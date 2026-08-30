@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bronzeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D8B679"/>
+      <stop offset="55%" stop-color="#B08D57"/>
+      <stop offset="100%" stop-color="#6F5635"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C6A15B"/>
+      <stop offset="100%" stop-color="#6F5635"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="200" height="200" rx="40" fill="#0D0D0F"/>
+
+  <circle cx="100" cy="102" r="82" fill="none" stroke="url(#ringGrad)" stroke-width="2.5"
+    stroke-dasharray="405 120" stroke-dashoffset="-197" opacity="0.85" stroke-linecap="round"/>
+
+  <path d="M55 172 L92 68 Q100 45 108 68 L145 172 L118 172 L100 118 L82 172 Z" fill="#3a342a" opacity="0.55"/>
+
+  <path d="M32 172 L92 34 Q100 18 108 34 L168 172 L133 172 L100 90 L67 172 Z" fill="url(#bronzeGrad)"/>
+
+  <path d="M100 90 L67 172 L133 172 Z" fill="#0D0D0F"/>
+
+  <polyline points="100,172 78,150 112,128 84,100 100,54"
+    fill="none" stroke="#F2EEE6" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+</svg>

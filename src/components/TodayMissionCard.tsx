@@ -1,0 +1,65 @@
+import { useState } from 'react';
+import type { SessionTemplate, SessionVariant } from '../models/training';
+import { availableVariants, durationForVariant } from '../engine/substitutions';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+
+const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
+  strength: 'Kracht',
+  cardio: 'Cardio',
+  hiking: 'Avontuur',
+  recovery: 'Herstel',
+  adventure: 'Avontuur',
+};
+
+export function TodayMissionCard({
+  template,
+  onStart,
+  onMove,
+  onSkip,
+}: {
+  template: SessionTemplate;
+  onStart: (variant: SessionVariant) => void;
+  onMove: (date: string) => void;
+  onSkip: () => void;
+}) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const variants = availableVariants(template);
+  const shortVariant = variants.find((v) => v === 'short');
+
+  return (
+    <Card texture className="flex flex-col gap-4">
+      <div>
+        <Eyebrow>VANDAAG</Eyebrow>
+        <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+          {TYPE_LABEL[template.type]} • ±{durationForVariant(template, 'full')} min
+        </p>
+        {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
+      </div>
+
+      <PrimaryButton onClick={() => onStart('full')}>SESSIE STARTEN</PrimaryButton>
+
+      <div className="flex gap-2">
+        {shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}
+        <SecondaryButton onClick={() => setShowDatePicker((s) => !s)}>VERPLAATS</SecondaryButton>
+        <SecondaryButton onClick={onSkip}>OVERSLAAN</SecondaryButton>
+      </div>
+
+      {showDatePicker && (
+        <div className="flex items-center gap-2 rounded-xl border p-2" style={{ borderColor: 'var(--color-card-border)' }}>
+          <input
+            type="date"
+            className="flex-1 rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+            style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+            onChange={(e) => {
+              if (e.target.value) {
+                onMove(e.target.value);
+                setShowDatePicker(false);
+              }
+            }}
+          />
+        </div>
+      )}
+    </Card>
+  );
+}
