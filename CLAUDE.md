@@ -1,40 +1,99 @@
-# CLAUDE.md
+# ASCEND
+
+ASCEND is a mobile-first personal training and adventure application.
 
 Guidance for Claude Code (and any other agent) working in this repository.
 
-## What ASCEND is
+## Core identity
 
-ASCEND is a personal training-and-adventure command center, not a workout
-logger. It ties daily strength training and cardio to a larger goal —
-running, hiking, elevation gain, backpack capacity, and eventually
-multi-day Alpine trips such as the GR5. The product's single throughline:
+The experience combines:
+
+- Stoic discipline
+- physical progression
+- mountain adventure
+- premium performance software
+
+Primary philosophy:
 
 ```
-MISSION → TRAINING → CAPACITY → PROGRESSION → OBJECTIVE → ADVENTURE → ASCENT
+Mission → Training → Capability → Progression → Objective → Adventure → Ascend
 ```
 
 Every screen exists to answer one question within two seconds of opening
 the app: **what is my mission today?**
 
-It's a fully client-side, offline-first, installable PWA. No backend, no
-account, no server — everything lives in the user's browser via IndexedDB.
 User-facing copy in the app and README is Dutch; keep new user-facing
 strings consistent with that unless told otherwise.
 
-## Stack
+## Design
 
-- **React 19 + TypeScript (strict) + Vite**
-- **Tailwind CSS v4**, configured via `@theme` tokens in `src/index.css`
-  (not a `tailwind.config.js`)
-- **IndexedDB** via the `idb` wrapper (`src/storage/database.ts`) for local,
-  offline-first persistence
-- **react-router-dom** with `HashRouter` — required so client-side routing
-  works with no server config on GitHub Pages
-- **vite-plugin-pwa** for installability, offline caching, and the manifest
-- **oxlint** for linting (`npm run lint`), not ESLint
-- Package manager: npm (`package-lock.json` is committed)
+- dark premium UI
+- charcoal / stone backgrounds
+- bronze and muted gold accents
+- muted Alpine green allowed
+- Roman/Stoic influence should remain subtle
+- adventure/mountain/topographic influences
+- never make the UI look like an RPG
+- never make it look like a generic bodybuilding app
+- mobile-first
 
-## Commands
+### Design tokens in code
+
+Theme tokens are defined once in `src/index.css` under `@theme` and
+consumed via Tailwind (`bg-[var(--color-card)]`) or inline `style` objects
+— never hardcode hex values in a component.
+
+- Backgrounds: `--color-bg` `--color-charcoal` `--color-surface`
+  `--color-card` (with `--color-card-border`)
+- Text: `--color-ink` (primary), `--color-ink-dim` (secondary)
+- Accents: `--color-bronze` `--color-gold` `--color-bronze-dark` (primary
+  actions, emphasis), `--color-alpine` `--color-stone` `--color-sky`
+  `--color-snow` (secondary/status)
+- Status: `--color-success` `--color-warning` `--color-danger`
+- Typography: `--font-display` (Marcellus, via `.font-display`) for
+  headings/wordmarks, `--font-sans` (Inter) for everything else
+- `html { color-scheme: dark }` — the app is dark-only, there is no light
+  theme to preserve
+- Shared primitives live in `src/components/ui.tsx` (`Card`,
+  `PrimaryButton`, `SecondaryButton`, `StatusDot`, `Eyebrow`) — reuse these
+  rather than re-implementing card/button chrome in a page or feature
+  component
+- Cards are `rounded-2xl` with a subtle border; the optional `topo-texture`
+  class adds a very low-opacity topographic contour pattern — use it
+  sparingly on specific cards, never as a global background
+- Single-column, `max-w-md`, bottom tab navigation (`BottomNav` in
+  `src/App.tsx`) with a safe-area-aware sticky bar.
+  `@media (prefers-reduced-motion: reduce)` is respected globally
+
+## Brand
+
+Name: ASCEND
+
+Brand line:
+
+```
+Train. Progress. Explore. Ascend.
+```
+
+## Engineering
+
+- React 19
+- TypeScript (strict)
+- Vite
+- Tailwind CSS v4 (theme via `@theme` tokens, not `tailwind.config.js`)
+- IndexedDB (via the `idb` wrapper)
+- react-router-dom with `HashRouter` — required so routing works with no
+  server config on GitHub Pages
+- vite-plugin-pwa — installability, offline caching, manifest
+- oxlint for linting (`npm run lint`), not ESLint
+- No backend, no account — everything is local to the user's device
+
+Keep domain logic separate from React components. A component calls a
+function in `engine/` or `storage/` and renders the result — this keeps
+the scheduler, progression math, and readiness formulas fully testable in
+isolation from the UI.
+
+### Commands
 
 ```bash
 npm ci             # install (CI/reproducible)
@@ -59,27 +118,8 @@ src/
   utils/         Date math, id generation
 ```
 
-### The core rule
-
-**React components never contain training logic.** A component calls a
-function in `engine/` or `storage/` and renders the result. This keeps the
-scheduler, progression math, and readiness formulas fully testable in
-isolation from the UI. When adding a feature, put the decision-making in
-`engine/`, not in a component or in `AppDataContext`.
-
-### Data architecture
-
-Domain models are never coupled to a specific external service. Model
-`OutdoorMetric` / `RecoveryMetric` / etc. with a `source` field
-(`'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import'`), never
-a vendor-specific field like `garminElevation`. When a Garmin or Health
-Connect adapter lands, it writes the exact same shapes — no screen or
-engine file should need to change. See `src/integrations/types.ts` for the
-adapter interface every future integration builds against.
-
-### Scheduling architecture
-
-Three distinct concepts, never merged:
+Training definitions, scheduled sessions, and completed session logs are
+separate entities:
 
 | Concept | Meaning | Rewrites history? |
 |---|---|---|
@@ -87,115 +127,86 @@ Three distinct concepts, never merged:
 | `PlannedSession` | A template scheduled onto a date | Yes — movable/skippable |
 | `SessionLog` | What actually happened | **Never** — append-only |
 
-Completion is never stored as a flag. A session is "done" the moment a
-`SessionLog` exists that references the `PlannedSession`
-(`engine/sessionStatus.ts`). This means editing the plan can never
-overwrite history.
+**Never rewrite historical logs when schedules change.** Completion is
+never stored as a flag — a session is "done" the moment a `SessionLog`
+exists that references the `PlannedSession` (`engine/sessionStatus.ts`).
+The same append-only pattern applies to `MilestoneProgress` (the record of
+when an Ascent Ladder milestone was actually cleared, vs. the static
+`Objective` / `MilestoneDefinition` ladder).
 
-The scheduler (`engine/scheduler.ts`) is **deterministic** — no AI, no
-guessing. It enforces one concrete rule: two "leg-heavy" sessions (Lower
-Body or a hike) must not land within 48 hours of each other. Moving a
-session into conflict produces a **cascade proposal**: the engine proposes
-shifting the conflicting session to the next free, conflict-free day in the
-same week, shown via `RescheduleDialog` — nothing is applied without
-confirmation. Additional rules from the original brief (avoid stacking too
-many heavy days, drop optional sessions first) are deliberately not yet
-automated; the architecture already supports adding them as pure functions
-in `engine/`.
-
-### Progression / Ascent Ladder architecture
-
-Objectives mirror the session pattern:
-
-- `Objective` + `MilestoneDefinition[]` — the static ladder ("what it would take")
-- `MilestoneProgress` — append-only records of *when* a milestone was cleared
-
-`engine/progression.ts` resolves each milestone as satisfied either via an
-explicit `MilestoneProgress` row, or automatically because a `SessionLog`
-already meets the requirement (e.g. a hike with 750+ m D+). Milestones with
-a manual requirement (`kind: 'manual'`) are cleared explicitly from the
-Ascend screen.
+**Scheduling logic belongs in `/engine`.** The scheduler
+(`engine/scheduler.ts`) is deterministic — no AI, no guessing. It enforces
+one concrete rule: two "leg-heavy" sessions (Lower Body or a hike) must not
+land within 48 hours of each other. Moving a session into conflict produces
+a cascade proposal (shown via `RescheduleDialog`) rather than applying
+silently.
 
 Readiness percentages (`engine/readiness.ts` — strength, cardio,
 climbing/D+, endurance, recovery, consistency, pack capability) are
-intentionally simple, isolated formulas over the last 28 days of logs. Each
-formula lives in its own commented section so it can be replaced later
-(e.g. HRV-adjusted recovery via Garmin) without touching the rest of the
-file.
+intentionally simple, isolated formulas over the last 28 days of logs, each
+in its own commented section so a formula can be swapped later without
+touching the rest of the file.
+
+Weeks are derived, not stored: a week is just seven days starting on a
+Monday; which phase/week-number it belongs to is computed from
+`Program.startDate` + `Phase.weekCount` (`utils/dates.ts`), never persisted
+as its own entity.
+
+**External providers must use generic adapters — do not tightly couple
+domain fields to provider names.** Model `OutdoorMetric` / `RecoveryMetric`
+/ etc. with a `source` field (`'manual' | 'garmin' | 'health-connect' |
+'macrofactor' | 'import'`), never a vendor-specific field like
+`garminElevation`. Future providers land behind the `DataSourceAdapter`
+interface in `src/integrations/types.ts` and populate the exact same
+shapes — no screen or engine file should need to change:
+
+- Garmin
+- Health Connect
+- MacroFactor
+- AI assistant (a future AI layer may translate free text into
+  constraints, but the deterministic functions in `engine/` remain the
+  only thing that actually schedules)
 
 ### Import / export
 
 Settings → Export downloads readable JSON with `schemaVersion`,
 `exportDate`, the program, templates, planned sessions, logs, objectives,
-and milestone progress. Import replaces current data with the contents of
-such a file. `storage/migrations.ts` is a minimal pass-through for
-`schemaVersion: 1` today; future schema changes get their own
+and milestone progress. `storage/migrations.ts` is a minimal pass-through
+for `schemaVersion: 1` today; future schema changes get their own
 `migrateV1toV2`-style step so an export made today still imports years from
 now. When you change a persisted shape, add a migration step here — don't
 just change the shape in place.
 
-## Design language
+## Deployment
 
-Dark, "alpine expedition" aesthetic — bronze/gold accents on near-black,
-serif display type for headings, sans body text.
+Repository name:
 
-- Theme tokens are defined once in `src/index.css` under `@theme` and
-  consumed via Tailwind (`bg-[var(--color-card)]`) or inline `style`
-  objects — **not** hardcoded hex values in components.
-  - Backgrounds: `--color-bg` `--color-charcoal` `--color-surface`
-    `--color-card` (with `--color-card-border`)
-  - Text: `--color-ink` (primary), `--color-ink-dim` (secondary)
-  - Accents: `--color-bronze` `--color-gold` `--color-bronze-dark`
-    (primary actions, emphasis), `--color-alpine` `--color-stone`
-    `--color-sky` `--color-snow` (secondary/status)
-  - Status: `--color-success` `--color-warning` `--color-danger`
-- Typography: `--font-display` (Marcellus, via `.font-display`) for
-  headings/wordmarks, `--font-sans` (Inter) for everything else. Loaded via
-  a Google Fonts `@import` in `src/index.css`.
-- `html { color-scheme: dark }` — the app is dark-only, there is no light
-  theme to preserve.
-- Shared primitives live in `src/components/ui.tsx` (`Card`,
-  `PrimaryButton`, `SecondaryButton`, `StatusDot`, `Eyebrow`) — reuse these
-  rather than re-implementing card/button chrome in a page or feature
-  component.
-- Cards are `rounded-2xl` with a subtle border; the optional `topo-texture`
-  class adds a very low-opacity topographic contour pattern — use it
-  sparingly on specific cards, never as a global background.
-- Mobile-first, single-column, `max-w-md`, bottom tab navigation
-  (`BottomNav` in `src/App.tsx`) with a safe-area-aware sticky bar.
-  `@media (prefers-reduced-motion: reduce)` is respected globally.
+```
+ascend
+```
 
-## Engineering rules
+GitHub Pages base path:
 
-- **Business logic belongs in `engine/`**, never in a component or in
-  `AppDataContext`. `AppDataContext` (`src/state/AppDataContext.tsx`) wires
-  storage reads/writes to engine calls and exposes plain data + actions —
-  it should stay thin.
-- **`SessionLog` and `MilestoneProgress` rows are append-only.** Never
-  mutate or delete one to "correct" history; add a new record instead.
-  Anything representing history follows this pattern, not just these two
-  types.
-- **Domain models never reference a vendor.** Add a `source` field instead
-  of a service-specific field or type. See `src/models/metrics.ts` and
-  `src/models/training.ts` for the existing pattern.
-- **The scheduler stays deterministic.** Don't introduce randomness or an
-  LLM call into `engine/scheduler.ts`; a future AI layer may translate free
-  text into constraints, but the deterministic functions in `engine/`
-  remain the only thing that actually schedules.
-- **Weeks are derived, not stored.** A week is just seven days starting on
-  a Monday; which phase/week-number it belongs to is computed from
-  `Program.startDate` + `Phase.weekCount` (`utils/dates.ts`), never
-  persisted as its own entity.
-- Routing must stay on `HashRouter` — GitHub Pages serves no server-side
-  rewrites, so a browser-history router would 404 on refresh/deep links.
-- The Vite `base` path is driven by the `ASCEND_BASE_PATH` env var
-  (`vite.config.ts`), not hardcoded — it must resolve correctly both for a
-  GitHub Pages project page (`/<repo>/`) and a root/custom domain (`/`).
-- TypeScript is strict; new code should stay warning-free under both `tsc`
-  and `oxlint` (`.oxlintrc.json`).
-- Keep new integrations behind the `DataSourceAdapter` interface
-  (`src/integrations/types.ts`) rather than calling a vendor SDK directly
-  from engine/UI code.
+```
+/ascend/
+```
+
+The base path is not hardcoded in the workflow — `.github/workflows/deploy.yml`
+uses `actions/configure-pages` to read the repo's actual Pages
+configuration and passes it to the build as `ASCEND_BASE_PATH`
+(`vite.config.ts`), so it resolves to `/ascend/` for this project page and
+would resolve correctly for a root/custom domain too, without editing the
+workflow.
+
+Any change must preserve:
+
+```bash
+npm ci
+npm run build
+```
+
+The build must remain deployable through GitHub Actions (GitHub Pages,
+via `actions/upload-pages-artifact` + `actions/deploy-pages`).
 
 ## Do not
 
@@ -207,3 +218,5 @@ serif display type for headings, sans body text.
 - Do not redesign the visual language (colors, type, layout) as a side
   effect of an unrelated change; extend the existing token set instead of
   introducing new hardcoded colors.
+- Do not let the UI drift toward an RPG or generic-bodybuilding-app look —
+  keep the Stoic/alpine/premium tone.
