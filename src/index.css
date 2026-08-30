@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #0d0d0f;
+  --color-charcoal: #121216;
+  --color-surface: #17171b;
+  --color-card: #1d1d22;
+  --color-card-border: #29292f;
+  --color-ink: #f2eee6;
+  --color-ink-dim: #96928b;
+  --color-bronze: #b08d57;
+  --color-gold: #c6a15b;
+  --color-bronze-dark: #6f5635;
+  --color-alpine: #3a5644;
+  --color-stone: #8a8478;
+  --color-sky: #7c93a0;
+  --color-snow: #efebe3;
+  --color-success: #5c7a63;
+  --color-warning: #b8863b;
+  --color-danger: #8c3f3f;
+
+  --font-display: 'Marcellus', 'Iowan Old Style', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--color-bronze);
+  color: var(--color-bg);
+}
+
+/* Subtle topographic contour texture, used at very low opacity behind
+   specific cards — never as a global background. */
+.topo-texture {
+  background-image: repeating-radial-gradient(
+    circle at 30% 20%,
+    transparent 0,
+    transparent 18px,
+    rgba(178, 141, 87, 0.05) 19px,
+    rgba(178, 141, 87, 0.05) 20px
+  );
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
