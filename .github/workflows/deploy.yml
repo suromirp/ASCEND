@@ -18,21 +18,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+
+      - id: pages
+        uses: actions/configure-pages@v6
 
       - run: npm ci
       - run: npm run build
         env:
-          # Must match your repo name for a project page:
-          # https://<username>.github.io/<repo-name>/
-          ASCEND_BASE_PATH: /${{ github.event.repository.name }}/
+          # Derived from the repo's actual GitHub Pages configuration, so
+          # this resolves correctly both for a project page
+          # (https://<username>.github.io/<repo-name>/) and for a root or
+          # custom domain (base_path is empty there).
+          ASCEND_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -44,4 +49,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

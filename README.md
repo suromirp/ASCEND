@@ -80,8 +80,10 @@ officiële `actions/deploy-pages` action.
 **Belangrijk: het base path.** Vite moet weten onder welk sub-pad de app
 draait op GitHub Pages (`https://<gebruiker>.github.io/<repo-naam>/`). De
 workflow zet dit automatisch via de `ASCEND_BASE_PATH` environment variable,
-afgeleid van de repository-naam. Deploy je liever handmatig, of gebruik je een
-custom domain (dus geen sub-pad)? Stel de variabele dan zelf in:
+afgeleid van de officiële `actions/configure-pages` action — die leest de
+daadwerkelijke Pages-configuratie van de repo, dus dit werkt vanzelf voor
+zowel een project page als een custom domain (geen sub-pad). Deploy je
+liever handmatig? Stel de variabele dan zelf in:
 
 ```bash
 # Project page onder /mijn-repo/
