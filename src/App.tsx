@@ -31,24 +31,30 @@ const TABS = [
   { to: '/more', id: 'more', label: 'MORE' },
 ];
 
+// `fixed` rather than `sticky` — sticky is only pinned relative to its own
+// scroll container, so on mobile (address bar show/hide, momentum scroll,
+// on-screen keyboard) it could visibly slide up/down with the content
+// instead of staying put. Fixed anchors it to the viewport itself.
 function BottomNav() {
   return (
     <nav
-      className="sticky bottom-0 z-40 flex items-center justify-around border-t px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2"
+      className="fixed inset-x-0 bottom-0 z-40 border-t"
       style={{ background: 'rgba(13,13,15,0.92)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
     >
-      {TABS.map((tab) => (
-        <NavLink
-          key={tab.id}
-          to={tab.to}
-          end={tab.to === '/'}
-          className="flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium tracking-wide"
-          style={({ isActive }) => ({ color: isActive ? 'var(--color-gold)' : 'var(--color-ink-dim)' })}
-        >
-          <NavIcon id={tab.id} />
-          {tab.label}
-        </NavLink>
-      ))}
+      <div className="mx-auto flex w-full max-w-md items-center justify-around px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2">
+        {TABS.map((tab) => (
+          <NavLink
+            key={tab.id}
+            to={tab.to}
+            end={tab.to === '/'}
+            className="flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium tracking-wide"
+            style={({ isActive }) => ({ color: isActive ? 'var(--color-gold)' : 'var(--color-ink-dim)' })}
+          >
+            <NavIcon id={tab.id} />
+            {tab.label}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   );
 }
@@ -68,7 +74,10 @@ function AppShell() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto">
+      <div
+        className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
+        style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
+      >
         <Routes>
           <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
           <Route path="/week" element={<WeekPage />} />
@@ -79,9 +88,7 @@ function AppShell() {
           <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
         </Routes>
       </div>
-      <div className="mx-auto w-full max-w-md">
-        <BottomNav />
-      </div>
+      <BottomNav />
     </>
   );
 }
