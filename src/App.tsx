@@ -67,9 +67,7 @@ function AppShell() {
   if (loading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-10">
-        <div className="w-full max-w-[240px]">
-          <AscendAnimatedLogo />
-        </div>
+        <AscendAnimatedLogo size={200} />
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De klim wordt voorbereid…</p>
       </div>
     );
