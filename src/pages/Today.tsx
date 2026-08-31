@@ -94,15 +94,15 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       <div className="grid grid-cols-3 gap-3">
         <Card className="text-center">
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>WEEK</p>
+          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK</p>
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>{weekCompletedCount} / {weekSessions.length}</p>
         </Card>
         <Card className="text-center">
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
+          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistency}%</p>
         </Card>
         <Card className="text-center">
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>BLOK</p>
+          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>BLOK</p>
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>
             {position ? `${position.weekInPhase}/${position.phase.weekCount}` : '—'}
           </p>
