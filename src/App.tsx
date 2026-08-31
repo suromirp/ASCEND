@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
+import { AscendMark } from './components/ui';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
@@ -66,6 +67,7 @@ function AppShell() {
   if (loading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
+        <AscendMark size={64} />
         <p className="font-display text-2xl tracking-wide" style={{ color: 'var(--color-bronze)' }}>ASCEND</p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De klim wordt voorbereid…</p>
       </div>
