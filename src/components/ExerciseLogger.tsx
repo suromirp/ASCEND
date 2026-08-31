@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog } from '../models/training';
 import type { Program } from '../models/program';
-import { exercisesForVariant, durationForVariant, availableVariants, resolveEffectiveFullDuration } from '../engine/substitutions';
+import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 
@@ -27,8 +27,8 @@ export function ExerciseLogger({
   const quickComplete = template.type === 'strength' && settings.strengthTrackedExternally;
 
   function resolveDuration(v: SessionVariant): number {
-    if (v === 'full' && scheduledDate) return resolveEffectiveFullDuration(template, scheduledDate, program);
-    return durationForVariant(template, v);
+    if (!scheduledDate) return durationForVariant(template, v);
+    return resolveVariantDuration(template, v, scheduledDate, program);
   }
 
   const [duration, setDuration] = useState(resolveDuration(initialVariant));

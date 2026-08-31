@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
-import type { PlannedSession, SessionVariant } from '../models/training';
+import { resolveVariantDuration } from '../engine/substitutions';
+import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
@@ -11,7 +12,7 @@ import { Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function WeekPage() {
-  const { program, sessionLogs, templateById, sessionsForWeek, moveSession, applyProposal, skipSession } = useAppData();
+  const { program, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession } = useAppData();
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
@@ -24,6 +25,27 @@ export function WeekPage() {
     const { status } = deriveSessionStatus(session, sessionLogs);
     if (status === 'completed') return;
     setSelected(session);
+  }
+
+  // Mirrors Today.tsx: with Krachttraining "Bijgehouden in MacroFactor" on,
+  // starting a strength session logs it immediately instead of opening the
+  // exercise-entry modal.
+  function isQuickComplete(template?: SessionTemplate) {
+    return template?.type === 'strength' && settings.strengthTrackedExternally;
+  }
+
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant) {
+    if (isQuickComplete(template)) {
+      logSession({
+        plannedSessionId: session.id,
+        templateId: template.id,
+        type: template.type,
+        variant,
+        durationMinutes: resolveVariantDuration(template, variant, session.scheduledDate, program),
+      });
+    } else {
+      setLogging({ session, variant });
+    }
   }
 
   return (
@@ -53,8 +75,9 @@ export function WeekPage() {
           session={selected}
           template={templateById.get(selected.templateId)!}
           program={program}
+          quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           onStart={(variant) => {
-            setLogging({ session: selected, variant });
+            startSession(selected, templateById.get(selected.templateId)!, variant);
             setSelected(null);
           }}
           onMove={(date) => {

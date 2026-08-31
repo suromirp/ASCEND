@@ -5,8 +5,8 @@ import { mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeObjectiveProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
-import { resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
-import type { PlannedSession, SessionVariant } from '../models/training';
+import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
+import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { AdventureCard } from '../components/AdventureCard';
 import { SessionCard } from '../components/SessionCard';
@@ -17,7 +17,7 @@ import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, templateById, sessionsForWeek, moveSession, applyProposal, skipSession } = useAppData();
+  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession } = useAppData();
   const today = todayISO();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
@@ -28,8 +28,13 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const weekStart = mondayOfWeek(today);
   const weekSessions = sessionsForWeek(weekStart);
   const todaySessions = weekSessions.filter((s) => s.scheduledDate === today);
-  const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped') ?? todaySessions[0];
+  // No `?? todaySessions[0]` fallback here: .find() only returns undefined
+  // when every session today is already completed or skipped, and falling
+  // back to one of those would re-show a finished session as if it still
+  // needed to be started.
+  const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped');
   const secondary = todaySessions.filter((s) => s.id !== primary?.id);
+  const allTodayDone = todaySessions.length > 0 && !primary;
 
   const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
@@ -55,6 +60,28 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
 
+  // When Settings → Krachttraining "Bijgehouden in MacroFactor" is on,
+  // starting a strength session skips the exercise-entry modal entirely —
+  // it's logged immediately, one tap, instead of opening ExerciseLogger.
+  function isQuickComplete(template?: SessionTemplate) {
+    return template?.type === 'strength' && settings.strengthTrackedExternally;
+  }
+
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant) {
+    if (isQuickComplete(template)) {
+      logSession({
+        plannedSessionId: session.id,
+        templateId: template.id,
+        type: template.type,
+        variant,
+        durationMinutes: resolveVariantDuration(template, variant, session.scheduledDate, program),
+      });
+    } else {
+      setLoggingVariant(variant);
+      setLoggingSession(session);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-6">
       <div>
@@ -71,18 +98,25 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           template={primaryTemplate}
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
-          onStart={(variant) => {
-            setLoggingVariant(variant);
-            setLoggingSession(primary);
-          }}
+          quickComplete={isQuickComplete(primaryTemplate)}
+          onStart={(variant) => startSession(primary, primaryTemplate, variant)}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => skipSession(primary.id)}
         />
       ) : (
         <Card>
           <Eyebrow>VANDAAG</Eyebrow>
-          <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Rust of vrije dag</p>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen sessie gepland voor vandaag.</p>
+          {allTodayDone ? (
+            <>
+              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Klaar voor vandaag</p>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je sessie(s) van vandaag staan op voltooid.</p>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Rust of vrije dag</p>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen sessie gepland voor vandaag.</p>
+            </>
+          )}
         </Card>
       )}
 
@@ -127,9 +161,9 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           session={actionSheetSession}
           template={actionSheetTemplate}
           program={program}
+          quickComplete={isQuickComplete(actionSheetTemplate)}
           onStart={(variant) => {
-            setLoggingVariant(variant);
-            setLoggingSession(actionSheetSession);
+            startSession(actionSheetSession, actionSheetTemplate, variant);
             setActionSheetSession(null);
           }}
           onMove={(date) => {

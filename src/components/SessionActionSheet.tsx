@@ -8,6 +8,7 @@ export function SessionActionSheet({
   session,
   template,
   program,
+  quickComplete = false,
   onStart,
   onMove,
   onSkip,
@@ -16,6 +17,7 @@ export function SessionActionSheet({
   session: PlannedSession;
   template: SessionTemplate;
   program: Program | null;
+  quickComplete?: boolean;
   onStart: (variant: SessionVariant) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
@@ -37,11 +39,15 @@ export function SessionActionSheet({
           </p>
 
           <div className="mt-4 flex flex-col gap-2">
-            {variants.map((v) => (
-              <PrimaryButton key={v} onClick={() => onStart(v)}>
-                {v === 'full' ? 'START VOLLEDIGE SESSIE' : v === 'short' ? 'START KORTE VERSIE' : 'START MINIMUM VERSIE'}
-              </PrimaryButton>
-            ))}
+            {quickComplete ? (
+              <PrimaryButton onClick={() => onStart('full')}>AFVINKEN</PrimaryButton>
+            ) : (
+              variants.map((v) => (
+                <PrimaryButton key={v} onClick={() => onStart(v)}>
+                  {v === 'full' ? 'START VOLLEDIGE SESSIE' : v === 'short' ? 'START KORTE VERSIE' : 'START MINIMUM VERSIE'}
+                </PrimaryButton>
+              ))
+            )}
           </div>
 
           <div className="mt-3 flex gap-3">

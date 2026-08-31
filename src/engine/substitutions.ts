@@ -38,6 +38,20 @@ export function resolveEffectiveFullDuration(
   return template.durationVariants.full;
 }
 
+// Shared by ExerciseLogger (variant picker) and the quick-complete flow
+// (Settings → Krachttraining) so both resolve a variant's duration the same
+// way: 'full' follows weeklyProgression when present, short/minimum are
+// always the static fallback durations.
+export function resolveVariantDuration(
+  template: SessionTemplate,
+  variant: SessionVariant,
+  scheduledDate: string,
+  program: Program | null | undefined,
+): number {
+  if (variant === 'full') return resolveEffectiveFullDuration(template, scheduledDate, program);
+  return durationForVariant(template, variant);
+}
+
 export function weeklyProgressionNote(
   template: SessionTemplate,
   scheduledDate: string,

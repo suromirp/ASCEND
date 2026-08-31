@@ -15,6 +15,7 @@ export function TodayMissionCard({
   template,
   fullDuration,
   weekNote,
+  quickComplete = false,
   onStart,
   onMove,
   onSkip,
@@ -22,6 +23,7 @@ export function TodayMissionCard({
   template: SessionTemplate;
   fullDuration: number;
   weekNote?: string;
+  quickComplete?: boolean;
   onStart: (variant: SessionVariant) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
@@ -41,10 +43,10 @@ export function TodayMissionCard({
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
       </div>
 
-      <PrimaryButton onClick={() => onStart('full')}>SESSIE STARTEN</PrimaryButton>
+      <PrimaryButton onClick={() => onStart('full')}>{quickComplete ? 'AFVINKEN' : 'SESSIE STARTEN'}</PrimaryButton>
 
       <div className="flex gap-2">
-        {shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}
+        {!quickComplete && shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}
         <SecondaryButton onClick={() => setShowDatePicker((s) => !s)}>VERPLAATS</SecondaryButton>
         <SecondaryButton onClick={onSkip}>OVERSLAAN</SecondaryButton>
       </div>

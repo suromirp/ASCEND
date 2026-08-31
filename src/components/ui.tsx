@@ -65,8 +65,8 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       style={{ background: checked ? 'var(--color-gold)' : 'var(--color-card-border)' }}
     >
       <span
-        className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
-        style={{ background: checked ? '#15130d' : 'var(--color-ink-dim)', transform: checked ? 'translateX(1.375rem)' : 'translateX(0.125rem)' }}
+        className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full transition-transform"
+        style={{ background: checked ? '#15130d' : 'var(--color-ink-dim)', transform: checked ? 'translateX(1.25rem)' : 'translateX(0)' }}
       />
     </button>
   );
