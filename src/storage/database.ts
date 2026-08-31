@@ -106,6 +106,7 @@ export const PlannedSessionsRepo = {
 export const SessionLogsRepo = {
   getAll: () => getAll('sessionLogs') as Promise<SessionLog[]>,
   put: (l: SessionLog) => put('sessionLogs', l),
+  delete: (id: string) => del('sessionLogs', id),
 };
 
 export const ObjectivesRepo = {
@@ -116,6 +117,7 @@ export const ObjectivesRepo = {
 export const MilestoneProgressRepo = {
   getAll: () => getAll('milestoneProgress') as Promise<MilestoneProgress[]>,
   put: (m: MilestoneProgress) => put('milestoneProgress', m),
+  delete: (id: string) => del('milestoneProgress', id),
 };
 
 export const RecoveryMetricsRepo = { getAll: () => getAll('recoveryMetrics') as Promise<RecoveryMetric[]> };

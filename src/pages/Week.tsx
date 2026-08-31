@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
-import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
@@ -12,7 +11,7 @@ import { Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function WeekPage() {
-  const { program, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession } = useAppData();
+  const { program, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog } = useAppData();
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
@@ -20,10 +19,11 @@ export function WeekPage() {
 
   const sessions = sessionsForWeek(weekStart);
   const position = program ? resolveProgramWeek(program, weekStart) : null;
+  const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
+  // A completed session is still selectable — SessionActionSheet shows an
+  // "ongedaan maken" (undo) view for it instead of the start/move/skip one.
   function selectSession(session: PlannedSession) {
-    const { status } = deriveSessionStatus(session, sessionLogs);
-    if (status === 'completed') return;
     setSelected(session);
   }
 
@@ -76,6 +76,7 @@ export function WeekPage() {
           template={templateById.get(selected.templateId)!}
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
+          completedLog={selectedLog}
           onStart={(variant) => {
             startSession(selected, templateById.get(selected.templateId)!, variant);
             setSelected(null);
@@ -87,6 +88,10 @@ export function WeekPage() {
           }}
           onSkip={() => {
             skipSession(selected.id);
+            setSelected(null);
+          }}
+          onUndo={() => {
+            if (selectedLog) undoLog(selectedLog.id);
             setSelected(null);
           }}
           onClose={() => setSelected(null)}

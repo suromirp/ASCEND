@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
@@ -9,24 +9,60 @@ export function SessionActionSheet({
   template,
   program,
   quickComplete = false,
+  completedLog,
   onStart,
   onMove,
   onSkip,
+  onUndo,
   onClose,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
   program: Program | null;
   quickComplete?: boolean;
+  completedLog?: SessionLog;
   onStart: (variant: SessionVariant) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
+  onUndo?: () => void;
   onClose: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [confirmingUndo, setConfirmingUndo] = useState(false);
   const variants = availableVariants(template);
   const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
+
+  if (completedLog) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
+        <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <Card className="rounded-b-none border-b-0 pb-6">
+            <Eyebrow>{session.scheduledDate}</Eyebrow>
+            <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-success)' }}>
+              ✓ Voltooid • {completedLog.durationMinutes} min
+            </p>
+
+            <div className="mt-4">
+              {!confirmingUndo ? (
+                <SecondaryButton onClick={() => setConfirmingUndo(true)} className="w-full">ONGEDAAN MAKEN</SecondaryButton>
+              ) : (
+                <div className="flex gap-3">
+                  <SecondaryButton onClick={() => setConfirmingUndo(false)}>ANNULEREN</SecondaryButton>
+                  <PrimaryButton onClick={onUndo}>BEVESTIG</PrimaryButton>
+                </div>
+              )}
+            </div>
+
+            <button onClick={onClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Sluiten
+            </button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>

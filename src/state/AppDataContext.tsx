@@ -35,6 +35,7 @@ interface AppData {
   refresh: () => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
   logSession: (input: LogSessionInput) => Promise<void>;
+  undoLog: (logId: string) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   skipSession: (sessionId: string) => Promise<void>;
@@ -145,6 +146,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [objectives, milestoneProgress, sessionLogs, refresh],
   );
 
+  // Undoing a log also removes any milestone auto-cleared by it (matched
+  // via sourceSessionLogId) — otherwise the Ascent Ladder would keep
+  // showing a milestone as cleared with no log left to back it up.
+  // Manually-cleared milestones (no sourceSessionLogId) are untouched.
+  const undoLog = useCallback(
+    async (logId: string) => {
+      await SessionLogsRepo.delete(logId);
+      for (const p of milestoneProgress) {
+        if (p.sourceSessionLogId === logId) await MilestoneProgressRepo.delete(p.id);
+      }
+      await refresh();
+    },
+    [milestoneProgress, refresh],
+  );
+
   const moveSession = useCallback(
     (sessionId: string, targetDate: string): ScheduleProposal => {
       const week = sessionsForWeek(mondayOfWeek(targetDate));
@@ -212,6 +228,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     refresh,
     sessionsForWeek,
     logSession,
+    undoLog,
     moveSession,
     applyProposal,
     skipSession,

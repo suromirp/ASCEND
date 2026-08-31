@@ -17,7 +17,7 @@ import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession } = useAppData();
+  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog } = useAppData();
   const today = todayISO();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
@@ -59,6 +59,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const primaryTemplate = primary ? templateById.get(primary.templateId) : undefined;
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
+  const actionSheetLog = actionSheetSession ? sessionLogs.find((l) => l.plannedSessionId === actionSheetSession.id) : undefined;
 
   // When Settings → Krachttraining "Bijgehouden in MacroFactor" is on,
   // starting a strength session skips the exercise-entry modal entirely —
@@ -162,6 +163,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           template={actionSheetTemplate}
           program={program}
           quickComplete={isQuickComplete(actionSheetTemplate)}
+          completedLog={actionSheetLog}
           onStart={(variant) => {
             startSession(actionSheetSession, actionSheetTemplate, variant);
             setActionSheetSession(null);
@@ -172,6 +174,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           }}
           onSkip={() => {
             skipSession(actionSheetSession.id);
+            setActionSheetSession(null);
+          }}
+          onUndo={() => {
+            if (actionSheetLog) undoLog(actionSheetLog.id);
             setActionSheetSession(null);
           }}
           onClose={() => setActionSheetSession(null)}
