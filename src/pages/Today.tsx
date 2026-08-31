@@ -14,14 +14,17 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
-import { StretchList } from '../components/StretchList';
+import { DailyStretchCard } from '../components/DailyStretchCard';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog } = useAppData();
+  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine } = useAppData();
   const today = todayISO();
+  // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
+  // ever shown, matched to the current time of day.
+  const isMorning = new Date().getHours() < 12;
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
@@ -152,8 +155,21 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
 
-      <StretchList title="OCHTEND REKKEN" stretches={MORNING_ROUTINE} className="" />
-      <StretchList title="AVOND REKKEN" stretches={EVENING_ROUTINE} className="" />
+      {isMorning ? (
+        <DailyStretchCard
+          title="OCHTEND REKKEN"
+          stretches={MORNING_ROUTINE}
+          completed={stretchCompletion.morning === today}
+          onToggleComplete={() => toggleStretchRoutine('morning')}
+        />
+      ) : (
+        <DailyStretchCard
+          title="AVOND REKKEN"
+          stretches={EVENING_ROUTINE}
+          completed={stretchCompletion.evening === today}
+          onToggleComplete={() => toggleStretchRoutine('evening')}
+        />
+      )}
 
       {loggingSession && loggingTemplate && (
         <ExerciseLogger

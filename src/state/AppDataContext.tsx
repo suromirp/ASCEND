@@ -11,9 +11,11 @@ import {
   ObjectivesRepo,
   MilestoneProgressRepo,
   SettingsRepo,
+  StretchCompletionRepo,
   resetToDemoData,
   DEFAULT_SETTINGS,
   type AppSettings,
+  type StretchCompletion,
 } from '../storage/database';
 import { proposeMove, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeObjectiveProgress, requirementAutoSatisfied } from '../engine/progression';
@@ -31,6 +33,7 @@ interface AppData {
   objectives: Objective[];
   milestoneProgress: MilestoneProgress[];
   settings: AppSettings;
+  stretchCompletion: StretchCompletion;
   templateById: Map<string, SessionTemplate>;
   refresh: () => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
@@ -41,6 +44,7 @@ interface AppData {
   skipSession: (sessionId: string) => Promise<void>;
   clearMilestoneManually: (objectiveId: string, milestoneId: string) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
+  toggleStretchRoutine: (kind: keyof StretchCompletion) => Promise<void>;
   exportData: () => Promise<void>;
   importData: (file: File) => Promise<void>;
   resetDemoData: () => Promise<void>;
@@ -70,9 +74,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [milestoneProgress, setMilestoneProgress] = useState<MilestoneProgress[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, objs, progress, loadedSettings] = await Promise.all([
+    const [programs, tpls, planned, logs, objs, progress, loadedSettings, loadedStretchCompletion] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -80,6 +85,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ObjectivesRepo.getAll(),
       MilestoneProgressRepo.getAll(),
       SettingsRepo.get(),
+      StretchCompletionRepo.get(),
     ]);
     setProgram(programs[0] ?? null);
     setTemplates(tpls);
@@ -88,6 +94,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setObjectives(objs);
     setMilestoneProgress(progress);
     setSettings(loadedSettings);
+    setStretchCompletion(loadedStretchCompletion);
   }, []);
 
   useEffect(() => {
@@ -215,6 +222,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setSettings(next);
   }, []);
 
+  // Stores the date last checked off, not a boolean — so the box reads as
+  // unchecked again the moment todayISO() rolls over to a new day, with no
+  // separate reset step needed.
+  const toggleStretchRoutine = useCallback(
+    async (kind: keyof StretchCompletion) => {
+      const today = todayISO();
+      const isDoneToday = stretchCompletion[kind] === today;
+      const next = await StretchCompletionRepo.set({ [kind]: isDoneToday ? undefined : today });
+      setStretchCompletion(next);
+    },
+    [stretchCompletion],
+  );
+
   const value: AppData = {
     loading,
     program,
@@ -224,6 +244,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     objectives,
     milestoneProgress,
     settings,
+    stretchCompletion,
     templateById,
     refresh,
     sessionsForWeek,
@@ -234,6 +255,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     skipSession,
     clearMilestoneManually,
     updateSettings,
+    toggleStretchRoutine,
     exportData: downloadExport,
     importData: async (file: File) => {
       await importFromFile(file);

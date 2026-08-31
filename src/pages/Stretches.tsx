@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS, STRETCH_GENERAL_ADVICE, STRETCH_SOURCE_NOTE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
+import { StretchItems } from '../components/StretchList';
 
 export function StretchesPage() {
   const navigate = useNavigate();
@@ -32,18 +33,7 @@ export function StretchesPage() {
                 <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
                 <span className="text-xs" style={{ color: 'var(--color-gold)' }}>{open ? '−' : '+'}</span>
               </button>
-              {open && (
-                <ul className="mt-3 flex flex-col gap-2">
-                  {area.stretches.map((s) => (
-                    <li key={s.name} className="flex items-baseline justify-between gap-3 text-sm">
-                      <span style={{ color: 'var(--color-ink)' }}>{s.name}</span>
-                      <span className="shrink-0 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                        {s.durationSec ? `${s.durationSec}s` : ''}{s.note ? (s.durationSec ? ` • ${s.note}` : s.note) : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {open && <StretchItems stretches={area.stretches} />}
             </Card>
           );
         })}

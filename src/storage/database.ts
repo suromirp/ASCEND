@@ -161,6 +161,26 @@ export const SettingsRepo = {
   },
 };
 
+// Whether today's daily stretch routine has been checked off. Stores the
+// ISO date it was last marked done for each routine, not a bare boolean —
+// comparing that date to today's is what makes the checkbox reset itself
+// every day without any cleanup job.
+export interface StretchCompletion {
+  morning?: string;
+  evening?: string;
+}
+
+export const StretchCompletionRepo = {
+  get: async (): Promise<StretchCompletion> => {
+    return (await MetaRepo.get<StretchCompletion>('stretchCompletion')) ?? {};
+  },
+  set: async (patch: Partial<StretchCompletion>): Promise<StretchCompletion> => {
+    const next = { ...(await StretchCompletionRepo.get()), ...patch };
+    await MetaRepo.set('stretchCompletion', next);
+    return next;
+  },
+};
+
 // --- seeding & reset ---------------------------------------------------
 
 export async function seedIfEmpty(): Promise<void> {
