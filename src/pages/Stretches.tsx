@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS, STRETCH_GENERAL_ADVICE, STRETCH_SOURCE_NOTE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 
 export function StretchesPage() {
   const navigate = useNavigate();
-  const [openAreaId, setOpenAreaId] = useState<string | null>(null);
+  const location = useLocation();
+  const initialAreaId = (location.state as { areaId?: string } | null)?.areaId ?? null;
+  const [openAreaId, setOpenAreaId] = useState<string | null>(initialAreaId);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/more')} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>REKOEFENINGEN</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar zit je vast?</p>

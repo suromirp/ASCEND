@@ -13,6 +13,7 @@ import { SessionCard } from '../components/SessionCard';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { SessionActionSheet } from '../components/SessionActionSheet';
+import { StretchMenuButton } from '../components/StretchMenuButton';
 import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
@@ -85,13 +86,16 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-6">
-      <div>
-        <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>ASCEND</p>
-        {position && (
-          <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-            WEEK {position.weekInProgram} • {position.phase.name}
-          </p>
-        )}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>ASCEND</p>
+          {position && (
+            <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
+              WEEK {position.weekInProgram} • {position.phase.name}
+            </p>
+          )}
+        </div>
+        <StretchMenuButton />
       </div>
 
       {primary && primaryTemplate ? (

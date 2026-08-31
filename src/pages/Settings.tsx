@@ -1,11 +1,9 @@
 import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 
 export function SettingsPage() {
   const { exportData, importData, resetDemoData, settings, updateSettings } = useAppData();
-  const navigate = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -79,14 +77,6 @@ export function SettingsPage() {
             label="Kracht bijgehouden in MacroFactor"
           />
         </div>
-      </Card>
-
-      <Card className="flex flex-col gap-3">
-        <Eyebrow>MOBILITEIT</Eyebrow>
-        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Warming-up en afkoeling staan al bij elke sessie. Wil je gericht rekken bij een specifieke klacht?
-        </p>
-        <SecondaryButton onClick={() => navigate('/stretches')}>REKOEFENINGEN</SecondaryButton>
       </Card>
 
       <Card className="flex flex-col gap-3 opacity-60">
