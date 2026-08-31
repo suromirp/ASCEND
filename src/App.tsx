@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
-import { AscendAnimatedLogo } from './components/AscendAnimatedLogo';
+import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
@@ -67,7 +67,7 @@ function AppShell() {
   if (loading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-10">
-        <AscendAnimatedLogo size={200} />
+        <AscendSplashLogo size={200} />
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De klim wordt voorbereid…</p>
       </div>
     );
