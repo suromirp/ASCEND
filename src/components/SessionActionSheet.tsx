@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
-import { availableVariants, durationForVariant } from '../engine/substitutions';
+import type { Program } from '../models/program';
+import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 
 export function SessionActionSheet({
   session,
   template,
+  program,
   onStart,
   onMove,
   onSkip,
@@ -13,6 +15,7 @@ export function SessionActionSheet({
 }: {
   session: PlannedSession;
   template: SessionTemplate;
+  program: Program | null;
   onStart: (variant: SessionVariant) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
@@ -20,6 +23,8 @@ export function SessionActionSheet({
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const variants = availableVariants(template);
+  const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
+  const note = weeklyProgressionNote(template, session.scheduledDate, program);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
@@ -28,7 +33,7 @@ export function SessionActionSheet({
           <Eyebrow>{session.scheduledDate}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            ±{durationForVariant(template, 'full')} min{template.focus ? ` • ${template.focus}` : ''}
+            ±{fullDuration} min{note ? ` • ${note}` : ''}{template.focus ? ` • ${template.focus}` : ''}
           </p>
 
           <div className="mt-4 flex flex-col gap-2">

@@ -1,5 +1,7 @@
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
+import type { Program } from '../models/program';
 import { deriveSessionStatus } from '../engine/sessionStatus';
+import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { StatusDot } from './ui';
 
 const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
@@ -14,15 +16,18 @@ export function SessionCard({
   session,
   template,
   logs,
+  program,
   onTap,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
   logs: SessionLog[];
+  program?: Program | null;
   onTap?: () => void;
 }) {
   const { status, wasMoved } = deriveSessionStatus(session, logs);
-  const dim = status === 'skipped';
+  const dim = status === 'skipped' || status === 'missed';
+  const duration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
 
   return (
     <button
@@ -48,7 +53,7 @@ export function SessionCard({
         </div>
       </div>
       <div className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        {template.durationVariants.full} min
+        {duration} min
       </div>
     </button>
   );

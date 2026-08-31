@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog } from '../models/training';
-import { exercisesForVariant, durationForVariant, availableVariants } from '../engine/substitutions';
+import type { Program } from '../models/program';
+import { exercisesForVariant, durationForVariant, availableVariants, resolveEffectiveFullDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 
@@ -9,17 +10,27 @@ const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'VOLLEDIG', short:
 export function ExerciseLogger({
   template,
   plannedSessionId,
+  scheduledDate,
+  program,
   initialVariant = 'full',
   onClose,
 }: {
   template: SessionTemplate;
   plannedSessionId?: string;
+  scheduledDate?: string;
+  program?: Program | null;
   initialVariant?: SessionVariant;
   onClose: () => void;
 }) {
   const { logSession } = useAppData();
   const [variant, setVariant] = useState<SessionVariant>(initialVariant);
-  const [duration, setDuration] = useState(durationForVariant(template, initialVariant));
+
+  function resolveDuration(v: SessionVariant): number {
+    if (v === 'full' && scheduledDate) return resolveEffectiveFullDuration(template, scheduledDate, program);
+    return durationForVariant(template, v);
+  }
+
+  const [duration, setDuration] = useState(resolveDuration(initialVariant));
   const [rpe, setRpe] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -38,7 +49,7 @@ export function ExerciseLogger({
 
   function selectVariant(v: SessionVariant) {
     setVariant(v);
-    setDuration(durationForVariant(template, v));
+    setDuration(resolveDuration(v));
     const newExercises = exercisesForVariant(template, v);
     setSetLogs(
       Object.fromEntries(

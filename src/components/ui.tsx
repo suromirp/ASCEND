@@ -36,13 +36,14 @@ export function SecondaryButton({ children, onClick, className = '' }: { childre
   );
 }
 
-export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' }) {
+export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' }) {
   const map: Record<string, { symbol: string; color: string }> = {
     completed: { symbol: '✓', color: 'var(--color-success)' },
     today: { symbol: '●', color: 'var(--color-gold)' },
     planned: { symbol: '○', color: 'var(--color-ink-dim)' },
     moved: { symbol: '↷', color: 'var(--color-sky)' },
     skipped: { symbol: '×', color: 'var(--color-danger)' },
+    missed: { symbol: '!', color: 'var(--color-warning)' },
   };
   const s = map[status];
   return (

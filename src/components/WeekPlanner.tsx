@@ -1,4 +1,5 @@
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
+import type { Program } from '../models/program';
 import { weekDates, weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
 import { SessionCard } from './SessionCard';
 import { Eyebrow } from './ui';
@@ -8,12 +9,14 @@ export function WeekPlanner({
   sessions,
   templateById,
   logs,
+  program,
   onSelectSession,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
   templateById: Map<string, SessionTemplate>;
   logs: SessionLog[];
+  program?: Program | null;
   onSelectSession: (session: PlannedSession) => void;
 }) {
   const days = weekDates(weekStartDate);
@@ -41,7 +44,9 @@ export function WeekPlanner({
                 {daySessions.map((s) => {
                   const template = templateById.get(s.templateId);
                   if (!template) return null;
-                  return <SessionCard key={s.id} session={s} template={template} logs={logs} onTap={() => onSelectSession(s)} />;
+                  return (
+                    <SessionCard key={s.id} session={s} template={template} logs={logs} program={program} onTap={() => onSelectSession(s)} />
+                  );
                 })}
               </div>
             )}

@@ -42,6 +42,19 @@ Duurlopen bouwen uithoudingsvermogen. Stijgingstraining bouwt hoogtemeters.
 Consistentie bouwt richting een concreet objectief: de volgende mijlpaal op de
 **Ascent Ladder**, oplopend tot "GR5 KLAAR".
 
+Het standaard schema dat ASCEND meelevert (`src/data/defaultProgram.ts`) is
+niet langer generieke demo-data — het is het echte **Maand 1 / BASISFASE**
+schema: Upper A, Easy Run, Lower A (zware beendag), Upper B, Bergconditie,
+Lower B en Herstel, met de exacte week-op-week progressie (wennen → opbouw →
+zwaarste week → deload) uit dat schema. Maand 2-4 zijn nog placeholders die
+hetzelfde patroon hergebruiken totdat die maanden zijn uitgewerkt — zie
+Roadmap.
+
+> **Als je de app al eerder had geopend:** je browser heeft de oude demo-data
+> al lokaal opgeslagen. Ga naar **Meer → Schema opnieuw laden** om over te
+> schakelen naar het echte Maand 1-schema. Dit wist eventuele voortgang die
+> op de oude demo-data was gelogd.
+
 ## Technologie
 
 - **React 19 + TypeScript (strict) + Vite**
@@ -53,6 +66,24 @@ Consistentie bouwt richting een concreet objectief: de volgende mijlpaal op de
   op GitHub Pages)
 - **vite-plugin-pwa** voor installeerbaarheid, offline caching en het manifest
 - Geen backend. Geen account. Alles staat op het apparaat van de gebruiker.
+
+## Wijzigingen in deze update
+
+- **Bug:** op langere pagina's (bijv. Instellingen) kon de onderste
+  navigatiebalk buiten beeld vallen, omdat de scrollende flex-container geen
+  `min-height: 0` had en daardoor de hele pagina liet meegroeien in plaats van
+  zelf te scrollen. Opgelost in `App.tsx`.
+- **Bug:** een sessie in het verleden die niet gelogd én niet expliciet
+  overgeslagen was, toonde zich als een gewone (nog te plannen) sessie. Er
+  bestaat nu een aparte `missed`-status (`engine/sessionStatus.ts`), zichtbaar
+  in Week en meegeteld in Geschiedenis.
+- **Bug:** hoogtemeters van een Bergconditie/incline-sessie stonden wel in de
+  maandtotalen maar niet op de losse regel in Geschiedenis. Gefixed.
+- **Inconsistentie:** "CONSISTENTIE" op Today toonde een andere berekening
+  (alleen deze week) dan op Ascend (rollend 28 dagen), wat op maandagochtend
+  een verwarrende 0% gaf. Today gebruikt nu dezelfde rollende berekening.
+- Het standaard schema is vervangen door je echte Maand 1-schema (zie Visie
+  hierboven).
 
 ## Aan de slag
 
@@ -151,6 +182,15 @@ zonder bevestiging. Andere regels uit de oorspronkelijke briefing (niet te
 veel zware dagen achter elkaar, optionele sessies als eerste laten vervallen)
 zijn bewust nog niet geautomatiseerd; de architectuur is er wel klaar voor
 — zie Roadmap.
+
+**Week-op-week progressieve targets.** Easy Run en Bergconditie hebben geen
+vast aantal minuten — ze volgen `SessionTemplate.weeklyProgression`, een
+lijst van `{ weekInPhase, targetMinutes, note }`. `engine/substitutions.ts
+#resolveEffectiveFullDuration` zoekt de juiste stap op basis van de datum van
+de sessie (via `resolveProgramWeek`) en valt terug op de statische duur als
+er geen match is. Dit is generiek: elke toekomstige sessie met een
+week-afhankelijk doel (bijv. rugzakgewicht dat per week oploopt) kan dezelfde
+structuur gebruiken zonder nieuwe UI.
 
 ### Progressie- en Ascent Ladder-architectuur
 

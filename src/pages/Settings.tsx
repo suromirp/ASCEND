@@ -39,12 +39,13 @@ export function SettingsPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <Eyebrow>DEMO DATA</Eyebrow>
+        <Eyebrow>SCHEMA OPNIEUW LADEN</Eyebrow>
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Zet alles terug naar het standaard ASCEND-programma. Dit verwijdert je huidige voortgang.
+          Zet alles terug naar je standaard trainingsschema (Maand 1 — Upper A, Easy Run, Lower A, Upper B, Bergconditie,
+          Lower B, Herstel), startend deze week. Dit verwijdert je huidige voortgang.
         </p>
         {!confirmingReset ? (
-          <SecondaryButton onClick={() => setConfirmingReset(true)}>RESET NAAR DEMO</SecondaryButton>
+          <SecondaryButton onClick={() => setConfirmingReset(true)}>SCHEMA OPNIEUW LADEN</SecondaryButton>
         ) : (
           <div className="flex gap-3">
             <SecondaryButton onClick={() => setConfirmingReset(false)}>ANNULEREN</SecondaryButton>

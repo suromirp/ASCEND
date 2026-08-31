@@ -1,4 +1,6 @@
 import type { SessionTemplate, ExercisePrescription, SessionVariant } from '../models/training';
+import type { Program } from '../models/program';
+import { resolveProgramWeek } from '../utils/dates';
 
 // "Short" keeps core + accessory work, drops optional. "Minimum" keeps only
 // core work — the smallest version of the session that still counts.
@@ -13,6 +15,38 @@ export function durationForVariant(template: SessionTemplate, variant: SessionVa
   if (variant === 'short') return template.durationVariants.short ?? template.durationVariants.full;
   if (variant === 'minimum') return template.durationVariants.minimum ?? template.durationVariants.short ?? template.durationVariants.full;
   return template.durationVariants.full;
+}
+
+// Some templates (Easy Run, Bergconditie) target a different duration each
+// week of the training block instead of one fixed number — see
+// SessionTemplate.weeklyProgression. This resolves the *actual* target for
+// one specific scheduled date, falling back to the static duration when no
+// program/week match is available. Only affects the 'full' variant; short
+// and minimum fallbacks stay fixed regardless of week.
+export function resolveEffectiveFullDuration(
+  template: SessionTemplate,
+  scheduledDate: string,
+  program: Program | null | undefined,
+): number {
+  if (template.weeklyProgression && program) {
+    const position = resolveProgramWeek(program, scheduledDate);
+    if (position) {
+      const step = template.weeklyProgression.find((s) => s.weekInPhase === position.weekInPhase);
+      if (step) return step.targetMinutes;
+    }
+  }
+  return template.durationVariants.full;
+}
+
+export function weeklyProgressionNote(
+  template: SessionTemplate,
+  scheduledDate: string,
+  program: Program | null | undefined,
+): string | undefined {
+  if (!template.weeklyProgression || !program) return undefined;
+  const position = resolveProgramWeek(program, scheduledDate);
+  if (!position) return undefined;
+  return template.weeklyProgression.find((s) => s.weekInPhase === position.weekInPhase)?.note;
 }
 
 export function availableVariants(template: SessionTemplate): SessionVariant[] {

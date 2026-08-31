@@ -4,6 +4,8 @@ import { resolveProgramWeek } from '../utils/dates';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeObjectiveProgress } from '../engine/progression';
+import { computeReadiness } from '../engine/readiness';
+import { resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionVariant } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { AdventureCard } from '../components/AdventureCard';
@@ -15,7 +17,7 @@ import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, sessionLogs, objectives, milestoneProgress, templateById, sessionsForWeek, moveSession, applyProposal, skipSession } = useAppData();
+  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, templateById, sessionsForWeek, moveSession, applyProposal, skipSession } = useAppData();
   const today = todayISO();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
@@ -30,7 +32,13 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const secondary = todaySessions.filter((s) => s.id !== primary?.id);
 
   const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
-  const consistencyPct = weekSessions.length ? Math.round((weekCompletedCount / weekSessions.length) * 100) : 0;
+
+  // Rolling 28-day consistency — the same number the Ascend screen shows, so
+  // "CONSISTENTIE" never means two different things depending on which tab
+  // you're on. Early in a fresh week the literal this-week ratio is 0/low by
+  // definition, which reads as broken; the rolling figure is representative
+  // from day one.
+  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
 
   const firstObjective = objectives[0];
   const objectiveProgress = useMemo(
@@ -43,6 +51,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     setPendingProposal(proposal);
   }
 
+  const primaryTemplate = primary ? templateById.get(primary.templateId) : undefined;
+  const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
+  const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
+
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-6">
       <div>
@@ -54,9 +66,11 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         )}
       </div>
 
-      {primary && templateById.get(primary.templateId) ? (
+      {primary && primaryTemplate ? (
         <TodayMissionCard
-          template={templateById.get(primary.templateId)!}
+          template={primaryTemplate}
+          fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
+          weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
           onStart={(variant) => {
             setLoggingVariant(variant);
             setLoggingSession(primary);
@@ -75,7 +89,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       {secondary.map((s) => {
         const t = templateById.get(s.templateId);
         if (!t) return null;
-        return <SessionCard key={s.id} session={s} template={t} logs={sessionLogs} onTap={() => setActionSheetSession(s)} />;
+        return <SessionCard key={s.id} session={s} template={t} logs={sessionLogs} program={program} onTap={() => setActionSheetSession(s)} />;
       })}
 
       <div className="grid grid-cols-3 gap-3">
@@ -85,7 +99,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         </Card>
         <Card className="text-center">
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{consistencyPct}%</p>
+          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistency}%</p>
         </Card>
         <Card className="text-center">
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>BLOK</p>
@@ -97,19 +111,22 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
 
-      {loggingSession && templateById.get(loggingSession.templateId) && (
+      {loggingSession && loggingTemplate && (
         <ExerciseLogger
-          template={templateById.get(loggingSession.templateId)!}
+          template={loggingTemplate}
           plannedSessionId={loggingSession.id}
+          scheduledDate={loggingSession.scheduledDate}
+          program={program}
           initialVariant={loggingVariant}
           onClose={() => setLoggingSession(null)}
         />
       )}
 
-      {actionSheetSession && templateById.get(actionSheetSession.templateId) && (
+      {actionSheetSession && actionSheetTemplate && (
         <SessionActionSheet
           session={actionSheetSession}
-          template={templateById.get(actionSheetSession.templateId)!}
+          template={actionSheetTemplate}
+          program={program}
           onStart={(variant) => {
             setLoggingVariant(variant);
             setLoggingSession(actionSheetSession);

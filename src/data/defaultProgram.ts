@@ -1,123 +1,184 @@
 import type { Program } from '../models/program';
-import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
-import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { SessionTemplate, PlannedSession } from '../models/training';
+import type { Objective } from '../models/objectives';
 import { makeId } from '../utils/id';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 
 // ---------------------------------------------------------------------------
-// Session templates — the reusable "what" behind every planned session.
+// Session templates — MAAND 1 (BASISFASE), exactly as specified:
+// 4x kracht/week (Upper A, Lower A zwaar, Upper B, Lower B), Easy Run,
+// Bergconditie (incline óf hike), en Herstel op zondag.
 // ---------------------------------------------------------------------------
 
 function buildTemplates(): SessionTemplate[] {
   return [
     {
       id: 'tpl_upper_a',
-      name: 'Bovenlichaam A',
+      name: 'Upper A',
       type: 'strength',
       focus: 'Borst • Rug • Schouders',
-      durationVariants: { full: 65, short: 35, minimum: 15 },
+      durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 1,
+      notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
       exercises: [
-        { id: 'ex1', exerciseName: 'Bankdrukken', sets: 4, reps: '6-8', targetWeightKg: 70, priority: 'core' },
+        { id: 'ex1', exerciseName: 'Bench press', sets: 4, reps: '6-8', priority: 'core' },
         { id: 'ex2', exerciseName: 'Zittende kabelroeien', sets: 4, reps: '8-10', priority: 'core' },
-        { id: 'ex3', exerciseName: 'Schouderpers', sets: 3, reps: '8-10', priority: 'core' },
+        { id: 'ex3', exerciseName: 'Overhead press', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex4', exerciseName: 'Lat pulldown', sets: 3, reps: '10-12', priority: 'accessory' },
-        { id: 'ex5', exerciseName: 'Zijwaartse heffingen', sets: 3, reps: '12-15', priority: 'accessory' },
-        { id: 'ex6', exerciseName: 'Triceps pushdown', sets: 3, reps: '12-15', priority: 'optional' },
-        { id: 'ex7', exerciseName: 'Biceps curl', sets: 3, reps: '12-15', priority: 'optional' },
+        { id: 'ex5', exerciseName: 'Lateral raises', sets: 3, reps: '12-15', priority: 'accessory' },
+        { id: 'ex6', exerciseName: 'Triceps', sets: 3, reps: '12-15', priority: 'optional' },
+        { id: 'ex7', exerciseName: 'Biceps', sets: 3, reps: '12-15', priority: 'optional' },
       ],
     },
     {
-      id: 'tpl_lower',
-      name: 'Onderlichaam',
+      id: 'tpl_lower_a',
+      name: 'Lower A — Zware Beendag',
       type: 'strength',
-      focus: 'Benen • Core',
-      durationVariants: { full: 60, short: 35, minimum: 15 },
+      focus: 'Squat • RDL • Hamstrings • Single-leg',
+      durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 3,
+      notes: 'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor.',
       exercises: [
-        { id: 'ex8', exerciseName: 'Squat', sets: 4, reps: '5-8', targetWeightKg: 90, priority: 'core' },
-        { id: 'ex9', exerciseName: 'Romeinse deadlift', sets: 3, reps: '8-10', priority: 'core' },
-        { id: 'ex10', exerciseName: 'Beenpers', sets: 3, reps: '10-12', priority: 'accessory' },
-        { id: 'ex11', exerciseName: 'Kuitheffingen', sets: 4, reps: '12-15', priority: 'accessory' },
-        { id: 'ex12', exerciseName: 'Plank', sets: 3, reps: '45s', priority: 'optional' },
+        { id: 'ex8', exerciseName: 'Squat / Leg press', sets: 4, reps: '5-8', priority: 'core' },
+        { id: 'ex9', exerciseName: 'RDL / hip hinge', sets: 3, reps: '8-10', priority: 'core' },
+        { id: 'ex10', exerciseName: 'Hamstrings (leg curl)', sets: 3, reps: '10-12', priority: 'accessory' },
+        { id: 'ex11', exerciseName: 'Single-leg (Bulgarian split squat)', sets: 3, reps: '8-10', priority: 'accessory' },
+        { id: 'ex12', exerciseName: 'Calves', sets: 3, reps: '12-15', priority: 'optional' },
+        { id: 'ex13', exerciseName: 'Core', sets: 3, reps: '45s', priority: 'optional' },
       ],
     },
     {
       id: 'tpl_upper_b',
-      name: 'Bovenlichaam B',
+      name: 'Upper B',
       type: 'strength',
-      focus: 'Rug • Borst • Armen',
-      durationVariants: { full: 60, short: 35, minimum: 15 },
+      focus: 'Borst • Rug • Armen',
+      durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 4,
+      notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor.',
       exercises: [
-        { id: 'ex13', exerciseName: 'Optrekken', sets: 4, reps: '6-10', priority: 'core' },
-        { id: 'ex14', exerciseName: 'Schuine halterpers', sets: 4, reps: '8-10', priority: 'core' },
-        { id: 'ex15', exerciseName: 'Arnold press', sets: 3, reps: '8-10', priority: 'accessory' },
-        { id: 'ex16', exerciseName: 'Face pulls', sets: 3, reps: '15', priority: 'accessory' },
-        { id: 'ex17', exerciseName: 'Hamercurls', sets: 3, reps: '12', priority: 'optional' },
+        { id: 'ex14', exerciseName: 'Chest press / bench', sets: 4, reps: '6-8', priority: 'core' },
+        { id: 'ex15', exerciseName: 'Incline press', sets: 3, reps: '8-10', priority: 'core' },
+        { id: 'ex16', exerciseName: 'Row', sets: 4, reps: '8-10', priority: 'core' },
+        { id: 'ex17', exerciseName: 'Pulldown / pull-up', sets: 3, reps: '8-10', priority: 'accessory' },
+        { id: 'ex18', exerciseName: 'Lateral raises', sets: 3, reps: '12-15', priority: 'accessory' },
+        { id: 'ex19', exerciseName: 'Biceps', sets: 3, reps: '12-15', priority: 'optional' },
+        { id: 'ex20', exerciseName: 'Triceps', sets: 3, reps: '12-15', priority: 'optional' },
       ],
     },
     {
-      id: 'tpl_zone2',
-      name: 'Zone 2 Duurloop',
+      id: 'tpl_lower_b',
+      name: 'Lower B',
+      type: 'strength',
+      focus: 'Onderlichaam — minder zwaar dan Lower A',
+      durationVariants: { full: 70, short: 40, minimum: 20 },
+      defaultDayOfWeek: 6,
+      notes:
+        'Niet per se zo zwaar/slopend als Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus. Vrijdag bergtraining bewust rustig houden zodat deze sessie nog goed gaat.',
+      exercises: [
+        { id: 'ex21', exerciseName: 'Squat (lichter)', sets: 3, reps: '8-10', priority: 'core' },
+        { id: 'ex22', exerciseName: 'Step-ups', sets: 3, reps: '10 per been', priority: 'core' },
+        { id: 'ex23', exerciseName: 'Hamstrings (leg curl)', sets: 3, reps: '10-12', priority: 'accessory' },
+        { id: 'ex24', exerciseName: 'Calves / soleus', sets: 3, reps: '12-15', priority: 'accessory' },
+        { id: 'ex25', exerciseName: 'Core', sets: 3, reps: '45s', priority: 'optional' },
+      ],
+    },
+    {
+      id: 'tpl_easy_run',
+      name: 'Easy Run',
       type: 'cardio',
       focus: 'Aerobe basis',
-      durationVariants: { full: 60, short: 35, minimum: 20 },
+      durationVariants: { full: 35, short: 20 },
       defaultDayOfWeek: 2,
-      cardioTarget: { zone: 'Zone 2', targetDurationMin: 60, targetDistanceKm: 9 },
+      cardioTarget: { zone: 'RPE 3-4', targetDurationMin: 35 },
+      notes:
+        "RPE 3-4/10 — rustig / conversational pace, volledige zinnen kunnen praten. Geen PR's. Garmin + borstband gebruiken. Doel: aerobe basis, efficiënter leren hardlopen, conditie verbeteren zonder woensdag te slopen.",
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 30, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 35, note: 'Opbouw' },
+        { weekInPhase: 3, targetMinutes: 40, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 27, note: 'Deload (25-30 min)' },
+      ],
     },
     {
-      id: 'tpl_incline',
-      name: 'Stijgingstraining',
-      type: 'cardio',
-      focus: 'Incline • D+ opbouw',
-      durationVariants: { full: 45, short: 30, minimum: 15 },
-      defaultDayOfWeek: 5,
-      cardioTarget: { zone: 'Incline', targetDurationMin: 45 },
-    },
-    {
-      id: 'tpl_hike',
-      name: 'Wandeling / Avontuur',
+      id: 'tpl_bergconditie',
+      name: 'Bergconditie',
       type: 'hiking',
-      focus: 'Duur • D+ • Rugzak',
-      durationVariants: { full: 180, short: 90 },
-      defaultDayOfWeek: 6,
-      outdoorTarget: { targetDistanceKm: 12, targetElevationM: 500 },
+      focus: 'Incline of hike — D+ opbouw',
+      durationVariants: { full: 50, short: 30 },
+      defaultDayOfWeek: 5,
+      outdoorTarget: { targetElevationM: 400 },
+      notes:
+        'Optie A — incline treadmill: helling 8-15%, snelheid ±4-5,5 km/u, RPE 4-5/10, niet aan de handgrepen hangen. Optie B — buiten hiken: liefst hoogteverschil, rustig tempo, D+ en tijd op de benen bijhouden. Voorlopig voornamelijk rustige aerobe training. Garmin + borstband gebruiken. Zijn de benen erg vermoeid? Maak deze sessie lichter.',
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 45, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 50, note: 'Opbouw' },
+        { weekInPhase: 3, targetMinutes: 60, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 40, note: 'Deload (35-45 min)' },
+      ],
     },
     {
-      id: 'tpl_recovery',
+      id: 'tpl_herstel',
       name: 'Herstel',
       type: 'recovery',
-      focus: 'Mobiliteit • Ademhaling • Lichte rek',
-      durationVariants: { full: 30 },
+      focus: 'Rust of rustig wandelen',
+      durationVariants: { full: 45 },
       defaultDayOfWeek: 7,
+      notes: 'Geen zware training, geen hardlopen, geen zware incline. 30-60 min rustig wandelen is prima. Doel: herstellen, frisse start maandag.',
     },
   ];
 }
 
 // ---------------------------------------------------------------------------
-// Program — four phases of four weeks, starting two weeks in the past so
-// there is real history to look back on when the app is opened for the
-// first time.
+// Program — Maand 1 is de BASISFASE. Maanden 2-4 zijn nog niet door jou
+// uitgewerkt; ze hergebruiken voorlopig hetzelfde weekpatroon als placeholder
+// (zie README), met alvast de richting uit "LATER / ALPENFASE" verwerkt in de
+// omschrijving. Start op de eerstvolgende maandag zodat Week 1 (WENNEN)
+// meteen aansluit bij vandaag.
 // ---------------------------------------------------------------------------
 
 function buildProgram(): Program {
-  const startDate = addDays(mondayOfWeek(todayISO()), -14);
+  const startDate = mondayOfWeek(todayISO());
   return {
     id: 'prog_ascend',
     name: 'ASCEND PROGRAMMA',
     startDate,
     phases: [
-      { id: 'phase_1', name: 'FUNDAMENT', order: 1, weekCount: 4, description: 'Basis leggen: consistentie en techniek.' },
-      { id: 'phase_2', name: 'OPBOUW', order: 2, weekCount: 4, description: 'Volume en belasting opvoeren.' },
-      { id: 'phase_3', name: 'BERGCAPACITEIT', order: 3, weekCount: 4, description: 'D+, afstand en rugzakcapaciteit.' },
-      { id: 'phase_4', name: 'EXPEDITIEKLAAR', order: 4, weekCount: 4, description: 'Simulatie van meerdaagse tochten.' },
+      {
+        id: 'phase_1',
+        name: 'BASISFASE',
+        order: 1,
+        weekCount: 4,
+        description: 'Maand 1: 4x kracht, aerobe basis opbouwen, wennen aan bergconditie. Wennen → Opbouw → Zwaarste week → Deload.',
+      },
+      {
+        id: 'phase_2',
+        name: 'OPBOUW',
+        order: 2,
+        weekCount: 4,
+        description: 'Placeholder — nog niet door jou ingevuld. Richting uit je notities: 2x hardlopen per week, langere Zone 2, meer incline.',
+      },
+      {
+        id: 'phase_3',
+        name: 'BERGCAPACITEIT',
+        order: 3,
+        weekCount: 4,
+        description: 'Placeholder — nog niet door jou ingevuld. Richting: meer D+, step-ups/step-downs, rugzakgewicht, 2-4+ uur hikes.',
+      },
+      {
+        id: 'phase_4',
+        name: 'EXPEDITIEKLAAR',
+        order: 4,
+        weekCount: 4,
+        description: 'Placeholder — nog niet door jou ingevuld. Richting: 500 → 750 → 1000+ D+, back-to-back hiking days.',
+      },
     ],
   };
 }
 
 // ---------------------------------------------------------------------------
-// Planned sessions — the weekly pattern repeated across the whole program.
+// Planned sessions — het vaste weekpatroon herhaald over het hele programma.
+// MA Upper A · DI Easy Run · WO Lower A zwaar · DO Upper B ·
+// VR Bergconditie · ZA Lower B · ZO Herstel
 // ---------------------------------------------------------------------------
 
 function buildPlannedSessions(program: Program, templates: SessionTemplate[]): PlannedSession[] {
@@ -144,15 +205,15 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
 }
 
 // ---------------------------------------------------------------------------
-// GR5 / Alpine Readiness — the default Ascent Ladder.
+// GR5 / Alpine Readiness — de lange-termijn richting uit "LATER / ALPENFASE":
+// 500 → 750 → 1000+ D+, rugzakgewicht, back-to-back hiking days.
 // ---------------------------------------------------------------------------
 
 function buildObjective(): Objective {
   const objectiveId = 'obj_gr5';
   const defs: Array<[string, Objective['milestones'][number]['requirement']]> = [
-    ['30 min Zone 2', { kind: 'duration', activityType: 'cardio', minMinutes: 30 }],
-    ['45 min Zone 2', { kind: 'duration', activityType: 'cardio', minMinutes: 45 }],
-    ['60 min Zone 2', { kind: 'duration', activityType: 'cardio', minMinutes: 60 }],
+    ['40 min Easy Run onafgebroken', { kind: 'duration', activityType: 'cardio', minMinutes: 40 }],
+    ['60 min bergconditie volhouden', { kind: 'duration', activityType: 'hiking', minMinutes: 60 }],
     ['300 D+', { kind: 'elevation', minMeters: 300 }],
     ['500 D+', { kind: 'elevation', minMeters: 500 }],
     ['750 D+', { kind: 'elevation', minMeters: 750 }],
@@ -168,7 +229,7 @@ function buildObjective(): Objective {
   return {
     id: objectiveId,
     name: 'GR5 / ALPINE READINESS',
-    description: 'Opbouw richting een meerdaagse Alpine trektocht zoals de GR5.',
+    description: 'Opbouw richting een meerdaagse Alpine trektocht zoals de GR5 — de Alpenfase uit je eigen schema.',
     milestones: defs.map(([title, requirement], i) => ({
       id: `${objectiveId}_m${i + 1}`,
       objectiveId,
@@ -179,107 +240,20 @@ function buildObjective(): Objective {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Seed history — a couple of completed weeks so Today/Week/History/Ascend
-// aren't empty on first launch, plus the milestone progress that history
-// implies (cleared up to "500 D+").
-// ---------------------------------------------------------------------------
-
-function buildSeedLogsAndProgress(
-  program: Program,
-  plannedSessions: PlannedSession[],
-  objective: Objective,
-): { logs: SessionLog[]; progress: MilestoneProgress[] } {
-  const logs: SessionLog[] = [];
-  const progress: MilestoneProgress[] = [];
-  const today = todayISO();
-  const twoWeeksAgo = addDays(mondayOfWeek(today), -14);
-  const thisWeekMonday = mondayOfWeek(today);
-
-  const past = plannedSessions.filter(
-    (s) => s.scheduledDate >= twoWeeksAgo && s.scheduledDate < thisWeekMonday,
-  );
-
-  // Skip one session on purpose so consistency isn't a suspicious 100%.
-  const skipIndex = Math.min(4, past.length - 1);
-
-  past.forEach((session, idx) => {
-    if (idx === skipIndex) return; // left un-logged → shows as missed in history
-
-    let strengthData: SessionLog['strengthData'];
-    let cardioData: SessionLog['cardioData'];
-    let outdoorData: SessionLog['outdoorData'];
-    let duration = 55;
-    let type: SessionLog['type'] = 'strength';
-
-    if (session.templateId.startsWith('tpl_upper') || session.templateId === 'tpl_lower') {
-      type = 'strength';
-      duration = 60;
-      strengthData = [{ exerciseId: 'ex1', exerciseName: 'Bankdrukken', sets: [{ reps: 8, weightKg: 67.5 }, { reps: 8, weightKg: 67.5 }, { reps: 7, weightKg: 67.5 }] }];
-    } else if (session.templateId === 'tpl_zone2') {
-      type = 'cardio';
-      duration = 55;
-      cardioData = { durationMinutes: 55, distanceKm: 8.5, avgHeartRate: 142, source: 'manual' };
-    } else if (session.templateId === 'tpl_incline') {
-      type = 'cardio';
-      duration = 40;
-      cardioData = { durationMinutes: 40, elevationGainM: 420, avgHeartRate: 138, source: 'manual' };
-    } else if (session.templateId === 'tpl_hike') {
-      type = 'hiking';
-      duration = 165;
-      const elevation = idx < past.length / 2 ? 320 : 540;
-      outdoorData = { durationMinutes: 165, distanceKm: 13, elevationGainM: elevation, backpackWeightKg: 6, source: 'manual' };
-    } else if (session.templateId === 'tpl_recovery') {
-      type = 'recovery';
-      duration = 30;
-    }
-
-    logs.push({
-      id: makeId('log'),
-      plannedSessionId: session.id,
-      templateId: session.templateId,
-      type,
-      completedDate: session.scheduledDate,
-      completedAt: `${session.scheduledDate}T18:00:00`,
-      variant: 'full',
-      durationMinutes: duration,
-      strengthData,
-      cardioData,
-      outdoorData,
-      source: 'manual',
-    });
-  });
-
-  // Milestones already cleared, matching the elevation seeded above (300 & 500 D+).
-  const clearedTitles = ['30 min Zone 2', '45 min Zone 2', '60 min Zone 2', '300 D+', '500 D+'];
-  objective.milestones
-    .filter((m) => clearedTitles.includes(m.title))
-    .forEach((m) => {
-      progress.push({
-        id: makeId('progress'),
-        objectiveId: objective.id,
-        milestoneId: m.id,
-        clearedDate: twoWeeksAgo,
-      });
-    });
-
-  void program;
-  return { logs, progress };
-}
-
 export function buildDefaultProgramData() {
   const program = buildProgram();
   const templates = buildTemplates();
   const plannedSessions = buildPlannedSessions(program, templates);
   const objective = buildObjective();
-  const { logs, progress } = buildSeedLogsAndProgress(program, plannedSessions, objective);
 
+  // Clean start — je begint dit schema nu, dus er is bewust geen verzonnen
+  // geschiedenis of alvast-behaalde mijlpaal. Week 1 begint op nul.
   return {
     program,
     templates,
     plannedSessions,
     objectives: [objective],
-    sessionLogs: logs,
-    milestoneProgress: progress,
+    sessionLogs: [],
+    milestoneProgress: [],
   };
 }

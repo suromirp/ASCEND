@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { SessionTemplate, SessionVariant } from '../models/training';
-import { availableVariants, durationForVariant } from '../engine/substitutions';
+import { availableVariants } from '../engine/substitutions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 
 const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
@@ -13,11 +13,15 @@ const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
 
 export function TodayMissionCard({
   template,
+  fullDuration,
+  weekNote,
   onStart,
   onMove,
   onSkip,
 }: {
   template: SessionTemplate;
+  fullDuration: number;
+  weekNote?: string;
   onStart: (variant: SessionVariant) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
@@ -32,7 +36,7 @@ export function TodayMissionCard({
         <Eyebrow>VANDAAG</Eyebrow>
         <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          {TYPE_LABEL[template.type]} • ±{durationForVariant(template, 'full')} min
+          {TYPE_LABEL[template.type]} • ±{fullDuration} min{weekNote ? ` • ${weekNote}` : ''}
         </p>
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
       </div>

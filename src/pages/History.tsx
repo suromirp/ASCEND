@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatMonthNL, parseISODate, toISODate, todayISO } from '../utils/dates';
+import { deriveSessionStatus } from '../engine/sessionStatus';
 import { Card, Eyebrow } from '../components/ui';
 
 function monthBounds(anchor: string) {
@@ -24,14 +25,12 @@ export function HistoryPage() {
 
   const missedCount = useMemo(
     () =>
-      plannedSessions.filter(
-        (p) =>
-          p.scheduledDate >= start &&
-          p.scheduledDate <= end &&
-          p.scheduledDate < todayISO() &&
-          p.status === 'skipped',
-      ).length,
-    [plannedSessions, start, end],
+      plannedSessions.filter((p) => {
+        if (p.scheduledDate < start || p.scheduledDate > end) return false;
+        const { status } = deriveSessionStatus(p, sessionLogs);
+        return status === 'skipped' || status === 'missed';
+      }).length,
+    [plannedSessions, sessionLogs, start, end],
   );
 
   const summary = useMemo(() => {
@@ -62,7 +61,7 @@ export function HistoryPage() {
         <Stat label="Hoogtemeters" value={`${Math.round(summary.elevation)} D+`} />
         <Stat label="Wandelen" value={`${summary.hikingKm.toFixed(1)} km`} />
         <Stat label="Trainingstijd" value={`${Math.floor(summary.totalMinutes / 60)}u ${summary.totalMinutes % 60}m`} />
-        <Stat label="Overgeslagen" value={`${missedCount}`} />
+        <Stat label="Gemist" value={`${missedCount}`} />
       </Card>
 
       <div className="flex flex-col gap-2">
@@ -79,6 +78,7 @@ export function HistoryPage() {
                 <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {TYPE_LABEL[log.type]} • {log.durationMinutes} min
                   {log.outdoorData?.elevationGainM ? ` • ${log.outdoorData.elevationGainM} D+` : ''}
+                  {log.cardioData?.elevationGainM ? ` • ${log.cardioData.elevationGainM} D+` : ''}
                   {log.outdoorData?.distanceKm ? ` • ${log.outdoorData.distanceKm} km` : ''}
                   {log.cardioData?.distanceKm ? ` • ${log.cardioData.distanceKm} km` : ''}
                 </p>

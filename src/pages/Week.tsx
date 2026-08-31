@@ -44,6 +44,7 @@ export function WeekPage() {
         sessions={sessions}
         templateById={templateById}
         logs={sessionLogs}
+        program={program}
         onSelectSession={selectSession}
       />
 
@@ -51,6 +52,7 @@ export function WeekPage() {
         <SessionActionSheet
           session={selected}
           template={templateById.get(selected.templateId)!}
+          program={program}
           onStart={(variant) => {
             setLogging({ session: selected, variant });
             setSelected(null);
@@ -72,6 +74,8 @@ export function WeekPage() {
         <ExerciseLogger
           template={templateById.get(logging.session.templateId)!}
           plannedSessionId={logging.session.id}
+          scheduledDate={logging.session.scheduledDate}
+          program={program}
           initialVariant={logging.variant}
           onClose={() => setLogging(null)}
         />

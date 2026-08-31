@@ -41,6 +41,16 @@ export interface OutdoorTarget {
   backpackWeightKg?: number;
 }
 
+// Some sessions (Easy Run, Bergconditie) don't have a single fixed duration
+// — they follow a week-by-week build within a training block (wennen →
+// opbouwen → zwaarste week → deload). `weekInPhase` matches
+// ResolvedProgramPosition.weekInPhase from utils/dates#resolveProgramWeek.
+export interface WeeklyProgressionStep {
+  weekInPhase: number;
+  targetMinutes: number;
+  note?: string; // e.g. "Wennen", "Deload"
+}
+
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.
 export interface SessionTemplate {
@@ -49,6 +59,7 @@ export interface SessionTemplate {
   type: SessionType;
   focus?: string; // e.g. "Borst • Rug • Schouders"
   durationVariants: DurationVariants;
+  weeklyProgression?: WeeklyProgressionStep[];
   exercises?: ExercisePrescription[];
   cardioTarget?: CardioTarget;
   outdoorTarget?: OutdoorTarget;

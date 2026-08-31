@@ -14,7 +14,7 @@ import { addDays, daysBetween, mondayOfWeek, weekDates } from '../utils/dates';
 // sessions last, etc.) are documented here as the natural next additions but
 // are not yet enforced — see README "Roadmap".
 
-const LEG_HEAVY_TEMPLATE_IDS = new Set(['tpl_lower', 'tpl_hike']);
+const LEG_HEAVY_TEMPLATE_IDS = new Set(['tpl_lower_a', 'tpl_lower_b', 'tpl_bergconditie']);
 
 export function isLegHeavy(templateId: string): boolean {
   return LEG_HEAVY_TEMPLATE_IDS.has(templateId);

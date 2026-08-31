@@ -66,7 +66,7 @@ function AppShell() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-md flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto">
         <Routes>
           <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
           <Route path="/week" element={<WeekPage />} />
