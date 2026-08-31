@@ -63,8 +63,14 @@ export function weeklyProgressionNote(
   return template.weeklyProgression.find((s) => s.weekInPhase === position.weekInPhase)?.note;
 }
 
+// Short/minimum variants trim the exercise list — meaningful only for
+// strength sessions. Cardio/hiking sessions have no exercise list to trim,
+// so "short" there was just a duration preset with an otherwise identical
+// screen; only "full" is offered for those, and the duration field stays
+// freely editable.
 export function availableVariants(template: SessionTemplate): SessionVariant[] {
   const variants: SessionVariant[] = ['full'];
+  if (template.type !== 'strength') return variants;
   if (template.durationVariants.short) variants.push('short');
   if (template.durationVariants.minimum) variants.push('minimum');
   return variants;
