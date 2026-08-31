@@ -101,12 +101,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       // AscendSplashLogo's entrance sequence (ring/mountain/trail draw-in,
-      // peak flash, wordmark fade-up, first light travel) takes ~2.5s to
-      // fully play. On a warm load, seedIfEmpty/refresh can resolve in a
-      // handful of ms — without a floor, the splash would unmount before
-      // its later stages ever fire, so the animation would "sometimes"
-      // look broken depending on how fast IndexedDB happened to respond.
-      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, 2500));
+      // peak flash, wordmark fade-up) finishes around 2.3s in, with the
+      // light-travel loop starting at 2.2s — 3.2s gives that loop a moment
+      // to actually be seen, not just the reveal. On a warm load,
+      // seedIfEmpty/refresh can resolve in a handful of ms — without a
+      // floor, the splash would unmount before its later stages ever fire,
+      // so the animation would "sometimes" look broken depending on how
+      // fast IndexedDB happened to respond.
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, 3200));
       await Promise.all([
         (async () => {
           await seedIfEmpty();
