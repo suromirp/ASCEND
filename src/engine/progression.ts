@@ -12,14 +12,16 @@ export function logSatisfiesRequirement(log: SessionLog, requirement: MilestoneR
       return log.type === requirement.activityType && log.durationMinutes >= requirement.minMinutes;
     case 'elevation': {
       const gain = log.outdoorData?.elevationGainM ?? log.cardioData?.elevationGainM ?? 0;
-      return gain >= requirement.minMeters;
+      const loss = log.outdoorData?.elevationLossM ?? 0;
+      return gain >= requirement.minMeters && (requirement.minLossMeters === undefined || loss >= requirement.minLossMeters);
     }
     case 'distance':
       return (log.outdoorData?.distanceKm ?? log.cardioData?.distanceKm ?? 0) >= requirement.minKm;
     case 'distanceAndElevation':
       return (
         (log.outdoorData?.distanceKm ?? 0) >= requirement.minKm &&
-        (log.outdoorData?.elevationGainM ?? 0) >= requirement.minMeters
+        (log.outdoorData?.elevationGainM ?? 0) >= requirement.minMeters &&
+        (requirement.minLossMeters === undefined || (log.outdoorData?.elevationLossM ?? 0) >= requirement.minLossMeters)
       );
     case 'backpack':
       return (

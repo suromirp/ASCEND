@@ -221,8 +221,11 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
 }
 
 // ---------------------------------------------------------------------------
-// GR5 / Alpine Readiness — de lange-termijn richting uit "LATER / ALPENFASE":
-// 500 → 750 → 1000+ D+, rugzakgewicht, back-to-back hiking days.
+// GR5 / Alpine Readiness — herzien op de daadwerkelijke eisen van de Grande
+// Traversée des Alpes (±600–620 km, ±30.000 D+, 36–40 etappes), niet alleen
+// op D+: afstand, D+, D-, uren op de benen, rugzakgewicht en back-to-back
+// herstel tellen allemaal mee. Rich content (waarom/behaald wanneer/bronnen)
+// per stap staat in data/gr5Details.ts — zie MilestoneDetailSheet.
 // ---------------------------------------------------------------------------
 
 function buildObjective(): Objective {
@@ -230,13 +233,13 @@ function buildObjective(): Objective {
   const defs: Array<[string, Objective['milestones'][number]['requirement']]> = [
     ['40 min Easy Run onafgebroken', { kind: 'duration', activityType: 'cardio', minMinutes: 40 }],
     ['60 min bergconditie volhouden', { kind: 'duration', activityType: 'hiking', minMinutes: 60 }],
-    ['300 D+', { kind: 'elevation', minMeters: 300 }],
-    ['500 D+', { kind: 'elevation', minMeters: 500 }],
-    ['750 D+', { kind: 'elevation', minMeters: 750 }],
-    ['1000 D+', { kind: 'elevation', minMeters: 1000 }],
     ['15 km wandeling', { kind: 'distance', minKm: 15 }],
+    ['300 D+ / D-', { kind: 'elevation', minMeters: 300, minLossMeters: 300 }],
+    ['500 D+ / D-', { kind: 'elevation', minMeters: 500, minLossMeters: 500 }],
+    ['750 D+ / D-', { kind: 'elevation', minMeters: 750, minLossMeters: 750 }],
+    ['1000 D+ + afdaalcapaciteit', { kind: 'elevation', minMeters: 1000, minLossMeters: 1000 }],
     ['15 km + 1000 D+', { kind: 'distanceAndElevation', minKm: 15, minMeters: 1000 }],
-    ['Volledige rugzaksessie', { kind: 'backpack', minWeightKg: 12, minKm: 10 }],
+    ['Volledige rugzaksessie', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
     ['Twee dagen achter elkaar', { kind: 'consecutiveDays', days: 2 }],
     ['Weekend bergsimulatie', { kind: 'manual' }],
     ['GR5 KLAAR', { kind: 'manual' }],

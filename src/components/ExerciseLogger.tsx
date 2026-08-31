@@ -46,6 +46,7 @@ export function ExerciseLogger({
 
   const [distanceKm, setDistanceKm] = useState<number | ''>('');
   const [elevationGainM, setElevationGainM] = useState<number | ''>('');
+  const [elevationLossM, setElevationLossM] = useState<number | ''>('');
   const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('');
   const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>('');
 
@@ -99,6 +100,7 @@ export function ExerciseLogger({
               durationMinutes: duration,
               distanceKm: distanceKm === '' ? undefined : distanceKm,
               elevationGainM: elevationGainM === '' ? undefined : elevationGainM,
+              elevationLossM: elevationLossM === '' ? undefined : elevationLossM,
               avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
               backpackWeightKg: backpackWeightKg === '' ? undefined : backpackWeightKg,
               source: 'manual',
@@ -192,6 +194,7 @@ export function ExerciseLogger({
           <Card className="mt-5 flex flex-col gap-3">
             <Field label="Afstand (km)" value={distanceKm} onChange={setDistanceKm} />
             <Field label="Hoogtemeters D+ (m)" value={elevationGainM} onChange={setElevationGainM} />
+            {template.type === 'hiking' && <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />}
             <Field label="Gem. hartslag" value={avgHeartRate} onChange={setAvgHeartRate} />
             {template.type === 'hiking' && <Field label="Rugzakgewicht (kg)" value={backpackWeightKg} onChange={setBackpackWeightKg} />}
           </Card>

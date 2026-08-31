@@ -1,13 +1,16 @@
 import type { ObjectiveProgress } from '../engine/progression';
 import { ObjectiveCard } from './ObjectiveCard';
 import { Eyebrow } from './ui';
+import { getGR5MilestoneDetail } from '../data/gr5Details';
 
 export function AscentLadder({
   progress,
   onMarkCleared,
+  onSelectMilestone,
 }: {
   progress: ObjectiveProgress;
   onMarkCleared: (milestoneId: string) => void;
+  onSelectMilestone?: (milestoneId: string) => void;
 }) {
   return (
     <div>
@@ -22,8 +25,10 @@ export function AscentLadder({
           <ObjectiveCard
             key={m.definition.id}
             milestone={m}
+            subtitle={getGR5MilestoneDetail(m.definition.order)?.subtitle}
             isLast={i === progress.milestones.length - 1}
             onMarkCleared={() => onMarkCleared(m.definition.id)}
+            onSelect={onSelectMilestone ? () => onSelectMilestone(m.definition.id) : undefined}
           />
         ))}
       </div>

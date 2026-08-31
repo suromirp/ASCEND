@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { computeReadiness } from '../engine/readiness';
 import { computeObjectiveProgress } from '../engine/progression';
 import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
+import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
+import { getGR5MilestoneDetail } from '../data/gr5Details';
 import { Card, Eyebrow } from '../components/ui';
 
 export function AscendPage() {
   const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually } = useAppData();
+  const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const objective = objectives[0];
@@ -15,6 +18,8 @@ export function AscendPage() {
     () => (objective ? computeObjectiveProgress(objective, milestoneProgress, sessionLogs) : null),
     [objective, milestoneProgress, sessionLogs],
   );
+  const selectedMilestone = progress?.milestones.find((m) => m.definition.id === selectedMilestoneId);
+  const selectedDetail = selectedMilestone ? getGR5MilestoneDetail(selectedMilestone.definition.order) : undefined;
 
   return (
     <div className="flex flex-col gap-6 px-4 pb-10 pt-6">
@@ -37,6 +42,29 @@ export function AscendPage() {
         <AscentLadder
           progress={progress}
           onMarkCleared={(milestoneId) => clearMilestoneManually(objective.id, milestoneId)}
+          onSelectMilestone={setSelectedMilestoneId}
+        />
+      )}
+
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow>
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+          Hardlopen blijft in het schema — het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
+          De verhouding verschuift wel steeds meer richting echte hiking-specificiteit naarmate de GR5 dichterbij komt.
+        </p>
+        <ul className="flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
+          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>4× kracht / hypertrofie</li>
+          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1–2× hardlopen — aerobe basis, later snelheid/drempel</li>
+          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1× bergspecifiek — incline / D+ / echte hike</li>
+          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>regelmatig: lange hike, afdaling, rugzak, back-to-back</li>
+        </ul>
+      </Card>
+
+      {selectedMilestone && selectedDetail && (
+        <MilestoneDetailSheet
+          title={selectedMilestone.definition.title}
+          detail={selectedDetail}
+          onClose={() => setSelectedMilestoneId(null)}
         />
       )}
     </div>

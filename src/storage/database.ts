@@ -196,6 +196,29 @@ export async function seedIfEmpty(): Promise<void> {
   await putAll('milestoneProgress', milestoneProgress);
   await MetaRepo.set('seeded', true);
   await MetaRepo.set('schemaVersion', SCHEMA_VERSION);
+  await MetaRepo.set('gr5LadderVersion', GR5_LADDER_CONTENT_VERSION);
+}
+
+// The GR5 ladder (Objective + MilestoneDefinitions) is static content, not
+// historical data — unlike MilestoneProgress/SessionLog it's safe to
+// overwrite in place when the copy improves. Bump this when
+// buildObjective() in data/defaultProgram.ts changes, so an already-seeded
+// device picks up the new ladder once instead of staying stuck on whatever
+// content existed the day it was first opened. Milestone ids are
+// order-based (`obj_gr5_m{order}`); reordering is safe here because
+// non-manual milestones aren't referenced by id in MilestoneProgress at
+// all (their status is recomputed live from logs), and the two 'manual'
+// milestones keep the same order position across this content revision.
+const GR5_LADDER_CONTENT_VERSION = 2;
+
+export async function syncObjectiveDefinitions(): Promise<void> {
+  const version = await MetaRepo.get<number>('gr5LadderVersion');
+  if (version === GR5_LADDER_CONTENT_VERSION) return;
+  const { objectives } = buildDefaultProgramData();
+  for (const objective of objectives) {
+    await ObjectivesRepo.put(objective);
+  }
+  await MetaRepo.set('gr5LadderVersion', GR5_LADDER_CONTENT_VERSION);
 }
 
 export async function resetToDemoData(): Promise<void> {

@@ -4,6 +4,7 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import {
   seedIfEmpty,
+  syncObjectiveDefinitions,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
@@ -100,6 +101,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       await seedIfEmpty();
+      await syncObjectiveDefinitions();
       await refresh();
       setLoading(false);
     })();

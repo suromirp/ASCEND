@@ -8,9 +8,9 @@
 
 export type MilestoneRequirement =
   | { kind: 'duration'; activityType: 'cardio' | 'hiking' | 'strength'; minMinutes: number }
-  | { kind: 'elevation'; minMeters: number }
+  | { kind: 'elevation'; minMeters: number; minLossMeters?: number }
   | { kind: 'distance'; minKm: number }
-  | { kind: 'distanceAndElevation'; minKm: number; minMeters: number }
+  | { kind: 'distanceAndElevation'; minKm: number; minMeters: number; minLossMeters?: number }
   | { kind: 'backpack'; minWeightKg: number; minKm?: number }
   | { kind: 'consecutiveDays'; days: number }
   | { kind: 'manual' };

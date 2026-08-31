@@ -11,11 +11,15 @@ const COLOR: Record<string, string> = {
 
 export function ObjectiveCard({
   milestone,
+  subtitle,
   onMarkCleared,
+  onSelect,
   isLast,
 }: {
   milestone: MilestoneView;
+  subtitle?: string;
   onMarkCleared?: () => void;
+  onSelect?: () => void;
   isLast?: boolean;
 }) {
   const { definition, status, clearedDate } = milestone;
@@ -37,12 +41,27 @@ export function ObjectiveCard({
         {!isLast && <span className="mt-1 w-px flex-1" style={{ background: 'var(--color-card-border)', minHeight: '24px' }} />}
       </div>
       <div className="flex-1 pb-6">
-        <p
-          className={status === 'current' ? 'font-display text-lg' : 'text-sm'}
-          style={{ color: status === 'future' || status === 'upcoming' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}
+        <button
+          type="button"
+          onClick={onSelect}
+          disabled={!onSelect}
+          className="flex w-full items-start justify-between gap-2 text-left disabled:cursor-default"
         >
-          {definition.title}
-        </p>
+          <span>
+            <span
+              className={status === 'current' ? 'block font-display text-lg' : 'block text-sm'}
+              style={{ color: status === 'future' || status === 'upcoming' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}
+            >
+              {definition.title}
+            </span>
+            {subtitle && (
+              <span className="mt-0.5 block text-xs tracking-wide" style={{ color: 'var(--color-bronze)' }}>{subtitle}</span>
+            )}
+          </span>
+          {onSelect && (
+            <span className="mt-0.5 shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>meer info →</span>
+          )}
+        </button>
         {status === 'completed' && clearedDate && (
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>behaald op {formatDateNL(clearedDate)}</p>
         )}
