@@ -72,6 +72,19 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   );
 }
 
+// Flat line-art rendition of the brand mark (circle · mountain/"A" · trail)
+// — matches the app's existing icon language (thin stroke, no fill), not
+// the photorealistic gold medallion from brand exploration art.
+export function AscendMark({ size = 22 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="var(--color-bronze)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 5L6 18M12 5l6 13" />
+      <path d="M8.4 14.3 11 12.4 13 14.8 15.6 13" />
+    </svg>
+  );
+}
+
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
     <div className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>

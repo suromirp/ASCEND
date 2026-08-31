@@ -16,7 +16,7 @@ import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, AscendMark } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
@@ -92,13 +92,16 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-6">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>ASCEND</p>
-          {position && (
-            <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-              WEEK {position.weekInProgram} • {position.phase.name}
-            </p>
-          )}
+        <div className="flex items-center gap-2">
+          <AscendMark />
+          <div>
+            <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>ASCEND</p>
+            {position && (
+              <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
+                WEEK {position.weekInProgram} • {position.phase.name}
+              </p>
+            )}
+          </div>
         </div>
         <StretchMenuButton />
       </div>
