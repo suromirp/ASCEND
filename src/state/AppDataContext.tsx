@@ -100,9 +100,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      await seedIfEmpty();
-      await syncObjectiveDefinitions();
-      await refresh();
+      // AscendSplashLogo's entrance sequence (ring/mountain/trail draw-in,
+      // peak flash, wordmark fade-up, first light travel) takes ~2.5s to
+      // fully play. On a warm load, seedIfEmpty/refresh can resolve in a
+      // handful of ms — without a floor, the splash would unmount before
+      // its later stages ever fire, so the animation would "sometimes"
+      // look broken depending on how fast IndexedDB happened to respond.
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, 2500));
+      await Promise.all([
+        (async () => {
+          await seedIfEmpty();
+          await syncObjectiveDefinitions();
+          await refresh();
+        })(),
+        minSplashDuration,
+      ]);
       setLoading(false);
     })();
   }, [refresh]);
