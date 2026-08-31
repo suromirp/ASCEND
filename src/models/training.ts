@@ -51,6 +51,15 @@ export interface WeeklyProgressionStep {
   note?: string; // e.g. "Wennen", "Deload"
 }
 
+// A single mobility item — either a dynamic warm-up move (before training)
+// or a static stretch (after training, or in the standalone problem-area
+// library). durationSec is per side when the stretch is one-sided.
+export interface Stretch {
+  name: string;
+  durationSec?: number;
+  note?: string;
+}
+
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.
 export interface SessionTemplate {
@@ -65,6 +74,12 @@ export interface SessionTemplate {
   outdoorTarget?: OutdoorTarget;
   notes?: string;
   defaultDayOfWeek?: number; // 1 (Monday) – 7 (Sunday), used only for seeding
+  // Dynamic warm-up (same routine for every training day) and a static
+  // cool-down tailored to this session's muscle groups. Both are reference
+  // lists shown in ExerciseLogger — logging a session never requires
+  // stretch data, they're purely informational.
+  warmup?: Stretch[];
+  cooldown?: Stretch[];
 }
 
 export type PlannedSessionStatus = 'planned' | 'moved' | 'skipped' | 'optional';

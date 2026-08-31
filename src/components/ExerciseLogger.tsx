@@ -4,6 +4,7 @@ import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { StretchList } from './StretchList';
 
 const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'VOLLEDIG', short: 'KORT', minimum: 'MINIMUM', custom: 'AANGEPAST' };
 
@@ -137,6 +138,8 @@ export function ExerciseLogger({
           ))}
         </div>
 
+        {template.warmup && template.warmup.length > 0 && <StretchList title="OPWARMING (voor)" stretches={template.warmup} />}
+
         {quickComplete && (
           <Card className="mt-5">
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Kracht bijgehouden in MacroFactor</p>
@@ -208,6 +211,8 @@ export function ExerciseLogger({
             />
           </div>
         </Card>
+
+        {template.cooldown && template.cooldown.length > 0 && <StretchList title="AFKOELING (na)" stretches={template.cooldown} />}
 
         <div className="mt-6 flex gap-3">
           <SecondaryButton onClick={onClose}>ANNULEREN</SecondaryButton>

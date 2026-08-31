@@ -3,6 +3,7 @@ import type { SessionTemplate, PlannedSession } from '../models/training';
 import type { Objective } from '../models/objectives';
 import { makeId } from '../utils/id';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
+import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_RECOVERY } from './stretches';
 
 // ---------------------------------------------------------------------------
 // Session templates — MAAND 1 (BASISFASE), exactly as specified:
@@ -20,6 +21,8 @@ function buildTemplates(): SessionTemplate[] {
       durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 1,
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_UPPER,
       exercises: [
         { id: 'ex1', exerciseName: 'Bench press', sets: 4, reps: '6-8', priority: 'core' },
         { id: 'ex2', exerciseName: 'Zittende kabelroeien', sets: 4, reps: '8-10', priority: 'core' },
@@ -38,6 +41,8 @@ function buildTemplates(): SessionTemplate[] {
       durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 3,
       notes: 'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_LOWER,
       exercises: [
         { id: 'ex8', exerciseName: 'Squat / Leg press', sets: 4, reps: '5-8', priority: 'core' },
         { id: 'ex9', exerciseName: 'RDL / hip hinge', sets: 3, reps: '8-10', priority: 'core' },
@@ -55,6 +60,8 @@ function buildTemplates(): SessionTemplate[] {
       durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 4,
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_UPPER,
       exercises: [
         { id: 'ex14', exerciseName: 'Chest press / bench', sets: 4, reps: '6-8', priority: 'core' },
         { id: 'ex15', exerciseName: 'Incline press', sets: 3, reps: '8-10', priority: 'core' },
@@ -74,6 +81,8 @@ function buildTemplates(): SessionTemplate[] {
       defaultDayOfWeek: 6,
       notes:
         'Niet per se zo zwaar/slopend als Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus. Vrijdag bergtraining bewust rustig houden zodat deze sessie nog goed gaat.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_LOWER,
       exercises: [
         { id: 'ex21', exerciseName: 'Squat (lichter)', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex22', exerciseName: 'Step-ups', sets: 3, reps: '10 per been', priority: 'core' },
@@ -92,6 +101,8 @@ function buildTemplates(): SessionTemplate[] {
       cardioTarget: { zone: 'RPE 3-4', targetDurationMin: 35 },
       notes:
         "RPE 3-4/10 — rustig / conversational pace, volledige zinnen kunnen praten. Geen PR's. Garmin + borstband gebruiken. Doel: aerobe basis, efficiënter leren hardlopen, conditie verbeteren zonder woensdag te slopen.",
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 30, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 35, note: 'Opbouw' },
@@ -109,6 +120,8 @@ function buildTemplates(): SessionTemplate[] {
       outdoorTarget: { targetElevationM: 400 },
       notes:
         'Optie A — incline treadmill: helling 8-15%, snelheid ±4-5,5 km/u, RPE 4-5/10, niet aan de handgrepen hangen. Optie B — buiten hiken: liefst hoogteverschil, rustig tempo, D+ en tijd op de benen bijhouden. Voorlopig voornamelijk rustige aerobe training. Garmin + borstband gebruiken. Zijn de benen erg vermoeid? Maak deze sessie lichter.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 45, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 50, note: 'Opbouw' },
@@ -124,6 +137,9 @@ function buildTemplates(): SessionTemplate[] {
       durationVariants: { full: 45 },
       defaultDayOfWeek: 7,
       notes: 'Geen zware training, geen hardlopen, geen zware incline. 30-60 min rustig wandelen is prima. Doel: herstellen, frisse start maandag.',
+      // No dynamic warm-up here — Herstel is a light/rest day, not
+      // strenuous enough to need the pre-training prep routine.
+      cooldown: COOLDOWN_RECOVERY,
     },
   ];
 }
