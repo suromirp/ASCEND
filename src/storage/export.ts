@@ -5,17 +5,19 @@ import {
   SessionLogsRepo,
   ObjectivesRepo,
   MilestoneProgressRepo,
+  SettingsRepo,
 } from './database';
 import { CURRENT_SCHEMA_VERSION, type AscendExport } from './migrations';
 
 export async function buildExportPayload(): Promise<AscendExport> {
-  const [program, templates, plannedSessions, sessionLogs, objectives, milestoneProgress] = await Promise.all([
+  const [program, templates, plannedSessions, sessionLogs, objectives, milestoneProgress, settings] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
     ObjectivesRepo.getAll(),
     MilestoneProgressRepo.getAll(),
+    SettingsRepo.get(),
   ]);
 
   return {
@@ -27,7 +29,7 @@ export async function buildExportPayload(): Promise<AscendExport> {
     sessionLogs,
     objectives,
     milestoneProgress,
-    settings: {},
+    settings,
   };
 }
 

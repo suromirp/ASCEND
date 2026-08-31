@@ -10,7 +10,10 @@ import {
   SessionLogsRepo,
   ObjectivesRepo,
   MilestoneProgressRepo,
+  SettingsRepo,
   resetToDemoData,
+  DEFAULT_SETTINGS,
+  type AppSettings,
 } from '../storage/database';
 import { proposeMove, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeObjectiveProgress, requirementAutoSatisfied } from '../engine/progression';
@@ -27,6 +30,7 @@ interface AppData {
   sessionLogs: SessionLog[];
   objectives: Objective[];
   milestoneProgress: MilestoneProgress[];
+  settings: AppSettings;
   templateById: Map<string, SessionTemplate>;
   refresh: () => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
@@ -35,6 +39,7 @@ interface AppData {
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   skipSession: (sessionId: string) => Promise<void>;
   clearMilestoneManually: (objectiveId: string, milestoneId: string) => Promise<void>;
+  updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   exportData: () => Promise<void>;
   importData: (file: File) => Promise<void>;
   resetDemoData: () => Promise<void>;
@@ -63,15 +68,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [milestoneProgress, setMilestoneProgress] = useState<MilestoneProgress[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, objs, progress] = await Promise.all([
+    const [programs, tpls, planned, logs, objs, progress, loadedSettings] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
       SessionLogsRepo.getAll(),
       ObjectivesRepo.getAll(),
       MilestoneProgressRepo.getAll(),
+      SettingsRepo.get(),
     ]);
     setProgram(programs[0] ?? null);
     setTemplates(tpls);
@@ -79,6 +86,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setSessionLogs(logs);
     setObjectives(objs);
     setMilestoneProgress(progress);
+    setSettings(loadedSettings);
   }, []);
 
   useEffect(() => {
@@ -186,6 +194,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
+    const next = await SettingsRepo.set(patch);
+    setSettings(next);
+  }, []);
+
   const value: AppData = {
     loading,
     program,
@@ -194,6 +207,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     sessionLogs,
     objectives,
     milestoneProgress,
+    settings,
     templateById,
     refresh,
     sessionsForWeek,
@@ -202,6 +216,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     applyProposal,
     skipSession,
     clearMilestoneManually,
+    updateSettings,
     exportData: downloadExport,
     importData: async (file: File) => {
       await importFromFile(file);

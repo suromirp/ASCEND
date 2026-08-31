@@ -53,6 +53,25 @@ export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned
   );
 }
 
+export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+      style={{ background: checked ? 'var(--color-gold)' : 'var(--color-card-border)' }}
+    >
+      <span
+        className="absolute top-0.5 h-5 w-5 rounded-full transition-transform"
+        style={{ background: checked ? '#15130d' : 'var(--color-ink-dim)', transform: checked ? 'translateX(1.375rem)' : 'translateX(0.125rem)' }}
+      />
+    </button>
+  );
+}
+
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
     <div className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>

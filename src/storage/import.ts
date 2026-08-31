@@ -1,7 +1,7 @@
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
-import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRepo, ObjectivesRepo, MilestoneProgressRepo, MetaRepo, wipeAllData } from './database';
+import { ProgramsRepo, SessionTemplatesRepo, PlannedSessionsRepo, SessionLogsRepo, ObjectivesRepo, MilestoneProgressRepo, MetaRepo, SettingsRepo, wipeAllData, type AppSettings } from './database';
 import { migrateExport, type AscendExport } from './migrations';
 
 export async function importFromFile(file: File): Promise<void> {
@@ -27,6 +27,7 @@ export async function importFromFile(file: File): Promise<void> {
   for (const l of (migrated.sessionLogs as SessionLog[]) ?? []) await SessionLogsRepo.put(l);
   for (const o of (migrated.objectives as Objective[]) ?? []) await ObjectivesRepo.put(o);
   for (const m of (migrated.milestoneProgress as MilestoneProgress[]) ?? []) await MilestoneProgressRepo.put(m);
+  await SettingsRepo.set((migrated.settings as Partial<AppSettings>) ?? {});
 
   await MetaRepo.set('seeded', true);
   await MetaRepo.set('schemaVersion', migrated.schemaVersion);

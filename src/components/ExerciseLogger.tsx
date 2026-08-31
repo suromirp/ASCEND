@@ -22,8 +22,9 @@ export function ExerciseLogger({
   initialVariant?: SessionVariant;
   onClose: () => void;
 }) {
-  const { logSession } = useAppData();
+  const { logSession, settings } = useAppData();
   const [variant, setVariant] = useState<SessionVariant>(initialVariant);
+  const quickComplete = template.type === 'strength' && settings.strengthTrackedExternally;
 
   function resolveDuration(v: SessionVariant): number {
     if (v === 'full' && scheduledDate) return resolveEffectiveFullDuration(template, scheduledDate, program);
@@ -68,7 +69,7 @@ export function ExerciseLogger({
   async function handleSave() {
     setSaving(true);
     const strengthData: ExerciseSetLog[] | undefined =
-      template.type === 'strength'
+      template.type === 'strength' && !quickComplete
         ? exercises.map((e) => ({ exerciseId: e.id, exerciseName: e.exerciseName, sets: setLogs[e.id] ?? [] }))
         : undefined;
 
@@ -136,7 +137,17 @@ export function ExerciseLogger({
           ))}
         </div>
 
-        {template.type === 'strength' && (
+        {quickComplete && (
+          <Card className="mt-5">
+            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Kracht bijgehouden in MacroFactor</p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Sets, reps en gewicht log je in MacroFactor — hier vink je de sessie alleen af. Zet dit uit bij
+              Instellingen → Krachttraining om weer per oefening in te vullen.
+            </p>
+          </Card>
+        )}
+
+        {template.type === 'strength' && !quickComplete && (
           <div className="mt-5 flex flex-col gap-4">
             {exercises.map((ex) => (
               <Card key={ex.id}>
@@ -200,7 +211,9 @@ export function ExerciseLogger({
 
         <div className="mt-6 flex gap-3">
           <SecondaryButton onClick={onClose}>ANNULEREN</SecondaryButton>
-          <PrimaryButton onClick={handleSave} disabled={saving}>{saving ? 'OPSLAAN...' : 'VOLTOOIEN'}</PrimaryButton>
+          <PrimaryButton onClick={handleSave} disabled={saving}>
+            {saving ? 'OPSLAAN...' : quickComplete ? 'AFVINKEN' : 'VOLTOOIEN'}
+          </PrimaryButton>
         </div>
       </div>
     </div>

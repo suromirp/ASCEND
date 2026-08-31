@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 
 export function SettingsPage() {
-  const { exportData, importData, resetDemoData } = useAppData();
+  const { exportData, importData, resetDemoData, settings, updateSettings } = useAppData();
   const fileInput = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -59,6 +59,24 @@ export function SettingsPage() {
             </PrimaryButton>
           </div>
         )}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>KRACHTTRAINING</Eyebrow>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgehouden in MacroFactor</p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Sets, reps en gewicht van kracht-sessies log je al in MacroFactor. Zet dit aan om kracht-sessies in
+              ASCEND in één tik af te vinken, zonder invulformulier.
+            </p>
+          </div>
+          <Toggle
+            checked={settings.strengthTrackedExternally}
+            onChange={(v) => updateSettings({ strengthTrackedExternally: v })}
+            label="Kracht bijgehouden in MacroFactor"
+          />
+        </div>
       </Card>
 
       <Card className="flex flex-col gap-3 opacity-60">

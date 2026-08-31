@@ -133,6 +133,32 @@ export const MetaRepo = {
   },
 };
 
+// User-facing app preferences (as opposed to internal bookkeeping like
+// `seeded`/`schemaVersion` above). Stored as a single object under one meta
+// key so future settings don't each need their own key and migration.
+export interface AppSettings {
+  // When true, strength sessions are tracked externally (e.g. MacroFactor)
+  // and ASCEND only records that the session happened, skipping the
+  // per-exercise sets/reps/weight entry form.
+  strengthTrackedExternally: boolean;
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  strengthTrackedExternally: false,
+};
+
+export const SettingsRepo = {
+  get: async (): Promise<AppSettings> => {
+    const stored = await MetaRepo.get<Partial<AppSettings>>('settings');
+    return { ...DEFAULT_SETTINGS, ...stored };
+  },
+  set: async (patch: Partial<AppSettings>): Promise<AppSettings> => {
+    const next = { ...(await SettingsRepo.get()), ...patch };
+    await MetaRepo.set('settings', next);
+    return next;
+  },
+};
+
 // --- seeding & reset ---------------------------------------------------
 
 export async function seedIfEmpty(): Promise<void> {
