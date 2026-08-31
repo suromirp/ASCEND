@@ -67,19 +67,6 @@ body {
   font-family: var(--font-display);
 }
 
-/* The trail line inside AscendMark "flows" slowly along the path —
-   thematically the journey/ascent, not a generic spinner. Respects
-   prefers-reduced-motion via the global rule below. */
-.ascend-mark-trail {
-  animation: ascend-trail-flow 2.6s linear infinite;
-}
-
-@keyframes ascend-trail-flow {
-  to {
-    stroke-dashoffset: -8;
-  }
-}
-
 /* Splash/loading-screen brand mark (components/AscendAnimatedLogo.tsx):
    pure SVG, no image asset. The outer ring+glow breathes, a point of light
    travels up the winding trail via CSS offset-path, and the peak flashes
