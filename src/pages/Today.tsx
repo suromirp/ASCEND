@@ -14,6 +14,8 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
+import { StretchList } from '../components/StretchList';
+import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
@@ -149,6 +151,9 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       </div>
 
       {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
+
+      <StretchList title="OCHTEND REKKEN" stretches={MORNING_ROUTINE} className="" />
+      <StretchList title="AVOND REKKEN" stretches={EVENING_ROUTINE} className="" />
 
       {loggingSession && loggingTemplate && (
         <ExerciseLogger

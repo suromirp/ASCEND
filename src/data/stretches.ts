@@ -53,6 +53,26 @@ export const COOLDOWN_RECOVERY: Stretch[] = [
   { name: 'Staande zijwaartse rek (side-bend)', durationSec: 30, note: 'per kant' },
 ];
 
+// Daily routines, independent of whatever training session is planned —
+// shown every day on Today, not tied to a session log.
+export const MORNING_ROUTINE: Stretch[] = [
+  { name: 'Kattenrug / koeienrug (cat-cow)', durationSec: 45, note: 'wakkert de wervelkolom wakker' },
+  { name: 'Staande forward fold', durationSec: 30, note: 'rustig opbouwen, knieën licht gebogen' },
+  { name: 'Nekrollen', durationSec: 20 },
+  { name: 'Schouderrollen', durationSec: 20 },
+  { name: 'Staande zijwaartse rek (side-bend)', durationSec: 20, note: 'per kant' },
+  { name: 'Rustige torso-rotatie', durationSec: 30 },
+];
+
+export const EVENING_ROUTINE: Stretch[] = [
+  { name: "Child's pose", durationSec: 60 },
+  { name: 'Zittende forward fold', durationSec: 45 },
+  { name: 'Figure-four liggend', durationSec: 45, note: 'per kant' },
+  { name: 'Nek zij-buiging (oor naar schouder)', durationSec: 25, note: 'per kant' },
+  { name: 'Liggende torso-twist', durationSec: 30, note: 'per kant' },
+  { name: 'Benen tegen de muur (legs-up-the-wall)', durationSec: 120, note: 'rustig ademhalen, ontspanning' },
+];
+
 export interface ProblemAreaGroup {
   id: string;
   label: string;

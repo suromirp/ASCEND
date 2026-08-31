@@ -2,11 +2,19 @@ import { useState } from 'react';
 import type { Stretch } from '../models/training';
 import { Card } from './ui';
 
-export function StretchList({ title, stretches }: { title: string; stretches: Stretch[] }) {
+export function StretchList({
+  title,
+  stretches,
+  className = 'mt-5',
+}: {
+  title: string;
+  stretches: Stretch[];
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Card className="mt-5">
+    <Card className={className}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between text-left"
