@@ -21,7 +21,7 @@ export function StretchMenuButton() {
 
   function go(areaId?: string) {
     setOpen(false);
-    navigate('/stretches', areaId ? { state: { areaId } } : undefined);
+    navigate(areaId ? `/stretches/${areaId}` : '/stretches');
   }
 
   return (

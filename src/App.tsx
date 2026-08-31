@@ -6,6 +6,7 @@ import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsPage } from './pages/Settings';
 import { StretchesPage } from './pages/Stretches';
+import { StretchAreaPage } from './pages/StretchArea';
 
 function NavIcon({ id }: { id: string }) {
   const icons: Record<string, string> = {
@@ -75,6 +76,7 @@ function AppShell() {
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/more" element={<SettingsPage />} />
           <Route path="/stretches" element={<StretchesPage />} />
+          <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
         </Routes>
       </div>
       <div className="mx-auto w-full max-w-md">

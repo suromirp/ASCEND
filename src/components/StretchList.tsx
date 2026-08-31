@@ -2,9 +2,9 @@ import { useState } from 'react';
 import type { Stretch } from '../models/training';
 import { Card } from './ui';
 
-export function StretchItems({ stretches }: { stretches: Stretch[] }) {
+export function StretchItems({ stretches, className = 'mt-3 flex flex-col gap-2' }: { stretches: Stretch[]; className?: string }) {
   return (
-    <ul className="mt-3 flex flex-col gap-2">
+    <ul className={className}>
       {stretches.map((s) => (
         <li key={s.name} className="flex items-baseline justify-between gap-3 text-sm">
           <span style={{ color: 'var(--color-ink)' }}>{s.name}</span>

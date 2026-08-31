@@ -1,14 +1,9 @@
-import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS, STRETCH_GENERAL_ADVICE, STRETCH_SOURCE_NOTE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
-import { StretchItems } from '../components/StretchList';
 
 export function StretchesPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const initialAreaId = (location.state as { areaId?: string } | null)?.areaId ?? null;
-  const [openAreaId, setOpenAreaId] = useState<string | null>(initialAreaId);
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -21,22 +16,14 @@ export function StretchesPage() {
       </div>
 
       <div className="flex flex-col gap-2">
-        {PROBLEM_AREAS.map((area) => {
-          const open = openAreaId === area.id;
-          return (
-            <Card key={area.id}>
-              <button
-                onClick={() => setOpenAreaId(open ? null : area.id)}
-                className="flex w-full items-center justify-between text-left"
-                aria-expanded={open}
-              >
-                <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
-                <span className="text-xs" style={{ color: 'var(--color-gold)' }}>{open ? '−' : '+'}</span>
-              </button>
-              {open && <StretchItems stretches={area.stretches} />}
+        {PROBLEM_AREAS.map((area) => (
+          <button key={area.id} onClick={() => navigate(`/stretches/${area.id}`)} className="text-left">
+            <Card className="flex items-center justify-between">
+              <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
+              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
             </Card>
-          );
-        })}
+          </button>
+        ))}
       </div>
 
       <Card className="flex flex-col gap-2">
