@@ -5,8 +5,9 @@ import { mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeObjectiveProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
+import { fridaySessionDegradingLowerB } from '../engine/recoveryCheck';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
-import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
+import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { AdventureCard } from '../components/AdventureCard';
 import { SessionCard } from '../components/SessionCard';
@@ -64,6 +65,11 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   }
 
   const primaryTemplate = primary ? templateById.get(primary.templateId) : undefined;
+  // Two 'worse' Lower B logs in a row after Bergconditie is a pattern, not
+  // a single off day — only worth a nudge on the day it's actually
+  // actionable (Friday, before you've decided how hard to go).
+  const lowerBDegrading = useMemo(() => fridaySessionDegradingLowerB(sessionLogs), [sessionLogs]);
+  const showRecoveryWarning = lowerBDegrading && primaryTemplate?.id === 'tpl_bergconditie';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
   const actionSheetLog = actionSheetSession ? sessionLogs.find((l) => l.plannedSessionId === actionSheetSession.id) : undefined;
@@ -75,7 +81,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     return template?.type === 'strength' && settings.strengthTrackedExternally;
   }
 
-  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant) {
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel) {
     if (isQuickComplete(template)) {
       logSession({
         plannedSessionId: session.id,
@@ -83,6 +89,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         type: template.type,
         variant,
         durationMinutes: resolveVariantDuration(template, variant, session.scheduledDate, program),
+        subjectiveFeel: feel,
       });
     } else {
       setLoggingVariant(variant);
@@ -104,13 +111,23 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         <StretchMenuButton />
       </div>
 
+      {showRecoveryWarning && (
+        <Card className="flex flex-col gap-1">
+          <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+            Lower B voelde de laatste twee weken slechter na Bergconditie. Overweeg vandaag rustiger te gaan —
+            lagere helling/snelheid, of een kortere sessie.
+          </p>
+        </Card>
+      )}
+
       {primary && primaryTemplate ? (
         <TodayMissionCard
           template={primaryTemplate}
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
           quickComplete={isQuickComplete(primaryTemplate)}
-          onStart={(variant) => startSession(primary, primaryTemplate, variant)}
+          onStart={(variant, feel) => startSession(primary, primaryTemplate, variant, feel)}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => skipSession(primary.id)}
         />
@@ -190,8 +207,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           program={program}
           quickComplete={isQuickComplete(actionSheetTemplate)}
           completedLog={actionSheetLog}
-          onStart={(variant) => {
-            startSession(actionSheetSession, actionSheetTemplate, variant);
+          onStart={(variant, feel) => {
+            startSession(actionSheetSession, actionSheetTemplate, variant, feel);
             setActionSheetSession(null);
           }}
           onMove={(date) => {

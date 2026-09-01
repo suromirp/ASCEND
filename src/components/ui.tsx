@@ -11,12 +11,24 @@ export function Card({ children, className = '', texture = false }: { children: 
   );
 }
 
-export function PrimaryButton({ children, onClick, disabled, className = '' }: { children: ReactNode; onClick?: () => void; disabled?: boolean; className?: string }) {
+export function PrimaryButton({
+  children,
+  onClick,
+  disabled,
+  className = '',
+  fullWidth = true,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  fullWidth?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`w-full rounded-xl py-3 text-sm font-semibold tracking-wide transition-opacity active:opacity-80 disabled:opacity-40 ${className}`}
+      className={`${fullWidth ? 'w-full' : 'flex-1'} rounded-xl py-3 text-sm font-semibold tracking-wide transition-opacity active:opacity-80 disabled:opacity-40 ${className}`}
       style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze-dark))', color: '#15130d' }}
     >
       {children}

@@ -114,8 +114,28 @@ export interface ExerciseSetLog {
 // What the session was actually done on/in — a treadmill run and an
 // outdoor run (or an incline treadmill and a real hike) aren't
 // interchangeable: GPS-based D+/D- only means something outdoors, and the
-// incline % estimate only means something on a treadmill.
+// incline % estimate only means something on a treadmill. Kept as a coarse
+// tag alongside the richer `modality` below (derived from the chosen
+// modality's own metadata) since it's still the simplest thing for a
+// History line to show at a glance.
 export type TrainingEnvironment = 'treadmill' | 'outdoor';
+
+// Which specific way of training this was — a free-form key into
+// data/modalities.ts (e.g. 'run_outdoor', 'stairmaster', 'incline_treadmill').
+// Deliberately a plain string, not a TypeScript union: the set of
+// modalities is content (data/modalities.ts), not domain structure, so
+// adding one shouldn't require a model change. One shared metric shape
+// with this tag is used for every modality rather than a separate
+// interface per activity (running/cycling/stairmaster/...) — same fields
+// (distance, HR, cadence, ...) apply loosely across most of them, and the
+// UI only shows what's relevant for the selected modality.
+export type ActivityModality = string;
+
+// How the session's target/intensity was decided — ASCEND's own plan, the
+// Daily Suggested Workout shown on the Garmin watch (selected manually;
+// there is no supported API to read it automatically), or a free session
+// with no prescribed target at all.
+export type GuidanceMode = 'ascend_guided' | 'garmin_suggested' | 'free';
 
 export interface CardioMetric {
   durationMinutes: number;
@@ -123,10 +143,14 @@ export interface CardioMetric {
   elevationGainM?: number; // e.g. incline treadmill work counts toward D+ conditioning
   estimatedElevation?: boolean; // see OutdoorMetric.estimatedElevation
   environment?: TrainingEnvironment;
+  modality?: ActivityModality;
+  guidanceMode?: GuidanceMode;
+  garminSuggestedType?: string; // e.g. 'Base', 'Tempo' — only when guidanceMode === 'garmin_suggested'
   avgHeartRate?: number;
   hrZones?: number[];
   paceMinPerKm?: number;
   cadence?: number;
+  power?: number;
   source: MetricSource;
 }
 
@@ -136,6 +160,9 @@ export interface OutdoorMetric {
   elevationGainM?: number;
   elevationLossM?: number;
   environment?: TrainingEnvironment;
+  modality?: ActivityModality;
+  guidanceMode?: GuidanceMode;
+  garminSuggestedType?: string;
   // True when elevationGainM came from the incline-treadmill estimate
   // (distance × incline%), not a GPS/altimeter measurement — a treadmill
   // doesn't actually change your altitude, so Total Ascent from a wearable
@@ -143,11 +170,19 @@ export interface OutdoorMetric {
   // rather than presenting it as measured D+.
   estimatedElevation?: boolean;
   avgHeartRate?: number;
+  cadence?: number;
+  power?: number; // e.g. Friday's Easy Bike fallback
   maxElevationM?: number;
   backpackWeightKg?: number;
   terrain?: string;
   weatherNotes?: string;
   technicalDifficulty?: string;
+  // StairMaster/Stepmill only — a machine's own step/floor count and
+  // reported vertical. Never merged into elevationGainM: it's not a GPS or
+  // barometric measurement of real outdoor D+, just a same-caveat cousin
+  // of the treadmill incline estimate above.
+  steps?: number;
+  machineVerticalM?: number;
   source: MetricSource;
 }
 
@@ -167,5 +202,13 @@ export interface SessionLog {
   strengthData?: ExerciseSetLog[];
   cardioData?: CardioMetric;
   outdoorData?: OutdoorMetric;
+  // Subjective "how did this feel vs. normal" — mainly used on strength
+  // sessions to catch a Friday Bergconditie that's dosed too hard: two
+  // 'worse' Lower B sessions in a row after Bergconditie is a signal to
+  // lighten Friday (engine/recoveryCheck.ts). Optional everywhere; never
+  // required, since MacroFactor's own quick-complete flow stays low-friction.
+  subjectiveFeel?: SubjectiveFeel;
   source: MetricSource;
 }
+
+export type SubjectiveFeel = 'better' | 'normal' | 'worse';

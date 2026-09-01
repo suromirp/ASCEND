@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
-import type { PlannedSession, SessionTemplate, SessionVariant } from '../models/training';
+import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
@@ -34,7 +34,7 @@ export function WeekPage() {
     return template?.type === 'strength' && settings.strengthTrackedExternally;
   }
 
-  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant) {
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel) {
     if (isQuickComplete(template)) {
       logSession({
         plannedSessionId: session.id,
@@ -42,6 +42,7 @@ export function WeekPage() {
         type: template.type,
         variant,
         durationMinutes: resolveVariantDuration(template, variant, session.scheduledDate, program),
+        subjectiveFeel: feel,
       });
     } else {
       setLogging({ session, variant });
@@ -77,8 +78,8 @@ export function WeekPage() {
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
-          onStart={(variant) => {
-            startSession(selected, templateById.get(selected.templateId)!, variant);
+          onStart={(variant, feel) => {
+            startSession(selected, templateById.get(selected.templateId)!, variant, feel);
             setSelected(null);
           }}
           onMove={(date) => {

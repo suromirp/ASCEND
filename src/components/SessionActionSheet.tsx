@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { getTrainingGuide } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
+
+const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
 export function SessionActionSheet({
   session,
@@ -23,7 +25,7 @@ export function SessionActionSheet({
   program: Program | null;
   quickComplete?: boolean;
   completedLog?: SessionLog;
-  onStart: (variant: SessionVariant) => void;
+  onStart: (variant: SessionVariant, feel?: SubjectiveFeel) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
   onUndo?: () => void;
@@ -90,7 +92,14 @@ export function SessionActionSheet({
 
           <div className="mt-4 flex flex-col gap-2">
             {quickComplete ? (
-              <PrimaryButton onClick={() => onStart('full')}>AFVINKEN</PrimaryButton>
+              <div>
+                <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde dit t.o.v. normaal?</p>
+                <div className="flex gap-2">
+                  {(['better', 'normal', 'worse'] as const).map((f) => (
+                    <PrimaryButton key={f} onClick={() => onStart('full', f)} fullWidth={false} className="text-xs">{FEEL_LABEL[f]}</PrimaryButton>
+                  ))}
+                </div>
+              </div>
             ) : (
               variants.map((v) => (
                 <PrimaryButton key={v} onClick={() => onStart(v)}>

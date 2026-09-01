@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { SessionTemplate, SessionVariant } from '../models/training';
+import type { SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
 import { getTrainingGuide } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
@@ -12,6 +12,8 @@ const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
   recovery: 'Herstel',
   adventure: 'Avontuur',
 };
+
+const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
 export function TodayMissionCard({
   template,
@@ -26,7 +28,7 @@ export function TodayMissionCard({
   fullDuration: number;
   weekNote?: string;
   quickComplete?: boolean;
-  onStart: (variant: SessionVariant) => void;
+  onStart: (variant: SessionVariant, feel?: SubjectiveFeel) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
 }) {
@@ -52,7 +54,18 @@ export function TodayMissionCard({
 
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
 
-      <PrimaryButton onClick={() => onStart('full')}>{quickComplete ? 'AFVINKEN' : 'SESSIE STARTEN'}</PrimaryButton>
+      {quickComplete ? (
+        <div>
+          <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde dit t.o.v. normaal?</p>
+          <div className="flex gap-2">
+            {(['better', 'normal', 'worse'] as const).map((f) => (
+              <PrimaryButton key={f} onClick={() => onStart('full', f)} fullWidth={false} className="text-xs">{FEEL_LABEL[f]}</PrimaryButton>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <PrimaryButton onClick={() => onStart('full')}>SESSIE STARTEN</PrimaryButton>
+      )}
 
       <div className="flex gap-2">
         {!quickComplete && shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}

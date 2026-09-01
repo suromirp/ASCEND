@@ -1,12 +1,22 @@
 import { useState } from 'react';
-import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment } from '../models/training';
+import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment, GuidanceMode } from '../models/training';
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
+import { getModalities, getModality, defaultModality } from '../data/modalities';
+import { GARMIN_SUGGESTED_TYPES, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
+import { ModalityPicker } from './ModalityPicker';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StretchList } from './StretchList';
 
 const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'VOLLEDIG', short: 'KORT', minimum: 'MINIMUM', custom: 'AANGEPAST' };
+const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
+
+// Only these two days carry the ASCEND Guided / Garmin Suggested / Free
+// Training choice — Herstel just gets the modality picker directly, since
+// "what did Garmin suggest" and "free training" don't add anything
+// meaningful on a day whose whole point is optional/unstructured rest.
+const GUIDANCE_MODE_DAYS = new Set(['tpl_easy_run', 'tpl_bergconditie']);
 
 export function ExerciseLogger({
   template,
@@ -35,6 +45,7 @@ export function ExerciseLogger({
   const [duration, setDuration] = useState(resolveDuration(initialVariant));
   const [rpe, setRpe] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
+  const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(undefined);
   const [saving, setSaving] = useState(false);
 
   const exercises = exercisesForVariant(template, variant);
@@ -44,18 +55,37 @@ export function ExerciseLogger({
     ),
   );
 
+  const hasModalities = !!getModalities(template.id);
+  const supportsGuidanceMode = GUIDANCE_MODE_DAYS.has(template.id);
+  const [guidanceMode, setGuidanceMode] = useState<GuidanceMode>('ascend_guided');
+  const [modalityKey, setModalityKey] = useState<string | undefined>(() => defaultModality(template.id));
+  const [garminSuggestedType, setGarminSuggestedType] = useState<string>('');
+  const selectedModality = modalityKey ? getModality(template.id, modalityKey) : undefined;
+  const compatibility = garminSuggestedType ? getCompatibility(template.id, garminSuggestedType) : undefined;
+
+  // Ascend Guided shows only the fields the chosen modality actually needs
+  // (a StairMaster session doesn't have a "helling %" field, a rest day
+  // has none at all). Garmin Suggested / Free Training fall back to a
+  // generic set — we don't know the specifics of what was actually done.
+  const fields =
+    guidanceMode === 'ascend_guided'
+      ? (selectedModality?.fields ?? {})
+      : { distance: true, elevation: true };
+  const environment: TrainingEnvironment | undefined =
+    guidanceMode === 'ascend_guided' && (selectedModality?.environment === 'treadmill' || selectedModality?.environment === 'outdoor')
+      ? selectedModality.environment
+      : undefined;
+
   const [distanceKm, setDistanceKm] = useState<number | ''>('');
   const [elevationGainM, setElevationGainM] = useState<number | ''>('');
   const [elevationLossM, setElevationLossM] = useState<number | ''>('');
   const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('');
   const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>('');
-
-  // What the session was actually done on — changes what data makes sense:
-  // GPS-based D+/D- only means something outdoors, an incline % estimate
-  // only means something on a treadmill. Bergconditie defaults to treadmill
-  // (Maand 1's primary mode); Easy Run defaults to outdoor.
-  const [environment, setEnvironment] = useState<TrainingEnvironment>(template.type === 'hiking' ? 'treadmill' : 'outdoor');
-  const isTreadmill = environment === 'treadmill';
+  const [cadence, setCadence] = useState<number | ''>('');
+  const [power, setPower] = useState<number | ''>('');
+  const [steps, setSteps] = useState<number | ''>('');
+  const [machineVerticalM, setMachineVerticalM] = useState<number | ''>('');
+  const [terrain, setTerrain] = useState('');
 
   // Incline-treadmill D+ estimate (distance × incline% ÷ 100) — a treadmill
   // doesn't actually change your altitude, so this is a training estimate,
@@ -64,7 +94,7 @@ export function ExerciseLogger({
   // override, and the incline estimate is used whenever there isn't one.
   const [inclinePercent, setInclinePercent] = useState<number | ''>('');
   const inclineEstimate =
-    isTreadmill && distanceKm !== '' && inclinePercent !== ''
+    fields.inclinePercent && distanceKm !== '' && inclinePercent !== ''
       ? Math.round((distanceKm * 1000 * inclinePercent) / 100)
       : undefined;
   const elevationEstimated = elevationGainM === '' && inclineEstimate !== undefined;
@@ -95,6 +125,20 @@ export function ExerciseLogger({
         ? exercises.map((e) => ({ exerciseId: e.id, exerciseName: e.exerciseName, sets: setLogs[e.id] ?? [] }))
         : undefined;
 
+    const activityCommon = {
+      durationMinutes: duration,
+      distanceKm: distanceKm === '' ? undefined : distanceKm,
+      elevationGainM: effectiveElevationGainM === '' ? undefined : effectiveElevationGainM,
+      estimatedElevation: elevationEstimated || undefined,
+      environment,
+      modality: guidanceMode === 'ascend_guided' ? modalityKey : undefined,
+      guidanceMode: hasModalities ? guidanceMode : undefined,
+      garminSuggestedType: guidanceMode === 'garmin_suggested' ? garminSuggestedType || undefined : undefined,
+      avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
+      cadence: cadence === '' ? undefined : cadence,
+      source: 'manual' as const,
+    };
+
     const input: LogSessionInput = {
       plannedSessionId,
       templateId: template.id,
@@ -103,31 +147,22 @@ export function ExerciseLogger({
       durationMinutes: duration,
       rpe: rpe === '' ? undefined : rpe,
       notes: notes || undefined,
+      subjectiveFeel,
       strengthData,
       cardioData:
-        template.type === 'cardio'
-          ? {
-              durationMinutes: duration,
-              distanceKm: distanceKm === '' ? undefined : distanceKm,
-              elevationGainM: effectiveElevationGainM === '' ? undefined : effectiveElevationGainM,
-              estimatedElevation: elevationEstimated || undefined,
-              environment,
-              avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
-              source: 'manual',
-            }
+        template.type === 'cardio' || template.type === 'recovery'
+          ? { ...activityCommon, power: power === '' ? undefined : power }
           : undefined,
       outdoorData:
         template.type === 'hiking'
           ? {
-              durationMinutes: duration,
-              distanceKm: distanceKm === '' ? undefined : distanceKm,
-              elevationGainM: effectiveElevationGainM === '' ? undefined : effectiveElevationGainM,
-              elevationLossM: isTreadmill || elevationLossM === '' ? undefined : elevationLossM,
-              estimatedElevation: elevationEstimated || undefined,
-              environment,
-              avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
+              ...activityCommon,
+              power: power === '' ? undefined : power,
+              elevationLossM: elevationLossM === '' ? undefined : elevationLossM,
               backpackWeightKg: backpackWeightKg === '' ? undefined : backpackWeightKg,
-              source: 'manual',
+              terrain: terrain || undefined,
+              steps: steps === '' ? undefined : steps,
+              machineVerticalM: machineVerticalM === '' ? undefined : machineVerticalM,
             }
           : undefined,
     };
@@ -148,21 +183,23 @@ export function ExerciseLogger({
         <h1 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
         {template.focus && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
 
-        <div className="mt-4 flex gap-2">
-          {availableVariants(template).map((v) => (
-            <button
-              key={v}
-              onClick={() => selectVariant(v)}
-              className="flex-1 rounded-lg border py-2 text-xs font-semibold tracking-wide"
-              style={{
-                borderColor: variant === v ? 'var(--color-gold)' : 'var(--color-card-border)',
-                color: variant === v ? 'var(--color-gold)' : 'var(--color-ink-dim)',
-              }}
-            >
-              {VARIANT_LABEL[v]}
-            </button>
-          ))}
-        </div>
+        {availableVariants(template).length > 1 && (
+          <div className="mt-4 flex gap-2">
+            {availableVariants(template).map((v) => (
+              <button
+                key={v}
+                onClick={() => selectVariant(v)}
+                className="flex-1 rounded-lg border py-2 text-xs font-semibold tracking-wide"
+                style={{
+                  borderColor: variant === v ? 'var(--color-gold)' : 'var(--color-card-border)',
+                  color: variant === v ? 'var(--color-gold)' : 'var(--color-ink-dim)',
+                }}
+              >
+                {VARIANT_LABEL[v]}
+              </button>
+            ))}
+          </div>
+        )}
 
         {template.warmup && template.warmup.length > 0 && <StretchList title="OPWARMING (voor)" stretches={template.warmup} />}
 
@@ -214,51 +251,145 @@ export function ExerciseLogger({
           </div>
         )}
 
-        {(template.type === 'cardio' || template.type === 'hiking') && (
-          <Card className="mt-5 flex flex-col gap-3">
-            <div>
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar getraind?</label>
-              <div className="mt-1.5 flex gap-2">
-                {(['treadmill', 'outdoor'] as const).map((env) => (
-                  <button
-                    key={env}
-                    onClick={() => setEnvironment(env)}
-                    className="flex-1 rounded-lg border py-2 text-xs font-semibold tracking-wide"
+        {template.type === 'strength' && (
+          <Card className="mt-5 flex flex-col gap-2">
+            <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde dit t.o.v. normaal?</label>
+            <div className="flex gap-2">
+              {(['better', 'normal', 'worse'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setSubjectiveFeel(f)}
+                  className="flex-1 rounded-lg border py-2 text-xs font-semibold tracking-wide"
+                  style={{
+                    borderColor: subjectiveFeel === f ? 'var(--color-gold)' : 'var(--color-card-border)',
+                    color: subjectiveFeel === f ? 'var(--color-gold)' : 'var(--color-ink-dim)',
+                  }}
+                >
+                  {FEEL_LABEL[f]}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Optioneel — helpt Ascend signaleren als Bergconditie op vrijdag zaterdags Lower B twee weken op rij verstoort.
+            </p>
+          </Card>
+        )}
+
+        {hasModalities && (
+          <Card className="mt-5 flex flex-col gap-4">
+            {supportsGuidanceMode && (
+              <div>
+                <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe wil je trainen?</label>
+                <div className="mt-1.5 flex gap-2">
+                  {(['ascend_guided', 'garmin_suggested', 'free'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setGuidanceMode(mode)}
+                      className="flex-1 rounded-lg border py-2 text-xs font-semibold tracking-wide"
+                      style={{
+                        borderColor: guidanceMode === mode ? 'var(--color-gold)' : 'var(--color-card-border)',
+                        color: guidanceMode === mode ? 'var(--color-gold)' : 'var(--color-ink-dim)',
+                      }}
+                    >
+                      {mode === 'ascend_guided' ? 'ASCEND' : mode === 'garmin_suggested' ? 'GARMIN' : 'VRIJ'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {guidanceMode === 'ascend_guided' && (
+              <ModalityPicker templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} />
+            )}
+
+            {guidanceMode === 'garmin_suggested' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Check de suggestie op je Garmin, en kies hier wat hij voorstelde
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {GARMIN_SUGGESTED_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setGarminSuggestedType(t)}
+                      className="rounded-lg border px-2.5 py-1.5 text-xs"
+                      style={{
+                        borderColor: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-card-border)',
+                        color: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-ink)',
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                {compatibility && (
+                  <div
+                    className="rounded-xl border p-2.5 text-xs leading-relaxed"
                     style={{
-                      borderColor: environment === env ? 'var(--color-gold)' : 'var(--color-card-border)',
-                      color: environment === env ? 'var(--color-gold)' : 'var(--color-ink-dim)',
+                      borderColor: compatibility.compatibility === 'not_equivalent' ? 'var(--color-warning)' : 'var(--color-card-border)',
+                      color: 'var(--color-ink-dim)',
                     }}
                   >
-                    {env === 'treadmill' ? 'TREADMILL' : 'BUITEN'}
-                  </button>
-                ))}
+                    <span className="font-medium" style={{ color: 'var(--color-ink)' }}>{COMPATIBILITY_LABEL[compatibility.compatibility]}. </span>
+                    {compatibility.note}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
-            <Field label="Afstand (km)" value={distanceKm} onChange={setDistanceKm} />
-            {isTreadmill && (
+            {guidanceMode === 'free' && (
+              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                Vrije training — geen vooraf bepaald doel. Log gewoon wat je daadwerkelijk deed.
+              </p>
+            )}
+
+            {fields.distance && <Field label="Afstand (km)" value={distanceKm} onChange={setDistanceKm} />}
+            {fields.inclinePercent && (
               <>
                 <Field label="Helling (%)" value={inclinePercent} onChange={setInclinePercent} />
-                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Vul de helling in — Ascend berekent de geschatte D+ voor je (afstand × helling ÷ 100).
                 </p>
               </>
             )}
-            <Field
-              label={`Hoogtemeters D+ (m)${elevationEstimated ? ' — geschat' : ''}`}
-              value={effectiveElevationGainM}
-              onChange={setElevationGainM}
-            />
-            {elevationEstimated && (
-              <p className="-mt-2 text-xs" style={{ color: 'var(--color-gold)' }}>
-                ≈ geschat uit afstand × helling — geen GPS-meting.
-              </p>
+            {fields.elevation && (
+              <>
+                <Field
+                  label={`Hoogtemeters D+ (m)${elevationEstimated ? ' — geschat' : ''}`}
+                  value={effectiveElevationGainM}
+                  onChange={setElevationGainM}
+                />
+                {elevationEstimated && (
+                  <p className="-mt-2 text-xs" style={{ color: 'var(--color-gold)' }}>
+                    ≈ geschat uit afstand × helling — geen GPS-meting.
+                  </p>
+                )}
+              </>
             )}
-            {template.type === 'hiking' && !isTreadmill && (
-              <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />
+            {fields.elevationLoss && <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />}
+            {fields.steps && (
+              <>
+                <Field label="Verdiepingen/stappen" value={steps} onChange={setSteps} />
+                <Field label="Machine-vertical (m, optioneel)" value={machineVerticalM} onChange={setMachineVerticalM} />
+              </>
             )}
-            <Field label="Gem. hartslag" value={avgHeartRate} onChange={setAvgHeartRate} />
-            {template.type === 'hiking' && <Field label="Rugzakgewicht (kg)" value={backpackWeightKg} onChange={setBackpackWeightKg} />}
+            {selectedModality?.environment !== 'rest' && <Field label="Gem. hartslag" value={avgHeartRate} onChange={setAvgHeartRate} />}
+            {fields.cadence && <Field label="Cadans" value={cadence} onChange={setCadence} />}
+            {fields.power && <Field label="Vermogen (W)" value={power} onChange={setPower} />}
+            {fields.backpackWeight && <Field label="Rugzakgewicht (kg)" value={backpackWeightKg} onChange={setBackpackWeightKg} />}
+            {fields.terrain && (
+              <div>
+                <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Terrein</label>
+                <input
+                  type="text"
+                  value={terrain}
+                  onChange={(e) => setTerrain(e.target.value)}
+                  placeholder="bijv. bos, rotsen, zand"
+                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+                />
+              </div>
+            )}
           </Card>
         )}
 

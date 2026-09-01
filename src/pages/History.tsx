@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatMonthNL, parseISODate, toISODate, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
+import { getModality } from '../data/modalities';
 import { Card, Eyebrow } from '../components/ui';
 
 function monthBounds(anchor: string) {
@@ -70,6 +71,10 @@ export function HistoryPage() {
         )}
         {monthLogs.map((log) => {
           const template = templateById.get(log.templateId);
+          const modalityKey = log.outdoorData?.modality ?? log.cardioData?.modality;
+          const modalityLabel = modalityKey ? getModality(log.templateId, modalityKey)?.label : undefined;
+          const environment = log.outdoorData?.environment ?? log.cardioData?.environment;
+          const garminType = log.outdoorData?.garminSuggestedType ?? log.cardioData?.garminSuggestedType;
           return (
             <div key={log.id} className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)', width: '48px' }}>{formatDateNL(log.completedDate)}</span>
@@ -77,8 +82,10 @@ export function HistoryPage() {
                 <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
                 <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {TYPE_LABEL[log.type]} • {log.durationMinutes} min
-                  {(log.outdoorData?.environment ?? log.cardioData?.environment) === 'treadmill' ? ' • Treadmill' : ''}
-                  {(log.outdoorData?.environment ?? log.cardioData?.environment) === 'outdoor' ? ' • Buiten' : ''}
+                  {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Treadmill' : environment === 'outdoor' ? ' • Buiten' : ''}
+                  {garminType ? ` • Garmin: ${garminType}` : ''}
+                  {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}
+                  {log.subjectiveFeel === 'worse' ? ' • voelde slechter' : ''}
                   {log.outdoorData?.elevationGainM
                     ? ` • ${log.outdoorData.elevationGainM} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
                     : ''}
@@ -87,6 +94,7 @@ export function HistoryPage() {
                     : ''}
                   {log.outdoorData?.distanceKm ? ` • ${log.outdoorData.distanceKm} km` : ''}
                   {log.cardioData?.distanceKm ? ` • ${log.cardioData.distanceKm} km` : ''}
+                  {log.outdoorData?.steps ? ` • ${log.outdoorData.steps} verdiepingen` : ''}
                 </p>
               </div>
             </div>

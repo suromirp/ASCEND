@@ -62,6 +62,7 @@ export interface LogSessionInput {
   strengthData?: SessionLog['strengthData'];
   cardioData?: SessionLog['cardioData'];
   outdoorData?: SessionLog['outdoorData'];
+  subjectiveFeel?: SessionLog['subjectiveFeel'];
 }
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -144,6 +145,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         strengthData: input.strengthData,
         cardioData: input.cardioData,
         outdoorData: input.outdoorData,
+        subjectiveFeel: input.subjectiveFeel,
         source: 'manual',
       };
       await SessionLogsRepo.put(log);
