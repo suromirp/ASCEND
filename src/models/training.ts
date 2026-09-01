@@ -111,10 +111,18 @@ export interface ExerciseSetLog {
   sets: SetLog[];
 }
 
+// What the session was actually done on/in — a treadmill run and an
+// outdoor run (or an incline treadmill and a real hike) aren't
+// interchangeable: GPS-based D+/D- only means something outdoors, and the
+// incline % estimate only means something on a treadmill.
+export type TrainingEnvironment = 'treadmill' | 'outdoor';
+
 export interface CardioMetric {
   durationMinutes: number;
   distanceKm?: number;
   elevationGainM?: number; // e.g. incline treadmill work counts toward D+ conditioning
+  estimatedElevation?: boolean; // see OutdoorMetric.estimatedElevation
+  environment?: TrainingEnvironment;
   avgHeartRate?: number;
   hrZones?: number[];
   paceMinPerKm?: number;
@@ -127,6 +135,7 @@ export interface OutdoorMetric {
   distanceKm?: number;
   elevationGainM?: number;
   elevationLossM?: number;
+  environment?: TrainingEnvironment;
   // True when elevationGainM came from the incline-treadmill estimate
   // (distance × incline%), not a GPS/altimeter measurement — a treadmill
   // doesn't actually change your altitude, so Total Ascent from a wearable

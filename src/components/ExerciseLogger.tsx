@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog } from '../models/training';
+import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment } from '../models/training';
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
@@ -50,6 +50,13 @@ export function ExerciseLogger({
   const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('');
   const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>('');
 
+  // What the session was actually done on — changes what data makes sense:
+  // GPS-based D+/D- only means something outdoors, an incline % estimate
+  // only means something on a treadmill. Bergconditie defaults to treadmill
+  // (Maand 1's primary mode); Easy Run defaults to outdoor.
+  const [environment, setEnvironment] = useState<TrainingEnvironment>(template.type === 'hiking' ? 'treadmill' : 'outdoor');
+  const isTreadmill = environment === 'treadmill';
+
   // Incline-treadmill D+ estimate (distance × incline% ÷ 100) — a treadmill
   // doesn't actually change your altitude, so this is a training estimate,
   // not a GPS measurement. Derived at render time rather than mirrored into
@@ -57,7 +64,7 @@ export function ExerciseLogger({
   // override, and the incline estimate is used whenever there isn't one.
   const [inclinePercent, setInclinePercent] = useState<number | ''>('');
   const inclineEstimate =
-    template.type === 'hiking' && distanceKm !== '' && inclinePercent !== ''
+    isTreadmill && distanceKm !== '' && inclinePercent !== ''
       ? Math.round((distanceKm * 1000 * inclinePercent) / 100)
       : undefined;
   const elevationEstimated = elevationGainM === '' && inclineEstimate !== undefined;
@@ -102,7 +109,9 @@ export function ExerciseLogger({
           ? {
               durationMinutes: duration,
               distanceKm: distanceKm === '' ? undefined : distanceKm,
-              elevationGainM: elevationGainM === '' ? undefined : elevationGainM,
+              elevationGainM: effectiveElevationGainM === '' ? undefined : effectiveElevationGainM,
+              estimatedElevation: elevationEstimated || undefined,
+              environment,
               avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
               source: 'manual',
             }
@@ -113,8 +122,9 @@ export function ExerciseLogger({
               durationMinutes: duration,
               distanceKm: distanceKm === '' ? undefined : distanceKm,
               elevationGainM: effectiveElevationGainM === '' ? undefined : effectiveElevationGainM,
-              elevationLossM: elevationLossM === '' ? undefined : elevationLossM,
+              elevationLossM: isTreadmill || elevationLossM === '' ? undefined : elevationLossM,
               estimatedElevation: elevationEstimated || undefined,
+              environment,
               avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
               backpackWeightKg: backpackWeightKg === '' ? undefined : backpackWeightKg,
               source: 'manual',
@@ -206,13 +216,31 @@ export function ExerciseLogger({
 
         {(template.type === 'cardio' || template.type === 'hiking') && (
           <Card className="mt-5 flex flex-col gap-3">
+            <div>
+              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar getraind?</label>
+              <div className="mt-1.5 flex gap-2">
+                {(['treadmill', 'outdoor'] as const).map((env) => (
+                  <button
+                    key={env}
+                    onClick={() => setEnvironment(env)}
+                    className="flex-1 rounded-lg border py-2 text-xs font-semibold tracking-wide"
+                    style={{
+                      borderColor: environment === env ? 'var(--color-gold)' : 'var(--color-card-border)',
+                      color: environment === env ? 'var(--color-gold)' : 'var(--color-ink-dim)',
+                    }}
+                  >
+                    {env === 'treadmill' ? 'TREADMILL' : 'BUITEN'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Field label="Afstand (km)" value={distanceKm} onChange={setDistanceKm} />
-            {template.type === 'hiking' && (
+            {isTreadmill && (
               <>
-                <Field label="Helling treadmill (%)" value={inclinePercent} onChange={setInclinePercent} />
+                <Field label="Helling (%)" value={inclinePercent} onChange={setInclinePercent} />
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Op de treadmill? Vul de helling in — Ascend berekent de geschatte D+ voor je (afstand × helling ÷ 100).
-                  Buiten gehiked? Laat leeg en vul D+ hieronder direct in vanaf je GPS.
+                  Vul de helling in — Ascend berekent de geschatte D+ voor je (afstand × helling ÷ 100).
                 </p>
               </>
             )}
@@ -226,7 +254,9 @@ export function ExerciseLogger({
                 ≈ geschat uit afstand × helling — geen GPS-meting.
               </p>
             )}
-            {template.type === 'hiking' && <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />}
+            {template.type === 'hiking' && !isTreadmill && (
+              <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />
+            )}
             <Field label="Gem. hartslag" value={avgHeartRate} onChange={setAvgHeartRate} />
             {template.type === 'hiking' && <Field label="Rugzakgewicht (kg)" value={backpackWeightKg} onChange={setBackpackWeightKg} />}
           </Card>
