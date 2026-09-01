@@ -19,7 +19,7 @@ export function TrainingGuidePage() {
   const openGuide = openTemplateId ? TRAINING_GUIDES[openTemplateId] : undefined;
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <div>
@@ -38,12 +38,17 @@ export function TrainingGuidePage() {
       </Card>
 
       <div className="flex flex-col gap-2">
-        {DAY_ORDER.map((templateId) => {
+        {DAY_ORDER.map((templateId, i) => {
           const template = templateById.get(templateId);
           const guide = TRAINING_GUIDES[templateId];
           if (!template || !guide) return null;
           return (
-            <button key={templateId} onClick={() => setOpenTemplateId(templateId)} className="text-left">
+            <button
+              key={templateId}
+              onClick={() => setOpenTemplateId(templateId)}
+              className="animate-rise-in text-left"
+              style={{ animationDelay: `${i * 40}ms` }}
+            >
               <Card className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-medium tracking-wide" style={{ color: 'var(--color-bronze)' }}>{guide.dayLabel}</p>

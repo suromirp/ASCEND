@@ -6,6 +6,7 @@ import { useAppData, type LogSessionInput } from '../state/AppDataContext';
 import { getModalities, getModality, defaultModality } from '../data/modalities';
 import { GARMIN_SUGGESTED_TYPES, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { ModalityPicker } from './ModalityPicker';
+import { useSheetClose } from '../utils/useSheetClose';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StretchList } from './StretchList';
 
@@ -34,6 +35,7 @@ export function ExerciseLogger({
   onClose: () => void;
 }) {
   const { logSession, settings } = useAppData();
+  const { closing, requestClose } = useSheetClose(onClose);
   const [variant, setVariant] = useState<SessionVariant>(initialVariant);
   const quickComplete = template.type === 'strength' && settings.strengthTrackedExternally;
 
@@ -173,11 +175,14 @@ export function ExerciseLogger({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--color-bg)' }}>
+    <div
+      className={`fixed inset-0 z-50 overflow-y-auto ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+      style={{ background: 'var(--color-bg)' }}
+    >
       <div className="mx-auto max-w-md px-4 pb-28 pt-6">
         <div className="mb-4 flex items-center justify-between">
           <Eyebrow>SESSIE VOLTOOIEN</Eyebrow>
-          <button onClick={onClose} className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
+          <button onClick={requestClose} className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
         </div>
 
         <h1 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
@@ -411,7 +416,7 @@ export function ExerciseLogger({
         {template.cooldown && template.cooldown.length > 0 && <StretchList title="AFKOELING (na)" stretches={template.cooldown} />}
 
         <div className="mt-6 flex gap-3">
-          <SecondaryButton onClick={onClose}>ANNULEREN</SecondaryButton>
+          <SecondaryButton onClick={requestClose}>ANNULEREN</SecondaryButton>
           <PrimaryButton onClick={handleSave} disabled={saving}>
             {saving ? 'OPSLAAN...' : quickComplete ? 'AFVINKEN' : 'VOLTOOIEN'}
           </PrimaryButton>

@@ -211,6 +211,86 @@ body {
   100% { offset-distance: 0%; opacity: 0; }
 }
 
+/* General-purpose entrance/exit motion, used app-wide so nothing just
+   snaps into view: page bodies rise in on navigation, cards/list rows
+   fade or rise in (optionally staggered via an inline animationDelay),
+   dropdowns scale in from their anchor corner, and bottom sheets slide up
+   over a fading backdrop — with a matching reverse pair so closing a
+   sheet doesn't cut jarringly against its own entrance. All covered by
+   the prefers-reduced-motion rule below, same as the existing splash/mark
+   animations. */
+@keyframes ascend-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ascend-rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ascend-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ascend-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes ascend-sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes ascend-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ascend-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-page-in {
+  animation: ascend-rise-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in {
+  animation: ascend-fade-in 0.28s ease-out both;
+}
+
+.animate-fade-out {
+  animation: ascend-fade-in 0.2s ease-in both reverse;
+}
+
+.animate-rise-in {
+  animation: ascend-rise-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-dropdown-in {
+  animation: ascend-scale-in 0.16s ease-out both;
+  transform-origin: top right;
+}
+
+.animate-backdrop-in {
+  animation: ascend-backdrop-in 0.2s ease-out both;
+}
+
+.animate-backdrop-out {
+  animation: ascend-backdrop-out 0.18s ease-in both;
+}
+
+.animate-sheet-in {
+  animation: ascend-sheet-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-sheet-out {
+  animation: ascend-sheet-out 0.2s ease-in both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

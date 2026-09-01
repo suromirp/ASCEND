@@ -22,14 +22,15 @@ export function AscentLadder({
 
       <div className="mt-6">
         {progress.milestones.map((m, i) => (
-          <ObjectiveCard
-            key={m.definition.id}
-            milestone={m}
-            subtitle={getGR5MilestoneDetail(m.definition.order)?.subtitle}
-            isLast={i === progress.milestones.length - 1}
-            onMarkCleared={() => onMarkCleared(m.definition.id)}
-            onSelect={onSelectMilestone ? () => onSelectMilestone(m.definition.id) : undefined}
-          />
+          <div key={m.definition.id} className="animate-rise-in" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+            <ObjectiveCard
+              milestone={m}
+              subtitle={getGR5MilestoneDetail(m.definition.order)?.subtitle}
+              isLast={i === progress.milestones.length - 1}
+              onMarkCleared={() => onMarkCleared(m.definition.id)}
+              onSelect={onSelectMilestone ? () => onSelectMilestone(m.definition.id) : undefined}
+            />
+          </div>
         ))}
       </div>
 

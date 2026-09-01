@@ -62,7 +62,7 @@ export function HistoryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center justify-between">
         <button onClick={() => shiftMonth(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <Eyebrow>{formatMonthNL(anchor).toUpperCase()}</Eyebrow>
@@ -86,14 +86,19 @@ export function HistoryPage() {
         {monthLogs.length === 0 && (
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen voltooide sessies deze maand.</p>
         )}
-        {monthLogs.map((log) => {
+        {monthLogs.map((log, i) => {
           const template = templateById.get(log.templateId);
           const modalityKey = log.outdoorData?.modality ?? log.cardioData?.modality;
           const modalityLabel = modalityKey ? getModality(log.templateId, modalityKey)?.label : undefined;
           const environment = log.outdoorData?.environment ?? log.cardioData?.environment;
           const garminType = log.outdoorData?.garminSuggestedType ?? log.cardioData?.garminSuggestedType;
           return (
-            <button key={log.id} onClick={() => setSelectedLog(log)} className="text-left">
+            <button
+              key={log.id}
+              onClick={() => setSelectedLog(log)}
+              className="animate-rise-in text-left"
+              style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}
+            >
               <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
                 <span className="text-xs" style={{ color: 'var(--color-ink-dim)', width: '48px' }}>{formatDateNL(log.completedDate)}</span>
                 <div className="min-w-0 flex-1">

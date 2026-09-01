@@ -4,6 +4,7 @@ import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { getTrainingGuide } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { useSheetClose } from '../utils/useSheetClose';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 
 const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
@@ -38,11 +39,15 @@ export function SessionActionSheet({
   const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
   const guide = getTrainingGuide(template.id);
+  const { closing, requestClose } = useSheetClose(onClose);
 
   if (completedLog) {
     return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
-        <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={requestClose}
+      >
+        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
             <div className="flex items-start justify-between gap-2">
               <Eyebrow>{session.scheduledDate}</Eyebrow>
@@ -66,7 +71,7 @@ export function SessionActionSheet({
               )}
             </div>
 
-            <button onClick={onClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={requestClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Sluiten
             </button>
           </Card>
@@ -76,8 +81,11 @@ export function SessionActionSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+      onClick={requestClose}
+    >
+      <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
         <Card className="rounded-b-none border-b-0 pb-6">
           <div className="flex items-start justify-between gap-2">
             <Eyebrow>{session.scheduledDate}</Eyebrow>
@@ -125,7 +133,7 @@ export function SessionActionSheet({
             </div>
           )}
 
-          <button onClick={onClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <button onClick={requestClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
           </button>
         </Card>

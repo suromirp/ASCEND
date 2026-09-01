@@ -2,6 +2,7 @@ import type { SessionLog } from '../models/training';
 import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL } from '../utils/dates';
+import { useSheetClose } from '../utils/useSheetClose';
 import { Card, Eyebrow } from './ui';
 
 const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio', hiking: 'Avontuur', recovery: 'Herstel', adventure: 'Avontuur' };
@@ -38,9 +39,17 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.outdoorData?.terrain) rows.push({ label: 'Terrein', value: log.outdoorData.terrain });
   if (log.rpe !== undefined) rows.push({ label: 'RPE', value: `${log.rpe}/10` });
 
+  const { closing, requestClose } = useSheetClose(onClose);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div className="max-h-[85vh] w-full max-w-md overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+      onClick={requestClose}
+    >
+      <div
+        className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <Card className="rounded-b-none border-b-0 pb-8">
           <Eyebrow>{formatDateNL(log.completedDate)}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{templateName}</h3>
@@ -85,7 +94,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
             </div>
           )}
 
-          <button onClick={onClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <button onClick={requestClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
           </button>
         </Card>

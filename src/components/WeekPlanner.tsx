@@ -23,11 +23,11 @@ export function WeekPlanner({
 
   return (
     <div className="flex flex-col gap-4">
-      {days.map((date) => {
+      {days.map((date, i) => {
         const daySessions = sessions.filter((s) => s.scheduledDate === date);
         const isToday = date === todayISO();
         return (
-          <div key={date}>
+          <div key={date} className="animate-rise-in" style={{ animationDelay: `${i * 40}ms` }}>
             <div className="mb-2 flex items-baseline gap-2">
               <span
                 className="text-xs font-semibold tracking-wide"

@@ -24,7 +24,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div>
         <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>MEER</p>
       </div>

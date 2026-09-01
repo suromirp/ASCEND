@@ -98,7 +98,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-6 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <AscendAnimatedLogo size={64} />

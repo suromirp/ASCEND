@@ -40,7 +40,7 @@ export function StretchMenuButton() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-xl border py-1 shadow-lg"
+            className="animate-dropdown-in absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-xl border py-1 shadow-lg"
             style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
           >
             {PROBLEM_AREAS.map((area) => (

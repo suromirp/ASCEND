@@ -23,7 +23,7 @@ export function StretchAreaPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <div>

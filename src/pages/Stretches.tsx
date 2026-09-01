@@ -6,7 +6,7 @@ export function StretchesPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <div>
@@ -16,8 +16,13 @@ export function StretchesPage() {
       </div>
 
       <div className="flex flex-col gap-2">
-        {PROBLEM_AREAS.map((area) => (
-          <button key={area.id} onClick={() => navigate(`/stretches/${area.id}`)} className="text-left">
+        {PROBLEM_AREAS.map((area, i) => (
+          <button
+            key={area.id}
+            onClick={() => navigate(`/stretches/${area.id}`)}
+            className="animate-rise-in text-left"
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
             <Card className="flex items-center justify-between">
               <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
               <span className="text-sm" style={{ color: 'var(--color-gold)' }}>›</span>

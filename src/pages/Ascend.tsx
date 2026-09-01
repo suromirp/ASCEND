@@ -23,7 +23,7 @@ export function AscendPage() {
   const selectedDetail = selectedMilestone ? getGR5MilestoneDetail(selectedMilestone.definition.order) : undefined;
 
   return (
-    <div className="flex flex-col gap-6 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-6 px-4 pb-10 pt-6">
       <div>
         <Eyebrow>ASCEND READINESS</Eyebrow>
         <p className="mt-1 font-display text-4xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</p>

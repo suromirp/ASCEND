@@ -1,5 +1,6 @@
 import type { ScheduleProposal } from '../engine/scheduler';
 import { formatDateNL } from '../utils/dates';
+import { useSheetClose } from '../utils/useSheetClose';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 
 export function RescheduleDialog({
@@ -11,9 +12,14 @@ export function RescheduleDialog({
   onApply: () => void;
   onCancel: () => void;
 }) {
+  const { closing, requestClose } = useSheetClose(onCancel);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={onCancel}>
-      <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+      onClick={requestClose}
+    >
+      <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
         <Card className="rounded-b-none border-b-0 pb-6">
           <Eyebrow>SCHEMA AANPASSING</Eyebrow>
           <div className="mt-3 flex flex-col gap-2">
@@ -30,7 +36,7 @@ export function RescheduleDialog({
             {proposal.reason}
           </p>
           <div className="mt-5 flex gap-3">
-            <SecondaryButton onClick={onCancel}>ORIGINEEL BEHOUDEN</SecondaryButton>
+            <SecondaryButton onClick={requestClose}>ORIGINEEL BEHOUDEN</SecondaryButton>
             <PrimaryButton onClick={onApply}>TOEPASSEN</PrimaryButton>
           </div>
         </Card>

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { TrainingDayGuide } from '../data/trainingGuide';
+import { useSheetClose } from '../utils/useSheetClose';
 import { Card, Eyebrow } from './ui';
 
 export function TrainingGuideSheet({
@@ -12,10 +13,17 @@ export function TrainingGuideSheet({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const { closing, requestClose } = useSheetClose(onClose);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div className="max-h-[85vh] w-full max-w-md overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+      onClick={requestClose}
+    >
+      <div
+        className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <Card className="rounded-b-none border-b-0 pb-8">
           <Eyebrow>{guide.dayLabel}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
@@ -92,7 +100,7 @@ export function TrainingGuideSheet({
             </div>
           )}
 
-          <button onClick={onClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <button onClick={requestClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
           </button>
         </Card>
