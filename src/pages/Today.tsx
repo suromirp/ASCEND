@@ -18,9 +18,11 @@ import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
+import { QuoteCard } from '../components/QuoteCard';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
+import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
@@ -63,6 +65,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // from day one.
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
+  const quote = dailyQuote(today);
 
   const firstObjective = objectives[0];
   const objectiveProgress = useMemo(
@@ -210,6 +213,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           onToggleComplete={() => toggleStretchRoutine('evening')}
         />
       )}
+
+      <QuoteCard quote={quote} />
 
       {loggingSession && loggingTemplate && (
         <ExerciseLogger

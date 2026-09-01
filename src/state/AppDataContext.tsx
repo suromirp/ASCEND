@@ -2,8 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
-import type { CelebrationEvent } from '../components/MilestoneCelebration';
+import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
+import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
   seedIfEmpty,
   syncObjectiveDefinitions,
@@ -177,7 +178,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       await refresh();
       haptics.success();
-      if (clearedTitle) setCelebration({ id: makeId('celebration'), title: clearedTitle });
+      // Every completion gets a quote — a regular session a lighter one, a
+      // milestone clear (if this same log happened to satisfy one) the
+      // bigger victory-tier treatment with the milestone's title attached.
+      setCelebration(
+        clearedTitle
+          ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote() }
+          : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
+      );
     },
     [objectives, milestoneProgress, sessionLogs, refresh],
   );
@@ -244,7 +252,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const title = objectives.find((o) => o.id === objectiveId)?.milestones.find((m) => m.id === milestoneId)?.title;
       await refresh();
       haptics.success();
-      if (title) setCelebration({ id: makeId('celebration'), title });
+      if (title) setCelebration({ id: makeId('celebration'), kind: 'milestone', title, quote: pickVictoryQuote() });
     },
     [objectives, refresh],
   );

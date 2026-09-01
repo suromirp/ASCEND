@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
-import { MilestoneCelebration } from './components/MilestoneCelebration';
+import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { playIntroDrumsOnFirstInteraction } from './utils/introDrums';
 import { TodayPage } from './pages/Today';
@@ -105,7 +105,7 @@ function AppShell() {
       </div>
       <BottomNav />
       <UpdatePrompt />
-      <MilestoneCelebration event={celebration} onDismiss={dismissCelebration} />
+      <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
     </>
   );
 }
