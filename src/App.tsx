@@ -8,6 +8,8 @@ import { HistoryPage } from './pages/History';
 import { SettingsPage } from './pages/Settings';
 import { StretchesPage } from './pages/Stretches';
 import { StretchAreaPage } from './pages/StretchArea';
+import { TrainingGuidePage } from './pages/TrainingGuide';
+import { GarminGuidePage } from './pages/GarminGuide';
 
 function NavIcon({ id }: { id: string }) {
   const icons: Record<string, string> = {
@@ -87,6 +89,8 @@ function AppShell() {
           <Route path="/more" element={<SettingsPage />} />
           <Route path="/stretches" element={<StretchesPage />} />
           <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
+          <Route path="/gids" element={<TrainingGuidePage />} />
+          <Route path="/garmin" element={<GarminGuidePage />} />
         </Routes>
       </div>
       <BottomNav />

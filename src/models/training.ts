@@ -127,6 +127,12 @@ export interface OutdoorMetric {
   distanceKm?: number;
   elevationGainM?: number;
   elevationLossM?: number;
+  // True when elevationGainM came from the incline-treadmill estimate
+  // (distance × incline%), not a GPS/altimeter measurement — a treadmill
+  // doesn't actually change your altitude, so Total Ascent from a wearable
+  // isn't trustworthy there. History/readiness label this distinctly
+  // rather than presenting it as measured D+.
+  estimatedElevation?: boolean;
   avgHeartRate?: number;
   maxElevationM?: number;
   backpackWeightKg?: number;

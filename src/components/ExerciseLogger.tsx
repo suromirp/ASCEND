@@ -50,6 +50,19 @@ export function ExerciseLogger({
   const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('');
   const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>('');
 
+  // Incline-treadmill D+ estimate (distance × incline% ÷ 100) — a treadmill
+  // doesn't actually change your altitude, so this is a training estimate,
+  // not a GPS measurement. Derived at render time rather than mirrored into
+  // state via an effect: elevationGainM only ever holds a manually-typed
+  // override, and the incline estimate is used whenever there isn't one.
+  const [inclinePercent, setInclinePercent] = useState<number | ''>('');
+  const inclineEstimate =
+    template.type === 'hiking' && distanceKm !== '' && inclinePercent !== ''
+      ? Math.round((distanceKm * 1000 * inclinePercent) / 100)
+      : undefined;
+  const elevationEstimated = elevationGainM === '' && inclineEstimate !== undefined;
+  const effectiveElevationGainM = elevationEstimated ? inclineEstimate : elevationGainM;
+
   function selectVariant(v: SessionVariant) {
     setVariant(v);
     setDuration(resolveDuration(v));
@@ -99,8 +112,9 @@ export function ExerciseLogger({
           ? {
               durationMinutes: duration,
               distanceKm: distanceKm === '' ? undefined : distanceKm,
-              elevationGainM: elevationGainM === '' ? undefined : elevationGainM,
+              elevationGainM: effectiveElevationGainM === '' ? undefined : effectiveElevationGainM,
               elevationLossM: elevationLossM === '' ? undefined : elevationLossM,
+              estimatedElevation: elevationEstimated || undefined,
               avgHeartRate: avgHeartRate === '' ? undefined : avgHeartRate,
               backpackWeightKg: backpackWeightKg === '' ? undefined : backpackWeightKg,
               source: 'manual',
@@ -193,7 +207,25 @@ export function ExerciseLogger({
         {(template.type === 'cardio' || template.type === 'hiking') && (
           <Card className="mt-5 flex flex-col gap-3">
             <Field label="Afstand (km)" value={distanceKm} onChange={setDistanceKm} />
-            <Field label="Hoogtemeters D+ (m)" value={elevationGainM} onChange={setElevationGainM} />
+            {template.type === 'hiking' && (
+              <>
+                <Field label="Helling treadmill (%)" value={inclinePercent} onChange={setInclinePercent} />
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Op de treadmill? Vul de helling in — Ascend berekent de geschatte D+ voor je (afstand × helling ÷ 100).
+                  Buiten gehiked? Laat leeg en vul D+ hieronder direct in vanaf je GPS.
+                </p>
+              </>
+            )}
+            <Field
+              label={`Hoogtemeters D+ (m)${elevationEstimated ? ' — geschat' : ''}`}
+              value={effectiveElevationGainM}
+              onChange={setElevationGainM}
+            />
+            {elevationEstimated && (
+              <p className="-mt-2 text-xs" style={{ color: 'var(--color-gold)' }}>
+                ≈ geschat uit afstand × helling — geen GPS-meting.
+              </p>
+            )}
             {template.type === 'hiking' && <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />}
             <Field label="Gem. hartslag" value={avgHeartRate} onChange={setAvgHeartRate} />
             {template.type === 'hiking' && <Field label="Rugzakgewicht (kg)" value={backpackWeightKg} onChange={setBackpackWeightKg} />}

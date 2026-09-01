@@ -5,12 +5,13 @@ import { computeObjectiveProgress } from '../engine/progression';
 import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
-import { getGR5MilestoneDetail } from '../data/gr5Details';
+import { getGR5MilestoneDetail, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES } from '../data/gr5Details';
 import { Card, Eyebrow } from '../components/ui';
 
 export function AscendPage() {
   const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
+  const [showPackingList, setShowPackingList] = useState(false);
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const objective = objectives[0];
@@ -58,6 +59,44 @@ export function AscendPage() {
           <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1× bergspecifiek — incline / D+ / echte hike</li>
           <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>regelmatig: lange hike, afdaling, rugzak, back-to-back</li>
         </ul>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <button onClick={() => setShowPackingList((s) => !s)} className="flex items-center justify-between gap-3 text-left">
+          <div>
+            <Eyebrow>LATER: ALPINE / GR5-MATERIAAL</Eyebrow>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog niet nodig voor Maand 1 — de volledige uitrusting voor een echte GR5-etappe.</p>
+          </div>
+          <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>{showPackingList ? '−' : '+'}</span>
+        </button>
+
+        {showPackingList && (
+          <>
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
+              {GR5_PACKING_LIST.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span style={{ color: 'var(--color-gold)' }}>·</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{GR5_PACKING_NOTE}</p>
+            <div className="flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+              {GR5_PACKING_SOURCES.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs underline underline-offset-2"
+                  style={{ color: 'var(--color-sky)' }}
+                >
+                  {s.label} ↗
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
 
       {selectedMilestone && selectedDetail && (

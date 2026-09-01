@@ -72,6 +72,27 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   );
 }
 
+// Small "meer informatie" affordance next to a session's title — opens a
+// TrainingGuideSheet. Kept here (not in TrainingGuideSheet.tsx) since two
+// unrelated components (TodayMissionCard, SessionActionSheet) both need it.
+export function InfoButton({ onClick, label = 'Meer informatie' }: { onClick: () => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border"
+      style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-gold)' }}
+    >
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="12" r="9" />
+        <line x1="12" y1="11" x2="12" y2="16.5" />
+        <circle cx="12" cy="7.5" r="0.25" fill="currentColor" />
+      </svg>
+    </button>
+  );
+}
+
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
     <div className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>

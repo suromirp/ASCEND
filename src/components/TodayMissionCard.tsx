@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { SessionTemplate, SessionVariant } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { getTrainingGuide } from '../data/trainingGuide';
+import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 
 const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
   strength: 'Kracht',
@@ -29,19 +31,26 @@ export function TodayMissionCard({
   onSkip: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const variants = availableVariants(template);
   const shortVariant = variants.find((v) => v === 'short');
+  const guide = getTrainingGuide(template.id);
 
   return (
     <Card texture className="flex flex-col gap-4">
       <div>
-        <Eyebrow>VANDAAG</Eyebrow>
+        <div className="flex items-start justify-between gap-2">
+          <Eyebrow>VANDAAG</Eyebrow>
+          {guide && <InfoButton onClick={() => setShowGuide(true)} />}
+        </div>
         <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
           {TYPE_LABEL[template.type]} • ±{fullDuration} min{weekNote ? ` • ${weekNote}` : ''}
         </p>
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
       </div>
+
+      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
 
       <PrimaryButton onClick={() => onStart('full')}>{quickComplete ? 'AFVINKEN' : 'SESSIE STARTEN'}</PrimaryButton>
 

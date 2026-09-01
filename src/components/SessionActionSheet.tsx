@@ -2,7 +2,9 @@ import { useState } from 'react';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { getTrainingGuide } from '../data/trainingGuide';
+import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 
 export function SessionActionSheet({
   session,
@@ -29,20 +31,27 @@ export function SessionActionSheet({
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [confirmingUndo, setConfirmingUndo] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const variants = availableVariants(template);
   const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
+  const guide = getTrainingGuide(template.id);
 
   if (completedLog) {
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
         <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
-            <Eyebrow>{session.scheduledDate}</Eyebrow>
+            <div className="flex items-start justify-between gap-2">
+              <Eyebrow>{session.scheduledDate}</Eyebrow>
+              {guide && <InfoButton onClick={() => setShowGuide(true)} />}
+            </div>
             <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-success)' }}>
               ✓ Voltooid • {completedLog.durationMinutes} min
             </p>
+
+            {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
 
             <div className="mt-4">
               {!confirmingUndo ? (
@@ -68,11 +77,16 @@ export function SessionActionSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
       <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <Card className="rounded-b-none border-b-0 pb-6">
-          <Eyebrow>{session.scheduledDate}</Eyebrow>
+          <div className="flex items-start justify-between gap-2">
+            <Eyebrow>{session.scheduledDate}</Eyebrow>
+            {guide && <InfoButton onClick={() => setShowGuide(true)} />}
+          </div>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             ±{fullDuration} min{note ? ` • ${note}` : ''}{template.focus ? ` • ${template.focus}` : ''}
           </p>
+
+          {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
 
           <div className="mt-4 flex flex-col gap-2">
             {quickComplete ? (

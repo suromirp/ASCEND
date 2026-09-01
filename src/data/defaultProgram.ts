@@ -76,11 +76,11 @@ function buildTemplates(): SessionTemplate[] {
       id: 'tpl_lower_b',
       name: 'Lower B',
       type: 'strength',
-      focus: 'Onderlichaam — minder zwaar dan Lower A',
+      focus: 'Onderlichaam',
       durationVariants: { full: 70, short: 40, minimum: 20 },
       defaultDayOfWeek: 6,
       notes:
-        'Niet per se zo zwaar/slopend als Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus. Vrijdag bergtraining bewust rustig houden zodat deze sessie nog goed gaat.',
+        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus. Deze sessie is ook de controle of vrijdags Bergconditie goed gedoseerd was.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       exercises: [

@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 
 export function SettingsPage() {
+  const navigate = useNavigate();
   const { exportData, importData, resetDemoData, settings, updateSettings } = useAppData();
   const fileInput = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -26,6 +28,12 @@ export function SettingsPage() {
       <div>
         <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>MEER</p>
       </div>
+
+      <Card className="flex flex-col gap-1">
+        <Eyebrow>GIDSEN</Eyebrow>
+        <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
+        <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
+      </Card>
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>GEGEVENS</Eyebrow>
@@ -99,5 +107,17 @@ function IntegrationRow({ name, note }: { name: string; note: string }) {
       <span style={{ color: 'var(--color-ink)' }}>{name}</span>
       <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{note}</span>
     </div>
+  );
+}
+
+function NavRow({ label, note, onClick }: { label: string; note: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex items-center justify-between gap-3 py-2 text-left">
+      <div>
+        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{label}</p>
+        <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
+      </div>
+      <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+    </button>
   );
 }

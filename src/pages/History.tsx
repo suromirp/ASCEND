@@ -77,7 +77,9 @@ export function HistoryPage() {
                 <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
                 <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {TYPE_LABEL[log.type]} • {log.durationMinutes} min
-                  {log.outdoorData?.elevationGainM ? ` • ${log.outdoorData.elevationGainM} D+` : ''}
+                  {log.outdoorData?.elevationGainM
+                    ? ` • ${log.outdoorData.elevationGainM} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
+                    : ''}
                   {log.cardioData?.elevationGainM ? ` • ${log.cardioData.elevationGainM} D+` : ''}
                   {log.outdoorData?.distanceKm ? ` • ${log.outdoorData.distanceKm} km` : ''}
                   {log.cardioData?.distanceKm ? ` • ${log.cardioData.distanceKm} km` : ''}

@@ -30,6 +30,37 @@ export interface MilestoneDetail {
 const FFRANDONNEE: MilestoneSource = { label: 'FFRandonnée — officiële GR5 / GTA-etappes', url: 'https://www.ffrandonnee.fr' };
 const PUBMED: MilestoneSource = { label: 'PubMed — wetenschappelijke literatuur', url: 'https://pubmed.ncbi.nlm.nih.gov' };
 const GARMIN: MilestoneSource = { label: 'Garmin — trainingsdata & zones', url: 'https://www.garmin.com' };
+const NKBV: MilestoneSource = { label: 'NKBV — bergsport voorbereiding', url: 'https://www.nkbv.nl' };
+
+// Full GR5/Alpine kit list — separate from the per-milestone ladder content
+// above, shown as its own reference card on the Ascend page (not tied to
+// any single milestone). "Later" because none of this is needed for Maand
+// 1's incline/hike training; it becomes relevant once the ladder gets
+// closer to a real multi-day GR5 attempt.
+export const GR5_PACKING_LIST: string[] = [
+  'ingelopen, geschikte wandelschoenen',
+  'passende kleding voor regen en kou',
+  'rugzak',
+  'water',
+  'EHBO',
+  'hoofdlamp',
+  'regenbescherming',
+  'topografische kaart',
+  'GPS / GPX-tracks (offline)',
+  'kompas',
+  'smartphone',
+  'zonnebril',
+  'zonnebrand',
+  'hoofddeksel',
+  'handschoenen',
+  'nooddeken',
+  'eventueel trekkingstokken',
+];
+
+export const GR5_PACKING_NOTE =
+  'Onnodig zwaar pakken is ongunstig — de etappes zijn al lang genoeg. GPX/offline navigatie is verstandig; let daarbij ook op batterijmanagement, want niet elke hut heeft goede laadmogelijkheden. Reken op weercontrole, routevoorbereiding, voldoende eten/drinken en iemand thuis laten weten welke tocht je doet.';
+
+export const GR5_PACKING_SOURCES: MilestoneSource[] = [FFRANDONNEE, NKBV];
 
 export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
   1: {
