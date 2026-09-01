@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import type { SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatMonthNL, parseISODate, toISODate, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { getModality } from '../data/modalities';
+import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
 
 function monthBounds(anchor: string) {
@@ -39,9 +41,20 @@ export function HistoryPage() {
     const runningKm = monthLogs.reduce((sum, l) => sum + (l.cardioData?.distanceKm ?? 0), 0);
     const hikingKm = monthLogs.reduce((sum, l) => sum + (l.outdoorData?.distanceKm ?? 0), 0);
     const elevation = monthLogs.reduce((sum, l) => sum + (l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0), 0);
+    const elevationLoss = monthLogs.reduce((sum, l) => sum + (l.outdoorData?.elevationLossM ?? 0), 0);
+    const machineVertical = monthLogs.reduce((sum, l) => sum + (l.outdoorData?.machineVerticalM ?? 0), 0);
     const totalMinutes = monthLogs.reduce((sum, l) => sum + l.durationMinutes, 0);
-    return { strengthCount, runningKm, hikingKm, elevation, totalMinutes };
+
+    const cadenceValues = monthLogs.map((l) => l.outdoorData?.cadence ?? l.cardioData?.cadence).filter((v): v is number => v !== undefined);
+    const avgCadence = cadenceValues.length > 0 ? Math.round(cadenceValues.reduce((sum, v) => sum + v, 0) / cadenceValues.length) : undefined;
+
+    const powerValues = monthLogs.map((l) => l.outdoorData?.power ?? l.cardioData?.power).filter((v): v is number => v !== undefined);
+    const avgPower = powerValues.length > 0 ? Math.round(powerValues.reduce((sum, v) => sum + v, 0) / powerValues.length) : undefined;
+
+    return { strengthCount, runningKm, hikingKm, elevation, elevationLoss, machineVertical, totalMinutes, avgCadence, avgPower };
   }, [monthLogs]);
+
+  const [selectedLog, setSelectedLog] = useState<SessionLog | null>(null);
 
   function shiftMonth(delta: number) {
     const d = parseISODate(anchor);
@@ -63,6 +76,10 @@ export function HistoryPage() {
         <Stat label="Wandelen" value={`${summary.hikingKm.toFixed(1)} km`} />
         <Stat label="Trainingstijd" value={`${Math.floor(summary.totalMinutes / 60)}u ${summary.totalMinutes % 60}m`} />
         <Stat label="Gemist" value={`${missedCount}`} />
+        {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${Math.round(summary.elevationLoss)} D-`} />}
+        {summary.machineVertical > 0 && <Stat label="Machine-vertical" value={`${Math.round(summary.machineVertical)} m`} />}
+        {summary.avgCadence !== undefined && <Stat label="Gem. cadans" value={`${summary.avgCadence}`} />}
+        {summary.avgPower !== undefined && <Stat label="Gem. vermogen" value={`${summary.avgPower} W`} />}
       </Card>
 
       <div className="flex flex-col gap-2">
@@ -76,31 +93,42 @@ export function HistoryPage() {
           const environment = log.outdoorData?.environment ?? log.cardioData?.environment;
           const garminType = log.outdoorData?.garminSuggestedType ?? log.cardioData?.garminSuggestedType;
           return (
-            <div key={log.id} className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
-              <span className="text-xs" style={{ color: 'var(--color-ink-dim)', width: '48px' }}>{formatDateNL(log.completedDate)}</span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
-                <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {TYPE_LABEL[log.type]} • {log.durationMinutes} min
-                  {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Treadmill' : environment === 'outdoor' ? ' • Buiten' : ''}
-                  {garminType ? ` • Garmin: ${garminType}` : ''}
-                  {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}
-                  {log.subjectiveFeel === 'worse' ? ' • voelde slechter' : ''}
-                  {log.outdoorData?.elevationGainM
-                    ? ` • ${log.outdoorData.elevationGainM} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
-                    : ''}
-                  {log.cardioData?.elevationGainM
-                    ? ` • ${log.cardioData.elevationGainM} D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
-                    : ''}
-                  {log.outdoorData?.distanceKm ? ` • ${log.outdoorData.distanceKm} km` : ''}
-                  {log.cardioData?.distanceKm ? ` • ${log.cardioData.distanceKm} km` : ''}
-                  {log.outdoorData?.steps ? ` • ${log.outdoorData.steps} verdiepingen` : ''}
-                </p>
+            <button key={log.id} onClick={() => setSelectedLog(log)} className="text-left">
+              <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
+                <span className="text-xs" style={{ color: 'var(--color-ink-dim)', width: '48px' }}>{formatDateNL(log.completedDate)}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
+                  <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                    {TYPE_LABEL[log.type]} • {log.durationMinutes} min
+                    {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Treadmill' : environment === 'outdoor' ? ' • Buiten' : ''}
+                    {garminType ? ` • Garmin: ${garminType}` : ''}
+                    {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}
+                    {log.subjectiveFeel === 'worse' ? ' • voelde slechter' : ''}
+                    {log.outdoorData?.elevationGainM
+                      ? ` • ${log.outdoorData.elevationGainM} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
+                      : ''}
+                    {log.cardioData?.elevationGainM
+                      ? ` • ${log.cardioData.elevationGainM} D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
+                      : ''}
+                    {log.outdoorData?.distanceKm ? ` • ${log.outdoorData.distanceKm} km` : ''}
+                    {log.cardioData?.distanceKm ? ` • ${log.cardioData.distanceKm} km` : ''}
+                    {log.outdoorData?.steps ? ` • ${log.outdoorData.steps} verdiepingen` : ''}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
+
+      {selectedLog && (
+        <LogDetailSheet
+          log={selectedLog}
+          templateName={templateById.get(selectedLog.templateId)?.name ?? selectedLog.templateId}
+          onClose={() => setSelectedLog(null)}
+        />
+      )}
     </div>
   );
 }
