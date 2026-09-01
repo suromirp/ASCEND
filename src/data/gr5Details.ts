@@ -4,10 +4,10 @@
 // data/defaultProgram.ts) rather than by id, so this stays a plain content
 // lookup independent of storage concerns.
 //
-// Sources link to the official organisations' homepages, not to specific
-// deep-linked articles — the underlying research/route citations didn't
-// come with stable direct URLs, and a guessed deep link would risk pointing
-// nowhere or somewhere wrong.
+// Sources link to the exact articles/pages supplied by the user
+// (trainingsschema_bronnen_urls.txt) wherever a specific citation could be
+// matched to its claim; a few less specific PubMed mentions still fall back
+// to a general reference since no single confirmed URL matched them.
 
 export interface MilestoneSource {
   label: string;
@@ -27,10 +27,21 @@ export interface MilestoneDetail {
   sources: MilestoneSource[];
 }
 
-const FFRANDONNEE: MilestoneSource = { label: 'FFRandonnée — officiële GR5 / GTA-etappes', url: 'https://www.ffrandonnee.fr' };
+// "GR5 Alpes" (Grande Traversée des Alpes) is the org actually cited for
+// etappe/route data — grande-traversee-alpes.com, not ffrandonnee.fr, which
+// turned out to be a different real organisation (see FFRANDONNEE_SACADOS
+// below, used only for the packing-list backpack-prep citation).
+const GR5_ALPES: MilestoneSource = { label: 'GR5 Alpes — officiële GTA-etappes', url: 'https://www.grande-traversee-alpes.com/en/' };
+const GR5_ALPES_WAYMARKING: MilestoneSource = { label: 'GR5 Alpes — bewegwijzering & routemoeilijkheid', url: 'https://www.grande-traversee-alpes.com/en/portfolio-item/balisage-et-difficulte-de-litineraire/' };
+const GR5_ALPES_EQUIPMENT: MilestoneSource = { label: 'GR5 Alpes — uitrusting', url: 'https://www.grande-traversee-alpes.com/en/portfolio-item/equipement/' };
+const FFRANDONNEE_SACADOS: MilestoneSource = { label: 'FFRandonnée — rugzak en uitrusting voorbereiden', url: 'https://www.ffrandonnee.fr/randonner/conseils/preparer-son-sac-a-dos' };
+const NKBV: MilestoneSource = { label: 'NKBV — je eerste tocht voorbereiden', url: 'https://nkbv.nl/kenniscentrum/het-voorbereiden-van-je-eerste-tocht.html' };
 const PUBMED: MilestoneSource = { label: 'PubMed — wetenschappelijke literatuur', url: 'https://pubmed.ncbi.nlm.nih.gov' };
-const GARMIN: MilestoneSource = { label: 'Garmin — trainingsdata & zones', url: 'https://www.garmin.com' };
-const NKBV: MilestoneSource = { label: 'NKBV — bergsport voorbereiding', url: 'https://www.nkbv.nl' };
+const PUBMED_INTENSITY_DISTRIBUTION: MilestoneSource = { label: 'PubMed — trainingsintensiteit bij afstandslopers', url: 'https://pubmed.ncbi.nlm.nih.gov/PMC6253751/' };
+const PUBMED_INJURY_LOAD: MilestoneSource = { label: 'PubMed — trainingsbelasting en blessurerisico', url: 'https://pubmed.ncbi.nlm.nih.gov/25010379/' };
+const PUBMED_DOWNHILL: MilestoneSource = { label: 'PubMed — excentrische belasting bij afdalen', url: 'https://pubmed.ncbi.nlm.nih.gov/22130400/' };
+const PUBMED_LOAD_CARRYING: MilestoneSource = { label: 'PubMed — load-carriage/rugzaktraining', url: 'https://pubmed.ncbi.nlm.nih.gov/35060915/' };
+const GARMIN_ZONES: MilestoneSource = { label: 'Garmin — sportspecifieke hartslagzones', url: 'https://www8.garmin.com/manuals-apac/webhelp/forerunner255series/EN-SG/GUID-21F7EFD8-1AE2-4E1A-959E-A98B6A297584-1763.html' };
 
 // Full GR5/Alpine kit list — separate from the per-milestone ladder content
 // above, shown as its own reference card on the Ascend page (not tied to
@@ -60,7 +71,14 @@ export const GR5_PACKING_LIST: string[] = [
 export const GR5_PACKING_NOTE =
   'Onnodig zwaar pakken is ongunstig — de etappes zijn al lang genoeg. GPX/offline navigatie is verstandig; let daarbij ook op batterijmanagement, want niet elke hut heeft goede laadmogelijkheden. Reken op weercontrole, routevoorbereiding, voldoende eten/drinken en iemand thuis laten weten welke tocht je doet.';
 
-export const GR5_PACKING_SOURCES: MilestoneSource[] = [FFRANDONNEE, NKBV];
+export const GR5_PACKING_SOURCES: MilestoneSource[] = [GR5_ALPES_EQUIPMENT, GR5_ALPES_WAYMARKING, FFRANDONNEE_SACADOS, NKBV];
+
+// Backs the "TRAININGSVERDELING RICHTING GR5" card on the Ascend page —
+// the meta-analysis behind "hardlopen blijft in het schema, gaat niet ten
+// koste van kracht".
+export const GR5_TRAINING_SPLIT_SOURCES: MilestoneSource[] = [
+  { label: 'PubMed — concurrent kracht- en duurtraining, umbrella review', url: 'https://pubmed.ncbi.nlm.nih.gov/34757594/' },
+];
 
 export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
   1: {
@@ -76,7 +94,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     ],
     data: ['Tijd', 'Gemiddelde hartslag', 'Tijd in zones', 'Tempo', 'Training Effect'],
     preparation: 'Bouw op via 30 → 35 → 40 min easy.',
-    sources: [PUBMED, GARMIN],
+    sources: [PUBMED_INTENSITY_DISTRIBUTION, GARMIN_ZONES],
   },
   2: {
     subtitle: 'Uphill Endurance',
@@ -108,7 +126,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     ],
     data: ['Afstand', 'Tijd', 'Hartslag', 'Tempo', 'Eventuele rugzak', 'Voetproblemen'],
     preparation: 'Bouw op via 8 → 10 → 12 → 15 km.',
-    sources: [FFRANDONNEE],
+    sources: [GR5_ALPES],
   },
   4: {
     subtitle: 'Vertical Base I',
@@ -121,7 +139,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
       'gecontroleerde afdaling, geen wankele knieën',
     ],
     preparation: 'Heuvels, trappen, incline-training voor D+; step-downs / split squats / squats voor excentrische kracht; echte heuvelroutes waar mogelijk.',
-    sources: [PUBMED],
+    sources: [PUBMED_DOWNHILL],
   },
   5: {
     subtitle: 'Vertical Base II',
@@ -131,7 +149,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     note: 'Verhoog niet elke sessie tegelijk afstand, tempo én D+ fors — grote plotselinge sprongen in belasting hangen samen met een hoger blessurerisico.',
     achievedWhen: ['500 D+ is geen maximale inspanning meer', 'de afdaling blijft technisch en fysiek gecontroleerd'],
     preparation: 'Bouw op via 300 → 400 → 500 D+.',
-    sources: [PUBMED],
+    sources: [PUBMED_INJURY_LOAD],
   },
   6: {
     subtitle: 'Mountain Endurance',
@@ -158,7 +176,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
       'knieën/quads blijven bruikbaar',
       'de volgende dag geen extreme bewegingsbeperking',
     ],
-    sources: [FFRANDONNEE, PUBMED],
+    sources: [GR5_ALPES, PUBMED_DOWNHILL],
   },
   8: {
     subtitle: 'Alpine Day',
@@ -175,7 +193,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
       'de volgende dag nog functioneel',
     ],
     data: ['Afstand', 'D+', 'D-', 'Verstreken tijd', 'Beweegtijd', 'Hartslag', 'Training Effect'],
-    sources: [FFRANDONNEE],
+    sources: [GR5_ALPES],
   },
   9: {
     subtitle: '15–20 km + 750–1000 D+ met GR5-pack',
@@ -191,7 +209,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
       'eten en drinken onderweg werken goed',
       'voeten blijven goed',
     ],
-    sources: [PUBMED, FFRANDONNEE],
+    sources: [PUBMED_LOAD_CARRYING, GR5_ALPES],
   },
   10: {
     subtitle: 'Back-to-Back',
@@ -200,7 +218,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     why: 'De GR5 is geen losse daghike maar tientallen opeenvolgende etappes — dit ontbreekt volledig als je alleen losse weekendhikes doet.',
     achievedWhen: ['dag 2 geeft geen complete instorting', 'voeten/gewrichten worden niet de beperkende factor'],
     data: ['Spierpijn', 'Voeten/blaren', 'Slaap', 'Voedingsstrategie', 'Functioneren op vermoeide benen'],
-    sources: [FFRANDONNEE],
+    sources: [GR5_ALPES],
   },
   11: {
     subtitle: '2–3 dagen + volledige uitrusting',
@@ -212,7 +230,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
       'volledige uitrusting getest, inclusief slaapsysteem',
       'geen ernstige uitval van voeten, gewrichten of materiaal',
     ],
-    sources: [FFRANDONNEE],
+    sources: [GR5_ALPES],
   },
   12: {
     subtitle: 'Volledige gereedheid',
@@ -255,7 +273,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
         ],
       },
     ],
-    sources: [FFRANDONNEE],
+    sources: [GR5_ALPES, GR5_ALPES_WAYMARKING],
   },
 };
 

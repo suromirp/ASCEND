@@ -5,7 +5,7 @@ import { computeObjectiveProgress } from '../engine/progression';
 import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
-import { getGR5MilestoneDetail, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES } from '../data/gr5Details';
+import { getGR5MilestoneDetail, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Card, Eyebrow } from '../components/ui';
 
 export function AscendPage() {
@@ -59,6 +59,20 @@ export function AscendPage() {
           <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1× bergspecifiek — incline / D+ / echte hike</li>
           <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>regelmatig: lange hike, afdaling, rugzak, back-to-back</li>
         </ul>
+        <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+          {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
+            <a
+              key={s.label}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs underline underline-offset-2"
+              style={{ color: 'var(--color-sky)' }}
+            >
+              {s.label} ↗
+            </a>
+          ))}
+        </div>
       </Card>
 
       <Card className="flex flex-col gap-3">

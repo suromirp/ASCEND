@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { GARMIN_DATA_SCREENS, GARMIN_METRICS, GARMIN_SOURCES, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
+import { GARMIN_DATA_SCREENS, GARMIN_METRICS, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
 import { Card, Eyebrow } from '../components/ui';
 
 export function GarminGuidePage() {
@@ -19,26 +19,6 @@ export function GarminGuidePage() {
       <GuideCardView card={GARMIN_STRAP_USAGE} />
       <GuideCardView card={GARMIN_DATA_SCREENS} />
       <GuideCardView card={GARMIN_METRICS} />
-
-      {GARMIN_SOURCES.length > 0 && (
-        <Card className="flex flex-col gap-2">
-          <Eyebrow>BRONNEN</Eyebrow>
-          <div className="flex flex-col gap-1.5">
-            {GARMIN_SOURCES.map((s) => (
-              <a
-                key={s.label}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs underline underline-offset-2"
-                style={{ color: 'var(--color-sky)' }}
-              >
-                {s.label} ↗
-              </a>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 }
@@ -64,6 +44,26 @@ function GuideCardView({ card }: { card: GuideCard }) {
           style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}
         >
           {card.note}
+        </div>
+      )}
+      {card.sources.length > 0 && (
+        <div className="flex flex-col gap-1 border-t pt-2" style={{ borderColor: 'var(--color-card-border)' }}>
+          {card.sources.map((s) =>
+            s.url ? (
+              <a
+                key={s.label}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline underline-offset-2"
+                style={{ color: 'var(--color-sky)' }}
+              >
+                {s.label} ↗
+              </a>
+            ) : (
+              <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>
+            ),
+          )}
         </div>
       )}
     </Card>

@@ -4,9 +4,13 @@
 // standalone Trainingsgids index page. Keyed by SessionTemplate.id from
 // data/defaultProgram.ts, so nothing here needs its own id scheme.
 //
-// Sources link to the official organisations' homepages, not specific
-// deep-linked articles — same approach as data/gr5Details.ts, for the same
-// reason: the underlying citations didn't come with stable direct URLs.
+// Sources link to the exact articles/pages the user supplied
+// (trainingsschema_bronnen_urls.txt) rather than organisation homepages —
+// matched per section from the original research document's own citations.
+// The Garmin Forerunner 255 manual pages are opaque GUID URLs on a domain
+// this environment can't fetch to verify, so their per-claim assignment is
+// inferred from the order they were supplied and the order the original
+// document cited Garmin for each topic, not independently confirmed.
 
 export interface GuideSource {
   label: string;
@@ -36,10 +40,32 @@ export interface TrainingDayGuide {
   sources: GuideSource[];
 }
 
-const PUBMED: GuideSource = { label: 'PubMed — wetenschappelijke literatuur', url: 'https://pubmed.ncbi.nlm.nih.gov' };
-const GARMIN: GuideSource = { label: 'Garmin — support & training', url: 'https://www.garmin.com' };
-const MACROFACTOR: GuideSource = { label: 'MacroFactor — help center', url: 'https://macrofactorapp.com' };
-const ACSM: GuideSource = { label: 'ACSM — Resistance Training Position Stand', url: 'https://www.acsm.org' };
+const ACSM: GuideSource = { label: 'ACSM — Resistance Training Position Stand', url: 'https://www.acsm.org/wp-content/uploads/2026/03/Resistance-Training-Position-Stand-infographic.pdf' };
+const MACROFACTOR_LOG: GuideSource = { label: 'MacroFactor — een workout loggen', url: 'https://help.macrofactorapp.com/en/articles/310-how-to-log-a-workout' };
+const MACROFACTOR_PROGRESSION: GuideSource = { label: 'MacroFactor — Smart Progressions', url: 'https://help.macrofactorapp.com/en/articles/305-understanding-and-using-smart-progressions' };
+const MACROFACTOR_RIR: GuideSource = { label: 'MacroFactor — wat is RIR', url: 'https://help.macrofactorapp.com/en/articles/385-what-is-rir-and-how-should-i-use-it-during-training' };
+const MACROFACTOR_MISSED: GuideSource = { label: 'MacroFactor — gemiste workouts en trainingscycli', url: 'https://help.macrofactorapp.com/en/articles/382-what-happens-to-my-program-if-i-miss-workouts-or-take-time-off' };
+const MACROFACTOR_DELOAD: GuideSource = { label: 'MacroFactor — deload: eerste of laatste cyclus', url: 'https://help.macrofactorapp.com/en/articles/297-deload-first-cycle-or-last-cycle' };
+
+const PUBMED_CONCURRENT_TRAINING: GuideSource = { label: 'PubMed — concurrent kracht- en duurtraining', url: 'https://pubmed.ncbi.nlm.nih.gov/28288187/' };
+const PUBMED_INJURY_LOAD_1: GuideSource = { label: 'PubMed — trainingsbelasting en hardloopblessures', url: 'https://pubmed.ncbi.nlm.nih.gov/25010379/' };
+const PUBMED_INJURY_LOAD_2: GuideSource = { label: 'PubMed — trainingsbelasting en hardloopblessures (vervolg)', url: 'https://pubmed.ncbi.nlm.nih.gov/34749417/' };
+const PUBMED_INTENSITY_DISTRIBUTION: GuideSource = { label: 'PubMed — trainingsintensiteit bij afstandslopers', url: 'https://pubmed.ncbi.nlm.nih.gov/PMC6253751/' };
+const PUBMED_TALK_TEST: GuideSource = { label: 'PubMed — talk test review', url: 'https://pubmed.ncbi.nlm.nih.gov/28709155/' };
+const PUBMED_DOWNHILL: GuideSource = { label: 'PubMed — excentrische belasting bij afdalen', url: 'https://pubmed.ncbi.nlm.nih.gov/22130400/' };
+const PUBMED_LOAD_CARRYING: GuideSource = { label: 'PubMed — load-carriage/rugzaktraining', url: 'https://pubmed.ncbi.nlm.nih.gov/35060915/' };
+
+// Garmin Forerunner 255 manual pages — see the file-level note on why exact
+// per-claim assignment here is inferred, not independently verified.
+const GARMIN_ZONES: GuideSource = { label: 'Garmin — sportspecifieke hartslagzones', url: 'https://www8.garmin.com/manuals-apac/webhelp/forerunner255series/EN-SG/GUID-21F7EFD8-1AE2-4E1A-959E-A98B6A297584-1763.html' };
+const GARMIN_HANDRAIL: GuideSource = { label: 'Garmin — nauwkeurigheid bij treadmill-handgrepen', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-BDCC2C12-1D33-45DB-967B-4313BBA83BC9.html' };
+const GARMIN_CUSTOM_ACTIVITY: GuideSource = { label: 'Garmin — aangepaste activiteiten & dataschermen', url: 'https://support.garmin.com/en-GB/?faq=o3jGSobIba3z7lLLMexE16&identifier=649059&tab=topics' };
+const GARMIN_INDOOR_ACCELEROMETER: GuideSource = { label: 'Garmin — indoor afstand via accelerometer', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/NL-NL/GUID-3A4C7C6C-1FE3-4EB5-B38E-3F744A5C1F00.html' };
+const GARMIN_CALIBRATION: GuideSource = { label: 'Garmin — treadmill handmatig kalibreren', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-25FA2988-33F2-4FC9-92FA-E457CBDB9E72.html' };
+const GARMIN_ELEVATION_FIELDS: GuideSource = { label: 'Garmin — gegevensvelden Total Ascent/Descent', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-GB/GUID-86541696-B60E-44BC-9A46-4349C86A1CD8.html' };
+const GARMIN_RECOVERY_TIME: GuideSource = { label: 'Garmin — Recovery Time', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-73BCE454-042E-420D-96A4-9DBA46626CD4.html' };
+const GARMIN_STRAP_PRIORITY: GuideSource = { label: 'Garmin — borstband vs. polssensor', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-F5BF67CE-C94E-4842-AE96-A7A05C85B732.html' };
+const PUBMED_RUNNING_ECONOMY: GuideSource = { label: 'PubMed — krachttraining en running economy', url: 'https://pubmed.ncbi.nlm.nih.gov/38165636/' };
 
 export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   tpl_upper_a: {
@@ -69,7 +95,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
-    sources: [ACSM, MACROFACTOR],
+    sources: [ACSM, MACROFACTOR_LOG, MACROFACTOR_PROGRESSION, MACROFACTOR_MISSED, MACROFACTOR_DELOAD, PUBMED_RUNNING_ECONOMY],
   },
 
   tpl_easy_run: {
@@ -109,7 +135,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     ],
     garminNote: 'Volledige Garmin-instellingen (zones, databeelden, borstband) staan in de Garmin-gids.',
     gear: ['Forerunner 255', 'Garmin borstband', 'hardloopschoenen', 'kleding passend bij het weer'],
-    sources: [PUBMED, GARMIN],
+    sources: [PUBMED_INJURY_LOAD_1, PUBMED_INJURY_LOAD_2, PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST, GARMIN_ZONES, GARMIN_STRAP_PRIORITY],
   },
 
   tpl_lower_a: {
@@ -137,7 +163,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
-    sources: [PUBMED],
+    sources: [PUBMED_CONCURRENT_TRAINING],
   },
 
   tpl_upper_b: {
@@ -155,7 +181,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
-    sources: [ACSM, MACROFACTOR],
+    sources: [ACSM, MACROFACTOR_RIR],
   },
 
   tpl_bergconditie: {
@@ -194,7 +220,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     ],
     garminNote: 'Zie de Garmin-gids voor custom-activity- en databeeld-tips bij indoor klimmen.',
     gear: ['Forerunner 255', 'Garmin borstband', 'trainingsschoenen', 'water', 'treadmill (of buitenroute)'],
-    sources: [GARMIN, PUBMED],
+    sources: [GARMIN_HANDRAIL, GARMIN_CUSTOM_ACTIVITY, GARMIN_INDOOR_ACCELEROMETER, GARMIN_CALIBRATION, GARMIN_ELEVATION_FIELDS, PUBMED_DOWNHILL, PUBMED_LOAD_CARRYING],
   },
 
   tpl_lower_b: {
@@ -216,7 +242,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
-    sources: [PUBMED],
+    sources: [PUBMED_CONCURRENT_TRAINING],
   },
 
   tpl_herstel: {
@@ -236,7 +262,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
     ],
     gear: ['comfortabele wandelschoenen (optioneel)'],
-    sources: [GARMIN],
+    sources: [GARMIN_RECOVERY_TIME],
   },
 };
 
