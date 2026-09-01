@@ -1,4 +1,5 @@
 import { QUOTE_LIBRARY, type Quote } from '../data/quoteLibrary';
+import { AUTHOR_WIKIPEDIA } from '../data/quoteAuthors';
 
 // "Victory-tier" — milestones cleared on the Ascent Ladder draw from this
 // narrower, more triumphant slice instead of the full library.
@@ -29,4 +30,8 @@ export function dailyQuote(dateIso: string): Quote {
   const pool = DAILY_POOL.length > 0 ? DAILY_POOL : QUOTE_LIBRARY;
   const hash = Array.from(dateIso).reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 0);
   return pool[hash % pool.length];
+}
+
+export function authorWikipediaUrl(author: string): string | undefined {
+  return AUTHOR_WIKIPEDIA[author];
 }

@@ -9,7 +9,13 @@ export interface CelebrationEvent {
   quote: Quote;
 }
 
-const VISIBLE_MS = 1800;
+// A milestone win stays up noticeably longer than a routine session
+// completion — it's the rarer, bigger moment and deserves the extra beat
+// to actually be read, not just flashed past.
+const VISIBLE_MS: Record<CelebrationEvent['kind'], number> = {
+  session: 2600,
+  milestone: 4200,
+};
 const FADE_MS = 400;
 
 // Mounted unconditionally in App.tsx, driven entirely by AppDataContext's
@@ -26,7 +32,7 @@ function CompletionCard({ event, onDismiss }: { event: CelebrationEvent; onDismi
   const { closing, requestClose } = useSheetClose(onDismiss, FADE_MS);
 
   useEffect(() => {
-    const t = setTimeout(requestClose, VISIBLE_MS);
+    const t = setTimeout(requestClose, VISIBLE_MS[event.kind]);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
