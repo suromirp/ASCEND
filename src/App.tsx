@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
+import { playIntroDrumsOnFirstInteraction } from './utils/introDrums';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
@@ -63,8 +65,14 @@ function BottomNav() {
 }
 
 function AppShell() {
-  const { loading } = useAppData();
+  const { loading, settings } = useAppData();
   const navigate = useNavigate();
+
+  // Armed once per app open, not per settings change — re-arming on every
+  // toggle would let a later interaction retrigger it after the user just
+  // turned it off mid-session, which reads as broken rather than muted.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => playIntroDrumsOnFirstInteraction(settings.introSoundEnabled), []);
 
   if (loading) {
     return (

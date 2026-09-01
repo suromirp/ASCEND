@@ -87,6 +87,24 @@ export function SettingsPage() {
         </div>
       </Card>
 
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>GELUID</Eyebrow>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Openingsgeluid</p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Een paar percussieve dreunen bij het openen van de app. Browsers staan geluid pas toe na je eerste
+              tik — het speelt dus af zodra je iets aanraakt, niet al bij het laadscherm zelf.
+            </p>
+          </div>
+          <Toggle
+            checked={settings.introSoundEnabled}
+            onChange={(v) => updateSettings({ introSoundEnabled: v })}
+            label="Openingsgeluid"
+          />
+        </div>
+      </Card>
+
       <Card className="flex flex-col gap-3 opacity-60">
         <Eyebrow>INTEGRATIES</Eyebrow>
         <IntegrationRow name="Garmin" note="Binnenkort" />

@@ -143,10 +143,16 @@ export interface AppSettings {
   // and ASCEND only records that the session happened, skipping the
   // per-exercise sets/reps/weight entry form.
   strengthTrackedExternally: boolean;
+  // Synthesised drum hits on app open (see utils/introDrums.ts) — no audio
+  // file, generated with the Web Audio API. Browsers block autoplay
+  // without a user gesture, so it actually fires on the first tap/click
+  // after launch, not literally on the splash frame itself.
+  introSoundEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   strengthTrackedExternally: false,
+  introSoundEnabled: true,
 };
 
 export const SettingsRepo = {
