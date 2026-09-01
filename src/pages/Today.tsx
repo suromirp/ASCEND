@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
-import { mondayOfWeek, todayISO } from '../utils/dates';
+import { daysBetween, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeObjectiveProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
+import { computeCurrentStreak } from '../engine/streak';
 import { fridaySessionDegradingLowerB } from '../engine/recoveryCheck';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -16,13 +17,14 @@ import { RescheduleDialog } from '../components/RescheduleDialog';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
+import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine } = useAppData();
+  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -46,12 +48,21 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
   const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
+  // Weekly nudge to back up: local-only storage means a wiped browser/cache
+  // means everything is gone. No reference yet (never exported, never
+  // dismissed) reads as "always show" as long as there's actually
+  // something worth backing up, rather than trying to guess a sensible
+  // start date from seed/demo data.
+  const backupTouchedAt = [settings.lastExportedAt, settings.lastExportReminderDismissedAt].filter((d): d is string => !!d).sort().at(-1);
+  const showExportReminder = sessionLogs.length > 0 && (!backupTouchedAt || daysBetween(backupTouchedAt.slice(0, 10), today) >= 7);
+
   // Rolling 28-day consistency — the same number the Ascend screen shows, so
   // "CONSISTENTIE" never means two different things depending on which tab
   // you're on. Early in a fresh week the literal this-week ratio is 0/low by
   // definition, which reads as broken; the rolling figure is representative
   // from day one.
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
+  const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
 
   const firstObjective = objectives[0];
   const objectiveProgress = useMemo(
@@ -111,6 +122,13 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         <StretchMenuButton />
       </div>
 
+      {showExportReminder && (
+        <ExportReminderBanner
+          onExport={() => exportData()}
+          onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
+        />
+      )}
+
       {showRecoveryWarning && (
         <Card className="flex flex-col gap-1">
           <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
@@ -154,7 +172,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         return <SessionCard key={s.id} session={s} template={t} logs={sessionLogs} program={program} onTap={() => setActionSheetSession(s)} />;
       })}
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK</p>
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>{weekCompletedCount} / {weekSessions.length}</p>
@@ -168,6 +186,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>
             {position ? `${position.weekInPhase}/${position.phase.weekCount}` : '—'}
           </p>
+        </Card>
+        <Card className="text-center">
+          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>REEKS</p>
+          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{streak} {streak === 1 ? 'dag' : 'dagen'}</p>
         </Card>
       </div>
 

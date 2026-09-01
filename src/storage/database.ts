@@ -148,6 +148,14 @@ export interface AppSettings {
   // without a user gesture, so it actually fires on the first tap/click
   // after launch, not literally on the splash frame itself.
   introSoundEnabled: boolean;
+  // ISO timestamp of the last successful Settings → Export. Everything is
+  // local-only (see CLAUDE.md) — this is what a weekly "you haven't backed
+  // up" nudge compares against.
+  lastExportedAt?: string;
+  // ISO timestamp the export nudge was last dismissed. Tracked separately
+  // from lastExportedAt so dismissing it actually snoozes for a week,
+  // rather than reappearing on the very next app open.
+  lastExportReminderDismissedAt?: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

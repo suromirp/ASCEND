@@ -1,5 +1,5 @@
 import type { PlannedSession, SessionLog } from '../models/training';
-import { addDays, todayISO } from '../utils/dates';
+import { addDays, formatDateNL, todayISO } from '../utils/dates';
 
 export interface ReadinessBreakdown {
   strength: number;
@@ -23,10 +23,11 @@ export function computeReadiness(
   logs: SessionLog[],
   plannedSessions: PlannedSession[],
   windowDays = 28,
+  asOf: string = todayISO(),
 ): ReadinessBreakdown {
-  const since = addDays(todayISO(), -windowDays);
-  const recentLogs = logs.filter((l) => l.completedDate >= since);
-  const recentPlanned = plannedSessions.filter((p) => p.scheduledDate >= since && p.scheduledDate <= todayISO());
+  const since = addDays(asOf, -windowDays);
+  const recentLogs = logs.filter((l) => l.completedDate >= since && l.completedDate <= asOf);
+  const recentPlanned = plannedSessions.filter((p) => p.scheduledDate >= since && p.scheduledDate <= asOf);
 
   // Consistency: share of planned sessions in the window that have a log.
   const loggedPlannedIds = new Set(recentLogs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -78,4 +79,22 @@ export function computeReadiness(
   );
 
   return { strength, cardio, climbing, endurance, recovery, consistency, packCapability, overall };
+}
+
+export interface TrendPoint {
+  label: string;
+  value: number;
+}
+
+// A weekly snapshot of the same 28-day overall figure computeReadiness
+// already shows, just re-run with `asOf` walked back a week at a time —
+// this is the one thing that needed that param, everything else about the
+// formulas is untouched.
+export function computeReadinessTrend(logs: SessionLog[], plannedSessions: PlannedSession[], weeks = 8): TrendPoint[] {
+  const points: TrendPoint[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const asOf = addDays(todayISO(), -7 * i);
+    points.push({ label: formatDateNL(asOf), value: computeReadiness(logs, plannedSessions, 28, asOf).overall });
+  }
+  return points;
 }

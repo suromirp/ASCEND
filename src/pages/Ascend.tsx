@@ -1,19 +1,25 @@
 import { useMemo, useState } from 'react';
+import type { Objective } from '../models/objectives';
+import type { SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { computeReadiness } from '../engine/readiness';
+import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
 import { computeObjectiveProgress } from '../engine/progression';
+import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
+import { daysBetween, todayISO } from '../utils/dates';
 import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
+import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Card, Eyebrow } from '../components/ui';
 
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually } = useAppData();
+  const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually, updateObjective } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
+  const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const objective = objectives[0];
   const progress = useMemo(
     () => (objective ? computeObjectiveProgress(objective, milestoneProgress, sessionLogs) : null),
@@ -38,6 +44,21 @@ export function AscendPage() {
         <MetricBar label="CONSISTENTIE" value={readiness.consistency} />
         <MetricBar label="RUGZAKCAPACITEIT" value={readiness.packCapability} />
       </Card>
+
+      {readinessTrend.some((p) => p.value > 0) && (
+        <Card>
+          <Eyebrow>READINESS TREND — 8 WEKEN</Eyebrow>
+          <div className="mt-3">
+            <TrendLineChart points={readinessTrend} formatValue={(v) => `${v}%`} />
+          </div>
+        </Card>
+      )}
+
+      <StrengthProgressionCard logs={sessionLogs} />
+
+      {objective && (
+        <GR5GoalCard objective={objective} onUpdate={(patch) => updateObjective(objective.id, patch)} />
+      )}
 
       {progress && (
         <AscentLadder
@@ -121,5 +142,87 @@ export function AscendPage() {
         />
       )}
     </div>
+  );
+}
+
+const dateInputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
+
+function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
+  const exercises = useMemo(() => listLoggedExercises(logs), [logs]);
+  const [selectedId, setSelectedId] = useState<string | undefined>(exercises[0]?.id);
+  const activeId = selectedId && exercises.some((e) => e.id === selectedId) ? selectedId : exercises[0]?.id;
+  const progression = useMemo(() => (activeId ? computeExerciseProgression(logs, activeId) : []), [logs, activeId]);
+
+  if (exercises.length === 0) return null;
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between gap-3">
+        <Eyebrow>KRACHT PROGRESSIE</Eyebrow>
+        <select
+          value={activeId}
+          onChange={(e) => setSelectedId(e.target.value)}
+          className="rounded-lg border bg-transparent px-2 py-1 text-xs"
+          style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+        >
+          {exercises.map((ex) => (
+            <option key={ex.id} value={ex.id} style={{ background: 'var(--color-card)' }}>{ex.name}</option>
+          ))}
+        </select>
+      </div>
+      {progression.length >= 2 ? (
+        <div className="mt-3">
+          <TrendLineChart points={progression} formatValue={(v) => `${v} kg`} />
+        </div>
+      ) : (
+        <p className="mt-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          Nog te weinig loggings van deze oefening om een trend te tonen.
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function GR5GoalCard({
+  objective,
+  onUpdate,
+}: {
+  objective: Objective;
+  onUpdate: (patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => void;
+}) {
+  const daysLeft = objective.targetDate ? daysBetween(todayISO(), objective.targetDate) : undefined;
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>GR5 DOEL</Eyebrow>
+      {daysLeft !== undefined && (
+        <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
+          {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
+        </p>
+      )}
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Startdatum</label>
+          <input
+            type="date"
+            value={objective.targetDate ?? ''}
+            onChange={(e) => onUpdate({ targetDate: e.target.value || undefined })}
+            className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+            style={dateInputStyle}
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Afstand (km)</label>
+          <input
+            type="number"
+            value={objective.targetDistanceKm ?? ''}
+            onChange={(e) => onUpdate({ targetDistanceKm: e.target.value === '' ? undefined : Number(e.target.value) })}
+            placeholder="±600"
+            className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+            style={dateInputStyle}
+          />
+        </div>
+      </div>
+    </Card>
   );
 }

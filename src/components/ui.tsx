@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { haptics } from '../utils/haptics';
 
 export function Card({ children, className = '', texture = false }: { children: ReactNode; className?: string; texture?: boolean }) {
   return (
@@ -72,7 +73,10 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      onClick={() => onChange(!checked)}
+      onClick={() => {
+        haptics.tap();
+        onChange(!checked);
+      }}
       className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
       style={{ background: checked ? 'var(--color-gold)' : 'var(--color-card-border)' }}
     >

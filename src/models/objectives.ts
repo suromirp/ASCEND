@@ -28,6 +28,12 @@ export interface Objective {
   name: string; // e.g. "GR5 / ALPINE READINESS"
   description?: string;
   targetDate?: string; // ISO date
+  // Total trip distance in km, filled in by the user once they know it —
+  // purely a display/countdown figure for now, not wired into scheduling or
+  // the readiness formulas. Feeding actual training volume off this (e.g.
+  // scaling endurance targets to trip length) is a deliberate future step,
+  // not something this field silently implies today.
+  targetDistanceKm?: number;
   milestones: MilestoneDefinition[];
 }
 

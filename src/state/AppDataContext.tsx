@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { CelebrationEvent } from '../components/MilestoneCelebration';
+import { haptics } from '../utils/haptics';
 import {
   seedIfEmpty,
   syncObjectiveDefinitions,
@@ -44,11 +46,14 @@ interface AppData {
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   skipSession: (sessionId: string) => Promise<void>;
   clearMilestoneManually: (objectiveId: string, milestoneId: string) => Promise<void>;
+  updateObjective: (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   toggleStretchRoutine: (kind: keyof StretchCompletion) => Promise<void>;
   exportData: () => Promise<void>;
   importData: (file: File) => Promise<void>;
   resetDemoData: () => Promise<void>;
+  celebration: CelebrationEvent | null;
+  dismissCelebration: () => void;
 }
 
 export interface LogSessionInput {
@@ -77,6 +82,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [milestoneProgress, setMilestoneProgress] = useState<MilestoneProgress[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
+  const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
 
   const refresh = useCallback(async () => {
     const [programs, tpls, planned, logs, objs, progress, loadedSettings, loadedStretchCompletion] = await Promise.all([
@@ -152,6 +158,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       // If this log satisfies the current front-of-ladder milestone on any
       // objective, record the historical moment it was cleared.
+      let clearedTitle: string | undefined;
       for (const objective of objectives) {
         const progress = computeObjectiveProgress(objective, milestoneProgress, sessionLogs);
         const current = progress.currentMilestone;
@@ -163,10 +170,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             clearedDate: log.completedDate,
             sourceSessionLogId: log.id,
           });
+          clearedTitle = current.definition.title;
         }
       }
 
       await refresh();
+      haptics.success();
+      if (clearedTitle) setCelebration({ id: makeId('celebration'), title: clearedTitle });
     },
     [objectives, milestoneProgress, sessionLogs, refresh],
   );
@@ -230,9 +240,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         milestoneId,
         clearedDate: todayISO(),
       });
+      const title = objectives.find((o) => o.id === objectiveId)?.milestones.find((m) => m.id === milestoneId)?.title;
+      await refresh();
+      haptics.success();
+      if (title) setCelebration({ id: makeId('celebration'), title });
+    },
+    [objectives, refresh],
+  );
+
+  // Only targetDate/targetDistanceKm are editable from the UI today — the
+  // ladder content itself (name, milestones) is static and synced from
+  // data/defaultProgram.ts via syncObjectiveDefinitions().
+  const updateObjective = useCallback(
+    async (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => {
+      const objective = objectives.find((o) => o.id === objectiveId);
+      if (!objective) return;
+      await ObjectivesRepo.put({ ...objective, ...patch });
       await refresh();
     },
-    [refresh],
+    [objectives, refresh],
   );
 
   const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
@@ -272,9 +298,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     applyProposal,
     skipSession,
     clearMilestoneManually,
+    updateObjective,
     updateSettings,
     toggleStretchRoutine,
-    exportData: downloadExport,
+    exportData: async () => {
+      await downloadExport();
+      await updateSettings({ lastExportedAt: new Date().toISOString() });
+    },
     importData: async (file: File) => {
       await importFromFile(file);
       await refresh();
@@ -283,6 +313,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await resetToDemoData();
       await refresh();
     },
+    celebration,
+    dismissCelebration: () => setCelebration(null),
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

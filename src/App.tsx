@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
+import { MilestoneCelebration } from './components/MilestoneCelebration';
+import { UpdatePrompt } from './components/UpdatePrompt';
 import { playIntroDrumsOnFirstInteraction } from './utils/introDrums';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
@@ -65,7 +67,7 @@ function BottomNav() {
 }
 
 function AppShell() {
-  const { loading, settings } = useAppData();
+  const { loading, settings, celebration, dismissCelebration } = useAppData();
   const navigate = useNavigate();
 
   // Armed once per app open, not per settings change — re-arming on every
@@ -102,6 +104,8 @@ function AppShell() {
         </Routes>
       </div>
       <BottomNav />
+      <UpdatePrompt />
+      <MilestoneCelebration event={celebration} onDismiss={dismissCelebration} />
     </>
   );
 }
