@@ -7,6 +7,7 @@ import { getModalities, getModality, defaultModality } from '../data/modalities'
 import { GARMIN_SUGGESTED_TYPES, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { ModalityPicker } from './ModalityPicker';
 import { useSheetClose } from '../utils/useSheetClose';
+import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StretchList } from './StretchList';
 
@@ -175,10 +176,11 @@ export function ExerciseLogger({
   }
 
   return (
-    <div
-      className={`fixed inset-0 z-50 overflow-y-auto ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
-      style={{ background: 'var(--color-bg)' }}
-    >
+    <Portal>
+      <div
+        className={`fixed inset-0 z-50 overflow-y-auto ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+        style={{ background: 'var(--color-bg)' }}
+      >
       <div className="mx-auto max-w-md px-4 pb-28 pt-6">
         <div className="mb-4 flex items-center justify-between">
           <Eyebrow>SESSIE VOLTOOIEN</Eyebrow>
@@ -422,7 +424,8 @@ export function ExerciseLogger({
           </PrimaryButton>
         </div>
       </div>
-    </div>
+      </div>
+    </Portal>
   );
 }
 

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { MilestoneDetail } from '../data/gr5Details';
 import { useSheetClose } from '../utils/useSheetClose';
+import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
 
 export function MilestoneDetailSheet({
@@ -15,14 +16,15 @@ export function MilestoneDetailSheet({
   const { closing, requestClose } = useSheetClose(onClose);
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-      onClick={requestClose}
-    >
+    <Portal>
       <div
-        className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
-        onClick={(e) => e.stopPropagation()}
+        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={requestClose}
       >
+        <div
+          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
         <Card className="rounded-b-none border-b-0 pb-8">
           <Eyebrow>{detail.type}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
@@ -91,8 +93,9 @@ export function MilestoneDetailSheet({
             Sluiten
           </button>
         </Card>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 

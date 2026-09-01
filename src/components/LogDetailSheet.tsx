@@ -3,6 +3,7 @@ import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
+import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
 
 const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio', hiking: 'Avontuur', recovery: 'Herstel', adventure: 'Avontuur' };
@@ -42,14 +43,15 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   const { closing, requestClose } = useSheetClose(onClose);
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-      onClick={requestClose}
-    >
+    <Portal>
       <div
-        className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
-        onClick={(e) => e.stopPropagation()}
+        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={requestClose}
       >
+        <div
+          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
         <Card className="rounded-b-none border-b-0 pb-8">
           <Eyebrow>{formatDateNL(log.completedDate)}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{templateName}</h3>
@@ -98,7 +100,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
             Sluiten
           </button>
         </Card>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
