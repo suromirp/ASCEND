@@ -291,6 +291,23 @@ body {
   animation: ascend-sheet-out 0.2s ease-in both;
 }
 
+/* Tactile press feedback on every button in the app — a slight scale-down
+   on tap so buttons feel responsive instead of just snapping straight to
+   their active/opacity state. Scoped off the switch role: a toggle already
+   animates its thumb/track colour, and shrinking the whole track on tap
+   reads as broken rather than tactile. PrimaryButton/SecondaryButton/
+   SessionCard declare their own transition-all + active:scale instead of
+   relying on this, since their existing transition-opacity/-colors utility
+   classes would otherwise win on specificity and drop transform from what
+   actually animates. */
+button:not(:disabled):not([role='switch']) {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:not(:disabled):not([role='switch']):active {
+  transform: scale(0.96);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

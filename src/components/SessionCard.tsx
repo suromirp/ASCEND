@@ -32,7 +32,7 @@ export function SessionCard({
   return (
     <button
       onClick={onTap}
-      className="flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors active:opacity-75"
+      className="flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all active:scale-[0.98] active:opacity-75"
       style={{
         background: 'var(--color-surface)',
         borderColor: status === 'today' ? 'var(--color-gold)' : 'var(--color-card-border)',

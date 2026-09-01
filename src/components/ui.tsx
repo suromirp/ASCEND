@@ -28,7 +28,7 @@ export function PrimaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${fullWidth ? 'w-full' : 'flex-1'} rounded-xl py-3 text-sm font-semibold tracking-wide transition-opacity active:opacity-80 disabled:opacity-40 ${className}`}
+      className={`${fullWidth ? 'w-full' : 'flex-1'} rounded-xl py-3 text-sm font-semibold tracking-wide transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
       style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze-dark))', color: '#15130d' }}
     >
       {children}
@@ -40,7 +40,7 @@ export function SecondaryButton({ children, onClick, className = '' }: { childre
   return (
     <button
       onClick={onClick}
-      className={`flex-1 rounded-xl border py-2.5 text-xs font-medium tracking-wide transition-colors active:opacity-70 ${className}`}
+      className={`flex-1 rounded-xl border py-2.5 text-xs font-medium tracking-wide transition-all active:scale-[0.97] active:opacity-70 ${className}`}
       style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
     >
       {children}
