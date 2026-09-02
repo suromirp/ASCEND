@@ -66,6 +66,11 @@ const NKBV_OEFENINGEN_CONDITIE: ModalitySource = { label: 'NKBV — oefeningen o
 const GARMIN_INDOOR_ACCELEROMETER: ModalitySource = { label: 'Garmin — indoor snelheid/afstand via accelerometer', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-3A4C7C6C-1FE3-4EB5-B38E-3F744A5C1F00.html' };
 const GARMIN_CYCLING_PERFORMANCE: ModalitySource = { label: 'Garmin — cycling performance metrics', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-44C7BB4B-EFF7-4A42-AC03-8A6AABB94807.html' };
 const GARMIN_SMART_TRAINER: ModalitySource = { label: 'Garmin — smart trainer', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-5956B2AD-038A-4998-860B-032081F18F61.html' };
+const PELOTON_HILL_REPEATS: ModalitySource = { label: 'Peloton — hill repeats techniek en opbouw', url: 'https://www.onepeloton.com/blog/hill-repeats' };
+const OUTSIDE_INCLINE_TREADMILL: ModalitySource = { label: 'Outside — incline-intervallen op de treadmill', url: 'https://run.outsideonline.com/training/treadmill-workout-incline/' };
+const TRAILRUNNER_MOUNTAIN_TRAINING: ModalitySource = { label: 'Trail Runner Mag — specifiek trainen voor bergrennen', url: 'https://www.trailrunnermag.com/training/trail-tips-training/specific-training-for-mountain-running/' };
+const RUNINFINITE_VERTICAL_GAIN: ModalitySource = { label: 'Run Infinite — hoeveel D+ is genoeg in training', url: 'https://runinfinite.com/training-for-vertical-gain/' };
+const MARATHONHANDBOOK_TEN_PERCENT: ModalitySource = { label: 'Marathon Handbook — de 10%-regel voor mijlage-opbouw', url: 'https://marathonhandbook.com/the-10-percent-rule/' };
 
 export const TUESDAY_MODALITIES: ModalityDefinition[] = [
   {
@@ -242,6 +247,93 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
 ];
 
+export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
+  {
+    key: 'hill_repeats_outdoor',
+    label: 'Heuvelherhalingen — buiten',
+    role: 'PRIMARY',
+    environment: 'outdoor',
+    garminProfile: 'Run',
+    durationHint: 'geplande duur, incl. warming-up/cooling-down',
+    how: 'Warm 10 min rustig op. Daarna herhaald: 30-90 sec bergop op hoge inspanning (RPE 8-9), rustig aflopen of teruglopen als volledig herstel. Begin met 4-5 herhalingen, bouw op naar 8-10.',
+    why: 'Combineert een sterke loop-specifieke snelheidsprikkel met opbouwende D+ — de helling verlaagt bovendien de impact per stap t.o.v. vlakke sprints.',
+    whenNotIdeal: ['geen toegang tot een bruikbare helling', 'acute beenpijn of ongewone impactgevoeligheid'],
+    fields: { distance: true, elevation: true, cadence: true },
+    sources: [PELOTON_HILL_REPEATS],
+  },
+  {
+    key: 'incline_treadmill_intervals',
+    label: 'Incline-intervallen — treadmill',
+    role: 'EQUIVALENT',
+    environment: 'treadmill',
+    garminProfile: 'Treadmill',
+    durationHint: 'geplande duur, incl. warming-up/cooling-down',
+    how: 'Helling op 4-5%. Herhaald: 30-90 sec hoog tempo (RPE 8-9), tussendoor helling/snelheid fors omlaag voor volledig herstel. Niet aan de handgrepen hangen.',
+    why: 'Even effectief als buiten heuvelrennen voor de snelheids- en D+-prikkel, en volledig los van weer of beschikbaar terrein te plannen.',
+    garminNote: 'Total Ascent is op een treadmill niet betrouwbaar — Ascend schat D+ uit afstand × helling%, net als bij Bergconditie.',
+    fields: { distance: true, inclinePercent: true, elevation: true, cadence: true },
+    sources: [OUTSIDE_INCLINE_TREADMILL, GARMIN_INDOOR_ACCELEROMETER],
+  },
+  {
+    key: 'stairmaster_intervals',
+    label: 'StairMaster-intervallen',
+    role: 'FALLBACK',
+    environment: 'indoor',
+    garminProfile: 'Stair Stepper',
+    durationHint: 'geplande duur',
+    how: 'Herhaald: 30-90 sec hoog tempo, daartussen rustig doorstappen tot volledig herstel — alleen wanneer geen heuvel of treadmill beschikbaar is.',
+    why: 'Behoudt de verticale beenprikkel wanneer de primaire opties niet beschikbaar zijn.',
+    whenNotIdeal: ['mist de loop-specifieke snelheidscomponent van buiten/treadmill'],
+    fields: { steps: true },
+    sources: [],
+  },
+];
+
+export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
+  {
+    key: 'long_hike_outdoor',
+    label: 'Lange hike met D+ — buiten',
+    role: 'PRIMARY',
+    environment: 'outdoor',
+    garminProfile: 'Hike',
+    durationHint: 'geplande duur',
+    how: 'Rustig tempo (RPE 3-4/10), route met zoveel mogelijk hoogteverschil. Bouw afstand/D+ t.o.v. vorige week op met max +10-15%.',
+    why: 'De meest GR5-specifieke vorm: echte D+/D-, tijd op de benen, wisselend terrein — bouwt tegelijk marathon-uithouding en bergcapaciteit op.',
+    fields: { distance: true, elevation: true, elevationLoss: true, terrain: true, backpackWeight: true },
+    sources: [TRAILRUNNER_MOUNTAIN_TRAINING, RUNINFINITE_VERTICAL_GAIN],
+  },
+  {
+    key: 'long_run_outdoor',
+    label: 'Lange duurloop — buiten',
+    role: 'PRIMARY',
+    environment: 'outdoor',
+    garminProfile: 'Run',
+    durationHint: 'geplande duur',
+    how: 'Rustig, gelijkmatig tempo (RPE 3-4/10), gesprekstempo blijft mogelijk. Bouw afstand op t.o.v. vorige week met max +10%.',
+    why: 'De klassieke marathon-lange-duurloop: bouwt aerobe uithouding en de mentale/fysieke gewenning aan lang op de been zijn.',
+    whenNotIdeal: ['geen route met hoogteverschil beschikbaar en D+ is het hoofddoel deze week'],
+    fields: { distance: true, elevation: true },
+    sources: [MARATHONHANDBOOK_TEN_PERCENT],
+  },
+  {
+    key: 'long_run_treadmill',
+    label: 'Lange duurloop — treadmill',
+    role: 'FALLBACK',
+    environment: 'treadmill',
+    garminProfile: 'Treadmill',
+    durationHint: 'geplande duur',
+    how: 'Zelfde geplande duur en RPE 3-4/10 — alleen bij slecht weer of wanneer buiten niet haalbaar is.',
+    why: 'Behoudt de duurprikkel wanneer buiten geen optie is, al mist het de D+/terrein-specificiteit die deze sessie juist waardevol maakt.',
+    whenNotIdeal: ['mist échte D+/D- en terreinwisseling — telt niet mee als bergspecifieke voorbereiding'],
+    fields: { distance: true, inclinePercent: true, elevation: true },
+    sources: [],
+  },
+];
+
+// Named for the rest day's original weekday (Sunday) — Herstel moved to
+// Monday when the week was reshaped around a weekend hill/long-run block,
+// but this content (rest/recovery-walk options) didn't change, and it's
+// keyed by templateId below, not by name.
 export const SUNDAY_MODALITIES: ModalityDefinition[] = [
   {
     key: 'rest',
@@ -295,6 +387,8 @@ export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
   tpl_easy_run: TUESDAY_MODALITIES,
   tpl_bergconditie: FRIDAY_MODALITIES,
   tpl_herstel: SUNDAY_MODALITIES,
+  tpl_hill_intervals: HILL_INTERVAL_MODALITIES,
+  tpl_long_run: LONG_RUN_MODALITIES,
 };
 
 export function getModalities(templateId: string): ModalityDefinition[] | undefined {

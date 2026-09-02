@@ -8,7 +8,7 @@ import { Card, Eyebrow } from '../components/ui';
 // Fixed weekday order (Ma → Zo) rather than iterating TRAINING_GUIDES —
 // object key order isn't a contract worth relying on, and this reads in
 // the order someone actually trains in.
-const DAY_ORDER = ['tpl_upper_a', 'tpl_easy_run', 'tpl_lower_a', 'tpl_upper_b', 'tpl_bergconditie', 'tpl_lower_b', 'tpl_herstel'];
+const DAY_ORDER = ['tpl_herstel', 'tpl_easy_run', 'tpl_lower_a', 'tpl_upper_b', 'tpl_upper_a', 'tpl_hill_intervals', 'tpl_long_run'];
 
 export function TrainingGuidePage() {
   const navigate = useNavigate();
@@ -31,8 +31,9 @@ export function TrainingGuidePage() {
       <Card className="flex flex-col gap-2">
         <Eyebrow>DOEL VAN DEZE FASE</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Deze maand bouwt de basis waarop later specifiekere GR5-training komt: 4× kracht, aerobe basis opbouwen,
-          wennen aan bergconditie. De GR5 is ±600 km over circa 40 etappes — uiteindelijk tellen dus niet alleen
+          Deze maand bouwt de basis waarop later specifiekere GR5-training komt: 3× kracht, aerobe basis opbouwen,
+          en een weekend-beenblok (heuvelintervallen + lange duurloop) dat tegelijk hardloopprogressie en
+          bergconditie traint. De GR5 is ±600 km over circa 40 etappes — uiteindelijk tellen dus niet alleen
           conditie en D+, maar ook langdurig bewegen, afdalen, rugzakbelasting en meerdere dagen achter elkaar.
         </p>
       </Card>

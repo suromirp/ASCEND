@@ -202,10 +202,10 @@ export interface SessionLog {
   strengthData?: ExerciseSetLog[];
   cardioData?: CardioMetric;
   outdoorData?: OutdoorMetric;
-  // Subjective "how did this feel vs. normal" — mainly used on strength
-  // sessions to catch a Friday Bergconditie that's dosed too hard: two
-  // 'worse' Lower B sessions in a row after Bergconditie is a signal to
-  // lighten Friday (engine/recoveryCheck.ts). Optional everywhere; never
+  // Subjective "how did this feel vs. normal" — mainly used to catch
+  // Saturday's hill/incline intervals being dosed too hard: two 'worse'
+  // lange-duurloop sessions in a row afterward is a signal to lighten
+  // Saturday (engine/recoveryCheck.ts). Optional everywhere; never
   // required, since MacroFactor's own quick-complete flow stays low-friction.
   subjectiveFeel?: SubjectiveFeel;
   source: MetricSource;

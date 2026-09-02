@@ -4,6 +4,8 @@ import type { SessionTemplate, PlannedSession, SessionLog } from '../models/trai
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import { buildDefaultProgramData } from '../data/defaultProgram';
+import { addDays, todayISO } from '../utils/dates';
+import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
@@ -211,6 +213,7 @@ export async function seedIfEmpty(): Promise<void> {
   await MetaRepo.set('seeded', true);
   await MetaRepo.set('schemaVersion', SCHEMA_VERSION);
   await MetaRepo.set('gr5LadderVersion', GR5_LADDER_CONTENT_VERSION);
+  await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
 }
 
 // The GR5 ladder (Objective + MilestoneDefinitions) is static content, not
@@ -233,6 +236,64 @@ export async function syncObjectiveDefinitions(): Promise<void> {
     await ObjectivesRepo.put(objective);
   }
   await MetaRepo.set('gr5LadderVersion', GR5_LADDER_CONTENT_VERSION);
+}
+
+// SessionTemplate definitions are static content, same reasoning as
+// syncObjectiveDefinitions above — safe to overwrite in place. The weekly
+// PlannedSession pattern they generate is not: an already-seeded device has
+// its own program.startDate and, more importantly, real SessionLogs whose
+// plannedSessionId points at specific PlannedSession rows. Bump this when
+// buildTemplates()/the defaultDayOfWeek pattern in data/defaultProgram.ts
+// changes shape (not for wording-only tweaks, which upsert for free).
+//
+// Only PlannedSessions with scheduledDate strictly after today are touched
+// — today and every earlier day keep exactly what was already scheduled,
+// so no already-logged session's plannedSessionId ever dangles and nothing
+// that already happened silently reshapes itself. A future session the
+// user already skipped or moved is still replaced by this — same
+// full-overwrite tradeoff syncObjectiveDefinitions/resetToDemoData already
+// make for non-historical data, just scoped to "not yet happened" here.
+const SCHEDULE_CONTENT_VERSION = 1;
+
+export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
+  const version = await MetaRepo.get<number>('scheduleVersion');
+  if (version === SCHEDULE_CONTENT_VERSION) return;
+
+  const { templates } = buildDefaultProgramData();
+  await putAll('sessionTemplates', templates);
+
+  const [programs, existingSessions] = await Promise.all([ProgramsRepo.getAll(), PlannedSessionsRepo.getAll()]);
+  const program = programs[0];
+  if (!program) {
+    await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
+    return;
+  }
+
+  const today = todayISO();
+  const toDelete = existingSessions.filter((s) => s.scheduledDate > today);
+  await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
+
+  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
+  const templatesWithDay = templates.filter((t) => t.defaultDayOfWeek);
+  const newSessions: PlannedSession[] = [];
+  for (let week = 0; week < totalWeeks; week++) {
+    const weekStart = addDays(program.startDate, week * 7);
+    templatesWithDay.forEach((t, order) => {
+      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
+      if (date <= today) return;
+      newSessions.push({
+        id: makeId('planned'),
+        templateId: t.id,
+        scheduledDate: date,
+        weekStartDate: weekStart,
+        status: 'planned',
+        order,
+      });
+    });
+  }
+  await putAll('plannedSessions', newSessions);
+
+  await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
 }
 
 export async function resetToDemoData(): Promise<void> {

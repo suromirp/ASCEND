@@ -14,11 +14,11 @@ import { StretchList } from './StretchList';
 const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'VOLLEDIG', short: 'KORT', minimum: 'MINIMUM', custom: 'AANGEPAST' };
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
-// Only these two days carry the ASCEND Guided / Garmin Suggested / Free
+// Only these days carry the ASCEND Guided / Garmin Suggested / Free
 // Training choice — Herstel just gets the modality picker directly, since
 // "what did Garmin suggest" and "free training" don't add anything
 // meaningful on a day whose whole point is optional/unstructured rest.
-const GUIDANCE_MODE_DAYS = new Set(['tpl_easy_run', 'tpl_bergconditie']);
+const GUIDANCE_MODE_DAYS = new Set(['tpl_easy_run', 'tpl_bergconditie', 'tpl_hill_intervals', 'tpl_long_run']);
 
 export function ExerciseLogger({
   template,

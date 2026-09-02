@@ -8,6 +8,7 @@ import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
   seedIfEmpty,
   syncObjectiveDefinitions,
+  syncTemplateAndScheduleDefinitions,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
@@ -122,6 +123,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         (async () => {
           await seedIfEmpty();
           await syncObjectiveDefinitions();
+          await syncTemplateAndScheduleDefinitions();
           await refresh();
         })(),
         minSplashDuration,

@@ -6,7 +6,7 @@ import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeObjectiveProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
-import { fridaySessionDegradingLowerB } from '../engine/recoveryCheck';
+import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
@@ -79,11 +79,12 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   }
 
   const primaryTemplate = primary ? templateById.get(primary.templateId) : undefined;
-  // Two 'worse' Lower B logs in a row after Bergconditie is a pattern, not
-  // a single off day — only worth a nudge on the day it's actually
-  // actionable (Friday, before you've decided how hard to go).
-  const lowerBDegrading = useMemo(() => fridaySessionDegradingLowerB(sessionLogs), [sessionLogs]);
-  const showRecoveryWarning = lowerBDegrading && primaryTemplate?.id === 'tpl_bergconditie';
+  // Two 'worse' Lange Duurloop logs in a row after Heuvel-/Incline-
+  // Intervallen is a pattern, not a single off day — only worth a nudge on
+  // the day it's actually actionable (Saturday, before you've decided how
+  // hard to go into the hill session).
+  const longRunDegrading = useMemo(() => hillIntervalsDegradingLongRun(sessionLogs), [sessionLogs]);
+  const showRecoveryWarning = longRunDegrading && primaryTemplate?.id === 'tpl_hill_intervals';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
   const actionSheetLog = actionSheetSession ? sessionLogs.find((l) => l.plannedSessionId === actionSheetSession.id) : undefined;
@@ -136,8 +137,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         <Card className="flex flex-col gap-1">
           <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-            Lower B voelde de laatste twee weken slechter na Bergconditie. Overweeg vandaag rustiger te gaan —
-            lagere helling/snelheid, of een kortere sessie.
+            De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
+            rustiger te gaan — minder herhalingen, lagere helling, of een kortere sessie.
           </p>
         </Card>
       )}

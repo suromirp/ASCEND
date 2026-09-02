@@ -6,9 +6,20 @@ import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_RECOVERY } from './stretches';
 
 // ---------------------------------------------------------------------------
-// Session templates — MAAND 1 (BASISFASE), exactly as specified:
-// 4x kracht/week (Upper A, Lower A zwaar, Upper B, Lower B), Easy Run,
-// Bergconditie (incline óf hike), en Herstel op zondag.
+// Session templates — MAAND 1 (BASISFASE).
+//
+// Herzien van 4x kracht + 1x Easy Run + Bergconditie naar een schema waarin
+// het weekend het bergspecifieke hardloopblok draagt: Upper A/Lower A/Upper B
+// blijven overeind, maar Lower B en Bergconditie zijn geretired als aparte
+// wekelijkse sessies (tpl_lower_b/tpl_bergconditie blijven wél gedefinieerd
+// zodat oudere SessionLogs die ernaar verwijzen nog gewoon oplossen — zie
+// storage/database.ts syncTemplateAndScheduleDefinitions). Zaterdag +
+// zondag vormen samen het beenblok: heuvel-/incline-intervallen (snelheid ×
+// D+) gevolgd door een lange duurloop/hike (uithouding × D+, richting zowel
+// een marathon als de GR5). Bewust een aaneengesloten, zwaar weekend — geen
+// automatische 48u-conflictcheck ertussen (zie engine/scheduler.ts) omdat
+// dat "op vermoeide benen" trainen hier het punt is, niet een fout.
+// Maandag is daarom de nieuwe rustdag, na het zware weekend.
 // ---------------------------------------------------------------------------
 
 function buildTemplates(): SessionTemplate[] {
@@ -19,7 +30,7 @@ function buildTemplates(): SessionTemplate[] {
       type: 'strength',
       focus: 'Borst • Rug • Schouders',
       durationVariants: { full: 75, short: 45, minimum: 20 },
-      defaultDayOfWeek: 1,
+      defaultDayOfWeek: 5,
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
@@ -78,9 +89,12 @@ function buildTemplates(): SessionTemplate[] {
       type: 'strength',
       focus: 'Onderlichaam',
       durationVariants: { full: 70, short: 40, minimum: 20 },
-      defaultDayOfWeek: 6,
+      // Geen defaultDayOfWeek meer — vervangen door het zaterdag/zondag
+      // beenblok (tpl_hill_intervals + tpl_long_run). Template blijft
+      // gedefinieerd zodat oudere SessionLogs die ernaar verwijzen nog
+      // gewoon oplossen in History.
       notes:
-        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus. Deze sessie is ook de controle of vrijdags Bergconditie goed gedoseerd was.',
+        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       exercises: [
@@ -116,7 +130,9 @@ function buildTemplates(): SessionTemplate[] {
       type: 'hiking',
       focus: 'Incline of hike — D+ opbouw',
       durationVariants: { full: 50, short: 30 },
-      defaultDayOfWeek: 5,
+      // Geen defaultDayOfWeek meer — opgevolgd door tpl_hill_intervals
+      // (scherpere, intervalmatige versie op zaterdag). Template blijft
+      // gedefinieerd zodat oudere SessionLogs nog gewoon oplossen.
       outdoorTarget: { targetElevationM: 400 },
       notes:
         'Optie A — incline treadmill: helling 8-15%, snelheid ±4-5,5 km/u, RPE 4-5/10, niet aan de handgrepen hangen. Optie B — buiten hiken: liefst hoogteverschil, rustig tempo, D+ en tijd op de benen bijhouden. Voorlopig voornamelijk rustige aerobe training. Garmin + borstband gebruiken. Zijn de benen erg vermoeid? Maak deze sessie lichter.',
@@ -130,13 +146,51 @@ function buildTemplates(): SessionTemplate[] {
       ],
     },
     {
+      id: 'tpl_hill_intervals',
+      name: 'Heuvel-/Incline-Intervallen',
+      type: 'cardio',
+      focus: 'Snelheid × D+ — bergop intervaltraining',
+      durationVariants: { full: 45, short: 30 },
+      defaultDayOfWeek: 6,
+      cardioTarget: { zone: 'RPE 8-9 op de herhalingen, volledig herstel ertussen' },
+      notes:
+        'Herhalingen van 30-90 sec bergop (buiten) of op een treadmill op 4-5% helling, op hoge inspanning (RPE 8-9), met ruime rust/rustig afdalen ertussen. Bouwt tegelijk loopsnelheid/-kracht én D+ voor de GR5 op — dit is de kwaliteitssessie van de week, geen rustige duurloop. Minder impact op de knieën/enkels dan vlakke sprints, dankzij de helling.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 35, note: 'Wennen — 4-5 herhalingen' },
+        { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw — 6 herhalingen' },
+        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week — 8 herhalingen' },
+        { weekInPhase: 4, targetMinutes: 30, note: 'Deload — 4 herhalingen, rustig' },
+      ],
+    },
+    {
+      id: 'tpl_long_run',
+      name: 'Lange Duurloop',
+      type: 'hiking',
+      focus: 'Uithouding × D+ — richting marathon en GR5',
+      durationVariants: { full: 75, short: 45 },
+      defaultDayOfWeek: 7,
+      outdoorTarget: { targetElevationM: 300 },
+      notes:
+        'De langste sessie van de week, op vermoeide benen na zaterdag — precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), afstand en hoogtemeters bouw je zelf op t.o.v. vorige week (richtlijn: max +10-15%). Buiten met D+ heeft de voorkeur boven een vlakke route — dit is de sessie die het meest direct naar de GR5 vertaalt.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 50, note: 'Wennen — rustig tempo, D+ waar mogelijk' },
+        { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw — +10% afstand/D+ t.o.v. week 1' },
+        { weekInPhase: 3, targetMinutes: 70, note: 'Zwaarste week — +10-15% t.o.v. week 2' },
+        { weekInPhase: 4, targetMinutes: 45, note: 'Deload (35-45 min, D+ ook lager)' },
+      ],
+    },
+    {
       id: 'tpl_herstel',
       name: 'Herstel',
       type: 'recovery',
       focus: 'Rust of rustig wandelen',
       durationVariants: { full: 45 },
-      defaultDayOfWeek: 7,
-      notes: 'Geen zware training, geen hardlopen, geen zware incline. 30-60 min rustig wandelen is prima. Doel: herstellen, frisse start maandag.',
+      defaultDayOfWeek: 1,
+      notes: 'Geen zware training, geen hardlopen, geen zware incline. 30-60 min rustig wandelen is prima. Doel: herstellen van het zware weekend (heuvelintervallen + lange duurloop), frisse start dinsdag.',
       // No dynamic warm-up here — Herstel is a light/rest day, not
       // strenuous enough to need the pre-training prep routine.
       cooldown: COOLDOWN_RECOVERY,
@@ -164,7 +218,7 @@ function buildProgram(): Program {
         name: 'BASISFASE',
         order: 1,
         weekCount: 4,
-        description: 'Maand 1: 4x kracht, aerobe basis opbouwen, wennen aan bergconditie. Wennen → Opbouw → Zwaarste week → Deload.',
+        description: 'Maand 1: 3x kracht, aerobe basis opbouwen, en een weekend-beenblok (heuvelintervallen + lange duurloop) richting zowel hardloopprogressie als de GR5. Wennen → Opbouw → Zwaarste week → Deload.',
       },
       {
         id: 'phase_2',
@@ -193,8 +247,8 @@ function buildProgram(): Program {
 
 // ---------------------------------------------------------------------------
 // Planned sessions — het vaste weekpatroon herhaald over het hele programma.
-// MA Upper A · DI Easy Run · WO Lower A zwaar · DO Upper B ·
-// VR Bergconditie · ZA Lower B · ZO Herstel
+// MA Herstel · DI Easy Run · WO Lower A zwaar · DO Upper B ·
+// VR Upper A · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop
 // ---------------------------------------------------------------------------
 
 function buildPlannedSessions(program: Program, templates: SessionTemplate[]): PlannedSession[] {

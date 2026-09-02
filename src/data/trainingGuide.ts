@@ -66,10 +66,17 @@ const GARMIN_ELEVATION_FIELDS: GuideSource = { label: 'Garmin — gegevensvelden
 const GARMIN_RECOVERY_TIME: GuideSource = { label: 'Garmin — Recovery Time', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-73BCE454-042E-420D-96A4-9DBA46626CD4.html' };
 const GARMIN_STRAP_PRIORITY: GuideSource = { label: 'Garmin — borstband vs. polssensor', url: 'https://www8.garmin.com/manuals/webhelp/GUID-676967A0-1B23-4384-9BC9-76F3D643F1C8/EN-US/GUID-F5BF67CE-C94E-4842-AE96-A7A05C85B732.html' };
 const PUBMED_RUNNING_ECONOMY: GuideSource = { label: 'PubMed — krachttraining en running economy', url: 'https://pubmed.ncbi.nlm.nih.gov/38165636/' };
+const PELOTON_HILL_REPEATS: GuideSource = { label: 'Peloton — hill repeats techniek en opbouw', url: 'https://www.onepeloton.com/blog/hill-repeats' };
+const OUTSIDE_INCLINE_TREADMILL: GuideSource = { label: 'Outside — incline-intervallen op de treadmill', url: 'https://run.outsideonline.com/training/treadmill-workout-incline/' };
+const TRAINIINGPEAKS_TREADMILL_INTERVAL: GuideSource = { label: 'TrainingPeaks — treadmill interval workout voor snelheid', url: 'https://www.trainingpeaks.com/blog/the-ultimate-interval-treadmill-session-to-improve-speed-and-beat-boredom/' };
+const TRAILRUNNER_MOUNTAIN_TRAINING: GuideSource = { label: 'Trail Runner Mag — specifiek trainen voor bergrennen', url: 'https://www.trailrunnermag.com/training/trail-tips-training/specific-training-for-mountain-running/' };
+const RUNINFINITE_VERTICAL_GAIN: GuideSource = { label: 'Run Infinite — hoeveel D+ is genoeg in training', url: 'https://runinfinite.com/training-for-vertical-gain/' };
+const MARATHONHANDBOOK_TEN_PERCENT: GuideSource = { label: 'Marathon Handbook — de 10%-regel voor mijlage-opbouw', url: 'https://marathonhandbook.com/the-10-percent-rule/' };
+const RUNBIKECALC_POLARIZED: GuideSource = { label: 'RunBikeCalc — 80/20 polarized training guide', url: 'https://runbikecalc.com/blog/polarized-training-complete-guide-2025' };
 
 export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   tpl_upper_a: {
-    dayLabel: 'MAANDAG',
+    dayLabel: 'VRIJDAG',
     subtitle: 'Kracht • Hypertrofie • Bovenlichaam',
     registration: 'Ascend: alleen voltooid/niet voltooid. Oefeningen, sets, reps, gewicht en RIR log je in MacroFactor.',
     sections: [
@@ -177,7 +184,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'WAAR OP LETTEN',
-        body: 'Geen extra endurance nodig deze dag. Dit is bewust ook een dag zónder zware beenbelasting, ingeklemd tussen woensdag (Lower A) en vrijdag (Bergconditie).',
+        body: 'Geen extra endurance nodig deze dag. Dit is bewust ook een dag zónder zware beenbelasting, ingeklemd tussen woensdag (Lower A) en het zware weekend-beenblok (zaterdag heuvelintervallen, zondag lange duurloop).',
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
@@ -246,23 +253,87 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_herstel: {
-    dayLabel: 'ZONDAG',
+    dayLabel: 'MAANDAG',
     subtitle: 'Recovery • Rustige beweging',
     registration: 'Training is niet verplicht.',
     sections: [
       {
         heading: 'DOEL',
-        body: 'Vermoeidheid laten dalen voordat maandag de volgende trainingscyclus begint. Een herstelwandeling hoeft niet als prestatie behandeld te worden — geen tempo- of hartslagdoel nodig.',
+        body: 'Vermoeidheid van het zware weekend (heuvelintervallen + lange duurloop) laten dalen voordat dinsdag de volgende trainingscyclus begint. Een herstelwandeling hoeft niet als prestatie behandeld te worden — geen tempo- of hartslagdoel nodig.',
       },
       { heading: 'OPTIES', items: ['volledige rust', '30–60 min rustige wandeling'] },
       { heading: 'GEEN', items: ['intervallen', 'zware incline', 'lange run', 'zware beentraining'] },
       {
         heading: 'GARMIN RECOVERY TIME',
-        body: 'Een hoge Recovery Time betekent niet "36 uur niet sporten" — het is Garmins schatting van de tijd tot je optimaal hersteld bent voor de volgende zware workout, en past zich gedurende de dag aan op onder andere slaap, stress en activiteit. Hoge Recovery Time + rustige wandeling is meestal prima; hoge Recovery Time + een zware Lower-sessie is wel relevante informatie om mee te wegen.',
+        body: 'Een hoge Recovery Time betekent niet "36 uur niet sporten" — het is Garmins schatting van de tijd tot je optimaal hersteld bent voor de volgende zware workout, en past zich gedurende de dag aan op onder andere slaap, stress en activiteit. Hoge Recovery Time + rustige wandeling is meestal prima; hoge Recovery Time + een zware sessie is wel relevante informatie om mee te wegen.',
       },
     ],
     gear: ['comfortabele wandelschoenen (optioneel)'],
     sources: [GARMIN_RECOVERY_TIME],
+  },
+
+  tpl_hill_intervals: {
+    dayLabel: 'ZATERDAG',
+    subtitle: 'Snelheid × D+ • Bergop intervaltraining',
+    registration: 'Ascend: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
+    sections: [
+      {
+        heading: 'DOEL',
+        body: 'De kwaliteitssessie van de week: bergop intervallen combineren een echte snelheidsprikkel (voor hardloopprogressie) met opbouwende D+ (voor de GR5) — twee doelen in één sessie in plaats van losse hardloop- en bergsessies.',
+      },
+      {
+        heading: 'UITVOERING',
+        body: '10 min rustig opwarmen. Daarna herhaald: 30-90 sec bergop op hoge inspanning (RPE 8-9/10), tussendoor rustig aflopen of teruglopen tot volledig herstel. Begin Maand 1 met 4-5 herhalingen, bouw op naar 8-10. Sluit af met 10 min rustig uitlopen.',
+      },
+      {
+        heading: 'WAAROM BERGOP, NIET VLAK?',
+        body: 'De helling verlaagt de impact per stap ten opzichte van vlakke sprints, en elke herhaling telt tegelijk mee als D+-training. Dit is dezelfde reden waarom heuvelherhalingen vaak worden aanbevolen als laagdrempelige introductie tot snelheidswerk.',
+      },
+      {
+        heading: 'WANNEER TE ZWAAR?',
+        items: [
+          'techniek/houding verslechtert duidelijk tijdens de herhalingen',
+          'geen volledig herstel meer mogelijk tussen herhalingen binnen de geplande tijd',
+          'zondag (Lange Duurloop) is meerdere weken op rij merkbaar slechter na zaterdag',
+        ],
+        note: 'Dan eerst het aantal herhalingen of de helling omlaag — niet meteen de hele sessie schrappen.',
+      },
+    ],
+    garminNote: 'Zie de Garmin-gids voor custom-activity- en databeeld-tips bij indoor intervallen.',
+    gear: ['Forerunner 255', 'Garmin borstband', 'hardloopschoenen', 'treadmill (of buiten heuvel/trap)'],
+    sources: [PELOTON_HILL_REPEATS, OUTSIDE_INCLINE_TREADMILL, TRAINIINGPEAKS_TREADMILL_INTERVAL, RUNBIKECALC_POLARIZED],
+  },
+
+  tpl_long_run: {
+    dayLabel: 'ZONDAG',
+    subtitle: 'Uithouding × D+ • Richting marathon en GR5',
+    registration: 'Ascend: duur, afstand, D+, D-, gemiddelde hartslag, RPE.',
+    sections: [
+      {
+        heading: 'DOEL',
+        body: 'De langste sessie van de week — bouwt zowel de marathon-uithouding (tijd op de been, aerobe basis) als GR5-specificiteit (D+, terrein, op vermoeide benen na zaterdag) tegelijk op.',
+      },
+      {
+        heading: 'OP VERMOEIDE BENEN — BEWUST',
+        body: 'Zondag komt direct na zaterdags heuvelintervallen. Dat is geen ongelukkige planning: bergsport-specifieke schema\'s trainen bewust een zwaar weekendblok (klimprikkel, dan een dag op vermoeide benen) omdat dat is wat een meerdaagse tocht als de GR5 daadwerkelijk vraagt.',
+      },
+      {
+        heading: 'OPBOUW',
+        body: 'Rustig tempo (RPE 3-4/10). Bouw afstand en D+ ten opzichte van vorige week op met maximaal +10-15% — niet meer. Elke 3-4 weken een lichtere week (zie de Deload-week in dit blok).',
+      },
+      {
+        heading: 'WANNEER TE ZWAAR?',
+        items: [
+          'de laatste 10-15 minuten voelen als tempo-/wedstrijdtraining in plaats van rustig',
+          'volledige zinnen spreken wordt structureel moeilijk',
+          'herstel duurt meerdere dagen langer dan normaal na deze sessie',
+        ],
+        note: 'Dan eerst de opbouw vertragen (kleinere stap dan +10%) — niet de sessie overslaan.',
+      },
+    ],
+    garminNote: 'Zie de Garmin-gids voor zones en databeelden bij lange duurlopen.',
+    gear: ['Forerunner 255', 'Garmin borstband', 'hardloop-/hikingschoenen', 'water/voeding voor langere duur'],
+    sources: [TRAILRUNNER_MOUNTAIN_TRAINING, RUNINFINITE_VERTICAL_GAIN, MARATHONHANDBOOK_TEN_PERCENT],
   },
 };
 
