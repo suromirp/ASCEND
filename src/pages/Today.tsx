@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
-import { daysBetween, mondayOfWeek, todayISO } from '../utils/dates';
+import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeObjectiveProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
@@ -19,14 +19,27 @@ import { StretchMenuButton } from '../components/StretchMenuButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { QuoteCard } from '../components/QuoteCard';
+import { WeeklyReflectionCard } from '../components/WeeklyReflectionCard';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, SecondaryButton } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
+// Merges proposeNoTimeToday's per-session proposals into one for the
+// shared RescheduleDialog — applyNoTimeToday (AppDataContext) still applies
+// the original array so each session's resolved/fallback status is
+// respected individually.
+function mergeNoTimeProposals(proposals: ScheduleProposal[]): ScheduleProposal {
+  return {
+    changes: proposals.flatMap((p) => p.changes),
+    reason: 'Sessies van vandaag verplaatsen naar de eerstvolgende vrije dag deze week — of overslaan als de week vol zit.',
+    resolved: proposals.every((p) => p.resolved),
+  };
+}
+
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings } = useAppData();
+  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -35,6 +48,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
+  const [noTimeProposals, setNoTimeProposals] = useState<ScheduleProposal[] | null>(null);
 
   const position = program ? resolveProgramWeek(program, today) : null;
   const weekStart = mondayOfWeek(today);
@@ -47,8 +61,23 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped');
   const secondary = todaySessions.filter((s) => s.id !== primary?.id);
   const allTodayDone = todaySessions.length > 0 && !primary;
+  const hasTodoToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped');
+
+  function handleNoTimeToday() {
+    const proposals = proposeNoTimeToday();
+    if (proposals.length === 0) return;
+    setNoTimeProposals(proposals);
+  }
 
   const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
+
+  // A short look-back nudge — only worth showing right at the week
+  // boundary (closing out the week that just ended, or opening the new
+  // one), not as a permanent fixture crowding every day's Today screen.
+  const showWeeklyReflection = isoWeekday(today) === 7 || isoWeekday(today) === 1;
+  const lastWeekStart = addDays(weekStart, -7);
+  const lastWeekSessions = sessionsForWeek(lastWeekStart);
+  const lastWeekCompletedCount = lastWeekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
   // Weekly nudge to back up: local-only storage means a wiped browser/cache
   // means everything is gone. No reference yet (never exported, never
@@ -170,6 +199,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         </Card>
       )}
 
+      {hasTodoToday && (
+        <SecondaryButton onClick={handleNoTimeToday} className="w-full">GEEN TIJD VANDAAG</SecondaryButton>
+      )}
+
       {secondary.map((s) => {
         const t = templateById.get(s.templateId);
         if (!t) return null;
@@ -196,6 +229,16 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{streak} {streak === 1 ? 'dag' : 'dagen'}</p>
         </Card>
       </div>
+
+      {showWeeklyReflection && (
+        <WeeklyReflectionCard
+          completed={weekCompletedCount}
+          total={weekSessions.length}
+          lastWeekCompleted={lastWeekCompletedCount}
+          lastWeekTotal={lastWeekSessions.length}
+          streak={streak}
+        />
+      )}
 
       {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
 
@@ -263,6 +306,17 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
             setPendingProposal(null);
           }}
           onCancel={() => setPendingProposal(null)}
+        />
+      )}
+
+      {noTimeProposals && (
+        <RescheduleDialog
+          proposal={mergeNoTimeProposals(noTimeProposals)}
+          onApply={() => {
+            applyNoTimeToday(noTimeProposals);
+            setNoTimeProposals(null);
+          }}
+          onCancel={() => setNoTimeProposals(null)}
         />
       )}
     </div>

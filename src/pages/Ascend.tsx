@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Objective } from '../models/objectives';
 import type { SessionLog } from '../models/training';
+import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
 import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
 import { computeObjectiveProgress } from '../engine/progression';
@@ -14,7 +15,7 @@ import { getGR5MilestoneDetail, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_
 import { Card, Eyebrow } from '../components/ui';
 
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually, updateObjective } = useAppData();
+  const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually, updateObjective, settings, updateSettings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
 
@@ -59,6 +60,8 @@ export function AscendPage() {
       {objective && (
         <GR5GoalCard objective={objective} onUpdate={(patch) => updateObjective(objective.id, patch)} />
       )}
+
+      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} onUpdate={(patch) => updateSettings(patch)} />
 
       {progress && (
         <AscentLadder
@@ -147,6 +150,15 @@ export function AscendPage() {
 
 const dateInputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
+// Date-driven UI guidance only — deliberately not an engine/scheduler
+// change that auto-mutates session durations. Just a nudge on the goal
+// card itself once a target date is close.
+const TAPER_WINDOW_DAYS = 14;
+
+function isTaperWindow(daysLeft: number | undefined): boolean {
+  return daysLeft !== undefined && daysLeft >= 0 && daysLeft <= TAPER_WINDOW_DAYS;
+}
+
 function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
   const exercises = useMemo(() => listLoggedExercises(logs), [logs]);
   const [selectedId, setSelectedId] = useState<string | undefined>(exercises[0]?.id);
@@ -200,6 +212,12 @@ function GR5GoalCard({
           {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
         </p>
       )}
+      {isTaperWindow(daysLeft) && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-alpine)' }}>
+          Taper: bouw dagelijkse afstand en D+ de komende twee weken rustig af, houd de benen fris en zorg voor
+          extra slaap en herstel richting de tocht.
+        </p>
+      )}
       <div className="flex gap-3">
         <div className="flex-1">
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Startdatum</label>
@@ -223,6 +241,134 @@ function GR5GoalCard({
           />
         </div>
       </div>
+    </Card>
+  );
+}
+
+const RACE_DISTANCE_KM: Record<'half' | 'full', number> = { half: 21.1, full: 42.2 };
+
+type MarathonGoalPatch = Partial<Pick<AppSettings, 'marathonRaceType' | 'marathonTargetDate' | 'marathonTargetTimeMinutes'>>;
+
+// Standalone goal, not a second Objective/MilestoneDefinition ladder — the
+// Ascent Ladder assumes objectives[0] is "the" objective in several places
+// (Today, Ascend), so a second one would need a broader refactor. This
+// mirrors GR5GoalCard's UI instead, backed by AppSettings.
+function MarathonGoalCard({
+  settings,
+  sessionLogs,
+  onUpdate,
+}: {
+  settings: AppSettings;
+  sessionLogs: SessionLog[];
+  onUpdate: (patch: MarathonGoalPatch) => void;
+}) {
+  const raceType = settings.marathonRaceType;
+  const distanceKm = raceType ? RACE_DISTANCE_KM[raceType] : undefined;
+  const daysLeft = settings.marathonTargetDate ? daysBetween(todayISO(), settings.marathonTargetDate) : undefined;
+
+  // Longest tpl_long_run so far — that template is 'hiking' type, so its
+  // distance lives under outdoorData (see models/training.ts).
+  const longestRunKm = useMemo(() => {
+    const distances = sessionLogs
+      .filter((l) => l.templateId === 'tpl_long_run')
+      .map((l) => l.outdoorData?.distanceKm ?? l.cardioData?.distanceKm ?? 0);
+    return distances.length > 0 ? Math.max(...distances) : 0;
+  }, [sessionLogs]);
+  const percentOfDistance = distanceKm && longestRunKm > 0 ? Math.round((longestRunKm / distanceKm) * 100) : undefined;
+
+  const totalMinutes = settings.marathonTargetTimeMinutes;
+  const hours = totalMinutes !== undefined ? Math.floor(totalMinutes / 60) : undefined;
+  const minutes = totalMinutes !== undefined ? totalMinutes % 60 : undefined;
+
+  function updateHours(value: string) {
+    const h = value === '' ? 0 : Number(value);
+    const m = minutes ?? 0;
+    onUpdate({ marathonTargetTimeMinutes: value === '' && m === 0 ? undefined : h * 60 + m });
+  }
+
+  function updateMinutes(value: string) {
+    const h = hours ?? 0;
+    const m = value === '' ? 0 : Number(value);
+    onUpdate({ marathonTargetTimeMinutes: h === 0 && value === '' ? undefined : h * 60 + m });
+  }
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>MARATHON DOEL</Eyebrow>
+      <div className="flex gap-2">
+        {(['half', 'full'] as const).map((type) => (
+          <button
+            key={type}
+            onClick={() => onUpdate({ marathonRaceType: type })}
+            className="flex-1 rounded-xl border py-2 text-xs font-medium tracking-wide transition-all active:scale-[0.97]"
+            style={{
+              borderColor: raceType === type ? 'var(--color-gold)' : 'var(--color-card-border)',
+              color: raceType === type ? 'var(--color-gold)' : 'var(--color-ink)',
+            }}
+          >
+            {type === 'half' ? 'HALVE (21,1 KM)' : 'HELE (42,2 KM)'}
+          </button>
+        ))}
+      </div>
+
+      {raceType && (
+        <>
+          {daysLeft !== undefined && (
+            <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
+              {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
+            </p>
+          )}
+          {isTaperWindow(daysLeft) && (
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-alpine)' }}>
+              Taper: bouw het volume de komende twee weken af, houd de intensiteit kort maar scherp, en focus op
+              slaap en voeding richting de start.
+            </p>
+          )}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wedstrijddatum</label>
+              <input
+                type="date"
+                value={settings.marathonTargetDate ?? ''}
+                onChange={(e) => onUpdate({ marathonTargetDate: e.target.value || undefined })}
+                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                style={dateInputStyle}
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — uur</label>
+              <input
+                type="number"
+                min={0}
+                value={hours ?? ''}
+                onChange={(e) => updateHours(e.target.value)}
+                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                style={dateInputStyle}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — min</label>
+              <input
+                type="number"
+                min={0}
+                max={59}
+                value={minutes ?? ''}
+                onChange={(e) => updateMinutes(e.target.value)}
+                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                style={dateInputStyle}
+              />
+            </div>
+          </div>
+          {longestRunKm > 0 && (
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Langste duurloop tot nu toe: {longestRunKm.toFixed(1)} km
+              {percentOfDistance !== undefined ? ` — ${percentOfDistance}% van de wedstrijdafstand` : ''}
+            </p>
+          )}
+        </>
+      )}
     </Card>
   );
 }

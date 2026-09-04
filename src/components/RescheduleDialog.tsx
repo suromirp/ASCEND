@@ -28,9 +28,13 @@ export function RescheduleDialog({
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">
                   <span style={{ color: 'var(--color-ink)' }}>{c.templateName}</span>
-                  <span style={{ color: 'var(--color-ink-dim)' }}>
-                    {formatDateNL(c.fromDate)} → <span style={{ color: 'var(--color-gold)' }}>{formatDateNL(c.toDate)}</span>
-                  </span>
+                  {c.toDate === c.fromDate ? (
+                    <span style={{ color: 'var(--color-danger)' }}>wordt overgeslagen</span>
+                  ) : (
+                    <span style={{ color: 'var(--color-ink-dim)' }}>
+                      {formatDateNL(c.fromDate)} → <span style={{ color: 'var(--color-gold)' }}>{formatDateNL(c.toDate)}</span>
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

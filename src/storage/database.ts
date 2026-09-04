@@ -3,13 +3,14 @@ import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
+import type { InjuryNote } from '../models/injury';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -22,6 +23,7 @@ interface AscendDB extends DBSchema {
   recoveryMetrics: { key: string; value: RecoveryMetric };
   bodyMetrics: { key: string; value: BodyMetric };
   nutritionMetrics: { key: string; value: NutritionMetric };
+  injuryNotes: { key: string; value: InjuryNote };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -29,21 +31,34 @@ let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
 export function getDB(): Promise<IDBPDatabase<AscendDB>> {
   if (!dbPromise) {
     dbPromise = openDB<AscendDB>(DB_NAME, DB_VERSION, {
+      // Guarded with objectStoreNames.contains(...) on every store — this
+      // callback re-runs (from oldVersion, not from scratch) on every real
+      // user's device the first time they open the app after a DB_VERSION
+      // bump, so a bare createObjectStore() would throw
+      // "object store already exists" for anything created by an earlier
+      // version.
       upgrade(db) {
-        db.createObjectStore('meta');
-        db.createObjectStore('programs', { keyPath: 'id' });
-        db.createObjectStore('sessionTemplates', { keyPath: 'id' });
-        const planned = db.createObjectStore('plannedSessions', { keyPath: 'id' });
-        planned.createIndex('by-week', 'weekStartDate');
-        planned.createIndex('by-date', 'scheduledDate');
-        const logs = db.createObjectStore('sessionLogs', { keyPath: 'id' });
-        logs.createIndex('by-date', 'completedDate');
-        db.createObjectStore('objectives', { keyPath: 'id' });
-        const progress = db.createObjectStore('milestoneProgress', { keyPath: 'id' });
-        progress.createIndex('by-objective', 'objectiveId');
-        db.createObjectStore('recoveryMetrics', { keyPath: 'id' });
-        db.createObjectStore('bodyMetrics', { keyPath: 'id' });
-        db.createObjectStore('nutritionMetrics', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+        if (!db.objectStoreNames.contains('programs')) db.createObjectStore('programs', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('sessionTemplates')) db.createObjectStore('sessionTemplates', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('plannedSessions')) {
+          const planned = db.createObjectStore('plannedSessions', { keyPath: 'id' });
+          planned.createIndex('by-week', 'weekStartDate');
+          planned.createIndex('by-date', 'scheduledDate');
+        }
+        if (!db.objectStoreNames.contains('sessionLogs')) {
+          const logs = db.createObjectStore('sessionLogs', { keyPath: 'id' });
+          logs.createIndex('by-date', 'completedDate');
+        }
+        if (!db.objectStoreNames.contains('objectives')) db.createObjectStore('objectives', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('milestoneProgress')) {
+          const progress = db.createObjectStore('milestoneProgress', { keyPath: 'id' });
+          progress.createIndex('by-objective', 'objectiveId');
+        }
+        if (!db.objectStoreNames.contains('recoveryMetrics')) db.createObjectStore('recoveryMetrics', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('bodyMetrics')) db.createObjectStore('bodyMetrics', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('nutritionMetrics')) db.createObjectStore('nutritionMetrics', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('injuryNotes')) db.createObjectStore('injuryNotes', { keyPath: 'id' });
       },
     });
   }
@@ -122,6 +137,12 @@ export const MilestoneProgressRepo = {
   delete: (id: string) => del('milestoneProgress', id),
 };
 
+export const InjuryNotesRepo = {
+  getAll: () => getAll('injuryNotes') as Promise<InjuryNote[]>,
+  put: (n: InjuryNote) => put('injuryNotes', n),
+  delete: (id: string) => del('injuryNotes', id),
+};
+
 export const RecoveryMetricsRepo = { getAll: () => getAll('recoveryMetrics') as Promise<RecoveryMetric[]> };
 export const BodyMetricsRepo = { getAll: () => getAll('bodyMetrics') as Promise<BodyMetric[]> };
 export const NutritionMetricsRepo = { getAll: () => getAll('nutritionMetrics') as Promise<NutritionMetric[]> };
@@ -158,6 +179,13 @@ export interface AppSettings {
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
   lastExportReminderDismissedAt?: string;
+  // Marathon goal — deliberately not a second Objective/MilestoneDefinition
+  // ladder (several screens assume objectives[0] is "the" objective); a
+  // standalone settings-backed goal instead, mirroring the GR5 card's UI.
+  // undefined raceType means the goal card is hidden/not yet set up.
+  marathonRaceType?: 'half' | 'full';
+  marathonTargetDate?: string; // ISO date
+  marathonTargetTimeMinutes?: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -363,6 +391,7 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('recoveryMetrics'),
     clearStore('bodyMetrics'),
     clearStore('nutritionMetrics'),
+    clearStore('injuryNotes'),
   ]);
   await MetaRepo.set('seeded', false);
   await seedIfEmpty();
@@ -379,6 +408,7 @@ export async function wipeAllData(): Promise<void> {
     clearStore('recoveryMetrics'),
     clearStore('bodyMetrics'),
     clearStore('nutritionMetrics'),
+    clearStore('injuryNotes'),
     clearStore('meta'),
   ]);
 }

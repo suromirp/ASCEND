@@ -5,7 +5,8 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../compon
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { exportData, importData, resetDemoData, settings, updateSettings } = useAppData();
+  const { exportData, importData, resetDemoData, settings, updateSettings, injuryNotes } = useAppData();
+  const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const fileInput = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -33,6 +34,15 @@ export function SettingsPage() {
         <Eyebrow>GIDSEN</Eyebrow>
         <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
         <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
+      </Card>
+
+      <Card className="flex flex-col gap-1">
+        <Eyebrow>GEZONDHEID</Eyebrow>
+        <NavRow
+          label="Blessures"
+          note={activeInjuryCount > 0 ? `${activeInjuryCount} actief` : 'Geen actieve blessures'}
+          onClick={() => navigate('/blessures')}
+        />
       </Card>
 
       <Card className="flex flex-col gap-3">

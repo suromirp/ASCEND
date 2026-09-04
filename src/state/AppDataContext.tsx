@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { InjuryNote } from '../models/injury';
 import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
 import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
@@ -16,6 +17,7 @@ import {
   SessionLogsRepo,
   ObjectivesRepo,
   MilestoneProgressRepo,
+  InjuryNotesRepo,
   SettingsRepo,
   StretchCompletionRepo,
   resetToDemoData,
@@ -23,7 +25,7 @@ import {
   type AppSettings,
   type StretchCompletion,
 } from '../storage/database';
-import { proposeMove, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { proposeMove, proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeObjectiveProgress, requirementAutoSatisfied } from '../engine/progression';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -38,6 +40,7 @@ interface AppData {
   sessionLogs: SessionLog[];
   objectives: Objective[];
   milestoneProgress: MilestoneProgress[];
+  injuryNotes: InjuryNote[];
   settings: AppSettings;
   stretchCompletion: StretchCompletion;
   templateById: Map<string, SessionTemplate>;
@@ -52,6 +55,11 @@ interface AppData {
   updateObjective: (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   toggleStretchRoutine: (kind: keyof StretchCompletion) => Promise<void>;
+  addInjury: (input: Omit<InjuryNote, 'id'>) => Promise<void>;
+  resolveInjury: (id: string) => Promise<void>;
+  deleteInjury: (id: string) => Promise<void>;
+  proposeNoTimeToday: () => ScheduleProposal[];
+  applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
   exportData: () => Promise<void>;
   importData: (file: File) => Promise<void>;
   resetDemoData: () => Promise<void>;
@@ -83,18 +91,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [milestoneProgress, setMilestoneProgress] = useState<MilestoneProgress[]>([]);
+  const [injuryNotes, setInjuryNotes] = useState<InjuryNote[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, objs, progress, loadedSettings, loadedStretchCompletion] = await Promise.all([
+    const [programs, tpls, planned, logs, objs, progress, injuries, loadedSettings, loadedStretchCompletion] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
       SessionLogsRepo.getAll(),
       ObjectivesRepo.getAll(),
       MilestoneProgressRepo.getAll(),
+      InjuryNotesRepo.getAll(),
       SettingsRepo.get(),
       StretchCompletionRepo.get(),
     ]);
@@ -104,6 +114,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setSessionLogs(logs);
     setObjectives(objs);
     setMilestoneProgress(progress);
+    setInjuryNotes(injuries);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
   }, []);
@@ -296,6 +307,71 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [stretchCompletion],
   );
 
+  const addInjury = useCallback(
+    async (input: Omit<InjuryNote, 'id'>) => {
+      await InjuryNotesRepo.put({ ...input, id: makeId('injury') });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  // Resolving is a status change, not a historical rewrite (see
+  // models/injury.ts) — unlike SessionLog this store is fine to update in
+  // place.
+  const resolveInjury = useCallback(
+    async (id: string) => {
+      const note = injuryNotes.find((n) => n.id === id);
+      if (!note) return;
+      await InjuryNotesRepo.put({ ...note, resolvedDate: todayISO() });
+      await refresh();
+    },
+    [injuryNotes, refresh],
+  );
+
+  const deleteInjury = useCallback(
+    async (id: string) => {
+      await InjuryNotesRepo.delete(id);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  // "Geen tijd vandaag" — proposeNoTimeToday returns one ScheduleProposal
+  // per session still due today (each already resolved against the others,
+  // since the engine threads a simulated week through the loop), for the UI
+  // to merge into a single confirmation and apply as one batch.
+  const proposeNoTimeTodayAction = useCallback((): ScheduleProposal[] => {
+    const today = todayISO();
+    const week = sessionsForWeek(mondayOfWeek(today));
+    return proposeNoTimeToday(week, templates, today);
+  }, [sessionsForWeek, templates]);
+
+  // Mirrors applyProposal's move semantics, plus the scheduler's
+  // "no free day left" fallback (a same-date no-op change) which reads as a
+  // skip rather than a move.
+  const applyNoTimeToday = useCallback(
+    async (proposals: ScheduleProposal[]) => {
+      for (const proposal of proposals) {
+        for (const change of proposal.changes) {
+          const session = plannedSessions.find((s) => s.id === change.sessionId);
+          if (!session) continue;
+          if (proposal.resolved && change.toDate !== change.fromDate) {
+            await PlannedSessionsRepo.put({
+              ...session,
+              scheduledDate: change.toDate,
+              status: 'moved',
+              movedFromDate: session.movedFromDate ?? change.fromDate,
+            });
+          } else {
+            await PlannedSessionsRepo.put(skipSessionEngine(session));
+          }
+        }
+      }
+      await refresh();
+    },
+    [plannedSessions, refresh],
+  );
+
   const value: AppData = {
     loading,
     program,
@@ -304,6 +380,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     sessionLogs,
     objectives,
     milestoneProgress,
+    injuryNotes,
     settings,
     stretchCompletion,
     templateById,
@@ -318,6 +395,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     updateObjective,
     updateSettings,
     toggleStretchRoutine,
+    addInjury,
+    resolveInjury,
+    deleteInjury,
+    proposeNoTimeToday: proposeNoTimeTodayAction,
+    applyNoTimeToday,
     exportData: async () => {
       await downloadExport();
       await updateSettings({ lastExportedAt: new Date().toISOString() });
