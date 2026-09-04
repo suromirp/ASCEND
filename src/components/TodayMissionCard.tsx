@@ -28,12 +28,16 @@ export function TodayMissionCard({
   fullDuration: number;
   weekNote?: string;
   quickComplete?: boolean;
-  onStart: (variant: SessionVariant, feel?: SubjectiveFeel) => void;
+  onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  // Prefilled with ASCEND's own estimate, but editable — MacroFactor knows
+  // the real elapsed time for a quick-complete strength session, and that's
+  // usually more accurate than the template's fixed duration.
+  const [quickDuration, setQuickDuration] = useState<number | ''>(fullDuration);
   const variants = availableVariants(template);
   const shortVariant = variants.find((v) => v === 'short');
   const guide = getTrainingGuide(template.id);
@@ -56,10 +60,27 @@ export function TodayMissionCard({
 
       {quickComplete ? (
         <div>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Duur (min) — uit MacroFactor</label>
+            <input
+              type="number"
+              value={quickDuration}
+              onChange={(e) => setQuickDuration(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-20 rounded-lg border px-2 py-1.5 text-right text-sm"
+              style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+            />
+          </div>
           <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde dit t.o.v. normaal?</p>
           <div className="flex gap-2">
             {(['better', 'normal', 'worse'] as const).map((f) => (
-              <PrimaryButton key={f} onClick={() => onStart('full', f)} fullWidth={false} className="text-xs">{FEEL_LABEL[f]}</PrimaryButton>
+              <PrimaryButton
+                key={f}
+                onClick={() => onStart('full', f, quickDuration === '' ? fullDuration : quickDuration)}
+                fullWidth={false}
+                className="text-xs"
+              >
+                {FEEL_LABEL[f]}
+              </PrimaryButton>
             ))}
           </div>
         </div>

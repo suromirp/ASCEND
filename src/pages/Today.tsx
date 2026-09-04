@@ -125,14 +125,14 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     return template?.type === 'strength' && settings.strengthTrackedExternally;
   }
 
-  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel) {
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) {
     if (isQuickComplete(template)) {
       logSession({
         plannedSessionId: session.id,
         templateId: template.id,
         type: template.type,
         variant,
-        durationMinutes: resolveVariantDuration(template, variant, session.scheduledDate, program),
+        durationMinutes: durationMinutes ?? resolveVariantDuration(template, variant, session.scheduledDate, program),
         subjectiveFeel: feel,
       });
     } else {
@@ -178,7 +178,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
           quickComplete={isQuickComplete(primaryTemplate)}
-          onStart={(variant, feel) => startSession(primary, primaryTemplate, variant, feel)}
+          onStart={(variant, feel, durationMinutes) => startSession(primary, primaryTemplate, variant, feel, durationMinutes)}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => skipSession(primary.id)}
         />
@@ -278,8 +278,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           program={program}
           quickComplete={isQuickComplete(actionSheetTemplate)}
           completedLog={actionSheetLog}
-          onStart={(variant, feel) => {
-            startSession(actionSheetSession, actionSheetTemplate, variant, feel);
+          onStart={(variant, feel, durationMinutes) => {
+            startSession(actionSheetSession, actionSheetTemplate, variant, feel, durationMinutes);
             setActionSheetSession(null);
           }}
           onMove={(date) => {

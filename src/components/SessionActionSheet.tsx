@@ -27,7 +27,7 @@ export function SessionActionSheet({
   program: Program | null;
   quickComplete?: boolean;
   completedLog?: SessionLog;
-  onStart: (variant: SessionVariant, feel?: SubjectiveFeel) => void;
+  onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
   onUndo?: () => void;
@@ -38,6 +38,8 @@ export function SessionActionSheet({
   const [showGuide, setShowGuide] = useState(false);
   const variants = availableVariants(template);
   const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
+  // Same MacroFactor-duration override as TodayMissionCard (see there).
+  const [quickDuration, setQuickDuration] = useState<number | ''>(fullDuration);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
   const guide = getTrainingGuide(template.id);
   const { closing, requestClose } = useSheetClose(onClose);
@@ -105,10 +107,27 @@ export function SessionActionSheet({
             <div className="mt-4 flex flex-col gap-2">
               {quickComplete ? (
                 <div>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Duur (min) — uit MacroFactor</label>
+                    <input
+                      type="number"
+                      value={quickDuration}
+                      onChange={(e) => setQuickDuration(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-20 rounded-lg border px-2 py-1.5 text-right text-sm"
+                      style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+                    />
+                  </div>
                   <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde dit t.o.v. normaal?</p>
                   <div className="flex gap-2">
                     {(['better', 'normal', 'worse'] as const).map((f) => (
-                      <PrimaryButton key={f} onClick={() => onStart('full', f)} fullWidth={false} className="text-xs">{FEEL_LABEL[f]}</PrimaryButton>
+                      <PrimaryButton
+                        key={f}
+                        onClick={() => onStart('full', f, quickDuration === '' ? fullDuration : quickDuration)}
+                        fullWidth={false}
+                        className="text-xs"
+                      >
+                        {FEEL_LABEL[f]}
+                      </PrimaryButton>
                     ))}
                   </div>
                 </div>

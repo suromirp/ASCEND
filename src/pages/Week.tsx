@@ -36,14 +36,14 @@ export function WeekPage() {
     return template?.type === 'strength' && settings.strengthTrackedExternally;
   }
 
-  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel) {
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) {
     if (isQuickComplete(template)) {
       logSession({
         plannedSessionId: session.id,
         templateId: template.id,
         type: template.type,
         variant,
-        durationMinutes: resolveVariantDuration(template, variant, session.scheduledDate, program),
+        durationMinutes: durationMinutes ?? resolveVariantDuration(template, variant, session.scheduledDate, program),
         subjectiveFeel: feel,
       });
     } else {
@@ -117,8 +117,8 @@ export function WeekPage() {
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
-          onStart={(variant, feel) => {
-            startSession(selected, templateById.get(selected.templateId)!, variant, feel);
+          onStart={(variant, feel, durationMinutes) => {
+            startSession(selected, templateById.get(selected.templateId)!, variant, feel, durationMinutes);
             setSelected(null);
           }}
           onMove={(date) => {
