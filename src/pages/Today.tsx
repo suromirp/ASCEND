@@ -116,7 +116,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <AscendAnimatedLogo size={64} />
+          <AscendAnimatedLogo size={84} />
           {position && (
             <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
               WEEK {position.weekInProgram} • {position.phase.name}

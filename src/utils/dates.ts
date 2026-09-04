@@ -63,6 +63,22 @@ export function formatMonthNL(iso: string): string {
   return `${DUTCH_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+// The first and last calendar date of the month containing `anchor`.
+export function monthBounds(anchor: string): { start: string; end: string } {
+  const d = parseISODate(anchor);
+  const start = toISODate(new Date(d.getFullYear(), d.getMonth(), 1));
+  const end = toISODate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  return { start, end };
+}
+
+// Moves `anchor` `delta` whole calendar months, landing on the 1st — used
+// to page a month view back/forward regardless of which day of the month
+// `anchor` started on.
+export function shiftMonthAnchor(anchor: string, delta: number): string {
+  const d = parseISODate(anchor);
+  return toISODate(new Date(d.getFullYear(), d.getMonth() + delta, 1));
+}
+
 // Resolves which phase / week-in-phase / week-in-program a given date falls
 // on, purely from Program.startDate + each Phase's weekCount. Weeks are
 // never persisted (see models/program.ts) — this is the single source of

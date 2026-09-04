@@ -157,71 +157,105 @@ export function playIntroDrumsOnFirstInteraction(enabled: boolean) {
   };
 }
 
-// --- Completion chimes ---------------------------------------------------
+// --- Completion fanfares ---------------------------------------------
 
-function playChimeNote(ctx: AudioContext, destination: AudioNode, time: number, freqHz: number, gain: number, durationSec = 0.9) {
+// A low percussive anchor under the fanfare — the same tom-style body as
+// the intro drums, one hit instead of a pattern, giving the rise something
+// to launch off instead of starting from silence.
+function playImpactHit(ctx: AudioContext, destination: AudioNode, time: number, gain: number) {
   const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(freqHz, time);
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(110, time);
+  osc.frequency.exponentialRampToValueAtTime(42, time + 0.24);
 
   const oscGain = ctx.createGain();
-  oscGain.gain.setValueAtTime(0, time);
-  oscGain.gain.linearRampToValueAtTime(gain, time + 0.02);
-  oscGain.gain.exponentialRampToValueAtTime(0.001, time + durationSec);
+  oscGain.gain.setValueAtTime(gain, time);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.55);
 
   osc.connect(oscGain);
   oscGain.connect(destination);
   osc.start(time);
-  osc.stop(time + durationSec + 0.05);
+  osc.stop(time + 0.6);
+}
 
-  // A quiet octave-up overtone layered in for a bell-like shimmer, rather
-  // than a single flat sine — reads as a soft chime instead of a beep.
+// Sine core + a triangle layer for brightness ("brassier" than a flat
+// sine, reads as a fanfare rather than a notification ding) + an octave
+// overtone for shimmer.
+function playFanfareNote(ctx: AudioContext, destination: AudioNode, time: number, freqHz: number, gain: number, durationSec = 1.1) {
+  const core = ctx.createOscillator();
+  core.type = 'sine';
+  core.frequency.setValueAtTime(freqHz, time);
+  const coreGain = ctx.createGain();
+  coreGain.gain.setValueAtTime(0, time);
+  coreGain.gain.linearRampToValueAtTime(gain, time + 0.015);
+  coreGain.gain.exponentialRampToValueAtTime(0.001, time + durationSec);
+  core.connect(coreGain);
+  coreGain.connect(destination);
+  core.start(time);
+  core.stop(time + durationSec + 0.05);
+
+  const bright = ctx.createOscillator();
+  bright.type = 'triangle';
+  bright.frequency.setValueAtTime(freqHz, time);
+  const brightGain = ctx.createGain();
+  brightGain.gain.setValueAtTime(0, time);
+  brightGain.gain.linearRampToValueAtTime(gain * 0.55, time + 0.015);
+  brightGain.gain.exponentialRampToValueAtTime(0.001, time + durationSec * 0.75);
+  bright.connect(brightGain);
+  brightGain.connect(destination);
+  bright.start(time);
+  bright.stop(time + durationSec * 0.75 + 0.05);
+
   const overtone = ctx.createOscillator();
   overtone.type = 'sine';
   overtone.frequency.setValueAtTime(freqHz * 2, time);
-
   const overtoneGain = ctx.createGain();
   overtoneGain.gain.setValueAtTime(0, time);
-  overtoneGain.gain.linearRampToValueAtTime(gain * 0.25, time + 0.02);
+  overtoneGain.gain.linearRampToValueAtTime(gain * 0.3, time + 0.02);
   overtoneGain.gain.exponentialRampToValueAtTime(0.001, time + durationSec * 0.6);
-
   overtone.connect(overtoneGain);
   overtoneGain.connect(destination);
   overtone.start(time);
   overtone.stop(time + durationSec * 0.6 + 0.05);
 }
 
-function playChime(pattern: { offset: number; freqHz: number; gain: number }[], volume: number) {
+function playFanfare(pattern: { offset: number; freqHz: number; gain: number; duration?: number }[], volume: number, impactGain: number) {
   const ctx = getAudioContext();
   if (!ctx) return;
   ensureRunning(ctx);
 
-  const master = createMasterBus(ctx, volume, 0.18, 1.2, 4);
+  const master = createMasterBus(ctx, volume, 0.32, 2.2, 2.6);
   const now = ctx.currentTime;
+  playImpactHit(ctx, master, now, impactGain);
   for (const note of pattern) {
-    playChimeNote(ctx, master, now + note.offset, note.freqHz, note.gain);
+    playFanfareNote(ctx, master, now + note.offset, note.freqHz, note.gain, note.duration ?? 1.1);
   }
 }
 
-// A short two-note rise — the routine "you finished a session" acknowledgement.
-const SESSION_CHIME = [
-  { offset: 0, freqHz: 587.33, gain: 0.32 }, // D5
-  { offset: 0.1, freqHz: 880, gain: 0.4 }, // A5
+// A punchy rising fourth-then-fifth, not a stepwise scale — reads as a
+// quick "victory", not a doorbell. Still shorter/smaller than the
+// milestone fanfare below.
+const SESSION_FANFARE = [
+  { offset: 0.05, freqHz: 392, gain: 0.4 }, // G4
+  { offset: 0.16, freqHz: 587.33, gain: 0.46 }, // D5
+  { offset: 0.28, freqHz: 783.99, gain: 0.55, duration: 1.3 }, // G5, held
 ];
 
-// A fuller four-note ascending triad+octave — reserved for an actual
-// Ascent Ladder milestone, the rarer/bigger moment.
-const MILESTONE_CHIME = [
-  { offset: 0, freqHz: 523.25, gain: 0.3 }, // C5
-  { offset: 0.11, freqHz: 659.25, gain: 0.34 }, // E5
-  { offset: 0.22, freqHz: 783.99, gain: 0.38 }, // G5
-  { offset: 0.36, freqHz: 1046.5, gain: 0.45 }, // C6
+// A bigger rising run that lands on a sustained octave — the rare, actually
+// epic moment (an Ascent Ladder milestone), noticeably bigger than a
+// routine session completion.
+const MILESTONE_FANFARE = [
+  { offset: 0.06, freqHz: 392, gain: 0.42 }, // G4
+  { offset: 0.16, freqHz: 523.25, gain: 0.46 }, // C5
+  { offset: 0.26, freqHz: 659.25, gain: 0.5 }, // E5
+  { offset: 0.36, freqHz: 783.99, gain: 0.56, duration: 1.6 }, // G5, held
+  { offset: 0.36, freqHz: 1046.5, gain: 0.42, duration: 1.6 }, // C6, landed together with the G5 as a sustained chord
 ];
 
-export function playSessionCompleteChime(volume = 0.45) {
-  playChime(SESSION_CHIME, volume);
+export function playSessionCompleteChime(volume = 0.55) {
+  playFanfare(SESSION_FANFARE, volume, 0.5);
 }
 
-export function playMilestoneChime(volume = 0.55) {
-  playChime(MILESTONE_CHIME, volume);
+export function playMilestoneChime(volume = 0.65) {
+  playFanfare(MILESTONE_FANFARE, volume, 0.65);
 }

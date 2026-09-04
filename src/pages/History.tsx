@@ -1,18 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { formatDateNL, formatMonthNL, parseISODate, toISODate, todayISO } from '../utils/dates';
+import { formatDateNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
-
-function monthBounds(anchor: string) {
-  const d = parseISODate(anchor);
-  const start = toISODate(new Date(d.getFullYear(), d.getMonth(), 1));
-  const end = toISODate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
-  return { start, end };
-}
 
 const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio', hiking: 'Avontuur', recovery: 'Herstel', adventure: 'Avontuur' };
 
@@ -57,8 +50,7 @@ export function HistoryPage() {
   const [selectedLog, setSelectedLog] = useState<SessionLog | null>(null);
 
   function shiftMonth(delta: number) {
-    const d = parseISODate(anchor);
-    setAnchor(toISODate(new Date(d.getFullYear(), d.getMonth() + delta, 1)));
+    setAnchor(shiftMonthAnchor(anchor, delta));
   }
 
   return (
