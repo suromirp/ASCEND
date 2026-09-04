@@ -4,6 +4,7 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
+import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
 import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
   seedIfEmpty,
@@ -180,6 +181,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       await refresh();
       haptics.success();
+      if (settings.introSoundEnabled) {
+        if (clearedTitle) playMilestoneChime();
+        else playSessionCompleteChime();
+      }
       // Every completion gets a quote — a regular session a lighter one, a
       // milestone clear (if this same log happened to satisfy one) the
       // bigger victory-tier treatment with the milestone's title attached.
@@ -189,7 +194,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
       );
     },
-    [objectives, milestoneProgress, sessionLogs, refresh],
+    [objectives, milestoneProgress, sessionLogs, refresh, settings.introSoundEnabled],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
@@ -254,9 +259,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const title = objectives.find((o) => o.id === objectiveId)?.milestones.find((m) => m.id === milestoneId)?.title;
       await refresh();
       haptics.success();
+      if (settings.introSoundEnabled) playMilestoneChime();
       if (title) setCelebration({ id: makeId('celebration'), kind: 'milestone', title, quote: pickVictoryQuote() });
     },
-    [objectives, refresh],
+    [objectives, refresh, settings.introSoundEnabled],
   );
 
   // Only targetDate/targetDistanceKm are editable from the UI today — the

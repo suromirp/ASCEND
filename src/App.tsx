@@ -4,7 +4,7 @@ import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt } from './components/UpdatePrompt';
-import { playIntroDrumsOnFirstInteraction } from './utils/introDrums';
+import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage } from './pages/Ascend';
