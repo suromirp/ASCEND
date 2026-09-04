@@ -259,3 +259,54 @@ export function playSessionCompleteChime(volume = 0.55) {
 export function playMilestoneChime(volume = 0.65) {
   playFanfare(MILESTONE_FANFARE, volume, 0.65);
 }
+
+// --- Timer alarm ----------------------------------------------------
+
+// A single clean pulse — sine core for a pure tone, a soft triangle layer
+// underneath for a bit of body (same recipe as playFanfareNote, just
+// short and undecorated: this needs to read as "time's up", not
+// "achievement"). No octave overtone, no long tail.
+function playAlarmPulse(ctx: AudioContext, destination: AudioNode, time: number, freqHz: number, gain: number) {
+  const core = ctx.createOscillator();
+  core.type = 'sine';
+  core.frequency.setValueAtTime(freqHz, time);
+  const coreGain = ctx.createGain();
+  coreGain.gain.setValueAtTime(0, time);
+  coreGain.gain.linearRampToValueAtTime(gain, time + 0.01);
+  coreGain.gain.setValueAtTime(gain, time + 0.11);
+  coreGain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+  core.connect(coreGain);
+  coreGain.connect(destination);
+  core.start(time);
+  core.stop(time + 0.18);
+
+  const body = ctx.createOscillator();
+  body.type = 'triangle';
+  body.frequency.setValueAtTime(freqHz, time);
+  const bodyGain = ctx.createGain();
+  bodyGain.gain.setValueAtTime(0, time);
+  bodyGain.gain.linearRampToValueAtTime(gain * 0.4, time + 0.01);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+  body.connect(bodyGain);
+  bodyGain.connect(destination);
+  body.start(time);
+  body.stop(time + 0.18);
+}
+
+// Three even pulses on the same note, a fourth held slightly longer — a
+// steady, unmistakable "timer done" rhythm rather than a melodic run.
+// Deliberately drier than the completion fanfares (little reverb) so it
+// reads as crisp/urgent rather than celebratory.
+export function playTimerAlarm(volume = 0.55) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  ensureRunning(ctx);
+
+  const master = createMasterBus(ctx, volume, 0.12, 0.9, 2.4);
+  const now = ctx.currentTime;
+  const freq = 880; // A5
+  const offsets = [0, 0.24, 0.48, 0.78];
+  offsets.forEach((offset, i) => {
+    playAlarmPulse(ctx, master, now + offset, freq, i === offsets.length - 1 ? 0.6 : 0.5);
+  });
+}

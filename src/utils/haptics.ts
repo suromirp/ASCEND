@@ -14,4 +14,7 @@ export const haptics = {
   // A session logged or a milestone cleared — two short pulses read as more
   // deliberate than a single buzz, without tipping into "game achievement".
   success: () => vibrate([12, 50, 18]),
+  // A countdown timer reaching zero — three even buzzes, matching the
+  // steady (not melodic) rhythm of playTimerAlarm in utils/sound.ts.
+  alarm: () => vibrate([40, 90, 40, 90, 40]),
 };

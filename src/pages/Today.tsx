@@ -16,6 +16,7 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
+import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { QuoteCard } from '../components/QuoteCard';
@@ -152,7 +153,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
             </p>
           )}
         </div>
-        <StretchMenuButton />
+        <div className="flex items-center gap-2">
+          <TimerButton />
+          <StretchMenuButton />
+        </div>
       </div>
 
       {showExportReminder && (

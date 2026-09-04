@@ -10,6 +10,9 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StretchList } from './StretchList';
+import { CountdownTimer } from './CountdownTimer';
+
+const REST_TIMER_SECONDS = 90;
 
 const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'VOLLEDIG', short: 'KORT', minimum: 'MINIMUM', custom: 'AANGEPAST' };
 const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
@@ -50,6 +53,7 @@ export function ExerciseLogger({
   const [notes, setNotes] = useState('');
   const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(undefined);
   const [saving, setSaving] = useState(false);
+  const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
 
   const exercises = exercisesForVariant(template, variant);
   const [setLogs, setSetLogs] = useState<Record<string, SetLog[]>>(() =>
@@ -224,9 +228,19 @@ export function ExerciseLogger({
           <div className="mt-5 flex flex-col gap-4">
             {exercises.map((ex) => (
               <Card key={ex.id}>
-                <div className="mb-2 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{ex.exerciseName}</span>
-                  <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{ex.sets} × {ex.reps}</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{ex.sets} × {ex.reps}</span>
+                    <button
+                      onClick={() => setRestTimerFor(ex.exerciseName)}
+                      aria-label={`Rusttimer voor ${ex.exerciseName}`}
+                      className="text-xs underline underline-offset-2"
+                      style={{ color: 'var(--color-bronze)' }}
+                    >
+                      rust
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   {(setLogs[ex.id] ?? []).map((set, i) => (
@@ -425,6 +439,10 @@ export function ExerciseLogger({
         </div>
       </div>
       </div>
+
+      {restTimerFor && (
+        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`RUST — ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
+      )}
     </Portal>
   );
 }
