@@ -7,7 +7,21 @@ export function StretchItems({ stretches, className = 'mt-3 flex flex-col gap-2'
     <ul className={className}>
       {stretches.map((s) => (
         <li key={s.name} className="flex items-baseline justify-between gap-3 text-sm">
-          <span style={{ color: 'var(--color-ink)' }}>{s.name}</span>
+          <span className="flex items-baseline gap-1.5" style={{ color: 'var(--color-ink)' }}>
+            {s.name}
+            {s.videoUrl && (
+              <a
+                href={s.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-xs underline underline-offset-2"
+                style={{ color: 'var(--color-sky)' }}
+              >
+                video ↗
+              </a>
+            )}
+          </span>
           <span className="shrink-0 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {s.durationSec ? `${s.durationSec}s` : ''}{s.note ? (s.durationSec ? ` • ${s.note}` : s.note) : ''}
           </span>

@@ -58,6 +58,9 @@ export interface Stretch {
   name: string;
   durationSec?: number;
   note?: string;
+  // A short (~1-2 min), demonstration-only reference video — never a
+  // required watch, just an optional "hoe ziet dit eruit" link.
+  videoUrl?: string;
 }
 
 // The reusable definition of a workout — "what" a session is, independent of
