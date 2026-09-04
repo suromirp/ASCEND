@@ -4,7 +4,7 @@ import type { SessionTemplate, PlannedSession, SessionLog } from '../models/trai
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays, todayISO } from '../utils/dates';
+import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
@@ -246,18 +246,74 @@ export async function syncObjectiveDefinitions(): Promise<void> {
 // buildTemplates()/the defaultDayOfWeek pattern in data/defaultProgram.ts
 // changes shape (not for wording-only tweaks, which upsert for free).
 //
-// Only PlannedSessions with scheduledDate strictly after today are touched
-// — today and every earlier day keep exactly what was already scheduled,
-// so no already-logged session's plannedSessionId ever dangles and nothing
-// that already happened silently reshapes itself. A future session the
-// user already skipped or moved is still replaced by this — same
-// full-overwrite tradeoff syncObjectiveDefinitions/resetToDemoData already
-// make for non-historical data, just scoped to "not yet happened" here.
-const SCHEDULE_CONTENT_VERSION = 1;
+// Only PlannedSessions from the Monday *after* the week containing today
+// are regenerated — the whole week someone is mid-way through, including
+// its still-future days, is left exactly as already scheduled. (v1 of this
+// cut off at "today" itself, which could fragment the in-progress week:
+// Monday already logged under the old pattern, but Thursday/Friday/
+// Saturday of that same week silently reshaped underneath it — see the
+// v1->v2 correction below.) Nothing that already happened silently
+// reshapes itself, and no already-logged session's plannedSessionId ever
+// dangles. A future session the user already skipped or moved is still
+// replaced by this — same full-overwrite tradeoff syncObjectiveDefinitions/
+// resetToDemoData already make for non-historical data, just scoped to
+// "not this week or earlier" here.
+const SCHEDULE_CONTENT_VERSION = 2;
+
+// One-time correction for exactly the fragmentation v1 could cause (see
+// above): a week where tpl_upper_a appears twice — once on its old Monday
+// slot (already scheduled/logged before v1 ran) and once on its new Friday
+// slot (written by v1, since Friday fell after v1's same-day cutoff) — with
+// tpl_hill_intervals/tpl_long_run also freshly written into that week's
+// Saturday/Sunday. Reverts just those three still-unlogged sessions back to
+// the old Friday/Saturday/Sunday templates (Bergconditie/Lower B/Herstel),
+// so the in-progress week reads as one coherent plan again; the new pattern
+// still takes over cleanly from the following Monday (already correct,
+// untouched by this).
+async function fixV1WeekFragmentation(): Promise<void> {
+  const [sessions, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll()]);
+  const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+
+  const byWeek = new Map<string, PlannedSession[]>();
+  for (const s of sessions) {
+    const list = byWeek.get(s.weekStartDate);
+    if (list) list.push(s);
+    else byWeek.set(s.weekStartDate, [s]);
+  }
+
+  const REVERT: Record<string, string> = {
+    tpl_hill_intervals: 'tpl_lower_b',
+    tpl_long_run: 'tpl_herstel',
+  };
+
+  for (const weekSessions of byWeek.values()) {
+    const upperAs = weekSessions.filter((s) => s.templateId === 'tpl_upper_a').sort((a, b) => (a.scheduledDate < b.scheduledDate ? -1 : 1));
+    if (upperAs.length < 2) continue; // not a fragmented week
+
+    // Only the later (Friday, written by v1) occurrence is the erroneous
+    // duplicate — the earliest one is the legitimate original Monday slot
+    // and must never be touched, logged or not.
+    const duplicate = upperAs[upperAs.length - 1];
+    if (!loggedPlannedIds.has(duplicate.id)) {
+      await PlannedSessionsRepo.put({ ...duplicate, templateId: 'tpl_bergconditie' });
+    }
+
+    for (const s of weekSessions) {
+      if (s.id === duplicate.id || loggedPlannedIds.has(s.id)) continue;
+      if (REVERT[s.templateId]) {
+        await PlannedSessionsRepo.put({ ...s, templateId: REVERT[s.templateId] });
+      }
+    }
+  }
+}
 
 export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
   const version = await MetaRepo.get<number>('scheduleVersion');
   if (version === SCHEDULE_CONTENT_VERSION) return;
+
+  if (version === 1) {
+    await fixV1WeekFragmentation();
+  }
 
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
@@ -269,8 +325,8 @@ export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
     return;
   }
 
-  const today = todayISO();
-  const toDelete = existingSessions.filter((s) => s.scheduledDate > today);
+  const cutoff = addDays(mondayOfWeek(todayISO()), 7);
+  const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff);
   await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
 
   const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
@@ -280,7 +336,7 @@ export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
     const weekStart = addDays(program.startDate, week * 7);
     templatesWithDay.forEach((t, order) => {
       const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date <= today) return;
+      if (date < cutoff) return;
       newSessions.push({
         id: makeId('planned'),
         templateId: t.id,
