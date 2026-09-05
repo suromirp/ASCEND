@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, wipeAllData } from './database';
+import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
@@ -139,19 +139,21 @@ describe('backup envelope round-trip', () => {
     expect(await GoalMilestoneProgressRepo.getAll()).toHaveLength(1);
   });
 
-  it('round-trips a real TrainingGoal/GoalMilestone through export and full-restore import (V2)', async () => {
+  it('round-trips a real TrainingGoal/GoalMilestone/CapabilityEvidence through export and full-restore import (V3)', async () => {
     await TrainingGoalsRepo.put({ id: 'goal1', name: 'Marathon', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'paused' });
     await GoalMilestonesRepo.put({ id: 'ms1', goalId: 'goal1', order: 1, title: 'First', requirement: { kind: 'manual' } });
     await GoalMilestoneProgressRepo.put({ id: 'p1', goalId: 'goal1', milestoneId: 'ms1', clearedDate: '2026-02-01' });
+    await CapabilityEvidenceRepo.put({ id: 'ce1', key: { dimension: 'load_carriage' }, measured: { amount: 12, unit: 'kg' }, date: '2026-02-01', evidenceType: 'manual', source: 'manualEntry' });
 
     const envelope = await buildBackupEnvelope();
-    expect(envelope.payload).toEqual(expect.objectContaining({ version: 2 }));
+    expect(envelope.payload).toEqual(expect.objectContaining({ version: 3 }));
 
     await wipeAllData();
     await importEnvelope(envelope);
 
     expect(await TrainingGoalsRepo.getAll()).toEqual([expect.objectContaining({ id: 'goal1' })]);
     expect(await GoalMilestonesRepo.getAll()).toEqual([expect.objectContaining({ id: 'ms1' })]);
+    expect(await CapabilityEvidenceRepo.getAll()).toEqual([expect.objectContaining({ id: 'ce1' })]);
     expect(await GoalMilestoneProgressRepo.getAll()).toEqual([expect.objectContaining({ id: 'p1' })]);
   });
 });

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 import { ImportWizard } from '../components/ImportWizard';
+import { BaselineEvidenceCard } from '../components/BaselineEvidenceCard';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 
 export function SettingsPage() {
@@ -98,6 +99,8 @@ export function SettingsPage() {
           </div>
         )}
       </Card>
+
+      <BaselineEvidenceCard />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>KRACHTTRAINING</Eyebrow>

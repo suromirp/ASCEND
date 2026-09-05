@@ -20,6 +20,7 @@ import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
 import {
   ProgramsRepo,
@@ -29,6 +30,7 @@ import {
   TrainingGoalsRepo,
   GoalMilestonesRepo,
   GoalMilestoneProgressRepo,
+  CapabilityEvidenceRepo,
   InjuryNotesRepo,
   SettingsRepo,
   BackupSnapshotsRepo,
@@ -43,6 +45,7 @@ import {
   ALL_CATEGORIES,
   type AscendBackupEnvelope,
   type AscendBackupPayloadV2,
+  type AscendBackupPayloadV3,
   type NormalizedBackupData,
   type BackupDataCategory,
   type CategoryAction,
@@ -87,7 +90,7 @@ function migrateLegacyObjectives(
 // --- export direction --------------------------------------------------------
 
 export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
-  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, injuryNotes, settings] = await Promise.all([
+  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
@@ -95,12 +98,13 @@ export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
     TrainingGoalsRepo.getAll(),
     GoalMilestonesRepo.getAll(),
     GoalMilestoneProgressRepo.getAll(),
+    CapabilityEvidenceRepo.getAll(),
     InjuryNotesRepo.getAll(),
     SettingsRepo.get(),
   ]);
 
-  const payload: AscendBackupPayloadV2 = {
-    version: 2,
+  const payload: AscendBackupPayloadV3 = {
+    version: 3,
     program: programs[0] ?? null,
     templates,
     plannedSessions,
@@ -108,6 +112,7 @@ export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
     trainingGoals,
     goalMilestones,
     goalMilestoneProgress,
+    capabilityEvidence,
     injuryNotes,
     settings,
   };
@@ -147,6 +152,24 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     const payload = obj.payload as Record<string, unknown>;
     const createdAt = typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString();
 
+    if (payload.version === 3) {
+      const p = payload as unknown as AscendBackupPayloadV3;
+      return {
+        createdAt,
+        sourceBackupSchemaVersion: obj.backupSchemaVersion,
+        program: p.program ?? null,
+        templates: p.templates ?? [],
+        plannedSessions: p.plannedSessions ?? [],
+        sessionLogs: p.sessionLogs ?? [],
+        trainingGoals: p.trainingGoals ?? [],
+        goalMilestones: p.goalMilestones ?? [],
+        goalMilestoneProgress: p.goalMilestoneProgress ?? [],
+        capabilityEvidence: p.capabilityEvidence ?? [],
+        injuryNotes: p.injuryNotes ?? [],
+        settings: p.settings ?? {},
+      };
+    }
+
     if (payload.version === 2) {
       const p = payload as unknown as AscendBackupPayloadV2;
       return {
@@ -159,6 +182,10 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
         trainingGoals: p.trainingGoals ?? [],
         goalMilestones: p.goalMilestones ?? [],
         goalMilestoneProgress: p.goalMilestoneProgress ?? [],
+        // V2 predates the Capability Engine (Phase 2) — no manual baseline
+        // evidence could have existed yet, so an empty array here is a
+        // true absence, not data loss.
+        capabilityEvidence: [],
         injuryNotes: p.injuryNotes ?? [],
         settings: p.settings ?? {},
       };
@@ -178,6 +205,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
         trainingGoals: migrated.trainingGoals,
         goalMilestones: migrated.goalMilestones,
         goalMilestoneProgress: migrated.goalMilestoneProgress,
+        capabilityEvidence: [],
         injuryNotes: p.injuryNotes ?? [],
         settings,
       };
@@ -203,6 +231,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
       trainingGoals: migratedGoals.trainingGoals,
       goalMilestones: migratedGoals.goalMilestones,
       goalMilestoneProgress: migratedGoals.goalMilestoneProgress,
+      capabilityEvidence: [],
       injuryNotes: (migrated.injuryNotes as InjuryNote[] | undefined) ?? [],
       settings,
     };
@@ -222,6 +251,7 @@ export const CATEGORY_SUPPORTED_ACTIONS: Record<BackupDataCategory, CategoryActi
   training_history: ['keep_current', 'merge', 'replace', 'ignore'],
   planned_schedule: ['keep_current', 'replace'],
   objectives_and_milestones: ['keep_current', 'merge', 'replace'],
+  capability_evidence: ['keep_current', 'merge', 'replace', 'ignore'],
   injuries: ['keep_current', 'merge', 'replace', 'ignore'],
   app_settings: ['keep_current', 'replace'],
 };
@@ -238,6 +268,7 @@ export function defaultActionsForMode(mode: ImportMode): Partial<Record<BackupDa
       training_history: 'replace',
       planned_schedule: 'replace',
       objectives_and_milestones: 'replace',
+      capability_evidence: 'replace',
       injuries: 'replace',
       app_settings: 'replace',
     };
@@ -247,6 +278,7 @@ export function defaultActionsForMode(mode: ImportMode): Partial<Record<BackupDa
     program_and_templates: 'merge',
     training_history: 'merge',
     objectives_and_milestones: 'merge',
+    capability_evidence: 'merge',
     injuries: 'merge',
     app_settings: 'keep_current',
   };
@@ -340,12 +372,13 @@ interface CurrentData {
   trainingGoals: TrainingGoal[];
   goalMilestones: GoalMilestone[];
   goalMilestoneProgress: GoalMilestoneProgress[];
+  capabilityEvidence: CapabilityEvidence[];
   injuryNotes: InjuryNote[];
   settings: AppSettings;
 }
 
 async function loadCurrentData(): Promise<CurrentData> {
-  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, injuryNotes, settings] = await Promise.all([
+  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
@@ -353,10 +386,11 @@ async function loadCurrentData(): Promise<CurrentData> {
     TrainingGoalsRepo.getAll(),
     GoalMilestonesRepo.getAll(),
     GoalMilestoneProgressRepo.getAll(),
+    CapabilityEvidenceRepo.getAll(),
     InjuryNotesRepo.getAll(),
     SettingsRepo.get(),
   ]);
-  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, injuryNotes, settings };
+  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings };
 }
 
 interface DiffResult {
@@ -370,6 +404,7 @@ interface DiffResult {
     trainingGoals: ResolvedListCategory<TrainingGoal>;
     goalMilestones: ResolvedListCategory<GoalMilestone>;
     goalMilestoneProgress: ResolvedListCategory<GoalMilestoneProgress>;
+    capabilityEvidence: ResolvedListCategory<CapabilityEvidence>;
     injuryNotes: ResolvedListCategory<InjuryNote>;
     settings: AppSettings | undefined;
   };
@@ -434,6 +469,20 @@ function computeDiff(
     conflicts: [...trainingGoalsResolved.conflicts, ...goalMilestonesResolved.conflicts, ...goalMilestoneProgressResolved.conflicts],
   });
 
+  // Manual CapabilityEvidence rows are user-authored answers, not
+  // append-only observed history — a conflicting id can be safely
+  // overwritten by a newer answer on merge, same as InjuryNote.
+  const capabilityEvidenceAction = categorySelections.capability_evidence ?? 'keep_current';
+  const capabilityEvidenceResolved = resolveListCategory(capabilityEvidenceAction, backup.capabilityEvidence, current.capabilityEvidence, true);
+  diffByCategory.push({
+    category: 'capability_evidence',
+    action: capabilityEvidenceAction,
+    toAdd: capabilityEvidenceResolved.toAdd,
+    toReplace: capabilityEvidenceResolved.toReplace,
+    toSkipDuplicate: capabilityEvidenceResolved.toSkipDuplicate,
+    conflicts: capabilityEvidenceResolved.conflicts,
+  });
+
   const injuriesAction = categorySelections.injuries ?? 'keep_current';
   const injuryNotesResolved = resolveListCategory(injuriesAction, backup.injuryNotes, current.injuryNotes, true);
   diffByCategory.push({
@@ -478,6 +527,7 @@ function computeDiff(
       trainingGoals: trainingGoalsResolved,
       goalMilestones: goalMilestonesResolved,
       goalMilestoneProgress: goalMilestoneProgressResolved,
+      capabilityEvidence: capabilityEvidenceResolved,
       injuryNotes: injuryNotesResolved,
       settings: resolvedSettings,
     },
@@ -499,6 +549,7 @@ export async function buildImportPreview(
     training_history: backup.sessionLogs.length,
     planned_schedule: backup.plannedSessions.length,
     objectives_and_milestones: backup.trainingGoals.length + backup.goalMilestones.length + backup.goalMilestoneProgress.length,
+    capability_evidence: backup.capabilityEvidence.length,
     injuries: backup.injuryNotes.length,
     app_settings: Object.keys(backup.settings).length,
   };
@@ -572,6 +623,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const historyAction = plan.categorySelections.training_history ?? 'keep_current';
   const scheduleAction = resolvePlannedScheduleAction(plan.planPolicy);
   const goalsAction = plan.categorySelections.objectives_and_milestones ?? 'keep_current';
+  const capabilityEvidenceAction = plan.categorySelections.capability_evidence ?? 'keep_current';
   const injuriesAction = plan.categorySelections.injuries ?? 'keep_current';
 
   await applyBackupWrites({
@@ -590,6 +642,9 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     goalMilestoneProgress: goalsAction === 'keep_current'
       ? undefined
       : { clear: goalsAction === 'replace', puts: resolved.goalMilestoneProgress.final },
+    capabilityEvidence: capabilityEvidenceAction === 'keep_current' || capabilityEvidenceAction === 'ignore'
+      ? undefined
+      : { clear: capabilityEvidenceAction === 'replace', puts: resolved.capabilityEvidence.final },
     injuryNotes: injuriesAction === 'keep_current' || injuriesAction === 'ignore'
       ? undefined
       : { clear: injuriesAction === 'replace', puts: resolved.injuryNotes.final },
