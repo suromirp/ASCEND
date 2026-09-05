@@ -1,0 +1,426 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Program } from '../models/program';
+import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
+import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { InjuryNote } from '../models/injury';
+import type { CelebrationEvent } from '../components/CompletionMoment';
+import { haptics } from '../utils/haptics';
+import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
+import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
+import {
+  seedIfEmpty,
+  syncObjectiveDefinitions,
+  syncTemplateAndScheduleDefinitions,
+  ProgramsRepo,
+  SessionTemplatesRepo,
+  PlannedSessionsRepo,
+  SessionLogsRepo,
+  ObjectivesRepo,
+  MilestoneProgressRepo,
+  InjuryNotesRepo,
+  SettingsRepo,
+  StretchCompletionRepo,
+  resetToDemoData,
+  DEFAULT_SETTINGS,
+  type AppSettings,
+  type StretchCompletion,
+} from '../storage/database';
+import { proposeMove, proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { computeObjectiveProgress, requirementAutoSatisfied } from '../engine/progression';
+import { mondayOfWeek, todayISO } from '../utils/dates';
+import { makeId } from '../utils/id';
+import { downloadExport } from '../storage/export';
+import { importFromFile } from '../storage/import';
+
+interface AppData {
+  loading: boolean;
+  program: Program | null;
+  templates: SessionTemplate[];
+  plannedSessions: PlannedSession[];
+  sessionLogs: SessionLog[];
+  objectives: Objective[];
+  milestoneProgress: MilestoneProgress[];
+  injuryNotes: InjuryNote[];
+  settings: AppSettings;
+  stretchCompletion: StretchCompletion;
+  templateById: Map<string, SessionTemplate>;
+  refresh: () => Promise<void>;
+  sessionsForWeek: (weekStartDate: string) => PlannedSession[];
+  logSession: (input: LogSessionInput) => Promise<void>;
+  undoLog: (logId: string) => Promise<void>;
+  moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
+  applyProposal: (proposal: ScheduleProposal) => Promise<void>;
+  skipSession: (sessionId: string) => Promise<void>;
+  clearMilestoneManually: (objectiveId: string, milestoneId: string) => Promise<void>;
+  updateObjective: (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => Promise<void>;
+  updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
+  toggleStretchRoutine: (kind: keyof StretchCompletion) => Promise<void>;
+  addInjury: (input: Omit<InjuryNote, 'id'>) => Promise<void>;
+  resolveInjury: (id: string) => Promise<void>;
+  deleteInjury: (id: string) => Promise<void>;
+  proposeNoTimeToday: () => ScheduleProposal[];
+  applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
+  exportData: () => Promise<void>;
+  importData: (file: File) => Promise<void>;
+  resetDemoData: () => Promise<void>;
+  celebration: CelebrationEvent | null;
+  dismissCelebration: () => void;
+}
+
+export interface LogSessionInput {
+  plannedSessionId?: string;
+  templateId: string;
+  type: SessionLog['type'];
+  variant: SessionVariant;
+  durationMinutes: number;
+  rpe?: number;
+  notes?: string;
+  strengthData?: SessionLog['strengthData'];
+  cardioData?: SessionLog['cardioData'];
+  outdoorData?: SessionLog['outdoorData'];
+  subjectiveFeel?: SessionLog['subjectiveFeel'];
+}
+
+const AppDataContext = createContext<AppData | null>(null);
+
+export function AppDataProvider({ children }: { children: ReactNode }) {
+  const [loading, setLoading] = useState(true);
+  const [program, setProgram] = useState<Program | null>(null);
+  const [templates, setTemplates] = useState<SessionTemplate[]>([]);
+  const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
+  const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
+  const [objectives, setObjectives] = useState<Objective[]>([]);
+  const [milestoneProgress, setMilestoneProgress] = useState<MilestoneProgress[]>([]);
+  const [injuryNotes, setInjuryNotes] = useState<InjuryNote[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
+  const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
+
+  const refresh = useCallback(async () => {
+    const [programs, tpls, planned, logs, objs, progress, injuries, loadedSettings, loadedStretchCompletion] = await Promise.all([
+      ProgramsRepo.getAll(),
+      SessionTemplatesRepo.getAll(),
+      PlannedSessionsRepo.getAll(),
+      SessionLogsRepo.getAll(),
+      ObjectivesRepo.getAll(),
+      MilestoneProgressRepo.getAll(),
+      InjuryNotesRepo.getAll(),
+      SettingsRepo.get(),
+      StretchCompletionRepo.get(),
+    ]);
+    setProgram(programs[0] ?? null);
+    setTemplates(tpls);
+    setPlannedSessions(planned);
+    setSessionLogs(logs);
+    setObjectives(objs);
+    setMilestoneProgress(progress);
+    setInjuryNotes(injuries);
+    setSettings(loadedSettings);
+    setStretchCompletion(loadedStretchCompletion);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      // AscendSplashLogo's entrance sequence (ring/mountain/trail draw-in,
+      // peak flash, wordmark fade-up) finishes around 2.3s in, with the
+      // light-travel loop starting at 2.2s. 2.6s gives that loop a brief
+      // moment to actually be seen, not just the reveal, while keeping the
+      // splash noticeably shorter than before. On a warm load,
+      // seedIfEmpty/refresh can resolve in a handful of ms — without a
+      // floor, the splash would unmount before its later stages ever fire,
+      // so the animation would "sometimes" look broken depending on how
+      // fast IndexedDB happened to respond.
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, 2600));
+      await Promise.all([
+        (async () => {
+          await seedIfEmpty();
+          await syncObjectiveDefinitions();
+          await syncTemplateAndScheduleDefinitions();
+          await refresh();
+        })(),
+        minSplashDuration,
+      ]);
+      setLoading(false);
+    })();
+  }, [refresh]);
+
+  const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
+
+  const sessionsForWeek = useCallback(
+    (weekStartDate: string) => plannedSessions.filter((s) => s.weekStartDate === weekStartDate || mondayOfWeek(s.scheduledDate) === weekStartDate),
+    [plannedSessions],
+  );
+
+  const logSession = useCallback(
+    async (input: LogSessionInput) => {
+      const log: SessionLog = {
+        id: makeId('log'),
+        plannedSessionId: input.plannedSessionId,
+        templateId: input.templateId,
+        type: input.type,
+        completedDate: todayISO(),
+        completedAt: new Date().toISOString(),
+        variant: input.variant,
+        durationMinutes: input.durationMinutes,
+        rpe: input.rpe,
+        notes: input.notes,
+        strengthData: input.strengthData,
+        cardioData: input.cardioData,
+        outdoorData: input.outdoorData,
+        subjectiveFeel: input.subjectiveFeel,
+        source: 'manual',
+      };
+      await SessionLogsRepo.put(log);
+
+      // If this log satisfies the current front-of-ladder milestone on any
+      // objective, record the historical moment it was cleared.
+      let clearedTitle: string | undefined;
+      for (const objective of objectives) {
+        const progress = computeObjectiveProgress(objective, milestoneProgress, sessionLogs);
+        const current = progress.currentMilestone;
+        if (current && requirementAutoSatisfied(current.definition.requirement, [log])) {
+          await MilestoneProgressRepo.put({
+            id: makeId('progress'),
+            objectiveId: objective.id,
+            milestoneId: current.definition.id,
+            clearedDate: log.completedDate,
+            sourceSessionLogId: log.id,
+          });
+          clearedTitle = current.definition.title;
+        }
+      }
+
+      await refresh();
+      haptics.success();
+      if (settings.introSoundEnabled) {
+        if (clearedTitle) playMilestoneChime();
+        else playSessionCompleteChime();
+      }
+      // Every completion gets a quote — a regular session a lighter one, a
+      // milestone clear (if this same log happened to satisfy one) the
+      // bigger victory-tier treatment with the milestone's title attached.
+      setCelebration(
+        clearedTitle
+          ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote() }
+          : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
+      );
+    },
+    [objectives, milestoneProgress, sessionLogs, refresh, settings.introSoundEnabled],
+  );
+
+  // Undoing a log also removes any milestone auto-cleared by it (matched
+  // via sourceSessionLogId) — otherwise the Ascent Ladder would keep
+  // showing a milestone as cleared with no log left to back it up.
+  // Manually-cleared milestones (no sourceSessionLogId) are untouched.
+  const undoLog = useCallback(
+    async (logId: string) => {
+      await SessionLogsRepo.delete(logId);
+      for (const p of milestoneProgress) {
+        if (p.sourceSessionLogId === logId) await MilestoneProgressRepo.delete(p.id);
+      }
+      await refresh();
+    },
+    [milestoneProgress, refresh],
+  );
+
+  const moveSession = useCallback(
+    (sessionId: string, targetDate: string): ScheduleProposal => {
+      const week = sessionsForWeek(mondayOfWeek(targetDate));
+      const combined = week.some((s) => s.id === sessionId) ? week : [...week, ...plannedSessions.filter((s) => s.id === sessionId)];
+      return proposeMove(combined, templates, sessionId, targetDate);
+    },
+    [sessionsForWeek, plannedSessions, templates],
+  );
+
+  const applyProposal = useCallback(
+    async (proposal: ScheduleProposal) => {
+      for (const change of proposal.changes) {
+        const session = plannedSessions.find((s) => s.id === change.sessionId);
+        if (!session) continue;
+        await PlannedSessionsRepo.put({
+          ...session,
+          scheduledDate: change.toDate,
+          status: 'moved',
+          movedFromDate: session.movedFromDate ?? change.fromDate,
+        });
+      }
+      await refresh();
+    },
+    [plannedSessions, refresh],
+  );
+
+  const skipSession = useCallback(
+    async (sessionId: string) => {
+      const session = plannedSessions.find((s) => s.id === sessionId);
+      if (!session) return;
+      await PlannedSessionsRepo.put(skipSessionEngine(session));
+      await refresh();
+    },
+    [plannedSessions, refresh],
+  );
+
+  const clearMilestoneManually = useCallback(
+    async (objectiveId: string, milestoneId: string) => {
+      await MilestoneProgressRepo.put({
+        id: makeId('progress'),
+        objectiveId,
+        milestoneId,
+        clearedDate: todayISO(),
+      });
+      const title = objectives.find((o) => o.id === objectiveId)?.milestones.find((m) => m.id === milestoneId)?.title;
+      await refresh();
+      haptics.success();
+      if (settings.introSoundEnabled) playMilestoneChime();
+      if (title) setCelebration({ id: makeId('celebration'), kind: 'milestone', title, quote: pickVictoryQuote() });
+    },
+    [objectives, refresh, settings.introSoundEnabled],
+  );
+
+  // Only targetDate/targetDistanceKm are editable from the UI today — the
+  // ladder content itself (name, milestones) is static and synced from
+  // data/defaultProgram.ts via syncObjectiveDefinitions().
+  const updateObjective = useCallback(
+    async (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => {
+      const objective = objectives.find((o) => o.id === objectiveId);
+      if (!objective) return;
+      await ObjectivesRepo.put({ ...objective, ...patch });
+      await refresh();
+    },
+    [objectives, refresh],
+  );
+
+  const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
+    const next = await SettingsRepo.set(patch);
+    setSettings(next);
+  }, []);
+
+  // Stores the date last checked off, not a boolean — so the box reads as
+  // unchecked again the moment todayISO() rolls over to a new day, with no
+  // separate reset step needed.
+  const toggleStretchRoutine = useCallback(
+    async (kind: keyof StretchCompletion) => {
+      const today = todayISO();
+      const isDoneToday = stretchCompletion[kind] === today;
+      const next = await StretchCompletionRepo.set({ [kind]: isDoneToday ? undefined : today });
+      setStretchCompletion(next);
+    },
+    [stretchCompletion],
+  );
+
+  const addInjury = useCallback(
+    async (input: Omit<InjuryNote, 'id'>) => {
+      await InjuryNotesRepo.put({ ...input, id: makeId('injury') });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  // Resolving is a status change, not a historical rewrite (see
+  // models/injury.ts) — unlike SessionLog this store is fine to update in
+  // place.
+  const resolveInjury = useCallback(
+    async (id: string) => {
+      const note = injuryNotes.find((n) => n.id === id);
+      if (!note) return;
+      await InjuryNotesRepo.put({ ...note, resolvedDate: todayISO() });
+      await refresh();
+    },
+    [injuryNotes, refresh],
+  );
+
+  const deleteInjury = useCallback(
+    async (id: string) => {
+      await InjuryNotesRepo.delete(id);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  // "Geen tijd vandaag" — proposeNoTimeToday returns one ScheduleProposal
+  // per session still due today (each already resolved against the others,
+  // since the engine threads a simulated week through the loop), for the UI
+  // to merge into a single confirmation and apply as one batch.
+  const proposeNoTimeTodayAction = useCallback((): ScheduleProposal[] => {
+    const today = todayISO();
+    const week = sessionsForWeek(mondayOfWeek(today));
+    return proposeNoTimeToday(week, templates, today);
+  }, [sessionsForWeek, templates]);
+
+  // Mirrors applyProposal's move semantics, plus the scheduler's
+  // "no free day left" fallback (a same-date no-op change) which reads as a
+  // skip rather than a move.
+  const applyNoTimeToday = useCallback(
+    async (proposals: ScheduleProposal[]) => {
+      for (const proposal of proposals) {
+        for (const change of proposal.changes) {
+          const session = plannedSessions.find((s) => s.id === change.sessionId);
+          if (!session) continue;
+          if (proposal.resolved && change.toDate !== change.fromDate) {
+            await PlannedSessionsRepo.put({
+              ...session,
+              scheduledDate: change.toDate,
+              status: 'moved',
+              movedFromDate: session.movedFromDate ?? change.fromDate,
+            });
+          } else {
+            await PlannedSessionsRepo.put(skipSessionEngine(session));
+          }
+        }
+      }
+      await refresh();
+    },
+    [plannedSessions, refresh],
+  );
+
+  const value: AppData = {
+    loading,
+    program,
+    templates,
+    plannedSessions,
+    sessionLogs,
+    objectives,
+    milestoneProgress,
+    injuryNotes,
+    settings,
+    stretchCompletion,
+    templateById,
+    refresh,
+    sessionsForWeek,
+    logSession,
+    undoLog,
+    moveSession,
+    applyProposal,
+    skipSession,
+    clearMilestoneManually,
+    updateObjective,
+    updateSettings,
+    toggleStretchRoutine,
+    addInjury,
+    resolveInjury,
+    deleteInjury,
+    proposeNoTimeToday: proposeNoTimeTodayAction,
+    applyNoTimeToday,
+    exportData: async () => {
+      await downloadExport();
+      await updateSettings({ lastExportedAt: new Date().toISOString() });
+    },
+    importData: async (file: File) => {
+      await importFromFile(file);
+      await refresh();
+    },
+    resetDemoData: async () => {
+      await resetToDemoData();
+      await refresh();
+    },
+    celebration,
+    dismissCelebration: () => setCelebration(null),
+  };
+
+  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
+}
+
+export function useAppData(): AppData {
+  const ctx = useContext(AppDataContext);
+  if (!ctx) throw new Error('useAppData must be used within AppDataProvider');
+  return ctx;
+}

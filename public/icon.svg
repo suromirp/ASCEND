@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="goldStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbead0"/>
+      <stop offset="30%" stop-color="#eec066"/>
+      <stop offset="60%" stop-color="#c9932e"/>
+      <stop offset="100%" stop-color="#8f611c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="240" height="240" rx="48" fill="#0D0D0F"/>
+
+  <circle cx="120" cy="120" r="95" fill="none" stroke="url(#goldStroke)" stroke-width="6"/>
+
+  <path d="M50,168 L68,112 L78,124 L92,86 L102,98 L120,58 L138,98 L148,86 L162,124 L172,112 L190,168"
+    fill="none" stroke="url(#goldStroke)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <path d="M120,58 C108,82 133,100 116,122 C102,142 130,158 112,182 C102,196 122,204 112,206"
+    fill="none" stroke="#ffe9a8" stroke-width="6" stroke-linecap="round"/>
+
+  <circle cx="120" cy="59" r="6" fill="#fff3cf"/>
+</svg>
