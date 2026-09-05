@@ -15,6 +15,11 @@ export interface AscendExport {
   sessionLogs: unknown;
   objectives: unknown;
   milestoneProgress: unknown;
+  // Optional — absent on any export made before this field existed. Never
+  // treat a missing value as "no injuries"; importFromFile falls back to an
+  // empty array only for the write, not as a claim about what the backup
+  // actually contained.
+  injuryNotes?: unknown;
   settings: unknown;
 }
 
