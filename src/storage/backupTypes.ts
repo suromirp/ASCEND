@@ -1,12 +1,17 @@
 // ASCEND — Backup / Import / Restore domain types
 //
 // Implements ASCEND Technical Architecture v0.3.2's backup/import/restore
-// design. V2 (Phase 1) adds TrainingGoal/GoalMilestone/GoalMilestoneProgress
+// design. V2 (Phase 1) added TrainingGoal/GoalMilestone/GoalMilestoneProgress
 // now that the goal engine foundation exists, replacing the legacy
-// Objective/MilestoneProgress fields V1 carried — exactly the "one more
-// union member without redesigning this file" extension point V1's own
-// comment anticipated. PlanPolicy still doesn't carry 'recalculate_plan' —
-// that still depends on a later phase's recompute pipeline.
+// Objective/MilestoneProgress fields V1 carried. V3 (Phase 2) adds manual
+// CapabilityEvidence (baseline-question answers) — the only capability
+// data ever persisted (direct/derived/proxy evidence stays a derived read
+// model, see engine/capability.ts) but real user input all the same, and
+// worth not silently losing on export/restore. Each version is exactly
+// "one more union member without redesigning this file", as V1's own
+// original comment anticipated. PlanPolicy still doesn't carry
+// 'recalculate_plan' — that still depends on a later phase's recompute
+// pipeline.
 //
 // Lives under storage/, not models/, on purpose: this is a serialization
 ///persistence-schema concern, not a core domain concept — models/ has no
@@ -18,12 +23,13 @@ import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
 import type { AppSettings } from './database';
 
 // --- Backup envelope & versioned payload -----------------------------------
 
-export const CURRENT_BACKUP_SCHEMA_VERSION = 2;
+export const CURRENT_BACKUP_SCHEMA_VERSION = 3;
 
 export interface AscendBackupPayloadV1 {
   version: 1;
@@ -50,7 +56,21 @@ export interface AscendBackupPayloadV2 {
   settings: AppSettings;
 }
 
-export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2;
+export interface AscendBackupPayloadV3 {
+  version: 3;
+  program: Program | null;
+  templates: SessionTemplate[];
+  plannedSessions: PlannedSession[];
+  sessionLogs: SessionLog[];
+  trainingGoals: TrainingGoal[];
+  goalMilestones: GoalMilestone[];
+  goalMilestoneProgress: GoalMilestoneProgress[];
+  capabilityEvidence: CapabilityEvidence[];
+  injuryNotes: InjuryNote[];
+  settings: AppSettings;
+}
+
+export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3;
 
 export interface AscendBackupEnvelope {
   backupSchemaVersion: number;
@@ -79,6 +99,7 @@ export interface NormalizedBackupData {
   trainingGoals: TrainingGoal[];
   goalMilestones: GoalMilestone[];
   goalMilestoneProgress: GoalMilestoneProgress[];
+  capabilityEvidence: CapabilityEvidence[];
   injuryNotes: InjuryNote[];
   settings: Partial<AppSettings>;
 }
@@ -90,6 +111,7 @@ export type BackupDataCategory =
   | 'training_history'
   | 'planned_schedule'
   | 'objectives_and_milestones'
+  | 'capability_evidence'
   | 'injuries'
   | 'app_settings';
 
@@ -98,6 +120,7 @@ export const ALL_CATEGORIES: BackupDataCategory[] = [
   'training_history',
   'planned_schedule',
   'objectives_and_milestones',
+  'capability_evidence',
   'injuries',
   'app_settings',
 ];
@@ -107,6 +130,7 @@ export const CATEGORY_LABEL: Record<BackupDataCategory, string> = {
   training_history: 'Trainingsgeschiedenis',
   planned_schedule: 'Huidige planning',
   objectives_and_milestones: 'Doelen en mijlpalen',
+  capability_evidence: 'Baseline-metingen',
   injuries: 'Blessures',
   app_settings: 'Instellingen',
 };

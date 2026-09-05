@@ -8,6 +8,7 @@ import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../mode
 import type { TrainingPrescription } from '../models/prescription';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
+import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
@@ -15,7 +16,7 @@ import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -42,6 +43,11 @@ interface AscendDB extends DBSchema {
   goalMilestones: { key: string; value: GoalMilestone; indexes: { 'by-goal': string } };
   goalMilestoneProgress: { key: string; value: GoalMilestoneProgress; indexes: { 'by-goal': string } };
   trainingPrescriptions: { key: string; value: TrainingPrescription; indexes: { 'by-plannedSession': string } };
+  // --- Capability & Demand (Technical Architecture v0.3.1 REVISED, Phase 2) ---
+  // Manual-entry rows ONLY (Storage plan) — direct/derived/proxy evidence
+  // computed from SessionLog[] (engine/capability.ts#extractEvidenceFromLogs)
+  // stays a derived read model, never duplicated into storage.
+  capabilityEvidence: { key: string; value: CapabilityEvidence };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -91,6 +97,7 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
           const store = db.createObjectStore('trainingPrescriptions', { keyPath: 'id' });
           store.createIndex('by-plannedSession', 'plannedSessionId');
         }
+        if (!db.objectStoreNames.contains('capabilityEvidence')) db.createObjectStore('capabilityEvidence', { keyPath: 'id' });
       },
     });
   }
@@ -264,6 +271,21 @@ export const GoalEngineConfigRepo: GoalEngineConfigRepo = {
     await MetaRepo.set('goalEngineConfig', next);
     return next;
   },
+};
+
+// Manual-entry evidence only (v0.3.1 REVISED Storage plan) — direct/
+// derived/proxy evidence extracted from SessionLog[] is never persisted
+// here, only computed live (engine/capability.ts).
+export interface CapabilityEvidenceRepo {
+  getAll(): Promise<CapabilityEvidence[]>;
+  put(evidence: CapabilityEvidence): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const CapabilityEvidenceRepo: CapabilityEvidenceRepo = {
+  getAll: () => getAll('capabilityEvidence') as Promise<CapabilityEvidence[]>,
+  put: (evidence: CapabilityEvidence) => put('capabilityEvidence', evidence),
+  delete: (id: string) => del('capabilityEvidence', id),
 };
 
 export const BackupSnapshotsRepo = {
@@ -518,6 +540,7 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('goalMilestones'),
     clearStore('goalMilestoneProgress'),
     clearStore('trainingPrescriptions'),
+    clearStore('capabilityEvidence'),
   ]);
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
@@ -552,6 +575,7 @@ export interface BackupWriteSet {
   trainingGoals?: BackupStoreWrite<TrainingGoal>;
   goalMilestones?: BackupStoreWrite<GoalMilestone>;
   goalMilestoneProgress?: BackupStoreWrite<GoalMilestoneProgress>;
+  capabilityEvidence?: BackupStoreWrite<CapabilityEvidence>;
   injuryNotes?: BackupStoreWrite<InjuryNote>;
   settings?: AppSettings;
 }
@@ -568,7 +592,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'injuryNotes'] as const) {
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes'] as const) {
     const write = writes[key];
     if (!write) continue;
     const store = tx.objectStore(key);
@@ -599,6 +623,7 @@ export async function wipeAllData(): Promise<void> {
     clearStore('goalMilestones'),
     clearStore('goalMilestoneProgress'),
     clearStore('trainingPrescriptions'),
+    clearStore('capabilityEvidence'),
     clearStore('meta'),
   ]);
 }

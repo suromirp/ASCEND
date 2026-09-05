@@ -3,6 +3,7 @@ import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
+import type { CapabilityEvidence } from '../models/capability';
 import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
 import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
@@ -18,6 +19,7 @@ import {
   GoalMilestonesRepo,
   GoalMilestoneProgressRepo,
   InjuryNotesRepo,
+  CapabilityEvidenceRepo,
   SettingsRepo,
   StretchCompletionRepo,
   resetToDemoData,
@@ -43,6 +45,7 @@ interface AppData {
   goalMilestones: GoalMilestone[];
   goalMilestoneProgress: GoalMilestoneProgress[];
   injuryNotes: InjuryNote[];
+  capabilityEvidence: CapabilityEvidence[];
   settings: AppSettings;
   stretchCompletion: StretchCompletion;
   templateById: Map<string, SessionTemplate>;
@@ -60,6 +63,8 @@ interface AppData {
   addInjury: (input: Omit<InjuryNote, 'id'>) => Promise<void>;
   resolveInjury: (id: string) => Promise<void>;
   deleteInjury: (id: string) => Promise<void>;
+  addManualCapabilityEvidence: (input: Omit<CapabilityEvidence, 'id' | 'evidenceType' | 'source'>) => Promise<void>;
+  deleteCapabilityEvidence: (id: string) => Promise<void>;
   proposeNoTimeToday: () => ScheduleProposal[];
   applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
   exportData: () => Promise<boolean>;
@@ -94,12 +99,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [goalMilestones, setGoalMilestones] = useState<GoalMilestone[]>([]);
   const [goalMilestoneProgress, setGoalMilestoneProgress] = useState<GoalMilestoneProgress[]>([]);
   const [injuryNotes, setInjuryNotes] = useState<InjuryNote[]>([]);
+  const [capabilityEvidence, setCapabilityEvidence] = useState<CapabilityEvidence[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, loadedSettings, loadedStretchCompletion] = await Promise.all([
+    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, loadedSettings, loadedStretchCompletion] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -108,6 +114,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       GoalMilestonesRepo.getAll(),
       GoalMilestoneProgressRepo.getAll(),
       InjuryNotesRepo.getAll(),
+      CapabilityEvidenceRepo.getAll(),
       SettingsRepo.get(),
       StretchCompletionRepo.get(),
     ]);
@@ -119,6 +126,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setGoalMilestones(milestones);
     setGoalMilestoneProgress(progress);
     setInjuryNotes(injuries);
+    setCapabilityEvidence(manualEvidence);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
   }, []);
@@ -362,6 +370,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  // Targeted baseline questions (Algorithm Contract v0.2 §27) — manual
+  // evidence, never a fake SessionLog (§5.4). Always evidenceType:'manual',
+  // source:'manualEntry'; the caller (a baseline-entry form) only ever
+  // supplies the measured value/date/key.
+  const addManualCapabilityEvidence = useCallback(
+    async (input: Omit<CapabilityEvidence, 'id' | 'evidenceType' | 'source'>) => {
+      await CapabilityEvidenceRepo.put({ ...input, id: makeId('evidence'), evidenceType: 'manual', source: 'manualEntry' });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const deleteCapabilityEvidence = useCallback(
+    async (id: string) => {
+      await CapabilityEvidenceRepo.delete(id);
+      await refresh();
+    },
+    [refresh],
+  );
+
   // "Geen tijd vandaag" — proposeNoTimeToday returns one ScheduleProposal
   // per session still due today (each already resolved against the others,
   // since the engine threads a simulated week through the loop), for the UI
@@ -408,6 +436,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     goalMilestones,
     goalMilestoneProgress,
     injuryNotes,
+    capabilityEvidence,
     settings,
     stretchCompletion,
     templateById,
@@ -425,6 +454,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     addInjury,
     resolveInjury,
     deleteInjury,
+    addManualCapabilityEvidence,
+    deleteCapabilityEvidence,
     proposeNoTimeToday: proposeNoTimeTodayAction,
     applyNoTimeToday,
     exportData: async () => {
