@@ -12,7 +12,7 @@ import { Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function WeekPage() {
-  const { program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog } = useAppData();
+  const { program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog } = useAppData();
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
   const [selected, setSelected] = useState<PlannedSession | null>(null);
@@ -127,7 +127,7 @@ export function WeekPage() {
             setSelected(null);
           }}
           onSkip={() => {
-            skipSession(selected.id);
+            setPendingProposal(proposeSkip(selected.id));
             setSelected(null);
           }}
           onUndo={() => {

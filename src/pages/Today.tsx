@@ -40,7 +40,7 @@ function mergeNoTimeProposals(proposals: ScheduleProposal[]): ScheduleProposal {
 }
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday } = useAppData();
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -110,6 +110,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   function handleMove(sessionId: string, date: string) {
     const proposal = moveSession(sessionId, date);
     setPendingProposal(proposal);
+  }
+
+  function handleSkip(sessionId: string) {
+    setPendingProposal(proposeSkip(sessionId));
   }
 
   const primaryTemplate = primary ? templateById.get(primary.templateId) : undefined;
@@ -188,7 +192,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           quickComplete={isQuickComplete(primaryTemplate)}
           onStart={(variant, feel, durationMinutes) => startSession(primary, primaryTemplate, variant, feel, durationMinutes)}
           onMove={(date) => handleMove(primary.id, date)}
-          onSkip={() => skipSession(primary.id)}
+          onSkip={() => handleSkip(primary.id)}
         />
       ) : (
         <Card>
@@ -295,7 +299,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
             setActionSheetSession(null);
           }}
           onSkip={() => {
-            skipSession(actionSheetSession.id);
+            handleSkip(actionSheetSession.id);
             setActionSheetSession(null);
           }}
           onUndo={() => {

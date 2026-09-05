@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isLegHeavy, proposeMove, proposeNoTimeToday, skipSession } from './scheduler';
+import { isLegHeavy, proposeMove, proposeNoTimeToday, proposeSkip, skipSession } from './scheduler';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 
 // Phase 0a regression safety net (ASCEND Technical Architecture v0.3.2) —
@@ -113,5 +113,14 @@ describe('skipSession', () => {
   it('sets status to skipped without touching other fields', () => {
     const s = session('s1', 'tpl_easy_run', WED, MON);
     expect(skipSession(s)).toEqual({ ...s, status: 'skipped' });
+  });
+});
+
+describe('proposeSkip', () => {
+  it('produces a same-date, resolved ScheduleProposal — the shape a skip is represented as', () => {
+    const s = session('s1', 'tpl_easy_run', WED, MON);
+    const proposal = proposeSkip(s, templates);
+    expect(proposal.resolved).toBe(true);
+    expect(proposal.changes).toEqual([{ sessionId: 's1', templateId: 'tpl_easy_run', templateName: 'tpl_easy_run', fromDate: WED, toDate: WED }]);
   });
 });
