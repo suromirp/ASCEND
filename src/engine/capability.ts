@@ -20,7 +20,11 @@ import type { MeasuredValue } from '../models/units';
 import { UNIT_COMPARISON_DIRECTION } from '../models/units';
 import { daysBetween } from '../utils/dates';
 
-function keyId(key: CapabilityKey): string {
+// Exported (Phase 6) so any caller matching a CapabilityKey against a
+// Map<string, ...> keyed the same way (e.g. engine/adaptiveReplanner.ts's
+// ProgressionDecision lookup) uses the exact same stringification — never
+// a second, potentially-drifting reimplementation of "dimension[:discipline]".
+export function keyId(key: CapabilityKey): string {
   return key.discipline ? `${key.dimension}:${key.discipline}` : key.dimension;
 }
 

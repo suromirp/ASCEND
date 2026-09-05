@@ -36,3 +36,9 @@ export function committedWeekStartDates(asOf: string): string[] {
 export function isDateInCommittedRange(dateIso: string, asOf: string): boolean {
   return resolveHorizonZone(mondayOfWeek(dateIso), asOf) === 'committed';
 }
+
+// Phase 6: the Adaptive Replanner is the only thing ever allowed to touch
+// this range — the symmetrical check to isDateInCommittedRange above.
+export function isDateInForecastRange(dateIso: string, asOf: string): boolean {
+  return resolveHorizonZone(mondayOfWeek(dateIso), asOf) === 'forecast';
+}

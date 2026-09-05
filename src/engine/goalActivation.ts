@@ -186,6 +186,10 @@ export function applyGoalActivationPlan(
   if (isGoalActivationPlanStale(plan, currentInputStateHash)) {
     return { applied: false, reason: 'stale' };
   }
-  const updatedSessions = applyPlanChangeItems(plan.committedWeekChanges.changes, currentSessions);
+  // committedWeekChanges only ever contains 'keep' entries (built above) —
+  // never 'replace'/'reduce'/'swap' — so prescriptionChanges/unsupported
+  // are always empty here; the richer ApplyPlanChangeResult shape only
+  // matters once the Adaptive Replanner (Phase 6) starts producing those.
+  const { sessions: updatedSessions } = applyPlanChangeItems(plan.committedWeekChanges.changes, currentSessions);
   return { applied: true, updatedSessions };
 }
