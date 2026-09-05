@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { migrateGr5ObjectiveData, buildMarathonGoal, LEGACY_MILESTONE_ID_MAP } from './goalMigration';
+import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy, LEGACY_MILESTONE_ID_MAP } from './goalMigration';
 import type { Objective, MilestoneProgress } from '../models/objectives';
 
 const objective: Objective = {
@@ -71,5 +71,18 @@ describe('buildMarathonGoal', () => {
     expect(goal?.requirements).toEqual([
       { id: expect.any(String), kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 21.1, unit: 'km' }, discipline: 'running' },
     ]);
+  });
+});
+
+describe('buildDefaultStrengthProgramStrategy', () => {
+  it('reflects the current live split — 3x/week upper_lower, excluding retired tpl_lower_b', () => {
+    const strategy = buildDefaultStrengthProgramStrategy('2026-09-09');
+    expect(strategy.sessionsPerWeek).toBe(3);
+    expect(strategy.splitType).toBe('upper_lower');
+    expect(strategy.sessionTemplateIds).toEqual(['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b']);
+    expect(strategy.sessionTemplateIds).not.toContain('tpl_lower_b');
+    expect(strategy.status).toBe('active');
+    expect(strategy.source).toBe('macrofactor_workouts');
+    expect(strategy.startDate).toBe('2026-09-09');
   });
 });

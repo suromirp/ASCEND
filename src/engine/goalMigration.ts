@@ -13,6 +13,7 @@
 
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import { makeId } from '../utils/id';
 
 // One-time id remap (Technical Architecture v0.3.1 REVISED, Migration
@@ -99,4 +100,28 @@ export function buildMarathonGoal(
   return marathonTargetDate
     ? { id: makeId('goal'), name: 'Marathon', requirements, createdAt: now, updatedAt: now, status: 'active', targetDate: marathonTargetDate }
     : { id: makeId('goal'), name: 'Marathon', requirements, createdAt: now, updatedAt: now, status: 'paused' };
+}
+
+// One-time default (Strength Program Strategy Addendum v0.1, Phase 8) —
+// reflects the CURRENT live static split (data/defaultProgram.ts) as a
+// real, ASCEND-owned StrengthProgramStrategy from day one, rather than
+// leaving every user (new or already-migrated) staring at "no block set
+// up yet" for a split they're already actually running. tpl_lower_b is
+// deliberately excluded — its own template comment already documents it
+// as retired from the weekly rotation (replaced by the weekend hiking leg
+// block), so including it here would misrepresent what's actually
+// scheduled.
+export function buildDefaultStrengthProgramStrategy(asOf: string): StrengthProgramStrategy {
+  const now = new Date().toISOString();
+  return {
+    id: makeId('strength'),
+    source: 'macrofactor_workouts',
+    startDate: asOf,
+    sessionsPerWeek: 3,
+    splitType: 'upper_lower',
+    sessionTemplateIds: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'],
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
+  };
 }

@@ -4,6 +4,7 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
 import type { CapabilityEvidence } from '../models/capability';
+import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { DEFAULT_GOAL_ENGINE_CONFIG, type GoalEngineConfig } from '../models/goalEngineConfig';
 import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
@@ -23,6 +24,8 @@ import {
   CapabilityEvidenceRepo,
   TrainingPrescriptionsRepo,
   PlanChangeProposalsRepo,
+  StrengthProgramStrategiesRepo,
+  StrengthProgramRecommendationsRepo,
   GoalEngineConfigRepo,
   SettingsRepo,
   StretchCompletionRepo,
@@ -31,7 +34,7 @@ import {
   type AppSettings,
   type StretchCompletion,
 } from '../storage/database';
-import { migrateToGoalEngine } from '../storage/goalMigration';
+import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
@@ -42,7 +45,10 @@ import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan } from '../models/planChange';
-import { mondayOfWeek, todayISO } from '../utils/dates';
+import { computeActiveGoalOverviews } from '../engine/goalOverview';
+import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
+import { computeStrengthPlacementPlan } from '../engine/strengthScheduling';
+import { mondayOfWeek, todayISO, daysBetween } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -115,6 +121,24 @@ interface AppData {
   // passive summary — never a popup — the caller can show and dismiss.
   forecastSummary: string | null;
   dismissForecastSummary: () => void;
+  // Phase 8 — Strength Program Strategy (Addendum v0.1). ASCEND owns block
+  // strategy/frequency/split/placement; MacroFactor Workouts (or a future
+  // provider) keeps owning exercise-level content — see
+  // models/strengthProgram.ts and engine/strengthScheduling.ts.
+  strengthProgramStrategies: StrengthProgramStrategy[];
+  // The one currently-unresolved suggestion, if any (§5: "a review is a
+  // suggestion, not an automatic rewrite") — never more than one at a time,
+  // matching forecastSummary's own "single pending thing to show" shape.
+  strengthRecommendation: StrengthProgramRecommendation | null;
+  // Single-transaction activation (mirrors activateGoal): persists the
+  // strategy (retiring any previous active/ending one to 'completed'),
+  // recomputes and applies the forecast-range placement fresh against
+  // live data, and records the append-only audit proposal.
+  activateStrengthProgram: (strategy: StrengthProgramStrategy) => Promise<void>;
+  // §5/§7's manual "Mijn schema is afgelopen" trigger — computes and shows
+  // a recommendation immediately, never waiting for the next boot check.
+  reportStrengthSchemaEnded: () => Promise<void>;
+  resolveStrengthRecommendation: (id: string, resolution: 'accepted' | 'dismissed') => Promise<void>;
 }
 
 export interface LogSessionInput {
@@ -149,9 +173,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [forecastSummary, setForecastSummary] = useState<string | null>(null);
+  const [strengthProgramStrategies, setStrengthProgramStrategies] = useState<StrengthProgramStrategy[]>([]);
+  const [strengthRecommendation, setStrengthRecommendation] = useState<StrengthProgramRecommendation | null>(null);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion] = await Promise.all([
+    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -164,6 +190,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       GoalEngineConfigRepo.get(),
       SettingsRepo.get(),
       StretchCompletionRepo.get(),
+      StrengthProgramStrategiesRepo.getAll(),
+      StrengthProgramRecommendationsRepo.getAll(),
     ]);
     setProgram(programs[0] ?? null);
     setTemplates(tpls);
@@ -177,6 +205,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setGoalEngineConfig(engineConfig);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
+    setStrengthProgramStrategies(strengthStrategies);
+    setStrengthRecommendation(strengthRecs.find((r) => !r.resolvedAt) ?? null);
   }, []);
 
   // Phase 6 — the live Adaptive Replanner for the forecast range. Reads
@@ -254,6 +284,140 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  // Phase 8 — the single-transaction activation flow for a Strength
+  // Program Strategy (mirrors activateGoal): the forecast-range placement
+  // is always recomputed fresh, right here, against live data rather than
+  // trusting whatever the wizard's Plan Preview showed a moment earlier —
+  // simpler than a stale-plan hash check, and correct by construction
+  // since there's no intervening step (unlike goal activation's baseline
+  // questions) between preview and confirm.
+  const activateStrengthProgram = useCallback(
+    async (strategy: StrengthProgramStrategy) => {
+      const [strategies, planned, tpls, engineConfig] = await Promise.all([
+        StrengthProgramStrategiesRepo.getAll(),
+        PlannedSessionsRepo.getAll(),
+        SessionTemplatesRepo.getAll(),
+        GoalEngineConfigRepo.get(),
+      ]);
+
+      const proposal = computeStrengthPlacementPlan(strategy, planned, tpls, engineConfig.availability, todayISO());
+      const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+      if (unsupported.length > 0) {
+        // Same atomicity guarantee as runForecastReplan: never an
+        // unintended partial apply.
+        console.error('Strength placement: refusing to apply — unsupported plan change items present', unsupported);
+        return;
+      }
+
+      // Only one strategy is ever 'active'/'ending' at a time — starting a
+      // new block retires the previous one to 'completed' rather than
+      // deleting it (§2: "keep historical blocks... instead of only
+      // storing one global current setting").
+      const previousActive = activeStrengthStrategy(strategies);
+      if (previousActive && previousActive.id !== strategy.id) {
+        await StrengthProgramStrategiesRepo.put({ ...previousActive, status: 'completed', updatedAt: new Date().toISOString() });
+      }
+      await StrengthProgramStrategiesRepo.put(strategy);
+
+      const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+      const originalIds = new Set(planned.map((s) => s.id));
+      for (const session of updatedSessions) {
+        if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
+          await PlannedSessionsRepo.put(session);
+        }
+      }
+
+      await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  // §5/§7's manual trigger — computes and persists a recommendation right
+  // away rather than waiting for the next boot's review check.
+  const reportStrengthSchemaEnded = useCallback(async () => {
+    const [strategies, goals, logs, manualEvidence, engineConfig] = await Promise.all([
+      StrengthProgramStrategiesRepo.getAll(),
+      TrainingGoalsRepo.getAll(),
+      SessionLogsRepo.getAll(),
+      CapabilityEvidenceRepo.getAll(),
+      GoalEngineConfigRepo.get(),
+    ]);
+    const asOf = todayISO();
+    const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
+    const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
+    const rec = buildStrengthProgramRecommendation({
+      currentStrategy: activeStrengthStrategy(strategies),
+      triggers: ['user_reported_schema_ended'],
+      goalOverviews: overviews,
+      asOf,
+    });
+    await StrengthProgramRecommendationsRepo.put(rec);
+    await refresh();
+  }, [refresh]);
+
+  const resolveStrengthRecommendation = useCallback(
+    async (id: string, resolution: 'accepted' | 'dismissed') => {
+      const recs = await StrengthProgramRecommendationsRepo.getAll();
+      const rec = recs.find((r) => r.id === id);
+      if (!rec) return;
+      await StrengthProgramRecommendationsRepo.put({ ...rec, resolvedAt: new Date().toISOString(), resolution });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  // Boot-time review check (§5) — only ever surfaces a *suggestion*
+  // (never a rewrite), and only when nothing is already pending, so
+  // repeated boots never stack duplicate recommendations. Reads repos
+  // directly for the same reason runForecastReplan does: this fires right
+  // after refresh(), before React state necessarily reflects that fetch.
+  const runStrengthReviewCheck = useCallback(async () => {
+    const [strategies, existingRecs, goals, logs, manualEvidence, injuries, engineConfig, proposals] = await Promise.all([
+      StrengthProgramStrategiesRepo.getAll(),
+      StrengthProgramRecommendationsRepo.getAll(),
+      TrainingGoalsRepo.getAll(),
+      SessionLogsRepo.getAll(),
+      CapabilityEvidenceRepo.getAll(),
+      InjuryNotesRepo.getAll(),
+      GoalEngineConfigRepo.get(),
+      PlanChangeProposalsRepo.getAll(),
+    ]);
+
+    const currentStrategy = activeStrengthStrategy(strategies);
+    if (!currentStrategy) return; // nothing to review yet
+    if (existingRecs.some((r) => !r.resolvedAt)) return; // one is already pending
+
+    const asOf = todayISO();
+    const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
+    const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
+
+    // More than one 48h-spacing cascade in the last 4 weeks is the
+    // "repeated lower-body conflicts" signal (§5) — reusing the exact
+    // reason text engine/scheduler.ts#proposeMove already stamps onto its
+    // own cascade proposals, never a second conflict-detection formula.
+    const recentLegConflictCount = proposals.filter(
+      (p) => daysBetween(p.createdAt.slice(0, 10), asOf) <= 28 && p.changes.some((c) => c.reason?.includes('48 uur hersteltijd')),
+    ).length;
+
+    const signals: StrengthReviewSignals = {
+      daysUntilBlockEnd: daysUntilBlockEnd(currentStrategy, asOf),
+      userReportedSchemaEnded: false,
+      activeGoalChangedSinceBlockStart: goals.some((g) => g.status === 'active' && g.updatedAt > currentStrategy.updatedAt),
+      goalEnteredNewPhaseSinceBlockStart: overviews.some((o) => o.focus.reasons.some((r) => r.component === 'phase')),
+      availabilityOrPriorityChangedSinceBlockStart: Boolean(engineConfig.updatedAt && engineConfig.updatedAt > currentStrategy.updatedAt),
+      recentLegConflictCount,
+      injuryChangedSinceBlockStart: injuries.some((n) => n.date > currentStrategy.updatedAt || (n.resolvedDate && n.resolvedDate > currentStrategy.updatedAt)),
+    };
+
+    const triggers = computeStrengthReviewTriggers(signals);
+    if (triggers.length === 0) return;
+
+    const rec = buildStrengthProgramRecommendation({ currentStrategy, triggers, goalOverviews: overviews, asOf });
+    await StrengthProgramRecommendationsRepo.put(rec);
+    await refresh();
+  }, [refresh]);
+
   useEffect(() => {
     (async () => {
       // AscendSplashLogo's entrance sequence (ring/mountain/trail draw-in,
@@ -273,6 +437,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           // migration to TrainingGoal/GoalMilestone (Technical Architecture
           // v0.3.1 REVISED, Phase 1), guarded so it only ever runs once.
           await migrateToGoalEngine();
+          await migrateStrengthProgramDefault();
           await syncTemplateAndScheduleDefinitions();
           await refresh();
         })(),
@@ -282,8 +447,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Fire-and-forget, after the splash — this is background forecast
       // adaptation, never something the user waits on to see Today/Week.
       void runForecastReplan();
+      void runStrengthReviewCheck();
     })();
-  }, [refresh, runForecastReplan]);
+  }, [refresh, runForecastReplan, runStrengthReviewCheck]);
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
 
@@ -658,12 +824,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     resetDemoData: async () => {
       await resetToDemoData();
       await migrateToGoalEngine();
+      await migrateStrengthProgramDefault();
       await refresh();
     },
     celebration,
     dismissCelebration: () => setCelebration(null),
     forecastSummary,
     dismissForecastSummary: () => setForecastSummary(null),
+    strengthProgramStrategies,
+    strengthRecommendation,
+    activateStrengthProgram,
+    reportStrengthSchemaEnded,
+    resolveStrengthRecommendation,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

@@ -48,6 +48,13 @@ export interface GoalEngineConfig {
   strategy: TrainingStrategyProfile;
   guardrails: TrainingGuardrail[];
   availability: TrainingAvailability;
+  // Stamped by storage/database.ts#GoalEngineConfigRepo.set on every write —
+  // absent until the first edit. First real consumer (Phase 8): a Strength
+  // Program review needs to honestly detect "availability/priority changed
+  // since the current strength block started" without inventing a diff of
+  // its own; a single blob-level timestamp is enough for that, an
+  // ASCEND_HEURISTIC-free fact rather than a guess at which field changed.
+  updatedAt?: string;
 }
 
 export const DEFAULT_GOAL_ENGINE_CONFIG: GoalEngineConfig = {

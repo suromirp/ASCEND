@@ -14,17 +14,19 @@
 // Pure transform logic lives in engine/goalMigration.ts — this file only
 // orchestrates reading/writing IndexedDB.
 
-import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
+import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy } from '../engine/goalMigration';
 import {
   ObjectivesRepo,
   MilestoneProgressRepo,
   TrainingGoalsRepo,
   GoalMilestonesRepo,
   GoalMilestoneProgressRepo,
+  StrengthProgramStrategiesRepo,
   MetaRepo,
   SettingsRepo,
   clearLegacyObjectiveStores,
 } from './database';
+import { todayISO } from '../utils/dates';
 
 export async function migrateToGoalEngine(): Promise<void> {
   const migrated = await MetaRepo.get<boolean>('goalEngineMigrated');
@@ -54,4 +56,22 @@ export async function migrateToGoalEngine(): Promise<void> {
   await clearLegacyObjectiveStores();
 
   await MetaRepo.set('goalEngineMigrated', true);
+}
+
+// Separate one-time migration (Strength Program Strategy Addendum v0.1,
+// Phase 8), guarded by its own flag rather than folded into
+// 'goalEngineMigrated' above — that flag is already true on every device
+// that ran the Phase 1 migration, so reusing it here would mean this
+// default never seeds for anyone except a brand-new install. Runs once
+// per device regardless of when the app was first installed.
+export async function migrateStrengthProgramDefault(): Promise<void> {
+  const migrated = await MetaRepo.get<boolean>('strengthProgramDefaultSeeded');
+  if (migrated) return;
+
+  const existing = await StrengthProgramStrategiesRepo.getAll();
+  if (existing.length === 0) {
+    await StrengthProgramStrategiesRepo.put(buildDefaultStrengthProgramStrategy(todayISO()));
+  }
+
+  await MetaRepo.set('strengthProgramDefaultSeeded', true);
 }

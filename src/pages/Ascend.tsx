@@ -16,6 +16,7 @@ import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PAC
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
+import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
 
 function blankGoalDraft(): TrainingGoal {
@@ -71,6 +72,8 @@ export function AscendPage() {
       )}
 
       <StrengthProgressionCard logs={sessionLogs} />
+
+      <StrengthProgramCard />
 
       {goal && (
         <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} />

@@ -50,7 +50,13 @@ export type EngineEvent =
   | 'strategy_changed' | 'goal_priority_changed'
   | 'session_completed' | 'session_skipped' | 'session_moved' | 'no_time_today'
   | 'injury_added' | 'injury_resolved'
-  | 'availability_changed' | 'new_training_data';
+  | 'availability_changed' | 'new_training_data'
+  // Phase 8 — a StrengthProgramStrategy was started or changed, and the
+  // forecast-range strength placement was reconciled against it
+  // (engine/strengthScheduling.ts). Distinct from 'strategy_changed'
+  // (TrainingStrategyProfile — progression style/guardrails), which is an
+  // unrelated, pre-existing concept.
+  | 'strength_program_changed';
 
 export interface PlanChangeAlternative {
   label: string;
