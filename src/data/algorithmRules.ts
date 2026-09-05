@@ -8,10 +8,14 @@
 // these were consumed by any engine logic in Phase 1 ("no new training
 // intelligence yet", Technical Architecture v0.3.1 REVISED) — this module
 // exists so later phases have one place to look rule provenance up by id,
-// never restated inline. Phase 3's Progression Orchestrator is the first
+// never restated inline. Phase 3's Progression Orchestrator was the first
 // consumer: `HEURISTIC-POOR-RESPONSE-2-OF-3` and
 // `HEURISTIC-ACCUMULATION-REVIEW-3-PROGRESSIONS` (both already seeded here)
-// plus five new entries below it added for that engine.
+// plus five new entries added for that engine. Phase 4 (Feasibility Engine,
+// Goal Focus, Goal Arbiter) consumes three more that were seeded here since
+// Phase 1 but unused until now: `HEURISTIC-FEASIBILITY-CATEGORY-SIMULATION`,
+// `HEURISTIC-GOAL-FOCUS-WEIGHTS`, and `HEURISTIC-ADVENTURE-FRESHEN` (the
+// taper/freshen trigger) — no new rule entries were needed for Phase 4.
 
 import type { AlgorithmRuleMetadata } from '../models/evidence';
 
