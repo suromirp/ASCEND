@@ -1,4 +1,4 @@
-import type { ObjectiveProgress } from '../engine/progression';
+import type { GoalProgress } from '../engine/progression';
 import { Card, Eyebrow } from './ui';
 
 const SYMBOL: Record<string, string> = { completed: '✓', current: '●', upcoming: '○', future: '○' };
@@ -9,13 +9,13 @@ const SYMBOL_COLOR: Record<string, string> = {
   future: 'var(--color-ink-dim)',
 };
 
-export function AdventureCard({ progress, onOpenLadder }: { progress: ObjectiveProgress; onOpenLadder?: () => void }) {
+export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgress; onOpenLadder?: () => void }) {
   if (!progress.currentMilestone) {
     return (
       <Card texture>
         <Eyebrow>VOLGEND OBJECTIEF</Eyebrow>
         <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-gold)' }}>Alle mijlpalen behaald</p>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.objective.name} — klaar voor de expeditie.</p>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName} — klaar voor de expeditie.</p>
       </Card>
     );
   }
@@ -31,7 +31,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: ObjectiveP
           <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{progress.readinessPct}% GEREED</span>
         </div>
         <p className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{progress.currentMilestone.definition.title}</p>
-        <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{progress.objective.name}</p>
+        <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName}</p>
 
         <div className="mt-3 flex flex-col gap-1.5">
           {window.map((m) => (

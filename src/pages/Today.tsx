@@ -3,7 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
-import { computeObjectiveProgress } from '../engine/progression';
+import { computeGoalProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
@@ -40,7 +40,7 @@ function mergeNoTimeProposals(proposals: ScheduleProposal[]): ScheduleProposal {
 }
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, objectives, milestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday } = useAppData();
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, skipSession, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -97,10 +97,14 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
   const quote = dailyQuote(today);
 
-  const firstObjective = objectives[0];
+  // The GR5 goal is the one with milestones — mirrors the old objectives[0]
+  // assumption, now stated explicitly rather than by array position (see
+  // pages/Ascend.tsx).
+  const primaryGoal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
+  const primaryGoalMilestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
   const objectiveProgress = useMemo(
-    () => (firstObjective ? computeObjectiveProgress(firstObjective, milestoneProgress, sessionLogs) : null),
-    [firstObjective, milestoneProgress, sessionLogs],
+    () => (primaryGoal ? computeGoalProgress(primaryGoal.id, primaryGoal.name, primaryGoalMilestones, goalMilestoneProgress, sessionLogs) : null),
+    [primaryGoal, primaryGoalMilestones, goalMilestoneProgress, sessionLogs],
   );
 
   function handleMove(sessionId: string, date: string) {

@@ -1,23 +1,25 @@
-import type { ObjectiveProgress } from '../engine/progression';
+import type { GoalProgress } from '../engine/progression';
 import { ObjectiveCard } from './ObjectiveCard';
 import { Eyebrow } from './ui';
 import { getGR5MilestoneDetail } from '../data/gr5Details';
 
 export function AscentLadder({
   progress,
+  description,
   onMarkCleared,
   onSelectMilestone,
 }: {
-  progress: ObjectiveProgress;
+  progress: GoalProgress;
+  description?: string;
   onMarkCleared: (milestoneId: string) => void;
   onSelectMilestone?: (milestoneId: string) => void;
 }) {
   return (
     <div>
       <Eyebrow>DE BEKLIMMING</Eyebrow>
-      <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{progress.objective.name}</h2>
-      {progress.objective.description && (
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.objective.description}</p>
+      <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{progress.goalName}</h2>
+      {description && (
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{description}</p>
       )}
 
       <div className="mt-6">

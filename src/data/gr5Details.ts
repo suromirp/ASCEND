@@ -14,6 +14,14 @@ export interface MilestoneSource {
   url?: string;
 }
 
+// Moved here from the old Objective.description field (models/objectives.ts)
+// as part of the Phase 1 goal-engine migration — TrainingGoal (models/goals.ts)
+// carries no description field of its own, matching Technical Architecture
+// v0.3.1 REVISED's domain model. This is static narrative copy about the
+// GR5 track, same category as GR5_PACKING_NOTE below, not user data.
+export const GR5_TRACK_DESCRIPTION =
+  'Opbouw richting een meerdaagse Alpine trektocht zoals de GR5 — de Alpenfase uit je eigen schema.';
+
 export interface MilestoneDetail {
   subtitle: string;
   type: string;
