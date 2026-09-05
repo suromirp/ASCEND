@@ -1,27 +1,33 @@
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
+import { ImportWizard } from '../components/ImportWizard';
+import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { exportData, importData, resetDemoData, settings, updateSettings, injuryNotes } = useAppData();
+  const { exportData, resetDemoData, settings, updateSettings, injuryNotes } = useAppData();
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
-  const fileInput = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [showImportWizard, setShowImportWizard] = useState(false);
+  const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
+  const supportsPreferredDirectory = webBackupFileAdapter.supportsPreferredDirectory();
 
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      await importData(file);
-      setStatus('Import geslaagd.');
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Import mislukt.');
-    } finally {
-      e.target.value = '';
-    }
+  useEffect(() => {
+    if (!supportsPreferredDirectory) return;
+    webBackupFileAdapter.hasPreferredDirectory?.().then(setHasPreferredDirectory);
+  }, [supportsPreferredDirectory]);
+
+  async function handleExport() {
+    const success = await exportData();
+    setStatus(success ? 'Export geslaagd.' : null);
+  }
+
+  async function handleChooseDirectory() {
+    await webBackupFileAdapter.choosePreferredDirectory?.();
+    setHasPreferredDirectory((await webBackupFileAdapter.hasPreferredDirectory?.()) ?? false);
   }
 
   return (
@@ -50,11 +56,25 @@ export function SettingsPage() {
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
           Alle data staat lokaal op dit apparaat. Exporteer regelmatig een back-up.
         </p>
-        <PrimaryButton onClick={() => exportData()}>EXPORTEER DATA</PrimaryButton>
-        <SecondaryButton onClick={() => fileInput.current?.click()}>IMPORTEER DATA</SecondaryButton>
-        <input ref={fileInput} type="file" accept="application/json" className="hidden" onChange={handleImport} />
+        <PrimaryButton onClick={handleExport}>EXPORTEER DATA</PrimaryButton>
+        <SecondaryButton onClick={() => setShowImportWizard(true)}>IMPORTEER DATA</SecondaryButton>
         {status && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{status}</p>}
       </Card>
+
+      {supportsPreferredDirectory && (
+        <Card className="flex flex-col gap-3">
+          <Eyebrow>BACK-UPMAP</Eyebrow>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+            Kies een vaste map op dit apparaat waar EXPORTEER DATA automatisch naartoe schrijft, zonder elke keer een
+            opslaanvenster te tonen.
+          </p>
+          <SecondaryButton onClick={handleChooseDirectory}>
+            {hasPreferredDirectory ? 'MAP WIJZIGEN' : 'MAP KIEZEN'}
+          </SecondaryButton>
+        </Card>
+      )}
+
+      {showImportWizard && <ImportWizard onClose={() => setShowImportWizard(false)} />}
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>SCHEMA OPNIEUW LADEN</Eyebrow>
