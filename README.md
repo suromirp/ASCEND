@@ -199,18 +199,29 @@ structuur gebruiken zonder nieuwe UI.
 
 ### Progressie- en Ascent Ladder-architectuur
 
-Objectieven volgen hetzelfde patroon als sessies:
+Doelen volgen hetzelfde patroon als sessies — sinds Phase 1 van de
+Technical Architecture (v0.3.1 REVISED) generiek voor elk toekomstig doel,
+niet meer hardcoded op GR5:
 
-- `Objective` + `MilestoneDefinition[]` — de statische ladder ("wat zou het
-  kosten")
-- `MilestoneProgress` — append-only records van *wanneer* een mijlpaal
+- `TrainingGoal` (`models/goals.ts`) — het doel zelf (naam, status,
+  streefdatum, `GoalRequirement[]`)
+- `GoalMilestone[]` (eigen store, `by-goal` geïndexeerd) — de statische
+  ladder ("wat zou het kosten")
+- `GoalMilestoneProgress` — append-only records van *wanneer* een mijlpaal
   daadwerkelijk gehaald is
 
-`engine/progression.ts` berekent voor elke mijlpaal of hij voldaan is: via een
-expliciete `MilestoneProgress`-rij, óf automatisch doordat een `SessionLog`
-al aan de eis voldoet (bijv. een wandeling met 750+ D+). Mijlpalen met een
-handmatige eis (`kind: 'manual'`, zoals "Weekend bergsimulatie" of "GR5
-KLAAR") kun je expliciet markeren op het Ascend-scherm.
+`engine/progression.ts#computeGoalProgress` berekent voor elke mijlpaal of
+hij voldaan is: via een expliciete `GoalMilestoneProgress`-rij, óf
+automatisch doordat een `SessionLog` al aan de eis voldoet (bijv. een
+wandeling met 750+ D+). Mijlpalen met een handmatige eis (`kind: 'manual'`,
+zoals "Weekend bergsimulatie" of "GR5 KLAAR") kun je expliciet markeren op
+het Ascend-scherm.
+
+De oude `Objective`/`MilestoneDefinition`/`MilestoneProgress`-stores
+(`models/objectives.ts`) bestaan nog in de database, maar zijn na de
+eenmalige migratie (`storage/goalMigration.ts`) leeg — ze blijven puur zodat
+een export van vóór Phase 1 nog importeert. Nergens in de actieve code leest
+of schrijft nog iets naar die stores.
 
 Readiness-percentages (`engine/readiness.ts` — kracht, cardio, klimmen/D+,
 uithouding, herstel, consistentie, rugzakcapaciteit) zijn in V1 bewust

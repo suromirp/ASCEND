@@ -1,30 +1,35 @@
 import { useMemo, useState } from 'react';
-import type { Objective } from '../models/objectives';
+import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
 import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
-import { computeObjectiveProgress } from '../engine/progression';
+import { computeGoalProgress } from '../engine/progression';
+import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
 import { daysBetween, todayISO } from '../utils/dates';
 import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
-import { getGR5MilestoneDetail, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
+import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Card, Eyebrow } from '../components/ui';
 
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, objectives, milestoneProgress, clearMilestoneManually, updateObjective, settings, updateSettings } = useAppData();
+  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, settings, updateSettings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
-  const objective = objectives[0];
+  // The GR5 goal is always the one with milestones — the marathon goal
+  // (migrated from AppSettings) has none. Mirrors the old objectives[0]
+  // assumption, now stated explicitly rather than by array position.
+  const goal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
+  const milestonesForGoal = useMemo(() => goalMilestones.filter((m) => m.goalId === goal?.id), [goalMilestones, goal?.id]);
   const progress = useMemo(
-    () => (objective ? computeObjectiveProgress(objective, milestoneProgress, sessionLogs) : null),
-    [objective, milestoneProgress, sessionLogs],
+    () => (goal ? computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs) : null),
+    [goal, milestonesForGoal, goalMilestoneProgress, sessionLogs],
   );
   const selectedMilestone = progress?.milestones.find((m) => m.definition.id === selectedMilestoneId);
   const selectedDetail = selectedMilestone ? getGR5MilestoneDetail(selectedMilestone.definition.order) : undefined;
@@ -57,16 +62,17 @@ export function AscendPage() {
 
       <StrengthProgressionCard logs={sessionLogs} />
 
-      {objective && (
-        <GR5GoalCard objective={objective} onUpdate={(patch) => updateObjective(objective.id, patch)} />
+      {goal && (
+        <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} />
       )}
 
       <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} onUpdate={(patch) => updateSettings(patch)} />
 
-      {progress && (
+      {progress && goal && (
         <AscentLadder
           progress={progress}
-          onMarkCleared={(milestoneId) => clearMilestoneManually(objective.id, milestoneId)}
+          description={GR5_TRACK_DESCRIPTION}
+          onMarkCleared={(milestoneId) => clearMilestoneManually(goal.id, milestoneId)}
           onSelectMilestone={setSelectedMilestoneId}
         />
       )}
@@ -196,13 +202,14 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
 }
 
 function GR5GoalCard({
-  objective,
+  goal,
   onUpdate,
 }: {
-  objective: Objective;
-  onUpdate: (patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => void;
+  goal: TrainingGoal;
+  onUpdate: (patch: { targetDate?: string; targetDistanceKm?: number }) => void;
 }) {
-  const daysLeft = objective.targetDate ? daysBetween(todayISO(), objective.targetDate) : undefined;
+  const daysLeft = goal.targetDate ? daysBetween(todayISO(), goal.targetDate) : undefined;
+  const targetDistanceKm = findRequirement(goal, 'distance')?.target?.amount;
 
   return (
     <Card className="flex flex-col gap-3">
@@ -223,7 +230,7 @@ function GR5GoalCard({
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Startdatum</label>
           <input
             type="date"
-            value={objective.targetDate ?? ''}
+            value={goal.targetDate ?? ''}
             onChange={(e) => onUpdate({ targetDate: e.target.value || undefined })}
             className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
             style={dateInputStyle}
@@ -233,7 +240,7 @@ function GR5GoalCard({
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Afstand (km)</label>
           <input
             type="number"
-            value={objective.targetDistanceKm ?? ''}
+            value={targetDistanceKm ?? ''}
             onChange={(e) => onUpdate({ targetDistanceKm: e.target.value === '' ? undefined : Number(e.target.value) })}
             placeholder="±600"
             className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
@@ -249,10 +256,13 @@ const RACE_DISTANCE_KM: Record<'half' | 'full', number> = { half: 21.1, full: 42
 
 type MarathonGoalPatch = Partial<Pick<AppSettings, 'marathonRaceType' | 'marathonTargetDate' | 'marathonTargetTimeMinutes'>>;
 
-// Standalone goal, not a second Objective/MilestoneDefinition ladder — the
-// Ascent Ladder assumes objectives[0] is "the" objective in several places
-// (Today, Ascend), so a second one would need a broader refactor. This
-// mirrors GR5GoalCard's UI instead, backed by AppSettings.
+// Standalone goal, not a second GoalAchievementTrack/GoalMilestone ladder —
+// the Ascent Ladder only ever renders the one goal that actually has
+// milestones (Today, Ascend), so a second ladder would need a broader
+// refactor. This mirrors GR5GoalCard's UI instead, backed by AppSettings.
+// Migrated into its own TrainingGoal (storage/goalMigration.ts) purely so
+// it's visible to the goal engine's storage layer — the UI here is
+// unchanged and still reads/writes AppSettings directly.
 function MarathonGoalCard({
   settings,
   sessionLogs,

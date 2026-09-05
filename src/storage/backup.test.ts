@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, wipeAllData } from './database';
+import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
 import type { Program } from '../models/program';
 
@@ -99,5 +100,58 @@ describe('backup envelope round-trip', () => {
 
     // The original, un-overwritten log survives.
     expect(await SessionLogsRepo.getAll()).toEqual([currentLog]);
+  });
+
+  it('restoring a V1 backup migrates its legacy objectives/milestoneProgress into the new goal-engine stores', async () => {
+    const backup = normalizeBackupToCurrentModel({
+      backupSchemaVersion: 1,
+      createdAt: '2026-09-01T00:00:00.000Z',
+      payload: {
+        version: 1,
+        program: null,
+        templates: [],
+        plannedSessions: [],
+        sessionLogs: [],
+        objectives: [{
+          id: 'obj_gr5',
+          name: 'GR5 / ALPINE READINESS',
+          targetDate: '2027-06-01',
+          targetDistanceKm: 600,
+          milestones: [{ id: 'obj_gr5_m1', objectiveId: 'obj_gr5', order: 1, title: 'First', requirement: { kind: 'duration', activityType: 'cardio', minMinutes: 40 } }],
+        }],
+        milestoneProgress: [{ id: 'p1', objectiveId: 'obj_gr5', milestoneId: 'obj_gr5_m1', clearedDate: '2026-01-01' }],
+        injuryNotes: [],
+        settings: {},
+      },
+    });
+
+    expect(backup.trainingGoals).toEqual([expect.objectContaining({ id: 'obj_gr5', status: 'active' })]);
+    expect(backup.goalMilestones).toEqual([expect.objectContaining({ id: LEGACY_MILESTONE_ID_MAP.obj_gr5_m1, goalId: 'obj_gr5' })]);
+    expect(backup.goalMilestoneProgress).toEqual([expect.objectContaining({ milestoneId: LEGACY_MILESTONE_ID_MAP.obj_gr5_m1, goalId: 'obj_gr5' })]);
+
+    await applyImportPlan(
+      backup,
+      createImportPlan(backup, 'full_restore', defaultActionsForMode('full_restore'), 'restore_backup_plan', [], (await createPreImportSnapshot()).id),
+    );
+
+    expect(await TrainingGoalsRepo.getAll()).toHaveLength(1);
+    expect(await GoalMilestonesRepo.getAll()).toHaveLength(1);
+    expect(await GoalMilestoneProgressRepo.getAll()).toHaveLength(1);
+  });
+
+  it('round-trips a real TrainingGoal/GoalMilestone through export and full-restore import (V2)', async () => {
+    await TrainingGoalsRepo.put({ id: 'goal1', name: 'Marathon', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'paused' });
+    await GoalMilestonesRepo.put({ id: 'ms1', goalId: 'goal1', order: 1, title: 'First', requirement: { kind: 'manual' } });
+    await GoalMilestoneProgressRepo.put({ id: 'p1', goalId: 'goal1', milestoneId: 'ms1', clearedDate: '2026-02-01' });
+
+    const envelope = await buildBackupEnvelope();
+    expect(envelope.payload).toEqual(expect.objectContaining({ version: 2 }));
+
+    await wipeAllData();
+    await importEnvelope(envelope);
+
+    expect(await TrainingGoalsRepo.getAll()).toEqual([expect.objectContaining({ id: 'goal1' })]);
+    expect(await GoalMilestonesRepo.getAll()).toEqual([expect.objectContaining({ id: 'ms1' })]);
+    expect(await GoalMilestoneProgressRepo.getAll()).toEqual([expect.objectContaining({ id: 'p1' })]);
   });
 });

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
-import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
 import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
@@ -9,14 +9,14 @@ import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
 import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
   seedIfEmpty,
-  syncObjectiveDefinitions,
   syncTemplateAndScheduleDefinitions,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
-  ObjectivesRepo,
-  MilestoneProgressRepo,
+  TrainingGoalsRepo,
+  GoalMilestonesRepo,
+  GoalMilestoneProgressRepo,
   InjuryNotesRepo,
   SettingsRepo,
   StretchCompletionRepo,
@@ -25,8 +25,9 @@ import {
   type AppSettings,
   type StretchCompletion,
 } from '../storage/database';
+import { migrateToGoalEngine } from '../storage/goalMigration';
 import { proposeMove, proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
-import { computeObjectiveProgress, requirementAutoSatisfied } from '../engine/progression';
+import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
@@ -38,8 +39,9 @@ interface AppData {
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
-  objectives: Objective[];
-  milestoneProgress: MilestoneProgress[];
+  trainingGoals: TrainingGoal[];
+  goalMilestones: GoalMilestone[];
+  goalMilestoneProgress: GoalMilestoneProgress[];
   injuryNotes: InjuryNote[];
   settings: AppSettings;
   stretchCompletion: StretchCompletion;
@@ -51,8 +53,8 @@ interface AppData {
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   skipSession: (sessionId: string) => Promise<void>;
-  clearMilestoneManually: (objectiveId: string, milestoneId: string) => Promise<void>;
-  updateObjective: (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => Promise<void>;
+  clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
+  updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   toggleStretchRoutine: (kind: keyof StretchCompletion) => Promise<void>;
   addInjury: (input: Omit<InjuryNote, 'id'>) => Promise<void>;
@@ -88,21 +90,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [templates, setTemplates] = useState<SessionTemplate[]>([]);
   const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
-  const [objectives, setObjectives] = useState<Objective[]>([]);
-  const [milestoneProgress, setMilestoneProgress] = useState<MilestoneProgress[]>([]);
+  const [trainingGoals, setTrainingGoals] = useState<TrainingGoal[]>([]);
+  const [goalMilestones, setGoalMilestones] = useState<GoalMilestone[]>([]);
+  const [goalMilestoneProgress, setGoalMilestoneProgress] = useState<GoalMilestoneProgress[]>([]);
   const [injuryNotes, setInjuryNotes] = useState<InjuryNote[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, objs, progress, injuries, loadedSettings, loadedStretchCompletion] = await Promise.all([
+    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, loadedSettings, loadedStretchCompletion] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
       SessionLogsRepo.getAll(),
-      ObjectivesRepo.getAll(),
-      MilestoneProgressRepo.getAll(),
+      TrainingGoalsRepo.getAll(),
+      GoalMilestonesRepo.getAll(),
+      GoalMilestoneProgressRepo.getAll(),
       InjuryNotesRepo.getAll(),
       SettingsRepo.get(),
       StretchCompletionRepo.get(),
@@ -111,8 +115,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setTemplates(tpls);
     setPlannedSessions(planned);
     setSessionLogs(logs);
-    setObjectives(objs);
-    setMilestoneProgress(progress);
+    setTrainingGoals(goals);
+    setGoalMilestones(milestones);
+    setGoalMilestoneProgress(progress);
     setInjuryNotes(injuries);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
@@ -133,7 +138,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await Promise.all([
         (async () => {
           await seedIfEmpty();
-          await syncObjectiveDefinitions();
+          // Replaces the retired syncObjectiveDefinitions() — one-time
+          // migration to TrainingGoal/GoalMilestone (Technical Architecture
+          // v0.3.1 REVISED, Phase 1), guarded so it only ever runs once.
+          await migrateToGoalEngine();
           await syncTemplateAndScheduleDefinitions();
           await refresh();
         })(),
@@ -172,15 +180,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await SessionLogsRepo.put(log);
 
       // If this log satisfies the current front-of-ladder milestone on any
-      // objective, record the historical moment it was cleared.
+      // goal, record the historical moment it was cleared.
       let clearedTitle: string | undefined;
-      for (const objective of objectives) {
-        const progress = computeObjectiveProgress(objective, milestoneProgress, sessionLogs);
+      for (const goal of trainingGoals) {
+        const milestonesForGoal = goalMilestones.filter((m) => m.goalId === goal.id);
+        if (milestonesForGoal.length === 0) continue;
+        const progress = computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs);
         const current = progress.currentMilestone;
         if (current && requirementAutoSatisfied(current.definition.requirement, [log])) {
-          await MilestoneProgressRepo.put({
+          await GoalMilestoneProgressRepo.put({
             id: makeId('progress'),
-            objectiveId: objective.id,
+            goalId: goal.id,
             milestoneId: current.definition.id,
             clearedDate: log.completedDate,
             sourceSessionLogId: log.id,
@@ -204,7 +214,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
       );
     },
-    [objectives, milestoneProgress, sessionLogs, refresh, settings.introSoundEnabled],
+    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
@@ -214,12 +224,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const undoLog = useCallback(
     async (logId: string) => {
       await SessionLogsRepo.delete(logId);
-      for (const p of milestoneProgress) {
-        if (p.sourceSessionLogId === logId) await MilestoneProgressRepo.delete(p.id);
+      for (const p of goalMilestoneProgress) {
+        if (p.sourceSessionLogId === logId) await GoalMilestoneProgressRepo.delete(p.id);
       }
       await refresh();
     },
-    [milestoneProgress, refresh],
+    [goalMilestoneProgress, refresh],
   );
 
   const moveSession = useCallback(
@@ -259,33 +269,50 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const clearMilestoneManually = useCallback(
-    async (objectiveId: string, milestoneId: string) => {
-      await MilestoneProgressRepo.put({
+    async (goalId: string, milestoneId: string) => {
+      await GoalMilestoneProgressRepo.put({
         id: makeId('progress'),
-        objectiveId,
+        goalId,
         milestoneId,
         clearedDate: todayISO(),
       });
-      const title = objectives.find((o) => o.id === objectiveId)?.milestones.find((m) => m.id === milestoneId)?.title;
+      const title = goalMilestones.find((m) => m.goalId === goalId && m.id === milestoneId)?.title;
       await refresh();
       haptics.success();
       if (settings.introSoundEnabled) playMilestoneChime();
       if (title) setCelebration({ id: makeId('celebration'), kind: 'milestone', title, quote: pickVictoryQuote() });
     },
-    [objectives, refresh, settings.introSoundEnabled],
+    [goalMilestones, refresh, settings.introSoundEnabled],
   );
 
   // Only targetDate/targetDistanceKm are editable from the UI today — the
-  // ladder content itself (name, milestones) is static and synced from
-  // data/defaultProgram.ts via syncObjectiveDefinitions().
-  const updateObjective = useCallback(
-    async (objectiveId: string, patch: Partial<Pick<Objective, 'targetDate' | 'targetDistanceKm'>>) => {
-      const objective = objectives.find((o) => o.id === objectiveId);
-      if (!objective) return;
-      await ObjectivesRepo.put({ ...objective, ...patch });
+  // ladder content itself (name, milestones) is static, migrated once from
+  // data/defaultProgram.ts (storage/goalMigration.ts). targetDistanceKm
+  // isn't a direct TrainingGoal field (Technical Architecture v0.3.1
+  // REVISED) — it's expressed as a 'distance'/'total_event' GoalRequirement,
+  // upserted here by kind. Setting/clearing targetDate also flips the
+  // discriminated union's status between 'active' and 'paused', since an
+  // active goal cannot exist without one.
+  const updateGoal = useCallback(
+    async (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => {
+      const goal = trainingGoals.find((g) => g.id === goalId);
+      if (!goal) return;
+      const now = new Date().toISOString();
+      let requirements = goal.requirements;
+      if ('targetDistanceKm' in patch) {
+        const withoutDistance = goal.requirements.filter((r) => r.kind !== 'distance');
+        requirements = patch.targetDistanceKm !== undefined
+          ? [...withoutDistance, { id: makeId('req'), kind: 'distance' as const, scope: 'total_event' as const, target: { amount: patch.targetDistanceKm, unit: 'km' as const } }]
+          : withoutDistance;
+      }
+      const targetDate = 'targetDate' in patch ? patch.targetDate : goal.targetDate;
+      const next: TrainingGoal = targetDate
+        ? { ...goal, requirements, updatedAt: now, status: 'active', targetDate }
+        : { ...goal, requirements, updatedAt: now, status: 'paused', targetDate: undefined };
+      await TrainingGoalsRepo.put(next);
       await refresh();
     },
-    [objectives, refresh],
+    [trainingGoals, refresh],
   );
 
   const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
@@ -377,8 +404,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     templates,
     plannedSessions,
     sessionLogs,
-    objectives,
-    milestoneProgress,
+    trainingGoals,
+    goalMilestones,
+    goalMilestoneProgress,
     injuryNotes,
     settings,
     stretchCompletion,
@@ -391,7 +419,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     applyProposal,
     skipSession,
     clearMilestoneManually,
-    updateObjective,
+    updateGoal,
     updateSettings,
     toggleStretchRoutine,
     addInjury,
@@ -408,6 +436,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     resetDemoData: async () => {
       await resetToDemoData();
+      await migrateToGoalEngine();
       await refresh();
     },
     celebration,

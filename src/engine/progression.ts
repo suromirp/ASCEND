@@ -1,5 +1,6 @@
 import type { SessionLog } from '../models/training';
-import type { Objective, MilestoneDefinition, MilestoneProgress, MilestoneRequirement, MilestoneStatus } from '../models/objectives';
+import type { MilestoneRequirement, MilestoneStatus } from '../models/objectives';
+import type { GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import { addDays } from '../utils/dates';
 
 // Does a single SessionLog satisfy a given requirement on its own?
@@ -58,13 +59,14 @@ export function requirementAutoSatisfied(requirement: MilestoneRequirement, logs
 }
 
 export interface MilestoneView {
-  definition: MilestoneDefinition;
+  definition: GoalMilestone;
   status: MilestoneStatus;
   clearedDate?: string;
 }
 
-export interface ObjectiveProgress {
-  objective: Objective;
+export interface GoalProgress {
+  goalId: string;
+  goalName: string;
   milestones: MilestoneView[];
   completedCount: number;
   totalCount: number;
@@ -72,19 +74,24 @@ export interface ObjectiveProgress {
   currentMilestone?: MilestoneView;
 }
 
-// Builds the full Ascent Ladder view-model for one objective: every
-// milestone gets a status derived from explicit MilestoneProgress rows
-// (never mutated) plus, defensively, from what the log history alone would
-// already satisfy — so a manually-imported log still lights up a milestone
-// even if the user never tapped a "mark complete" button.
-export function computeObjectiveProgress(
-  objective: Objective,
-  progressRows: MilestoneProgress[],
+// Builds the full Ascent Ladder view-model for one goal's achievement
+// track: every milestone gets a status derived from explicit
+// GoalMilestoneProgress rows (never mutated) plus, defensively, from what
+// the log history alone would already satisfy — so a manually-imported log
+// still lights up a milestone even if the user never tapped a "markeer als
+// behaald" button. Generic over any goal (Technical Architecture v0.3.1
+// REVISED, "Foundation" phase) — the caller supplies the goal's id/name,
+// not a domain-specific Objective/TrainingGoal object.
+export function computeGoalProgress(
+  goalId: string,
+  goalName: string,
+  milestones: GoalMilestone[],
+  progressRows: GoalMilestoneProgress[],
   logs: SessionLog[],
-): ObjectiveProgress {
-  const clearedByRow = new Map(progressRows.filter((p) => p.objectiveId === objective.id).map((p) => [p.milestoneId, p]));
+): GoalProgress {
+  const clearedByRow = new Map(progressRows.filter((p) => p.goalId === goalId).map((p) => [p.milestoneId, p]));
 
-  const milestones: MilestoneView[] = objective.milestones
+  const views: MilestoneView[] = [...milestones]
     .sort((a, b) => a.order - b.order)
     .map((definition) => {
       const row = clearedByRow.get(definition.id);
@@ -92,23 +99,24 @@ export function computeObjectiveProgress(
       return { definition, status: cleared ? ('completed' as const) : ('future' as const), clearedDate: row?.clearedDate };
     });
 
-  const firstIncompleteIdx = milestones.findIndex((m) => m.status !== 'completed');
+  const firstIncompleteIdx = views.findIndex((m) => m.status !== 'completed');
   if (firstIncompleteIdx !== -1) {
-    milestones[firstIncompleteIdx] = { ...milestones[firstIncompleteIdx], status: 'current' };
-    for (let i = firstIncompleteIdx + 1; i < milestones.length; i++) {
-      milestones[i] = { ...milestones[i], status: i === firstIncompleteIdx + 1 ? 'upcoming' : 'future' };
+    views[firstIncompleteIdx] = { ...views[firstIncompleteIdx], status: 'current' };
+    for (let i = firstIncompleteIdx + 1; i < views.length; i++) {
+      views[i] = { ...views[i], status: i === firstIncompleteIdx + 1 ? 'upcoming' : 'future' };
     }
   }
 
-  const completedCount = milestones.filter((m) => m.status === 'completed').length;
-  const totalCount = milestones.length;
+  const completedCount = views.filter((m) => m.status === 'completed').length;
+  const totalCount = views.length;
 
   return {
-    objective,
-    milestones,
+    goalId,
+    goalName,
+    milestones: views,
     completedCount,
     totalCount,
     readinessPct: totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100),
-    currentMilestone: milestones.find((m) => m.status === 'current'),
+    currentMilestone: views.find((m) => m.status === 'current'),
   };
 }

@@ -4,6 +4,10 @@ import type { SessionTemplate, PlannedSession, SessionLog } from '../models/trai
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { InjuryNote } from '../models/injury';
+import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { TrainingPrescription } from '../models/prescription';
+import type { GoalEngineConfig } from '../models/goalEngineConfig';
+import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
@@ -11,7 +15,7 @@ import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -19,6 +23,9 @@ interface AscendDB extends DBSchema {
   sessionTemplates: { key: string; value: SessionTemplate };
   plannedSessions: { key: string; value: PlannedSession; indexes: { 'by-week': string; 'by-date': string } };
   sessionLogs: { key: string; value: SessionLog; indexes: { 'by-date': string } };
+  // Legacy — kept, not deleted, so a pre-goal-engine export still imports
+  // cleanly. Emptied by storage/goalMigration.ts once trainingGoals/
+  // goalMilestones/goalMilestoneProgress take over as the live source.
   objectives: { key: string; value: Objective };
   milestoneProgress: { key: string; value: MilestoneProgress; indexes: { 'by-objective': string } };
   recoveryMetrics: { key: string; value: RecoveryMetric };
@@ -30,6 +37,11 @@ interface AscendDB extends DBSchema {
   // specifically so the import transaction itself can never overwrite the
   // one copy that would let a bad import be undone.
   backupSnapshots: { key: string; value: PreImportSnapshot };
+  // --- Goal engine foundation (Technical Architecture v0.3.1 REVISED, Phase 1) ---
+  trainingGoals: { key: string; value: TrainingGoal };
+  goalMilestones: { key: string; value: GoalMilestone; indexes: { 'by-goal': string } };
+  goalMilestoneProgress: { key: string; value: GoalMilestoneProgress; indexes: { 'by-goal': string } };
+  trainingPrescriptions: { key: string; value: TrainingPrescription; indexes: { 'by-plannedSession': string } };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -66,6 +78,19 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
         if (!db.objectStoreNames.contains('nutritionMetrics')) db.createObjectStore('nutritionMetrics', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('injuryNotes')) db.createObjectStore('injuryNotes', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('backupSnapshots')) db.createObjectStore('backupSnapshots', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('trainingGoals')) db.createObjectStore('trainingGoals', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('goalMilestones')) {
+          const store = db.createObjectStore('goalMilestones', { keyPath: 'id' });
+          store.createIndex('by-goal', 'goalId');
+        }
+        if (!db.objectStoreNames.contains('goalMilestoneProgress')) {
+          const store = db.createObjectStore('goalMilestoneProgress', { keyPath: 'id' });
+          store.createIndex('by-goal', 'goalId');
+        }
+        if (!db.objectStoreNames.contains('trainingPrescriptions')) {
+          const store = db.createObjectStore('trainingPrescriptions', { keyPath: 'id' });
+          store.createIndex('by-plannedSession', 'plannedSessionId');
+        }
       },
     });
   }
@@ -148,6 +173,97 @@ export const InjuryNotesRepo = {
   getAll: () => getAll('injuryNotes') as Promise<InjuryNote[]>,
   put: (n: InjuryNote) => put('injuryNotes', n),
   delete: (id: string) => del('injuryNotes', id),
+};
+
+// --- goal engine foundation repos ---------------------------------------
+// Named, exported interfaces (not just inferred object shapes) — the
+// platform-boundary groundwork from Technical Architecture v0.3.1 REVISED's
+// Platform & Deployment Architecture section: a future
+// AndroidStorageAdapter/iOSStorageAdapter implements the same interface
+// over SQLite/native storage without engine/models code caring which one
+// is live.
+
+export interface TrainingGoalsRepo {
+  getAll(): Promise<TrainingGoal[]>;
+  put(goal: TrainingGoal): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const TrainingGoalsRepo: TrainingGoalsRepo = {
+  getAll: () => getAll('trainingGoals') as Promise<TrainingGoal[]>,
+  put: (goal: TrainingGoal) => put('trainingGoals', goal),
+  delete: (id: string) => del('trainingGoals', id),
+};
+
+export interface GoalMilestonesRepo {
+  getAll(): Promise<GoalMilestone[]>;
+  byGoal(goalId: string): Promise<GoalMilestone[]>;
+  put(milestone: GoalMilestone): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const GoalMilestonesRepo: GoalMilestonesRepo = {
+  getAll: () => getAll('goalMilestones') as Promise<GoalMilestone[]>,
+  byGoal: async (goalId: string) => {
+    const db = await getDB();
+    return db.getAllFromIndex('goalMilestones', 'by-goal', goalId);
+  },
+  put: (milestone: GoalMilestone) => put('goalMilestones', milestone),
+  delete: (id: string) => del('goalMilestones', id),
+};
+
+export interface GoalMilestoneProgressRepo {
+  getAll(): Promise<GoalMilestoneProgress[]>;
+  byGoal(goalId: string): Promise<GoalMilestoneProgress[]>;
+  put(progress: GoalMilestoneProgress): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const GoalMilestoneProgressRepo: GoalMilestoneProgressRepo = {
+  getAll: () => getAll('goalMilestoneProgress') as Promise<GoalMilestoneProgress[]>,
+  byGoal: async (goalId: string) => {
+    const db = await getDB();
+    return db.getAllFromIndex('goalMilestoneProgress', 'by-goal', goalId);
+  },
+  put: (progress: GoalMilestoneProgress) => put('goalMilestoneProgress', progress),
+  delete: (id: string) => del('goalMilestoneProgress', id),
+};
+
+export interface TrainingPrescriptionsRepo {
+  getAll(): Promise<TrainingPrescription[]>;
+  byPlannedSession(plannedSessionId: string): Promise<TrainingPrescription | undefined>;
+  put(prescription: TrainingPrescription): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const TrainingPrescriptionsRepo: TrainingPrescriptionsRepo = {
+  getAll: () => getAll('trainingPrescriptions') as Promise<TrainingPrescription[]>,
+  byPlannedSession: async (plannedSessionId: string) => {
+    const db = await getDB();
+    return db.getFromIndex('trainingPrescriptions', 'by-plannedSession', plannedSessionId);
+  },
+  put: (prescription: TrainingPrescription) => put('trainingPrescriptions', prescription),
+  delete: (id: string) => del('trainingPrescriptions', id),
+};
+
+// goalEngineConfig deliberately isn't a store — a single meta key, same
+// pattern as AppSettings, since strategy/guardrails/availability are all
+// read/written together as one small config unit with no indexed queries.
+export interface GoalEngineConfigRepo {
+  get(): Promise<GoalEngineConfig>;
+  set(patch: Partial<GoalEngineConfig>): Promise<GoalEngineConfig>;
+}
+
+export const GoalEngineConfigRepo: GoalEngineConfigRepo = {
+  get: async () => {
+    const stored = await MetaRepo.get<Partial<GoalEngineConfig>>('goalEngineConfig');
+    return { ...DEFAULT_GOAL_ENGINE_CONFIG, ...stored };
+  },
+  set: async (patch: Partial<GoalEngineConfig>) => {
+    const next = { ...(await GoalEngineConfigRepo.get()), ...patch };
+    await MetaRepo.set('goalEngineConfig', next);
+    return next;
+  },
 };
 
 export const BackupSnapshotsRepo = {
@@ -253,31 +369,18 @@ export async function seedIfEmpty(): Promise<void> {
   await putAll('milestoneProgress', milestoneProgress);
   await MetaRepo.set('seeded', true);
   await MetaRepo.set('schemaVersion', SCHEMA_VERSION);
-  await MetaRepo.set('gr5LadderVersion', GR5_LADDER_CONTENT_VERSION);
   await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
 }
 
-// The GR5 ladder (Objective + MilestoneDefinitions) is static content, not
-// historical data — unlike MilestoneProgress/SessionLog it's safe to
-// overwrite in place when the copy improves. Bump this when
-// buildObjective() in data/defaultProgram.ts changes, so an already-seeded
-// device picks up the new ladder once instead of staying stuck on whatever
-// content existed the day it was first opened. Milestone ids are
-// order-based (`obj_gr5_m{order}`); reordering is safe here because
-// non-manual milestones aren't referenced by id in MilestoneProgress at
-// all (their status is recomputed live from logs), and the two 'manual'
-// milestones keep the same order position across this content revision.
-const GR5_LADDER_CONTENT_VERSION = 2;
-
-export async function syncObjectiveDefinitions(): Promise<void> {
-  const version = await MetaRepo.get<number>('gr5LadderVersion');
-  if (version === GR5_LADDER_CONTENT_VERSION) return;
-  const { objectives } = buildDefaultProgramData();
-  for (const objective of objectives) {
-    await ObjectivesRepo.put(objective);
-  }
-  await MetaRepo.set('gr5LadderVersion', GR5_LADDER_CONTENT_VERSION);
-}
+// syncObjectiveDefinitions()/GR5_LADDER_CONTENT_VERSION retired (Technical
+// Architecture v0.3.1 REVISED, Migration plan): its job — keeping the
+// legacy GR5 ladder's static content current on an already-seeded device —
+// is superseded by storage/goalMigration.ts's one-time migration to
+// TrainingGoal/GoalMilestone. The legacy `objectives` store this used to
+// upsert into is still seeded once by seedIfEmpty() above (migration reads
+// its user-specific state — targetDate/progress — from there), but its
+// static content (name/milestones) no longer needs ongoing sync: the
+// migrated GoalMilestone rows are the live source of truth from here on.
 
 // SessionTemplate definitions are static content, same reasoning as
 // syncObjectiveDefinitions above — safe to overwrite in place. The weekly
@@ -393,6 +496,12 @@ export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
   await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
 }
 
+// Emptied (not deleted) by storage/goalMigration.ts once the one-time
+// migration has copied their content forward — see that file.
+export async function clearLegacyObjectiveStores(): Promise<void> {
+  await Promise.all([clearStore('objectives'), clearStore('milestoneProgress')]);
+}
+
 export async function resetToDemoData(): Promise<void> {
   await Promise.all([
     clearStore('programs'),
@@ -405,8 +514,13 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('bodyMetrics'),
     clearStore('nutritionMetrics'),
     clearStore('injuryNotes'),
+    clearStore('trainingGoals'),
+    clearStore('goalMilestones'),
+    clearStore('goalMilestoneProgress'),
+    clearStore('trainingPrescriptions'),
   ]);
   await MetaRepo.set('seeded', false);
+  await MetaRepo.set('goalEngineMigrated', false);
   await seedIfEmpty();
 }
 
@@ -435,8 +549,9 @@ export interface BackupWriteSet {
   sessionTemplates?: BackupStoreWrite<SessionTemplate>;
   plannedSessions?: BackupStoreWrite<PlannedSession>;
   sessionLogs?: BackupStoreWrite<SessionLog>;
-  objectives?: BackupStoreWrite<Objective>;
-  milestoneProgress?: BackupStoreWrite<MilestoneProgress>;
+  trainingGoals?: BackupStoreWrite<TrainingGoal>;
+  goalMilestones?: BackupStoreWrite<GoalMilestone>;
+  goalMilestoneProgress?: BackupStoreWrite<GoalMilestoneProgress>;
   injuryNotes?: BackupStoreWrite<InjuryNote>;
   settings?: AppSettings;
 }
@@ -453,7 +568,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'objectives', 'milestoneProgress', 'injuryNotes'] as const) {
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'injuryNotes'] as const) {
     const write = writes[key];
     if (!write) continue;
     const store = tx.objectStore(key);
@@ -480,6 +595,10 @@ export async function wipeAllData(): Promise<void> {
     clearStore('bodyMetrics'),
     clearStore('nutritionMetrics'),
     clearStore('injuryNotes'),
+    clearStore('trainingGoals'),
+    clearStore('goalMilestones'),
+    clearStore('goalMilestoneProgress'),
+    clearStore('trainingPrescriptions'),
     clearStore('meta'),
   ]);
 }

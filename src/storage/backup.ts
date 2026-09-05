@@ -19,27 +19,30 @@
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
 import {
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
-  ObjectivesRepo,
-  MilestoneProgressRepo,
+  TrainingGoalsRepo,
+  GoalMilestonesRepo,
+  GoalMilestoneProgressRepo,
   InjuryNotesRepo,
   SettingsRepo,
   BackupSnapshotsRepo,
   applyBackupWrites,
   type AppSettings,
 } from './database';
+import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
 import { migrateExport, type AscendExport } from './migrations';
 import { makeId } from '../utils/id';
 import {
   CURRENT_BACKUP_SCHEMA_VERSION,
   ALL_CATEGORIES,
   type AscendBackupEnvelope,
-  type AscendBackupPayloadV1,
+  type AscendBackupPayloadV2,
   type NormalizedBackupData,
   type BackupDataCategory,
   type CategoryAction,
@@ -52,28 +55,59 @@ import {
   type PreImportSnapshot,
 } from './backupTypes';
 
+// A V1 backup's legacy objectives/milestoneProgress are migrated into
+// trainingGoals/goalMilestones/goalMilestoneProgress here — the exact same
+// transform storage/goalMigration.ts runs on-device (engine/goalMigration.ts),
+// so restoring an old backup never silently loses GR5/marathon goal
+// progress just because the on-disk shape has moved on. Today's app only
+// ever has one GR5-shaped Objective, but this maps every row present, not
+// just the first, in case an old export ever carried more than one.
+function migrateLegacyObjectives(
+  objectives: Objective[],
+  legacyProgress: MilestoneProgress[],
+  settings: Partial<AppSettings>,
+): { trainingGoals: TrainingGoal[]; goalMilestones: GoalMilestone[]; goalMilestoneProgress: GoalMilestoneProgress[] } {
+  const trainingGoals: TrainingGoal[] = [];
+  const goalMilestones: GoalMilestone[] = [];
+  const goalMilestoneProgress: GoalMilestoneProgress[] = [];
+
+  for (const objective of objectives) {
+    const migrated = migrateGr5ObjectiveData(objective, legacyProgress);
+    trainingGoals.push(migrated.goal);
+    goalMilestones.push(...migrated.milestones);
+    goalMilestoneProgress.push(...migrated.progress);
+  }
+
+  const marathonGoal = buildMarathonGoal(settings.marathonRaceType, settings.marathonTargetDate, settings.marathonTargetTimeMinutes);
+  if (marathonGoal) trainingGoals.push(marathonGoal);
+
+  return { trainingGoals, goalMilestones, goalMilestoneProgress };
+}
+
 // --- export direction --------------------------------------------------------
 
 export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
-  const [programs, templates, plannedSessions, sessionLogs, objectives, milestoneProgress, injuryNotes, settings] = await Promise.all([
+  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, injuryNotes, settings] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
-    ObjectivesRepo.getAll(),
-    MilestoneProgressRepo.getAll(),
+    TrainingGoalsRepo.getAll(),
+    GoalMilestonesRepo.getAll(),
+    GoalMilestoneProgressRepo.getAll(),
     InjuryNotesRepo.getAll(),
     SettingsRepo.get(),
   ]);
 
-  const payload: AscendBackupPayloadV1 = {
-    version: 1,
+  const payload: AscendBackupPayloadV2 = {
+    version: 2,
     program: programs[0] ?? null,
     templates,
     plannedSessions,
     sessionLogs,
-    objectives,
-    milestoneProgress,
+    trainingGoals,
+    goalMilestones,
+    goalMilestoneProgress,
     injuryNotes,
     settings,
   };
@@ -111,27 +145,54 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
       );
     }
     const payload = obj.payload as Record<string, unknown>;
-    if (payload.version !== 1) {
-      throw new Error(`Deze back-up heeft een onbekende gegevensversie en kan niet worden geïmporteerd.`);
+    const createdAt = typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString();
+
+    if (payload.version === 2) {
+      const p = payload as unknown as AscendBackupPayloadV2;
+      return {
+        createdAt,
+        sourceBackupSchemaVersion: obj.backupSchemaVersion,
+        program: p.program ?? null,
+        templates: p.templates ?? [],
+        plannedSessions: p.plannedSessions ?? [],
+        sessionLogs: p.sessionLogs ?? [],
+        trainingGoals: p.trainingGoals ?? [],
+        goalMilestones: p.goalMilestones ?? [],
+        goalMilestoneProgress: p.goalMilestoneProgress ?? [],
+        injuryNotes: p.injuryNotes ?? [],
+        settings: p.settings ?? {},
+      };
     }
-    const p = payload as unknown as AscendBackupPayloadV1;
-    return {
-      createdAt: typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString(),
-      sourceBackupSchemaVersion: obj.backupSchemaVersion,
-      program: p.program ?? null,
-      templates: p.templates ?? [],
-      plannedSessions: p.plannedSessions ?? [],
-      sessionLogs: p.sessionLogs ?? [],
-      objectives: p.objectives ?? [],
-      milestoneProgress: p.milestoneProgress ?? [],
-      injuryNotes: p.injuryNotes ?? [],
-      settings: p.settings ?? {},
-    };
+
+    if (payload.version === 1) {
+      const p = payload as { program?: Program | null; templates?: SessionTemplate[]; plannedSessions?: PlannedSession[]; sessionLogs?: SessionLog[]; objectives?: Objective[]; milestoneProgress?: MilestoneProgress[]; injuryNotes?: InjuryNote[]; settings?: Partial<AppSettings> };
+      const settings = p.settings ?? {};
+      const migrated = migrateLegacyObjectives(p.objectives ?? [], p.milestoneProgress ?? [], settings);
+      return {
+        createdAt,
+        sourceBackupSchemaVersion: obj.backupSchemaVersion,
+        program: p.program ?? null,
+        templates: p.templates ?? [],
+        plannedSessions: p.plannedSessions ?? [],
+        sessionLogs: p.sessionLogs ?? [],
+        trainingGoals: migrated.trainingGoals,
+        goalMilestones: migrated.goalMilestones,
+        goalMilestoneProgress: migrated.goalMilestoneProgress,
+        injuryNotes: p.injuryNotes ?? [],
+        settings,
+      };
+    }
+
+    throw new Error('Deze back-up heeft een onbekende gegevensversie en kan niet worden geïmporteerd.');
   }
 
   // Legacy flat export shape (pre-v0.3.2 — see migrations.ts).
   if (typeof obj.schemaVersion === 'number' && typeof obj.exportDate === 'string') {
     const migrated = migrateExport(obj as unknown as AscendExport);
+    const objectives = (migrated.objectives as Objective[] | undefined) ?? [];
+    const milestoneProgress = (migrated.milestoneProgress as MilestoneProgress[] | undefined) ?? [];
+    const settings = (migrated.settings as Partial<AppSettings> | undefined) ?? {};
+    const migratedGoals = migrateLegacyObjectives(objectives, milestoneProgress, settings);
     return {
       createdAt: migrated.exportDate,
       sourceBackupSchemaVersion: 0,
@@ -139,10 +200,11 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
       templates: (migrated.templates as SessionTemplate[] | undefined) ?? [],
       plannedSessions: (migrated.plannedSessions as PlannedSession[] | undefined) ?? [],
       sessionLogs: (migrated.sessionLogs as SessionLog[] | undefined) ?? [],
-      objectives: (migrated.objectives as Objective[] | undefined) ?? [],
-      milestoneProgress: (migrated.milestoneProgress as MilestoneProgress[] | undefined) ?? [],
+      trainingGoals: migratedGoals.trainingGoals,
+      goalMilestones: migratedGoals.goalMilestones,
+      goalMilestoneProgress: migratedGoals.goalMilestoneProgress,
       injuryNotes: (migrated.injuryNotes as InjuryNote[] | undefined) ?? [],
-      settings: (migrated.settings as Partial<AppSettings> | undefined) ?? {},
+      settings,
     };
   }
 
@@ -275,24 +337,26 @@ interface CurrentData {
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
-  objectives: Objective[];
-  milestoneProgress: MilestoneProgress[];
+  trainingGoals: TrainingGoal[];
+  goalMilestones: GoalMilestone[];
+  goalMilestoneProgress: GoalMilestoneProgress[];
   injuryNotes: InjuryNote[];
   settings: AppSettings;
 }
 
 async function loadCurrentData(): Promise<CurrentData> {
-  const [programs, templates, plannedSessions, sessionLogs, objectives, milestoneProgress, injuryNotes, settings] = await Promise.all([
+  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, injuryNotes, settings] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
-    ObjectivesRepo.getAll(),
-    MilestoneProgressRepo.getAll(),
+    TrainingGoalsRepo.getAll(),
+    GoalMilestonesRepo.getAll(),
+    GoalMilestoneProgressRepo.getAll(),
     InjuryNotesRepo.getAll(),
     SettingsRepo.get(),
   ]);
-  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, objectives, milestoneProgress, injuryNotes, settings };
+  return { program: programs[0] ?? null, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, injuryNotes, settings };
 }
 
 interface DiffResult {
@@ -303,8 +367,9 @@ interface DiffResult {
     templates: ResolvedListCategory<SessionTemplate>;
     plannedSessions: ResolvedListCategory<PlannedSession>;
     sessionLogs: ResolvedListCategory<SessionLog>;
-    objectives: ResolvedListCategory<Objective>;
-    milestoneProgress: ResolvedListCategory<MilestoneProgress>;
+    trainingGoals: ResolvedListCategory<TrainingGoal>;
+    goalMilestones: ResolvedListCategory<GoalMilestone>;
+    goalMilestoneProgress: ResolvedListCategory<GoalMilestoneProgress>;
     injuryNotes: ResolvedListCategory<InjuryNote>;
     settings: AppSettings | undefined;
   };
@@ -356,16 +421,17 @@ function computeDiff(
     conflicts: plannedSessionsResolved.conflicts,
   });
 
-  const objectivesAction = categorySelections.objectives_and_milestones ?? 'keep_current';
-  const objectivesResolved = resolveListCategory(objectivesAction, backup.objectives, current.objectives, true);
-  const milestoneProgressResolved = resolveListCategory(objectivesAction, backup.milestoneProgress, current.milestoneProgress, false);
+  const goalsAction = categorySelections.objectives_and_milestones ?? 'keep_current';
+  const trainingGoalsResolved = resolveListCategory(goalsAction, backup.trainingGoals, current.trainingGoals, true);
+  const goalMilestonesResolved = resolveListCategory(goalsAction, backup.goalMilestones, current.goalMilestones, true);
+  const goalMilestoneProgressResolved = resolveListCategory(goalsAction, backup.goalMilestoneProgress, current.goalMilestoneProgress, false);
   diffByCategory.push({
     category: 'objectives_and_milestones',
-    action: objectivesAction,
-    toAdd: objectivesResolved.toAdd + milestoneProgressResolved.toAdd,
-    toReplace: objectivesResolved.toReplace + milestoneProgressResolved.toReplace,
-    toSkipDuplicate: objectivesResolved.toSkipDuplicate + milestoneProgressResolved.toSkipDuplicate,
-    conflicts: [...objectivesResolved.conflicts, ...milestoneProgressResolved.conflicts],
+    action: goalsAction,
+    toAdd: trainingGoalsResolved.toAdd + goalMilestonesResolved.toAdd + goalMilestoneProgressResolved.toAdd,
+    toReplace: trainingGoalsResolved.toReplace + goalMilestonesResolved.toReplace + goalMilestoneProgressResolved.toReplace,
+    toSkipDuplicate: trainingGoalsResolved.toSkipDuplicate + goalMilestonesResolved.toSkipDuplicate + goalMilestoneProgressResolved.toSkipDuplicate,
+    conflicts: [...trainingGoalsResolved.conflicts, ...goalMilestonesResolved.conflicts, ...goalMilestoneProgressResolved.conflicts],
   });
 
   const injuriesAction = categorySelections.injuries ?? 'keep_current';
@@ -409,8 +475,9 @@ function computeDiff(
       templates: templatesResolved,
       plannedSessions: plannedSessionsResolved,
       sessionLogs: sessionLogsResolved,
-      objectives: objectivesResolved,
-      milestoneProgress: milestoneProgressResolved,
+      trainingGoals: trainingGoalsResolved,
+      goalMilestones: goalMilestonesResolved,
+      goalMilestoneProgress: goalMilestoneProgressResolved,
       injuryNotes: injuryNotesResolved,
       settings: resolvedSettings,
     },
@@ -431,7 +498,7 @@ export async function buildImportPreview(
     program_and_templates: backup.templates.length,
     training_history: backup.sessionLogs.length,
     planned_schedule: backup.plannedSessions.length,
-    objectives_and_milestones: backup.objectives.length + backup.milestoneProgress.length,
+    objectives_and_milestones: backup.trainingGoals.length + backup.goalMilestones.length + backup.goalMilestoneProgress.length,
     injuries: backup.injuryNotes.length,
     app_settings: Object.keys(backup.settings).length,
   };
@@ -504,7 +571,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const touchesProgram = programAction !== 'keep_current' && programAction !== 'ignore';
   const historyAction = plan.categorySelections.training_history ?? 'keep_current';
   const scheduleAction = resolvePlannedScheduleAction(plan.planPolicy);
-  const objectivesAction = plan.categorySelections.objectives_and_milestones ?? 'keep_current';
+  const goalsAction = plan.categorySelections.objectives_and_milestones ?? 'keep_current';
   const injuriesAction = plan.categorySelections.injuries ?? 'keep_current';
 
   await applyBackupWrites({
@@ -516,10 +583,13 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
     sessionLogs: historyAction === 'keep_current' || historyAction === 'ignore'
       ? undefined
       : { clear: historyAction === 'replace', puts: resolved.sessionLogs.final },
-    objectives: objectivesAction === 'keep_current' ? undefined : { clear: objectivesAction === 'replace', puts: resolved.objectives.final },
-    milestoneProgress: objectivesAction === 'keep_current'
+    trainingGoals: goalsAction === 'keep_current' ? undefined : { clear: goalsAction === 'replace', puts: resolved.trainingGoals.final },
+    goalMilestones: goalsAction === 'keep_current'
       ? undefined
-      : { clear: objectivesAction === 'replace', puts: resolved.milestoneProgress.final },
+      : { clear: goalsAction === 'replace', puts: resolved.goalMilestones.final },
+    goalMilestoneProgress: goalsAction === 'keep_current'
+      ? undefined
+      : { clear: goalsAction === 'replace', puts: resolved.goalMilestoneProgress.final },
     injuryNotes: injuriesAction === 'keep_current' || injuriesAction === 'ignore'
       ? undefined
       : { clear: injuriesAction === 'replace', puts: resolved.injuryNotes.final },

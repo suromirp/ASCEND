@@ -1,12 +1,12 @@
 // ASCEND — Backup / Import / Restore domain types
 //
 // Implements ASCEND Technical Architecture v0.3.2's backup/import/restore
-// design, scoped to what actually exists in the app today — there is no
-// TrainingGoal/GoalMilestone/TrainingPrescription yet, those land with the
-// goal engine in a later phase. The envelope/versioned-payload shape is
-// deliberately built so a V2 payload (once the goal engine ships) can be
-// added as one more union member without redesigning this file, and so
-// PlanPolicy can grow a 'recalculate_plan' option later the same way.
+// design. V2 (Phase 1) adds TrainingGoal/GoalMilestone/GoalMilestoneProgress
+// now that the goal engine foundation exists, replacing the legacy
+// Objective/MilestoneProgress fields V1 carried — exactly the "one more
+// union member without redesigning this file" extension point V1's own
+// comment anticipated. PlanPolicy still doesn't carry 'recalculate_plan' —
+// that still depends on a later phase's recompute pipeline.
 //
 // Lives under storage/, not models/, on purpose: this is a serialization
 ///persistence-schema concern, not a core domain concept — models/ has no
@@ -17,12 +17,13 @@
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
+import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
 import type { AppSettings } from './database';
 
 // --- Backup envelope & versioned payload -----------------------------------
 
-export const CURRENT_BACKUP_SCHEMA_VERSION = 1;
+export const CURRENT_BACKUP_SCHEMA_VERSION = 2;
 
 export interface AscendBackupPayloadV1 {
   version: 1;
@@ -36,7 +37,20 @@ export interface AscendBackupPayloadV1 {
   settings: AppSettings;
 }
 
-export type AscendBackupPayload = AscendBackupPayloadV1;
+export interface AscendBackupPayloadV2 {
+  version: 2;
+  program: Program | null;
+  templates: SessionTemplate[];
+  plannedSessions: PlannedSession[];
+  sessionLogs: SessionLog[];
+  trainingGoals: TrainingGoal[];
+  goalMilestones: GoalMilestone[];
+  goalMilestoneProgress: GoalMilestoneProgress[];
+  injuryNotes: InjuryNote[];
+  settings: AppSettings;
+}
+
+export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2;
 
 export interface AscendBackupEnvelope {
   backupSchemaVersion: number;
@@ -47,8 +61,11 @@ export interface AscendBackupEnvelope {
 
 // The common shape every source version normalizes into — the only shape
 // the rest of the import pipeline (diff/preview/plan/apply) ever operates
-// on. Distinct from AscendBackupPayloadV1 mainly so a future V2 normalizer
-// has somewhere to converge to without this type itself needing to change.
+// on. A V1 backup's legacy objectives/milestoneProgress are migrated into
+// trainingGoals/goalMilestones/goalMilestoneProgress at normalization time
+// (storage/backup.ts, reusing the same transform storage/goalMigration.ts
+// runs on-device) — restoring an old backup must not silently lose GR5/
+// marathon goal progress just because the on-disk shape has moved on.
 export interface NormalizedBackupData {
   createdAt: string;
   // 0 means the source was a pre-v0.3.2 legacy AscendExport file (no
@@ -59,8 +76,9 @@ export interface NormalizedBackupData {
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
-  objectives: Objective[];
-  milestoneProgress: MilestoneProgress[];
+  trainingGoals: TrainingGoal[];
+  goalMilestones: GoalMilestone[];
+  goalMilestoneProgress: GoalMilestoneProgress[];
   injuryNotes: InjuryNote[];
   settings: Partial<AppSettings>;
 }
