@@ -14,6 +14,7 @@ import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Card, Eyebrow } from '../components/ui';
+import { GoalFocusCard } from '../components/GoalFocusCard';
 
 export function AscendPage() {
   const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, settings, updateSettings } = useAppData();
@@ -67,6 +68,8 @@ export function AscendPage() {
       )}
 
       <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} onUpdate={(patch) => updateSettings(patch)} />
+
+      <GoalFocusCard />
 
       {progress && goal && (
         <AscentLadder

@@ -4,6 +4,7 @@ import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
 import type { CapabilityEvidence } from '../models/capability';
+import { DEFAULT_GOAL_ENGINE_CONFIG, type GoalEngineConfig } from '../models/goalEngineConfig';
 import type { CelebrationEvent } from '../components/CompletionMoment';
 import { haptics } from '../utils/haptics';
 import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
@@ -20,6 +21,7 @@ import {
   GoalMilestoneProgressRepo,
   InjuryNotesRepo,
   CapabilityEvidenceRepo,
+  GoalEngineConfigRepo,
   SettingsRepo,
   StretchCompletionRepo,
   resetToDemoData,
@@ -46,6 +48,10 @@ interface AppData {
   goalMilestoneProgress: GoalMilestoneProgress[];
   injuryNotes: InjuryNote[];
   capabilityEvidence: CapabilityEvidence[];
+  // Read-only for now — Phase 4 (Feasibility/Goal Focus/Goal Arbiter) is the
+  // first consumer; no Settings UI to edit guardrails/availability exists
+  // yet, so this always reflects DEFAULT_GOAL_ENGINE_CONFIG until one does.
+  goalEngineConfig: GoalEngineConfig;
   settings: AppSettings;
   stretchCompletion: StretchCompletion;
   templateById: Map<string, SessionTemplate>;
@@ -100,12 +106,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [goalMilestoneProgress, setGoalMilestoneProgress] = useState<GoalMilestoneProgress[]>([]);
   const [injuryNotes, setInjuryNotes] = useState<InjuryNote[]>([]);
   const [capabilityEvidence, setCapabilityEvidence] = useState<CapabilityEvidence[]>([]);
+  const [goalEngineConfig, setGoalEngineConfig] = useState<GoalEngineConfig>(DEFAULT_GOAL_ENGINE_CONFIG);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, loadedSettings, loadedStretchCompletion] = await Promise.all([
+    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -115,6 +122,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       GoalMilestoneProgressRepo.getAll(),
       InjuryNotesRepo.getAll(),
       CapabilityEvidenceRepo.getAll(),
+      GoalEngineConfigRepo.get(),
       SettingsRepo.get(),
       StretchCompletionRepo.get(),
     ]);
@@ -127,6 +135,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setGoalMilestoneProgress(progress);
     setInjuryNotes(injuries);
     setCapabilityEvidence(manualEvidence);
+    setGoalEngineConfig(engineConfig);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
   }, []);
@@ -437,6 +446,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     goalMilestoneProgress,
     injuryNotes,
     capabilityEvidence,
+    goalEngineConfig,
     settings,
     stretchCompletion,
     templateById,
