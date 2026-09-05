@@ -17,8 +17,11 @@ export type TerrainContext =
   | 'unknown';
 
 export type GoalStatus = 'active' | 'paused' | 'completed' | 'archived';
-export type Discipline = 'running' | 'cycling' | 'hiking' | 'strength' | 'other';
-export type RequirementScope = 'single_event' | 'per_day' | 'total_event' | 'consecutive_days';
+
+// Requirement scope — over what span a GoalRequirement's target is measured
+// (Technical Architecture v0.3.6 §E1, correcting v0.3.1 REVISED's original
+// lowercase casing to what was explicitly re-confirmed there).
+export type RequirementScope = 'SINGLE_EVENT' | 'PER_DAY' | 'TOTAL_EVENT' | 'CONSECUTIVE_DAYS';
 
 export interface GoalRequirement {
   id: string;
@@ -26,7 +29,11 @@ export interface GoalRequirement {
       | 'packWeight' | 'consecutiveDays' | 'manual';
   scope: RequirementScope;
   target?: MeasuredValue; // absent for 'manual'
-  discipline?: Discipline;
+  // Free-form, deliberately a plain string rather than a closed union
+  // (Technical Architecture v0.3.6 §E1) — mirrors ActivityModality
+  // (models/training.ts): the set of disciplines is content, not domain
+  // structure, so a new one never needs a model change.
+  discipline?: string;
   context?: TerrainContext; // optional context layer, never a requirement kind of its own
 }
 

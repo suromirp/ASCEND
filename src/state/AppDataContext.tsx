@@ -289,7 +289,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // ladder content itself (name, milestones) is static, migrated once from
   // data/defaultProgram.ts (storage/goalMigration.ts). targetDistanceKm
   // isn't a direct TrainingGoal field (Technical Architecture v0.3.1
-  // REVISED) — it's expressed as a 'distance'/'total_event' GoalRequirement,
+  // REVISED) — it's expressed as a 'distance'/'TOTAL_EVENT' GoalRequirement,
   // upserted here by kind. Setting/clearing targetDate also flips the
   // discriminated union's status between 'active' and 'paused', since an
   // active goal cannot exist without one.
@@ -302,7 +302,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if ('targetDistanceKm' in patch) {
         const withoutDistance = goal.requirements.filter((r) => r.kind !== 'distance');
         requirements = patch.targetDistanceKm !== undefined
-          ? [...withoutDistance, { id: makeId('req'), kind: 'distance' as const, scope: 'total_event' as const, target: { amount: patch.targetDistanceKm, unit: 'km' as const } }]
+          ? [...withoutDistance, { id: makeId('req'), kind: 'distance' as const, scope: 'TOTAL_EVENT' as const, target: { amount: patch.targetDistanceKm, unit: 'km' as const } }]
           : withoutDistance;
       }
       const targetDate = 'targetDate' in patch ? patch.targetDate : goal.targetDate;
