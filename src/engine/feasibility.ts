@@ -12,6 +12,7 @@
 import type { CapabilityGap, GapStatus } from '../models/capability';
 import type { TrainingAvailability, TrainingGuardrail } from '../models/goalEngineConfig';
 import type { FeasibilityAssessment } from '../models/feasibility';
+import { capabilityKeyLabel } from '../data/baselineQuestions';
 
 // ASCEND_HEURISTIC runway calibration (HEURISTIC-FEASIBILITY-CATEGORY-
 // SIMULATION, seeded in Phase 1, first consumed here) — a starting default
@@ -130,8 +131,7 @@ function buildBestPossiblePreparation(
 ): string | undefined {
   if (status === 'on_track' || !worst) return undefined;
 
-  const dimensionLabel = worst.key.discipline ? `${worst.key.dimension} (${worst.key.discipline})` : worst.key.dimension;
-  const parts = [`Gerichte, regelmatige blootstelling aan ${dimensionLabel} zou dit dichter bij ON_TRACK brengen.`];
+  const parts = [`Gerichte, regelmatige blootstelling aan ${capabilityKeyLabel(worst.key)} zou dit dichter bij op schema brengen.`];
 
   if (!sufficientAvailability) {
     parts.push('Meer beschikbare trainingsdagen of een long-session-dag zou de haalbaarheid ook verbeteren.');

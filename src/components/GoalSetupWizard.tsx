@@ -22,10 +22,12 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { TrainingAvailability, TrainingGuardrail } from '../models/goalEngineConfig';
 import type { GoalActivationPlan } from '../models/planChange';
 import type { Unit } from '../models/units';
+import { UNIT_LABEL, formatMeasuredValue } from '../models/units';
+import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../models/disciplines';
 import { computeGoalActivationPlan } from '../engine/goalActivation';
 import { identifyBaselineNeeds, identifyKnownCapabilities, type BaselineCapabilityStatus } from '../engine/goalSetupAssist';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
-import { DIMENSION_META } from '../data/baselineQuestions';
+import { DIMENSION_META, capabilityKeyLabel } from '../data/baselineQuestions';
 import { todayISO, formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
@@ -305,6 +307,8 @@ function InterpretStep({
   );
 }
 
+const CUSTOM_DISCIPLINE = '__custom__';
+
 function RequirementRow({
   requirement,
   onChange,
@@ -315,6 +319,12 @@ function RequirementRow({
   onRemove: () => void;
 }) {
   const meta = REQUIREMENT_KIND_META[requirement.kind as EditableRequirementKind];
+  // A discipline outside the known list (legacy data, or a deliberate
+  // custom entry — models/disciplines.ts never forces a closed set) starts
+  // in free-text mode so its value stays visible instead of silently
+  // resetting to the dropdown's placeholder.
+  const isKnownDiscipline = !requirement.discipline || (DISCIPLINE_OPTIONS as string[]).includes(requirement.discipline);
+  const [customDiscipline, setCustomDiscipline] = useState(!isKnownDiscipline);
   if (!meta) return null; // 'manual' never appears in this generic editor
 
   return (
@@ -325,7 +335,7 @@ function RequirementRow({
       </div>
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waarde ({meta.unit})</label>
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waarde ({UNIT_LABEL[meta.unit]})</label>
           <input
             type="number"
             value={requirement.target?.amount ?? ''}
@@ -337,14 +347,44 @@ function RequirementRow({
         {meta.needsDiscipline && (
           <div className="flex-1">
             <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sport</label>
-            <input
-              type="text"
-              value={requirement.discipline ?? ''}
-              onChange={(e) => onChange({ discipline: e.target.value })}
-              placeholder="bijv. hardlopen, hiken"
-              className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-              style={inputStyle}
-            />
+            {customDiscipline ? (
+              <input
+                type="text"
+                value={requirement.discipline ?? ''}
+                onChange={(e) => onChange({ discipline: e.target.value })}
+                placeholder="bijv. alpineklimmen"
+                className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                style={inputStyle}
+              />
+            ) : (
+              <select
+                value={requirement.discipline ?? ''}
+                onChange={(e) => {
+                  if (e.target.value === CUSTOM_DISCIPLINE) {
+                    setCustomDiscipline(true);
+                    onChange({ discipline: '' });
+                  } else {
+                    onChange({ discipline: e.target.value });
+                  }
+                }}
+                className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                style={inputStyle}
+              >
+                <option value="" style={{ background: 'var(--color-charcoal)' }}>Kies sport</option>
+                {DISCIPLINE_OPTIONS.map((d) => (
+                  <option key={d} value={d} style={{ background: 'var(--color-charcoal)' }}>{DISCIPLINE_LABEL[d]}</option>
+                ))}
+                <option value={CUSTOM_DISCIPLINE} style={{ background: 'var(--color-charcoal)' }}>Andere sport…</option>
+              </select>
+            )}
+            {customDiscipline && (
+              <p className="mt-1 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
+                Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.{' '}
+                <button onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="underline" style={{ color: 'var(--color-ink-dim)' }}>
+                  terug naar lijst
+                </button>
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -388,7 +428,7 @@ function BaselineStep({
           {known.map((k) => {
             const meta = k.key.dimension === 'fatigue_resistance' ? undefined : DIMENSION_META[k.key.dimension];
             if (!meta) return null;
-            const label = k.key.discipline ? `${meta.label} (${k.key.discipline})` : meta.label;
+            const label = k.key.discipline ? `${meta.label} (${disciplineLabel(k.key.discipline)})` : meta.label;
             return (
               <div key={keyId(k.key)} className="flex items-center justify-between gap-3 text-xs">
                 <span style={{ color: 'var(--color-ink)' }}>{label}</span>
@@ -437,7 +477,7 @@ function BaselineQuestionRow({
   const [saving, setSaving] = useState(false);
   if (!meta) return null; // fatigue_resistance never asked — data/baselineQuestions.ts
 
-  const label = need.key.discipline ? `${meta.label} (${need.key.discipline})` : meta.label;
+  const label = need.key.discipline ? `${meta.label} (${disciplineLabel(need.key.discipline)})` : meta.label;
 
   async function handleSave() {
     const parsed = Number(amount);
@@ -455,7 +495,7 @@ function BaselineQuestionRow({
         type="number"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        placeholder={meta.unit}
+        placeholder={UNIT_LABEL[meta.unit]}
         className="rounded-lg border bg-transparent px-2 py-1.5 text-sm"
         style={inputStyle}
       />
@@ -508,7 +548,7 @@ function PreviewStep({
             const meta = REQUIREMENT_KIND_META[r.kind as EditableRequirementKind];
             return (
               <li key={r.id}>
-                · {meta?.label ?? r.kind}: {r.target?.amount} {r.target?.unit}{r.discipline ? ` (${r.discipline})` : ''}
+                · {meta?.label ?? r.kind}: {r.target ? formatMeasuredValue(r.target) : '—'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
               </li>
             );
           })}
@@ -531,7 +571,7 @@ function PreviewStep({
             {sortedGaps.map((g) => (
               <div key={keyId(g.key)} className="flex flex-col gap-0.5 border-t pt-2 text-xs" style={{ borderColor: 'var(--color-card-border)' }}>
                 <div className="flex items-center justify-between gap-3">
-                  <span style={{ color: 'var(--color-ink)' }}>{g.key.discipline ? `${g.key.dimension} (${g.key.discipline})` : g.key.dimension}</span>
+                  <span style={{ color: 'var(--color-ink)' }}>{capabilityKeyLabel(g.key)}</span>
                   <span style={{ color: GAP_STATUS_COLOR[g.status] }}>{GAP_STATUS_LABEL[g.status]}</span>
                 </div>
                 <span style={{ color: 'var(--color-ink-dim)' }}>vertrouwen: {CONFIDENCE_LABEL[g.confidence]}</span>

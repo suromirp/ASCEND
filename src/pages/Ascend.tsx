@@ -25,18 +25,28 @@ function blankGoalDraft(): TrainingGoal {
 }
 
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, updateMarathonGoal, settings } = useAppData();
+  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, updateMarathonGoal, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
   const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
-  const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon');
+  // Archiving (below) sets status:'archived' in place rather than removing
+  // the row, so every "find the live goal" lookup here must exclude it —
+  // otherwise the dedicated GR5/Marathon cards would keep showing an
+  // archived goal as if it were still active.
+  const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   // The GR5 goal is always the one with milestones — the marathon goal
   // (migrated from AppSettings) has none. Mirrors the old objectives[0]
   // assumption, now stated explicitly rather than by array position.
-  const goal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
+  const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  // Any other goal created via "+ NIEUW DOEL" — GR5 and Marathon each have
+  // their own dedicated card above, so this is the only place a custom
+  // goal is visible/editable/archivable at all.
+  const customGoals = trainingGoals.filter(
+    (g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id),
+  );
   const milestonesForGoal = useMemo(() => goalMilestones.filter((m) => m.goalId === goal?.id), [goalMilestones, goal?.id]);
   const progress = useMemo(
     () => (goal ? computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs) : null),
@@ -76,10 +86,12 @@ export function AscendPage() {
       <StrengthProgramCard />
 
       {goal && (
-        <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} />
+        <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} onArchive={() => archiveGoal(goal.id)} />
       )}
 
-      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} />
+      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => archiveGoal(marathonGoal.id) : undefined} />
+
+      <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
 
       <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL</SecondaryButton>
       {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
@@ -222,9 +234,11 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
 function GR5GoalCard({
   goal,
   onUpdate,
+  onArchive,
 }: {
   goal: TrainingGoal;
   onUpdate: (patch: { targetDate?: string; targetDistanceKm?: number }) => void;
+  onArchive: () => void;
 }) {
   const daysLeft = goal.targetDate ? daysBetween(todayISO(), goal.targetDate) : undefined;
   const targetDistanceKm = findRequirement(goal, 'distance')?.target?.amount;
@@ -278,6 +292,8 @@ function GR5GoalCard({
       </div>
       )}
 
+      <button onClick={onArchive} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+
       {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={goal} onClose={() => setWizardOpen(false)} />}
     </Card>
   );
@@ -299,11 +315,13 @@ function MarathonGoalCard({
   sessionLogs,
   marathonGoal,
   onUpdate,
+  onArchive,
 }: {
   settings: AppSettings;
   sessionLogs: SessionLog[];
   marathonGoal: TrainingGoal | undefined;
   onUpdate: (patch: MarathonGoalPatch) => void;
+  onArchive?: () => void;
 }) {
   const raceType = settings.marathonRaceType;
   const distanceKm = raceType ? RACE_DISTANCE_KM[raceType] : undefined;
@@ -442,10 +460,38 @@ function MarathonGoalCard({
               {percentOfDistance !== undefined ? ` — ${percentOfDistance}% van de wedstrijdafstand` : ''}
             </p>
           )}
+          {onArchive && (
+            <button onClick={onArchive} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+          )}
         </>
       )}
 
       {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={wizardDraft} onClose={() => setWizardOpen(false)} />}
+    </Card>
+  );
+}
+
+// Any goal created via "+ NIEUW DOEL" that isn't GR5 (has its own ladder
+// card above) or Marathon (its own settings-backed card above) — until
+// now these had no edit/archive entry point at all outside the read-only
+// DOELFOCUS overview.
+function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchive: (goalId: string) => void }) {
+  const [editing, setEditing] = useState<TrainingGoal | null>(null);
+  if (goals.length === 0) return null;
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>EIGEN DOELEN</Eyebrow>
+      {goals.map((g) => (
+        <div key={g.id} className="flex items-center justify-between gap-3 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
+          <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{g.name || 'Naamloos doel'}</p>
+          <div className="flex shrink-0 gap-3">
+            <SecondaryButton onClick={() => setEditing(g)}>AANPASSEN</SecondaryButton>
+            <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>archiveren</button>
+          </div>
+        </div>
+      ))}
+      {editing && <GoalSetupWizard mode="edit" initialGoal={editing} onClose={() => setEditing(null)} />}
     </Card>
   );
 }
