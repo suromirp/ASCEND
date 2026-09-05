@@ -19,16 +19,15 @@
 //     'reduce'/'replace' item points at — never silently no-op
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import type { TrainingAvailability, TrainingStrategyProfile } from '../models/goalEngineConfig';
-import type { ProgressionDecision, ProgressionState } from '../models/progression';
+import type { TrainingAvailability } from '../models/goalEngineConfig';
+import type { ProgressionDecision } from '../models/progression';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import type { TrainingPrescription, TrainingPrescriptionCandidate, SessionRole } from '../models/prescription';
+import type { TrainingPrescription, TrainingPrescriptionCandidate } from '../models/prescription';
 import { resolveHorizonZone, isDateInForecastRange } from './planningHorizon';
 import { inferCapabilityKeysForTemplate } from './sessionContribution';
 import { keyId } from './capability';
 import { proposeNoTimeToday } from './scheduler';
 import { writeTrainingPrescription } from './prescriptionWriter';
-import { preserveStrengthRole } from './goalArbiter';
 import { proposeRunningPrescription } from './specialists/running';
 import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
 import { findAlgorithmRule } from '../data/algorithmRules';
@@ -60,38 +59,26 @@ function isDateAvailable(dateIso: string, availability: TrainingAvailability): b
   return availability.allowedDays.includes(WEEKDAY_ORDER[isoWeekday(dateIso) - 1]);
 }
 
-// The same role vocabulary each Phase 3 specialist maps independently
-// (deliberately not shared between them — engine module map: "Must NOT
-// share one generic formula across disciplines"); strength has no
-// discipline specialist of its own, so this is its one, direct mapping.
-function roleForState(state: ProgressionState): SessionRole {
-  switch (state) {
-    case 'progress': return 'key';
-    case 'consolidate': return 'support';
-    case 'reduce': return 'maintenance';
-    case 'recover': return 'recovery';
-    case 'taper': return 'maintenance';
-    case 'assess': return 'assessment';
-  }
-}
-
+// Only template types with a real discipline specialist (Phase 3) reach
+// here at all — computeForecastReplan's pass 2 excludes every other type
+// before calling this (see the pass-2 loop below). Strength deliberately
+// has none: the Strength Program Strategy Addendum v0.1 explicitly defers
+// StrengthProgramStrategy/StrengthProgramRecommendation to a later phase,
+// so there is no evidence-backed strength progression logic to drive a
+// 'reduce'/'replace' decision — inventing a role-change heuristic here
+// would be exactly the kind of unbacked guess this codebase's provenance
+// discipline exists to prevent. Throwing (rather than silently falling
+// back to something unbacked) is the fix, not an afterthought: a session
+// type without a real specialist must never quietly get a fabricated
+// prescription.
 function buildPrescriptionCandidate(
   template: SessionTemplate,
   decision: ProgressionDecision,
   plannedSessionId: string,
-  strengthProtection: TrainingStrategyProfile['strengthProtection'],
 ): TrainingPrescriptionCandidate {
   if (template.type === 'cardio') return proposeRunningPrescription({ decision, plannedSessionId });
   if (template.type === 'hiking') return proposeMountainAdventurePrescription({ decision, plannedSessionId });
-  // Strength (Phase 3 built no discipline specialist for it): role-only,
-  // floored at 'maintenance' by Goal Arbiter's §24 rule — an endurance
-  // goal's own pressure never demotes strength further than that.
-  return {
-    plannedSessionId,
-    role: preserveStrengthRole(roleForState(decision.state), strengthProtection),
-    generatedBy: ['engine/adaptiveReplanner.ts', decision.ruleId],
-    reason: decision.reason,
-  };
+  throw new Error(`Adaptive Replanner: no discipline specialist for template type '${template.type}' — this session should have been excluded before reaching here.`);
 }
 
 function buildPassiveSummary(items: PlanChangeItem[]): string {
@@ -120,7 +107,6 @@ export interface ForecastReplanInputs {
   // ProgressionDecision, CapabilityEstimate or ReadinessBreakdown itself.
   decisionsByKey: Map<string, ProgressionDecision>;
   availability: TrainingAvailability;
-  strengthProtection: TrainingStrategyProfile['strengthProtection'];
   asOf: string;
 }
 
@@ -134,7 +120,7 @@ export interface ForecastReplanResult {
 }
 
 export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastReplanResult {
-  const { plannedSessions, templates, decisionsByKey, availability, strengthProtection, asOf } = inputs;
+  const { plannedSessions, templates, decisionsByKey, availability, asOf } = inputs;
   const templateById = new Map(templates.map((t) => [t.id, t]));
 
   const forecastSessions = plannedSessions.filter(
@@ -187,8 +173,16 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     const template = templateById.get(session.templateId);
     // Recovery sessions are never adapted — their whole point is already
     // minimal load; there is nothing to reduce and removing one during a
-    // genuine recovery need would be counterproductive.
-    if (!template || template.type === 'recovery') continue;
+    // genuine recovery need would be counterproductive. Strength sessions
+    // are excluded for a different reason: the Strength Program Strategy
+    // Addendum v0.1 explicitly defers StrengthProgramStrategy/a strength
+    // specialist to a later phase, so there is no evidence-backed logic to
+    // decide *how* a strength session's content should change. Until that
+    // specialist exists, the strength split (Upper/Lower A/B) must stay
+    // exactly as scheduled — this pass may still move a strength session
+    // via pass 1 (availability/conflicts), it just never rewrites its role
+    // or content here.
+    if (!template || template.type === 'recovery' || template.type === 'strength') continue;
 
     const keys = inferCapabilityKeysForTemplate(template);
     const decision = keys.map((k) => decisionsByKey.get(keyId(k))).find((d): d is ProgressionDecision => d !== undefined);
@@ -209,7 +203,7 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     // goes through a confirmation dialog) — 'reduce' (role: 'recovery',
     // lighter load) is the semantically correct, proportionate response.
     const action: 'reduce' | 'replace' = decision.state === 'reduce' || decision.state === 'taper' || decision.state === 'recover' ? 'reduce' : 'replace';
-    const candidate = buildPrescriptionCandidate(template, decision, session.id, strengthProtection);
+    const candidate = buildPrescriptionCandidate(template, decision, session.id);
     const written = writeTrainingPrescription(candidate);
     prescriptions.push(written);
     // reason/generatedBy duplicated from the written prescription onto the

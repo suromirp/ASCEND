@@ -41,7 +41,6 @@ describe('computeForecastReplan — availability pass', () => {
       templates: [tplEasyRun],
       decisionsByKey: new Map(),
       availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }), // Monday blocked
-      strengthProtection: 'normal',
       asOf: ASOF,
     });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
@@ -56,7 +55,6 @@ describe('computeForecastReplan — availability pass', () => {
       templates: [tplEasyRun],
       decisionsByKey: new Map(),
       availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
-      strengthProtection: 'normal',
       asOf: ASOF,
     });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
@@ -75,7 +73,6 @@ describe('computeForecastReplan — availability pass', () => {
       templates: [tplEasyRun],
       decisionsByKey: new Map(),
       availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
-      strengthProtection: 'normal',
       asOf: ASOF,
     });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps0');
@@ -89,7 +86,6 @@ describe('computeForecastReplan — availability pass', () => {
       templates: [tplEasyRun],
       decisionsByKey: new Map(),
       availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
-      strengthProtection: 'normal',
       asOf: ASOF,
     });
     expect(result.proposal.changes).toEqual([]);
@@ -100,7 +96,7 @@ describe('computeForecastReplan — progression pass', () => {
   it('reduces (never removes) a session whose relevant decision is recover — a full removal is a stronger, less reversible action than the locked cutback/deload vocabulary calls for', () => {
     const s = session('ps1', 'tpl_easy_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['sustainable_output:running', decision({ state: 'recover' })]]);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
     expect(item?.action).toBe('reduce');
     expect(result.prescriptions).toHaveLength(1);
@@ -110,7 +106,7 @@ describe('computeForecastReplan — progression pass', () => {
   it('writes a real prescription and emits a reduce item for a reduce/taper decision, referencing the same session', () => {
     const s = session('ps1', 'tpl_long_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['ascent_capacity', decision({ key: { dimension: 'ascent_capacity' }, state: 'reduce' })]]);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
     expect(item?.action).toBe('reduce');
     expect(result.prescriptions).toHaveLength(1);
@@ -121,7 +117,7 @@ describe('computeForecastReplan — progression pass', () => {
   it('stamps reason/generatedBy directly onto the item — durably, so the audit trail survives even after the referenced prescription is later superseded and deleted', () => {
     const s = session('ps1', 'tpl_long_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['ascent_capacity', decision({ key: { dimension: 'ascent_capacity' }, state: 'reduce', reason: 'test reason for durability check', ruleId: 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE' })]]);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
     // Read directly off the item — never cross-referencing result.prescriptions,
     // which is exactly the mutable, non-append-only companion store this
@@ -133,7 +129,7 @@ describe('computeForecastReplan — progression pass', () => {
   it('emits a replace item (not reduce) for a consolidate/assess decision', () => {
     const s = session('ps1', 'tpl_long_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['ascent_capacity', decision({ key: { dimension: 'ascent_capacity' }, state: 'consolidate' })]]);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
     const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
     expect(item?.action).toBe('replace');
   });
@@ -141,7 +137,7 @@ describe('computeForecastReplan — progression pass', () => {
   it('leaves a "progress" session completely untouched — the template is already the plan', () => {
     const s = session('ps1', 'tpl_easy_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['sustainable_output:running', decision({ state: 'progress' })]]);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
     expect(result.proposal.changes).toEqual([]);
     expect(result.prescriptions).toEqual([]);
   });
@@ -149,22 +145,31 @@ describe('computeForecastReplan — progression pass', () => {
   it('never adapts a recovery-type session regardless of any decision present', () => {
     const s = session('ps1', 'tpl_herstel', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['aerobic_engine', decision({ key: { dimension: 'aerobic_engine' }, state: 'recover' })]]);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplHerstel], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplHerstel], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
     expect(result.proposal.changes).toEqual([]);
   });
 
-  it('floors a strength session at maintenance role via preserveStrengthRole, never lower, when protection is not low', () => {
+  it('never touches a strength session\'s content/role, even when a matching decision would otherwise trigger reduce/replace — no StrengthProgramStrategy/specialist exists yet', () => {
     const s = session('ps1', 'tpl_upper_a', FORECAST_TUESDAY, FORECAST_MONDAY);
-    const decisionsByKey = new Map([['strength', decision({ key: { dimension: 'strength' }, state: 'assess' })]]); // assess -> 'assessment' role, not floored (already >= maintenance conceptually)
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplUpperA], decisionsByKey, availability: fullAvailability(), strengthProtection: 'high', asOf: ASOF });
-    const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
-    expect(item?.action).toBe('replace');
-    expect(result.prescriptions[0].role).toBe('assessment');
+    // A decision keyed under 'strength' that would trigger 'replace' for any
+    // specialist-backed template type — must still leave this session alone.
+    const decisionsByKey = new Map([['strength', decision({ key: { dimension: 'strength' }, state: 'assess' })]]);
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplUpperA], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
+    expect(result.proposal.changes).toEqual([]);
+    expect(result.prescriptions).toEqual([]);
+  });
+
+  it('never touches a strength session even for a decision keyed under aerobic_engine (the other capability demand.ts deliberately never derives a numeric target for)', () => {
+    const s = session('ps1', 'tpl_upper_a', FORECAST_TUESDAY, FORECAST_MONDAY);
+    const decisionsByKey = new Map([['aerobic_engine', decision({ key: { dimension: 'aerobic_engine' }, state: 'reduce' })]]);
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplUpperA], decisionsByKey, availability: fullAvailability(), asOf: ASOF });
+    expect(result.proposal.changes).toEqual([]);
+    expect(result.prescriptions).toEqual([]);
   });
 
   it('produces no changes at all and a calm summary when nothing needs adapting', () => {
     const s = session('ps1', 'tpl_easy_run', FORECAST_MONDAY, FORECAST_MONDAY);
-    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey: new Map(), availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey: new Map(), availability: fullAvailability(), asOf: ASOF });
     expect(result.proposal.changes).toEqual([]);
     expect(result.passiveSummary).toMatch(/Geen aanpassingen/);
   });
@@ -184,7 +189,6 @@ describe('computeForecastReplan — progression pass', () => {
       templates: [tplEasyRun, tplLongRun],
       decisionsByKey,
       availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
-      strengthProtection: 'normal',
       asOf: ASOF,
     });
     expect(result.passiveSummary).toContain('2 sessie(s)');
