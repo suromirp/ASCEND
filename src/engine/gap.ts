@@ -48,6 +48,25 @@ export function computeCapabilityGap(demand: CapabilityDemand, estimate: Capabil
     };
   }
 
+  // A unit mismatch (e.g. a distance-shaped demand for a dimension whose
+  // only real evidence is duration-shaped — engine/demand.ts's own
+  // endurance_duration/mechanical_tolerance derivation from a bare
+  // 'distance' requirement) means this demand and this evidence cannot be
+  // honestly compared at all — structurally the same "cannot assess" case
+  // as no evidence existing (§23), never a crash and never a guessed
+  // conversion between them.
+  if (demand.demand.unit !== currentEstimate.unit) {
+    return {
+      key: demand.key,
+      demand: demand.demand,
+      currentEstimate,
+      status: 'unknown',
+      confidence: estimate.confidence,
+      criticality: demand.criticality,
+      explanation: 'Deze vraag en de beschikbare evidence zijn niet in dezelfde eenheid uit te drukken — dit telt niet als een tekortkoming.',
+    };
+  }
+
   const ratio = capabilityRatio(demand.demand, currentEstimate);
   const status = statusFromRatio(ratio);
   const met = isDemandMet(demand.demand, currentEstimate);
