@@ -31,8 +31,26 @@ import { writeTrainingPrescription } from './prescriptionWriter';
 import { preserveStrengthRole } from './goalArbiter';
 import { proposeRunningPrescription } from './specialists/running';
 import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
+import { findAlgorithmRule } from '../data/algorithmRules';
 import { isoWeekday, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
+
+// A bare ruleId is a stable identifier, but the *metadata it resolves to*
+// (data/algorithmRules.ts#ruleVersion) can be recalibrated later under the
+// same id (SYSTEM_INVARIANTS' own "same input + engine version + rule
+// version -> same output" already treats rule version as a distinct axis
+// of change). Stamping the version NOW, at decision time, onto the
+// permanent audit item means a much later lookup by ruleId alone can never
+// silently misattribute an old entry to a rule version that didn't exist
+// yet when it was written. Any entry that isn't a known ruleId (a file/
+// module path, e.g. 'engine/specialists/running.ts') passes through
+// unchanged — this only ever stamps entries findAlgorithmRule resolves.
+function stampGeneratedBy(entries: string[]): string[] {
+  return entries.map((entry) => {
+    const rule = findAlgorithmRule(entry);
+    return rule ? `${entry}@v${rule.ruleVersion}` : entry;
+  });
+}
 
 const WEEKDAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
@@ -151,6 +169,13 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
           action: change.toDate === change.fromDate ? 'remove' : 'move',
           fromDate: change.fromDate,
           toDate: change.toDate,
+          // Captured on the item itself (not only derivable from
+          // TrainingAvailability at read time, which may have since
+          // changed) — proposal.reason is scheduler.ts's own real,
+          // specific text (e.g. the 48h-spacing cascade note), not a
+          // generic placeholder.
+          reason: `Beschikbaarheid: ${date} niet beschikbaar volgens de ingestelde trainingsbeschikbaarheid. ${proposal.reason}`,
+          generatedBy: ['engine/adaptiveReplanner.ts#availability-pass', 'engine/scheduler.ts#proposeNoTimeToday'],
         });
       }
     }
@@ -187,7 +212,14 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     const candidate = buildPrescriptionCandidate(template, decision, session.id, strengthProtection);
     const written = writeTrainingPrescription(candidate);
     prescriptions.push(written);
-    items.push({ plannedSessionId: session.id, action, newPrescriptionId: written.id });
+    // reason/generatedBy duplicated from the written prescription onto the
+    // item itself, deliberately — TrainingPrescriptionsRepo keeps only the
+    // one *current* row per session (the previous one is deleted the next
+    // time this replanner runs), so without its own copy this permanent,
+    // append-only audit record would lose exactly the "why"/"which
+    // rule/engine version" it exists to preserve the moment a later run
+    // supersedes that prescription.
+    items.push({ plannedSessionId: session.id, action, newPrescriptionId: written.id, reason: written.reason, generatedBy: stampGeneratedBy(written.generatedBy) });
   }
 
   const proposal: PlanChangeProposal = {

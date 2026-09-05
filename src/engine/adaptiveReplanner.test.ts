@@ -49,6 +49,21 @@ describe('computeForecastReplan — availability pass', () => {
     expect(item?.toDate).not.toBe(FORECAST_MONDAY);
   });
 
+  it('stamps a specific, durable reason/generatedBy on an availability-driven item too — not only progression-driven ones', () => {
+    const s = session('ps1', 'tpl_easy_run', FORECAST_MONDAY, FORECAST_MONDAY);
+    const result = computeForecastReplan({
+      plannedSessions: [s],
+      templates: [tplEasyRun],
+      decisionsByKey: new Map(),
+      availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
+      strengthProtection: 'normal',
+      asOf: ASOF,
+    });
+    const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
+    expect(item?.reason).toMatch(/Beschikbaarheid/);
+    expect(item?.generatedBy).toEqual(['engine/adaptiveReplanner.ts#availability-pass', 'engine/scheduler.ts#proposeNoTimeToday']);
+  });
+
   it('removes (skips) a session when no free day exists at all that week', () => {
     // Every day of the week is filled, and Monday itself is unavailable.
     const week = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((_, i) => {
@@ -101,6 +116,18 @@ describe('computeForecastReplan — progression pass', () => {
     expect(result.prescriptions).toHaveLength(1);
     expect(result.prescriptions[0].id).toBe(item?.newPrescriptionId);
     expect(result.prescriptions[0].plannedSessionId).toBe('ps1');
+  });
+
+  it('stamps reason/generatedBy directly onto the item — durably, so the audit trail survives even after the referenced prescription is later superseded and deleted', () => {
+    const s = session('ps1', 'tpl_long_run', FORECAST_MONDAY, FORECAST_MONDAY);
+    const decisionsByKey = new Map([['ascent_capacity', decision({ key: { dimension: 'ascent_capacity' }, state: 'reduce', reason: 'test reason for durability check', ruleId: 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE' })]]);
+    const result = computeForecastReplan({ plannedSessions: [s], templates: [tplLongRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
+    // Read directly off the item — never cross-referencing result.prescriptions,
+    // which is exactly the mutable, non-append-only companion store this
+    // durability requirement exists independently of.
+    expect(item?.reason).toBe('test reason for durability check');
+    expect(item?.generatedBy?.some((g) => g.includes('HEURISTIC-PROGRESSION-CONFIDENCE-GATE@v'))).toBe(true);
   });
 
   it('emits a replace item (not reduce) for a consolidate/assess decision', () => {
