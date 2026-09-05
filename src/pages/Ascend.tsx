@@ -13,13 +13,22 @@ import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
 import { GoalFocusCard } from '../components/GoalFocusCard';
+import { GoalSetupWizard } from '../components/GoalSetupWizard';
+import { makeId } from '../utils/id';
+
+function blankGoalDraft(): TrainingGoal {
+  const now = new Date().toISOString();
+  return { id: makeId('goal'), name: '', requirements: [], createdAt: now, updatedAt: now, status: 'paused' };
+}
 
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, settings, updateSettings } = useAppData();
+  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, updateMarathonGoal, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
+  const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
+  const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon');
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
@@ -67,7 +76,10 @@ export function AscendPage() {
         <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} />
       )}
 
-      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} onUpdate={(patch) => updateSettings(patch)} />
+      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} />
+
+      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL</SecondaryButton>
+      {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
 
       <GoalFocusCard />
 
@@ -213,6 +225,8 @@ function GR5GoalCard({
 }) {
   const daysLeft = goal.targetDate ? daysBetween(todayISO(), goal.targetDate) : undefined;
   const targetDistanceKm = findRequirement(goal, 'distance')?.target?.amount;
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
     <Card className="flex flex-col gap-3">
@@ -228,6 +242,14 @@ function GR5GoalCard({
           extra slaap en herstel richting de tocht.
         </p>
       )}
+
+      <PrimaryButton onClick={() => setWizardOpen(true)}>DOEL AANPASSEN</PrimaryButton>
+
+      <button onClick={() => setAdvancedOpen((s) => !s)} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+        {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
+      </button>
+
+      {advancedOpen && (
       <div className="flex gap-3">
         <div className="flex-1">
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Startdatum</label>
@@ -251,6 +273,9 @@ function GR5GoalCard({
           />
         </div>
       </div>
+      )}
+
+      {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={goal} onClose={() => setWizardOpen(false)} />}
     </Card>
   );
 }
@@ -269,15 +294,38 @@ type MarathonGoalPatch = Partial<Pick<AppSettings, 'marathonRaceType' | 'maratho
 function MarathonGoalCard({
   settings,
   sessionLogs,
+  marathonGoal,
   onUpdate,
 }: {
   settings: AppSettings;
   sessionLogs: SessionLog[];
+  marathonGoal: TrainingGoal | undefined;
   onUpdate: (patch: MarathonGoalPatch) => void;
 }) {
   const raceType = settings.marathonRaceType;
   const distanceKm = raceType ? RACE_DISTANCE_KM[raceType] : undefined;
   const daysLeft = settings.marathonTargetDate ? daysBetween(todayISO(), settings.marathonTargetDate) : undefined;
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // The wizard always needs a real TrainingGoal draft to edit — the
+  // migrated one (storage/goalMigration.ts#buildMarathonGoal) once it
+  // exists, kept in sync going forward by updateMarathonGoal
+  // (state/AppDataContext.tsx); a fresh, not-yet-persisted draft mirroring
+  // the current quick-pick fields otherwise, so choosing a race type
+  // first is never a hard requirement to reach the wizard.
+  const wizardDraft = useMemo<TrainingGoal>(() => {
+    if (marathonGoal) return marathonGoal;
+    const now = new Date().toISOString();
+    return {
+      id: makeId('goal'),
+      name: 'Marathon',
+      requirements: raceType ? [{ id: makeId('req'), kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: RACE_DISTANCE_KM[raceType], unit: 'km' }, discipline: 'running' }] : [],
+      createdAt: now,
+      updatedAt: now,
+      status: 'paused',
+    };
+  }, [marathonGoal, raceType]);
 
   // Longest tpl_long_run so far — that template is 'hiking' type, so its
   // distance lives under outdoorData (see models/training.ts).
@@ -337,43 +385,54 @@ function MarathonGoalCard({
               slaap en voeding richting de start.
             </p>
           )}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wedstrijddatum</label>
-              <input
-                type="date"
-                value={settings.marathonTargetDate ?? ''}
-                onChange={(e) => onUpdate({ marathonTargetDate: e.target.value || undefined })}
-                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
-                style={dateInputStyle}
-              />
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — uur</label>
-              <input
-                type="number"
-                min={0}
-                value={hours ?? ''}
-                onChange={(e) => updateHours(e.target.value)}
-                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
-                style={dateInputStyle}
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — min</label>
-              <input
-                type="number"
-                min={0}
-                max={59}
-                value={minutes ?? ''}
-                onChange={(e) => updateMinutes(e.target.value)}
-                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
-                style={dateInputStyle}
-              />
-            </div>
-          </div>
+
+          <PrimaryButton onClick={() => setWizardOpen(true)}>DOEL AANPASSEN VIA ASSISTENT</PrimaryButton>
+
+          <button onClick={() => setAdvancedOpen((s) => !s)} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
+          </button>
+
+          {advancedOpen && (
+            <>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wedstrijddatum</label>
+                  <input
+                    type="date"
+                    value={settings.marathonTargetDate ?? ''}
+                    onChange={(e) => onUpdate({ marathonTargetDate: e.target.value || undefined })}
+                    className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                    style={dateInputStyle}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — uur</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={hours ?? ''}
+                    onChange={(e) => updateHours(e.target.value)}
+                    className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                    style={dateInputStyle}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — min</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={59}
+                    value={minutes ?? ''}
+                    onChange={(e) => updateMinutes(e.target.value)}
+                    className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                    style={dateInputStyle}
+                  />
+                </div>
+              </div>
+            </>
+          )}
           {longestRunKm > 0 && (
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Langste duurloop tot nu toe: {longestRunKm.toFixed(1)} km
@@ -382,6 +441,8 @@ function MarathonGoalCard({
           )}
         </>
       )}
+
+      {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={wizardDraft} onClose={() => setWizardOpen(false)} />}
     </Card>
   );
 }

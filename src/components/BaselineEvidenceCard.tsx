@@ -1,34 +1,18 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import type { CapabilityDimension } from '../models/capability';
-import type { Unit } from '../models/units';
 import { todayISO, formatDateNL } from '../utils/dates';
+import { DIMENSION_META, DIMENSION_ORDER } from '../data/baselineQuestions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 
-// Targeted baseline questions (Algorithm Contract v0.2 §27) — a minimal,
-// honest first version: manual entry only, not yet contextual to a
-// specific active goal's actual gaps (that needs the bottleneck-detection
-// machinery a later phase adds once a real goal-creation/Plan Preview flow
-// exists). Answers here are stored as CapabilityEvidence with
-// evidenceType:'manual' — never a fake SessionLog (§5.4).
-//
-// fatigue_resistance is deliberately excluded — v0.2 §9.9 explicitly notes
-// it "mag in de eerste implementatie vaak UNKNOWN zijn": there's no single
-// honest number a manual question could ask for here yet.
-const DIMENSION_META: Record<Exclude<CapabilityDimension, 'fatigue_resistance'>, { label: string; unit: Unit; question: string; needsDiscipline?: boolean }> = {
-  aerobic_engine: { label: 'Algemene conditie', unit: 'min', question: 'Langste stevige cardio-inspanning recent (minuten)?' },
-  sustainable_output: { label: 'Duurzaam tempo', unit: 'min_per_km', question: 'Tempo dat je een tijd kunt volhouden (min/km)?', needsDiscipline: true },
-  endurance_duration: { label: 'Uithoudingsduur', unit: 'min', question: 'Langste wandeling/inspanning recent (minuten)?', needsDiscipline: true },
-  mechanical_tolerance: { label: 'Mechanische belastbaarheid', unit: 'min', question: 'Langste aaneengesloten inspanning op de benen (minuten)?', needsDiscipline: true },
-  ascent_capacity: { label: 'Klimcapaciteit (D+)', unit: 'm_elevation_gain', question: 'Meeste hoogtemeters omhoog in één keer?' },
-  descent_tolerance: { label: 'Afdalingscapaciteit (D-)', unit: 'm_elevation_loss', question: 'Meeste hoogtemeters omlaag in één keer?' },
-  load_carriage: { label: 'Rugzakcapaciteit', unit: 'kg', question: 'Zwaarste rugzak die je meerdere uren hebt gedragen (kg)?' },
-  multi_day_durability: { label: 'Meerdaagse belastbaarheid', unit: 'days', question: 'Meeste opeenvolgende zware trainingsdagen recent?' },
-  strength: { label: 'Kracht', unit: 'kg', question: 'Zwaarste gewicht dat je recent hebt getild (kg)?' },
-};
-
-const DIMENSION_ORDER = Object.keys(DIMENSION_META) as (keyof typeof DIMENSION_META)[];
-
+// Targeted baseline questions (Algorithm Contract v0.2 §27) — the full,
+// generic list across every dimension, regardless of any specific goal's
+// actual demand. Advanced/fallback entry point (Phase 7) — the primary way
+// to answer these is now the goal setup wizard's targeted baseline step
+// (components/GoalSetupWizard.tsx), which only asks about what a goal
+// draft actually demands and doesn't already know. This card stays for
+// manual entry any time, goal-independent. Answers here are stored as
+// CapabilityEvidence with evidenceType:'manual' — never a fake SessionLog
+// (§5.4).
 export function BaselineEvidenceCard() {
   const { capabilityEvidence, addManualCapabilityEvidence, deleteCapabilityEvidence } = useAppData();
   const manualEntries = capabilityEvidence.filter((e) => e.source === 'manualEntry');
