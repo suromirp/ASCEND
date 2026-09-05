@@ -21,7 +21,7 @@ describe('migrateGr5ObjectiveData', () => {
     expect(goal.name).toBe('GR5 / ALPINE READINESS');
     expect(goal.status).toBe('active');
     expect(goal.status === 'active' && goal.targetDate).toBe('2027-06-01');
-    expect(goal.requirements).toEqual([{ id: expect.any(String), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' } }]);
+    expect(goal.requirements).toEqual([{ id: expect.any(String), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }]);
   });
 
   it('produces a paused goal with no targetDate when the objective has none', () => {

@@ -42,8 +42,15 @@ export interface MigratedGr5Data {
 
 export function migrateGr5ObjectiveData(objective: Objective, legacyProgress: MilestoneProgress[]): MigratedGr5Data {
   const now = new Date().toISOString();
+  // discipline: 'hiking' — GR5's distance demand is a long-distance trek,
+  // matching AppDataContext#updateGoal's own upsert of this same
+  // requirement kind. Without it, computeDemand's endurance_duration/
+  // mechanical_tolerance keys would carry discipline: undefined, which can
+  // never match any real evidence (extractEvidenceFromLog only ever
+  // produces a discipline-specific key) — the Gap/Feasibility/Adaptive
+  // Replanner pipeline would silently never engage with this demand at all.
   const requirements: TrainingGoal['requirements'] = objective.targetDistanceKm
-    ? [{ id: makeId('req'), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: objective.targetDistanceKm, unit: 'km' } }]
+    ? [{ id: makeId('req'), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: objective.targetDistanceKm, unit: 'km' }, discipline: 'hiking' }]
     : [];
 
   const goal: TrainingGoal = objective.targetDate

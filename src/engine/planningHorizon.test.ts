@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveHorizonZone, committedWeekStartDates, isDateInCommittedRange } from './planningHorizon';
+import { resolveHorizonZone, committedWeekStartDates, isDateInCommittedRange, isDateInForecastRange } from './planningHorizon';
 
 // A fixed Monday for deterministic tests.
 const THIS_MONDAY = '2026-09-07';
@@ -43,5 +43,19 @@ describe('isDateInCommittedRange', () => {
 
   it('rejects a date already in the past', () => {
     expect(isDateInCommittedRange('2026-08-15', ASOF)).toBe(false);
+  });
+});
+
+describe('isDateInForecastRange', () => {
+  it('rejects a date inside the committed range', () => {
+    expect(isDateInForecastRange('2026-09-16', ASOF)).toBe(false);
+  });
+
+  it('accepts a date two weeks out — the only range the Adaptive Replanner may touch', () => {
+    expect(isDateInForecastRange('2026-09-22', ASOF)).toBe(true);
+  });
+
+  it('rejects a date already in the past', () => {
+    expect(isDateInForecastRange('2026-08-15', ASOF)).toBe(false);
   });
 });

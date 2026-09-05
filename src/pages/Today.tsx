@@ -19,6 +19,7 @@ import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
+import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeeklyReflectionCard } from '../components/WeeklyReflectionCard';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
@@ -40,7 +41,7 @@ function mergeNoTimeProposals(proposals: ScheduleProposal[]): ScheduleProposal {
 }
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday } = useAppData();
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday, forecastSummary, dismissForecastSummary } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -172,6 +173,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           onExport={() => exportData()}
           onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
         />
+      )}
+
+      {forecastSummary && (
+        <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
       )}
 
       {showRecoveryWarning && (

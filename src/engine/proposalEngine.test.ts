@@ -17,7 +17,7 @@ describe('wrapAsPlanChangeProposal', () => {
       reason: 'Sessie wordt overgeslagen.',
       resolved: true,
     };
-    const proposal = wrapAsPlanChangeProposal(scheduleProposal, 'session_skipped', ASOF);
+    const proposal = wrapAsPlanChangeProposal(scheduleProposal, 'session_skipped', 'committed', ASOF);
     expect(proposal.changes).toEqual([{ plannedSessionId: 's1', action: 'remove', fromDate: '2026-09-09', toDate: '2026-09-09' }]);
     expect(proposal.trigger).toBe('session_skipped');
   });
@@ -28,17 +28,33 @@ describe('wrapAsPlanChangeProposal', () => {
       reason: 'Verplaatst.',
       resolved: true,
     };
-    const proposal = wrapAsPlanChangeProposal(scheduleProposal, 'session_moved', ASOF);
+    const proposal = wrapAsPlanChangeProposal(scheduleProposal, 'session_moved', 'committed', ASOF);
     expect(proposal.changes).toEqual([{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-10' }]);
   });
 
-  it('throws when a change targets a date outside the committed (current+next week) range', () => {
+  it('throws when a committed-zone change targets a date outside the current+next week range', () => {
     const scheduleProposal: ScheduleProposal = {
       changes: [{ sessionId: 's1', templateId: 'tpl_x', templateName: 'X', fromDate: '2026-09-09', toDate: '2026-09-25' }],
       reason: 'test',
       resolved: true,
     };
-    expect(() => wrapAsPlanChangeProposal(scheduleProposal, 'session_moved', ASOF)).toThrow(/committed/);
+    expect(() => wrapAsPlanChangeProposal(scheduleProposal, 'session_moved', 'committed', ASOF)).toThrow(/committed/);
+  });
+
+  it('accepts a forecast-zone change targeting week +2 onward, and rejects one that is not actually in the forecast', () => {
+    const forecast: ScheduleProposal = {
+      changes: [{ sessionId: 's1', templateId: 'tpl_x', templateName: 'X', fromDate: '2026-09-23', toDate: '2026-09-25' }],
+      reason: 'test',
+      resolved: true,
+    };
+    expect(() => wrapAsPlanChangeProposal(forecast, 'new_training_data', 'forecast', ASOF)).not.toThrow();
+
+    const committedShapedChange: ScheduleProposal = {
+      changes: [{ sessionId: 's1', templateId: 'tpl_x', templateName: 'X', fromDate: '2026-09-09', toDate: '2026-09-10' }],
+      reason: 'test',
+      resolved: true,
+    };
+    expect(() => wrapAsPlanChangeProposal(committedShapedChange, 'new_training_data', 'forecast', ASOF)).toThrow(/forecast/);
   });
 });
 
@@ -46,37 +62,59 @@ describe('applyPlanChangeItems', () => {
   const sessions = [session('s1', 'tpl_x', '2026-09-09', '2026-09-07'), session('s2', 'tpl_y', '2026-09-10', '2026-09-07')];
 
   it('keep is a no-op', () => {
-    const items: PlanChangeItem[] = [{ plannedSessionId: 's1', action: 'keep' }];
-    expect(applyPlanChangeItems(items, sessions)).toEqual(sessions);
+    const result = applyPlanChangeItems([{ plannedSessionId: 's1', action: 'keep' }], sessions);
+    expect(result.sessions).toEqual(sessions);
+    expect(result.prescriptionChanges).toEqual([]);
+    expect(result.unsupported).toEqual([]);
   });
 
   it('move updates scheduledDate/status/movedFromDate on the matched session only', () => {
     const items: PlanChangeItem[] = [{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-11' }];
     const result = applyPlanChangeItems(items, sessions);
-    expect(result.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-11', status: 'moved', movedFromDate: '2026-09-09' });
-    expect(result.find((s) => s.id === 's2')).toEqual(sessions[1]);
+    expect(result.sessions.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-11', status: 'moved', movedFromDate: '2026-09-09' });
+    expect(result.sessions.find((s) => s.id === 's2')).toEqual(sessions[1]);
+    expect(result.unsupported).toEqual([]);
   });
 
   it('remove sets status to skipped without deleting the row', () => {
-    const items: PlanChangeItem[] = [{ plannedSessionId: 's1', action: 'remove' }];
-    const result = applyPlanChangeItems(items, sessions);
-    expect(result).toHaveLength(2);
-    expect(result.find((s) => s.id === 's1')?.status).toBe('skipped');
+    const result = applyPlanChangeItems([{ plannedSessionId: 's1', action: 'remove' }], sessions);
+    expect(result.sessions).toHaveLength(2);
+    expect(result.sessions.find((s) => s.id === 's1')?.status).toBe('skipped');
   });
 
   it('add appends a brand-new session using the injected id generator', () => {
     const items: PlanChangeItem[] = [{ action: 'add', newSessionDraft: { templateId: 'tpl_z', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07' } }];
     const result = applyPlanChangeItems(items, sessions, () => 'fixed-id');
-    expect(result).toHaveLength(3);
-    expect(result[2]).toEqual({ id: 'fixed-id', templateId: 'tpl_z', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07', status: 'planned', order: 2 });
+    expect(result.sessions).toHaveLength(3);
+    expect(result.sessions[2]).toEqual({ id: 'fixed-id', templateId: 'tpl_z', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07', status: 'planned', order: 2 });
   });
 
-  it('replace/swap/reduce never touch PlannedSession — they are prescription-level concerns with no writer yet', () => {
+  it('never touches PlannedSession for replace/reduce (one-directional prescription relationship) — but surfaces them for the caller to actually act on, never silently drops them', () => {
     const items: PlanChangeItem[] = [
       { plannedSessionId: 's1', action: 'replace', newPrescriptionId: 'presc1' },
-      { plannedSessionId: 's2', action: 'swap' },
-      { plannedSessionId: 's1', action: 'reduce' },
+      { plannedSessionId: 's1', action: 'reduce', newPrescriptionId: 'presc2' },
     ];
-    expect(applyPlanChangeItems(items, sessions)).toEqual(sessions);
+    const result = applyPlanChangeItems(items, sessions);
+    expect(result.sessions).toEqual(sessions);
+    expect(result.prescriptionChanges).toEqual(items);
+    expect(result.unsupported).toEqual([]);
+  });
+
+  it('reports a bare swap as unsupported — a single PlanChangeItem has no second session id to pair with, so it is never silently accepted as a no-op success', () => {
+    const items: PlanChangeItem[] = [{ plannedSessionId: 's2', action: 'swap' }];
+    const result = applyPlanChangeItems(items, sessions);
+    expect(result.sessions).toEqual(sessions);
+    expect(result.unsupported).toEqual(items);
+  });
+
+  it('reports a malformed move/remove/add item (missing required fields) as unsupported rather than silently ignoring it', () => {
+    const malformed: PlanChangeItem[] = [
+      { action: 'move' }, // no plannedSessionId/toDate
+      { action: 'remove' }, // no plannedSessionId
+      { action: 'add' }, // no newSessionDraft
+    ];
+    const result = applyPlanChangeItems(malformed, sessions);
+    expect(result.sessions).toEqual(sessions);
+    expect(result.unsupported).toEqual(malformed);
   });
 });
