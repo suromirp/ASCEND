@@ -135,6 +135,29 @@ export function skipSession(session: PlannedSession): PlannedSession {
   return { ...session, status: 'skipped' };
 }
 
+// Phase 5 ("skipSession folded into the same pattern" — Technical
+// Architecture v0.3.1 REVISED): skipSession() itself stays the underlying
+// mutator, unchanged; this is the missing ScheduleProposal-producing
+// sibling proposeMove() already has, so a skip goes through the same
+// confirm-before-applying UI instead of mutating instantly and silently.
+// A same-date change (toDate === fromDate) is how a skip is represented —
+// engine/proposalEngine.ts and AppDataContext#applyProposal both already
+// read that shape to mean "skip", matching proposeNoTimeToday's fallback.
+export function proposeSkip(session: PlannedSession, templates: SessionTemplate[]): ScheduleProposal {
+  const templateMap = new Map(templates.map((t) => [t.id, t]));
+  return {
+    changes: [{
+      sessionId: session.id,
+      templateId: session.templateId,
+      templateName: templateName(templateMap, session.templateId),
+      fromDate: session.scheduledDate,
+      toDate: session.scheduledDate,
+    }],
+    reason: 'Sessie wordt overgeslagen.',
+    resolved: true,
+  };
+}
+
 // "Geen tijd vandaag" — try to move every one of today's sessions to the
 // next free day this week; falls back to skip if the week is full.
 export function proposeNoTimeToday(

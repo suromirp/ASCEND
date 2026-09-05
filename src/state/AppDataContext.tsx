@@ -30,7 +30,7 @@ import {
   type StretchCompletion,
 } from '../storage/database';
 import { migrateToGoalEngine } from '../storage/goalMigration';
-import { proposeMove, proposeNoTimeToday, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -61,7 +61,13 @@ interface AppData {
   undoLog: (logId: string) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
-  skipSession: (sessionId: string) => Promise<void>;
+  // Phase 5: folded into the same proposal-confirm pattern moveSession
+  // already uses (Technical Architecture v0.3.1 REVISED,
+  // "skipSession folded into the same pattern") — a skip is never applied
+  // silently, matching SYSTEM_INVARIANTS' confirmation_horizon_respected.
+  // applyProposal (below) recognizes the same-date shape proposeSkipEngine
+  // produces and calls the skip mutator instead of a move.
+  proposeSkip: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
   updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
@@ -258,31 +264,38 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [sessionsForWeek, plannedSessions, templates],
   );
 
+  // A same-date change (toDate === fromDate) is how proposeSkipEngine
+  // represents a skip — applied as a skip, never as a no-op "move" to the
+  // date the session already occupied (mirrors applyNoTimeToday's existing
+  // fallback for the same shape).
   const applyProposal = useCallback(
     async (proposal: ScheduleProposal) => {
       for (const change of proposal.changes) {
         const session = plannedSessions.find((s) => s.id === change.sessionId);
         if (!session) continue;
-        await PlannedSessionsRepo.put({
-          ...session,
-          scheduledDate: change.toDate,
-          status: 'moved',
-          movedFromDate: session.movedFromDate ?? change.fromDate,
-        });
+        if (change.toDate === change.fromDate) {
+          await PlannedSessionsRepo.put(skipSessionEngine(session));
+        } else {
+          await PlannedSessionsRepo.put({
+            ...session,
+            scheduledDate: change.toDate,
+            status: 'moved',
+            movedFromDate: session.movedFromDate ?? change.fromDate,
+          });
+        }
       }
       await refresh();
     },
     [plannedSessions, refresh],
   );
 
-  const skipSession = useCallback(
-    async (sessionId: string) => {
+  const proposeSkip = useCallback(
+    (sessionId: string): ScheduleProposal => {
       const session = plannedSessions.find((s) => s.id === sessionId);
-      if (!session) return;
-      await PlannedSessionsRepo.put(skipSessionEngine(session));
-      await refresh();
+      if (!session) return { changes: [], reason: 'Sessie niet gevonden.', resolved: false };
+      return proposeSkipEngine(session, templates);
     },
-    [plannedSessions, refresh],
+    [plannedSessions, templates],
   );
 
   const clearMilestoneManually = useCallback(
@@ -456,7 +469,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     undoLog,
     moveSession,
     applyProposal,
-    skipSession,
+    proposeSkip,
     clearMilestoneManually,
     updateGoal,
     updateSettings,
