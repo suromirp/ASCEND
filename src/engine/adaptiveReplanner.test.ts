@@ -82,11 +82,14 @@ describe('computeForecastReplan — availability pass', () => {
 });
 
 describe('computeForecastReplan — progression pass', () => {
-  it('removes a session whose relevant decision is recover', () => {
+  it('reduces (never removes) a session whose relevant decision is recover — a full removal is a stronger, less reversible action than the locked cutback/deload vocabulary calls for', () => {
     const s = session('ps1', 'tpl_easy_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([['sustainable_output:running', decision({ state: 'recover' })]]);
     const result = computeForecastReplan({ plannedSessions: [s], templates: [tplEasyRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
-    expect(result.proposal.changes).toEqual([{ plannedSessionId: 'ps1', action: 'remove', fromDate: FORECAST_MONDAY, toDate: FORECAST_MONDAY }]);
+    const item = result.proposal.changes.find((c) => c.plannedSessionId === 'ps1');
+    expect(item?.action).toBe('reduce');
+    expect(result.prescriptions).toHaveLength(1);
+    expect(result.prescriptions[0].id).toBe(item?.newPrescriptionId);
   });
 
   it('writes a real prescription and emits a reduce item for a reduce/taper decision, referencing the same session', () => {
@@ -140,13 +143,23 @@ describe('computeForecastReplan — progression pass', () => {
   });
 
   it('summarizes multiple changes in one passive, one-line string — never a per-session popup', () => {
+    // s1 gets removed via the availability pass (Monday blocked, every
+    // other day of the week already full — no free day left); s2 gets
+    // reduced via the progression pass.
+    const filledWeek = ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((_, i) => session(`filler${i}`, 'tpl_easy_run', `2026-09-${22 + i}`, FORECAST_MONDAY));
     const s1 = session('ps1', 'tpl_easy_run', FORECAST_MONDAY, FORECAST_MONDAY);
     const s2 = session('ps2', 'tpl_long_run', FORECAST_TUESDAY, FORECAST_MONDAY);
     const decisionsByKey = new Map([
-      ['sustainable_output:running', decision({ state: 'recover' })],
       ['ascent_capacity', decision({ key: { dimension: 'ascent_capacity' }, state: 'reduce' })],
     ]);
-    const result = computeForecastReplan({ plannedSessions: [s1, s2], templates: [tplEasyRun, tplLongRun], decisionsByKey, availability: fullAvailability(), strengthProtection: 'normal', asOf: ASOF });
+    const result = computeForecastReplan({
+      plannedSessions: [s1, s2, ...filledWeek],
+      templates: [tplEasyRun, tplLongRun],
+      decisionsByKey,
+      availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
+      strengthProtection: 'normal',
+      asOf: ASOF,
+    });
     expect(result.passiveSummary).toContain('2 sessie(s)');
     expect(result.passiveSummary).toMatch(/overgeslagen/);
     expect(result.passiveSummary).toMatch(/verlicht/);

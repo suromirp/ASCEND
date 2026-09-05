@@ -100,11 +100,38 @@ describe('applyPlanChangeItems', () => {
     expect(result.unsupported).toEqual([]);
   });
 
-  it('reports a bare swap as unsupported — a single PlanChangeItem has no second session id to pair with, so it is never silently accepted as a no-op success', () => {
-    const items: PlanChangeItem[] = [{ plannedSessionId: 's2', action: 'swap' }];
+  it('reports a bare swap (no pairedWithSessionId) as unsupported, never a silent no-op success', () => {
+    const items: PlanChangeItem[] = [{ plannedSessionId: 's2', action: 'swap', toDate: '2026-09-11' }];
     const result = applyPlanChangeItems(items, sessions);
     expect(result.sessions).toEqual(sessions);
     expect(result.unsupported).toEqual(items);
+  });
+
+  it('reports one half of a swap as unsupported when its named partner is missing from the batch', () => {
+    const items: PlanChangeItem[] = [{ plannedSessionId: 's1', action: 'swap', toDate: '2026-09-10', pairedWithSessionId: 's2' }];
+    const result = applyPlanChangeItems(items, sessions);
+    expect(result.sessions).toEqual(sessions);
+    expect(result.unsupported).toEqual(items);
+  });
+
+  it('reports one half of a swap as unsupported when the named partner does not mirror it back', () => {
+    const items: PlanChangeItem[] = [
+      { plannedSessionId: 's1', action: 'swap', toDate: '2026-09-10', pairedWithSessionId: 's2' },
+      { plannedSessionId: 's2', action: 'swap', toDate: '2026-09-09', pairedWithSessionId: 'someone-else' },
+    ];
+    const result = applyPlanChangeItems(items, sessions);
+    expect(result.unsupported).toEqual(items);
+  });
+
+  it('applies a genuine, well-formed swap — both sessions exchange dates', () => {
+    const items: PlanChangeItem[] = [
+      { plannedSessionId: 's1', action: 'swap', fromDate: '2026-09-09', toDate: '2026-09-10', pairedWithSessionId: 's2' },
+      { plannedSessionId: 's2', action: 'swap', fromDate: '2026-09-10', toDate: '2026-09-09', pairedWithSessionId: 's1' },
+    ];
+    const result = applyPlanChangeItems(items, sessions);
+    expect(result.unsupported).toEqual([]);
+    expect(result.sessions.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-10', status: 'moved', movedFromDate: '2026-09-09' });
+    expect(result.sessions.find((s) => s.id === 's2')).toEqual({ ...sessions[1], scheduledDate: '2026-09-09', status: 'moved', movedFromDate: '2026-09-10' });
   });
 
   it('reports a malformed move/remove/add item (missing required fields) as unsupported rather than silently ignoring it', () => {

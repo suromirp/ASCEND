@@ -6,6 +6,7 @@ import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metr
 import type { InjuryNote } from '../models/injury';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
+import type { PlanChangeProposal } from '../models/planChange';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
@@ -16,7 +17,7 @@ import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -48,6 +49,16 @@ interface AscendDB extends DBSchema {
   // computed from SessionLog[] (engine/capability.ts#extractEvidenceFromLogs)
   // stays a derived read model, never duplicated into storage.
   capabilityEvidence: { key: string; value: CapabilityEvidence };
+  // --- Rolling adaptation (Technical Architecture v0.3.1 REVISED, Phase 6) ---
+  // Storage plan's own "Audit trail of shown proposals + resolution" —
+  // append-only in practice: every id is fresh (makeId), nothing in this
+  // codebase ever calls put() twice for the same id, and no delete is
+  // exposed. Every PlanChangeProposal the Adaptive Replanner actually
+  // applies to the forecast range is recorded here, resolvedAt/resolution
+  // already set (auto-applied, not user-confirmed) — the same record a
+  // future committed-range Proposal Engine flow would write once a
+  // proposal is accepted there too.
+  planChangeProposals: { key: string; value: PlanChangeProposal };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -98,6 +109,7 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
           store.createIndex('by-plannedSession', 'plannedSessionId');
         }
         if (!db.objectStoreNames.contains('capabilityEvidence')) db.createObjectStore('capabilityEvidence', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('planChangeProposals')) db.createObjectStore('planChangeProposals', { keyPath: 'id' });
       },
     });
   }
@@ -286,6 +298,19 @@ export const CapabilityEvidenceRepo: CapabilityEvidenceRepo = {
   getAll: () => getAll('capabilityEvidence') as Promise<CapabilityEvidence[]>,
   put: (evidence: CapabilityEvidence) => put('capabilityEvidence', evidence),
   delete: (id: string) => del('capabilityEvidence', id),
+};
+
+// Append-only audit trail (Phase 6) — no delete exposed on purpose. Every
+// id is fresh (makeId), so put() is only ever an insert in practice, never
+// an overwrite of an existing record.
+export interface PlanChangeProposalsRepo {
+  getAll(): Promise<PlanChangeProposal[]>;
+  put(proposal: PlanChangeProposal): Promise<unknown>;
+}
+
+export const PlanChangeProposalsRepo: PlanChangeProposalsRepo = {
+  getAll: () => getAll('planChangeProposals') as Promise<PlanChangeProposal[]>,
+  put: (proposal: PlanChangeProposal) => put('planChangeProposals', proposal),
 };
 
 export const BackupSnapshotsRepo = {
@@ -541,6 +566,7 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('goalMilestoneProgress'),
     clearStore('trainingPrescriptions'),
     clearStore('capabilityEvidence'),
+    clearStore('planChangeProposals'),
   ]);
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
@@ -624,6 +650,7 @@ export async function wipeAllData(): Promise<void> {
     clearStore('goalMilestoneProgress'),
     clearStore('trainingPrescriptions'),
     clearStore('capabilityEvidence'),
+    clearStore('planChangeProposals'),
     clearStore('meta'),
   ]);
 }

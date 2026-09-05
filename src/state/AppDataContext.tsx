@@ -22,6 +22,7 @@ import {
   InjuryNotesRepo,
   CapabilityEvidenceRepo,
   TrainingPrescriptionsRepo,
+  PlanChangeProposalsRepo,
   GoalEngineConfigRepo,
   SettingsRepo,
   StretchCompletionRepo,
@@ -199,9 +200,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
     if (unsupported.length > 0) {
-      // Structurally shouldn't happen from this module's own output (see
-      // engine/adaptiveReplanner.ts) — never silently dropped regardless.
-      console.warn('Adaptive Replanner: some plan changes could not be applied', unsupported);
+      // Never an unintended partial apply: if any item in this batch can't
+      // be honored, nothing from this run is persisted — no sessions, no
+      // prescriptions, no audit record, no passive summary claiming
+      // success. Structurally shouldn't happen from this module's own
+      // output (see engine/adaptiveReplanner.ts, which never emits a
+      // malformed or unpaired item) — this is the safety net for if it
+      // ever does, not the expected path. The next boot recomputes fresh
+      // against then-current data rather than retrying this exact batch.
+      console.error('Adaptive Replanner: refusing to apply — unsupported plan change items present', unsupported);
+      return;
     }
 
     const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
@@ -219,6 +227,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (existing) await TrainingPrescriptionsRepo.delete(existing.id);
       await TrainingPrescriptionsRepo.put(prescription);
     }
+
+    // Append-only audit trail (Storage plan: "audit trail of shown
+    // proposals + resolution") — resolvedAt/resolution set immediately
+    // since the forecast range auto-applies, never user-confirmed.
+    await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
 
     setForecastSummary(passiveSummary);
     await refresh();

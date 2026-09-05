@@ -169,15 +169,21 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     const decision = keys.map((k) => decisionsByKey.get(keyId(k))).find((d): d is ProgressionDecision => d !== undefined);
     if (!decision) continue; // nothing tracked for this session — leave it alone
 
-    if (decision.state === 'recover') {
-      items.push({ plannedSessionId: session.id, action: 'remove', fromDate: session.scheduledDate, toDate: session.scheduledDate });
-      continue;
-    }
     if (decision.state === 'progress') continue; // the template's own progression is already the plan
 
     // consolidate/assess -> 'replace' (different role, same load target);
-    // reduce/taper -> 'reduce' (same role family, lighter target/volume).
-    const action: 'reduce' | 'replace' = decision.state === 'reduce' || decision.state === 'taper' ? 'reduce' : 'replace';
+    // reduce/taper/recover -> 'reduce' (same role family, lighter target/
+    // volume). recover deliberately does NOT map to 'remove': the
+    // Algorithm Contract's own cutback/deload vocabulary (§31) never lists
+    // full removal as a response to deteriorating readiness, only reduce/
+    // consolidate/taper — and the specialists (engine/specialists/*.ts)
+    // already treat 'recover' and 'reduce' identically for stress-override
+    // purposes (both cap intensity to 'low'). A full, unconfirmed removal
+    // of a future session is a stronger, less reversible action than
+    // Phase 5 was willing to apply even to a same-day skip (which still
+    // goes through a confirmation dialog) — 'reduce' (role: 'recovery',
+    // lighter load) is the semantically correct, proportionate response.
+    const action: 'reduce' | 'replace' = decision.state === 'reduce' || decision.state === 'taper' || decision.state === 'recover' ? 'reduce' : 'replace';
     const candidate = buildPrescriptionCandidate(template, decision, session.id, strengthProtection);
     const written = writeTrainingPrescription(candidate);
     prescriptions.push(written);
