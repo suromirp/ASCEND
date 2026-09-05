@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
@@ -70,6 +71,7 @@ function BottomNav() {
 function AppShell() {
   const { loading, settings, celebration, dismissCelebration } = useAppData();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Armed once per app open, not per settings change — re-arming on every
   // toggle would let a later interaction retrigger it after the user just
@@ -92,18 +94,20 @@ function AppShell() {
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
-        <Routes>
-          <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
-          <Route path="/week" element={<WeekPage />} />
-          <Route path="/ascend" element={<AscendPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/more" element={<SettingsPage />} />
-          <Route path="/stretches" element={<StretchesPage />} />
-          <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
-          <Route path="/gids" element={<TrainingGuidePage />} />
-          <Route path="/garmin" element={<GarminGuidePage />} />
-          <Route path="/blessures" element={<InjuriesPage />} />
-        </Routes>
+        <ErrorBoundary resetKey={location.pathname}>
+          <Routes>
+            <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
+            <Route path="/week" element={<WeekPage />} />
+            <Route path="/ascend" element={<AscendPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/more" element={<SettingsPage />} />
+            <Route path="/stretches" element={<StretchesPage />} />
+            <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
+            <Route path="/gids" element={<TrainingGuidePage />} />
+            <Route path="/garmin" element={<GarminGuidePage />} />
+            <Route path="/blessures" element={<InjuriesPage />} />
+          </Routes>
+        </ErrorBoundary>
       </div>
       <BottomNav />
       <UpdatePrompt />
