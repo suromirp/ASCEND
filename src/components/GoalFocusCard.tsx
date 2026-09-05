@@ -11,7 +11,7 @@ import { todayISO } from '../utils/dates';
 import type { FeasibilityStatus } from '../models/feasibility';
 import { Card, Eyebrow } from './ui';
 
-const FEASIBILITY_LABEL: Record<FeasibilityStatus, { label: string; color: string }> = {
+export const FEASIBILITY_LABEL: Record<FeasibilityStatus, { label: string; color: string }> = {
   on_track: { label: 'OP SCHEMA', color: 'var(--color-success)' },
   challenging: { label: 'UITDAGEND', color: 'var(--color-warning)' },
   unlikely: { label: 'ONWAARSCHIJNLIJK', color: 'var(--color-danger)' },

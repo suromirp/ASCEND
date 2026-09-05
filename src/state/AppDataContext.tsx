@@ -32,6 +32,7 @@ import {
   type StretchCompletion,
 } from '../storage/database';
 import { migrateToGoalEngine } from '../storage/goalMigration';
+import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
@@ -39,6 +40,8 @@ import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
+import type { GoalActivationPlan } from '../models/planChange';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
@@ -77,7 +80,22 @@ interface AppData {
   proposeSkip: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
   updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => Promise<void>;
-  updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
+  // Phase 7 — the single-transaction activation flow (engine/goalActivation.ts,
+  // review point 11) applied for real, for both a brand-new goal draft and
+  // an edit to an existing one: persists the goal, applies its
+  // committed-range changes, and records the append-only audit row — never
+  // a silent re-analysis against whatever the plan was actually shown
+  // against (inputStateHash re-checked here, live, right before persisting).
+  activateGoal: (plan: GoalActivationPlan) => Promise<{ applied: boolean; reason?: 'stale' }>;
+  updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+  // Keeps the migrated Marathon TrainingGoal row (storage/goalMigration.ts#
+  // buildMarathonGoal, called once at migration time only) in sync with
+  // AppSettings' own marathon fields — without this, any edit made after
+  // that first migration would leave every goal-engine consumer (Goal
+  // Focus, Feasibility, the Adaptive Replanner's activeGoalDemandKeys, this
+  // phase's own Plan Preview) silently reading a stale requirements/
+  // targetDate forever, never the value actually shown on MarathonGoalCard.
+  updateMarathonGoal: (patch: Partial<Pick<AppSettings, 'marathonRaceType' | 'marathonTargetDate' | 'marathonTargetTimeMinutes'>>) => Promise<void>;
   toggleStretchRoutine: (kind: keyof StretchCompletion) => Promise<void>;
   addInjury: (input: Omit<InjuryNote, 'id'>) => Promise<void>;
   resolveInjury: (id: string) => Promise<void>;
@@ -447,10 +465,55 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [trainingGoals, refresh],
   );
 
-  const updateSettings = useCallback(async (patch: Partial<AppSettings>) => {
+  const updateSettings = useCallback(async (patch: Partial<AppSettings>): Promise<AppSettings> => {
     const next = await SettingsRepo.set(patch);
     setSettings(next);
+    return next;
   }, []);
+
+  // Phase 7 — see the AppData interface comment above for why this exists
+  // separately from updateGoal. buildMarathonGoal always mints a fresh id
+  // (storage/goalMigration.ts), so the existing row's id/createdAt must be
+  // carried over explicitly here or every call would create a new, second
+  // Marathon goal rather than updating the one already migrated.
+  const updateMarathonGoal = useCallback(
+    async (patch: Partial<Pick<AppSettings, 'marathonRaceType' | 'marathonTargetDate' | 'marathonTargetTimeMinutes'>>) => {
+      const next = await updateSettings(patch);
+      const rebuilt = buildMarathonGoal(next.marathonRaceType, next.marathonTargetDate, next.marathonTargetTimeMinutes);
+      if (!rebuilt) return; // no race type chosen (yet) — nothing to keep in sync
+      const existing = trainingGoals.find((g) => g.name === 'Marathon');
+      await TrainingGoalsRepo.put(existing ? { ...rebuilt, id: existing.id, createdAt: existing.createdAt } : rebuilt);
+      await refresh();
+    },
+    [trainingGoals, refresh, updateSettings],
+  );
+
+  // Phase 7 — mirrors runForecastReplan's own persistence pattern (reads
+  // repos directly for the freshest possible inputStateHash check, rather
+  // than trusting React state that may lag one render behind an in-flight
+  // mutation). committedWeekChanges only ever contains 'keep' entries
+  // (engine/goalActivation.ts) — a no-op for applyPlanChangeItems — so
+  // there is nothing to persist on PlannedSession itself here, only the
+  // goal draft and the append-only audit record.
+  const activateGoal = useCallback(
+    async (plan: GoalActivationPlan): Promise<{ applied: boolean; reason?: 'stale' }> => {
+      const [logs, manualEvidence, planned] = await Promise.all([
+        SessionLogsRepo.getAll(),
+        CapabilityEvidenceRepo.getAll(),
+        PlannedSessionsRepo.getAll(),
+      ]);
+      const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
+      const currentHash = computeInputStateHash({ goalDraft: plan.goalDraft, allEvidence, plannedSessions: planned });
+      const result = applyGoalActivationPlan(plan, currentHash, planned);
+      if (!result.applied) return { applied: false, reason: result.reason };
+
+      await TrainingGoalsRepo.put(plan.goalDraft);
+      await PlanChangeProposalsRepo.put({ ...plan.committedWeekChanges, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+      await refresh();
+      return { applied: true };
+    },
+    [refresh],
+  );
 
   // Stores the date last checked off, not a boolean — so the box reads as
   // unchecked again the moment todayISO() rolls over to a new day, with no
@@ -574,7 +637,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     proposeSkip,
     clearMilestoneManually,
     updateGoal,
+    activateGoal,
     updateSettings,
+    updateMarathonGoal,
     toggleStretchRoutine,
     addInjury,
     resolveInjury,

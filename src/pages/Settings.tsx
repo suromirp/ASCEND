@@ -13,6 +13,7 @@ export function SettingsPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showBaselineEditor, setShowBaselineEditor] = useState(false);
   const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
   const supportsPreferredDirectory = webBackupFileAdapter.supportsPreferredDirectory();
 
@@ -100,7 +101,27 @@ export function SettingsPage() {
         )}
       </Card>
 
-      <BaselineEvidenceCard />
+      {!showBaselineEditor ? (
+        <Card className="flex flex-col gap-1">
+          <button onClick={() => setShowBaselineEditor(true)} className="flex items-center justify-between gap-3 text-left">
+            <div>
+              <Eyebrow>GEAVANCEERD: BASELINE HANDMATIG INVULLEN</Eyebrow>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                Meestal niet nodig — bij het aanmaken of aanpassen van een doel vraagt ASCEND daar zelf al gericht
+                naar wat nog ontbreekt. Gebruik dit alleen om los van een doel iets vast te leggen.
+              </p>
+            </div>
+            <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>+</span>
+          </button>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <button onClick={() => setShowBaselineEditor(false)} className="self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            − verbergen
+          </button>
+          <BaselineEvidenceCard />
+        </div>
+      )}
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>KRACHTTRAINING</Eyebrow>

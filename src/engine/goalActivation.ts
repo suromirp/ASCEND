@@ -104,10 +104,16 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     id: makeId('planchange'),
     trigger: 'goal_created',
     issue: 'Vervolgweken',
+    // Deliberately no concrete changes here — the Adaptive Replanner
+    // (Phase 6) only ever runs against the live, current active-goal set at
+    // its own scheduled moment, never as a side effect of previewing a
+    // not-yet-activated goal draft. Summary-level only, so the Plan Preview
+    // never claims a false certainty about exactly what will happen weeks
+    // from now under conditions (evidence, readiness) that don't exist yet.
     changes: [],
     alternatives: [],
-    consequences: 'Nog geen automatische aanpassingen — de Adaptive Replanner voor de forecast-periode is nog niet actief.',
-    explanation: `Zodra er voldoende evidence en ruimte is, past een latere fase het schema vanaf twee weken verder geleidelijk aan (huidige status: ${feasibility.status}).`,
+    consequences: 'Geen concrete wijzigingen vooraf — na activatie past de Adaptive Replanner het schema vanaf twee weken verder doorlopend aan, op basis van dan actuele evidence en readiness.',
+    explanation: `Wordt pas na activatie zichtbaar: de Adaptive Replanner beoordeelt dan doorlopend readiness en capability-trend voor de vervolgweken (huidige status: ${feasibility.status}).`,
     createdAt: new Date().toISOString(),
   };
 
