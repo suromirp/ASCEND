@@ -7,6 +7,7 @@ import type { InjuryNote } from '../models/injury';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
+import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
@@ -17,7 +18,7 @@ import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -59,6 +60,17 @@ interface AscendDB extends DBSchema {
   // future committed-range Proposal Engine flow would write once a
   // proposal is accepted there too.
   planChangeProposals: { key: string; value: PlanChangeProposal };
+  // --- Strength Program Strategy (Strength Program Strategy Addendum v0.1,
+  // Phase 8) --- ASCEND owns block strategy/frequency/split/placement;
+  // MacroFactor Workouts (or a future provider) keeps owning exercise-level
+  // content. One row per strength-training block (not per workout) —
+  // historical blocks are kept, not overwritten, mirroring
+  // planChangeProposals' own append-only-in-spirit pattern.
+  strengthProgramStrategies: { key: string; value: StrengthProgramStrategy };
+  // Append-only suggestions (§5: "a review is a suggestion, not an
+  // automatic rewrite") — no delete exposed, same pattern as
+  // planChangeProposals.
+  strengthProgramRecommendations: { key: string; value: StrengthProgramRecommendation };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -110,6 +122,8 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
         }
         if (!db.objectStoreNames.contains('capabilityEvidence')) db.createObjectStore('capabilityEvidence', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('planChangeProposals')) db.createObjectStore('planChangeProposals', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('strengthProgramStrategies')) db.createObjectStore('strengthProgramStrategies', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('strengthProgramRecommendations')) db.createObjectStore('strengthProgramRecommendations', { keyPath: 'id' });
       },
     });
   }
@@ -279,7 +293,7 @@ export const GoalEngineConfigRepo: GoalEngineConfigRepo = {
     return { ...DEFAULT_GOAL_ENGINE_CONFIG, ...stored };
   },
   set: async (patch: Partial<GoalEngineConfig>) => {
-    const next = { ...(await GoalEngineConfigRepo.get()), ...patch };
+    const next = { ...(await GoalEngineConfigRepo.get()), ...patch, updatedAt: new Date().toISOString() };
     await MetaRepo.set('goalEngineConfig', next);
     return next;
   },
@@ -311,6 +325,33 @@ export interface PlanChangeProposalsRepo {
 export const PlanChangeProposalsRepo: PlanChangeProposalsRepo = {
   getAll: () => getAll('planChangeProposals') as Promise<PlanChangeProposal[]>,
   put: (proposal: PlanChangeProposal) => put('planChangeProposals', proposal),
+};
+
+// Historical blocks are kept (put upserts by id; a completed/archived
+// strategy is never deleted, only its status changes) — delete is exposed
+// only for the rare case of discarding a genuine mistake, never used to
+// "clean up" finished blocks.
+export interface StrengthProgramStrategiesRepo {
+  getAll(): Promise<StrengthProgramStrategy[]>;
+  put(strategy: StrengthProgramStrategy): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const StrengthProgramStrategiesRepo: StrengthProgramStrategiesRepo = {
+  getAll: () => getAll('strengthProgramStrategies') as Promise<StrengthProgramStrategy[]>,
+  put: (strategy: StrengthProgramStrategy) => put('strengthProgramStrategies', strategy),
+  delete: (id: string) => del('strengthProgramStrategies', id),
+};
+
+// Append-only (§5) — no delete exposed, same pattern as PlanChangeProposalsRepo.
+export interface StrengthProgramRecommendationsRepo {
+  getAll(): Promise<StrengthProgramRecommendation[]>;
+  put(recommendation: StrengthProgramRecommendation): Promise<unknown>;
+}
+
+export const StrengthProgramRecommendationsRepo: StrengthProgramRecommendationsRepo = {
+  getAll: () => getAll('strengthProgramRecommendations') as Promise<StrengthProgramRecommendation[]>,
+  put: (recommendation: StrengthProgramRecommendation) => put('strengthProgramRecommendations', recommendation),
 };
 
 export const BackupSnapshotsRepo = {
@@ -567,9 +608,12 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('trainingPrescriptions'),
     clearStore('capabilityEvidence'),
     clearStore('planChangeProposals'),
+    clearStore('strengthProgramStrategies'),
+    clearStore('strengthProgramRecommendations'),
   ]);
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
+  await MetaRepo.set('strengthProgramDefaultSeeded', false);
   await seedIfEmpty();
 }
 
@@ -651,6 +695,8 @@ export async function wipeAllData(): Promise<void> {
     clearStore('trainingPrescriptions'),
     clearStore('capabilityEvidence'),
     clearStore('planChangeProposals'),
+    clearStore('strengthProgramStrategies'),
+    clearStore('strengthProgramRecommendations'),
     clearStore('meta'),
   ]);
 }

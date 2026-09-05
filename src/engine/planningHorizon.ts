@@ -37,8 +37,13 @@ export function isDateInCommittedRange(dateIso: string, asOf: string): boolean {
   return resolveHorizonZone(mondayOfWeek(dateIso), asOf) === 'committed';
 }
 
-// Phase 6: the Adaptive Replanner is the only thing ever allowed to touch
-// this range — the symmetrical check to isDateInCommittedRange above.
+// Phase 6: the Adaptive Replanner is the only thing allowed to touch this
+// range for progression-driven prescription changes. Phase 8 adds one
+// narrow, explicitly-scoped second mutator (engine/strengthScheduling.ts)
+// for strength session PLACEMENT only, triggered by an explicit strategy
+// change rather than running continuously in the background — the
+// Adaptive Replanner itself still never touches strength content (see its
+// own pass-2 exclusion). Nothing else is ever allowed to touch this range.
 export function isDateInForecastRange(dateIso: string, asOf: string): boolean {
   return resolveHorizonZone(mondayOfWeek(dateIso), asOf) === 'forecast';
 }

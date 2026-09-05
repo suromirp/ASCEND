@@ -53,7 +53,11 @@ function stampGeneratedBy(entries: string[]): string[] {
 
 const WEEKDAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
-function isDateAvailable(dateIso: string, availability: TrainingAvailability): boolean {
+// Exported (Phase 8) so engine/strengthScheduling.ts's forecast-range
+// placement checks the exact same availability rule — never a second,
+// potentially-drifting reimplementation of "allowed weekday, minus
+// temporary exceptions".
+export function isDateAvailable(dateIso: string, availability: TrainingAvailability): boolean {
   const exception = availability.temporaryExceptions.find((e) => e.date === dateIso);
   if (exception) return exception.available;
   return availability.allowedDays.includes(WEEKDAY_ORDER[isoWeekday(dateIso) - 1]);
