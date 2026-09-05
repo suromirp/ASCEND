@@ -192,7 +192,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       templates: tpls,
       decisionsByKey,
       availability: engineConfig.availability,
-      strengthProtection: engineConfig.strategy.strengthProtection,
       asOf,
     });
 
