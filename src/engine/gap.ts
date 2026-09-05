@@ -7,7 +7,7 @@
 // produces status 'unknown', never a computed gap against zero.
 
 import { isDemandMet } from './units';
-import { UNIT_COMPARISON_DIRECTION } from '../models/units';
+import { UNIT_COMPARISON_DIRECTION, formatMeasuredValue } from '../models/units';
 import type { MeasuredValue } from '../models/units';
 import type { CapabilityDemand, CapabilityEstimate, CapabilityGap, GapStatus, Confidence } from '../models/capability';
 
@@ -79,8 +79,8 @@ export function computeCapabilityGap(demand: CapabilityDemand, estimate: Capabil
     confidence: estimate.confidence,
     criticality: demand.criticality,
     explanation: met
-      ? `Doel vraagt ${demand.demand.amount} ${demand.demand.unit}; aantoonbaar ${currentEstimate.amount} ${currentEstimate.unit} (vertrouwen: ${confidenceLabel(estimate.confidence)}).`
-      : `Doel vraagt ${demand.demand.amount} ${demand.demand.unit}; nu aantoonbaar ${currentEstimate.amount} ${currentEstimate.unit} (vertrouwen: ${confidenceLabel(estimate.confidence)}).`,
+      ? `Doel vraagt ${formatMeasuredValue(demand.demand)}; aantoonbaar ${formatMeasuredValue(currentEstimate)} (vertrouwen: ${confidenceLabel(estimate.confidence)}).`
+      : `Doel vraagt ${formatMeasuredValue(demand.demand)}; nu aantoonbaar ${formatMeasuredValue(currentEstimate)} (vertrouwen: ${confidenceLabel(estimate.confidence)}).`,
   };
 }
 

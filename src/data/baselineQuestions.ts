@@ -11,8 +11,9 @@
 // it "mag in de eerste implementatie vaak UNKNOWN zijn": there's no single
 // honest number a manual question could ask for here yet.
 
-import type { CapabilityDimension } from '../models/capability';
+import type { CapabilityDimension, CapabilityKey } from '../models/capability';
 import type { Unit } from '../models/units';
+import { disciplineLabel } from '../models/disciplines';
 
 export type BaselineDimension = Exclude<CapabilityDimension, 'fatigue_resistance'>;
 
@@ -29,3 +30,23 @@ export const DIMENSION_META: Record<BaselineDimension, { label: string; unit: Un
 };
 
 export const DIMENSION_ORDER = Object.keys(DIMENSION_META) as BaselineDimension[];
+
+// Human label for a capability dimension — never the raw dimension key
+// (production incident: explanation copy showing "sustainable_output"
+// verbatim). fatigue_resistance has no baseline question (it's excluded
+// from DIMENSION_META above) but still needs a display label wherever a
+// CapabilityGap for it is shown.
+export function dimensionLabel(dimension: CapabilityDimension): string {
+  return dimension === 'fatigue_resistance' ? 'Vermoeidheidsweerstand' : DIMENSION_META[dimension].label;
+}
+
+// Full human label for a capability key ("Duurzaam tempo (hardlopen)"),
+// combining the dimension label with a friendly discipline label — falls
+// back to the raw discipline string for anything outside the known list
+// (models/disciplines.ts), so an unrecognized value still renders instead
+// of disappearing.
+export function capabilityKeyLabel(key: Pick<CapabilityKey, 'dimension' | 'discipline'>): string {
+  const dim = dimensionLabel(key.dimension);
+  const discipline = disciplineLabel(key.discipline);
+  return discipline ? `${dim} (${discipline})` : dim;
+}

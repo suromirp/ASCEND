@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { InjurySeverity } from '../models/injury';
+import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
+
+const CUSTOM_BODY_PART = '__custom__';
 
 const SEVERITY_LABEL: Record<InjurySeverity, string> = { licht: 'Licht', matig: 'Matig', ernstig: 'Ernstig' };
 const SEVERITY_COLOR: Record<InjurySeverity, string> = {
@@ -20,6 +23,7 @@ export function InjuriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [date, setDate] = useState(todayISO());
   const [bodyPart, setBodyPart] = useState('');
+  const [customBodyPart, setCustomBodyPart] = useState(false);
   const [severity, setSeverity] = useState<InjurySeverity>('licht');
   const [note, setNote] = useState('');
 
@@ -30,6 +34,7 @@ export function InjuriesPage() {
     if (!bodyPart.trim()) return;
     await addInjury({ date, bodyPart: bodyPart.trim(), severity, note: note.trim() || undefined });
     setBodyPart('');
+    setCustomBodyPart(false);
     setNote('');
     setSeverity('licht');
     setDate(todayISO());
@@ -67,14 +72,36 @@ export function InjuriesPage() {
           </div>
           <div>
             <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Lichaamsdeel</label>
-            <input
-              type="text"
-              value={bodyPart}
-              onChange={(e) => setBodyPart(e.target.value)}
-              placeholder="bijv. rechterknie"
-              className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
-              style={inputStyle}
-            />
+            {customBodyPart ? (
+              <input
+                type="text"
+                value={bodyPart}
+                onChange={(e) => setBodyPart(e.target.value)}
+                placeholder="bijv. rechterknie"
+                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                style={inputStyle}
+              />
+            ) : (
+              <select
+                value={bodyPart}
+                onChange={(e) => {
+                  if (e.target.value === CUSTOM_BODY_PART) {
+                    setCustomBodyPart(true);
+                    setBodyPart('');
+                  } else {
+                    setBodyPart(e.target.value);
+                  }
+                }}
+                className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                style={inputStyle}
+              >
+                <option value="" style={{ background: 'var(--color-card)' }}>Kies lichaamsdeel</option>
+                {BODY_PART_OPTIONS.map((p) => (
+                  <option key={p} value={p} style={{ background: 'var(--color-card)' }}>{p}</option>
+                ))}
+                <option value={CUSTOM_BODY_PART} style={{ background: 'var(--color-card)' }}>Anders…</option>
+              </select>
+            )}
           </div>
           <div>
             <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notitie (optioneel)</label>

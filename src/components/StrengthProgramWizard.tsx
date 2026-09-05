@@ -10,6 +10,7 @@ import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { StrengthProgramStrategy, StrengthProgramSource } from '../models/strengthProgram';
 import { computeStrengthPlacementPlan } from '../engine/strengthScheduling';
+import { MUSCLE_GROUP_OPTIONS } from '../data/bodyAreas';
 import { addDays, todayISO } from '../utils/dates';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { Portal } from './Portal';
@@ -23,7 +24,25 @@ const SOURCE_LABEL: Record<StrengthProgramSource, string> = {
   future_provider: 'Andere externe app',
 };
 
-type Step = { kind: 'edit'; draft: StrengthProgramStrategy } | { kind: 'preview'; draft: StrengthProgramStrategy } | { kind: 'applying' } | { kind: 'done' } | { kind: 'error'; message: string };
+// A menu of presets, never a closed type (StrengthProgramStrategy.splitType
+// stays a plain string, deliberately — models/strengthProgram.ts) — "Anders"
+// falls back to free text so a split outside this list is still just as
+// storable as it was before this menu existed.
+const SPLIT_PRESET_LABEL: Record<string, string> = {
+  upper_lower: 'Upper / Lower',
+  full_body: 'Full Body',
+  push_pull_legs: 'Push / Pull / Legs',
+};
+const SPLIT_PRESETS = Object.keys(SPLIT_PRESET_LABEL);
+const CUSTOM_SPLIT = '__custom__';
+
+type Step =
+  | { kind: 'sessions'; draft: StrengthProgramStrategy }
+  | { kind: 'focus'; draft: StrengthProgramStrategy }
+  | { kind: 'preview'; draft: StrengthProgramStrategy }
+  | { kind: 'applying' }
+  | { kind: 'done' }
+  | { kind: 'error'; message: string };
 
 export function StrengthProgramWizard({
   initialStrategy,
@@ -38,7 +57,7 @@ export function StrengthProgramWizard({
 }) {
   const { templates, plannedSessions, goalEngineConfig, activateStrengthProgram } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
-  const [step, setStep] = useState<Step>({ kind: 'edit', draft: initialStrategy });
+  const [step, setStep] = useState<Step>({ kind: 'sessions', draft: initialStrategy });
 
   const strengthTemplates = useMemo(() => templates.filter((t) => t.type === 'strength'), [templates]);
 
@@ -62,11 +81,19 @@ export function StrengthProgramWizard({
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>{mode === 'create' ? 'NIEUW KRACHTBLOK' : 'KRACHTBLOK AANPASSEN'}</Eyebrow>
 
-            {step.kind === 'edit' && (
-              <EditStep
+            {step.kind === 'sessions' && (
+              <SessionsStep
                 draft={step.draft}
                 strengthTemplates={strengthTemplates}
                 onCancel={requestClose}
+                onNext={(draft) => setStep({ kind: 'focus', draft })}
+              />
+            )}
+
+            {step.kind === 'focus' && (
+              <FocusStep
+                draft={step.draft}
+                onBack={() => setStep({ kind: 'sessions', draft: step.draft })}
                 onNext={(draft) => setStep({ kind: 'preview', draft })}
               />
             )}
@@ -77,7 +104,7 @@ export function StrengthProgramWizard({
                 plannedSessions={plannedSessions}
                 templates={templates}
                 availability={goalEngineConfig.availability}
-                onBack={() => setStep({ kind: 'edit', draft: step.draft })}
+                onBack={() => setStep({ kind: 'focus', draft: step.draft })}
                 onConfirm={() => void handleConfirm(step.draft)}
               />
             )}
@@ -106,7 +133,10 @@ export function StrengthProgramWizard({
   );
 }
 
-function EditStep({
+// Step 1 — "wat train je": source, frequency, split, which session types
+// make up the block. Kept separate from Step 2's focus/notes fields so
+// neither screen is a wall of unrelated inputs.
+function SessionsStep({
   draft,
   strengthTemplates,
   onCancel,
@@ -118,33 +148,22 @@ function EditStep({
   onNext: (draft: StrengthProgramStrategy) => void;
 }) {
   const [local, setLocal] = useState(draft);
-  const [prioritiesText, setPrioritiesText] = useState((draft.musclePriorities ?? []).join(', '));
-  const [maintenanceText, setMaintenanceText] = useState((draft.muscleMaintenance ?? []).join(', '));
+  const [customSplit, setCustomSplit] = useState(!SPLIT_PRESETS.includes(draft.splitType));
 
+  // Always recomputed in the canonical template order, regardless of the
+  // order templates were toggled in — otherwise the checked set drifts to
+  // "click order" (production bug: re-toggling Upper A after Lower B left
+  // it displayed last, "Upper A, Lower A, Upper B", even though the
+  // checklist itself still showed the templates in their fixed order).
   function toggleTemplate(id: string) {
-    setLocal((s) => ({
-      ...s,
-      sessionTemplateIds: s.sessionTemplateIds.includes(id)
-        ? s.sessionTemplateIds.filter((t) => t !== id)
-        : [...s.sessionTemplateIds, id],
-    }));
+    setLocal((s) => {
+      const wasChecked = s.sessionTemplateIds.includes(id);
+      const nextIds = new Set(wasChecked ? s.sessionTemplateIds.filter((t) => t !== id) : [...s.sessionTemplateIds, id]);
+      return { ...s, sessionTemplateIds: strengthTemplates.filter((t) => nextIds.has(t.id)).map((t) => t.id) };
+    });
   }
 
   const canProceed = local.sessionTemplateIds.length > 0 && local.sessionsPerWeek > 0 && local.splitType.trim().length > 0;
-
-  function next() {
-    const now = new Date().toISOString();
-    const musclePriorities = prioritiesText.split(',').map((s) => s.trim()).filter(Boolean);
-    const muscleMaintenance = maintenanceText.split(',').map((s) => s.trim()).filter(Boolean);
-    const plannedEndDate = local.plannedBlockWeeks ? addDays(local.startDate, local.plannedBlockWeeks * 7) : undefined;
-    onNext({
-      ...local,
-      musclePriorities: musclePriorities.length > 0 ? musclePriorities : undefined,
-      muscleMaintenance: muscleMaintenance.length > 0 ? muscleMaintenance : undefined,
-      plannedEndDate,
-      updatedAt: now,
-    });
-  }
 
   return (
     <div className="mt-4 flex flex-col gap-4">
@@ -176,14 +195,35 @@ function EditStep({
         </div>
         <div className="flex-1">
           <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Split</label>
-          <input
-            type="text"
-            value={local.splitType}
-            onChange={(e) => setLocal((s) => ({ ...s, splitType: e.target.value }))}
-            placeholder="upper_lower, full_body, ..."
-            className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-            style={inputStyle}
-          />
+          {customSplit ? (
+            <input
+              type="text"
+              value={local.splitType}
+              onChange={(e) => setLocal((s) => ({ ...s, splitType: e.target.value }))}
+              placeholder="bijv. bro_split"
+              className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+              style={inputStyle}
+            />
+          ) : (
+            <select
+              value={local.splitType}
+              onChange={(e) => {
+                if (e.target.value === CUSTOM_SPLIT) {
+                  setCustomSplit(true);
+                  setLocal((s) => ({ ...s, splitType: '' }));
+                } else {
+                  setLocal((s) => ({ ...s, splitType: e.target.value }));
+                }
+              }}
+              className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+              style={inputStyle}
+            >
+              {SPLIT_PRESETS.map((preset) => (
+                <option key={preset} value={preset} style={{ background: 'var(--color-charcoal)' }}>{SPLIT_PRESET_LABEL[preset]}</option>
+              ))}
+              <option value={CUSTOM_SPLIT} style={{ background: 'var(--color-charcoal)' }}>Andere split…</option>
+            </select>
+          )}
         </div>
       </div>
 
@@ -208,6 +248,43 @@ function EditStep({
         })}
       </div>
 
+      <div className="mt-2 flex gap-3">
+        <SecondaryButton onClick={onCancel}>ANNULEREN</SecondaryButton>
+        <PrimaryButton onClick={() => onNext(local)} disabled={!canProceed}>VOLGENDE</PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+// Step 2 — "hoe lang en waarop focus": block length + priority/maintenance
+// muscle groups (chips, not a comma-separated string to hand-type) + notes.
+function FocusStep({
+  draft,
+  onBack,
+  onNext,
+}: {
+  draft: StrengthProgramStrategy;
+  onBack: () => void;
+  onNext: (draft: StrengthProgramStrategy) => void;
+}) {
+  const [local, setLocal] = useState(draft);
+
+  function toggleGroup(field: 'musclePriorities' | 'muscleMaintenance', value: string) {
+    setLocal((s) => {
+      const current = s[field] ?? [];
+      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      return { ...s, [field]: next.length > 0 ? next : undefined };
+    });
+  }
+
+  function next() {
+    const now = new Date().toISOString();
+    const plannedEndDate = local.plannedBlockWeeks ? addDays(local.startDate, local.plannedBlockWeeks * 7) : undefined;
+    onNext({ ...local, plannedEndDate, updatedAt: now });
+  }
+
+  return (
+    <div className="mt-4 flex flex-col gap-4">
       <div>
         <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Bloklengte (weken, optioneel)</label>
         <input
@@ -225,25 +302,19 @@ function EditStep({
       </div>
 
       <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Prioriteit (kommagescheiden, optioneel)</label>
-        <input
-          type="text"
-          value={prioritiesText}
-          onChange={(e) => setPrioritiesText(e.target.value)}
-          placeholder="borst, schouders, armen"
-          className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-          style={inputStyle}
+        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Prioriteit (optioneel)</label>
+        <ChipMultiSelect
+          options={MUSCLE_GROUP_OPTIONS}
+          selected={local.musclePriorities ?? []}
+          onToggle={(v) => toggleGroup('musclePriorities', v)}
         />
       </div>
       <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Onderhoud (kommagescheiden, optioneel)</label>
-        <input
-          type="text"
-          value={maintenanceText}
-          onChange={(e) => setMaintenanceText(e.target.value)}
-          placeholder="rug, benen"
-          className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-          style={inputStyle}
+        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Onderhoud (optioneel)</label>
+        <ChipMultiSelect
+          options={MUSCLE_GROUP_OPTIONS}
+          selected={local.muscleMaintenance ?? []}
+          onToggle={(v) => toggleGroup('muscleMaintenance', v)}
         />
       </div>
       <div>
@@ -258,8 +329,66 @@ function EditStep({
       </div>
 
       <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onCancel}>ANNULEREN</SecondaryButton>
-        <PrimaryButton onClick={next} disabled={!canProceed}>VOLGENDE</PrimaryButton>
+        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
+        <PrimaryButton onClick={next}>VOLGENDE</PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+// Chip picker over a fixed option list, plus a small free-text add so a
+// value outside the list is still just as storable as before (the backing
+// field stays a plain string[] — models/strengthProgram.ts).
+function ChipMultiSelect({
+  options,
+  selected,
+  onToggle,
+}: {
+  options: readonly string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  const [customText, setCustomText] = useState('');
+  const extraSelected = selected.filter((s) => !options.includes(s));
+
+  function addCustom() {
+    const value = customText.trim();
+    if (!value) return;
+    onToggle(value);
+    setCustomText('');
+  }
+
+  return (
+    <div className="mt-1 flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        {[...options, ...extraSelected].map((opt) => {
+          const checked = selected.includes(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onToggle(opt)}
+              className="rounded-full border px-3 py-1 text-xs"
+              style={{ borderColor: checked ? 'var(--color-gold)' : 'var(--color-card-border)', color: checked ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={customText}
+          onChange={(e) => setCustomText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+          placeholder="Andere spiergroep…"
+          className="flex-1 rounded-lg border bg-transparent px-2 py-1.5 text-xs"
+          style={inputStyle}
+        />
+        <button type="button" onClick={addCustom} className="rounded-lg border px-3 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+          TOEVOEGEN
+        </button>
       </div>
     </div>
   );

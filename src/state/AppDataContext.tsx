@@ -86,6 +86,14 @@ interface AppData {
   proposeSkip: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
   updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => Promise<void>;
+  // Soft-delete: sets status:'archived' rather than removing the row, so
+  // GoalMilestoneProgress/PlanChangeProposal rows that still reference this
+  // goalId stay valid (models/goals.ts's GoalStatus already has 'archived'
+  // for exactly this). computeActiveGoalOverviews/goalOverview.ts already
+  // filters to status:'active', so an archived goal drops out of DOELFOCUS
+  // for free — callers only need to also stop finding it by other means
+  // (Ascend.tsx's own goal/marathonGoal lookups).
+  archiveGoal: (goalId: string) => Promise<void>;
   // Phase 7 — the single-transaction activation flow (engine/goalActivation.ts,
   // review point 11) applied for real, for both a brand-new goal draft and
   // an edit to an existing one: persists the goal, applies its
@@ -631,6 +639,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [trainingGoals, refresh],
   );
 
+  const archiveGoal = useCallback(
+    async (goalId: string) => {
+      const goal = trainingGoals.find((g) => g.id === goalId);
+      if (!goal) return;
+      await TrainingGoalsRepo.put({ ...goal, status: 'archived', targetDate: undefined, updatedAt: new Date().toISOString() });
+      await refresh();
+    },
+    [trainingGoals, refresh],
+  );
+
   const updateSettings = useCallback(async (patch: Partial<AppSettings>): Promise<AppSettings> => {
     const next = await SettingsRepo.set(patch);
     setSettings(next);
@@ -803,6 +821,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     proposeSkip,
     clearMilestoneManually,
     updateGoal,
+    archiveGoal,
     activateGoal,
     updateSettings,
     updateMarathonGoal,

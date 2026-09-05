@@ -28,3 +28,34 @@ export interface MeasuredValue {
   amount: number;
   unit: Unit;
 }
+
+// Short, human labels for display — never the raw Unit key itself (which
+// is internal vocabulary, not copy). Kept next to Unit so every new unit
+// value is forced to get a label in the same change.
+export const UNIT_LABEL: Record<Unit, string> = {
+  km: 'km',
+  min: 'min',
+  min_per_km: 'min/km',
+  watts: 'W',
+  kg: 'kg',
+  m_elevation_gain: 'm',
+  m_elevation_loss: 'm',
+  days: 'dagen',
+  bpm: 'bpm',
+};
+
+function formatPace(minPerKm: number): string {
+  const totalSeconds = Math.round(minPerKm * 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`;
+}
+
+// One place that turns a raw MeasuredValue into copy — so no call site
+// prints a full-precision float or a raw Unit key again (production
+// incident: DOELFOCUS showing "4.976303317535545 min_per_km").
+export function formatMeasuredValue(value: MeasuredValue): string {
+  if (value.unit === 'min_per_km') return formatPace(value.amount);
+  const rounded = Number.isInteger(value.amount) ? value.amount : Math.round(value.amount * 10) / 10;
+  return `${rounded} ${UNIT_LABEL[value.unit]}`;
+}

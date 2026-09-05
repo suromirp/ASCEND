@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { todayISO, formatDateNL } from '../utils/dates';
-import { DIMENSION_META, DIMENSION_ORDER } from '../data/baselineQuestions';
+import { DIMENSION_META, DIMENSION_ORDER, dimensionLabel } from '../data/baselineQuestions';
+import { UNIT_LABEL, formatMeasuredValue } from '../models/units';
+import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../models/disciplines';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+
+const CUSTOM_DISCIPLINE = '__custom__';
 
 // Targeted baseline questions (Algorithm Contract v0.2 §27) — the full,
 // generic list across every dimension, regardless of any specific goal's
@@ -19,6 +23,7 @@ export function BaselineEvidenceCard() {
   const [adding, setAdding] = useState(false);
   const [dimension, setDimension] = useState<(typeof DIMENSION_ORDER)[number]>(DIMENSION_ORDER[0]);
   const [discipline, setDiscipline] = useState('');
+  const [customDiscipline, setCustomDiscipline] = useState(false);
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(todayISO());
 
@@ -47,13 +52,13 @@ export function BaselineEvidenceCard() {
       {manualEntries.length > 0 && (
         <div className="flex flex-col gap-2">
           {manualEntries.map((e) => {
-            const label = e.key.dimension === 'fatigue_resistance' ? e.key.dimension : DIMENSION_META[e.key.dimension]?.label ?? e.key.dimension;
+            const label = e.key.discipline ? `${dimensionLabel(e.key.dimension)} (${disciplineLabel(e.key.discipline)})` : dimensionLabel(e.key.dimension);
             return (
               <div key={e.id} className="flex items-center justify-between gap-3 text-sm">
                 <div>
                   <span style={{ color: 'var(--color-ink)' }}>{label}</span>
                   <span className="ml-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                    {e.measured.amount} {e.measured.unit} — {formatDateNL(e.date)}
+                    {formatMeasuredValue(e.measured)} — {formatDateNL(e.date)}
                   </span>
                 </div>
                 <button onClick={() => deleteCapabilityEvidence(e.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>
@@ -85,19 +90,42 @@ export function BaselineEvidenceCard() {
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{meta.question}</p>
           {meta.needsDiscipline && (
             <div>
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sport (bijv. hardlopen, hiken)</label>
-              <input
-                type="text"
-                value={discipline}
-                onChange={(e) => setDiscipline(e.target.value)}
-                className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-                style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-              />
+              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sport</label>
+              {customDiscipline ? (
+                <input
+                  type="text"
+                  value={discipline}
+                  onChange={(e) => setDiscipline(e.target.value)}
+                  placeholder="bijv. alpineklimmen"
+                  className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+                />
+              ) : (
+                <select
+                  value={discipline}
+                  onChange={(e) => {
+                    if (e.target.value === CUSTOM_DISCIPLINE) {
+                      setCustomDiscipline(true);
+                      setDiscipline('');
+                    } else {
+                      setDiscipline(e.target.value);
+                    }
+                  }}
+                  className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+                >
+                  <option value="" style={{ background: 'var(--color-charcoal)' }}>Kies sport</option>
+                  {DISCIPLINE_OPTIONS.map((d) => (
+                    <option key={d} value={d} style={{ background: 'var(--color-charcoal)' }}>{DISCIPLINE_LABEL[d]}</option>
+                  ))}
+                  <option value={CUSTOM_DISCIPLINE} style={{ background: 'var(--color-charcoal)' }}>Andere sport…</option>
+                </select>
+              )}
             </div>
           )}
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waarde ({meta.unit})</label>
+              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waarde ({UNIT_LABEL[meta.unit]})</label>
               <input
                 type="number"
                 value={amount}
