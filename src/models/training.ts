@@ -6,6 +6,8 @@
 // Changing the plan must never rewrite history — SessionLog rows are
 // append-only and are never mutated once created.
 
+import type { SessionStressProfile } from './prescription';
+
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
 
 export type SessionType = 'strength' | 'cardio' | 'hiking' | 'recovery' | 'adventure';
@@ -83,6 +85,14 @@ export interface SessionTemplate {
   // stretch data, they're purely informational.
   warmup?: Stretch[];
   cooldown?: Stretch[];
+  // The sensible default stress profile for this workout shape (Technical
+  // Architecture v0.3.1 REVISED, Phase 3 — replaces hardcoded isLegHeavy).
+  // A TrainingPrescription may layer a partial override on top for one
+  // specific occurrence; engine/stressProfile.ts#resolveEffectiveStressProfile
+  // is the only place that layering happens. Absent on a template falls
+  // back to legacyIsLegHeavyToStressProfile(templateId) — kept only as a
+  // bridge for any template that hasn't been backfilled.
+  baseStressProfile?: SessionStressProfile;
 }
 
 export type PlannedSessionStatus = 'planned' | 'moved' | 'skipped' | 'optional';

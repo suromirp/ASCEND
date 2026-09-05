@@ -52,3 +52,12 @@ export interface TrainingPrescription {
   evidenceRefs?: string[];
   createdAt: string;
 }
+
+// A specialist's draft output (engine module map: "Candidate
+// TrainingPrescription draft") — before the (later-phase) writer module
+// assigns an id/createdAt and actually persists it via
+// storage/database.ts#TrainingPrescriptionsRepo. Phase 3 only builds the
+// specialists that produce this candidate; wiring one up to an actual
+// planned session automatically is Goal Arbiter/Adaptive Replanner
+// territory (Phase 4+).
+export type TrainingPrescriptionCandidate = Omit<TrainingPrescription, 'id' | 'createdAt'>;
