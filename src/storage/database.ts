@@ -4,13 +4,14 @@ import type { SessionTemplate, PlannedSession, SessionLog } from '../models/trai
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { InjuryNote } from '../models/injury';
+import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -24,6 +25,11 @@ interface AscendDB extends DBSchema {
   bodyMetrics: { key: string; value: BodyMetric };
   nutritionMetrics: { key: string; value: NutritionMetric };
   injuryNotes: { key: string; value: InjuryNote };
+  // Snapshots taken automatically right before an import is applied — see
+  // storage/backupImport.ts. A separate store (not reused for anything else)
+  // specifically so the import transaction itself can never overwrite the
+  // one copy that would let a bad import be undone.
+  backupSnapshots: { key: string; value: PreImportSnapshot };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -59,6 +65,7 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
         if (!db.objectStoreNames.contains('bodyMetrics')) db.createObjectStore('bodyMetrics', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('nutritionMetrics')) db.createObjectStore('nutritionMetrics', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('injuryNotes')) db.createObjectStore('injuryNotes', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('backupSnapshots')) db.createObjectStore('backupSnapshots', { keyPath: 'id' });
       },
     });
   }
@@ -141,6 +148,12 @@ export const InjuryNotesRepo = {
   getAll: () => getAll('injuryNotes') as Promise<InjuryNote[]>,
   put: (n: InjuryNote) => put('injuryNotes', n),
   delete: (id: string) => del('injuryNotes', id),
+};
+
+export const BackupSnapshotsRepo = {
+  getAll: () => getAll('backupSnapshots') as Promise<PreImportSnapshot[]>,
+  put: (s: PreImportSnapshot) => put('backupSnapshots', s),
+  delete: (id: string) => del('backupSnapshots', id),
 };
 
 export const RecoveryMetricsRepo = { getAll: () => getAll('recoveryMetrics') as Promise<RecoveryMetric[]> };
@@ -395,6 +408,64 @@ export async function resetToDemoData(): Promise<void> {
   ]);
   await MetaRepo.set('seeded', false);
   await seedIfEmpty();
+}
+
+// --- atomic multi-store backup writes -----------------------------------
+
+// One write set per store: `clear` wipes the store before `puts` are
+// written (used for a 'replace' category action), omitted entirely means
+// "don't touch this store at all" (a 'keep_current' or 'ignore' category
+// action, or a category not part of this import). `puts` alone with
+// `clear: false` is a merge — existing rows stay, these are added/overwrite
+// by id.
+//
+// Real IndexedDB constraint this exists to satisfy: a transaction
+// auto-closes the moment an unrelated promise is awaited inside it. So this
+// function assumes every decision (what to add, what conflicts, what the
+// final settings object should be) was already made by the caller — it only
+// ever issues synchronous store calls before `tx.done`, never anything that
+// awaits outside the transaction's own operations.
+export interface BackupStoreWrite<T> {
+  clear: boolean;
+  puts: T[];
+}
+
+export interface BackupWriteSet {
+  programs?: BackupStoreWrite<Program>;
+  sessionTemplates?: BackupStoreWrite<SessionTemplate>;
+  plannedSessions?: BackupStoreWrite<PlannedSession>;
+  sessionLogs?: BackupStoreWrite<SessionLog>;
+  objectives?: BackupStoreWrite<Objective>;
+  milestoneProgress?: BackupStoreWrite<MilestoneProgress>;
+  injuryNotes?: BackupStoreWrite<InjuryNote>;
+  settings?: AppSettings;
+}
+
+export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
+  const db = await getDB();
+  const storeNames = (Object.keys(writes) as (keyof BackupWriteSet)[])
+    .filter((k) => writes[k] !== undefined)
+    .map((k) => (k === 'settings' ? 'meta' : k))
+    // 'settings' collapses onto 'meta' — dedupe in case both were present.
+    .filter((v, i, arr) => arr.indexOf(v) === i);
+  if (storeNames.length === 0) return;
+
+  const tx = db.transaction(storeNames, 'readwrite');
+  const ops: Promise<unknown>[] = [];
+
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'objectives', 'milestoneProgress', 'injuryNotes'] as const) {
+    const write = writes[key];
+    if (!write) continue;
+    const store = tx.objectStore(key);
+    if (write.clear) ops.push(store.clear());
+    for (const value of write.puts) ops.push(store.put(value as never));
+  }
+
+  if (writes.settings) {
+    ops.push(tx.objectStore('meta').put(writes.settings, 'settings'));
+  }
+
+  await Promise.all([...ops, tx.done]);
 }
 
 export async function wipeAllData(): Promise<void> {

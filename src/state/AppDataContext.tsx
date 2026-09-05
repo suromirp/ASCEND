@@ -29,8 +29,8 @@ import { proposeMove, proposeNoTimeToday, skipSession as skipSessionEngine, type
 import { computeObjectiveProgress, requirementAutoSatisfied } from '../engine/progression';
 import { mondayOfWeek, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { downloadExport } from '../storage/export';
-import { importFromFile } from '../storage/import';
+import { buildBackupEnvelope, backupFileName } from '../storage/backup';
+import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 
 interface AppData {
   loading: boolean;
@@ -60,8 +60,7 @@ interface AppData {
   deleteInjury: (id: string) => Promise<void>;
   proposeNoTimeToday: () => ScheduleProposal[];
   applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
-  exportData: () => Promise<void>;
-  importData: (file: File) => Promise<void>;
+  exportData: () => Promise<boolean>;
   resetDemoData: () => Promise<void>;
   celebration: CelebrationEvent | null;
   dismissCelebration: () => void;
@@ -401,12 +400,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     proposeNoTimeToday: proposeNoTimeTodayAction,
     applyNoTimeToday,
     exportData: async () => {
-      await downloadExport();
-      await updateSettings({ lastExportedAt: new Date().toISOString() });
-    },
-    importData: async (file: File) => {
-      await importFromFile(file);
-      await refresh();
+      const envelope = await buildBackupEnvelope();
+      const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
+      const result = await webBackupFileAdapter.saveBackup(blob, backupFileName(envelope.createdAt));
+      if (result.success) await updateSettings({ lastExportedAt: new Date().toISOString() });
+      return result.success;
     },
     resetDemoData: async () => {
       await resetToDemoData();
