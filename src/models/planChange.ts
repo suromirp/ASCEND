@@ -14,6 +14,12 @@ export interface PlanChangeItem {
   toDate?: string;
   newPrescriptionId?: string;
   newSessionDraft?: { templateId: string; scheduledDate: string; weekStartDate: string }; // 'add' only
+  // 'swap' only — the other PlannedSession's id this item exchanges dates
+  // with. A bare 'swap' with no partner is structurally meaningless (one
+  // PlanChangeItem alone can't express "with what"); a genuine swap is
+  // always two items, each naming the other via this field, each carrying
+  // its own new toDate (the partner's original date).
+  pairedWithSessionId?: string;
 }
 
 export type EngineEvent =

@@ -85,11 +85,9 @@ export interface ApplyPlanChangeResult {
   // back for the caller to act on (engine/prescriptionWriter.ts + write the
   // referenced TrainingPrescription), never silently dropped here.
   prescriptionChanges: PlanChangeItem[];
-  // Anything this function structurally cannot execute at all — e.g.
-  // 'swap' has no second session id to pair with in this domain model, so
-  // a bare 'swap' item can never be honored as a single PlanChangeItem (a
-  // real swap must be expressed as two paired 'move' items instead, which
-  // this function already fully supports). Surfaced so a caller can never
+  // Anything this function structurally cannot execute at all — e.g. a
+  // 'swap' item with no pairedWithSessionId, or one whose named partner
+  // isn't present/doesn't mirror it back. Surfaced so a caller can never
   // mistake "nothing happened" for "successfully applied".
   unsupported: PlanChangeItem[];
 }
@@ -115,9 +113,30 @@ export function applyPlanChangeItems(
       case 'reduce':
         prescriptionChanges.push(item);
         break;
-      case 'swap':
-        unsupported.push(item);
+      case 'swap': {
+        // A genuine swap is always two items, each naming the other via
+        // pairedWithSessionId, each already carrying its own new toDate
+        // (the partner's original date) — never inferred here. Anything
+        // less (no partner named, or the named partner isn't present or
+        // doesn't mirror back) can't be honored as a swap at all.
+        if (!item.plannedSessionId || !item.toDate || !item.pairedWithSessionId) {
+          unsupported.push(item);
+          break;
+        }
+        const partner = items.find(
+          (other) => other.action === 'swap' && other.plannedSessionId === item.pairedWithSessionId && other.pairedWithSessionId === item.plannedSessionId,
+        );
+        if (!partner || !partner.toDate) {
+          unsupported.push(item);
+          break;
+        }
+        next = next.map((s) =>
+          s.id === item.plannedSessionId
+            ? { ...s, scheduledDate: item.toDate as string, status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
+            : s,
+        );
         break;
+      }
       case 'add': {
         if (!item.newSessionDraft) {
           unsupported.push(item);
