@@ -49,6 +49,22 @@ describe('computeCapabilityGap', () => {
     expect(gap.criticality).toBe('important');
     expect(gap.confidence).toBe('medium');
   });
+
+  it('never crashes on a genuine unit mismatch between demand and evidence — reads as unknown, the same honest "cannot assess" case as no evidence at all (production incident: a distance-shaped endurance_duration/mechanical_tolerance demand from engine/demand.ts against duration-shaped real evidence)', () => {
+    const enduranceKey = { dimension: 'endurance_duration' as const, discipline: 'hiking' };
+    const demand: CapabilityDemand = { key: enduranceKey, demand: { amount: 20, unit: 'km' }, criticality: 'critical' };
+    const gap = computeCapabilityGap(demand, {
+      key: enduranceKey,
+      confidence: 'high',
+      unconfirmedPeak: false,
+      evidenceRefs: [],
+      asOf: '2026-09-01',
+      repeatableAnchor: { amount: 90, unit: 'min' },
+    });
+    expect(gap.status).toBe('unknown');
+    expect(gap.currentEstimate).toEqual({ amount: 90, unit: 'min' });
+    expect(() => gap).not.toThrow();
+  });
 });
 
 describe('computeCapabilityGaps', () => {
