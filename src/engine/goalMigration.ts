@@ -43,7 +43,7 @@ export interface MigratedGr5Data {
 export function migrateGr5ObjectiveData(objective: Objective, legacyProgress: MilestoneProgress[]): MigratedGr5Data {
   const now = new Date().toISOString();
   const requirements: TrainingGoal['requirements'] = objective.targetDistanceKm
-    ? [{ id: makeId('req'), kind: 'distance', scope: 'total_event', target: { amount: objective.targetDistanceKm, unit: 'km' } }]
+    ? [{ id: makeId('req'), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: objective.targetDistanceKm, unit: 'km' } }]
     : [];
 
   const goal: TrainingGoal = objective.targetDate
@@ -83,10 +83,10 @@ export function buildMarathonGoal(
 
   const now = new Date().toISOString();
   const requirements: TrainingGoal['requirements'] = [
-    { id: makeId('req'), kind: 'distance', scope: 'single_event', target: { amount: RACE_DISTANCE_KM[marathonRaceType], unit: 'km' }, discipline: 'running' },
+    { id: makeId('req'), kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: RACE_DISTANCE_KM[marathonRaceType], unit: 'km' }, discipline: 'running' },
   ];
   if (marathonTargetTimeMinutes !== undefined) {
-    requirements.push({ id: makeId('req'), kind: 'targetTime', scope: 'single_event', target: { amount: marathonTargetTimeMinutes, unit: 'min' }, discipline: 'running' });
+    requirements.push({ id: makeId('req'), kind: 'targetTime', scope: 'SINGLE_EVENT', target: { amount: marathonTargetTimeMinutes, unit: 'min' }, discipline: 'running' });
   }
 
   return marathonTargetDate

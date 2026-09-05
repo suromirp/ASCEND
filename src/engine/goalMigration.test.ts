@@ -21,7 +21,7 @@ describe('migrateGr5ObjectiveData', () => {
     expect(goal.name).toBe('GR5 / ALPINE READINESS');
     expect(goal.status).toBe('active');
     expect(goal.status === 'active' && goal.targetDate).toBe('2027-06-01');
-    expect(goal.requirements).toEqual([{ id: expect.any(String), kind: 'distance', scope: 'total_event', target: { amount: 600, unit: 'km' } }]);
+    expect(goal.requirements).toEqual([{ id: expect.any(String), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' } }]);
   });
 
   it('produces a paused goal with no targetDate when the objective has none', () => {
@@ -60,8 +60,8 @@ describe('buildMarathonGoal', () => {
     expect(goal?.status).toBe('active');
     expect(goal?.name).toBe('Marathon');
     expect(goal?.requirements).toEqual([
-      { id: expect.any(String), kind: 'distance', scope: 'single_event', target: { amount: 42.2, unit: 'km' }, discipline: 'running' },
-      { id: expect.any(String), kind: 'targetTime', scope: 'single_event', target: { amount: 240, unit: 'min' }, discipline: 'running' },
+      { id: expect.any(String), kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 42.2, unit: 'km' }, discipline: 'running' },
+      { id: expect.any(String), kind: 'targetTime', scope: 'SINGLE_EVENT', target: { amount: 240, unit: 'min' }, discipline: 'running' },
     ]);
   });
 
@@ -69,7 +69,7 @@ describe('buildMarathonGoal', () => {
     const goal = buildMarathonGoal('half', undefined, undefined);
     expect(goal?.status).toBe('paused');
     expect(goal?.requirements).toEqual([
-      { id: expect.any(String), kind: 'distance', scope: 'single_event', target: { amount: 21.1, unit: 'km' }, discipline: 'running' },
+      { id: expect.any(String), kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 21.1, unit: 'km' }, discipline: 'running' },
     ]);
   });
 });
