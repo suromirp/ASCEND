@@ -22,6 +22,13 @@ import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_
 // Maandag is daarom de nieuwe rustdag, na het zware weekend.
 // ---------------------------------------------------------------------------
 
+// baseStressProfile (Technical Architecture v0.3.1 REVISED, Phase 3): the
+// sensible qualitative default for each template's own workout shape,
+// derived from what the template's notes/target already say about it (RPE,
+// D+/D-, duration, mechanism) — not a new physiological claim, just a
+// categorical read of content that already exists above. This is what
+// resolveEffectiveStressProfile() falls back to legacyIsLegHeavyToStressProfile()
+// for on any template that DOESN'T have one — every template here does.
 function buildTemplates(): SessionTemplate[] {
   return [
     {
@@ -34,6 +41,7 @@ function buildTemplates(): SessionTemplate[] {
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
+      baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate' },
       exercises: [
         { id: 'ex1', exerciseName: 'Bench press', sets: 4, reps: '6-8', priority: 'core' },
         { id: 'ex2', exerciseName: 'Zittende kabelroeien', sets: 4, reps: '8-10', priority: 'core' },
@@ -54,6 +62,7 @@ function buildTemplates(): SessionTemplate[] {
       notes: 'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high' },
       exercises: [
         { id: 'ex8', exerciseName: 'Squat / Leg press', sets: 4, reps: '5-8', priority: 'core' },
         { id: 'ex9', exerciseName: 'RDL / hip hinge', sets: 3, reps: '8-10', priority: 'core' },
@@ -73,6 +82,7 @@ function buildTemplates(): SessionTemplate[] {
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
+      baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate' },
       exercises: [
         { id: 'ex14', exerciseName: 'Chest press / bench', sets: 4, reps: '6-8', priority: 'core' },
         { id: 'ex15', exerciseName: 'Incline press', sets: 3, reps: '8-10', priority: 'core' },
@@ -97,6 +107,7 @@ function buildTemplates(): SessionTemplate[] {
         'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high' },
       exercises: [
         { id: 'ex21', exerciseName: 'Squat (lichter)', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex22', exerciseName: 'Step-ups', sets: 3, reps: '10 per been', priority: 'core' },
@@ -117,6 +128,7 @@ function buildTemplates(): SessionTemplate[] {
         "RPE 3-4/10 — rustig / conversational pace, volledige zinnen kunnen praten. Geen PR's. Garmin + borstband gebruiken. Doel: aerobe basis, efficiënter leren hardlopen, conditie verbeteren zonder woensdag te slopen.",
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'low' },
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 30, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 35, note: 'Opbouw' },
@@ -138,6 +150,7 @@ function buildTemplates(): SessionTemplate[] {
         'Optie A — incline treadmill: helling 8-15%, snelheid ±4-5,5 km/u, RPE 4-5/10, niet aan de handgrepen hangen. Optie B — buiten hiken: liefst hoogteverschil, rustig tempo, D+ en tijd op de benen bijhouden. Voorlopig voornamelijk rustige aerobe training. Garmin + borstband gebruiken. Zijn de benen erg vermoeid? Maak deze sessie lichter.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'light', intensity: 'moderate' },
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 45, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 50, note: 'Opbouw' },
@@ -157,6 +170,10 @@ function buildTemplates(): SessionTemplate[] {
         'Herhalingen van 30-90 sec bergop (buiten) of op een treadmill op 4-5% helling, op hoge inspanning (RPE 8-9), met ruime rust/rustig afdalen ertussen. Bouwt tegelijk loopsnelheid/-kracht én D+ voor de GR5 op — dit is de kwaliteitssessie van de week, geen rustige duurloop. Minder impact op de knieën/enkels dan vlakke sprints, dankzij de helling.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
+      // Bergop = grotendeels concentrisch, rustig afdalen ertussen houdt de
+      // eccentrische/afdaalbelasting laag — dat is precies waarom deze
+      // sessie minder kniebelasting geeft dan vlakke sprints (zie notes).
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'heavy', eccentricLoad: 'light', intensity: 'high' },
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 35, note: 'Wennen — 4-5 herhalingen' },
         { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw — 6 herhalingen' },
@@ -176,6 +193,9 @@ function buildTemplates(): SessionTemplate[] {
         'De langste sessie van de week, op vermoeide benen na zaterdag — precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), afstand en hoogtemeters bouw je zelf op t.o.v. vorige week (richtlijn: max +10-15%). Buiten met D+ heeft de voorkeur boven een vlakke route — dit is de sessie die het meest direct naar de GR5 vertaalt.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
+      // Langste sessie, op al vermoeide benen, met echte D+/D- — cumulatief
+      // zwaar voor de benen ondanks de lage RPE (rustig tempo).
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low' },
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 50, note: 'Wennen — rustig tempo, D+ waar mogelijk' },
         { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw — +10% afstand/D+ t.o.v. week 1' },
@@ -194,6 +214,7 @@ function buildTemplates(): SessionTemplate[] {
       // No dynamic warm-up here — Herstel is a light/rest day, not
       // strenuous enough to need the pre-training prep routine.
       cooldown: COOLDOWN_RECOVERY,
+      baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'low' },
     },
   ];
 }

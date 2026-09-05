@@ -5,10 +5,13 @@
 // other entry here corresponds to an item from §69 ("What remains
 // deliberately heuristic") — the contract names these as plain parameters,
 // not formal rule ids, so this file assigns each a stable slug. None of
-// these are consumed by any engine logic yet (Phase 1 — "no new training
+// these were consumed by any engine logic in Phase 1 ("no new training
 // intelligence yet", Technical Architecture v0.3.1 REVISED) — this module
 // exists so later phases have one place to look rule provenance up by id,
-// never restated inline.
+// never restated inline. Phase 3's Progression Orchestrator is the first
+// consumer: `HEURISTIC-POOR-RESPONSE-2-OF-3` and
+// `HEURISTIC-ACCUMULATION-REVIEW-3-PROGRESSIONS` (both already seeded here)
+// plus five new entries below it added for that engine.
 
 import type { AlgorithmRuleMetadata } from '../models/evidence';
 
@@ -173,6 +176,57 @@ export const ALGORITHM_RULES: AlgorithmRuleMetadata[] = [
     populationDirectness: 'low',
     evidenceRefs: [],
     limitations: ['feasibility category simulation — corrected for impossible-goal Focus inflation'],
+    lastReviewed: REVIEWED,
+    ruleVersion: 1,
+  },
+  // --- Phase 3: Progression Orchestrator (engine/progressionOrchestrator.ts) ---
+  {
+    ruleId: 'HEURISTIC-PROGRESSION-READINESS-GATE',
+    ruleClass: 'ascend_heuristic',
+    evidenceStrength: 'heuristic',
+    populationDirectness: 'low',
+    evidenceRefs: ['E-RECOVERY-001', 'E-RECOVERY-002', 'E-RECOVERY-003', 'E-RECOVERY-004'],
+    limitations: ['the underlying "readiness is multi-signal" principle is evidence-backed (RULE-RECOVERY-MULTI-001); the specific cutoff percentages this rule applies to engine/readiness.ts\'s existing 0-100 scores are ASCEND\'s own calibration, not derived from those sources'],
+    lastReviewed: REVIEWED,
+    ruleVersion: 1,
+  },
+  {
+    ruleId: 'HEURISTIC-PROGRESSION-TREND-GATE',
+    ruleClass: 'ascend_heuristic',
+    evidenceStrength: 'heuristic',
+    populationDirectness: 'low',
+    evidenceRefs: [],
+    limitations: ['a declining CapabilityEstimate trend caps the decision at consolidate — a safety default, not a formula (v0.2b REVISED §12: one bad session never wipes capability, but a declining trend is a different, stronger signal)'],
+    lastReviewed: REVIEWED,
+    ruleVersion: 1,
+  },
+  {
+    ruleId: 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE',
+    ruleClass: 'ascend_heuristic',
+    evidenceStrength: 'heuristic',
+    populationDirectness: 'low',
+    evidenceRefs: [],
+    limitations: ['maps CapabilityEstimate.confidence (low/medium/high) to a progression state — ASCEND\'s own calibration, not a validated confidence-to-load-progression formula'],
+    lastReviewed: REVIEWED,
+    ruleVersion: 1,
+  },
+  {
+    ruleId: 'PRODUCT-ASSESS-INSUFFICIENT-DATA',
+    ruleClass: 'product_rule',
+    evidenceStrength: 'heuristic',
+    populationDirectness: 'low',
+    evidenceRefs: [],
+    limitations: ['product policy, not a physiological claim: confidence "unknown" always resolves to the assess state, never a guessed progression (v0.2 §23 — missing data is never interpreted as bad capability)'],
+    lastReviewed: REVIEWED,
+    ruleVersion: 1,
+  },
+  {
+    ruleId: 'PRODUCT-GUARDRAIL-BLOCK',
+    ruleClass: 'product_rule',
+    evidenceStrength: 'heuristic',
+    populationDirectness: 'low',
+    evidenceRefs: [],
+    limitations: ['product policy: a user-configured block guardrail caps an intended progress decision down to consolidate, never silently overridden (v0.2b REVISED §1.3 — a deadline does not overrule a guardrail silently)'],
     lastReviewed: REVIEWED,
     ruleVersion: 1,
   },
