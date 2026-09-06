@@ -30,6 +30,7 @@ import {
   SettingsRepo,
   StretchCompletionRepo,
   resetToDemoData,
+  resetScheduleToDefault,
   DEFAULT_SETTINGS,
   type AppSettings,
   type StretchCompletion,
@@ -120,6 +121,12 @@ interface AppData {
   applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
   exportData: () => Promise<boolean>;
   resetDemoData: () => Promise<void>;
+  // Settings' SCHEMA OPNIEUW LADEN — regenerates the future weekly schedule
+  // back to the standard rotation. Deliberately NOT resetDemoData: this
+  // never touches sessionLogs/injuryNotes/capabilityEvidence/trainingGoals
+  // (storage/database.ts#resetScheduleToDefault's own comment has the full
+  // reasoning — production bug: the old wiring silently wiped all of that).
+  resetSchedule: (startFrom: 'this_week' | 'next_week') => Promise<void>;
   celebration: CelebrationEvent | null;
   dismissCelebration: () => void;
   // Phase 6 — the live Adaptive Replanner for the forecast range (week +2
@@ -844,6 +851,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await resetToDemoData();
       await migrateToGoalEngine();
       await migrateStrengthProgramDefault();
+      await refresh();
+    },
+    resetSchedule: async (startFrom) => {
+      await resetScheduleToDefault(startFrom);
       await refresh();
     },
     celebration,

@@ -8,10 +8,11 @@ import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { exportData, resetDemoData, settings, updateSettings, injuryNotes } = useAppData();
+  const { exportData, resetSchedule, settings, updateSettings, injuryNotes } = useAppData();
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [resetStartFrom, setResetStartFrom] = useState<'this_week' | 'next_week'>('next_week');
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showBaselineEditor, setShowBaselineEditor] = useState(false);
   const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
@@ -81,22 +82,44 @@ export function SettingsPage() {
       <Card className="flex flex-col gap-3">
         <Eyebrow>SCHEMA OPNIEUW LADEN</Eyebrow>
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Zet alles terug naar je standaard trainingsschema (Maand 1 — Upper A, Easy Run, Lower A, Upper B, Bergconditie,
-          Lower B, Herstel), startend deze week. Dit verwijdert je huidige voortgang.
+          Zet je toekomstige planning terug naar het standaard weekschema (Maand 1 — Upper A, Easy Run, Lower A, Upper B,
+          Bergconditie, Lower B, Herstel). Je geschiedenis, voltooide sessies, doelen en blessures blijven gewoon
+          bewaard — dit raakt alleen wat er nog gepland staat.
         </p>
         {!confirmingReset ? (
           <SecondaryButton onClick={() => setConfirmingReset(true)}>SCHEMA OPNIEUW LADEN</SecondaryButton>
         ) : (
-          <div className="flex gap-3">
-            <SecondaryButton onClick={() => setConfirmingReset(false)}>ANNULEREN</SecondaryButton>
-            <PrimaryButton
-              onClick={() => {
-                resetDemoData();
-                setConfirmingReset(false);
-              }}
-            >
-              BEVESTIG RESET
-            </PrimaryButton>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              {(['this_week', 'next_week'] as const).map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setResetStartFrom(option)}
+                  className="rounded-xl border p-3 text-left transition-all active:scale-[0.98]"
+                  style={{ borderColor: resetStartFrom === option ? 'var(--color-gold)' : 'var(--color-card-border)' }}
+                >
+                  <p className="text-sm font-semibold" style={{ color: resetStartFrom === option ? 'var(--color-gold)' : 'var(--color-ink)' }}>
+                    {option === 'this_week' ? 'Vanaf nu, deze week' : 'Vanaf volgende week'}
+                  </p>
+                  <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                    {option === 'this_week'
+                      ? 'De rest van deze week krijgt meteen het standaard schema.'
+                      : 'Deze week maak je af zoals gepland — het standaard schema begint aankomende maandag.'}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <SecondaryButton onClick={() => setConfirmingReset(false)}>ANNULEREN</SecondaryButton>
+              <PrimaryButton
+                onClick={() => {
+                  resetSchedule(resetStartFrom);
+                  setConfirmingReset(false);
+                }}
+              >
+                BEVESTIG RESET
+              </PrimaryButton>
+            </div>
           </div>
         )}
       </Card>

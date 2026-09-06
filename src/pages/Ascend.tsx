@@ -407,7 +407,7 @@ function MarathonGoalCard({
             </p>
           )}
 
-          <PrimaryButton onClick={() => setWizardOpen(true)}>DOEL AANPASSEN VIA ASSISTENT</PrimaryButton>
+          <PrimaryButton onClick={() => setWizardOpen(true)}>DOEL AANPASSEN</PrimaryButton>
 
           <button onClick={() => setAdvancedOpen((s) => !s)} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
