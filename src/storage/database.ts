@@ -617,6 +617,67 @@ export async function resetToDemoData(): Promise<void> {
   await seedIfEmpty();
 }
 
+// User-facing "reset my schedule" — Settings' SCHEMA OPNIEUW LADEN button.
+// Deliberately NOT resetToDemoData: that's a full factory reset (wipes
+// sessionLogs/injuryNotes/capabilityEvidence/trainingGoals/... too), which
+// is wrong here — a user asking to reset their *schedule* still wants their
+// training history, injuries and goals intact (production bug report: this
+// button silently deleted "geschiedenis en al mijn afgeronde activiteiten").
+//
+// Only ever touches `programs`/`sessionTemplates`/`plannedSessions` — the
+// same content `syncTemplateAndScheduleDefinitions` treats as safe to
+// regenerate — and even then only PlannedSessions from `cutoff` onward,
+// with logged ones excluded on top of that as a second, independent guard
+// (a SessionLog's plannedSessionId must never dangle). `startFrom` decides
+// where the standard weekly rotation restarts as "Maand 1, Week 1":
+// 'this_week' takes effect immediately (today onward, this week's earlier
+// days/logs untouched); 'next_week' leaves the rest of the current week
+// exactly as already scheduled and only starts the fresh pattern next
+// Monday. Either way `program.startDate` moves to this week's Monday, so
+// week/phase numbering always restarts cleanly from Week 1 — dates before
+// it simply resolve outside the (new) program via resolveProgramWeek,
+// exactly like any date before a fresh install's startDate.
+export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week'): Promise<void> {
+  const [programs, existingSessions, logs] = await Promise.all([
+    ProgramsRepo.getAll(),
+    PlannedSessionsRepo.getAll(),
+    SessionLogsRepo.getAll(),
+  ]);
+  const program = programs[0];
+  if (!program) return;
+
+  const thisMonday = mondayOfWeek(todayISO());
+  const cutoff = startFrom === 'this_week' ? todayISO() : addDays(thisMonday, 7);
+
+  const { templates } = buildDefaultProgramData();
+  await putAll('sessionTemplates', templates);
+  await ProgramsRepo.put({ ...program, startDate: thisMonday });
+
+  const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff && !loggedPlannedIds.has(s.id));
+  await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
+
+  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
+  const templatesWithDay = templates.filter((t) => t.defaultDayOfWeek);
+  const newSessions: PlannedSession[] = [];
+  for (let week = 0; week < totalWeeks; week++) {
+    const weekStart = addDays(thisMonday, week * 7);
+    templatesWithDay.forEach((t, order) => {
+      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
+      if (date < cutoff) return;
+      newSessions.push({
+        id: makeId('planned'),
+        templateId: t.id,
+        scheduledDate: date,
+        weekStartDate: weekStart,
+        status: 'planned',
+        order,
+      });
+    });
+  }
+  await putAll('plannedSessions', newSessions);
+}
+
 // --- atomic multi-store backup writes -----------------------------------
 
 // One write set per store: `clear` wipes the store before `puts` are

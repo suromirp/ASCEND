@@ -233,7 +233,12 @@ function InterpretStep({
     const meta = REQUIREMENT_KIND_META[kind];
     setLocal((g) => ({
       ...g,
-      requirements: [...g.requirements, { id: makeId('req'), kind, scope: meta.scope, target: { amount: 0, unit: meta.unit }, discipline: meta.needsDiscipline ? '' : undefined }],
+      // No `target` yet — an initial amount:0 left the number input showing
+      // "0" instead of empty, and on a phone keyboard typing "1200" over a
+      // visible "0" appends instead of replacing ("01200", per a user bug
+      // report). Leaving target unset (GoalRequirement.target is optional)
+      // makes the field genuinely blank until the user types something.
+      requirements: [...g.requirements, { id: makeId('req'), kind, scope: meta.scope, discipline: meta.needsDiscipline ? '' : undefined }],
     }));
   }
 
@@ -245,7 +250,20 @@ function InterpretStep({
     setLocal((g) => ({ ...g, requirements: g.requirements.filter((r) => r.id !== id) }));
   }
 
-  const availableKinds = REQUIREMENT_KIND_ORDER.filter((k) => !local.requirements.some((r) => r.kind === k));
+  // 'duration' and 'distance' can't coexist meaningfully: engine/demand.ts
+  // only ever reads a bare 'duration' requirement when no 'distance' one
+  // exists — a goal with both silently drops 'duration' entirely (verified
+  // bug report: a Marathon goal with Afstand + Doeltijd + Duur, where Duur
+  // did nothing). Hiding whichever one is already present prevents building
+  // a combination the engine would then quietly ignore.
+  const hasDistance = local.requirements.some((r) => r.kind === 'distance');
+  const hasDuration = local.requirements.some((r) => r.kind === 'duration');
+  const availableKinds = REQUIREMENT_KIND_ORDER.filter((k) => {
+    if (local.requirements.some((r) => r.kind === k)) return false;
+    if (k === 'duration' && hasDistance) return false;
+    if (k === 'distance' && hasDuration) return false;
+    return true;
+  });
   const canProceed = local.name.trim().length > 0 && local.requirements.length > 0 && local.requirements.every((r) => (r.target?.amount ?? 0) > 0);
 
   return (
@@ -276,6 +294,9 @@ function InterpretStep({
 
       <div className="flex flex-col gap-3">
         <Eyebrow>EISEN</Eyebrow>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          Wat het doel zelf vraagt (bijv. de afstand van de tocht) — niet wat jij daar al aantoonbaar voor kan.
+        </p>
         {local.requirements.length === 0 && (
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Nog geen eisen — voeg er hieronder minstens één toe.</p>
         )}
@@ -339,7 +360,10 @@ function RequirementRow({
           <input
             type="number"
             value={requirement.target?.amount ?? ''}
-            onChange={(e) => onChange({ target: { amount: Number(e.target.value), unit: meta.unit } })}
+            onChange={(e) => {
+              const raw = e.target.value;
+              onChange({ target: raw === '' ? undefined : { amount: Number(raw), unit: meta.unit } });
+            }}
             className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
             style={inputStyle}
           />
@@ -419,7 +443,8 @@ function BaselineStep({
   return (
     <div className="mt-4 flex flex-col gap-4">
       <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-        ASCEND gebruikt eerst wat het al weet uit je trainingsgeschiedenis. Hieronder alleen wat daarvoor nog ontbreekt.
+        Dit gaat nu over jou, niet over het doel: wat kun je al aantoonbaar, los van wat de eisen hierboven vragen?
+        ASCEND gebruikt eerst wat het al weet uit je trainingsgeschiedenis — hieronder alleen wat daarvoor nog ontbreekt.
       </p>
 
       {known.length > 0 && (
