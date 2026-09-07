@@ -23,14 +23,15 @@
 // generative "keep inventing new weeks forever" process.
 
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
-import type { TrainingAvailability } from '../models/goalEngineConfig';
+import type { Program } from '../models/program';
+import type { TrainingAvailability, TrainingStrategyProfile } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import type { GoalOverview } from './goalOverview';
 import { resolveHorizonZone, committedWeekStartDates } from './planningHorizon';
 import { isDateAvailable } from './adaptiveReplanner';
 import { resolveEffectiveStressProfile } from './stressProfile';
-import { requiredSpacingDays } from './scheduler';
+import { requiredSpacingDays, dayHasRoomFor } from './scheduler';
 import { resolveSessionContributions, type GoalDemand } from './sessionContribution';
 import { computeDemand } from './demand';
 import { daysBetween, weekDates } from '../utils/dates';
@@ -38,10 +39,6 @@ import { makeId } from '../utils/id';
 
 function isLegHeavyTemplate(template: SessionTemplate): boolean {
   return resolveEffectiveStressProfile(template).lowerBodyLoad === 'heavy';
-}
-
-function isSlotFree(sessions: PlannedSession[], date: string): boolean {
-  return !sessions.some((s) => s.status !== 'skipped' && s.scheduledDate === date);
 }
 
 // `recentLogs` lets an already-logged existing session widen its own
@@ -205,6 +202,8 @@ function reconcileWeek(
   goalOverviews: GoalOverview[],
   sessionLogs: SessionLog[],
   source: string,
+  program: Program | null | undefined,
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
 ): WeekReconciliation {
   const items: PlanChangeItem[] = [];
   let noFreeDay = false;
@@ -243,16 +242,23 @@ function reconcileWeek(
     const template = templateById.get(templateId);
     if (!template) continue; // strategy references a template that no longer exists — never invent a replacement
 
-    const availableFreeDates = weekDates(weekStart).filter(
-      (date) => isDateAvailable(date, availability) && isSlotFree(weekSessions, date),
+    // Time-budget scheduling redesign (Fase 3): dayHasRoomFor replaces the
+    // plain "is this date genuinely empty" isSlotFree gate — a day that
+    // already holds a session can still qualify here when the day's
+    // DailyTimeBudget and the user's sameDayPairingPreference allow a
+    // second one. `availableDates` therefore now means "has room", not
+    // "is empty" — the variable keeps its role (feeding both the direct
+    // placement below and the swap-fallback trigger), just a richer test.
+    const availableDates = weekDates(weekStart).filter(
+      (date) => isDateAvailable(date, availability) && dayHasRoomFor(date, template, weekSessions, templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
     );
-    let chosenDate = availableFreeDates.find((date) => !wouldConflict(date, template, weekSessions, templateById, sessionLogs));
+    let chosenDate = availableDates.find((date) => !wouldConflict(date, template, weekSessions, templateById, sessionLogs));
     let swapCandidate: SwapCandidate | null = null;
 
-    if (!chosenDate && availableFreeDates.length === 0) {
-      // No genuinely empty day exists (the normal state for every ASCEND
-      // week) — see if an existing, low-goal-relevance session is worth
-      // giving up for this one instead of giving up outright.
+    if (!chosenDate && availableDates.length === 0) {
+      // No day has room for this session at all (pairing included) — see
+      // if an existing, low-goal-relevance session is worth giving up for
+      // this one instead of giving up outright.
       swapCandidate = pickSwapCandidate(
         weekSessions,
         templateById,
@@ -266,12 +272,10 @@ function reconcileWeek(
     }
 
     if (!chosenDate) {
-      // Every ASCEND week is always fully scheduled (7 sessions across 7
-      // days) — an available, genuinely empty day essentially never exists.
-      // Track that distinctly from "a free day existed but the 48h rule
-      // blocked every one of them", so the summary never blames the 48h
-      // rule for what's actually just a full week.
-      if (availableFreeDates.length === 0) noFreeDay = true;
+      // Track "no day had room" distinctly from "a day had room but the
+      // 48h rule blocked every one of them", so the summary never blames
+      // the 48h rule for what's actually just a fully-booked week.
+      if (availableDates.length === 0) noFreeDay = true;
       else legHeavyConflict = true;
       continue; // no honest placement this week — never force an unavailable/conflicting slot
     }
@@ -314,6 +318,8 @@ function buildPlan(
   sessionLogs: SessionLog[],
   source: string,
   zoneLabel: 'forecast' | 'committed',
+  program: Program | null | undefined,
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
 ): PlanChangeProposal {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const strategyTemplateIds = new Set(strategy.sessionTemplateIds);
@@ -342,6 +348,8 @@ function buildPlan(
       goalOverviews,
       sessionLogs,
       source,
+      program,
+      sameDayPairingPreference,
     );
     items.push(...weekItems);
     if (noFreeDay) noFreeDayWeekCount++;
@@ -397,6 +405,8 @@ export function computeStrengthPlacementPlan(
   availability: TrainingAvailability,
   asOf: string,
   goalOverviews: GoalOverview[],
+  program?: Program | null,
+  sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
 ): PlanChangeProposal {
   const forecastWeekStarts = [
     ...new Set(
@@ -417,6 +427,8 @@ export function computeStrengthPlacementPlan(
     [], // forecast weeks are, by definition (week +2 onward), never logged yet
     'engine/strengthScheduling.ts#computeStrengthPlacementPlan',
     'forecast',
+    program,
+    sameDayPairingPreference,
   );
 }
 
@@ -437,6 +449,8 @@ export function computeStrengthPlacementPlanForCommittedRange(
   sessionLogs: SessionLog[],
   asOf: string,
   goalOverviews: GoalOverview[],
+  program?: Program | null,
+  sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
 ): PlanChangeProposal {
   const protectedSessionIds = new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
 
@@ -451,5 +465,7 @@ export function computeStrengthPlacementPlanForCommittedRange(
     sessionLogs,
     'engine/strengthScheduling.ts#computeStrengthPlacementPlanForCommittedRange',
     'committed',
+    program,
+    sameDayPairingPreference,
   );
 }

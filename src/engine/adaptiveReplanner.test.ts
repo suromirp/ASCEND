@@ -9,7 +9,7 @@ const FORECAST_MONDAY = '2026-09-21';
 const FORECAST_TUESDAY = '2026-09-22';
 
 function fullAvailability(overrides: Partial<TrainingAvailability> = {}): TrainingAvailability {
-  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], maxSessionDurationMin: {}, longSessionDays: ['sun'], temporaryExceptions: [], ...overrides };
+  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], dailyTimeBudget: {}, longSessionDays: ['sun'], temporaryExceptions: [], ...overrides };
 }
 
 function session(id: string, templateId: string, scheduledDate: string, weekStartDate: string): PlannedSession {

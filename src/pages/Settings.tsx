@@ -5,10 +5,32 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../compon
 import { ImportWizard } from '../components/ImportWizard';
 import { BaselineEvidenceCard } from '../components/BaselineEvidenceCard';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
+import type { Weekday, DailyTimeBudget, TrainingStrategyProfile } from '../models/goalEngineConfig';
+
+const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const WEEKDAY_LABELS_NL: Record<Weekday, string> = {
+  mon: 'Maandag', tue: 'Dinsdag', wed: 'Woensdag', thu: 'Donderdag', fri: 'Vrijdag', sat: 'Zaterdag', sun: 'Zondag',
+};
+
+// ASCEND_HEURISTIC(SOFT-FLEX-FROM-PREFERRED): softFlexMinutes is deliberately
+// never asked for directly — a user says "~90 minuten", not "90 minuten plus
+// 15 minuten flex". 15% of the preferred duration, with a 15-minute floor so
+// even a short day still gets a little breathing room, is a plain,
+// documented default rather than an invented one hidden in the UI.
+function deriveSoftFlexMinutes(preferredMinutes: number): number {
+  return Math.max(15, Math.round(preferredMinutes * 0.15));
+}
+
+const PAIRING_OPTIONS: { value: TrainingStrategyProfile['sameDayPairingPreference']; label: string; note: string }[] = [
+  { value: 'automatic', label: 'Automatisch', note: 'ASCEND beslist zelf op basis van je tijd-budget per dag.' },
+  { value: 'always', label: 'Ja', note: 'Plaats zo veel mogelijk sessies samen als de tijd het toelaat.' },
+  { value: 'only_if_useful', label: 'Alleen indien nuttig', note: 'Alleen samenvoegen als er anders écht geen plek is.' },
+  { value: 'never', label: 'Nee', note: 'Nooit meer dan één training per dag — het oude gedrag.' },
+];
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { exportData, resetSchedule, settings, updateSettings, injuryNotes } = useAppData();
+  const { loading, exportData, resetSchedule, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes } = useAppData();
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [status, setStatus] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -146,6 +168,34 @@ export function SettingsPage() {
         </div>
       )}
 
+      <DailyBudgetEditor
+        key={loading ? 'loading' : 'ready'}
+        dailyTimeBudget={goalEngineConfig.availability.dailyTimeBudget}
+        onSave={(nextBudget) => updateGoalEngineConfig({ availability: { ...goalEngineConfig.availability, dailyTimeBudget: nextBudget } })}
+      />
+
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>MEERDERE TRAININGEN OP ÉÉN DAG</Eyebrow>
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+          Mag ASCEND twee sessies op dezelfde dag plannen als je tijd-budget dat toelaat?
+        </p>
+        <div className="flex flex-col gap-2">
+          {PAIRING_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => updateGoalEngineConfig({ strategy: { ...goalEngineConfig.strategy, sameDayPairingPreference: option.value } })}
+              className="rounded-xl border p-3 text-left transition-all active:scale-[0.98]"
+              style={{ borderColor: goalEngineConfig.strategy.sameDayPairingPreference === option.value ? 'var(--color-gold)' : 'var(--color-card-border)' }}
+            >
+              <p className="text-sm font-semibold" style={{ color: goalEngineConfig.strategy.sameDayPairingPreference === option.value ? 'var(--color-gold)' : 'var(--color-ink)' }}>
+                {option.label}
+              </p>
+              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{option.note}</p>
+            </button>
+          ))}
+        </div>
+      </Card>
+
       <Card className="flex flex-col gap-3">
         <Eyebrow>KRACHTTRAINING</Eyebrow>
         <div className="flex items-center justify-between gap-4">
@@ -215,5 +265,93 @@ function NavRow({ label, note, onClick }: { label: string; note: string; onClick
       </div>
       <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
     </button>
+  );
+}
+
+type BudgetDraft = { preferred: string; hardMax: string };
+
+// Rendered with a `key` that flips once real data replaces the initial
+// default (SettingsPage's own `loading` -> 'ready' transition) so this
+// initializes its drafts directly from props exactly once, via a fresh
+// mount — no effect needed to re-sync local edit state to an
+// asynchronously-loaded value.
+function DailyBudgetEditor({
+  dailyTimeBudget,
+  onSave,
+}: {
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>>;
+  onSave: (next: Partial<Record<Weekday, DailyTimeBudget>>) => void;
+}) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [drafts, setDrafts] = useState<Partial<Record<Weekday, BudgetDraft>>>(() => {
+    const initial: Partial<Record<Weekday, BudgetDraft>> = {};
+    for (const day of WEEKDAY_ORDER) {
+      const budget = dailyTimeBudget[day];
+      initial[day] = { preferred: budget ? String(budget.preferredMinutes) : '', hardMax: budget?.hardMaximumMinutes !== undefined ? String(budget.hardMaximumMinutes) : '' };
+    }
+    return initial;
+  });
+  const [status, setStatus] = useState<string | null>(null);
+
+  function handleSave() {
+    const next: Partial<Record<Weekday, DailyTimeBudget>> = {};
+    for (const day of WEEKDAY_ORDER) {
+      const draft = drafts[day];
+      const preferredMinutes = draft ? Number.parseInt(draft.preferred, 10) : NaN;
+      if (!draft || Number.isNaN(preferredMinutes) || preferredMinutes <= 0) continue; // an empty/invalid day simply has no budget — never a fabricated one
+      const hardMaximumMinutes = draft.hardMax ? Number.parseInt(draft.hardMax, 10) : undefined;
+      next[day] = {
+        preferredMinutes,
+        softFlexMinutes: deriveSoftFlexMinutes(preferredMinutes),
+        ...(hardMaximumMinutes !== undefined && !Number.isNaN(hardMaximumMinutes) ? { hardMaximumMinutes } : {}),
+      };
+    }
+    onSave(next);
+    setStatus('Opgeslagen.');
+  }
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>TRAININGSTIJD PER DAG</Eyebrow>
+      <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+        Hoeveel tijd heb je normaal per dag? ASCEND gebruikt dit om te bepalen of een extra sessie op een dag past —
+        een dag die je leeg laat, telt gewoon als "vol zodra er één sessie op staat", zoals nu.
+      </p>
+      <div className="flex flex-col gap-2">
+        {WEEKDAY_ORDER.map((day) => (
+          <div key={day} className="flex items-center gap-3">
+            <span className="w-24 shrink-0 text-sm" style={{ color: 'var(--color-ink)' }}>{WEEKDAY_LABELS_NL[day]}</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              placeholder="niet ingesteld"
+              value={drafts[day]?.preferred ?? ''}
+              onChange={(e) => setDrafts((prev) => ({ ...prev, [day]: { preferred: e.target.value, hardMax: prev[day]?.hardMax ?? '' } }))}
+              className="w-28 rounded-lg border px-2 py-1.5 text-sm"
+              style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)', color: 'var(--color-ink)' }}
+            />
+            <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>min</span>
+            {showAdvanced && (
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                placeholder="harde limiet"
+                value={drafts[day]?.hardMax ?? ''}
+                onChange={(e) => setDrafts((prev) => ({ ...prev, [day]: { preferred: prev[day]?.preferred ?? '', hardMax: e.target.value } }))}
+                className="w-24 rounded-lg border px-2 py-1.5 text-xs"
+                style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)', color: 'var(--color-ink)' }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      <button onClick={() => setShowAdvanced((v) => !v)} className="self-start text-xs" style={{ color: 'var(--color-gold)' }}>
+        {showAdvanced ? '− verberg harde limiet' : '+ geavanceerd: harde limiet per dag'}
+      </button>
+      <PrimaryButton onClick={handleSave}>OPSLAAN</PrimaryButton>
+      {status && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{status}</p>}
+    </Card>
   );
 }

@@ -1,7 +1,10 @@
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
-import { addDays, daysBetween, mondayOfWeek, weekDates } from '../utils/dates';
+import type { Program } from '../models/program';
+import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
+import { addDays, daysBetween, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { detectRecentSpike } from './progressionSpikes';
+import { resolveEffectiveFullDuration } from './substitutions';
 
 // ASCEND's scheduling engine is deterministic on purpose (spec §16, §29):
 // it never guesses and it never runs an LLM in the loop. A future AI layer
@@ -41,10 +44,18 @@ export function isLegHeavyTemplate(template: SessionTemplate): boolean {
 // leg-heavy check above would now flag that intentional pairing as a
 // conflict. Only exempts these two FROM EACH OTHER — either one still
 // conflicts normally with any other leg-heavy session (e.g. tpl_lower_a).
-const INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS = new Set(['tpl_hill_intervals', 'tpl_long_run']);
-
-export function isIntentionalBackToBack(templateIdA: string, templateIdB: string): boolean {
-  return INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS.has(templateIdA) && INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS.has(templateIdB);
+//
+// Time-budget scheduling redesign (Fase 2): the hardcoded
+// INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS set this used to be is now data —
+// SessionTemplate.pairingOverride (models/training.ts) — instead of code,
+// so a future intentional exception never again needs a scheduler.ts edit.
+// Checked on either side (an override is only ever asserted from one
+// template about a specific other one, never assumed symmetric).
+export function isIntentionalBackToBack(templateA: SessionTemplate, templateB: SessionTemplate): boolean {
+  return (
+    !!templateA.pairingOverride?.some((o) => o.withTemplateId === templateB.id && o.verdict === 'prefer') ||
+    !!templateB.pairingOverride?.some((o) => o.withTemplateId === templateA.id && o.verdict === 'prefer')
+  );
 }
 
 // ASCEND_HEURISTIC(LOAD-AWARE-SPACING): the reviewed evidence supports
@@ -85,8 +96,63 @@ function templateName(templates: Map<string, SessionTemplate>, id: string): stri
   return templates.get(id)?.name ?? id;
 }
 
-function isSlotFree(sessions: PlannedSession[], date: string, excludeId: string): boolean {
-  return !sessions.some((s) => s.id !== excludeId && s.status !== 'skipped' && s.scheduledDate === date);
+// ASCEND_HEURISTIC(TIME-BUDGET-SCHEDULING): time-budget scheduling redesign
+// (production feedback: "1 trainingsdag = 1 training" was too rigid for
+// anyone combining strength + running + hiking). Replaces the boolean
+// "is this date already occupied" gate with a richer question: does this
+// date have enough remaining time budget for one more session. Two
+// independent, never-merged concerns feed the final answer — the caller's
+// `sameDayPairingPreference` (a pure user preference, checked first,
+// short-circuits everything else) and the day's own `DailyTimeBudget` (an
+// objective practical constraint) — this function never reasons about
+// recovery/training load at all; that stays engine/scheduler.ts's own
+// separate 48h leg-heavy check (conflictsWith/requiredSpacingDays above),
+// queried independently by the same callers.
+//
+// No budget configured for this weekday (the honest default until a
+// Settings UI exists to set one, or for any day the user never filled in)
+// never fabricates a ceiling — falls back to the original "only when
+// genuinely empty" behavior, deferring entirely to the leg-heavy/
+// interference checks for safety instead of a guessed time constraint.
+export function dayHasRoomFor(
+  date: string,
+  candidateTemplate: SessionTemplate,
+  weekSessions: PlannedSession[],
+  templateById: Map<string, SessionTemplate>,
+  program: Program | null | undefined,
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>> | undefined,
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] = 'automatic',
+): boolean {
+  const existing = weekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === date);
+
+  if (sameDayPairingPreference === 'never') {
+    return existing.length === 0;
+  }
+
+  const budget = dailyTimeBudget?.[weekdayOf(date)];
+  if (!budget) {
+    return existing.length === 0;
+  }
+
+  const existingMinutes = existing.reduce((sum, s) => {
+    const template = templateById.get(s.templateId);
+    return template ? sum + resolveEffectiveFullDuration(template, date, program) : sum;
+  }, 0);
+  const candidateMinutes = resolveEffectiveFullDuration(candidateTemplate, date, program);
+  const totalMinutes = existingMinutes + candidateMinutes;
+
+  if (budget.hardMaximumMinutes !== undefined && totalMinutes > budget.hardMaximumMinutes) {
+    return false;
+  }
+
+  // 'only_if_useful': pairing is allowed, but only within the plain
+  // preferred budget (no soft-flex overshoot) — a stricter margin than
+  // 'automatic'/'always', since this mode means "only pair when there's
+  // truly no better option", not "pair whenever it roughly fits".
+  const ceiling = sameDayPairingPreference === 'only_if_useful' && existing.length > 0
+    ? budget.preferredMinutes
+    : budget.preferredMinutes + budget.softFlexMinutes;
+  return totalMinutes <= ceiling;
 }
 
 function conflictsWith(
@@ -103,7 +169,7 @@ function conflictsWith(
     if (s.id === excludeId || s.status === 'skipped') return false;
     const other = templates.get(s.templateId);
     if (!other || !isLegHeavyTemplate(other)) return false;
-    if (isIntentionalBackToBack(candidateTemplateId, s.templateId)) return false;
+    if (isIntentionalBackToBack(candidateTemplate, other)) return false;
     const spacing = Math.max(requiredSpacingDays(excludeId, recentLogs), requiredSpacingDays(s.id, recentLogs));
     return Math.abs(daysBetween(s.scheduledDate, candidateDate)) <= spacing;
   });
@@ -112,12 +178,22 @@ function conflictsWith(
 // Proposes moving one session to a new date, cascading a single conflicting
 // leg-heavy session out of the way within the same week if needed. Returns a
 // proposal for the UI to confirm — nothing is mutated here.
+//
+// Time-budget scheduling redesign (Fase 3): the cascade search's free-day
+// gate is dayHasRoomFor (budget-aware) rather than the plain isSlotFree —
+// the trailing three params are optional and default to the exact old
+// "only when genuinely empty" behavior (dayHasRoomFor's own fallback when no
+// budget is configured), so every existing caller that doesn't pass them is
+// unaffected.
 export function proposeMove(
   weekSessions: PlannedSession[],
   templates: SessionTemplate[],
   sessionId: string,
   targetDate: string,
   recentLogs: SessionLog[] = [],
+  program?: Program | null,
+  dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>,
+  sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
 ): ScheduleProposal {
   const templateMap = new Map(templates.map((t) => [t.id, t]));
   const session = weekSessions.find((s) => s.id === sessionId);
@@ -142,7 +218,7 @@ export function proposeMove(
     if (!movedTemplate || !isLegHeavyTemplate(movedTemplate)) return false;
     const other = templateMap.get(s.templateId);
     if (!other || !isLegHeavyTemplate(other)) return false;
-    if (isIntentionalBackToBack(session.templateId, s.templateId)) return false;
+    if (isIntentionalBackToBack(movedTemplate, other)) return false;
     const spacing = Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs));
     return Math.abs(daysBetween(s.scheduledDate, targetDate)) <= spacing;
   });
@@ -157,9 +233,10 @@ export function proposeMove(
   const candidates = weekDates(monday).filter((d) => d !== conflicting.scheduledDate);
   const ordered = [...candidates.filter((d) => d > conflicting.scheduledDate), ...candidates.filter((d) => d < conflicting.scheduledDate).reverse()];
 
+  const conflictingTemplate = templateMap.get(conflicting.templateId);
   const newSpot = ordered.find(
     (d) =>
-      isSlotFree(simulated, d, conflicting.id) &&
+      (!conflictingTemplate || dayHasRoomFor(d, conflictingTemplate, simulated, templateMap, program, dailyTimeBudget, sameDayPairingPreference)) &&
       !conflictsWith(d, conflicting.templateId, simulated, templateMap, conflicting.id, recentLogs),
   );
 
@@ -214,12 +291,19 @@ export function proposeSkip(session: PlannedSession, templates: SessionTemplate[
 
 // "Geen tijd vandaag" — try to move every one of today's sessions to the
 // next free day this week; falls back to skip if the week is full.
+//
+// Time-budget scheduling redesign (Fase 3): same dayHasRoomFor rewiring and
+// backward-compatible optional trailing params as proposeMove above.
 export function proposeNoTimeToday(
   weekSessions: PlannedSession[],
   templates: SessionTemplate[],
   todayDate: string,
   recentLogs: SessionLog[] = [],
+  program?: Program | null,
+  dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>,
+  sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
 ): ScheduleProposal[] {
+  const templateById = new Map(templates.map((t) => [t.id, t]));
   const todaysSessions = weekSessions.filter((s) => s.scheduledDate === todayDate && s.status !== 'skipped');
   const proposals: ScheduleProposal[] = [];
   let working = weekSessions;
@@ -227,9 +311,12 @@ export function proposeNoTimeToday(
   for (const session of todaysSessions) {
     const monday = mondayOfWeek(todayDate);
     const candidates = weekDates(monday).filter((d) => d !== todayDate && d > todayDate);
-    const freeDay = candidates.find((d) => isSlotFree(working, d, session.id));
+    const candidateTemplate = templateById.get(session.templateId);
+    const freeDay = candidates.find(
+      (d) => !candidateTemplate || dayHasRoomFor(d, candidateTemplate, working, templateById, program, dailyTimeBudget, sameDayPairingPreference),
+    );
     if (freeDay) {
-      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs);
+      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs, program, dailyTimeBudget, sameDayPairingPreference);
       proposals.push(proposal);
       working = working.map((s) => {
         const change = proposal.changes.find((c) => c.sessionId === s.id);
@@ -237,7 +324,7 @@ export function proposeNoTimeToday(
       });
     } else {
       proposals.push({
-        changes: [{ sessionId: session.id, templateId: session.templateId, templateName: templateName(new Map(templates.map((t) => [t.id, t])), session.templateId), fromDate: todayDate, toDate: todayDate }],
+        changes: [{ sessionId: session.id, templateId: session.templateId, templateName: templateName(templateById, session.templateId), fromDate: todayDate, toDate: todayDate }],
         reason: 'Geen vrije dag meer deze week — sessie wordt overgeslagen.',
         resolved: false,
       });

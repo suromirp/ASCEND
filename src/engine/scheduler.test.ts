@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession } from './scheduler';
+import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor } from './scheduler';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
+import type { DailyTimeBudget } from '../models/goalEngineConfig';
 
 // Phase 0a regression safety net (ASCEND Technical Architecture v0.3.2) —
 // these lock in the scheduler's ACTUAL current behavior before any nearby
@@ -38,7 +39,7 @@ const templates = [
   template('tpl_lower_b'),
   template('tpl_bergconditie', 'hiking'),
   template('tpl_easy_run', 'cardio'),
-  templateWithProfile('tpl_hill_intervals', 'cardio', 'heavy'),
+  { ...templateWithProfile('tpl_hill_intervals', 'cardio', 'heavy'), pairingOverride: [{ withTemplateId: 'tpl_long_run', verdict: 'prefer' as const }] },
   templateWithProfile('tpl_long_run', 'hiking', 'heavy'),
 ];
 
@@ -127,6 +128,31 @@ describe('proposeMove', () => {
     const withHeavyLog = proposeMove(week, templates, 'c', WED, recentLogs);
     expect(withHeavyLog.changes.length).toBeGreaterThan(1); // now cascaded away — Wednesday conflicts once Monday's session is flagged heavy
   });
+
+  // Time-budget scheduling redesign (Fase 3): the cascade's free-day search
+  // now goes through dayHasRoomFor, so a day that's already occupied can
+  // become a valid cascade target once a real DailyTimeBudget makes room
+  // for pairing — without any budget configured, behavior is unchanged
+  // (occupied still means occupied).
+  it('a DailyTimeBudget lets the cascade pair onto an already-occupied day that would otherwise block it', () => {
+    const week = [
+      session('a', 'tpl_lower_a', MON, MON),
+      session('b', 'tpl_lower_b', WED, MON),
+      session('busy', 'tpl_easy_run', THU, MON), // 60 min — the only day that could ever work for b
+      session('fri_filler', 'tpl_easy_run', FRI, MON),
+      session('sat_filler', 'tpl_easy_run', SAT, MON),
+      session('sun_filler', 'tpl_easy_run', SUN, MON),
+    ];
+
+    const withoutBudget = proposeMove(week, templates, 'a', TUE);
+    expect(withoutBudget.resolved).toBe(false); // every day is either occupied (no budget) or leg-heavy-conflicting
+
+    const thuBudget: Record<string, DailyTimeBudget> = { thu: { preferredMinutes: 90, softFlexMinutes: 40 } }; // 60 (busy) + 60 (b) = 120 <= 130
+    const withBudget = proposeMove(week, templates, 'a', TUE, [], null, thuBudget, 'automatic');
+    expect(withBudget.resolved).toBe(true);
+    expect(withBudget.changes).toHaveLength(2);
+    expect(withBudget.changes[1]).toMatchObject({ sessionId: 'b', fromDate: WED, toDate: THU });
+  });
 });
 
 describe('proposeNoTimeToday', () => {
@@ -151,6 +177,19 @@ describe('proposeNoTimeToday', () => {
     const week = [session('s1', 'tpl_easy_run', WED, MON, 'skipped')];
     expect(proposeNoTimeToday(week, templates, WED)).toEqual([]);
   });
+
+  // Time-budget scheduling redesign (Fase 3): same dayHasRoomFor rewiring
+  // as proposeMove — a "fully booked" week only stays fully booked when no
+  // day has budget room; once one does, that day resolves it instead of
+  // falling back to a same-date skip.
+  it('a DailyTimeBudget turns an otherwise fully-booked week into a resolved pairing instead of a skip', () => {
+    const week = [MON, TUE, WED, THU, FRI, SAT, SUN].map((d, i) => session(`s${i}`, 'tpl_easy_run', d, MON));
+    const friBudget: Record<string, DailyTimeBudget> = { fri: { preferredMinutes: 90, softFlexMinutes: 40 } }; // 60 (existing) + 60 (moved) = 120 <= 130
+    const proposals = proposeNoTimeToday(week, templates, WED, [], null, friBudget, 'automatic');
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].resolved).toBe(true);
+    expect(proposals[0].changes[0]).toMatchObject({ sessionId: 's2', fromDate: WED, toDate: FRI });
+  });
 });
 
 describe('skipSession', () => {
@@ -166,5 +205,51 @@ describe('proposeSkip', () => {
     const proposal = proposeSkip(s, templates);
     expect(proposal.resolved).toBe(true);
     expect(proposal.changes).toEqual([{ sessionId: 's1', templateId: 'tpl_easy_run', templateName: 'tpl_easy_run', fromDate: WED, toDate: WED }]);
+  });
+});
+
+// Time-budget scheduling redesign (Fase 1) — dayHasRoomFor replaces the
+// old boolean isSlotFree as the hard placement gate.
+describe('dayHasRoomFor', () => {
+  const templateById = new Map(templates.map((t) => [t.id, t]));
+  // WED (2026-09-09) is a Wednesday.
+  function budget(overrides: Partial<DailyTimeBudget> = {}): Record<string, DailyTimeBudget> {
+    return { wed: { preferredMinutes: 90, softFlexMinutes: 15, ...overrides } };
+  }
+
+  it('falls back to "only when genuinely empty" when no budget is configured for that weekday', () => {
+    const week = [session('s1', 'tpl_easy_run', WED, MON)];
+    expect(dayHasRoomFor(WED, template('tpl_upper_a'), week, templateById, null, undefined)).toBe(false);
+    expect(dayHasRoomFor(WED, template('tpl_upper_a'), [], templateById, null, undefined)).toBe(true);
+  });
+
+  it('allows a second session when the combined duration fits the preferred+softFlex ceiling', () => {
+    const week = [session('s1', 'tpl_easy_run', WED, MON)]; // 60 min
+    // candidate is also 60 min (default template() duration) -> 120 total, ceiling 90+15=105
+    expect(dayHasRoomFor(WED, template('tpl_x'), week, templateById, null, budget())).toBe(false);
+    // a lighter budget with more flex covers it
+    expect(dayHasRoomFor(WED, template('tpl_x'), week, templateById, null, budget({ softFlexMinutes: 60 }))).toBe(true);
+  });
+
+  it('a hard maximum blocks placement even when the soft ceiling would allow it', () => {
+    const week = [session('s1', 'tpl_easy_run', WED, MON)]; // 60 min
+    expect(dayHasRoomFor(WED, template('tpl_x'), week, templateById, null, budget({ softFlexMinutes: 60, hardMaximumMinutes: 100 }))).toBe(false);
+  });
+
+  it("'never' hard-blocks any second session regardless of budget", () => {
+    const week = [session('s1', 'tpl_easy_run', WED, MON)];
+    expect(dayHasRoomFor(WED, template('tpl_x'), week, templateById, null, budget({ softFlexMinutes: 60 }), 'never')).toBe(false);
+    expect(dayHasRoomFor(WED, template('tpl_x'), [], templateById, null, budget({ softFlexMinutes: 60 }), 'never')).toBe(true);
+  });
+
+  it("'only_if_useful' drops the soft-flex margin once a session already exists that day", () => {
+    const week = [session('s1', 'tpl_easy_run', WED, MON)]; // 60 min
+    const b = budget({ preferredMinutes: 90, softFlexMinutes: 60 }); // 60+60=120 <= 150 normally fits
+    expect(dayHasRoomFor(WED, template('tpl_x'), week, templateById, null, b, 'automatic')).toBe(true);
+    expect(dayHasRoomFor(WED, template('tpl_x'), week, templateById, null, b, 'only_if_useful')).toBe(false); // 120 > preferred-only 90
+  });
+
+  it('an empty day still only needs to fit the candidate alone', () => {
+    expect(dayHasRoomFor(WED, template('tpl_x'), [], templateById, null, budget({ preferredMinutes: 60, softFlexMinutes: 0 }))).toBe(true);
   });
 });

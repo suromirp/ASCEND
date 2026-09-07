@@ -18,6 +18,17 @@ export interface SessionStressProfile {
   impact: LoadLevel;
   eccentricLoad: LoadLevel; // descent-heavy / downhill-specific
   intensity: 'low' | 'moderate' | 'high';
+  // Time-budget scheduling redesign (production feedback) — same-day
+  // interference reasoning (engine/concurrentTraining.ts) needs an upper-
+  // body and a cardiovascular-demand axis alongside the existing three,
+  // since e.g. two upper-body-heavy sessions the same day is a real
+  // stacking concern the original three axes can't see. Deliberately
+  // optional, unlike the four required fields above: only templates where
+  // this axis actually matters need it filled in (§23's "absence is never
+  // a deficiency" — an unset axis reads as no same-day signal on that
+  // axis, never a fabricated 'none').
+  upperBodyLoad?: LoadLevel;
+  cardioLoad?: LoadLevel;
   // recoveryCostHours deliberately absent (Technical Architecture v0.3.4
   // §5): an unvalidated predicted-recovery-time estimate with no
   // evidence-backed formula behind it. engine/readiness.ts's `recovery`

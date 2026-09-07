@@ -8,7 +8,7 @@ import type { TrainingAvailability } from '../models/goalEngineConfig';
 const ASOF = '2026-09-09';
 
 function availability(): TrainingAvailability {
-  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], maxSessionDurationMin: {}, longSessionDays: ['sun'], temporaryExceptions: [] };
+  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], dailyTimeBudget: {}, longSessionDays: ['sun'], temporaryExceptions: [] };
 }
 
 function goalDraft(overrides: Partial<TrainingGoal> = {}): TrainingGoal {

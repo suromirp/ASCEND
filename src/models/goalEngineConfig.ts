@@ -13,6 +13,15 @@ export interface TrainingStrategyProfile {
   missedSessionPreference: 'prefer_move' | 'balanced' | 'prefer_skip';
   legHeavySpacingMode: 'strict' | 'balanced' | 'flexible' | 'custom';
   legHeavySpacingHours?: number;
+  // Time-budget scheduling redesign (production feedback: "1 trainingsdag =
+  // 1 training" was too rigid for anyone combining strength + running +
+  // hiking) — how eager the placement engines are to put a second real
+  // session on a day that already has one, same enum-of-named-modes
+  // convention as missedSessionPreference above rather than a bespoke
+  // boolean/config shape. 'automatic' lets engine/scheduler.ts#dayHasRoomFor
+  // decide from the day's own time budget; 'never' preserves the original
+  // one-session-per-day behavior exactly.
+  sameDayPairingPreference: 'automatic' | 'always' | 'only_if_useful' | 'never';
 }
 
 export type GuardrailMode = 'block' | 'warn' | 'allow';
@@ -37,9 +46,25 @@ export const SYSTEM_INVARIANTS = [
 
 export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
+// Time-budget scheduling redesign — replaces the old, effectively-unused
+// maxSessionDurationMin: Partial<Record<Weekday, number>> (confirmed dead:
+// never read anywhere outside its own type/default, and no Settings UI
+// ever wrote to it — see TrainingAvailability's own history). Three tiers,
+// not one hard number, because a user's real day never has a single sharp
+// cutoff: preferredMinutes is what they'd say if asked ("~90 min"),
+// softFlexMinutes is a small, expected overshoot that's still fine
+// (engine/scheduler.ts#dayHasRoomFor treats preferred+softFlex as the real
+// ceiling), hardMaximumMinutes is the genuine hard constraint some days
+// have ("moet om 19:30 weg") and is optional — most days have none.
+export interface DailyTimeBudget {
+  preferredMinutes: number;
+  softFlexMinutes: number;
+  hardMaximumMinutes?: number;
+}
+
 export interface TrainingAvailability {
   allowedDays: Weekday[];
-  maxSessionDurationMin: Partial<Record<Weekday, number>>;
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>>;
   longSessionDays: Weekday[];
   temporaryExceptions: { date: string; reason: string; available: boolean; maxDurationMin?: number }[];
 }
@@ -64,11 +89,12 @@ export const DEFAULT_GOAL_ENGINE_CONFIG: GoalEngineConfig = {
     planningFlexibility: 'normal',
     missedSessionPreference: 'balanced',
     legHeavySpacingMode: 'balanced',
+    sameDayPairingPreference: 'automatic',
   },
   guardrails: [],
   availability: {
     allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
-    maxSessionDurationMin: {},
+    dailyTimeBudget: {},
     longSessionDays: [],
     temporaryExceptions: [],
   },

@@ -28,7 +28,7 @@ describe('buildDefaultProgramData — default week respects Fase 2 leg-heavy spa
       const a = legHeavySessions[i];
       const b = legHeavySessions[i + 1];
       const gap = Math.abs(daysBetween(a.scheduledDate, b.scheduledDate));
-      if (gap <= 1 && !isIntentionalBackToBack(a.templateId, b.templateId)) {
+      if (gap <= 1 && !isIntentionalBackToBack(templateById.get(a.templateId)!, templateById.get(b.templateId)!)) {
         throw new Error(`Unintentional leg-heavy conflict: ${a.templateId} (${a.scheduledDate}) and ${b.templateId} (${b.scheduledDate}) are ${gap} day(s) apart`);
       }
     }
@@ -39,6 +39,6 @@ describe('buildDefaultProgramData — default week respects Fase 2 leg-heavy spa
     const templateById = new Map(templates.map((t) => [t.id, t]));
     expect(isLegHeavyTemplate(templateById.get('tpl_hill_intervals')!)).toBe(true);
     expect(isLegHeavyTemplate(templateById.get('tpl_long_run')!)).toBe(true);
-    expect(isIntentionalBackToBack('tpl_hill_intervals', 'tpl_long_run')).toBe(true);
+    expect(isIntentionalBackToBack(templateById.get('tpl_hill_intervals')!, templateById.get('tpl_long_run')!)).toBe(true);
   });
 });

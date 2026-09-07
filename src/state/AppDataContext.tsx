@@ -108,6 +108,15 @@ interface AppData {
   // against (inputStateHash re-checked here, live, right before persisting).
   activateGoal: (plan: GoalActivationPlan) => Promise<{ applied: boolean; reason?: 'stale' }>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
+  // Time-budget scheduling redesign (Fase 4) — the Settings UI's only write
+  // path onto TrainingAvailability/TrainingStrategyProfile. A top-level
+  // patch key (e.g. `availability`) replaces that whole sub-object
+  // (GoalEngineConfigRepo.set's own shallow-merge contract), so a caller
+  // that only means to change one weekday's DailyTimeBudget must spread the
+  // existing `goalEngineConfig.availability` itself first — never a deep
+  // merge here, to keep this function's behavior identical to every other
+  // patch-shaped update* function in this file.
+  updateGoalEngineConfig: (patch: Partial<GoalEngineConfig>) => Promise<GoalEngineConfig>;
   // Keeps the migrated Marathon TrainingGoal row (storage/goalMigration.ts#
   // buildMarathonGoal, called once at migration time only) in sync with
   // AppSettings' own marathon fields — without this, any edit made after
@@ -338,7 +347,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // questions) between preview and confirm.
   const activateStrengthProgram = useCallback(
     async (strategy: StrengthProgramStrategy) => {
-      const [strategies, planned, tpls, engineConfig, goals, logs, manualEvidence] = await Promise.all([
+      const [strategies, planned, tpls, engineConfig, goals, logs, manualEvidence, programs] = await Promise.all([
         StrengthProgramStrategiesRepo.getAll(),
         PlannedSessionsRepo.getAll(),
         SessionTemplatesRepo.getAll(),
@@ -346,12 +355,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         TrainingGoalsRepo.getAll(),
         SessionLogsRepo.getAll(),
         CapabilityEvidenceRepo.getAll(),
+        ProgramsRepo.getAll(),
       ]);
       const asOf = todayISO();
       const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
       const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
 
-      const proposal = computeStrengthPlacementPlan(strategy, planned, tpls, engineConfig.availability, asOf, overviews);
+      const proposal = computeStrengthPlacementPlan(strategy, planned, tpls, engineConfig.availability, asOf, overviews, programs[0] ?? null, engineConfig.strategy.sameDayPairingPreference);
       const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
       if (unsupported.length > 0) {
         // Same atomicity guarantee as runForecastReplan: never an
@@ -386,19 +396,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const applyStrengthPlacementToCommittedRange = useCallback(
     async (strategy: StrengthProgramStrategy): Promise<boolean> => {
-      const [planned, tpls, logs, engineConfig, goals, manualEvidence] = await Promise.all([
+      const [planned, tpls, logs, engineConfig, goals, manualEvidence, programs] = await Promise.all([
         PlannedSessionsRepo.getAll(),
         SessionTemplatesRepo.getAll(),
         SessionLogsRepo.getAll(),
         GoalEngineConfigRepo.get(),
         TrainingGoalsRepo.getAll(),
         CapabilityEvidenceRepo.getAll(),
+        ProgramsRepo.getAll(),
       ]);
       const asOf = todayISO();
       const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
       const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
 
-      const proposal = computeStrengthPlacementPlanForCommittedRange(strategy, planned, tpls, engineConfig.availability, logs, asOf, overviews);
+      const proposal = computeStrengthPlacementPlanForCommittedRange(strategy, planned, tpls, engineConfig.availability, logs, asOf, overviews, programs[0] ?? null, engineConfig.strategy.sameDayPairingPreference);
       if (proposal.changes.length === 0) return false;
 
       const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
@@ -681,9 +692,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     (sessionId: string, targetDate: string): ScheduleProposal => {
       const week = sessionsForWeek(mondayOfWeek(targetDate));
       const combined = week.some((s) => s.id === sessionId) ? week : [...week, ...plannedSessions.filter((s) => s.id === sessionId)];
-      return proposeMove(combined, templates, sessionId, targetDate, sessionLogs);
+      return proposeMove(combined, templates, sessionId, targetDate, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
     },
-    [sessionsForWeek, plannedSessions, templates, sessionLogs],
+    [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig],
   );
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
@@ -789,6 +800,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const updateSettings = useCallback(async (patch: Partial<AppSettings>): Promise<AppSettings> => {
     const next = await SettingsRepo.set(patch);
     setSettings(next);
+    return next;
+  }, []);
+
+  const updateGoalEngineConfig = useCallback(async (patch: Partial<GoalEngineConfig>): Promise<GoalEngineConfig> => {
+    const next = await GoalEngineConfigRepo.set(patch);
+    setGoalEngineConfig(next);
     return next;
   }, []);
 
@@ -905,8 +922,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const proposeNoTimeTodayAction = useCallback((): ScheduleProposal[] => {
     const today = todayISO();
     const week = sessionsForWeek(mondayOfWeek(today));
-    return proposeNoTimeToday(week, templates, today, sessionLogs);
-  }, [sessionsForWeek, templates, sessionLogs]);
+    return proposeNoTimeToday(week, templates, today, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
+  }, [sessionsForWeek, templates, sessionLogs, program, goalEngineConfig]);
 
   // Mirrors applyProposal's move semantics, plus the scheduler's
   // "no free day left" fallback (a same-date no-op change) which reads as a
@@ -962,6 +979,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     archiveGoal,
     activateGoal,
     updateSettings,
+    updateGoalEngineConfig,
     updateMarathonGoal,
     toggleStretchRoutine,
     addInjury,

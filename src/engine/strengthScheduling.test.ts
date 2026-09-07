@@ -10,7 +10,7 @@ const ASOF = '2026-09-09'; // Wednesday — forecast is week +2 onward: 2026-09-
 const FORECAST_MONDAY = '2026-09-21';
 
 function availability(overrides: Partial<TrainingAvailability> = {}): TrainingAvailability {
-  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], maxSessionDurationMin: {}, longSessionDays: ['sun'], temporaryExceptions: [], ...overrides };
+  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], dailyTimeBudget: {}, longSessionDays: ['sun'], temporaryExceptions: [], ...overrides };
 }
 
 function session(id: string, templateId: string, scheduledDate: string, weekStartDate: string, status: PlannedSession['status'] = 'planned'): PlannedSession {
@@ -345,6 +345,30 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
     const removed = proposal.changes.find((c) => c.action === 'remove');
     expect(removed?.plannedSessionId).toBe('easy');
     expect(removed?.reason).toMatch(/Goal Focus/);
+  });
+
+  // Time-budget scheduling redesign (Fase 3): once a real DailyTimeBudget is
+  // configured for the day and pairing is allowed, the missing session
+  // should land there directly (an 'add' alongside the existing session,
+  // no 'remove') rather than falling through to the swap fallback — the
+  // concrete bug this redesign exists to fix ("Lower B has nowhere to go").
+  it('places the missing session by pairing it onto a day with budget room, instead of swapping', () => {
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      packedWeekWithFiller(),
+      templates,
+      availability({ dailyTimeBudget: { tue: { preferredMinutes: 90, softFlexMinutes: 20 } } }), // 2026-09-22 is a Tuesday; Easy Run (30) + Lower A (75) = 105 <= 110
+      ASOF,
+      [],
+    );
+    expect(proposal.changes).toEqual([
+      {
+        action: 'add',
+        newSessionDraft: { templateId: 'tpl_lower_a', scheduledDate: '2026-09-22', weekStartDate: FORECAST_MONDAY },
+        reason: expect.stringContaining('toegevoegd'),
+        generatedBy: ['engine/strengthScheduling.ts#computeStrengthPlacementPlan'],
+      },
+    ]);
   });
 
   it('never touches an already-logged session as a swap candidate, even at zero relevance', () => {

@@ -93,6 +93,18 @@ export interface SessionTemplate {
   // back to legacyIsLegHeavyToStressProfile(templateId) — kept only as a
   // bridge for any template that hasn't been backfilled.
   baseStressProfile?: SessionStressProfile;
+  // Time-budget scheduling redesign — an escape hatch for a same-day
+  // pairing verdict that doesn't follow from load categories alone (the
+  // categorical rule in engine/concurrentTraining.ts is the default; this
+  // overrides it for a specific named pair). Subsumes the old hardcoded
+  // INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS set in engine/scheduler.ts (the
+  // deliberate Saturday hill-intervals + Sunday long-run exception) as
+  // data instead of code, generalized to same-day pairing too. Only ever
+  // read for THIS template against the named other one — never implies
+  // anything about how the other template treats pairing with this one;
+  // callers that need the relationship checked either way look up both
+  // sides explicitly.
+  pairingOverride?: { withTemplateId: string; verdict: 'prefer' | 'avoid' }[];
 }
 
 export type PlannedSessionStatus = 'planned' | 'moved' | 'skipped' | 'optional';
