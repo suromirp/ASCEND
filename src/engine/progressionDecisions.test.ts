@@ -3,6 +3,7 @@ import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from './prog
 import { keyId } from './capability';
 import type { TrainingGoal } from '../models/goals';
 import type { ReadinessBreakdown } from './readiness';
+import type { CapacityBreakdown } from './capacity';
 
 function activeGoal(overrides: Partial<TrainingGoal> = {}): TrainingGoal {
   return {
@@ -14,7 +15,11 @@ function activeGoal(overrides: Partial<TrainingGoal> = {}): TrainingGoal {
 }
 
 function readiness(overrides: Partial<ReadinessBreakdown> = {}): ReadinessBreakdown {
-  return { strength: 80, cardio: 80, climbing: 80, endurance: 80, recovery: 80, consistency: 80, packCapability: 80, overall: 80, ...overrides };
+  return { recovery: 80, consistency: 80, subjectiveSignal: 80, overall: 80, ...overrides };
+}
+
+function capacity(overrides: Partial<CapacityBreakdown> = {}): CapacityBreakdown {
+  return { strength: 80, cardio: 80, climbing: 80, endurance: 80, packCapability: 80, overall: 80, ...overrides };
 }
 
 describe('activeGoalDemandKeys', () => {
@@ -39,13 +44,13 @@ describe('activeGoalDemandKeys', () => {
 describe('computeProgressionDecisionsForKeys', () => {
   it('produces one decision per key, addressable by the same keyId used everywhere else', () => {
     const keys = [{ dimension: 'ascent_capacity' as const }];
-    const decisions = computeProgressionDecisionsForKeys(keys, [], readiness(), [], [], '2026-09-05');
+    const decisions = computeProgressionDecisionsForKeys(keys, [], readiness(), capacity(), [], [], '2026-09-05');
     expect(decisions.size).toBe(1);
     expect(decisions.get(keyId(keys[0]))?.state).toBe('assess'); // no evidence -> unknown confidence -> assess
   });
 
   it('never computes a decision for a key it was not asked about', () => {
-    const decisions = computeProgressionDecisionsForKeys([], [], readiness(), [], [], '2026-09-05');
+    const decisions = computeProgressionDecisionsForKeys([], [], readiness(), capacity(), [], [], '2026-09-05');
     expect(decisions.size).toBe(0);
   });
 });

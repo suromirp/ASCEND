@@ -4,6 +4,7 @@ import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
 import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
+import { computeCapacity } from '../engine/capacity';
 import { computeGoalProgress } from '../engine/progression';
 import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
@@ -37,6 +38,12 @@ export function AscendPage() {
 
   const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
   const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
+  // Sports-science review, item B1: capacity ("what have you demonstrably
+  // been building lately") and readiness ("are you acutely ready for more
+  // right now") were previously one flat 7-score average — split into two
+  // engines (engine/capacity.ts vs engine/readiness.ts) and shown here as
+  // two separate cards, not re-averaged back together.
+  const capacity = useMemo(() => computeCapacity(sessionLogs), [sessionLogs]);
   // The GR5 goal is always the one with milestones — the marathon goal
   // (migrated from AppSettings) has none. Mirrors the old objectives[0]
   // assumption, now stated explicitly rather than by array position.
@@ -60,16 +67,13 @@ export function AscendPage() {
       <div>
         <Eyebrow>ASCEND READINESS</Eyebrow>
         <p className="mt-1 font-display text-4xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</p>
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ben je er nu klaar voor — herstel, consistentie, hoe recente sessies aanvoelden.</p>
       </div>
 
       <Card className="flex flex-col gap-4">
-        <MetricBar label="KRACHT" value={readiness.strength} />
-        <MetricBar label="CARDIO" value={readiness.cardio} />
-        <MetricBar label="KLIMMEN / D+" value={readiness.climbing} accent="alpine" />
-        <MetricBar label="UITHOUDING" value={readiness.endurance} />
         <MetricBar label="HERSTEL" value={readiness.recovery} accent="alpine" />
         <MetricBar label="CONSISTENTIE" value={readiness.consistency} />
-        <MetricBar label="RUGZAKCAPACITEIT" value={readiness.packCapability} />
+        <MetricBar label="SESSIE-RESPONS" value={readiness.subjectiveSignal} />
       </Card>
 
       {readinessTrend.some((p) => p.value > 0) && (
@@ -80,6 +84,20 @@ export function AscendPage() {
           </div>
         </Card>
       )}
+
+      <div>
+        <Eyebrow>CAPACITEIT</Eyebrow>
+        <p className="mt-1 font-display text-4xl" style={{ color: 'var(--color-gold)' }}>{capacity.overall}%</p>
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat je de afgelopen weken aantoonbaar hebt opgebouwd.</p>
+      </div>
+
+      <Card className="flex flex-col gap-4">
+        <MetricBar label="KRACHT" value={capacity.strength} />
+        <MetricBar label="CARDIO" value={capacity.cardio} />
+        <MetricBar label="KLIMMEN / D+" value={capacity.climbing} accent="alpine" />
+        <MetricBar label="UITHOUDING" value={capacity.endurance} />
+        <MetricBar label="RUGZAKCAPACITEIT" value={capacity.packCapability} />
+      </Card>
 
       <StrengthProgressionCard logs={sessionLogs} />
 

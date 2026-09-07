@@ -1,34 +1,46 @@
 // ASCEND — Progression Orchestrator (Technical Architecture v0.3.1 REVISED,
 // Phase 3; Algorithm Contract v0.2b REVISED §5, §8-§13).
 //
-// The one place Capability + Confidence + Readiness + guardrails meet
-// (engine module map). Deliberately does NOT compute capability or
-// readiness itself — both are passed in, already computed by the Capability
-// Engine (engine/capability.ts) and the existing, independent
-// engine/readiness.ts. This file only combines them into one
-// ProgressionDecision per CapabilityKey.
+// The one place Capability + Confidence + Readiness + Capacity + guardrails
+// meet (engine module map). Deliberately does NOT compute capability,
+// readiness, or capacity itself — all three are passed in, already
+// computed by engine/capability.ts, engine/readiness.ts, and (Fase 3,
+// sports-science review) engine/capacity.ts. This file only combines them
+// into one ProgressionDecision per CapabilityKey.
 //
 // v0.2b REVISED §1.2: CONSOLIDATE is a full state, never just "not quite
 // PROGRESS". §11: no single readiness metric is a master override — the
 // gates below read engine/readiness.ts's already-multi-signal
-// ReadinessBreakdown, never one raw wearable number. §12: one poor session
-// never wipes capability on its own — poorResponsePattern only trips on 2-
-// of-3 recent sessions (HEURISTIC-POOR-RESPONSE-2-OF-3), matching the
-// contract's explicit rejection of a single-session penalty formula.
+// ReadinessBreakdown (acute recovery: recovery/consistency/subjective
+// response) alongside engine/capacity.ts's exposure breakdown (how much
+// recent building-block volume exists per dimension) — never one raw
+// wearable number, and never conflating "have you built the base" with
+// "are you recovered enough right now," the two questions the Fase 3
+// split exists to keep separate. §12: one poor session never wipes
+// capability on its own — poorResponsePattern only trips on 2-of-3 recent
+// sessions (HEURISTIC-POOR-RESPONSE-2-OF-3), matching the contract's
+// explicit rejection of a single-session penalty formula.
 
 import type { CapabilityEstimate, CapabilityDimension, CapabilityKey } from '../models/capability';
 import type { TrainingGuardrail } from '../models/goalEngineConfig';
 import type { SessionLog } from '../models/training';
 import type { ProgressionDecision, ProgressionState } from '../models/progression';
 import type { ReadinessBreakdown } from './readiness';
+import type { CapacityBreakdown } from './capacity';
 import { detectRecentSpike } from './progressionSpikes';
 
-// ASCEND_HEURISTIC cutoffs against engine/readiness.ts's existing 0-100
-// scores (HEURISTIC-PROGRESSION-READINESS-GATE) — calibration values, not a
-// validated readiness formula; the underlying "readiness is multi-signal"
-// principle is itself evidence-backed (E-RECOVERY-001..004).
-const READINESS_RECOVER_THRESHOLD = 35;
-const READINESS_CAUTION_THRESHOLD = 55;
+// ASCEND_HEURISTIC cutoffs (HEURISTIC-PROGRESSION-READINESS-GATE) —
+// calibration values, not a validated readiness formula; the underlying
+// "readiness is multi-signal" principle is itself evidence-backed
+// (E-RECOVERY-001..004). Sports-science review (Fase 3, September 2026):
+// widened from the original exact 35/55 cliff-edges into a small buffer
+// band, so a 1-point score change right at the boundary is less likely to
+// flip the decision outright. This is NOT full persistent hysteresis
+// (remembering the previous zone across calls, requiring decision-history
+// storage this codebase doesn't have yet) — that's a natural next step,
+// not built here; this is a modest, honest first step toward it.
+const READINESS_RECOVER_THRESHOLD = 30;
+const READINESS_CAUTION_THRESHOLD = 60;
 
 // Guardrail rule ids that specifically gate progression rate (the
 // §69-seeded "*-progression-bands"/pack-weight-bands heuristics) — a user
@@ -42,26 +54,33 @@ const PROGRESSION_GUARDRAIL_RULE_IDS = new Set([
   'HEURISTIC-PACK-WEIGHT-BANDS',
 ]);
 
-function readinessSignalForDimension(dimension: CapabilityDimension, readiness: ReadinessBreakdown): number {
+// Renamed from readinessSignalForDimension (Fase 3): this was always
+// reading "how much recent exposure/volume has there been in this area" —
+// a CAPACITY question (has the base been built to progress further from),
+// not a readiness one (are you acutely recovered enough right now). It
+// stayed a gate either way (progressive overload needs an adequately built
+// base), just housed in the wrong module before the capacity/readiness
+// split.
+function capacitySignalForDimension(dimension: CapabilityDimension, capacity: CapacityBreakdown): number {
   switch (dimension) {
     case 'aerobic_engine':
     case 'sustainable_output':
-      return readiness.cardio;
+      return capacity.cardio;
     case 'endurance_duration':
     case 'multi_day_durability':
     case 'fatigue_resistance':
-      return readiness.endurance;
+      return capacity.endurance;
     case 'mechanical_tolerance':
-      return readiness.endurance;
+      return capacity.endurance;
     case 'ascent_capacity':
     case 'descent_tolerance':
-      return readiness.climbing;
+      return capacity.climbing;
     case 'load_carriage':
-      return readiness.packCapability;
+      return capacity.packCapability;
     case 'strength':
-      return readiness.strength;
+      return capacity.strength;
     default:
-      return readiness.overall;
+      return capacity.overall;
   }
 }
 
@@ -83,6 +102,13 @@ export interface ProgressionOrchestratorInputs {
   key: CapabilityKey;
   estimate: CapabilityEstimate;
   readiness: ReadinessBreakdown;
+  // engine/capacity.ts's exposure/fitness breakdown (Fase 3) — how much
+  // recent building-block volume exists in this dimension, distinct from
+  // acute readiness. Deliberately required, not defaulted: a missing
+  // capacity input silently defaulting to all-zero would read as "no
+  // recent exposure anywhere" and degrade every decision to consolidate —
+  // far worse than a compile error at the call site.
+  capacity: CapacityBreakdown;
   guardrails?: TrainingGuardrail[];
   // Most-recent-first, already filtered to logs relevant to this key by the
   // caller. The most recent 3 feed the §10-13 poor-response classification
@@ -96,7 +122,7 @@ export interface ProgressionOrchestratorInputs {
 }
 
 export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs): ProgressionDecision {
-  const { key, estimate, readiness, guardrails = [], recentLogs = [], consecutiveProgressCount = 0 } = inputs;
+  const { key, estimate, readiness, capacity, guardrails = [], recentLogs = [], consecutiveProgressCount = 0 } = inputs;
 
   // v0.2 §23: missing data is never interpreted as bad capability — nor as
   // a reason to progress. 'unknown' confidence always resolves to 'assess'.
@@ -111,8 +137,12 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     };
   }
 
-  const recoverySignal = readiness.recovery;
-  const dimensionSignal = readinessSignalForDimension(key.dimension, readiness);
+  // The weaker of the two acute-readiness signals, not their average —
+  // matches the review's critique of naive averaging: a good recovery
+  // score should never mask a run of "worse than normal" subjective
+  // responses, or vice versa.
+  const recoverySignal = Math.min(readiness.recovery, readiness.subjectiveSignal);
+  const dimensionSignal = capacitySignalForDimension(key.dimension, capacity);
 
   const recentThree = recentLogs.slice(0, 3);
   const poorCount = recentThree.filter(isPoorResponse).length;
@@ -147,7 +177,9 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     ruleId = 'HEURISTIC-PROGRESSION-SPIKE-DETECTED';
   } else if (recoverySignal < READINESS_CAUTION_THRESHOLD || dimensionSignal < READINESS_CAUTION_THRESHOLD) {
     state = 'consolidate';
-    reason = `Readiness is nog niet stevig genoeg (${Math.min(recoverySignal, dimensionSignal)}%) om verder op te bouwen.`;
+    reason = recoverySignal < dimensionSignal
+      ? `Readiness is nog niet stevig genoeg (${recoverySignal}%) om verder op te bouwen.`
+      : `Nog niet genoeg recente opbouw in dit gebied (${dimensionSignal}%) om verder te gaan.`;
     ruleId = 'HEURISTIC-PROGRESSION-READINESS-GATE';
   } else if (estimate.confidence === 'low') {
     state = 'assess';
@@ -159,7 +191,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     ruleId = 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE';
   } else {
     state = 'progress';
-    reason = 'Voldoende evidence, een stabiele of stijgende trend en goede readiness ondersteunen een volgende stap.';
+    reason = 'Voldoende evidence, een stabiele of stijgende trend en goed herstel ondersteunen een volgende stap.';
     ruleId = 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE';
   }
 

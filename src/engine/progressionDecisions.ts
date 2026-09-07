@@ -12,6 +12,7 @@ import type { TrainingGuardrail } from '../models/goalEngineConfig';
 import type { SessionLog } from '../models/training';
 import type { ProgressionDecision } from '../models/progression';
 import type { ReadinessBreakdown } from './readiness';
+import type { CapacityBreakdown } from './capacity';
 import { computeDemand } from './demand';
 import { computeCapabilityEstimate, keyId } from './capability';
 import { computeProgressionDecision } from './progressionOrchestrator';
@@ -36,6 +37,7 @@ export function computeProgressionDecisionsForKeys(
   keys: CapabilityKey[],
   allEvidence: CapabilityEvidence[],
   readiness: ReadinessBreakdown,
+  capacity: CapacityBreakdown,
   guardrails: TrainingGuardrail[],
   // Most-recent-first; not filtered per key here (a per-key match would
   // need real evidence-source tracing this aggregation layer doesn't have)
@@ -52,6 +54,7 @@ export function computeProgressionDecisionsForKeys(
       key,
       estimate,
       readiness,
+      capacity,
       guardrails,
       recentLogs,
       // No decision-history store exists yet (Phase 3's own documented

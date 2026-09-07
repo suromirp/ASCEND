@@ -227,7 +227,7 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     changes: items,
     alternatives: [],
     consequences: 'Wordt automatisch toegepast op het forecast-bereik (week +2 en verder) — nooit op de huidige of volgende week.',
-    explanation: 'Gebaseerd op readiness, capability-trend en beschikbaarheid; niets hiervan raakt de bevestigde (committed) weken.',
+    explanation: 'Gebaseerd op herstel, capaciteit-trend en beschikbaarheid; niets hiervan raakt de bevestigde (committed) weken.',
     createdAt: new Date().toISOString(),
   };
 
