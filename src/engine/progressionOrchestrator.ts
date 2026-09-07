@@ -206,7 +206,18 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
 
   const accumulationReviewDue = state === 'progress' && consecutiveProgressCount + 1 >= 3;
 
-  return { key, state, reason, ruleId, poorResponsePattern, accumulationReviewDue };
+  // Fase 6 (sports-science review, item D4): this signal never itself
+  // forces a scale-back — `state` above is untouched by it, still
+  // 'progress'. Its only job is to make that explicit in the reason text
+  // too, the moment this ever reaches a UI (HEURISTIC-ACCUMULATION-REVIEW-
+  // 3-PROGRESSIONS's own trigger doc already says the same at the type
+  // level — this is that framing actually reaching the explanation a human
+  // would read, not a second, silently-conflicting copy of it).
+  const finalReason = accumulationReviewDue
+    ? `${reason} Dit is de derde opeenvolgende stap — een natuurlijk controlemoment om samen te checken of dit tempo nog goed voelt, geen automatische terugschaling.`
+    : reason;
+
+  return { key, state, reason: finalReason, ruleId, poorResponsePattern, accumulationReviewDue };
 }
 
 // Note: this function never returns 'taper'. Per v0.2b REVISED §32, taper
