@@ -261,26 +261,49 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
     expect(added?.newSessionDraft?.scheduledDate).toBe('2026-09-22');
   });
 
-  it('never swaps out a hiking session even when it would otherwise be the lowest-relevance candidate', () => {
-    // Same shape, but with no cardio filler at all — only hiking days plus
-    // an unrecognized recovery-stub session — so no eligible candidate
-    // exists no matter how low the (nonexistent) relevance bar is.
-    const sessions = [
-      session('herstel', 'tpl_herstel_stub', '2026-09-21', FORECAST_MONDAY),
+  // Production feedback (Fase 6 follow-up): hiking sessions used to be
+  // hard-protected here regardless of relevance — "core to ASCEND's
+  // mountain adventure identity". Now the same Goal Focus ranking used for
+  // every other session type decides: a hiking session with no real
+  // current goal link is just as swappable as an off-strategy cardio
+  // filler, while one that genuinely serves an active goal stays protected
+  // via its own high relevance score, not a type-based exemption.
+  function packedWeekWithLoneHikingCandidate(): PlannedSession[] {
+    return [
+      session('herstel1', 'tpl_herstel_stub', '2026-09-21', FORECAST_MONDAY),
       session('h1', 'tpl_long_run', '2026-09-22', FORECAST_MONDAY),
-      session('h2', 'tpl_long_run', '2026-09-23', FORECAST_MONDAY),
-      session('h3', 'tpl_long_run', '2026-09-24', FORECAST_MONDAY),
-      session('h4', 'tpl_long_run', '2026-09-25', FORECAST_MONDAY),
-      session('h5', 'tpl_long_run', '2026-09-26', FORECAST_MONDAY),
-      session('h6', 'tpl_long_run', '2026-09-27', FORECAST_MONDAY),
+      session('herstel2', 'tpl_herstel_stub', '2026-09-23', FORECAST_MONDAY),
+      session('herstel3', 'tpl_herstel_stub', '2026-09-24', FORECAST_MONDAY),
+      session('herstel4', 'tpl_herstel_stub', '2026-09-25', FORECAST_MONDAY),
+      session('herstel5', 'tpl_herstel_stub', '2026-09-26', FORECAST_MONDAY),
+      session('herstel6', 'tpl_herstel_stub', '2026-09-27', FORECAST_MONDAY),
     ];
+  }
+
+  it('swaps out a hiking session with no active-goal link, just like any other zero-relevance candidate', () => {
     const proposal = computeStrengthPlacementPlan(
       strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
-      sessions,
+      packedWeekWithLoneHikingCandidate(),
       templates,
       availability(),
       ASOF,
       [],
+    );
+    const removed = proposal.changes.find((c) => c.action === 'remove');
+    const added = proposal.changes.find((c) => c.action === 'add');
+    expect(removed?.plannedSessionId).toBe('h1');
+    expect(added?.newSessionDraft?.templateId).toBe('tpl_lower_a');
+  });
+
+  it('still never swaps out a hiking session that genuinely serves an active goal — protected by its own relevance, not its type', () => {
+    const overviews = [goalOverview({ goalId: 'gr5', discipline: 'hiking', normalizedPct: 80 })];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      packedWeekWithLoneHikingCandidate(),
+      templates,
+      availability(),
+      ASOF,
+      overviews,
     );
     expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
     expect(proposal.consequences).toMatch(/geen vrije dag/);
