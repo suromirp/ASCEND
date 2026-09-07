@@ -59,7 +59,15 @@ function buildTemplates(): SessionTemplate[] {
       focus: 'Squat • RDL • Hamstrings • Single-leg',
       durationVariants: { full: 75, short: 45, minimum: 20 },
       defaultDayOfWeek: 3,
-      notes: 'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor.',
+      // Fase 6 (sports-science review, item F1): sets/reps below are
+      // unchanged (well-supported as-is) — the addition is ex13b's
+      // controlled-eccentric/unilateral work, and this note. Lange-duur
+      // beenuithouding voor de berg wordt primair opgebouwd via wandelen/
+      // hiken/rugzaktraining, niet via extra herhalingen in de gym — deze
+      // sessie traint kracht en excentrische controle als aanvulling
+      // daarop, niet als vervanging.
+      notes:
+        'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining — deze sessie is een aanvulling daarop (kracht, excentrische controle), geen vervanging.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high' },
@@ -68,6 +76,7 @@ function buildTemplates(): SessionTemplate[] {
         { id: 'ex9', exerciseName: 'RDL / hip hinge', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex10', exerciseName: 'Hamstrings (leg curl)', sets: 3, reps: '10-12', priority: 'accessory' },
         { id: 'ex11', exerciseName: 'Single-leg (Bulgarian split squat)', sets: 3, reps: '8-10', priority: 'accessory' },
+        { id: 'ex13b', exerciseName: 'Step-downs (gecontroleerd excentrisch, langzaam neer)', sets: 3, reps: '8-10 per been', priority: 'accessory' },
         { id: 'ex12', exerciseName: 'Calves', sets: 3, reps: '12-15', priority: 'optional' },
         { id: 'ex13', exerciseName: 'Core', sets: 3, reps: '45s', priority: 'optional' },
       ],
@@ -103,14 +112,22 @@ function buildTemplates(): SessionTemplate[] {
       // beenblok (tpl_hill_intervals + tpl_long_run). Template blijft
       // gedefinieerd zodat oudere SessionLogs die ernaar verwijzen nog
       // gewoon oplossen in History.
+      // Fase 6 (sports-science review, item F1): sets/reps below are
+      // unchanged (well-supported as-is) — ex22b (step-downs) actually
+      // delivers on this template's own long-standing "wordt later hiking-
+      // specifieker" note. Lange-duur beenuithouding voor de berg bouw je
+      // primair op via wandelen/hiken/rugzaktraining, niet via extra
+      // herhalingen in de gym — deze sessie is een aanvulling, geen
+      // vervanging.
       notes:
-        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Wordt later hiking-specifieker: step-ups, step-downs, single-leg, kuiten/soleus.',
+        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Hiking-specifiek: step-ups, step-downs, single-leg, kuiten/soleus. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining — deze sessie is een aanvulling daarop, geen vervanging.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high' },
       exercises: [
         { id: 'ex21', exerciseName: 'Squat (lichter)', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex22', exerciseName: 'Step-ups', sets: 3, reps: '10 per been', priority: 'core' },
+        { id: 'ex22b', exerciseName: 'Step-downs (gecontroleerd excentrisch, langzaam neer)', sets: 3, reps: '8-10 per been', priority: 'accessory' },
         { id: 'ex23', exerciseName: 'Hamstrings (leg curl)', sets: 3, reps: '10-12', priority: 'accessory' },
         { id: 'ex24', exerciseName: 'Calves / soleus', sets: 3, reps: '12-15', priority: 'accessory' },
         { id: 'ex25', exerciseName: 'Core', sets: 3, reps: '45s', priority: 'optional' },
