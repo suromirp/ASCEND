@@ -37,11 +37,22 @@ export function PrimaryButton({
   );
 }
 
-export function SecondaryButton({ children, onClick, className = '' }: { children: ReactNode; onClick?: () => void; className?: string }) {
+export function SecondaryButton({
+  children,
+  onClick,
+  disabled,
+  className = '',
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 rounded-xl border py-2.5 text-xs font-medium tracking-wide transition-all active:scale-[0.97] active:opacity-70 ${className}`}
+      disabled={disabled}
+      className={`flex-1 rounded-xl border py-2.5 text-xs font-medium tracking-wide transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
       style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
     >
       {children}

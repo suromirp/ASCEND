@@ -9,9 +9,9 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { StrengthProgramStrategy, StrengthProgramSource } from '../models/strengthProgram';
-import { computeStrengthPlacementPlan } from '../engine/strengthScheduling';
+import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { MUSCLE_GROUP_OPTIONS } from '../data/bodyAreas';
-import { addDays, todayISO } from '../utils/dates';
+import { addDays, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -41,7 +41,7 @@ type Step =
   | { kind: 'focus'; draft: StrengthProgramStrategy }
   | { kind: 'preview'; draft: StrengthProgramStrategy }
   | { kind: 'applying' }
-  | { kind: 'done' }
+  | { kind: 'done'; draft: StrengthProgramStrategy }
   | { kind: 'error'; message: string };
 
 export function StrengthProgramWizard({
@@ -65,7 +65,7 @@ export function StrengthProgramWizard({
     setStep({ kind: 'applying' });
     await activateStrengthProgram(draft);
     onActivated?.();
-    setStep({ kind: 'done' });
+    setStep({ kind: 'done', draft });
   }
 
   return (
@@ -116,7 +116,7 @@ export function StrengthProgramWizard({
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-success)' }}>Krachtblok geactiveerd.</p>
-                <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                <CommittedRangeOptIn strategy={step.draft} onClose={requestClose} />
               </div>
             )}
 
@@ -130,6 +130,97 @@ export function StrengthProgramWizard({
         </div>
       </div>
     </Portal>
+  );
+}
+
+// Shown right after activation. By design, activateStrengthProgram above
+// only ever reaches the forecast range (week +2 onward) — the committed
+// range (this week + next week) is never silently touched, per the app's
+// confirmation_horizon_respected invariant. That's still the recommended
+// default (a krachtblok change appearing on you without warning, mid-week,
+// is exactly what the invariant exists to prevent) — but a user who
+// actively wants it sooner should get an explicit, reviewed way to ask for
+// that, not just silently wait two weeks with no way to speed it up
+// (production feedback: "ascend moet die optie bij de gebruiker leggen en
+// wel zelf zijn voorkeur daarbij geven").
+function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramStrategy; onClose: () => void }) {
+  const { plannedSessions, templates, sessionLogs, goalEngineConfig, applyStrengthPlacementToCommittedRange } = useAppData();
+  const [phase, setPhase] = useState<'idle' | 'preview' | 'applying' | 'applied' | 'no_changes'>('idle');
+
+  const forecastStart = addDays(mondayOfWeek(todayISO()), 14);
+  const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
+
+  const committedProposal = useMemo(
+    () => computeStrengthPlacementPlanForCommittedRange(strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, todayISO()),
+    [strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs],
+  );
+
+  async function confirmApply() {
+    setPhase('applying');
+    const applied = await applyStrengthPlacementToCommittedRange(strategy);
+    setPhase(applied ? 'applied' : 'no_changes');
+  }
+
+  if (phase === 'applying') {
+    return <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Bezig met toepassen…</p>;
+  }
+
+  if (phase === 'applied' || phase === 'no_changes') {
+    return (
+      <>
+        <p className="text-sm" style={{ color: phase === 'applied' ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>
+          {phase === 'applied' ? 'Toegepast op deze en/of volgende week.' : 'Geen wijzigingen meer nodig voor deze/volgende week.'}
+        </p>
+        <PrimaryButton onClick={onClose}>SLUITEN</PrimaryButton>
+      </>
+    );
+  }
+
+  if (phase === 'preview') {
+    const removed = committedProposal.changes.filter((c) => c.action === 'remove');
+    const added = committedProposal.changes.filter((c) => c.action === 'add');
+    return (
+      <>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{committedProposal.consequences}</p>
+        <div className="flex flex-col gap-2">
+          {removed.map((c) => (
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger)' }}>− {c.fromDate}: {c.reason}</div>
+          ))}
+          {added.map((c, i) => (
+            <div key={i} className="text-xs" style={{ color: 'var(--color-success)' }}>
+              + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <SecondaryButton onClick={() => setPhase('idle')}>TERUG</SecondaryButton>
+          <PrimaryButton onClick={() => void confirmApply()}>BEVESTIGEN</PrimaryButton>
+        </div>
+      </>
+    );
+  }
+
+  const nothingToApply = committedProposal.changes.length === 0;
+  const blocked = nothingToApply && committedProposal.issue === 'Kon niet volledig plaatsen';
+
+  return (
+    <>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        Dit begint automatisch vanaf {formatDateNL(forecastStart)} — je planning voor deze en volgende week blijft
+        intact. Dat raden we ook aan, tenzij je hier nu al mee wil trainen.
+      </p>
+      {blocked && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
+          {committedProposal.consequences}
+        </p>
+      )}
+      <div className="flex gap-3">
+        <SecondaryButton onClick={() => setPhase('preview')} disabled={nothingToApply}>
+          NU AL TOEPASSEN
+        </SecondaryButton>
+        <PrimaryButton onClick={onClose}>SLUITEN</PrimaryButton>
+      </div>
+    </>
   );
 }
 
