@@ -21,6 +21,7 @@ import type { TrainingGuardrail } from '../models/goalEngineConfig';
 import type { SessionLog } from '../models/training';
 import type { ProgressionDecision, ProgressionState } from '../models/progression';
 import type { ReadinessBreakdown } from './readiness';
+import { detectRecentSpike } from './progressionSpikes';
 
 // ASCEND_HEURISTIC cutoffs against engine/readiness.ts's existing 0-100
 // scores (HEURISTIC-PROGRESSION-READINESS-GATE) — calibration values, not a
@@ -84,8 +85,9 @@ export interface ProgressionOrchestratorInputs {
   readiness: ReadinessBreakdown;
   guardrails?: TrainingGuardrail[];
   // Most-recent-first, already filtered to logs relevant to this key by the
-  // caller — only the most recent 3 are read (§10-13's response
-  // classification window).
+  // caller. The most recent 3 feed the §10-13 poor-response classification
+  // window; the full array (ideally ~30+ days deep) feeds
+  // engine/progressionSpikes.ts's single-session-spike check.
   recentLogs?: SessionLog[];
   // How many consecutive 'progress' decisions this key already received —
   // caller-tracked, since this function is a pure combiner and never reads
@@ -115,6 +117,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
   const recentThree = recentLogs.slice(0, 3);
   const poorCount = recentThree.filter(isPoorResponse).length;
   const poorResponsePattern = recentThree.length >= 2 && poorCount >= 2;
+  const spikeSignal = detectRecentSpike(recentLogs);
 
   let state: ProgressionState;
   let reason: string;
@@ -134,6 +137,14 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     state = 'consolidate';
     reason = 'Capability-trend is dalend — huidige belasting consolideren in plaats van opbouwen.';
     ruleId = 'HEURISTIC-PROGRESSION-TREND-GATE';
+  } else if (spikeSignal.detected) {
+    // engine/progressionSpikes.ts — the most recent session already
+    // represented an outsized single-session jump vs. its own 30-day
+    // baseline. Let the body absorb that before pushing further, rather
+    // than stacking a second progression on top of an unabsorbed one.
+    state = 'consolidate';
+    reason = spikeSignal.reason!;
+    ruleId = 'HEURISTIC-PROGRESSION-SPIKE-DETECTED';
   } else if (recoverySignal < READINESS_CAUTION_THRESHOLD || dimensionSignal < READINESS_CAUTION_THRESHOLD) {
     state = 'consolidate';
     reason = `Readiness is nog niet stevig genoeg (${Math.min(recoverySignal, dimensionSignal)}%) om verder op te bouwen.`;
