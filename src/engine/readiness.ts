@@ -1,14 +1,20 @@
 import type { PlannedSession, SessionLog } from '../models/training';
 import { addDays, formatDateNL, todayISO } from '../utils/dates';
 
+// ASCEND — Readiness (sports-science review, September 2026, item B1).
+//
+// Narrowed from the original 7-sub-score ReadinessBreakdown: the 5
+// fitness/exposure scores (strength, cardio, climbing, endurance,
+// packCapability) moved to engine/capacity.ts, which answers a genuinely
+// different question ("what have you demonstrably been building lately").
+// This file keeps only the acute "are you ready for more training right
+// now" signals: recovery, consistency, and a new subjectiveSignal reading
+// (recent subjective session response) — see engine/capacity.ts's header
+// for the full rationale.
 export interface ReadinessBreakdown {
-  strength: number;
-  cardio: number;
-  climbing: number;
-  endurance: number;
   recovery: number;
   consistency: number;
-  packCapability: number;
+  subjectiveSignal: number;
   overall: number;
 }
 
@@ -16,9 +22,8 @@ const clampPct = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
 // V1 heuristics only. Every formula here is intentionally simple and
 // isolated so it can be swapped for a real calculation (HRV-adjusted
-// recovery, actual 1RM-based strength trend, etc.) once Garmin / Health
-// Connect / MacroFactor data is available — nothing outside this file needs
-// to change when that happens.
+// recovery, etc.) once Garmin / Health Connect data is available — nothing
+// outside this file needs to change when that happens.
 export function computeReadiness(
   logs: SessionLog[],
   plannedSessions: PlannedSession[],
@@ -35,50 +40,27 @@ export function computeReadiness(
     ? 0
     : clampPct((loggedPlannedIds.size / recentPlanned.length) * 100);
 
-  // Strength: completed strength sessions vs. a 3x/week target for the window.
-  const strengthTarget = Math.max(1, Math.round((windowDays / 7) * 3));
-  const strengthDone = recentLogs.filter((l) => l.type === 'strength').length;
-  const strength = clampPct((strengthDone / strengthTarget) * 100);
-
-  // Cardio: completed cardio sessions vs. a 2x/week target for the window.
-  const cardioTarget = Math.max(1, Math.round((windowDays / 7) * 2));
-  const cardioDone = recentLogs.filter((l) => l.type === 'cardio').length;
-  const cardio = clampPct((cardioDone / cardioTarget) * 100);
-
-  // Climbing / D+: total elevation gained (outdoor + incline) vs. a
-  // 1000 D+ per 4 weeks reference target, scaled to the window.
-  const elevationTarget = (windowDays / 28) * 1000;
-  const elevationDone = recentLogs.reduce(
-    (sum, l) => sum + (l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0),
-    0,
-  );
-  const climbing = clampPct((elevationDone / elevationTarget) * 100);
-
-  // Endurance: total cardio + hiking distance vs. a 40 km per 4 weeks
-  // reference target, scaled to the window.
-  const distanceTarget = (windowDays / 28) * 40;
-  const distanceDone = recentLogs.reduce(
-    (sum, l) => sum + (l.outdoorData?.distanceKm ?? l.cardioData?.distanceKm ?? 0),
-    0,
-  );
-  const endurance = clampPct((distanceDone / distanceTarget) * 100);
-
   // Recovery: completed recovery sessions vs. a 1x/week target. This is a
   // placeholder until HRV / sleep / Body Battery data arrives via Garmin.
   const recoveryTarget = Math.max(1, Math.round(windowDays / 7));
   const recoveryDone = recentLogs.filter((l) => l.type === 'recovery').length;
   const recovery = clampPct((recoveryDone / recoveryTarget) * 100);
 
-  // Pack capability: heaviest backpack carried vs. a 15 kg reference target.
-  const packTarget = 15;
-  const maxPack = recentLogs.reduce((max, l) => Math.max(max, l.outdoorData?.backpackWeightKg ?? 0), 0);
-  const packCapability = clampPct((maxPack / packTarget) * 100);
+  // Subjective signal (new, B1): share of recent logged sessions that did
+  // NOT come back "worse than normal" — the review's recommendation to read
+  // acute readiness from recent subjective response (SessionLog.subjectiveFeel)
+  // rather than treat capacity/consistency as if they measured the same
+  // thing. No subjective data yet is never read as a bad signal (matches
+  // this codebase's "missing data is never interpreted as bad" convention
+  // — see engine/capability.ts) — it simply doesn't move the number down.
+  const subjectiveLogs = recentLogs.filter((l) => l.subjectiveFeel !== undefined);
+  const subjectiveSignal = subjectiveLogs.length === 0
+    ? 100
+    : clampPct((subjectiveLogs.filter((l) => l.subjectiveFeel !== 'worse').length / subjectiveLogs.length) * 100);
 
-  const overall = clampPct(
-    (strength + cardio + climbing + endurance + recovery + consistency + packCapability) / 7,
-  );
+  const overall = clampPct((recovery + consistency + subjectiveSignal) / 3);
 
-  return { strength, cardio, climbing, endurance, recovery, consistency, packCapability, overall };
+  return { recovery, consistency, subjectiveSignal, overall };
 }
 
 export interface TrendPoint {

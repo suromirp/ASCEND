@@ -112,8 +112,8 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     // from now under conditions (evidence, readiness) that don't exist yet.
     changes: [],
     alternatives: [],
-    consequences: 'Geen concrete wijzigingen vooraf — na activatie past de Adaptive Replanner het schema vanaf twee weken verder doorlopend aan, op basis van dan actuele evidence en readiness.',
-    explanation: `Wordt pas na activatie zichtbaar: de Adaptive Replanner beoordeelt dan doorlopend readiness en capability-trend voor de vervolgweken (huidige status: ${feasibility.status}).`,
+    consequences: 'Geen concrete wijzigingen vooraf — na activatie past de Adaptive Replanner het schema vanaf twee weken verder doorlopend aan, op basis van dan actuele evidence, herstel en capaciteit.',
+    explanation: `Wordt pas na activatie zichtbaar: de Adaptive Replanner beoordeelt dan doorlopend herstel en capaciteit-trend voor de vervolgweken (huidige status: ${feasibility.status}).`,
     createdAt: new Date().toISOString(),
   };
 

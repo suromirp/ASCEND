@@ -40,6 +40,7 @@ import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
+import { computeCapacity } from '../engine/capacity';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
@@ -261,8 +262,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const asOf = todayISO();
     const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
     const readiness = computeReadiness(logs, planned);
-    const recentLogs = [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate)).slice(0, 3);
-    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, engineConfig.guardrails, recentLogs, asOf);
+    const capacity = computeCapacity(logs, 28, asOf);
+    // Most-recent-first, NOT pre-sliced to 3 here — computeProgressionDecision
+    // itself takes only the top 3 for the 2-of-3 poor-response check, but
+    // engine/progressionSpikes.ts's single-session-spike check needs the
+    // fuller ~30-day history to compute an honest baseline.
+    const recentLogs = [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate));
+    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, capacity, engineConfig.guardrails, recentLogs, asOf);
 
     const { proposal, prescriptions, passiveSummary } = computeForecastReplan({
       plannedSessions: planned,
