@@ -130,7 +130,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     return {
       key,
       state: 'assess',
-      reason: 'Nog geen evidence voor deze capability — eerst data verzamelen voordat een voortgangsbeslissing wordt genomen.',
+      reason: 'Hier is nog te weinig over jou bekend — eerst gegevens verzamelen voordat er een voortgangsbeslissing valt.',
       ruleId: 'PRODUCT-ASSESS-INSUFFICIENT-DATA',
       poorResponsePattern: false,
       accumulationReviewDue: false,
@@ -165,7 +165,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     ruleId = 'HEURISTIC-POOR-RESPONSE-2-OF-3';
   } else if (estimate.trend === 'declining') {
     state = 'consolidate';
-    reason = 'Capability-trend is dalend — huidige belasting consolideren in plaats van opbouwen.';
+    reason = 'De trend hierin is dalend — huidige belasting vasthouden in plaats van opbouwen.';
     ruleId = 'HEURISTIC-PROGRESSION-TREND-GATE';
   } else if (spikeSignal.detected) {
     // engine/progressionSpikes.ts — the most recent session already
@@ -178,20 +178,20 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
   } else if (recoverySignal < READINESS_CAUTION_THRESHOLD || dimensionSignal < READINESS_CAUTION_THRESHOLD) {
     state = 'consolidate';
     reason = recoverySignal < dimensionSignal
-      ? `Readiness is nog niet stevig genoeg (${recoverySignal}%) om verder op te bouwen.`
+      ? `Je herstel is nog niet stevig genoeg (${recoverySignal}%) om verder op te bouwen.`
       : `Nog niet genoeg recente opbouw in dit gebied (${dimensionSignal}%) om verder te gaan.`;
     ruleId = 'HEURISTIC-PROGRESSION-READINESS-GATE';
   } else if (estimate.confidence === 'low') {
     state = 'assess';
-    reason = 'Beperkte evidence voor deze capability — eerst meer bevestiging verzamelen.';
+    reason = 'Nog te weinig over jou bekend hierover — eerst meer bevestiging verzamelen.';
     ruleId = 'PRODUCT-ASSESS-INSUFFICIENT-DATA';
   } else if (estimate.confidence === 'medium') {
     state = 'consolidate';
-    reason = 'Evidence is nog niet robuust genoeg voor een volgende stap — huidige belasting consolideren.';
+    reason = 'Nog niet genoeg bekend voor een volgende stap — huidige belasting vasthouden.';
     ruleId = 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE';
   } else {
     state = 'progress';
-    reason = 'Voldoende evidence, een stabiele of stijgende trend en goed herstel ondersteunen een volgende stap.';
+    reason = 'Genoeg bekend, een stabiele of stijgende trend en goed herstel ondersteunen een volgende stap.';
     ruleId = 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE';
   }
 
@@ -199,7 +199,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     const blocked = guardrails.some((g) => g.mode === 'block' && PROGRESSION_GUARDRAIL_RULE_IDS.has(g.ruleId));
     if (blocked) {
       state = 'consolidate';
-      reason = `${reason} Een ingestelde guardrail blokkeert verdere opbouw op dit moment.`;
+      reason = `${reason} Een ingestelde grens blokkeert verdere opbouw op dit moment.`;
       ruleId = 'PRODUCT-GUARDRAIL-BLOCK';
     }
   }

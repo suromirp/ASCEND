@@ -97,7 +97,7 @@ export function computeFeasibility(inputs: FeasibilityInputs): FeasibilityAssess
       goalId,
       status: 'insufficient_data',
       confidence: 'unknown',
-      explanation: 'Voor dit doel is nog geen concrete capability-vraag vastgelegd — er is niets om haalbaarheid tegen te beoordelen.',
+      explanation: 'Dit doel vraagt nog niets concreets van je — er is niets om de haalbaarheid tegen af te zetten.',
     };
   }
 
@@ -108,7 +108,7 @@ export function computeFeasibility(inputs: FeasibilityInputs): FeasibilityAssess
       status: 'insufficient_data',
       bottleneck: criticalGaps.length === 1 ? criticalGaps[0].key : undefined,
       confidence: 'unknown',
-      explanation: 'Nog onvoldoende evidence voor de kritieke capabilities van dit doel om haalbaarheid te beoordelen — dit telt niet als een tekortkoming.',
+      explanation: 'Nog te weinig over jou bekend om de haalbaarheid van dit doel te beoordelen — geen tekortkoming, gewoon een kwestie van tijd.',
     };
   }
 
@@ -156,15 +156,15 @@ function buildBestPossiblePreparation(
 ): string | undefined {
   if (status === 'on_track' || !worst) return undefined;
 
-  const parts = [`Gerichte, regelmatige blootstelling aan ${capabilityKeyLabel(worst.key)} zou dit dichter bij op schema brengen.`];
+  const parts = [`Regelmatig en gericht trainen op ${capabilityKeyLabel(worst.key)} brengt dit doel dichter bij haalbaar.`];
 
   if (!sufficientAvailability) {
-    parts.push('Meer beschikbare trainingsdagen of een long-session-dag zou de haalbaarheid ook verbeteren.');
+    parts.push('Meer beschikbare trainingsdagen, of een vaste dag voor een langere sessie, zou de haalbaarheid ook verbeteren.');
   }
   if (status === 'unlikely' && blockingGuardrail) {
     // §38: an outside-guardrail alternative is never applied automatically
     // — only surfaced, explicitly, for the user to confirm.
-    parts.push('Een agressievere opbouw buiten je ingestelde guardrail zou dit doel dichterbij kunnen brengen, maar wordt niet automatisch toegepast.');
+    parts.push('Een agressievere opbouw buiten je ingestelde grenzen zou dit doel dichterbij kunnen brengen, maar wordt nooit automatisch toegepast.');
   }
   return parts.join(' ');
 }

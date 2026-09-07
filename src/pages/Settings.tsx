@@ -30,9 +30,13 @@ const PAIRING_OPTIONS: { value: TrainingStrategyProfile['sameDayPairingPreferenc
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { loading, exportData, resetSchedule, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes } = useAppData();
+  const { loading, exportData, resetSchedule, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes, rebuildRecommendations, resetDemoData } = useAppData();
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [status, setStatus] = useState<string | null>(null);
+  const [rebuildStatus, setRebuildStatus] = useState<string | null>(null);
+  const [rebuilding, setRebuilding] = useState(false);
+  const [confirmingFullReset, setConfirmingFullReset] = useState(false);
+  const [fullResetting, setFullResetting] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [resetStartFrom, setResetStartFrom] = useState<'this_week' | 'next_week'>('next_week');
   const [showImportWizard, setShowImportWizard] = useState(false);
@@ -48,6 +52,21 @@ export function SettingsPage() {
   async function handleExport() {
     const success = await exportData();
     setStatus(success ? 'Export geslaagd.' : null);
+  }
+
+  async function handleRebuildRecommendations() {
+    setRebuilding(true);
+    setRebuildStatus(null);
+    await rebuildRecommendations();
+    setRebuilding(false);
+    setRebuildStatus('ASCEND heeft opnieuw gekeken — nieuwe aanbevelingen verschijnen hierboven zodra er iets is.');
+  }
+
+  async function handleFullReset() {
+    setFullResetting(true);
+    await resetDemoData();
+    setFullResetting(false);
+    setConfirmingFullReset(false);
   }
 
   async function handleChooseDirectory() {
@@ -238,6 +257,52 @@ export function SettingsPage() {
         <IntegrationRow name="Garmin" note="Binnenkort" />
         <IntegrationRow name="Health Connect" note="Binnenkort" />
         <IntegrationRow name="MacroFactor" note="Binnenkort" />
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>OPNIEUW BEGINNEN</Eyebrow>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Aanbevelingen opnieuw laten berekenen</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            Krachtblok-review en de aanpassingen voor de komende weken worden normaal alleen ververst als je de app
+            opnieuw opent. Heb je net iets aangepast (bijv. je beschikbare tijd) en wil je dat ASCEND daar nu meteen
+            opnieuw naar kijkt? Dit verwijdert niets — je geschiedenis, doelen en huidige schema blijven ongewijzigd.
+          </p>
+          <SecondaryButton onClick={handleRebuildRecommendations} disabled={rebuilding}>
+            {rebuilding ? 'BEZIG…' : 'HERBOUW AANBEVELINGEN'}
+          </SecondaryButton>
+          {rebuildStatus && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{rebuildStatus}</p>}
+        </div>
+
+        <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Alles verwijderen en opnieuw beginnen</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            Wist al je geschiedenis, doelen, blessures en instellingen, en start je met een lege lei op het
+            standaard programma — alsof je ASCEND voor het eerst opent. Dit kan niet ongedaan worden gemaakt.
+          </p>
+          {!confirmingFullReset ? (
+            <button onClick={() => setConfirmingFullReset(true)} className="text-left text-xs" style={{ color: 'var(--color-danger)' }}>
+              Alles verwijderen…
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold" style={{ color: 'var(--color-danger)' }}>
+                Weet je het zeker? Al je gegevens gaan definitief verloren.
+              </p>
+              <div className="flex gap-3">
+                <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>ANNULEREN</SecondaryButton>
+                <button
+                  onClick={handleFullReset}
+                  disabled={fullResetting}
+                  className="flex-1 rounded-xl py-2.5 text-xs font-semibold tracking-wide transition-all active:scale-[0.97] disabled:opacity-40"
+                  style={{ background: 'var(--color-danger)', color: '#fff' }}
+                >
+                  {fullResetting ? 'BEZIG…' : 'JA, ALLES VERWIJDEREN'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
 
       <p className="px-1 text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>

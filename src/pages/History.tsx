@@ -92,7 +92,7 @@ export function HistoryPage() {
         <Stat label="Hardlopen" value={`${summary.runningKm.toFixed(1)} km`} delta={formatDelta(summary.runningKm, prevSummary.runningKm, { unit: ' km', decimals: 1 })} />
         <Stat label="Hoogtemeters" value={`${Math.round(summary.elevation)} D+`} delta={formatDelta(Math.round(summary.elevation), Math.round(prevSummary.elevation), { unit: ' D+' })} />
         <Stat label="Wandelen" value={`${summary.hikingKm.toFixed(1)} km`} delta={formatDelta(summary.hikingKm, prevSummary.hikingKm, { unit: ' km', decimals: 1 })} />
-        <Stat label="Trainingstijd" value={`${Math.floor(summary.totalMinutes / 60)}u ${summary.totalMinutes % 60}m`} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
+        <Stat label="Trainingstijd" value={`${Math.floor(Math.round(summary.totalMinutes) / 60)}u ${Math.round(summary.totalMinutes) % 60}m`} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
         <Stat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
         {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${Math.round(summary.elevationLoss)} D-`} />}
         {summary.machineVertical > 0 && <Stat label="Machine-vertical" value={`${Math.round(summary.machineVertical)} m`} />}
@@ -160,7 +160,7 @@ function Stat({ label, value, delta }: { label: string; value: string; delta?: {
   return (
     <div>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</p>
-      <p className="mt-0.5 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{value}</p>
+      <p className="mt-0.5 break-words font-display text-xl" style={{ color: 'var(--color-ink)' }}>{value}</p>
       {delta && <p className="mt-0.5 text-[10px] leading-tight" style={{ color: delta.color }}>{delta.text}</p>}
     </div>
   );
