@@ -44,7 +44,7 @@ Consistentie bouwt richting een concreet objectief: de volgende mijlpaal op de
 
 Het standaard schema dat ASCEND meelevert (`src/data/defaultProgram.ts`) is
 niet langer generieke demo-data — het is het echte **Maand 1 / BASISFASE**
-schema: Herstel, Easy Run, Lower A (zware beendag), Upper B, Upper A, en een
+schema: Herstel, Easy Run, Lower A (zware beendag), Upper A, Upper B, en een
 weekend-beenblok van Heuvel-/Incline-Intervallen (zaterdag) gevolgd door een
 Lange Duurloop (zondag) — bewust aaneengesloten, gericht op zowel
 hardloopprogressie als GR5-specifieke D+. Lower B en Bergconditie zijn als

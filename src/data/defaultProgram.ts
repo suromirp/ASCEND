@@ -37,7 +37,7 @@ function buildTemplates(): SessionTemplate[] {
       type: 'strength',
       focus: 'Borst • Rug • Schouders',
       durationVariants: { full: 75, short: 45, minimum: 20 },
-      defaultDayOfWeek: 5,
+      defaultDayOfWeek: 4,
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
@@ -78,7 +78,7 @@ function buildTemplates(): SessionTemplate[] {
       type: 'strength',
       focus: 'Borst • Rug • Armen',
       durationVariants: { full: 75, short: 45, minimum: 20 },
-      defaultDayOfWeek: 4,
+      defaultDayOfWeek: 5,
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
@@ -268,8 +268,8 @@ function buildProgram(): Program {
 
 // ---------------------------------------------------------------------------
 // Planned sessions — het vaste weekpatroon herhaald over het hele programma.
-// MA Herstel · DI Easy Run · WO Lower A zwaar · DO Upper B ·
-// VR Upper A · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop
+// MA Herstel · DI Easy Run · WO Lower A zwaar · DO Upper A ·
+// VR Upper B · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop
 // ---------------------------------------------------------------------------
 
 function buildPlannedSessions(program: Program, templates: SessionTemplate[]): PlannedSession[] {

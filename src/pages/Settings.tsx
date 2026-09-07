@@ -82,9 +82,9 @@ export function SettingsPage() {
       <Card className="flex flex-col gap-3">
         <Eyebrow>SCHEMA OPNIEUW LADEN</Eyebrow>
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Zet je toekomstige planning terug naar het standaard weekschema (Maand 1 — Upper A, Easy Run, Lower A, Upper B,
-          Bergconditie, Lower B, Herstel). Je geschiedenis, voltooide sessies, doelen en blessures blijven gewoon
-          bewaard — dit raakt alleen wat er nog gepland staat.
+          Zet je toekomstige planning terug naar het standaard weekschema (Maand 1 — Herstel, Easy Run, Lower A, Upper A,
+          Upper B, Heuvel-/Incline-Intervallen, Lange Duurloop). Je geschiedenis, voltooide sessies, doelen en
+          blessures blijven gewoon bewaard — dit raakt alleen wat er nog gepland staat.
         </p>
         {!confirmingReset ? (
           <SecondaryButton onClick={() => setConfirmingReset(true)}>SCHEMA OPNIEUW LADEN</SecondaryButton>
