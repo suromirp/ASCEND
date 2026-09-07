@@ -61,12 +61,21 @@ export function proposeMountainAdventurePrescription(inputs: MountainAdventureSp
   const specificOverride = dimensionOverride(decision.key.dimension, state);
   const stressProfileOverride = { ...baseOverride, ...specificOverride };
 
+  // Fase 4 (sports-science review, item D3) — taper reduces volume
+  // (elevation gain/loss), only ever scaling a REAL candidate value the
+  // caller supplied. Pack weight is left alone: it's an event-specificity
+  // variable, not a volume one, and tapering keeps specificity intact.
+  const taperScale =
+    state === 'taper' && decision.taperReductionFactor !== undefined ? 1 - decision.taperReductionFactor : 1;
+  const elevationGainM = candidateElevationGainM !== undefined ? candidateElevationGainM * taperScale : undefined;
+  const elevationLossM = candidateElevationLossM !== undefined ? candidateElevationLossM * taperScale : undefined;
+
   return {
     plannedSessionId,
     role: roleForState(state),
     stressProfileOverride: Object.keys(stressProfileOverride).length > 0 ? stressProfileOverride : undefined,
-    elevationGain: candidateElevationGainM !== undefined ? { amount: candidateElevationGainM, unit: 'm_elevation_gain' } : undefined,
-    elevationLoss: candidateElevationLossM !== undefined ? { amount: candidateElevationLossM, unit: 'm_elevation_loss' } : undefined,
+    elevationGain: elevationGainM !== undefined ? { amount: elevationGainM, unit: 'm_elevation_gain' } : undefined,
+    elevationLoss: elevationLossM !== undefined ? { amount: elevationLossM, unit: 'm_elevation_loss' } : undefined,
     packWeight: candidatePackWeightKg !== undefined ? { amount: candidatePackWeightKg, unit: 'kg' } : undefined,
     generatedBy: ['engine/specialists/mountainAdventure.ts', decision.ruleId],
     reason: decision.reason,

@@ -44,13 +44,38 @@ describe('activeGoalDemandKeys', () => {
 describe('computeProgressionDecisionsForKeys', () => {
   it('produces one decision per key, addressable by the same keyId used everywhere else', () => {
     const keys = [{ dimension: 'ascent_capacity' as const }];
-    const decisions = computeProgressionDecisionsForKeys(keys, [], readiness(), capacity(), [], [], '2026-09-05');
+    const decisions = computeProgressionDecisionsForKeys(keys, [], readiness(), capacity(), [], [], '2026-09-05', []);
     expect(decisions.size).toBe(1);
     expect(decisions.get(keyId(keys[0]))?.state).toBe('assess'); // no evidence -> unknown confidence -> assess
   });
 
   it('never computes a decision for a key it was not asked about', () => {
-    const decisions = computeProgressionDecisionsForKeys([], [], readiness(), capacity(), [], [], '2026-09-05');
+    const decisions = computeProgressionDecisionsForKeys([], [], readiness(), capacity(), [], [], '2026-09-05', []);
     expect(decisions.size).toBe(0);
+  });
+
+  // Fase 4 (sports-science review, item D3): applyTaperOverride was fully
+  // implemented in goalArbiter.ts but never wired into a live decisions
+  // pipeline before this — these confirm the wiring actually fires now.
+  it('overrides a decision to taper when its key\'s nearest active goal deadline is inside the taper window', () => {
+    const keys = [{ dimension: 'ascent_capacity' as const }];
+    const asOf = '2026-09-05';
+    const nearGoal = activeGoal({ id: 'near', targetDate: '2026-09-12' }); // 7 days out
+    const decisions = computeProgressionDecisionsForKeys(
+      keys, [], readiness(), capacity(), [], [], asOf, [nearGoal],
+    );
+    const decision = decisions.get(keyId(keys[0]));
+    expect(decision?.state).toBe('taper');
+    expect(decision?.taperReductionFactor).toBeGreaterThan(0);
+  });
+
+  it('leaves a decision untouched when no active goal demanding that key is inside the taper window', () => {
+    const keys = [{ dimension: 'ascent_capacity' as const }];
+    const asOf = '2026-09-05';
+    const farGoal = activeGoal({ id: 'far', targetDate: '2026-12-01' }); // far outside the 21-day window
+    const decisions = computeProgressionDecisionsForKeys(
+      keys, [], readiness(), capacity(), [], [], asOf, [farGoal],
+    );
+    expect(decisions.get(keyId(keys[0]))?.state).not.toBe('taper');
   });
 });

@@ -42,4 +42,18 @@ describe('proposeCyclingPrescription', () => {
     expect(proposeCyclingPrescription({ decision: decision({ state: 'assess' }), plannedSessionId: 'ps1' }).role).toBe('assessment');
     expect(proposeCyclingPrescription({ decision: decision({ state: 'reduce' }), plannedSessionId: 'ps1' }).role).toBe('maintenance');
   });
+
+  it('scales a supplied duration down by taperReductionFactor when tapering', () => {
+    const candidate = proposeCyclingPrescription({
+      decision: decision({ state: 'taper', taperReductionFactor: 0.4 }), plannedSessionId: 'ps1', candidateDurationMinutes: 60,
+    });
+    expect(candidate.targetDuration).toEqual({ amount: 36, unit: 'min' });
+  });
+
+  it('never fabricates a duration during taper when the caller supplied none', () => {
+    const candidate = proposeCyclingPrescription({
+      decision: decision({ state: 'taper', taperReductionFactor: 0.4 }), plannedSessionId: 'ps1',
+    });
+    expect(candidate.targetDuration).toBeUndefined();
+  });
 });
