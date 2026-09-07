@@ -44,9 +44,17 @@ describe('computeCapacity', () => {
     expect(computeCapacity(logs, 28, ASOF).endurance).toBe(100);
   });
 
-  it('reaches 100% packCapability at a logged 15kg backpack', () => {
+  it('reaches 100% packCapability at a logged 15kg backpack when no event-specific target is supplied', () => {
     const logs = [log({ type: 'hiking', outdoorData: { durationMinutes: 120, backpackWeightKg: 15, source: 'manual' } })];
     expect(computeCapacity(logs, 28, ASOF).packCapability).toBe(100);
+  });
+
+  // Fase 6 (sports-science review, item D2): the active goal's own target
+  // pack weight is authoritative, not a universal hard-coded reference.
+  it('targets the supplied event-specific pack weight instead of the generic 15kg default', () => {
+    const logs = [log({ type: 'hiking', outdoorData: { durationMinutes: 120, backpackWeightKg: 8, source: 'manual' } })];
+    expect(computeCapacity(logs, 28, ASOF, 8).packCapability).toBe(100); // a lighter goal target (e.g. 8kg) is fully met at 8kg
+    expect(computeCapacity(logs, 28, ASOF, 15).packCapability).toBe(53); // the same log against the heavier default target
   });
 
   it('ignores logs outside the window', () => {

@@ -15,6 +15,15 @@ function req(requirements: GoalRequirement[], kind: GoalRequirement['kind']): Go
   return requirements.find((r) => r.kind === kind);
 }
 
+// Fase 6 (sports-science review, item D2) — the event-specific target pack
+// weight a goal actually asks for, when one was set. The one place this
+// extraction happens, so engine/capacity.ts's packCapability score (and any
+// other future consumer) reads the same authoritative number instead of a
+// generic universal default.
+export function targetPackWeightKg(requirements: GoalRequirement[]): number | undefined {
+  return req(requirements, 'packWeight')?.target?.amount;
+}
+
 // Criticality defaults below mirror v0.2 §17's two worked examples
 // (marathon vs. multi-day mountain trip) as closely as a general-purpose
 // mapping can — an ASCEND_HEURISTIC starting point, not a per-goal-type

@@ -31,7 +31,27 @@ export interface CapacityBreakdown {
 
 const clampPct = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
-export function computeCapacity(logs: SessionLog[], windowDays = 28, asOf: string = todayISO()): CapacityBreakdown {
+// ASCEND_HEURISTIC(PACK-CAPACITY-TARGET-FALLBACK): Fase 6 (sports-science
+// review, item D2) — only ever used when the caller has no event-specific
+// pack-weight target to pass in (engine/demand.ts#targetPackWeightKg, from
+// the active goal's own 'packWeight' GoalRequirement). A fixed universal
+// number was previously always used regardless of what any goal actually
+// demanded; this stays only as a generic starting reference for someone
+// with no goal-set target yet, never a hard cap on anyone's real pack
+// training.
+const DEFAULT_PACK_TARGET_KG = 15;
+
+export function computeCapacity(
+  logs: SessionLog[],
+  windowDays = 28,
+  asOf: string = todayISO(),
+  // Event-specific target pack weight (kg), when the caller has one — see
+  // engine/demand.ts#targetPackWeightKg. %bodyweight context (heavier
+  // hikers can reasonably carry more absolute kg) is a natural next
+  // refinement once body-weight data is reliably wired in here; left out
+  // for now rather than only half-implemented.
+  packWeightTargetKg?: number,
+): CapacityBreakdown {
   const since = addDays(asOf, -windowDays);
   const recentLogs = logs.filter((l) => l.completedDate >= since && l.completedDate <= asOf);
 
@@ -63,8 +83,9 @@ export function computeCapacity(logs: SessionLog[], windowDays = 28, asOf: strin
   );
   const endurance = clampPct((distanceDone / distanceTarget) * 100);
 
-  // Pack capability: heaviest backpack carried vs. a 15 kg reference target.
-  const packTarget = 15;
+  // Pack capability: heaviest backpack carried vs. the active goal's own
+  // event-specific target when one exists, the generic default otherwise.
+  const packTarget = packWeightTargetKg && packWeightTargetKg > 0 ? packWeightTargetKg : DEFAULT_PACK_TARGET_KG;
   const maxPack = recentLogs.reduce((max, l) => Math.max(max, l.outdoorData?.backpackWeightKg ?? 0), 0);
   const packCapability = clampPct((maxPack / packTarget) * 100);
 
