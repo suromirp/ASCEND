@@ -490,7 +490,14 @@ export async function seedIfEmpty(): Promise<void> {
 // replaced by this — same full-overwrite tradeoff syncObjectiveDefinitions/
 // resetToDemoData already make for non-historical data, just scoped to
 // "not this week or earlier" here.
-const SCHEDULE_CONTENT_VERSION = 2;
+// v3: swapped Upper A/Upper B's defaultDayOfWeek (data/defaultProgram.ts) —
+// Upper A was displaced from Monday to Friday by an earlier reshape (moving
+// Herstel onto Monday) while Upper B stayed put on Thursday, an unintended
+// side effect that left Upper B landing before Upper A each week with no
+// actual training rationale behind the order (confirmed via git history —
+// user bug report). Fixed at the source; this bump carries it to already-
+// seeded devices the same safe way v1->v2 did.
+const SCHEDULE_CONTENT_VERSION = 3;
 
 // One-time correction for exactly the fragmentation v1 could cause (see
 // above): a week where tpl_upper_a appears twice — once on its old Monday
