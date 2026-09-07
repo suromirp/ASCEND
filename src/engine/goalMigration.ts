@@ -19,20 +19,27 @@ import { makeId } from '../utils/id';
 // One-time id remap (Technical Architecture v0.3.1 REVISED, Migration
 // plan) — stable semantic ids. Order matches
 // data/defaultProgram.ts#buildObjective()'s milestone order exactly
-// (obj_gr5_m1..m12).
+// (obj_gr5_m1..m13 as of the Fase 5 parallel-axes restructure — see that
+// file's own comment). Only ms_gr5_pack_licht_8kg is a genuinely new id;
+// every other stable id is reused unchanged from the original 12-milestone
+// ladder (even where a milestone's own position/requirement shifted), on
+// purpose — storage/goalMilestoneSync.ts's resync for already-migrated
+// devices depends on these ids staying stable so existing
+// GoalMilestoneProgress rows keep referencing a real milestone.
 export const LEGACY_MILESTONE_ID_MAP: Record<string, string> = {
   obj_gr5_m1: 'ms_gr5_easy_run_40min',
   obj_gr5_m2: 'ms_gr5_bergconditie_60min',
   obj_gr5_m3: 'ms_gr5_wandeling_15km',
-  obj_gr5_m4: 'ms_gr5_dplus_300',
-  obj_gr5_m5: 'ms_gr5_dplus_500',
-  obj_gr5_m6: 'ms_gr5_dplus_750',
-  obj_gr5_m7: 'ms_gr5_dplus_1000_descent',
-  obj_gr5_m8: 'ms_gr5_15km_1000dplus',
-  obj_gr5_m9: 'ms_gr5_rugzaksessie',
-  obj_gr5_m10: 'ms_gr5_twee_dagen',
-  obj_gr5_m11: 'ms_gr5_weekend_simulatie',
-  obj_gr5_m12: 'ms_gr5_klaar',
+  obj_gr5_m4: 'ms_gr5_twee_dagen',
+  obj_gr5_m5: 'ms_gr5_dplus_300',
+  obj_gr5_m6: 'ms_gr5_pack_licht_8kg',
+  obj_gr5_m7: 'ms_gr5_dplus_500',
+  obj_gr5_m8: 'ms_gr5_dplus_750',
+  obj_gr5_m9: 'ms_gr5_dplus_1000_descent',
+  obj_gr5_m10: 'ms_gr5_15km_1000dplus',
+  obj_gr5_m11: 'ms_gr5_rugzaksessie',
+  obj_gr5_m12: 'ms_gr5_weekend_simulatie',
+  obj_gr5_m13: 'ms_gr5_klaar',
 };
 
 export interface MigratedGr5Data {

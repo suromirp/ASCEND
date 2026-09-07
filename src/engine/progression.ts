@@ -1,7 +1,11 @@
-import type { SessionLog } from '../models/training';
-import type { MilestoneRequirement, MilestoneStatus } from '../models/objectives';
+import type { SessionLog, SessionType } from '../models/training';
+import type { MilestoneRequirement, MilestoneStatus, MilestoneActivityType } from '../models/objectives';
 import type { GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import { addDays } from '../utils/dates';
+
+function matchesActivityType(logType: SessionType, activityType: MilestoneActivityType | MilestoneActivityType[]): boolean {
+  return Array.isArray(activityType) ? activityType.includes(logType as MilestoneActivityType) : logType === activityType;
+}
 
 // Does a single SessionLog satisfy a given requirement on its own?
 // ('manual' requirements can never be auto-satisfied — they always need an
@@ -10,11 +14,14 @@ import { addDays } from '../utils/dates';
 export function logSatisfiesRequirement(log: SessionLog, requirement: MilestoneRequirement): boolean {
   switch (requirement.kind) {
     case 'duration':
-      return log.type === requirement.activityType && log.durationMinutes >= requirement.minMinutes;
+      return matchesActivityType(log.type, requirement.activityType) && log.durationMinutes >= requirement.minMinutes;
     case 'elevation': {
       const gain = log.outdoorData?.elevationGainM ?? log.cardioData?.elevationGainM ?? 0;
       const loss = log.outdoorData?.elevationLossM ?? 0;
-      return gain >= requirement.minMeters && (requirement.minLossMeters === undefined || loss >= requirement.minLossMeters);
+      return (
+        (requirement.minMeters === undefined || gain >= requirement.minMeters) &&
+        (requirement.minLossMeters === undefined || loss >= requirement.minLossMeters)
+      );
     }
     case 'distance':
       return (log.outdoorData?.distanceKm ?? log.cardioData?.distanceKm ?? 0) >= requirement.minKm;
@@ -50,12 +57,31 @@ function hasConsecutiveTrainingDays(logs: SessionLog[], days: number): boolean {
   return days <= 1 && dates.length > 0;
 }
 
+// Sports-science review (Fase 5, item G1): a milestone counts as genuinely
+// achieved only when the clearing session was completed_as_planned, showed
+// no_abnormal_pain, and had effort_in_expected_range — not bare completion
+// of the numbers alone. Reuses the SessionLog fields that already exist for
+// this (no new data model): `variant !== 'minimum'` stands in for
+// completed-as-planned (a session cut down to its bare minimum was not
+// actually run as intended), `subjectiveFeel !== 'worse'` for no abnormal
+// pain/distress, and a not-extreme RPE for effort staying in the expected
+// range rather than an all-out, unsustainable one.
+function logQualifiesForMilestone(log: SessionLog, requirement: MilestoneRequirement): boolean {
+  if (!logSatisfiesRequirement(log, requirement)) return false;
+  if (log.variant === 'minimum') return false;
+  if (log.subjectiveFeel === 'worse') return false;
+  if (log.rpe !== undefined && log.rpe >= 9) return false;
+  return true;
+}
+
 // A requirement is "auto-clearable" if any single log (or, for
-// consecutiveDays, the log history as a whole) satisfies it.
+// consecutiveDays, the log history as a whole) satisfies it and, for every
+// kind but consecutiveDays (evaluated over the whole log set, not one
+// session), qualifies per logQualifiesForMilestone above.
 export function requirementAutoSatisfied(requirement: MilestoneRequirement, logs: SessionLog[]): boolean {
   if (requirement.kind === 'consecutiveDays') return hasConsecutiveTrainingDays(logs, requirement.days);
   if (requirement.kind === 'manual') return false;
-  return logs.some((log) => logSatisfiesRequirement(log, requirement));
+  return logs.some((log) => logQualifiesForMilestone(log, requirement));
 }
 
 export interface MilestoneView {

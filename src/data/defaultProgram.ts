@@ -301,21 +301,38 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
 // op D+: afstand, D+, D-, uren op de benen, rugzakgewicht en back-to-back
 // herstel tellen allemaal mee. Rich content (waarom/behaald wanneer/bronnen)
 // per stap staat in data/gr5Details.ts — zie MilestoneDetailSheet.
+//
+// Sports-science review (Fase 5, item G1): heringedeeld van één lineaire
+// keten in parallelle assen (aerobe basis, tijd-op-de-benen, ascent/D+,
+// descent/D- als eigen as, rugzak, meerdaagse belastbaarheid) die
+// geïnterleaved staan in plaats van axis-voor-axis — je hoeft niet eerst
+// alle D+ te maxen voordat rugzak of meerdaagse training aan bod komen.
+// Descent volgt bewust een tempo achter ascent (excentrische tolerantie
+// bouwt trager op dan concentrische capaciteit) in plaats van elke D+-stap
+// automatisch een gelijke D- te laten eisen. Rugzak start lichter en
+// eerder, in plaats van in één late sprong naar het volledige eventgewicht.
+// Meerdaagse belastbaarheid start met een lichte 2-dagen-streak vroeg in de
+// ladder, met de zwaardere weekend-bergsimulatie als latere capstone.
+// Stabiele ids blijven vrijwel allemaal ongewijzigd (alleen de nieuwe
+// rugzak-mijlpaal is echt nieuw) zodat storage/goalMilestoneSync.ts al
+// bestaande GoalMilestoneProgress-rijen op een al-gemigreerd device zonder
+// dataverlies kan laten doorlopen — zie dat bestand.
 // ---------------------------------------------------------------------------
 
 function buildObjective(): Objective {
   const objectiveId = 'obj_gr5';
   const defs: Array<[string, Objective['milestones'][number]['requirement']]> = [
-    ['40 min Easy Run onafgebroken', { kind: 'duration', activityType: 'cardio', minMinutes: 40 }],
+    ['40 min makkelijk tempo — hardlopen of stevig wandelen', { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 }],
     ['60 min bergconditie volhouden', { kind: 'duration', activityType: 'hiking', minMinutes: 60 }],
     ['15 km wandeling', { kind: 'distance', minKm: 15 }],
-    ['300 D+ / D-', { kind: 'elevation', minMeters: 300, minLossMeters: 300 }],
-    ['500 D+ / D-', { kind: 'elevation', minMeters: 500, minLossMeters: 500 }],
-    ['750 D+ / D-', { kind: 'elevation', minMeters: 750, minLossMeters: 750 }],
-    ['1000 D+ + afdaalcapaciteit', { kind: 'elevation', minMeters: 1000, minLossMeters: 1000 }],
+    ['Twee dagen achter elkaar (licht)', { kind: 'consecutiveDays', days: 2 }],
+    ['300 D+', { kind: 'elevation', minMeters: 300 }],
+    ['Lichte rugzaksessie — 8 kg / 10 km', { kind: 'backpack', minWeightKg: 8, minKm: 10 }],
+    ['500 D+ / 300 D-', { kind: 'elevation', minMeters: 500, minLossMeters: 300 }],
+    ['750 D+ / 500 D-', { kind: 'elevation', minMeters: 750, minLossMeters: 500 }],
+    ['1000 D+ / 750 D-', { kind: 'elevation', minMeters: 1000, minLossMeters: 750 }],
     ['15 km + 1000 D+', { kind: 'distanceAndElevation', minKm: 15, minMeters: 1000 }],
-    ['Volledige rugzaksessie', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
-    ['Twee dagen achter elkaar', { kind: 'consecutiveDays', days: 2 }],
+    ['Volledige rugzaksessie — 12 kg / 15 km', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
     ['Weekend bergsimulatie', { kind: 'manual' }],
     ['GR5 KLAAR', { kind: 'manual' }],
   ];
