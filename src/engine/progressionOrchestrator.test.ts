@@ -60,6 +60,17 @@ describe('computeProgressionDecision', () => {
     expect(decision.ruleId).toBe('HEURISTIC-PROGRESSION-TREND-GATE');
   });
 
+  it('consolidates when the most recent session was a single-session spike vs. its own 30-day baseline', () => {
+    const recentLogs: SessionLog[] = [
+      log({ completedDate: '2026-09-05', outdoorData: { durationMinutes: 200, distanceKm: 23, source: 'manual' } }),
+      log({ completedDate: '2026-08-20', outdoorData: { durationMinutes: 100, distanceKm: 15, source: 'manual' } }),
+    ];
+    const decision = computeProgressionDecision({ key: KEY, estimate: estimate({ trend: 'stable' }), readiness: readiness(), recentLogs });
+    expect(decision.state).toBe('consolidate');
+    expect(decision.ruleId).toBe('HEURISTIC-PROGRESSION-SPIKE-DETECTED');
+    expect(decision.reason).toMatch(/afstand/);
+  });
+
   it('progresses when confidence is high, trend is stable/rising and readiness is good', () => {
     const decision = computeProgressionDecision({ key: KEY, estimate: estimate({ trend: 'rising' }), readiness: readiness() });
     expect(decision.state).toBe('progress');
