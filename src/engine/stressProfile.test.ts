@@ -1,6 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { resolveEffectiveStressProfile, deriveObservedStressFromLog, legacyIsLegHeavyToStressProfile } from './stressProfile';
+import { resolveEffectiveStressProfile, deriveObservedStressFromLog, legacyIsLegHeavyToStressProfile, isLegHeavy } from './stressProfile';
 import type { SessionLog } from '../models/training';
+
+describe('isLegHeavy', () => {
+  it('flags the three legacy leg-heavy templates', () => {
+    expect(isLegHeavy('tpl_lower_a')).toBe(true);
+    expect(isLegHeavy('tpl_lower_b')).toBe(true);
+    expect(isLegHeavy('tpl_bergconditie')).toBe(true);
+  });
+
+  it('does not flag other templates', () => {
+    expect(isLegHeavy('tpl_easy_run')).toBe(false);
+    expect(isLegHeavy('unknown_template')).toBe(false);
+  });
+});
 
 function log(overrides: Partial<SessionLog> = {}): SessionLog {
   return {

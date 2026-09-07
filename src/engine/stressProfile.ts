@@ -12,7 +12,18 @@
 
 import type { SessionLog } from '../models/training';
 import type { LoadLevel, SessionStressProfile } from '../models/prescription';
-import { isLegHeavy } from './scheduler';
+
+// Relocated here from engine/scheduler.ts (sports-science review, Fase 2):
+// scheduler.ts now reads leg-heaviness through resolveEffectiveStressProfile
+// below instead of this hardcoded set, so keeping the set (and the import)
+// in scheduler.ts would have created a circular scheduler.ts <-> stressProfile.ts
+// dependency. This lives here now purely as the legacy-fallback's own data,
+// self-contained.
+const LEGACY_LEG_HEAVY_TEMPLATE_IDS = new Set(['tpl_lower_a', 'tpl_lower_b', 'tpl_bergconditie']);
+
+export function isLegHeavy(templateId: string): boolean {
+  return LEGACY_LEG_HEAVY_TEMPLATE_IDS.has(templateId);
+}
 
 // The legacy adapter (review point 8): maps the existing hardcoded
 // leg-heavy template-id set to a real SessionStressProfile shape, so
