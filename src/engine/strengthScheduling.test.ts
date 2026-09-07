@@ -3,6 +3,8 @@ import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedR
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { TrainingAvailability } from '../models/goalEngineConfig';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
+import type { TrainingGoal, GoalRequirement } from '../models/goals';
+import type { GoalOverview } from './goalOverview';
 
 const ASOF = '2026-09-09'; // Wednesday — forecast is week +2 onward: 2026-09-21 Monday and later
 const FORECAST_MONDAY = '2026-09-21';
@@ -22,6 +24,39 @@ const tplLowerB: SessionTemplate = { id: 'tpl_lower_b', name: 'Lower B', type: '
 const tplLongRun: SessionTemplate = { id: 'tpl_long_run', name: 'Lange Duurloop', type: 'hiking', durationVariants: { full: 75 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'high' } };
 const tplEasyRun: SessionTemplate = { id: 'tpl_easy_run', name: 'Easy Run', type: 'cardio', durationVariants: { full: 30 }, baseStressProfile: { lowerBodyLoad: 'none', impact: 'light', eccentricLoad: 'none', intensity: 'moderate' } };
 const templates = [tplUpperA, tplLowerA, tplUpperB, tplLowerB, tplLongRun, tplEasyRun];
+
+function goalOverview(overrides: {
+  goalId: string;
+  discipline: string;
+  normalizedPct: number;
+  status?: GoalOverview['feasibility']['status'];
+  tapering?: boolean;
+}): GoalOverview {
+  const requirements: GoalRequirement[] = [
+    { id: 'r1', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 20, unit: 'km' }, discipline: overrides.discipline },
+  ];
+  const goal: TrainingGoal = {
+    id: overrides.goalId,
+    name: overrides.goalId,
+    requirements,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    status: 'active',
+    targetDate: '2026-12-01',
+  };
+  return {
+    goal,
+    gaps: [],
+    feasibility: { goalId: overrides.goalId, status: overrides.status ?? 'on_track', confidence: 'medium', explanation: '' },
+    focus: {
+      goalId: overrides.goalId,
+      score: overrides.normalizedPct,
+      normalizedPct: overrides.normalizedPct,
+      reasons: overrides.tapering ? [{ component: 'phase', points: 15 }] : [{ component: 'base', points: 10 }],
+      asOf: ASOF,
+    },
+  };
+}
 
 function strategy(overrides: Partial<StrengthProgramStrategy> = {}): StrengthProgramStrategy {
   return {
@@ -45,19 +80,19 @@ describe('computeStrengthPlacementPlan', () => {
       session('s2', 'tpl_lower_a', '2026-09-23', FORECAST_MONDAY),
       session('s3', 'tpl_upper_b', '2026-09-24', FORECAST_MONDAY),
     ];
-    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF);
+    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF, []);
     expect(proposal.changes).toEqual([]);
   });
 
   it('never proposes anything for the committed range, even with an off-strategy session there', () => {
     const committedSession = session('ps_committed', 'tpl_lower_b', '2026-09-07', '2026-09-07');
-    const proposal = computeStrengthPlacementPlan(strategy(), [committedSession], templates, availability(), ASOF);
+    const proposal = computeStrengthPlacementPlan(strategy(), [committedSession], templates, availability(), ASOF, []);
     expect(proposal.changes).toEqual([]);
   });
 
   it('removes an off-strategy strength session (old split leftover) in the forecast range', () => {
     const sessions = [session('leftover', 'tpl_lower_b', FORECAST_MONDAY, FORECAST_MONDAY)];
-    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF);
+    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF, []);
     const removeItem = proposal.changes.find((c) => c.plannedSessionId === 'leftover');
     expect(removeItem?.action).toBe('remove');
     expect(removeItem?.reason).toMatch(/Lower B/);
@@ -68,7 +103,7 @@ describe('computeStrengthPlacementPlan', () => {
       session('s1', 'tpl_upper_a', FORECAST_MONDAY, FORECAST_MONDAY),
       session('s2', 'tpl_lower_a', '2026-09-23', FORECAST_MONDAY),
     ];
-    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF);
+    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF, []);
     const addItem = proposal.changes.find((c) => c.action === 'add');
     expect(addItem?.newSessionDraft?.templateId).toBe('tpl_upper_b');
     expect(addItem?.newSessionDraft?.weekStartDate).toBe(FORECAST_MONDAY);
@@ -82,6 +117,7 @@ describe('computeStrengthPlacementPlan', () => {
       templates,
       availability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }), // Monday blocked
       ASOF,
+      [],
     );
     const addItem = proposal.changes.find((c) => c.action === 'add');
     expect(addItem?.newSessionDraft?.scheduledDate).not.toBe(FORECAST_MONDAY);
@@ -97,6 +133,7 @@ describe('computeStrengthPlacementPlan', () => {
       templates,
       availability(),
       ASOF,
+      [],
     );
     const addItem = proposal.changes.find((c) => c.action === 'add');
     expect(addItem?.newSessionDraft?.scheduledDate).toBeDefined();
@@ -116,6 +153,7 @@ describe('computeStrengthPlacementPlan', () => {
       templates,
       availability(),
       ASOF,
+      [],
     );
     expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
   });
@@ -133,6 +171,7 @@ describe('computeStrengthPlacementPlan', () => {
       templates,
       availability(),
       ASOF,
+      [],
     );
     expect(proposal.changes).toEqual([]);
     expect(proposal.consequences).toMatch(/geen vrije dag/);
@@ -156,6 +195,7 @@ describe('computeStrengthPlacementPlan', () => {
       templates,
       availability(),
       ASOF,
+      [],
     );
     expect(proposal.changes).toEqual([]);
     expect(proposal.consequences).toMatch(/48-uursregel/);
@@ -164,13 +204,13 @@ describe('computeStrengthPlacementPlan', () => {
 
   it('never emits a replace/reduce action — placement only, content stays MacroFactor\'s job', () => {
     const sessions = [session('leftover', 'tpl_lower_b', FORECAST_MONDAY, FORECAST_MONDAY)];
-    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF);
+    const proposal = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF, []);
     expect(proposal.changes.every((c) => c.action === 'add' || c.action === 'remove')).toBe(true);
   });
 
   it('is idempotent — running again after a first reconciliation produces no further changes', () => {
     const sessions = [session('leftover', 'tpl_lower_b', FORECAST_MONDAY, FORECAST_MONDAY)];
-    const first = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF);
+    const first = computeStrengthPlacementPlan(strategy(), sessions, templates, availability(), ASOF, []);
 
     // Simulate applying the first proposal: leftover skipped, new sessions added.
     const afterApply: PlannedSession[] = [
@@ -179,8 +219,152 @@ describe('computeStrengthPlacementPlan', () => {
         .filter((c) => c.action === 'add')
         .map((c, i) => session(`new${i}`, c.newSessionDraft!.templateId, c.newSessionDraft!.scheduledDate, c.newSessionDraft!.weekStartDate)),
     ];
-    const second = computeStrengthPlacementPlan(strategy(), afterApply, templates, availability(), ASOF);
+    const second = computeStrengthPlacementPlan(strategy(), afterApply, templates, availability(), ASOF, []);
     expect(second.changes).toEqual([]);
+  });
+});
+
+describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback', () => {
+  // A fully-booked week (the normal ASCEND state) with one cardio filler
+  // (Easy Run) among otherwise leg-heavy long-run days — a genuine,
+  // honestly-scoreable swap candidate distinct from recovery/hiking, which
+  // are never candidates regardless of score.
+  // Easy Run sits between two unrecognized-template stub days (never
+  // candidates, never leg-heavy) so placing the missing (leg-heavy) Lower A
+  // there never trips the unrelated 48h rule — the long-run days are kept
+  // safely >1 day away.
+  function packedWeekWithFiller(): PlannedSession[] {
+    return [
+      session('herstel1', 'tpl_herstel_stub', '2026-09-21', FORECAST_MONDAY),
+      session('easy', 'tpl_easy_run', '2026-09-22', FORECAST_MONDAY),
+      session('herstel2', 'tpl_herstel_stub', '2026-09-23', FORECAST_MONDAY),
+      session('h1', 'tpl_long_run', '2026-09-24', FORECAST_MONDAY),
+      session('h2', 'tpl_long_run', '2026-09-25', FORECAST_MONDAY),
+      session('h3', 'tpl_long_run', '2026-09-26', FORECAST_MONDAY),
+      session('h4', 'tpl_long_run', '2026-09-27', FORECAST_MONDAY),
+    ];
+  }
+
+  it('swaps in the missing strength session for a zero-relevance candidate when there are no active goals', () => {
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      packedWeekWithFiller(),
+      templates,
+      availability(),
+      ASOF,
+      [],
+    );
+    const removed = proposal.changes.find((c) => c.action === 'remove');
+    const added = proposal.changes.find((c) => c.action === 'add');
+    expect(removed?.plannedSessionId).toBe('easy'); // the only eligible (non-recovery, non-hiking) candidate
+    expect(added?.newSessionDraft?.templateId).toBe('tpl_lower_a');
+    expect(added?.newSessionDraft?.scheduledDate).toBe('2026-09-22');
+  });
+
+  it('never swaps out a hiking session even when it would otherwise be the lowest-relevance candidate', () => {
+    // Same shape, but with no cardio filler at all — only hiking days plus
+    // an unrecognized recovery-stub session — so no eligible candidate
+    // exists no matter how low the (nonexistent) relevance bar is.
+    const sessions = [
+      session('herstel', 'tpl_herstel_stub', '2026-09-21', FORECAST_MONDAY),
+      session('h1', 'tpl_long_run', '2026-09-22', FORECAST_MONDAY),
+      session('h2', 'tpl_long_run', '2026-09-23', FORECAST_MONDAY),
+      session('h3', 'tpl_long_run', '2026-09-24', FORECAST_MONDAY),
+      session('h4', 'tpl_long_run', '2026-09-25', FORECAST_MONDAY),
+      session('h5', 'tpl_long_run', '2026-09-26', FORECAST_MONDAY),
+      session('h6', 'tpl_long_run', '2026-09-27', FORECAST_MONDAY),
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      sessions,
+      templates,
+      availability(),
+      ASOF,
+      [],
+    );
+    expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
+    expect(proposal.consequences).toMatch(/geen vrije dag/);
+  });
+
+  it('refuses to swap out a candidate with meaningful goal relevance when no goal is under pressure', () => {
+    // A single active running goal — Easy Run genuinely serves it, so its
+    // relevance is 100% (the only goal always gets the full share) and no
+    // goal is tapering/challenging — nothing clears the calm 0% bar.
+    const overviews = [goalOverview({ goalId: 'g1', discipline: 'running', normalizedPct: 100 })];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      packedWeekWithFiller(),
+      templates,
+      availability(),
+      ASOF,
+      overviews,
+    );
+    expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
+  });
+
+  it('allows swapping a modestly-relevant candidate once another active goal is under real pressure', () => {
+    // Goal A (hiking, tapering — under pressure) has no link to the Easy
+    // Run candidate at all; Goal B (running, calm) does, at a modest 15%
+    // share. Goal A being under pressure raises the bar enough for Goal
+    // B's own 15% to still clear it.
+    const overviews = [
+      goalOverview({ goalId: 'gA', discipline: 'hiking', normalizedPct: 85, tapering: true }),
+      goalOverview({ goalId: 'gB', discipline: 'running', normalizedPct: 15 }),
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      packedWeekWithFiller(),
+      templates,
+      availability(),
+      ASOF,
+      overviews,
+    );
+    const removed = proposal.changes.find((c) => c.action === 'remove');
+    expect(removed?.plannedSessionId).toBe('easy');
+    expect(removed?.reason).toMatch(/Goal Focus/);
+  });
+
+  it('never touches an already-logged session as a swap candidate, even at zero relevance', () => {
+    // ASOF = 2026-09-09 (Wednesday) — committed range starts 2026-09-07.
+    const committedMonday = '2026-09-07';
+    const sessions = [
+      session('herstel', 'tpl_herstel_stub', '2026-09-07', committedMonday),
+      session('easy', 'tpl_easy_run', '2026-09-08', committedMonday),
+      session('easy2', 'tpl_easy_run', '2026-09-09', committedMonday),
+      session('herstel2', 'tpl_herstel_stub', '2026-09-10', committedMonday),
+      session('h2', 'tpl_long_run', '2026-09-11', committedMonday),
+      session('h3', 'tpl_long_run', '2026-09-12', committedMonday),
+      session('h4', 'tpl_long_run', '2026-09-13', committedMonday),
+    ];
+    const log: SessionLog = {
+      id: 'log1',
+      plannedSessionId: 'easy',
+      templateId: 'tpl_easy_run',
+      type: 'cardio',
+      completedDate: '2026-09-08',
+      completedAt: '2026-09-08T10:00:00.000Z',
+      variant: 'full',
+      durationMinutes: 30,
+      source: 'manual',
+    };
+    // computeStrengthPlacementPlan itself never receives sessionLogs (the
+    // forecast range has none by definition), so this exercises the same
+    // guard through computeStrengthPlacementPlanForCommittedRange instead,
+    // which does — a forecast-only equivalent isn't meaningfully
+    // constructible since nothing in the forecast range can be logged yet.
+    const proposal = computeStrengthPlacementPlanForCommittedRange(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      sessions,
+      templates,
+      availability(),
+      [log],
+      ASOF,
+      [],
+    );
+    expect(proposal.changes.find((c) => c.action === 'remove' && c.plannedSessionId === 'easy')).toBeUndefined();
+    // The unlogged twin is still fair game — proves 'easy' was skipped
+    // specifically because it's logged, not because no candidate existed.
+    expect(proposal.changes.find((c) => c.action === 'remove' && c.plannedSessionId === 'easy2')).toBeDefined();
   });
 });
 
@@ -195,14 +379,14 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
       session('s1', 'tpl_upper_a', COMMITTED_MONDAY_1, COMMITTED_MONDAY_1),
       session('s2', 'tpl_lower_a', '2026-09-09', COMMITTED_MONDAY_1),
     ];
-    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), sessions, templates, availability(), [], ASOF);
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), sessions, templates, availability(), [], ASOF, []);
     const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
     expect(addItem?.newSessionDraft?.templateId).toBe('tpl_upper_b');
   });
 
   it('removes an off-strategy committed-range session that has no log', () => {
     const leftover = session('leftover', 'tpl_lower_b', COMMITTED_MONDAY_2, COMMITTED_MONDAY_2);
-    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [leftover], templates, availability(), [], ASOF);
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [leftover], templates, availability(), [], ASOF, []);
     const removeItem = proposal.changes.find((c) => c.plannedSessionId === 'leftover');
     expect(removeItem?.action).toBe('remove');
   });
@@ -220,13 +404,13 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
       durationMinutes: 70,
       source: 'manual',
     };
-    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [logged], templates, availability(), [log], ASOF);
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [logged], templates, availability(), [log], ASOF, []);
     expect(proposal.changes.some((c) => c.plannedSessionId === 'logged')).toBe(false);
   });
 
   it('never produces changes outside the committed range', () => {
     const forecastLeftover = session('leftover', 'tpl_lower_b', FORECAST_MONDAY, FORECAST_MONDAY);
-    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [forecastLeftover], templates, availability(), [], ASOF);
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [forecastLeftover], templates, availability(), [], ASOF, []);
     expect(proposal.changes.some((c) => c.plannedSessionId === 'leftover')).toBe(false);
   });
 });

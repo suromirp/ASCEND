@@ -55,7 +55,7 @@ export function StrengthProgramWizard({
   onClose: () => void;
   onActivated?: () => void;
 }) {
-  const { templates, plannedSessions, goalEngineConfig, activateStrengthProgram } = useAppData();
+  const { templates, plannedSessions, goalEngineConfig, goalOverviews, activateStrengthProgram } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const [step, setStep] = useState<Step>({ kind: 'sessions', draft: initialStrategy });
 
@@ -104,6 +104,7 @@ export function StrengthProgramWizard({
                 plannedSessions={plannedSessions}
                 templates={templates}
                 availability={goalEngineConfig.availability}
+                goalOverviews={goalOverviews}
                 onBack={() => setStep({ kind: 'focus', draft: step.draft })}
                 onConfirm={() => void handleConfirm(step.draft)}
               />
@@ -144,15 +145,15 @@ export function StrengthProgramWizard({
 // (production feedback: "ascend moet die optie bij de gebruiker leggen en
 // wel zelf zijn voorkeur daarbij geven").
 function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramStrategy; onClose: () => void }) {
-  const { plannedSessions, templates, sessionLogs, goalEngineConfig, applyStrengthPlacementToCommittedRange } = useAppData();
+  const { plannedSessions, templates, sessionLogs, goalEngineConfig, goalOverviews, applyStrengthPlacementToCommittedRange } = useAppData();
   const [phase, setPhase] = useState<'idle' | 'preview' | 'applying' | 'applied' | 'no_changes'>('idle');
 
   const forecastStart = addDays(mondayOfWeek(todayISO()), 14);
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
 
   const committedProposal = useMemo(
-    () => computeStrengthPlacementPlanForCommittedRange(strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, todayISO()),
-    [strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs],
+    () => computeStrengthPlacementPlanForCommittedRange(strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, todayISO(), goalOverviews),
+    [strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, goalOverviews],
   );
 
   async function confirmApply() {
@@ -490,6 +491,7 @@ function PreviewStep({
   plannedSessions,
   templates,
   availability,
+  goalOverviews,
   onBack,
   onConfirm,
 }: {
@@ -497,12 +499,13 @@ function PreviewStep({
   plannedSessions: Parameters<typeof computeStrengthPlacementPlan>[1];
   templates: Parameters<typeof computeStrengthPlacementPlan>[2];
   availability: Parameters<typeof computeStrengthPlacementPlan>[3];
+  goalOverviews: Parameters<typeof computeStrengthPlacementPlan>[5];
   onBack: () => void;
   onConfirm: () => void;
 }) {
   const proposal = useMemo(
-    () => computeStrengthPlacementPlan(draft, plannedSessions, templates, availability, todayISO()),
-    [draft, plannedSessions, templates, availability],
+    () => computeStrengthPlacementPlan(draft, plannedSessions, templates, availability, todayISO(), goalOverviews),
+    [draft, plannedSessions, templates, availability, goalOverviews],
   );
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const removed = proposal.changes.filter((c) => c.action === 'remove');

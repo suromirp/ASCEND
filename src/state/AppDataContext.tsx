@@ -46,7 +46,7 @@ import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan } from '../models/planChange';
-import { computeActiveGoalOverviews } from '../engine/goalOverview';
+import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
 import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { detectConsecutiveRestDays, buildConsecutiveRestFixProposal } from '../engine/scheduleAnomalies';
@@ -73,6 +73,7 @@ interface AppData {
   settings: AppSettings;
   stretchCompletion: StretchCompletion;
   templateById: Map<string, SessionTemplate>;
+  goalOverviews: GoalOverview[];
   refresh: () => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
   logSession: (input: LogSessionInput) => Promise<void>;
@@ -321,14 +322,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // questions) between preview and confirm.
   const activateStrengthProgram = useCallback(
     async (strategy: StrengthProgramStrategy) => {
-      const [strategies, planned, tpls, engineConfig] = await Promise.all([
+      const [strategies, planned, tpls, engineConfig, goals, logs, manualEvidence] = await Promise.all([
         StrengthProgramStrategiesRepo.getAll(),
         PlannedSessionsRepo.getAll(),
         SessionTemplatesRepo.getAll(),
         GoalEngineConfigRepo.get(),
+        TrainingGoalsRepo.getAll(),
+        SessionLogsRepo.getAll(),
+        CapabilityEvidenceRepo.getAll(),
       ]);
+      const asOf = todayISO();
+      const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
+      const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
 
-      const proposal = computeStrengthPlacementPlan(strategy, planned, tpls, engineConfig.availability, todayISO());
+      const proposal = computeStrengthPlacementPlan(strategy, planned, tpls, engineConfig.availability, asOf, overviews);
       const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
       if (unsupported.length > 0) {
         // Same atomicity guarantee as runForecastReplan: never an
@@ -363,14 +370,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const applyStrengthPlacementToCommittedRange = useCallback(
     async (strategy: StrengthProgramStrategy): Promise<boolean> => {
-      const [planned, tpls, logs, engineConfig] = await Promise.all([
+      const [planned, tpls, logs, engineConfig, goals, manualEvidence] = await Promise.all([
         PlannedSessionsRepo.getAll(),
         SessionTemplatesRepo.getAll(),
         SessionLogsRepo.getAll(),
         GoalEngineConfigRepo.get(),
+        TrainingGoalsRepo.getAll(),
+        CapabilityEvidenceRepo.getAll(),
       ]);
+      const asOf = todayISO();
+      const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
+      const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
 
-      const proposal = computeStrengthPlacementPlanForCommittedRange(strategy, planned, tpls, engineConfig.availability, logs, todayISO());
+      const proposal = computeStrengthPlacementPlanForCommittedRange(strategy, planned, tpls, engineConfig.availability, logs, asOf, overviews);
       if (proposal.changes.length === 0) return false;
 
       const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
@@ -551,6 +563,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [refresh, runForecastReplan, runStrengthReviewCheck]);
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
+
+  // Reactive mirror of the same computeActiveGoalOverviews call every
+  // strength-review function already makes from fresh repo reads — exposed
+  // here too so UI-time consumers (e.g. StrengthProgramWizard's committed-
+  // range opt-in) can read current Goal Focus without duplicating the
+  // wiring or waiting for a refresh() round-trip.
+  const goalOverviews = useMemo(
+    () =>
+      computeActiveGoalOverviews(
+        trainingGoals,
+        [...extractEvidenceFromLogs(sessionLogs), ...capabilityEvidence],
+        goalEngineConfig.availability,
+        goalEngineConfig.guardrails,
+        todayISO(),
+      ),
+    [trainingGoals, sessionLogs, capabilityEvidence, goalEngineConfig],
+  );
 
   const sessionsForWeek = useCallback(
     (weekStartDate: string) => plannedSessions.filter((s) => s.weekStartDate === weekStartDate || mondayOfWeek(s.scheduledDate) === weekStartDate),
@@ -903,6 +932,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     settings,
     stretchCompletion,
     templateById,
+    goalOverviews,
     refresh,
     sessionsForWeek,
     logSession,
