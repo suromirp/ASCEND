@@ -187,8 +187,8 @@ function SessionsStep({
           <input
             type="number"
             min={1}
-            value={local.sessionsPerWeek}
-            onChange={(e) => setLocal((s) => ({ ...s, sessionsPerWeek: Number(e.target.value) }))}
+            value={local.sessionsPerWeek || ''}
+            onChange={(e) => setLocal((s) => ({ ...s, sessionsPerWeek: Number(e.target.value) || 0 }))}
             className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
             style={inputStyle}
           />
