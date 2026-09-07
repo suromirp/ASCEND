@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeFeasibility } from './feasibility';
+import { computeFeasibility, hasSufficientAvailability } from './feasibility';
 import type { CapabilityGap } from '../models/capability';
 import type { TrainingAvailability, TrainingGuardrail } from '../models/goalEngineConfig';
 
@@ -76,10 +76,48 @@ describe('computeFeasibility', () => {
     expect(typeof result.explanation).toBe('string');
   });
 
+  // Fase 6 (sports-science review, item E1): availability is now a forward
+  // simulation (weeks remaining × long-session days = projected exposures),
+  // not a static "<4 allowed days = insufficient" hard gate.
+  it('a major_gap can still read as merely challenging with only 3 allowed days, given enough long-session exposures over a long runway', () => {
+    const result = computeFeasibility({
+      goalId: 'g1', gaps: [gap({ status: 'major_gap' })], weeksRemaining: 12,
+      availability: availability({ allowedDays: ['sat', 'sun', 'wed'], longSessionDays: ['sat'] }), guardrails: [],
+    });
+    // 12 weeks x 1 long-session day/week = 12 projected exposures, well
+    // past the pass bar — the old hard gate would have called 3 allowed
+    // days insufficient regardless of this runway.
+    expect(result.status).toBe('challenging');
+  });
+
   it('mentions an outside-guardrail alternative only when unlikely and a block guardrail is set', () => {
     const guardrails: TrainingGuardrail[] = [{ id: 'g1', ruleId: 'HEURISTIC-ELEVATION-PROGRESSION-BANDS', mode: 'block' }];
     const result = computeFeasibility({ goalId: 'g1', gaps: [gap({ status: 'major_gap' })], weeksRemaining: 2, availability: availability(), guardrails });
     expect(result.status).toBe('unlikely');
     expect(result.bestPossiblePreparation).toMatch(/guardrail/);
+  });
+});
+
+describe('hasSufficientAvailability', () => {
+  it('falls back to the plain weekly-pattern snapshot when there is no deadline to simulate against', () => {
+    expect(hasSufficientAvailability(undefined, availability({ allowedDays: ['mon', 'tue'], longSessionDays: ['sun'] }))).toBe(false); // <4 allowed days
+    expect(hasSufficientAvailability(undefined, availability())).toBe(true); // 7 allowed days, 1 long-session day
+  });
+
+  it('a short runway can make an otherwise-fine weekly pattern insufficient — too few projected exposures', () => {
+    // 2 weeks x 1 long-session day/week = 2 projected exposures, short of
+    // the pass bar even though the weekly pattern itself has 7 allowed days.
+    expect(hasSufficientAvailability(2, availability())).toBe(false);
+  });
+
+  it('a long runway can make a thin weekly pattern (few allowed days) sufficient, as long as long-session exposures accumulate', () => {
+    // 10 weeks x 1 long-session day/week = 10 projected exposures — past
+    // the pass bar even with only 2 allowed days, which the old static
+    // "<4 allowed days" gate would always have called insufficient.
+    expect(hasSufficientAvailability(10, availability({ allowedDays: ['sat', 'sun'], longSessionDays: ['sun'] }))).toBe(true);
+  });
+
+  it('zero long-session days is never sufficient, regardless of runway length', () => {
+    expect(hasSufficientAvailability(52, availability({ longSessionDays: [] }))).toBe(false);
   });
 });

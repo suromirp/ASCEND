@@ -21,7 +21,19 @@ import { capabilityKeyLabel } from '../data/baselineQuestions';
 // de progression heuristic niet stil").
 const TIGHT_RUNWAY_WEEKS = 4;
 const GENEROUS_RUNWAY_WEEKS = 8;
-const MIN_SUFFICIENT_ALLOWED_DAYS = 4;
+// Only used when there's no deadline to simulate a runway against at all
+// (see hasSufficientAvailability below) — a plain "is this a workable
+// weekly pattern" snapshot, not a hard gate on whether a real gap can close.
+const FALLBACK_MIN_ALLOWED_DAYS = 4;
+
+// ASCEND_HEURISTIC(FEASIBILITY-FORWARD-SIMULATION): Fase 6 (sports-science
+// review, item E1). A closed major_gap realistically needs several repeated
+// long-session exposures (the D+/distance/pack sessions that actually move
+// a mountain-adventure capability), not just calendar weeks. Not a
+// validated number — a starting estimate of "the fewest long-session
+// occurrences that could plausibly close a major gap," reused as the
+// forward-simulation's pass bar below.
+const MIN_LONG_SESSION_EXPOSURES_FOR_MAJOR_GAP = 6;
 
 const GAP_SEVERITY: Record<GapStatus, number> = {
   exceeds: 0,
@@ -32,8 +44,21 @@ const GAP_SEVERITY: Record<GapStatus, number> = {
   unknown: -1, // handled separately — never treated as a demonstrated deficiency (§23)
 };
 
-function hasSufficientAvailability(availability: TrainingAvailability): boolean {
-  return availability.allowedDays.length >= MIN_SUFFICIENT_ALLOWED_DAYS && availability.longSessionDays.length >= 1;
+// Previously a static snapshot — <4 allowed days OR 0 long-session days
+// always read as "insufficient" regardless of how many weeks remained, and
+// conversely any pattern meeting that bar always counted as "sufficient"
+// even with almost no runway left to actually use it. Replaced with a
+// simple forward simulation: how many real long-session exposures the
+// remaining weeks × the weekly long-session pattern would actually produce.
+// A goal with no deadline has no runway to simulate against, so it falls
+// back to the original day-count snapshot — a plain "is this a workable
+// weekly pattern" read, not a projection.
+export function hasSufficientAvailability(weeksRemaining: number | undefined, availability: TrainingAvailability): boolean {
+  if (weeksRemaining === undefined) {
+    return availability.allowedDays.length >= FALLBACK_MIN_ALLOWED_DAYS && availability.longSessionDays.length >= 1;
+  }
+  const projectedLongSessionExposures = Math.floor(Math.max(0, weeksRemaining)) * availability.longSessionDays.length;
+  return availability.allowedDays.length >= 1 && projectedLongSessionExposures >= MIN_LONG_SESSION_EXPOSURES_FOR_MAJOR_GAP;
 }
 
 function worstOf(gaps: CapabilityGap[]): CapabilityGap | undefined {
@@ -91,7 +116,7 @@ export function computeFeasibility(inputs: FeasibilityInputs): FeasibilityAssess
   // worst is defined here: allUnknown is false, so at least one gap has a
   // known (non-'unknown') status.
   const severity = worst ? GAP_SEVERITY[worst.status] : 0;
-  const sufficientAvailability = hasSufficientAvailability(availability);
+  const sufficientAvailability = hasSufficientAvailability(weeksRemaining, availability);
 
   let status: FeasibilityAssessment['status'];
   if (severity <= 1) {
