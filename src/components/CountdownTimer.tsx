@@ -100,7 +100,7 @@ export function CountdownTimer({
                   <input
                     type="number"
                     min={0}
-                    value={Math.floor(totalSeconds / 60)}
+                    value={Math.floor(totalSeconds / 60) || ''}
                     onChange={(e) => applyDuration(Number(e.target.value) || 0, totalSeconds % 60)}
                     className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
                     style={inputStyle}
@@ -112,7 +112,7 @@ export function CountdownTimer({
                     type="number"
                     min={0}
                     max={59}
-                    value={totalSeconds % 60}
+                    value={(totalSeconds % 60) || ''}
                     onChange={(e) => applyDuration(Math.floor(totalSeconds / 60), Number(e.target.value) || 0)}
                     className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
                     style={inputStyle}
