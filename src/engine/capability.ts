@@ -15,7 +15,7 @@
 // later without touching extraction or the Demand/Gap engines.
 
 import type { SessionLog } from '../models/training';
-import type { CapabilityEvidence, CapabilityKey, CapabilityEstimate, RecencyBand, Confidence } from '../models/capability';
+import type { CapabilityEvidence, CapabilityKey, CapabilityEstimate, CapabilityDimension, RecencyBand, Confidence } from '../models/capability';
 import type { MeasuredValue } from '../models/units';
 import { UNIT_COMPARISON_DIRECTION } from '../models/units';
 import { daysBetween } from '../utils/dates';
@@ -137,20 +137,57 @@ export function extractEvidenceFromLogs(logs: SessionLog[]): CapabilityEvidence[
 
 // --- Capability Engine: estimate from evidence (v0.2 §3, §6, §7) -----------
 
-// Day thresholds are one more ASCEND_HEURISTIC (v0.2 §3: "no universal 28-
-// day rule for capability", but a starting default is still needed until
-// per-dimension windows are tuned later).
-const RECENCY_BAND_MAX_DAYS: Record<'current' | 'supporting' | 'historical', number> = {
-  current: 21,
-  supporting: 56,
-  historical: 120,
+// ASCEND_HEURISTIC(RECENCY-BANDS-PER-DIMENSION): sports-science review
+// (Fase 6, item C1) — a single uniform 21/56/120-day window for every
+// dimension treats "40 min easy run three weeks ago" and "8kg pack carry
+// three weeks ago" as equally fresh, which they are not. Still no
+// universal N-day rule (v0.2 §3) — these are starting defaults per rough
+// physiological category, not individually validated per dimension:
+// - Aerobic/cardio engine (aerobic_engine, sustainable_output): decays
+//   fastest — cardiorespiratory fitness detraining shows measurably within
+//   2-3 weeks of reduced training, so a tighter window keeps confidence
+//   honest about how current the evidence really is.
+// - Ascent/descent/load-carriage (ascent_capacity, descent_tolerance,
+//   load_carriage): mountain-specific, largely neuromuscular/eccentric-
+//   tolerance exposure that fades with disuse but is less purely
+//   cardiovascular than running pace — a tighter "current" band than the
+//   general default still weighs recent specific exposure most heavily,
+//   without decaying quite as fast as pure aerobic capacity.
+// - Strength: slowest decay — strength/neuromuscular adaptations are
+//   consistently found to persist longer under reduced training than
+//   aerobic capacity does, so a wider window avoids under-crediting a
+//   lifter for a month without a session that isn't actually relevant to
+//   their real current strength.
+// - Everything else (endurance_duration, mechanical_tolerance,
+//   fatigue_resistance, multi_day_durability): the original general
+//   default — broad time-on-feet/durability exposure without a strong
+//   reason yet to diverge either way.
+type RecencyBandDays = Record<'current' | 'supporting' | 'historical', number>;
+
+const DEFAULT_RECENCY_BAND_MAX_DAYS: RecencyBandDays = { current: 21, supporting: 56, historical: 120 };
+const AEROBIC_RECENCY_BAND_MAX_DAYS: RecencyBandDays = { current: 14, supporting: 35, historical: 90 };
+const MOUNTAIN_SPECIFIC_RECENCY_BAND_MAX_DAYS: RecencyBandDays = { current: 14, supporting: 42, historical: 100 };
+const STRENGTH_RECENCY_BAND_MAX_DAYS: RecencyBandDays = { current: 28, supporting: 70, historical: 150 };
+
+const RECENCY_BAND_MAX_DAYS_BY_DIMENSION: Partial<Record<CapabilityDimension, RecencyBandDays>> = {
+  aerobic_engine: AEROBIC_RECENCY_BAND_MAX_DAYS,
+  sustainable_output: AEROBIC_RECENCY_BAND_MAX_DAYS,
+  ascent_capacity: MOUNTAIN_SPECIFIC_RECENCY_BAND_MAX_DAYS,
+  descent_tolerance: MOUNTAIN_SPECIFIC_RECENCY_BAND_MAX_DAYS,
+  load_carriage: MOUNTAIN_SPECIFIC_RECENCY_BAND_MAX_DAYS,
+  strength: STRENGTH_RECENCY_BAND_MAX_DAYS,
 };
 
-export function recencyBand(evidenceDate: string, asOf: string): RecencyBand {
+function recencyBandMaxDaysFor(dimension: CapabilityDimension): RecencyBandDays {
+  return RECENCY_BAND_MAX_DAYS_BY_DIMENSION[dimension] ?? DEFAULT_RECENCY_BAND_MAX_DAYS;
+}
+
+export function recencyBand(evidenceDate: string, asOf: string, dimension: CapabilityDimension): RecencyBand {
+  const maxDays = recencyBandMaxDaysFor(dimension);
   const ageDays = daysBetween(evidenceDate, asOf);
-  if (ageDays <= RECENCY_BAND_MAX_DAYS.current) return 'current';
-  if (ageDays <= RECENCY_BAND_MAX_DAYS.supporting) return 'supporting';
-  if (ageDays <= RECENCY_BAND_MAX_DAYS.historical) return 'historical';
+  if (ageDays <= maxDays.current) return 'current';
+  if (ageDays <= maxDays.supporting) return 'supporting';
+  if (ageDays <= maxDays.historical) return 'historical';
   return 'older';
 }
 
@@ -168,6 +205,28 @@ function average(values: number[]): number | undefined {
   return values.length === 0 ? undefined : values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
+// ASCEND_HEURISTIC(PEAK-CONFIRMATION-MARGIN): Fase 6 (sports-science review,
+// item C2). A standardized strength/rep test (same exercise, same load
+// definition every time) can reasonably demand the anchor be within a tight
+// ~5% of the peak to call it confirmed. A route/hike performance cannot:
+// terrain, weather, and pack all move the numbers around without the
+// underlying capability actually changing, so demanding near-exact
+// agreement would flag almost every real outdoor peak as "unconfirmed"
+// even when it plainly was. This widens the margin for everything outdoor/
+// route-based instead — a coarser, more qualitative bar, not the same
+// precision as a controlled strength test. Scoped to the two numbers
+// actually available here (peak vs. anchor magnitude); folding in
+// completion-quality/RPE as a further qualitative signal is a larger
+// change than this margin fix and is left for a future pass.
+function peakConfirmationMarginFor(dimension: CapabilityDimension): number {
+  return dimension === 'strength' ? 0.05 : 0.15;
+}
+
+function relativeDifference(a: MeasuredValue, b: MeasuredValue): number {
+  if (b.amount === 0) return a.amount === 0 ? 0 : Infinity;
+  return Math.abs(a.amount - b.amount) / Math.abs(b.amount);
+}
+
 export function computeCapabilityEstimate(key: CapabilityKey, allEvidence: CapabilityEvidence[], asOf: string): CapabilityEstimate {
   const matching = allEvidence.filter((e) => e.key.dimension === key.dimension && e.key.discipline === key.discipline);
 
@@ -178,7 +237,7 @@ export function computeCapabilityEstimate(key: CapabilityKey, allEvidence: Capab
     return { key, confidence: 'unknown', unconfirmedPeak: false, evidenceRefs: [], asOf };
   }
 
-  const withBand = matching.map((e) => ({ evidence: e, band: recencyBand(e.date, asOf) }));
+  const withBand = matching.map((e) => ({ evidence: e, band: recencyBand(e.date, asOf, key.dimension) }));
   const peakExposure = bestOf(matching.map((e) => e.measured));
 
   // Repeatable anchor: corroborated by more than one current/supporting
@@ -192,9 +251,13 @@ export function computeCapabilityEstimate(key: CapabilityKey, allEvidence: Capab
 
   // Unconfirmed when the all-time peak isn't corroborated by that anchor —
   // e.g. one exceptional session weeks ago vs. several controlled recent
-  // ones (v0.2 §7's "30 km once vs. 18-20 km repeatedly" example).
+  // ones (v0.2 §7's "30 km once vs. 18-20 km repeatedly" example). Within
+  // peakConfirmationMarginFor's context-dependent margin counts as
+  // confirmed — real repeat performances are essentially never bit-for-bit
+  // identical, especially outdoors.
   const unconfirmedPeak =
-    peakExposure !== undefined && (repeatableAnchor === undefined || peakExposure.amount !== repeatableAnchor.amount);
+    peakExposure !== undefined &&
+    (repeatableAnchor === undefined || relativeDifference(peakExposure, repeatableAnchor) > peakConfirmationMarginFor(key.dimension));
 
   const hasSubstantiveRecent = recentOrSupporting.some((e) => e.evidence.evidenceType === 'direct' || e.evidence.evidenceType === 'derived');
   const confidence: Confidence =

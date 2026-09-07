@@ -81,11 +81,28 @@ describe('extractEvidenceFromLog', () => {
 });
 
 describe('recencyBand', () => {
-  it('buckets by age in days', () => {
-    expect(recencyBand('2026-08-20', '2026-09-01')).toBe('current'); // 12 days
-    expect(recencyBand('2026-07-15', '2026-09-01')).toBe('supporting'); // 48 days
-    expect(recencyBand('2026-06-01', '2026-09-01')).toBe('historical'); // 92 days
-    expect(recencyBand('2026-01-01', '2026-09-01')).toBe('older');
+  it('buckets by age in days, using the default window for a dimension with no override', () => {
+    expect(recencyBand('2026-08-20', '2026-09-01', 'endurance_duration')).toBe('current'); // 12 days
+    expect(recencyBand('2026-07-15', '2026-09-01', 'endurance_duration')).toBe('supporting'); // 48 days
+    expect(recencyBand('2026-06-01', '2026-09-01', 'endurance_duration')).toBe('historical'); // 92 days
+    expect(recencyBand('2026-01-01', '2026-09-01', 'endurance_duration')).toBe('older');
+  });
+
+  // Fase 6 (sports-science review, item C1): per-dimension recency windows
+  // — aerobic evidence decays fastest, strength slowest.
+  it('decays aerobic/cardio evidence faster than the default window', () => {
+    expect(recencyBand('2026-08-14', '2026-09-01', 'aerobic_engine')).toBe('supporting'); // 18 days: past aerobic's 14-day current band
+    expect(recencyBand('2026-08-14', '2026-09-01', 'endurance_duration')).toBe('current'); // same age, still current under the default band
+  });
+
+  it('decays strength evidence slower than the default window', () => {
+    expect(recencyBand('2026-08-07', '2026-09-01', 'strength')).toBe('current'); // 25 days: still current under strength's 28-day band
+    expect(recencyBand('2026-08-07', '2026-09-01', 'endurance_duration')).toBe('supporting'); // same age, already past the default's 21-day band
+  });
+
+  it('gives mountain-specific dimensions (ascent/descent/pack) a tighter current band than the default', () => {
+    expect(recencyBand('2026-08-14', '2026-09-01', 'ascent_capacity')).toBe('supporting'); // 18 days: past ascent's 14-day current band
+    expect(recencyBand('2026-08-14', '2026-09-01', 'endurance_duration')).toBe('current'); // same age, still current under the default band
   });
 });
 
@@ -138,5 +155,31 @@ describe('computeCapabilityEstimate', () => {
     ];
     const estimate = computeCapabilityEstimate(paceKey, evidence, asOf);
     expect(estimate.peakExposure).toEqual({ amount: 5.5, unit: 'min_per_km' }); // faster = better
+  });
+
+  // Fase 6 (sports-science review, item C2): peak-confirmation margin is
+  // context-dependent — wider/qualitative for outdoor route performances,
+  // tight (~5%) for standardized strength tests.
+  it('confirms an outdoor peak within ~15% of its anchor — terrain/weather variability, not an exact match', () => {
+    const evidence = [
+      { id: 'e1', key, measured: { amount: 1000, unit: 'm_elevation_gain' as const }, date: '2026-08-25', evidenceType: 'direct' as const, source: 'sessionLog' as const },
+      { id: 'e2', key, measured: { amount: 900, unit: 'm_elevation_gain' as const }, date: '2026-08-28', evidenceType: 'direct' as const, source: 'sessionLog' as const },
+      { id: 'e3', key, measured: { amount: 900, unit: 'm_elevation_gain' as const }, date: '2026-08-30', evidenceType: 'direct' as const, source: 'sessionLog' as const },
+    ];
+    const estimate = computeCapabilityEstimate(key, evidence, asOf);
+    expect(estimate.peakExposure).toEqual({ amount: 1000, unit: 'm_elevation_gain' });
+    expect(estimate.repeatableAnchor).toEqual({ amount: 900, unit: 'm_elevation_gain' });
+    expect(estimate.unconfirmedPeak).toBe(false); // ~11% apart, within ascent_capacity's ~15% margin
+  });
+
+  it('demands a tighter ~5% margin for a standardized strength test — the same 11% gap stays unconfirmed', () => {
+    const strengthKey = { dimension: 'strength' as const };
+    const evidence = [
+      { id: 'e1', key: strengthKey, measured: { amount: 100, unit: 'kg' as const }, date: '2026-08-25', evidenceType: 'direct' as const, source: 'sessionLog' as const },
+      { id: 'e2', key: strengthKey, measured: { amount: 90, unit: 'kg' as const }, date: '2026-08-28', evidenceType: 'direct' as const, source: 'sessionLog' as const },
+      { id: 'e3', key: strengthKey, measured: { amount: 90, unit: 'kg' as const }, date: '2026-08-30', evidenceType: 'direct' as const, source: 'sessionLog' as const },
+    ];
+    const estimate = computeCapabilityEstimate(strengthKey, evidence, asOf);
+    expect(estimate.unconfirmedPeak).toBe(true); // ~11% apart, outside strength's ~5% margin
   });
 });
