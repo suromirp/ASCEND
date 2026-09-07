@@ -25,4 +25,11 @@ export interface ProgressionDecision {
   // heuristic parameter: three consecutive PROGRESS decisions for the same
   // key are a deliberate checkpoint, not silent indefinite progression.
   accumulationReviewDue: boolean;
+  // Fase 4 (sports-science review, item D3) — set only when
+  // engine/goalArbiter.ts#applyTaperOverride actually overrode this
+  // decision to 'taper'. The graduated 0-1 volume-reduction fraction from
+  // engine/goalArbiter.ts#taperReductionFactor, for any downstream
+  // consumer (a specialist scaling a real target, or UI copy) that needs
+  // the numeric value, not just the state.
+  taperReductionFactor?: number;
 }

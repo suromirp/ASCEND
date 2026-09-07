@@ -49,11 +49,19 @@ export function proposeCyclingPrescription(inputs: CyclingSpecialistInputs): Tra
       ? { intensity: 'low' as const, impact: 'none' as const, eccentricLoad: 'none' as const }
       : { impact: 'none' as const, eccentricLoad: 'none' as const };
 
+  // Fase 4 (sports-science review, item D3) — only ever scales a REAL
+  // candidate value the caller supplied, never fabricates one just because
+  // the state is 'taper'.
+  const durationMinutes =
+    state === 'taper' && decision.taperReductionFactor !== undefined && candidateDurationMinutes !== undefined
+      ? candidateDurationMinutes * (1 - decision.taperReductionFactor)
+      : candidateDurationMinutes;
+
   return {
     plannedSessionId,
     role: roleForState(state),
     stressProfileOverride,
-    targetDuration: candidateDurationMinutes !== undefined ? { amount: candidateDurationMinutes, unit: 'min' } : undefined,
+    targetDuration: durationMinutes !== undefined ? { amount: durationMinutes, unit: 'min' } : undefined,
     generatedBy: ['engine/specialists/cycling.ts', decision.ruleId],
     reason: decision.reason,
   };

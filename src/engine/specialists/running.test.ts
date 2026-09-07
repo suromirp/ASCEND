@@ -52,4 +52,18 @@ describe('proposeRunningPrescription', () => {
     });
     expect(candidate.role).toBe('support');
   });
+
+  it('scales a supplied distance down by taperReductionFactor when tapering', () => {
+    const candidate = proposeRunningPrescription({
+      decision: decision({ state: 'taper', taperReductionFactor: 0.3 }), plannedSessionId: 'ps1', candidateDistanceKm: 20,
+    });
+    expect(candidate.targetDistance).toEqual({ amount: 14, unit: 'km' });
+  });
+
+  it('never fabricates a distance during taper when the caller supplied none', () => {
+    const candidate = proposeRunningPrescription({
+      decision: decision({ state: 'taper', taperReductionFactor: 0.3 }), plannedSessionId: 'ps1',
+    });
+    expect(candidate.targetDistance).toBeUndefined();
+  });
 });

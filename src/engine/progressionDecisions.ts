@@ -16,6 +16,8 @@ import type { CapacityBreakdown } from './capacity';
 import { computeDemand } from './demand';
 import { computeCapabilityEstimate, keyId } from './capability';
 import { computeProgressionDecision } from './progressionOrchestrator';
+import { applyTaperOverride } from './goalArbiter';
+import { daysBetween } from '../utils/dates';
 
 export function activeGoalDemandKeys(goals: TrainingGoal[]): CapabilityKey[] {
   const keys: CapabilityKey[] = [];
@@ -33,6 +35,25 @@ export function activeGoalDemandKeys(goals: TrainingGoal[]): CapabilityKey[] {
   return keys;
 }
 
+// Fase 4 (sports-science review, item D3) — the nearest active goal's
+// deadline that actually demands this key, so applyTaperOverride can fire
+// per-key rather than only globally. A goal past its own targetDate is
+// excluded (daysBetween would go negative, which applyTaperOverride
+// already treats as "outside the window" — filtered here too so a single
+// stale goal can't hide a real, still-upcoming one behind it via Math.min).
+function nearestGoalDaysToGoal(goals: TrainingGoal[], key: CapabilityKey, asOf: string): number | undefined {
+  let nearest: number | undefined;
+  for (const goal of goals) {
+    if (goal.status !== 'active') continue;
+    const demandsKey = computeDemand(goal.requirements).some((d) => keyId(d.key) === keyId(key));
+    if (!demandsKey) continue;
+    const days = daysBetween(asOf, goal.targetDate);
+    if (days < 0) continue;
+    if (nearest === undefined || days < nearest) nearest = days;
+  }
+  return nearest;
+}
+
 export function computeProgressionDecisionsForKeys(
   keys: CapabilityKey[],
   allEvidence: CapabilityEvidence[],
@@ -46,6 +67,12 @@ export function computeProgressionDecisionsForKeys(
   // contract computeProgressionDecision itself supports.
   recentLogs: SessionLog[],
   asOf: string,
+  // Fase 4 (sports-science review, item D3) — active goals, so the taper
+  // trigger (proximity to a goal's targetDate, §32) can actually fire.
+  // Previously this aggregation never called applyTaperOverride at all:
+  // 'taper' was fully implemented in engine/goalArbiter.ts but never
+  // invoked from any live pipeline, so it never fired in production.
+  goals: TrainingGoal[],
 ): Map<string, ProgressionDecision> {
   const decisions = new Map<string, ProgressionDecision>();
   for (const key of keys) {
@@ -61,7 +88,8 @@ export function computeProgressionDecisionsForKeys(
       // scope boundary) — always 0, never guessed.
       consecutiveProgressCount: 0,
     });
-    decisions.set(keyId(key), decision);
+    const daysToGoal = nearestGoalDaysToGoal(goals, key, asOf);
+    decisions.set(keyId(key), applyTaperOverride(decision, daysToGoal));
   }
   return decisions;
 }

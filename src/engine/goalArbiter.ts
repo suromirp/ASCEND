@@ -77,6 +77,19 @@ export function arbitrateContestedSlot(slot: ContestedSlot, goalFocusById: Map<s
 // component reads, from one single source of truth.
 export const TAPER_WINDOW_DAYS = 21;
 
+// ASCEND_HEURISTIC(TAPER-REDUCTION-CURVE): E-TAPER-001/002 support a
+// progressive endurance taper of up to ~21 days with volume reduced
+// roughly 41-60% by the end while intensity/frequency stay largely intact.
+// Modeled here as a straight linear ramp from 0% at day 21 to 50% (the
+// midpoint of that reviewed range) at day 0 — not a validated day-by-day
+// curve, just less binary than a flat on/off switch.
+const TAPER_MAX_REDUCTION = 0.5;
+
+export function taperReductionFactor(daysToGoal: number | undefined): number {
+  if (daysToGoal === undefined || daysToGoal < 0 || daysToGoal > TAPER_WINDOW_DAYS) return 0;
+  return Math.round(((TAPER_WINDOW_DAYS - daysToGoal) / TAPER_WINDOW_DAYS) * TAPER_MAX_REDUCTION * 100) / 100;
+}
+
 // A goal in its taper window overrides ANY non-recover decision to
 // 'taper' — Goal Focus can rise while training volume drops (§32); a
 // genuine 'recover' need (poor readiness/response) is never masked by
@@ -85,11 +98,15 @@ export function applyTaperOverride(decision: ProgressionDecision, daysToGoal: nu
   if (daysToGoal === undefined || daysToGoal < 0 || daysToGoal > TAPER_WINDOW_DAYS) return decision;
   if (decision.state === 'recover' || decision.state === 'taper') return decision;
 
+  const factor = taperReductionFactor(daysToGoal);
+  const pct = Math.round(factor * 100);
+
   return {
     ...decision,
     state: 'taper',
-    reason: `${decision.reason} Doel is over ${daysToGoal} dag${daysToGoal === 1 ? '' : 'en'} — tapering: vermoeidheid verlagen, relevante prikkel behouden.`,
+    reason: `${decision.reason} Doel is over ${daysToGoal} dag${daysToGoal === 1 ? '' : 'en'} — tapering: ongeveer ${pct}% volumereductie, intensiteit en frequentie blijven grotendeels behouden.`,
     ruleId: 'HEURISTIC-ADVENTURE-FRESHEN',
+    taperReductionFactor: factor,
   };
 }
 

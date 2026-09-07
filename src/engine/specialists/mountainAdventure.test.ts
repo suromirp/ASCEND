@@ -56,4 +56,22 @@ describe('proposeMountainAdventurePrescription', () => {
     expect(candidate.stressProfileOverride).toEqual({ intensity: 'low' });
     expect(candidate.role).toBe('recovery');
   });
+
+  it('scales supplied elevation gain/loss down by taperReductionFactor when tapering, but leaves pack weight untouched (specificity, not volume)', () => {
+    const candidate = proposeMountainAdventurePrescription({
+      decision: decision({ dimension: 'ascent_capacity' }, { state: 'taper', taperReductionFactor: 0.2 }), plannedSessionId: 'ps1',
+      candidateElevationGainM: 1000, candidateElevationLossM: 500, candidatePackWeightKg: 10,
+    });
+    expect(candidate.elevationGain).toEqual({ amount: 800, unit: 'm_elevation_gain' });
+    expect(candidate.elevationLoss).toEqual({ amount: 400, unit: 'm_elevation_loss' });
+    expect(candidate.packWeight).toEqual({ amount: 10, unit: 'kg' });
+  });
+
+  it('never fabricates elevation targets during taper when the caller supplied none', () => {
+    const candidate = proposeMountainAdventurePrescription({
+      decision: decision({ dimension: 'ascent_capacity' }, { state: 'taper', taperReductionFactor: 0.2 }), plannedSessionId: 'ps1',
+    });
+    expect(candidate.elevationGain).toBeUndefined();
+    expect(candidate.elevationLoss).toBeUndefined();
+  });
 });

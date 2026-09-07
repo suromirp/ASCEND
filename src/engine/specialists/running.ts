@@ -67,6 +67,13 @@ export function proposeRunningPrescription(inputs: RunningSpecialistInputs): Tra
     }
   }
 
+  // Fase 4 (sports-science review, item D3) — only ever scales a REAL
+  // candidate value the caller supplied, never fabricates one just because
+  // the state is 'taper'.
+  if (state === 'taper' && decision.taperReductionFactor !== undefined && distanceKm !== undefined) {
+    distanceKm = distanceKm * (1 - decision.taperReductionFactor);
+  }
+
   const stressProfileOverride =
     state === 'reduce' || state === 'recover' ? { intensity: 'low' as const } : undefined;
 

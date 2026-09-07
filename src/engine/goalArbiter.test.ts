@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectContestedSlots, arbitrateContestedSlot, applyTaperOverride, preserveStrengthRole, TAPER_WINDOW_DAYS } from './goalArbiter';
+import { detectContestedSlots, arbitrateContestedSlot, applyTaperOverride, taperReductionFactor, preserveStrengthRole, TAPER_WINDOW_DAYS } from './goalArbiter';
 import type { SessionContribution, GoalFocus } from '../models/feasibility';
 import type { ProgressionDecision } from '../models/progression';
 
@@ -82,6 +82,32 @@ describe('applyTaperOverride', () => {
     const already = decision({ state: 'taper', ruleId: 'some-other-rule' });
     const result = applyTaperOverride(already, 5);
     expect(result).toEqual(already);
+  });
+
+  it('attaches a graduated taperReductionFactor, growing as the goal gets closer', () => {
+    const result = applyTaperOverride(decision({ state: 'progress' }), 7);
+    expect(result.taperReductionFactor).toBeGreaterThan(0);
+    expect(result.taperReductionFactor).toBeLessThan(0.5);
+  });
+});
+
+describe('taperReductionFactor', () => {
+  it('is 0 at the far edge of the taper window (day 21)', () => {
+    expect(taperReductionFactor(TAPER_WINDOW_DAYS)).toBe(0);
+  });
+
+  it('reaches the max reduction (0.5) on the event day itself', () => {
+    expect(taperReductionFactor(0)).toBe(0.5);
+  });
+
+  it('ramps linearly in between — day 14 (1/3 through) is roughly a third of the max reduction', () => {
+    expect(taperReductionFactor(14)).toBeCloseTo(0.17, 1);
+  });
+
+  it('is 0 outside the taper window or when there is no goal date at all', () => {
+    expect(taperReductionFactor(undefined)).toBe(0);
+    expect(taperReductionFactor(TAPER_WINDOW_DAYS + 1)).toBe(0);
+    expect(taperReductionFactor(-1)).toBe(0);
   });
 });
 

@@ -268,7 +268,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // engine/progressionSpikes.ts's single-session-spike check needs the
     // fuller ~30-day history to compute an honest baseline.
     const recentLogs = [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate));
-    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, capacity, engineConfig.guardrails, recentLogs, asOf);
+    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, capacity, engineConfig.guardrails, recentLogs, asOf, goals);
 
     const { proposal, prescriptions, passiveSummary } = computeForecastReplan({
       plannedSessions: planned,
