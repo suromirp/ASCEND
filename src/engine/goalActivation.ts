@@ -91,10 +91,10 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     ? {
         id: makeId('planchange'),
         trigger: 'goal_created',
-        issue: 'Onvoldoende evidence om verantwoord te plannen',
+        issue: 'Nog te weinig over jou bekend om verantwoord te plannen',
         changes: [],
         alternatives: [],
-        consequences: 'Geen schemawijzigingen worden voorgesteld totdat er meer capability-evidence is voor dit doel.',
+        consequences: 'Er verandert nu niets aan je schema — zodra ASCEND genoeg over je weet, volgen concrete voorstellen.',
         explanation: feasibility.explanation,
         createdAt: new Date().toISOString(),
       }
@@ -112,8 +112,8 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     // from now under conditions (evidence, readiness) that don't exist yet.
     changes: [],
     alternatives: [],
-    consequences: 'Geen concrete wijzigingen vooraf — na activatie past de Adaptive Replanner het schema vanaf twee weken verder doorlopend aan, op basis van dan actuele evidence, herstel en capaciteit.',
-    explanation: `Wordt pas na activatie zichtbaar: de Adaptive Replanner beoordeelt dan doorlopend herstel en capaciteit-trend voor de vervolgweken (huidige status: ${feasibility.status}).`,
+    consequences: 'Geen wijzigingen vooraf — na activatie stemt ASCEND je schema doorlopend af op je herstel en vooruitgang, vanaf twee weken verder.',
+    explanation: `Wordt pas na activatie zichtbaar: ASCEND beoordeelt dan doorlopend je herstel en vooruitgang voor de weken erna (huidige status: ${feasibility.status}).`,
     createdAt: new Date().toISOString(),
   };
 
@@ -127,7 +127,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     committedWeekChanges,
     forecastChanges,
     consequences: feasibility.status === 'insufficient_data'
-      ? 'Dit doel wordt geactiveerd zonder schemawijzigingen totdat er meer evidence is.'
+      ? 'Dit doel wordt geactiveerd zonder schemawijzigingen — ASCEND wacht met concrete voorstellen tot er genoeg over je bekend is.'
       : 'Bestaande sessies die al bijdragen blijven ongewijzigd; latere aanpassingen verschijnen als voorstel zodra dat nodig is.',
     computedAt: new Date().toISOString(),
     inputStateHash: computeInputStateHash({ goalDraft, allEvidence, plannedSessions }),

@@ -94,7 +94,7 @@ describe('computeFeasibility', () => {
     const guardrails: TrainingGuardrail[] = [{ id: 'g1', ruleId: 'HEURISTIC-ELEVATION-PROGRESSION-BANDS', mode: 'block' }];
     const result = computeFeasibility({ goalId: 'g1', gaps: [gap({ status: 'major_gap' })], weeksRemaining: 2, availability: availability(), guardrails });
     expect(result.status).toBe('unlikely');
-    expect(result.bestPossiblePreparation).toMatch(/guardrail/);
+    expect(result.bestPossiblePreparation).toMatch(/buiten je ingestelde grenzen/);
   });
 });
 

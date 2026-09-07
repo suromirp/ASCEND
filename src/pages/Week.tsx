@@ -88,7 +88,7 @@ export function WeekPage() {
           )}
           {!monthView && totalWeekMinutes > 0 && (
             <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
-              {Math.floor(totalWeekMinutes / 60)}u {totalWeekMinutes % 60}m gepland
+              {Math.floor(Math.round(totalWeekMinutes) / 60)}u {Math.round(totalWeekMinutes) % 60}m gepland
             </p>
           )}
           <span className="text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>

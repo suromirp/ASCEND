@@ -303,6 +303,7 @@ function InterpretStep({
         {local.requirements.map((r) => (
           <RequirementRow key={r.id} requirement={r} onChange={(patch) => updateRequirement(r.id, patch)} onRemove={() => removeRequirement(r.id)} />
         ))}
+        <PaceHint requirements={local.requirements} />
         {availableKinds.length > 0 && (
           <select
             value=""
@@ -325,6 +326,39 @@ function InterpretStep({
         <PrimaryButton onClick={() => onNext(local)} disabled={!canProceed}>VOLGENDE</PrimaryButton>
       </div>
     </div>
+  );
+}
+
+// A doeltijd on its own says nothing about whether that's realistic — the
+// number that actually means something to a runner is pace per km. Derived
+// live from whichever Afstand + Doeltijd pair shares a discipline, never a
+// separate field to fill in.
+function formatPacePerKm(totalMinutes: number, km: number): string {
+  const paceMinPerKm = totalMinutes / km;
+  let wholeMin = Math.floor(paceMinPerKm);
+  let seconds = Math.round((paceMinPerKm - wholeMin) * 60);
+  if (seconds === 60) {
+    seconds = 0;
+    wholeMin += 1;
+  }
+  return `${wholeMin}:${String(seconds).padStart(2, '0')} min/km`;
+}
+
+function PaceHint({ requirements }: { requirements: GoalRequirement[] }) {
+  const pace = useMemo(() => {
+    const distanceReq = requirements.find((r) => r.kind === 'distance' && r.target && r.target.amount > 0);
+    const targetTimeReq = requirements.find(
+      (r) => r.kind === 'targetTime' && r.target && r.target.amount > 0 && r.discipline === distanceReq?.discipline,
+    );
+    if (!distanceReq?.target || !targetTimeReq?.target) return null;
+    return formatPacePerKm(targetTimeReq.target.amount, distanceReq.target.amount);
+  }, [requirements]);
+
+  if (!pace) return null;
+  return (
+    <p className="text-xs" style={{ color: 'var(--color-gold)' }}>
+      Dat is een tempo van <span className="font-semibold">{pace}</span>.
+    </p>
   );
 }
 

@@ -141,6 +141,14 @@ interface AppData {
   // (storage/database.ts#resetScheduleToDefault's own comment has the full
   // reasoning — production bug: the old wiring silently wiped all of that).
   resetSchedule: (startFrom: 'this_week' | 'next_week') => Promise<void>;
+  // "Reset alles / nieuwe aanbevelingen" (production feedback: the strength
+  // review and the forecast replan both only ever run once at app boot —
+  // there was no way to ask ASCEND to look again after changing something
+  // (availability, a goal) without force-quitting and reopening the app).
+  // Re-evaluates both live, on demand — never fabricates a recommendation
+  // when nothing actually warrants one, same honesty standard as every
+  // other engine here.
+  rebuildRecommendations: () => Promise<void>;
   celebration: CelebrationEvent | null;
   dismissCelebration: () => void;
   // Phase 6 — the live Adaptive Replanner for the forecast range (week +2
@@ -556,6 +564,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  const rebuildRecommendations = useCallback(async () => {
+    // runStrengthReviewCheck refuses to run again while a recommendation is
+    // already pending (never stacks duplicates on repeated boots) — a
+    // deliberate rebuild means the user wants a fresh look regardless, so
+    // any pending one is dismissed first rather than left blocking it.
+    const pendingRecs = await StrengthProgramRecommendationsRepo.getAll();
+    for (const rec of pendingRecs.filter((r) => !r.resolvedAt)) {
+      await StrengthProgramRecommendationsRepo.put({ ...rec, resolvedAt: new Date().toISOString(), resolution: 'dismissed' });
+    }
+    await runForecastReplan();
+    await runStrengthReviewCheck();
+    await refresh();
+  }, [refresh, runForecastReplan, runStrengthReviewCheck]);
+
   useEffect(() => {
     (async () => {
       // AscendSplashLogo's entrance sequence (ring/mountain/trail draw-in,
@@ -792,6 +814,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const goal = trainingGoals.find((g) => g.id === goalId);
       if (!goal) return;
       await TrainingGoalsRepo.put({ ...goal, status: 'archived', targetDate: undefined, updatedAt: new Date().toISOString() });
+      // MarathonGoalCard's populated view is gated on settings.marathonRaceType
+      // (the quick-pick field), not on whether a live TrainingGoal exists —
+      // without this, archiving the Marathon goal left that field set, so the
+      // card kept showing exactly as before (production feedback: "verwijderen
+      // doet niks", and it read as a permanent, undeletable goal slot).
+      // Clearing it here resets the card to its unconfigured state, the same
+      // as GR5's own dedicated card disappearing once archived.
+      if (goal.name === 'Marathon') {
+        const nextSettings = await SettingsRepo.set({ marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined });
+        setSettings(nextSettings);
+      }
       await refresh();
     },
     [trainingGoals, refresh],
@@ -1007,6 +1040,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await resetScheduleToDefault(startFrom);
       await refresh();
     },
+    rebuildRecommendations,
     celebration,
     dismissCelebration: () => setCelebration(null),
     forecastSummary,
