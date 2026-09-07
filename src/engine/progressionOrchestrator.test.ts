@@ -110,4 +110,17 @@ describe('computeProgressionDecision', () => {
     const third = computeProgressionDecision({ key: KEY, estimate: estimate({ trend: 'rising' }), readiness: readiness(), capacity: capacity(), consecutiveProgressCount: 2 });
     expect(third.accumulationReviewDue).toBe(true);
   });
+
+  // Fase 6 (sports-science review, item D4): the 3-progression checkpoint
+  // must never itself read as an automatic scale-back.
+  it('never forces a scale-back when the accumulation review is due — state stays progress', () => {
+    const third = computeProgressionDecision({ key: KEY, estimate: estimate({ trend: 'rising' }), readiness: readiness(), capacity: capacity(), consecutiveProgressCount: 2 });
+    expect(third.state).toBe('progress');
+  });
+
+  it('frames the accumulation review explicitly as a check-in moment, never a scale-back, in the reason text', () => {
+    const third = computeProgressionDecision({ key: KEY, estimate: estimate({ trend: 'rising' }), readiness: readiness(), capacity: capacity(), consecutiveProgressCount: 2 });
+    expect(third.reason).toContain('controlemoment');
+    expect(third.reason).toContain('geen automatische terugschaling');
+  });
 });
