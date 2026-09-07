@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeStrengthPlacementPlan } from './strengthScheduling';
-import type { PlannedSession, SessionTemplate } from '../models/training';
+import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from './strengthScheduling';
+import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { TrainingAvailability } from '../models/goalEngineConfig';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
 
@@ -20,7 +20,8 @@ const tplLowerA: SessionTemplate = { id: 'tpl_lower_a', name: 'Lower A', type: '
 const tplUpperB: SessionTemplate = { id: 'tpl_upper_b', name: 'Upper B', type: 'strength', durationVariants: { full: 75 }, baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate' } };
 const tplLowerB: SessionTemplate = { id: 'tpl_lower_b', name: 'Lower B', type: 'strength', durationVariants: { full: 70 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high' } };
 const tplLongRun: SessionTemplate = { id: 'tpl_long_run', name: 'Lange Duurloop', type: 'hiking', durationVariants: { full: 75 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'high' } };
-const templates = [tplUpperA, tplLowerA, tplUpperB, tplLowerB, tplLongRun];
+const tplEasyRun: SessionTemplate = { id: 'tpl_easy_run', name: 'Easy Run', type: 'cardio', durationVariants: { full: 30 }, baseStressProfile: { lowerBodyLoad: 'none', impact: 'light', eccentricLoad: 'none', intensity: 'moderate' } };
+const templates = [tplUpperA, tplLowerA, tplUpperB, tplLowerB, tplLongRun, tplEasyRun];
 
 function strategy(overrides: Partial<StrengthProgramStrategy> = {}): StrengthProgramStrategy {
   return {
@@ -119,7 +120,10 @@ describe('computeStrengthPlacementPlan', () => {
     expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
   });
 
-  it('honestly flags an unplaceable week in the proposal text — never a silent "already matches" when a conflict, not agreement, is the real reason nothing was added', () => {
+  it('honestly flags an unplaceable week in the proposal text — never a silent "already matches" when the week is simply fully booked, not agreement, is the real reason nothing was added', () => {
+    // Every day already holds a session — the normal state for every
+    // ASCEND week — so the true blocker is "no free day", not the 48h
+    // rule (even though tpl_long_run happens to be leg-heavy too).
     const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
       session(`filler${i}`, 'tpl_long_run', d, FORECAST_MONDAY),
     );
@@ -131,8 +135,31 @@ describe('computeStrengthPlacementPlan', () => {
       ASOF,
     );
     expect(proposal.changes).toEqual([]);
-    expect(proposal.consequences).toMatch(/48-uursregel/);
+    expect(proposal.consequences).toMatch(/geen vrije dag/);
     expect(proposal.issue).not.toBe('Geen aanpassingen nodig');
+  });
+
+  it('blames the 48h rule specifically only when a free day actually existed but every one of them conflicted', () => {
+    // Monday and Wednesday are the only free days; a leg-heavy hike sits on
+    // Tuesday, so both free days fall within 48h of it and get refused —
+    // a genuine conflict-caused unplaceability, distinct from a full week.
+    const sessions = [
+      session('tue', 'tpl_long_run', '2026-09-22', FORECAST_MONDAY),
+      session('thu', 'tpl_easy_run', '2026-09-24', FORECAST_MONDAY),
+      session('fri', 'tpl_easy_run', '2026-09-25', FORECAST_MONDAY),
+      session('sat', 'tpl_easy_run', '2026-09-26', FORECAST_MONDAY),
+      session('sun', 'tpl_easy_run', '2026-09-27', FORECAST_MONDAY),
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      sessions,
+      templates,
+      availability(),
+      ASOF,
+    );
+    expect(proposal.changes).toEqual([]);
+    expect(proposal.consequences).toMatch(/48-uursregel/);
+    expect(proposal.consequences).not.toMatch(/geen vrije dag/);
   });
 
   it('never emits a replace/reduce action — placement only, content stays MacroFactor\'s job', () => {
@@ -154,5 +181,52 @@ describe('computeStrengthPlacementPlan', () => {
     ];
     const second = computeStrengthPlacementPlan(strategy(), afterApply, templates, availability(), ASOF);
     expect(second.changes).toEqual([]);
+  });
+});
+
+// ASOF = 2026-09-09 (Wednesday) — committed range is the Monday of that
+// week (2026-09-07) and the following Monday (2026-09-14).
+const COMMITTED_MONDAY_1 = '2026-09-07';
+const COMMITTED_MONDAY_2 = '2026-09-14';
+
+describe('computeStrengthPlacementPlanForCommittedRange', () => {
+  it('adds a missing on-strategy session into the committed range when explicitly requested', () => {
+    const sessions = [
+      session('s1', 'tpl_upper_a', COMMITTED_MONDAY_1, COMMITTED_MONDAY_1),
+      session('s2', 'tpl_lower_a', '2026-09-09', COMMITTED_MONDAY_1),
+    ];
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), sessions, templates, availability(), [], ASOF);
+    const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
+    expect(addItem?.newSessionDraft?.templateId).toBe('tpl_upper_b');
+  });
+
+  it('removes an off-strategy committed-range session that has no log', () => {
+    const leftover = session('leftover', 'tpl_lower_b', COMMITTED_MONDAY_2, COMMITTED_MONDAY_2);
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [leftover], templates, availability(), [], ASOF);
+    const removeItem = proposal.changes.find((c) => c.plannedSessionId === 'leftover');
+    expect(removeItem?.action).toBe('remove');
+  });
+
+  it('never touches a committed-range session a SessionLog already references, even when it is off-strategy', () => {
+    const logged = session('logged', 'tpl_lower_b', COMMITTED_MONDAY_1, COMMITTED_MONDAY_1);
+    const log: SessionLog = {
+      id: 'log1',
+      plannedSessionId: 'logged',
+      templateId: 'tpl_lower_b',
+      type: 'strength',
+      completedDate: COMMITTED_MONDAY_1,
+      completedAt: '2026-09-07T10:00:00.000Z',
+      variant: 'full',
+      durationMinutes: 70,
+      source: 'manual',
+    };
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [logged], templates, availability(), [log], ASOF);
+    expect(proposal.changes.some((c) => c.plannedSessionId === 'logged')).toBe(false);
+  });
+
+  it('never produces changes outside the committed range', () => {
+    const forecastLeftover = session('leftover', 'tpl_lower_b', FORECAST_MONDAY, FORECAST_MONDAY);
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [forecastLeftover], templates, availability(), [], ASOF);
+    expect(proposal.changes.some((c) => c.plannedSessionId === 'leftover')).toBe(false);
   });
 });

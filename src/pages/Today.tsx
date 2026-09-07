@@ -20,6 +20,7 @@ import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
+import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeeklyReflectionCard } from '../components/WeeklyReflectionCard';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
@@ -178,6 +179,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       {forecastSummary && (
         <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
       )}
+
+      <ScheduleAnomalyCard />
 
       {showRecoveryWarning && (
         <Card className="flex flex-col gap-1">

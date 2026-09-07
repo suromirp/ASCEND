@@ -48,7 +48,8 @@ import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalAc
 import type { GoalActivationPlan } from '../models/planChange';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
 import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
-import { computeStrengthPlacementPlan } from '../engine/strengthScheduling';
+import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
+import { detectConsecutiveRestDays, buildConsecutiveRestFixProposal } from '../engine/scheduleAnomalies';
 import { mondayOfWeek, todayISO, daysBetween } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
@@ -150,6 +151,18 @@ interface AppData {
   // recomputes and applies the forecast-range placement fresh against
   // live data, and records the append-only audit proposal.
   activateStrengthProgram: (strategy: StrengthProgramStrategy) => Promise<void>;
+  // The explicit "apply it sooner" opt-in (Strength Program Strategy
+  // Addendum §3's confirmation-horizon rule stays the default — this is
+  // only ever called from a dedicated, separately-confirmed step in the
+  // wizard, never automatically alongside activateStrengthProgram above).
+  // Returns false when the freshly-recomputed committed-range plan turned
+  // out to contain nothing applicable (structurally unsupported items) —
+  // the caller should treat that as "nothing happened", not a silent success.
+  applyStrengthPlacementToCommittedRange: (strategy: StrengthProgramStrategy) => Promise<boolean>;
+  // engine/scheduleAnomalies.ts's confirm/dismiss flow. Applies the fix
+  // currently proposable (recomputed fresh, see the function's own
+  // comment); false means there was nothing left to fix.
+  applyScheduleAnomalyFix: () => Promise<boolean>;
   // §5/§7's manual "Mijn schema is afgelopen" trigger — computes and shows
   // a recommendation immediately, never waiting for the next boot check.
   reportStrengthSchemaEnded: () => Promise<void>;
@@ -347,6 +360,77 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     [refresh],
   );
+
+  const applyStrengthPlacementToCommittedRange = useCallback(
+    async (strategy: StrengthProgramStrategy): Promise<boolean> => {
+      const [planned, tpls, logs, engineConfig] = await Promise.all([
+        PlannedSessionsRepo.getAll(),
+        SessionTemplatesRepo.getAll(),
+        SessionLogsRepo.getAll(),
+        GoalEngineConfigRepo.get(),
+      ]);
+
+      const proposal = computeStrengthPlacementPlanForCommittedRange(strategy, planned, tpls, engineConfig.availability, logs, todayISO());
+      if (proposal.changes.length === 0) return false;
+
+      const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+      if (unsupported.length > 0) {
+        console.error('Strength placement (committed range): refusing to apply — unsupported plan change items present', unsupported);
+        return false;
+      }
+
+      const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+      const originalIds = new Set(planned.map((s) => s.id));
+      for (const session of updatedSessions) {
+        if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
+          await PlannedSessionsRepo.put(session);
+        }
+      }
+
+      await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+      await refresh();
+      return true;
+    },
+    [refresh],
+  );
+
+  // engine/scheduleAnomalies.ts's fix, applied. Always recomputes fresh
+  // against live data right before applying (same reasoning as
+  // activateStrengthProgram above) rather than trusting whatever the card
+  // last rendered — nothing else to key a staleness check against here,
+  // since the detection itself has no id, just current PlannedSessions.
+  // Returns false when there's nothing left to fix (e.g. the user already
+  // resolved it another way) so the caller never reports a false success.
+  const applyScheduleAnomalyFix = useCallback(async (): Promise<boolean> => {
+    const [planned, tpls, logs, engineConfig] = await Promise.all([
+      PlannedSessionsRepo.getAll(),
+      SessionTemplatesRepo.getAll(),
+      SessionLogsRepo.getAll(),
+      GoalEngineConfigRepo.get(),
+    ]);
+    const templateById = new Map(tpls.map((t) => [t.id, t]));
+    const runs = detectConsecutiveRestDays(planned, templateById, logs, todayISO());
+    const proposal = buildConsecutiveRestFixProposal(runs, planned, templateById, engineConfig.availability, logs);
+    if (!proposal) return false;
+
+    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+    if (unsupported.length > 0) {
+      console.error('Schedule anomaly fix: refusing to apply — unsupported plan change items present', unsupported);
+      return false;
+    }
+
+    const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+    const originalIds = new Set(planned.map((s) => s.id));
+    for (const session of updatedSessions) {
+      if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
+        await PlannedSessionsRepo.put(session);
+      }
+    }
+
+    await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+    await refresh();
+    return true;
+  }, [refresh]);
 
   // §5/§7's manual trigger — computes and persists a recommendation right
   // away rather than waiting for the next boot's review check.
@@ -864,6 +948,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     strengthProgramStrategies,
     strengthRecommendation,
     activateStrengthProgram,
+    applyStrengthPlacementToCommittedRange,
+    applyScheduleAnomalyFix,
     reportStrengthSchemaEnded,
     resolveStrengthRecommendation,
   };

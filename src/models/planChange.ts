@@ -56,7 +56,12 @@ export type EngineEvent =
   // (engine/strengthScheduling.ts). Distinct from 'strategy_changed'
   // (TrainingStrategyProfile — progression style/guardrails), which is an
   // unrelated, pre-existing concept.
-  | 'strength_program_changed';
+  | 'strength_program_changed'
+  // engine/scheduleAnomalies.ts found a mechanical scheduling pattern
+  // (e.g. multiple rest days in a row) unlikely to be intentional and
+  // proposed a concrete fix — always user-reviewed via the same confirm
+  // flow as every other PlanChangeProposal, never auto-applied.
+  | 'schedule_anomaly_detected';
 
 export interface PlanChangeAlternative {
   label: string;
