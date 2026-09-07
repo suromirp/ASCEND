@@ -7,8 +7,12 @@ function contribution(overrides: Partial<SessionContribution> = {}): SessionCont
   return { plannedSessionId: 'ps1', goalId: 'gr5', capabilityKeys: [{ dimension: 'ascent_capacity' }], ...overrides };
 }
 
-function focus(goalId: string, normalizedPct: number): GoalFocus {
-  return { goalId, score: normalizedPct, normalizedPct, reasons: [], asOf: '2026-09-05' };
+function focus(goalId: string, normalizedPct: number, explicitPrimary = false): GoalFocus {
+  return {
+    goalId, score: normalizedPct, normalizedPct,
+    reasons: explicitPrimary ? [{ component: 'userPriority', points: 20 }] : [],
+    asOf: '2026-09-05',
+  };
 }
 
 function decision(overrides: Partial<ProgressionDecision> = {}): ProgressionDecision {
@@ -53,6 +57,30 @@ describe('arbitrateContestedSlot', () => {
     const r2 = arbitrateContestedSlot({ plannedSessionId: 'ps1', goalIds: ['b', 'a'] }, goalFocusById);
     expect(r1.winningGoalId).toBe('a');
     expect(r1).toEqual(r2);
+  });
+
+  // Fase 6 (sports-science review, item E2): an explicit user-set primary
+  // goal is a hierarchical filter, never just another point-sum component
+  // another goal's urgency/gap total could outvote.
+  it('an explicit primary goal wins even against a much higher Goal Focus score from the other goal', () => {
+    const goalFocusById = new Map([['gr5', focus('gr5', 15, true)], ['marathon', focus('marathon', 85)]]);
+    const result = arbitrateContestedSlot({ plannedSessionId: 'ps1', goalIds: ['marathon', 'gr5'] }, goalFocusById);
+    expect(result.winningGoalId).toBe('gr5');
+    expect(result.reason).toMatch(/hoofddoel/);
+  });
+
+  it('falls back to the point-sum ranking when neither contested goal is explicitly primary', () => {
+    const goalFocusById = new Map([['gr5', focus('gr5', 70)], ['marathon', focus('marathon', 30)]]);
+    const result = arbitrateContestedSlot({ plannedSessionId: 'ps1', goalIds: ['marathon', 'gr5'] }, goalFocusById);
+    expect(result.winningGoalId).toBe('gr5');
+    expect(result.reason).not.toMatch(/hoofddoel/);
+  });
+
+  it('falls back to the point-sum ranking when BOTH contested goals are explicitly primary — no hierarchy to apply', () => {
+    const goalFocusById = new Map([['gr5', focus('gr5', 70, true)], ['marathon', focus('marathon', 30, true)]]);
+    const result = arbitrateContestedSlot({ plannedSessionId: 'ps1', goalIds: ['marathon', 'gr5'] }, goalFocusById);
+    expect(result.winningGoalId).toBe('gr5'); // higher score wins, same as the ordinary path
+    expect(result.reason).not.toMatch(/hoofddoel/);
   });
 });
 

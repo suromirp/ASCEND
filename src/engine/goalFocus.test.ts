@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeGoalFocus, normalizeGoalFocusScores } from './goalFocus';
+import { computeGoalFocus, normalizeGoalFocusScores, isExplicitPrimaryGoal } from './goalFocus';
 import type { FeasibilityAssessment } from '../models/feasibility';
 
 function feasibility(overrides: Partial<FeasibilityAssessment> = {}): FeasibilityAssessment {
@@ -67,5 +67,26 @@ describe('normalizeGoalFocusScores', () => {
 
   it('never divides by zero for an empty list', () => {
     expect(normalizeGoalFocusScores([])).toEqual([]);
+  });
+});
+
+describe('isExplicitPrimaryGoal', () => {
+  it('is true only when userPriority is maxed out — a true "this is my main goal" signal', () => {
+    const maxed = computeGoalFocus({ goalId: 'g1', feasibility: feasibility(), criticalGapStatuses: [], isTapering: false, userPriority: 1, asOf: '2026-09-05' });
+    expect(isExplicitPrimaryGoal(maxed)).toBe(true);
+  });
+
+  it('is false for a partial userPriority — not the same as an explicit maximum', () => {
+    const partial = computeGoalFocus({ goalId: 'g1', feasibility: feasibility(), criticalGapStatuses: [], isTapering: false, userPriority: 0.5, asOf: '2026-09-05' });
+    expect(isExplicitPrimaryGoal(partial)).toBe(false);
+  });
+
+  it('is false when no userPriority was ever set', () => {
+    const none = computeGoalFocus({ goalId: 'g1', feasibility: feasibility(), criticalGapStatuses: [], isTapering: false, asOf: '2026-09-05' });
+    expect(isExplicitPrimaryGoal(none)).toBe(false);
+  });
+
+  it('is false for an undefined focus (goal not found)', () => {
+    expect(isExplicitPrimaryGoal(undefined)).toBe(false);
   });
 });
