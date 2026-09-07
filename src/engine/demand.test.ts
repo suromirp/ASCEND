@@ -1,10 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { computeDemand } from './demand';
+import { computeDemand, targetPackWeightKg } from './demand';
 import type { GoalRequirement } from '../models/goals';
 
 function requirement(overrides: Partial<GoalRequirement>): GoalRequirement {
   return { id: 'r1', kind: 'manual', scope: 'SINGLE_EVENT', ...overrides };
 }
+
+describe('targetPackWeightKg', () => {
+  it('reads the target amount off a packWeight requirement', () => {
+    const reqs = [requirement({ kind: 'packWeight', target: { amount: 12, unit: 'kg' } })];
+    expect(targetPackWeightKg(reqs)).toBe(12);
+  });
+
+  it('is undefined when the goal has no packWeight requirement', () => {
+    expect(targetPackWeightKg([requirement({ kind: 'distance', target: { amount: 20, unit: 'km' } })])).toBeUndefined();
+  });
+});
 
 describe('computeDemand', () => {
   it('a bare distance requirement demands endurance_duration and mechanical_tolerance', () => {

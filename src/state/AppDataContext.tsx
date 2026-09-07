@@ -42,6 +42,7 @@ import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skip
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
 import { computeCapacity } from '../engine/capacity';
+import { targetPackWeightKg } from '../engine/demand';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
@@ -263,7 +264,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const asOf = todayISO();
     const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
     const readiness = computeReadiness(logs, planned);
-    const capacity = computeCapacity(logs, 28, asOf);
+    // Fase 6 (sports-science review, item D2): the pack-capability score
+    // targets whichever active goal actually set a pack-weight requirement
+    // (e.g. GR5), falling back to computeCapacity's own generic default
+    // when no goal has one — never a universal hard cap.
+    const packWeightTargetKg = goals
+      .filter((g) => g.status === 'active')
+      .map((g) => targetPackWeightKg(g.requirements))
+      .find((v) => v !== undefined);
+    const capacity = computeCapacity(logs, 28, asOf, packWeightTargetKg);
     // Most-recent-first, NOT pre-sliced to 3 here — computeProgressionDecision
     // itself takes only the top 3 for the 2-of-3 poor-response check, but
     // engine/progressionSpikes.ts's single-session-spike check needs the

@@ -5,6 +5,7 @@ import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
 import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
 import { computeCapacity } from '../engine/capacity';
+import { targetPackWeightKg } from '../engine/demand';
 import { computeGoalProgress } from '../engine/progression';
 import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
@@ -43,7 +44,14 @@ export function AscendPage() {
   // right now") were previously one flat 7-score average — split into two
   // engines (engine/capacity.ts vs engine/readiness.ts) and shown here as
   // two separate cards, not re-averaged back together.
-  const capacity = useMemo(() => computeCapacity(sessionLogs), [sessionLogs]);
+  // Fase 6 (sports-science review, item D2): pack-capability targets
+  // whichever active goal actually set a pack-weight requirement, not a
+  // universal hard cap.
+  const packWeightTargetKg = useMemo(
+    () => trainingGoals.filter((g) => g.status === 'active').map((g) => targetPackWeightKg(g.requirements)).find((v) => v !== undefined),
+    [trainingGoals],
+  );
+  const capacity = useMemo(() => computeCapacity(sessionLogs, 28, undefined, packWeightTargetKg), [sessionLogs, packWeightTargetKg]);
   // The GR5 goal is always the one with milestones — the marathon goal
   // (migrated from AppSettings) has none. Mirrors the old objectives[0]
   // assumption, now stated explicitly rather than by array position.
