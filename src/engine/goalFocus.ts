@@ -90,6 +90,18 @@ export function computeGoalFocus(inputs: GoalFocusInputs): GoalFocus {
   return { goalId, score, normalizedPct: 0, reasons, asOf };
 }
 
+// Fase 6 (sports-science review, item E2): userPriority (0-1) only ever
+// contributes up to MAX_USER_PRIORITY_POINTS into the same linear point sum
+// as urgency/feasibility-pressure/trainable-gap — so even an explicit "this
+// is my main goal" signal (userPriority: 1) could still be outvoted by
+// another goal that simply scored higher on those other components. This
+// gives goalArbiter.ts#arbitrateContestedSlot a way to treat a maxed-out
+// userPriority as a genuine hierarchical override instead: applied BEFORE
+// the point-sum ranking, never averaged into it.
+export function isExplicitPrimaryGoal(focus: GoalFocus | undefined): boolean {
+  return focus?.reasons.some((r) => r.component === 'userPriority' && r.points >= MAX_USER_PRIORITY_POINTS) ?? false;
+}
+
 // A relative priority share across a user's own active goals — never a %
 // of training time/workload. Splits the total evenly (0%) only when every
 // goal scored exactly 0, which never happens in practice (BASE_POINTS

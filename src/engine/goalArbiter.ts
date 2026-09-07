@@ -12,6 +12,7 @@ import type { SessionContribution, GoalFocus } from '../models/feasibility';
 import type { ProgressionDecision } from '../models/progression';
 import type { TrainingStrategyProfile } from '../models/goalEngineConfig';
 import type { SessionRole } from '../models/prescription';
+import { isExplicitPrimaryGoal } from './goalFocus';
 
 // --- Contested slots (§39: goal pressure changes priority, not evidence) ---
 
@@ -43,13 +44,38 @@ export interface ArbitrationResult {
   reason: string;
 }
 
-// Highest normalized Goal Focus wins; ties break on goalId for a
-// deterministic result (SYSTEM_INVARIANTS: same input -> same output).
-export function arbitrateContestedSlot(slot: ContestedSlot, goalFocusById: Map<string, GoalFocus>): ArbitrationResult {
-  const ranked = [...slot.goalIds].sort((a, b) => {
+function rankByGoalFocus(goalIds: string[], goalFocusById: Map<string, GoalFocus>): string[] {
+  return [...goalIds].sort((a, b) => {
     const diff = (goalFocusById.get(b)?.normalizedPct ?? 0) - (goalFocusById.get(a)?.normalizedPct ?? 0);
     return diff !== 0 ? diff : a.localeCompare(b);
   });
+}
+
+// Highest normalized Goal Focus wins; ties break on goalId for a
+// deterministic result (SYSTEM_INVARIANTS: same input -> same output).
+//
+// Fase 6 (sports-science review, item E2): an explicit user-set primary-
+// goal priority is checked FIRST, as a hierarchical filter ahead of that
+// point-sum ranking — never just one more component an urgent/gappy
+// competing goal's total could outvote (see
+// engine/goalFocus.ts#isExplicitPrimaryGoal). Only applies when exactly one
+// contested goal is explicitly marked primary; zero or more-than-one keeps
+// the existing point-sum ranking as the tiebreaker, same as before.
+export function arbitrateContestedSlot(slot: ContestedSlot, goalFocusById: Map<string, GoalFocus>): ArbitrationResult {
+  const explicitPrimaries = slot.goalIds.filter((id) => isExplicitPrimaryGoal(goalFocusById.get(id)));
+
+  if (explicitPrimaries.length === 1) {
+    const winningGoalId = explicitPrimaries[0];
+    const deprioritizedGoalIds = rankByGoalFocus(slot.goalIds.filter((id) => id !== winningGoalId), goalFocusById);
+    return {
+      plannedSessionId: slot.plannedSessionId,
+      winningGoalId,
+      deprioritizedGoalIds,
+      reason: `Deze sessie draagt bij aan meerdere doelen; ${winningGoalId} is expliciet als hoofddoel ingesteld en krijgt daarom voorrang, ongeacht de Goal Focus-score van de andere doelen.`,
+    };
+  }
+
+  const ranked = rankByGoalFocus(slot.goalIds, goalFocusById);
   const [winningGoalId, ...deprioritizedGoalIds] = ranked;
   const winningPct = goalFocusById.get(winningGoalId)?.normalizedPct;
 
