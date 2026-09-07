@@ -29,7 +29,7 @@ import { detectRecentSpike } from './progressionSpikes';
 // preserve optional sessions last, etc.) are documented here as the natural
 // next additions but are not yet enforced — see README "Roadmap".
 
-function isLegHeavyTemplate(template: SessionTemplate): boolean {
+export function isLegHeavyTemplate(template: SessionTemplate): boolean {
   return resolveEffectiveStressProfile(template).lowerBodyLoad === 'heavy';
 }
 
@@ -43,7 +43,7 @@ function isLegHeavyTemplate(template: SessionTemplate): boolean {
 // conflicts normally with any other leg-heavy session (e.g. tpl_lower_a).
 const INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS = new Set(['tpl_hill_intervals', 'tpl_long_run']);
 
-function isIntentionalBackToBack(templateIdA: string, templateIdB: string): boolean {
+export function isIntentionalBackToBack(templateIdA: string, templateIdB: string): boolean {
   return INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS.has(templateIdA) && INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS.has(templateIdB);
 }
 
