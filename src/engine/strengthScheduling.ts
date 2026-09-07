@@ -30,6 +30,7 @@ import type { GoalOverview } from './goalOverview';
 import { resolveHorizonZone, committedWeekStartDates } from './planningHorizon';
 import { isDateAvailable } from './adaptiveReplanner';
 import { resolveEffectiveStressProfile } from './stressProfile';
+import { requiredSpacingDays } from './scheduler';
 import { resolveSessionContributions, type GoalDemand } from './sessionContribution';
 import { computeDemand } from './demand';
 import { daysBetween, weekDates } from '../utils/dates';
@@ -43,18 +44,26 @@ function isSlotFree(sessions: PlannedSession[], date: string): boolean {
   return !sessions.some((s) => s.status !== 'skipped' && s.scheduledDate === date);
 }
 
+// `recentLogs` lets an already-logged existing session widen its own
+// required spacing when it was unusually heavy (engine/scheduler.ts's
+// requiredSpacingDays, shared with the same load-aware-spacing rework
+// there) — the candidate template being placed here is never itself
+// logged yet (it doesn't exist), so only the OTHER (existing) session's
+// own history can ever widen the gap.
 function wouldConflict(
   candidateDate: string,
   candidateTemplate: SessionTemplate,
   sessions: PlannedSession[],
   templateById: Map<string, SessionTemplate>,
+  recentLogs: SessionLog[] = [],
 ): boolean {
   if (!isLegHeavyTemplate(candidateTemplate)) return false;
   return sessions.some((s) => {
     if (s.status === 'skipped') return false;
     const other = templateById.get(s.templateId);
     if (!other || !isLegHeavyTemplate(other)) return false;
-    return Math.abs(daysBetween(s.scheduledDate, candidateDate)) <= 1;
+    const spacing = requiredSpacingDays(s.id, recentLogs);
+    return Math.abs(daysBetween(s.scheduledDate, candidateDate)) <= spacing;
   });
 }
 
@@ -117,6 +126,7 @@ function pickSwapCandidate(
   protectedSessionIds: Set<string>,
   goalOverviews: GoalOverview[],
   newTemplate: SessionTemplate,
+  sessionLogs: SessionLog[],
 ): SwapCandidate | null {
   const candidates = weekSessions.filter((s) => {
     if (s.status === 'skipped' || protectedSessionIds.has(s.id) || targetTemplateIds.includes(s.templateId)) return false;
@@ -142,7 +152,7 @@ function pickSwapCandidate(
   for (const candidate of ranked) {
     if (candidate.relevancePct > threshold) break; // ranked ascending — nothing after this qualifies either
     const otherSessions = weekSessions.filter((s) => s.id !== candidate.session.id);
-    if (wouldConflict(candidate.session.scheduledDate, newTemplate, otherSessions, templateById)) continue;
+    if (wouldConflict(candidate.session.scheduledDate, newTemplate, otherSessions, templateById, sessionLogs)) continue;
 
     const template = templateById.get(candidate.session.templateId);
     const name = template?.name ?? candidate.session.templateId;
@@ -185,6 +195,7 @@ function reconcileWeek(
   availability: TrainingAvailability,
   protectedSessionIds: Set<string>,
   goalOverviews: GoalOverview[],
+  sessionLogs: SessionLog[],
   source: string,
 ): WeekReconciliation {
   const items: PlanChangeItem[] = [];
@@ -227,7 +238,7 @@ function reconcileWeek(
     const availableFreeDates = weekDates(weekStart).filter(
       (date) => isDateAvailable(date, availability) && isSlotFree(weekSessions, date),
     );
-    let chosenDate = availableFreeDates.find((date) => !wouldConflict(date, template, weekSessions, templateById));
+    let chosenDate = availableFreeDates.find((date) => !wouldConflict(date, template, weekSessions, templateById, sessionLogs));
     let swapCandidate: SwapCandidate | null = null;
 
     if (!chosenDate && availableFreeDates.length === 0) {
@@ -241,6 +252,7 @@ function reconcileWeek(
         protectedSessionIds,
         goalOverviews,
         template,
+        sessionLogs,
       );
       if (swapCandidate) chosenDate = swapCandidate.session.scheduledDate;
     }
@@ -291,6 +303,7 @@ function buildPlan(
   availability: TrainingAvailability,
   protectedSessionIds: Set<string>,
   goalOverviews: GoalOverview[],
+  sessionLogs: SessionLog[],
   source: string,
   zoneLabel: 'forecast' | 'committed',
 ): PlanChangeProposal {
@@ -319,6 +332,7 @@ function buildPlan(
       availability,
       protectedSessionIds,
       goalOverviews,
+      sessionLogs,
       source,
     );
     items.push(...weekItems);
@@ -392,6 +406,7 @@ export function computeStrengthPlacementPlan(
     availability,
     new Set(),
     goalOverviews,
+    [], // forecast weeks are, by definition (week +2 onward), never logged yet
     'engine/strengthScheduling.ts#computeStrengthPlacementPlan',
     'forecast',
   );
@@ -425,6 +440,7 @@ export function computeStrengthPlacementPlanForCommittedRange(
     availability,
     protectedSessionIds,
     goalOverviews,
+    sessionLogs,
     'engine/strengthScheduling.ts#computeStrengthPlacementPlanForCommittedRange',
     'committed',
   );

@@ -413,4 +413,36 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
     const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), [forecastLeftover], templates, availability(), [], ASOF, []);
     expect(proposal.changes.some((c) => c.plannedSessionId === 'leftover')).toBe(false);
   });
+
+  it('widens the required gap around a session logged unusually heavy (RPE 9), sports-science review Fase 2', () => {
+    const hike = session('hike', 'tpl_long_run', '2026-09-08', COMMITTED_MONDAY_1); // Tuesday
+    const heavyLog: SessionLog = {
+      id: 'hikelog',
+      plannedSessionId: 'hike',
+      templateId: 'tpl_long_run',
+      type: 'hiking',
+      completedDate: '2026-09-08',
+      completedAt: '2026-09-08T10:00:00.000Z',
+      variant: 'full',
+      durationMinutes: 180,
+      rpe: 9,
+      source: 'manual',
+    };
+    const proposal = computeStrengthPlacementPlanForCommittedRange(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      [hike],
+      templates,
+      availability(),
+      [heavyLog],
+      ASOF,
+      [],
+    );
+    const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
+    expect(addItem?.newSessionDraft?.scheduledDate).toBeDefined();
+    const chosen = addItem!.newSessionDraft!.scheduledDate;
+    const daysFromHike = Math.abs(new Date(chosen).getTime() - new Date('2026-09-08').getTime()) / 86400000;
+    // Thursday (2 days out) would pass the plain 1-day rule — the widened
+    // gap from the heavy RPE 9 log must push placement further out than that.
+    expect(daysFromHike).toBeGreaterThan(2);
+  });
 });

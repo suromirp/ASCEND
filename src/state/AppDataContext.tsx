@@ -664,9 +664,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     (sessionId: string, targetDate: string): ScheduleProposal => {
       const week = sessionsForWeek(mondayOfWeek(targetDate));
       const combined = week.some((s) => s.id === sessionId) ? week : [...week, ...plannedSessions.filter((s) => s.id === sessionId)];
-      return proposeMove(combined, templates, sessionId, targetDate);
+      return proposeMove(combined, templates, sessionId, targetDate, sessionLogs);
     },
-    [sessionsForWeek, plannedSessions, templates],
+    [sessionsForWeek, plannedSessions, templates, sessionLogs],
   );
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
@@ -888,8 +888,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const proposeNoTimeTodayAction = useCallback((): ScheduleProposal[] => {
     const today = todayISO();
     const week = sessionsForWeek(mondayOfWeek(today));
-    return proposeNoTimeToday(week, templates, today);
-  }, [sessionsForWeek, templates]);
+    return proposeNoTimeToday(week, templates, today, sessionLogs);
+  }, [sessionsForWeek, templates, sessionLogs]);
 
   // Mirrors applyProposal's move semantics, plus the scheduler's
   // "no free day left" fallback (a same-date no-op change) which reads as a

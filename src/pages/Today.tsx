@@ -7,6 +7,7 @@ import { computeGoalProgress } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
+import { suggestSameDayOrder } from '../engine/concurrentTraining';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
@@ -125,6 +126,9 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // hard to go into the hill session).
   const longRunDegrading = useMemo(() => hillIntervalsDegradingLongRun(sessionLogs), [sessionLogs]);
   const showRecoveryWarning = longRunDegrading && primaryTemplate?.id === 'tpl_hill_intervals';
+  // Sports-science review, item A2 — a soft, never-blocking suggestion when
+  // today combines a strength session with a cardio/hiking one.
+  const concurrentTrainingTip = suggestSameDayOrder(todaySessions, templateById);
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
   const actionSheetLog = actionSheetSession ? sessionLogs.find((l) => l.plannedSessionId === actionSheetSession.id) : undefined;
@@ -189,6 +193,13 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
             De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
             rustiger te gaan — minder herhalingen, lagere helling, of een kortere sessie.
           </p>
+        </Card>
+      )}
+
+      {concurrentTrainingTip && (
+        <Card className="flex flex-col gap-1">
+          <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>TIP VOOR VANDAAG</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
         </Card>
       )}
 
