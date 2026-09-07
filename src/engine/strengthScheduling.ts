@@ -92,13 +92,21 @@ function targetTemplateIdsForWeek(strategy: StrengthProgramStrategy): string[] {
 const URGENT_GOAL_SWAP_THRESHOLD_PCT = 20;
 const CALM_GOAL_SWAP_THRESHOLD_PCT = 0;
 
-// Recovery days are never a candidate (injury-prevention/adherence value
+// Recovery days are never a candidate — injury-prevention/adherence value
 // the goal-demand pipeline structurally can't see and never should
-// override) and neither are hiking days (core to ASCEND's own "mountain
-// adventure" identity regardless of whether a formal TrainingGoal happens
-// to be linked to one right now) — every other type is fair game, ranked
-// by goal relevance below.
-const SWAP_PROTECTED_TYPES = new Set(['recovery', 'hiking']);
+// override, unlike goal relevance itself. Hiking sessions used to be
+// hard-protected here too ("core to ASCEND's own mountain adventure
+// identity"), but production feedback pushed back on that: a hiking
+// session that genuinely serves an active goal (e.g. GR5) already ranks
+// high via resolveSessionContributions/Goal Focus below and so is
+// protected in practice anyway — a session that DOESN'T currently link to
+// any active goal's demand has no principled reason to be exempt from the
+// same trade-off every other non-recovery session already faces. Letting
+// the ranking decide (not a blanket type rule) is exactly what the user
+// asked ASCEND to do: weigh "does the MacroFactor split stay fully intact"
+// against "should another leg session yield instead", using real Goal
+// Focus data rather than a hard-coded answer either way.
+const SWAP_PROTECTED_TYPES = new Set(['recovery']);
 
 function isGoalUnderPressure(overviews: GoalOverview[]): boolean {
   return overviews.some(
