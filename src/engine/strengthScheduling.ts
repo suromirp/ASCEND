@@ -26,9 +26,12 @@ import type { PlannedSession, SessionTemplate, SessionLog } from '../models/trai
 import type { TrainingAvailability } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
+import type { GoalOverview } from './goalOverview';
 import { resolveHorizonZone, committedWeekStartDates } from './planningHorizon';
 import { isDateAvailable } from './adaptiveReplanner';
 import { resolveEffectiveStressProfile } from './stressProfile';
+import { resolveSessionContributions, type GoalDemand } from './sessionContribution';
+import { computeDemand } from './demand';
 import { daysBetween, weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
 
@@ -64,6 +67,94 @@ function targetTemplateIdsForWeek(strategy: StrengthProgramStrategy): string[] {
   return strategy.sessionTemplateIds.slice(0, Math.min(strategy.sessionsPerWeek, strategy.sessionTemplateIds.length));
 }
 
+// ASCEND_HEURISTIC(SWAP-URGENCY-THRESHOLD, seeded this session from
+// production feedback: "Ascend adviseert wat belangrijker is richting het
+// doel, ook afhankelijk van hoe ver het doel is [...] als iets echt
+// belangrijk is om te halen kan dat [...] dat mag ook een upper zijn met
+// onderbouwing"). engine/demand.ts deliberately never produces a numeric
+// CapabilityDemand for 'strength' itself (qualitative context, not a
+// fabricated target — its own comment) — so there is no honest way to
+// score the MISSING strength session against a goal the way an existing
+// cardio/hiking session can be scored. Rather than invent that number,
+// this only ranks the week's EXISTING swappable sessions by their own
+// (honestly computable) goal relevance, and only actually proposes giving
+// one up when that relevance is low enough — where "low enough" scales
+// with how urgent/close the most-pressured active goal currently is.
+const URGENT_GOAL_SWAP_THRESHOLD_PCT = 20;
+const CALM_GOAL_SWAP_THRESHOLD_PCT = 0;
+
+// Recovery days are never a candidate (injury-prevention/adherence value
+// the goal-demand pipeline structurally can't see and never should
+// override) and neither are hiking days (core to ASCEND's own "mountain
+// adventure" identity regardless of whether a formal TrainingGoal happens
+// to be linked to one right now) — every other type is fair game, ranked
+// by goal relevance below.
+const SWAP_PROTECTED_TYPES = new Set(['recovery', 'hiking']);
+
+function isGoalUnderPressure(overviews: GoalOverview[]): boolean {
+  return overviews.some(
+    (o) => o.feasibility.status === 'challenging' || o.feasibility.status === 'unlikely' || o.focus.reasons.some((r) => r.component === 'phase'),
+  );
+}
+
+interface SwapCandidate {
+  session: PlannedSession;
+  reason: string;
+}
+
+// Ranks the week's non-protected, off-target sessions by goal relevance
+// (lowest first) and returns the first one both under the urgency-scaled
+// threshold and usable on its own date for the template being placed there
+// instead (the caller's own 48h leg-heavy check, `newTemplate`/`weekSessions`
+// /`templateById`) — evaluated with the CANDIDATE'S OWN session excluded
+// from that check each time, since a candidate can itself be leg-heavy
+// (e.g. Heuvel-/Incline-Intervallen) and must never be treated as
+// conflicting with its own removal.
+function pickSwapCandidate(
+  weekSessions: PlannedSession[],
+  templateById: Map<string, SessionTemplate>,
+  targetTemplateIds: string[],
+  protectedSessionIds: Set<string>,
+  goalOverviews: GoalOverview[],
+  newTemplate: SessionTemplate,
+): SwapCandidate | null {
+  const candidates = weekSessions.filter((s) => {
+    if (s.status === 'skipped' || protectedSessionIds.has(s.id) || targetTemplateIds.includes(s.templateId)) return false;
+    const template = templateById.get(s.templateId);
+    return !!template && !SWAP_PROTECTED_TYPES.has(template.type);
+  });
+  if (candidates.length === 0) return null;
+
+  const goalDemands: GoalDemand[] = goalOverviews.map((o) => ({ goalId: o.goal.id, demands: computeDemand(o.goal.requirements) }));
+  const focusById = new Map(goalOverviews.map((o) => [o.goal.id, o.focus]));
+  const contributions = resolveSessionContributions(candidates, [...templateById.values()], goalDemands);
+
+  const ranked = candidates
+    .map((session) => {
+      const goalIds = contributions.filter((c) => c.plannedSessionId === session.id).map((c) => c.goalId);
+      const relevancePct = goalIds.reduce((sum, goalId) => sum + (focusById.get(goalId)?.normalizedPct ?? 0), 0);
+      return { session, relevancePct };
+    })
+    .sort((a, b) => a.relevancePct - b.relevancePct || a.session.scheduledDate.localeCompare(b.session.scheduledDate));
+
+  const threshold = isGoalUnderPressure(goalOverviews) ? URGENT_GOAL_SWAP_THRESHOLD_PCT : CALM_GOAL_SWAP_THRESHOLD_PCT;
+
+  for (const candidate of ranked) {
+    if (candidate.relevancePct > threshold) break; // ranked ascending — nothing after this qualifies either
+    const otherSessions = weekSessions.filter((s) => s.id !== candidate.session.id);
+    if (wouldConflict(candidate.session.scheduledDate, newTemplate, otherSessions, templateById)) continue;
+
+    const template = templateById.get(candidate.session.templateId);
+    const name = template?.name ?? candidate.session.templateId;
+    const reason = candidate.relevancePct === 0
+      ? `${name} draagt momenteel niet aantoonbaar bij aan een actief doel — deze dag is vrijgemaakt voor de extra kracht-sessie.`
+      : `${name} draagt het minst bij aan je actieve doelen van de sessies deze week (${Math.round(candidate.relevancePct)}% Goal Focus) — vrijgemaakt voor de extra kracht-sessie omdat een doel op dit moment onder druk staat of dichtbij is.`;
+    return { session: candidate.session, reason };
+  }
+
+  return null;
+}
+
 interface WeekReconciliation {
   items: PlanChangeItem[];
   // Distinguished so the summary can tell the user the true reason nothing
@@ -93,6 +184,7 @@ function reconcileWeek(
   strategyTemplateIds: Set<string>,
   availability: TrainingAvailability,
   protectedSessionIds: Set<string>,
+  goalOverviews: GoalOverview[],
   source: string,
 ): WeekReconciliation {
   const items: PlanChangeItem[] = [];
@@ -135,7 +227,24 @@ function reconcileWeek(
     const availableFreeDates = weekDates(weekStart).filter(
       (date) => isDateAvailable(date, availability) && isSlotFree(weekSessions, date),
     );
-    const chosenDate = availableFreeDates.find((date) => !wouldConflict(date, template, weekSessions, templateById));
+    let chosenDate = availableFreeDates.find((date) => !wouldConflict(date, template, weekSessions, templateById));
+    let swapCandidate: SwapCandidate | null = null;
+
+    if (!chosenDate && availableFreeDates.length === 0) {
+      // No genuinely empty day exists (the normal state for every ASCEND
+      // week) — see if an existing, low-goal-relevance session is worth
+      // giving up for this one instead of giving up outright.
+      swapCandidate = pickSwapCandidate(
+        weekSessions,
+        templateById,
+        targetTemplateIds,
+        protectedSessionIds,
+        goalOverviews,
+        template,
+      );
+      if (swapCandidate) chosenDate = swapCandidate.session.scheduledDate;
+    }
+
     if (!chosenDate) {
       // Every ASCEND week is always fully scheduled (7 sessions across 7
       // days) — an available, genuinely empty day essentially never exists.
@@ -145,6 +254,18 @@ function reconcileWeek(
       if (availableFreeDates.length === 0) noFreeDay = true;
       else legHeavyConflict = true;
       continue; // no honest placement this week — never force an unavailable/conflicting slot
+    }
+
+    if (swapCandidate) {
+      items.push({
+        plannedSessionId: swapCandidate.session.id,
+        action: 'remove',
+        fromDate: swapCandidate.session.scheduledDate,
+        toDate: swapCandidate.session.scheduledDate,
+        reason: swapCandidate.reason,
+        generatedBy: [source],
+      });
+      weekSessions = weekSessions.map((s) => (s.id === swapCandidate!.session.id ? { ...s, status: 'skipped' as const } : s));
     }
 
     items.push({
@@ -169,6 +290,7 @@ function buildPlan(
   templates: SessionTemplate[],
   availability: TrainingAvailability,
   protectedSessionIds: Set<string>,
+  goalOverviews: GoalOverview[],
   source: string,
   zoneLabel: 'forecast' | 'committed',
 ): PlanChangeProposal {
@@ -196,6 +318,7 @@ function buildPlan(
       strategyTemplateIds,
       availability,
       protectedSessionIds,
+      goalOverviews,
       source,
     );
     items.push(...weekItems);
@@ -251,6 +374,7 @@ export function computeStrengthPlacementPlan(
   templates: SessionTemplate[],
   availability: TrainingAvailability,
   asOf: string,
+  goalOverviews: GoalOverview[],
 ): PlanChangeProposal {
   const forecastWeekStarts = [
     ...new Set(
@@ -267,6 +391,7 @@ export function computeStrengthPlacementPlan(
     templates,
     availability,
     new Set(),
+    goalOverviews,
     'engine/strengthScheduling.ts#computeStrengthPlacementPlan',
     'forecast',
   );
@@ -288,6 +413,7 @@ export function computeStrengthPlacementPlanForCommittedRange(
   availability: TrainingAvailability,
   sessionLogs: SessionLog[],
   asOf: string,
+  goalOverviews: GoalOverview[],
 ): PlanChangeProposal {
   const protectedSessionIds = new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
 
@@ -298,6 +424,7 @@ export function computeStrengthPlacementPlanForCommittedRange(
     templates,
     availability,
     protectedSessionIds,
+    goalOverviews,
     'engine/strengthScheduling.ts#computeStrengthPlacementPlanForCommittedRange',
     'committed',
   );
