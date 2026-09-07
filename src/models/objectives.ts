@@ -6,9 +6,21 @@
 // record of when a milestone was actually cleared. This means editing the
 // objective (e.g. changing a target) never rewrites what was already earned.
 
+// Sports-science review (Fase 5, item G1): a single milestone can now
+// accept more than one activity type as valid evidence — e.g. the aerobic-
+// base milestone no longer requires running specifically, since a
+// comparable cardio or hiking session builds the same base fitness.
+// Running/hiking-only milestones still just supply a single value.
+export type MilestoneActivityType = 'cardio' | 'hiking' | 'strength';
+
 export type MilestoneRequirement =
-  | { kind: 'duration'; activityType: 'cardio' | 'hiking' | 'strength'; minMinutes: number }
-  | { kind: 'elevation'; minMeters: number; minLossMeters?: number }
+  | { kind: 'duration'; activityType: MilestoneActivityType | MilestoneActivityType[]; minMinutes: number }
+  // minMeters (D+) and minLossMeters (D-) are independently optional (Fase
+  // 5, item G1) — descent is its own axis with its own pace of progression
+  // now, not a value silently mirrored from ascent. At least one of the two
+  // is expected to be set; a definition with neither is meaningless but not
+  // type-prevented, same as the rest of this union.
+  | { kind: 'elevation'; minMeters?: number; minLossMeters?: number }
   | { kind: 'distance'; minKm: number }
   | { kind: 'distanceAndElevation'; minKm: number; minMeters: number; minLossMeters?: number }
   | { kind: 'backpack'; minWeightKg: number; minKm?: number }

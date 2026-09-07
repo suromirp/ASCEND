@@ -53,6 +53,50 @@ describe('logSatisfiesRequirement', () => {
   it('manual requirements are never auto-satisfied by a log', () => {
     expect(logSatisfiesRequirement(log(), { kind: 'manual' })).toBe(false);
   });
+
+  it('duration: accepts an array of activity types as valid evidence (Fase 5, broader aerobic-base evidence)', () => {
+    const req: MilestoneRequirement = { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 };
+    expect(logSatisfiesRequirement(log({ type: 'cardio', durationMinutes: 40 }), req)).toBe(true);
+    expect(logSatisfiesRequirement(log({ type: 'hiking', durationMinutes: 40 }), req)).toBe(true);
+    expect(logSatisfiesRequirement(log({ type: 'strength', durationMinutes: 40 }), req)).toBe(false);
+  });
+
+  it('elevation: minMeters and minLossMeters are now independently optional — a descent-only requirement never demands ascent', () => {
+    const descentOnly: MilestoneRequirement = { kind: 'elevation', minLossMeters: 300 };
+    expect(logSatisfiesRequirement(log({ outdoorData: { durationMinutes: 60, elevationLossM: 300, source: 'manual' } }), descentOnly)).toBe(true);
+    expect(logSatisfiesRequirement(log({ outdoorData: { durationMinutes: 60, elevationLossM: 200, source: 'manual' } }), descentOnly)).toBe(false);
+
+    const ascentOnly: MilestoneRequirement = { kind: 'elevation', minMeters: 300 };
+    expect(logSatisfiesRequirement(log({ outdoorData: { durationMinutes: 60, elevationGainM: 300, source: 'manual' } }), ascentOnly)).toBe(true);
+  });
+});
+
+describe('requirementAutoSatisfied — stricter achieved-definition (Fase 5, item G1)', () => {
+  // "completed_as_planned && no_abnormal_pain && effort_in_expected_range",
+  // not bare numeric completion — reusing SessionLog.variant/subjectiveFeel/
+  // rpe rather than a new data model.
+  const req: MilestoneRequirement = { kind: 'duration', activityType: 'hiking', minMinutes: 60 };
+
+  it('is satisfied by a normal, fully-completed log that meets the numbers', () => {
+    expect(requirementAutoSatisfied(req, [log({ durationMinutes: 60 })])).toBe(true);
+  });
+
+  it('is NOT satisfied when the clearing log was cut down to its bare minimum variant', () => {
+    expect(requirementAutoSatisfied(req, [log({ durationMinutes: 60, variant: 'minimum' })])).toBe(false);
+  });
+
+  it('is NOT satisfied when the clearing log felt abnormally worse than normal', () => {
+    expect(requirementAutoSatisfied(req, [log({ durationMinutes: 60, subjectiveFeel: 'worse' })])).toBe(false);
+  });
+
+  it('is NOT satisfied when the clearing log was an all-out effort (RPE >= 9), outside the expected range', () => {
+    expect(requirementAutoSatisfied(req, [log({ durationMinutes: 60, rpe: 9 })])).toBe(false);
+  });
+
+  it('still counts a disqualified log toward nothing, but a later qualifying log still clears it', () => {
+    const logs = [log({ durationMinutes: 60, variant: 'minimum' }), log({ id: 'l2', durationMinutes: 60 })];
+    expect(requirementAutoSatisfied(req, logs)).toBe(true);
+  });
 });
 
 describe('requirementAutoSatisfied — consecutiveDays', () => {
