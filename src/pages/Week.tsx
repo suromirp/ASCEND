@@ -23,6 +23,16 @@ export function WeekPage() {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
+  // Sum of each planned session's target ('full' variant) duration — an
+  // at-a-glance weekly volume, not tied to whether a session is already
+  // logged. Mirrors History.tsx's own Trainingstijd stat in including every
+  // session type (recovery included), for the same "total time this week
+  // asks of you" reading.
+  const totalWeekMinutes = sessions.reduce((sum, s) => {
+    const template = templateById.get(s.templateId);
+    return template ? sum + resolveVariantDuration(template, 'full', s.scheduledDate, program) : sum;
+  }, 0);
+
   // A completed session is still selectable — SessionActionSheet shows an
   // "ongedaan maken" (undo) view for it instead of the start/move/skip one.
   function selectSession(session: PlannedSession) {
@@ -75,6 +85,11 @@ export function WeekPage() {
           <Eyebrow>{monthView ? formatMonthNL(weekStart) : position ? `WEEK ${position.weekInProgram} • ${position.phase.name}` : 'WEEK'}</Eyebrow>
           {!monthView && weekStart === mondayOfWeek(todayISO()) && (
             <p className="text-[11px]" style={{ color: 'var(--color-gold)' }}>huidige week</p>
+          )}
+          {!monthView && totalWeekMinutes > 0 && (
+            <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+              {Math.floor(totalWeekMinutes / 60)}u {totalWeekMinutes % 60}m gepland
+            </p>
           )}
           <span className="text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
             {monthView ? '▴ terug naar week' : '▾ maandoverzicht'}
