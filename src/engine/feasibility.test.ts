@@ -17,7 +17,7 @@ function gap(overrides: Partial<CapabilityGap> = {}): CapabilityGap {
 }
 
 function availability(overrides: Partial<TrainingAvailability> = {}): TrainingAvailability {
-  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], maxSessionDurationMin: {}, longSessionDays: ['sun'], temporaryExceptions: [], ...overrides };
+  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], dailyTimeBudget: {}, longSessionDays: ['sun'], temporaryExceptions: [], ...overrides };
 }
 
 describe('computeFeasibility', () => {

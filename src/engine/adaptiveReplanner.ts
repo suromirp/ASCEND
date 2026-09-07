@@ -31,7 +31,7 @@ import { writeTrainingPrescription } from './prescriptionWriter';
 import { proposeRunningPrescription } from './specialists/running';
 import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
 import { findAlgorithmRule } from '../data/algorithmRules';
-import { isoWeekday, mondayOfWeek } from '../utils/dates';
+import { weekdayOf, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 // A bare ruleId is a stable identifier, but the *metadata it resolves to*
@@ -51,8 +51,6 @@ function stampGeneratedBy(entries: string[]): string[] {
   });
 }
 
-const WEEKDAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
-
 // Exported (Phase 8) so engine/strengthScheduling.ts's forecast-range
 // placement checks the exact same availability rule — never a second,
 // potentially-drifting reimplementation of "allowed weekday, minus
@@ -60,7 +58,7 @@ const WEEKDAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 export function isDateAvailable(dateIso: string, availability: TrainingAvailability): boolean {
   const exception = availability.temporaryExceptions.find((e) => e.date === dateIso);
   if (exception) return exception.available;
-  return availability.allowedDays.includes(WEEKDAY_ORDER[isoWeekday(dateIso) - 1]);
+  return availability.allowedDays.includes(weekdayOf(dateIso));
 }
 
 // Only template types with a real discipline specialist (Phase 3) reach

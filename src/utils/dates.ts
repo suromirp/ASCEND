@@ -1,4 +1,5 @@
 import type { Program, ResolvedProgramPosition } from '../models/program';
+import type { Weekday } from '../models/goalEngineConfig';
 
 export function toISODate(d: Date): string {
   const year = d.getFullYear();
@@ -26,6 +27,17 @@ export function addDays(iso: string, days: number): string {
 export function isoWeekday(iso: string): number {
   const jsDay = parseISODate(iso).getDay(); // 0 = Sunday
   return jsDay === 0 ? 7 : jsDay;
+}
+
+const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+// The single source of truth for "which TrainingAvailability.Weekday does
+// this date fall on" — previously duplicated as a local WEEKDAY_ORDER
+// const inside engine/adaptiveReplanner.ts; extracted here so a second,
+// independently-drifting copy never has to exist (engine/scheduler.ts's
+// dayHasRoomFor needs the exact same mapping).
+export function weekdayOf(iso: string): Weekday {
+  return WEEKDAY_ORDER[isoWeekday(iso) - 1];
 }
 
 export function mondayOfWeek(iso: string): string {

@@ -89,6 +89,24 @@ describe('applyPlanChangeItems', () => {
     expect(result.sessions[2]).toEqual({ id: 'fixed-id', templateId: 'tpl_z', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07', status: 'planned', order: 2 });
   });
 
+  // Time-budget scheduling redesign (Fase 0): confirms PAIR needs no new
+  // PlanChangeAction or model change — two ordinary 'add' items that
+  // happen to share a scheduledDate apply exactly like any other two
+  // 'add' items. Nothing in this switch (or PlannedSession's own shape)
+  // assumes a date holds at most one session.
+  it('applies two "add" items on the same date cleanly — PAIR is just two ordinary adds, no special-casing needed', () => {
+    const items: PlanChangeItem[] = [
+      { action: 'add', newSessionDraft: { templateId: 'tpl_easy_run', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07' } },
+      { action: 'add', newSessionDraft: { templateId: 'tpl_upper_a', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07' } },
+    ];
+    let counter = 0;
+    const result = applyPlanChangeItems(items, sessions, () => `paired-${counter++}`);
+    expect(result.sessions).toHaveLength(4);
+    const paired = result.sessions.filter((s) => s.scheduledDate === '2026-09-12');
+    expect(paired.map((s) => s.templateId).sort()).toEqual(['tpl_easy_run', 'tpl_upper_a']);
+    expect(result.unsupported).toEqual([]);
+  });
+
   it('never touches PlannedSession for replace/reduce (one-directional prescription relationship) — but surfaces them for the caller to actually act on, never silently drops them', () => {
     const items: PlanChangeItem[] = [
       { plannedSessionId: 's1', action: 'replace', newPrescriptionId: 'presc1' },

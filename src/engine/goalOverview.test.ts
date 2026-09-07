@@ -5,7 +5,7 @@ import type { CapabilityEvidence } from '../models/capability';
 import type { TrainingAvailability } from '../models/goalEngineConfig';
 
 function availability(): TrainingAvailability {
-  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], maxSessionDurationMin: {}, longSessionDays: ['sun'], temporaryExceptions: [] };
+  return { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], dailyTimeBudget: {}, longSessionDays: ['sun'], temporaryExceptions: [] };
 }
 
 function activeGoal(overrides: Partial<TrainingGoal> = {}): TrainingGoal {
