@@ -22,7 +22,6 @@ import {
   GoalMilestoneProgressRepo,
   InjuryNotesRepo,
   CapabilityEvidenceRepo,
-  TrainingPrescriptionsRepo,
   PlanChangeProposalsRepo,
   StrengthProgramStrategiesRepo,
   StrengthProgramRecommendationsRepo,
@@ -40,11 +39,8 @@ import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
-import { computeReadiness } from '../engine/readiness';
-import { computeCapacity } from '../engine/capacity';
-import { targetPackWeightKg } from '../engine/demand';
 import { extractEvidenceFromLogs } from '../engine/capability';
-import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from '../engine/progressionDecisions';
+import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
@@ -262,14 +258,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // directly from the repos rather than React state, since this runs
   // once at boot right after refresh() — before that state necessarily
   // reflects the fetch it just did. Deliberately only ever called once per
-  // app load (see the boot effect below): every 'reduce'/'replace' item
-  // writes a fresh TrainingPrescription row, so re-running on every
-  // micro-interaction would just accumulate churn, not new information.
+  // app load (see the boot effect below). Weekly Prescription Builder
+  // architecture pass, Fase 6: this now ONLY runs the availability
+  // cascade (move/skip a session off a now-unavailable day) — the former
+  // progression-driven replace/reduce pass moved to
+  // engine/weeklyPrescriptionEngine.ts, which also actually supplies
+  // candidate numbers to the specialists (see runWeeklyPrescriptionBuild).
   const runForecastReplan = useCallback(async () => {
-    const [goals, logs, manualEvidence, planned, tpls, engineConfig] = await Promise.all([
+    const [goals, planned, tpls, engineConfig] = await Promise.all([
       TrainingGoalsRepo.getAll(),
-      SessionLogsRepo.getAll(),
-      CapabilityEvidenceRepo.getAll(),
       PlannedSessionsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       GoalEngineConfigRepo.get(),
@@ -279,28 +276,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (keys.length === 0) return; // no active goal's demand to adapt the forecast around
 
     const asOf = todayISO();
-    const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
-    const readiness = computeReadiness(logs, planned);
-    // Fase 6 (sports-science review, item D2): the pack-capability score
-    // targets whichever active goal actually set a pack-weight requirement
-    // (e.g. GR5), falling back to computeCapacity's own generic default
-    // when no goal has one — never a universal hard cap.
-    const packWeightTargetKg = goals
-      .filter((g) => g.status === 'active')
-      .map((g) => targetPackWeightKg(g.requirements))
-      .find((v) => v !== undefined);
-    const capacity = computeCapacity(logs, 28, asOf, packWeightTargetKg);
-    // Most-recent-first, NOT pre-sliced to 3 here — computeProgressionDecision
-    // itself takes only the top 3 for the 2-of-3 poor-response check, but
-    // engine/progressionSpikes.ts's single-session-spike check needs the
-    // fuller ~30-day history to compute an honest baseline.
-    const recentLogs = [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate));
-    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, capacity, engineConfig.guardrails, recentLogs, asOf, goals);
 
-    const { proposal, prescriptions, passiveSummary } = computeForecastReplan({
+    const { proposal, passiveSummary } = computeForecastReplan({
       plannedSessions: planned,
       templates: tpls,
-      decisionsByKey,
       availability: engineConfig.availability,
       asOf,
     });
@@ -327,14 +306,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
         await PlannedSessionsRepo.put(session);
       }
-    }
-
-    // A session gets at most one *current* prescription — replace, never
-    // accumulate, across repeated replanner runs on later app opens.
-    for (const prescription of prescriptions) {
-      const existing = await TrainingPrescriptionsRepo.byPlannedSession(prescription.plannedSessionId);
-      if (existing) await TrainingPrescriptionsRepo.delete(existing.id);
-      await TrainingPrescriptionsRepo.put(prescription);
     }
 
     // Append-only audit trail (Storage plan: "audit trail of shown

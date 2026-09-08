@@ -1,55 +1,38 @@
 // ASCEND — Adaptive Replanner (Technical Architecture v0.3.1 REVISED,
-// Phase 6 — "live for the forecast range, full add/move/replace/remove/
-// reduce, not prescription-only").
+// Phase 6 — "live for the forecast range, availability-driven cascade").
 //
 // The only module ever allowed to touch the forecast range (week +2
-// onward) — Planning Horizon (Phase 5) draws that boundary, the Proposal
-// Engine (Phase 5) owns the committed range exclusively. Built entirely on
-// existing machinery, never a new decision-making formula of its own:
+// onward) for AVAILABILITY reasons — Planning Horizon (Phase 5) draws that
+// boundary, the Proposal Engine (Phase 5) owns the committed range
+// exclusively. Built entirely on existing machinery, never a new
+// decision-making formula of its own:
 //
 //   - Planning Horizon (engine/planningHorizon.ts) for the forecast zone
 //   - proposeNoTimeToday (engine/scheduler.ts, unchanged) for the
 //     TrainingAvailability pass — the exact same "move to the next free
 //     day this week, or skip" logic that already exists for "no time
 //     today", just triggered by an availability exception instead
-//   - ProgressionDecision (engine/progressionOrchestrator.ts) + the
-//     Running/Mountain-Adventure specialists (Phase 3) + Goal Arbiter's
-//     preserveStrengthRole (Phase 4) for the progression-driven pass
-//   - engine/prescriptionWriter.ts (Phase 6) to actually persist what a
-//     'reduce'/'replace' item points at — never silently no-op
+//
+// Weekly Prescription Builder architecture pass, Fase 6: the former pass 2
+// (a ProgressionDecision-driven replace/reduce loop over existing forecast
+// sessions, writing a TrainingPrescription via the Running/Mountain-
+// Adventure specialists) has been RETIRED — it is now a strict subset of
+// what engine/weeklyPrescriptionEngine.ts does (which additionally
+// respects cross-goal arbitration, the bounded planned-trajectory curve,
+// and actually supplies real candidate numbers to those same specialists,
+// something this pass never did — every prescription it wrote carried
+// role but no real target). Running both against the same forecast
+// sessions on the same boot would mean two independently-reasoned
+// TrainingPrescription rows for one session, with whichever ran last
+// silently winning. This file now only ever does pass 1 (availability).
 
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { TrainingAvailability } from '../models/goalEngineConfig';
-import type { ProgressionDecision } from '../models/progression';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import type { TrainingPrescription, TrainingPrescriptionCandidate } from '../models/prescription';
 import { resolveHorizonZone, isDateInForecastRange } from './planningHorizon';
-import { inferCapabilityKeysForTemplate } from './sessionContribution';
-import { keyId } from './capability';
 import { proposeNoTimeToday } from './scheduler';
-import { writeTrainingPrescription } from './prescriptionWriter';
-import { proposeRunningPrescription } from './specialists/running';
-import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
-import { findAlgorithmRule } from '../data/algorithmRules';
 import { weekdayOf, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
-
-// A bare ruleId is a stable identifier, but the *metadata it resolves to*
-// (data/algorithmRules.ts#ruleVersion) can be recalibrated later under the
-// same id (SYSTEM_INVARIANTS' own "same input + engine version + rule
-// version -> same output" already treats rule version as a distinct axis
-// of change). Stamping the version NOW, at decision time, onto the
-// permanent audit item means a much later lookup by ruleId alone can never
-// silently misattribute an old entry to a rule version that didn't exist
-// yet when it was written. Any entry that isn't a known ruleId (a file/
-// module path, e.g. 'engine/specialists/running.ts') passes through
-// unchanged — this only ever stamps entries findAlgorithmRule resolves.
-function stampGeneratedBy(entries: string[]): string[] {
-  return entries.map((entry) => {
-    const rule = findAlgorithmRule(entry);
-    return rule ? `${entry}@v${rule.ruleVersion}` : entry;
-  });
-}
 
 // Exported (Phase 8) so engine/strengthScheduling.ts's forecast-range
 // placement checks the exact same availability rule — never a second,
@@ -61,36 +44,12 @@ export function isDateAvailable(dateIso: string, availability: TrainingAvailabil
   return availability.allowedDays.includes(weekdayOf(dateIso));
 }
 
-// Only template types with a real discipline specialist (Phase 3) reach
-// here at all — computeForecastReplan's pass 2 excludes every other type
-// before calling this (see the pass-2 loop below). Strength deliberately
-// has none: the Strength Program Strategy Addendum v0.1 explicitly defers
-// StrengthProgramStrategy/StrengthProgramRecommendation to a later phase,
-// so there is no evidence-backed strength progression logic to drive a
-// 'reduce'/'replace' decision — inventing a role-change heuristic here
-// would be exactly the kind of unbacked guess this codebase's provenance
-// discipline exists to prevent. Throwing (rather than silently falling
-// back to something unbacked) is the fix, not an afterthought: a session
-// type without a real specialist must never quietly get a fabricated
-// prescription.
-function buildPrescriptionCandidate(
-  template: SessionTemplate,
-  decision: ProgressionDecision,
-  plannedSessionId: string,
-): TrainingPrescriptionCandidate {
-  if (template.type === 'cardio') return proposeRunningPrescription({ decision, plannedSessionId });
-  if (template.type === 'hiking') return proposeMountainAdventurePrescription({ decision, plannedSessionId });
-  throw new Error(`Adaptive Replanner: no discipline specialist for template type '${template.type}' — this session should have been excluded before reaching here.`);
-}
-
 function buildPassiveSummary(items: PlanChangeItem[]): string {
   if (items.length === 0) return 'Geen aanpassingen nodig in de vervolgweken.';
   const counts: Partial<Record<PlanChangeItem['action'], number>> = {};
   for (const item of items) counts[item.action] = (counts[item.action] ?? 0) + 1;
   const parts: string[] = [];
   if (counts.remove) parts.push(`${counts.remove} overgeslagen`);
-  if (counts.reduce) parts.push(`${counts.reduce} verlicht`);
-  if (counts.replace) parts.push(`${counts.replace} aangepast`);
   if (counts.move) parts.push(`${counts.move} verplaatst`);
   // A single, one-line summary (v0.1 §11.3) — never a popup for every
   // small shift, whatever the count.
@@ -104,36 +63,25 @@ export interface ForecastReplanInputs {
   // slice.
   plannedSessions: PlannedSession[];
   templates: SessionTemplate[];
-  // Caller-computed (Progression Orchestrator), keyed by
-  // engine/capability.ts#keyId — this module never computes a
-  // ProgressionDecision, CapabilityEstimate or ReadinessBreakdown itself.
-  decisionsByKey: Map<string, ProgressionDecision>;
   availability: TrainingAvailability;
   asOf: string;
 }
 
 export interface ForecastReplanResult {
   proposal: PlanChangeProposal;
-  // Real TrainingPrescription rows a 'reduce'/'replace' item points at via
-  // newPrescriptionId — the caller must persist these (TrainingPrescriptionsRepo)
-  // for the change to actually mean anything, never assumed to already exist.
-  prescriptions: TrainingPrescription[];
   passiveSummary: string;
 }
 
 export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastReplanResult {
-  const { plannedSessions, templates, decisionsByKey, availability, asOf } = inputs;
-  const templateById = new Map(templates.map((t) => [t.id, t]));
+  const { plannedSessions, templates, availability, asOf } = inputs;
 
   const forecastSessions = plannedSessions.filter(
     (s) => s.status !== 'skipped' && resolveHorizonZone(s.weekStartDate, asOf) === 'forecast',
   );
 
   const items: PlanChangeItem[] = [];
-  const prescriptions: TrainingPrescription[] = [];
   const handledIds = new Set<string>();
 
-  // --- Pass 1: TrainingAvailability (module map's explicit input) ---
   // Reuses proposeNoTimeToday verbatim — the exact "move every session on
   // this date to the next free day this week, or skip if the week is
   // full" mechanic that already exists, just triggered by an availability
@@ -169,55 +117,6 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     }
   }
 
-  // --- Pass 2: ProgressionDecision-driven adaptation ---
-  for (const session of forecastSessions) {
-    if (handledIds.has(session.id)) continue; // already addressed above
-    const template = templateById.get(session.templateId);
-    // Recovery sessions are never adapted — their whole point is already
-    // minimal load; there is nothing to reduce and removing one during a
-    // genuine recovery need would be counterproductive. Strength sessions
-    // are excluded for a different reason: the Strength Program Strategy
-    // Addendum v0.1 explicitly defers StrengthProgramStrategy/a strength
-    // specialist to a later phase, so there is no evidence-backed logic to
-    // decide *how* a strength session's content should change. Until that
-    // specialist exists, the strength split (Upper/Lower A/B) must stay
-    // exactly as scheduled — this pass may still move a strength session
-    // via pass 1 (availability/conflicts), it just never rewrites its role
-    // or content here.
-    if (!template || template.type === 'recovery' || template.type === 'strength') continue;
-
-    const keys = inferCapabilityKeysForTemplate(template);
-    const decision = keys.map((k) => decisionsByKey.get(keyId(k))).find((d): d is ProgressionDecision => d !== undefined);
-    if (!decision) continue; // nothing tracked for this session — leave it alone
-
-    if (decision.state === 'progress') continue; // the template's own progression is already the plan
-
-    // consolidate/assess -> 'replace' (different role, same load target);
-    // reduce/taper/recover -> 'reduce' (same role family, lighter target/
-    // volume). recover deliberately does NOT map to 'remove': the
-    // Algorithm Contract's own cutback/deload vocabulary (§31) never lists
-    // full removal as a response to deteriorating readiness, only reduce/
-    // consolidate/taper — and the specialists (engine/specialists/*.ts)
-    // already treat 'recover' and 'reduce' identically for stress-override
-    // purposes (both cap intensity to 'low'). A full, unconfirmed removal
-    // of a future session is a stronger, less reversible action than
-    // Phase 5 was willing to apply even to a same-day skip (which still
-    // goes through a confirmation dialog) — 'reduce' (role: 'recovery',
-    // lighter load) is the semantically correct, proportionate response.
-    const action: 'reduce' | 'replace' = decision.state === 'reduce' || decision.state === 'taper' || decision.state === 'recover' ? 'reduce' : 'replace';
-    const candidate = buildPrescriptionCandidate(template, decision, session.id);
-    const written = writeTrainingPrescription(candidate);
-    prescriptions.push(written);
-    // reason/generatedBy duplicated from the written prescription onto the
-    // item itself, deliberately — TrainingPrescriptionsRepo keeps only the
-    // one *current* row per session (the previous one is deleted the next
-    // time this replanner runs), so without its own copy this permanent,
-    // append-only audit record would lose exactly the "why"/"which
-    // rule/engine version" it exists to preserve the moment a later run
-    // supersedes that prescription.
-    items.push({ plannedSessionId: session.id, action, newPrescriptionId: written.id, reason: written.reason, generatedBy: stampGeneratedBy(written.generatedBy) });
-  }
-
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: 'new_training_data',
@@ -225,9 +124,9 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     changes: items,
     alternatives: [],
     consequences: 'Wordt automatisch toegepast op het forecast-bereik (week +2 en verder) — nooit op de huidige of volgende week.',
-    explanation: 'Gebaseerd op herstel, capaciteit-trend en beschikbaarheid; niets hiervan raakt de bevestigde (committed) weken.',
+    explanation: 'Gebaseerd op de ingestelde trainingsbeschikbaarheid; niets hiervan raakt de bevestigde (committed) weken.',
     createdAt: new Date().toISOString(),
   };
 
-  return { proposal, prescriptions, passiveSummary: buildPassiveSummary(items) };
+  return { proposal, passiveSummary: buildPassiveSummary(items) };
 }
