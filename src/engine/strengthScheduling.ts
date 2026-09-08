@@ -63,8 +63,11 @@ function targetTemplateIdsForWeek(strategy: StrengthProgramStrategy): string[] {
 // actually proposes giving one up when that relevance is low enough —
 // where "low enough" scales with how urgent/close the most-pressured
 // active goal currently is.
-const URGENT_GOAL_SWAP_THRESHOLD_PCT = 20;
-const CALM_GOAL_SWAP_THRESHOLD_PCT = 0;
+// Exported so engine/weeklyPrescriptionEngine.ts (Fase 5) reuses the exact
+// same threshold for its own ReconciliationTarget — never a second,
+// disagreeing swap-urgency number.
+export const URGENT_GOAL_SWAP_THRESHOLD_PCT = 20;
+export const CALM_GOAL_SWAP_THRESHOLD_PCT = 0;
 
 // Recovery days are never a candidate — injury-prevention/adherence value
 // the goal-demand pipeline structurally can't see and never should
