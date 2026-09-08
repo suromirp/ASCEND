@@ -334,6 +334,9 @@ function deriveLine(
   const { criticality, gapStatus } = gapAndCriticalityFor(kId, entry.goalIds[0], goalOverviews);
   const specificityWeight = computeSpecificityWeight({ criticality, gapStatus, band });
 
+  const slotId = slotIdFor(key, entry.goalIds);
+  const previousLine = previousWeekPrescription?.lines.find((l) => l.slotId === slotId);
+
   let sessionCountDelta = 0;
   let volumeMultiplier = 1.0;
   let preKeepDecision: WeeklyPrescriptionDecision = 'consolidate';
@@ -370,13 +373,20 @@ function deriveLine(
       // Compositie bevriest — taperReductionFactor (al berekend en op de
       // ProgressionDecision meegegeven door goalArbiter.ts#applyTaperOverride)
       // wordt letterlijk hergebruikt, nooit hier herberekend.
-      sessionCountDelta = 0;
       volumeMultiplier = 1 - (entry.decision.taperReductionFactor ?? 0);
       preKeepDecision = 'taper';
       break;
   }
 
-  let targetSessionCount = baseline + sessionCountDelta;
+  // Taper bevriest de telling op waar hij AL stond (vorige week se eigen
+  // lijn voor dezelfde slot, indien aanwezig) — nooit terugvallen op de
+  // verre, vaste anchorBaselineCoverage, anders zou de telling zichtbaar
+  // terugklappen zodra een reeks progress-weken overgaat in taper. Alleen
+  // bij de allereerste-ooit afleiding voor deze slot (geen previousLine)
+  // is de anchor-baseline de eerlijke startwaarde.
+  let targetSessionCount = state === 'taper'
+    ? (previousLine?.targetSessionCount ?? baseline)
+    : baseline + sessionCountDelta;
   if (sessionCountDelta < 0 && criticality === 'critical') {
     targetSessionCount = Math.max(targetSessionCount, 1); // CRITICAL-FLOOR — nooit naar 0
   }
@@ -385,9 +395,6 @@ function deriveLine(
   const candidateTemplateIds = rankCandidateTemplates(key, templates, allRelevantKeyIds);
   const dominantTemplate = templates.find((t) => t.id === candidateTemplateIds[0]);
   const numericRanges = numericBaselineRanges(dominantTemplate, volumeMultiplier);
-
-  const slotId = slotIdFor(key, entry.goalIds);
-  const previousLine = previousWeekPrescription?.lines.find((l) => l.slotId === slotId);
 
   let decision: WeeklyPrescriptionDecision = preKeepDecision;
   if (previousLine && targetSessionCount === previousLine.targetSessionCount && candidateTemplateIds.join('|') !== previousLine.candidateTemplateIds.join('|')) {
