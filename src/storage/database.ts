@@ -8,6 +8,7 @@ import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../mode
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
+import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
@@ -18,7 +19,7 @@ import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 7;
+const DB_VERSION = 8;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -71,6 +72,12 @@ interface AscendDB extends DBSchema {
   // automatic rewrite") — no delete exposed, same pattern as
   // planChangeProposals.
   strengthProgramRecommendations: { key: string; value: StrengthProgramRecommendation };
+  // --- Weekly Prescription Builder (WAT vóór WAAR architecture pass) ---
+  // One CURRENT row per week (old row deleted, new one put on each
+  // recompute) — NOT append-only: the audit trail of WHY a week's
+  // composition changed lives in planChangeProposals (trigger
+  // 'weekly_prescription_computed'), never duplicated here.
+  weeklyPrescriptions: { key: string; value: WeeklyPrescription; indexes: { 'by-week': string } };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -124,6 +131,10 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
         if (!db.objectStoreNames.contains('planChangeProposals')) db.createObjectStore('planChangeProposals', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('strengthProgramStrategies')) db.createObjectStore('strengthProgramStrategies', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('strengthProgramRecommendations')) db.createObjectStore('strengthProgramRecommendations', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('weeklyPrescriptions')) {
+          const store = db.createObjectStore('weeklyPrescriptions', { keyPath: 'id' });
+          store.createIndex('by-week', 'weekStartDate');
+        }
       },
     });
   }
@@ -352,6 +363,27 @@ export interface StrengthProgramRecommendationsRepo {
 export const StrengthProgramRecommendationsRepo: StrengthProgramRecommendationsRepo = {
   getAll: () => getAll('strengthProgramRecommendations') as Promise<StrengthProgramRecommendation[]>,
   put: (recommendation: StrengthProgramRecommendation) => put('strengthProgramRecommendations', recommendation),
+};
+
+// One current row per week (put deletes the old row for the same week via
+// the caller's own delete-then-put convention, mirroring
+// TrainingPrescriptionsRepo's byPlannedSession pattern) — the "why" audit
+// trail lives in PlanChangeProposalsRepo, never duplicated here.
+export interface WeeklyPrescriptionsRepo {
+  getAll(): Promise<WeeklyPrescription[]>;
+  byWeekStartDate(weekStartDate: string): Promise<WeeklyPrescription | undefined>;
+  put(prescription: WeeklyPrescription): Promise<unknown>;
+  delete(id: string): Promise<void>;
+}
+
+export const WeeklyPrescriptionsRepo: WeeklyPrescriptionsRepo = {
+  getAll: () => getAll('weeklyPrescriptions') as Promise<WeeklyPrescription[]>,
+  byWeekStartDate: async (weekStartDate: string) => {
+    const db = await getDB();
+    return db.getFromIndex('weeklyPrescriptions', 'by-week', weekStartDate);
+  },
+  put: (prescription: WeeklyPrescription) => put('weeklyPrescriptions', prescription),
+  delete: (id: string) => del('weeklyPrescriptions', id),
 };
 
 export const BackupSnapshotsRepo = {
@@ -617,6 +649,7 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('planChangeProposals'),
     clearStore('strengthProgramStrategies'),
     clearStore('strengthProgramRecommendations'),
+    clearStore('weeklyPrescriptions'),
   ]);
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
@@ -765,6 +798,7 @@ export async function wipeAllData(): Promise<void> {
     clearStore('planChangeProposals'),
     clearStore('strengthProgramStrategies'),
     clearStore('strengthProgramRecommendations'),
+    clearStore('weeklyPrescriptions'),
     clearStore('meta'),
   ]);
 }
