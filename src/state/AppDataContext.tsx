@@ -22,9 +22,11 @@ import {
   GoalMilestoneProgressRepo,
   InjuryNotesRepo,
   CapabilityEvidenceRepo,
+  TrainingPrescriptionsRepo,
   PlanChangeProposalsRepo,
   StrengthProgramStrategiesRepo,
   StrengthProgramRecommendationsRepo,
+  WeeklyPrescriptionsRepo,
   GoalEngineConfigRepo,
   SettingsRepo,
   StretchCompletionRepo,
@@ -39,9 +41,14 @@ import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
+import { computeReadiness } from '../engine/readiness';
+import { computeCapacity } from '../engine/capacity';
+import { targetPackWeightKg } from '../engine/demand';
 import { extractEvidenceFromLogs } from '../engine/capability';
-import { activeGoalDemandKeys } from '../engine/progressionDecisions';
+import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
+import { resolveHorizonZone } from '../engine/planningHorizon';
+import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan } from '../models/planChange';
@@ -317,6 +324,97 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  // Weekly Prescription Builder architecture pass, Fase 7 — decides WAT
+  // each forecast week should contain (engine/weeklyPrescriptionEngine.ts);
+  // engine/candidatePlacement.ts (Groep C, via reconcileWeekComposition)
+  // still decides WAAR, unchanged. Reads repos directly for the same
+  // reason runForecastReplan does — fires right after refresh(), before
+  // React state necessarily reflects that fetch. No active goal, or no
+  // forecast weeks yet scheduled → no-op, same precedent as
+  // runForecastReplan's own activeGoalDemandKeys gate.
+  const runWeeklyPrescriptionBuild = useCallback(async () => {
+    const [goals, logs, manualEvidence, planned, tpls, engineConfig, strategies, previousPrescriptions, programs] = await Promise.all([
+      TrainingGoalsRepo.getAll(),
+      SessionLogsRepo.getAll(),
+      CapabilityEvidenceRepo.getAll(),
+      PlannedSessionsRepo.getAll(),
+      SessionTemplatesRepo.getAll(),
+      GoalEngineConfigRepo.get(),
+      StrengthProgramStrategiesRepo.getAll(),
+      WeeklyPrescriptionsRepo.getAll(),
+      ProgramsRepo.getAll(),
+    ]);
+
+    const keys = activeGoalDemandKeys(goals);
+    if (keys.length === 0) return; // no active goal's demand to prescribe around
+
+    const asOf = todayISO();
+    const forecastWeekStarts = [
+      ...new Set(planned.filter((s) => resolveHorizonZone(s.weekStartDate, asOf) === 'forecast').map((s) => s.weekStartDate)),
+    ].sort();
+    if (forecastWeekStarts.length === 0) return; // nothing scheduled that far out yet — a real, unresolved dependency (see CLAUDE.md's "16-week horizon" note)
+
+    const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
+    const readiness = computeReadiness(logs, planned);
+    const packWeightTargetKg = goals
+      .filter((g) => g.status === 'active')
+      .map((g) => targetPackWeightKg(g.requirements))
+      .find((v) => v !== undefined);
+    const capacity = computeCapacity(logs, 28, asOf, packWeightTargetKg);
+    const recentLogs = [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate));
+    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, capacity, engineConfig.guardrails, recentLogs, asOf, goals);
+    const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
+
+    const { prescriptions, newTrainingPrescriptions, proposal } = computeWeeklyPrescriptionPlan(
+      forecastWeekStarts, goals, overviews, decisionsByKey, planned, tpls, engineConfig.availability,
+      activeStrengthStrategy(strategies) ?? null, previousPrescriptions, [], programs[0] ?? null,
+      engineConfig.strategy.sameDayPairingPreference, asOf,
+    );
+
+    // Geen wijziging (alle lijnen keep én geen items) -> no-op, geen schrijf.
+    const allKeep = prescriptions.every((p) => p.lines.every((l) => l.decision === 'keep'));
+    if (allKeep && proposal.changes.length === 0) return;
+
+    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+    if (unsupported.length > 0) {
+      // Same atomicity guarantee as runForecastReplan: never an
+      // unintended partial apply.
+      console.error('Weekly Prescription Builder: refusing to apply — unsupported plan change items present', unsupported);
+      return;
+    }
+
+    const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+    const originalIds = new Set(planned.map((s) => s.id));
+    for (const session of updatedSessions) {
+      if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
+        await PlannedSessionsRepo.put(session);
+      }
+    }
+
+    // A session gets at most one *current* prescription — replace, never
+    // accumulate, across repeated builder runs on later app opens.
+    for (const prescription of newTrainingPrescriptions) {
+      const existing = await TrainingPrescriptionsRepo.byPlannedSession(prescription.plannedSessionId);
+      if (existing) await TrainingPrescriptionsRepo.delete(existing.id);
+      await TrainingPrescriptionsRepo.put(prescription);
+    }
+
+    // Eén huidige rij per week (Fase 1) — oude rij voor diezelfde week
+    // verwijderen, nieuwe zetten; de audit trail van waarom leeft in
+    // PlanChangeProposalsRepo hieronder, nooit hier gedupliceerd.
+    for (const wp of prescriptions) {
+      const existing = await WeeklyPrescriptionsRepo.byWeekStartDate(wp.weekStartDate);
+      if (existing) await WeeklyPrescriptionsRepo.delete(existing.id);
+      await WeeklyPrescriptionsRepo.put(wp);
+    }
+
+    // Append-only audit trail — resolvedAt/resolution set immediately since
+    // the forecast range auto-applies, never user-confirmed.
+    await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+
+    await refresh();
+  }, [refresh]);
+
   // Phase 8 — the single-transaction activation flow for a Strength
   // Program Strategy (mirrors activateGoal): the forecast-range placement
   // is always recomputed fresh, right here, against live data rather than
@@ -546,8 +644,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
     await runForecastReplan();
     await runStrengthReviewCheck();
+    await runWeeklyPrescriptionBuild();
     await refresh();
-  }, [refresh, runForecastReplan, runStrengthReviewCheck]);
+  }, [refresh, runForecastReplan, runStrengthReviewCheck, runWeeklyPrescriptionBuild]);
 
   useEffect(() => {
     (async () => {
@@ -580,8 +679,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // adaptation, never something the user waits on to see Today/Week.
       void runForecastReplan();
       void runStrengthReviewCheck();
+      void runWeeklyPrescriptionBuild();
     })();
-  }, [refresh, runForecastReplan, runStrengthReviewCheck]);
+  }, [refresh, runForecastReplan, runStrengthReviewCheck, runWeeklyPrescriptionBuild]);
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
 
