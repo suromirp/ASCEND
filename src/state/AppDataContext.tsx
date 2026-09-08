@@ -53,7 +53,7 @@ import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOve
 import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { detectConsecutiveRestDays, buildConsecutiveRestFixProposal } from '../engine/scheduleAnomalies';
-import { mondayOfWeek, todayISO, daysBetween } from '../utils/dates';
+import { mondayOfWeek, todayISO, daysBetween, addDays } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -712,8 +712,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const moveSession = useCallback(
     (sessionId: string, targetDate: string): ScheduleProposal => {
-      const week = sessionsForWeek(mondayOfWeek(targetDate));
-      const combined = week.some((s) => s.id === sessionId) ? week : [...week, ...plannedSessions.filter((s) => s.id === sessionId)];
+      const targetMonday = mondayOfWeek(targetDate);
+      // Groep C, Fase 5 — de weekgrens-bug: cross-day belastingsscoring
+      // (candidatePlacement.ts#findLoadOverlaps) kijkt tot 2 dagen terug/
+      // vooruit, wat de eigen kalenderweek kan overschrijden (bv. maandag
+      // vergeleken met de voorgaande zondag). `week` alleen zou zo'n
+      // aangrenzende-week-sessie stilzwijgend missen — de buurweken worden
+      // hier meegenomen zodat searchWeeklyPlacement's nabijheidscontext
+      // altijd compleet is, ook al blijven de kandidaatdata zelf beperkt
+      // tot de kalenderweek van targetDate (scheduler.ts#proposeMove).
+      const week = sessionsForWeek(targetMonday);
+      const previousWeek = sessionsForWeek(addDays(targetMonday, -7));
+      const nextWeek = sessionsForWeek(addDays(targetMonday, 7));
+      const nearby = [...previousWeek, ...week, ...nextWeek];
+      const combined = nearby.some((s) => s.id === sessionId) ? nearby : [...nearby, ...plannedSessions.filter((s) => s.id === sessionId)];
       return proposeMove(combined, templates, sessionId, targetDate, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference);
     },
     [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig],

@@ -30,6 +30,13 @@ export interface PlanChangeItem {
   // always two items, each naming the other via this field, each carrying
   // its own new toDate (the partner's original date).
   pairedWithSessionId?: string;
+  // Groep C, Fase 8 — puur informatief veld, nooit gelezen door
+  // applyPlanChangeItems, alleen voor UI/audit: welke andere sessie(s) op
+  // dezelfde datum staan als deze PAIR-plaatsing. Meervoud (niet
+  // coPlacedWithSessionId: string) omdat het model meerdere sessies per
+  // dag ondersteunt (Groep A) — een enkelvoudig ID zou stilzwijgend
+  // informatie laten vallen zodra een derde sessie dezelfde dag deelt.
+  coPlacedWithSessionIds?: string[];
   // Why this specific item was proposed, and which engine/rule produced
   // it — captured HERE, not only on a referenced TrainingPrescription
   // (newPrescriptionId), because that row is deliberately NOT append-only

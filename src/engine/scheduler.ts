@@ -5,6 +5,7 @@ import { addDays, daysBetween, mondayOfWeek, weekDates, weekdayOf } from '../uti
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { detectRecentSpike } from './progressionSpikes';
 import { resolveEffectiveFullDuration } from './substitutions';
+import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
 
 // ASCEND's scheduling engine is deterministic on purpose (spec §16, §29):
 // it never guesses and it never runs an LLM in the loop. A future AI layer
@@ -90,6 +91,12 @@ export interface ScheduleProposal {
   changes: ScheduleChange[];
   reason: string;
   resolved: boolean;
+  // Groep C, Fase 8 — overlevende, niet-gekozen complete weekkandidaten uit
+  // searchWeeklyPlacement's cascade-aanroep, direct herbruikbaar door
+  // engine/proposalEngine.ts#wrapAsPlanChangeProposal via
+  // candidatePlacement.ts#weekCandidatesToAlternatives. Leeg wanneer er geen
+  // cascade nodig was (geen conflict) of geen alternatieven overleefden.
+  alternatives?: WeekPlacementCandidate[];
 }
 
 function templateName(templates: Map<string, SessionTemplate>, id: string): string {
@@ -106,7 +113,8 @@ function templateName(templates: Map<string, SessionTemplate>, id: string): stri
 // short-circuits everything else) and the day's own `DailyTimeBudget` (an
 // objective practical constraint) — this function never reasons about
 // recovery/training load at all; that stays engine/scheduler.ts's own
-// separate 48h leg-heavy check (conflictsWith/requiredSpacingDays above),
+// separate leg-heavy check (requiredSpacingDays above, and Groep C's soft
+// candidatePlacement.ts scoring),
 // queried independently by the same callers.
 //
 // No budget configured for this weekday (the honest default until a
@@ -153,26 +161,6 @@ export function dayHasRoomFor(
     ? budget.preferredMinutes
     : budget.preferredMinutes + budget.softFlexMinutes;
   return totalMinutes <= ceiling;
-}
-
-function conflictsWith(
-  candidateDate: string,
-  candidateTemplateId: string,
-  sessions: PlannedSession[],
-  templates: Map<string, SessionTemplate>,
-  excludeId: string,
-  recentLogs: SessionLog[] = [],
-): boolean {
-  const candidateTemplate = templates.get(candidateTemplateId);
-  if (!candidateTemplate || !isLegHeavyTemplate(candidateTemplate)) return false;
-  return sessions.some((s) => {
-    if (s.id === excludeId || s.status === 'skipped') return false;
-    const other = templates.get(s.templateId);
-    if (!other || !isLegHeavyTemplate(other)) return false;
-    if (isIntentionalBackToBack(candidateTemplate, other)) return false;
-    const spacing = Math.max(requiredSpacingDays(excludeId, recentLogs), requiredSpacingDays(s.id, recentLogs));
-    return Math.abs(daysBetween(s.scheduledDate, candidateDate)) <= spacing;
-  });
 }
 
 // Proposes moving one session to a new date, cascading a single conflicting
@@ -227,37 +215,68 @@ export function proposeMove(
     return { changes, reason: 'Geen conflicten gevonden.', resolved: true };
   }
 
-  // Try to find the conflicting session a free, non-conflicting day within
-  // the same calendar week, preferring later days first.
-  const monday = mondayOfWeek(targetDate);
-  const candidates = weekDates(monday).filter((d) => d !== conflicting.scheduledDate);
-  const ordered = [...candidates.filter((d) => d > conflicting.scheduledDate), ...candidates.filter((d) => d < conflicting.scheduledDate).reverse()];
-
+  // Groep C, Fase 7: in plaats van de eerste vrije, niet-conflicterende dag
+  // te pakken (first-fit), scoort searchWeeklyPlacement alle kandidaatdagen
+  // voor de conflicterende sessie en kiest de beste — met een expliciete
+  // compromised/unplaceable-uitkomst wanneer geen enkele dag goed genoeg is,
+  // i.p.v. stilzwijgend de eerste conflictloze dag te accepteren.
+  //
+  // `fixedExistingSessions` sluit de conflicterende sessie zelf uit
+  // (correctheidseis, Fase 7): hij mag nooit tegelijk op zijn oude datum
+  // aanwezig zijn terwijl searchWeeklyPlacement een nieuwe datum voor hem
+  // zoekt — anders ontstaat een self-conflict.
   const conflictingTemplate = templateMap.get(conflicting.templateId);
-  const newSpot = ordered.find(
-    (d) =>
-      (!conflictingTemplate || dayHasRoomFor(d, conflictingTemplate, simulated, templateMap, program, dailyTimeBudget, sameDayPairingPreference)) &&
-      !conflictsWith(d, conflicting.templateId, simulated, templateMap, conflicting.id, recentLogs),
-  );
-
-  if (newSpot) {
-    changes.push({
-      sessionId: conflicting.id,
-      templateId: conflicting.templateId,
-      templateName: templateName(templateMap, conflicting.templateId),
-      fromDate: conflicting.scheduledDate,
-      toDate: newSpot,
-    });
+  if (!conflictingTemplate) {
     return {
       changes,
-      reason: `Behoudt 48 uur hersteltijd tussen beenbelasting: ${templateName(templateMap, conflicting.templateId)} schuift op.`,
-      resolved: true,
+      reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu te dicht op een andere zware beensessie. Geen vrije dag gevonden om dit automatisch op te lossen.`,
+      resolved: false,
     };
+  }
+
+  const fixedExistingSessions = simulated.filter((s) => s.id !== conflicting.id);
+  const toPlace: PlacementRequest[] = [{ template: conflictingTemplate, source: 'cascade', sessionId: conflicting.id }];
+  const monday = mondayOfWeek(targetDate);
+
+  const hardValidDatesProvider = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
+    const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
+      id: p.sessionOrDraft,
+      templateId: template.id,
+      scheduledDate: p.date,
+      weekStartDate: monday,
+      status: 'planned' as const,
+      order: 1000 + i,
+    }));
+    return weekDates(monday).filter(
+      (d) =>
+        d !== conflicting.scheduledDate &&
+        dayHasRoomFor(d, template, [...fixedExistingSessions, ...tentativeAsSessions], templateMap, program, dailyTimeBudget, sameDayPairingPreference),
+    );
+  };
+
+  const result = searchWeeklyPlacement(toPlace, fixedExistingSessions, hardValidDatesProvider, templateMap, recentLogs, new Map());
+
+  if (result.status === 'clean' || result.status === 'compromised') {
+    const newSpot = result.bestFound.placements[0]?.date;
+    if (newSpot) {
+      changes.push({
+        sessionId: conflicting.id,
+        templateId: conflicting.templateId,
+        templateName: templateName(templateMap, conflicting.templateId),
+        fromDate: conflicting.scheduledDate,
+        toDate: newSpot,
+      });
+    }
+    const alternatives = result.alternatives;
+    const reason = result.status === 'compromised'
+      ? `Let op: ${result.compromisedReason} ${templateName(templateMap, conflicting.templateId)} schuift op naar de minst slechte optie.`
+      : `Probeert zware beenbelasting over meerdere dagen te spreiden en niet te dicht op elkaar te plannen: ${templateName(templateMap, conflicting.templateId)} schuift op.`;
+    return { changes, reason, resolved: true, alternatives };
   }
 
   return {
     changes,
-    reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen 48 uur van een andere zware beensessie. Geen vrije dag gevonden om dit automatisch op te lossen.`,
+    reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen de gewenste hersteltijd van een andere zware beensessie. Geen vrije dag gevonden om dit automatisch op te lossen.`,
     resolved: false,
   };
 }
