@@ -14,10 +14,11 @@
 // than a hardcoded assumption.
 
 import type { ScheduleProposal } from './scheduler';
-import type { PlannedSession } from '../models/training';
+import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { EngineEvent, PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { isDateInCommittedRange, isDateInForecastRange, type HorizonZone } from './planningHorizon';
 import { makeId } from '../utils/id';
+import { weekCandidatesToAlternatives } from './candidatePlacement';
 
 function scheduleChangeToPlanChangeItem(change: ScheduleProposal['changes'][number]): PlanChangeItem {
   return {
@@ -55,16 +56,40 @@ export function wrapAsPlanChangeProposal(
   trigger: EngineEvent,
   zone: HorizonZone,
   asOf: string,
+  // Groep C, Fase 8 — nodig om searchWeeklyPlacement's overlevende
+  // alternatieven (scheduleProposal.alternatives) terug te vertalen naar
+  // sjabloonnamen voor PlanChangeAlternative. Ontbreekt (undefined) op elke
+  // bestaande call site die dit nog niet doorgeeft — dan blijft
+  // alternatives leeg, exact het oude gedrag, nooit een crash.
+  templateById?: Map<string, SessionTemplate>,
 ): PlanChangeProposal {
   const changes = scheduleProposal.changes.map(scheduleChangeToPlanChangeItem);
   assertZone(changes, zone, asOf);
+
+  const weekStartDate = changes[0]?.toDate ?? asOf;
+  const alternatives = scheduleProposal.alternatives && templateById
+    ? weekCandidatesToAlternatives(
+        scheduleProposal.alternatives,
+        (sessionOrDraft) => {
+          // De alternatieve kandidaten dragen alleen sessionId's, geen
+          // sjabloon-informatie direct — zoek de sjabloon van de
+          // overeenkomstige plaatsing in scheduleProposal.changes op via de
+          // sessionId, met een fallback op de eerste change (single-session
+          // cascade, het enige huidige aanroepgeval van dit veld).
+          const match = scheduleProposal.changes.find((c) => c.sessionId === sessionOrDraft);
+          const templateId = match?.templateId ?? scheduleProposal.changes[0]?.templateId;
+          return templateId ? templateById.get(templateId) : undefined;
+        },
+        weekStartDate,
+      )
+    : [];
 
   return {
     id: makeId('planchange'),
     trigger,
     issue: scheduleProposal.reason,
     changes,
-    alternatives: [],
+    alternatives,
     consequences: scheduleProposal.resolved
       ? 'Wijziging wordt direct toegepast na bevestiging.'
       : 'Kon niet automatisch worden opgelost — controleer het schema handmatig.',

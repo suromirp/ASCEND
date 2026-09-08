@@ -178,10 +178,16 @@ describe('computeStrengthPlacementPlan', () => {
     expect(proposal.issue).not.toBe('Geen aanpassingen nodig');
   });
 
-  it('blames the 48h rule specifically only when a free day actually existed but every one of them conflicted', () => {
-    // Monday and Wednesday are the only free days; a leg-heavy hike sits on
-    // Tuesday, so both free days fall within 48h of it and get refused —
-    // a genuine conflict-caused unplaceability, distinct from a full week.
+  // Groep C: dit fixture illustreerde vroeger de harde 48u-blokkade (beide
+  // vrije dagen lagen binnen 48u van de zware hike, dus geen enkele mocht).
+  // Nu beenbelasting een zachte score is i.p.v. een harde poort, vindt de
+  // batch-zoekstrategie wél degelijk een goede plek — maandag en woensdag
+  // liggen allebei maar 1 dag van de hike vandaan (cost 0,5, ruim onder de
+  // compromised-drempel), dus de plaatsing lukt gewoon en is `clean`. Dat
+  // is precies de bedoelde verbetering: eerst kijken of een goede plek
+  // bestaat, pas als `compromised`/`unplaceable` markeren wanneer dat écht
+  // niet lukt.
+  it('places the session even when every free day sits close to a leg-heavy hike, once the clustering cost stays acceptable', () => {
     const sessions = [
       session('tue', 'tpl_long_run', '2026-09-22', FORECAST_MONDAY),
       session('thu', 'tpl_easy_run', '2026-09-24', FORECAST_MONDAY),
@@ -197,9 +203,70 @@ describe('computeStrengthPlacementPlan', () => {
       ASOF,
       [],
     );
-    expect(proposal.changes).toEqual([]);
-    expect(proposal.consequences).toMatch(/48-uursregel/);
-    expect(proposal.consequences).not.toMatch(/geen vrije dag/);
+    expect(proposal.changes).toEqual([
+      {
+        action: 'add',
+        newSessionDraft: { templateId: 'tpl_lower_a', scheduledDate: '2026-09-21', weekStartDate: FORECAST_MONDAY },
+        reason: expect.stringContaining('toegevoegd'),
+        generatedBy: ['engine/strengthScheduling.ts#computeStrengthPlacementPlan'],
+        coPlacedWithSessionIds: undefined,
+      },
+    ]);
+    // Geen "Let op:"-waarschuwing — dit is een schone plaatsing, geen
+    // gecompromitteerde.
+    expect(proposal.changes[0].reason).not.toMatch(/Let op:/);
+  });
+
+  // Groep C, Fase 8 — twee haalbare weekkandidaten (maandag EN woensdag
+  // zijn allebei vrij en plaatsbaar); de schonere (laagste cost) wint als
+  // `changes`, en de afgewezen kandidaat komt terug in `alternatives` in
+  // plaats van hardcoded [] — nooit stilzwijgend weggegooid.
+  it('populates alternatives with the surviving, non-chosen week candidate', () => {
+    const sessions = [
+      session('tue', 'tpl_long_run', '2026-09-22', FORECAST_MONDAY),
+      session('thu', 'tpl_easy_run', '2026-09-24', FORECAST_MONDAY),
+      session('fri', 'tpl_easy_run', '2026-09-25', FORECAST_MONDAY),
+      session('sat', 'tpl_easy_run', '2026-09-26', FORECAST_MONDAY),
+      session('sun', 'tpl_easy_run', '2026-09-27', FORECAST_MONDAY),
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      sessions,
+      templates,
+      availability(),
+      ASOF,
+      [],
+    );
+    expect(proposal.alternatives.length).toBeGreaterThan(0);
+    expect(proposal.alternatives[0].consequences.length).toBeGreaterThan(0);
+  });
+
+  // Een fixture waar écht geen goede plek bestaat: elke vrije dag ligt
+  // dezelfde dag als, of één dag van, een ANDERE zware beensessie — de
+  // batch vindt nog wel een complete plaatsing, maar die blijft
+  // gecompromitteerd (nooit stilzwijgend gelijkgesteld aan een schone).
+  it('marks the placement compromised (not silently clean) when every viable day still clusters heavy load', () => {
+    const sessions = [
+      session('mon', 'tpl_long_run', '2026-09-21', FORECAST_MONDAY),
+      session('tue', 'tpl_long_run', '2026-09-22', FORECAST_MONDAY),
+      session('thu', 'tpl_long_run', '2026-09-24', FORECAST_MONDAY),
+      session('fri', 'tpl_long_run', '2026-09-25', FORECAST_MONDAY),
+      session('sat', 'tpl_easy_run', '2026-09-26', FORECAST_MONDAY),
+      session('sun', 'tpl_easy_run', '2026-09-27', FORECAST_MONDAY),
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      sessions,
+      templates,
+      availability(),
+      ASOF,
+      [],
+    );
+    // Only Wednesday is free, sandwiched between two leg-heavy long runs
+    // (Tue + Thu) — a complete placement exists, but it's a real cluster.
+    expect(proposal.changes).toHaveLength(1);
+    expect(proposal.changes[0].newSessionDraft?.scheduledDate).toBe('2026-09-23');
+    expect(proposal.changes[0].reason).toMatch(/Let op:/);
   });
 
   it('never emits a replace/reduce action — placement only, content stays MacroFactor\'s job', () => {
@@ -367,6 +434,9 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
         newSessionDraft: { templateId: 'tpl_lower_a', scheduledDate: '2026-09-22', weekStartDate: FORECAST_MONDAY },
         reason: expect.stringContaining('toegevoegd'),
         generatedBy: ['engine/strengthScheduling.ts#computeStrengthPlacementPlan'],
+        // Groep C, Fase 8 — puur informatief audit-veld: welke andere
+        // sessie(s) dezelfde dag delen met deze PAIR-plaatsing.
+        coPlacedWithSessionIds: ['easy'],
       },
     ]);
   });

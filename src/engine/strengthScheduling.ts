@@ -25,7 +25,7 @@
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrainingAvailability, TrainingStrategyProfile } from '../models/goalEngineConfig';
-import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import type { PlanChangeAlternative, PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import type { GoalOverview } from './goalOverview';
 import { resolveHorizonZone, committedWeekStartDates } from './planningHorizon';
@@ -36,6 +36,7 @@ import { resolveSessionContributions, type GoalDemand } from './sessionContribut
 import { computeDemand } from './demand';
 import { daysBetween, weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { searchWeeklyPlacement, keyForPlacementRequest, weekCandidatesToAlternatives, type PlacementRequest } from './candidatePlacement';
 
 function isLegHeavyTemplate(template: SessionTemplate): boolean {
   return resolveEffectiveStressProfile(template).lowerBodyLoad === 'heavy';
@@ -182,6 +183,13 @@ interface WeekReconciliation {
   // booked case.
   noFreeDay: boolean;
   legHeavyConflict: boolean;
+  // Groep C, Fase 8 — de overlevende, niet-gekozen complete weekkandidaten
+  // uit de batch searchWeeklyPlacement-aanroep hierboven, rechtstreeks
+  // gevoed aan PlanChangeProposal.alternatives via
+  // candidatePlacement.ts#weekCandidatesToAlternatives. Leeg wanneer de
+  // batch niet is gebruikt (unplaceable/search-limited viel terug op de
+  // per-sjabloon lus) of er geen alternatieven overleefden.
+  alternatives: PlanChangeAlternative[];
 }
 
 // The actual per-week reconciliation — shared by both the forecast-range
@@ -208,6 +216,7 @@ function reconcileWeek(
   const items: PlanChangeItem[] = [];
   let noFreeDay = false;
   let legHeavyConflict = false;
+  let alternatives: PlanChangeAlternative[] = [];
 
   // A mutable per-week working snapshot so an item this same batch just
   // added/removed is immediately visible to the next placement's
@@ -238,9 +247,82 @@ function reconcileWeek(
   const presentTemplateIds = new Set(onStrategy.map((s) => s.templateId));
   const missingTemplateIds = targetTemplateIds.filter((id) => !presentTemplateIds.has(id));
 
-  for (const templateId of missingTemplateIds) {
-    const template = templateById.get(templateId);
-    if (!template) continue; // strategy references a template that no longer exists — never invent a replacement
+  // Groep C, Fase 7: alle ontbrekende sjablonen worden eerst GEZAMENLIJK
+  // geoptimaliseerd via searchWeeklyPlacement — dit is waar de winst zit
+  // t.o.v. de oude per-sjabloon .find()-lus: meerdere sessies in één batch
+  // tegen elkaar afgewogen i.p.v. na elkaar hebzuchtig geplaatst. Alleen
+  // wanneer de VOLLEDIGE batch niet in één keer plaatsbaar is
+  // (unplaceable/search-limited), valt dit terug op de oorspronkelijke
+  // per-sjabloon lus hieronder (inclusief de bestaande swap-fallback) —
+  // zodat elk sjabloon nog individueel een kans krijgt in plaats van de
+  // hele batch stilzwijgend op te geven.
+  const missingTemplates = missingTemplateIds
+    .map((id) => templateById.get(id))
+    .filter((t): t is SessionTemplate => !!t);
+
+  let templatesForIndividualPass = missingTemplates;
+
+  if (missingTemplates.length > 0) {
+    const toPlace: PlacementRequest[] = missingTemplates.map((template) => ({ template, source: 'strength-missing' }));
+    const keyToTemplate = new Map(toPlace.map((req, i) => [keyForPlacementRequest(req, i), req.template]));
+
+    const hardValidDatesProvider = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
+      const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
+        id: p.sessionOrDraft,
+        templateId: keyToTemplate.get(p.sessionOrDraft)?.id ?? p.sessionOrDraft,
+        scheduledDate: p.date,
+        weekStartDate: weekStart,
+        status: 'planned' as const,
+        order: 1000 + i,
+      }));
+      return weekDates(weekStart).filter(
+        (date) =>
+          isDateAvailable(date, availability) &&
+          dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+      );
+    };
+
+    // Krachtblok-plaatsing kent geen per-sessie Goal Focus-gewicht (dat
+    // domein bestaat hier niet) — elke te plaatsen sessie weegt gelijk.
+    const sessionPriorityWeightById = new Map<string, number>();
+
+    const result = searchWeeklyPlacement(toPlace, weekSessions, hardValidDatesProvider, templateById, sessionLogs, sessionPriorityWeightById);
+
+    if (result.status === 'clean' || result.status === 'compromised') {
+      templatesForIndividualPass = [];
+      const compromisedPrefix = result.status === 'compromised' ? `Let op: ${result.compromisedReason} ` : '';
+      alternatives = weekCandidatesToAlternatives(result.alternatives, (sessionOrDraft) => keyToTemplate.get(sessionOrDraft), weekStart);
+
+      const newSessionIds = result.bestFound.placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
+      for (const { placement, id } of newSessionIds) {
+        const template = keyToTemplate.get(placement.sessionOrDraft);
+        if (!template) continue;
+        const existingOnDate = weekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === placement.date).map((s) => s.id);
+        const siblingNewIds = newSessionIds.filter((o) => o.placement.date === placement.date && o.id !== id).map((o) => o.id);
+        const coPlacedWithSessionIds = [...existingOnDate, ...siblingNewIds];
+        items.push({
+          action: 'add',
+          newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
+          reason: `${compromisedPrefix}Krachtblok-plaatsing: ${template.name} toegevoegd volgens het actieve krachtblok (${strategy.sessionsPerWeek}x/week, ${strategy.splitType}).`,
+          generatedBy: [source],
+          coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
+        });
+      }
+      const addedSessions: PlannedSession[] = [];
+      for (const { placement, id, index } of newSessionIds) {
+        const template = keyToTemplate.get(placement.sessionOrDraft);
+        if (!template) continue;
+        addedSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: weekSessions.length + index });
+      }
+      weekSessions = [...weekSessions, ...addedSessions];
+    }
+    // status === 'unplaceable' | 'search-limited': templatesForIndividualPass
+    // blijft de volledige missingTemplates-lijst — val terug op de
+    // per-sjabloon lus hieronder.
+  }
+
+  for (const template of templatesForIndividualPass) {
+    const templateId = template.id;
 
     // Time-budget scheduling redesign (Fase 3): dayHasRoomFor replaces the
     // plain "is this date genuinely empty" isSlotFree gate — a day that
@@ -304,7 +386,7 @@ function reconcileWeek(
     ];
   }
 
-  return { items, noFreeDay, legHeavyConflict };
+  return { items, noFreeDay, legHeavyConflict, alternatives };
 }
 
 function buildPlan(
@@ -334,9 +416,10 @@ function buildPlan(
   // good" the moment nothing gets added.
   let noFreeDayWeekCount = 0;
   let legHeavyConflictWeekCount = 0;
+  const alternatives: PlanChangeAlternative[] = [];
 
   for (const weekStart of weekStarts) {
-    const { items: weekItems, noFreeDay, legHeavyConflict } = reconcileWeek(
+    const { items: weekItems, noFreeDay, legHeavyConflict, alternatives: weekAlternatives } = reconcileWeek(
       weekStart,
       strategy,
       plannedSessions,
@@ -352,6 +435,7 @@ function buildPlan(
       sameDayPairingPreference,
     );
     items.push(...weekItems);
+    alternatives.push(...weekAlternatives);
     if (noFreeDay) noFreeDayWeekCount++;
     if (legHeavyConflict) legHeavyConflictWeekCount++;
   }
@@ -381,7 +465,7 @@ function buildPlan(
     trigger: 'strength_program_changed',
     issue: items.length > 0 ? 'Krachtblok-plaatsing' : unplaceableCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
     changes: items,
-    alternatives: [],
+    alternatives,
     consequences: items.length > 0
       ? `${zoneNote}${unplaceableNote}`
       : unplaceableCount > 0

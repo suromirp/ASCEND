@@ -75,20 +75,26 @@ describe('proposeMove', () => {
     expect(proposal.reason).toMatch(/schuift op/);
   });
 
-  it('reports unresolved when no non-conflicting free day exists for the cascade', () => {
+  // Groep C: onder de oude harde 48u-regel blokkeerde dit fixture élke
+  // kandidaatdag voor de cascade (Monday's oude plek werd immers ook als
+  // "binnen 48u van Tuesday" gezien, hoe ver ook). Nu beenbelasting een
+  // zachte score is, wordt Monday — vrijgekomen zodra sessie 'a' naar
+  // Tuesday verschuift — wél degelijk gevonden: 1 dag van Tuesday (cost
+  // 0,5) is ruim onder de compromised-drempel, dus een schone plaatsing.
+  // Dit is precies de bedoelde verbetering, geen regressie.
+  it('cascades onto a day that only just became free, once clustering cost stays acceptable', () => {
     const week = [
       session('a', 'tpl_lower_a', MON, MON),
       session('b', 'tpl_lower_b', WED, MON),
       session('c', 'tpl_bergconditie', FRI, MON),
       session('d', 'tpl_lower_a', SUN, MON),
     ];
-    // Moving Monday's session onto Tuesday conflicts with Wednesday's —
-    // and every other day in the week is either occupied or itself
-    // adjacent to another leg-heavy session, per the fixture above.
     const proposal = proposeMove(week, templates, 'a', TUE);
-    expect(proposal.resolved).toBe(false);
-    expect(proposal.changes).toHaveLength(1);
-    expect(proposal.reason).toMatch(/Geen vrije dag gevonden/);
+    expect(proposal.resolved).toBe(true);
+    expect(proposal.changes).toHaveLength(2);
+    expect(proposal.changes[1]).toMatchObject({ sessionId: 'b', fromDate: WED, toDate: MON });
+    expect(proposal.reason).toMatch(/spreiden/);
+    expect(proposal.reason).not.toMatch(/Let op:/);
   });
 
   it('never flags the intentional hill-intervals + long-run weekend as a conflict, even though both are leg-heavy', () => {
@@ -129,29 +135,37 @@ describe('proposeMove', () => {
     expect(withHeavyLog.changes.length).toBeGreaterThan(1); // now cascaded away — Wednesday conflicts once Monday's session is flagged heavy
   });
 
-  // Time-budget scheduling redesign (Fase 3): the cascade's free-day search
-  // now goes through dayHasRoomFor, so a day that's already occupied can
-  // become a valid cascade target once a real DailyTimeBudget makes room
-  // for pairing — without any budget configured, behavior is unchanged
-  // (occupied still means occupied).
-  it('a DailyTimeBudget lets the cascade pair onto an already-occupied day that would otherwise block it', () => {
+  // Time-budget scheduling redesign (Fase 3) + Groep C: the cascade's
+  // free-day search goes through dayHasRoomFor, so a day that's already
+  // occupied can become a valid cascade candidate once a real
+  // DailyTimeBudget makes room for pairing. Groep C changes what happens
+  // WITHOUT a budget too: Monday (freed up once 'a' moves to Tuesday) is
+  // now a valid, low-cost candidate on its own (soft scoring, not a hard
+  // 48h block) — so this no longer demonstrates "budget is the only way
+  // in", it demonstrates "the search picks the objectively better spot":
+  // without a budget, Monday (1 day from Tuesday, cost 0.5) is the only
+  // option; with Thursday's budget added, Thursday (2 days from Tuesday,
+  // cost 0.2 — genuinely less clustered) wins instead.
+  it('picks the lowest-cost cascade candidate, and a DailyTimeBudget can unlock a genuinely better one', () => {
     const week = [
       session('a', 'tpl_lower_a', MON, MON),
       session('b', 'tpl_lower_b', WED, MON),
-      session('busy', 'tpl_easy_run', THU, MON), // 60 min — the only day that could ever work for b
+      session('busy', 'tpl_easy_run', THU, MON), // 60 min — occupied without a budget
       session('fri_filler', 'tpl_easy_run', FRI, MON),
       session('sat_filler', 'tpl_easy_run', SAT, MON),
       session('sun_filler', 'tpl_easy_run', SUN, MON),
     ];
 
     const withoutBudget = proposeMove(week, templates, 'a', TUE);
-    expect(withoutBudget.resolved).toBe(false); // every day is either occupied (no budget) or leg-heavy-conflicting
+    expect(withoutBudget.resolved).toBe(true);
+    expect(withoutBudget.changes).toHaveLength(2);
+    expect(withoutBudget.changes[1]).toMatchObject({ sessionId: 'b', fromDate: WED, toDate: MON }); // the only free day without a budget
 
     const thuBudget: Record<string, DailyTimeBudget> = { thu: { preferredMinutes: 90, softFlexMinutes: 40 } }; // 60 (busy) + 60 (b) = 120 <= 130
     const withBudget = proposeMove(week, templates, 'a', TUE, [], null, thuBudget, 'automatic');
     expect(withBudget.resolved).toBe(true);
     expect(withBudget.changes).toHaveLength(2);
-    expect(withBudget.changes[1]).toMatchObject({ sessionId: 'b', fromDate: WED, toDate: THU });
+    expect(withBudget.changes[1]).toMatchObject({ sessionId: 'b', fromDate: WED, toDate: THU }); // now available AND objectively less clustered than Monday
   });
 });
 
