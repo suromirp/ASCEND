@@ -9,11 +9,13 @@ import {
   InjuryNotesRepo,
   TrainingGoalsRepo,
   CapabilityEvidenceRepo,
+  WeeklyPrescriptionsRepo,
 } from './database';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
 import type { InjuryNote } from '../models/injury';
 import type { TrainingGoal } from '../models/goals';
 import type { CapabilityEvidence } from '../models/capability';
+import type { WeeklyPrescription } from '../models/weeklyPrescription';
 
 // Production incident: Settings' "SCHEMA OPNIEUW LADEN" called the
 // full-factory-reset resetToDemoData(), silently wiping sessionLogs/
@@ -132,5 +134,51 @@ describe('resetScheduleToDefault', () => {
 
     const after = await PlannedSessionsRepo.getAll();
     expect(after.some((s) => s.scheduledDate === todayISO())).toBe(true);
+  });
+});
+
+// Weekly Prescription Builder — one current row per week, indexed by
+// weekStartDate (DB_VERSION 7->8).
+describe('WeeklyPrescriptionsRepo', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  function prescription(overrides: Partial<WeeklyPrescription> & { id: string; weekStartDate: string }): WeeklyPrescription {
+    return {
+      lines: [],
+      skeletonSignature: 'sig',
+      consecutiveKeepWeeks: 0,
+      reviewDue: false,
+      specificityRampBand: 'base',
+      goalSnapshot: [],
+      generatedBy: ['test'],
+      computedAt: new Date().toISOString(),
+      ...overrides,
+    };
+  }
+
+  it('round-trips a row and reads it back by week', async () => {
+    const row = prescription({ id: 'wp1', weekStartDate: '2026-09-21' });
+    await WeeklyPrescriptionsRepo.put(row);
+
+    expect(await WeeklyPrescriptionsRepo.byWeekStartDate('2026-09-21')).toEqual(row);
+    expect(await WeeklyPrescriptionsRepo.getAll()).toEqual([row]);
+  });
+
+  it('delete removes exactly the targeted row', async () => {
+    await WeeklyPrescriptionsRepo.put(prescription({ id: 'wp1', weekStartDate: '2026-09-21' }));
+    await WeeklyPrescriptionsRepo.put(prescription({ id: 'wp2', weekStartDate: '2026-09-28' }));
+    await WeeklyPrescriptionsRepo.delete('wp1');
+
+    const remaining = await WeeklyPrescriptionsRepo.getAll();
+    expect(remaining.map((r) => r.id)).toEqual(['wp2']);
+  });
+
+  it('wipeAllData clears the store', async () => {
+    await WeeklyPrescriptionsRepo.put(prescription({ id: 'wp1', weekStartDate: '2026-09-21' }));
+    await wipeAllData();
+    expect(await WeeklyPrescriptionsRepo.getAll()).toEqual([]);
   });
 });

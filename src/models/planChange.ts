@@ -68,7 +68,17 @@ export type EngineEvent =
   // (e.g. multiple rest days in a row) unlikely to be intentional and
   // proposed a concrete fix — always user-reviewed via the same confirm
   // flow as every other PlanChangeProposal, never auto-applied.
-  | 'schedule_anomaly_detected';
+  | 'schedule_anomaly_detected'
+  // Weekly Prescription Builder (engine/weeklyPrescriptionEngine.ts) decided
+  // this week's non-strength session count/volume/decision composition and
+  // reconciled it via the shared engine/weekReconciliation.ts against
+  // existing forecast-zone PlannedSessions. Distinct from
+  // 'new_training_data' (the existing Adaptive Replanner's own trigger,
+  // engine/adaptiveReplanner.ts) — that pass now only handles the
+  // availability cascade; this is the progression/volume-driven pass for
+  // cardio/hiking, see engine/weeklyPrescriptionEngine.ts's own header for
+  // why the two were split apart.
+  | 'weekly_prescription_computed';
 
 export interface PlanChangeAlternative {
   label: string;
