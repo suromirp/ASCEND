@@ -90,15 +90,44 @@ describe('reconcileWeekComposition — generic, non-strength ReconciliationTarge
     expect(addItem?.newSessionDraft?.scheduledDate).toBeDefined();
   });
 
-  it('skips placement entirely for a week with no honest slot, rather than forcing a conflict', () => {
-    // The candidate must itself be leg-heavy here — a non-leg-heavy
-    // candidate (like tpl_easy_run) never trips wouldConflict at all and
-    // would trivially swap onto any filler day regardless of how full the
-    // week is, which would test the swap-ranking path, not "no honest slot".
+  // Groep C invariant (test D): a leg-heavy/load-overlap situation may never
+  // by itself make a placement unplaceable — the only thing that may veto a
+  // day is real hard capacity (dayHasRoomFor). Every day here already holds
+  // a leg-heavy filler AND dailyTimeBudget is empty (so dayHasRoomFor falls
+  // back to "one session per day"), which is genuinely a hard-occupancy
+  // situation — but since the fillers have zero goal relevance (no active
+  // goals), the swap fallback can still honestly free a day for the
+  // candidate. This used to fail purely because the swap fallback ALSO used
+  // to hard-veto on leg-heavy adjacency (wouldConflict) — removing that is
+  // exactly this fix.
+  it('places via the swap fallback even when every day already holds a leg-heavy session — the fallback never hard-blocks purely on load overlap (Groep C invariant / test D)', () => {
     const heavyTemplate: SessionTemplate = { id: 'tpl_heavy_a', name: 'Zware Sessie A', type: 'strength', durationVariants: { full: 60 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'light', intensity: 'high' } };
     const byId = new Map([...templateById, [heavyTemplate.id, heavyTemplate]]);
     const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
-      session(`filler${i}`, 'tpl_long_run', d, FORECAST_MONDAY), // also leg-heavy — every candidate date conflicts with some filler
+      session(`filler${i}`, 'tpl_long_run', d, FORECAST_MONDAY), // also leg-heavy — every candidate date is adjacent to some filler
+    );
+    const target = cardioFamilyTarget({ isInFamily: (_s, t) => t.id === 'tpl_heavy_a', targetTemplateIds: ['tpl_heavy_a'] });
+    const result = reconcileWeekComposition(FORECAST_MONDAY, target, sessions, byId, availability(), new Set(), [], [], null, undefined);
+    const removeItem = result.items.find((i) => i.action === 'remove');
+    const addItem = result.items.find((i) => i.action === 'add');
+    expect(removeItem).toBeDefined(); // a low-relevance filler was swapped out to make room
+    expect(addItem?.newSessionDraft?.templateId).toBe('tpl_heavy_a');
+    expect(result.noFreeDay).toBe(false);
+  });
+
+  // Test E: without ANY swappable candidate at all (every existing session
+  // is a protected type), hard capacity genuinely runs out — noFreeDay
+  // stays a real, reachable outcome. This is the honest counterpart to the
+  // test above: hard capacity exhaustion is still possible, just never
+  // caused by load overlap alone.
+  it('still reports noFreeDay when hard capacity is genuinely exhausted (no swappable candidate exists) — test E', () => {
+    const heavyTemplate: SessionTemplate = { id: 'tpl_heavy_a', name: 'Zware Sessie A', type: 'strength', durationVariants: { full: 60 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'light', intensity: 'high' } };
+    const byId = new Map([...templateById, [heavyTemplate.id, heavyTemplate]]);
+    // Every existing session is 'recovery' — the family's own protectedTypes
+    // set — so pickSwapCandidate has literally nothing to offer up, and the
+    // week is genuinely, honestly full.
+    const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
+      session(`filler${i}`, 'tpl_herstel_stub', d, FORECAST_MONDAY),
     );
     const target = cardioFamilyTarget({ isInFamily: (_s, t) => t.id === 'tpl_heavy_a', targetTemplateIds: ['tpl_heavy_a'] });
     const result = reconcileWeekComposition(FORECAST_MONDAY, target, sessions, byId, availability(), new Set(), [], [], null, undefined);
@@ -114,11 +143,15 @@ describe('reconcileWeeksComposition — multi-week aggregation', () => {
     const target = cardioFamilyTarget({ isInFamily: (_s, t) => t.id === 'tpl_heavy_a', targetTemplateIds: ['tpl_heavy_a'] });
     const week1 = FORECAST_MONDAY;
     const week2 = '2026-09-28';
+    // week1 is genuinely, honestly full — every day holds a protected
+    // (recovery) session, so there is no swap candidate at all, not just a
+    // load-overlap situation (see test E above for why that distinction
+    // matters here).
     const fullWeek1 = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
-      session(`w1-${i}`, 'tpl_long_run', d, week1),
+      session(`w1-${i}`, 'tpl_herstel_stub', d, week1),
     );
     const result = reconcileWeeksComposition([week1, week2], target, fullWeek1, byId, availability(), new Set(), [], [], null, undefined);
-    expect(result.noFreeDayWeekCount).toBe(1); // week1 fully booked
+    expect(result.noFreeDayWeekCount).toBe(1); // week1 fully booked, no swap candidate
     expect(result.items.some((i) => i.action === 'add')).toBe(true); // week2 gets the add
   });
 });

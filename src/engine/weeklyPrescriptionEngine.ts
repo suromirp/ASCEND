@@ -151,7 +151,6 @@ export function computeWeeklyPrescriptionPlan(
   const alternatives: PlanChangeProposal['alternatives'] = [];
   const newTrainingPrescriptions: TrainingPrescription[] = [];
   let noFreeDayWeekCount = 0;
-  let legHeavyConflictWeekCount = 0;
 
   // Sequentieel vouwen — week N+1's KEEP-vergelijking heeft week N se
   // vers berekende rij nodig zodra nog geen gepersisteerde rij bestaat.
@@ -196,7 +195,6 @@ export function computeWeeklyPrescriptionPlan(
     items.push(...week.items);
     alternatives.push(...week.alternatives);
     if (week.noFreeDay) noFreeDayWeekCount++;
-    if (week.legHeavyConflict) legHeavyConflictWeekCount++;
 
     // Stap 3 — lijnen waar de telling gelijk bleef maar de numerieke
     // inhoud (volume/karakter) wél veranderde: bestaande, al-geplande
@@ -225,19 +223,18 @@ export function computeWeeklyPrescriptionPlan(
     }
   });
 
-  const unplaceableParts: string[] = [];
-  if (noFreeDayWeekCount > 0) {
-    unplaceableParts.push(`in ${noFreeDayWeekCount} week(en) zit elke dag al vol — er was geen vrije dag om de berekende weekprescriptie volledig te plaatsen`);
-  }
-  if (legHeavyConflictWeekCount > 0) {
-    unplaceableParts.push(`in ${legHeavyConflictWeekCount} week(en) kon een sessie niet geplaatst worden zonder de 48-uursregel voor zware beenbelasting te schenden`);
-  }
-  const unplaceableNote = unplaceableParts.length > 0 ? ` Let op: ${unplaceableParts.join('; ')}.` : '';
+  // Training-load overlap is a soft cost inside searchWeeklyPlacement (see
+  // reconcileWeekComposition's per-item "Let op: ..." compromised prefix) —
+  // it can never by itself make a week noFreeDay, so this is the only
+  // genuine hard-capacity-exhaustion reason left to report.
+  const unplaceableNote = noFreeDayWeekCount > 0
+    ? ` Let op: in ${noFreeDayWeekCount} week(en) zit elke dag al vol — er was geen vrije dag om de berekende weekprescriptie volledig te plaatsen.`
+    : '';
 
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: 'weekly_prescription_computed',
-    issue: items.length > 0 ? 'Weekprescriptie bijgewerkt' : unplaceableParts.length > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
+    issue: items.length > 0 ? 'Weekprescriptie bijgewerkt' : noFreeDayWeekCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
     changes: items,
     alternatives,
     consequences: `Wordt toegepast op het forecast-bereik (week +2 en verder) — nooit op de huidige of volgende week.${unplaceableNote}`,
