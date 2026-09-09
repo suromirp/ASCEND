@@ -17,6 +17,37 @@ export function durationForVariant(template: SessionTemplate, variant: SessionVa
   return template.durationVariants.full;
 }
 
+// weeklyProgression is defined once per template as a short Wennen →
+// Opbouw → Zwaarste week → Deload shape (data/defaultProgram.ts), keyed by
+// weekInPhase — which resets to 1 at the start of every Phase
+// (utils/dates.ts#resolveProgramWeek). Phase 2-4 today reuse that exact
+// same shape as placeholder content (their own description field says so
+// literally: "Placeholder — nog niet door jou ingevuld"), so a naive
+// weekInPhase lookup would make training visibly reset to the "Wennen"
+// numbers every 4 weeks, forever plateauing at the first cycle's own
+// peak — never actually building further, exactly the symptom a user
+// reported (screens showing week 5 identical to week 1).
+//
+// ASCEND_HEURISTIC(PROGRESSION-CYCLE-CARRYOVER): a purely mechanical
+// carry-over, not new training content — every time this same 4-step
+// shape repeats (weekInProgram, monotonic across the whole program,
+// divided by the shape's own length), the whole shape scales up by +8%
+// per full repeat, capped at 1.3x. The very first cycle (weeks 1-4) is
+// unaffected (multiplier 1.0) — today's numbers stay exactly as they are.
+// Bounded and modest on purpose: this program only spans 16 weeks
+// (utils/dates.ts#resolveProgramWeek returns null beyond it), so this
+// compounds at most 3 times with today's 4-phase x 4-week layout. This is
+// a safety net so a still-placeholder phase 2-4 keeps building rather than
+// silently resetting — it never substitutes for the user's own, real
+// phase-specific content once they write it (see Phase.description).
+const PROGRESSION_CYCLE_GROWTH_PER_REPEAT = 0.08;
+const PROGRESSION_CYCLE_GROWTH_CAP = 1.3;
+
+function progressionCycleMultiplier(weekInProgram: number, cycleLength: number): number {
+  const cycleIndex = Math.floor((weekInProgram - 1) / cycleLength); // 0-indexed: 0 = first pass through the shape
+  return Math.min(1 + PROGRESSION_CYCLE_GROWTH_PER_REPEAT * cycleIndex, PROGRESSION_CYCLE_GROWTH_CAP);
+}
+
 // Some templates (Easy Run, Bergconditie) target a different duration each
 // week of the training block instead of one fixed number — see
 // SessionTemplate.weeklyProgression. This resolves the *actual* target for
@@ -32,7 +63,10 @@ export function resolveEffectiveFullDuration(
     const position = resolveProgramWeek(program, scheduledDate);
     if (position) {
       const step = template.weeklyProgression.find((s) => s.weekInPhase === position.weekInPhase);
-      if (step) return step.targetMinutes;
+      if (step) {
+        const multiplier = progressionCycleMultiplier(position.weekInProgram, template.weeklyProgression.length);
+        return Math.round(step.targetMinutes * multiplier);
+      }
     }
   }
   return template.durationVariants.full;
