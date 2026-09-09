@@ -55,7 +55,7 @@ export function StrengthProgramWizard({
   onClose: () => void;
   onActivated?: () => void;
 }) {
-  const { templates, plannedSessions, goalEngineConfig, goalOverviews, activateStrengthProgram } = useAppData();
+  const { templates, plannedSessions, goalEngineConfig, goalOverviews, program, activateStrengthProgram } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const [step, setStep] = useState<Step>({ kind: 'sessions', draft: initialStrategy });
 
@@ -105,6 +105,8 @@ export function StrengthProgramWizard({
                 templates={templates}
                 availability={goalEngineConfig.availability}
                 goalOverviews={goalOverviews}
+                program={program}
+                sameDayPairingPreference={goalEngineConfig.strategy.sameDayPairingPreference}
                 onBack={() => setStep({ kind: 'focus', draft: step.draft })}
                 onConfirm={() => void handleConfirm(step.draft)}
               />
@@ -145,15 +147,20 @@ export function StrengthProgramWizard({
 // (production feedback: "ascend moet die optie bij de gebruiker leggen en
 // wel zelf zijn voorkeur daarbij geven").
 function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramStrategy; onClose: () => void }) {
-  const { plannedSessions, templates, sessionLogs, goalEngineConfig, goalOverviews, applyStrengthPlacementToCommittedRange } = useAppData();
+  const { plannedSessions, templates, sessionLogs, goalEngineConfig, goalOverviews, program, applyStrengthPlacementToCommittedRange } = useAppData();
   const [phase, setPhase] = useState<'idle' | 'preview' | 'applying' | 'applied' | 'no_changes'>('idle');
 
   const forecastStart = addDays(mondayOfWeek(todayISO()), 14);
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
 
+  // Same 8-arg call shape as AppDataContext.tsx#applyStrengthPlacementToCommittedRange
+  // itself uses (program + sameDayPairingPreference included) — this preview
+  // must reach the identical placement decision the real apply will, never a
+  // narrower one that omits program-aware durations (weeklyProgression) or
+  // the user's actual pairing preference.
   const committedProposal = useMemo(
-    () => computeStrengthPlacementPlanForCommittedRange(strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, todayISO(), goalOverviews),
-    [strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, goalOverviews],
+    () => computeStrengthPlacementPlanForCommittedRange(strategy, plannedSessions, templates, goalEngineConfig.availability, sessionLogs, todayISO(), goalOverviews, program, goalEngineConfig.strategy.sameDayPairingPreference),
+    [strategy, plannedSessions, templates, goalEngineConfig.availability, goalEngineConfig.strategy.sameDayPairingPreference, sessionLogs, goalOverviews, program],
   );
 
   async function confirmApply() {
@@ -492,6 +499,8 @@ function PreviewStep({
   templates,
   availability,
   goalOverviews,
+  program,
+  sameDayPairingPreference,
   onBack,
   onConfirm,
 }: {
@@ -500,12 +509,18 @@ function PreviewStep({
   templates: Parameters<typeof computeStrengthPlacementPlan>[2];
   availability: Parameters<typeof computeStrengthPlacementPlan>[3];
   goalOverviews: Parameters<typeof computeStrengthPlacementPlan>[5];
+  program: Parameters<typeof computeStrengthPlacementPlan>[6];
+  sameDayPairingPreference: Parameters<typeof computeStrengthPlacementPlan>[7];
   onBack: () => void;
   onConfirm: () => void;
 }) {
+  // Same 8-arg call shape as AppDataContext.tsx#activateStrengthProgram
+  // itself uses — this preview must reach the identical placement decision
+  // the real activation will, never a narrower one that omits program-aware
+  // durations (weeklyProgression) or the user's actual pairing preference.
   const proposal = useMemo(
-    () => computeStrengthPlacementPlan(draft, plannedSessions, templates, availability, todayISO(), goalOverviews),
-    [draft, plannedSessions, templates, availability, goalOverviews],
+    () => computeStrengthPlacementPlan(draft, plannedSessions, templates, availability, todayISO(), goalOverviews, program, sameDayPairingPreference),
+    [draft, plannedSessions, templates, availability, goalOverviews, program, sameDayPairingPreference],
   );
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const removed = proposal.changes.filter((c) => c.action === 'remove');
