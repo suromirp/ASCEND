@@ -23,7 +23,9 @@ const tplUpperB: SessionTemplate = { id: 'tpl_upper_b', name: 'Upper B', type: '
 const tplLowerB: SessionTemplate = { id: 'tpl_lower_b', name: 'Lower B', type: 'strength', durationVariants: { full: 70 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high' } };
 const tplLongRun: SessionTemplate = { id: 'tpl_long_run', name: 'Lange Duurloop', type: 'hiking', durationVariants: { full: 75 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'high' } };
 const tplEasyRun: SessionTemplate = { id: 'tpl_easy_run', name: 'Easy Run', type: 'cardio', durationVariants: { full: 30 }, baseStressProfile: { lowerBodyLoad: 'none', impact: 'light', eccentricLoad: 'none', intensity: 'moderate' } };
-const templates = [tplUpperA, tplLowerA, tplUpperB, tplLowerB, tplLongRun, tplEasyRun];
+const tplHerstel: SessionTemplate = { id: 'tpl_herstel', name: 'Herstel', type: 'recovery', durationVariants: { full: 20 } };
+const tplHill: SessionTemplate = { id: 'tpl_hill', name: 'Hill Intervals', type: 'hiking', durationVariants: { full: 60 }, baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'high' } };
+const templates = [tplUpperA, tplLowerA, tplUpperB, tplLowerB, tplLongRun, tplEasyRun, tplHerstel, tplHill];
 
 function goalOverview(overrides: {
   goalId: string;
@@ -142,8 +144,13 @@ describe('computeStrengthPlacementPlan', () => {
     expect(daysFromHike).toBeGreaterThan(1);
   });
 
-  it('skips placement entirely for a week with no honest slot, rather than forcing a conflict', () => {
-    // Every day is leg-heavy-occupied or unavailable — no free, non-conflicting day exists.
+  // Groep C invariant (test D): a week fully occupied by leg-heavy fillers
+  // used to be treated as unplaceable purely because the swap fallback
+  // ALSO hard-vetoed on leg-heavy adjacency. Now the swap fallback is gated
+  // purely by real hard capacity (dayHasRoomFor) — since these fillers have
+  // zero goal relevance (no active goals passed in), one is honestly given
+  // up to make room, and the placement succeeds.
+  it('places via the swap fallback even when every day is leg-heavy-occupied — leg-heavy adjacency alone never blocks placement (test D)', () => {
     const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
       session(`filler${i}`, 'tpl_long_run', d, FORECAST_MONDAY),
     );
@@ -155,15 +162,20 @@ describe('computeStrengthPlacementPlan', () => {
       ASOF,
       [],
     );
-    expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
+    const removed = proposal.changes.find((c) => c.action === 'remove');
+    const added = proposal.changes.find((c) => c.action === 'add');
+    expect(removed).toBeDefined();
+    expect(added?.newSessionDraft?.templateId).toBe('tpl_lower_a');
   });
 
-  it('honestly flags an unplaceable week in the proposal text — never a silent "already matches" when the week is simply fully booked, not agreement, is the real reason nothing was added', () => {
-    // Every day already holds a session — the normal state for every
-    // ASCEND week — so the true blocker is "no free day", not the 48h
-    // rule (even though tpl_long_run happens to be leg-heavy too).
+  // Test E / F: hard capacity exhaustion is still a real, honestly-reported
+  // outcome — just never driven by load overlap. A week with NO swappable
+  // candidate at all (every existing session is a protected type) is
+  // genuinely unplaceable, and the "geen vrije dag" note in the proposal
+  // text may only appear in exactly this situation.
+  it('honestly flags an unplaceable week in the proposal text only when hard capacity genuinely proves it (test E / F)', () => {
     const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
-      session(`filler${i}`, 'tpl_long_run', d, FORECAST_MONDAY),
+      session(`filler${i}`, 'tpl_herstel', d, FORECAST_MONDAY),
     );
     const proposal = computeStrengthPlacementPlan(
       strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
@@ -176,6 +188,21 @@ describe('computeStrengthPlacementPlan', () => {
     expect(proposal.changes).toEqual([]);
     expect(proposal.consequences).toMatch(/geen vrije dag/);
     expect(proposal.issue).not.toBe('Geen aanpassingen nodig');
+  });
+
+  it('never mentions the old 48-hour leg-heavy rule in the unplaceable note — load overlap is not a valid reason for it anymore', () => {
+    const sessions = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'].map((d, i) =>
+      session(`filler${i}`, 'tpl_herstel', d, FORECAST_MONDAY),
+    );
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
+      sessions,
+      templates,
+      availability(),
+      ASOF,
+      [],
+    );
+    expect(proposal.consequences).not.toMatch(/48-uursregel/);
   });
 
   // Groep C: dit fixture illustreerde vroeger de harde 48u-blokkade (beide
@@ -376,10 +403,16 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
     expect(proposal.consequences).toMatch(/geen vrije dag/);
   });
 
-  it('refuses to swap out a candidate with meaningful goal relevance when no goal is under pressure', () => {
+  it('never swaps out the one candidate with meaningful goal relevance when a lower-relevance candidate is available instead', () => {
     // A single active running goal — Easy Run genuinely serves it, so its
-    // relevance is 100% (the only goal always gets the full share) and no
-    // goal is tapering/challenging — nothing clears the calm 0% bar.
+    // relevance is 100% (the only goal always gets the full share). The
+    // week's long-run fillers don't serve a running goal at all (0%
+    // relevance) and remain fully legitimate, lower-relevance swap
+    // candidates — ranked ascending, the swap must give one of THOSE up,
+    // never the 100%-relevant Easy Run. (Previously this fixture also
+    // happened to pass with NO swap at all, but only because the old
+    // hard leg-heavy rule accidentally blocked every long-run candidate
+    // too — not because the algorithm was protecting Easy Run on purpose.)
     const overviews = [goalOverview({ goalId: 'g1', discipline: 'running', normalizedPct: 100 })];
     const proposal = computeStrengthPlacementPlan(
       strategy({ sessionTemplateIds: ['tpl_lower_a'], sessionsPerWeek: 1 }),
@@ -389,7 +422,10 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
       ASOF,
       overviews,
     );
-    expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
+    const removed = proposal.changes.find((c) => c.action === 'remove');
+    expect(removed).toBeDefined();
+    expect(removed?.plannedSessionId).not.toBe('easy');
+    expect(proposal.changes.find((c) => c.action === 'add')).toBeDefined();
   });
 
   it('allows swapping a modestly-relevant candidate once another active goal is under real pressure', () => {
@@ -561,5 +597,77 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
     // Thursday (2 days out) would pass the plain 1-day rule — the widened
     // gap from the heavy RPE 9 log must push placement further out than that.
     expect(daysFromHike).toBeGreaterThan(2);
+  });
+});
+
+// Test A — components/StrengthProgramWizard.tsx#PlanPreview calls
+// computeStrengthPlacementPlan with only 6 args (program/
+// sameDayPairingPreference default to undefined); AppDataContext.tsx#
+// activateStrengthProgram calls it with the full 8-arg shape. Both must
+// reach the same placement decision for the same effective week — this was
+// investigated as "Bug A" and disproven for a realistic budget, but never
+// had a permanent regression test pinning it down.
+describe('computeStrengthPlacementPlan — preview/activation parity (test A)', () => {
+  it('produces identical placement whether called with the wizard-preview 6-arg shape or the activation 8-arg shape', () => {
+    const budget = {
+      mon: { preferredMinutes: 75, softFlexMinutes: 15 },
+      tue: { preferredMinutes: 120, softFlexMinutes: 20 },
+      wed: { preferredMinutes: 45, softFlexMinutes: 15 },
+      thu: { preferredMinutes: 90, softFlexMinutes: 15 },
+      fri: { preferredMinutes: 180, softFlexMinutes: 20 },
+      sat: { preferredMinutes: 180, softFlexMinutes: 20 },
+      sun: { preferredMinutes: 180, softFlexMinutes: 20 },
+    };
+    const sessions = [
+      session('herstel', 'tpl_herstel', '2026-09-21', FORECAST_MONDAY),
+      session('lowerA', 'tpl_lower_a', '2026-09-23', FORECAST_MONDAY),
+      session('upperA', 'tpl_upper_a', '2026-09-24', FORECAST_MONDAY),
+      session('upperB', 'tpl_upper_b', '2026-09-25', FORECAST_MONDAY),
+      session('hill', 'tpl_hill', '2026-09-26', FORECAST_MONDAY),
+      session('long', 'tpl_long_run', '2026-09-27', FORECAST_MONDAY),
+    ];
+    const availabilityWithBudget = availability({ dailyTimeBudget: budget });
+    const strat = strategy({ sessionTemplateIds: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_lower_b'], sessionsPerWeek: 4 });
+
+    // Preview shape — omits program/sameDayPairingPreference (both undefined).
+    const previewShape = computeStrengthPlacementPlan(strat, sessions, templates, availabilityWithBudget, ASOF, []);
+    // Activation shape — passes them explicitly.
+    const activationShape = computeStrengthPlacementPlan(strat, sessions, templates, availabilityWithBudget, ASOF, [], null, 'automatic');
+
+    expect(activationShape.changes).toEqual(previewShape.changes);
+    expect(activationShape.issue).toBe(previewShape.issue);
+  });
+});
+
+// Test B — the reported production scenario: a 4x/week upper/lower split
+// activated on top of a week whose non-strength structure already occupies
+// Wed/Sat/Sun with leg-heavy sessions (exactly ASCEND's real weekly
+// template — data/defaultProgram.ts). Under the old hard 48h rule, Tuesday
+// (the only remaining free day) sits 1 day from Wednesday's Lower A and
+// would have been hard-rejected, making Lower B "impossible" regardless of
+// active goals — precisely the bug this fix addresses. Lower B must stay
+// placeable.
+describe('computeStrengthPlacementPlan — 4x/week upper/lower stays placeable against a real weekly structure (test B)', () => {
+  it('places Lower B on the only remaining day even though it sits within 48h of another leg-heavy session', () => {
+    const sessions = [
+      session('herstel', 'tpl_herstel', '2026-09-21', FORECAST_MONDAY), // Monday, recovery
+      session('lowerA', 'tpl_lower_a', '2026-09-23', FORECAST_MONDAY), // Wednesday, leg-heavy
+      session('upperA', 'tpl_upper_a', '2026-09-24', FORECAST_MONDAY), // Thursday
+      session('upperB', 'tpl_upper_b', '2026-09-25', FORECAST_MONDAY), // Friday
+      session('hill', 'tpl_hill', '2026-09-26', FORECAST_MONDAY), // Saturday, leg-heavy
+      session('long', 'tpl_long_run', '2026-09-27', FORECAST_MONDAY), // Sunday, leg-heavy
+      // Tuesday (2026-09-22) is the only free day — 1 day from Wednesday's Lower A.
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_lower_b'], sessionsPerWeek: 4 }),
+      sessions,
+      templates,
+      availability(),
+      ASOF,
+      [], // no active goals — matches the user's reported "geen doelen actief" scenario exactly
+    );
+    const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_lower_b');
+    expect(addItem).toBeDefined();
+    expect(addItem?.newSessionDraft?.scheduledDate).toBe('2026-09-22');
   });
 });

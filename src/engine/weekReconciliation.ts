@@ -22,39 +22,12 @@ import type { TrainingAvailability, TrainingStrategyProfile } from '../models/go
 import type { PlanChangeAlternative, PlanChangeItem } from '../models/planChange';
 import type { GoalOverview } from './goalOverview';
 import { isDateAvailable } from './adaptiveReplanner';
-import { resolveEffectiveStressProfile } from './stressProfile';
-import { requiredSpacingDays, dayHasRoomFor } from './scheduler';
+import { dayHasRoomFor } from './scheduler';
 import { resolveSessionContributions, type GoalDemand } from './sessionContribution';
 import { computeDemand } from './demand';
-import { daysBetween, weekDates } from '../utils/dates';
+import { weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { searchWeeklyPlacement, keyForPlacementRequest, weekCandidatesToAlternatives, type PlacementRequest } from './candidatePlacement';
-
-function isLegHeavyTemplate(template: SessionTemplate): boolean {
-  return resolveEffectiveStressProfile(template).lowerBodyLoad === 'heavy';
-}
-
-// `recentLogs` lets an already-logged existing session widen its own
-// required spacing when it was unusually heavy (engine/scheduler.ts's
-// requiredSpacingDays) — the candidate template being placed here is never
-// itself logged yet (it doesn't exist), so only the OTHER (existing)
-// session's own history can ever widen the gap.
-function wouldConflict(
-  candidateDate: string,
-  candidateTemplate: SessionTemplate,
-  sessions: PlannedSession[],
-  templateById: Map<string, SessionTemplate>,
-  recentLogs: SessionLog[] = [],
-): boolean {
-  if (!isLegHeavyTemplate(candidateTemplate)) return false;
-  return sessions.some((s) => {
-    if (s.status === 'skipped') return false;
-    const other = templateById.get(s.templateId);
-    if (!other || !isLegHeavyTemplate(other)) return false;
-    const spacing = requiredSpacingDays(s.id, recentLogs);
-    return Math.abs(daysBetween(s.scheduledDate, candidateDate)) <= spacing;
-  });
-}
 
 function isGoalUnderPressure(overviews: GoalOverview[]): boolean {
   return overviews.some(
@@ -73,6 +46,14 @@ interface SwapCandidate {
 // instead — evaluated with the CANDIDATE'S OWN session excluded from that
 // check each time, since a candidate can itself be leg-heavy and must
 // never be treated as conflicting with its own removal.
+//
+// Groep C invariant: the only thing that may veto a swap day is the same
+// HARD gate everything else in this file uses — dayHasRoomFor (real
+// availability/time-budget). Training-load overlap (lowerBodyLoad and
+// every other axis in candidatePlacement.ts#LOAD_AXIS_CONFIG) is soft
+// everywhere, including here — it was never this function's job to
+// second-guess candidatePlacement.ts's own scoring with a parallel,
+// binary "kan niet"-rule.
 function pickSwapCandidate(
   weekSessions: PlannedSession[],
   templateById: Map<string, SessionTemplate>,
@@ -83,7 +64,9 @@ function pickSwapCandidate(
   calmThresholdPct: number,
   goalOverviews: GoalOverview[],
   newTemplate: SessionTemplate,
-  sessionLogs: SessionLog[],
+  program: Program | null | undefined,
+  dailyTimeBudget: TrainingAvailability['dailyTimeBudget'] | undefined,
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
 ): SwapCandidate | null {
   const candidates = weekSessions.filter((s) => {
     if (s.status === 'skipped' || protectedSessionIds.has(s.id) || targetTemplateIds.includes(s.templateId)) return false;
@@ -109,7 +92,7 @@ function pickSwapCandidate(
   for (const candidate of ranked) {
     if (candidate.relevancePct > threshold) break; // ranked ascending — nothing after this qualifies either
     const otherSessions = weekSessions.filter((s) => s.id !== candidate.session.id);
-    if (wouldConflict(candidate.session.scheduledDate, newTemplate, otherSessions, templateById, sessionLogs)) continue;
+    if (!dayHasRoomFor(candidate.session.scheduledDate, newTemplate, otherSessions, templateById, program, dailyTimeBudget, sameDayPairingPreference)) continue;
 
     const template = templateById.get(candidate.session.templateId);
     const name = template?.name ?? candidate.session.templateId;
@@ -143,12 +126,13 @@ export interface ReconciliationTarget {
 
 export interface WeekReconciliation {
   items: PlanChangeItem[];
-  // Distinguished so the summary can tell the user the true reason nothing
-  // was added: a week that's simply fully booked (every day already holds
-  // some session) is a different, more common situation than one where a
-  // free day exists but placing there would violate the 48h leg-heavy rule.
+  // True only when hard capacity (availability + dayHasRoomFor, including
+  // the swap-a-low-relevance-session last resort) genuinely proves there
+  // was no valid day left this week. Training-load overlap (lowerBodyLoad
+  // included) is a soft cost handled entirely inside searchWeeklyPlacement
+  // — it can make a placement 'compromised', but it can never by itself be
+  // the reason noFreeDay is true.
   noFreeDay: boolean;
-  legHeavyConflict: boolean;
   // The overlevende, niet-gekozen complete weekkandidaten uit de batch
   // searchWeeklyPlacement-aanroep, direct herbruikbaar als
   // PlanChangeProposal.alternatives. Empty when the batch wasn't used
@@ -174,13 +158,35 @@ export function reconcileWeekComposition(
 ): WeekReconciliation {
   const items: PlanChangeItem[] = [];
   let noFreeDay = false;
-  let legHeavyConflict = false;
   let alternatives: PlanChangeAlternative[] = [];
 
   // A mutable per-week working snapshot so an item this same batch just
   // added/removed is immediately visible to the next placement's
   // occupancy/conflict checks.
   let weekSessions = plannedSessions.filter((s) => s.weekStartDate === weekStart);
+
+  // Shared by the batch searchWeeklyPlacement call below AND the
+  // per-template fallback loop — ONE hard-availability definition, reused
+  // rather than reimplemented per call site. Closes over `weekSessions`
+  // (the mutable let above) by reference, so it always sees the latest
+  // working snapshot at call time, not a stale copy from when the factory
+  // ran.
+  const hardValidDatesProviderFor = (keyToTemplate: Map<string, SessionTemplate>) =>
+    (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
+      const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
+        id: p.sessionOrDraft,
+        templateId: keyToTemplate.get(p.sessionOrDraft)?.id ?? p.sessionOrDraft,
+        scheduledDate: p.date,
+        weekStartDate: weekStart,
+        status: 'planned' as const,
+        order: 1000 + i,
+      }));
+      return weekDates(weekStart).filter(
+        (date) =>
+          isDateAvailable(date, availability) &&
+          dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+      );
+    };
 
   const familySessions = weekSessions.filter((s) => {
     if (s.status === 'skipped') return false;
@@ -227,28 +233,12 @@ export function reconcileWeekComposition(
     const toPlace: PlacementRequest[] = missingTemplates.map((template) => ({ template, source: 'strength-missing' }));
     const keyToTemplate = new Map(toPlace.map((req, i) => [keyForPlacementRequest(req, i), req.template]));
 
-    const hardValidDatesProvider = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
-      const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
-        id: p.sessionOrDraft,
-        templateId: keyToTemplate.get(p.sessionOrDraft)?.id ?? p.sessionOrDraft,
-        scheduledDate: p.date,
-        weekStartDate: weekStart,
-        status: 'planned' as const,
-        order: 1000 + i,
-      }));
-      return weekDates(weekStart).filter(
-        (date) =>
-          isDateAvailable(date, availability) &&
-          dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
-      );
-    };
-
     // No per-session Goal Focus weight known generically here (the caller
     // may supply one via a future extension) — every session to place
     // weighs equally, same as strengthScheduling.ts's own behavior today.
     const sessionPriorityWeightById = new Map<string, number>();
 
-    const result = searchWeeklyPlacement(toPlace, weekSessions, hardValidDatesProvider, templateById, sessionLogs, sessionPriorityWeightById);
+    const result = searchWeeklyPlacement(toPlace, weekSessions, hardValidDatesProviderFor(keyToTemplate), templateById, sessionLogs, sessionPriorityWeightById);
 
     if (result.status === 'clean' || result.status === 'compromised') {
       templatesForIndividualPass = [];
@@ -283,75 +273,98 @@ export function reconcileWeekComposition(
     // loop below.
   }
 
+  // Reached only when the joint batch above couldn't place everything —
+  // each remaining template still gets its own individual chance, via the
+  // SAME single source of truth (searchWeeklyPlacement) rather than a
+  // second, parallel placement rule. A single-item toPlace batch degrades
+  // to exactly "find a hard-valid day with the lowest load-overlap cost",
+  // which is what this loop needs.
   for (const template of templatesForIndividualPass) {
     const templateId = template.id;
 
-    const availableDates = weekDates(weekStart).filter(
-      (date) => isDateAvailable(date, availability) && dayHasRoomFor(date, template, weekSessions, templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
-    );
-    let chosenDate = availableDates.find((date) => !wouldConflict(date, template, weekSessions, templateById, sessionLogs));
-    let swapCandidate: SwapCandidate | null = null;
+    const toPlace: PlacementRequest[] = [{ template, source: 'strength-missing' }];
+    const keyToTemplate = new Map(toPlace.map((req, i) => [keyForPlacementRequest(req, i), req.template]));
+    const sessionPriorityWeightById = new Map<string, number>();
+    const result = searchWeeklyPlacement(toPlace, weekSessions, hardValidDatesProviderFor(keyToTemplate), templateById, sessionLogs, sessionPriorityWeightById);
 
-    if (!chosenDate && availableDates.length === 0) {
-      // No day has room for this session at all (pairing included) — see
-      // if an existing, low-goal-relevance session is worth giving up for
-      // this one instead of giving up outright.
-      swapCandidate = pickSwapCandidate(
-        weekSessions,
-        templateById,
-        target.targetTemplateIds,
-        protectedSessionIds,
-        target.protectedTypes,
-        target.urgentSwapThresholdPct,
-        target.calmSwapThresholdPct,
-        goalOverviews,
-        template,
-        sessionLogs,
-      );
-      if (swapCandidate) chosenDate = swapCandidate.session.scheduledDate;
-    }
-
-    if (!chosenDate) {
-      // Track "no day had room" distinctly from "a day had room but the
-      // 48h rule blocked every one of them", so the summary never blames
-      // the 48h rule for what's actually just a fully-booked week.
-      if (availableDates.length === 0) noFreeDay = true;
-      else legHeavyConflict = true;
-      continue; // no honest placement this week — never force an unavailable/conflicting slot
-    }
-
-    if (swapCandidate) {
+    if (result.status === 'clean' || result.status === 'compromised') {
+      const compromisedPrefix = result.status === 'compromised' ? `Let op: ${result.compromisedReason} ` : '';
+      const placement = result.bestFound.placements[0];
+      const chosenDate = placement.date;
+      const existingOnDate = weekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === chosenDate).map((s) => s.id);
       items.push({
-        plannedSessionId: swapCandidate.session.id,
-        action: 'remove',
-        fromDate: swapCandidate.session.scheduledDate,
-        toDate: swapCandidate.session.scheduledDate,
-        reason: swapCandidate.reason,
+        action: 'add',
+        newSessionDraft: { templateId, scheduledDate: chosenDate, weekStartDate: weekStart },
+        reason: `${compromisedPrefix}${target.addReason(template)}`,
         generatedBy: [target.source],
+        coPlacedWithSessionIds: existingOnDate.length > 0 ? existingOnDate : undefined,
       });
-      weekSessions = weekSessions.map((s) => (s.id === swapCandidate!.session.id ? { ...s, status: 'skipped' as const } : s));
+      weekSessions = [
+        ...weekSessions,
+        { id: makeId('planned'), templateId, scheduledDate: chosenDate, weekStartDate: weekStart, status: 'planned' as const, order: weekSessions.length },
+      ];
+      continue;
+    }
+
+    // status === 'unplaceable' | 'search-limited' — no hard-valid day exists
+    // (or the search couldn't find one, but a feasibility check didn't rule
+    // it out either way; either way this template gets no day for free). See
+    // if an existing, low-goal-relevance session is worth giving up for this
+    // one instead of giving up outright — still gated purely by the same
+    // hard dayHasRoomFor check (pickSwapCandidate), never by load overlap.
+    const swapCandidate = pickSwapCandidate(
+      weekSessions,
+      templateById,
+      target.targetTemplateIds,
+      protectedSessionIds,
+      target.protectedTypes,
+      target.urgentSwapThresholdPct,
+      target.calmSwapThresholdPct,
+      goalOverviews,
+      template,
+      program,
+      availability.dailyTimeBudget,
+      sameDayPairingPreference,
+    );
+
+    if (!swapCandidate) {
+      // Both the direct search and the swap fallback failed to find any
+      // hard-valid day — this is a genuine hard-capacity exhaustion, never
+      // a load-overlap veto (that can only ever produce 'compromised'
+      // above, handled before this point is ever reached).
+      noFreeDay = true;
+      continue; // no honest placement this week — never force an unavailable slot
     }
 
     items.push({
+      plannedSessionId: swapCandidate.session.id,
+      action: 'remove',
+      fromDate: swapCandidate.session.scheduledDate,
+      toDate: swapCandidate.session.scheduledDate,
+      reason: swapCandidate.reason,
+      generatedBy: [target.source],
+    });
+    weekSessions = weekSessions.map((s) => (s.id === swapCandidate.session.id ? { ...s, status: 'skipped' as const } : s));
+
+    items.push({
       action: 'add',
-      newSessionDraft: { templateId, scheduledDate: chosenDate, weekStartDate: weekStart },
+      newSessionDraft: { templateId, scheduledDate: swapCandidate.session.scheduledDate, weekStartDate: weekStart },
       reason: target.addReason(template),
       generatedBy: [target.source],
     });
     weekSessions = [
       ...weekSessions,
-      { id: makeId('planned'), templateId, scheduledDate: chosenDate, weekStartDate: weekStart, status: 'planned' as const, order: weekSessions.length },
+      { id: makeId('planned'), templateId, scheduledDate: swapCandidate.session.scheduledDate, weekStartDate: weekStart, status: 'planned' as const, order: weekSessions.length },
     ];
   }
 
-  return { items, noFreeDay, legHeavyConflict, alternatives };
+  return { items, noFreeDay, alternatives };
 }
 
 export interface WeeksReconciliation {
   items: PlanChangeItem[];
   alternatives: PlanChangeAlternative[];
   noFreeDayWeekCount: number;
-  legHeavyConflictWeekCount: number;
 }
 
 // The weekly-loop mechanics shared by any caller reconciling multiple
@@ -373,7 +386,6 @@ export function reconcileWeeksComposition(
   const items: PlanChangeItem[] = [];
   const alternatives: PlanChangeAlternative[] = [];
   let noFreeDayWeekCount = 0;
-  let legHeavyConflictWeekCount = 0;
 
   for (const weekStart of weekStarts) {
     const week = reconcileWeekComposition(
@@ -382,8 +394,7 @@ export function reconcileWeeksComposition(
     items.push(...week.items);
     alternatives.push(...week.alternatives);
     if (week.noFreeDay) noFreeDayWeekCount++;
-    if (week.legHeavyConflict) legHeavyConflictWeekCount++;
   }
 
-  return { items, alternatives, noFreeDayWeekCount, legHeavyConflictWeekCount };
+  return { items, alternatives, noFreeDayWeekCount };
 }

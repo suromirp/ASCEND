@@ -109,24 +109,21 @@ function buildPlan(
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const target = buildReconciliationTarget(strategy, source);
 
-  const { items, alternatives, noFreeDayWeekCount, legHeavyConflictWeekCount } = reconcileWeeksComposition(
+  const { items, alternatives, noFreeDayWeekCount } = reconcileWeeksComposition(
     weekStarts, target, plannedSessions, templateById, availability, protectedSessionIds, goalOverviews, sessionLogs, program, sameDayPairingPreference,
   );
 
-  const unplaceableCount = noFreeDayWeekCount + legHeavyConflictWeekCount;
-  const unplaceableParts: string[] = [];
-  if (noFreeDayWeekCount > 0) {
-    unplaceableParts.push(
-      `in ${noFreeDayWeekCount} week(en) zit elke dag al vol met een andere sessie — er was geen vrije dag om de extra frequentie te plaatsen zonder een bestaande sessie te verplaatsen of te verwijderen`,
-    );
-  }
-  if (legHeavyConflictWeekCount > 0) {
-    unplaceableParts.push(
-      `in ${legHeavyConflictWeekCount} week(en) kon de extra sessie niet geplaatst worden zonder de 48-uursregel voor zware beenbelasting te schenden`,
-    );
-  }
-  const unplaceableNote = unplaceableParts.length > 0
-    ? ` Let op: ${unplaceableParts.join('; ')} — dat is geen "geen wijzigingen nodig", maar een echte planningsgrens.`
+  // Training-load overlap (lowerBodyLoad included) is a soft cost inside
+  // searchWeeklyPlacement — it can make a placement 'compromised' (see the
+  // "Let op: ..." prefix reconcileWeekComposition attaches per item in that
+  // case), but it can never by itself make a week noFreeDay. So the only
+  // thing that can legitimately drive this note is genuine hard-capacity
+  // exhaustion (every day already booked, including the swap-a-session last
+  // resort) — there is no second, load-driven unplaceable reason to report
+  // here anymore.
+  const unplaceableCount = noFreeDayWeekCount;
+  const unplaceableNote = noFreeDayWeekCount > 0
+    ? ` Let op: in ${noFreeDayWeekCount} week(en) zit elke dag al vol met een andere sessie — er was geen vrije dag om de extra frequentie te plaatsen zonder een bestaande sessie te verplaatsen of te verwijderen — dat is geen "geen wijzigingen nodig", maar een echte planningsgrens.`
     : '';
 
   const zoneNote = zoneLabel === 'forecast'
