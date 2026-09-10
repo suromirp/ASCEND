@@ -651,6 +651,16 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('strengthProgramRecommendations'),
     clearStore('weeklyPrescriptions'),
   ]);
+  // Production incident: trainingGoals above is cleared, but the marathon
+  // fields in `settings` (AppSettings) are a second, shadow pointer into
+  // that same goal — storage/goalMigration.ts#migrateToGoalEngine reads
+  // them straight back out and silently re-mints the exact same
+  // TrainingGoal (buildMarathonGoal) the moment goalEngineMigrated is unset
+  // below. Without this, "reset alles" leaves a stale marathonRaceType
+  // behind that regenerates a goal the user believed they'd wiped —
+  // status:'paused' if marathonTargetDate was never set, which is silently
+  // invisible everywhere (see MarathonGoalCard's status badge/pages/Ascend.tsx).
+  await SettingsRepo.set({ marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined });
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
   await MetaRepo.set('strengthProgramDefaultSeeded', false);

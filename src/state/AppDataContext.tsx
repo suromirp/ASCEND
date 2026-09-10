@@ -103,6 +103,16 @@ interface AppData {
   // for free — callers only need to also stop finding it by other means
   // (Ascend.tsx's own goal/marathonGoal lookups).
   archiveGoal: (goalId: string) => Promise<void>;
+  // The other half of the soft-delete above: archiving used to be a one-way
+  // door in the UI (no un-archive path existed at all) — for GR5 specifically
+  // that meant losing the Ascent Ladder for good, since goalMilestones are
+  // pinned to the original goalId ('obj_gr5') and "+ NIEUW DOEL" mints a
+  // fresh id that can never re-link to them. Restores to 'paused' (never
+  // straight back to 'active' — targetDate was cleared on archive, and the
+  // TrainingGoal union requires one for 'active'), so the goal reappears on
+  // its dedicated card/in the custom-goals list, ready to be given a date
+  // again.
+  unarchiveGoal: (goalId: string) => Promise<void>;
   // Phase 7 — the single-transaction activation flow (engine/goalActivation.ts,
   // review point 11) applied for real, for both a brand-new goal draft and
   // an edit to an existing one: persists the goal, applies its
@@ -913,6 +923,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [trainingGoals, refresh],
   );
 
+  const unarchiveGoal = useCallback(
+    async (goalId: string) => {
+      const goal = trainingGoals.find((g) => g.id === goalId);
+      if (!goal || goal.status !== 'archived') return;
+      await TrainingGoalsRepo.put({ ...goal, status: 'paused', updatedAt: new Date().toISOString() });
+      await refresh();
+    },
+    [trainingGoals, refresh],
+  );
+
   const updateSettings = useCallback(async (patch: Partial<AppSettings>): Promise<AppSettings> => {
     const next = await SettingsRepo.set(patch);
     setSettings(next);
@@ -1093,6 +1113,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     clearMilestoneManually,
     updateGoal,
     archiveGoal,
+    unarchiveGoal,
     activateGoal,
     updateSettings,
     updateGoalEngineConfig,

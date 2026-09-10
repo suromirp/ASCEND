@@ -28,6 +28,21 @@ describe('computeActiveGoalOverviews', () => {
     expect(overviews).toEqual([]);
   });
 
+  // Production incident: a goal archived via AppDataContext.tsx#archiveGoal
+  // (status:'archived', targetDate cleared) must never quietly count toward
+  // Goal Focus/session-relevance again — this is the exact filter every
+  // strength-placement/weekly-prescription call site relies on via
+  // computeActiveGoalOverviews being their single source of truth.
+  it('skips an archived goal entirely, even one still carrying requirements', () => {
+    const archived: TrainingGoal = {
+      id: 'g3', name: 'Archived', status: 'archived',
+      requirements: [{ id: 'r1', kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }],
+      createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const overviews = computeActiveGoalOverviews([archived], [], availability(), [], '2026-09-05');
+    expect(overviews).toEqual([]);
+  });
+
   it('produces an insufficient_data feasibility for an active goal with no capability evidence at all', () => {
     const overviews = computeActiveGoalOverviews([activeGoal()], [], availability(), [], '2026-09-05');
     expect(overviews).toHaveLength(1);
