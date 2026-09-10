@@ -27,7 +27,7 @@ import { resolveSessionContributions, type GoalDemand } from './sessionContribut
 import { computeDemand } from './demand';
 import { weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { searchWeeklyPlacement, keyForPlacementRequest, weekCandidatesToAlternatives, type PlacementRequest } from './candidatePlacement';
+import { searchWeeklyPlacement, keyForPlacementRequest, weekCandidatesToAlternatives, type PlacementRequest, type WeeklyPlacementResult } from './candidatePlacement';
 
 function isGoalUnderPressure(overviews: GoalOverview[]): boolean {
   return overviews.some(
@@ -122,6 +122,28 @@ export interface ReconciliationTarget {
   urgentSwapThresholdPct: number;
   calmSwapThresholdPct: number;
   source: string; // PlanChangeItem.generatedBy value
+  // STRENGTH BLOCK REFLOW — opt-in (strengthScheduling.ts only; the Weekly
+  // Prescription Builder's lines are per-goal-capability, not one
+  // interchangeable block, so it leaves this unset). When there's a genuine
+  // change (missingTemplateIds non-empty) AND this is true, every already-
+  // on-target, still-movable (not logged/protected) family session is
+  // pulled OUT of fixed context alongside the missing ones and the WHOLE
+  // family batch is re-placed jointly via searchWeeklyPlacement — instead
+  // of only ever searching for a home for the newly-added template while
+  // the rest of the block sits pinned. Confirmed via direct reproduction
+  // (production report, Sept 2026): with only the new template in toPlace,
+  // it can be hard-forced onto the one remaining free day even when that
+  // day sits adjacent to another on-target heavy session, while a joint
+  // reflow of the same 4-template block found a materially lower-cost
+  // arrangement (totalCost 0.6 vs 1.0) that avoided any 1-day heavy-heavy
+  // adjacency entirely — the optimizer was never wrong, it just never got
+  // to see the sessions it would have needed to move. Falls back to the
+  // existing missing-only behavior if the joint batch itself can't be
+  // placed (unplaceable/search-limited) — reflow is strictly an
+  // improvement attempt on WHERE the block's sessions land, never a risk
+  // of ending up worse than the non-reflow result, and it never changes
+  // WHAT the block's composition is.
+  reflowOnChange?: boolean;
 }
 
 export interface WeekReconciliation {
@@ -230,26 +252,152 @@ export function reconcileWeekComposition(
   let templatesForIndividualPass = missingTemplates;
 
   if (missingTemplates.length > 0) {
-    const toPlace: PlacementRequest[] = missingTemplates.map((template) => ({ template, source: 'strength-missing' }));
-    const keyToTemplate = new Map(toPlace.map((req, i) => [keyForPlacementRequest(req, i), req.template]));
+    // Both candidates below are computed against this same, untouched
+    // snapshot — neither may mutate `weekSessions` until AFTER the cost
+    // comparison decides a winner, so computing the reflow candidate can
+    // never bias or corrupt the missing-only candidate's own view of the
+    // week, or vice versa.
+    const baseWeekSessions = weekSessions;
 
-    // No per-session Goal Focus weight known generically here (the caller
-    // may supply one via a future extension) — every session to place
-    // weighs equally, same as strengthScheduling.ts's own behavior today.
-    const sessionPriorityWeightById = new Map<string, number>();
+    // ---- Candidate "missing-only": today's existing behavior — only the
+    // newly-required templates move, every already-on-target family
+    // session stays fixed exactly where it is. ----
+    const missingOnlyToPlace: PlacementRequest[] = missingTemplates.map((template) => ({ template, source: 'strength-missing' }));
+    const missingOnlyKeyToTemplate = new Map(missingOnlyToPlace.map((req, i) => [keyForPlacementRequest(req, i), req.template]));
+    const missingOnlyHardValidDates = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
+      const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
+        id: p.sessionOrDraft,
+        templateId: missingOnlyKeyToTemplate.get(p.sessionOrDraft)?.id ?? p.sessionOrDraft,
+        scheduledDate: p.date,
+        weekStartDate: weekStart,
+        status: 'planned' as const,
+        order: 1000 + i,
+      }));
+      return weekDates(weekStart).filter(
+        (date) =>
+          isDateAvailable(date, availability) &&
+          dayHasRoomFor(date, template, [...baseWeekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+      );
+    };
+    const missingOnlyResult = searchWeeklyPlacement(missingOnlyToPlace, baseWeekSessions, missingOnlyHardValidDates, templateById, sessionLogs, new Map());
 
-    const result = searchWeeklyPlacement(toPlace, weekSessions, hardValidDatesProviderFor(keyToTemplate), templateById, sessionLogs, sessionPriorityWeightById);
+    // ---- Candidate "reflow" (opt-in, ReconciliationTarget.reflowOnChange):
+    // every already-on-target, still-movable family session is pulled OUT
+    // of fixed context and re-batched alongside the missing ones, so
+    // searchWeeklyPlacement can discover a genuinely better arrangement of
+    // the WHOLE block instead of only ever finding a home for what's new
+    // while everything else stays pinned. See ReconciliationTarget's own
+    // doc comment for the production reproduction that motivated this. ----
+    let reflowResult: WeeklyPlacementResult | null = null;
+    let reflowKeyToTemplate: Map<string, SessionTemplate> | null = null;
+    let reflowSessionById: Map<string, PlannedSession> | null = null;
+    let reflowFixedSessions: PlannedSession[] | null = null;
 
-    if (result.status === 'clean' || result.status === 'compromised') {
+    if (target.reflowOnChange) {
+      const reflowableExisting = onTarget.filter((s) => !protectedSessionIds.has(s.id));
+      reflowFixedSessions = baseWeekSessions.filter((s) => !reflowableExisting.some((r) => r.id === s.id));
+      reflowSessionById = new Map(reflowableExisting.map((s) => [s.id, s]));
+
+      const existingRequests: PlacementRequest[] = reflowableExisting
+        .map((s): PlacementRequest | null => {
+          const template = templateById.get(s.templateId);
+          return template ? { template, source: 'strength-missing', sessionId: s.id } : null;
+        })
+        .filter((r): r is PlacementRequest => !!r);
+      const toPlace: PlacementRequest[] = [...existingRequests, ...missingOnlyToPlace];
+      reflowKeyToTemplate = new Map(toPlace.map((req, i) => [keyForPlacementRequest(req, i), req.template]));
+      const fixedForReflow = reflowFixedSessions;
+
+      const hardValidDatesForReflow = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
+        const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
+          id: p.sessionOrDraft,
+          templateId: reflowKeyToTemplate!.get(p.sessionOrDraft)?.id ?? p.sessionOrDraft,
+          scheduledDate: p.date,
+          weekStartDate: weekStart,
+          status: 'planned' as const,
+          order: 1000 + i,
+        }));
+        return weekDates(weekStart).filter(
+          (date) =>
+            isDateAvailable(date, availability) &&
+            dayHasRoomFor(date, template, [...fixedForReflow, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+        );
+      };
+      reflowResult = searchWeeklyPlacement(toPlace, fixedForReflow, hardValidDatesForReflow, templateById, sessionLogs, new Map());
+    }
+
+    const costOf = (r: WeeklyPlacementResult | null) => (r && (r.status === 'clean' || r.status === 'compromised') ? r.bestFound.totalCost : Infinity);
+    const missingOnlyCost = costOf(missingOnlyResult);
+    const reflowCost = costOf(reflowResult);
+
+    // Reflow only wins with a STRICTLY lower cost — a tie keeps the
+    // missing-only candidate so an unchanged, already-optimal block never
+    // gets gratuitously reshuffled for zero real benefit (the beam search
+    // has no built-in preference for leaving things where they already
+    // are among equal-cost candidates).
+    if (reflowResult && reflowKeyToTemplate && reflowSessionById && reflowFixedSessions && reflowCost < missingOnlyCost && (reflowResult.status === 'clean' || reflowResult.status === 'compromised')) {
       templatesForIndividualPass = [];
-      const compromisedPrefix = result.status === 'compromised' ? `Let op: ${result.compromisedReason} ` : '';
-      alternatives = weekCandidatesToAlternatives(result.alternatives, (sessionOrDraft) => keyToTemplate.get(sessionOrDraft), weekStart);
+      const compromisedPrefix = reflowResult.status === 'compromised' ? `Let op: ${reflowResult.compromisedReason} ` : '';
+      alternatives = weekCandidatesToAlternatives(reflowResult.alternatives, (sessionOrDraft) => reflowKeyToTemplate!.get(sessionOrDraft), weekStart);
 
-      const newSessionIds = result.bestFound.placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
-      for (const { placement, id } of newSessionIds) {
-        const template = keyToTemplate.get(placement.sessionOrDraft);
+      const placedById = reflowResult.bestFound.placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
+      const finalWeekSessions: PlannedSession[] = [...reflowFixedSessions];
+
+      for (const { placement, id, index } of placedById) {
+        const template = reflowKeyToTemplate.get(placement.sessionOrDraft);
         if (!template) continue;
-        const existingOnDate = weekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === placement.date).map((s) => s.id);
+        const existing = reflowSessionById.get(placement.sessionOrDraft);
+
+        if (existing && existing.scheduledDate === placement.date) {
+          // Chosen exactly where it already was — leave it untouched, no
+          // items emitted, so an unchanged block still stays idempotent.
+          finalWeekSessions.push(existing);
+          continue;
+        }
+
+        const existingOnDate = finalWeekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === placement.date).map((s) => s.id);
+        const siblingNewIds = placedById.filter((o) => o.placement.date === placement.date && o.id !== id).map((o) => o.id);
+        const coPlacedWithSessionIds = [...existingOnDate, ...siblingNewIds];
+
+        if (existing) {
+          items.push({
+            plannedSessionId: existing.id,
+            action: 'remove',
+            fromDate: existing.scheduledDate,
+            toDate: existing.scheduledDate,
+            reason: `Krachtblok-herverdeling: ${template.name} verplaatst voor een betere combinatie met de rest van de week.`,
+            generatedBy: [target.source],
+          });
+          items.push({
+            action: 'add',
+            newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
+            reason: `${compromisedPrefix}Krachtblok-herverdeling: ${template.name} herplaatst voor een betere combinatie met de rest van de week.`,
+            generatedBy: [target.source],
+            coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
+          });
+        } else {
+          items.push({
+            action: 'add',
+            newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
+            reason: `${compromisedPrefix}${target.addReason(template)}`,
+            generatedBy: [target.source],
+            coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
+          });
+        }
+        finalWeekSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: baseWeekSessions.length + index });
+      }
+
+      weekSessions = finalWeekSessions;
+    } else if (missingOnlyResult.status === 'clean' || missingOnlyResult.status === 'compromised') {
+      templatesForIndividualPass = [];
+      const compromisedPrefix = missingOnlyResult.status === 'compromised' ? `Let op: ${missingOnlyResult.compromisedReason} ` : '';
+      alternatives = weekCandidatesToAlternatives(missingOnlyResult.alternatives, (sessionOrDraft) => missingOnlyKeyToTemplate.get(sessionOrDraft), weekStart);
+
+      const newSessionIds = missingOnlyResult.bestFound.placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
+      for (const { placement, id } of newSessionIds) {
+        const template = missingOnlyKeyToTemplate.get(placement.sessionOrDraft);
+        if (!template) continue;
+        const existingOnDate = baseWeekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === placement.date).map((s) => s.id);
         const siblingNewIds = newSessionIds.filter((o) => o.placement.date === placement.date && o.id !== id).map((o) => o.id);
         const coPlacedWithSessionIds = [...existingOnDate, ...siblingNewIds];
         items.push({
@@ -262,13 +410,13 @@ export function reconcileWeekComposition(
       }
       const addedSessions: PlannedSession[] = [];
       for (const { placement, id, index } of newSessionIds) {
-        const template = keyToTemplate.get(placement.sessionOrDraft);
+        const template = missingOnlyKeyToTemplate.get(placement.sessionOrDraft);
         if (!template) continue;
-        addedSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: weekSessions.length + index });
+        addedSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: baseWeekSessions.length + index });
       }
-      weekSessions = [...weekSessions, ...addedSessions];
+      weekSessions = [...baseWeekSessions, ...addedSessions];
     }
-    // status === 'unplaceable' | 'search-limited': templatesForIndividualPass
+    // Both candidates failed (unplaceable/search-limited): templatesForIndividualPass
     // stays the full missingTemplates list — fall back to the per-template
     // loop below.
   }

@@ -645,10 +645,22 @@ describe('computeStrengthPlacementPlan — preview/activation parity (test A)', 
 // template — data/defaultProgram.ts). Under the old hard 48h rule, Tuesday
 // (the only remaining free day) sits 1 day from Wednesday's Lower A and
 // would have been hard-rejected, making Lower B "impossible" regardless of
-// active goals — precisely the bug this fix addresses. Lower B must stay
+// active goals — the bug an earlier fix addressed. Lower B must stay
 // placeable.
+//
+// STRENGTH BLOCK REFLOW (weekReconciliation.ts#ReconciliationTarget.reflowOnChange)
+// goes one step further: with only Lower B in toPlace, Tuesday is the ONLY
+// hard-valid day, so it gets forced there directly next to Wednesday's
+// Lower A — placeable, but a real 1-day leg-heavy cluster (a second
+// production report, confirmed via direct cost trace: totalCost 1.0 vs a
+// reflow of the whole block finding 0.6 by also moving Upper A/Lower A).
+// Reflow pulls Lower A/Upper A/Upper B into the same batch and finds that
+// better arrangement instead — this test now asserts the qualitative
+// outcome (Lower B stays placeable, AND the block ends up genuinely
+// spread out) rather than one specific date, since which exact days the
+// optimizer picks is an implementation detail of its cost search.
 describe('computeStrengthPlacementPlan — 4x/week upper/lower stays placeable against a real weekly structure (test B)', () => {
-  it('places Lower B on the only remaining day even though it sits within 48h of another leg-heavy session', () => {
+  it('reflows the whole block so Lower B never has to force a 1-day leg-heavy cluster with Lower A', () => {
     const sessions = [
       session('herstel', 'tpl_herstel', '2026-09-21', FORECAST_MONDAY), // Monday, recovery
       session('lowerA', 'tpl_lower_a', '2026-09-23', FORECAST_MONDAY), // Wednesday, leg-heavy
@@ -668,6 +680,63 @@ describe('computeStrengthPlacementPlan — 4x/week upper/lower stays placeable a
     );
     const addItem = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_lower_b');
     expect(addItem).toBeDefined();
-    expect(addItem?.newSessionDraft?.scheduledDate).toBe('2026-09-22');
+
+    // Reconstruct where Lower A and Lower B actually ended up (either may
+    // have moved during the reflow) and assert they landed more than 1 day
+    // apart — the whole point of giving the optimizer the rest of the
+    // block to work with.
+    const removedIds = new Set(proposal.changes.filter((c) => c.action === 'remove').map((c) => c.plannedSessionId));
+    const addedByTemplate = new Map(proposal.changes.filter((c) => c.action === 'add').map((c) => [c.newSessionDraft!.templateId, c.newSessionDraft!.scheduledDate]));
+    const lowerADate = addedByTemplate.get('tpl_lower_a') ?? (removedIds.has('lowerA') ? undefined : sessions.find((s) => s.id === 'lowerA')!.scheduledDate);
+    const lowerBDate = addedByTemplate.get('tpl_lower_b')!;
+    expect(lowerADate).toBeDefined();
+    const daysApart = Math.abs(new Date(lowerADate!).getTime() - new Date(lowerBDate).getTime()) / 86400000;
+    expect(daysApart).toBeGreaterThan(1);
+  });
+
+  // Direct regression for the reported bug: Easy Run (Tue, budget 120min)
+  // sat right next to Wednesday's Lower A, and activating a 4x split added
+  // ONLY Lower B to toPlace — the only hard-valid day left was Tuesday
+  // (paired with Easy Run), forcing Lower B directly next to Lower A
+  // (totalCost 1.0, confirmed by direct trace). A joint reflow of Lower A/
+  // Lower B/Upper A/Upper B finds totalCost 0.6 by also moving Upper A and
+  // Lower A — this asserts the engine actually PICKS that lower-cost
+  // complete strength arrangement, not just that a better one theoretically
+  // exists somewhere in the search space.
+  it('picks the lower-cost complete strength reflow instead of forcing Lower B next to Lower A on the only free day', () => {
+    const sessions = [
+      session('herstel', 'tpl_herstel', '2026-09-21', FORECAST_MONDAY), // Monday, recovery
+      session('easy', 'tpl_easy_run', '2026-09-22', FORECAST_MONDAY), // Tuesday
+      session('lowerA', 'tpl_lower_a', '2026-09-23', FORECAST_MONDAY), // Wednesday, leg-heavy
+      session('upperA', 'tpl_upper_a', '2026-09-24', FORECAST_MONDAY), // Thursday
+      session('upperB', 'tpl_upper_b', '2026-09-25', FORECAST_MONDAY), // Friday
+      session('hill', 'tpl_hill', '2026-09-26', FORECAST_MONDAY), // Saturday, leg-heavy
+      session('long', 'tpl_long_run', '2026-09-27', FORECAST_MONDAY), // Sunday, leg-heavy
+      // Only Tuesday has a configured daily time budget — every other day
+      // is hard-occupied by whatever already sits there.
+    ];
+    const proposal = computeStrengthPlacementPlan(
+      strategy({ sessionTemplateIds: ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_lower_b'], sessionsPerWeek: 4 }),
+      sessions,
+      templates,
+      availability({ dailyTimeBudget: { tue: { preferredMinutes: 120, softFlexMinutes: 18 } } }),
+      ASOF,
+      [],
+    );
+
+    const addedByTemplate = new Map(proposal.changes.filter((c) => c.action === 'add').map((c) => [c.newSessionDraft!.templateId, c.newSessionDraft!.scheduledDate]));
+    const lowerBDate = addedByTemplate.get('tpl_lower_b');
+    expect(lowerBDate).toBeDefined();
+    expect(lowerBDate).not.toBe('2026-09-22'); // never forced directly onto Easy Run's day next to Lower A
+
+    // Easy Run itself must never be evicted — a hard-valid co-placement
+    // (or, via reflow, a hard-valid arrangement elsewhere) always exists.
+    expect(proposal.changes.some((c) => c.action === 'remove' && c.plannedSessionId === 'easy')).toBe(false);
+
+    const removedIds = new Set(proposal.changes.filter((c) => c.action === 'remove').map((c) => c.plannedSessionId));
+    const lowerADate = addedByTemplate.get('tpl_lower_a') ?? (removedIds.has('lowerA') ? undefined : sessions.find((s) => s.id === 'lowerA')!.scheduledDate);
+    expect(lowerADate).toBeDefined();
+    const daysApart = Math.abs(new Date(lowerADate!).getTime() - new Date(lowerBDate!).getTime()) / 86400000;
+    expect(daysApart).toBeGreaterThan(1);
   });
 });
