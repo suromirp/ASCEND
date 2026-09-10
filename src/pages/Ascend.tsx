@@ -26,8 +26,23 @@ function blankGoalDraft(): TrainingGoal {
   return { id: makeId('goal'), name: '', requirements: [], createdAt: now, updatedAt: now, status: 'paused' };
 }
 
+// Surfaces the difference between 'active' and 'paused' that used to be
+// invisible on every goal card — a goal reads as fully configured (a race
+// type picked, a full editable card) with no visual sign it's actually
+// paused and contributing nothing to Goal Focus/scheduling until a
+// targetDate is set. Renders nothing for 'active' (the countdown above
+// already implies it).
+function GoalStatusNote({ status }: { status: TrainingGoal['status'] }) {
+  if (status !== 'paused') return null;
+  return (
+    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
+      Gepauzeerd — nog geen streefdatum ingesteld. Telt zo nog niet mee bij Goal Focus of het plannen van sessies.
+    </p>
+  );
+}
+
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, updateMarathonGoal, settings } = useAppData();
+  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
   const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
@@ -62,6 +77,13 @@ export function AscendPage() {
   const customGoals = trainingGoals.filter(
     (g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id),
   );
+  // Archiving used to be a one-way door — nothing in the UI ever read
+  // status:'archived', so an archived goal simply vanished with no way
+  // back except "+ NIEUW DOEL", which mints a fresh id and can never
+  // re-link to GR5's own id-pinned goalMilestones. Surfaced here so a
+  // mis-click (or an old habit of "archiving" instead of pausing) is
+  // recoverable.
+  const archivedGoals = trainingGoals.filter((g) => g.status === 'archived');
   const milestonesForGoal = useMemo(() => goalMilestones.filter((m) => m.goalId === goal?.id), [goalMilestones, goal?.id]);
   const progress = useMemo(
     () => (goal ? computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs) : null),
@@ -118,6 +140,8 @@ export function AscendPage() {
       <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => archiveGoal(marathonGoal.id) : undefined} />
 
       <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
+
+      <ArchivedGoalsCard goals={archivedGoals} onUnarchive={unarchiveGoal} />
 
       <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL</SecondaryButton>
       {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
@@ -274,6 +298,7 @@ function GR5GoalCard({
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow>GR5 DOEL</Eyebrow>
+      <GoalStatusNote status={goal.status} />
       {daysLeft !== undefined && (
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
           {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
@@ -421,6 +446,7 @@ function MarathonGoalCard({
 
       {raceType && (
         <>
+          <GoalStatusNote status={marathonGoal?.status ?? 'paused'} />
           {daysLeft !== undefined && (
             <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
               {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
@@ -509,15 +535,49 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
     <Card className="flex flex-col gap-3">
       <Eyebrow>EIGEN DOELEN</Eyebrow>
       {goals.map((g) => (
-        <div key={g.id} className="flex items-center justify-between gap-3 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
-          <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{g.name || 'Naamloos doel'}</p>
-          <div className="flex shrink-0 gap-3">
-            <SecondaryButton onClick={() => setEditing(g)}>AANPASSEN</SecondaryButton>
-            <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>archiveren</button>
+        <div key={g.id} className="flex flex-col gap-2 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{g.name || 'Naamloos doel'}</p>
+            <div className="flex shrink-0 gap-3">
+              <SecondaryButton onClick={() => setEditing(g)}>AANPASSEN</SecondaryButton>
+              <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>archiveren</button>
+            </div>
           </div>
+          <GoalStatusNote status={g.status} />
         </div>
       ))}
       {editing && <GoalSetupWizard mode="edit" initialGoal={editing} onClose={() => setEditing(null)} />}
+    </Card>
+  );
+}
+
+// The recovery path for the archiving above — collapsed by default since
+// this is a rarely-needed corner, not a primary action. Reactivating puts
+// a goal back to 'paused' (never straight to 'active' — archiving cleared
+// its targetDate), from where its own dedicated card (GR5/Marathon) or
+// the custom-goals list above picks it back up, ready for a new date.
+function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUnarchive: (goalId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  if (goals.length === 0) return null;
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <button onClick={() => setOpen((s) => !s)} className="flex items-center justify-between gap-3 text-left">
+        <Eyebrow>GEARCHIVEERDE DOELEN ({goals.length})</Eyebrow>
+        <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>{open ? '−' : '+'}</span>
+      </button>
+      {open && (
+        <div className="flex flex-col gap-3">
+          {goals.map((g) => (
+            <div key={g.id} className="flex items-center justify-between gap-3 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
+              <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{g.name || 'Naamloos doel'}</p>
+              <button onClick={() => onUnarchive(g.id)} className="shrink-0 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+                heractiveren
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

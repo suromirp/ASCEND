@@ -3,6 +3,7 @@ import {
   wipeAllData,
   seedIfEmpty,
   resetScheduleToDefault,
+  resetToDemoData,
   ProgramsRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
@@ -10,7 +11,9 @@ import {
   TrainingGoalsRepo,
   CapabilityEvidenceRepo,
   WeeklyPrescriptionsRepo,
+  SettingsRepo,
 } from './database';
+import { migrateToGoalEngine } from './goalMigration';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
 import type { InjuryNote } from '../models/injury';
 import type { TrainingGoal } from '../models/goals';
@@ -180,5 +183,42 @@ describe('WeeklyPrescriptionsRepo', () => {
     await WeeklyPrescriptionsRepo.put(prescription({ id: 'wp1', weekStartDate: '2026-09-21' }));
     await wipeAllData();
     expect(await WeeklyPrescriptionsRepo.getAll()).toEqual([]);
+  });
+});
+
+// Production incident: a full "reset alles" left the user with a Marathon
+// goal stuck in status:'paused' — invisible to Goal Focus/scheduling but
+// still rendered on its card as if fully configured. Root cause:
+// resetToDemoData cleared trainingGoals but left settings.marathonRaceType/
+// marathonTargetDate in place — a second, shadow pointer into that same
+// goal. The next migrateToGoalEngine() run (goalEngineMigrated is unset by
+// the reset) read those stale settings straight back out and silently
+// re-minted the exact goal the user believed they'd wiped.
+describe('resetToDemoData', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('clears the marathon settings fields too, so the next migration does not resurrect a stale goal', async () => {
+    await seedIfEmpty();
+    await SettingsRepo.set({ marathonRaceType: 'half' }); // race type picked, no targetDate — mirrors the incident
+    await migrateToGoalEngine();
+
+    const beforeReset = await TrainingGoalsRepo.getAll();
+    expect(beforeReset.some((g) => g.name === 'Marathon' && g.status === 'paused')).toBe(true);
+
+    await resetToDemoData();
+
+    const settingsAfterReset = await SettingsRepo.get();
+    expect(settingsAfterReset.marathonRaceType).toBeUndefined();
+    expect(settingsAfterReset.marathonTargetDate).toBeUndefined();
+    expect(settingsAfterReset.marathonTargetTimeMinutes).toBeUndefined();
+
+    // The real regression: resetToDemoData unsets goalEngineMigrated, so
+    // the very next migration run must not resurrect the goal from
+    // leftover settings.
+    await migrateToGoalEngine();
+    const afterReset = await TrainingGoalsRepo.getAll();
+    expect(afterReset.some((g) => g.name === 'Marathon')).toBe(false);
   });
 });

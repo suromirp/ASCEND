@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { inferCapabilityKeysForTemplate, resolveSessionContributions } from './sessionContribution';
+import { inferCapabilityKeysForTemplate, resolveSessionContributions, type GoalDemand } from './sessionContribution';
+import { computeDemand } from './demand';
+import { computeActiveGoalOverviews } from './goalOverview';
 import type { SessionTemplate, PlannedSession } from '../models/training';
 import type { CapabilityDemand } from '../models/capability';
+import type { TrainingGoal } from '../models/goals';
+import type { TrainingAvailability } from '../models/goalEngineConfig';
 
 function template(overrides: Partial<SessionTemplate> = {}): SessionTemplate {
   return { id: 'tpl_x', name: 'Test', type: 'cardio', durationVariants: { full: 30 }, ...overrides };
@@ -81,5 +85,43 @@ describe('resolveSessionContributions', () => {
       [{ goalId: 'gr5', demands: [{ key: { dimension: 'ascent_capacity' }, demand: { amount: 1000, unit: 'm_elevation_gain' }, criticality: 'critical' }] }],
     );
     expect(contributions).toEqual([]);
+  });
+
+  // Production incident regression: a user reported an Easy Run session
+  // being flagged as contributing to no active goal ("draagt momenteel
+  // niet aantoonbaar bij") despite an active Marathon goal — root cause
+  // turned out to be the Marathon TrainingGoal itself sitting at
+  // status:'paused' (no targetDate), not a key mismatch here. This proves
+  // the mapping itself is sound end-to-end (computeDemand ->
+  // resolveSessionContributions -> computeActiveGoalOverviews's
+  // normalizedPct) for a genuinely ACTIVE goal, so a future regression in
+  // either half is caught immediately instead of being mis-diagnosed again.
+  it('an active Marathon goal (distance + discipline:running) gives Easy Run a real, positive Goal Focus contribution', () => {
+    const tplEasyRun = template({ id: 'tpl_easy_run', type: 'cardio' });
+    const marathon: TrainingGoal = {
+      id: 'marathon',
+      name: 'Marathon',
+      requirements: [{ id: 'r1', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 21.1, unit: 'km' }, discipline: 'running' }],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      status: 'active',
+      targetDate: '2027-04-01',
+    };
+    const availability: TrainingAvailability = { allowedDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], dailyTimeBudget: {}, longSessionDays: ['sun'], temporaryExceptions: [] };
+
+    const overviews = computeActiveGoalOverviews([marathon], [], availability, [], '2026-09-09');
+    expect(overviews).toHaveLength(1); // status:'active' — this is the exact filter a paused goal fails
+
+    const goalDemands: GoalDemand[] = [{ goalId: marathon.id, demands: computeDemand(marathon.requirements) }];
+    const contributions = resolveSessionContributions([planned({ id: 'ps1', templateId: 'tpl_easy_run' })], [tplEasyRun], goalDemands);
+    expect(contributions.map((c) => c.goalId)).toEqual(['marathon']);
+
+    // Mirrors weekReconciliation.ts#pickSwapCandidate's own relevancePct
+    // computation — the score that decides whether a session is "free to
+    // swap out".
+    const relevancePct = contributions
+      .filter((c) => c.plannedSessionId === 'ps1')
+      .reduce((sum, c) => sum + (overviews.find((o) => o.goal.id === c.goalId)?.focus.normalizedPct ?? 0), 0);
+    expect(relevancePct).toBeGreaterThan(0);
   });
 });
