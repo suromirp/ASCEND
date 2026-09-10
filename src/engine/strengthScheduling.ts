@@ -89,6 +89,13 @@ function buildReconciliationTarget(strategy: StrengthProgramStrategy, source: st
     urgentSwapThresholdPct: URGENT_GOAL_SWAP_THRESHOLD_PCT,
     calmSwapThresholdPct: CALM_GOAL_SWAP_THRESHOLD_PCT,
     source,
+    // STRENGTH BLOCK REFLOW (see weekReconciliation.ts#ReconciliationTarget)
+    // — a krachtblok is one interchangeable set of sessions decided as a
+    // whole, so when it changes, the whole block gets a joint shot at a
+    // better week, not just whichever template happens to be new. Never
+    // touches WHAT is in the block (targetTemplateIds above), only WHERE
+    // its sessions land relative to each other.
+    reflowOnChange: true,
   };
 }
 
