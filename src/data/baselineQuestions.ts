@@ -104,3 +104,41 @@ export const RANGE_OPTIONS: Partial<Record<BaselineDimension, { label: string; v
     { label: 'Sneller dan 5:00', value: 5 },
   ],
 };
+
+// Fase 4 — the question, unit and ranges for one capability KEY. Cycling
+// endurance is measured in kilometres (a ride and a cycling goal both are,
+// engine/capability.ts), so its question differs from the time-based
+// walking/running one. Everything else is the dimension's own entry.
+const CYCLING_DISTANCE_RANGES = [
+  { label: '< 30 km', value: 15 },
+  { label: '30 – 60 km', value: 30 },
+  { label: '60 – 100 km', value: 60 },
+  { label: '100 – 150 km', value: 100 },
+  { label: '150+ km', value: 150 },
+];
+
+export interface QuestionMeta {
+  label: string;
+  unit: Unit;
+  question: string;
+  ranges?: { label: string; value: number }[];
+}
+
+export function questionMetaFor(key: Pick<CapabilityKey, 'dimension' | 'discipline'>): QuestionMeta | undefined {
+  if (key.dimension === 'fatigue_resistance') return undefined;
+  const base = DIMENSION_META[key.dimension];
+  if (key.discipline === 'cycling' && (key.dimension === 'endurance_duration' || key.dimension === 'mechanical_tolerance')) {
+    return {
+      label: base.label,
+      unit: 'km',
+      question: key.dimension === 'endurance_duration'
+        ? 'Wat is de langste rit die je de afgelopen 8 weken hebt gefietst?'
+        : 'Hoe ver fietste je de afgelopen 8 weken op een dag voordat je benen echt op waren?',
+      ranges: CYCLING_DISTANCE_RANGES,
+    };
+  }
+  if (key.discipline === 'cycling' && key.dimension === 'ascent_capacity') {
+    return { label: base.label, unit: base.unit, question: 'Hoeveel hoogtemeters heb je de afgelopen 8 weken op één rit geklommen?', ranges: RANGE_OPTIONS.ascent_capacity };
+  }
+  return { label: base.label, unit: base.unit, question: base.question, ranges: RANGE_OPTIONS[key.dimension] };
+}

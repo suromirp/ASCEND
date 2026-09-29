@@ -239,6 +239,24 @@ function buildTemplates(): SessionTemplate[] {
       cooldown: COOLDOWN_RECOVERY,
       baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'none' },
     },
+    // Fase 4 — fietsen. Geen vaste dag in het weekpatroon (geen
+    // defaultDayOfWeek): je logt een rit wanneer je fietst, en ASCEND plant
+    // er alleen een in als Fietsen aan staat (Instellingen → Training) en de
+    // weekplanning erom vraagt. Buiten is de standaard, binnen de
+    // uitzondering (modaliteit).
+    {
+      id: 'tpl_bike',
+      name: 'Fietstocht',
+      type: 'cardio',
+      sport: 'cycling',
+      focus: 'Duurvermogen op de fiets',
+      durationVariants: { full: 90, short: 45 },
+      notes:
+        'Grotendeels continu, RPE 3-4/10. Telt mee voor je conditie en, buiten met hoogtemeters, deels voor klimmen. Niet voor tijd op de benen, afdalen of rugzak dragen: daarvoor blijft hiken nodig. Binnen fietsen telt niet mee voor klimmen.',
+      // Beenwerk zonder impact of excentrische belasting — geen "zware
+      // beendag" voor de 48-uursregel.
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'none', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+    },
   ];
 }
 

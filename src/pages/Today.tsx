@@ -25,6 +25,7 @@ import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeeklyReflectionCard } from '../components/WeeklyReflectionCard';
 import { CoachCard } from '../components/CoachCard';
+import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { nextWeekChangeLines } from '../engine/changeLog';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow, SecondaryButton } from '../components/ui';
@@ -51,6 +52,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // ever shown, matched to the current time of day.
   const isMorning = new Date().getHours() < 12;
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
+  const [adHocOpen, setAdHocOpen] = useState(false);
+  const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
@@ -238,6 +241,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       <CoachCard />
 
+      <button onClick={() => setAdHocOpen(true)} className="-mt-2 self-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+        + losse training loggen
+      </button>
+
       {secondary.map((s) => {
         const t = templateById.get(s.templateId);
         if (!t) return null;
@@ -298,6 +305,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       {loggingSession && loggingTemplate && (
         <ExerciseLogger
+          key={loggingSession.id}
           template={loggingTemplate}
           plannedSessionId={loggingSession.id}
           scheduledDate={loggingSession.scheduledDate}
@@ -305,6 +313,17 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           initialVariant={loggingVariant}
           onClose={() => setLoggingSession(null)}
         />
+      )}
+
+      {adHocOpen && (
+        <AdHocLogSheet
+          templates={templates}
+          onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }}
+          onClose={() => setAdHocOpen(false)}
+        />
+      )}
+      {adHocTemplate && (
+        <ExerciseLogger template={adHocTemplate} scheduledDate={today} program={program} onClose={() => setAdHocTemplate(null)} />
       )}
 
       {actionSheetSession && actionSheetTemplate && (

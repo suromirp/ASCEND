@@ -53,7 +53,7 @@ function readStoredTab(): SettingsTab {
   }
 }
 
-const PLANNABLE_SPORTS: Sport[] = ['running', 'hiking'];
+const PLANNABLE_SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
 
 type PendingImpact = { section: string; title: string; proposal: PlanChangeProposal; lines: string[] };
 

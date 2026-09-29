@@ -585,6 +585,17 @@ async function fixV1WeekFragmentation(): Promise<void> {
   }
 }
 
+// Fase 4 — adds any default SessionTemplate this device doesn't have yet
+// (e.g. tpl_bike), without touching the schedule or existing templates.
+// syncTemplateAndScheduleDefinitions below only runs on a content-version
+// bump and then regenerates future weeks, which would throw away a user's
+// own placement; a new template on its own never needs that.
+export async function ensureDefaultTemplates(): Promise<void> {
+  const existing = new Set((await SessionTemplatesRepo.getAll()).map((t) => t.id));
+  const missing = buildDefaultProgramData().templates.filter((t) => !existing.has(t.id));
+  if (missing.length > 0) await putAll('sessionTemplates', missing);
+}
+
 export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
   const version = await MetaRepo.get<number>('scheduleVersion');
   if (version === SCHEDULE_CONTENT_VERSION) return;

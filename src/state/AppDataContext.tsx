@@ -13,6 +13,7 @@ import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
   seedIfEmpty,
   syncTemplateAndScheduleDefinitions,
+  ensureDefaultTemplates,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
@@ -74,6 +75,7 @@ function runBootMigrationsOnce(): Promise<void> {
     await syncGr5MilestoneDefinitions();
     await migrateStrengthProgramDefault();
     await syncTemplateAndScheduleDefinitions();
+    await ensureDefaultTemplates();
   })();
   return bootMigrations;
 }
@@ -253,6 +255,7 @@ export interface LogSessionInput {
   plannedSessionId?: string;
   templateId: string;
   type: SessionLog['type'];
+  sport?: SessionLog['sport'];
   variant: SessionVariant;
   durationMinutes: number;
   rpe?: number;
@@ -873,6 +876,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         plannedSessionId: input.plannedSessionId,
         templateId: input.templateId,
         type: input.type,
+        sport: input.sport,
         completedDate: todayISO(),
         completedAt: new Date().toISOString(),
         variant: input.variant,

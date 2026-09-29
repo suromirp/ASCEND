@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { NumberField } from './NumberField';
+import { templateSport } from '../engine/sports';
 import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment, GuidanceMode } from '../models/training';
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
-import { getModalities, getModality, defaultModality } from '../data/modalities';
+import { getModalities, getModality, defaultModality, isCyclingModality } from '../data/modalities';
 import { GARMIN_SUGGESTED_TYPES, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { ModalityPicker } from './ModalityPicker';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -151,6 +152,7 @@ export function ExerciseLogger({
       plannedSessionId,
       templateId: template.id,
       type: template.type,
+      sport: isCyclingModality(modalityKey) ? 'cycling' : templateSport(template),
       variant,
       durationMinutes: duration,
       rpe: rpe === '' ? undefined : rpe,

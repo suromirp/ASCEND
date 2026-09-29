@@ -82,16 +82,21 @@ export function computeDemand(requirements: GoalRequirement[]): CapabilityDemand
     });
   }
 
+  // Fase 4 — a cycling goal climbs on the bike: its own ascent key, met by
+  // rides. Descending on a bike and bike bags aren't the leg/eccentric
+  // descent tolerance or rucksack carrying the hiking dimensions measure,
+  // so a cycling goal doesn't demand those.
+  const cycling = discipline === 'cycling';
   if (gainDay && gainDay.amount > 0) {
-    demand.push({ key: { dimension: 'ascent_capacity' }, demand: gainDay, criticality: 'critical' });
+    demand.push({ key: cycling ? { dimension: 'ascent_capacity', discipline } : { dimension: 'ascent_capacity' }, demand: gainDay, criticality: 'critical' });
   }
 
   // descent stays independent of ascent — never inferred from D+ (§18.4).
-  if (lossDay && lossDay.amount > 0) {
+  if (!cycling && lossDay && lossDay.amount > 0) {
     demand.push({ key: { dimension: 'descent_tolerance' }, demand: lossDay, criticality: 'critical' });
   }
 
-  if (packWeight?.target && packWeight.target.amount > 0) {
+  if (!cycling && packWeight?.target && packWeight.target.amount > 0) {
     demand.push({ key: { dimension: 'load_carriage' }, demand: packWeight.target, criticality: 'critical' });
   }
 

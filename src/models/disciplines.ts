@@ -1,6 +1,6 @@
 // ASCEND — the disciplines the Capability Engine can actually match against
 // real evidence (engine/capability.ts's own discipline derivation from a
-// SessionLog only ever produces 'running' or 'hiking'). A goal requirement
+// SessionLog produces 'running', 'hiking' or, since Fase 4, 'cycling'). A goal requirement
 // or baseline answer carrying any other discipline string can never be met
 // by real training data — not a UI restriction, a reflection of what the
 // engine already does.
@@ -12,11 +12,12 @@
 // existing one, or typed via the editor's "andere sport" fallback); it just
 // won't yet contribute to automatic capability tracking.
 
-export type Discipline = 'running' | 'hiking';
+export type Discipline = 'running' | 'hiking' | 'cycling';
 
 export const DISCIPLINE_LABEL: Record<Discipline, string> = {
   running: 'Hardlopen',
   hiking: 'Wandelen / hiken',
+  cycling: 'Fietsen',
 };
 
 export const DISCIPLINE_OPTIONS = Object.keys(DISCIPLINE_LABEL) as Discipline[];

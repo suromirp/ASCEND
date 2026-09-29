@@ -87,7 +87,7 @@ type Step =
 type Preset = 'trek' | 'race' | 'custom';
 
 const PRESET_LABEL: Record<Preset, { label: string; note: string }> = {
-  trek: { label: 'Meerdaagse tocht', note: 'Hiken over meerdere dagen, aaneengesloten of in etappes. Zoals de GR5.' },
+  trek: { label: 'Meerdaagse tocht', note: 'Hiken of fietsen over meerdere dagen, aaneengesloten of in etappes. Zoals de GR5.' },
   race: { label: 'Hardloopwedstrijd', note: 'Eén vaste afstand, optioneel een doeltijd.' },
   custom: { label: 'Ander doel', note: 'Stel zelf samen wat dit doel vraagt, bijvoorbeeld een zware dagtocht.' },
 };
@@ -490,7 +490,7 @@ const PER_DAY_DIMENSIONS = new Set(['endurance_duration', 'mechanical_tolerance'
 function RouteSummary({ goal }: { goal: TrainingGoal }) {
   const reqs = goal.requirements;
   const days = eventDaysRequirement(reqs)?.target?.amount;
-  const dayWord = routeDiscipline(goal) === 'hiking' ? 'loopdagen' : 'dagen';
+  const dayWord = routeDiscipline(goal) === 'hiking' ? 'loopdagen' : routeDiscipline(goal) === 'cycling' ? 'fietsdagen' : 'dagen';
   const totals = ROUTE_KINDS.flatMap((k) => {
     const t = routeTotal(reqs, k);
     return t ? [formatRouteValue(k, t.amount)] : [];

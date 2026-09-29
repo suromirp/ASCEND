@@ -33,6 +33,8 @@ import {
   type DesiredSlot,
 } from './weeklyPrescriptionBuilder';
 import { proposeRunningPrescription } from './specialists/running';
+import { proposeCyclingPrescription } from './specialists/cycling';
+import { templateSport } from './sports';
 import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
 import { writeTrainingPrescription } from './prescriptionWriter';
 import { addDays } from '../utils/dates';
@@ -94,6 +96,10 @@ function buildPrescriptionForLine(
 ): TrainingPrescription | null {
   const midpoint = (range?: { min: { amount: number }; max: { amount: number } }) => (range ? (range.min.amount + range.max.amount) / 2 : undefined);
 
+  if (templateSport(template) === 'cycling') {
+    const candidate = proposeCyclingPrescription({ decision, plannedSessionId, candidateDurationMinutes: midpoint(line.targetDuration) });
+    return writeTrainingPrescription(candidate);
+  }
   if (template.type === 'cardio') {
     const candidate = proposeRunningPrescription({ decision, plannedSessionId, candidateDistanceKm: midpoint(line.targetDistance) });
     return writeTrainingPrescription(candidate);

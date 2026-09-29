@@ -109,7 +109,10 @@ export function evidenceFromRecentActivity(
   const result: { key: CapabilityKey; measured: MeasuredValue }[] = [];
   for (const key of needs) {
     const d = key.dimension;
-    if ((d === 'endurance_duration' || d === 'mechanical_tolerance' || d === 'aerobic_engine') && activity.durationMinutes) {
+    // Cycling endurance is measured in km (engine/capability.ts, Fase 4).
+    if (key.discipline === 'cycling' && (d === 'endurance_duration' || d === 'mechanical_tolerance')) {
+      if (activity.distanceKm) result.push({ key, measured: { amount: activity.distanceKm, unit: 'km' } });
+    } else if ((d === 'endurance_duration' || d === 'mechanical_tolerance' || d === 'aerobic_engine') && activity.durationMinutes) {
       result.push({ key, measured: { amount: activity.durationMinutes, unit: 'min' } });
     } else if (d === 'ascent_capacity' && activity.elevationGainM) {
       result.push({ key, measured: { amount: activity.elevationGainM, unit: 'm_elevation_gain' } });
