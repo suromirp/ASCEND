@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, formatMonthNL, mondayOfWeek, resolveProgramWeek, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
+import { ChangeLogCard } from '../components/ChangeLogCard';
+import { adjustedSessionReasons } from '../engine/changeLog';
 import { MonthCalendar } from '../components/MonthCalendar';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
@@ -12,7 +14,8 @@ import { Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function WeekPage() {
-  const { program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog } = useAppData();
+  const { program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog } = useAppData();
+  const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
   const [selected, setSelected] = useState<PlannedSession | null>(null);
@@ -122,8 +125,11 @@ export function WeekPage() {
           logs={sessionLogs}
           program={program}
           onSelectSession={selectSession}
+          adjustedIds={adjustedIds}
         />
       )}
+
+      {!monthView && <ChangeLogCard />}
 
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet

@@ -1,0 +1,268 @@
+// ASCEND — advice engine (Fase 3).
+//
+// Deterministic coaching: every piece of advice is one TRIGGER (something
+// that happened), one RULE (a fixed, readable if-then), and one EFFECT
+// (what ASCEND suggests, optionally as a concrete PlanChangeProposal the
+// user can accept). No AI, no guessing — the same inputs always give the
+// same advice, and the "waarom" line spells out trigger -> rule -> effect.
+//
+// Boundaries, on purpose:
+// - Load feedback (too hard / too light) only for running, cycling and
+//   hiking — the sports ASCEND actually measures. Strength is tracked in
+//   MacroFactor: ASCEND only looks at whether sessions happened
+//   (regularity), never at loads.
+// - An effect never removes history and never stacks sessions: a missed
+//   session is moved to a free day in the same week or let go.
+// - Whether an accepted proposal is applied at once or asked first is not
+//   decided here — that's the shared feedback pattern (changeImpact.ts);
+//   accepting advice IS the user's confirmation.
+
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { Program } from '../models/program';
+import type { InjuryNote } from '../models/injury';
+import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
+import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import { dayHasRoomFor, isLegHeavyTemplate } from './scheduler';
+import { isTemplatePlannable, type EnabledSports } from './sports';
+import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
+import { makeId } from '../utils/id';
+
+export type AdviceTrigger = 'plan_update' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
+
+export interface Advice {
+  id: string; // deterministic (rule + subject) — a response to it sticks
+  trigger: AdviceTrigger;
+  ruleId: string;
+  title: string;
+  effect: string;
+  why: string;
+  priority: number; // higher first
+  proposal?: PlanChangeProposal;
+  relatedLogId?: string;
+}
+
+export interface AdviceInputs {
+  logs: SessionLog[];
+  plannedSessions: PlannedSession[];
+  templates: SessionTemplate[];
+  injuries: InjuryNote[];
+  program: Program | null | undefined;
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>> | undefined;
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'];
+  enabledSports?: Partial<EnabledSports>;
+  respondedIds: Set<string>;
+  asOf: string;
+}
+
+const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
+const LEG_BODY_PARTS = ['knie', 'enkel', 'heup', 'hamstring', 'kuit', 'voet', 'achilles', 'quadriceps', 'been', 'benen'];
+
+function shortDate(iso: string): string {
+  return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
+}
+
+function proposal(issue: string, items: PlanChangeItem[], consequences: string, explanation: string): PlanChangeProposal {
+  return { id: makeId('planchange'), trigger: 'session_skipped', issue, changes: items, alternatives: [], consequences, explanation, createdAt: new Date().toISOString() };
+}
+
+// A free day for `session` from `fromDate` to the end of its week: room
+// under the user's time budget/pairing preference, and no second
+// leg-heavy session within 48 hours of it (the one hard scheduling rule).
+function findCatchUpDate(
+  session: PlannedSession,
+  template: SessionTemplate,
+  inputs: AdviceInputs,
+  templateById: Map<string, SessionTemplate>,
+  fromDate: string,
+): string | undefined {
+  const week = inputs.plannedSessions.filter((s) => s.weekStartDate === session.weekStartDate && s.id !== session.id && s.status !== 'skipped');
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  for (const date of weekDates(session.weekStartDate)) {
+    if (date < fromDate) continue;
+    if (!dayHasRoomFor(date, template, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
+    if (isLegHeavyTemplate(template)) {
+      const clash = week.some((other) => {
+        const t = templateById.get(other.templateId);
+        if (!t || !isLegHeavyTemplate(t)) return false;
+        if (other.scheduledDate < inputs.asOf && !loggedIds.has(other.id)) return false; // a missed one isn't load
+        return Math.abs(daysBetween(other.scheduledDate, date)) <= 1;
+      });
+      if (clash) continue;
+    }
+    return date;
+  }
+  return undefined;
+}
+
+// --- Rule MISSED-CATCH-UP --------------------------------------------------
+// Trigger: a planned session in the last 3 days has no log and wasn't
+// skipped. Rule: catch up on a free day later this same week, if one
+// exists without breaking the 48h leg rule; otherwise let it go — never
+// double up. Effect: a move (or skip) proposal.
+function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const recentMissed = inputs.plannedSessions.filter(
+    (s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3,
+  );
+  return recentMissed.flatMap((s): Advice[] => {
+    const template = templateById.get(s.templateId);
+    if (!template || template.type === 'recovery') return [];
+    const catchUp = isTemplatePlannable(template, inputs.enabledSports) ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
+    const title = `${template.name} van ${shortDate(s.scheduledDate)} gemist`;
+    const rule = 'Regel: inhalen op een vrije dag in dezelfde week, zonder twee zware beendagen binnen 48 uur. Lukt dat niet, dan laten vallen. Nooit twee sessies op elkaar stapelen om bij te benen.';
+    if (catchUp) {
+      return [{
+        id: `missed:${s.id}`,
+        trigger: 'session_missed',
+        ruleId: 'MISSED-CATCH-UP',
+        title,
+        effect: `Inhalen op ${shortDate(catchUp)}.`,
+        why: `Trigger: geen log voor deze sessie. ${rule}`,
+        priority: 3,
+        proposal: proposal(title, [{ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] }], `${template.name} schuift naar ${shortDate(catchUp)}.`, rule),
+      }];
+    }
+    return [{
+      id: `missed:${s.id}`,
+      trigger: 'session_missed',
+      ruleId: 'MISSED-CATCH-UP',
+      title,
+      effect: 'Laten vallen. Deze week is er geen vrije dag zonder te stapelen.',
+      why: `Trigger: geen log voor deze sessie. ${rule}`,
+      priority: 2,
+      proposal: proposal(title, [{ plannedSessionId: s.id, action: 'remove', reason: 'Gemist en deze week niet in te halen zonder te stapelen.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] }], `${template.name} vervalt; de rest van de week blijft zoals gepland.`, rule),
+    }];
+  });
+}
+
+// --- Rule HARD-THEN-SPACE ----------------------------------------------------
+// Trigger: a run/ride/hike in the last 2 days logged at RPE 8+ or as
+// "zwaarder dan normaal". Rule: the next leg-heavy session within a day of
+// it gets one extra day, if there's room; otherwise keep it easy.
+function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const recent = inputs.logs
+    .filter((l) => LOAD_SPORT_TYPES.has(l.type) && daysBetween(l.completedDate, inputs.asOf) <= 1 && daysBetween(l.completedDate, inputs.asOf) >= 0)
+    .filter((l) => (l.rpe ?? 0) >= 8 || l.subjectiveFeel === 'worse')
+    .sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
+  if (!recent) return [];
+  const loggedName = templateById.get(recent.templateId)?.name ?? 'Je sessie';
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const next = inputs.plannedSessions
+    .filter((s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate >= inputs.asOf && daysBetween(recent.completedDate, s.scheduledDate) <= 1)
+    .find((s) => { const t = templateById.get(s.templateId); return t ? isLegHeavyTemplate(t) : false; });
+  const signal = recent.rpe !== undefined && recent.rpe >= 8 ? `RPE ${recent.rpe}` : 'zwaarder dan normaal';
+  const rule = 'Regel: na een zware sessie krijgt de eerstvolgende zware beensessie binnen een dag een extra hersteldag, als die plek er is.';
+  const base = { trigger: 'session_too_hard' as const, ruleId: 'HARD-THEN-SPACE', title: `${loggedName} was zwaar (${signal})`, relatedLogId: recent.id, priority: 4 };
+  if (!next) {
+    return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `Trigger: ${signal} gelogd. ${rule}`, priority: 1 }];
+  }
+  const nextTemplate = templateById.get(next.templateId)!;
+  const later = findCatchUpDate(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
+  if (!later) {
+    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `Trigger: ${signal} gelogd. ${rule}` }];
+  }
+  return [{
+    ...base,
+    id: `hard:${recent.id}`,
+    effect: `${nextTemplate.name} een dag later: ${shortDate(later)}.`,
+    why: `Trigger: ${signal} gelogd. ${rule}`,
+    proposal: proposal(base.title, [{ plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `Extra herstel na ${loggedName} (${signal}).`, generatedBy: ['engine/adviceEngine.ts', 'HARD-THEN-SPACE'] }], `${nextTemplate.name} schuift naar ${shortDate(later)}.`, rule),
+  }];
+}
+
+// --- Rule LIGHT-TWICE --------------------------------------------------------
+// Trigger: the same run/ride/hike logged twice in a row at RPE 3 or
+// lower. Rule: no manual action; the weekly planning raises load only
+// when a goal asks for it and recovery is good. Effect: a hint.
+function tooLightAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const byTemplate = new Map<string, SessionLog[]>();
+  for (const l of inputs.logs) {
+    if (!LOAD_SPORT_TYPES.has(l.type) || daysBetween(l.completedDate, inputs.asOf) > 14) continue;
+    byTemplate.set(l.templateId, [...(byTemplate.get(l.templateId) ?? []), l]);
+  }
+  const advice: Advice[] = [];
+  for (const [templateId, logs] of byTemplate) {
+    const lastTwo = [...logs].sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(0, 2);
+    if (lastTwo.length < 2 || !lastTwo.every((l) => l.rpe !== undefined && l.rpe <= 3)) continue;
+    const name = templateById.get(templateId)?.name ?? 'Deze sessie';
+    advice.push({
+      id: `light:${lastTwo[0].id}`,
+      trigger: 'session_too_light',
+      ruleId: 'LIGHT-TWICE',
+      title: `${name} voelde twee keer licht`,
+      effect: 'Je hoeft niets te doen. Blijft je herstel goed, dan vraagt de weekplanning vanzelf iets meer zodra je doel dat nodig heeft.',
+      why: 'Trigger: twee keer RPE 3 of lager op dezelfde sessie. Regel: belasting gaat alleen omhoog via de weekplanning, stap voor stap, nooit na één losse sessie.',
+      priority: 1,
+      relatedLogId: lastTwo[0].id,
+    });
+  }
+  return advice;
+}
+
+// --- Rule INJURY-LEGS ---------------------------------------------------------
+// Trigger: an open injury on a leg area noted in the last 14 days. Rule:
+// ASCEND adds nothing heavy for the legs; the user picks the short variant
+// or skips. Effect: a hint naming this week's leg-heavy sessions.
+function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const leg = inputs.injuries.find((i) => !i.resolvedDate && daysBetween(i.date, inputs.asOf) <= 14 && LEG_BODY_PARTS.some((p) => i.bodyPart.toLowerCase().includes(p)));
+  if (!leg) return [];
+  const upcoming = inputs.plannedSessions
+    .filter((s) => s.status !== 'skipped' && s.scheduledDate >= inputs.asOf && daysBetween(inputs.asOf, s.scheduledDate) <= 6)
+    .filter((s) => { const t = templateById.get(s.templateId); return t ? isLegHeavyTemplate(t) : false; })
+    .map((s) => `${templateById.get(s.templateId)?.name} (${shortDate(s.scheduledDate)})`);
+  return [{
+    id: `injury:${leg.id}`,
+    trigger: 'injury_active',
+    ruleId: 'INJURY-LEGS',
+    title: `Blessure: ${leg.bodyPart.toLowerCase()}`,
+    effect: upcoming.length > 0
+      ? `Zware beensessies de komende week: ${upcoming.join(', ')}. Kies de korte variant of sla over als het niet goed voelt.`
+      : 'Er staan de komende week geen zware beensessies. Houd het zo tot het beter voelt.',
+    why: 'Trigger: open blessure aan been of voet. Regel: ASCEND plant er niets zwaars bij; jij bepaalt per sessie of het gaat.',
+    priority: leg.severity === 'ernstig' ? 6 : 5,
+  }];
+}
+
+// --- Rule STRENGTH-REGULARITY -------------------------------------------------
+// Trigger: over the last 14 days, two or more planned strength sessions
+// without a log. Rule: ASCEND only watches whether strength happens —
+// loads and progression stay in MacroFactor. Effect: a hint.
+function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const window = inputs.plannedSessions.filter((s) => {
+    const t = templateById.get(s.templateId);
+    return t?.type === 'strength' && s.status !== 'skipped' && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 14;
+  });
+  const done = window.filter((s) => loggedIds.has(s.id)).length;
+  const missed = window.length - done;
+  if (window.length === 0 || missed < 2) return [];
+  return [{
+    id: `strength:${mondayOfWeek(inputs.asOf)}`, // at most once a week
+    trigger: 'strength_irregular',
+    ruleId: 'STRENGTH-REGULARITY',
+    title: `Kracht: ${done} van ${window.length} sessies afgevinkt`,
+    effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de Ascend-pagina.',
+    why: 'Trigger: twee of meer krachtsessies zonder log in 14 dagen. Regel: ASCEND kijkt bij kracht alleen naar regelmaat; gewichten en progressie blijven in MacroFactor.',
+    priority: 2,
+  }];
+}
+
+export function computeAdvice(inputs: AdviceInputs): Advice[] {
+  const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
+  return [
+    ...missedAdvice(inputs, templateById),
+    ...tooHardAdvice(inputs, templateById),
+    ...tooLightAdvice(inputs, templateById),
+    ...injuryAdvice(inputs, templateById),
+    ...strengthAdvice(inputs, templateById),
+  ]
+    .filter((a) => !inputs.respondedIds.has(a.id))
+    .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
+}
+
+// Advice tied to one specific log — what the debrief right after logging
+// shows.
+export function adviceForLog(inputs: AdviceInputs, logId: string): Advice[] {
+  return computeAdvice(inputs).filter((a) => a.relatedLogId === logId);
+}
+

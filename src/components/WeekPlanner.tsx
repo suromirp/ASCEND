@@ -11,6 +11,7 @@ export function WeekPlanner({
   logs,
   program,
   onSelectSession,
+  adjustedIds,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -18,6 +19,7 @@ export function WeekPlanner({
   logs: SessionLog[];
   program?: Program | null;
   onSelectSession: (session: PlannedSession) => void;
+  adjustedIds?: Set<string>;
 }) {
   const days = weekDates(weekStartDate);
 
@@ -45,7 +47,7 @@ export function WeekPlanner({
                   const template = templateById.get(s.templateId);
                   if (!template) return null;
                   return (
-                    <SessionCard key={s.id} session={s} template={template} logs={logs} program={program} onTap={() => onSelectSession(s)} />
+                    <SessionCard key={s.id} session={s} template={template} logs={logs} program={program} onTap={() => onSelectSession(s)} adjusted={adjustedIds?.has(s.id)} />
                   );
                 })}
               </div>

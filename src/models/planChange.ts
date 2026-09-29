@@ -98,6 +98,10 @@ export interface PlanChangeProposal {
   createdAt: string;
   resolvedAt?: string;
   resolution?: 'accepted' | 'rejected';
+  // Fase 2/3 — set on the audit record written when the user pressed
+  // "ongedaan maken": the id of the proposal it reverted. The original
+  // record stays untouched (append-only); readers skip what was reverted.
+  revertsProposalId?: string;
 }
 
 export interface GoalActivationPlan {
