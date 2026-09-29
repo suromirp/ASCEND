@@ -25,8 +25,9 @@ const ROUTE_UNIT: Record<RouteKind, Unit> = { distance: 'km', elevationGain: 'm_
 const ROUTE_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D-' };
 const OVERRIDE_LABEL: Record<RouteKind, string> = { distance: 'Dagafstand', elevationGain: 'Stijging per dag', elevationLoss: 'Daling per dag' };
 
-const ROUTE_SPORTS: { value: string; label: string; dayWord: string }[] = [
-  { value: 'hiking', label: 'Hiken', dayWord: 'loopdagen' },
+const ROUTE_SPORTS: { value: string; label: string; dayWord: string; verb: string }[] = [
+  { value: 'hiking', label: 'Hiken', dayWord: 'loopdagen', verb: 'lopen' },
+  { value: 'cycling', label: 'Fietsen', dayWord: 'fietsdagen', verb: 'fietsen' },
 ];
 
 function isPerDay(r: GoalRequirement): boolean {
@@ -63,6 +64,9 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
   const discipline = routeDiscipline(goal);
   const sport = ROUTE_SPORTS.find((s) => s.value === discipline) ?? ROUTE_SPORTS[0];
   const execution: GoalExecution = goal.execution ?? 'stages';
+  // A rucksack is a hiking demand; bike bags aren't load carriage
+  // (engine/demand.ts never asks it of a cycling goal).
+  const carriesPack = discipline !== 'cycling';
   const hasOverride = ROUTE_KINDS.some((k) => amountOf(reqs, k, true) !== undefined);
   const [editingDay, setEditingDay] = useState(hasOverride);
 
@@ -116,7 +120,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           label="Sport"
           value={discipline}
           options={ROUTE_SPORTS.map((s) => ({ value: s.value, label: s.label }))}
-          onChange={(value) => commit(reqs.map((r) => (r.kind === 'eventDays' || r.kind === 'distance' ? { ...r, discipline: value } : r)))}
+          onChange={(value) => commit(reqs.map((r) => (r.kind === 'eventDays' || r.kind === 'distance' ? { ...r, discipline: value } : r)).filter((r) => value !== 'cycling' || r.kind !== 'packWeight'))}
         />
       )}
 
@@ -128,7 +132,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           { value: 'stages', label: 'Meerdere etappes' },
         ]}
         onChange={(value) => setExecution(value as GoalExecution)}
-        helper={execution === 'continuous' ? 'Je loopt de hele tocht in één keer, dag na dag.' : 'Je loopt de tocht in delen, met tijd thuis of rust ertussen.'}
+        helper={execution === 'continuous' ? 'De hele tocht in één keer, dag na dag.' : 'De tocht in delen, met tijd thuis of rust ertussen.'}
       />
 
       <section className="flex flex-col gap-3">
@@ -146,7 +150,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           onChange={(v) => commit(setRequirement(reqs, 'eventDays', false, v, 'days', 'TOTAL_EVENT', discipline))}
           helper="Alleen de dagen dat je echt onderweg bent, rustdagen niet meegeteld."
         />
-        {execution === 'continuous' && packField}
+        {execution === 'continuous' && carriesPack && packField}
       </section>
 
       {execution === 'stages' && (
@@ -157,12 +161,12 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
             unit="dagen"
             value={longest}
             onChange={(v) => commit(setRequirement(reqs, 'consecutiveDays', false, v, 'days', 'CONSECUTIVE_DAYS'))}
-            helper="Het maximale aantal dagen dat je tijdens één etappe achter elkaar verwacht te lopen."
+            helper={`Het maximale aantal dagen dat je tijdens één etappe achter elkaar verwacht te ${sport.verb}.`}
           />
           {longest !== undefined && days !== undefined && longest > days && (
             <p className="-mt-2 text-[11px]" style={{ color: 'var(--color-warning)' }}>De langste etappe kan niet langer zijn dan de hele tocht.</p>
           )}
-          {packField}
+          {carriesPack && packField}
         </section>
       )}
 

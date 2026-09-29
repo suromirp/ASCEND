@@ -19,6 +19,7 @@ import type { CapabilityEvidence, CapabilityKey, CapabilityEstimate, CapabilityD
 import type { MeasuredValue } from '../models/units';
 import { UNIT_COMPARISON_DIRECTION } from '../models/units';
 import { daysBetween } from '../utils/dates';
+import { logSport, isIndoorLog } from './sports';
 
 // Exported (Phase 6) so any caller matching a CapabilityKey against a
 // Map<string, ...> keyed the same way (e.g. engine/adaptiveReplanner.ts's
@@ -36,9 +37,7 @@ export function keyId(key: CapabilityKey): string {
 // modality-classification system on top of the free-form ActivityModality
 // string.
 function inferDiscipline(log: SessionLog): string | undefined {
-  if (log.type === 'cardio') return 'running';
-  if (log.type === 'hiking') return 'hiking';
-  return undefined;
+  return logSport(log);
 }
 
 // --- Evidence extraction from SessionLog (v0.2 §4-§5) -----------------------
@@ -65,6 +64,31 @@ export function extractEvidenceFromLog(log: SessionLog): CapabilityEvidence[] {
   // deliberately discipline-agnostic ("deels overdraagbaar tussen sporten").
   if (log.type !== 'recovery' && log.durationMinutes > 0) {
     push({ dimension: 'aerobic_engine' }, { amount: log.durationMinutes, unit: 'min' }, 'direct');
+  }
+
+  // Fase 4 — a ride. What transfers, and what doesn't (sports-science
+  // boundary agreed for hiking goals): aerobic engine fully (above);
+  // cycling's own endurance/leg tolerance in km (the unit a ride and a
+  // cycling goal are both measured in); climbing only outdoors — fully for
+  // cycling's own ascent key, and as PROXY at half the height for general
+  // (hiking) climbing capacity: the legs and lungs work, but without
+  // carrying body weight uphill on foot. Never time on feet, impact,
+  // descent or pack weight.
+  if (discipline === 'cycling') {
+    const data = log.cardioData ?? log.outdoorData;
+    const distanceKm = data?.distanceKm;
+    if (distanceKm !== undefined && distanceKm > 0) {
+      push({ dimension: 'endurance_duration', discipline }, { amount: distanceKm, unit: 'km' }, 'direct');
+      push({ dimension: 'mechanical_tolerance', discipline }, { amount: distanceKm, unit: 'km' }, 'direct');
+    }
+    const gain = data?.elevationGainM;
+    if (!isIndoorLog(log) && !data?.estimatedElevation && gain !== undefined && gain > 0) {
+      push({ dimension: 'ascent_capacity', discipline }, { amount: gain, unit: 'm_elevation_gain' }, 'direct');
+      // ASCEND_HEURISTIC(CYCLING-CLIMB-TRANSFER-50): half the height, as
+      // proxy evidence — a deliberately cautious, unvalidated factor.
+      push({ dimension: 'ascent_capacity' }, { amount: Math.round(gain * 0.5), unit: 'm_elevation_gain' }, 'proxy');
+    }
+    return evidence;
   }
 
   if (log.type === 'hiking' || log.type === 'cardio') {

@@ -1,4 +1,5 @@
 import { formatNumberNL } from '../utils/number';
+import { logSport } from '../engine/sports';
 import { useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -12,8 +13,9 @@ const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio
 
 function computeMonthSummary(logs: SessionLog[]) {
   const strengthCount = logs.filter((l) => l.type === 'strength').length;
-  const runningKm = logs.reduce((sum, l) => sum + (l.cardioData?.distanceKm ?? 0), 0);
-  const hikingKm = logs.reduce((sum, l) => sum + (l.outdoorData?.distanceKm ?? 0), 0);
+  const runningKm = logs.reduce((sum, l) => sum + (logSport(l) === 'cycling' ? 0 : (l.cardioData?.distanceKm ?? 0)), 0);
+  const cyclingKm = logs.reduce((sum, l) => sum + (logSport(l) === 'cycling' ? (l.cardioData?.distanceKm ?? l.outdoorData?.distanceKm ?? 0) : 0), 0);
+  const hikingKm = logs.reduce((sum, l) => sum + (logSport(l) === 'cycling' ? 0 : (l.outdoorData?.distanceKm ?? 0)), 0);
   const elevation = logs.reduce((sum, l) => sum + (l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0), 0);
   const elevationLoss = logs.reduce((sum, l) => sum + (l.outdoorData?.elevationLossM ?? 0), 0);
   const machineVertical = logs.reduce((sum, l) => sum + (l.outdoorData?.machineVerticalM ?? 0), 0);
@@ -25,7 +27,7 @@ function computeMonthSummary(logs: SessionLog[]) {
   const powerValues = logs.map((l) => l.outdoorData?.power ?? l.cardioData?.power).filter((v): v is number => v !== undefined);
   const avgPower = powerValues.length > 0 ? Math.round(powerValues.reduce((sum, v) => sum + v, 0) / powerValues.length) : undefined;
 
-  return { strengthCount, runningKm, hikingKm, elevation, elevationLoss, machineVertical, totalMinutes, avgCadence, avgPower };
+  return { strengthCount, runningKm, hikingKm, cyclingKm, elevation, elevationLoss, machineVertical, totalMinutes, avgCadence, avgPower };
 }
 
 function countMissed(plannedSessions: PlannedSession[], sessionLogs: SessionLog[], start: string, end: string) {
@@ -93,6 +95,9 @@ export function HistoryPage() {
         <Stat label="Hardlopen" value={`${formatNumberNL(summary.runningKm, 1)} km`} delta={formatDelta(summary.runningKm, prevSummary.runningKm, { unit: ' km', decimals: 1 })} />
         <Stat label="Hoogtemeters" value={`${formatNumberNL(summary.elevation, 0)} m D+`} delta={formatDelta(Math.round(summary.elevation), Math.round(prevSummary.elevation), { unit: ' m D+' })} />
         <Stat label="Wandelen" value={`${formatNumberNL(summary.hikingKm, 1)} km`} delta={formatDelta(summary.hikingKm, prevSummary.hikingKm, { unit: ' km', decimals: 1 })} />
+        {(summary.cyclingKm > 0 || prevSummary.cyclingKm > 0) && (
+          <Stat label="Fietsen" value={`${formatNumberNL(summary.cyclingKm, 1)} km`} delta={formatDelta(summary.cyclingKm, prevSummary.cyclingKm, { unit: ' km', decimals: 1 })} />
+        )}
         <Stat label="Trainingstijd" value={`${Math.floor(Math.round(summary.totalMinutes) / 60)}u ${Math.round(summary.totalMinutes) % 60}m`} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
         <Stat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
         {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D-`} />}

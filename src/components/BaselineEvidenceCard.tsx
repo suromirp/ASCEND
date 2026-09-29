@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NumberField } from './NumberField';
 import { useAppData } from '../state/AppDataContext';
 import { todayISO, formatDateNL } from '../utils/dates';
-import { DIMENSION_META, DIMENSION_ORDER, dimensionLabel } from '../data/baselineQuestions';
+import { questionMetaFor, DIMENSION_META, DIMENSION_ORDER, dimensionLabel } from '../data/baselineQuestions';
 import { UNIT_LABEL, formatMeasuredValue } from '../models/units';
 import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../models/disciplines';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
@@ -28,7 +28,9 @@ export function BaselineEvidenceCard() {
   const [amount, setAmount] = useState<number | undefined>();
   const [date, setDate] = useState(todayISO());
 
-  const meta = DIMENSION_META[dimension];
+  // Unit follows the key, not just the dimension (cycling endurance is in
+  // km — data/baselineQuestions.ts#questionMetaFor).
+  const meta = { ...DIMENSION_META[dimension], unit: questionMetaFor({ dimension, discipline: discipline || undefined })?.unit ?? DIMENSION_META[dimension].unit };
 
   async function handleSave() {
     const parsed = amount;

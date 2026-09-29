@@ -383,7 +383,18 @@ export const SUNDAY_MODALITIES: ModalityDefinition[] = [
   },
 ];
 
+// Fase 4 — the dedicated cycling session (tpl_bike): the two existing bike
+// modalities, outside first (the usual case), inside as the exception.
+// Reused by key from the Tuesday list — one definition, never two copies.
+export const CYCLING_MODALITIES: ModalityDefinition[] = ['bike_outdoor', 'bike_indoor']
+  .map((key) => TUESDAY_MODALITIES.find((m) => m.key === key))
+  .filter((m): m is ModalityDefinition => m !== undefined)
+  .map((m) => (m.key === 'bike_outdoor'
+    ? { ...m, label: 'Buiten', role: 'PRIMARY' as const, durationHint: undefined }
+    : { ...m, label: 'Binnen', role: 'EQUIVALENT' as const, durationHint: undefined, fields: { ...m.fields, distance: true } }));
+
 export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
+  tpl_bike: CYCLING_MODALITIES,
   tpl_easy_run: TUESDAY_MODALITIES,
   tpl_bergconditie: FRIDAY_MODALITIES,
   tpl_herstel: SUNDAY_MODALITIES,
@@ -402,4 +413,19 @@ export function getModality(templateId: string, key: string): ModalityDefinition
 export function defaultModality(templateId: string): string | undefined {
   const modalities = getModalities(templateId);
   return modalities?.find((m) => m.role === 'PRIMARY' && !m.locked)?.key ?? modalities?.[0]?.key;
+}
+
+// Any modality by key, whichever template lists it — for reading back what
+// a log was (engine/sports.ts#logSport).
+export function findModalityByKey(key: string | undefined): ModalityDefinition | undefined {
+  if (!key) return undefined;
+  for (const list of Object.values(MODALITIES_BY_TEMPLATE)) {
+    const found = list.find((m) => m.key === key);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+export function isCyclingModality(key: string | undefined): boolean {
+  return findModalityByKey(key)?.garminProfile?.startsWith('Bike') ?? false;
 }

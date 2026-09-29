@@ -22,7 +22,7 @@ import type { Unit } from '../models/units';
 import { formatCapabilityValue } from '../models/units';
 import { identifyBaselineNeeds, identifyKnownCapabilities, ownHistoryAnchor, evidenceFromRecentActivity, type RecentActivityInput } from '../engine/goalSetupAssist';
 import { keyId } from '../engine/capability';
-import { DIMENSION_META, RANGE_OPTIONS, capabilityKeyLabel } from '../data/baselineQuestions';
+import { questionMetaFor, capabilityKeyLabel } from '../data/baselineQuestions';
 import { addDays, formatDateNL } from '../utils/dates';
 import { PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { NumberField } from './NumberField';
@@ -168,8 +168,9 @@ function RecentActivityBlock({
   const [daysAgo, setDaysAgo] = useState<number | undefined>();
   const [saving, setSaving] = useState(false);
 
-  const askDuration = dims.has('endurance_duration') || dims.has('mechanical_tolerance') || dims.has('aerobic_engine') || dims.has('sustainable_output');
-  const askDistance = dims.has('sustainable_output');
+  const askDuration = needs.some((k) => (k.dimension === 'endurance_duration' || k.dimension === 'mechanical_tolerance') && k.discipline !== 'cycling') || dims.has('aerobic_engine') || dims.has('sustainable_output');
+  const cyclingDistance = needs.some((k) => k.discipline === 'cycling' && (k.dimension === 'endurance_duration' || k.dimension === 'mechanical_tolerance'));
+  const askDistance = dims.has('sustainable_output') || cyclingDistance;
   const filled = [hours, distanceKm, gain, loss, pack].some((v) => v !== undefined && v > 0);
 
   async function handleSave() {
@@ -184,7 +185,7 @@ function RecentActivityBlock({
 
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Je zwaarste tocht of training van de afgelopen 8 weken</p>
+      <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{cyclingDistance ? 'Je zwaarste rit of training van de afgelopen 8 weken' : 'Je zwaarste tocht of training van de afgelopen 8 weken'}</p>
       <p className="mt-0.5 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Eén activiteit die je echt gedaan hebt. Vul in wat je weet, de rest mag leeg blijven.
       </p>
@@ -222,8 +223,8 @@ function CapabilityQuestion({
   onPick: (amount: number, unit: Unit, text: string) => Promise<void>;
   onUnknown: () => void;
 }) {
-  const meta = capKey.dimension === 'fatigue_resistance' ? undefined : DIMENSION_META[capKey.dimension];
-  const ranges = capKey.dimension === 'fatigue_resistance' ? undefined : RANGE_OPTIONS[capKey.dimension];
+  const meta = questionMetaFor(capKey);
+  const ranges = meta?.ranges;
   const [exact, setExact] = useState<number | undefined>();
   const [showExact, setShowExact] = useState(!ranges);
   if (!meta) return null;

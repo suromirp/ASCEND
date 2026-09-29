@@ -19,6 +19,7 @@
 
 import type { SessionLog } from '../models/training';
 import { addDays, todayISO } from '../utils/dates';
+import { logSport, isIndoorLog } from './sports';
 
 export interface CapacityBreakdown {
   strength: number;
@@ -68,17 +69,21 @@ export function computeCapacity(
   // Climbing / D+: total elevation gained (outdoor + incline) vs. a
   // 1000 D+ per 4 weeks reference target, scaled to the window.
   const elevationTarget = (windowDays / 28) * 1000;
-  const elevationDone = recentLogs.reduce(
-    (sum, l) => sum + (l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0),
-    0,
-  );
+  // Fase 4: a ride counts for half its height outdoors and not at all
+  // indoors (CYCLING-CLIMB-TRANSFER, engine/capability.ts).
+  const elevationDone = recentLogs.reduce((sum, l) => {
+    const gain = l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0;
+    if (logSport(l) !== 'cycling') return sum + gain;
+    return isIndoorLog(l) ? sum : sum + gain * 0.5;
+  }, 0);
   const climbing = clampPct((elevationDone / elevationTarget) * 100);
 
   // Endurance: total cardio + hiking distance vs. a 40 km per 4 weeks
   // reference target, scaled to the window.
   const distanceTarget = (windowDays / 28) * 40;
+  // Time on feet only — kilometres on the bike don't transfer here (Fase 4).
   const distanceDone = recentLogs.reduce(
-    (sum, l) => sum + (l.outdoorData?.distanceKm ?? l.cardioData?.distanceKm ?? 0),
+    (sum, l) => sum + (logSport(l) === 'cycling' ? 0 : (l.outdoorData?.distanceKm ?? l.cardioData?.distanceKm ?? 0)),
     0,
   );
   const endurance = clampPct((distanceDone / distanceTarget) * 100);

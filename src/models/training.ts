@@ -222,6 +222,10 @@ export interface SessionLog {
   plannedSessionId?: string; // absent for ad-hoc / unplanned sessions
   templateId: string;
   type: SessionType;
+  // Fase 4 — the endurance sport this was, when type alone doesn't say (a
+  // ride is type 'cardio' like a run). Optional: older logs are read via
+  // their modality (engine/sports.ts#logSport).
+  sport?: 'running' | 'hiking' | 'cycling';
   completedDate: string; // ISO date
   completedAt: string; // ISO datetime
   variant: SessionVariant;

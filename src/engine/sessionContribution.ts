@@ -14,11 +14,10 @@
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { CapabilityDemand, CapabilityKey } from '../models/capability';
 import type { SessionContribution } from '../models/feasibility';
+import { templateSport } from './sports';
 
 function inferDiscipline(template: SessionTemplate): string | undefined {
-  if (template.type === 'cardio') return 'running';
-  if (template.type === 'hiking') return 'hiking';
-  return undefined;
+  return templateSport(template);
 }
 
 // Mirrors the dimensions engine/capability.ts#extractEvidenceFromLog would
@@ -38,6 +37,14 @@ export function inferCapabilityKeysForTemplate(template: SessionTemplate): Capab
     if (discipline === 'running') {
       keys.push({ dimension: 'sustainable_output', discipline });
     }
+  }
+
+  // Fase 4 — a ride climbs for cycling goals and, partially, for hiking
+  // climbing (engine/capability.ts's CYCLING-CLIMB-TRANSFER); never time on
+  // feet, descent or pack.
+  if (discipline === 'cycling') {
+    keys.push({ dimension: 'ascent_capacity', discipline }, { dimension: 'ascent_capacity' });
+    return keys;
   }
 
   if (template.outdoorTarget?.targetElevationM) {
