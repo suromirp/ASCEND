@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NumberField } from './NumberField';
 import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment, GuidanceMode } from '../models/training';
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
@@ -246,14 +247,9 @@ export function ExerciseLogger({
                   {(setLogs[ex.id] ?? []).map((set, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="w-6 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{i + 1}</span>
-                      <input
-                        type="number"
-                        placeholder="kg"
-                        value={set.weightKg ?? ''}
-                        onChange={(e) => updateSet(ex.id, i, { weightKg: e.target.value === '' ? undefined : Number(e.target.value) })}
-                        className="w-20 rounded-lg border px-2 py-1.5 text-sm"
-                        style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-                      />
+                      <div className="w-24">
+                        <NumberField value={set.weightKg} onChange={(v) => updateSet(ex.id, i, { weightKg: v })} decimals={2} unit="kg" compact />
+                      </div>
                       <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>×</span>
                       <input
                         type="number"
@@ -364,10 +360,10 @@ export function ExerciseLogger({
               </p>
             )}
 
-            {fields.distance && <Field label="Afstand (km)" value={distanceKm} onChange={setDistanceKm} />}
+            {fields.distance && <Field label="Afstand" unit="km" decimals={2} value={distanceKm} onChange={setDistanceKm} />}
             {fields.inclinePercent && (
               <>
-                <Field label="Helling (%)" value={inclinePercent} onChange={setInclinePercent} />
+                <Field label="Helling" unit="%" decimals={1} value={inclinePercent} onChange={setInclinePercent} />
                 <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Vul de helling in — Ascend berekent de geschatte D+ voor je (afstand × helling ÷ 100).
                 </p>
@@ -376,7 +372,8 @@ export function ExerciseLogger({
             {fields.elevation && (
               <>
                 <Field
-                  label={`Hoogtemeters D+ (m)${elevationEstimated ? ' — geschat' : ''}`}
+                  label={`Stijging${elevationEstimated ? ' (geschat)' : ''}`}
+                  unit="m D+"
                   value={effectiveElevationGainM}
                   onChange={setElevationGainM}
                 />
@@ -387,17 +384,17 @@ export function ExerciseLogger({
                 )}
               </>
             )}
-            {fields.elevationLoss && <Field label="Hoogtemeters D- (m)" value={elevationLossM} onChange={setElevationLossM} />}
+            {fields.elevationLoss && <Field label="Daling" unit="m D-" value={elevationLossM} onChange={setElevationLossM} />}
             {fields.steps && (
               <>
                 <Field label="Verdiepingen/stappen" value={steps} onChange={setSteps} />
-                <Field label="Machine-vertical (m, optioneel)" value={machineVerticalM} onChange={setMachineVerticalM} />
+                <Field label="Machine-vertical (optioneel)" unit="m" value={machineVerticalM} onChange={setMachineVerticalM} />
               </>
             )}
-            {selectedModality?.environment !== 'rest' && <Field label="Gem. hartslag" value={avgHeartRate} onChange={setAvgHeartRate} />}
+            {selectedModality?.environment !== 'rest' && <Field label="Gem. hartslag" unit="bpm" value={avgHeartRate} onChange={setAvgHeartRate} />}
             {fields.cadence && <Field label="Cadans" value={cadence} onChange={setCadence} />}
-            {fields.power && <Field label="Vermogen (W)" value={power} onChange={setPower} />}
-            {fields.backpackWeight && <Field label="Rugzakgewicht (kg)" value={backpackWeightKg} onChange={setBackpackWeightKg} />}
+            {fields.power && <Field label="Vermogen" unit="W" value={power} onChange={setPower} />}
+            {fields.backpackWeight && <Field label="Rugzak" unit="kg" decimals={1} value={backpackWeightKg} onChange={setBackpackWeightKg} />}
             {fields.terrain && (
               <div>
                 <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Terrein</label>
@@ -415,7 +412,7 @@ export function ExerciseLogger({
         )}
 
         <Card className="mt-5 flex flex-col gap-3">
-          <Field label="Duur (min)" value={duration} onChange={(v) => setDuration(typeof v === 'number' ? v : 0)} />
+          <Field label="Duur" unit="min" value={duration} onChange={(v) => setDuration(typeof v === 'number' ? v : 0)} />
           <Field label="RPE (1-10)" value={rpe} onChange={setRpe} />
           <div>
             <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notities</label>
@@ -447,17 +444,15 @@ export function ExerciseLogger({
   );
 }
 
-function Field({ label, value, onChange }: { label: string; value: number | ''; onChange: (v: number | '') => void }) {
+// Dutch number entry (components/NumberField.tsx): "1.200" m D+ stays
+// 1200, "12,5" km stays 12.5.
+function Field({ label, value, onChange, decimals = 0, unit }: { label: string; value: number | ''; onChange: (v: number | '') => void; decimals?: number; unit?: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</label>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
-        className="w-24 rounded-lg border px-2 py-1.5 text-right text-sm"
-        style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-      />
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>
+      <div className="w-32">
+        <NumberField value={value === '' ? undefined : value} onChange={(v) => onChange(v === undefined ? '' : v)} decimals={decimals} unit={unit} compact />
+      </div>
     </div>
   );
 }

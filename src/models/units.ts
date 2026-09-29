@@ -6,6 +6,8 @@
 // (higher=more capable) coexist under the same capability dimension
 // without one universal "demand - current" comparison.
 
+import { formatNumberNL } from '../utils/number';
+
 export type Unit =
   | 'km' | 'min' | 'min_per_km' | 'watts' | 'kg'
   | 'm_elevation_gain' | 'm_elevation_loss' | 'days' | 'bpm';
@@ -54,8 +56,21 @@ function formatPace(minPerKm: number): string {
 // One place that turns a raw MeasuredValue into copy — so no call site
 // prints a full-precision float or a raw Unit key again (production
 // incident: DOELFOCUS showing "4.976303317535545 min_per_km").
+// Dutch number formatting (utils/number.ts): "30.000 m", "12,5 km".
 export function formatMeasuredValue(value: MeasuredValue): string {
   if (value.unit === 'min_per_km') return formatPace(value.amount);
-  const rounded = Number.isInteger(value.amount) ? value.amount : Math.round(value.amount * 10) / 10;
-  return `${rounded} ${UNIT_LABEL[value.unit]}`;
+  const decimals = value.unit === 'm_elevation_gain' || value.unit === 'm_elevation_loss' || value.unit === 'days' ? 0 : 1;
+  return `${formatNumberNL(value.amount, decimals)} ${UNIT_LABEL[value.unit]}`;
+}
+
+// Time values read as hours once they're long ("5 u 30 min", not "330 min").
+export function formatCapabilityValue(value: MeasuredValue): string {
+  if (value.unit === 'min' && value.amount >= 60) {
+    const h = Math.floor(value.amount / 60);
+    const m = Math.round(value.amount % 60);
+    return m > 0 ? `${h} u ${m} min` : `${h} uur`;
+  }
+  if (value.unit === 'm_elevation_gain') return `${formatNumberNL(value.amount, 0)} m D+`;
+  if (value.unit === 'm_elevation_loss') return `${formatNumberNL(value.amount, 0)} m D-`;
+  return formatMeasuredValue(value);
 }

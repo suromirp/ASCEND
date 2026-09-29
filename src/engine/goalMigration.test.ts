@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy, LEGACY_MILESTONE_ID_MAP } from './goalMigration';
+import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy, LEGACY_MILESTONE_ID_MAP, convertLegacyRouteGoal } from './goalMigration';
 import type { Objective, MilestoneProgress } from '../models/objectives';
 
 const objective: Objective = {
@@ -15,13 +15,17 @@ const objective: Objective = {
 };
 
 describe('migrateGr5ObjectiveData', () => {
-  it('produces an active TrainingGoal (targetDate present) with a distance requirement', () => {
+  it('produces an active TrainingGoal (targetDate present) as a multi-day route with an empty day count', () => {
     const { goal } = migrateGr5ObjectiveData(objective, []);
     expect(goal.id).toBe('obj_gr5');
     expect(goal.name).toBe('GR5 / ALPINE READINESS');
     expect(goal.status).toBe('active');
     expect(goal.status === 'active' && goal.targetDate).toBe('2027-06-01');
-    expect(goal.requirements).toEqual([{ id: expect.any(String), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }]);
+    expect(goal.execution).toBe('stages');
+    expect(goal.requirements).toEqual([
+      { id: expect.any(String), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' },
+      { id: expect.any(String), kind: 'eventDays', scope: 'TOTAL_EVENT', discipline: 'hiking' },
+    ]);
   });
 
   it('produces a paused goal with no targetDate when the objective has none', () => {
@@ -84,5 +88,29 @@ describe('buildDefaultStrengthProgramStrategy', () => {
     expect(strategy.status).toBe('active');
     expect(strategy.source).toBe('macrofactor_workouts');
     expect(strategy.startDate).toBe('2026-09-09');
+  });
+});
+
+describe('convertLegacyRouteGoal', () => {
+  const base = { id: 'g', name: 'GR5', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'paused' as const };
+
+  it('turns a stored route-total goal into a trip in stages with an empty day count (never guessed)', () => {
+    const converted = convertLegacyRouteGoal({
+      ...base,
+      requirements: [
+        { id: 'd', kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' },
+        { id: 'g', kind: 'elevationGain', scope: 'TOTAL_EVENT', target: { amount: 30000, unit: 'm_elevation_gain' } },
+      ],
+    });
+    expect(converted?.execution).toBe('stages');
+    const days = converted?.requirements.find((r) => r.kind === 'eventDays');
+    expect(days).toBeDefined();
+    expect(days?.target).toBeUndefined();
+    expect(days?.discipline).toBe('hiking');
+  });
+
+  it('leaves single-day goals and already-converted goals alone (idempotent)', () => {
+    expect(convertLegacyRouteGoal({ ...base, requirements: [{ id: 'd', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 42.2, unit: 'km' }, discipline: 'running' }] })).toBeNull();
+    expect(convertLegacyRouteGoal({ ...base, execution: 'stages', requirements: [] })).toBeNull();
   });
 });

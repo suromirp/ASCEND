@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { identifyBaselineNeeds, identifyKnownCapabilities } from './goalSetupAssist';
+import { identifyBaselineNeeds, identifyKnownCapabilities, evidenceFromRecentActivity } from './goalSetupAssist';
 import type { GoalRequirement } from '../models/goals';
 import type { CapabilityEvidence } from '../models/capability';
 
@@ -53,5 +53,33 @@ describe('identifyKnownCapabilities', () => {
 
   it('returns an empty array when nothing is demanded', () => {
     expect(identifyKnownCapabilities([], [], ASOF)).toEqual([]);
+  });
+});
+
+describe('evidenceFromRecentActivity', () => {
+  it('one described activity answers every capability it directly speaks to', () => {
+    const result = evidenceFromRecentActivity(
+      { durationMinutes: 300, elevationGainM: 900, packWeightKg: 8 },
+      [{ dimension: 'endurance_duration', discipline: 'hiking' }, { dimension: 'ascent_capacity' }, { dimension: 'descent_tolerance' }, { dimension: 'load_carriage' }],
+    );
+    expect(result).toEqual([
+      { key: { dimension: 'endurance_duration', discipline: 'hiking' }, measured: { amount: 300, unit: 'min' } },
+      { key: { dimension: 'ascent_capacity' }, measured: { amount: 900, unit: 'm_elevation_gain' } },
+      { key: { dimension: 'load_carriage' }, measured: { amount: 8, unit: 'kg' } },
+    ]); // descent not given -> not invented
+  });
+});
+
+describe('identifyBaselineNeeds — each capability once', () => {
+  it('never lists the same capability twice', () => {
+    const needs = identifyBaselineNeeds(
+      [
+        { id: 'a', kind: 'elevationGain', scope: 'SINGLE_EVENT', target: { amount: 900, unit: 'm_elevation_gain' } },
+        { id: 'b', kind: 'elevationGain', scope: 'PER_DAY', target: { amount: 800, unit: 'm_elevation_gain' } },
+      ],
+      [],
+      '2026-09-29',
+    );
+    expect(needs.filter((n) => n.key.dimension === 'ascent_capacity')).toHaveLength(1);
   });
 });

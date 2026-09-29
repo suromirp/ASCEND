@@ -19,9 +19,35 @@ describe('targetPackWeightKg', () => {
 
 describe('computeDemand', () => {
   it('a bare distance requirement demands endurance_duration and mechanical_tolerance', () => {
+    const demand = computeDemand([requirement({ kind: 'distance', target: { amount: 20, unit: 'km' }, discipline: 'running' })]);
+    expect(demand).toContainEqual({ key: { dimension: 'endurance_duration', discipline: 'running' }, demand: { amount: 20, unit: 'km' }, criticality: 'critical' });
+    expect(demand).toContainEqual({ key: { dimension: 'mechanical_tolerance', discipline: 'running' }, demand: { amount: 20, unit: 'km' }, criticality: 'critical' });
+  });
+
+  it('a hiking day is expressed as time on foot (DIN 33466), the unit hiking evidence is recorded in', () => {
     const demand = computeDemand([requirement({ kind: 'distance', target: { amount: 20, unit: 'km' }, discipline: 'hiking' })]);
-    expect(demand).toContainEqual({ key: { dimension: 'endurance_duration', discipline: 'hiking' }, demand: { amount: 20, unit: 'km' }, criticality: 'critical' });
-    expect(demand).toContainEqual({ key: { dimension: 'mechanical_tolerance', discipline: 'hiking' }, demand: { amount: 20, unit: 'km' }, criticality: 'critical' });
+    expect(demand).toContainEqual({ key: { dimension: 'endurance_duration', discipline: 'hiking' }, demand: { amount: 300, unit: 'min' }, criticality: 'critical' });
+  });
+
+  // Production report: a 30.000 m D+ route total was set against a single
+  // training session. Route totals are compared as a typical day.
+  it('a multi-day route demands a typical day, never the route total', () => {
+    const demand = computeDemand([
+      requirement({ scope: 'TOTAL_EVENT', id: 'd', kind: 'distance', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }),
+      requirement({ scope: 'TOTAL_EVENT', id: 'g', kind: 'elevationGain', target: { amount: 30000, unit: 'm_elevation_gain' } }),
+      requirement({ scope: 'TOTAL_EVENT', id: 'e', kind: 'eventDays', target: { amount: 35, unit: 'days' }, discipline: 'hiking' }),
+      requirement({ id: 'c', kind: 'consecutiveDays', scope: 'CONSECUTIVE_DAYS', target: { amount: 7, unit: 'days' } }),
+    ]);
+    expect(demand).toContainEqual({ key: { dimension: 'ascent_capacity' }, demand: { amount: 860, unit: 'm_elevation_gain' }, criticality: 'critical' });
+    expect(demand).toContainEqual({ key: { dimension: 'multi_day_durability' }, demand: { amount: 7, unit: 'days' }, criticality: 'critical' });
+  });
+
+  it('a multi-day route with its day count still empty demands nothing per day for route values', () => {
+    const demand = computeDemand([
+      requirement({ scope: 'TOTAL_EVENT', id: 'g', kind: 'elevationGain', target: { amount: 30000, unit: 'm_elevation_gain' } }),
+      requirement({ scope: 'TOTAL_EVENT', id: 'e', kind: 'eventDays', target: undefined, discipline: 'hiking' }),
+    ]);
+    expect(demand.find((d) => d.key.dimension === 'ascent_capacity')).toBeUndefined();
   });
 
   it('distance + targetTime for running derives a sustainable_output pace demand', () => {

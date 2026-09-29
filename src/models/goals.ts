@@ -25,8 +25,14 @@ export type RequirementScope = 'SINGLE_EVENT' | 'PER_DAY' | 'TOTAL_EVENT' | 'CON
 
 export interface GoalRequirement {
   id: string;
+  // 'eventDays' (goal-flow redesign, Fase 1): the total number of
+  // walking/riding days a route takes, scope TOTAL_EVENT, unit 'days'. What
+  // turns route totals (600 km, 30.000 m D+) into a typical day. A
+  // requirement of this kind WITHOUT a target means "multi-day, day count
+  // not filled in yet" — route totals are then never compared against a
+  // single session (engine/demand.ts).
   kind: 'distance' | 'elevationGain' | 'elevationLoss' | 'duration' | 'targetTime'
-      | 'packWeight' | 'consecutiveDays' | 'manual';
+      | 'packWeight' | 'consecutiveDays' | 'eventDays' | 'manual';
   scope: RequirementScope;
   target?: MeasuredValue; // absent for 'manual'
   // Free-form, deliberately a plain string rather than a closed union
@@ -37,10 +43,19 @@ export interface GoalRequirement {
   context?: TerrainContext; // optional context layer, never a requirement kind of its own
 }
 
+// How a multi-day goal is actually undertaken (goal-flow redesign, Fase 1):
+// one unbroken push from start to finish, or a route split into separate
+// stages with rest/home time in between. Absent = a single-day goal (a
+// race, a day hike) or a goal created before this field existed. Shapes
+// how route totals turn into a typical day and whether the longest stage
+// equals the whole trip (engine/goalRoute.ts).
+export type GoalExecution = 'continuous' | 'stages';
+
 export interface TrainingGoalBase {
   id: string;
   name: string;
   requirements: GoalRequirement[];
+  execution?: GoalExecution;
   createdAt: string;
   updatedAt: string;
 }
