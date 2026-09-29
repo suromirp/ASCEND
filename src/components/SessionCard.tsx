@@ -18,12 +18,16 @@ export function SessionCard({
   logs,
   program,
   onTap,
+  adjusted = false,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
   logs: SessionLog[];
   program?: Program | null;
   onTap?: () => void;
+  // Fase 3 — ASCEND changed this session recently (engine/changeLog.ts);
+  // the why lives in the Week page's WIJZIGINGEN list.
+  adjusted?: boolean;
 }) {
   const { status, wasMoved } = deriveSessionStatus(session, logs);
   const dim = status === 'skipped' || status === 'missed';
@@ -43,7 +47,9 @@ export function SessionCard({
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
           {template.name}
-          {wasMoved && status !== 'completed' && (
+          {adjusted && status !== 'completed' ? (
+            <span className="ml-2 text-[10px] font-normal" style={{ color: 'var(--color-sky)' }}>aangepast</span>
+          ) : wasMoved && status !== 'completed' && (
             <span className="ml-2 text-[10px] font-normal" style={{ color: 'var(--color-sky)' }}>verplaatst</span>
           )}
         </div>

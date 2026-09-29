@@ -5,6 +5,7 @@ import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { ChangeNotice } from './components/ChangeNotice';
+import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
@@ -112,6 +113,7 @@ function AppShell() {
       </div>
       <BottomNav />
       <ChangeNotice />
+      <DebriefSheet />
       <UpdatePrompt />
       <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
     </>

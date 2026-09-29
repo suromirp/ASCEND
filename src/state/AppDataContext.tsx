@@ -29,6 +29,7 @@ import {
   WeeklyPrescriptionsRepo,
   GoalEngineConfigRepo,
   SettingsRepo,
+  MetaRepo,
   StretchCompletionRepo,
   resetToDemoData,
   resetScheduleToDefault,
@@ -51,6 +52,37 @@ import { resolveHorizonZone } from '../engine/planningHorizon';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
+import { computeAdvice, type Advice } from '../engine/adviceEngine';
+
+type AdviceResponse = { response: 'accepted' | 'declined'; at: string };
+
+// The boot sequence must run once per page load. React StrictMode mounts
+// effects twice in development; two concurrent seedIfEmpty() calls both saw
+// an empty database and seeded it twice (every session doubled). One shared
+// promise makes the second caller wait for the first instead.
+let bootMigrations: Promise<void> | null = null;
+let backgroundPlanningStarted = false;
+
+function runBootMigrationsOnce(): Promise<void> {
+  bootMigrations ??= (async () => {
+    await seedIfEmpty();
+    // Replaces the retired syncObjectiveDefinitions() — one-time migration
+    // to TrainingGoal/GoalMilestone (Technical Architecture v0.3.1 REVISED,
+    // Phase 1), guarded so it only ever runs once.
+    await migrateToGoalEngine();
+    await migrateGoalRouteProfiles();
+    await syncGr5MilestoneDefinitions();
+    await migrateStrengthProgramDefault();
+    await syncTemplateAndScheduleDefinitions();
+  })();
+  return bootMigrations;
+}
+
+function simpleHash(text: string): string {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
 import { isTemplatePlannable } from '../engine/sports';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
@@ -178,6 +210,12 @@ interface AppData {
   commitPlanChange: (proposal: PlanChangeProposal, title: string) => Promise<boolean>;
   undoRecentChange: () => Promise<void>;
   dismissRecentChange: () => void;
+  // Fase 3 — advice engine (engine/adviceEngine.ts) + change log.
+  planChangeLog: PlanChangeProposal[];
+  advice: Advice[];
+  respondToAdvice: (advice: Advice, response: 'accepted' | 'declined') => Promise<void>;
+  debriefLogId: string | null;
+  dismissDebrief: () => void;
   dismissForecastSummary: () => void;
   // Phase 8 — Strength Program Strategy (Addendum v0.1). ASCEND owns block
   // strategy/frequency/split/placement; MacroFactor Workouts (or a future
@@ -244,11 +282,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [forecastSummary, setForecastSummary] = useState<string | null>(null);
   const [recentChange, setRecentChange] = useState<RecentPlanChange | null>(null);
+  const [planChangeLog, setPlanChangeLog] = useState<PlanChangeProposal[]>([]);
+  const [adviceResponses, setAdviceResponses] = useState<Record<string, AdviceResponse>>({});
+  const [debriefLogId, setDebriefLogId] = useState<string | null>(null);
+  const [plannerAdvice, setPlannerAdvice] = useState<Advice | null>(null);
   const [strengthProgramStrategies, setStrengthProgramStrategies] = useState<StrengthProgramStrategy[]>([]);
   const [strengthRecommendation, setStrengthRecommendation] = useState<StrengthProgramRecommendation | null>(null);
 
   const refresh = useCallback(async () => {
-    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs] = await Promise.all([
+    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -263,8 +305,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       StretchCompletionRepo.get(),
       StrengthProgramStrategiesRepo.getAll(),
       StrengthProgramRecommendationsRepo.getAll(),
+      PlanChangeProposalsRepo.getAll(),
+      MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses'),
     ]);
     setProgram(programs[0] ?? null);
+    setPlanChangeLog(proposals);
+    setAdviceResponses(responses ?? {});
     setTemplates(tpls);
     setPlannedSessions(planned);
     setSessionLogs(logs);
@@ -311,6 +357,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return true;
   }, [refresh]);
 
+  const respondToAdvice = useCallback(async (item: Advice, response: 'accepted' | 'declined') => {
+    if (response === 'accepted' && item.proposal) await commitPlanChange(item.proposal, item.title);
+    const current = (await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {};
+    const next = { ...current, [item.id]: { response, at: new Date().toISOString() } };
+    await MetaRepo.set('adviceResponses', next);
+    setAdviceResponses(next);
+  }, [commitPlanChange]);
+
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
     for (const session of recentChange.before) await PlannedSessionsRepo.put(session);
@@ -324,6 +378,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       alternatives: [],
       consequences: recentChange.lines.join('; '),
       explanation: 'Door jou ongedaan gemaakt, direct na de wijziging.',
+      revertsProposalId: recentChange.id,
       createdAt: now,
       resolvedAt: now,
       resolution: 'rejected',
@@ -448,6 +503,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const allKeep = prescriptions.every((p) => p.lines.every((l) => l.decision === 'keep'));
     if (allKeep && proposal.changes.length === 0) return;
 
+    // Fase 3 — "Wijzigingen toepassen: altijd eerst vragen": the forecast
+    // changes become a coach item to accept or decline instead of being
+    // applied in the background. A declined set isn't asked again (the id
+    // is derived from the changes themselves).
+    const realChanges = proposal.changes.filter((c) => c.action !== 'keep');
+    if (appSettings.changeApplyMode === 'always_ask' && realChanges.length > 0) {
+      const signature = realChanges.map((c) => `${c.action}:${c.plannedSessionId ?? c.newSessionDraft?.templateId}:${c.toDate ?? c.newSessionDraft?.scheduledDate ?? ''}`).sort().join('|');
+      setPlannerAdvice({
+        id: `planner:${simpleHash(signature)}`,
+        trigger: 'plan_update',
+        ruleId: 'WEEKLY-PRESCRIPTION',
+        title: 'Weekplanning voor de komende weken',
+        effect: `${realChanges.length} ${realChanges.length === 1 ? 'wijziging' : 'wijzigingen'} vanaf week +2: ${describeChanges(realChanges, planned, tpls).slice(0, 2).join('; ')}${realChanges.length > 2 ? ' …' : ''}`,
+        why: `Trigger: je doelen, trainingen en herstel van nu. Regel: de weekplanning bepaalt per week wat erin hoort. ${proposal.explanation}`,
+        priority: 2,
+        proposal,
+      });
+      return;
+    }
+
     const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
     if (unsupported.length > 0) {
       // Same atomicity guarantee as runForecastReplan: never an
@@ -484,6 +559,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Append-only audit trail — resolvedAt/resolution set immediately since
     // the forecast range auto-applies, never user-confirmed.
     await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+
+    // Fase 3 — say what changed (melding), even though it was automatic.
+    if (realChanges.length > 0) {
+      const touched = new Set(realChanges.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+      setRecentChange({
+        id: proposal.id,
+        trigger: proposal.trigger,
+        title: 'Weekplanning bijgewerkt',
+        lines: describeChanges(realChanges, planned, tpls),
+        why: proposal.consequences,
+        before: planned.filter((x) => touched.has(x.id)),
+        addedIds: updatedSessions.filter((x) => !originalIds.has(x.id)).map((x) => x.id),
+        createdAt: new Date().toISOString(),
+      });
+    }
 
     await refresh();
   }, [refresh]);
@@ -735,15 +825,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const minSplashDuration = new Promise((resolve) => setTimeout(resolve, 2600));
       await Promise.all([
         (async () => {
-          await seedIfEmpty();
-          // Replaces the retired syncObjectiveDefinitions() — one-time
-          // migration to TrainingGoal/GoalMilestone (Technical Architecture
-          // v0.3.1 REVISED, Phase 1), guarded so it only ever runs once.
-          await migrateToGoalEngine();
-          await migrateGoalRouteProfiles();
-          await syncGr5MilestoneDefinitions();
-          await migrateStrengthProgramDefault();
-          await syncTemplateAndScheduleDefinitions();
+          await runBootMigrationsOnce();
           await refresh();
         })(),
         minSplashDuration,
@@ -751,6 +833,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       // Fire-and-forget, after the splash — this is background forecast
       // adaptation, never something the user waits on to see Today/Week.
+      // Once per page load, like the migrations above.
+      if (backgroundPlanningStarted) return;
+      backgroundPlanningStarted = true;
       void runForecastReplan();
       void runStrengthReviewCheck();
       void runWeeklyPrescriptionBuild();
@@ -836,6 +921,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote() }
           : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
       );
+      // Fase 3 — the debrief (components/DebriefSheet.tsx) opens once the
+      // celebration has faded.
+      setDebriefLogId(log.id);
     },
     [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled],
   );
@@ -1151,6 +1239,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions, refresh],
   );
 
+  const advice = useMemo(
+    () => [
+      ...(plannerAdvice && !adviceResponses[plannerAdvice.id] ? [plannerAdvice] : []),
+      ...computeAdvice({
+        logs: sessionLogs,
+        plannedSessions,
+        templates,
+        injuries: injuryNotes,
+        program,
+        dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
+        sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+        enabledSports: settings.enabledSports,
+        respondedIds: new Set(Object.keys(adviceResponses)),
+        asOf: todayISO(),
+      }),
+    ].sort((a, b) => b.priority - a.priority),
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, adviceResponses],
+  );
+
   const value: AppData = {
     loading,
     program,
@@ -1213,6 +1320,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     dismissCelebration: () => setCelebration(null),
     forecastSummary,
     dismissForecastSummary: () => setForecastSummary(null),
+    planChangeLog,
+    advice,
+    respondToAdvice,
+    debriefLogId,
+    dismissDebrief: () => setDebriefLogId(null),
     recentChange,
     commitPlanChange,
     undoRecentChange,

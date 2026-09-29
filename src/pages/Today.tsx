@@ -24,6 +24,8 @@ import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeeklyReflectionCard } from '../components/WeeklyReflectionCard';
+import { CoachCard } from '../components/CoachCard';
+import { nextWeekChangeLines } from '../engine/changeLog';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow, SecondaryButton } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
@@ -43,7 +45,7 @@ function mergeNoTimeProposals(proposals: ScheduleProposal[]): ScheduleProposal {
 }
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday, forecastSummary, dismissForecastSummary } = useAppData();
+  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday, forecastSummary, dismissForecastSummary, planChangeLog, templates } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -234,6 +236,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         <SecondaryButton onClick={handleNoTimeToday} className="w-full">GEEN TIJD VANDAAG</SecondaryButton>
       )}
 
+      <CoachCard />
+
       {secondary.map((s) => {
         const t = templateById.get(s.templateId);
         if (!t) return null;
@@ -268,6 +272,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           lastWeekCompleted={lastWeekCompletedCount}
           lastWeekTotal={lastWeekSessions.length}
           streak={streak}
+          nextWeekChanges={nextWeekChangeLines(planChangeLog, plannedSessions, templates, today)}
         />
       )}
 
