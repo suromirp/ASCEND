@@ -12,7 +12,7 @@
 // in storage/database.ts) — engine/ never imports from storage/.
 
 import type { Objective, MilestoneProgress } from '../models/objectives';
-import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { TrainingGoal, GoalRequirement, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import { makeId } from '../utils/id';
 
@@ -61,9 +61,12 @@ export function migrateGr5ObjectiveData(objective: Objective, legacyProgress: Mi
     ? [{ id: makeId('req'), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: objective.targetDistanceKm, unit: 'km' }, discipline: 'hiking' }]
     : [];
 
-  const goal: TrainingGoal = objective.targetDate
+  const legacyGoal: TrainingGoal = objective.targetDate
     ? { id: objective.id, name: objective.name, requirements, createdAt: now, updatedAt: now, status: 'active', targetDate: objective.targetDate }
     : { id: objective.id, name: objective.name, requirements, createdAt: now, updatedAt: now, status: 'paused' };
+  // A multi-day trek from the start (goal-flow redesign, Fase 1) — same
+  // conversion every older stored goal gets, never a second shape.
+  const goal = convertLegacyRouteGoal(legacyGoal) ?? legacyGoal;
 
   const milestones: GoalMilestone[] = objective.milestones.map((m) => ({
     id: LEGACY_MILESTONE_ID_MAP[m.id] ?? m.id,
@@ -130,5 +133,44 @@ export function buildDefaultStrengthProgramStrategy(asOf: string): StrengthProgr
     status: 'active',
     createdAt: now,
     updatedAt: now,
+  };
+}
+
+// --- Route profile conversion (goal-flow redesign, Fase 1) -----------------
+
+// ASCEND_HEURISTIC(LEGACY-MULTI-DAY-DETECTION): goals stored before
+// TrainingGoal.execution existed carry route totals (600 km, 30.000 m D+)
+// with nothing saying they span many days — which is exactly what made
+// demand.ts compare a whole route against one training. A stored goal is
+// read as a multi-day trip when it already asks for back-to-back days, or
+// when its route totals are far beyond anything done in a single day
+// (>= 100 km hiking, or >= 5.000 m D+ in total). It becomes a trip in
+// stages with an EMPTY day count: ASCEND never guesses the number of days,
+// it asks for it (the goal card and wizard point this out) and until then
+// compares nothing per day for these values. Returns null when the goal
+// doesn't need converting — idempotent, a converted goal has execution set.
+const LEGACY_MULTI_DAY_HIKING_KM = 100;
+const LEGACY_MULTI_DAY_ELEVATION_M = 5000;
+
+export function convertLegacyRouteGoal(goal: TrainingGoal): TrainingGoal | null {
+  if (goal.execution !== undefined) return null;
+  const reqs = goal.requirements;
+  if (reqs.some((r) => r.kind === 'eventDays')) return null;
+  const isTotal = (r: GoalRequirement) => r.scope === 'TOTAL_EVENT' && r.target !== undefined;
+  const distance = reqs.find((r) => r.kind === 'distance' && isTotal(r));
+  const gain = reqs.find((r) => r.kind === 'elevationGain' && isTotal(r));
+  const consecutive = reqs.find((r) => r.kind === 'consecutiveDays')?.target?.amount ?? 0;
+
+  const multiDay =
+    consecutive > 1 ||
+    (distance?.discipline === 'hiking' && (distance.target?.amount ?? 0) >= LEGACY_MULTI_DAY_HIKING_KM) ||
+    (gain?.target?.amount ?? 0) >= LEGACY_MULTI_DAY_ELEVATION_M;
+  if (!multiDay || (!distance && !gain)) return null;
+
+  const discipline = distance?.discipline || 'hiking';
+  return {
+    ...goal,
+    execution: 'stages',
+    requirements: [...reqs, { id: makeId('req'), kind: 'eventDays', scope: 'TOTAL_EVENT', discipline }],
   };
 }

@@ -14,7 +14,7 @@
 // Pure transform logic lives in engine/goalMigration.ts — this file only
 // orchestrates reading/writing IndexedDB.
 
-import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy } from '../engine/goalMigration';
+import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy, convertLegacyRouteGoal } from '../engine/goalMigration';
 import {
   ObjectivesRepo,
   MilestoneProgressRepo,
@@ -74,4 +74,18 @@ export async function migrateStrengthProgramDefault(): Promise<void> {
   }
 
   await MetaRepo.set('strengthProgramDefaultSeeded', true);
+}
+
+// Goal-flow redesign (Fase 1): gives every stored multi-day goal from
+// before TrainingGoal.execution existed its route shape
+// (engine/goalMigration.ts#convertLegacyRouteGoal). Deliberately not
+// flag-guarded: the conversion is idempotent (a converted goal carries
+// `execution`), so running it on every boot also catches goals that arrive
+// later through a backup import made before this change.
+export async function migrateGoalRouteProfiles(): Promise<void> {
+  const goals = await TrainingGoalsRepo.getAll();
+  for (const goal of goals) {
+    const converted = convertLegacyRouteGoal(goal);
+    if (converted) await TrainingGoalsRepo.put(converted);
+  }
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NumberField } from './NumberField';
 import { useAppData } from '../state/AppDataContext';
 import { todayISO, formatDateNL } from '../utils/dates';
 import { DIMENSION_META, DIMENSION_ORDER, dimensionLabel } from '../data/baselineQuestions';
@@ -24,20 +25,20 @@ export function BaselineEvidenceCard() {
   const [dimension, setDimension] = useState<(typeof DIMENSION_ORDER)[number]>(DIMENSION_ORDER[0]);
   const [discipline, setDiscipline] = useState('');
   const [customDiscipline, setCustomDiscipline] = useState(false);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState<number | undefined>();
   const [date, setDate] = useState(todayISO());
 
   const meta = DIMENSION_META[dimension];
 
   async function handleSave() {
-    const parsed = Number(amount);
-    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    const parsed = amount;
+    if (parsed === undefined || !Number.isFinite(parsed) || parsed <= 0) return;
     await addManualCapabilityEvidence({
       key: { dimension, discipline: meta.needsDiscipline && discipline ? discipline : undefined },
       measured: { amount: parsed, unit: meta.unit },
       date,
     });
-    setAmount('');
+    setAmount(undefined);
     setAdding(false);
   }
 
@@ -125,14 +126,7 @@ export function BaselineEvidenceCard() {
           )}
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waarde ({UNIT_LABEL[meta.unit]})</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-                style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-              />
+              <NumberField label="Waarde" unit={UNIT_LABEL[meta.unit]} decimals={meta.unit === 'kg' || meta.unit === 'min_per_km' ? 2 : 0} value={amount} onChange={setAmount} />
             </div>
             <div className="flex-1">
               <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Datum</label>

@@ -36,7 +36,7 @@ import {
   type AppSettings,
   type StretchCompletion,
 } from '../storage/database';
-import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
+import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from '../storage/goalMigration';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
@@ -677,6 +677,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           // migration to TrainingGoal/GoalMilestone (Technical Architecture
           // v0.3.1 REVISED, Phase 1), guarded so it only ever runs once.
           await migrateToGoalEngine();
+          await migrateGoalRouteProfiles();
           await syncGr5MilestoneDefinitions();
           await migrateStrengthProgramDefault();
           await syncTemplateAndScheduleDefinitions();

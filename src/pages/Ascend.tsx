@@ -20,6 +20,9 @@ import { GoalFocusCard } from '../components/GoalFocusCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
+import { NumberField } from '../components/NumberField';
+import { formatNumberNL } from '../utils/number';
+import { eventDaysRequirement, routeTotal, typicalDayValue, ROUTE_KINDS } from '../engine/goalRoute';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -32,12 +35,43 @@ function blankGoalDraft(): TrainingGoal {
 // paused and contributing nothing to Goal Focus/scheduling until a
 // targetDate is set. Renders nothing for 'active' (the countdown above
 // already implies it).
-function GoalStatusNote({ status }: { status: TrainingGoal['status'] }) {
-  if (status !== 'paused') return null;
+function GoalStatusNote({ status, goal }: { status: TrainingGoal['status']; goal?: TrainingGoal }) {
+  // A multi-day goal without its day count can't be turned into a typical
+  // day yet (engine/goalRoute.ts) — ASCEND then compares nothing per day
+  // for its route values, so say so instead of silently under-planning.
+  const missingDays = goal?.execution !== undefined && !eventDaysRequirement(goal.requirements)?.target;
   return (
-    <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
-      Gepauzeerd — nog geen streefdatum ingesteld. Telt zo nog niet mee bij Goal Focus of het plannen van sessies.
-    </p>
+    <>
+      {status === 'paused' && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
+          Gepauzeerd, nog geen streefdatum ingesteld. Telt zo nog niet mee bij Goal Focus of het plannen van sessies.
+        </p>
+      )}
+      {missingDays && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
+          Het aantal loopdagen ontbreekt nog. Vul het in via Doel aanpassen, dan rekent ASCEND de tocht om naar een gewone dag.
+        </p>
+      )}
+    </>
+  );
+}
+
+// One line that says what the trip is and what one day of it asks — the
+// number training is actually measured against.
+function RouteLine({ goal }: { goal: TrainingGoal }) {
+  if (goal.execution === undefined) return null;
+  const fmt = (k: 'distance' | 'elevationGain' | 'elevationLoss', amount: number) =>
+    `${formatNumberNL(amount, k === 'distance' ? 1 : 0)} ${k === 'distance' ? 'km' : k === 'elevationGain' ? 'm D+' : 'm D-'}`;
+  const totals = ROUTE_KINDS.flatMap((k) => { const t = routeTotal(goal.requirements, k); return t ? [fmt(k, t.amount)] : []; });
+  const days = eventDaysRequirement(goal.requirements)?.target?.amount;
+  if (days) totals.push(`${days} loopdagen`);
+  const typical = ROUTE_KINDS.flatMap((k) => { const d = typicalDayValue(goal.requirements, k); return d && days && days > 1 ? [fmt(k, d.value.amount)] : []; });
+  if (totals.length === 0) return null;
+  return (
+    <div className="text-xs leading-relaxed">
+      <p style={{ color: 'var(--color-ink)' }}>{totals.join(' · ')}</p>
+      {typical.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>Typische dag: {typical.join(' · ')}</p>}
+    </div>
   );
 }
 
@@ -298,7 +332,8 @@ function GR5GoalCard({
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow>GR5 DOEL</Eyebrow>
-      <GoalStatusNote status={goal.status} />
+      <GoalStatusNote status={goal.status} goal={goal} />
+      <RouteLine goal={goal} />
       {daysLeft !== undefined && (
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
           {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
@@ -330,14 +365,13 @@ function GR5GoalCard({
           />
         </div>
         <div className="flex-1">
-          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Afstand (km)</label>
-          <input
-            type="number"
-            value={targetDistanceKm ?? ''}
-            onChange={(e) => onUpdate({ targetDistanceKm: e.target.value === '' ? undefined : Number(e.target.value) })}
-            placeholder="±600"
-            className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
-            style={dateInputStyle}
+          <NumberField
+            label="Afstand"
+            unit="km"
+            decimals={1}
+            value={targetDistanceKm}
+            onChange={(v) => onUpdate({ targetDistanceKm: v })}
+            placeholder="600"
           />
         </div>
       </div>
@@ -508,7 +542,7 @@ function MarathonGoalCard({
           )}
           {longestRunKm > 0 && (
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Langste duurloop tot nu toe: {longestRunKm.toFixed(1)} km
+              Langste duurloop tot nu toe: {formatNumberNL(longestRunKm, 1)} km
               {percentOfDistance !== undefined ? ` — ${percentOfDistance}% van de wedstrijdafstand` : ''}
             </p>
           )}
@@ -543,7 +577,8 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
               <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>archiveren</button>
             </div>
           </div>
-          <GoalStatusNote status={g.status} />
+          <GoalStatusNote status={g.status} goal={g} />
+          <RouteLine goal={g} />
         </div>
       ))}
       {editing && <GoalSetupWizard mode="edit" initialGoal={editing} onClose={() => setEditing(null)} />}

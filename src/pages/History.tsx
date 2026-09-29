@@ -1,3 +1,4 @@
+import { formatNumberNL } from '../utils/number';
 import { useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -45,7 +46,7 @@ function formatDelta(current: number, previous: number, opts?: { unit?: string; 
   const decimals = opts?.decimals ?? 0;
   const unit = opts?.unit ?? '';
   const sign = diff > 0 ? '+' : '';
-  const text = `${sign}${diff.toFixed(decimals)}${unit} t.o.v. vorige maand`;
+  const text = `${sign}${formatNumberNL(diff, decimals)}${unit} t.o.v. vorige maand`;
   const goodDirection = opts?.invert ? diff <= 0 : diff >= 0;
   const color = diff === 0 ? 'var(--color-ink-dim)' : goodDirection ? 'var(--color-success)' : 'var(--color-danger)';
   return { text, color };
@@ -89,12 +90,12 @@ export function HistoryPage() {
 
       <Card className="grid grid-cols-2 gap-4">
         <Stat label="Krachtsessies" value={`${summary.strengthCount}`} delta={formatDelta(summary.strengthCount, prevSummary.strengthCount)} />
-        <Stat label="Hardlopen" value={`${summary.runningKm.toFixed(1)} km`} delta={formatDelta(summary.runningKm, prevSummary.runningKm, { unit: ' km', decimals: 1 })} />
-        <Stat label="Hoogtemeters" value={`${Math.round(summary.elevation)} D+`} delta={formatDelta(Math.round(summary.elevation), Math.round(prevSummary.elevation), { unit: ' D+' })} />
-        <Stat label="Wandelen" value={`${summary.hikingKm.toFixed(1)} km`} delta={formatDelta(summary.hikingKm, prevSummary.hikingKm, { unit: ' km', decimals: 1 })} />
+        <Stat label="Hardlopen" value={`${formatNumberNL(summary.runningKm, 1)} km`} delta={formatDelta(summary.runningKm, prevSummary.runningKm, { unit: ' km', decimals: 1 })} />
+        <Stat label="Hoogtemeters" value={`${formatNumberNL(summary.elevation, 0)} m D+`} delta={formatDelta(Math.round(summary.elevation), Math.round(prevSummary.elevation), { unit: ' m D+' })} />
+        <Stat label="Wandelen" value={`${formatNumberNL(summary.hikingKm, 1)} km`} delta={formatDelta(summary.hikingKm, prevSummary.hikingKm, { unit: ' km', decimals: 1 })} />
         <Stat label="Trainingstijd" value={`${Math.floor(Math.round(summary.totalMinutes) / 60)}u ${Math.round(summary.totalMinutes) % 60}m`} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
         <Stat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
-        {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${Math.round(summary.elevationLoss)} D-`} />}
+        {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D-`} />}
         {summary.machineVertical > 0 && <Stat label="Machine-vertical" value={`${Math.round(summary.machineVertical)} m`} />}
         {summary.avgCadence !== undefined && <Stat label="Gem. cadans" value={`${summary.avgCadence}`} />}
         {summary.avgPower !== undefined && <Stat label="Gem. vermogen" value={`${summary.avgPower} W`} />}

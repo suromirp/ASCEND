@@ -2,53 +2,62 @@
 // Phase 7 — "Goal Setup & Plan Preview UX bovenop de bestaande locked
 // engines").
 //
-// Built entirely on existing, unchanged engines — never a new
-// decision-making formula: engine/goalSetupAssist.ts (Phase 7, itself only
-// a composition of the Demand/Capability engines) for "what does ASCEND
-// still need to ask", engine/goalActivation.ts (Phase 5) for the actual
-// Plan Preview and the single-transaction activation. Used both to create
-// a brand-new goal and to edit an existing one (GR5, Marathon, or a custom
-// goal) — one flow, not two.
+// Built entirely on existing engines — never a new decision-making formula:
+// engine/goalSetupAssist.ts for "what does ASCEND still need to ask",
+// engine/goalRoute.ts for turning route totals into a typical day,
+// engine/goalActivation.ts for the actual Plan Preview and the
+// single-transaction activation. Used both to create a brand-new goal and
+// to edit an existing one — one flow, not two.
 //
-// Step order mirrors the phase's own ask: interpret the goal → ask only
-// what's genuinely missing → show a real Plan Preview (interpretation,
-// confidence, gaps, feasibility, expected plan impact) → activate.
+// Goal-flow redesign (Fase 1): a multi-day trip is entered as a route
+// (GoalRouteEditor), capacity is asked once via the hardest recent activity
+// (GoalCapacityStep), and the preview mirrors the input structure and
+// compares capability against a typical day, never against route totals.
 
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { TrainingGoal, GoalRequirement } from '../models/goals';
-import type { CapabilityEvidence, CapabilityKey, GapStatus, Confidence } from '../models/capability';
+import type { CapabilityEvidence, GapStatus, Confidence, CapabilityGap } from '../models/capability';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { TrainingAvailability, TrainingGuardrail } from '../models/goalEngineConfig';
 import type { GoalActivationPlan } from '../models/planChange';
 import type { Unit } from '../models/units';
-import { UNIT_LABEL, formatMeasuredValue } from '../models/units';
-import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../models/disciplines';
+import { UNIT_LABEL, formatCapabilityValue } from '../models/units';
+import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS } from '../models/disciplines';
 import { computeGoalActivationPlan } from '../engine/goalActivation';
-import { identifyBaselineNeeds, identifyKnownCapabilities, type BaselineCapabilityStatus } from '../engine/goalSetupAssist';
+import { identifyBaselineNeeds } from '../engine/goalSetupAssist';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
-import { DIMENSION_META, capabilityKeyLabel } from '../data/baselineQuestions';
+import { typicalDayValue, routeTotal, eventDaysRequirement, isMultiDayGoal, longestStageDays, routeGoalComplete, routeDiscipline, ROUTE_KINDS } from '../engine/goalRoute';
+import { capabilityKeyLabel } from '../data/baselineQuestions';
 import { todayISO, formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { formatNumberNL } from '../utils/number';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { FEASIBILITY_LABEL } from './GoalFocusCard';
 import { Portal } from './Portal';
+import { NumberField } from './NumberField';
+import { GoalRouteEditor } from './GoalRouteEditor';
+import { GoalCapacityStep } from './GoalCapacityStep';
 import { useSheetClose } from '../utils/useSheetClose';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
 type EditableRequirementKind = Exclude<GoalRequirement['kind'], 'manual'>;
 
-const REQUIREMENT_KIND_META: Record<EditableRequirementKind, { label: string; unit: Unit; scope: GoalRequirement['scope']; needsDiscipline?: boolean }> = {
-  distance: { label: 'Afstand', unit: 'km', scope: 'TOTAL_EVENT', needsDiscipline: true },
-  elevationGain: { label: 'Hoogtemeters omhoog (D+)', unit: 'm_elevation_gain', scope: 'TOTAL_EVENT' },
-  elevationLoss: { label: 'Hoogtemeters omlaag (D-)', unit: 'm_elevation_loss', scope: 'TOTAL_EVENT' },
-  duration: { label: 'Duur', unit: 'min', scope: 'TOTAL_EVENT', needsDiscipline: true },
-  targetTime: { label: 'Doeltijd', unit: 'min', scope: 'SINGLE_EVENT', needsDiscipline: true },
-  packWeight: { label: 'Rugzakgewicht', unit: 'kg', scope: 'SINGLE_EVENT' },
-  consecutiveDays: { label: 'Opeenvolgende dagen', unit: 'days', scope: 'CONSECUTIVE_DAYS' },
+const REQUIREMENT_KIND_META: Record<EditableRequirementKind, { label: string; unit: Unit; scope: GoalRequirement['scope']; needsDiscipline?: boolean; decimals: number }> = {
+  distance: { label: 'Afstand', unit: 'km', scope: 'TOTAL_EVENT', needsDiscipline: true, decimals: 1 },
+  elevationGain: { label: 'Stijging (D+)', unit: 'm_elevation_gain', scope: 'TOTAL_EVENT', decimals: 0 },
+  elevationLoss: { label: 'Daling (D-)', unit: 'm_elevation_loss', scope: 'TOTAL_EVENT', decimals: 0 },
+  duration: { label: 'Duur', unit: 'min', scope: 'TOTAL_EVENT', needsDiscipline: true, decimals: 0 },
+  targetTime: { label: 'Doeltijd', unit: 'min', scope: 'SINGLE_EVENT', needsDiscipline: true, decimals: 0 },
+  packWeight: { label: 'Rugzak', unit: 'kg', scope: 'SINGLE_EVENT', decimals: 1 },
+  consecutiveDays: { label: 'Dagen achter elkaar', unit: 'days', scope: 'CONSECUTIVE_DAYS', decimals: 0 },
+  eventDays: { label: 'Aantal dagen', unit: 'days', scope: 'TOTAL_EVENT', decimals: 0 },
 };
-const REQUIREMENT_KIND_ORDER = Object.keys(REQUIREMENT_KIND_META) as EditableRequirementKind[];
+// What "+ EIS TOEVOEGEN" offers on a single-day goal. Day counts are not in
+// it: making a goal multi-day switches to the route editor instead.
+const ADDABLE_KINDS: EditableRequirementKind[] = ['distance', 'elevationGain', 'elevationLoss', 'duration', 'targetTime', 'packWeight'];
+const MAKE_MULTI_DAY = '__multi_day__';
 
 const GAP_STATUS_LABEL: Record<GapStatus, string> = {
   exceeds: 'OVERTREFT', meets: 'VOLDOET', near: 'BIJNA', gap: 'GAT', major_gap: 'GROOT GAT', unknown: 'ONBEKEND',
@@ -59,6 +68,12 @@ const GAP_STATUS_COLOR: Record<GapStatus, string> = {
 };
 const GAP_SEVERITY_ORDER: Record<GapStatus, number> = { major_gap: 4, gap: 3, near: 2, unknown: 1, meets: 0, exceeds: 0 };
 const CONFIDENCE_LABEL: Record<Confidence, string> = { high: 'hoog', medium: 'gemiddeld', low: 'laag', unknown: 'onbekend' };
+const CONFIDENCE_EXPLANATION: Record<Confidence, string> = {
+  high: 'meerdere recente metingen die elkaar bevestigen',
+  medium: 'een paar recente metingen',
+  low: 'één meting, of alleen oudere gegevens',
+  unknown: 'nog geen gegevens',
+};
 
 type Step =
   | { kind: 'type' }
@@ -69,15 +84,22 @@ type Step =
   | { kind: 'done' }
   | { kind: 'error'; message: string };
 
-const PRESET_LABEL: Record<'gr5' | 'race' | 'custom', { label: string; note: string }> = {
-  gr5: { label: 'Meerdaagse trektocht', note: 'Afstand + hoogtemeters over meerdere dagen — zoals de GR5.' },
+type Preset = 'trek' | 'race' | 'custom';
+
+const PRESET_LABEL: Record<Preset, { label: string; note: string }> = {
+  trek: { label: 'Meerdaagse tocht', note: 'Hiken over meerdere dagen, aaneengesloten of in etappes. Zoals de GR5.' },
   race: { label: 'Hardloopwedstrijd', note: 'Eén vaste afstand, optioneel een doeltijd.' },
-  custom: { label: 'Aangepast doel', note: 'Stel zelf samen welke eisen dit doel meet.' },
+  custom: { label: 'Ander doel', note: 'Stel zelf samen wat dit doel vraagt, bijvoorbeeld een zware dagtocht.' },
 };
 
-function applyPreset(preset: 'gr5' | 'race' | 'custom', base: TrainingGoal): TrainingGoal {
-  if (preset === 'gr5') {
-    return { ...base, name: base.name || 'Trektocht', requirements: [{ id: makeId('req'), kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' }] };
+function applyPreset(preset: Preset, base: TrainingGoal): TrainingGoal {
+  if (preset === 'trek') {
+    return {
+      ...base,
+      name: base.name || 'Meerdaagse tocht',
+      execution: 'stages',
+      requirements: [{ id: makeId('req'), kind: 'eventDays', scope: 'TOTAL_EVENT', discipline: 'hiking' }],
+    };
   }
   if (preset === 'race') {
     return { ...base, name: base.name || 'Hardloopwedstrijd', requirements: [{ id: makeId('req'), kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 42.2, unit: 'km' }, discipline: 'running' }] };
@@ -99,13 +121,14 @@ export function GoalSetupWizard({
   const [step, setStep] = useState<Step>(mode === 'create' ? { kind: 'type' } : { kind: 'interpret', draft: initialGoal });
 
   const asOf = todayISO();
-  const allEvidence = useMemo(() => [...extractEvidenceFromLogs(sessionLogs), ...capabilityEvidence], [sessionLogs, capabilityEvidence]);
+  const logEvidence = useMemo(() => extractEvidenceFromLogs(sessionLogs), [sessionLogs]);
+  const allEvidence = useMemo(() => [...logEvidence, ...capabilityEvidence], [logEvidence, capabilityEvidence]);
 
   async function handleConfirm(plan: GoalActivationPlan) {
     setStep({ kind: 'applying' });
     const result = await activateGoal(plan);
     if (!result.applied) {
-      setStep({ kind: 'error', message: 'Er is intussen iets veranderd (nieuwe training of evidence) — open dit doel opnieuw om verder te gaan met de actuele situatie.' });
+      setStep({ kind: 'error', message: 'Er is intussen iets veranderd (nieuwe training of evidence). Open dit doel opnieuw om verder te gaan met de actuele situatie.' });
       return;
     }
     setStep({ kind: 'done' });
@@ -132,7 +155,7 @@ export function GoalSetupWizard({
             {step.kind === 'type' && (
               <div className="mt-4 flex flex-col gap-3">
                 <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Waar werk je naartoe?</p>
-                {(['gr5', 'race', 'custom'] as const).map((preset) => (
+                {(['trek', 'race', 'custom'] as const).map((preset) => (
                   <button
                     key={preset}
                     onClick={() => setStep({ kind: 'interpret', draft: applyPreset(preset, initialGoal) })}
@@ -158,9 +181,10 @@ export function GoalSetupWizard({
             )}
 
             {step.kind === 'baseline' && (
-              <BaselineStep
+              <GoalCapacityStep
                 draft={step.draft}
                 allEvidence={allEvidence}
+                logEvidence={logEvidence}
                 asOf={asOf}
                 onBack={() => setStep({ kind: 'interpret', draft: step.draft })}
                 onNext={() => setStep({ kind: 'preview', draft: step.draft })}
@@ -219,6 +243,7 @@ function InterpretStep({
   onNext: (draft: TrainingGoal) => void;
 }) {
   const [local, setLocal] = useState(draft);
+  const isRoute = local.execution !== undefined;
 
   function patchDate(dateOrEmpty: string) {
     const now = new Date().toISOString();
@@ -233,13 +258,24 @@ function InterpretStep({
     const meta = REQUIREMENT_KIND_META[kind];
     setLocal((g) => ({
       ...g,
-      // No `target` yet — an initial amount:0 left the number input showing
-      // "0" instead of empty, and on a phone keyboard typing "1200" over a
-      // visible "0" appends instead of replacing ("01200", per a user bug
-      // report). Leaving target unset (GoalRequirement.target is optional)
-      // makes the field genuinely blank until the user types something.
+      // No `target` yet — the field starts genuinely blank.
       requirements: [...g.requirements, { id: makeId('req'), kind, scope: meta.scope, discipline: meta.needsDiscipline ? '' : undefined }],
     }));
+  }
+
+  function makeMultiDay() {
+    setLocal((g) => {
+      const discipline = g.requirements.find((r) => r.discipline)?.discipline || 'hiking';
+      const requirements: GoalRequirement[] = [
+        ...g.requirements.filter((r) => r.kind !== 'targetTime' && r.kind !== 'duration'),
+        { id: makeId('req'), kind: 'eventDays', scope: 'TOTAL_EVENT', discipline },
+      ];
+      return {
+        ...g,
+        execution: 'stages',
+        requirements: requirements.map((r) => (r.kind === 'distance' ? { ...r, scope: 'TOTAL_EVENT' as const, discipline } : r)),
+      };
+    });
   }
 
   function updateRequirement(id: string, patch: Partial<GoalRequirement>) {
@@ -251,88 +287,87 @@ function InterpretStep({
   }
 
   // 'duration' and 'distance' can't coexist meaningfully: engine/demand.ts
-  // only ever reads a bare 'duration' requirement when no 'distance' one
-  // exists — a goal with both silently drops 'duration' entirely (verified
-  // bug report: a Marathon goal with Afstand + Doeltijd + Duur, where Duur
-  // did nothing). Hiding whichever one is already present prevents building
-  // a combination the engine would then quietly ignore.
+  // only reads a bare 'duration' requirement when no 'distance' one exists.
   const hasDistance = local.requirements.some((r) => r.kind === 'distance');
   const hasDuration = local.requirements.some((r) => r.kind === 'duration');
-  const availableKinds = REQUIREMENT_KIND_ORDER.filter((k) => {
+  const availableKinds = ADDABLE_KINDS.filter((k) => {
     if (local.requirements.some((r) => r.kind === k)) return false;
     if (k === 'duration' && hasDistance) return false;
     if (k === 'distance' && hasDuration) return false;
     return true;
   });
-  const canProceed = local.name.trim().length > 0 && local.requirements.length > 0 && local.requirements.every((r) => (r.target?.amount ?? 0) > 0);
+  const canProceed = local.name.trim().length > 0 && (isRoute
+    ? routeGoalComplete(local)
+    : local.requirements.length > 0 && local.requirements.every((r) => (r.target?.amount ?? 0) > 0));
 
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Naam van dit doel</label>
-        <input
-          type="text"
-          value={local.name}
-          onChange={(e) => setLocal((g) => ({ ...g, name: e.target.value }))}
-          className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-          style={inputStyle}
-        />
-      </div>
-      <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Datum</label>
-        <input
-          type="date"
-          value={local.status === 'active' ? local.targetDate : ''}
-          onChange={(e) => patchDate(e.target.value)}
-          className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-          style={inputStyle}
-        />
-        {local.status !== 'active' && (
-          <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Zonder datum blijft dit doel gepauzeerd.</p>
-        )}
+    <div className="mt-4 flex flex-col gap-5">
+      <div className="flex flex-col gap-3">
+        <div>
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Naam</label>
+          <input
+            type="text"
+            value={local.name}
+            onChange={(e) => setLocal((g) => ({ ...g, name: e.target.value }))}
+            className="mt-1 w-full rounded-lg border bg-transparent px-2.5 py-1.5 text-sm"
+            style={inputStyle}
+          />
+        </div>
+        <div>
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeldatum</label>
+          <input
+            type="date"
+            value={local.status === 'active' ? local.targetDate : ''}
+            onChange={(e) => patchDate(e.target.value)}
+            className="mt-1 w-full rounded-lg border bg-transparent px-2.5 py-1.5 text-sm"
+            style={inputStyle}
+          />
+          {local.status !== 'active' && (
+            <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Zonder datum blijft dit doel gepauzeerd.</p>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <Eyebrow>EISEN</Eyebrow>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat het doel zelf vraagt (bijv. de afstand van de tocht) — niet wat jij daar al aantoonbaar voor kan.
-        </p>
-        {local.requirements.length === 0 && (
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Nog geen eisen — voeg er hieronder minstens één toe.</p>
-        )}
-        {local.requirements.map((r) => (
-          <RequirementRow key={r.id} requirement={r} onChange={(patch) => updateRequirement(r.id, patch)} onRemove={() => removeRequirement(r.id)} />
-        ))}
-        <PaceHint requirements={local.requirements} />
-        {availableKinds.length > 0 && (
+      {isRoute ? (
+        <GoalRouteEditor goal={local} onChange={setLocal} />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <Eyebrow>WAT HET DOEL VRAAGT</Eyebrow>
+          {local.requirements.length === 0 && (
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Voeg hieronder minstens één eis toe.</p>
+          )}
+          {local.requirements.map((r) => (
+            <RequirementRow key={r.id} requirement={r} onChange={(patch) => updateRequirement(r.id, patch)} onRemove={() => removeRequirement(r.id)} />
+          ))}
+          <PaceHint requirements={local.requirements} />
           <select
             value=""
             onChange={(e) => {
-              if (e.target.value) addRequirement(e.target.value as EditableRequirementKind);
+              if (e.target.value === MAKE_MULTI_DAY) makeMultiDay();
+              else if (e.target.value) addRequirement(e.target.value as EditableRequirementKind);
             }}
-            className="rounded-lg border bg-transparent px-2 py-1.5 text-xs"
-            style={inputStyle}
+            className="self-start rounded-lg border bg-transparent px-2.5 py-1.5 text-xs"
+            style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}
           >
             <option value="" style={{ background: 'var(--color-charcoal)' }}>+ EIS TOEVOEGEN</option>
             {availableKinds.map((k) => (
               <option key={k} value={k} style={{ background: 'var(--color-charcoal)' }}>{REQUIREMENT_KIND_META[k].label}</option>
             ))}
+            <option value={MAKE_MULTI_DAY} style={{ background: 'var(--color-charcoal)' }}>Meerdere dagen (tocht)</option>
           </select>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="mt-2 flex gap-3">
+      <div className="mt-1 flex gap-3">
         <SecondaryButton onClick={allowBack ? onBack : onCancel}>{allowBack ? 'TERUG' : 'ANNULEREN'}</SecondaryButton>
-        <PrimaryButton onClick={() => onNext(local)} disabled={!canProceed}>VOLGENDE</PrimaryButton>
+        <PrimaryButton fullWidth={false} onClick={() => onNext(local)} disabled={!canProceed}>VOLGENDE</PrimaryButton>
       </div>
     </div>
   );
 }
 
 // A doeltijd on its own says nothing about whether that's realistic — the
-// number that actually means something to a runner is pace per km. Derived
-// live from whichever Afstand + Doeltijd pair shares a discipline, never a
-// separate field to fill in.
+// number that actually means something to a runner is pace per km.
 function formatPacePerKm(totalMinutes: number, km: number): string {
   const paceMinPerKm = totalMinutes / km;
   let wholeMin = Math.floor(paceMinPerKm);
@@ -356,8 +391,8 @@ function PaceHint({ requirements }: { requirements: GoalRequirement[] }) {
 
   if (!pace) return null;
   return (
-    <p className="text-xs" style={{ color: 'var(--color-gold)' }}>
-      Dat is een tempo van <span className="font-semibold">{pace}</span>.
+    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+      Dat is een tempo van <span className="font-semibold" style={{ color: 'var(--color-gold)' }}>{pace}</span>.
     </p>
   );
 }
@@ -374,48 +409,39 @@ function RequirementRow({
   onRemove: () => void;
 }) {
   const meta = REQUIREMENT_KIND_META[requirement.kind as EditableRequirementKind];
-  // A discipline outside the known list (legacy data, or a deliberate
-  // custom entry — models/disciplines.ts never forces a closed set) starts
-  // in free-text mode so its value stays visible instead of silently
-  // resetting to the dropdown's placeholder.
+  // A discipline outside the known list starts in free-text mode so its
+  // value stays visible instead of silently resetting.
   const isKnownDiscipline = !requirement.discipline || (DISCIPLINE_OPTIONS as string[]).includes(requirement.discipline);
   const [customDiscipline, setCustomDiscipline] = useState(!isKnownDiscipline);
   if (!meta) return null; // 'manual' never appears in this generic editor
 
   return (
-    <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium" style={{ color: 'var(--color-ink)' }}>{meta.label}</span>
-        <button onClick={onRemove} className="text-xs" style={{ color: 'var(--color-danger)' }}>verwijderen</button>
-      </div>
-      <div className="flex gap-3">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-end gap-2">
         <div className="flex-1">
-          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waarde ({UNIT_LABEL[meta.unit]})</label>
-          <input
-            type="number"
-            value={requirement.target?.amount ?? ''}
-            onChange={(e) => {
-              const raw = e.target.value;
-              onChange({ target: raw === '' ? undefined : { amount: Number(raw), unit: meta.unit } });
-            }}
-            className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-            style={inputStyle}
+          <NumberField
+            label={meta.label}
+            unit={UNIT_LABEL[meta.unit]}
+            decimals={meta.decimals}
+            value={requirement.target?.amount}
+            onChange={(v) => onChange({ target: v === undefined ? undefined : { amount: v, unit: meta.unit } })}
           />
         </div>
         {meta.needsDiscipline && (
           <div className="flex-1">
-            <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sport</label>
             {customDiscipline ? (
               <input
                 type="text"
+                aria-label="Sport"
                 value={requirement.discipline ?? ''}
                 onChange={(e) => onChange({ discipline: e.target.value })}
                 placeholder="bijv. alpineklimmen"
-                className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                className="w-full rounded-lg border bg-transparent px-2.5 py-1.5 text-sm"
                 style={inputStyle}
               />
             ) : (
               <select
+                aria-label="Sport"
                 value={requirement.discipline ?? ''}
                 onChange={(e) => {
                   if (e.target.value === CUSTOM_DISCIPLINE) {
@@ -425,7 +451,7 @@ function RequirementRow({
                     onChange({ discipline: e.target.value });
                   }
                 }}
-                className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
+                className="w-full rounded-lg border bg-transparent px-2.5 py-1.5 text-sm"
                 style={inputStyle}
               >
                 <option value="" style={{ background: 'var(--color-charcoal)' }}>Kies sport</option>
@@ -435,133 +461,88 @@ function RequirementRow({
                 <option value={CUSTOM_DISCIPLINE} style={{ background: 'var(--color-charcoal)' }}>Andere sport…</option>
               </select>
             )}
-            {customDiscipline && (
-              <p className="mt-1 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
-                Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.{' '}
-                <button onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="underline" style={{ color: 'var(--color-ink-dim)' }}>
-                  terug naar lijst
-                </button>
-              </p>
-            )}
           </div>
         )}
+        <button onClick={onRemove} aria-label={`${meta.label} verwijderen`} className="px-1 pb-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>×</button>
+      </div>
+      {customDiscipline && (
+        <p className="text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
+          Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.{' '}
+          <button onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="underline" style={{ color: 'var(--color-ink-dim)' }}>
+            terug naar lijst
+          </button>
+        </p>
+      )}
+    </div>
+  );
+}
+
+// --- Preview ----------------------------------------------------------------
+
+const ROUTE_SUFFIX = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D-' } as const;
+
+function formatRouteValue(kind: keyof typeof ROUTE_SUFFIX, amount: number): string {
+  return `${formatNumberNL(amount, kind === 'distance' ? 1 : 0)} ${ROUTE_SUFFIX[kind]}`;
+}
+
+const PER_DAY_DIMENSIONS = new Set(['endurance_duration', 'mechanical_tolerance', 'ascent_capacity', 'descent_tolerance']);
+
+function RouteSummary({ goal }: { goal: TrainingGoal }) {
+  const reqs = goal.requirements;
+  const days = eventDaysRequirement(reqs)?.target?.amount;
+  const dayWord = routeDiscipline(goal) === 'hiking' ? 'loopdagen' : 'dagen';
+  const totals = ROUTE_KINDS.flatMap((k) => {
+    const t = routeTotal(reqs, k);
+    return t ? [formatRouteValue(k, t.amount)] : [];
+  });
+  if (days) totals.push(`${formatNumberNL(days, 0)} ${dayWord}`);
+  const typical = ROUTE_KINDS.flatMap((k) => {
+    const d = typicalDayValue(reqs, k);
+    return d ? [formatRouteValue(k, d.value.amount)] : [];
+  });
+  const longest = longestStageDays(reqs, goal.execution);
+  const pack = reqs.find((r) => r.kind === 'packWeight')?.target?.amount;
+  const stageBits = [
+    goal.execution === 'continuous' ? `aaneengesloten${longest ? `, ${longest} dagen achter elkaar` : ''}` : longest ? `langste etappe ${longest} dagen` : undefined,
+    pack ? `rugzak ${formatNumberNL(pack, 1)} kg` : undefined,
+  ].filter(Boolean);
+
+  return (
+    <div className="mt-3 flex flex-col gap-2 text-xs">
+      <div>
+        <p style={{ color: 'var(--color-ink-dim)' }}>Totale tocht</p>
+        <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>{totals.join(' · ')}</p>
+      </div>
+      <div>
+        <p style={{ color: 'var(--color-ink-dim)' }}>Etappebelasting</p>
+        {typical.length > 0 && <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>Typische dag: {typical.join(' · ')}</p>}
+        {stageBits.length > 0 && <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>{stageBits.join(' · ').replace(/^./, (c) => c.toUpperCase())}</p>}
       </div>
     </div>
   );
 }
 
-function BaselineStep({
-  draft,
-  allEvidence,
-  asOf,
-  onBack,
-  onNext,
-}: {
-  draft: TrainingGoal;
-  allEvidence: CapabilityEvidence[];
-  asOf: string;
-  onBack: () => void;
-  onNext: () => void;
-}) {
-  const { addManualCapabilityEvidence } = useAppData();
-  const [skipped, setSkipped] = useState<Set<string>>(new Set());
-
-  const needs = useMemo(() => identifyBaselineNeeds(draft.requirements, allEvidence, asOf), [draft.requirements, allEvidence, asOf]);
-  const known = useMemo(() => identifyKnownCapabilities(draft.requirements, allEvidence, asOf), [draft.requirements, allEvidence, asOf]);
-  const remaining = needs.filter((n) => !skipped.has(keyId(n.key)));
-
-  async function handleAnswer(key: CapabilityKey, amount: number, unit: Unit) {
-    await addManualCapabilityEvidence({ key, measured: { amount, unit }, date: asOf });
-  }
+function GapRow({ gap, multiDay }: { gap: CapabilityGap; multiDay: boolean }) {
+  const perDay = multiDay && PER_DAY_DIMENSIONS.has(gap.key.dimension);
+  const isHikingTime = gap.demand.unit === 'min' && gap.key.discipline === 'hiking';
+  const demandText = `${isHikingTime ? '± ' : ''}${formatCapabilityValue(gap.demand)}${isHikingTime ? ' onderweg' : ''}${perDay ? ' per dag' : ''}`;
+  const unitMismatch = gap.status === 'unknown' && gap.currentEstimate !== undefined && gap.currentEstimate.unit !== gap.demand.unit;
 
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-        Dit gaat nu over jou, niet over het doel: wat kun je al aantoonbaar, los van wat de eisen hierboven vragen?
-        ASCEND gebruikt eerst wat het al weet uit je trainingsgeschiedenis — hieronder alleen wat daarvoor nog ontbreekt.
-      </p>
-
-      {known.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <Eyebrow>AL BEKEND</Eyebrow>
-          {known.map((k) => {
-            const meta = k.key.dimension === 'fatigue_resistance' ? undefined : DIMENSION_META[k.key.dimension];
-            if (!meta) return null;
-            const label = k.key.discipline ? `${meta.label} (${disciplineLabel(k.key.discipline)})` : meta.label;
-            return (
-              <div key={keyId(k.key)} className="flex items-center justify-between gap-3 text-xs">
-                <span style={{ color: 'var(--color-ink)' }}>{label}</span>
-                <span style={{ color: 'var(--color-ink-dim)' }}>vertrouwen: {CONFIDENCE_LABEL[k.confidence]}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {remaining.length > 0 ? (
-        <div className="flex flex-col gap-1.5">
-          <Eyebrow>NOG NODIG</Eyebrow>
-          {remaining.map((need) => (
-            <BaselineQuestionRow
-              key={keyId(need.key)}
-              need={need}
-              onAnswer={handleAnswer}
-              onSkip={() => setSkipped((s) => new Set(s).add(keyId(need.key)))}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen aanvullende vragen nodig.</p>
-      )}
-
-      <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton onClick={onNext}>VOLGENDE</PrimaryButton>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{capabilityKeyLabel(gap.key)}</span>
+        <span className="shrink-0 whitespace-nowrap text-[11px] font-medium tracking-wide" style={{ color: GAP_STATUS_COLOR[gap.status] }}>{GAP_STATUS_LABEL[gap.status]}</span>
       </div>
-    </div>
-  );
-}
-
-function BaselineQuestionRow({
-  need,
-  onAnswer,
-  onSkip,
-}: {
-  need: BaselineCapabilityStatus;
-  onAnswer: (key: CapabilityKey, amount: number, unit: Unit) => Promise<void>;
-  onSkip: () => void;
-}) {
-  const meta = need.key.dimension === 'fatigue_resistance' ? undefined : DIMENSION_META[need.key.dimension];
-  const [amount, setAmount] = useState('');
-  const [saving, setSaving] = useState(false);
-  if (!meta) return null; // fatigue_resistance never asked — data/baselineQuestions.ts
-
-  const label = need.key.discipline ? `${meta.label} (${disciplineLabel(need.key.discipline)})` : meta.label;
-
-  async function handleSave() {
-    const parsed = Number(amount);
-    if (!Number.isFinite(parsed) || parsed <= 0 || !meta) return;
-    setSaving(true);
-    await onAnswer(need.key, parsed, meta.unit);
-    setSaving(false);
-  }
-
-  return (
-    <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-      <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{label}</p>
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{meta.question}</p>
-      <input
-        type="number"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        placeholder={UNIT_LABEL[meta.unit]}
-        className="rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-        style={inputStyle}
-      />
-      <div className="flex gap-3">
-        <SecondaryButton onClick={onSkip}>OVERSLAAN</SecondaryButton>
-        <PrimaryButton onClick={handleSave} disabled={saving || !amount}>OPSLAAN</PrimaryButton>
-      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
+        <dt style={{ color: 'var(--color-ink-dim)' }}>Vraag</dt>
+        <dd style={{ color: 'var(--color-ink)' }}>{demandText}</dd>
+        <dt style={{ color: 'var(--color-ink-dim)' }}>Aantoonbaar</dt>
+        <dd style={{ color: 'var(--color-ink)' }}>{gap.currentEstimate && !unitMismatch ? formatCapabilityValue(gap.currentEstimate) : 'nog niets bekend'}</dd>
+        <dt style={{ color: 'var(--color-ink-dim)' }}>Vertrouwen</dt>
+        <dd style={{ color: 'var(--color-ink-dim)' }}>{CONFIDENCE_LABEL[gap.confidence]}, {CONFIDENCE_EXPLANATION[gap.confidence]}</dd>
+      </dl>
+      {unitMismatch && <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{gap.explanation}</p>}
     </div>
   );
 }
@@ -592,65 +573,75 @@ function PreviewStep({
     [draft, allEvidence, availability, guardrails, plannedSessions, templates, asOf],
   );
   const feasibilityBadge = FEASIBILITY_LABEL[plan.feasibility.status];
-  const sortedGaps = [...plan.gaps].sort((a, b) => GAP_SEVERITY_ORDER[b.status] - GAP_SEVERITY_ORDER[a.status]);
+  const seen = new Set<string>();
+  const sortedGaps = [...plan.gaps]
+    .filter((g) => (seen.has(keyId(g.key)) ? false : (seen.add(keyId(g.key)), true)))
+    .sort((a, b) => GAP_SEVERITY_ORDER[b.status] - GAP_SEVERITY_ORDER[a.status]);
+  const isRoute = draft.execution !== undefined;
+  const multiDay = isMultiDayGoal(draft.requirements);
+  const impact = [plan.consequences, plan.committedWeekChanges.consequences, plan.forecastChanges.consequences].filter((t) => t && t.trim().length > 0);
 
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      <div>
+    <div className="mt-4 flex flex-col gap-6">
+      <section>
         <Eyebrow>DOELINTERPRETATIE</Eyebrow>
-        <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{draft.name}</p>
+        <p className="mt-1.5 text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{draft.name}</p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {draft.status === 'active' ? `Doeldatum: ${formatDateNL(draft.targetDate)}` : 'Geen datum — doel blijft gepauzeerd tot je er een instelt.'}
+          {draft.status === 'active' ? `Doeldatum ${formatDateNL(draft.targetDate)}` : 'Geen datum, dus het doel blijft gepauzeerd tot je er een instelt.'}
         </p>
-        <ul className="mt-2 flex flex-col gap-1 text-xs" style={{ color: 'var(--color-ink)' }}>
-          {draft.requirements.map((r) => {
-            const meta = REQUIREMENT_KIND_META[r.kind as EditableRequirementKind];
-            return (
-              <li key={r.id}>
-                · {meta?.label ?? r.kind}: {r.target ? formatMeasuredValue(r.target) : '—'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+        {isRoute ? (
+          <RouteSummary goal={draft} />
+        ) : (
+          <ul className="mt-2 flex flex-col gap-0.5 text-xs" style={{ color: 'var(--color-ink)' }}>
+            {draft.requirements.map((r) => {
+              const meta = REQUIREMENT_KIND_META[r.kind as EditableRequirementKind];
+              return (
+                <li key={r.id}>
+                  {meta?.label ?? r.kind}: {r.target ? formatCapabilityValue(r.target) : '—'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
-      <div>
-        <Eyebrow>HAALBAARHEID</Eyebrow>
-        <span className="text-[11px] font-medium tracking-wide" style={{ color: feasibilityBadge.color }}>{feasibilityBadge.label}</span>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.feasibility.explanation}</p>
+      <section>
+        <div className="flex items-baseline justify-between gap-3">
+          <Eyebrow>HAALBAARHEID</Eyebrow>
+          <span className="text-[11px] font-medium tracking-wide" style={{ color: feasibilityBadge.color }}>{feasibilityBadge.label}</span>
+        </div>
+        <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.feasibility.explanation}</p>
         {plan.feasibility.bestPossiblePreparation && (
           <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sky)' }}>{plan.feasibility.bestPossiblePreparation}</p>
         )}
-      </div>
+      </section>
 
       {sortedGaps.length > 0 && (
-        <div>
+        <section>
           <Eyebrow>CAPACITEIT VS. VRAAG</Eyebrow>
-          <div className="mt-2 flex flex-col gap-2">
-            {sortedGaps.map((g) => (
-              <div key={keyId(g.key)} className="flex flex-col gap-0.5 border-t pt-2 text-xs" style={{ borderColor: 'var(--color-card-border)' }}>
-                <div className="flex items-center justify-between gap-3">
-                  <span style={{ color: 'var(--color-ink)' }}>{capabilityKeyLabel(g.key)}</span>
-                  <span style={{ color: GAP_STATUS_COLOR[g.status] }}>{GAP_STATUS_LABEL[g.status]}</span>
-                </div>
-                <span style={{ color: 'var(--color-ink-dim)' }}>vertrouwen: {CONFIDENCE_LABEL[g.confidence]}</span>
-                <span style={{ color: 'var(--color-ink-dim)' }}>{g.explanation}</span>
-              </div>
-            ))}
+          {multiDay && (
+            <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              Vergeleken met een typische dag van de tocht, niet met de totalen.
+            </p>
+          )}
+          <div className="mt-3 flex flex-col gap-4">
+            {sortedGaps.map((g) => <GapRow key={keyId(g.key)} gap={g} multiDay={multiDay} />)}
           </div>
-        </div>
+        </section>
       )}
 
-      <div>
-        <Eyebrow>VERWACHTE PLANIMPACT</Eyebrow>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.consequences}</p>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.committedWeekChanges.consequences}</p>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.forecastChanges.consequences}</p>
-      </div>
+      {impact.length > 0 && (
+        <section>
+          <Eyebrow>VERWACHTE PLANIMPACT</Eyebrow>
+          {impact.map((t, i) => (
+            <p key={i} className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{t}</p>
+          ))}
+        </section>
+      )}
 
-      <div className="mt-2 flex gap-3">
+      <div className="mt-1 flex gap-3">
         <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton onClick={() => onConfirm(plan)}>DOEL ACTIVEREN</PrimaryButton>
+        <PrimaryButton fullWidth={false} onClick={() => onConfirm(plan)}>DOEL ACTIVEREN</PrimaryButton>
       </div>
     </div>
   );
