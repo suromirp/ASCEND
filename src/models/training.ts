@@ -71,6 +71,10 @@ export interface SessionTemplate {
   id: string;
   name: string;
   type: SessionType;
+  // Which endurance sport this is, when type alone doesn't say (a cycling
+  // session is type 'cardio' like a run). Absent = derived from type
+  // (engine/sports.ts#templateSport): cardio -> running, hiking -> hiking.
+  sport?: 'running' | 'hiking' | 'cycling';
   focus?: string; // e.g. "Borst • Rug • Schouders"
   durationVariants: DurationVariants;
   weeklyProgression?: WeeklyProgressionStep[];

@@ -1,0 +1,145 @@
+// ASCEND — does the existing calendar still fit after a scheduling
+// setting changed (daily time budget, "meerdere trainingen op één dag")?
+// Fase 2 — production report: changing the pairing preference had no
+// visible effect at all. This answers it honestly: a relaxed setting
+// changes nothing that's already planned (new planning simply gets the
+// extra room); a stricter one can leave days over their new limit, and
+// only those overflowing sessions are moved — within their own week, via
+// the same Groep C placement search every other move uses, respecting the
+// leg-heavy spacing rule. Never removes anything; a session with no valid
+// day left stays where it is and is reported, not silently dropped.
+
+import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
+import type { Program } from '../models/program';
+import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
+import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import { dayHasRoomFor } from './scheduler';
+import { searchWeeklyPlacement, type PlacementRequest } from './candidatePlacement';
+import { weekDates } from '../utils/dates';
+import { makeId } from '../utils/id';
+
+export interface ScheduleFitInputs {
+  plannedSessions: PlannedSession[];
+  templates: SessionTemplate[];
+  sessionLogs: SessionLog[];
+  program: Program | null | undefined;
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>> | undefined;
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'];
+  asOf: string;
+  settingLabel: string; // "Meerdere trainingen op één dag", "Trainingstijd per dag"
+}
+
+export interface ScheduleFitResult {
+  proposal: PlanChangeProposal;
+  stuck: string[]; // template names that no longer fit anywhere in their week
+}
+
+export function computeScheduleFit(inputs: ScheduleFitInputs): ScheduleFitResult {
+  const { plannedSessions, templates, sessionLogs, program, dailyTimeBudget, sameDayPairingPreference, asOf, settingLabel } = inputs;
+  const templateById = new Map(templates.map((t) => [t.id, t]));
+  const logged = new Set(sessionLogs.map((l) => l.plannedSessionId).filter(Boolean));
+  const movable = (s: PlannedSession) => s.status !== 'skipped' && s.scheduledDate >= asOf && !logged.has(s.id);
+
+  const items: PlanChangeItem[] = [];
+  const stuck: string[] = [];
+  const weekStarts = [...new Set(plannedSessions.filter(movable).map((s) => s.weekStartDate))].sort();
+
+  for (const weekStart of weekStarts) {
+    let week = plannedSessions.filter((s) => s.weekStartDate === weekStart && s.status !== 'skipped');
+    const byDate = new Map<string, PlannedSession[]>();
+    for (const s of week) byDate.set(s.scheduledDate, [...(byDate.get(s.scheduledDate) ?? []), s]);
+
+    // Rebuild each day in its existing order; whatever no longer has room
+    // under the new setting overflows.
+    const overflow: PlannedSession[] = [];
+    for (const [date, daySessions] of [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      if (daySessions.length < 2) continue;
+      const kept: PlannedSession[] = [];
+      for (const s of [...daySessions].sort((a, b) => Number(movable(a)) - Number(movable(b)) || a.order - b.order)) {
+        const template = templateById.get(s.templateId);
+        if (!template || kept.length === 0 || !movable(s)) { kept.push(s); continue; }
+        if (dayHasRoomFor(date, template, kept, templateById, program, dailyTimeBudget, sameDayPairingPreference)) kept.push(s);
+        else overflow.push(s);
+      }
+    }
+
+    for (const s of overflow) {
+      const template = templateById.get(s.templateId);
+      if (!template) continue;
+      const fixed = week.filter((w) => w.id !== s.id);
+      const toPlace: PlacementRequest[] = [{ template, source: 'cascade', sessionId: s.id }];
+      const provider = (t: SessionTemplate, tentative: { sessionOrDraft: string; date: string }[]) => {
+        const tentativeSessions: PlannedSession[] = tentative.map((p, i) => ({ id: p.sessionOrDraft, templateId: t.id, scheduledDate: p.date, weekStartDate: weekStart, status: 'planned' as const, order: 1000 + i }));
+        return weekDates(weekStart).filter(
+          (d) => d >= asOf && d !== s.scheduledDate && dayHasRoomFor(d, t, [...fixed, ...tentativeSessions], templateById, program, dailyTimeBudget, sameDayPairingPreference),
+        );
+      };
+      const result = searchWeeklyPlacement(toPlace, fixed, provider, templateById, sessionLogs, new Map());
+      const newDate = result.status === 'clean' || result.status === 'compromised' ? result.bestFound.placements[0]?.date : undefined;
+      if (!newDate) {
+        stuck.push(template.name);
+        continue;
+      }
+      items.push({
+        plannedSessionId: s.id,
+        action: 'move',
+        fromDate: s.scheduledDate,
+        toDate: newDate,
+        reason: `Past niet meer op dezelfde dag met de nieuwe instelling "${settingLabel}".`,
+        generatedBy: ['engine/scheduleFit.ts#computeScheduleFit'],
+      });
+      week = week.map((w) => (w.id === s.id ? { ...w, scheduledDate: newDate } : w));
+    }
+  }
+
+  const stuckNames = [...new Set(stuck)].join(', ');
+  const stuckNote = stuck.length > 0 ? ` Voor ${stuckNames} is in die week geen andere dag vrij, dus die blijft staan waar hij staat. Verplaats hem zelf als je wilt.` : '';
+  return {
+    stuck,
+    proposal: {
+      id: makeId('planchange'),
+      trigger: 'availability_changed',
+      issue: `Instelling gewijzigd: ${settingLabel}`,
+      changes: items,
+      alternatives: [],
+      consequences: items.length > 0
+        ? `Sessies die niet meer samen op een dag passen, schuiven binnen hun eigen week op.${stuckNote}`
+        : stuck.length > 0
+          ? `Nieuwe planning gebruikt de nieuwe instelling.${stuckNote}`
+          : 'Je huidige planning past al binnen de nieuwe instelling. Nieuwe planning gebruikt hem vanaf nu.',
+      explanation: `Gewijzigd in Instellingen: ${settingLabel}.`,
+      createdAt: new Date().toISOString(),
+    },
+  };
+}
+
+// Switching a sport off (Settings → Training → Sporten): its future,
+// not-yet-logged sessions come off the calendar — only when the user
+// chooses "nu toepassen"; "alleen nieuwe planning" leaves them.
+export function computeSportDisableProposal(
+  isSessionOfSport: (s: PlannedSession) => boolean,
+  sportLabel: string,
+  plannedSessions: PlannedSession[],
+  sessionLogs: SessionLog[],
+  asOf: string,
+): PlanChangeProposal {
+  const logged = new Set(sessionLogs.map((l) => l.plannedSessionId).filter(Boolean));
+  const items: PlanChangeItem[] = plannedSessions
+    .filter((s) => s.status !== 'skipped' && s.scheduledDate >= asOf && !logged.has(s.id) && isSessionOfSport(s))
+    .map((s) => ({
+      plannedSessionId: s.id,
+      action: 'remove' as const,
+      reason: `${sportLabel} staat uit in Instellingen → Training.`,
+      generatedBy: ['engine/scheduleFit.ts#computeSportDisableProposal'],
+    }));
+  return {
+    id: makeId('planchange'),
+    trigger: 'strategy_changed',
+    issue: `${sportLabel} uitgezet`,
+    changes: items,
+    alternatives: [],
+    consequences: items.length > 0 ? `${items.length} geplande ${sportLabel.toLowerCase()}sessie(s) vervallen. Loggen blijft altijd mogelijk.` : `Er stond geen ${sportLabel.toLowerCase()} meer gepland.`,
+    explanation: `${sportLabel} uitgezet in Instellingen → Training.`,
+    createdAt: new Date().toISOString(),
+  };
+}

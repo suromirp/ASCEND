@@ -435,6 +435,13 @@ export interface AppSettings {
   marathonRaceType?: 'half' | 'full';
   marathonTargetDate?: string; // ISO date
   marathonTargetTimeMinutes?: number;
+  // Fase 2 — how plan changes reach the calendar (engine/changeImpact.ts).
+  // Absent = 'auto_small'. Optional with a default, so older stored
+  // settings and backups need no migration step.
+  changeApplyMode?: 'always_ask' | 'auto_small' | 'auto_all';
+  // Fase 2 — which sports ASCEND may plan (engine/sports.ts). Logging is
+  // never restricted. Absent = engine/sports.ts#DEFAULT_ENABLED_SPORTS.
+  enabledSports?: { running: boolean; hiking: boolean; cycling: boolean };
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

@@ -4,6 +4,7 @@ import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { ChangeNotice } from './components/ChangeNotice';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
@@ -110,6 +111,7 @@ function AppShell() {
         </ErrorBoundary>
       </div>
       <BottomNav />
+      <ChangeNotice />
       <UpdatePrompt />
       <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
     </>

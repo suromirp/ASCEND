@@ -131,7 +131,13 @@ export function computeWeeklyPrescriptionPlan(
   program: Program | null | undefined,
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
   asOf: string,
+  // Settings → Training → Sporten (Fase 2): a template of a sport that's
+  // switched off is never a candidate for new or changed sessions. Its
+  // existing sessions stay out of this pass entirely (not in any line's
+  // family), so nothing here moves or removes them either.
+  isTemplatePlannable: (template: SessionTemplate) => boolean = () => true,
 ): WeeklyPrescriptionPlanResult {
+  const plannableTemplates = templates.filter(isTemplatePlannable);
   void goals; // audit context only — every real input this file needs is already resolved into goalOverviews/decisionsByKey
   const templateById = new Map(templates.map((t) => [t.id, t]));
 
@@ -176,7 +182,7 @@ export function computeWeeklyPrescriptionPlan(
       resolvedDemand,
       anchorBaselineCoverage,
       plannedSessions,
-      templates,
+      templates: plannableTemplates,
       previousWeekPrescription,
       strengthStrategy,
       asOf,
@@ -186,7 +192,7 @@ export function computeWeeklyPrescriptionPlan(
 
     // Stap 2 — vóór reconciliatie: dedupeDesiredSlots over alle lijnen
     // samen (eindreview-invariant b), nooit lijn voor lijn apart.
-    const desiredSlots = dedupeDesiredSlots(prescription.lines, templates);
+    const desiredSlots = dedupeDesiredSlots(prescription.lines, plannableTemplates);
     const target = buildReconciliationTarget(prescription.lines, desiredSlots);
 
     const week = reconcileWeekComposition(

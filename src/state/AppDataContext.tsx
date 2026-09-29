@@ -50,8 +50,10 @@ import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { resolveHorizonZone } from '../engine/planningHorizon';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { describeChanges } from '../engine/changeImpact';
+import { isTemplatePlannable } from '../engine/sports';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
-import type { GoalActivationPlan } from '../models/planChange';
+import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
 import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
 import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
@@ -170,6 +172,12 @@ interface AppData {
   // accumulate churn for no new information) and exposes a one-line
   // passive summary — never a popup — the caller can show and dismiss.
   forecastSummary: string | null;
+  // Fase 2 feedback pattern (engine/changeImpact.ts): apply a proposal,
+  // remember what it touched, and let the user undo it right after.
+  recentChange: RecentPlanChange | null;
+  commitPlanChange: (proposal: PlanChangeProposal, title: string) => Promise<boolean>;
+  undoRecentChange: () => Promise<void>;
+  dismissRecentChange: () => void;
   dismissForecastSummary: () => void;
   // Phase 8 — Strength Program Strategy (Addendum v0.1). ASCEND owns block
   // strategy/frequency/split/placement; MacroFactor Workouts (or a future
@@ -235,6 +243,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [forecastSummary, setForecastSummary] = useState<string | null>(null);
+  const [recentChange, setRecentChange] = useState<RecentPlanChange | null>(null);
   const [strengthProgramStrategies, setStrengthProgramStrategies] = useState<StrengthProgramStrategy[]>([]);
   const [strengthRecommendation, setStrengthRecommendation] = useState<StrengthProgramRecommendation | null>(null);
 
@@ -270,6 +279,58 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setStrengthProgramStrategies(strengthStrategies);
     setStrengthRecommendation(strengthRecs.find((r) => !r.resolvedAt) ?? null);
   }, []);
+
+  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string): Promise<boolean> => {
+    const real = proposal.changes.filter((c) => c.action !== 'keep');
+    if (real.length === 0) return false;
+    const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
+    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+    if (unsupported.length > 0) {
+      console.error('commitPlanChange: refusing to apply — unsupported plan change items present', unsupported);
+      return false;
+    }
+    const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+    const originalIds = new Set(planned.map((s) => s.id));
+    const addedIds: string[] = [];
+    for (const session of updatedSessions) {
+      if (!originalIds.has(session.id)) addedIds.push(session.id);
+      if (touchedIds.has(session.id) || !originalIds.has(session.id)) await PlannedSessionsRepo.put(session);
+    }
+    await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
+    setRecentChange({
+      id: proposal.id,
+      trigger: proposal.trigger,
+      title,
+      lines: describeChanges(proposal.changes, planned, tpls),
+      why: proposal.consequences,
+      before: planned.filter((s) => touchedIds.has(s.id)),
+      addedIds,
+      createdAt: new Date().toISOString(),
+    });
+    await refresh();
+    return true;
+  }, [refresh]);
+
+  const undoRecentChange = useCallback(async () => {
+    if (!recentChange) return;
+    for (const session of recentChange.before) await PlannedSessionsRepo.put(session);
+    for (const id of recentChange.addedIds) await PlannedSessionsRepo.delete(id);
+    const now = new Date().toISOString();
+    await PlanChangeProposalsRepo.put({
+      id: makeId('planchange'),
+      trigger: recentChange.trigger,
+      issue: `Ongedaan gemaakt: ${recentChange.title}`,
+      changes: [],
+      alternatives: [],
+      consequences: recentChange.lines.join('; '),
+      explanation: 'Door jou ongedaan gemaakt, direct na de wijziging.',
+      createdAt: now,
+      resolvedAt: now,
+      resolution: 'rejected',
+    });
+    setRecentChange(null);
+    await refresh();
+  }, [recentChange, refresh]);
 
   // Phase 6 — the live Adaptive Replanner for the forecast range. Reads
   // directly from the repos rather than React state, since this runs
@@ -343,7 +404,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // forecast weeks yet scheduled → no-op, same precedent as
   // runForecastReplan's own activeGoalDemandKeys gate.
   const runWeeklyPrescriptionBuild = useCallback(async () => {
-    const [goals, logs, manualEvidence, planned, tpls, engineConfig, strategies, previousPrescriptions, programs] = await Promise.all([
+    const [goals, logs, manualEvidence, planned, tpls, engineConfig, strategies, previousPrescriptions, programs, appSettings] = await Promise.all([
       TrainingGoalsRepo.getAll(),
       SessionLogsRepo.getAll(),
       CapabilityEvidenceRepo.getAll(),
@@ -353,6 +414,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       StrengthProgramStrategiesRepo.getAll(),
       WeeklyPrescriptionsRepo.getAll(),
       ProgramsRepo.getAll(),
+      SettingsRepo.get(),
     ]);
 
     const keys = activeGoalDemandKeys(goals);
@@ -379,6 +441,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       forecastWeekStarts, goals, overviews, decisionsByKey, planned, tpls, engineConfig.availability,
       activeStrengthStrategy(strategies) ?? null, previousPrescriptions, [], programs[0] ?? null,
       engineConfig.strategy.sameDayPairingPreference, asOf,
+      (t) => isTemplatePlannable(t, appSettings.enabledSports),
     );
 
     // Geen wijziging (alle lijnen keep én geen items) -> no-op, geen schrijf.
@@ -1150,6 +1213,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     dismissCelebration: () => setCelebration(null),
     forecastSummary,
     dismissForecastSummary: () => setForecastSummary(null),
+    recentChange,
+    commitPlanChange,
+    undoRecentChange,
+    dismissRecentChange: () => setRecentChange(null),
     strengthProgramStrategies,
     strengthRecommendation,
     activateStrengthProgram,

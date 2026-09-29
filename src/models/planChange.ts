@@ -12,6 +12,7 @@
 // PRIMARY document's own vocabulary, not a `PlanRevision` gap.
 
 import type { TrainingGoal } from './goals';
+import type { PlannedSession } from './training';
 import type { CapabilityGap, PreparationTarget } from './capability';
 import type { FeasibilityAssessment } from './feasibility';
 
@@ -112,4 +113,19 @@ export interface GoalActivationPlan {
   consequences: string;
   computedAt: string;
   inputStateHash: string; // detects "something changed since preview was shown"
+}
+
+// Fase 2 feedback pattern — the last change ASCEND applied to the
+// calendar, kept just long enough to show it and offer "ongedaan maken".
+// Never persisted: undo is a moment-of-change action, the permanent record
+// is the PlanChangeProposal audit trail.
+export interface RecentPlanChange {
+  id: string;
+  trigger: EngineEvent;
+  title: string;
+  lines: string[];
+  why: string;
+  before: PlannedSession[]; // touched rows exactly as they were
+  addedIds: string[]; // rows this change created
+  createdAt: string;
 }
