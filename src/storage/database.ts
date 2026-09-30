@@ -442,12 +442,10 @@ export interface AppSettings {
   // Fase 2 — which sports ASCEND may plan (engine/sports.ts). Logging is
   // never restricted. Absent = engine/sports.ts#DEFAULT_ENABLED_SPORTS.
   enabledSports?: { running: boolean; hiking: boolean; cycling: boolean };
-  // Fase 4 — how cycling is used when it's on (engine/sports.ts):
-  // 'alternative' = a ride can stand in for an easy cardio session, nothing
-  // is added; 'weekly' = one Fietstocht a week on cyclingDay (1 = Monday).
-  // Absent = 'alternative'.
-  cyclingMode?: 'alternative' | 'weekly';
-  cyclingDay?: number;
+  // "Zoveel keer per week" per sport (engine/sportFrequency.ts). A sport
+  // missing here is on Automatisch: the weekly pattern and weekly planning
+  // decide. Optional, so older settings need no migration.
+  sportFrequency?: Partial<Record<'running' | 'hiking' | 'cycling', number>>;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

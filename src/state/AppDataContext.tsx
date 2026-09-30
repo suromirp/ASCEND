@@ -87,7 +87,8 @@ function simpleHash(text: string): string {
   for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
-import { isTemplatePlannable, weeklyPatternTemplates, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
+import { isTemplatePlannable, weeklyPatternTemplates, fixedFrequencySports, templateSport, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
+import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
 import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
@@ -507,7 +508,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       forecastWeekStarts, goals, overviews, decisionsByKey, planned, tpls, engineConfig.availability,
       activeStrengthStrategy(strategies) ?? null, previousPrescriptions, [], programs[0] ?? null,
       engineConfig.strategy.sameDayPairingPreference, asOf,
-      (t) => isTemplatePlannable(t, appSettings.enabledSports),
+      // Sports pinned to a number per week keep that count; the automatic
+      // planning neither adds nor removes their sessions.
+      (t) => isTemplatePlannable(t, appSettings.enabledSports) && !fixedFrequencySports(appSettings).includes(templateSport(t) as Sport),
     );
 
     // Geen wijziging (alle lijnen keep én geen items) -> no-op, geen schrijf.
@@ -1343,6 +1346,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         await applyStrengthPlacementToCommittedRange(active);
         await activateStrengthProgram(active);
         lines.push(`Je krachtblok is toegepast (${active.sessionsPerWeek}x per week).`);
+      }
+      // Sports with a number per week: bring every week to that number.
+      for (const sport of fixedFrequencySports({ ...appSettings, enabledSports: enabled })) {
+        const perWeek = appSettings.sportFrequency![sport]!;
+        const [planned, tpls, logs, engineConfig, programs] = await Promise.all([
+          PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll(), GoalEngineConfigRepo.get(), ProgramsRepo.getAll(),
+        ]);
+        const { proposal, shortWeeks } = computeSportFrequencyPlan({
+          sport, perWeek, plannedSessions: planned, templates: tpls, sessionLogs: logs, program: programs[0] ?? null,
+          dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference, asOf: todayISO(),
+        });
+        await commitPlanChange(proposal, proposal.issue);
+        lines.push(`${SPORT_LABEL[sport]}: ${perWeek}x per week${shortWeeks > 0 ? `, past in ${shortWeeks} ${shortWeeks === 1 ? 'week' : 'weken'} niet` : ''}.`);
       }
       const off = (Object.keys(enabled) as Sport[]).filter((sport) => !enabled[sport]).map((sport) => SPORT_LABEL[sport]);
       if (off.length > 0) lines.push(`Niet ingepland omdat het uit staat: ${off.join(', ')}.`);
