@@ -37,7 +37,10 @@ function buildTemplates(): SessionTemplate[] {
       type: 'strength',
       focus: 'Borst • Rug • Schouders',
       durationVariants: { full: 75, short: 45, minimum: 20 },
-      defaultDayOfWeek: 4,
+      // Dinsdag, niet donderdag: Upper A en Upper B trainen dezelfde spieren
+      // (borst, rug, schouders) en horen ~48 uur uit elkaar te liggen, net
+      // als twee zware beendagen. Di + vr = 3 dagen ertussen.
+      defaultDayOfWeek: 2,
       notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
@@ -139,7 +142,9 @@ function buildTemplates(): SessionTemplate[] {
       type: 'cardio',
       focus: 'Aerobe basis',
       durationVariants: { full: 35, short: 20 },
-      defaultDayOfWeek: 2,
+      // Donderdag: de dag na Lower A, rustig en licht voor de benen, en
+      // ruim voor de heuvelintervallen op zaterdag.
+      defaultDayOfWeek: 4,
       cardioTarget: { zone: 'RPE 3-4', targetDurationMin: 35 },
       notes:
         "RPE 3-4/10 — rustig / conversational pace, volledige zinnen kunnen praten. Geen PR's. Garmin + borstband gebruiken. Doel: aerobe basis, efficiënter leren hardlopen, conditie verbeteren zonder woensdag te slopen.",
@@ -233,7 +238,7 @@ function buildTemplates(): SessionTemplate[] {
       focus: 'Rust of rustig wandelen',
       durationVariants: { full: 45 },
       defaultDayOfWeek: 1,
-      notes: 'Geen zware training, geen hardlopen, geen zware incline. 30-60 min rustig wandelen is prima. Doel: herstellen van het zware weekend (heuvelintervallen + lange duurloop), frisse start dinsdag.',
+      notes: 'Geen zware training, geen hardlopen, geen zware incline. 30-60 min rustig wandelen is prima. Doel: herstellen van het zware weekend (heuvelintervallen + lange duurloop), frisse start van de nieuwe week.',
       // No dynamic warm-up here — Herstel is a light/rest day, not
       // strenuous enough to need the pre-training prep routine.
       cooldown: COOLDOWN_RECOVERY,

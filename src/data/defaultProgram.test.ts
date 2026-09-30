@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildDefaultProgramData } from './defaultProgram';
 import { isLegHeavyTemplate, isIntentionalBackToBack } from '../engine/scheduler';
 import { daysBetween } from '../utils/dates';
+import { resolveEffectiveStressProfile } from '../engine/stressProfile';
 
 // Fase 6 (sports-science review, item F2): buildPlannedSessions' fixed
 // defaultDayOfWeek materialization is deliberately NOT replaced with a
@@ -40,5 +41,34 @@ describe('buildDefaultProgramData — default week respects Fase 2 leg-heavy spa
     expect(isLegHeavyTemplate(templateById.get('tpl_hill_intervals')!)).toBe(true);
     expect(isLegHeavyTemplate(templateById.get('tpl_long_run')!)).toBe(true);
     expect(isIntentionalBackToBack(templateById.get('tpl_hill_intervals')!, templateById.get('tpl_long_run')!)).toBe(true);
+  });
+});
+
+// The same rule for the upper body (production feedback: Upper A on
+// Thursday and Upper B on Friday trained chest/back/shoulders two days in
+// a row). Any two sessions that are both heavy for the same muscles must
+// be at least 48 hours apart in the standard week, unless the program
+// marks the pairing as intentional.
+describe('buildDefaultProgramData — same heavy muscles never on consecutive days', () => {
+  it('keeps every pair of sessions heavy on the same axis at least 2 days apart', () => {
+    const { templates, plannedSessions } = buildDefaultProgramData();
+    const templateById = new Map(templates.map((t) => [t.id, t]));
+    const axes = ['upperBodyLoad', 'lowerBodyLoad'] as const;
+    const heavy = (id: string) => axes.filter((a) => resolveEffectiveStressProfile(templateById.get(id)!)[a] === 'heavy');
+    const week = plannedSessions.filter((s) => s.weekStartDate === plannedSessions[0].weekStartDate);
+    for (const a of week) {
+      for (const b of week) {
+        if (a.id >= b.id) continue;
+        const shared = heavy(a.templateId).filter((x) => heavy(b.templateId).includes(x));
+        if (shared.length === 0) continue;
+        const gap = Math.abs(daysBetween(a.scheduledDate, b.scheduledDate));
+        if (gap <= 1 && !isIntentionalBackToBack(templateById.get(a.templateId)!, templateById.get(b.templateId)!)) {
+          throw new Error(`${a.templateId} and ${b.templateId} are heavy for ${shared.join('/')} only ${gap} day(s) apart`);
+        }
+      }
+    }
+    const upperA = week.find((s) => s.templateId === 'tpl_upper_a')!;
+    const upperB = week.find((s) => s.templateId === 'tpl_upper_b')!;
+    expect(Math.abs(daysBetween(upperA.scheduledDate, upperB.scheduledDate))).toBeGreaterThanOrEqual(2);
   });
 });

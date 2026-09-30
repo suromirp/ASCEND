@@ -7,10 +7,12 @@ import { Card, Eyebrow } from './ui';
 export function TrainingGuideSheet({
   title,
   guide,
+  dayLabel,
   onClose,
 }: {
   title: string;
   guide: TrainingDayGuide;
+  dayLabel: string;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ export function TrainingGuideSheet({
           onClick={(e) => e.stopPropagation()}
         >
         <Card className="rounded-b-none border-b-0 pb-8">
-          <Eyebrow>{guide.dayLabel}</Eyebrow>
+          <Eyebrow>{dayLabel}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
           <p className="mt-0.5 text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>{guide.subtitle}</p>
           <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.registration}</p>

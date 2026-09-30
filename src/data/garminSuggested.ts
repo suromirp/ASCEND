@@ -23,14 +23,14 @@ export interface CompatibilityEntry {
 export const GARMIN_COMPATIBILITY: Record<string, Record<string, CompatibilityEntry>> = {
   tpl_easy_run: {
     Recovery: { compatibility: 'compatible', note: 'Compatibel als de duur voldoende is — lagere prikkel dan gepland, maar prima wanneer je moe bent.' },
-    Base: { compatibility: 'compatible', note: 'Het meest compatibel met een rustige dinsdag.' },
-    Tempo: { compatibility: 'not_equivalent', note: 'Niet gelijkwaardig — dit maakt van dinsdag een zware loop vlak vóór woensdag Lower A.' },
-    Threshold: { compatibility: 'not_equivalent', note: 'Niet gelijkwaardig — verhoogt de beenvermoeidheid voor Lower A morgen.' },
+    Base: { compatibility: 'compatible', note: 'Het meest compatibel met een rustige Easy Run.' },
+    Tempo: { compatibility: 'not_equivalent', note: 'Niet gelijkwaardig: dit maakt van de Easy Run een zware loop, de dag na Lower A en vlak voor de heuvelintervallen.' },
+    Threshold: { compatibility: 'not_equivalent', note: 'Niet gelijkwaardig: verhoogt de beenvermoeidheid richting de heuvelintervallen.' },
     'VO2 Max': { compatibility: 'not_equivalent', note: 'Niet gelijkwaardig — te zware intensiteit voor een aerobe-basisdag.' },
     Sprint: { compatibility: 'not_equivalent', note: 'Niet gelijkwaardig — dit is geen rustige duurtraining meer.' },
-    Long: { compatibility: 'different', note: 'Mogelijk te veel duur voor Maand 1 — kan, maar houd rekening met extra vermoeidheid richting Lower A.' },
+    Long: { compatibility: 'different', note: 'Mogelijk te veel duur voor Maand 1 — kan, maar houd rekening met extra vermoeidheid richting het weekend.' },
     Bike: { compatibility: 'different', note: 'Aeroob nuttig, maar minder hardloopspecifiek.' },
-    Anders: { compatibility: 'different', note: 'Beoordeel zelf of dit rustig/aeroob genoeg is voor een dinsdag.' },
+    Anders: { compatibility: 'different', note: 'Beoordeel zelf of dit rustig/aeroob genoeg is voor een Easy Run.' },
   },
   tpl_bergconditie: {
     Recovery: { compatibility: 'different', note: 'Aeroob overlappend, maar niet bergspecifiek — geen D+-prikkel.' },

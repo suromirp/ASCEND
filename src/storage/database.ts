@@ -589,15 +589,19 @@ async function fixV1WeekFragmentation(): Promise<void> {
   }
 }
 
-// Fase 4 — adds any default SessionTemplate this device doesn't have yet
-// (e.g. tpl_bike), without touching the schedule or existing templates.
-// syncTemplateAndScheduleDefinitions below only runs on a content-version
-// bump and then regenerates future weeks, which would throw away a user's
-// own placement; a new template on its own never needs that.
+// Keeps every built-in SessionTemplate on this device equal to its current
+// definition in data/defaultProgram.ts — adds new ones (e.g. tpl_bike) and
+// updates changed ones (e.g. a new usual weekday) — without touching the
+// schedule. syncTemplateAndScheduleDefinitions below only runs on a
+// content-version bump and then regenerates future weeks, which would throw
+// away a user's own placement; a changed template definition on its own
+// never needs that. The new definitions take effect in the planning at the
+// next clean restart (Settings → Training → Programma) or wherever ASCEND
+// plans new sessions.
 export async function ensureDefaultTemplates(): Promise<void> {
-  const existing = new Set((await SessionTemplatesRepo.getAll()).map((t) => t.id));
-  const missing = buildDefaultProgramData().templates.filter((t) => !existing.has(t.id));
-  if (missing.length > 0) await putAll('sessionTemplates', missing);
+  const existing = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
+  const changed = buildDefaultProgramData().templates.filter((t) => JSON.stringify(existing.get(t.id)) !== JSON.stringify(t));
+  if (changed.length > 0) await putAll('sessionTemplates', changed);
 }
 
 export async function syncTemplateAndScheduleDefinitions(): Promise<void> {

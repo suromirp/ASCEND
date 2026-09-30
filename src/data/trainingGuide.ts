@@ -1,3 +1,5 @@
+import type { SessionTemplate } from '../models/training';
+import { isoWeekday } from '../utils/dates';
 // Rich per-training-day content for the Month 1 (BASISFASE) schedule —
 // shown in TrainingGuideSheet, reachable both via an info button on the
 // session itself (TodayMissionCard/SessionActionSheet) and via the
@@ -31,7 +33,6 @@ export interface GuideSection {
 }
 
 export interface TrainingDayGuide {
-  dayLabel: string;
   subtitle: string;
   registration: string;
   sections: GuideSection[];
@@ -76,7 +77,6 @@ const RUNBIKECALC_POLARIZED: GuideSource = { label: 'RunBikeCalc — 80/20 polar
 
 export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   tpl_upper_a: {
-    dayLabel: 'VRIJDAG',
     subtitle: 'Kracht • Hypertrofie • Bovenlichaam',
     registration: 'Ascend: alleen voltooid/niet voltooid. Oefeningen, sets, reps, gewicht en RIR log je in MacroFactor.',
     sections: [
@@ -106,13 +106,12 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_easy_run: {
-    dayLabel: 'DINSDAG',
     subtitle: 'Cardio • Aerobe basis',
     registration: 'Ascend: duur, afstand, D+, gemiddelde hartslag — via Garmin Forerunner 255 + borstband.',
     sections: [
       {
         heading: 'DOEL',
-        body: 'Aerobe basis en hardloopontwikkeling opbouwen zonder woensdag (Lower A) te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit — plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
+        body: 'Aerobe basis en hardloopontwikkeling opbouwen, de dag na Lower A, zonder je herstel of de heuvelintervallen van zaterdag te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit — plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
       },
       {
         heading: 'INTENSITEIT',
@@ -127,13 +126,13 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'je zit langdurig boven je bedoelde rustige Garmin-zone',
           'je moet bewust "pushen" om tempo vast te houden',
           'het laatste deel voelt als een tempo-/wedstrijdtraining',
-          'woensdag (Lower A) is merkbaar slechter door dinsdag',
+          'de heuvelintervallen op zaterdag zijn merkbaar slechter door deze run',
         ],
         note: 'Tempo is géén doel. Op een warme dag, met wind of vermoeidheid kan hetzelfde easy effort aanzienlijk langzamer zijn.',
       },
       {
         heading: 'WANNEER TE LANGZAAM?',
-        body: 'Bij een Easy Run is te langzaam veel minder een probleem dan te snel. Zolang je écht rustig loopt met een natuurlijke loopbeweging, hoeft het tempo niet omhoog omdat je hartslag laag is — het hoofddoel is rustig volume verzamelen zonder Lower A te beschadigen.',
+        body: 'Bij een Easy Run is te langzaam veel minder een probleem dan te snel. Zolang je écht rustig loopt met een natuurlijke loopbeweging, hoeft het tempo niet omhoog omdat je hartslag laag is — het hoofddoel is rustig volume verzamelen zonder je herstel van Lower A of de heuvelintervallen te verstoren.',
       },
       {
         heading: 'GARMIN',
@@ -146,7 +145,6 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_lower_a: {
-    dayLabel: 'WOENSDAG',
     subtitle: 'Kracht • Belangrijkste lower-body sessie',
     registration: 'Ascend: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
@@ -155,8 +153,8 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         body: 'Ontwikkelen en behouden van maximale kracht, spiermassa en robuustheid van het onderlichaam — de basis voor hardlopen en later stijgen en rugzakwerk.',
       },
       {
-        heading: 'WAAROM NA DE EASY RUN?',
-        body: 'Dinsdag is bewust rustig gehouden zodat woensdag kwaliteit kan leveren. Kracht- en duurtraining combineren is prima verdedigbaar — de praktische regel is: houd dinsdag rustig genoeg zodat Lower A niet lijdt onder de combinatie.',
+        heading: 'WAAROM MIDDEN IN DE WEEK?',
+        body: 'Lower A staat ver genoeg na het zware weekend en ver genoeg ervoor, zodat er minstens 48 uur tussen zware beendagen zit. De dag ervoor is een upperdag die je benen spaart, de dag erna een rustige Easy Run. Kracht- en duurtraining combineren is prima verdedigbaar, zolang de loop rond Lower A echt rustig blijft.',
       },
       {
         heading: 'CONTROLEPUNT',
@@ -166,7 +164,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'warming-upgewichten voelen ongewoon zwaar',
           'benen zijn iedere woensdag nog sterk vermoeid',
         ],
-        note: 'Bij dit patroon eerst dinsdag aanpassen (korter/langzamer) — niet meteen Lower A opofferen.',
+        note: 'Bij dit patroon eerst de Easy Run en het weekend lichter maken (korter/langzamer), niet meteen Lower A opofferen.',
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
@@ -174,7 +172,6 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_upper_b: {
-    dayLabel: 'DONDERDAG',
     subtitle: 'Kracht • Hypertrofie • Bovenlichaam',
     registration: 'Ascend: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
@@ -192,7 +189,6 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_bergconditie: {
-    dayLabel: 'VRIJDAG',
     subtitle: 'Alpine Base • Uphill Endurance',
     registration: 'Ascend: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
     sections: [
@@ -231,7 +227,6 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_lower_b: {
-    dayLabel: 'ZATERDAG',
     subtitle: 'Kracht • Hypertrofie • Onderlichaam',
     registration: 'Ascend: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
@@ -253,13 +248,12 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_herstel: {
-    dayLabel: 'MAANDAG',
     subtitle: 'Recovery • Rustige beweging',
     registration: 'Training is niet verplicht.',
     sections: [
       {
         heading: 'DOEL',
-        body: 'Vermoeidheid van het zware weekend (heuvelintervallen + lange duurloop) laten dalen voordat dinsdag de volgende trainingscyclus begint. Een herstelwandeling hoeft niet als prestatie behandeld te worden — geen tempo- of hartslagdoel nodig.',
+        body: 'Vermoeidheid van het zware weekend (heuvelintervallen + lange duurloop) laten dalen voordat de nieuwe week begint. Een herstelwandeling hoeft niet als prestatie behandeld te worden — geen tempo- of hartslagdoel nodig.',
       },
       { heading: 'OPTIES', items: ['volledige rust', '30–60 min rustige wandeling'] },
       { heading: 'GEEN', items: ['intervallen', 'zware incline', 'lange run', 'zware beentraining'] },
@@ -273,7 +267,6 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_hill_intervals: {
-    dayLabel: 'ZATERDAG',
     subtitle: 'Snelheid × D+ • Bergop intervaltraining',
     registration: 'Ascend: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
     sections: [
@@ -305,7 +298,6 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_long_run: {
-    dayLabel: 'ZONDAG',
     subtitle: 'Uithouding × D+ • Richting marathon en GR5',
     registration: 'Ascend: duur, afstand, D+, D-, gemiddelde hartslag, RPE.',
     sections: [
@@ -339,4 +331,16 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
 
 export function getTrainingGuide(templateId: string): TrainingDayGuide | undefined {
   return TRAINING_GUIDES[templateId];
+}
+
+// The day a guide belongs to comes from the real schedule, never a label
+// typed into this file (those went stale the moment the weekly pattern
+// changed): the session's own date when there is one, otherwise the
+// template's usual weekday, otherwise "flexibel" (e.g. Lower B, a ride).
+const WEEKDAYS_NL = ['MAANDAG', 'DINSDAG', 'WOENSDAG', 'DONDERDAG', 'VRIJDAG', 'ZATERDAG', 'ZONDAG'];
+
+export function guideDayLabel(template: Pick<SessionTemplate, 'defaultDayOfWeek'> | undefined, dateIso?: string): string {
+  if (dateIso) return WEEKDAYS_NL[isoWeekday(dateIso) - 1];
+  if (template?.defaultDayOfWeek) return WEEKDAYS_NL[template.defaultDayOfWeek - 1];
+  return 'FLEXIBEL';
 }
