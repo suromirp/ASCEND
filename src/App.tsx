@@ -3,7 +3,8 @@ import { HashRouter, Routes, Route, NavLink, useNavigate, useLocation } from 're
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
-import { UpdatePrompt } from './components/UpdatePrompt';
+import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
+import { JUST_UPDATED } from './utils/updateFlag';
 import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -81,6 +82,10 @@ function AppShell() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => playIntroDrumsOnFirstInteraction(settings.introSoundEnabled), []);
 
+  // After an update the splash has been seen already this visit: a quiet
+  // empty frame for the few ms IndexedDB needs, then the app.
+  if (loading && JUST_UPDATED) return <div className="flex-1" style={{ background: 'var(--color-bg)' }} />;
+
   if (loading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-10">
@@ -115,6 +120,7 @@ function AppShell() {
       <ChangeNotice />
       <DebriefSheet />
       <UpdatePrompt />
+      <UpdatedNotice />
       <CompletionMoment event={celebration} onDismiss={dismissCelebration} />
     </>
   );

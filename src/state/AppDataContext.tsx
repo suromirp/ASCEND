@@ -55,6 +55,7 @@ import { resolveHorizonZone } from '../engine/planningHorizon';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
+import { JUST_UPDATED } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 
 type AdviceResponse = { response: 'accepted' | 'declined'; at: string };
@@ -836,7 +837,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // floor, the splash would unmount before its later stages ever fire,
       // so the animation would "sometimes" look broken depending on how
       // fast IndexedDB happened to respond.
-      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, 2600));
+      // Right after an update (utils/updateFlag.ts) there's no splash to
+      // show, so no minimum duration either.
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, JUST_UPDATED ? 0 : 2600));
       await Promise.all([
         (async () => {
           await runBootMigrationsOnce();
