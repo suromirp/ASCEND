@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
-import { getTrainingGuide } from '../data/trainingGuide';
+import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -73,7 +73,7 @@ export function SessionActionSheet({
                 ✓ Voltooid • {completedLog.durationMinutes} min
               </p>
 
-              {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
+              {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />}
 
               <div className="mt-4">
                 {!confirmingUndo ? (
@@ -118,7 +118,7 @@ export function SessionActionSheet({
               </p>
             )}
 
-            {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
+            {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />}
 
             <div className="mt-4 flex flex-col gap-2">
               {quickComplete ? (

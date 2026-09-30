@@ -3,6 +3,7 @@ import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { adjustedSessionReasons, buildChangeLog, nextWeekChangeLines } from './changeLog';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { PlanChangeProposal } from '../models/planChange';
+import { daysBetween } from '../utils/dates';
 
 const asOf = '2026-09-30'; // Wednesday, week of 2026-09-28
 const week = '2026-09-28';
@@ -88,5 +89,29 @@ describe('change log', () => {
   it('badges and "volgende week verandert" only for changes that still stand', () => {
     expect(adjustedSessionReasons([accepted], asOf).get('x')).toBe('Betere spreiding.');
     expect(nextWeekChangeLines([accepted], planned, templates, asOf)).toEqual(['Easy Run: ma 5 oktober → di 6 oktober']);
+  });
+});
+
+describe('SAME-MUSCLE-SPACING', () => {
+  const upperHeavy = { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'heavy' } as const;
+  const ups: SessionTemplate[] = [
+    { id: 'ua', name: 'Upper A', type: 'strength', durationVariants: { full: 75 }, baseStressProfile: upperHeavy },
+    { id: 'ub', name: 'Upper B', type: 'strength', durationVariants: { full: 75 }, baseStressProfile: upperHeavy },
+    ...templates,
+  ];
+
+  it('moves the second of two heavy upper-body days so there are 48 hours between them', () => {
+    const planned = [ps('lo', 'lower', '2026-09-30'), ps('a', 'ua', '2026-10-01'), ps('b', 'ub', '2026-10-02'), ps('h', 'hike', '2026-10-04')];
+    const advice = computeAdvice(inputs({ templates: ups, plannedSessions: planned }));
+    const spacing = advice.find((x) => x.ruleId === 'SAME-MUSCLE-SPACING');
+    expect(spacing?.title).toBe('Upper A en Upper B op twee dagen achter elkaar');
+    const move = spacing?.proposal?.changes[0];
+    expect(move).toMatchObject({ plannedSessionId: 'b', action: 'move' });
+    expect(Math.abs(daysBetween('2026-10-01', move!.toDate!))).toBeGreaterThanOrEqual(2);
+  });
+
+  it('leaves the intentional hill-intervals + long-run weekend alone and ignores light sessions', () => {
+    const planned = [ps('a', 'run', '2026-10-01'), ps('b', 'upper', '2026-10-02')];
+    expect(computeAdvice(inputs({ plannedSessions: planned })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(false);
   });
 });

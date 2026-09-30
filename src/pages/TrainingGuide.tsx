@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { TRAINING_GUIDES } from '../data/trainingGuide';
+import { TRAINING_GUIDES, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
 import { Card, Eyebrow } from '../components/ui';
 
 // Fixed weekday order (Ma → Zo) rather than iterating TRAINING_GUIDES —
 // object key order isn't a contract worth relying on, and this reads in
 // the order someone actually trains in.
-const DAY_ORDER = ['tpl_herstel', 'tpl_easy_run', 'tpl_lower_a', 'tpl_upper_b', 'tpl_upper_a', 'tpl_hill_intervals', 'tpl_long_run'];
+
 
 export function TrainingGuidePage() {
   const navigate = useNavigate();
   const { templateById } = useAppData();
+  // The week as it's actually scheduled: sessions with a usual weekday in
+  // that order, then the flexible ones.
+  const dayOrder = Object.keys(TRAINING_GUIDES)
+    .filter((id) => templateById.has(id))
+    .sort((a, b) => (templateById.get(a)!.defaultDayOfWeek ?? 8) - (templateById.get(b)!.defaultDayOfWeek ?? 8));
   const [openTemplateId, setOpenTemplateId] = useState<string | null>(null);
 
   const openTemplate = openTemplateId ? templateById.get(openTemplateId) : undefined;
@@ -39,7 +44,7 @@ export function TrainingGuidePage() {
       </Card>
 
       <div className="flex flex-col gap-2">
-        {DAY_ORDER.map((templateId, i) => {
+        {dayOrder.map((templateId, i) => {
           const template = templateById.get(templateId);
           const guide = TRAINING_GUIDES[templateId];
           if (!template || !guide) return null;
@@ -52,7 +57,7 @@ export function TrainingGuidePage() {
             >
               <Card className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-medium tracking-wide" style={{ color: 'var(--color-bronze)' }}>{guide.dayLabel}</p>
+                  <p className="text-[10px] font-medium tracking-wide" style={{ color: 'var(--color-bronze)' }}>{guideDayLabel(template)}</p>
                   <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template.name}</p>
                   <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.subtitle}</p>
                 </div>
@@ -64,7 +69,7 @@ export function TrainingGuidePage() {
       </div>
 
       {openTemplate && openGuide && (
-        <TrainingGuideSheet title={openTemplate.name} guide={openGuide} onClose={() => setOpenTemplateId(null)} />
+        <TrainingGuideSheet title={openTemplate.name} guide={openGuide} dayLabel={guideDayLabel(openTemplate)} onClose={() => setOpenTemplateId(null)} />
       )}
     </div>
   );

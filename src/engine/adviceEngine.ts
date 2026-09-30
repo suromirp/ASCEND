@@ -22,12 +22,13 @@ import type { Program } from '../models/program';
 import type { InjuryNote } from '../models/injury';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { dayHasRoomFor, isLegHeavyTemplate } from './scheduler';
+import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack } from './scheduler';
+import { resolveEffectiveStressProfile } from './stressProfile';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 
-export type AdviceTrigger = 'plan_update' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
+export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
 export interface Advice {
   id: string; // deterministic (rule + subject) — a response to it sticks
@@ -247,6 +248,76 @@ function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
   }];
 }
 
+// --- Rule SAME-MUSCLE-SPACING ------------------------------------------------
+// Trigger: in the coming week, two sessions that load the SAME muscles
+// heavily (both heavy for the upper body, or both heavy for the legs) sit
+// on consecutive days — e.g. Upper A and Upper B, both chest/back/
+// shoulders. A pairing the program marks as intentional (hill intervals +
+// long run: running the long one on tired legs is the point) is left alone.
+// Rule: heavy work for the same muscles ~48 hours apart, the same spacing
+// ASCEND already keeps between two heavy leg days. Effect: move the later
+// one to the nearest day in its week that keeps 48 hours from every other
+// heavy session for those muscles and has room — or, if there is none,
+// advise to keep it lighter.
+type HeavyAxis = 'upperBodyLoad' | 'lowerBodyLoad';
+const AXIS_LABEL: Record<HeavyAxis, string> = { upperBodyLoad: 'bovenlichaam', lowerBodyLoad: 'benen' };
+
+function heavyAxes(template: SessionTemplate): HeavyAxis[] {
+  const profile = resolveEffectiveStressProfile(template);
+  return (['upperBodyLoad', 'lowerBodyLoad'] as HeavyAxis[]).filter((axis) => profile[axis] === 'heavy');
+}
+
+function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const upcoming = inputs.plannedSessions
+    .filter((s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate >= inputs.asOf && daysBetween(inputs.asOf, s.scheduledDate) <= 7)
+    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+  const advice: Advice[] = [];
+  const handled = new Set<string>();
+
+  for (const a of upcoming) {
+    for (const b of upcoming) {
+      if (daysBetween(a.scheduledDate, b.scheduledDate) !== 1 || handled.has(b.id)) continue;
+      const ta = templateById.get(a.templateId);
+      const tb = templateById.get(b.templateId);
+      if (!ta || !tb || isIntentionalBackToBack(ta, tb)) continue;
+      const shared = heavyAxes(ta).filter((axis) => heavyAxes(tb).includes(axis));
+      if (shared.length === 0) continue;
+      handled.add(b.id);
+
+      const week = inputs.plannedSessions.filter((s) => s.weekStartDate === b.weekStartDate && s.id !== b.id && s.status !== 'skipped');
+      const keepsSpacing = (date: string) => week.every((other) => {
+        const t = templateById.get(other.templateId);
+        if (!t || !heavyAxes(t).some((axis) => shared.includes(axis) || heavyAxes(tb).includes(axis))) return true;
+        return Math.abs(daysBetween(other.scheduledDate, date)) >= 2;
+      });
+      const candidates = weekDates(b.weekStartDate)
+        .filter((d) => d >= inputs.asOf && d !== b.scheduledDate && keepsSpacing(d)
+          && dayHasRoomFor(d, tb, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference))
+        .sort((x, y) => Math.abs(daysBetween(b.scheduledDate, x)) - Math.abs(daysBetween(b.scheduledDate, y)));
+      const muscles = shared.map((axis) => AXIS_LABEL[axis]).join(' en ');
+      const title = `${ta.name} en ${tb.name} op twee dagen achter elkaar`;
+      const why = `Trigger: twee zware sessies voor hetzelfde ${muscles} op opeenvolgende dagen. Regel: zware training voor dezelfde spieren ligt ongeveer 48 uur uit elkaar, zodat ze kunnen herstellen.`;
+      const target = candidates[0];
+      if (!target) {
+        advice.push({ id: `spacing:${b.id}:${b.scheduledDate}`, trigger: 'same_muscles_back_to_back', ruleId: 'SAME-MUSCLE-SPACING', title, effect: `Er is deze week geen dag met 48 uur ertussen. Houd ${tb.name} op ${shortDate(b.scheduledDate)} lichter, of kies de korte variant.`, why, priority: 3 });
+        continue;
+      }
+      advice.push({
+        id: `spacing:${b.id}:${b.scheduledDate}`,
+        trigger: 'same_muscles_back_to_back',
+        ruleId: 'SAME-MUSCLE-SPACING',
+        title,
+        effect: `${tb.name} naar ${shortDate(target)}, zodat er 48 uur tussen zit.`,
+        why,
+        priority: 3,
+        proposal: proposal(title, [{ plannedSessionId: b.id, action: 'move', fromDate: b.scheduledDate, toDate: target, reason: `48 uur tussen zware training voor hetzelfde ${muscles}.`, generatedBy: ['engine/adviceEngine.ts', 'SAME-MUSCLE-SPACING'] }], `${tb.name} schuift naar ${shortDate(target)}.`, why),
+      });
+    }
+  }
+  return advice;
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   return [
@@ -255,6 +326,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...tooLightAdvice(inputs, templateById),
     ...injuryAdvice(inputs, templateById),
     ...strengthAdvice(inputs, templateById),
+    ...spacingAdvice(inputs, templateById),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
-import { getTrainingGuide } from '../data/trainingGuide';
+import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
+import { todayISO } from '../utils/dates';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 
@@ -56,7 +57,7 @@ export function TodayMissionCard({
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
       </div>
 
-      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
+      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
       {quickComplete ? (
         <div>
