@@ -112,12 +112,13 @@ function buildPlan(
   zoneLabel: 'forecast' | 'committed',
   program: Program | null | undefined,
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
+  asOf?: string,
 ): PlanChangeProposal {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const target = buildReconciliationTarget(strategy, source);
 
   const { items, alternatives, noFreeDayWeekCount } = reconcileWeeksComposition(
-    weekStarts, target, plannedSessions, templateById, availability, protectedSessionIds, goalOverviews, sessionLogs, program, sameDayPairingPreference,
+    weekStarts, target, plannedSessions, templateById, availability, protectedSessionIds, goalOverviews, sessionLogs, program, sameDayPairingPreference, asOf,
   );
 
   // Training-load overlap (lowerBodyLoad included) is a soft cost inside
@@ -213,7 +214,11 @@ export function computeStrengthPlacementPlanForCommittedRange(
   program?: Program | null,
   sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
 ): PlanChangeProposal {
-  const protectedSessionIds = new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
+  // Logged sessions and anything on a day that has already passed stay put.
+  const protectedSessionIds = new Set([
+    ...sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id),
+    ...plannedSessions.filter((s) => s.scheduledDate < asOf).map((s) => s.id),
+  ]);
 
   return buildPlan(
     committedWeekStartDates(asOf),
@@ -228,5 +233,6 @@ export function computeStrengthPlacementPlanForCommittedRange(
     'committed',
     program,
     sameDayPairingPreference,
+    asOf,
   );
 }

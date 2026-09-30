@@ -1,7 +1,7 @@
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
-import { addDays, daysBetween, mondayOfWeek, weekDates, weekdayOf } from '../utils/dates';
+import { addDays, daysBetween, mondayOfWeek, todayISO, weekDates, weekdayOf } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { detectRecentSpike } from './progressionSpikes';
 import { resolveEffectiveFullDuration } from './substitutions';
@@ -199,6 +199,10 @@ export function proposeMove(
   program?: Program | null,
   dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>,
   sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
+  // Days before this date are history: the cascade never moves a session
+  // onto one, and never moves a session that already lies there or is
+  // already logged (production feedback: Upper B jumped to yesterday).
+  asOf: string = todayISO(),
 ): ScheduleProposal {
   const templateMap = new Map(templates.map((t) => [t.id, t]));
   const session = weekSessions.find((s) => s.id === sessionId);
@@ -261,6 +265,15 @@ export function proposeMove(
     };
   }
 
+  const conflictIsHistory = conflicting.scheduledDate < asOf || recentLogs.some((l) => l.plannedSessionId === conflicting.id);
+  if (conflictIsHistory) {
+    return {
+      changes,
+      reason: `Let op: dit valt dicht op ${templateName(templateMap, conflicting.templateId)}, ook zwaar voor ${conflictMuscles}. Die is al geweest, dus die blijft staan. Liefst ongeveer 48 uur ertussen.`,
+      resolved: false,
+    };
+  }
+
   const fixedExistingSessions = simulated.filter((s) => s.id !== conflicting.id);
   const toPlace: PlacementRequest[] = [{ template: conflictingTemplate, source: 'cascade', sessionId: conflicting.id }];
   const monday = mondayOfWeek(targetDate);
@@ -277,6 +290,7 @@ export function proposeMove(
     return weekDates(monday).filter(
       (d) =>
         d !== conflicting.scheduledDate &&
+        d >= asOf &&
         dayHasRoomFor(d, template, [...fixedExistingSessions, ...tentativeAsSessions], templateMap, program, dailyTimeBudget, sameDayPairingPreference),
     );
   };
@@ -362,7 +376,7 @@ export function proposeNoTimeToday(
       (d) => !candidateTemplate || dayHasRoomFor(d, candidateTemplate, working, templateById, program, dailyTimeBudget, sameDayPairingPreference),
     );
     if (freeDay) {
-      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs, program, dailyTimeBudget, sameDayPairingPreference);
+      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, todayDate);
       proposals.push(proposal);
       working = working.map((s) => {
         const change = proposal.changes.find((c) => c.sessionId === s.id);

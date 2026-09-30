@@ -177,6 +177,9 @@ export function reconcileWeekComposition(
   sessionLogs: SessionLog[],
   program: Program | null | undefined,
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
+  // Committed-range callers pass today: no placement ever lands on a day
+  // that has already passed.
+  asOf?: string,
 ): WeekReconciliation {
   const items: PlanChangeItem[] = [];
   let noFreeDay = false;
@@ -205,6 +208,7 @@ export function reconcileWeekComposition(
       }));
       return weekDates(weekStart).filter(
         (date) =>
+          (!asOf || date >= asOf) &&
           isDateAvailable(date, availability) &&
           dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
       );
@@ -275,6 +279,7 @@ export function reconcileWeekComposition(
       }));
       return weekDates(weekStart).filter(
         (date) =>
+          (!asOf || date >= asOf) &&
           isDateAvailable(date, availability) &&
           dayHasRoomFor(date, template, [...baseWeekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
       );
@@ -319,6 +324,7 @@ export function reconcileWeekComposition(
         }));
         return weekDates(weekStart).filter(
           (date) =>
+            (!asOf || date >= asOf) &&
             isDateAvailable(date, availability) &&
             dayHasRoomFor(date, template, [...fixedForReflow, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
         );
@@ -530,6 +536,7 @@ export function reconcileWeeksComposition(
   sessionLogs: SessionLog[],
   program: Program | null | undefined,
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
+  asOf?: string,
 ): WeeksReconciliation {
   const items: PlanChangeItem[] = [];
   const alternatives: PlanChangeAlternative[] = [];
@@ -537,7 +544,7 @@ export function reconcileWeeksComposition(
 
   for (const weekStart of weekStarts) {
     const week = reconcileWeekComposition(
-      weekStart, target, plannedSessions, templateById, availability, protectedSessionIds, goalOverviews, sessionLogs, program, sameDayPairingPreference,
+      weekStart, target, plannedSessions, templateById, availability, protectedSessionIds, goalOverviews, sessionLogs, program, sameDayPairingPreference, asOf,
     );
     items.push(...week.items);
     alternatives.push(...week.alternatives);

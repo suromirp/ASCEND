@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor } from './scheduler';
 import { daysBetween } from '../utils/dates';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
@@ -51,6 +51,15 @@ const THU = '2026-09-10';
 const FRI = '2026-09-11';
 const SAT = '2026-09-12';
 const SUN = '2026-09-13';
+
+// "Today" is the Monday of the test week, so no day in it lies in the past.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(`${MON}T08:00:00`));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('proposeMove', () => {
   it('resolves with a single change when the target day has no leg-heavy conflict', () => {
@@ -133,7 +142,12 @@ describe('proposeMove', () => {
     expect(withoutHeavyLog.resolved).toBe(true); // 2 days out — fine under the plain 1-day rule
 
     const withHeavyLog = proposeMove(week, templates, 'c', WED, recentLogs);
-    expect(withHeavyLog.changes.length).toBeGreaterThan(1); // now cascaded away — Wednesday conflicts once Monday's session is flagged heavy
+    // Wednesday now conflicts once Monday's session is flagged heavy. That
+    // session is already logged, so it is history: it stays put and the
+    // move comes with a warning instead of a cascade.
+    expect(withHeavyLog.resolved).toBe(false);
+    expect(withHeavyLog.changes).toHaveLength(1);
+    expect(withHeavyLog.reason).toMatch(/al geweest/);
   });
 
   // Time-budget scheduling redesign (Fase 3) + Groep C: the cascade's
@@ -283,6 +297,18 @@ describe('proposeMove — same heavy upper-body muscles', () => {
     expect(proposal.reason).toMatch(/bovenlichaam/);
     const cascade = proposal.changes.find((c) => c.sessionId === 'b');
     expect(cascade).toBeDefined();
+    expect(Math.abs(daysBetween(THU, cascade!.toDate))).toBeGreaterThanOrEqual(2);
+  });
+
+  // Production feedback: Upper A moved to Thursday, and Upper B (Friday)
+  // was pushed to Tuesday, which was already yesterday.
+  it('never cascades onto a day that has already passed', () => {
+    vi.setSystemTime(new Date(`${WED}T08:00:00`));
+    const week = [session('a', 'upper_a', TUE, MON), session('b', 'upper_b', FRI, MON), session('r', 'tpl_easy_run', THU, MON)];
+    const proposal = proposeMove(week, tpls, 'a', THU);
+    const cascade = proposal.changes.find((c) => c.sessionId === 'b');
+    expect(cascade).toBeDefined();
+    expect(cascade!.toDate >= WED).toBe(true);
     expect(Math.abs(daysBetween(THU, cascade!.toDate))).toBeGreaterThanOrEqual(2);
   });
 
