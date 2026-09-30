@@ -64,14 +64,14 @@ describe('cycling transfer (Fase 4)', () => {
   });
 });
 
-describe('weeklyPatternTemplates', () => {
-  it('adds the ride on the chosen day only for a weekly ride with cycling on, and drops sports that are off', async () => {
-    const { weeklyPatternTemplates } = await import('./sports');
+describe('weeklyPatternTemplates / fixedFrequencySports', () => {
+  it('drops sports that are off and lists only enabled sports with a number per week', async () => {
+    const { weeklyPatternTemplates, fixedFrequencySports } = await import('./sports');
     const run: SessionTemplate = { id: 'run', name: 'Easy Run', type: 'cardio', durationVariants: { full: 30 }, defaultDayOfWeek: 2 };
     const bike: SessionTemplate = { id: 'tpl_bike', name: 'Fietstocht', type: 'cardio', sport: 'cycling', durationVariants: { full: 90 } };
     const on = { running: true, hiking: true, cycling: true };
-    expect(weeklyPatternTemplates([run, bike], { enabledSports: on, cyclingMode: 'alternative', cyclingDay: 6 }).map((t) => t.id)).toEqual(['run']);
-    expect(weeklyPatternTemplates([run, bike], { enabledSports: on, cyclingMode: 'weekly', cyclingDay: 6 }).map((t) => [t.id, t.defaultDayOfWeek])).toEqual([['run', 2], ['tpl_bike', 6]]);
-    expect(weeklyPatternTemplates([run, bike], { enabledSports: { ...on, running: false, cycling: false }, cyclingMode: 'weekly', cyclingDay: 6 })).toEqual([]);
+    expect(weeklyPatternTemplates([run, bike], { enabledSports: on }).map((t) => t.id)).toEqual(['run']);
+    expect(weeklyPatternTemplates([run, bike], { enabledSports: { ...on, running: false } })).toEqual([]);
+    expect(fixedFrequencySports({ enabledSports: { ...on, hiking: false }, sportFrequency: { cycling: 2, hiking: 1, running: undefined } })).toEqual(['cycling']);
   });
 });

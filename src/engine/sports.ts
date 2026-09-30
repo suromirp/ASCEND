@@ -51,23 +51,22 @@ export function isIndoorLog(log: Pick<SessionLog, 'cardioData' | 'outdoorData'>)
   return findModalityByKey(data?.modality)?.environment === 'indoor';
 }
 
-export type CyclingMode = 'alternative' | 'weekly';
-
 export interface PatternSettings {
   enabledSports?: Partial<EnabledSports>;
-  cyclingMode?: CyclingMode;
-  cyclingDay?: number;
+  sportFrequency?: Partial<Record<Sport, number>>;
 }
 
-// The weekly pattern ASCEND builds a week from, shaped by the user's own
-// settings: sports that are off drop out, and with cycling on as a weekly
-// ride the cycling session gets that day. Used by the clean restart and by
-// switching a sport or the ride day on, so all of them agree.
+// The weekly pattern ASCEND builds a week from, shaped by the user's
+// settings: sports that are off drop out. A sport with a fixed number per
+// week is then brought to that number by engine/sportFrequency.ts.
 export function weeklyPatternTemplates(templates: SessionTemplate[], settings: PatternSettings): SessionTemplate[] {
-  const result = templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports));
-  if (isSportEnabled('cycling', settings.enabledSports) && settings.cyclingMode === 'weekly' && settings.cyclingDay) {
-    const ride = templates.find((t) => templateSport(t) === 'cycling' && !t.defaultDayOfWeek);
-    if (ride) result.push({ ...ride, defaultDayOfWeek: settings.cyclingDay });
-  }
-  return result;
+  return templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports));
+}
+
+// Sports the user pinned to a number per week — the automatic weekly
+// planning leaves those counts alone.
+export function fixedFrequencySports(settings: PatternSettings): Sport[] {
+  return (Object.entries(settings.sportFrequency ?? {}) as [Sport, number | undefined][])
+    .filter(([sport, n]) => n !== undefined && n > 0 && isSportEnabled(sport, settings.enabledSports))
+    .map(([sport]) => sport);
 }
