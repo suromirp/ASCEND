@@ -567,6 +567,30 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
     expect(proposal.changes.some((c) => c.plannedSessionId === 'leftover')).toBe(false);
   });
 
+  // Production feedback: "waarom plant hij upper b voor a?" A clean start on
+  // Wednesday leaves Upper A (Tuesday) behind in the past, Upper B stays on
+  // Friday, and the missing Upper A used to land on Sunday, after B.
+  it('keeps Upper A before Upper B when the missing one is added mid-week, and never before today', () => {
+    const week = [
+      session('lower', 'tpl_lower_a', '2026-09-09', COMMITTED_MONDAY_1),
+      session('easy', 'tpl_easy_run', '2026-09-10', COMMITTED_MONDAY_1),
+      session('upperB', 'tpl_upper_b', '2026-09-11', COMMITTED_MONDAY_1),
+      session('hill', 'tpl_hill', '2026-09-12', COMMITTED_MONDAY_1),
+    ];
+    // Sunday is the only free day left, so the search puts Upper A there.
+    const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), week, templates, availability(), [], ASOF, []);
+    const inWeek = proposal.changes.filter((c) => c.action !== 'add' || c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
+    const dateOf = (templateId: string, fallback?: string) =>
+      inWeek.find((c) => c.action === 'add' && c.newSessionDraft?.templateId === templateId)?.newSessionDraft?.scheduledDate ?? fallback;
+    const upperA = dateOf('tpl_upper_a');
+    const upperBRemoved = inWeek.some((c) => c.action === 'remove' && c.plannedSessionId === 'upperB');
+    const upperB = upperBRemoved ? dateOf('tpl_upper_b') : '2026-09-11';
+    expect(upperA).toBeDefined();
+    expect(upperB).toBeDefined();
+    expect(upperA! >= ASOF).toBe(true);
+    expect(upperA! < upperB!).toBe(true);
+  });
+
   it('widens the required gap around a session logged unusually heavy (RPE 9), sports-science review Fase 2', () => {
     const hike = session('hike', 'tpl_long_run', '2026-09-08', COMMITTED_MONDAY_1); // Tuesday
     const heavyLog: SessionLog = {
