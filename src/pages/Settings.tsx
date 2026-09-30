@@ -12,7 +12,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import { classifyChangeImpact, describeChanges, needsConfirmation, CHANGE_APPLY_MODE_LABEL, type ChangeApplyMode } from '../engine/changeImpact';
 import { computeScheduleFit, computeSportDisableProposal } from '../engine/scheduleFit';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, type Sport } from '../engine/sports';
-import { todayISO } from '../utils/dates';
+import { todayISO, resolveProgramWeek } from '../utils/dates';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const WEEKDAY_LABELS_NL: Record<Weekday, string> = {
@@ -61,7 +61,7 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const {
     loading, exportData, resetSchedule, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
-    rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById,
+    rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById, restartProgram,
   } = useAppData();
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [tab, setTab] = useState<SettingsTab>(readStoredTab);
@@ -76,6 +76,9 @@ export function SettingsPage() {
   const [showBaselineEditor, setShowBaselineEditor] = useState(false);
   const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
   const [pending, setPending] = useState<PendingImpact | null>(null);
+  const [confirmingRestart, setConfirmingRestart] = useState(false);
+  const [restartFrom, setRestartFrom] = useState<'this_week' | 'next_week'>('this_week');
+  const position = program ? resolveProgramWeek(program, todayISO()) : null;
   const [applying, setApplying] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const supportsPreferredDirectory = webBackupFileAdapter.supportsPreferredDirectory();
@@ -257,6 +260,46 @@ export function SettingsPage() {
 
       {tab === 'training' && (
         <>
+          <Card className="flex flex-col gap-3">
+            <Eyebrow>PROGRAMMA</Eyebrow>
+            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+              {position
+                ? `Je staat nu in week ${position.weekInProgram} van ${position.totalWeeksInProgram}, ${position.phase.name.toLowerCase()}.`
+                : 'Deze week valt buiten het programma.'}
+            </p>
+            {!confirmingRestart ? (
+              <SecondaryButton onClick={() => setConfirmingRestart(true)}>OPNIEUW BEGINNEN BIJ WEEK 1</SecondaryButton>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <OptionList
+                  options={[
+                    { value: 'this_week' as const, label: 'Deze week is week 1', note: 'De weektelling en opbouw beginnen deze week opnieuw.' },
+                    { value: 'next_week' as const, label: 'Volgende week is week 1', note: 'Deze week telt nog niet mee, het programma begint aankomende maandag.' },
+                  ]}
+                  value={restartFrom}
+                  onChange={setRestartFrom}
+                />
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                  Alleen de weektelling verschuift, en daarmee de opbouw per week. Wat er gepland staat en je geschiedenis blijven zoals ze zijn.
+                </p>
+                <div className="flex gap-3">
+                  <SecondaryButton onClick={() => setConfirmingRestart(false)}>ANNULEREN</SecondaryButton>
+                  <PrimaryButton
+                    fullWidth={false}
+                    onClick={async () => {
+                      await restartProgram(restartFrom);
+                      setConfirmingRestart(false);
+                      note('program', restartFrom === 'this_week' ? 'Deze week is nu week 1.' : 'Volgende week wordt week 1.');
+                    }}
+                  >
+                    BEVESTIGEN
+                  </PrimaryButton>
+                </div>
+              </div>
+            )}
+            <SectionNote text={notes.program} />
+          </Card>
+
           <Card className="flex flex-col gap-3">
             <Eyebrow>SPORTEN</Eyebrow>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>

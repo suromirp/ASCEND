@@ -746,6 +746,40 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
   await putAll('plannedSessions', newSessions);
 }
 
+// "Opnieuw beginnen bij week 1" (Settings → Training). Only moves where
+// week 1 starts — weeks are derived from Program.startDate (CLAUDE.md), so
+// every week number, phase and week-in-phase progression target shifts
+// with it. Unlike resetScheduleToDefault, nothing already planned is
+// deleted or moved (the user's own placement, strength block included) and
+// history is untouched. The one thing added: default-pattern sessions for
+// weeks inside the new program span that have no sessions at all yet
+// (the extra week(s) at the end when week 1 moves later), from today on.
+export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_week'): Promise<void> {
+  const [programs, existingSessions] = await Promise.all([ProgramsRepo.getAll(), PlannedSessionsRepo.getAll()]);
+  const program = programs[0];
+  if (!program) return;
+
+  const thisMonday = mondayOfWeek(todayISO());
+  const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
+  await ProgramsRepo.put({ ...program, startDate: newStart });
+
+  const weeksWithSessions = new Set(existingSessions.map((s) => s.weekStartDate));
+  const today = todayISO();
+  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
+  const templatesWithDay = (await SessionTemplatesRepo.getAll()).filter((t) => t.defaultDayOfWeek);
+  const newSessions: PlannedSession[] = [];
+  for (let week = 0; week < totalWeeks; week++) {
+    const weekStart = addDays(newStart, week * 7);
+    if (weeksWithSessions.has(weekStart)) continue;
+    templatesWithDay.forEach((t, order) => {
+      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
+      if (date < today) return;
+      newSessions.push({ id: makeId('planned'), templateId: t.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order });
+    });
+  }
+  if (newSessions.length > 0) await putAll('plannedSessions', newSessions);
+}
+
 // --- atomic multi-store backup writes -----------------------------------
 
 // One write set per store: `clear` wipes the store before `puts` are

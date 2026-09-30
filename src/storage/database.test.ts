@@ -4,6 +4,7 @@ import {
   seedIfEmpty,
   resetScheduleToDefault,
   resetToDemoData,
+  restartProgramAtWeekOne,
   ProgramsRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
@@ -220,5 +221,36 @@ describe('resetToDemoData', () => {
     await migrateToGoalEngine();
     const afterReset = await TrainingGoalsRepo.getAll();
     expect(afterReset.some((g) => g.name === 'Marathon')).toBe(false);
+  });
+});
+
+describe('restartProgramAtWeekOne', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  it('makes this week week 1 without deleting or moving anything already planned', async () => {
+    const [program] = await ProgramsRepo.getAll();
+    await ProgramsRepo.put({ ...program, startDate: addDays(mondayOfWeek(todayISO()), -7) }); // user is "in week 2"
+    const before = await PlannedSessionsRepo.getAll();
+
+    await restartProgramAtWeekOne('this_week');
+
+    const [after] = await ProgramsRepo.getAll();
+    expect(after.startDate).toBe(mondayOfWeek(todayISO()));
+    const sessions = await PlannedSessionsRepo.getAll();
+    const byId = new Map(sessions.map((s) => [s.id, s]));
+    for (const s of before) expect(byId.get(s.id)).toEqual(s);
+    // the program's last week (now one week later) gets its sessions
+    const totalWeeks = after.phases.reduce((sum, p) => sum + p.weekCount, 0);
+    const lastWeek = addDays(after.startDate, (totalWeeks - 1) * 7);
+    expect(sessions.some((s) => s.weekStartDate === lastWeek)).toBe(true);
+  });
+
+  it('can start week 1 next week', async () => {
+    await restartProgramAtWeekOne('next_week');
+    const [after] = await ProgramsRepo.getAll();
+    expect(after.startDate).toBe(addDays(mondayOfWeek(todayISO()), 7));
   });
 });

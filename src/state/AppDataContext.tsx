@@ -34,6 +34,7 @@ import {
   StretchCompletionRepo,
   resetToDemoData,
   resetScheduleToDefault,
+  restartProgramAtWeekOne,
   DEFAULT_SETTINGS,
   type AppSettings,
   type StretchCompletion,
@@ -190,6 +191,9 @@ interface AppData {
   // (storage/database.ts#resetScheduleToDefault's own comment has the full
   // reasoning — production bug: the old wiring silently wiped all of that).
   resetSchedule: (startFrom: 'this_week' | 'next_week') => Promise<void>;
+  // Moves week 1 of the program to this or next week, keeping the
+  // planning and history as they are (storage/database.ts).
+  restartProgram: (startFrom: 'this_week' | 'next_week') => Promise<void>;
   // "Reset alles / nieuwe aanbevelingen" (production feedback: the strength
   // review and the forecast replan both only ever run once at app boot —
   // there was no way to ask ASCEND to look again after changing something
@@ -1317,6 +1321,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     resetSchedule: async (startFrom) => {
       await resetScheduleToDefault(startFrom);
+      await refresh();
+    },
+    restartProgram: async (startFrom) => {
+      await restartProgramAtWeekOne(startFrom);
       await refresh();
     },
     rebuildRecommendations,
