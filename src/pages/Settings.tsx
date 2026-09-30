@@ -11,8 +11,8 @@ import type { Weekday, DailyTimeBudget, TrainingStrategyProfile } from '../model
 import type { PlanChangeProposal } from '../models/planChange';
 import { classifyChangeImpact, describeChanges, needsConfirmation, CHANGE_APPLY_MODE_LABEL, type ChangeApplyMode } from '../engine/changeImpact';
 import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProposal } from '../engine/scheduleFit';
-import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, type Sport } from '../engine/sports';
-import { todayISO, resolveProgramWeek } from '../utils/dates';
+import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTemplates, type Sport, type PatternSettings } from '../engine/sports';
+import { todayISO, resolveProgramWeek, isoWeekday } from '../utils/dates';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const WEEKDAY_LABELS_NL: Record<Weekday, string> = {
@@ -142,26 +142,59 @@ export function SettingsPage() {
     await route('budget', label, scheduleFitFor(label, nextBudget, goalEngineConfig.strategy.sameDayPairingPreference));
   }
 
+  const CYCLING_ALTERNATIVE_NOTE = 'Fietsen staat aan als alternatief. Bij rustige cardiosessies (Easy Run, Bergconditie, Herstel) zie je dat een rit ook mag; je kiest het bij het afvinken. Er komt niets extra bij in je planning.';
+  const cyclingMode = settings.cyclingMode ?? 'alternative';
+  const cyclingDay = settings.cyclingDay ?? 6;
+
+  function isSportSession(sport: Sport) {
+    return (s: { templateId: string }) => { const t = templateById.get(s.templateId); return t ? templateSport(t) === sport : false; };
+  }
+
+  // Adds the sport's sessions from the (settings-shaped) weekly pattern to
+  // upcoming weeks, optionally after removing the given sessions first.
+  async function addSportFromPattern(sport: Sport, title: string, patternSettings: PatternSettings, removeFirst: PlanChangeProposal | null) {
+    const sportPattern = weeklyPatternTemplates(templates, patternSettings).filter((t) => templateSport(t) === sport);
+    const removedIds = new Set((removeFirst?.changes ?? []).map((c) => c.plannedSessionId));
+    const remaining = plannedSessions.filter((x) => !removedIds.has(x.id));
+    const { proposal } = computeSportEnableProposal(
+      sportPattern, SPORT_LABEL[sport], remaining, templates, program,
+      goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+    );
+    if (removeFirst && removeFirst.changes.length > 0) {
+      proposal.changes = [...removeFirst.changes, ...proposal.changes];
+      proposal.consequences = `${removeFirst.consequences} ${proposal.consequences}`;
+    }
+    await route('sports', title, proposal);
+  }
+
   async function handleSportToggle(sport: Sport, on: boolean) {
-    await updateSettings({ enabledSports: { ...enabledSports, [sport]: on } });
+    const nextEnabled = { ...enabledSports, [sport]: on };
+    await updateSettings({ enabledSports: nextEnabled });
     if (on) {
-      const sportTemplates = templates.filter((t) => templateSport(t) === sport);
-      if (!sportTemplates.some((t) => t.defaultDayOfWeek)) {
-        note('sports', `${SPORT_LABEL[sport]} staat aan. Er is geen vaste dag voor in je weekschema, dus er verandert nu niets aan je planning. Je kunt ritten altijd loggen via Vandaag.`);
+      if (sport === 'cycling' && cyclingMode === 'alternative') {
+        note('sports', CYCLING_ALTERNATIVE_NOTE);
         return;
       }
-      const { proposal } = computeSportEnableProposal(
-        sportTemplates, SPORT_LABEL[sport], plannedSessions, templates, program,
-        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
-      );
-      await route('sports', `${SPORT_LABEL[sport]} weer aangezet`, proposal);
+      await addSportFromPattern(sport, `${SPORT_LABEL[sport]} weer aangezet`, { enabledSports: nextEnabled, cyclingMode, cyclingDay }, null);
       return;
     }
-    const proposal = computeSportDisableProposal(
-      (s) => { const t = templateById.get(s.templateId); return t ? templateSport(t) === sport : false; },
-      SPORT_LABEL[sport], plannedSessions, sessionLogs, todayISO(),
-    );
+    const proposal = computeSportDisableProposal(isSportSession(sport), SPORT_LABEL[sport], plannedSessions, sessionLogs, todayISO());
     await route('sports', `${SPORT_LABEL[sport]} uitgezet`, proposal);
+  }
+
+  async function handleCyclingUse(mode: 'alternative' | 'weekly', day: number) {
+    await updateSettings({ cyclingMode: mode, cyclingDay: day });
+    const today = todayISO();
+    if (mode === 'alternative') {
+      const proposal = computeSportDisableProposal(isSportSession('cycling'), 'Vaste fietsrit', plannedSessions, sessionLogs, today);
+      if (proposal.changes.length === 0) { note('sports', CYCLING_ALTERNATIVE_NOTE); return; }
+      await route('sports', 'Fietsen als alternatief', proposal);
+      return;
+    }
+    // Weekly ride: rides on another weekday move to the chosen day.
+    const onOtherDay = (x: { templateId: string; scheduledDate: string }) => isSportSession('cycling')(x) && isoWeekday(x.scheduledDate) !== day;
+    const removeFirst = computeSportDisableProposal(onOtherDay, 'Fietsrit op een andere dag', plannedSessions, sessionLogs, today);
+    await addSportFromPattern('cycling', `Vaste fietsrit op ${WEEKDAY_LABELS_NL[WEEKDAY_ORDER[day - 1]].toLowerCase()}`, { enabledSports, cyclingMode: 'weekly', cyclingDay: day }, removeFirst);
   }
 
   async function applyPending() {
@@ -328,6 +361,33 @@ export function SettingsPage() {
                 <Toggle checked={enabledSports[sport]} onChange={(v) => void handleSportToggle(sport, v)} label={SPORT_LABEL[sport]} />
               </div>
             ))}
+            {enabledSports.cycling && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe wil je fietsen?</p>
+                <OptionList
+                  options={[
+                    { value: 'alternative' as const, label: 'Als alternatief', note: 'Een rit mag in plaats van een rustige cardiosessie. Er komt niets bij.' },
+                    { value: 'weekly' as const, label: 'Vaste rit per week', note: 'Er komt elke week een Fietstocht bij op de dag die je kiest.' },
+                  ]}
+                  value={cyclingMode}
+                  onChange={(m) => void handleCyclingUse(m, cyclingDay)}
+                />
+                {cyclingMode === 'weekly' && (
+                  <div className="flex gap-1">
+                    {WEEKDAY_ORDER.map((d, i) => (
+                      <button
+                        key={d}
+                        onClick={() => void handleCyclingUse('weekly', i + 1)}
+                        className="flex-1 rounded-lg border py-1.5 text-xs"
+                        style={{ borderColor: cyclingDay === i + 1 ? 'var(--color-gold)' : 'var(--color-card-border)', color: cyclingDay === i + 1 ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+                      >
+                        {WEEKDAY_LABELS_NL[d].slice(0, 2).toLowerCase()}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <SectionNote text={notes.sports} />
           </Card>
 

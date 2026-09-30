@@ -63,3 +63,15 @@ describe('cycling transfer (Fase 4)', () => {
     expect(keys.some((k) => k.discipline === 'running')).toBe(false);
   });
 });
+
+describe('weeklyPatternTemplates', () => {
+  it('adds the ride on the chosen day only for a weekly ride with cycling on, and drops sports that are off', async () => {
+    const { weeklyPatternTemplates } = await import('./sports');
+    const run: SessionTemplate = { id: 'run', name: 'Easy Run', type: 'cardio', durationVariants: { full: 30 }, defaultDayOfWeek: 2 };
+    const bike: SessionTemplate = { id: 'tpl_bike', name: 'Fietstocht', type: 'cardio', sport: 'cycling', durationVariants: { full: 90 } };
+    const on = { running: true, hiking: true, cycling: true };
+    expect(weeklyPatternTemplates([run, bike], { enabledSports: on, cyclingMode: 'alternative', cyclingDay: 6 }).map((t) => t.id)).toEqual(['run']);
+    expect(weeklyPatternTemplates([run, bike], { enabledSports: on, cyclingMode: 'weekly', cyclingDay: 6 }).map((t) => [t.id, t.defaultDayOfWeek])).toEqual([['run', 2], ['tpl_bike', 6]]);
+    expect(weeklyPatternTemplates([run, bike], { enabledSports: { ...on, running: false, cycling: false }, cyclingMode: 'weekly', cyclingDay: 6 })).toEqual([]);
+  });
+});

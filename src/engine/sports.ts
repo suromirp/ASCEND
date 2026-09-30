@@ -50,3 +50,24 @@ export function isIndoorLog(log: Pick<SessionLog, 'cardioData' | 'outdoorData'>)
   if (data?.environment === 'treadmill') return true;
   return findModalityByKey(data?.modality)?.environment === 'indoor';
 }
+
+export type CyclingMode = 'alternative' | 'weekly';
+
+export interface PatternSettings {
+  enabledSports?: Partial<EnabledSports>;
+  cyclingMode?: CyclingMode;
+  cyclingDay?: number;
+}
+
+// The weekly pattern ASCEND builds a week from, shaped by the user's own
+// settings: sports that are off drop out, and with cycling on as a weekly
+// ride the cycling session gets that day. Used by the clean restart and by
+// switching a sport or the ride day on, so all of them agree.
+export function weeklyPatternTemplates(templates: SessionTemplate[], settings: PatternSettings): SessionTemplate[] {
+  const result = templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports));
+  if (isSportEnabled('cycling', settings.enabledSports) && settings.cyclingMode === 'weekly' && settings.cyclingDay) {
+    const ride = templates.find((t) => templateSport(t) === 'cycling' && !t.defaultDayOfWeek);
+    if (ride) result.push({ ...ride, defaultDayOfWeek: settings.cyclingDay });
+  }
+  return result;
+}

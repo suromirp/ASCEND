@@ -442,6 +442,12 @@ export interface AppSettings {
   // Fase 2 — which sports ASCEND may plan (engine/sports.ts). Logging is
   // never restricted. Absent = engine/sports.ts#DEFAULT_ENABLED_SPORTS.
   enabledSports?: { running: boolean; hiking: boolean; cycling: boolean };
+  // Fase 4 — how cycling is used when it's on (engine/sports.ts):
+  // 'alternative' = a ride can stand in for an easy cardio session, nothing
+  // is added; 'weekly' = one Fietstocht a week on cyclingDay (1 = Monday).
+  // Absent = 'alternative'.
+  cyclingMode?: 'alternative' | 'weekly';
+  cyclingDay?: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -750,13 +756,14 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
 // moves to this or next week AND the planning from then on is rebuilt from
 // the program's own weekly pattern: your own moves/skips from there on are
 // dropped (that is the point of starting over), logged sessions and all
-// history stay. isTemplateAllowed lets the caller leave out sports that are
-// switched off; the caller then applies the active strength block and the
+// history stay. selectPattern lets the caller shape the weekly pattern
+// (engine/sports.ts#weeklyPatternTemplates: sports on/off, a weekly ride);
+// the caller then applies the active strength block and the
 // weekly planning on top (state/AppDataContext.tsx#restartProgram), so the
 // rebuilt week follows the user's settings instead of a bare template.
 export async function rebuildPlanningFromWeekOne(
   startFrom: 'this_week' | 'next_week',
-  isTemplateAllowed: (template: SessionTemplate) => boolean = () => true,
+  selectPattern: (templates: SessionTemplate[]) => SessionTemplate[] = (templates) => templates.filter((t) => t.defaultDayOfWeek),
 ): Promise<{ created: number; removed: number }> {
   const [programs, existingSessions, logs, templates] = await Promise.all([
     ProgramsRepo.getAll(),
@@ -777,7 +784,7 @@ export async function rebuildPlanningFromWeekOne(
   await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
 
   const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
-  const pattern = templates.filter((t) => t.defaultDayOfWeek && isTemplateAllowed(t));
+  const pattern = selectPattern(templates).filter((t) => t.defaultDayOfWeek);
   const newSessions: PlannedSession[] = [];
   for (let week = 0; week < totalWeeks; week++) {
     const weekStart = addDays(newStart, week * 7);
