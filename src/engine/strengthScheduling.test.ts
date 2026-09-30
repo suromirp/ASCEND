@@ -1,3 +1,4 @@
+import type { PlanChangeItem } from '../models/planChange';
 import { describe, it, expect } from 'vitest';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from './strengthScheduling';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
@@ -58,6 +59,15 @@ function goalOverview(overrides: {
       asOf: ASOF,
     },
   };
+}
+
+// Where an existing session ends up: its move target, its own date when
+// untouched, undefined when removed.
+function finalDate(changes: PlanChangeItem[], sessions: PlannedSession[], id: string): string | undefined {
+  const change = changes.find((c) => c.plannedSessionId === id);
+  if (change?.action === 'remove') return undefined;
+  if (change?.action === 'move') return change.toDate;
+  return sessions.find((s) => s.id === id)?.scheduledDate;
 }
 
 function strategy(overrides: Partial<StrengthProgramStrategy> = {}): StrengthProgramStrategy {
@@ -579,12 +589,11 @@ describe('computeStrengthPlacementPlanForCommittedRange', () => {
     ];
     // Sunday is the only free day left, so the search puts Upper A there.
     const proposal = computeStrengthPlacementPlanForCommittedRange(strategy(), week, templates, availability(), [], ASOF, []);
-    const inWeek = proposal.changes.filter((c) => c.action !== 'add' || c.newSessionDraft?.weekStartDate === COMMITTED_MONDAY_1);
-    const dateOf = (templateId: string, fallback?: string) =>
-      inWeek.find((c) => c.action === 'add' && c.newSessionDraft?.templateId === templateId)?.newSessionDraft?.scheduledDate ?? fallback;
-    const upperA = dateOf('tpl_upper_a');
-    const upperBRemoved = inWeek.some((c) => c.action === 'remove' && c.plannedSessionId === 'upperB');
-    const upperB = upperBRemoved ? dateOf('tpl_upper_b') : '2026-09-11';
+    const upperA = proposal.changes.find((c) => c.action === 'add' && c.newSessionDraft?.templateId === 'tpl_upper_a' && c.newSessionDraft.weekStartDate === COMMITTED_MONDAY_1)?.newSessionDraft?.scheduledDate;
+    const upperB = finalDate(proposal.changes, week, 'upperB');
+    // A reordered Upper B is moved, never removed (which would leave it
+    // behind in the week as "overgeslagen").
+    expect(proposal.changes.some((c) => c.action === 'remove' && c.plannedSessionId === 'upperB')).toBe(false);
     expect(upperA).toBeDefined();
     expect(upperB).toBeDefined();
     expect(upperA! >= ASOF).toBe(true);
@@ -709,9 +718,8 @@ describe('computeStrengthPlacementPlan — 4x/week upper/lower stays placeable a
     // have moved during the reflow) and assert they landed more than 1 day
     // apart — the whole point of giving the optimizer the rest of the
     // block to work with.
-    const removedIds = new Set(proposal.changes.filter((c) => c.action === 'remove').map((c) => c.plannedSessionId));
     const addedByTemplate = new Map(proposal.changes.filter((c) => c.action === 'add').map((c) => [c.newSessionDraft!.templateId, c.newSessionDraft!.scheduledDate]));
-    const lowerADate = addedByTemplate.get('tpl_lower_a') ?? (removedIds.has('lowerA') ? undefined : sessions.find((s) => s.id === 'lowerA')!.scheduledDate);
+    const lowerADate = finalDate(proposal.changes, sessions, 'lowerA');
     const lowerBDate = addedByTemplate.get('tpl_lower_b')!;
     expect(lowerADate).toBeDefined();
     const daysApart = Math.abs(new Date(lowerADate!).getTime() - new Date(lowerBDate).getTime()) / 86400000;
@@ -757,8 +765,7 @@ describe('computeStrengthPlacementPlan — 4x/week upper/lower stays placeable a
     // (or, via reflow, a hard-valid arrangement elsewhere) always exists.
     expect(proposal.changes.some((c) => c.action === 'remove' && c.plannedSessionId === 'easy')).toBe(false);
 
-    const removedIds = new Set(proposal.changes.filter((c) => c.action === 'remove').map((c) => c.plannedSessionId));
-    const lowerADate = addedByTemplate.get('tpl_lower_a') ?? (removedIds.has('lowerA') ? undefined : sessions.find((s) => s.id === 'lowerA')!.scheduledDate);
+    const lowerADate = finalDate(proposal.changes, sessions, 'lowerA');
     expect(lowerADate).toBeDefined();
     const daysApart = Math.abs(new Date(lowerADate!).getTime() - new Date(lowerBDate!).getTime()) / 86400000;
     expect(daysApart).toBeGreaterThan(1);

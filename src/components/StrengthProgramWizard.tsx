@@ -186,6 +186,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
 
   if (phase === 'preview') {
     const removed = committedProposal.changes.filter((c) => c.action === 'remove');
+    const moved = committedProposal.changes.filter((c) => c.action === 'move');
     const added = committedProposal.changes.filter((c) => c.action === 'add');
     return (
       <>
@@ -193,6 +194,9 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
         <div className="flex flex-col gap-2">
           {removed.map((c) => (
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger)' }}>− {c.fromDate}: {c.reason}</div>
+          ))}
+          {moved.map((c) => (
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>→ {c.fromDate} naar {c.toDate}: {c.reason}</div>
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success)' }}>
@@ -524,6 +528,7 @@ function PreviewStep({
   );
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const removed = proposal.changes.filter((c) => c.action === 'remove');
+  const moved = proposal.changes.filter((c) => c.action === 'move');
   const added = proposal.changes.filter((c) => c.action === 'add');
 
   return (
@@ -544,11 +549,16 @@ function PreviewStep({
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{proposal.consequences}</p>
       </div>
 
-      {(removed.length > 0 || added.length > 0) && (
+      {(removed.length > 0 || moved.length > 0 || added.length > 0) && (
         <div className="flex flex-col gap-2">
           {removed.map((c) => (
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger)' }}>
               − {c.fromDate}: {c.reason}
+            </div>
+          ))}
+          {moved.map((c) => (
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              → {c.fromDate} naar {c.toDate}: {c.reason}
             </div>
           ))}
           {added.map((c, i) => (
