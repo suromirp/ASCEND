@@ -22,8 +22,7 @@ import type { Program } from '../models/program';
 import type { InjuryNote } from '../models/injury';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack } from './scheduler';
-import { resolveEffectiveStressProfile } from './stressProfile';
+import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -259,14 +258,6 @@ function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
 // one to the nearest day in its week that keeps 48 hours from every other
 // heavy session for those muscles and has room — or, if there is none,
 // advise to keep it lighter.
-type HeavyAxis = 'upperBodyLoad' | 'lowerBodyLoad';
-const AXIS_LABEL: Record<HeavyAxis, string> = { upperBodyLoad: 'bovenlichaam', lowerBodyLoad: 'benen' };
-
-function heavyAxes(template: SessionTemplate): HeavyAxis[] {
-  const profile = resolveEffectiveStressProfile(template);
-  return (['upperBodyLoad', 'lowerBodyLoad'] as HeavyAxis[]).filter((axis) => profile[axis] === 'heavy');
-}
-
 function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const upcoming = inputs.plannedSessions
@@ -295,7 +286,7 @@ function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
         .filter((d) => d >= inputs.asOf && d !== b.scheduledDate && keepsSpacing(d)
           && dayHasRoomFor(d, tb, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference))
         .sort((x, y) => Math.abs(daysBetween(b.scheduledDate, x)) - Math.abs(daysBetween(b.scheduledDate, y)));
-      const muscles = shared.map((axis) => AXIS_LABEL[axis]).join(' en ');
+      const muscles = shared.map((axis) => HEAVY_AXIS_LABEL[axis]).join(' en ');
       const title = `${ta.name} en ${tb.name} op twee dagen achter elkaar`;
       const why = `Trigger: twee zware sessies voor hetzelfde ${muscles} op opeenvolgende dagen. Regel: zware training voor dezelfde spieren ligt ongeveer 48 uur uit elkaar, zodat ze kunnen herstellen.`;
       const target = candidates[0];
