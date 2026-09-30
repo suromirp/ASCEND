@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { JUST_UPDATED, markJustUpdated } from '../utils/updateFlag';
+import { setSwRegistration } from '../utils/appUpdate';
 
 // vite-plugin-pwa runs in 'prompt' mode (vite.config.ts): a new build is
 // downloaded in the background and then WAITS — nothing reloads by itself
@@ -16,6 +17,7 @@ export function UpdatePrompt() {
   } = useRegisterSW({
     onRegisteredSW(_url, registration) {
       if (!registration) return;
+      setSwRegistration(registration);
       setInterval(() => void registration.update(), UPDATE_CHECK_MS);
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') void registration.update();
