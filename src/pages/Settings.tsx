@@ -13,7 +13,8 @@ import { classifyChangeImpact, describeChanges, needsConfirmation, CHANGE_APPLY_
 import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProposal } from '../engine/scheduleFit';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTemplates, type Sport } from '../engine/sports';
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
-import { todayISO, resolveProgramWeek } from '../utils/dates';
+import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
+import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const WEEKDAY_LABELS_NL: Record<Weekday, string> = {
@@ -207,6 +208,18 @@ export function SettingsPage() {
     setPending(null);
   }
 
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  async function handleCheckUpdate() {
+    setCheckingUpdate(true);
+    const result = await checkForUpdate();
+    setCheckingUpdate(false);
+    note('update', result === 'update'
+      ? 'Er is een nieuwe versie. Zodra die binnen is verschijnt onderin BIJWERKEN.'
+      : result === 'latest'
+        ? 'Je hebt de nieuwste versie.'
+        : 'Controleren lukt hier niet (bijvoorbeeld in de ontwikkelversie). Herlaad de pagina om de nieuwste versie te krijgen.');
+  }
+
   async function handleExport() {
     const success = await exportData();
     setStatus(success ? 'Export geslaagd.' : null);
@@ -270,6 +283,17 @@ export function SettingsPage() {
               note={activeInjuryCount > 0 ? `${activeInjuryCount} actief` : 'Geen actieve blessures'}
               onClick={() => navigate('/blessures')}
             />
+          </Card>
+
+          <Card className="flex flex-col gap-3">
+            <Eyebrow>APP</Eyebrow>
+            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+              Versie {APP_VERSION} · {formatDateNL(BUILD_TIME.slice(0, 10))} {BUILD_TIME.slice(11, 16)} UTC
+            </p>
+            <SecondaryButton onClick={() => void handleCheckUpdate()} disabled={checkingUpdate}>
+              {checkingUpdate ? 'ZOEKEN…' : 'ZOEKEN NAAR UPDATE'}
+            </SecondaryButton>
+            <SectionNote text={notes.update} />
           </Card>
 
           <Card className="flex flex-col gap-3">

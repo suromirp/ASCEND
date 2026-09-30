@@ -2,6 +2,19 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execSync } from 'node:child_process';
+
+// Which build this is — shown in Settings so a user can see whether they
+// run the newest version. GitHub Actions provides GITHUB_SHA; locally the
+// git HEAD is used; without git it simply says 'dev'.
+function buildVersion(): string {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7);
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'dev';
+  }
+}
 
 // Set this to match your GitHub repository name so assets resolve correctly
 // on GitHub Pages, e.g. https://username.github.io/ascend/ -> '/ascend/'.
@@ -10,6 +23,10 @@ const BASE_PATH = process.env.ASCEND_BASE_PATH || '/ascend/';
 
 export default defineConfig({
   base: BASE_PATH,
+  define: {
+    __APP_VERSION__: JSON.stringify(buildVersion()),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),
