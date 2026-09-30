@@ -746,6 +746,51 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
   await putAll('plannedSessions', newSessions);
 }
 
+// "Schone start vanaf week 1" (Settings → Training → Programma). Week 1
+// moves to this or next week AND the planning from then on is rebuilt from
+// the program's own weekly pattern: your own moves/skips from there on are
+// dropped (that is the point of starting over), logged sessions and all
+// history stay. isTemplateAllowed lets the caller leave out sports that are
+// switched off; the caller then applies the active strength block and the
+// weekly planning on top (state/AppDataContext.tsx#restartProgram), so the
+// rebuilt week follows the user's settings instead of a bare template.
+export async function rebuildPlanningFromWeekOne(
+  startFrom: 'this_week' | 'next_week',
+  isTemplateAllowed: (template: SessionTemplate) => boolean = () => true,
+): Promise<{ created: number; removed: number }> {
+  const [programs, existingSessions, logs, templates] = await Promise.all([
+    ProgramsRepo.getAll(),
+    PlannedSessionsRepo.getAll(),
+    SessionLogsRepo.getAll(),
+    SessionTemplatesRepo.getAll(),
+  ]);
+  const program = programs[0];
+  if (!program) return { created: 0, removed: 0 };
+
+  const thisMonday = mondayOfWeek(todayISO());
+  const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
+  const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
+  await ProgramsRepo.put({ ...program, startDate: newStart });
+
+  const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff && !loggedPlannedIds.has(s.id));
+  await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
+
+  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
+  const pattern = templates.filter((t) => t.defaultDayOfWeek && isTemplateAllowed(t));
+  const newSessions: PlannedSession[] = [];
+  for (let week = 0; week < totalWeeks; week++) {
+    const weekStart = addDays(newStart, week * 7);
+    pattern.forEach((t, order) => {
+      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
+      if (date < cutoff) return;
+      newSessions.push({ id: makeId('planned'), templateId: t.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order });
+    });
+  }
+  await putAll('plannedSessions', newSessions);
+  return { created: newSessions.length, removed: toDelete.length };
+}
+
 // "Opnieuw beginnen bij week 1" (Settings → Training). Only moves where
 // week 1 starts — weeks are derived from Program.startDate (CLAUDE.md), so
 // every week number, phase and week-in-phase progression target shifts

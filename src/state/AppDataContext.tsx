@@ -35,6 +35,7 @@ import {
   resetToDemoData,
   resetScheduleToDefault,
   restartProgramAtWeekOne,
+  rebuildPlanningFromWeekOne,
   DEFAULT_SETTINGS,
   type AppSettings,
   type StretchCompletion,
@@ -86,7 +87,7 @@ function simpleHash(text: string): string {
   for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
-import { isTemplatePlannable } from '../engine/sports';
+import { isTemplatePlannable, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
 import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
@@ -193,7 +194,10 @@ interface AppData {
   resetSchedule: (startFrom: 'this_week' | 'next_week') => Promise<void>;
   // Moves week 1 of the program to this or next week, keeping the
   // planning and history as they are (storage/database.ts).
-  restartProgram: (startFrom: 'this_week' | 'next_week') => Promise<void>;
+  // mode 'clean': week 1 moves AND the planning from there is rebuilt,
+  // with sports on/off and the active strength block applied; returns a
+  // short summary of what happened. 'count_only': only the week count moves.
+  restartProgram: (startFrom: 'this_week' | 'next_week', mode: 'clean' | 'count_only') => Promise<string>;
   // "Reset alles / nieuwe aanbevelingen" (production feedback: the strength
   // review and the forecast replan both only ever run once at app boot —
   // there was no way to ask ASCEND to look again after changing something
@@ -1323,9 +1327,28 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await resetScheduleToDefault(startFrom);
       await refresh();
     },
-    restartProgram: async (startFrom) => {
-      await restartProgramAtWeekOne(startFrom);
+    restartProgram: async (startFrom, mode) => {
+      const weekOne = startFrom === 'this_week' ? 'Deze week is nu week 1.' : 'Volgende week wordt week 1.';
+      if (mode === 'count_only') {
+        await restartProgramAtWeekOne(startFrom);
+        await refresh();
+        return `${weekOne} Je planning is niet veranderd.`;
+      }
+      const appSettings = await SettingsRepo.get();
+      const enabled = { ...DEFAULT_ENABLED_SPORTS, ...appSettings.enabledSports };
+      await rebuildPlanningFromWeekOne(startFrom, (t) => isTemplatePlannable(t, enabled));
+      const lines = [`${weekOne} De planning is vanaf daar opnieuw opgebouwd; eigen verplaatsingen daarna zijn vervallen, je geschiedenis is bewaard.`];
+      const active = activeStrengthStrategy(await StrengthProgramStrategiesRepo.getAll());
+      if (active) {
+        await applyStrengthPlacementToCommittedRange(active);
+        await activateStrengthProgram(active);
+        lines.push(`Je krachtblok is toegepast (${active.sessionsPerWeek}x per week).`);
+      }
+      const off = (Object.keys(enabled) as Sport[]).filter((sport) => !enabled[sport]).map((sport) => SPORT_LABEL[sport]);
+      if (off.length > 0) lines.push(`Niet ingepland omdat het uit staat: ${off.join(', ')}.`);
+      await runWeeklyPrescriptionBuild();
       await refresh();
+      return lines.join(' ');
     },
     rebuildRecommendations,
     celebration,
