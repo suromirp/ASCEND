@@ -53,3 +53,14 @@ describe('computeScheduleFit', () => {
     expect(proposal.consequences).toContain('past al');
   });
 });
+
+describe('computeSportEnableProposal', () => {
+  it('puts a switched-on sport back on its usual day in upcoming weeks that miss it', async () => {
+    const { computeSportEnableProposal } = await import('./scheduleFit');
+    const run: SessionTemplate = { id: 'tpl_run', name: 'Easy Run', type: 'cardio', durationVariants: { full: 30 }, defaultDayOfWeek: 2 };
+    const upper = tpl('tpl_b', 'Upper A', 60);
+    const planned = [session('u1', '2026-10-21', '2026-10-19', 'tpl_b')];
+    const { proposal } = computeSportEnableProposal([run], 'Hardlopen', planned, [run, upper], null, {}, 'automatic', asOf);
+    expect(proposal.changes).toEqual([expect.objectContaining({ action: 'add', newSessionDraft: { templateId: 'tpl_run', scheduledDate: '2026-10-20', weekStartDate: '2026-10-19' } })]);
+  });
+});
