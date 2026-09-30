@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { GoalRequirement } from '../models/goals';
-import { typicalDayValue, isMultiDayGoal, normalizeRouteRequirements, estimatedHikingMinutes, routeGoalComplete } from './goalRoute';
+import { typicalDayValue, averageDayValue, hasTrainingDay, routeDayParts, isMultiDayGoal, normalizeRouteRequirements, estimatedHikingMinutes, routeGoalComplete } from './goalRoute';
 
 const trip = (days?: number): GoalRequirement[] => [
   { id: 'd', kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' },
@@ -57,5 +57,30 @@ describe('estimatedHikingMinutes (DIN 33466)', () => {
     // 17 km -> 4,25 h; 860/300 + 860/500 = 4,59 h -> 4,59 + 2,125 = 6,72 h ≈ 405 min
     expect(estimatedHikingMinutes(17, 860, 860)).toBe(405);
     expect(estimatedHikingMinutes(20)).toBe(300);
+  });
+});
+
+// Gemiddelde loopdag = computed from the route, never overwritten;
+// trainingsdag = optional hand-picked reference that training aims at.
+describe('gemiddelde loopdag vs. trainingsdag', () => {
+  const pack: GoalRequirement = { id: 'p', kind: 'packWeight', scope: 'SINGLE_EVENT', target: { amount: 12, unit: 'kg' } };
+  const trainingDay: GoalRequirement = { id: 'o', kind: 'elevationGain', scope: 'PER_DAY', target: { amount: 1400, unit: 'm_elevation_gain' } };
+
+  it('shows the average day with the rucksack: 600 km / 30.000 m over 30 days', () => {
+    expect(routeDayParts([...trip(30), pack], 'average')).toEqual(['20 km', '1.000 m D+', '1.000 m D−', '12 kg']);
+  });
+
+  it('a training day never changes the average, but is what training aims at', () => {
+    const reqs = [...trip(30), trainingDay];
+    expect(averageDayValue(reqs, 'elevationGain')?.value.amount).toBe(1000);
+    expect(typicalDayValue(reqs, 'elevationGain')?.value.amount).toBe(1400);
+    expect(hasTrainingDay(reqs)).toBe(true);
+    // Shown complete: what was set, the rest from the average.
+    expect(routeDayParts(reqs, 'training', false)).toEqual(['20 km', '1.400 m D+', '1.000 m D−']);
+  });
+
+  it('without a training day there is nothing to show for it', () => {
+    expect(hasTrainingDay(trip(30))).toBe(false);
+    expect(routeDayParts(trip(30), 'training')).toEqual([]);
   });
 });

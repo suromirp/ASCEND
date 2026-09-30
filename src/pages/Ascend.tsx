@@ -22,7 +22,7 @@ import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
 import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
-import { eventDaysRequirement, routeTotal, typicalDayValue, ROUTE_KINDS } from '../engine/goalRoute';
+import { eventDaysRequirement, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -49,7 +49,7 @@ function GoalStatusNote({ status, goal }: { status: TrainingGoal['status']; goal
       )}
       {missingDays && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
-          Het aantal loopdagen ontbreekt nog. Vul het in via Doel aanpassen, dan rekent ASCEND de tocht om naar een gewone dag.
+          Het aantal loopdagen ontbreekt nog. Vul het in via Doel aanpassen, dan rekent ASCEND de tocht om naar een gemiddelde loopdag.
         </p>
       )}
     </>
@@ -60,17 +60,18 @@ function GoalStatusNote({ status, goal }: { status: TrainingGoal['status']; goal
 // number training is actually measured against.
 function RouteLine({ goal }: { goal: TrainingGoal }) {
   if (goal.execution === undefined) return null;
-  const fmt = (k: 'distance' | 'elevationGain' | 'elevationLoss', amount: number) =>
-    `${formatNumberNL(amount, k === 'distance' ? 1 : 0)} ${k === 'distance' ? 'km' : k === 'elevationGain' ? 'm D+' : 'm D-'}`;
-  const totals = ROUTE_KINDS.flatMap((k) => { const t = routeTotal(goal.requirements, k); return t ? [fmt(k, t.amount)] : []; });
+  const dayWord = routeDayWord(routeDiscipline(goal));
+  const totals = ROUTE_KINDS.flatMap((k) => { const t = routeTotal(goal.requirements, k); return t ? [formatRouteDayValue(k, t.amount)] : []; });
   const days = eventDaysRequirement(goal.requirements)?.target?.amount;
-  if (days) totals.push(`${days} loopdagen`);
-  const typical = ROUTE_KINDS.flatMap((k) => { const d = typicalDayValue(goal.requirements, k); return d && days && days > 1 ? [fmt(k, d.value.amount)] : []; });
+  if (days) totals.push(`${days} ${dayWord.plural}`);
+  const average = days && days > 1 ? routeDayParts(goal.requirements, 'average') : [];
+  const training = routeDayParts(goal.requirements, 'training');
   if (totals.length === 0) return null;
   return (
     <div className="text-xs leading-relaxed">
       <p style={{ color: 'var(--color-ink)' }}>{totals.join(' · ')}</p>
-      {typical.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>Typische dag: {typical.join(' · ')}</p>}
+      {average.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>Gemiddelde {dayWord.singular}: {average.join(' · ')}</p>}
+      {training.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>Trainingsdag: {training.join(' · ')}</p>}
     </div>
   );
 }

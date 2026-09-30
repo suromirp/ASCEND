@@ -2,7 +2,9 @@
 //
 // Mirrors how a trip is actually planned: how it's undertaken (one unbroken
 // push or in stages), the route totals, what one stage asks, and — derived,
-// never typed twice — what a typical day looks like. All conversion logic
+// never typed twice — what an average day looks like. Separately, and only
+// if wanted, a training day: a heavier, representative day ASCEND trains
+// toward, without overwriting the computed average. All conversion logic
 // lives in engine/goalRoute.ts; this file only edits requirements and
 // renders what that module computes.
 
@@ -10,7 +12,10 @@ import { useState } from 'react';
 import type { TrainingGoal, GoalRequirement, GoalExecution } from '../models/goals';
 import type { Unit } from '../models/units';
 import {
-  typicalDayValue,
+  averageDayValue,
+  hasTrainingDay,
+  routeDayParts,
+  routeDayWord,
   normalizeRouteRequirements,
   routeDiscipline,
   ROUTE_KINDS,
@@ -22,8 +27,8 @@ import { NumberField } from './NumberField';
 import { Eyebrow } from './ui';
 
 const ROUTE_UNIT: Record<RouteKind, Unit> = { distance: 'km', elevationGain: 'm_elevation_gain', elevationLoss: 'm_elevation_loss' };
-const ROUTE_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D-' };
-const OVERRIDE_LABEL: Record<RouteKind, string> = { distance: 'Dagafstand', elevationGain: 'Stijging per dag', elevationLoss: 'Daling per dag' };
+const ROUTE_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D−' };
+const OVERRIDE_LABEL: Record<RouteKind, string> = { distance: 'Afstand', elevationGain: 'Stijging', elevationLoss: 'Daling' };
 
 const ROUTE_SPORTS: { value: string; label: string; dayWord: string; verb: string }[] = [
   { value: 'hiking', label: 'Hiken', dayWord: 'loopdagen', verb: 'lopen' },
@@ -67,8 +72,9 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
   // A rucksack is a hiking demand; bike bags aren't load carriage
   // (engine/demand.ts never asks it of a cycling goal).
   const carriesPack = discipline !== 'cycling';
-  const hasOverride = ROUTE_KINDS.some((k) => amountOf(reqs, k, true) !== undefined);
-  const [editingDay, setEditingDay] = useState(hasOverride);
+  const trainingDaySet = hasTrainingDay(reqs);
+  const [editingDay, setEditingDay] = useState(false);
+  const dayWord = routeDayWord(discipline);
 
   function commit(next: GoalRequirement[], nextExecution: GoalExecution = execution) {
     onChange({ ...goal, execution: nextExecution, requirements: normalizeRouteRequirements(next, nextExecution), updatedAt: new Date().toISOString() });
@@ -96,11 +102,8 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
 
   const days = amountOf(reqs, 'eventDays');
   const longest = amountOf(reqs, 'consecutiveDays');
-  const typical = ROUTE_KINDS.map((k) => ({ kind: k, day: typicalDayValue(reqs, k) }));
-  const typicalParts = typical
-    .filter((t) => t.day)
-    .map((t) => `${formatNumberNL(t.day!.value.amount, t.kind === 'distance' ? 1 : 0)} ${ROUTE_SUFFIX[t.kind]}`);
-  const anyOverride = typical.some((t) => t.day?.source === 'override');
+  const averageParts = routeDayParts(reqs, 'average', carriesPack);
+  const trainingParts = routeDayParts(reqs, 'training', carriesPack);
 
   const packField = (
     <NumberField
@@ -140,7 +143,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
         <NumberField label="Afstand" unit="km" decimals={1} value={amountOf(reqs, 'distance')} onChange={(v) => setTotal('distance', v)} placeholder="600" />
         <div className="grid grid-cols-2 gap-3">
           <NumberField label="Stijging" unit="m D+" value={amountOf(reqs, 'elevationGain')} onChange={(v) => setTotal('elevationGain', v)} placeholder="30.000" />
-          <NumberField label="Daling" unit="m D-" value={amountOf(reqs, 'elevationLoss')} onChange={(v) => setTotal('elevationLoss', v)} placeholder="30.000" />
+          <NumberField label="Daling" unit="m D−" value={amountOf(reqs, 'elevationLoss')} onChange={(v) => setTotal('elevationLoss', v)} placeholder="30.000" />
         </div>
         <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alle hoogtemeters omhoog en omlaag over de volledige tocht.</p>
         <NumberField
@@ -171,43 +174,69 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
       )}
 
       <section className="rounded-xl border px-3 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>
-            TYPISCHE DAG · {anyOverride ? 'aangepast' : 'berekend'}
-          </span>
-          {!editingDay ? (
-            <button onClick={() => setEditingDay(true)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>aanpassen</button>
+        <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>
+          GEMIDDELDE {dayWord.singular.toUpperCase()} · berekend
+        </span>
+        {averageParts.length > 0 ? (
+          <>
+            <p className="mt-1.5 text-sm font-medium" style={{ color: trainingDaySet ? 'var(--color-ink)' : 'var(--color-gold)' }}>{averageParts.join(' · ')}</p>
+            {days !== undefined && days > 1 && (
+              <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Gebaseerd op {formatNumberNL(days, 0)} {dayWord.plural}.</p>
+            )}
+          </>
+        ) : (
+          <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Vul de afstand en het aantal {dayWord.plural} in, dan rekent ASCEND een gemiddelde {dayWord.singular} voor je uit.</p>
+        )}
+
+        <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+          {trainingDaySet || editingDay ? (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>TRAININGSDAG · zelf gekozen</span>
+                {editingDay ? (
+                  <button onClick={() => setEditingDay(false)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>klaar</button>
+                ) : (
+                  <button onClick={() => setEditingDay(true)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>wijzigen</button>
+                )}
+              </div>
+              {trainingParts.length > 0 && (
+                <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--color-gold)' }}>{trainingParts.join(' · ')}</p>
+              )}
+              {editingDay && (
+                <div className="mt-3 flex flex-col gap-2">
+                  {ROUTE_KINDS.map((k) => {
+                    const average = averageDayValue(reqs, k);
+                    return (
+                      <NumberField
+                        key={k}
+                        label={OVERRIDE_LABEL[k]}
+                        unit={ROUTE_SUFFIX[k]}
+                        decimals={k === 'distance' ? 1 : 0}
+                        compact
+                        value={amountOf(reqs, k, true)}
+                        onChange={(v) => setOverride(k, v)}
+                        placeholder={average ? formatNumberNL(average.value.amount, k === 'distance' ? 1 : 0) : undefined}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+              <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                ASCEND richt je training op deze dag. Wat je leeg laat, komt uit de gemiddelde {dayWord.singular}. Het gemiddelde zelf blijft gewoon berekend.
+              </p>
+              {trainingDaySet && (
+                <button onClick={resetOverrides} className="mt-2 text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>Trainingsdag verwijderen</button>
+              )}
+            </>
           ) : (
-            <button onClick={resetOverrides} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>{anyOverride ? 'weer laten berekenen' : 'klaar'}</button>
+            <>
+              <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                ASCEND traint nu richting de gemiddelde {dayWord.singular}. Wil je je voorbereiden op een zwaardere dag uit de tocht, stel die dan in als trainingsdag.
+              </p>
+              <button onClick={() => setEditingDay(true)} className="mt-2 text-xs font-medium underline" style={{ color: 'var(--color-gold)' }}>Trainingsdag instellen</button>
+            </>
           )}
         </div>
-        {typicalParts.length > 0 ? (
-          <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--color-gold)' }}>{typicalParts.join(' · ')}</p>
-        ) : (
-          <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Vul de afstand en het aantal {sport.dayWord} in, dan rekent ASCEND een gewone dag voor je uit.</p>
-        )}
-        {editingDay && (
-          <div className="mt-3 flex flex-col gap-2">
-            {ROUTE_KINDS.map((k) => {
-              const derived = typicalDayValue(reqs.filter((r) => !(r.kind === k && isPerDay(r))), k);
-              return (
-                <NumberField
-                  key={k}
-                  label={OVERRIDE_LABEL[k]}
-                  unit={ROUTE_SUFFIX[k]}
-                  decimals={k === 'distance' ? 1 : 0}
-                  compact
-                  value={amountOf(reqs, k, true)}
-                  onChange={(v) => setOverride(k, v)}
-                  placeholder={derived ? formatNumberNL(derived.value.amount, k === 'distance' ? 1 : 0) : undefined}
-                />
-              );
-            })}
-            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Laat een veld leeg om het te laten berekenen. ASCEND traint richting deze dag, niet richting de totalen.
-            </p>
-          </div>
-        )}
       </section>
     </div>
   );
