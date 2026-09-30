@@ -87,7 +87,7 @@ function simpleHash(text: string): string {
   for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
-import { isTemplatePlannable, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
+import { isTemplatePlannable, weeklyPatternTemplates, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
 import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
@@ -1336,7 +1336,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
       const appSettings = await SettingsRepo.get();
       const enabled = { ...DEFAULT_ENABLED_SPORTS, ...appSettings.enabledSports };
-      await rebuildPlanningFromWeekOne(startFrom, (t) => isTemplatePlannable(t, enabled));
+      await rebuildPlanningFromWeekOne(startFrom, (tpls) => weeklyPatternTemplates(tpls, { ...appSettings, enabledSports: enabled }));
       const lines = [`${weekOne} De planning is vanaf daar opnieuw opgebouwd; eigen verplaatsingen daarna zijn vervallen, je geschiedenis is bewaard.`];
       const active = activeStrengthStrategy(await StrengthProgramStrategiesRepo.getAll());
       if (active) {

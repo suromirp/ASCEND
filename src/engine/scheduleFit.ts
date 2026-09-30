@@ -138,7 +138,7 @@ export function computeSportDisableProposal(
     issue: `${sportLabel} uitgezet`,
     changes: items,
     alternatives: [],
-    consequences: items.length > 0 ? `${items.length} geplande ${sportLabel.toLowerCase()}sessie(s) vervallen. Loggen blijft altijd mogelijk.` : `Er stond geen ${sportLabel.toLowerCase()} meer gepland.`,
+    consequences: items.length > 0 ? `${items.length} geplande sessie(s) vervallen (${sportLabel.toLowerCase()}). Loggen blijft altijd mogelijk.` : `Er stond niets meer gepland (${sportLabel.toLowerCase()}).`,
     explanation: `${sportLabel} uitgezet in Instellingen → Training.`,
     createdAt: new Date().toISOString(),
   };
@@ -184,7 +184,7 @@ export function computeSportEnableProposal(
       });
     }
   }
-  const noRoomNote = noRoom > 0 ? ` ${noRoom}× paste het niet op de vaste dag omdat die al vol zat; daar blijft het zoals het is.` : '';
+  const noRoomNote = noRoom > 0 ? ` In ${noRoom} ${noRoom === 1 ? 'week' : 'weken'} zat die dag al vol, daar is niets toegevoegd.` : '';
   return {
     noRoom,
     proposal: {
@@ -195,7 +195,9 @@ export function computeSportEnableProposal(
       alternatives: [],
       consequences: items.length > 0
         ? `${sportLabel} komt terug op de vaste dagen in de komende weken.${noRoomNote}`
-        : `Er hoeft niets terug te komen: ${sportLabel.toLowerCase()} staat al op de planning.${noRoomNote}`,
+        : noRoom > 0
+          ? `Er is niets toegevoegd: op die dag staat al een andere sessie en er is geen ruimte voor een tweede. Kies een andere dag, of geef die dag meer tijd bij Trainingstijd per dag.`
+          : `Er hoeft niets bij: ${sportLabel.toLowerCase()} staat al op de planning.`,
       explanation: `${sportLabel} aangezet in Instellingen → Training.`,
       createdAt: new Date().toISOString(),
     },

@@ -270,7 +270,7 @@ describe('rebuildPlanningFromWeekOne (schone start)', () => {
     const loggedSession = future[1];
     await SessionLogsRepo.put({ id: 'log1', plannedSessionId: loggedSession.id, templateId: loggedSession.templateId, type: 'cardio', completedDate: todayISO(), completedAt: new Date().toISOString(), variant: 'full', durationMinutes: 30, source: 'manual' });
 
-    await rebuildPlanningFromWeekOne('this_week', (t) => t.type !== 'hiking');
+    await rebuildPlanningFromWeekOne('this_week', (tpls) => tpls.filter((t) => t.defaultDayOfWeek && t.type !== 'hiking'));
 
     const after = await PlannedSessionsRepo.getAll();
     expect(after.find((s) => s.id === moved.id)).toBeUndefined();

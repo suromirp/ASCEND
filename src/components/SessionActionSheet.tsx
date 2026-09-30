@@ -7,6 +7,10 @@ import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
+import { useAppData } from '../state/AppDataContext';
+import { isSportEnabled, templateSport } from '../engine/sports';
+import { getModalities, isCyclingModality } from '../data/modalities';
+import { weekdayShortNL, formatDateNL } from '../utils/dates';
 
 const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
@@ -41,6 +45,13 @@ export function SessionActionSheet({
   // Same MacroFactor-duration override as TodayMissionCard (see there).
   const [quickDuration, setQuickDuration] = useState<number | ''>(fullDuration);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
+  // Fase 4 — with cycling switched on, say so where a ride is a real
+  // alternative for this session (it lists a bike modality). Hill
+  // intervals and long hikes deliberately don't: their point is time and
+  // climbing on foot.
+  const { settings } = useAppData();
+  const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
+    && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
   const { closing, requestClose } = useSheetClose(onClose);
 
@@ -54,7 +65,7 @@ export function SessionActionSheet({
           <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
             <Card className="rounded-b-none border-b-0 pb-6">
               <div className="flex items-start justify-between gap-2">
-                <Eyebrow>{session.scheduledDate}</Eyebrow>
+                <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
                 {guide && <InfoButton onClick={() => setShowGuide(true)} />}
               </div>
               <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
@@ -94,13 +105,18 @@ export function SessionActionSheet({
         <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
             <div className="flex items-start justify-between gap-2">
-              <Eyebrow>{session.scheduledDate}</Eyebrow>
+              <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
               {guide && <InfoButton onClick={() => setShowGuide(true)} />}
             </div>
             <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               ±{fullDuration} min{note ? ` • ${note}` : ''}{template.focus ? ` • ${template.focus}` : ''}
             </p>
+            {bikeOption && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--color-alpine)' }}>
+                Kan ook op de fiets, buiten of binnen. Kies dat bij het afvinken.
+              </p>
+            )}
 
             {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} onClose={() => setShowGuide(false)} />}
 
