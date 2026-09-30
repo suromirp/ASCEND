@@ -5,6 +5,7 @@ import {
   resetScheduleToDefault,
   resetToDemoData,
   restartProgramAtWeekOne,
+  rebuildPlanningFromWeekOne,
   ProgramsRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
@@ -252,5 +253,32 @@ describe('restartProgramAtWeekOne', () => {
     await restartProgramAtWeekOne('next_week');
     const [after] = await ProgramsRepo.getAll();
     expect(after.startDate).toBe(addDays(mondayOfWeek(todayISO()), 7));
+  });
+});
+
+describe('rebuildPlanningFromWeekOne (schone start)', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  it('drops a session the user moved, keeps logged history, and leaves out switched-off sports', async () => {
+    const tomorrow = addDays(todayISO(), 1);
+    const future = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate >= tomorrow);
+    const moved = { ...future[0], scheduledDate: addDays(future[0].scheduledDate, 1), status: 'moved' as const, movedFromDate: future[0].scheduledDate };
+    await PlannedSessionsRepo.put(moved);
+    const loggedSession = future[1];
+    await SessionLogsRepo.put({ id: 'log1', plannedSessionId: loggedSession.id, templateId: loggedSession.templateId, type: 'cardio', completedDate: todayISO(), completedAt: new Date().toISOString(), variant: 'full', durationMinutes: 30, source: 'manual' });
+
+    await rebuildPlanningFromWeekOne('this_week', (t) => t.type !== 'hiking');
+
+    const after = await PlannedSessionsRepo.getAll();
+    expect(after.find((s) => s.id === moved.id)).toBeUndefined();
+    expect(after.find((s) => s.id === loggedSession.id)).toBeDefined();
+    expect(after.filter((s) => s.scheduledDate >= todayISO() && s.id !== loggedSession.id).every((s) => s.status === 'planned')).toBe(true);
+    const templates = await import('./database').then((m) => m.SessionTemplatesRepo.getAll());
+    const hikingIds = new Set(templates.filter((t) => t.type === 'hiking').map((t) => t.id));
+    expect(after.some((s) => s.scheduledDate >= todayISO() && hikingIds.has(s.templateId))).toBe(false);
+    expect((await SessionLogsRepo.getAll()).map((l) => l.id)).toContain('log1');
   });
 });

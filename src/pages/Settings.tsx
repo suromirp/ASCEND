@@ -60,7 +60,7 @@ type PendingImpact = { section: string; title: string; proposal: PlanChangePropo
 export function SettingsPage() {
   const navigate = useNavigate();
   const {
-    loading, exportData, resetSchedule, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
+    loading, exportData, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
     rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById, restartProgram,
   } = useAppData();
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
@@ -70,14 +70,14 @@ export function SettingsPage() {
   const [rebuilding, setRebuilding] = useState(false);
   const [confirmingFullReset, setConfirmingFullReset] = useState(false);
   const [fullResetting, setFullResetting] = useState(false);
-  const [confirmingReset, setConfirmingReset] = useState(false);
-  const [resetStartFrom, setResetStartFrom] = useState<'this_week' | 'next_week'>('next_week');
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showBaselineEditor, setShowBaselineEditor] = useState(false);
   const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
   const [pending, setPending] = useState<PendingImpact | null>(null);
   const [confirmingRestart, setConfirmingRestart] = useState(false);
   const [restartFrom, setRestartFrom] = useState<'this_week' | 'next_week'>('this_week');
+  const [restartMode, setRestartMode] = useState<'clean' | 'count_only'>('clean');
+  const [restarting, setRestarting] = useState(false);
   const position = program ? resolveProgramWeek(program, todayISO()) : null;
   const [applying, setApplying] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -273,26 +273,34 @@ export function SettingsPage() {
               <div className="flex flex-col gap-3">
                 <OptionList
                   options={[
-                    { value: 'this_week' as const, label: 'Deze week is week 1', note: 'De weektelling en opbouw beginnen deze week opnieuw.' },
-                    { value: 'next_week' as const, label: 'Volgende week is week 1', note: 'Deze week telt nog niet mee, het programma begint aankomende maandag.' },
+                    { value: 'clean' as const, label: 'Schone start', note: 'De planning wordt vanaf week 1 opnieuw opgebouwd met je huidige instellingen: sporten aan/uit en je krachtblok. Eigen verplaatsingen vanaf dat moment vervallen. Je geschiedenis blijft.' },
+                    { value: 'count_only' as const, label: 'Alleen de weektelling', note: 'Alleen het weeknummer en de opbouw per week schuiven. Wat er gepland staat blijft precies zoals het is.' },
+                  ]}
+                  value={restartMode}
+                  onChange={setRestartMode}
+                />
+                <OptionList
+                  options={[
+                    { value: 'this_week' as const, label: 'Deze week is week 1', note: 'Vanaf vandaag.' },
+                    { value: 'next_week' as const, label: 'Volgende week is week 1', note: 'Deze week blijft zoals hij is, het programma begint aankomende maandag.' },
                   ]}
                   value={restartFrom}
                   onChange={setRestartFrom}
                 />
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                  Alleen de weektelling verschuift, en daarmee de opbouw per week. Wat er gepland staat en je geschiedenis blijven zoals ze zijn.
-                </p>
                 <div className="flex gap-3">
-                  <SecondaryButton onClick={() => setConfirmingRestart(false)}>ANNULEREN</SecondaryButton>
+                  <SecondaryButton onClick={() => setConfirmingRestart(false)} disabled={restarting}>ANNULEREN</SecondaryButton>
                   <PrimaryButton
                     fullWidth={false}
+                    disabled={restarting}
                     onClick={async () => {
-                      await restartProgram(restartFrom);
+                      setRestarting(true);
+                      const summary = await restartProgram(restartFrom, restartMode);
+                      setRestarting(false);
                       setConfirmingRestart(false);
-                      note('program', restartFrom === 'this_week' ? 'Deze week is nu week 1.' : 'Volgende week wordt week 1.');
+                      note('program', summary);
                     }}
                   >
-                    BEVESTIGEN
+                    {restarting ? 'BEZIG…' : 'BEVESTIGEN'}
                   </PrimaryButton>
                 </div>
               </div>
@@ -303,7 +311,7 @@ export function SettingsPage() {
           <Card className="flex flex-col gap-3">
             <Eyebrow>SPORTEN</Eyebrow>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Welke sporten mag ASCEND inplannen? Loggen kan altijd, ook voor een sport die uit staat.
+              Welke sporten mag ASCEND inplannen? Uit betekent: geen nieuwe sessies van die sport, ook niet bij een schone start. Loggen kan altijd.
             </p>
             {PLANNABLE_SPORTS.map((sport) => (
               <div key={sport} className="flex items-center justify-between gap-4">
@@ -380,31 +388,6 @@ export function SettingsPage() {
             </Card>
           )}
 
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>SCHEMA OPNIEUW LADEN</Eyebrow>
-            <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Zet je toekomstige planning terug naar het standaard weekschema. Geschiedenis, voltooide sessies, doelen en
-              blessures blijven bewaard; dit raakt alleen wat er nog gepland staat.
-            </p>
-            {!confirmingReset ? (
-              <SecondaryButton onClick={() => setConfirmingReset(true)}>SCHEMA OPNIEUW LADEN</SecondaryButton>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <OptionList
-                  options={[
-                    { value: 'this_week' as const, label: 'Vanaf nu, deze week', note: 'De rest van deze week krijgt meteen het standaard schema.' },
-                    { value: 'next_week' as const, label: 'Vanaf volgende week', note: 'Deze week maak je af zoals gepland, het standaard schema begint aankomende maandag.' },
-                  ]}
-                  value={resetStartFrom}
-                  onChange={setResetStartFrom}
-                />
-                <div className="flex gap-3">
-                  <SecondaryButton onClick={() => setConfirmingReset(false)}>ANNULEREN</SecondaryButton>
-                  <PrimaryButton fullWidth={false} onClick={() => { resetSchedule(resetStartFrom); setConfirmingReset(false); }}>BEVESTIG RESET</PrimaryButton>
-                </div>
-              </div>
-            )}
-          </Card>
           {showImportWizard && <ImportWizard onClose={() => setShowImportWizard(false)} />}
         </>
       )}
