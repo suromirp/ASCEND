@@ -14,7 +14,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': a new build waits until the user taps BIJWERKEN
+      // (components/UpdatePrompt.tsx) — no silent second reload + splash.
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: BASE_PATH,
