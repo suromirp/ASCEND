@@ -22,6 +22,9 @@ export function ChangeLogCard() {
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow>WIJZIGINGEN</Eyebrow>
+      <p className="-mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        Wat ASCEND de afgelopen twee weken aan je planning heeft veranderd, en waarom. Oudere wijzigingen verdwijnen vanzelf uit dit overzicht.
+      </p>
       <div className="flex flex-col gap-3">
         {shown.map((e) => <Entry key={e.id} entry={e} />)}
       </div>

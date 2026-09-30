@@ -143,3 +143,61 @@ export function computeSportDisableProposal(
     createdAt: new Date().toISOString(),
   };
 }
+
+// Switching a sport back ON: its sessions from the program's weekly
+// pattern return to every upcoming week that doesn't have them — on their
+// usual day, only where that day has room under the user's time budget and
+// pairing preference. A sport without a fixed weekly day (cycling) has
+// nothing to put back; the caller says so.
+export function computeSportEnableProposal(
+  sportTemplates: SessionTemplate[],
+  sportLabel: string,
+  plannedSessions: PlannedSession[],
+  allTemplates: SessionTemplate[],
+  program: Program | null | undefined,
+  dailyTimeBudget: Partial<Record<Weekday, DailyTimeBudget>> | undefined,
+  sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'],
+  asOf: string,
+): { proposal: PlanChangeProposal; noRoom: number } {
+  const templateById = new Map(allTemplates.map((t) => [t.id, t]));
+  const patterned = sportTemplates.filter((t) => t.defaultDayOfWeek);
+  const weekStarts = [...new Set(plannedSessions.filter((s) => s.scheduledDate >= asOf).map((s) => s.weekStartDate))].sort();
+  const items: PlanChangeItem[] = [];
+  let noRoom = 0;
+  for (const weekStart of weekStarts) {
+    const week = plannedSessions.filter((s) => s.weekStartDate === weekStart && s.status !== 'skipped');
+    const added: PlannedSession[] = [];
+    for (const t of patterned) {
+      if (week.some((s) => s.templateId === t.id)) continue;
+      const date = weekDates(weekStart)[(t.defaultDayOfWeek as number) - 1];
+      if (date < asOf) continue;
+      if (!dayHasRoomFor(date, t, [...week, ...added], templateById, program, dailyTimeBudget, sameDayPairingPreference)) {
+        noRoom += 1;
+        continue;
+      }
+      added.push({ id: `draft:${weekStart}:${t.id}`, templateId: t.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order: 99 });
+      items.push({
+        action: 'add',
+        newSessionDraft: { templateId: t.id, scheduledDate: date, weekStartDate: weekStart },
+        reason: `${sportLabel} staat weer aan in Instellingen → Training.`,
+        generatedBy: ['engine/scheduleFit.ts#computeSportEnableProposal'],
+      });
+    }
+  }
+  const noRoomNote = noRoom > 0 ? ` ${noRoom}× paste het niet op de vaste dag omdat die al vol zat; daar blijft het zoals het is.` : '';
+  return {
+    noRoom,
+    proposal: {
+      id: makeId('planchange'),
+      trigger: 'strategy_changed',
+      issue: `${sportLabel} weer aangezet`,
+      changes: items,
+      alternatives: [],
+      consequences: items.length > 0
+        ? `${sportLabel} komt terug op de vaste dagen in de komende weken.${noRoomNote}`
+        : `Er hoeft niets terug te komen: ${sportLabel.toLowerCase()} staat al op de planning.${noRoomNote}`,
+      explanation: `${sportLabel} aangezet in Instellingen → Training.`,
+      createdAt: new Date().toISOString(),
+    },
+  };
+}

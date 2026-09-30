@@ -10,7 +10,7 @@ import { ImpactSheet } from '../components/ImpactSheet';
 import type { Weekday, DailyTimeBudget, TrainingStrategyProfile } from '../models/goalEngineConfig';
 import type { PlanChangeProposal } from '../models/planChange';
 import { classifyChangeImpact, describeChanges, needsConfirmation, CHANGE_APPLY_MODE_LABEL, type ChangeApplyMode } from '../engine/changeImpact';
-import { computeScheduleFit, computeSportDisableProposal } from '../engine/scheduleFit';
+import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProposal } from '../engine/scheduleFit';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, type Sport } from '../engine/sports';
 import { todayISO, resolveProgramWeek } from '../utils/dates';
 
@@ -145,7 +145,16 @@ export function SettingsPage() {
   async function handleSportToggle(sport: Sport, on: boolean) {
     await updateSettings({ enabledSports: { ...enabledSports, [sport]: on } });
     if (on) {
-      note('sports', `${SPORT_LABEL[sport]} staat aan. ASCEND neemt het weer mee in nieuwe planning.`);
+      const sportTemplates = templates.filter((t) => templateSport(t) === sport);
+      if (!sportTemplates.some((t) => t.defaultDayOfWeek)) {
+        note('sports', `${SPORT_LABEL[sport]} staat aan. Er is geen vaste dag voor in je weekschema, dus er verandert nu niets aan je planning. Je kunt ritten altijd loggen via Vandaag.`);
+        return;
+      }
+      const { proposal } = computeSportEnableProposal(
+        sportTemplates, SPORT_LABEL[sport], plannedSessions, templates, program,
+        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+      );
+      await route('sports', `${SPORT_LABEL[sport]} weer aangezet`, proposal);
       return;
     }
     const proposal = computeSportDisableProposal(
@@ -568,8 +577,10 @@ function DailyBudgetEditor({
     <Card className="flex flex-col gap-3">
       <Eyebrow>TRAININGSTIJD PER DAG</Eyebrow>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        Hoeveel tijd heb je normaal per dag? Daarmee bepaalt ASCEND of een tweede sessie op een dag past. Een lege dag
-        telt als vol zodra er één sessie op staat.
+        Hoeveel tijd heb je normaal per dag? Dit telt alleen als ASCEND een tweede sessie op een dag wil zetten: bij een
+        krachtblok met meer sessies, bij inhalen van een gemiste training of als de weekplanning iets toevoegt. Staat er
+        bij opslaan al meer op een dag dan past, dan schuift ASCEND dat op. Een dag zonder tijd telt als vol zodra er één
+        sessie op staat.
       </p>
       <div className="flex flex-col gap-2">
         {WEEKDAY_ORDER.map((day) => (
