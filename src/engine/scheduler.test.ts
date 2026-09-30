@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor } from './scheduler';
+import { daysBetween } from '../utils/dates';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { DailyTimeBudget } from '../models/goalEngineConfig';
 
@@ -93,7 +94,7 @@ describe('proposeMove', () => {
     expect(proposal.resolved).toBe(true);
     expect(proposal.changes).toHaveLength(2);
     expect(proposal.changes[1]).toMatchObject({ sessionId: 'b', fromDate: WED, toDate: MON });
-    expect(proposal.reason).toMatch(/spreiden/);
+    expect(proposal.reason).toMatch(/48 uur/);
     expect(proposal.reason).not.toMatch(/Let op:/);
   });
 
@@ -265,5 +266,28 @@ describe('dayHasRoomFor', () => {
 
   it('an empty day still only needs to fit the candidate alone', () => {
     expect(dayHasRoomFor(WED, template('tpl_x'), [], templateById, null, budget({ preferredMinutes: 60, softFlexMinutes: 0 }))).toBe(true);
+  });
+});
+
+// Production feedback: moving Upper A to the day before Upper B reported
+// "Geen conflicten gevonden". Heavy work for the same upper-body muscles
+// now counts as a conflict too.
+describe('proposeMove — same heavy upper-body muscles', () => {
+  const upper = (id: string): SessionTemplate => ({ id, name: id, type: 'strength', durationVariants: { full: 75 }, baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'heavy' } });
+  const tpls = [upper('upper_a'), upper('upper_b'), template('tpl_easy_run', 'cardio')];
+
+  it('flags Upper A moved next to Upper B and moves Upper B to a day with 48 hours in between', () => {
+    const week = [session('a', 'upper_a', TUE, MON), session('b', 'upper_b', FRI, MON), session('r', 'tpl_easy_run', THU, MON)];
+    const proposal = proposeMove(week, tpls, 'a', THU);
+    expect(proposal.reason).not.toBe('Geen conflicten gevonden.');
+    expect(proposal.reason).toMatch(/bovenlichaam/);
+    const cascade = proposal.changes.find((c) => c.sessionId === 'b');
+    expect(cascade).toBeDefined();
+    expect(Math.abs(daysBetween(THU, cascade!.toDate))).toBeGreaterThanOrEqual(2);
+  });
+
+  it('still finds no conflict when the upper days stay 48 hours apart', () => {
+    const week = [session('a', 'upper_a', TUE, MON), session('b', 'upper_b', FRI, MON)];
+    expect(proposeMove(week, tpls, 'a', WED).reason).toBe('Geen conflicten gevonden.');
   });
 });

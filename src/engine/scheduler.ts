@@ -33,6 +33,23 @@ import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandida
 // preserve optional sessions last, etc.) are documented here as the natural
 // next additions but are not yet enforced — see README "Roadmap".
 
+// The muscles a session loads heavily. Heavy work for the same muscles
+// needs ~48 hours before the next heavy session for those muscles — the
+// rule ASCEND always applied to leg days, and since production feedback
+// (Upper A and Upper B on consecutive days) also to the upper body.
+export type HeavyAxis = 'upperBodyLoad' | 'lowerBodyLoad';
+export const HEAVY_AXIS_LABEL: Record<HeavyAxis, string> = { upperBodyLoad: 'bovenlichaam', lowerBodyLoad: 'benen' };
+
+export function heavyAxes(template: SessionTemplate): HeavyAxis[] {
+  const profile = resolveEffectiveStressProfile(template);
+  return (['upperBodyLoad', 'lowerBodyLoad'] as HeavyAxis[]).filter((axis) => profile[axis] === 'heavy');
+}
+
+export function sharedHeavyAxes(a: SessionTemplate, b: SessionTemplate): HeavyAxis[] {
+  const bAxes = heavyAxes(b);
+  return heavyAxes(a).filter((axis) => bAxes.includes(axis));
+}
+
 export function isLegHeavyTemplate(template: SessionTemplate): boolean {
   return resolveEffectiveStressProfile(template).lowerBodyLoad === 'heavy';
 }
@@ -201,15 +218,25 @@ export function proposeMove(
   const simulated = weekSessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: targetDate } : s));
 
   const movedTemplate = templateMap.get(session.templateId);
+  // A conflict = another session heavy for the SAME muscles too close by:
+  // legs with the spike-aware spacing below, upper body with the plain
+  // 48-hour rule (production feedback: moving Upper A next to Upper B
+  // reported "geen conflicten").
   const conflicting = simulated.find((s) => {
     if (s.id === sessionId || s.status === 'skipped') return false;
-    if (!movedTemplate || !isLegHeavyTemplate(movedTemplate)) return false;
     const other = templateMap.get(s.templateId);
-    if (!other || !isLegHeavyTemplate(other)) return false;
+    if (!movedTemplate || !other) return false;
+    const shared = sharedHeavyAxes(movedTemplate, other);
+    if (shared.length === 0) return false;
     if (isIntentionalBackToBack(movedTemplate, other)) return false;
-    const spacing = Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs));
+    const spacing = shared.includes('lowerBodyLoad')
+      ? Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs))
+      : 1;
     return Math.abs(daysBetween(s.scheduledDate, targetDate)) <= spacing;
   });
+  const conflictMuscles = conflicting && movedTemplate && templateMap.get(conflicting.templateId)
+    ? sharedHeavyAxes(movedTemplate, templateMap.get(conflicting.templateId)!).map((axis) => HEAVY_AXIS_LABEL[axis]).join(' en ')
+    : '';
 
   if (!conflicting) {
     return { changes, reason: 'Geen conflicten gevonden.', resolved: true };
@@ -229,7 +256,7 @@ export function proposeMove(
   if (!conflictingTemplate) {
     return {
       changes,
-      reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu te dicht op een andere zware beensessie. Geen vrije dag gevonden om dit automatisch op te lossen.`,
+      reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu te dicht op een andere zware sessie voor ${conflictMuscles}. Geen vrije dag gevonden om dit automatisch op te lossen.`,
       resolved: false,
     };
   }
@@ -270,13 +297,13 @@ export function proposeMove(
     const alternatives = result.alternatives;
     const reason = result.status === 'compromised'
       ? `Let op: ${result.compromisedReason} ${templateName(templateMap, conflicting.templateId)} schuift op naar de minst slechte optie.`
-      : `Probeert zware beenbelasting over meerdere dagen te spreiden en niet te dicht op elkaar te plannen: ${templateName(templateMap, conflicting.templateId)} schuift op.`;
+      : `Zware training voor ${conflictMuscles} hoort ongeveer 48 uur uit elkaar te liggen: ${templateName(templateMap, conflicting.templateId)} schuift op.`;
     return { changes, reason, resolved: true, alternatives };
   }
 
   return {
     changes,
-    reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen de gewenste hersteltijd van een andere zware beensessie. Geen vrije dag gevonden om dit automatisch op te lossen.`,
+    reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen de hersteltijd van een andere zware sessie voor ${conflictMuscles} (ongeveer 48 uur). Er is deze week geen vrije dag om dat op te lossen; houd een van beide lichter, of kies een andere dag.`,
     resolved: false,
   };
 }
