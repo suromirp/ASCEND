@@ -252,21 +252,20 @@ export function reconcileWeekComposition(
       const coPlacedWithSessionIds = [...existingOnDate, ...siblingNewIds];
 
       if (existing) {
+        // A real move, not remove + add: remove would leave the old one
+        // behind in the week as "overgeslagen" (production feedback: Upper B
+        // showed a red cross on Friday while it had only moved to Sunday).
         items.push({
           plannedSessionId: existing.id,
-          action: 'remove',
+          action: 'move',
           fromDate: existing.scheduledDate,
-          toDate: existing.scheduledDate,
-          reason: `Krachtblok-herverdeling: ${template.name} ${movedWhy}`,
-          generatedBy: [target.source],
-        });
-        items.push({
-          action: 'add',
-          newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
+          toDate: placement.date,
           reason: `${compromisedPrefix}Krachtblok-herverdeling: ${template.name} ${movedWhy}`,
           generatedBy: [target.source],
           coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
         });
+        finalWeekSessions.push({ ...existing, scheduledDate: placement.date, status: 'moved', movedFromDate: existing.movedFromDate ?? existing.scheduledDate });
+        continue;
       } else {
         items.push({
           action: 'add',

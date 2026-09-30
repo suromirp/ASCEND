@@ -278,7 +278,8 @@ describe('rebuildPlanningFromWeekOne (schone start)', () => {
     expect(after.filter((s) => s.scheduledDate >= todayISO() && s.id !== loggedSession.id).every((s) => s.status === 'planned')).toBe(true);
     const templates = await import('./database').then((m) => m.SessionTemplatesRepo.getAll());
     const hikingIds = new Set(templates.filter((t) => t.type === 'hiking').map((t) => t.id));
-    expect(after.some((s) => s.scheduledDate >= todayISO() && hikingIds.has(s.templateId))).toBe(false);
+    // The logged session stays whatever its sport (history is never touched).
+    expect(after.some((s) => s.scheduledDate >= todayISO() && s.id !== loggedSession.id && hikingIds.has(s.templateId))).toBe(false);
     expect((await SessionLogsRepo.getAll()).map((l) => l.id)).toContain('log1');
   });
 });
