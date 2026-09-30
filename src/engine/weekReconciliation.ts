@@ -25,6 +25,7 @@ import { isDateAvailable } from './adaptiveReplanner';
 import { dayHasRoomFor } from './scheduler';
 import { resolveSessionContributions, type GoalDemand } from './sessionContribution';
 import { computeDemand } from './demand';
+import { orderRotation, type DatedPlacement } from './rotationOrder';
 import { weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { searchWeeklyPlacement, keyForPlacementRequest, weekCandidatesToAlternatives, type PlacementRequest, type WeeklyPlacementResult } from './candidatePlacement';
@@ -144,6 +145,10 @@ export interface ReconciliationTarget {
   // of ending up worse than the non-reflow result, and it never changes
   // WHAT the block's composition is.
   reflowOnChange?: boolean;
+  // Interchangeable sessions of the family (Upper A / Upper B) keep their
+  // own order within a week: A before B (engine/rotationOrder.ts). Opt-in,
+  // strength only.
+  keepRotationOrder?: boolean;
 }
 
 export interface WeekReconciliation {
@@ -213,6 +218,69 @@ export function reconcileWeekComposition(
           dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
       );
     };
+
+  // Turns one complete joint placement of family sessions (existing ones
+  // keyed by their id, new ones by a draft key) into items: an existing
+  // session that keeps its date is left untouched, one that moves becomes
+  // remove + add, a new one becomes add.
+  const emitJointPlacement = (
+    placements: DatedPlacement[],
+    keyToTemplate: Map<string, SessionTemplate>,
+    sessionById: Map<string, PlannedSession>,
+    fixedSessions: PlannedSession[],
+    compromisedPrefix: string,
+    baseLength: number,
+    movedWhy: string,
+  ): PlannedSession[] => {
+    const placedById = placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
+    const finalWeekSessions: PlannedSession[] = [...fixedSessions];
+
+    for (const { placement, id, index } of placedById) {
+      const template = keyToTemplate.get(placement.sessionOrDraft);
+      if (!template) continue;
+      const existing = sessionById.get(placement.sessionOrDraft);
+
+      if (existing && existing.scheduledDate === placement.date) {
+        // Chosen exactly where it already was — leave it untouched, no
+        // items emitted, so an unchanged block still stays idempotent.
+        finalWeekSessions.push(existing);
+        continue;
+      }
+
+      const existingOnDate = finalWeekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === placement.date).map((s) => s.id);
+      const siblingNewIds = placedById.filter((o) => o.placement.date === placement.date && o.id !== id).map((o) => o.id);
+      const coPlacedWithSessionIds = [...existingOnDate, ...siblingNewIds];
+
+      if (existing) {
+        items.push({
+          plannedSessionId: existing.id,
+          action: 'remove',
+          fromDate: existing.scheduledDate,
+          toDate: existing.scheduledDate,
+          reason: `Krachtblok-herverdeling: ${template.name} ${movedWhy}`,
+          generatedBy: [target.source],
+        });
+        items.push({
+          action: 'add',
+          newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
+          reason: `${compromisedPrefix}Krachtblok-herverdeling: ${template.name} ${movedWhy}`,
+          generatedBy: [target.source],
+          coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
+        });
+      } else {
+        items.push({
+          action: 'add',
+          newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
+          reason: `${compromisedPrefix}${target.addReason(template)}`,
+          generatedBy: [target.source],
+          coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
+        });
+      }
+      finalWeekSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: baseLength + index });
+    }
+
+    return finalWeekSessions;
+  };
 
   const familySessions = weekSessions.filter((s) => {
     if (s.status === 'skipped') return false;
@@ -346,60 +414,48 @@ export function reconcileWeekComposition(
       const compromisedPrefix = reflowResult.status === 'compromised' ? `Let op: ${reflowResult.compromisedReason} ` : '';
       alternatives = weekCandidatesToAlternatives(reflowResult.alternatives, (sessionOrDraft) => reflowKeyToTemplate!.get(sessionOrDraft), weekStart);
 
-      const placedById = reflowResult.bestFound.placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
-      const finalWeekSessions: PlannedSession[] = [...reflowFixedSessions];
-
-      for (const { placement, id, index } of placedById) {
-        const template = reflowKeyToTemplate.get(placement.sessionOrDraft);
-        if (!template) continue;
-        const existing = reflowSessionById.get(placement.sessionOrDraft);
-
-        if (existing && existing.scheduledDate === placement.date) {
-          // Chosen exactly where it already was — leave it untouched, no
-          // items emitted, so an unchanged block still stays idempotent.
-          finalWeekSessions.push(existing);
-          continue;
-        }
-
-        const existingOnDate = finalWeekSessions.filter((s) => s.status !== 'skipped' && s.scheduledDate === placement.date).map((s) => s.id);
-        const siblingNewIds = placedById.filter((o) => o.placement.date === placement.date && o.id !== id).map((o) => o.id);
-        const coPlacedWithSessionIds = [...existingOnDate, ...siblingNewIds];
-
-        if (existing) {
-          items.push({
-            plannedSessionId: existing.id,
-            action: 'remove',
-            fromDate: existing.scheduledDate,
-            toDate: existing.scheduledDate,
-            reason: `Krachtblok-herverdeling: ${template.name} verplaatst voor een betere combinatie met de rest van de week.`,
-            generatedBy: [target.source],
-          });
-          items.push({
-            action: 'add',
-            newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
-            reason: `${compromisedPrefix}Krachtblok-herverdeling: ${template.name} herplaatst voor een betere combinatie met de rest van de week.`,
-            generatedBy: [target.source],
-            coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
-          });
-        } else {
-          items.push({
-            action: 'add',
-            newSessionDraft: { templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart },
-            reason: `${compromisedPrefix}${target.addReason(template)}`,
-            generatedBy: [target.source],
-            coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
-          });
-        }
-        finalWeekSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: baseWeekSessions.length + index });
-      }
-
+      const placements = target.keepRotationOrder
+        ? orderRotation(reflowResult.bestFound.placements, (key) => reflowKeyToTemplate!.get(key))
+        : reflowResult.bestFound.placements;
+      const finalWeekSessions = emitJointPlacement(
+        placements, reflowKeyToTemplate, reflowSessionById, reflowFixedSessions, compromisedPrefix, baseWeekSessions.length,
+        'verplaatst voor een betere combinatie met de rest van de week.',
+      );
       weekSessions = finalWeekSessions;
     } else if (missingOnlyResult.status === 'clean' || missingOnlyResult.status === 'compromised') {
       templatesForIndividualPass = [];
       const compromisedPrefix = missingOnlyResult.status === 'compromised' ? `Let op: ${missingOnlyResult.compromisedReason} ` : '';
       alternatives = weekCandidatesToAlternatives(missingOnlyResult.alternatives, (sessionOrDraft) => missingOnlyKeyToTemplate.get(sessionOrDraft), weekStart);
 
-      const newSessionIds = missingOnlyResult.bestFound.placements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
+      // Rotation order: a new Upper A must not land after a movable Upper B
+      // that is already planned (e.g. a clean start on Wednesday, when
+      // Tuesday's Upper A is already past). Swapping their dates keeps the
+      // week exactly as valid; only then does an existing session move.
+      let missingPlacements: DatedPlacement[] = missingOnlyResult.bestFound.placements;
+      let rotationHandled = false;
+      if (target.keepRotationOrder) {
+        const movableExisting = onTarget.filter((s) => !protectedSessionIds.has(s.id) && (!asOf || s.scheduledDate >= asOf));
+        const existingById = new Map(movableExisting.map((s) => [s.id, s]));
+        const keyToTemplate = new Map(missingOnlyKeyToTemplate);
+        for (const s of movableExisting) {
+          const template = templateById.get(s.templateId);
+          if (template) keyToTemplate.set(s.id, template);
+        }
+        const combined = [...movableExisting.map((s) => ({ sessionOrDraft: s.id, date: s.scheduledDate })), ...missingPlacements];
+        const ordered = orderRotation(combined, (key) => keyToTemplate.get(key));
+        const existingMoves = ordered.some((p) => existingById.has(p.sessionOrDraft) && existingById.get(p.sessionOrDraft)!.scheduledDate !== p.date);
+        if (existingMoves) {
+          weekSessions = emitJointPlacement(
+            ordered, keyToTemplate, existingById, baseWeekSessions.filter((s) => !existingById.has(s.id)), compromisedPrefix, baseWeekSessions.length,
+            'verplaatst zodat de sessies van je krachtblok in hun eigen volgorde blijven.',
+          );
+          rotationHandled = true;
+        } else {
+          missingPlacements = ordered.filter((p) => !existingById.has(p.sessionOrDraft));
+        }
+      }
+
+      const newSessionIds = rotationHandled ? [] : missingPlacements.map((p, i) => ({ placement: p, id: makeId('planned'), index: i }));
       for (const { placement, id } of newSessionIds) {
         const template = missingOnlyKeyToTemplate.get(placement.sessionOrDraft);
         if (!template) continue;
@@ -420,7 +476,7 @@ export function reconcileWeekComposition(
         if (!template) continue;
         addedSessions.push({ id, templateId: template.id, scheduledDate: placement.date, weekStartDate: weekStart, status: 'planned', order: baseWeekSessions.length + index });
       }
-      weekSessions = [...baseWeekSessions, ...addedSessions];
+      if (!rotationHandled) weekSessions = [...baseWeekSessions, ...addedSessions];
     }
     // Both candidates failed (unplaceable/search-limited): templatesForIndividualPass
     // stays the full missingTemplates list — fall back to the per-template
