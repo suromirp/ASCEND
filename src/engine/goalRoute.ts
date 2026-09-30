@@ -8,11 +8,13 @@
 // session). This module turns totals into a TYPICAL DAY (totals ÷ days,
 // unless the user overrode a value with a PER_DAY requirement) — the one
 // place that conversion happens, shared by engine/demand.ts and the goal
-// wizard's "Typische dag · berekend" block, so the two can never disagree.
+// wizard's "Gemiddelde loopdag · berekend" block, so the two can never
+// disagree.
 
 import type { GoalRequirement, GoalExecution, TrainingGoal } from '../models/goals';
 import type { MeasuredValue } from '../models/units';
 import { makeId } from '../utils/id';
+import { formatNumberNL } from '../utils/number';
 
 export type RouteKind = 'distance' | 'elevationGain' | 'elevationLoss';
 export const ROUTE_KINDS: RouteKind[] = ['distance', 'elevationGain', 'elevationLoss'];
@@ -70,6 +72,51 @@ export function typicalDayValue(requirements: GoalRequirement[], kind: RouteKind
   if (days === undefined || days <= 0) return undefined;
   if (days === 1) return { value: total.target, source: 'single_day' };
   return { value: roundForUnit({ ...total.target, amount: total.target.amount / days }), source: 'derived' };
+}
+
+// Gemiddelde loopdag vs. trainingsdag (production feedback): the AVERAGE
+// day is always computed from the route (totals ÷ days) and is never
+// overwritten. The TRAINING DAY is an optional, hand-picked reference (a
+// heavier, representative day), stored as PER_DAY requirements. What
+// training aims at is typicalDayValue above: the training day where set,
+// otherwise the average day.
+export function averageDayValue(requirements: GoalRequirement[], kind: RouteKind): DayValue | undefined {
+  return typicalDayValue(requirements.filter((r) => !(r.kind === kind && r.scope === 'PER_DAY')), kind);
+}
+
+export function trainingDayValue(requirements: GoalRequirement[], kind: RouteKind): MeasuredValue | undefined {
+  return find(requirements, kind, true)?.target;
+}
+
+export function hasTrainingDay(requirements: GoalRequirement[]): boolean {
+  return ROUTE_KINDS.some((k) => trainingDayValue(requirements, k) !== undefined);
+}
+
+export function routeDayWord(discipline: string): { singular: string; plural: string } {
+  if (discipline === 'cycling') return { singular: 'fietsdag', plural: 'fietsdagen' };
+  if (discipline === 'hiking') return { singular: 'loopdag', plural: 'loopdagen' };
+  return { singular: 'dag', plural: 'dagen' };
+}
+
+const ROUTE_DAY_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D−' };
+
+export function formatRouteDayValue(kind: RouteKind, amount: number): string {
+  return `${formatNumberNL(amount, kind === 'distance' ? 1 : 0)} ${ROUTE_DAY_SUFFIX[kind]}`;
+}
+
+// "20,7 km · 1.000 m D+ · 1.000 m D− · 12 kg" — one day, with the
+// rucksack when the goal carries one. The training day is shown complete,
+// the way training uses it: what the user set, the rest from the average.
+// Empty when no training day is set.
+export function routeDayParts(requirements: GoalRequirement[], which: 'average' | 'training', includePack = true): string[] {
+  if (which === 'training' && !hasTrainingDay(requirements)) return [];
+  const parts = ROUTE_KINDS.flatMap((k) => {
+    const amount = which === 'average' ? averageDayValue(requirements, k)?.value.amount : typicalDayValue(requirements, k)?.value.amount;
+    return amount !== undefined ? [formatRouteDayValue(k, amount)] : [];
+  });
+  const pack = requirements.find((r) => r.kind === 'packWeight')?.target?.amount;
+  if (includePack && pack && parts.length > 0) parts.push(`${formatNumberNL(pack, 1)} kg`);
+  return parts;
 }
 
 export function routeTotal(requirements: GoalRequirement[], kind: RouteKind): MeasuredValue | undefined {

@@ -27,7 +27,7 @@ import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS } from '../models/disciplines';
 import { computeGoalActivationPlan } from '../engine/goalActivation';
 import { identifyBaselineNeeds } from '../engine/goalSetupAssist';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
-import { typicalDayValue, routeTotal, eventDaysRequirement, isMultiDayGoal, longestStageDays, routeGoalComplete, routeDiscipline, ROUTE_KINDS } from '../engine/goalRoute';
+import { routeDayParts, routeDayWord, routeTotal, eventDaysRequirement, isMultiDayGoal, longestStageDays, routeGoalComplete, routeDiscipline, ROUTE_KINDS } from '../engine/goalRoute';
 import { capabilityKeyLabel } from '../data/baselineQuestions';
 import { todayISO, formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -479,7 +479,7 @@ function RequirementRow({
 
 // --- Preview ----------------------------------------------------------------
 
-const ROUTE_SUFFIX = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D-' } as const;
+const ROUTE_SUFFIX = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D−' } as const;
 
 function formatRouteValue(kind: keyof typeof ROUTE_SUFFIX, amount: number): string {
   return `${formatNumberNL(amount, kind === 'distance' ? 1 : 0)} ${ROUTE_SUFFIX[kind]}`;
@@ -490,16 +490,15 @@ const PER_DAY_DIMENSIONS = new Set(['endurance_duration', 'mechanical_tolerance'
 function RouteSummary({ goal }: { goal: TrainingGoal }) {
   const reqs = goal.requirements;
   const days = eventDaysRequirement(reqs)?.target?.amount;
-  const dayWord = routeDiscipline(goal) === 'hiking' ? 'loopdagen' : routeDiscipline(goal) === 'cycling' ? 'fietsdagen' : 'dagen';
+  const dayWords = routeDayWord(routeDiscipline(goal));
+  const dayWord = dayWords.plural;
   const totals = ROUTE_KINDS.flatMap((k) => {
     const t = routeTotal(reqs, k);
     return t ? [formatRouteValue(k, t.amount)] : [];
   });
   if (days) totals.push(`${formatNumberNL(days, 0)} ${dayWord}`);
-  const typical = ROUTE_KINDS.flatMap((k) => {
-    const d = typicalDayValue(reqs, k);
-    return d ? [formatRouteValue(k, d.value.amount)] : [];
-  });
+  const average = routeDayParts(reqs, 'average', false);
+  const training = routeDayParts(reqs, 'training', false);
   const longest = longestStageDays(reqs, goal.execution);
   const pack = reqs.find((r) => r.kind === 'packWeight')?.target?.amount;
   const stageBits = [
@@ -515,7 +514,8 @@ function RouteSummary({ goal }: { goal: TrainingGoal }) {
       </div>
       <div>
         <p style={{ color: 'var(--color-ink-dim)' }}>Etappebelasting</p>
-        {typical.length > 0 && <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>Typische dag: {typical.join(' · ')}</p>}
+        {average.length > 0 && <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>Gemiddelde {dayWords.singular}: {average.join(' · ')}</p>}
+        {training.length > 0 && <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>Trainingsdag: {training.join(' · ')}</p>}
         {stageBits.length > 0 && <p className="mt-0.5" style={{ color: 'var(--color-ink)' }}>{stageBits.join(' · ').replace(/^./, (c) => c.toUpperCase())}</p>}
       </div>
     </div>
@@ -621,7 +621,7 @@ function PreviewStep({
           <Eyebrow>CAPACITEIT VS. VRAAG</Eyebrow>
           {multiDay && (
             <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Vergeleken met een typische dag van de tocht, niet met de totalen.
+              Vergeleken met één dag van de tocht (je trainingsdag, of anders de gemiddelde loopdag), niet met de totalen.
             </p>
           )}
           <div className="mt-3 flex flex-col gap-4">
