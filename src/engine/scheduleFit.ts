@@ -8,14 +8,24 @@
 // the same Groep C placement search every other move uses, respecting the
 // leg-heavy spacing rule. Never removes anything; a session with no valid
 // day left stays where it is and is reported, not silently dropped.
+//
+// The other direction (production feedback: "waarom schuift hij dan niet
+// gelijk of geeft hij daar een optie voor?"): when a setting makes room, a
+// session in this or next week that sits LATER than the day it was meant
+// for (its template's own weekday, or where it was moved from) is offered
+// the earliest day back toward it that now has room and keeps the 48-hour
+// rule. Only ever proposed, through the same confirm sheet as any other
+// change in this or next week.
 
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
-import { dayHasRoomFor } from './scheduler';
+import { dayHasRoomFor, findHeavyConflict } from './scheduler';
+import { committedWeekStartDates } from './planningHorizon';
+import { compareRotation, interchangeKey } from './rotationOrder';
 import { searchWeeklyPlacement, type PlacementRequest } from './candidatePlacement';
-import { weekDates } from '../utils/dates';
+import { addDays, formatDateNL, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 export interface ScheduleFitInputs {
@@ -92,6 +102,50 @@ export function computeScheduleFit(inputs: ScheduleFitInputs): ScheduleFitResult
     }
   }
 
+  // ---- Room freed up: bring sessions back toward their intended day. ----
+  let current = plannedSessions.map((s) => {
+    const moved = items.find((i) => i.plannedSessionId === s.id);
+    return moved?.toDate ? { ...s, scheduledDate: moved.toDate } : s;
+  });
+  const overflowIds = new Set(items.map((i) => i.plannedSessionId));
+  let pulledBack = 0;
+  for (const weekStart of committedWeekStartDates(asOf)) {
+    const candidates = current
+      .filter((s) => s.weekStartDate === weekStart && movable(s) && !overflowIds.has(s.id))
+      .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.order - b.order);
+    for (const candidate of candidates) {
+      const session = current.find((s) => s.id === candidate.id)!;
+      const template = templateById.get(session.templateId);
+      if (!template) continue;
+      const defaultDate = template.defaultDayOfWeek ? addDays(weekStart, template.defaultDayOfWeek - 1) : undefined;
+      const intended = [defaultDate, session.movedFromDate].filter((d): d is string => !!d && weekDates(weekStart).includes(d)).sort()[0];
+      if (!intended || intended >= session.scheduledDate) continue;
+      const week = current.filter((s) => s.weekStartDate === weekStart && s.status !== 'skipped' && s.id !== session.id);
+      const nearby = current.filter((s) => s.status !== 'skipped' && s.id !== session.id);
+      const target = weekDates(weekStart).find((d) =>
+        d >= asOf && d >= intended && d < session.scheduledDate
+        && dayHasRoomFor(d, template, week, templateById, program, dailyTimeBudget, sameDayPairingPreference)
+        && !findHeavyConflict(session.id, template, d, nearby, templateById, sessionLogs)
+        // Never jump ahead of a sibling that comes first (Upper A before B).
+        && !week.some((o) => {
+          const ot = templateById.get(o.templateId);
+          return ot && interchangeKey(ot) === interchangeKey(template) && compareRotation(ot, template) < 0 && o.scheduledDate >= d;
+        }),
+      );
+      if (!target) continue;
+      items.push({
+        plannedSessionId: session.id,
+        action: 'move',
+        fromDate: session.scheduledDate,
+        toDate: target,
+        reason: `Er is nu ruimte op ${weekdayShortNL(target).toLowerCase()} ${formatDateNL(target)}: ${template.name} kan eerder in de week, dichter bij de dag waarvoor hij bedoeld is.`,
+        generatedBy: ['engine/scheduleFit.ts#computeScheduleFit'],
+      });
+      current = current.map((s) => (s.id === session.id ? { ...s, scheduledDate: target } : s));
+      pulledBack++;
+    }
+  }
+
   const stuckNames = [...new Set(stuck)].join(', ');
   const stuckNote = stuck.length > 0 ? ` Voor ${stuckNames} is in die week geen andere dag vrij, dus die blijft staan waar hij staat. Verplaats hem zelf als je wilt.` : '';
   return {
@@ -103,7 +157,10 @@ export function computeScheduleFit(inputs: ScheduleFitInputs): ScheduleFitResult
       changes: items,
       alternatives: [],
       consequences: items.length > 0
-        ? `Sessies die niet meer samen op een dag passen, schuiven binnen hun eigen week op.${stuckNote}`
+        ? [
+          items.length > pulledBack ? `Sessies die niet meer samen op een dag passen, schuiven binnen hun eigen week op.${stuckNote}` : '',
+          pulledBack > 0 ? `Er is ruimte vrijgekomen: ${pulledBack === 1 ? 'een sessie kan' : `${pulledBack} sessies kunnen`} eerder in de week, dichter bij de bedoelde dag.` : '',
+        ].filter(Boolean).join(' ')
         : stuck.length > 0
           ? `Nieuwe planning gebruikt de nieuwe instelling.${stuckNote}`
           : 'Je huidige planning past al binnen de nieuwe instelling. Nieuwe planning gebruikt hem vanaf nu.',

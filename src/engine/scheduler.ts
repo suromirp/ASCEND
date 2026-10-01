@@ -96,6 +96,32 @@ export function requiredSpacingDays(sessionId: string, recentLogs: SessionLog[])
   return detectRecentSpike([ownLog, ...rest]).detected ? 2 : 1;
 }
 
+// The other session that would be heavy for the SAME muscles too close to
+// `date`: legs with the spike-aware spacing above, upper body with the
+// plain 48-hour rule. Shared by proposeMove and every other place that
+// moves a session to a day of its own choosing.
+export function findHeavyConflict(
+  sessionId: string,
+  template: SessionTemplate,
+  date: string,
+  sessions: PlannedSession[],
+  templateMap: Map<string, SessionTemplate>,
+  recentLogs: SessionLog[] = [],
+): PlannedSession | undefined {
+  return sessions.find((s) => {
+    if (s.id === sessionId || s.status === 'skipped') return false;
+    const other = templateMap.get(s.templateId);
+    if (!other) return false;
+    const shared = sharedHeavyAxes(template, other);
+    if (shared.length === 0) return false;
+    if (isIntentionalBackToBack(template, other)) return false;
+    const spacing = shared.includes('lowerBodyLoad')
+      ? Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs))
+      : 1;
+    return Math.abs(daysBetween(s.scheduledDate, date)) <= spacing;
+  });
+}
+
 export interface ScheduleChange {
   sessionId: string;
   templateId: string;
@@ -226,18 +252,7 @@ export function proposeMove(
   // legs with the spike-aware spacing below, upper body with the plain
   // 48-hour rule (production feedback: moving Upper A next to Upper B
   // reported "geen conflicten").
-  const conflicting = simulated.find((s) => {
-    if (s.id === sessionId || s.status === 'skipped') return false;
-    const other = templateMap.get(s.templateId);
-    if (!movedTemplate || !other) return false;
-    const shared = sharedHeavyAxes(movedTemplate, other);
-    if (shared.length === 0) return false;
-    if (isIntentionalBackToBack(movedTemplate, other)) return false;
-    const spacing = shared.includes('lowerBodyLoad')
-      ? Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs))
-      : 1;
-    return Math.abs(daysBetween(s.scheduledDate, targetDate)) <= spacing;
-  });
+  const conflicting = movedTemplate ? findHeavyConflict(sessionId, movedTemplate, targetDate, simulated, templateMap, recentLogs) : undefined;
   const conflictMuscles = conflicting && movedTemplate && templateMap.get(conflicting.templateId)
     ? sharedHeavyAxes(movedTemplate, templateMap.get(conflicting.templateId)!).map((axis) => HEAVY_AXIS_LABEL[axis]).join(' en ')
     : '';
