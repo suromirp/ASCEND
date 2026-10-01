@@ -495,7 +495,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (forecastWeekStarts.length === 0) return; // nothing scheduled that far out yet — a real, unresolved dependency (see CLAUDE.md's "16-week horizon" note)
 
     const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
-    const readiness = computeReadiness(logs, planned);
+    const readiness = computeReadiness(logs, planned, 28, asOf, programs[0]?.startDate);
     const packWeightTargetKg = goals
       .filter((g) => g.status === 'active')
       .map((g) => targetPackWeightKg(g.requirements))

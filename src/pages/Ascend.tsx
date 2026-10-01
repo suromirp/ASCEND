@@ -77,7 +77,7 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 }
 
 export function AscendPage() {
-  const { sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
+  const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
   const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
@@ -87,8 +87,9 @@ export function AscendPage() {
   // archived goal as if it were still active.
   const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
 
-  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
-  const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
+  const programStart = program?.startDate;
+  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions, 28, undefined, programStart), [sessionLogs, plannedSessions, programStart]);
+  const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions, 8, programStart), [sessionLogs, plannedSessions, programStart]);
   // Sports-science review, item B1: capacity ("what have you demonstrably
   // been building lately") and readiness ("are you acutely ready for more
   // right now") were previously one flat 7-score average — split into two
