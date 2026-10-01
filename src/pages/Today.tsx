@@ -101,7 +101,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // you're on. Early in a fresh week the literal this-week ratio is 0/low by
   // definition, which reads as broken; the rolling figure is representative
   // from day one.
-  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions), [sessionLogs, plannedSessions]);
+  const programStart = program?.startDate;
+  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, programStart);
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
   const quote = dailyQuote(today);
 
@@ -258,7 +259,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         </Card>
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistency}%</p>
+          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistencyBasis === 0 ? '—' : `${readiness.consistency}%`}</p>
         </Card>
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>BLOK</p>

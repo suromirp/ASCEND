@@ -15,7 +15,7 @@ function activeGoal(overrides: Partial<TrainingGoal> = {}): TrainingGoal {
 }
 
 function readiness(overrides: Partial<ReadinessBreakdown> = {}): ReadinessBreakdown {
-  return { recovery: 80, consistency: 80, subjectiveSignal: 80, overall: 80, ...overrides };
+  return { recovery: 80, consistency: 80, subjectiveSignal: 80, overall: 80, consistencyBasis: 10, ...overrides };
 }
 
 function capacity(overrides: Partial<CapacityBreakdown> = {}): CapacityBreakdown {

@@ -1,5 +1,5 @@
 import type { PlannedSession, SessionLog } from '../models/training';
-import { addDays, formatDateNL, todayISO } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, todayISO } from '../utils/dates';
 
 // ASCEND — Readiness (sports-science review, September 2026, item B1).
 //
@@ -16,6 +16,9 @@ export interface ReadinessBreakdown {
   consistency: number;
   subjectiveSignal: number;
   overall: number;
+  // How many sessions consistency is based on: 0 means nothing was due
+  // yet (a fresh start), which the UI shows as "—" rather than a score.
+  consistencyBasis: number;
 }
 
 const clampPct = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
@@ -29,20 +32,31 @@ export function computeReadiness(
   plannedSessions: PlannedSession[],
   windowDays = 28,
   asOf: string = todayISO(),
+  // Week 1 of the program. Nothing before it counts (production feedback:
+  // "30% consistentie terwijl ik letterlijk in mijn eerste week zit" —
+  // sessions from the schedule before a restart were read as missed).
+  programStart?: string,
 ): ReadinessBreakdown {
-  const since = addDays(asOf, -windowDays);
+  const windowStart = addDays(asOf, -windowDays);
+  const since = programStart && programStart > windowStart ? programStart : windowStart;
   const recentLogs = logs.filter((l) => l.completedDate >= since && l.completedDate <= asOf);
-  const recentPlanned = plannedSessions.filter((p) => p.scheduledDate >= since && p.scheduledDate <= asOf);
 
-  // Consistency: share of planned sessions in the window that have a log.
-  const loggedPlannedIds = new Set(recentLogs.map((l) => l.plannedSessionId).filter(Boolean));
-  const consistency = recentPlanned.length === 0
+  // Consistency: share of sessions that were due that have a log. Due =
+  // on the plan (skipped ones were taken off it) and on a day that has
+  // passed; today's session only counts once it's done, never as a miss
+  // while the day is still running.
+  const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const due = plannedSessions.filter(
+    (p) => p.status !== 'skipped' && p.scheduledDate >= since && (p.scheduledDate < asOf || (p.scheduledDate === asOf && loggedPlannedIds.has(p.id))),
+  );
+  const consistency = due.length === 0
     ? 0
-    : clampPct((loggedPlannedIds.size / recentPlanned.length) * 100);
+    : clampPct((due.filter((p) => loggedPlannedIds.has(p.id)).length / due.length) * 100);
 
   // Recovery: completed recovery sessions vs. a 1x/week target. This is a
   // placeholder until HRV / sleep / Body Battery data arrives via Garmin.
-  const recoveryTarget = Math.max(1, Math.round(windowDays / 7));
+  const effectiveDays = Math.max(1, daysBetween(since, asOf));
+  const recoveryTarget = Math.max(1, Math.round(effectiveDays / 7));
   const recoveryDone = recentLogs.filter((l) => l.type === 'recovery').length;
   const recovery = clampPct((recoveryDone / recoveryTarget) * 100);
 
@@ -60,7 +74,7 @@ export function computeReadiness(
 
   const overall = clampPct((recovery + consistency + subjectiveSignal) / 3);
 
-  return { recovery, consistency, subjectiveSignal, overall };
+  return { recovery, consistency, subjectiveSignal, overall, consistencyBasis: due.length };
 }
 
 export interface TrendPoint {
@@ -72,11 +86,11 @@ export interface TrendPoint {
 // already shows, just re-run with `asOf` walked back a week at a time —
 // this is the one thing that needed that param, everything else about the
 // formulas is untouched.
-export function computeReadinessTrend(logs: SessionLog[], plannedSessions: PlannedSession[], weeks = 8): TrendPoint[] {
+export function computeReadinessTrend(logs: SessionLog[], plannedSessions: PlannedSession[], weeks = 8, programStart?: string): TrendPoint[] {
   const points: TrendPoint[] = [];
   for (let i = weeks - 1; i >= 0; i--) {
     const asOf = addDays(todayISO(), -7 * i);
-    points.push({ label: formatDateNL(asOf), value: computeReadiness(logs, plannedSessions, 28, asOf).overall });
+    points.push({ label: formatDateNL(asOf), value: computeReadiness(logs, plannedSessions, 28, asOf, programStart).overall });
   }
   return points;
 }

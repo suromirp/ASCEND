@@ -37,9 +37,31 @@ describe('computeReadiness', () => {
   });
 
   it('consistency is the share of planned sessions in the window that have a log', () => {
-    const plannedSessions = [planned('p1', ASOF), planned('p2', ASOF)];
+    const plannedSessions = [planned('p1', '2026-09-27'), planned('p2', '2026-09-27')];
     const logs = [log({ plannedSessionId: 'p1' })];
     expect(computeReadiness(logs, plannedSessions, 28, ASOF).consistency).toBe(50);
+  });
+
+  // Production feedback: "30% consistentie terwijl ik letterlijk in mijn
+  // eerste week zit".
+  it('only counts sessions from week 1 on, skips taken-off sessions, and never counts today as missed', () => {
+    const plannedSessions = [
+      planned('before', '2026-09-21'), // old schedule, before the restart
+      planned('mon', '2026-09-28'),
+      { ...planned('skippedCopy', '2026-09-29'), status: 'skipped' as const },
+      planned('wed', '2026-09-30'),
+      planned('today', '2026-10-01'), // not done yet
+    ];
+    const logs = [log({ plannedSessionId: 'mon', completedDate: '2026-09-28' }), log({ plannedSessionId: 'wed', completedDate: '2026-09-30' })];
+    const result = computeReadiness(logs, plannedSessions, 28, '2026-10-01', '2026-09-28');
+    expect(result.consistency).toBe(100);
+    expect(result.consistencyBasis).toBe(2);
+    // Without the program start, the old schedule drags it down.
+    expect(computeReadiness(logs, plannedSessions, 28, '2026-10-01').consistency).toBe(67);
+  });
+
+  it('has no basis yet on the first day of a fresh start', () => {
+    expect(computeReadiness([], [planned('mon', '2026-09-28')], 28, '2026-09-28', '2026-09-28').consistencyBasis).toBe(0);
   });
 
   it('subjectiveSignal reflects the share of recent logs that were not "worse"', () => {
