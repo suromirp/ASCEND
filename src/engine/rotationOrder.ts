@@ -17,7 +17,7 @@ export interface DatedPlacement {
   date: string;
 }
 
-function interchangeKey(template: SessionTemplate): string {
+export function interchangeKey(template: SessionTemplate): string {
   return JSON.stringify([template.type, template.durationVariants.full, resolveEffectiveStressProfile(template)]);
 }
 

@@ -653,7 +653,8 @@ function DailyBudgetEditor({
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         Hoeveel tijd heb je normaal per dag? Dit telt alleen als ASCEND een tweede sessie op een dag wil zetten: bij een
         krachtblok met meer sessies, bij inhalen van een gemiste training of als de weekplanning iets toevoegt. Staat er
-        bij opslaan al meer op een dag dan past, dan schuift ASCEND dat op. Een dag zonder tijd telt als vol zodra er één
+        bij opslaan al meer op een dag dan past, dan schuift ASCEND dat op. Komt er juist ruimte vrij, dan stelt ASCEND voor
+        sessies die later dan bedoeld staan weer naar voren te halen. Een dag zonder tijd telt als vol zodra er één
         sessie op staat.
       </p>
       <div className="flex flex-col gap-2">
