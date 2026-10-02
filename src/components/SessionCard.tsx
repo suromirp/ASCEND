@@ -26,7 +26,7 @@ export function SessionCard({
   program?: Program | null;
   onTap?: () => void;
   // Fase 3 — ASCEND changed this session recently (engine/changeLog.ts);
-  // the why lives in the Week page's WIJZIGINGEN list.
+  // the why lives in the Week page's "door ASCEND aangepast" line.
   adjusted?: boolean;
 }) {
   const { status, wasMoved } = deriveSessionStatus(session, logs);

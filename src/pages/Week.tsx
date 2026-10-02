@@ -129,7 +129,7 @@ export function WeekPage() {
         />
       )}
 
-      {!monthView && <ChangeLogCard />}
+      {!monthView && <ChangeLogCard weekStart={weekStart} />}
 
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet
