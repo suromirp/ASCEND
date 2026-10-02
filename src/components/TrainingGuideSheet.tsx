@@ -1,22 +1,49 @@
+// ASCEND — the training guide sheet. Visual first (production feedback:
+// "een mooie visuele view, maar wel dezelfde inzichten"): summary, the
+// workout as a chart and steps with intensity in plain words, the Garmin
+// workout to rebuild, what it loads and builds, the weeks of this phase.
+// The full original text stays one tap away under "Meer uitleg".
+
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { TrainingDayGuide } from '../data/trainingGuide';
+import type { SessionTemplate } from '../models/training';
+import { INTENSITY, type Intensity } from '../data/workoutStructure';
+import { buildWorkoutPlan, formatClock, type PlanStep, type WorkoutPlan } from '../engine/workoutPlan';
+import { useAppData } from '../state/AppDataContext';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
+
+const INTENSITY_COLOR: Record<Intensity, string> = {
+  1: 'var(--color-stone)',
+  2: 'var(--color-sky)',
+  3: 'var(--color-bronze)',
+  4: 'var(--color-gold)',
+};
+const INTENSITY_HEIGHT: Record<Intensity, number> = { 1: 30, 2: 50, 3: 72, 4: 100 };
+const LOAD_WORD = ['geen', 'licht', 'gemiddeld', 'zwaar'];
 
 export function TrainingGuideSheet({
   title,
   guide,
   dayLabel,
   onClose,
+  template,
+  dateIso,
 }: {
   title: string;
   guide: TrainingDayGuide;
   dayLabel: string;
   onClose: () => void;
+  template?: SessionTemplate;
+  dateIso?: string;
 }) {
   const navigate = useNavigate();
+  const { program } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
+  const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
+  const [moreOpen, setMoreOpen] = useState(!plan);
 
   return (
     <Portal>
@@ -32,7 +59,23 @@ export function TrainingGuideSheet({
           <Eyebrow>{dayLabel}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
           <p className="mt-0.5 text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>{guide.subtitle}</p>
-          <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.registration}</p>
+
+          {plan && <PlanView plan={plan} />}
+
+          {plan && (
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className="mt-6 flex w-full items-center justify-between border-t pt-4 text-left"
+              style={{ borderColor: 'var(--color-card-border)' }}
+              aria-expanded={moreOpen}
+            >
+              <span className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>MEER UITLEG</span>
+              <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{moreOpen ? 'sluiten' : 'openen'}</span>
+            </button>
+          )}
+
+          {moreOpen && (<>
+          <p className="mt-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.registration}</p>
 
           {guide.sections.map((section) => (
             <div key={section.heading} className="mt-4">
@@ -104,6 +147,8 @@ export function TrainingGuideSheet({
             </div>
           )}
 
+          </>)}
+
           <button onClick={requestClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
           </button>
@@ -124,5 +169,163 @@ function BulletList({ items, className = '' }: { items: string[]; className?: st
         </li>
       ))}
     </ul>
+  );
+}
+
+function SectionTitle({ children }: { children: string }) {
+  return <p className="mt-6 text-[11px] font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{children}</p>;
+}
+
+function Dot({ intensity }: { intensity: Intensity }) {
+  return <span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: INTENSITY_COLOR[intensity] }} />;
+}
+
+function minutesText(seconds: number): string {
+  return seconds % 60 === 0 ? `${seconds / 60} min` : formatClock(seconds);
+}
+
+function StepRow({ step }: { step: PlanStep }) {
+  const level = INTENSITY[step.intensity];
+  const isStrength = step.kind === 'strength';
+  return (
+    <div className="flex gap-2.5">
+      <Dot intensity={step.intensity} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{step.label}</span>
+          <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutesText(step.seconds)}</span>
+        </div>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          {isStrength ? step.detail : `${level.label} · ${level.feel} · ${level.zone}${step.detail ? `. ${step.detail}` : ''}`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PlanView({ plan }: { plan: WorkoutPlan }) {
+  const total = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
+  const peak = Math.max(...plan.timeline.map((s) => s.intensity)) as Intensity;
+  const usedLevels = [...new Set(plan.timeline.filter((s) => s.kind !== 'strength').map((s) => s.intensity))].sort() as Intensity[];
+  const tags = [`±${plan.totalMinutes} min`, plan.timeline.every((s) => s.kind === 'strength') ? 'Kracht' : INTENSITY[peak].label, plan.keyTag].filter((t): t is string => !!t);
+
+  return (
+    <>
+      <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.summary}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {tags.map((t) => (
+          <span key={t} className="rounded-full border px-2.5 py-0.5 text-[11px]" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{t}</span>
+        ))}
+      </div>
+
+      <SectionTitle>OPBOUW</SectionTitle>
+      {/* A chart only says something when the session has steps; one
+          continuous block is just the step below. */}
+      {plan.timeline.length > 1 && (
+      <div className="mt-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+        <div className="flex h-16 items-end gap-[2px]" role="img" aria-label={`Opbouw van de training, ${plan.totalMinutes} minuten`}>
+          {plan.timeline.map((step, i) => (
+            <div
+              key={i}
+              className="rounded-[3px]"
+              style={{ flexGrow: step.seconds, flexBasis: 0, height: `${INTENSITY_HEIGHT[step.intensity]}%`, background: INTENSITY_COLOR[step.intensity], opacity: step.kind === 'strength' ? 0.55 : 0.9 }}
+            />
+          ))}
+        </div>
+        <div className="mt-1.5 flex justify-between text-[10px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+          <span>0</span>
+          <span>{Math.round(total / 60)} min</span>
+        </div>
+        {usedLevels.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            {usedLevels.map((lvl) => (
+              <span key={lvl} className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--color-ink-dim)' }}>
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: INTENSITY_COLOR[lvl] }} />
+                {INTENSITY[lvl].label} ({INTENSITY[lvl].rpe})
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      )}
+
+      <div className="mt-4 flex flex-col gap-3">
+        {plan.items.map((item, i) =>
+          'step' in item ? (
+            <StepRow key={i} step={item.step} />
+          ) : (
+            <div key={i} className="rounded-xl border-l-2 py-1 pl-3" style={{ borderColor: 'var(--color-bronze)' }}>
+              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-bronze)' }}>{item.repeat}× HERHALEN</p>
+              <div className="mt-2 flex flex-col gap-3">
+                {item.steps.map((step, j) => <StepRow key={j} step={step} />)}
+              </div>
+            </div>
+          ),
+        )}
+      </div>
+
+      {plan.garmin && (
+        <>
+          <SectionTitle>IN JE GARMIN</SectionTitle>
+          <div className="mt-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+              Maak in Garmin Connect een nieuwe workout van het type {plan.garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
+            </p>
+            <div className="mt-2.5 flex flex-col gap-1">
+              {plan.garmin.lines.map((line, i) => (
+                <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-bronze)' : 'var(--color-ink)' }}>{line}</p>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      <SectionTitle>WAT HET BELAST</SectionTitle>
+      <div className="mt-3 flex flex-col gap-2">
+        {plan.load.map((l) => (
+          <div key={l.label} className="flex items-center gap-3">
+            <span className="w-24 shrink-0 text-xs" style={{ color: 'var(--color-ink)' }}>{l.label}</span>
+            <div className="flex flex-1 gap-1">
+              {[1, 2, 3].map((n) => (
+                <span key={n} className="h-1.5 flex-1 rounded-full" style={{ background: n <= l.level ? 'var(--color-gold)' : 'var(--color-card-border)' }} />
+              ))}
+            </div>
+            <span className="w-16 shrink-0 text-right text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{LOAD_WORD[l.level]}</span>
+          </div>
+        ))}
+      </div>
+
+      <SectionTitle>BOUWT AAN</SectionTitle>
+      <div className="mt-3 flex flex-col gap-2.5">
+        {plan.builds.map((b) => (
+          <div key={b.label}>
+            <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: 'var(--color-charcoal)', color: 'var(--color-gold)' }}>{b.label}</span>
+            <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{b.why}</p>
+          </div>
+        ))}
+      </div>
+
+      {plan.weeks.length > 0 && (
+        <>
+          <SectionTitle>DEZE FASE</SectionTitle>
+          <div className="mt-3 grid grid-cols-4 gap-1.5">
+            {plan.weeks.map((w) => (
+              <div
+                key={w.week}
+                className="rounded-lg border px-1.5 py-2 text-center"
+                style={{ borderColor: w.current ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+              >
+                <p className="text-[10px] tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
+                <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
+                <p className="mt-0.5 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/ — | \(/)[0]}</p>
+              </div>
+            ))}
+          </div>
+          {plan.weeks.find((w) => w.current)?.note.includes('—') && (
+            <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Deze week: {plan.weeks.find((w) => w.current)!.note.split(' — ').slice(1).join(' — ')}</p>
+          )}
+        </>
+      )}
+    </>
   );
 }

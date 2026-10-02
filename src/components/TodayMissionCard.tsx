@@ -65,7 +65,7 @@ export function TodayMissionCard({
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
       </div>
 
-      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
+      {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
       {quickComplete ? (
         <div>

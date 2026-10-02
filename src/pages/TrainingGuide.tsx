@@ -4,6 +4,7 @@ import { useAppData } from '../state/AppDataContext';
 import { TRAINING_GUIDES, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
 import { Card, Eyebrow } from '../components/ui';
+import { todayISO } from '../utils/dates';
 
 // Fixed weekday order (Ma → Zo) rather than iterating TRAINING_GUIDES —
 // object key order isn't a contract worth relying on, and this reads in
@@ -69,7 +70,7 @@ export function TrainingGuidePage() {
       </div>
 
       {openTemplate && openGuide && (
-        <TrainingGuideSheet title={openTemplate.name} guide={openGuide} dayLabel={guideDayLabel(openTemplate)} onClose={() => setOpenTemplateId(null)} />
+        <TrainingGuideSheet title={openTemplate.name} guide={openGuide} template={openTemplate} dateIso={todayISO()} dayLabel={guideDayLabel(openTemplate)} onClose={() => setOpenTemplateId(null)} />
       )}
     </div>
   );
