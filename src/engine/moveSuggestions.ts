@@ -65,6 +65,8 @@ export function suggestMoveDates(
   const candidates: { date: string; score: number }[] = [];
   for (let date = firstDay; date <= lastDay; date = addDays(date, 1)) {
     if (date === session.scheduledDate) continue;
+    // Never a third session on one day, whatever the time allows.
+    if (others.filter((s) => s.scheduledDate === date).length >= 2) continue;
     const normal = fitsNormally(date);
     if (!normal && !fitsWhenAsked(date)) continue;
     if (findHeavyConflict(sessionId, template, date, others, templateById, recentLogs)) continue;
