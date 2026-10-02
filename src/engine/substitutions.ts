@@ -102,9 +102,17 @@ export function weeklyProgressionNote(
 // so "short" there was just a duration preset with an otherwise identical
 // screen; only "full" is offered for those, and the duration field stays
 // freely editable.
+//
+// Parked for now (production feedback: "doe korte sessie weg, dat is nu
+// niet nodig"): only the full session is offered anywhere in the UI. The
+// variant data, exercise trimming and progression handling all stay in
+// place; flipping this back on restores the short/minimum buttons. See
+// BACKLOG.md.
+export const SESSION_VARIANTS_ENABLED = false;
+
 export function availableVariants(template: SessionTemplate): SessionVariant[] {
   const variants: SessionVariant[] = ['full'];
-  if (template.type !== 'strength') return variants;
+  if (!SESSION_VARIANTS_ENABLED || template.type !== 'strength') return variants;
   if (template.durationVariants.short) variants.push('short');
   if (template.durationVariants.minimum) variants.push('minimum');
   return variants;
