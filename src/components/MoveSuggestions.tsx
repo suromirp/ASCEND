@@ -40,6 +40,11 @@ export function MoveSuggestions({
   return (
     <div>
       <Eyebrow>{sessionDate === todayISO() ? 'VANDAAG GEEN TIJD? VERPLAATS NAAR' : 'VERPLAATS NAAR'}</Eyebrow>
+      {originalDate && originalDate < todayISO() && originalDate !== sessionDate && (
+        <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          Oorspronkelijk gepland op {weekdayLongNL(originalDate)} {formatDateNL(originalDate)}. Die dag is al voorbij, dus terugzetten kan niet meer. Kies hieronder de beste dag die nog komt.
+        </p>
+      )}
       {canGoBack && (
         <button
           onClick={() => onPickDate(originalDate!)}
