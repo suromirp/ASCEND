@@ -14,6 +14,7 @@ import {
   seedIfEmpty,
   syncTemplateAndScheduleDefinitions,
   ensureDefaultTemplates,
+  restorePatternSessionsRemovedByPrescription,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
@@ -79,6 +80,7 @@ function runBootMigrationsOnce(): Promise<void> {
     await migrateStrengthProgramDefault();
     await syncTemplateAndScheduleDefinitions();
     await ensureDefaultTemplates();
+    await restorePatternSessionsRemovedByPrescription();
   })();
   return bootMigrations;
 }

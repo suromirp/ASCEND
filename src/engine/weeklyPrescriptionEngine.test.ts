@@ -245,3 +245,27 @@ describe('computeWeeklyPrescriptionPlan', () => {
     expect(batch2.prescriptions[1].consecutiveKeepWeeks).toBe(2);
   });
 });
+
+// Production feedback: "hoe kan het dat in opkomende weken de lange
+// duurloop een kruis krijgt?" With the real default week, the prescription
+// must never take a pattern session out to put another candidate in.
+describe('computeWeeklyPrescriptionPlan — the default weekly pattern stays', () => {
+  it('never removes the long run (or any pattern session) from a forecast week', async () => {
+    const { buildDefaultProgramData } = await import('../data/defaultProgram');
+    const { templates, program } = buildDefaultProgramData();
+    const pattern = templates.filter((t) => t.defaultDayOfWeek);
+    const weekOf = (monday: string) => pattern.map((t) => session(`${monday}-${t.id}`, t.id, new Date(Date.parse(monday) + (t.defaultDayOfWeek! - 1) * 86400000).toISOString().slice(0, 10), monday));
+    const plannedSessions = [...weekOf('2026-09-07'), ...weekOf(ANCHOR_WEEK), ...weekOf(FORECAST_WEEK_1), ...weekOf(FORECAST_WEEK_2)];
+    const keys = [ASCENT_KEY, { dimension: 'endurance_duration' as const, discipline: 'hiking' }, { dimension: 'descent_tolerance' as const }];
+    const decisionsByKey = new Map(keys.map((key) => [keyId(key), decision({ key, state: 'progress' })]));
+    const goalOverviews = [overview({ gaps: keys.map((key) => gap({ key, status: 'gap' })) })];
+    for (const state of ['progress', 'consolidate', 'reduce'] as const) {
+      for (const d of decisionsByKey.values()) d.state = state;
+      const result = computeWeeklyPrescriptionPlan(
+        [FORECAST_WEEK_1, FORECAST_WEEK_2], [goal()], goalOverviews, decisionsByKey, plannedSessions, templates, availability(), null, [], [], program, 'automatic', ASOF,
+      );
+      const removed = result.proposal.changes.filter((c) => c.action === 'remove').map((c) => plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId);
+      expect(removed, state).toEqual([]);
+    }
+  });
+});

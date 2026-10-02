@@ -67,9 +67,33 @@ function buildTargetTemplateIds(lines: WeeklyPrescription['lines'], desiredSlots
   return [...countByTemplate.entries()].flatMap(([templateId, count]) => Array<string>(count).fill(templateId));
 }
 
-function buildReconciliationTarget(lines: WeeklyPrescription['lines'], desiredSlots: DesiredSlot[]): ReconciliationTarget {
+// Production feedback: "hoe kan het dat in opkomende weken de lange
+// duurloop een kruis krijgt?" A line asks for its dominant template
+// (Bergconditie), but the week already has another candidate for the same
+// line (Lange Duurloop). That session already serves the line, so it
+// satisfies the target instead of being removed and replaced.
+export function satisfyWithExistingSessions(targetIds: string[], lines: WeeklyPrescription['lines'], weekSessions: PlannedSession[]): string[] {
+  const available = new Map<string, number>();
+  for (const s of weekSessions) if (s.status !== 'skipped') available.set(s.templateId, (available.get(s.templateId) ?? 0) + 1);
+  const take = (id: string) => {
+    const n = available.get(id) ?? 0;
+    if (n <= 0) return false;
+    available.set(id, n - 1);
+    return true;
+  };
+  const result: string[] = [];
+  const unmatched: string[] = [];
+  for (const id of targetIds) (take(id) ? result : unmatched).push(id);
+  for (const id of unmatched) {
+    const substitute = lines.filter((l) => l.candidateTemplateIds[0] === id).flatMap((l) => l.candidateTemplateIds.slice(1)).find(take);
+    result.push(substitute ?? id);
+  }
+  return result;
+}
+
+function buildReconciliationTarget(lines: WeeklyPrescription['lines'], desiredSlots: DesiredSlot[], weekSessions: PlannedSession[]): ReconciliationTarget {
   const familyTemplateIds = new Set(lines.flatMap((l) => l.candidateTemplateIds));
-  const targetTemplateIds = buildTargetTemplateIds(lines, desiredSlots);
+  const targetTemplateIds = satisfyWithExistingSessions(buildTargetTemplateIds(lines, desiredSlots), lines, weekSessions);
 
   return {
     isInFamily: (_session, template) => familyTemplateIds.has(template.id),
@@ -80,6 +104,10 @@ function buildReconciliationTarget(lines: WeeklyPrescription['lines'], desiredSl
     urgentSwapThresholdPct: URGENT_GOAL_SWAP_THRESHOLD_PCT,
     calmSwapThresholdPct: CALM_GOAL_SWAP_THRESHOLD_PCT,
     source: SOURCE,
+    // The user's own weekly pattern (templates with a fixed weekday) is the
+    // program; the prescription adds to it and adjusts volume, it never
+    // takes a pattern session out.
+    keepInPlace: (_session, template) => template.defaultDayOfWeek !== undefined,
   };
 }
 
@@ -199,7 +227,7 @@ export function computeWeeklyPrescriptionPlan(
     // Stap 2 — vóór reconciliatie: dedupeDesiredSlots over alle lijnen
     // samen (eindreview-invariant b), nooit lijn voor lijn apart.
     const desiredSlots = dedupeDesiredSlots(prescription.lines, plannableTemplates);
-    const target = buildReconciliationTarget(prescription.lines, desiredSlots);
+    const target = buildReconciliationTarget(prescription.lines, desiredSlots, plannedSessions.filter((s) => s.weekStartDate === weekStartDate));
 
     const week = reconcileWeekComposition(
       weekStartDate, target, plannedSessions, templateById, availability, new Set(), goalOverviews, sessionLogs, program, sameDayPairingPreference,
