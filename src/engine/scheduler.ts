@@ -114,12 +114,23 @@ export function findHeavyConflict(
     if (!other) return false;
     const shared = sharedHeavyAxes(template, other);
     if (shared.length === 0) return false;
-    if (isIntentionalBackToBack(template, other)) return false;
+    // The intended back-to-back (hill intervals Saturday, long run Sunday)
+    // is exactly that: the next day, in that order. Never both on the
+    // same day, and never the other way round (production feedback: a
+    // suggestion put hill intervals on the long run's own Sunday).
+    if (isIntentionalBackToBack(template, other) && isIntendedOrder(template, date, other, s.scheduledDate)) return false;
     const spacing = shared.includes('lowerBodyLoad')
       ? Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs))
       : 1;
     return Math.abs(daysBetween(s.scheduledDate, date)) <= spacing;
   });
+}
+
+function isIntendedOrder(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {
+  const gap = daysBetween(aDate, bDate); // > 0: b comes after a
+  if (Math.abs(gap) !== 1) return Math.abs(gap) > 1;
+  if (a.defaultDayOfWeek === undefined || b.defaultDayOfWeek === undefined) return true;
+  return gap > 0 ? a.defaultDayOfWeek < b.defaultDayOfWeek : b.defaultDayOfWeek < a.defaultDayOfWeek;
 }
 
 export interface ScheduleChange {

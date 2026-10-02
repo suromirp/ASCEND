@@ -54,4 +54,23 @@ describe('suggestMoveDates', () => {
     for (const x of suggestions) expect(x.note).toMatch(/^samen met .*, \d+ min$/);
     expect(suggestMoveDates([...week, ...next], templates, 'upperB', [], program, {}, 'never', '2026-10-01')).toEqual([]);
   });
+
+  // Production feedback: hill intervals were offered on Sunday next to the
+  // long run and Upper B (160 min, two heavy leg sessions on one day), and
+  // on Monday straight after the long run.
+  it('never stacks the leg sessions on one day, never reverses the intended back-to-back, never a third session', () => {
+    const now = [
+      s('herstel', 'tpl_herstel', MON),
+      s('lowerA', 'tpl_lower_a', '2026-09-30'),
+      s('easy', 'tpl_easy_run', '2026-10-01'),
+      s('hills', 'tpl_hill_intervals', '2026-10-03'),
+      s('long', 'tpl_long_run', '2026-10-04'),
+      s('upperB', 'tpl_upper_b', '2026-10-04'),
+      s('n-herstel', 'tpl_herstel', '2026-10-05', '2026-10-05'),
+    ];
+    const dates = suggestMoveDates(now, templates, 'hills', [], program, budget, 'automatic', '2026-10-02').map((x) => x.date);
+    expect(dates).toContain('2026-10-02');
+    expect(dates).not.toContain('2026-10-04');
+    expect(dates).not.toContain('2026-10-05');
+  });
 });
