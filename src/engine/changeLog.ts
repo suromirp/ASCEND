@@ -96,3 +96,70 @@ export function nextWeekChangeLines(proposals: PlanChangeProposal[], sessions: P
   }
   return [...new Set(lines)];
 }
+
+// Production feedback: the full change log was "te aanwezig" and a stack
+// of "Weekprescriptie bijgewerkt" entries told the user nothing. The Week
+// page now shows only what actually changed in the week being viewed:
+// one line per session, its latest change, and only while that change is
+// still what the calendar shows (a session moved again, restored or
+// deleted since then drops out). Undo proposals themselves never show.
+export interface WeekChange {
+  key: string;
+  line: string;
+  reason: string;
+  at: string;
+}
+
+export function weekChanges(
+  proposals: PlanChangeProposal[],
+  sessions: PlannedSession[],
+  templates: SessionTemplate[],
+  weekStart: string,
+  asOf: string,
+  days = 14,
+): WeekChange[] {
+  const since = addDays(asOf, -days);
+  const weekEnd = addDays(weekStart, 6);
+  const inWeek = (d?: string) => d !== undefined && d >= weekStart && d <= weekEnd;
+  const reverted = revertedIds(proposals);
+  const sessionById = new Map(sessions.map((s) => [s.id, s]));
+  const latest = new Map<string, WeekChange>();
+
+  const accepted = proposals
+    .filter((p) => p.resolution === 'accepted' && !p.revertsProposalId && !reverted.has(p.id) && p.createdAt.slice(0, 10) >= since)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  for (const p of accepted) {
+    for (const c of p.changes) {
+      if (c.action === 'keep') continue;
+      const session = c.plannedSessionId ? sessionById.get(c.plannedSessionId) : undefined;
+      if (!inWeek(c.toDate) && !inWeek(c.fromDate) && !inWeek(c.newSessionDraft?.scheduledDate) && !inWeek(session?.scheduledDate)) continue;
+
+      let stillTrue: boolean;
+      switch (c.action) {
+        case 'add': {
+          const draft = c.newSessionDraft;
+          stillTrue = !!draft && sessions.some((s) => s.templateId === draft.templateId && s.scheduledDate === draft.scheduledDate && s.status !== 'skipped');
+          break;
+        }
+        case 'remove':
+          stillTrue = session?.status === 'skipped';
+          break;
+        case 'move':
+        case 'swap':
+          stillTrue = !!session && session.status !== 'skipped' && session.scheduledDate === c.toDate;
+          break;
+        default:
+          stillTrue = !!session && session.status !== 'skipped';
+      }
+      const key = c.plannedSessionId ?? `${c.newSessionDraft?.templateId}:${c.newSessionDraft?.scheduledDate}`;
+      if (!stillTrue) {
+        latest.delete(key);
+        continue;
+      }
+      const line = describeChanges([c], sessions, templates)[0];
+      if (!line) continue;
+      latest.set(key, { key, line, reason: c.reason ?? p.issue, at: p.createdAt });
+    }
+  }
+  return [...latest.values()].sort((a, b) => b.at.localeCompare(a.at));
+}

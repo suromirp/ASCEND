@@ -1,65 +1,50 @@
-// ASCEND — "WIJZIGINGEN" on the Week page (Fase 3): what ASCEND changed on
-// the calendar in the last two weeks, newest first; each entry opens to
-// show why. Read-only view of the PlanChangeProposal audit trail
-// (engine/changeLog.ts).
+// ASCEND — "door ASCEND aangepast" on the Week page: what ASCEND changed in
+// the week being viewed, one line per session (engine/changeLog.ts#
+// weekChanges). Folded away by default; nothing at all when the week has
+// no changes (production feedback: the full change log was too present and
+// its many entries told the user nothing).
 
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { buildChangeLog, type ChangeLogEntry } from '../engine/changeLog';
-import { addDays, todayISO, formatDateNL, weekdayShortNL } from '../utils/dates';
-import { Card, Eyebrow } from './ui';
+import { weekChanges, type WeekChange } from '../engine/changeLog';
+import { mondayOfWeek, todayISO } from '../utils/dates';
+import { Card } from './ui';
 
-export function ChangeLogCard() {
+export function ChangeLogCard({ weekStart }: { weekStart: string }) {
   const { planChangeLog, plannedSessions, templates } = useAppData();
-  const entries = useMemo(
-    () => buildChangeLog(planChangeLog, plannedSessions, templates, addDays(todayISO(), -14)),
-    [planChangeLog, plannedSessions, templates],
+  const today = todayISO();
+  const changes = useMemo(
+    () => weekChanges(planChangeLog, plannedSessions, templates, weekStart, today),
+    [planChangeLog, plannedSessions, templates, weekStart, today],
   );
-  const [showAll, setShowAll] = useState(false);
-  if (entries.length === 0) return null;
-  const shown = showAll ? entries : entries.slice(0, 4);
+  const [open, setOpen] = useState(false);
+  if (changes.length === 0) return null;
+  const isCurrent = weekStart === mondayOfWeek(today);
 
   return (
-    <Card className="flex flex-col gap-3">
-      <Eyebrow>WIJZIGINGEN</Eyebrow>
-      <p className="-mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Wat ASCEND de afgelopen twee weken aan je planning heeft veranderd, en waarom. Oudere wijzigingen verdwijnen vanzelf uit dit overzicht.
-      </p>
-      <div className="flex flex-col gap-3">
-        {shown.map((e) => <Entry key={e.id} entry={e} />)}
-      </div>
-      {entries.length > shown.length && (
-        <button onClick={() => setShowAll(true)} className="self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          alle {entries.length} tonen
-        </button>
+    <Card>
+      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={open}>
+        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          {isCurrent ? 'Deze week' : 'In deze week'} door ASCEND aangepast · {changes.length}
+        </span>
+        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? 'sluiten' : 'bekijk'}</span>
+      </button>
+      {open && (
+        <div className="mt-3 flex flex-col gap-2">
+          {changes.map((c) => <ChangeRow key={c.key} change={c} />)}
+          <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Tik op een regel voor de reden.</p>
+        </div>
       )}
     </Card>
   );
 }
 
-function Entry({ entry }: { entry: ChangeLogEntry }) {
+function ChangeRow({ change }: { change: WeekChange }) {
   const [open, setOpen] = useState(false);
-  const day = entry.at.slice(0, 10);
   return (
-    <div>
-      <button onClick={() => setOpen((v) => !v)} className="flex w-full items-baseline justify-between gap-3 text-left">
-        <span className="min-w-0">
-          <span className="block text-sm" style={{ color: entry.undone ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
-            {entry.issue}{entry.undone ? ' · ongedaan' : ''}
-          </span>
-          <span className="block text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
-            {entry.label} · {weekdayShortNL(day).toLowerCase()} {formatDateNL(day)}{entry.lines.length > 0 ? ` · ${entry.lines.length} ${entry.lines.length === 1 ? 'wijziging' : 'wijzigingen'}` : ''}
-          </span>
-        </span>
-        <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? '−' : 'waarom'}</span>
-      </button>
-      {open && (
-        <div className="mt-1.5 flex flex-col gap-1 text-xs">
-          {entry.lines.map((l, i) => <p key={i} style={{ color: 'var(--color-ink)' }}>{l}</p>)}
-          {entry.reasons.map((r, i) => <p key={`r${i}`} className="leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{r}</p>)}
-          {entry.reasons.length === 0 && entry.explanation && <p className="leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{entry.explanation}</p>}
-        </div>
-      )}
-    </div>
+    <button onClick={() => setOpen((v) => !v)} className="text-left text-xs">
+      <span className="block" style={{ color: 'var(--color-ink)' }}>{change.line}</span>
+      {open && <span className="mt-0.5 block leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{change.reason}</span>}
+    </button>
   );
 }

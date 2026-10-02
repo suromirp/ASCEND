@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
-import { adjustedSessionReasons, buildChangeLog, nextWeekChangeLines } from './changeLog';
+import { adjustedSessionReasons, buildChangeLog, nextWeekChangeLines, weekChanges } from './changeLog';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { PlanChangeProposal } from '../models/planChange';
 import { daysBetween } from '../utils/dates';
@@ -84,6 +84,18 @@ describe('change log', () => {
     expect(entries[1].lines[0]).toContain('Easy Run');
     expect(entries[1].reasons).toEqual(['Betere spreiding.']);
     expect(adjustedSessionReasons([accepted, undo], asOf).size).toBe(0);
+  });
+
+  // Production feedback: the change log was too present and its entries
+  // ("Weekprescriptie bijgewerkt" x12) told the user nothing.
+  it('the Week page shows one line per session for the viewed week, only while it still stands', () => {
+    const noise: PlanChangeProposal = { ...accepted, id: 'p0', trigger: 'weekly_prescription_computed', issue: 'Weekprescriptie bijgewerkt', changes: [{ action: 'keep' }] };
+    expect(weekChanges([noise, accepted], planned, templates, '2026-10-05', asOf)).toEqual([
+      { key: 'x', line: 'Easy Run: ma 5 oktober → di 6 oktober', reason: 'Betere spreiding.', at: accepted.createdAt },
+    ]);
+    expect(weekChanges([accepted], planned, templates, '2026-09-28', asOf)).toEqual([]); // another week
+    const movedAgain = [{ ...planned[0], scheduledDate: '2026-10-08' }];
+    expect(weekChanges([accepted], movedAgain, templates, '2026-10-05', asOf)).toEqual([]); // no longer what the calendar shows
   });
 
   it('badges and "volgende week verandert" only for changes that still stand', () => {
