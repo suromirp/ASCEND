@@ -918,3 +918,52 @@ export async function wipeAllData(): Promise<void> {
     clearStore('meta'),
   ]);
 }
+
+// Repair for production feedback "hoe kan het dat in opkomende weken de
+// lange duurloop een kruis krijgt?": the weekly prescription used to take
+// a session of the weekly pattern (Lange Duurloop) out of upcoming weeks
+// and put another candidate (Bergconditie) in. It no longer does
+// (engine/weeklyPrescriptionEngine.ts); this restores what it removed,
+// from today on, and drops the sessions it added in those same weeks — the
+// next prescription run re-adds anything still genuinely needed.
+// Idempotent: a restored session is no longer skipped, so a second run
+// finds nothing to do. Logged sessions and past days are never touched.
+export async function restorePatternSessionsRemovedByPrescription(): Promise<number> {
+  const [proposals, sessions, logs, templates] = await Promise.all([
+    PlanChangeProposalsRepo.getAll(),
+    PlannedSessionsRepo.getAll(),
+    SessionLogsRepo.getAll(),
+    SessionTemplatesRepo.getAll(),
+  ]);
+  const today = todayISO();
+  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const templateById = new Map(templates.map((t) => [t.id, t]));
+  const byId = new Map(sessions.map((s) => [s.id, s]));
+  const fromPrescription = (generatedBy: string[] | undefined) => (generatedBy ?? []).some((g) => g.startsWith('engine/weeklyPrescriptionEngine'));
+  const isPattern = (templateId: string) => templateById.get(templateId)?.defaultDayOfWeek !== undefined;
+  let restored = 0;
+
+  for (const proposal of proposals) {
+    if (proposal.trigger !== 'weekly_prescription_computed' || proposal.resolution !== 'accepted') continue;
+    const restoredWeeks = new Set<string>();
+    for (const item of proposal.changes) {
+      if (item.action !== 'remove' || !item.plannedSessionId || !fromPrescription(item.generatedBy)) continue;
+      const session = byId.get(item.plannedSessionId);
+      if (!session || session.status !== 'skipped' || logged.has(session.id) || session.scheduledDate < today || !isPattern(session.templateId)) continue;
+      const back: PlannedSession = { ...session, status: 'planned' };
+      await PlannedSessionsRepo.put(back);
+      byId.set(back.id, back);
+      restoredWeeks.add(session.weekStartDate);
+      restored++;
+    }
+    for (const item of proposal.changes) {
+      const draft = item.newSessionDraft;
+      if (item.action !== 'add' || !draft || !restoredWeeks.has(draft.weekStartDate) || !fromPrescription(item.generatedBy) || isPattern(draft.templateId)) continue;
+      const added = [...byId.values()].find((s) => s.templateId === draft.templateId && s.scheduledDate === draft.scheduledDate && s.weekStartDate === draft.weekStartDate && s.status !== 'skipped' && !logged.has(s.id));
+      if (!added || added.scheduledDate < today) continue;
+      await PlannedSessionsRepo.delete(added.id);
+      byId.delete(added.id);
+    }
+  }
+  return restored;
+}

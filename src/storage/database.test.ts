@@ -6,6 +6,8 @@ import {
   resetToDemoData,
   restartProgramAtWeekOne,
   rebuildPlanningFromWeekOne,
+  restorePatternSessionsRemovedByPrescription,
+  PlanChangeProposalsRepo,
   ProgramsRepo,
   PlannedSessionsRepo,
   SessionLogsRepo,
@@ -281,5 +283,34 @@ describe('rebuildPlanningFromWeekOne (schone start)', () => {
     // The logged session stays whatever its sport (history is never touched).
     expect(after.some((s) => s.scheduledDate >= todayISO() && s.id !== loggedSession.id && hikingIds.has(s.templateId))).toBe(false);
     expect((await SessionLogsRepo.getAll()).map((l) => l.id)).toContain('log1');
+  });
+});
+
+describe('restorePatternSessionsRemovedByPrescription', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  it('brings back a long run the weekly prescription took out and drops what it put in, once', async () => {
+    const source = 'engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan';
+    const future = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate > addDays(todayISO(), 14));
+    const longRun = future.find((s) => s.templateId === 'tpl_long_run')!;
+    await PlannedSessionsRepo.put({ ...longRun, status: 'skipped' });
+    const added = { id: 'added-berg', templateId: 'tpl_bergconditie', scheduledDate: addDays(longRun.scheduledDate, -2), weekStartDate: longRun.weekStartDate, status: 'planned' as const, order: 99 };
+    await PlannedSessionsRepo.put(added);
+    await PlanChangeProposalsRepo.put({
+      id: 'wp1', trigger: 'weekly_prescription_computed', issue: 'Weekprescriptie bijgewerkt', alternatives: [], consequences: '', explanation: '', createdAt: '', resolvedAt: '', resolution: 'accepted',
+      changes: [
+        { plannedSessionId: longRun.id, action: 'remove', generatedBy: [source] },
+        { action: 'add', newSessionDraft: { templateId: added.templateId, scheduledDate: added.scheduledDate, weekStartDate: added.weekStartDate }, generatedBy: [source] },
+      ],
+    });
+
+    expect(await restorePatternSessionsRemovedByPrescription()).toBe(1);
+    const after = await PlannedSessionsRepo.getAll();
+    expect(after.find((s) => s.id === longRun.id)?.status).toBe('planned');
+    expect(after.find((s) => s.id === 'added-berg')).toBeUndefined();
+    expect(await restorePatternSessionsRemovedByPrescription()).toBe(0);
   });
 });

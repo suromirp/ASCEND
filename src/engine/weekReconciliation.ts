@@ -68,11 +68,12 @@ function pickSwapCandidate(
   program: Program | null | undefined,
   dailyTimeBudget: TrainingAvailability['dailyTimeBudget'] | undefined,
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'] | undefined,
+  keepInPlace?: ReconciliationTarget['keepInPlace'],
 ): SwapCandidate | null {
   const candidates = weekSessions.filter((s) => {
     if (s.status === 'skipped' || protectedSessionIds.has(s.id) || targetTemplateIds.includes(s.templateId)) return false;
     const template = templateById.get(s.templateId);
-    return !!template && !protectedTypes.has(template.type);
+    return !!template && !protectedTypes.has(template.type) && !keepInPlace?.(s, template);
   });
   if (candidates.length === 0) return null;
 
@@ -149,6 +150,10 @@ export interface ReconciliationTarget {
   // own order within a week: A before B (engine/rotationOrder.ts). Opt-in,
   // strength only.
   keepRotationOrder?: boolean;
+  // Sessions that are never removed for being off-target, even when the
+  // target doesn't list them (the weekly prescription leaves the user's own
+  // weekly pattern alone; it only adds to it).
+  keepInPlace?: (session: PlannedSession, template: SessionTemplate) => boolean;
 }
 
 export interface WeekReconciliation {
@@ -287,7 +292,11 @@ export function reconcileWeekComposition(
     return !!template && target.isInFamily(s, template);
   });
   const onTarget = familySessions.filter((s) => target.targetTemplateIds.includes(s.templateId));
-  const offTarget = familySessions.filter((s) => !target.targetTemplateIds.includes(s.templateId) && !protectedSessionIds.has(s.id));
+  const offTarget = familySessions.filter((s) => {
+    if (target.targetTemplateIds.includes(s.templateId) || protectedSessionIds.has(s.id)) return false;
+    const template = templateById.get(s.templateId);
+    return !(template && target.keepInPlace?.(s, template));
+  });
 
   for (const session of offTarget) {
     const template = templateById.get(session.templateId);
@@ -534,6 +543,7 @@ export function reconcileWeekComposition(
       program,
       availability.dailyTimeBudget,
       sameDayPairingPreference,
+      target.keepInPlace,
     );
 
     if (!swapCandidate) {
