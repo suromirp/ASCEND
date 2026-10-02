@@ -28,25 +28,13 @@ import { CoachCard } from '../components/CoachCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { nextWeekChangeLines } from '../engine/changeLog';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
-import { Card, Eyebrow, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
-// Merges proposeNoTimeToday's per-session proposals into one for the
-// shared RescheduleDialog — applyNoTimeToday (AppDataContext) still applies
-// the original array so each session's resolved/fallback status is
-// respected individually.
-function mergeNoTimeProposals(proposals: ScheduleProposal[]): ScheduleProposal {
-  return {
-    changes: proposals.flatMap((p) => p.changes),
-    reason: 'Sessies van vandaag verplaatsen naar de eerstvolgende vrije dag deze week — of overslaan als de week vol zit.',
-    resolved: proposals.every((p) => p.resolved),
-  };
-}
-
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, proposeNoTimeToday, applyNoTimeToday, forecastSummary, dismissForecastSummary, planChangeLog, templates } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, planChangeLog, templates } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -57,7 +45,6 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
-  const [noTimeProposals, setNoTimeProposals] = useState<ScheduleProposal[] | null>(null);
 
   const position = program ? resolveProgramWeek(program, today) : null;
   const weekStart = mondayOfWeek(today);
@@ -70,13 +57,6 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped');
   const secondary = todaySessions.filter((s) => s.id !== primary?.id);
   const allTodayDone = todaySessions.length > 0 && !primary;
-  const hasTodoToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped');
-
-  function handleNoTimeToday() {
-    const proposals = proposeNoTimeToday();
-    if (proposals.length === 0) return;
-    setNoTimeProposals(proposals);
-  }
 
   const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
@@ -218,6 +198,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           onStart={(variant, feel, durationMinutes) => startSession(primary, primaryTemplate, variant, feel, durationMinutes)}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => handleSkip(primary.id)}
+          suggestions={suggestMoves(primary.id)}
+          onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
         />
       ) : (
         <Card>
@@ -234,10 +216,6 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
             </>
           )}
         </Card>
-      )}
-
-      {hasTodoToday && (
-        <SecondaryButton onClick={handleNoTimeToday} className="w-full">GEEN TIJD VANDAAG</SecondaryButton>
       )}
 
       <CoachCard />
@@ -342,6 +320,11 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
             handleMove(actionSheetSession.id, date);
             setActionSheetSession(null);
           }}
+          suggestions={suggestMoves(actionSheetSession.id)}
+          onPickSuggestion={(sug) => {
+            void applyProposal(sug.proposal);
+            setActionSheetSession(null);
+          }}
           onSkip={() => {
             handleSkip(actionSheetSession.id);
             setActionSheetSession(null);
@@ -365,16 +348,6 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         />
       )}
 
-      {noTimeProposals && (
-        <RescheduleDialog
-          proposal={mergeNoTimeProposals(noTimeProposals)}
-          onApply={() => {
-            applyNoTimeToday(noTimeProposals);
-            setNoTimeProposals(null);
-          }}
-          onCancel={() => setNoTimeProposals(null)}
-        />
-      )}
     </div>
   );
 }

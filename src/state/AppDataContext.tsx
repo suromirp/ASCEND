@@ -47,6 +47,7 @@ import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
+import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { extractEvidenceFromLogs } from '../engine/capability';
@@ -127,6 +128,8 @@ interface AppData {
   logSession: (input: LogSessionInput) => Promise<void>;
   undoLog: (logId: string) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
+  // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
+  suggestMoves: (sessionId: string) => MoveSuggestion[];
   applyProposal: (proposal: ScheduleProposal) => Promise<void>;
   // Phase 5: folded into the same proposal-confirm pattern moveSession
   // already uses (Technical Architecture v0.3.1 REVISED,
@@ -984,6 +987,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [sessionsForWeek, plannedSessions, templates, sessionLogs, program, goalEngineConfig],
   );
 
+  const suggestMoves = useCallback(
+    (sessionId: string): MoveSuggestion[] => {
+      const session = plannedSessions.find((s) => s.id === sessionId);
+      if (!session) return [];
+      const monday = mondayOfWeek(session.scheduledDate);
+      const nearby = [-7, 0, 7, 14].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
+      return suggestMoveDates(
+        nearby, templates, sessionId, sessionLogs, program,
+        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+      );
+    },
+    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig],
+  );
+
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
   // represents a skip — applied as a skip, never as a no-op "move" to the
   // date the session already occupied (mirrors applyNoTimeToday's existing
@@ -1299,6 +1316,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     logSession,
     undoLog,
     moveSession,
+    suggestMoves,
     applyProposal,
     proposeSkip,
     clearMilestoneManually,

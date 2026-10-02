@@ -11,6 +11,8 @@ import { useAppData } from '../state/AppDataContext';
 import { isSportEnabled, templateSport } from '../engine/sports';
 import { getModalities, isCyclingModality } from '../data/modalities';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
+import { MoveSuggestions } from './MoveSuggestions';
+import type { MoveSuggestion } from '../engine/moveSuggestions';
 
 const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
@@ -25,6 +27,8 @@ export function SessionActionSheet({
   onSkip,
   onUndo,
   onClose,
+  suggestions = [],
+  onPickSuggestion,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -36,8 +40,10 @@ export function SessionActionSheet({
   onSkip: () => void;
   onUndo?: () => void;
   onClose: () => void;
+  // One tap moves the session there (engine/moveSuggestions.ts).
+  suggestions?: MoveSuggestion[];
+  onPickSuggestion?: (suggestion: MoveSuggestion) => void;
 }) {
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const variants = availableVariants(template);
@@ -156,21 +162,15 @@ export function SessionActionSheet({
               )}
             </div>
 
-            <div className="mt-3 flex gap-3">
-              <SecondaryButton onClick={() => setShowDatePicker((s) => !s)}>VERPLAATS</SecondaryButton>
-              <SecondaryButton onClick={onSkip}>OVERSLAAN</SecondaryButton>
+            <div className="mt-5">
+              <MoveSuggestions
+                sessionDate={session.scheduledDate}
+                suggestions={suggestions}
+                onPick={(sug) => onPickSuggestion?.(sug)}
+                onPickDate={onMove}
+                onSkip={onSkip}
+              />
             </div>
-
-            {showDatePicker && (
-              <div className="mt-3 rounded-xl border p-2" style={{ borderColor: 'var(--color-card-border)' }}>
-                <input
-                  type="date"
-                  className="w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-                  onChange={(e) => e.target.value && onMove(e.target.value)}
-                />
-              </div>
-            )}
 
             <button onClick={requestClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Sluiten
