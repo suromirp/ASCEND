@@ -20,24 +20,39 @@ function dayName(iso: string): string {
 
 export function MoveSuggestions({
   sessionDate,
+  originalDate,
   suggestions,
   onPick,
   onPickDate,
   onSkip,
 }: {
   sessionDate: string;
+  // Where a moved session came from: offered first, as "terug naar".
+  originalDate?: string;
   suggestions: MoveSuggestion[];
   onPick: (suggestion: MoveSuggestion) => void;
   onPickDate: (date: string) => void;
   onSkip: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const canGoBack = !!originalDate && originalDate !== sessionDate && originalDate >= todayISO();
+  const visible = canGoBack ? suggestions.filter((sug) => sug.date !== originalDate) : suggestions;
   return (
     <div>
       <Eyebrow>{sessionDate === todayISO() ? 'VANDAAG GEEN TIJD? VERPLAATS NAAR' : 'VERPLAATS NAAR'}</Eyebrow>
-      {suggestions.length > 0 ? (
+      {canGoBack && (
+        <button
+          onClick={() => onPickDate(originalDate!)}
+          className="mt-2 flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
+          style={{ borderColor: 'var(--color-gold)', background: 'var(--color-charcoal)' }}
+        >
+          <span className="shrink-0 whitespace-nowrap text-sm" style={{ color: 'var(--color-ink)' }}>Terug naar {dayName(originalDate!).replace(/^Vandaag$/, 'vandaag')}</span>
+          <span className="min-w-0 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>oorspronkelijke dag</span>
+        </button>
+      )}
+      {visible.length > 0 ? (
         <div className="mt-2 flex flex-col gap-2">
-          {suggestions.map((sug) => (
+          {visible.map((sug) => (
             <button
               key={sug.date}
               onClick={() => onPick(sug)}
@@ -49,7 +64,7 @@ export function MoveSuggestions({
             </button>
           ))}
         </div>
-      ) : (
+      ) : canGoBack ? null : (
         <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Deze en volgende week is er geen dag met genoeg tijd en 48 uur rust voor dezelfde spieren. Kies zelf een dag, of sla hem over.
         </p>

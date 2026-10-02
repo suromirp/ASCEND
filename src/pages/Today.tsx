@@ -96,9 +96,12 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     [primaryGoal, primaryGoalMilestones, goalMilestoneProgress, sessionLogs],
   );
 
+  // A clean move (nothing else has to shift) applies at once, with undo
+  // in the notice; anything that pushes another session asks first.
   function handleMove(sessionId: string, date: string) {
     const proposal = moveSession(sessionId, date);
-    setPendingProposal(proposal);
+    if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
+    else setPendingProposal(proposal);
   }
 
   function handleSkip(sessionId: string) {
@@ -200,6 +203,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           onSkip={() => handleSkip(primary.id)}
           suggestions={suggestMoves(primary.id)}
           onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
+          originalDate={primary.movedFromDate}
         />
       ) : (
         <Card>

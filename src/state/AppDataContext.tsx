@@ -99,7 +99,7 @@ import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOve
 import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { detectConsecutiveRestDays, buildConsecutiveRestFixProposal } from '../engine/scheduleAnomalies';
-import { mondayOfWeek, todayISO, daysBetween, addDays } from '../utils/dates';
+import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -1005,13 +1005,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // represents a skip — applied as a skip, never as a no-op "move" to the
   // date the session already occupied (mirrors applyNoTimeToday's existing
   // fallback for the same shape).
+  // Every move or skip the user confirms can be undone right away: the
+  // touched rows are snapshotted into recentChange, which ChangeNotice
+  // shows with "Ongedaan maken" (production feedback: "stel ik heb een
+  // foutje gemaakt, dan moet ik het weer ongedaan kunnen maken"). Moving a
+  // session back to the day it came from makes it a plain planned session
+  // again instead of "verplaatst".
   const applyProposal = useCallback(
     async (proposal: ScheduleProposal) => {
+      const before: PlannedSession[] = [];
+      const lines: string[] = [];
+      const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
       for (const change of proposal.changes) {
         const session = plannedSessions.find((s) => s.id === change.sessionId);
         if (!session) continue;
+        before.push(session);
         if (change.toDate === change.fromDate) {
           await PlannedSessionsRepo.put(skipSessionEngine(session));
+          lines.push(`${change.templateName} op ${day(change.fromDate)} overgeslagen`);
+        } else if (change.toDate === session.movedFromDate) {
+          await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: 'planned', movedFromDate: undefined });
+          lines.push(`${change.templateName}: terug naar ${day(change.toDate)}`);
         } else {
           await PlannedSessionsRepo.put({
             ...session,
@@ -1019,7 +1033,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             status: 'moved',
             movedFromDate: session.movedFromDate ?? change.fromDate,
           });
+          lines.push(`${change.templateName}: ${day(change.fromDate)} → ${day(change.toDate)}`);
         }
+      }
+      if (before.length > 0) {
+        const skipped = proposal.changes.every((c) => c.toDate === c.fromDate);
+        const first = proposal.changes[0]?.templateName ?? 'Sessie';
+        setRecentChange({
+          id: makeId('usermove'),
+          trigger: skipped ? 'session_skipped' : 'session_moved',
+          title: skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
+          lines,
+          why: proposal.changes.length > 1 ? proposal.reason : '',
+          before,
+          addedIds: [],
+          createdAt: new Date().toISOString(),
+        });
       }
       await refresh();
     },
