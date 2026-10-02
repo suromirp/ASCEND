@@ -165,6 +165,7 @@ export function SessionActionSheet({
             <div className="mt-5">
               <MoveSuggestions
                 sessionDate={session.scheduledDate}
+                originalDate={session.movedFromDate}
                 suggestions={suggestions}
                 onPick={(sug) => onPickSuggestion?.(sug)}
                 onPickDate={onMove}

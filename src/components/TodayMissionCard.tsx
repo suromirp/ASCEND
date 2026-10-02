@@ -28,6 +28,7 @@ export function TodayMissionCard({
   onSkip,
   suggestions,
   onPickSuggestion,
+  originalDate,
 }: {
   template: SessionTemplate;
   fullDuration: number;
@@ -38,6 +39,7 @@ export function TodayMissionCard({
   onSkip: () => void;
   suggestions: MoveSuggestion[];
   onPickSuggestion: (suggestion: MoveSuggestion) => void;
+  originalDate?: string;
 }) {
   const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -101,7 +103,7 @@ export function TodayMissionCard({
       </div>
 
       {showMove && (
-        <MoveSuggestions sessionDate={todayISO()} suggestions={suggestions} onPick={onPickSuggestion} onPickDate={onMove} onSkip={onSkip} />
+        <MoveSuggestions sessionDate={todayISO()} originalDate={originalDate} suggestions={suggestions} onPick={onPickSuggestion} onPickDate={onMove} onSkip={onSkip} />
       )}
     </Card>
   );

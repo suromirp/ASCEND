@@ -143,8 +143,10 @@ export function WeekPage() {
             setSelected(null);
           }}
           onMove={(date) => {
+            // Clean move: apply at once (undo in the notice); a cascade asks first.
             const proposal = moveSession(selected.id, date);
-            setPendingProposal(proposal);
+            if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
+            else setPendingProposal(proposal);
             setSelected(null);
           }}
           suggestions={suggestMoves(selected.id)}

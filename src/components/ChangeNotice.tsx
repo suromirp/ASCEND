@@ -31,7 +31,7 @@ export function ChangeNotice() {
           <button onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 text-left">
             <p className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-gold)' }}>AANGEPAST</p>
             <p className="mt-0.5 truncate text-sm" style={{ color: 'var(--color-ink)' }}>{recentChange.title}</p>
-            <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{open ? '' : ' · waarom?'}</p>
+            <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{open || !recentChange.why ? '' : ' · waarom?'}</p>
           </button>
           <button onClick={dismissRecentChange} aria-label="Melding sluiten" className="px-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>×</button>
         </div>
