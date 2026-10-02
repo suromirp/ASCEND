@@ -65,6 +65,12 @@ export function weekdayShortNL(iso: string): string {
   return DUTCH_WEEKDAYS_SHORT[isoWeekday(iso) - 1];
 }
 
+const DUTCH_WEEKDAYS_LONG = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+
+export function weekdayLongNL(iso: string): string {
+  return DUTCH_WEEKDAYS_LONG[isoWeekday(iso) - 1];
+}
+
 export function formatDateNL(iso: string): string {
   const d = parseISODate(iso);
   return `${d.getDate()} ${DUTCH_MONTHS[d.getMonth()]}`;

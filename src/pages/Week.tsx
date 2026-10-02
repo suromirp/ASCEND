@@ -14,7 +14,7 @@ import { Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function WeekPage() {
-  const { program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -145,6 +145,11 @@ export function WeekPage() {
           onMove={(date) => {
             const proposal = moveSession(selected.id, date);
             setPendingProposal(proposal);
+            setSelected(null);
+          }}
+          suggestions={suggestMoves(selected.id)}
+          onPickSuggestion={(sug) => {
+            void applyProposal(sug.proposal);
             setSelected(null);
           }}
           onSkip={() => {

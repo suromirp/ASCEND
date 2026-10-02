@@ -4,6 +4,8 @@ import { availableVariants } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { todayISO } from '../utils/dates';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { MoveSuggestions } from './MoveSuggestions';
+import type { MoveSuggestion } from '../engine/moveSuggestions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 
 const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
@@ -24,6 +26,8 @@ export function TodayMissionCard({
   onStart,
   onMove,
   onSkip,
+  suggestions,
+  onPickSuggestion,
 }: {
   template: SessionTemplate;
   fullDuration: number;
@@ -32,8 +36,10 @@ export function TodayMissionCard({
   onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
+  suggestions: MoveSuggestion[];
+  onPickSuggestion: (suggestion: MoveSuggestion) => void;
 }) {
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   // Prefilled with ASCEND's own estimate, but editable — MacroFactor knows
   // the real elapsed time for a quick-complete strength session, and that's
@@ -91,24 +97,11 @@ export function TodayMissionCard({
 
       <div className="flex gap-2">
         {!quickComplete && shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}
-        <SecondaryButton onClick={() => setShowDatePicker((s) => !s)}>VERPLAATS</SecondaryButton>
-        <SecondaryButton onClick={onSkip}>OVERSLAAN</SecondaryButton>
+        <SecondaryButton onClick={() => setShowMove((v) => !v)}>VERPLAATSEN</SecondaryButton>
       </div>
 
-      {showDatePicker && (
-        <div className="flex items-center gap-2 rounded-xl border p-2" style={{ borderColor: 'var(--color-card-border)' }}>
-          <input
-            type="date"
-            className="flex-1 rounded-lg border bg-transparent px-2 py-1.5 text-sm"
-            style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-            onChange={(e) => {
-              if (e.target.value) {
-                onMove(e.target.value);
-                setShowDatePicker(false);
-              }
-            }}
-          />
-        </div>
+      {showMove && (
+        <MoveSuggestions sessionDate={todayISO()} suggestions={suggestions} onPick={onPickSuggestion} onPickDate={onMove} onSkip={onSkip} />
       )}
     </Card>
   );
