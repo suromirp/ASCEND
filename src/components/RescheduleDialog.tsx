@@ -38,13 +38,26 @@ export function RescheduleDialog({
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+            <p
+              className="mt-4 text-xs leading-relaxed"
+              style={{ color: proposal.resolved ? 'var(--color-ink-dim)' : 'var(--color-warning)' }}
+            >
               {proposal.reason}
             </p>
-            <div className="mt-5 flex gap-3">
-              <SecondaryButton onClick={requestClose}>ORIGINEEL BEHOUDEN</SecondaryButton>
-              <PrimaryButton onClick={onApply}>TOEPASSEN</PrimaryButton>
-            </div>
+            {/* An unresolved clash is never applied under the same button as a
+                clean one: keeping the plan is the default, moving anyway is
+                a conscious second choice. */}
+            {proposal.resolved ? (
+              <div className="mt-5 flex gap-3">
+                <SecondaryButton onClick={requestClose}>ORIGINEEL BEHOUDEN</SecondaryButton>
+                <PrimaryButton onClick={onApply}>TOEPASSEN</PrimaryButton>
+              </div>
+            ) : (
+              <div className="mt-5 flex flex-col gap-3">
+                <PrimaryButton onClick={requestClose}>ORIGINEEL BEHOUDEN</PrimaryButton>
+                <SecondaryButton onClick={onApply}>TOCH VERPLAATSEN</SecondaryButton>
+              </div>
+            )}
           </Card>
         </div>
       </div>
