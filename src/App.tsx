@@ -74,7 +74,20 @@ function BottomNav() {
 }
 
 function AppShell() {
-  const { loading, settings, celebration, dismissCelebration } = useAppData();
+  const { loading, bootError, settings, celebration, dismissCelebration, storageNotice, dismissStorageNotice, reportStorageError } = useAppData();
+
+  // Any write that fails without its own handling (storage full, storage
+  // blocked mid-session) still reaches the user instead of only the console.
+  useEffect(() => {
+    const onRejection = (e: PromiseRejectionEvent) => {
+      const name = e.reason instanceof DOMException || e.reason instanceof Error ? e.reason.name : '';
+      if (['QuotaExceededError', 'InvalidStateError', 'TransactionInactiveError', 'AbortError', 'UnknownError', 'DataError'].includes(name)) {
+        reportStorageError(e.reason);
+      }
+    };
+    window.addEventListener('unhandledrejection', onRejection);
+    return () => window.removeEventListener('unhandledrejection', onRejection);
+  }, [reportStorageError]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -86,6 +99,22 @@ function AppShell() {
 
   // After an update the splash has been seen already this visit: a quiet
   // empty frame for the few ms IndexedDB needs, then the app.
+  if (bootError) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
+        <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Opslag niet beschikbaar</p>
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{bootError}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-xl border px-5 py-2.5 text-xs font-semibold tracking-wide"
+          style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+        >
+          OPNIEUW PROBEREN
+        </button>
+      </div>
+    );
+  }
+
   if (loading && JUST_UPDATED) return <div className="flex-1" style={{ background: 'var(--color-bg)' }} />;
 
   if (loading) {
@@ -99,6 +128,12 @@ function AppShell() {
 
   return (
     <>
+      {storageNotice && (
+        <div role="alert" className="fixed inset-x-0 top-0 z-[60] mx-auto flex max-w-md items-start gap-3 border-b px-4 py-3" style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-danger)', paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
+          <p className="flex-1 text-xs" style={{ color: 'var(--color-ink)' }}>{storageNotice}</p>
+          <button onClick={dismissStorageNotice} aria-label="Melding sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
+        </div>
+      )}
       <div
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}

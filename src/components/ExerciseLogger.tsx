@@ -177,9 +177,11 @@ export function ExerciseLogger({
           : undefined,
     };
 
-    await logSession(input);
+    const saved = await logSession(input);
     setSaving(false);
-    onClose();
+    // On a failed write the form stays open with everything filled in; the
+    // app-wide notice says what went wrong.
+    if (saved) onClose();
   }
 
   return (

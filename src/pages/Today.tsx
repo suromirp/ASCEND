@@ -76,8 +76,13 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // dismissed) reads as "always show" as long as there's actually
   // something worth backing up, rather than trying to guess a sensible
   // start date from seed/demo data.
+  // Without any backup yet, the clock starts at the first log: a fresh
+  // install isn't nagged after its very first session.
   const backupTouchedAt = [settings.lastExportedAt, settings.lastExportReminderDismissedAt].filter((d): d is string => !!d).sort().at(-1);
-  const showExportReminder = sessionLogs.length > 0 && (!backupTouchedAt || daysBetween(backupTouchedAt.slice(0, 10), today) >= 7);
+  const firstLogDate = sessionLogs.map((l) => l.completedDate).sort()[0];
+  const reminderReference = backupTouchedAt?.slice(0, 10) ?? firstLogDate;
+  const showExportReminder = !!reminderReference && daysBetween(reminderReference, today) >= 7;
+  const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 
   // Rolling 28-day consistency — the same number the Ascend screen shows, so
   // "CONSISTENTIE" never means two different things depending on which tab
@@ -167,6 +172,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       {showExportReminder && (
         <ExportReminderBanner
+          logsSinceBackup={logsSinceBackup}
+          neverBackedUp={!settings.lastExportedAt}
           onExport={() => exportData()}
           onDismiss={() => updateSettings({ lastExportReminderDismissedAt: new Date().toISOString() })}
         />

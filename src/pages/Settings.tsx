@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
+import { BackupStatusLine, StorageProtectionCard, SnapshotsCard } from '../components/DataSafetyCards';
 import { ImportWizard } from '../components/ImportWizard';
 import { BaselineEvidenceCard } from '../components/BaselineEvidenceCard';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -222,8 +223,12 @@ export function SettingsPage() {
   }
 
   async function handleExport() {
-    const success = await exportData();
-    setStatus(success ? 'Export geslaagd.' : null);
+    const result = await exportData();
+    setStatus(result === 'saved'
+      ? 'Back-up opgeslagen.'
+      : result === 'downloaded'
+        ? 'Back-up gedownload. Controleer of het bestand in je Downloads staat en bewaar het op een veilige plek.'
+        : null);
   }
 
   async function handleRebuildRecommendations() {
@@ -461,6 +466,7 @@ export function SettingsPage() {
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
               Alle data staat lokaal op dit apparaat. Exporteer regelmatig een back-up.
             </p>
+            <BackupStatusLine />
             <PrimaryButton onClick={handleExport}>EXPORTEER DATA</PrimaryButton>
             <SecondaryButton onClick={() => setShowImportWizard(true)}>IMPORTEER DATA</SecondaryButton>
             {status && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{status}</p>}
@@ -475,6 +481,9 @@ export function SettingsPage() {
               <SecondaryButton onClick={handleChooseDirectory}>{hasPreferredDirectory ? 'MAP WIJZIGEN' : 'MAP KIEZEN'}</SecondaryButton>
             </Card>
           )}
+
+          <StorageProtectionCard />
+          <SnapshotsCard />
 
           {showImportWizard && <ImportWizard onClose={() => setShowImportWizard(false)} />}
         </>
@@ -518,13 +527,14 @@ export function SettingsPage() {
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Alles verwijderen en opnieuw beginnen</p>
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 Wist al je geschiedenis, doelen, blessures en instellingen en start met het standaard programma. Dit kan niet
-                ongedaan worden gemaakt.
+                ongedaan worden gemaakt. Exporteer eerst een back-up als je iets wilt bewaren.
               </p>
               {!confirmingFullReset ? (
                 <button onClick={() => setConfirmingFullReset(true)} className="text-left text-xs" style={{ color: 'var(--color-danger)' }}>Alles verwijderen…</button>
               ) : (
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-semibold" style={{ color: 'var(--color-danger)' }}>Weet je het zeker? Al je gegevens gaan definitief verloren.</p>
+                  <button onClick={handleExport} className="text-left text-xs underline" style={{ color: 'var(--color-gold)' }}>Eerst een back-up exporteren</button>
                   <div className="flex gap-3">
                     <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>ANNULEREN</SecondaryButton>
                     <button

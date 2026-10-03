@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
@@ -71,8 +71,17 @@ type AdviceResponse = { response: 'accepted' | 'declined'; at: string };
 let bootMigrations: Promise<void> | null = null;
 let backgroundPlanningStarted = false;
 
+const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ascend-data') : null;
+
+// Web Locks serialize the boot across windows too: a fresh install opened
+// in two tabs at once used to seed the whole program twice.
+function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  return locks ? (locks.request('ascend-boot', fn) as Promise<T>) : fn();
+}
+
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= (async () => {
+  bootMigrations ??= withBootLock(async () => {
     await seedIfEmpty();
     // Replaces the retired syncObjectiveDefinitions() — one-time migration
     // to TrainingGoal/GoalMilestone (Technical Architecture v0.3.1 REVISED,
@@ -84,7 +93,7 @@ function runBootMigrationsOnce(): Promise<void> {
     await syncTemplateAndScheduleDefinitions();
     await ensureDefaultTemplates();
     await restorePatternSessionsRemovedByPrescription();
-  })();
+  });
   return bootMigrations;
 }
 
@@ -105,9 +114,23 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
+import { requestPersistentStorage } from '../storage/persistence';
+import { onDatabaseBlocked } from '../storage/database';
+
+// Turns a failed IndexedDB open/read into something the user can act on.
+function describeStorageError(err: unknown): string {
+  const name = err instanceof DOMException || err instanceof Error ? err.name : '';
+  if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
+  if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. Herlaad de pagina om de nieuwste versie te krijgen.';
+  return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
+}
 
 interface AppData {
   loading: boolean;
+  // Set when local storage can't be opened at all (private mode, blocked
+  // storage, a newer version open elsewhere). The app shows why instead of
+  // an endless splash.
+  bootError: string | null;
   program: Program | null;
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
@@ -127,7 +150,14 @@ interface AppData {
   goalOverviews: GoalOverview[];
   refresh: () => Promise<void>;
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
-  logSession: (input: LogSessionInput) => Promise<void>;
+  // Resolves false when nothing was stored: the save failed (storageNotice
+  // says why) or this planned session already has a log (a double tap).
+  logSession: (input: LogSessionInput) => Promise<boolean>;
+  // A write to local storage failed (storage full, blocked). Shown as a
+  // banner so a failed save is never silent.
+  storageNotice: string | null;
+  reportStorageError: (err: unknown) => void;
+  dismissStorageNotice: () => void;
   undoLog: (logId: string) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
@@ -193,7 +223,9 @@ interface AppData {
   deleteCapabilityEvidence: (id: string) => Promise<void>;
   proposeNoTimeToday: () => ScheduleProposal[];
   applyNoTimeToday: (proposals: ScheduleProposal[]) => Promise<void>;
-  exportData: () => Promise<boolean>;
+  // 'saved': written to a file the user picked; 'downloaded': handed to
+  // the browser's download (can't be confirmed); null: cancelled.
+  exportData: () => Promise<'saved' | 'downloaded' | null>;
   resetDemoData: () => Promise<void>;
   // Settings' SCHEMA OPNIEUW LADEN — regenerates the future weekly schedule
   // back to the standard rotation. Deliberately NOT resetDemoData: this
@@ -284,12 +316,16 @@ export interface LogSessionInput {
   cardioData?: SessionLog['cardioData'];
   outdoorData?: SessionLog['outdoorData'];
   subjectiveFeel?: SessionLog['subjectiveFeel'];
+  // The day it was actually done. Defaults to today; logging a missed
+  // session afterwards can pass its own date.
+  completedDate?: string;
 }
 
 const AppDataContext = createContext<AppData | null>(null);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
+  const [bootError, setBootError] = useState<string | null>(null);
   const [program, setProgram] = useState<Program | null>(null);
   const [templates, setTemplates] = useState<SessionTemplate[]>([]);
   const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
@@ -308,11 +344,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [planChangeLog, setPlanChangeLog] = useState<PlanChangeProposal[]>([]);
   const [adviceResponses, setAdviceResponses] = useState<Record<string, AdviceResponse>>({});
   const [debriefLogId, setDebriefLogId] = useState<string | null>(null);
+  const [storageNotice, setStorageNotice] = useState<string | null>(null);
+  // Planned sessions with a log being written right now: a second tap
+  // before the first write lands must not create a second log.
+  const loggingInFlight = useRef(new Set<string>());
+  const reportStorageError = useCallback((err: unknown) => {
+    const name = err instanceof DOMException || err instanceof Error ? err.name : '';
+    setStorageNotice(name === 'QuotaExceededError'
+      ? 'Opslaan lukt niet: de opslag op dit toestel is vol. Maak een back-up en ruim ruimte op.'
+      : 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Meer, Gegevens.');
+  }, []);
   const [plannerAdvice, setPlannerAdvice] = useState<Advice | null>(null);
   const [strengthProgramStrategies, setStrengthProgramStrategies] = useState<StrengthProgramStrategy[]>([]);
   const [strengthRecommendation, setStrengthRecommendation] = useState<StrengthProgramRecommendation | null>(null);
 
-  const refresh = useCallback(async () => {
+  // Every write ends in refresh(); telling other open ASCEND windows to
+  // reload from storage keeps a stale window from writing back old state
+  // over a change made elsewhere.
+  const refresh = useCallback(async (fromOtherWindow = false) => {
+    if (!fromOtherWindow) syncChannel?.postMessage('changed');
     const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
@@ -348,6 +398,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setStrengthProgramStrategies(strengthStrategies);
     setStrengthRecommendation(strengthRecs.find((r) => !r.resolvedAt) ?? null);
   }, []);
+
+  useEffect(() => {
+    if (!syncChannel) return;
+    const onMessage = () => void refresh(true);
+    syncChannel.addEventListener('message', onMessage);
+    return () => syncChannel.removeEventListener('message', onMessage);
+  }, [refresh]);
 
   const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string): Promise<boolean> => {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
@@ -859,14 +916,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Right after an update (utils/updateFlag.ts) there's no splash to
       // show, so no minimum duration either.
       const minSplashDuration = new Promise((resolve) => setTimeout(resolve, JUST_UPDATED ? 0 : 2600));
-      await Promise.all([
-        (async () => {
-          await runBootMigrationsOnce();
-          await refresh();
-        })(),
-        minSplashDuration,
-      ]);
+      const stopBlockedNotice = onDatabaseBlocked(() =>
+        setBootError('ASCEND is in een ander venster nog open met een oudere versie. Sluit dat venster om de update af te ronden.'),
+      );
+      try {
+        await Promise.all([
+          (async () => {
+            await runBootMigrationsOnce();
+            await refresh();
+          })(),
+          minSplashDuration,
+        ]);
+      } catch (err) {
+        setBootError(describeStorageError(err));
+        setLoading(false);
+        return;
+      } finally {
+        stopBlockedNotice();
+      }
+      setBootError(null);
       setLoading(false);
+      void requestPersistentStorage();
       // Fire-and-forget, after the splash — this is background forecast
       // adaptation, never something the user waits on to see Today/Week.
       // Once per page load, like the migrations above.
@@ -903,66 +973,80 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const logSession = useCallback(
-    async (input: LogSessionInput) => {
-      const log: SessionLog = {
-        id: makeId('log'),
-        plannedSessionId: input.plannedSessionId,
-        templateId: input.templateId,
-        type: input.type,
-        sport: input.sport,
-        completedDate: todayISO(),
-        completedAt: new Date().toISOString(),
-        variant: input.variant,
-        durationMinutes: input.durationMinutes,
-        rpe: input.rpe,
-        notes: input.notes,
-        strengthData: input.strengthData,
-        cardioData: input.cardioData,
-        outdoorData: input.outdoorData,
-        subjectiveFeel: input.subjectiveFeel,
-        source: 'manual',
-      };
-      await SessionLogsRepo.put(log);
+    async (input: LogSessionInput): Promise<boolean> => {
+      const plannedId = input.plannedSessionId;
+      if (plannedId) {
+        if (loggingInFlight.current.has(plannedId)) return false;
+        loggingInFlight.current.add(plannedId);
+      }
+      try {
+        if (plannedId && (await SessionLogsRepo.getAll()).some((l) => l.plannedSessionId === plannedId)) return false;
+        const log: SessionLog = {
+          id: makeId('log'),
+          plannedSessionId: input.plannedSessionId,
+          templateId: input.templateId,
+          type: input.type,
+          sport: input.sport,
+          completedDate: input.completedDate ?? todayISO(),
+          completedAt: new Date().toISOString(),
+          variant: input.variant,
+          durationMinutes: input.durationMinutes,
+          rpe: input.rpe,
+          notes: input.notes,
+          strengthData: input.strengthData,
+          cardioData: input.cardioData,
+          outdoorData: input.outdoorData,
+          subjectiveFeel: input.subjectiveFeel,
+          source: 'manual',
+        };
+        await SessionLogsRepo.put(log);
 
-      // If this log satisfies the current front-of-ladder milestone on any
-      // goal, record the historical moment it was cleared.
-      let clearedTitle: string | undefined;
-      for (const goal of trainingGoals) {
-        const milestonesForGoal = goalMilestones.filter((m) => m.goalId === goal.id);
-        if (milestonesForGoal.length === 0) continue;
-        const progress = computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs);
-        const current = progress.currentMilestone;
-        if (current && requirementAutoSatisfied(current.definition.requirement, [log])) {
-          await GoalMilestoneProgressRepo.put({
-            id: makeId('progress'),
-            goalId: goal.id,
-            milestoneId: current.definition.id,
-            clearedDate: log.completedDate,
-            sourceSessionLogId: log.id,
-          });
-          clearedTitle = current.definition.title;
+        // If this log satisfies the current front-of-ladder milestone on any
+        // goal, record the historical moment it was cleared.
+        let clearedTitle: string | undefined;
+        for (const goal of trainingGoals) {
+          const milestonesForGoal = goalMilestones.filter((m) => m.goalId === goal.id);
+          if (milestonesForGoal.length === 0) continue;
+          const progress = computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs);
+          const current = progress.currentMilestone;
+          if (current && requirementAutoSatisfied(current.definition.requirement, [log])) {
+            await GoalMilestoneProgressRepo.put({
+              id: makeId('progress'),
+              goalId: goal.id,
+              milestoneId: current.definition.id,
+              clearedDate: log.completedDate,
+              sourceSessionLogId: log.id,
+            });
+            clearedTitle = current.definition.title;
+          }
         }
-      }
 
-      await refresh();
-      haptics.success();
-      if (settings.introSoundEnabled) {
-        if (clearedTitle) playMilestoneChime();
-        else playSessionCompleteChime();
+        await refresh();
+        haptics.success();
+        if (settings.introSoundEnabled) {
+          if (clearedTitle) playMilestoneChime();
+          else playSessionCompleteChime();
+        }
+        // Every completion gets a quote — a regular session a lighter one, a
+        // milestone clear (if this same log happened to satisfy one) the
+        // bigger victory-tier treatment with the milestone's title attached.
+        setCelebration(
+          clearedTitle
+            ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote() }
+            : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
+        );
+        // Fase 3 — the debrief (components/DebriefSheet.tsx) opens once the
+        // celebration has faded.
+        setDebriefLogId(log.id);
+        return true;
+      } catch (err) {
+        reportStorageError(err);
+        return false;
+      } finally {
+        if (plannedId) loggingInFlight.current.delete(plannedId);
       }
-      // Every completion gets a quote — a regular session a lighter one, a
-      // milestone clear (if this same log happened to satisfy one) the
-      // bigger victory-tier treatment with the milestone's title attached.
-      setCelebration(
-        clearedTitle
-          ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote() }
-          : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
-      );
-      // Fase 3 — the debrief (components/DebriefSheet.tsx) opens once the
-      // celebration has faded.
-      setDebriefLogId(log.id);
     },
-    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled],
+    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled, reportStorageError],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
@@ -1386,6 +1470,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const value: AppData = {
     loading,
+    bootError,
+    storageNotice,
+    reportStorageError,
+    dismissStorageNotice: () => setStorageNotice(null),
     program,
     templates,
     plannedSessions,
@@ -1428,8 +1516,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const envelope = await buildBackupEnvelope();
       const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
       const result = await webBackupFileAdapter.saveBackup(blob, backupFileName(envelope.createdAt));
-      if (result.success) await updateSettings({ lastExportedAt: new Date().toISOString() });
-      return result.success;
+      if (!result.success) return null;
+      await updateSettings({ lastExportedAt: new Date().toISOString() });
+      return result.viaDownload ? 'downloaded' : 'saved';
     },
     resetDemoData: async () => {
       await resetToDemoData();
