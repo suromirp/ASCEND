@@ -5,6 +5,7 @@ import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
+import type { WeightEntry } from '../models/metrics';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -450,6 +451,12 @@ export interface AppSettings {
   // Ziek gemeld (engine/illness.ts). Optional, so older settings and
   // backups need no migration; travels with the settings in an export.
   illnessEpisodes?: IllnessEpisode[];
+  // Trend weight (engine/bodyWeight.ts), e.g. from MacroFactor, entered
+  // about every two weeks. Kept with the settings so it travels in an
+  // export without a backup schema change; carries a source like every
+  // other metric, so a Health Connect/MacroFactor adapter can fill it.
+  weightEntries?: WeightEntry[];
+  weightReminderSnoozedAt?: string; // ISO date
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

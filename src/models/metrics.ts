@@ -37,3 +37,11 @@ export interface NutritionMetric {
   fatG?: number;
   source: MetricSource;
 }
+
+// A trend-weight reading (engine/bodyWeight.ts). The trend, not one
+// morning on the scale: MacroFactor's trend weight is the intended input.
+export interface WeightEntry {
+  date: string; // ISO date
+  kg: number;
+  source: MetricSource;
+}

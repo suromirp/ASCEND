@@ -17,6 +17,7 @@ import { SessionCard } from '../components/SessionCard';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
+import { WeightReminder } from '../components/WeightCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
@@ -227,6 +228,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       )}
 
       <CoachCard />
+
+      <WeightReminder />
 
       <div className="-mt-2 flex items-center justify-center gap-5">
         <button onClick={() => setAdHocOpen(true)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
