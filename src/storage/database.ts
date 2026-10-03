@@ -4,6 +4,7 @@ import type { SessionTemplate, PlannedSession, SessionLog } from '../models/trai
 import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { InjuryNote } from '../models/injury';
+import type { IllnessEpisode } from '../models/illness';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -446,6 +447,9 @@ export interface AppSettings {
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.
   sportFrequency?: Partial<Record<'running' | 'hiking' | 'cycling', number>>;
+  // Ziek gemeld (engine/illness.ts). Optional, so older settings and
+  // backups need no migration; travels with the settings in an export.
+  illnessEpisodes?: IllnessEpisode[];
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

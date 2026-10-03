@@ -3,6 +3,7 @@ import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
+import { isIllnessDay } from '../engine/illness';
 import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
 import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
@@ -88,7 +89,8 @@ export function AscendPage() {
   const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
 
   const programStart = program?.startDate;
-  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions, 28, undefined, programStart), [sessionLogs, plannedSessions, programStart]);
+  const illnessEpisodes = settings.illnessEpisodes;
+  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions, 28, undefined, programStart, (d) => isIllnessDay(d, illnessEpisodes, todayISO())), [sessionLogs, plannedSessions, programStart, illnessEpisodes]);
   const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions, 8, programStart), [sessionLogs, plannedSessions, programStart]);
   // Sports-science review, item B1: capacity ("what have you demonstrably
   // been building lately") and readiness ("are you acutely ready for more

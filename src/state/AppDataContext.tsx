@@ -47,6 +47,8 @@ import { buildMarathonGoal } from '../engine/goalMigration';
 import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
+import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
+import type { IllnessKind } from '../models/illness';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
@@ -226,6 +228,9 @@ interface AppData {
   recentChange: RecentPlanChange | null;
   commitPlanChange: (proposal: PlanChangeProposal, title: string) => Promise<boolean>;
   undoRecentChange: () => Promise<void>;
+  // Ziek melden / weer beter (engine/illness.ts): one tap each.
+  reportIllness: (kind: IllnessKind) => Promise<void>;
+  recoverFromIllness: () => Promise<void>;
   dismissRecentChange: () => void;
   // Fase 3 — advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
@@ -385,6 +390,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
+    // Undoing "ziek gemeld" / "weer beter" also undoes the status itself.
+    if (recentChange.trigger === 'illness_reported' || recentChange.trigger === 'illness_resolved') {
+      const stored = await SettingsRepo.get();
+      const episodes = stored.illnessEpisodes ?? [];
+      const next = recentChange.trigger === 'illness_reported'
+        ? episodes.filter((e) => e.endDate || e.startDate !== recentChange.createdAt.slice(0, 10))
+        : episodes.map((e, i, all) => (i === all.length - 1 ? { ...e, endDate: undefined } : e));
+      setSettings(await SettingsRepo.set({ illnessEpisodes: next }));
+    }
     for (const session of recentChange.before) await PlannedSessionsRepo.put(session);
     for (const id of recentChange.addedIds) await PlannedSessionsRepo.delete(id);
     const now = new Date().toISOString();
@@ -1157,6 +1171,51 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return next;
   }, []);
 
+  // An illness status change that didn't need any calendar change still
+  // gets its own notice, so "Ongedaan maken" always undoes this tap and
+  // never an older change.
+  const showStatusOnlyChange = useCallback(async (proposal: PlanChangeProposal) => {
+    setRecentChange({
+      id: proposal.id,
+      trigger: proposal.trigger,
+      title: proposal.issue,
+      lines: ['Je planning hoefde niet te veranderen.'],
+      why: proposal.consequences,
+      before: [],
+      addedIds: [],
+      createdAt: new Date().toISOString(),
+    });
+    await refresh();
+  }, [refresh]);
+
+  const reportIllness = useCallback(async (kind: IllnessKind) => {
+    const asOf = todayISO();
+    const stored = await SettingsRepo.get();
+    const current = stored.illnessEpisodes ?? [];
+    const active = activeIllness(current);
+    const episodes = active
+      ? current.map((e) => (e.id === active.id ? { ...e, kind } : e))
+      : [...current, { id: makeId('illness'), kind, startDate: asOf }];
+    setSettings(await SettingsRepo.set({ illnessEpisodes: episodes }));
+    const [planned, tpls, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll()]);
+    const proposal = planIllnessStart(kind, planned, tpls, logs, asOf);
+    if (!(await commitPlanChange(proposal, proposal.issue))) await showStatusOnlyChange(proposal);
+  }, [commitPlanChange, showStatusOnlyChange]);
+
+  const recoverFromIllness = useCallback(async () => {
+    const asOf = todayISO();
+    const stored = await SettingsRepo.get();
+    const current = stored.illnessEpisodes ?? [];
+    const active = activeIllness(current);
+    if (!active) return;
+    // Keep the ended episode last, so undo can reopen it.
+    const episodes = [...current.filter((e) => e.id !== active.id), { ...active, endDate: asOf }];
+    setSettings(await SettingsRepo.set({ illnessEpisodes: episodes }));
+    const [planned, tpls, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll()]);
+    const { proposal } = planIllnessEnd(active, asOf, planned, tpls, logs);
+    if (!(await commitPlanChange(proposal, proposal.issue))) await showStatusOnlyChange(proposal);
+  }, [commitPlanChange, showStatusOnlyChange]);
+
   const updateGoalEngineConfig = useCallback(async (patch: Partial<GoalEngineConfig>): Promise<GoalEngineConfig> => {
     const next = await GoalEngineConfigRepo.set(patch);
     setGoalEngineConfig(next);
@@ -1319,9 +1378,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         enabledSports: settings.enabledSports,
         respondedIds: new Set(Object.keys(adviceResponses)),
         asOf: todayISO(),
+        illnessEpisodes: settings.illnessEpisodes,
       }),
     ].sort((a, b) => b.priority - a.priority),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, adviceResponses],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, adviceResponses],
   );
 
   const value: AppData = {
@@ -1431,6 +1491,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     recentChange,
     commitPlanChange,
     undoRecentChange,
+    reportIllness,
+    recoverFromIllness,
     dismissRecentChange: () => setRecentChange(null),
     strengthProgramStrategies,
     strengthRecommendation,

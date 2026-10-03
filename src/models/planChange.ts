@@ -79,7 +79,9 @@ export type EngineEvent =
   // availability cascade; this is the progression/volume-driven pass for
   // cardio/hiking, see engine/weeklyPrescriptionEngine.ts's own header for
   // why the two were split apart.
-  | 'weekly_prescription_computed';
+  | 'weekly_prescription_computed'
+  // Ziek gemeld / weer beter (engine/illness.ts).
+  | 'illness_reported' | 'illness_resolved';
 
 export interface PlanChangeAlternative {
   label: string;

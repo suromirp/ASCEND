@@ -36,6 +36,8 @@ export function computeReadiness(
   // "30% consistentie terwijl ik letterlijk in mijn eerste week zit" —
   // sessions from the schedule before a restart were read as missed).
   programStart?: string,
+  // Days that never count as missed, e.g. while ill (engine/illness.ts).
+  excludeDate?: (date: string) => boolean,
 ): ReadinessBreakdown {
   const windowStart = addDays(asOf, -windowDays);
   const since = programStart && programStart > windowStart ? programStart : windowStart;
@@ -47,7 +49,8 @@ export function computeReadiness(
   // while the day is still running.
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const due = plannedSessions.filter(
-    (p) => p.status !== 'skipped' && p.scheduledDate >= since && (p.scheduledDate < asOf || (p.scheduledDate === asOf && loggedPlannedIds.has(p.id))),
+    (p) => p.status !== 'skipped' && p.scheduledDate >= since && (p.scheduledDate < asOf || (p.scheduledDate === asOf && loggedPlannedIds.has(p.id)))
+      && (loggedPlannedIds.has(p.id) || !excludeDate?.(p.scheduledDate)),
   );
   const consistency = due.length === 0
     ? 0

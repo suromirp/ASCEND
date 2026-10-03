@@ -21,6 +21,8 @@ export const TRIGGER_LABEL: Record<EngineEvent, string> = {
   no_time_today: 'Geen tijd vandaag',
   injury_added: 'Blessure',
   injury_resolved: 'Blessure hersteld',
+  illness_reported: 'Ziek gemeld',
+  illness_resolved: 'Weer beter',
   availability_changed: 'Beschikbaarheid',
   new_training_data: 'Nieuwe trainingsdata',
   strength_program_changed: 'Krachtblok',
