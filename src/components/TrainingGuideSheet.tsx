@@ -62,6 +62,20 @@ export function TrainingGuideSheet({
 
           {plan && <PlanView plan={plan} />}
 
+          {plan?.keyTag?.includes('D+') && (
+            <button
+              onClick={() => { onClose(); navigate('/plekken'); }}
+              className="mt-5 flex w-full items-center justify-between rounded-xl border p-3 text-left"
+              style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+            >
+              <span>
+                <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
+                <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Heuvels, trappen en duinen bij jou in de buurt</span>
+              </span>
+              <span style={{ color: 'var(--color-gold)' }}>›</span>
+            </button>
+          )}
+
           {plan && (
             <button
               onClick={() => setMoreOpen((v) => !v)}
