@@ -274,6 +274,7 @@ export function SettingsPage() {
             <Eyebrow>GIDSEN</Eyebrow>
             <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
             <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
+            <NavRow label="Bronnen" note="Alle onderzoeken en bronnen achter de adviezen" onClick={() => navigate('/bronnen')} />
           </Card>
 
           <Card className="flex flex-col gap-1">
