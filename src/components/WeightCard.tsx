@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { addWeightEntry, latestWeight, weightDue } from '../engine/bodyWeight';
+import { addWeightEntry, latestWeight, weightDue, WEIGHT_REMINDER_DAYS } from '../engine/bodyWeight';
 import { activeIllness } from '../engine/illness';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
@@ -23,7 +23,7 @@ export function WeightReminder() {
   const save = useSaveWeight();
   const [kg, setKg] = useState<number | undefined>(latestWeight(settings.weightEntries)?.kg);
   const today = todayISO();
-  if (activeIllness(settings.illnessEpisodes) || !weightDue(settings.weightEntries, settings.weightReminderSnoozedAt, today)) return null;
+  if (activeIllness(settings.illnessEpisodes) || !weightDue(settings.weightEntries, settings.weightReminderSnoozedAt, today, settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS)) return null;
   const last = latestWeight(settings.weightEntries);
   return (
     <Card className="flex flex-col gap-2">
@@ -44,8 +44,15 @@ export function WeightReminder() {
   );
 }
 
+const REMINDER_OPTIONS = [
+  { days: 7, label: 'elke week' },
+  { days: 14, label: 'elke 2 weken' },
+  { days: 28, label: 'elke 4 weken' },
+  { days: 0, label: 'nooit' },
+];
+
 export function WeightSettingsCard() {
-  const { settings } = useAppData();
+  const { settings, updateSettings } = useAppData();
   const save = useSaveWeight();
   const last = latestWeight(settings.weightEntries);
   const [kg, setKg] = useState<number | undefined>(last?.kg);
@@ -60,6 +67,22 @@ export function WeightSettingsCard() {
       <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={(v) => { setKg(v); setSaved(false); }} />
       <PrimaryButton disabled={!kg} onClick={async () => { if (kg) { await save(kg); setSaved(true); } }}>OPSLAAN</PrimaryButton>
       {saved && <p className="text-xs" style={{ color: 'var(--color-success)' }}>Opgeslagen.</p>}
+      <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Herinnering op Vandaag</p>
+      <div className="flex flex-wrap gap-1.5">
+        {REMINDER_OPTIONS.map((o) => {
+          const active = (settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS) === o.days;
+          return (
+            <button
+              key={o.days}
+              onClick={() => void updateSettings({ weightReminderDays: o.days })}
+              className="rounded-full border px-3 py-1 text-xs"
+              style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
     </Card>
   );
 }

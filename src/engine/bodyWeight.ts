@@ -15,10 +15,12 @@ export function latestWeight(entries: WeightEntry[] | undefined): WeightEntry | 
 
 // Time for a new entry: none yet, or the last one is two weeks old, and
 // not snoozed in the last few days.
-export function weightDue(entries: WeightEntry[] | undefined, snoozedAt: string | undefined, asOf: string): boolean {
+// The interval is a setting (AppSettings.weightReminderDays; 0 = never).
+export function weightDue(entries: WeightEntry[] | undefined, snoozedAt: string | undefined, asOf: string, reminderDays: number = WEIGHT_REMINDER_DAYS): boolean {
+  if (reminderDays <= 0) return false;
   if (snoozedAt && asOf < addDays(snoozedAt, SNOOZE_DAYS)) return false;
   const last = latestWeight(entries);
-  return !last || daysBetween(last.date, asOf) >= WEIGHT_REMINDER_DAYS;
+  return !last || daysBetween(last.date, asOf) >= reminderDays;
 }
 
 // One entry per day: a second entry the same day replaces the first.

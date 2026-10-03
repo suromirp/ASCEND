@@ -457,6 +457,8 @@ export interface AppSettings {
   // other metric, so a Health Connect/MacroFactor adapter can fill it.
   weightEntries?: WeightEntry[];
   weightReminderSnoozedAt?: string; // ISO date
+  // Days between weight reminders; 0 = never remind. Absent = 14.
+  weightReminderDays?: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

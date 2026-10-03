@@ -10,6 +10,11 @@ describe('body weight', () => {
     expect(weightDue([e('2026-09-19', 80)], undefined, '2026-10-03')).toBe(true);
   });
 
+  it('follows the reminder setting, and 0 never reminds', () => {
+    expect(weightDue([e('2026-09-25', 80)], undefined, '2026-10-03', 7)).toBe(true);
+    expect(weightDue([], undefined, '2026-10-03', 0)).toBe(false);
+  });
+
   it('"later" snoozes the reminder for three days', () => {
     expect(weightDue([], '2026-10-02', '2026-10-03')).toBe(false);
     expect(weightDue([], '2026-09-30', '2026-10-03')).toBe(true);
