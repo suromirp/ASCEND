@@ -18,6 +18,7 @@ import { StretchesPage } from './pages/Stretches';
 import { StretchAreaPage } from './pages/StretchArea';
 import { TrainingGuidePage } from './pages/TrainingGuide';
 import { GarminGuidePage } from './pages/GarminGuide';
+import { SourcesPage } from './pages/Sources';
 import { InjuriesPage } from './pages/Injuries';
 
 function NavIcon({ id }: { id: string }) {
@@ -112,6 +113,7 @@ function AppShell() {
             <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
             <Route path="/gids" element={<TrainingGuidePage />} />
             <Route path="/garmin" element={<GarminGuidePage />} />
+            <Route path="/bronnen" element={<SourcesPage />} />
             <Route path="/blessures" element={<InjuriesPage />} />
           </Routes>
         </ErrorBoundary>
