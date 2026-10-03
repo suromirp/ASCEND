@@ -25,11 +25,14 @@ import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
+import type { PlanChangeProposal } from '../models/planChange';
+import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
+import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import type { AppSettings } from './database';
 
 // --- Backup envelope & versioned payload -----------------------------------
 
-export const CURRENT_BACKUP_SCHEMA_VERSION = 3;
+export const CURRENT_BACKUP_SCHEMA_VERSION = 4;
 
 export interface AscendBackupPayloadV1 {
   version: 1;
@@ -70,7 +73,20 @@ export interface AscendBackupPayloadV3 {
   settings: AppSettings;
 }
 
-export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3;
+// V4 (audit 2026-10) adds everything a restore on a new device needs to
+// rebuild the same week: availability/strategy (goalEngineConfig), the
+// strength block and its recommendations, the change log, and the coach's
+// remembered answers. All optional on read, so a V3 file still imports.
+export interface AscendBackupPayloadV4 extends Omit<AscendBackupPayloadV3, 'version'> {
+  version: 4;
+  goalEngineConfig: Partial<GoalEngineConfig> | null;
+  strengthProgramStrategies: StrengthProgramStrategy[];
+  strengthProgramRecommendations: StrengthProgramRecommendation[];
+  planChangeProposals: PlanChangeProposal[];
+  adviceResponses: Record<string, unknown> | null;
+}
+
+export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4;
 
 export interface AscendBackupEnvelope {
   backupSchemaVersion: number;
@@ -102,6 +118,19 @@ export interface NormalizedBackupData {
   capabilityEvidence: CapabilityEvidence[];
   injuryNotes: InjuryNote[];
   settings: Partial<AppSettings>;
+  // Which categories the file actually contains. A category missing from
+  // the file is "unknown", never "empty": it is left untouched on import
+  // instead of wiping what's on the device.
+  present: Record<BackupDataCategory, boolean>;
+  // Records dropped during normalization because they were incomplete or
+  // malformed (a hand-edited or damaged file) — never written to storage.
+  skippedInvalid: number;
+  // V4 extras — undefined means "not in this backup", leave current as-is.
+  goalEngineConfig?: Partial<GoalEngineConfig>;
+  strengthProgramStrategies?: StrengthProgramStrategy[];
+  strengthProgramRecommendations?: StrengthProgramRecommendation[];
+  planChangeProposals?: PlanChangeProposal[];
+  adviceResponses?: Record<string, unknown>;
 }
 
 // --- Data categories ---------------------------------------------------------
@@ -160,6 +189,12 @@ export interface ImportDiffEntry {
   toAdd: number;
   toReplace: number;
   toSkipDuplicate: number;
+  // Current records that disappear because the backup replaces this
+  // category and doesn't contain them — shown in the preview, never silent.
+  toRemove: number;
+  // The user chose to import this category but the file doesn't contain
+  // it, so it stays exactly as it is.
+  missingInBackup: boolean;
   conflicts: ImportConflict[];
 }
 
@@ -171,6 +206,11 @@ export interface ImportPreview {
     hasTrainingPlan: boolean;
     isFromOlderVersion: boolean;
     restoreDateWarning?: string;
+    // Trainings logged on this device after the backup was made. They are
+    // always kept (history is append-only), but the user should know the
+    // backup is older than what they have.
+    logsSinceBackup: number;
+    skippedInvalid: number;
   };
   diffByCategory: ImportDiffEntry[];
   settingsChanges: { key: string; current: unknown; incoming: unknown }[];
@@ -209,6 +249,9 @@ export interface PreImportSnapshot {
 export interface SaveResult {
   success: boolean;
   savedTo?: string;
+  // The browser was handed a download; whether it actually landed on disk
+  // isn't knowable (a blocked download looks the same), so say so.
+  viaDownload?: boolean;
 }
 
 export interface PickedBackupFile {

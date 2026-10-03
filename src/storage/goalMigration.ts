@@ -46,8 +46,11 @@ export async function migrateToGoalEngine(): Promise<void> {
     for (const p of progress) await GoalMilestoneProgressRepo.put(p);
   }
 
+  // An earlier run that stopped before the flag below was set may already
+  // have written one; never mint a second Marathon goal.
   const marathonGoal = buildMarathonGoal(settings.marathonRaceType, settings.marathonTargetDate, settings.marathonTargetTimeMinutes);
-  if (marathonGoal) await TrainingGoalsRepo.put(marathonGoal);
+  const hasMarathon = (await TrainingGoalsRepo.getAll()).some((g) => g.name === 'Marathon');
+  if (marathonGoal && !hasMarathon) await TrainingGoalsRepo.put(marathonGoal);
 
   // Legacy stores emptied, not deleted (Technical Architecture v0.3.1
   // REVISED, Backward compatibility) — a pre-migration export still

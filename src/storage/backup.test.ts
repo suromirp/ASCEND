@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
+import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
+import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, listSnapshots, restoreSnapshot } from './backup';
+import type { SessionLog, PlannedSession } from '../models/training';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
 import type { Program } from '../models/program';
@@ -139,14 +140,14 @@ describe('backup envelope round-trip', () => {
     expect(await GoalMilestoneProgressRepo.getAll()).toHaveLength(1);
   });
 
-  it('round-trips a real TrainingGoal/GoalMilestone/CapabilityEvidence through export and full-restore import (V3)', async () => {
+  it('round-trips a real TrainingGoal/GoalMilestone/CapabilityEvidence through export and full-restore import (V4)', async () => {
     await TrainingGoalsRepo.put({ id: 'goal1', name: 'Marathon', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'paused' });
     await GoalMilestonesRepo.put({ id: 'ms1', goalId: 'goal1', order: 1, title: 'First', requirement: { kind: 'manual' } });
     await GoalMilestoneProgressRepo.put({ id: 'p1', goalId: 'goal1', milestoneId: 'ms1', clearedDate: '2026-02-01' });
     await CapabilityEvidenceRepo.put({ id: 'ce1', key: { dimension: 'load_carriage' }, measured: { amount: 12, unit: 'kg' }, date: '2026-02-01', evidenceType: 'manual', source: 'manualEntry' });
 
     const envelope = await buildBackupEnvelope();
-    expect(envelope.payload).toEqual(expect.objectContaining({ version: 3 }));
+    expect(envelope.payload).toEqual(expect.objectContaining({ version: 4 }));
 
     await wipeAllData();
     await importEnvelope(envelope);
@@ -156,4 +157,89 @@ describe('backup envelope round-trip', () => {
     expect(await CapabilityEvidenceRepo.getAll()).toEqual([expect.objectContaining({ id: 'ce1' })]);
     expect(await GoalMilestoneProgressRepo.getAll()).toEqual([expect.objectContaining({ id: 'p1' })]);
   });
+
+  // --- audit 2026-10: restoring may never lose history ---------------------
+
+  const log = (id: string, date: string): SessionLog => ({
+    id, templateId: 'tpl', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00.000Z`, variant: 'full', durationMinutes: 40, source: 'manual',
+  });
+
+  it('a backup with an empty payload changes nothing (missing categories are unknown, not empty)', async () => {
+    await SessionLogsRepo.put(log('a', '2026-09-01'));
+    await TrainingGoalsRepo.put({ id: 'goal1', name: 'GR5', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'active', targetDate: '2027-08-02' });
+    const backup = normalizeBackupToCurrentModel({ backupSchemaVersion: 3, createdAt: '2026-09-02T00:00:00.000Z', payload: { version: 3 } });
+    const preview = await buildImportPreview(backup, defaultActionsForMode('full_restore'), 'restore_backup_plan');
+    expect(preview.diffByCategory.every((d) => d.toRemove === 0)).toBe(true);
+    expect(preview.diffByCategory.find((d) => d.category === 'training_history')?.missingInBackup).toBe(true);
+    await importEnvelope({ backupSchemaVersion: 3, createdAt: '2026-09-02T00:00:00.000Z', payload: { version: 3 } });
+    expect((await SessionLogsRepo.getAll()).map((l) => l.id)).toEqual(['a']);
+    expect((await TrainingGoalsRepo.getAll()).map((g) => g.id)).toEqual(['goal1']);
+  });
+
+  it('a full restore of an older backup keeps trainings logged since', async () => {
+    await SessionLogsRepo.put(log('old', '2026-09-20'));
+    const envelope = await buildBackupEnvelope();
+    await SessionLogsRepo.put(log('new1', '2026-09-28'));
+    await SessionLogsRepo.put(log('new2', '2026-10-02'));
+    const backup = normalizeBackupToCurrentModel({ ...envelope, createdAt: '2026-09-23T00:00:00.000Z' });
+    const preview = await buildImportPreview(backup, defaultActionsForMode('full_restore'), 'restore_backup_plan');
+    expect(preview.backupMeta.logsSinceBackup).toBe(2);
+    expect(preview.diffByCategory.find((d) => d.category === 'training_history')?.toRemove).toBe(0);
+    await importEnvelope(envelope);
+    expect((await SessionLogsRepo.getAll()).map((l) => l.id).sort()).toEqual(['new1', 'new2', 'old']);
+  });
+
+  it('restoring settings keeps weigh-ins the device has and the backup lacks', async () => {
+    await SettingsRepo.set({ weightEntries: [{ date: '2026-09-01', kg: 80, source: 'manual' }] });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightEntries: [{ date: '2026-09-01', kg: 80, source: 'manual' }, { date: '2026-10-01', kg: 79, source: 'manual' }] });
+    await importEnvelope(envelope);
+    expect((await SettingsRepo.get()).weightEntries?.map((e) => e.date)).toEqual(['2026-09-01', '2026-10-01']);
+  });
+
+  it('drops malformed records instead of storing them, and says how many', async () => {
+    const envelope = await buildBackupEnvelope();
+    const broken = { ...envelope, payload: { ...envelope.payload, sessionLogs: [{ id: 'junk' }, log('ok', '2026-09-01')], settings: { weightEntries: 'oops' } } };
+    const backup = normalizeBackupToCurrentModel(broken);
+    expect(backup.sessionLogs.map((l) => l.id)).toEqual(['ok']);
+    expect(backup.skippedInvalid).toBe(2);
+    expect(backup.settings.weightEntries).toBeUndefined();
+  });
+
+  it('a damaged file gets a readable message', () => {
+    expect(() => parseBackupText('{"backupSchemaVersion": 4, "payl')).toThrow(/beschadigd of onvolledig/);
+  });
+
+  it('exports and restores availability, strength block, change log and coach answers (V4)', async () => {
+    await MetaRepo.set('goalEngineConfig', { strategy: 'balanced' });
+    await MetaRepo.set('adviceResponses', { a1: { response: 'accepted' } });
+    await StrengthProgramStrategiesRepo.put({ id: 'sps1' } as never);
+    await PlanChangeProposalsRepo.put({ id: 'pcp1' } as never);
+    const envelope = await buildBackupEnvelope();
+    expect(envelope.appVersion === undefined || typeof envelope.appVersion === 'string').toBe(true);
+    await wipeAllData();
+    await importEnvelope(envelope);
+    expect(await MetaRepo.get('goalEngineConfig')).toEqual(expect.objectContaining({ strategy: 'balanced' }));
+    expect(await MetaRepo.get('adviceResponses')).toEqual({ a1: { response: 'accepted' } });
+    expect((await StrengthProgramStrategiesRepo.getAll()).map((x) => x.id)).toEqual(['sps1']);
+    expect((await PlanChangeProposalsRepo.getAll()).map((x) => x.id)).toEqual(['pcp1']);
+  });
+
+  it('keeps at most five pre-import copies and can put one back', async () => {
+    const planned = (id: string, date: string): PlannedSession => ({ id, templateId: 'tpl', scheduledDate: date, weekStartDate: '2026-09-28', status: 'planned', order: 0 });
+    await PlannedSessionsRepo.put(planned('p-before', '2026-10-01'));
+    await SessionLogsRepo.put(log('kept', '2026-10-01'));
+    const first = await createPreImportSnapshot();
+    for (let i = 0; i < 6; i++) await createPreImportSnapshot();
+    expect((await BackupSnapshotsRepo.getAll()).length).toBe(5);
+    const target = (await listSnapshots())[4];
+    await PlannedSessionsRepo.delete('p-before');
+    await PlannedSessionsRepo.put(planned('p-after', '2026-10-02'));
+    await SessionLogsRepo.put(log('since', '2026-10-02'));
+    await restoreSnapshot(target.id);
+    expect((await PlannedSessionsRepo.getAll()).map((p) => p.id)).toEqual(['p-before']);
+    expect((await SessionLogsRepo.getAll()).map((l) => l.id).sort()).toEqual(['kept', 'since']);
+    expect(first.id).toBeTruthy();
+  });
 });
+

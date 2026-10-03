@@ -98,7 +98,7 @@ function saveViaDownload(data: Blob, suggestedName: string): SaveResult {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  return { success: true };
+  return { success: true, viaDownload: true };
 }
 
 function pickViaInput(): Promise<PickedBackupFile | null> {

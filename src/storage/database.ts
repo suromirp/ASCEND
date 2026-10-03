@@ -138,9 +138,27 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
           store.createIndex('by-week', 'weekStartDate');
         }
       },
+      // Another ASCEND window was updated to a newer DB version: close this
+      // connection so that upgrade can finish, and reload into the new
+      // version instead of running old code against a changed database.
+      blocking() {
+        void dbPromise?.then((db) => db.close());
+        dbPromise = null;
+        if (typeof window !== 'undefined') window.location.reload();
+      },
+      // This window is the newer one, waiting for an old one to let go.
+      blocked() {
+        dbBlockedListeners.forEach((fn) => fn());
+      },
     });
   }
   return dbPromise;
+}
+
+const dbBlockedListeners = new Set<() => void>();
+export function onDatabaseBlocked(fn: () => void): () => void {
+  dbBlockedListeners.add(fn);
+  return () => dbBlockedListeners.delete(fn);
 }
 
 // --- generic helpers -------------------------------------------------------
@@ -692,6 +710,11 @@ export async function resetToDemoData(): Promise<void> {
     clearStore('strengthProgramStrategies'),
     clearStore('strengthProgramRecommendations'),
     clearStore('weeklyPrescriptions'),
+    // "Alles verwijderen" means everything: settings, availability, coach
+    // answers, illness and weight history, and the pre-import copies that
+    // hold a full copy of the old history.
+    clearStore('backupSnapshots'),
+    clearStore('meta'),
   ]);
   // Production incident: trainingGoals above is cleared, but the marathon
   // fields in `settings` (AppSettings) are a second, shadow pointer into
@@ -747,7 +770,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff && !loggedPlannedIds.has(s.id));
-  await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
+  const kept = keptLoggedSlots(existingSessions, loggedPlannedIds, cutoff);
 
   const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
   const templatesWithDay = templates.filter((t) => t.defaultDayOfWeek);
@@ -756,7 +779,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
     const weekStart = addDays(thisMonday, week * 7);
     templatesWithDay.forEach((t, order) => {
       const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date < cutoff) return;
+      if (date < cutoff || kept.has(`${t.id}|${date}`)) return;
       newSessions.push({
         id: makeId('planned'),
         templateId: t.id,
@@ -767,7 +790,26 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
       });
     });
   }
-  await putAll('plannedSessions', newSessions);
+  await replacePlannedSessions(toDelete, newSessions);
+}
+
+// Logged sessions on or after the cutoff stay; a rebuilt pattern must not
+// put the same template on the same day next to one (the user would be
+// asked to do a session they already did).
+function keptLoggedSlots(sessions: PlannedSession[], loggedIds: Set<string | undefined>, cutoff: string): Set<string> {
+  return new Set(sessions.filter((s) => s.scheduledDate >= cutoff && loggedIds.has(s.id)).map((s) => `${s.templateId}|${s.scheduledDate}`));
+}
+
+// Delete-then-add in one transaction: an app closed halfway used to leave
+// the future with no planning at all.
+async function replacePlannedSessions(toDelete: PlannedSession[], toAdd: PlannedSession[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('plannedSessions', 'readwrite');
+  await Promise.all([
+    ...toDelete.map((s) => tx.store.delete(s.id)),
+    ...toAdd.map((s) => tx.store.put(s)),
+    tx.done,
+  ]);
 }
 
 // "Schone start vanaf week 1" (Settings → Training → Programma). Week 1
@@ -799,7 +841,7 @@ export async function rebuildPlanningFromWeekOne(
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff && !loggedPlannedIds.has(s.id));
-  await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
+  const kept = keptLoggedSlots(existingSessions, loggedPlannedIds, cutoff);
 
   const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
   const pattern = selectPattern(templates).filter((t) => t.defaultDayOfWeek);
@@ -808,11 +850,11 @@ export async function rebuildPlanningFromWeekOne(
     const weekStart = addDays(newStart, week * 7);
     pattern.forEach((t, order) => {
       const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date < cutoff) return;
+      if (date < cutoff || kept.has(`${t.id}|${date}`)) return;
       newSessions.push({ id: makeId('planned'), templateId: t.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order });
     });
   }
-  await putAll('plannedSessions', newSessions);
+  await replacePlannedSessions(toDelete, newSessions);
   return { created: newSessions.length, removed: toDelete.length };
 }
 
@@ -880,7 +922,12 @@ export interface BackupWriteSet {
   goalMilestoneProgress?: BackupStoreWrite<GoalMilestoneProgress>;
   capabilityEvidence?: BackupStoreWrite<CapabilityEvidence>;
   injuryNotes?: BackupStoreWrite<InjuryNote>;
+  planChangeProposals?: BackupStoreWrite<PlanChangeProposal>;
+  strengthProgramStrategies?: BackupStoreWrite<StrengthProgramStrategy>;
+  strengthProgramRecommendations?: BackupStoreWrite<StrengthProgramRecommendation>;
   settings?: AppSettings;
+  // Other meta keys (goalEngineConfig, adviceResponses), written as-is.
+  meta?: Record<string, unknown>;
 }
 
 export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
@@ -895,7 +942,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes'] as const) {
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations'] as const) {
     const write = writes[key];
     if (!write) continue;
     const store = tx.objectStore(key);
@@ -905,6 +952,9 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
 
   if (writes.settings) {
     ops.push(tx.objectStore('meta').put(writes.settings, 'settings'));
+  }
+  for (const [key, value] of Object.entries(writes.meta ?? {})) {
+    ops.push(tx.objectStore('meta').put(value, key));
   }
 
   await Promise.all([...ops, tx.done]);
@@ -945,6 +995,15 @@ export async function wipeAllData(): Promise<void> {
 // Idempotent: a restored session is no longer skipped, so a second run
 // finds nothing to do. Logged sessions and past days are never touched.
 export async function restorePatternSessionsRemovedByPrescription(): Promise<number> {
+  // One-time repair. Running it on every start used to put a session the
+  // user later skipped on purpose straight back into the planning.
+  if (await MetaRepo.get<boolean>('patternRestoreDone')) return 0;
+  const restoredCount = await restorePatternSessionsOnce();
+  await MetaRepo.set('patternRestoreDone', true);
+  return restoredCount;
+}
+
+async function restorePatternSessionsOnce(): Promise<number> {
   const [proposals, sessions, logs, templates] = await Promise.all([
     PlanChangeProposalsRepo.getAll(),
     PlannedSessionsRepo.getAll(),

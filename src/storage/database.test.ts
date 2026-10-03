@@ -284,6 +284,17 @@ describe('rebuildPlanningFromWeekOne (schone start)', () => {
     expect(after.some((s) => s.scheduledDate >= todayISO() && s.id !== loggedSession.id && hikingIds.has(s.templateId))).toBe(false);
     expect((await SessionLogsRepo.getAll()).map((l) => l.id)).toContain('log1');
   });
+
+  it("does not put a second copy next to a session that is already logged on that day", async () => {
+    const future = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate >= todayISO()).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+    const logged = future[0];
+    await SessionLogsRepo.put({ id: 'log-today', plannedSessionId: logged.id, templateId: logged.templateId, type: 'cardio', completedDate: todayISO(), completedAt: new Date().toISOString(), variant: 'full', durationMinutes: 30, source: 'manual' });
+
+    await rebuildPlanningFromWeekOne('this_week');
+
+    const sameSlot = (await PlannedSessionsRepo.getAll()).filter((s) => s.templateId === logged.templateId && s.scheduledDate === logged.scheduledDate);
+    expect(sameSlot.map((s) => s.id)).toEqual([logged.id]);
+  });
 });
 
 describe('restorePatternSessionsRemovedByPrescription', () => {
