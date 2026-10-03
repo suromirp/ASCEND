@@ -22,6 +22,8 @@ import type { Program } from '../models/program';
 import type { InjuryNote } from '../models/injury';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
+import type { IllnessEpisode } from '../models/illness';
+import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
@@ -52,6 +54,8 @@ export interface AdviceInputs {
   enabledSports?: Partial<EnabledSports>;
   respondedIds: Set<string>;
   asOf: string;
+  // Sessions planned while ill are never "gemist" (engine/illness.ts).
+  illnessEpisodes?: IllnessEpisode[];
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
@@ -100,9 +104,12 @@ function findCatchUpDate(
 // exists without breaking the 48h leg rule; otherwise let it go — never
 // double up. Effect: a move (or skip) proposal.
 function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  // Ill or building back up: nothing gets caught up (engine/illness.ts).
+  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const recentMissed = inputs.plannedSessions.filter(
-    (s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3,
+    (s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf),
   );
   return recentMissed.flatMap((s): Advice[] => {
     const template = templateById.get(s.templateId);

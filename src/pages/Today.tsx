@@ -4,6 +4,7 @@ import { resolveProgramWeek } from '../utils/dates';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeGoalProgress } from '../engine/progression';
+import { isIllnessDay } from '../engine/illness';
 import { computeReadiness } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
@@ -15,6 +16,7 @@ import { AdventureCard } from '../components/AdventureCard';
 import { SessionCard } from '../components/SessionCard';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
+import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
@@ -82,7 +84,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // definition, which reads as broken; the rolling figure is representative
   // from day one.
   const programStart = program?.startDate;
-  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, programStart);
+  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, programStart, (d) => isIllnessDay(d, settings.illnessEpisodes, today));
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
   const quote = dailyQuote(today);
 
@@ -192,6 +194,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         </Card>
       )}
 
+      <IllnessStatusCard />
+
       {primary && primaryTemplate ? (
         <TodayMissionCard
           template={primaryTemplate}
@@ -224,9 +228,12 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       <CoachCard />
 
-      <button onClick={() => setAdHocOpen(true)} className="-mt-2 self-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-        + losse training loggen
-      </button>
+      <div className="-mt-2 flex items-center justify-center gap-5">
+        <button onClick={() => setAdHocOpen(true)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+          + losse training loggen
+        </button>
+        <NotFitLink />
+      </div>
 
       {secondary.map((s) => {
         const t = templateById.get(s.templateId);
