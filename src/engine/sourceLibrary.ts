@@ -12,6 +12,7 @@ import { MODALITIES_BY_TEMPLATE } from '../data/modalities';
 import { EVIDENCE_REGISTRY } from '../data/evidenceRegistry';
 import { ALGORITHM_RULES } from '../data/algorithmRules';
 import { RESEARCH_SOURCES } from '../data/researchSources';
+import { TRAINING_SPOTS } from '../data/trainingSpots';
 import type { PublicationType } from '../models/evidence';
 
 export type SourceCategory = 'wetenschap' | 'garmin' | 'macrofactor' | 'bergsport' | 'training';
@@ -109,6 +110,9 @@ export function buildSourceLibrary(templateName: (id: string) => string): Librar
     for (const m of modalities) {
       for (const s of m.sources ?? []) add(s.label, s.url, `Alternatief bij ${templateName(templateId)}: ${m.label}`);
     }
+  }
+  for (const spot of TRAINING_SPOTS) {
+    for (const src of spot.sources) add(src.label.includes(' — ') ? src.label : `${src.label.split(',')[0]} — ${src.label.split(',').slice(1).join(',').trim() || src.label}`, src.url, `Trainingsplek: ${spot.name}`);
   }
   for (const r of RESEARCH_SOURCES) {
     const key = normalizeUrl(r.url);

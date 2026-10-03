@@ -459,6 +459,9 @@ export interface AppSettings {
   weightReminderSnoozedAt?: string; // ISO date
   // Days between weight reminders; 0 = never remind. Absent = 14.
   weightReminderDays?: number;
+  // Where you live, for distances to training spots (engine/trainingSpots.ts).
+  // Only ever stored on this device.
+  homeLocation?: { name: string; lat: number; lon: number };
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
