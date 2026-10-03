@@ -6,6 +6,7 @@ import { ImportWizard } from '../components/ImportWizard';
 import { BaselineEvidenceCard } from '../components/BaselineEvidenceCard';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import { NumberField } from '../components/NumberField';
+import { WeightSettingsCard } from '../components/WeightCard';
 import { ImpactSheet } from '../components/ImpactSheet';
 import type { Weekday, DailyTimeBudget, TrainingStrategyProfile } from '../models/goalEngineConfig';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -285,6 +286,8 @@ export function SettingsPage() {
               onClick={() => navigate('/blessures')}
             />
           </Card>
+
+          <WeightSettingsCard />
 
           <Card className="flex flex-col gap-3">
             <Eyebrow>APP</Eyebrow>

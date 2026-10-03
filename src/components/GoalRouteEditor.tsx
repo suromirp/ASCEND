@@ -24,6 +24,8 @@ import {
 import { formatNumberNL } from '../utils/number';
 import { makeId } from '../utils/id';
 import { NumberField } from './NumberField';
+import { useAppData } from '../state/AppDataContext';
+import { packSharePct } from '../engine/bodyWeight';
 import { Eyebrow } from './ui';
 
 const ROUTE_UNIT: Record<RouteKind, Unit> = { distance: 'km', elevationGain: 'm_elevation_gain', elevationLoss: 'm_elevation_loss' };
@@ -105,6 +107,10 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
   const averageParts = routeDayParts(reqs, 'average', carriesPack);
   const trainingParts = routeDayParts(reqs, 'training', carriesPack);
 
+  const { settings } = useAppData();
+  const packKg = amountOf(reqs, 'packWeight');
+  const packShare = packKg ? packSharePct(packKg, settings.weightEntries) : undefined;
+
   const packField = (
     <NumberField
       label="Rugzak"
@@ -112,7 +118,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
       decimals={1}
       value={amountOf(reqs, 'packWeight')}
       onChange={(v) => commit(setRequirement(reqs, 'packWeight', false, v, 'kg', 'SINGLE_EVENT'))}
-      helper="Wat je gemiddeld op je rug hebt, inclusief water en eten."
+      helper={`Wat je gemiddeld op je rug hebt, inclusief water en eten.${packShare !== undefined ? ` Dat is ${packShare}% van je lichaamsgewicht${packShare > 20 ? '; boven de 20% wordt het zwaar voor rug en voeten' : ''}.` : ''}`}
     />
   );
 
