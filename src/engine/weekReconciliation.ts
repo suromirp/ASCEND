@@ -22,7 +22,7 @@ import type { TrainingAvailability, TrainingStrategyProfile } from '../models/go
 import type { PlanChangeAlternative, PlanChangeItem } from '../models/planChange';
 import type { GoalOverview } from './goalOverview';
 import { isDateAvailable } from './adaptiveReplanner';
-import { dayHasRoomFor } from './scheduler';
+import { dayHasRoomFor, respectsHeavySpacing } from './scheduler';
 import { resolveSessionContributions, type GoalDemand } from './sessionContribution';
 import { computeDemand } from './demand';
 import { orderRotation, type DatedPlacement } from './rotationOrder';
@@ -220,7 +220,8 @@ export function reconcileWeekComposition(
         (date) =>
           (!asOf || date >= asOf) &&
           isDateAvailable(date, availability) &&
-          dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+          dayHasRoomFor(date, template, [...weekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference) &&
+          respectsHeavySpacing(date, template, [...weekSessions, ...tentativeAsSessions], templateById, sessionLogs),
       );
     };
 
@@ -357,7 +358,8 @@ export function reconcileWeekComposition(
         (date) =>
           (!asOf || date >= asOf) &&
           isDateAvailable(date, availability) &&
-          dayHasRoomFor(date, template, [...baseWeekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+          dayHasRoomFor(date, template, [...baseWeekSessions, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference) &&
+          respectsHeavySpacing(date, template, [...baseWeekSessions, ...tentativeAsSessions], templateById, sessionLogs),
       );
     };
     const missingOnlyResult = searchWeeklyPlacement(missingOnlyToPlace, baseWeekSessions, missingOnlyHardValidDates, templateById, sessionLogs, new Map());
@@ -402,7 +404,8 @@ export function reconcileWeekComposition(
           (date) =>
             (!asOf || date >= asOf) &&
             isDateAvailable(date, availability) &&
-            dayHasRoomFor(date, template, [...fixedForReflow, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference),
+            dayHasRoomFor(date, template, [...fixedForReflow, ...tentativeAsSessions], templateById, program, availability.dailyTimeBudget, sameDayPairingPreference) &&
+            respectsHeavySpacing(date, template, [...fixedForReflow, ...tentativeAsSessions], templateById, sessionLogs),
         );
       };
       reflowResult = searchWeeklyPlacement(toPlace, fixedForReflow, hardValidDatesForReflow, templateById, sessionLogs, new Map());

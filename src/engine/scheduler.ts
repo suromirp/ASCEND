@@ -108,7 +108,35 @@ export function findHeavyConflict(
   templateMap: Map<string, SessionTemplate>,
   recentLogs: SessionLog[] = [],
 ): PlannedSession | undefined {
-  return sessions.find((s) => {
+  return findHeavyConflicts(sessionId, template, date, sessions, templateMap, recentLogs)[0];
+}
+
+// Hard gate for every placement search: a date is only valid for a
+// template when nothing heavy for the same muscles sits within its
+// recovery window (CLAUDE.md's 48-hour rule, no longer just a soft cost).
+export function respectsHeavySpacing(
+  date: string,
+  template: SessionTemplate,
+  sessions: PlannedSession[],
+  templateMap: Map<string, SessionTemplate>,
+  recentLogs: SessionLog[] = [],
+  sessionId = '',
+): boolean {
+  return findHeavyConflicts(sessionId, template, date, sessions, templateMap, recentLogs).length === 0;
+}
+
+// Every session that would clash, not just the first: moving one session
+// can land it between two others (production feedback: a cascade fixed one
+// clash and reported "opgelost" while a second one stayed).
+export function findHeavyConflicts(
+  sessionId: string,
+  template: SessionTemplate,
+  date: string,
+  sessions: PlannedSession[],
+  templateMap: Map<string, SessionTemplate>,
+  recentLogs: SessionLog[] = [],
+): PlannedSession[] {
+  return sessions.filter((s) => {
     if (s.id === sessionId || s.status === 'skipped') return false;
     const other = templateMap.get(s.templateId);
     if (!other) return false;
@@ -259,97 +287,88 @@ export function proposeMove(
   const simulated = weekSessions.map((s) => (s.id === sessionId ? { ...s, scheduledDate: targetDate } : s));
 
   const movedTemplate = templateMap.get(session.templateId);
-  // A conflict = another session heavy for the SAME muscles too close by:
-  // legs with the spike-aware spacing below, upper body with the plain
-  // 48-hour rule (production feedback: moving Upper A next to Upper B
-  // reported "geen conflicten").
-  const conflicting = movedTemplate ? findHeavyConflict(sessionId, movedTemplate, targetDate, simulated, templateMap, recentLogs) : undefined;
-  const conflictMuscles = conflicting && movedTemplate && templateMap.get(conflicting.templateId)
-    ? sharedHeavyAxes(movedTemplate, templateMap.get(conflicting.templateId)!).map((axis) => HEAVY_AXIS_LABEL[axis]).join(' en ')
-    : '';
-
-  if (!conflicting) {
+  if (!movedTemplate) return { changes, reason: 'Geen conflicten gevonden.', resolved: true };
+  // Every clash around the new day, not only the first: the session can
+  // land between two others (production feedback: one clash fixed, the
+  // second left in place while the dialog said "opgelost").
+  const conflicts = findHeavyConflicts(sessionId, movedTemplate, targetDate, simulated, templateMap, recentLogs);
+  if (conflicts.length === 0) {
     return { changes, reason: 'Geen conflicten gevonden.', resolved: true };
   }
 
-  // Groep C, Fase 7: in plaats van de eerste vrije, niet-conflicterende dag
-  // te pakken (first-fit), scoort searchWeeklyPlacement alle kandidaatdagen
-  // voor de conflicterende sessie en kiest de beste — met een expliciete
-  // compromised/unplaceable-uitkomst wanneer geen enkele dag goed genoeg is,
-  // i.p.v. stilzwijgend de eerste conflictloze dag te accepteren.
-  //
-  // `fixedExistingSessions` sluit de conflicterende sessie zelf uit
-  // (correctheidseis, Fase 7): hij mag nooit tegelijk op zijn oude datum
-  // aanwezig zijn terwijl searchWeeklyPlacement een nieuwe datum voor hem
-  // zoekt — anders ontstaat een self-conflict.
-  const conflictingTemplate = templateMap.get(conflicting.templateId);
-  if (!conflictingTemplate) {
+  const musclesWith = (other: PlannedSession) => {
+    const t = templateMap.get(other.templateId);
+    return t ? sharedHeavyAxes(movedTemplate, t).map((axis) => HEAVY_AXIS_LABEL[axis]).join(' en ') : '';
+  };
+
+  const history = conflicts.find((c) => c.scheduledDate < asOf || recentLogs.some((l) => l.plannedSessionId === c.id));
+  if (history) {
     return {
       changes,
-      reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu te dicht op een andere zware sessie voor ${conflictMuscles}. Geen vrije dag gevonden om dit automatisch op te lossen.`,
+      reason: `Let op: dit valt dicht op ${templateName(templateMap, history.templateId)}, ook zwaar voor ${musclesWith(history)}. Die is al geweest, dus die blijft staan. Liefst ongeveer 48 uur ertussen.`,
       resolved: false,
     };
   }
 
-  const conflictIsHistory = conflicting.scheduledDate < asOf || recentLogs.some((l) => l.plannedSessionId === conflicting.id);
-  if (conflictIsHistory) {
-    return {
-      changes,
-      reason: `Let op: dit valt dicht op ${templateName(templateMap, conflicting.templateId)}, ook zwaar voor ${conflictMuscles}. Die is al geweest, dus die blijft staan. Liefst ongeveer 48 uur ertussen.`,
-      resolved: false,
-    };
-  }
-
-  const fixedExistingSessions = simulated.filter((s) => s.id !== conflicting.id);
-  const toPlace: PlacementRequest[] = [{ template: conflictingTemplate, source: 'cascade', sessionId: conflicting.id }];
+  // Groep C, Fase 7: searchWeeklyPlacement scores every candidate day for
+  // each clashing session and picks the best, instead of first-fit. The
+  // 48-hour rule is a hard filter on those days, checked against the week
+  // as it will look: the moved session, and every session already shifted.
   const monday = mondayOfWeek(targetDate);
-
-  const hardValidDatesProvider = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
-    const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
-      id: p.sessionOrDraft,
-      templateId: template.id,
-      scheduledDate: p.date,
-      weekStartDate: monday,
-      status: 'planned' as const,
-      order: 1000 + i,
-    }));
-    return weekDates(monday).filter(
-      (d) =>
-        d !== conflicting.scheduledDate &&
-        d >= asOf &&
-        dayHasRoomFor(d, template, [...fixedExistingSessions, ...tentativeAsSessions], templateMap, program, dailyTimeBudget, sameDayPairingPreference),
-    );
-  };
-
-  const result = searchWeeklyPlacement(toPlace, fixedExistingSessions, hardValidDatesProvider, templateMap, recentLogs, new Map());
-
-  if (result.status === 'clean' || result.status === 'compromised') {
-    const newSpot = result.bestFound.placements[0]?.date;
-    if (newSpot) {
-      changes.push({
-        sessionId: conflicting.id,
-        templateId: conflicting.templateId,
-        templateName: templateName(templateMap, conflicting.templateId),
-        fromDate: conflicting.scheduledDate,
-        toDate: newSpot,
-      });
-    }
-    const alternatives = result.alternatives;
-    const reason = result.status === 'compromised'
-      ? `Let op: ${result.compromisedReason} ${templateName(templateMap, conflicting.templateId)} schuift op naar de minst slechte optie.`
-      : `Zware training voor ${conflictMuscles} hoort ongeveer 48 uur uit elkaar te liggen: ${templateName(templateMap, conflicting.templateId)} schuift op.`;
-    return { changes, reason, resolved: true, alternatives };
+  let working = simulated;
+  let compromisedNote: string | undefined;
+  let alternatives: WeekPlacementCandidate[] | undefined;
+  for (const conflicting of conflicts) {
+    const conflictingTemplate = templateMap.get(conflicting.templateId);
+    if (!conflictingTemplate) return { changes, reason: unresolvedReason(conflicting), resolved: false };
+    const fixed = working.filter((s) => s.id !== conflicting.id);
+    const hardValidDatesProvider = (template: SessionTemplate, tentativePlacements: { sessionOrDraft: string; date: string }[]) => {
+      const tentativeAsSessions: PlannedSession[] = tentativePlacements.map((p, i) => ({
+        id: p.sessionOrDraft,
+        templateId: template.id,
+        scheduledDate: p.date,
+        weekStartDate: monday,
+        status: 'planned' as const,
+        order: 1000 + i,
+      }));
+      const context = [...fixed, ...tentativeAsSessions];
+      return weekDates(monday).filter(
+        (d) =>
+          d !== conflicting.scheduledDate &&
+          d >= asOf &&
+          dayHasRoomFor(d, template, context, templateMap, program, dailyTimeBudget, sameDayPairingPreference) &&
+          respectsHeavySpacing(d, template, context, templateMap, recentLogs, conflicting.id),
+      );
+    };
+    const toPlace: PlacementRequest[] = [{ template: conflictingTemplate, source: 'cascade', sessionId: conflicting.id }];
+    const result = searchWeeklyPlacement(toPlace, fixed, hardValidDatesProvider, templateMap, recentLogs, new Map());
+    const newSpot = result.status === 'clean' || result.status === 'compromised' ? result.bestFound.placements[0]?.date : undefined;
+    if (!newSpot) return { changes, reason: unresolvedReason(conflicting), resolved: false };
+    if (result.status === 'compromised') compromisedNote ??= result.compromisedReason;
+    if (result.status === 'clean' || result.status === 'compromised') alternatives ??= result.alternatives;
+    changes.push({
+      sessionId: conflicting.id,
+      templateId: conflicting.templateId,
+      templateName: templateName(templateMap, conflicting.templateId),
+      fromDate: conflicting.scheduledDate,
+      toDate: newSpot,
+    });
+    working = working.map((s) => (s.id === conflicting.id ? { ...s, scheduledDate: newSpot } : s));
   }
 
-  return {
-    changes,
-    reason: `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen de hersteltijd van een andere zware sessie voor ${conflictMuscles} (ongeveer 48 uur). ASCEND vindt deze week geen dag met genoeg trainingstijd over om hem heen te schuiven. ${
+  const names = conflicts.map((c) => templateName(templateMap, c.templateId)).join(' en ');
+  const reason = compromisedNote
+    ? `Let op: ${compromisedNote} ${names} ${conflicts.length === 1 ? 'schuift' : 'schuiven'} op naar de minst slechte optie.`
+    : `Zware training voor ${musclesWith(conflicts[0])} hoort ongeveer 48 uur uit elkaar te liggen: ${names} ${conflicts.length === 1 ? 'schuift' : 'schuiven'} op.`;
+  return { changes, reason, resolved: true, alternatives };
+
+  function unresolvedReason(conflicting: PlannedSession): string {
+    return `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen de hersteltijd van een andere zware sessie voor ${musclesWith(conflicting)} (ongeveer 48 uur). ASCEND vindt deze week geen dag met genoeg trainingstijd over om hem heen te schuiven. ${
       Object.keys(dailyTimeBudget ?? {}).length === 0
-        ? 'Zonder ingestelde trainingstijd plant ASCEND maximaal één training per dag; stel bij Instellingen → Training → Trainingstijd per dag in hoeveel tijd je hebt, dan mogen er twee op een dag.'
-        : 'Geef een dag meer tijd bij Instellingen → Training → Trainingstijd per dag, of verplaats hem zelf.'
-    }`,
-    resolved: false,
-  };
+        ? 'Zonder ingestelde trainingstijd plant ASCEND maximaal één training per dag; stel bij Instellingen, Training, Trainingstijd per dag in hoeveel tijd je hebt, dan mogen er twee op een dag.'
+        : 'Geef een dag meer tijd bij Instellingen, Training, Trainingstijd per dag, of verplaats hem zelf.'
+    }`;
+  }
 }
 
 export function skipSession(session: PlannedSession): PlannedSession {
