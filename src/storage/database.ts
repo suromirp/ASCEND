@@ -173,7 +173,8 @@ async function putAll<K extends keyof AscendDB>(store: K, values: unknown[]) {
   const db = await getDB();
   // @ts-expect-error — generic store name
   const tx = db.transaction(store, 'readwrite');
-  await Promise.all([...values.map((v) => tx.store.put(v as never)), tx.done]);
+  const normalized = store === 'plannedSessions' ? values.map((v) => withDerivedWeek(v as PlannedSession)) : values;
+  await Promise.all([...normalized.map((v) => tx.store.put(v as never)), tx.done]);
 }
 
 async function put<K extends keyof AscendDB>(store: K, value: unknown) {
@@ -206,9 +207,26 @@ export const SessionTemplatesRepo = {
   put: (t: SessionTemplate) => put('sessionTemplates', t),
 };
 
+// A week is derived, never stored on its own (CLAUDE.md): a session always
+// belongs to the Monday-week of the day it is on. Every write goes through
+// here, so a move to another week can't leave it counted in its old week
+// too (production bug: totals and "x / 7" doubled after a cross-week move).
+export function withDerivedWeek(s: PlannedSession): PlannedSession {
+  const monday = mondayOfWeek(s.scheduledDate);
+  return s.weekStartDate === monday ? s : { ...s, weekStartDate: monday };
+}
+
+// One-time repair for sessions moved across weeks before the fix above.
+export async function normalizePlannedSessionWeeks(): Promise<number> {
+  const all = await PlannedSessionsRepo.getAll();
+  const wrong = all.filter((s) => s.weekStartDate !== mondayOfWeek(s.scheduledDate));
+  if (wrong.length > 0) await putAll('plannedSessions', wrong);
+  return wrong.length;
+}
+
 export const PlannedSessionsRepo = {
   getAll: () => getAll('plannedSessions') as Promise<PlannedSession[]>,
-  put: (s: PlannedSession) => put('plannedSessions', s),
+  put: (s: PlannedSession) => put('plannedSessions', withDerivedWeek(s)),
   delete: (id: string) => del('plannedSessions', id),
   byWeek: async (weekStartDate: string) => {
     const db = await getDB();
@@ -807,7 +825,7 @@ async function replacePlannedSessions(toDelete: PlannedSession[], toAdd: Planned
   const tx = db.transaction('plannedSessions', 'readwrite');
   await Promise.all([
     ...toDelete.map((s) => tx.store.delete(s.id)),
-    ...toAdd.map((s) => tx.store.put(s)),
+    ...toAdd.map((s) => tx.store.put(withDerivedWeek(s))),
     tx.done,
   ]);
 }
@@ -947,7 +965,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
     if (!write) continue;
     const store = tx.objectStore(key);
     if (write.clear) ops.push(store.clear());
-    for (const value of write.puts) ops.push(store.put(value as never));
+    for (const value of write.puts) ops.push(store.put((key === 'plannedSessions' ? withDerivedWeek(value as PlannedSession) : value) as never));
   }
 
   if (writes.settings) {

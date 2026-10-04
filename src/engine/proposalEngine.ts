@@ -19,6 +19,7 @@ import type { EngineEvent, PlanChangeItem, PlanChangeProposal } from '../models/
 import { isDateInCommittedRange, isDateInForecastRange, type HorizonZone } from './planningHorizon';
 import { makeId } from '../utils/id';
 import { weekCandidatesToAlternatives } from './candidatePlacement';
+import { mondayOfWeek } from '../utils/dates';
 
 function scheduleChangeToPlanChangeItem(change: ScheduleProposal['changes'][number]): PlanChangeItem {
   return {
@@ -157,7 +158,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
+            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
             : s,
         );
         break;
@@ -185,7 +186,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
+            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
             : s,
         );
         break;

@@ -325,3 +325,15 @@ describe('restorePatternSessionsRemovedByPrescription', () => {
     expect(await restorePatternSessionsRemovedByPrescription()).toBe(0);
   });
 });
+
+describe('planned sessions always belong to the week of their date', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('a session moved into next week is stored in next week', async () => {
+    await PlannedSessionsRepo.put({ id: 'x', templateId: 'tpl', scheduledDate: '2026-10-06', weekStartDate: '2026-09-28', status: 'moved', order: 0 });
+    const [stored] = await PlannedSessionsRepo.getAll();
+    expect(stored.weekStartDate).toBe('2026-10-05');
+  });
+});

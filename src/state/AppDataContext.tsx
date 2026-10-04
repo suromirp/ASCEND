@@ -15,6 +15,7 @@ import {
   syncTemplateAndScheduleDefinitions,
   ensureDefaultTemplates,
   restorePatternSessionsRemovedByPrescription,
+  normalizePlannedSessionWeeks,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
@@ -93,6 +94,7 @@ function runBootMigrationsOnce(): Promise<void> {
     await syncTemplateAndScheduleDefinitions();
     await ensureDefaultTemplates();
     await restorePatternSessionsRemovedByPrescription();
+    await normalizePlannedSessionWeeks();
   });
   return bootMigrations;
 }
@@ -258,7 +260,7 @@ interface AppData {
   // Fase 2 feedback pattern (engine/changeImpact.ts): apply a proposal,
   // remember what it touched, and let the user undo it right after.
   recentChange: RecentPlanChange | null;
-  commitPlanChange: (proposal: PlanChangeProposal, title: string) => Promise<boolean>;
+  commitPlanChange: (proposal: PlanChangeProposal, title: string, restore?: UndoRestore) => Promise<boolean>;
   undoRecentChange: () => Promise<void>;
   // Ziek melden / weer beter (engine/illness.ts): one tap each.
   reportIllness: (kind: IllnessKind) => Promise<void>;
@@ -319,6 +321,12 @@ export interface LogSessionInput {
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
   completedDate?: string;
+}
+
+// What undo must put back besides the planning itself.
+export interface UndoRestore {
+  settings?: Partial<AppSettings>;
+  config?: Partial<GoalEngineConfig>;
 }
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -406,7 +414,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => syncChannel.removeEventListener('message', onMessage);
   }, [refresh]);
 
-  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string): Promise<boolean> => {
+  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore): Promise<boolean> => {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
     if (real.length === 0) return false;
     const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
@@ -431,6 +439,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       why: proposal.consequences,
       before: planned.filter((s) => touchedIds.has(s.id)),
       addedIds,
+      settingsBefore: restore?.settings,
+      configBefore: restore?.config,
       createdAt: new Date().toISOString(),
     });
     await refresh();
@@ -447,15 +457,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
-    // Undoing "ziek gemeld" / "weer beter" also undoes the status itself.
-    if (recentChange.trigger === 'illness_reported' || recentChange.trigger === 'illness_resolved') {
-      const stored = await SettingsRepo.get();
-      const episodes = stored.illnessEpisodes ?? [];
-      const next = recentChange.trigger === 'illness_reported'
-        ? episodes.filter((e) => e.endDate || e.startDate !== recentChange.createdAt.slice(0, 10))
-        : episodes.map((e, i, all) => (i === all.length - 1 ? { ...e, endDate: undefined } : e));
-      setSettings(await SettingsRepo.set({ illnessEpisodes: next }));
-    }
+    // The setting behind the change goes back exactly as it was: an illness
+    // report (or a changed kind of illness), a sport switched off, a
+    // frequency or time budget. Never reconstructed from dates.
+    if (recentChange.settingsBefore) setSettings(await SettingsRepo.set(recentChange.settingsBefore as Partial<AppSettings>));
+    if (recentChange.configBefore) setGoalEngineConfig(await GoalEngineConfigRepo.set(recentChange.configBefore as Partial<GoalEngineConfig>));
     for (const session of recentChange.before) await PlannedSessionsRepo.put(session);
     for (const id of recentChange.addedIds) await PlannedSessionsRepo.delete(id);
     const now = new Date().toISOString();
@@ -968,7 +974,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const sessionsForWeek = useCallback(
-    (weekStartDate: string) => plannedSessions.filter((s) => s.weekStartDate === weekStartDate || mondayOfWeek(s.scheduledDate) === weekStartDate),
+    (weekStartDate: string) => plannedSessions.filter((s) => mondayOfWeek(s.scheduledDate) === weekStartDate),
     [plannedSessions],
   );
 
@@ -1258,7 +1264,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // An illness status change that didn't need any calendar change still
   // gets its own notice, so "Ongedaan maken" always undoes this tap and
   // never an older change.
-  const showStatusOnlyChange = useCallback(async (proposal: PlanChangeProposal) => {
+  const showStatusOnlyChange = useCallback(async (proposal: PlanChangeProposal, restore?: UndoRestore) => {
     setRecentChange({
       id: proposal.id,
       trigger: proposal.trigger,
@@ -1267,6 +1273,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       why: proposal.consequences,
       before: [],
       addedIds: [],
+      settingsBefore: restore?.settings,
+      configBefore: restore?.config,
       createdAt: new Date().toISOString(),
     });
     await refresh();
@@ -1283,7 +1291,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setSettings(await SettingsRepo.set({ illnessEpisodes: episodes }));
     const [planned, tpls, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll()]);
     const proposal = planIllnessStart(kind, planned, tpls, logs, asOf);
-    if (!(await commitPlanChange(proposal, proposal.issue))) await showStatusOnlyChange(proposal);
+    const restore = { settings: { illnessEpisodes: current } };
+    if (!(await commitPlanChange(proposal, proposal.issue, restore))) await showStatusOnlyChange(proposal, restore);
   }, [commitPlanChange, showStatusOnlyChange]);
 
   const recoverFromIllness = useCallback(async () => {
@@ -1297,7 +1306,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setSettings(await SettingsRepo.set({ illnessEpisodes: episodes }));
     const [planned, tpls, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll()]);
     const { proposal } = planIllnessEnd(active, asOf, planned, tpls, logs);
-    if (!(await commitPlanChange(proposal, proposal.issue))) await showStatusOnlyChange(proposal);
+    const restore = { settings: { illnessEpisodes: current } };
+    if (!(await commitPlanChange(proposal, proposal.issue, restore))) await showStatusOnlyChange(proposal, restore);
   }, [commitPlanChange, showStatusOnlyChange]);
 
   const updateGoalEngineConfig = useCallback(async (patch: Partial<GoalEngineConfig>): Promise<GoalEngineConfig> => {
@@ -1313,14 +1323,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Marathon goal rather than updating the one already migrated.
   const updateMarathonGoal = useCallback(
     async (patch: Partial<Pick<AppSettings, 'marathonRaceType' | 'marathonTargetDate' | 'marathonTargetTimeMinutes'>>) => {
-      const next = await updateSettings(patch);
+      const existing = trainingGoals.find((g) => g.name === 'Marathon');
+      // A date set in the goal wizard lives on the goal, not in settings;
+      // a quick pick (HALVE/HELE) must keep it instead of rebuilding the
+      // goal without one (production bug: the date vanished on a tap).
+      const keptDate = 'marathonTargetDate' in patch ? patch.marathonTargetDate : (settings.marathonTargetDate ?? existing?.targetDate);
+      const next = await updateSettings({ ...patch, marathonTargetDate: keptDate });
       const rebuilt = buildMarathonGoal(next.marathonRaceType, next.marathonTargetDate, next.marathonTargetTimeMinutes);
       if (!rebuilt) return; // no race type chosen (yet) — nothing to keep in sync
-      const existing = trainingGoals.find((g) => g.name === 'Marathon');
-      await TrainingGoalsRepo.put(existing ? { ...rebuilt, id: existing.id, createdAt: existing.createdAt } : rebuilt);
+      await TrainingGoalsRepo.put(existing ? { ...existing, ...rebuilt, id: existing.id, createdAt: existing.createdAt } : rebuilt);
       await refresh();
     },
-    [trainingGoals, refresh, updateSettings],
+    [trainingGoals, refresh, updateSettings, settings.marathonTargetDate],
   );
 
   // Phase 7 — mirrors runForecastReplan's own persistence pattern (reads
