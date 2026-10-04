@@ -52,7 +52,9 @@ describe('syncGr5MilestoneDefinitions', () => {
     await TrainingGoalsRepo.put(goal);
     await syncGr5MilestoneDefinitions();
     const goals = await TrainingGoalsRepo.getAll();
-    expect(goals).toEqual([goal]);
+    // Only the old default English name becomes Dutch; everything the user
+    // set stays exactly as it was.
+    expect(goals).toEqual([goal.name === 'GR5 / ALPINE READINESS' ? { ...goal, name: 'GR5 / ALPENKLAAR' } : goal]);
   });
 
   it('is a no-op the second time it runs (guarded by the version flag)', async () => {

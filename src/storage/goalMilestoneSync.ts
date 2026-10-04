@@ -29,7 +29,7 @@ import { GoalMilestonesRepo, TrainingGoalsRepo, MetaRepo } from './database';
 // Bump when data/defaultProgram.ts#buildObjective()'s milestone content
 // changes shape (not for wording-only tweaks, which overwrite for free) —
 // same convention as SCHEDULE_CONTENT_VERSION in storage/database.ts.
-export const GR5_MILESTONE_CONTENT_VERSION = 2;
+export const GR5_MILESTONE_CONTENT_VERSION = 3;
 
 export async function syncGr5MilestoneDefinitions(): Promise<void> {
   const version = await MetaRepo.get<number>('gr5MilestoneContentVersion');
@@ -57,6 +57,9 @@ export async function syncGr5MilestoneDefinitions(): Promise<void> {
   // holds, live, unrelated to this content resync).
   const { milestones } = migrateGr5ObjectiveData(freshObjective, []);
   for (const m of milestones) await GoalMilestonesRepo.put(m);
+  // Version 3: the default English name became Dutch. A name the user
+  // chose themselves stays.
+  if (goal.name === 'GR5 / ALPINE READINESS') await TrainingGoalsRepo.put({ ...goal, name: freshObjective.name });
 
   await MetaRepo.set('gr5MilestoneContentVersion', GR5_MILESTONE_CONTENT_VERSION);
 }
