@@ -4,7 +4,7 @@ import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
 import { isIllnessDay } from '../engine/illness';
-import { computeReadiness, computeReadinessTrend } from '../engine/readiness';
+import { computeReadiness, computeReadinessTrend, droppedAfterMissIds } from '../engine/readiness';
 import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { computeGoalProgress } from '../engine/progression';
@@ -78,7 +78,7 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 }
 
 export function AscendPage() {
-  const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
+  const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings, templateById, planChangeLog } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
   const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
@@ -90,8 +90,12 @@ export function AscendPage() {
 
   const programStart = program?.startDate;
   const illnessEpisodes = settings.illnessEpisodes;
-  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions, 28, undefined, programStart, (d) => isIllnessDay(d, illnessEpisodes, todayISO())), [sessionLogs, plannedSessions, programStart, illnessEpisodes]);
-  const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions, 8, programStart), [sessionLogs, plannedSessions, programStart]);
+  const readinessExtras = useMemo(() => ({
+    isRest: (p: { templateId: string }) => templateById.get(p.templateId)?.type === 'recovery',
+    droppedAfterMissIds: droppedAfterMissIds(planChangeLog),
+  }), [templateById, planChangeLog]);
+  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions, 28, undefined, programStart, (d) => isIllnessDay(d, illnessEpisodes, todayISO()), readinessExtras), [sessionLogs, plannedSessions, programStart, illnessEpisodes, readinessExtras]);
+  const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions, 8, programStart, readinessExtras), [sessionLogs, plannedSessions, programStart, readinessExtras]);
   // Sports-science review, item B1: capacity ("what have you demonstrably
   // been building lately") and readiness ("are you acutely ready for more
   // right now") were previously one flat 7-score average — split into two

@@ -55,7 +55,9 @@ describe('buildDefaultProgramData — same heavy muscles never on consecutive da
     const templateById = new Map(templates.map((t) => [t.id, t]));
     const axes = ['upperBodyLoad', 'lowerBodyLoad'] as const;
     const heavy = (id: string) => axes.filter((a) => resolveEffectiveStressProfile(templateById.get(id)!)[a] === 'heavy');
-    const week = plannedSessions.filter((s) => s.weekStartDate === plannedSessions[0].weekStartDate);
+    // A full week: the first one only holds the days from install on.
+    const fullWeekStart = plannedSessions[plannedSessions.length - 1].weekStartDate;
+    const week = plannedSessions.filter((s) => s.weekStartDate === fullWeekStart);
     for (const a of week) {
       for (const b of week) {
         if (a.id >= b.id) continue;

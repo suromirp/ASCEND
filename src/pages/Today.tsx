@@ -5,7 +5,7 @@ import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../uti
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeGoalProgress } from '../engine/progression';
 import { isIllnessDay, activeIllness, isHeavySession } from '../engine/illness';
-import { computeReadiness } from '../engine/readiness';
+import { computeReadiness, droppedAfterMissIds } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
@@ -101,7 +101,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // definition, which reads as broken; the rolling figure is representative
   // from day one.
   const programStart = program?.startDate;
-  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, programStart, (d) => isIllnessDay(d, settings.illnessEpisodes, today));
+  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, programStart, (d) => isIllnessDay(d, settings.illnessEpisodes, today), { isRest: (p) => templateById.get(p.templateId)?.type === 'recovery', droppedAfterMissIds: droppedAfterMissIds(planChangeLog) });
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
   const quote = dailyQuote(today);
 
