@@ -125,13 +125,13 @@ export function computeGoalProgress(
       return { definition, status: cleared ? ('completed' as const) : ('future' as const), clearedDate: row?.clearedDate };
     });
 
-  const firstIncompleteIdx = views.findIndex((m) => m.status !== 'completed');
-  if (firstIncompleteIdx !== -1) {
-    views[firstIncompleteIdx] = { ...views[firstIncompleteIdx], status: 'current' };
-    for (let i = firstIncompleteIdx + 1; i < views.length; i++) {
-      views[i] = { ...views[i], status: i === firstIncompleteIdx + 1 ? 'upcoming' : 'future' };
-    }
-  }
+  // A milestone you reached stays reached, also when an earlier one is
+  // still open (audit 2026-10: 300 m D+ done but shown as "future" because
+  // the 15 km walk before it was not). The first open one is current, the
+  // next open one upcoming.
+  const open = views.map((m, i) => (m.status === 'completed' ? -1 : i)).filter((i) => i !== -1);
+  if (open.length > 0) views[open[0]] = { ...views[open[0]], status: 'current' };
+  if (open.length > 1) views[open[1]] = { ...views[open[1]], status: 'upcoming' };
 
   const completedCount = views.filter((m) => m.status === 'completed').length;
   const totalCount = views.length;
