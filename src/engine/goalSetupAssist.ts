@@ -99,7 +99,7 @@ export interface RecentActivityInput {
 // 8 weeks") into evidence for every capability this goal still needs that
 // the activity actually says something about — one answer instead of a
 // question per capability. Only direct readings: duration -> time-based
-// endurance/leg tolerance/aerobic, D+ -> ascent, D- -> descent, pack ->
+// endurance/leg tolerance/aerobic, D+ -> ascent, D− -> descent, pack ->
 // load carriage, and pace only for running. Nothing is extrapolated; a
 // capability the activity says nothing about stays a separate question.
 export function evidenceFromRecentActivity(

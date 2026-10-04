@@ -108,7 +108,7 @@ export function HistoryPage() {
         )}
         <Stat label="Trainingstijd" value={formatHoursMinutesNL(summary.totalMinutes)} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
         <Stat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
-        {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D-`} />}
+        {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D−`} />}
         {summary.machineVertical > 0 && <Stat label="Hoogtemeters op toestel" value={`${Math.round(summary.machineVertical)} m`} />}
         {summary.avgCadence !== undefined && <Stat label="Gem. cadans" value={`${summary.avgCadence}`} />}
         {summary.avgPower !== undefined && <Stat label="Gem. vermogen" value={`${summary.avgPower} W`} />}
@@ -142,10 +142,10 @@ export function HistoryPage() {
                     {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}
                     {log.subjectiveFeel === 'worse' ? ' • voelde slechter' : ''}
                     {log.outdoorData?.elevationGainM
-                      ? ` • ${formatNumberNL(log.outdoorData.elevationGainM)} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
+                      ? ` • ${formatNumberNL(log.outdoorData.elevationGainM, 0)} m D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
                       : ''}
                     {log.cardioData?.elevationGainM
-                      ? ` • ${formatNumberNL(log.cardioData.elevationGainM)} D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
+                      ? ` • ${formatNumberNL(log.cardioData.elevationGainM, 0)} m D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
                       : ''}
                     {log.outdoorData?.distanceKm ? ` • ${formatNumberNL(log.outdoorData.distanceKm, 1)} km` : ''}
                     {log.cardioData?.distanceKm ? ` • ${formatNumberNL(log.cardioData.distanceKm, 1)} km` : ''}

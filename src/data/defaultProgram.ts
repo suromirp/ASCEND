@@ -29,7 +29,7 @@ import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_
 // baseStressProfile (Technical Architecture v0.3.1 REVISED, Phase 3): the
 // sensible qualitative default for each template's own workout shape,
 // derived from what the template's notes/target already say about it (RPE,
-// D+/D-, duration, mechanism) — not a new physiological claim, just a
+// D+/D−, duration, mechanism) — not a new physiological claim, just a
 // categorical read of content that already exists above. This is what
 // resolveEffectiveStressProfile() falls back to legacyIsLegHeavyToStressProfile()
 // for on any template that DOESN'T have one — every template here does.
@@ -230,7 +230,7 @@ function buildTemplates(): SessionTemplate[] {
         'De langste sessie van de week, op vermoeide benen na zaterdag — precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), afstand en hoogtemeters bouw je zelf op t.o.v. vorige week (richtlijn: max +10-15%). Buiten met D+ heeft de voorkeur boven een vlakke route — dit is de sessie die het meest direct naar de GR5 vertaalt.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
-      // Langste sessie, op al vermoeide benen, met echte D+/D- — cumulatief
+      // Langste sessie, op al vermoeide benen, met echte D+/D− — cumulatief
       // zwaar voor de benen ondanks de lage RPE (rustig tempo).
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'heavy' },
       pairingOverride: [{ withTemplateId: 'tpl_hill_intervals', verdict: 'prefer' }],
@@ -252,7 +252,7 @@ function buildTemplates(): SessionTemplate[] {
       name: 'Bergtocht',
       type: 'hiking',
       sport: 'hiking',
-      focus: 'Tijd op de benen × D+ en D- × rugzak, richting de GR5',
+      focus: 'Tijd op de benen × D+ en D− × rugzak, richting de GR5',
       durationVariants: { full: 180, short: 90 },
       outdoorTarget: { targetElevationM: 500, backpackWeightKg: 6 },
       cardioTarget: { zone: 'Zone 1-2, RPE 3-4: je kunt blijven praten' },
@@ -399,18 +399,18 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
 // ---------------------------------------------------------------------------
 // GR5 / Alpine Readiness — herzien op de daadwerkelijke eisen van de Grande
 // Traversée des Alpes (±600–620 km, ±30.000 D+, 36–40 etappes), niet alleen
-// op D+: afstand, D+, D-, uren op de benen, rugzakgewicht en back-to-back
+// op D+: afstand, D+, D−, uren op de benen, rugzakgewicht en back-to-back
 // herstel tellen allemaal mee. Rich content (waarom/behaald wanneer/bronnen)
 // per stap staat in data/gr5Details.ts — zie MilestoneDetailSheet.
 //
 // Sports-science review (Fase 5, item G1): heringedeeld van één lineaire
 // keten in parallelle assen (aerobe basis, tijd-op-de-benen, ascent/D+,
-// descent/D- als eigen as, rugzak, meerdaagse belastbaarheid) die
+// descent/D− als eigen as, rugzak, meerdaagse belastbaarheid) die
 // geïnterleaved staan in plaats van axis-voor-axis — je hoeft niet eerst
 // alle D+ te maxen voordat rugzak of meerdaagse training aan bod komen.
 // Descent volgt bewust een tempo achter ascent (excentrische tolerantie
 // bouwt trager op dan concentrische capaciteit) in plaats van elke D+-stap
-// automatisch een gelijke D- te laten eisen. Rugzak start lichter en
+// automatisch een gelijke D− te laten eisen. Rugzak start lichter en
 // eerder, in plaats van in één late sprong naar het volledige eventgewicht.
 // Meerdaagse belastbaarheid start met een lichte 2-dagen-streak vroeg in de
 // ladder, met de zwaardere weekend-bergsimulatie als latere capstone.
@@ -429,9 +429,9 @@ function buildObjective(): Objective {
     ['Twee dagen achter elkaar (licht)', { kind: 'consecutiveDays', days: 2 }],
     ['300 D+', { kind: 'elevation', minMeters: 300 }],
     ['Lichte rugzaksessie — 8 kg / 10 km', { kind: 'backpack', minWeightKg: 8, minKm: 10 }],
-    ['500 D+ / 300 D-', { kind: 'elevation', minMeters: 500, minLossMeters: 300 }],
-    ['750 D+ / 500 D-', { kind: 'elevation', minMeters: 750, minLossMeters: 500 }],
-    ['1000 D+ / 750 D-', { kind: 'elevation', minMeters: 1000, minLossMeters: 750 }],
+    ['500 D+ / 300 D−', { kind: 'elevation', minMeters: 500, minLossMeters: 300 }],
+    ['750 D+ / 500 D−', { kind: 'elevation', minMeters: 750, minLossMeters: 500 }],
+    ['1000 D+ / 750 D−', { kind: 'elevation', minMeters: 1000, minLossMeters: 750 }],
     ['15 km + 1000 D+', { kind: 'distanceAndElevation', minKm: 15, minMeters: 1000 }],
     ['Volledige rugzaksessie — 12 kg / 15 km', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
     ['Weekend bergsimulatie', { kind: 'manual' }],

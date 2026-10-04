@@ -47,7 +47,7 @@ type EditableRequirementKind = Exclude<GoalRequirement['kind'], 'manual'>;
 const REQUIREMENT_KIND_META: Record<EditableRequirementKind, { label: string; unit: Unit; scope: GoalRequirement['scope']; needsDiscipline?: boolean; decimals: number }> = {
   distance: { label: 'Afstand', unit: 'km', scope: 'TOTAL_EVENT', needsDiscipline: true, decimals: 1 },
   elevationGain: { label: 'Stijging (D+)', unit: 'm_elevation_gain', scope: 'TOTAL_EVENT', decimals: 0 },
-  elevationLoss: { label: 'Daling (D-)', unit: 'm_elevation_loss', scope: 'TOTAL_EVENT', decimals: 0 },
+  elevationLoss: { label: 'Daling (D−)', unit: 'm_elevation_loss', scope: 'TOTAL_EVENT', decimals: 0 },
   duration: { label: 'Duur', unit: 'min', scope: 'TOTAL_EVENT', needsDiscipline: true, decimals: 0 },
   targetTime: { label: 'Doeltijd', unit: 'min', scope: 'SINGLE_EVENT', needsDiscipline: true, decimals: 0 },
   packWeight: { label: 'Rugzak', unit: 'kg', scope: 'SINGLE_EVENT', decimals: 1 },

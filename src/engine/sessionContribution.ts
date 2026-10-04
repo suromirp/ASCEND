@@ -80,7 +80,7 @@ export interface GoalDemand {
 // One row per (plannedSession, goal) the session's template genuinely
 // serves. A session contested by more than one goal (engine/goalArbiter.ts
 // consumes this) simply has more than one row sharing the same
-// plannedSessionId — e.g. this repo's own tpl_long_run, whose real D+/D-
+// plannedSessionId — e.g. this repo's own tpl_long_run, whose real D+/D−
 // and distance serve both the GR5 goal and an active marathon goal at once.
 export function resolveSessionContributions(
   plannedSessions: PlannedSession[],

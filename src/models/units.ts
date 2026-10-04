@@ -71,6 +71,6 @@ export function formatCapabilityValue(value: MeasuredValue): string {
     return m > 0 ? `${h} u ${m} min` : `${h} uur`;
   }
   if (value.unit === 'm_elevation_gain') return `${formatNumberNL(value.amount, 0)} m D+`;
-  if (value.unit === 'm_elevation_loss') return `${formatNumberNL(value.amount, 0)} m D-`;
+  if (value.unit === 'm_elevation_loss') return `${formatNumberNL(value.amount, 0)} m D−`;
   return formatMeasuredValue(value);
 }

@@ -14,7 +14,7 @@
 // comparable relationship for the classic week-over-week distance ratio.
 // This module mirrors that shape — single-session-vs-30-day-baseline, not
 // week-vs-week — for distance, and extends the same shape BY ANALOGY to
-// D+/D-/pack weight, where no equivalent study exists (flagged in the
+// D+/D−/pack weight, where no equivalent study exists (flagged in the
 // research brief as low-confidence extrapolation, not a validated finding
 // in its own right).
 

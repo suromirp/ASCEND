@@ -29,7 +29,7 @@ export const DIMENSION_META: Record<BaselineDimension, { label: string; unit: Un
   endurance_duration: { label: 'Uithoudingsvermogen', unit: 'min', question: 'Wat is de langste tijd dat je de afgelopen maand aan één stuk hebt doorgewandeld of -gelopen, zonder te stoppen? (in minuten)', needsDiscipline: true },
   mechanical_tolerance: { label: 'Belastbaarheid van je benen', unit: 'min', question: 'Hoe lang hielden je benen en gewrichten het vol bij een aanhoudende inspanning, zoals een lange afdaling, voordat het pijn ging doen of zwaar werd? (in minuten)', needsDiscipline: true },
   ascent_capacity: { label: 'Klimcapaciteit (D+)', unit: 'm_elevation_gain', question: 'Hoeveel hoogtemeters omhoog heb je de afgelopen maand in één keer geklommen?' },
-  descent_tolerance: { label: 'Afdalingscapaciteit (D-)', unit: 'm_elevation_loss', question: 'Hoeveel hoogtemeters omlaag heb je de afgelopen maand in één keer afgedaald?' },
+  descent_tolerance: { label: 'Afdalingscapaciteit (D−)', unit: 'm_elevation_loss', question: 'Hoeveel hoogtemeters omlaag heb je de afgelopen maand in één keer afgedaald?' },
   load_carriage: { label: 'Rugzakcapaciteit', unit: 'kg', question: 'Wat is het zwaarste gewicht dat je de afgelopen maand meerdere uren achter elkaar hebt gedragen? (in kg)' },
   multi_day_durability: { label: 'Meerdaagse belastbaarheid', unit: 'days', question: 'Wat is het meeste aantal dagen op rij dat je recent zwaar hebt getraind, zonder een rustdag ertussen?' },
   strength: { label: 'Kracht', unit: 'kg', question: 'Wat is het zwaarste gewicht dat je de afgelopen maand hebt getild?' },

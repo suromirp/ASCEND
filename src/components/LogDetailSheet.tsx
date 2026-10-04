@@ -1,3 +1,4 @@
+import { formatNumberNL } from '../utils/number';
 import type { SessionLog } from '../models/training';
 import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
@@ -28,19 +29,19 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
     });
   }
   if (garminType) rows.push({ label: 'Garmin stelde voor', value: garminType });
-  if (activity?.distanceKm !== undefined) rows.push({ label: 'Afstand', value: `${activity.distanceKm} km` });
+  if (activity?.distanceKm !== undefined) rows.push({ label: 'Afstand', value: `${formatNumberNL(activity.distanceKm, 2)} km` });
   if (activity?.elevationGainM !== undefined) {
-    rows.push({ label: 'Hoogtemeters D+', value: `${activity.elevationGainM} m${activity.estimatedElevation ? ' (geschat)' : ''}` });
+    rows.push({ label: 'Stijging', value: `${formatNumberNL(activity.elevationGainM, 0)} m D+${activity.estimatedElevation ? ' (geschat)' : ''}` });
   }
-  if (log.outdoorData?.elevationLossM !== undefined) rows.push({ label: 'Hoogtemeters D-', value: `${log.outdoorData.elevationLossM} m` });
-  if (log.outdoorData?.steps !== undefined) rows.push({ label: 'Verdiepingen/stappen', value: `${log.outdoorData.steps}` });
-  if (log.outdoorData?.machineVerticalM !== undefined) rows.push({ label: 'Hoogtemeters op toestel', value: `${log.outdoorData.machineVerticalM} m` });
+  if (log.outdoorData?.elevationLossM !== undefined) rows.push({ label: 'Daling', value: `${formatNumberNL(log.outdoorData.elevationLossM, 0)} m D−` });
+  if (log.outdoorData?.steps !== undefined) rows.push({ label: 'Verdiepingen (trap)', value: `${log.outdoorData.steps}` });
+  if (log.outdoorData?.machineVerticalM !== undefined) rows.push({ label: 'Hoogtemeters op toestel', value: `${formatNumberNL(log.outdoorData.machineVerticalM, 0)} m` });
   if (activity?.avgHeartRate !== undefined) rows.push({ label: 'Gem. hartslag', value: `${activity.avgHeartRate} bpm` });
   if (activity?.cadence !== undefined) rows.push({ label: 'Cadans', value: `${activity.cadence}` });
   if (activity?.power !== undefined) rows.push({ label: 'Vermogen', value: `${activity.power} W` });
-  if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${log.outdoorData.backpackWeightKg} kg` });
+  if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${formatNumberNL(log.outdoorData.backpackWeightKg, 1)} kg` });
   if (log.outdoorData?.terrain) rows.push({ label: 'Terrein', value: log.outdoorData.terrain });
-  if (log.rpe !== undefined) rows.push({ label: 'RPE', value: `${log.rpe}/10` });
+  if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });
 
   const { closing, requestClose } = useSheetClose(onClose);
   const { undoLog } = useAppData();

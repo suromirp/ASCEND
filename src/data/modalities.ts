@@ -28,7 +28,7 @@ export const ROLE_LABEL: Record<ModalityRole, string> = {
 export interface ModalityFields {
   distance?: boolean;
   inclinePercent?: boolean; // treadmill incline % -> Ascend estimates D+
-  elevation?: boolean; // manual/GPS D+ (and D- when outdoor)
+  elevation?: boolean; // manual/GPS D+ (and D− when outdoor)
   elevationLoss?: boolean;
   steps?: boolean; // StairMaster floors/steps
   cadence?: boolean;
@@ -215,7 +215,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
     garminProfile: 'Hike',
     durationHint: 'geplande duur',
     how: 'Bijv.: 10 min rustige warming-up, dan herhaald 5 min doelgericht omhoog + rustig gecontroleerd omlaag, afsluiten met 10 min rustig — binnen de geplande totale duur.',
-    why: 'Haalt betekenisvolle D+ en D- uit één klein lokaal heuveltje. Geen zware hardloop-heuvelherhalingen: het doel is bergconditie zonder Lower B te slopen, geen VO2max-training.',
+    why: 'Haalt betekenisvolle D+ en D− uit één klein lokaal heuveltje. Geen zware hardloop-heuvelherhalingen: het doel is bergconditie zonder Lower B te slopen, geen VO2max-training.',
     fields: { elevation: true, elevationLoss: true },
     sources: [],
   },
@@ -311,7 +311,7 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
     garminProfile: 'Hike',
     durationHint: 'geplande duur',
     how: 'Rustig tempo (RPE 3-4/10), route met zoveel mogelijk hoogteverschil. Bouw afstand/D+ t.o.v. vorige week op met max +10-15%.',
-    why: 'De meest GR5-specifieke vorm: echte D+/D-, tijd op de benen, wisselend terrein — bouwt tegelijk marathon-uithouding en bergcapaciteit op.',
+    why: 'De meest GR5-specifieke vorm: echte D+/D−, tijd op de benen, wisselend terrein — bouwt tegelijk marathon-uithouding en bergcapaciteit op.',
     fields: { distance: true, elevation: true, elevationLoss: true, terrain: true, backpackWeight: true },
     sources: [TRAILRUNNER_MOUNTAIN_TRAINING, RUNINFINITE_VERTICAL_GAIN],
   },
@@ -324,7 +324,7 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
     durationHint: 'geplande duur',
     how: 'Zelfde geplande duur en RPE 3-4/10 — alleen bij slecht weer of wanneer buiten niet haalbaar is.',
     why: 'Behoudt de duurprikkel wanneer buiten geen optie is, al mist het de D+/terrein-specificiteit die deze sessie juist waardevol maakt.',
-    whenNotIdeal: ['mist échte D+/D- en terreinwisseling — telt niet mee als bergspecifieke voorbereiding'],
+    whenNotIdeal: ['mist échte D+/D− en terreinwisseling — telt niet mee als bergspecifieke voorbereiding'],
     fields: { distance: true, inclinePercent: true, elevation: true },
     sources: [],
   },

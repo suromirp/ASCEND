@@ -15,7 +15,7 @@ export type MilestoneActivityType = 'cardio' | 'hiking' | 'strength';
 
 export type MilestoneRequirement =
   | { kind: 'duration'; activityType: MilestoneActivityType | MilestoneActivityType[]; minMinutes: number }
-  // minMeters (D+) and minLossMeters (D-) are independently optional (Fase
+  // minMeters (D+) and minLossMeters (D−) are independently optional (Fase
   // 5, item G1) — descent is its own axis with its own pace of progression
   // now, not a value silently mirrored from ascent. At least one of the two
   // is expected to be set; a definition with neither is meaningless but not
