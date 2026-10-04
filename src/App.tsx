@@ -11,7 +11,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
-import { AscendPage } from './pages/Ascend';
+import { AscendPage, GoalsPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsPage } from './pages/Settings';
 import { StretchesPage } from './pages/Stretches';
@@ -143,6 +143,7 @@ function AppShell() {
             <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
             <Route path="/week" element={<WeekPage />} />
             <Route path="/ascend" element={<AscendPage />} />
+            <Route path="/ascend/doelen" element={<GoalsPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/more" element={<SettingsPage />} />
             <Route path="/stretches" element={<StretchesPage />} />
