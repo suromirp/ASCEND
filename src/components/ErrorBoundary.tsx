@@ -62,7 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
         </p>
         <pre
           className="overflow-x-auto whitespace-pre-wrap rounded-xl border p-3 text-xs"
-          style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-danger)' }}
+          style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-danger-text)' }}
         >
           {error.message}
         </pre>

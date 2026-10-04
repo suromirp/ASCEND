@@ -60,7 +60,7 @@ import { resolveHorizonZone } from '../engine/planningHorizon';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { describeChanges } from '../engine/changeImpact';
-import { JUST_UPDATED } from '../utils/updateFlag';
+import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 
 type AdviceResponse = { response: 'accepted' | 'declined'; at: string };
@@ -970,9 +970,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // floor, the splash would unmount before its later stages ever fire,
       // so the animation would "sometimes" look broken depending on how
       // fast IndexedDB happened to respond.
-      // Right after an update (utils/updateFlag.ts) there's no splash to
-      // show, so no minimum duration either.
-      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, JUST_UPDATED ? 0 : 2600));
+      // Only the first open of the day shows the splash (utils/updateFlag.ts
+      // #SHOW_SPLASH); otherwise there is no minimum duration.
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, SHOW_SPLASH ? 2600 : 0));
       const stopBlockedNotice = onDatabaseBlocked(() =>
         setBootError('ASCEND is in een ander venster nog open met een oudere versie. Sluit dat venster om de update af te ronden.'),
       );

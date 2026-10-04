@@ -75,7 +75,7 @@ export function SessionActionSheet({
                 {guide && <InfoButton onClick={() => setShowGuide(true)} />}
               </div>
               <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
-              <p className="mt-1 text-xs" style={{ color: 'var(--color-success)' }}>
+              <p className="mt-1 text-xs" style={{ color: 'var(--color-success-text)' }}>
                 ✓ Voltooid • {completedLog.durationMinutes} min
               </p>
 

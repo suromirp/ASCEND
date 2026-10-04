@@ -19,6 +19,7 @@ export function AscendAnimatedLogo({ size = 200 }: { size?: number }) {
   const peakGlow = `ag-peak-${uid}`;
   const dotGlow = `ag-dot-${uid}`;
   const ringGlint = `ag-ring-${uid}`;
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   return (
     <svg viewBox="0 0 240 300" width={size} height={size * 1.25} style={{ overflow: 'visible' }}>
@@ -50,7 +51,8 @@ export function AscendAnimatedLogo({ size = 200 }: { size?: number }) {
           <stop offset="50%" stopColor="#fff8e2" stopOpacity="0.9" />
           <stop offset="52%" stopColor="#fff8e2" stopOpacity="0" />
           <stop offset="100%" stopColor="#fff8e2" stopOpacity="0" />
-          <animateTransform attributeName="gradientTransform" type="rotate" from="0 120 120" to="360 120 120" dur="11s" repeatCount="indefinite" />
+          {/* SMIL is not reached by the CSS reduced-motion rule. */}
+          {!reducedMotion && <animateTransform attributeName="gradientTransform" type="rotate" from="0 120 120" to="360 120 120" dur="11s" repeatCount="indefinite" />}
         </linearGradient>
       </defs>
 

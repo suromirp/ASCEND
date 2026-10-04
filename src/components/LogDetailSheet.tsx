@@ -104,7 +104,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
               stay forever). Always behind a confirmation. */}
           {confirmDelete ? (
             <div className="mt-6 flex flex-col gap-2">
-              <p className="text-xs" style={{ color: 'var(--color-danger)' }}>Deze training uit je geschiedenis verwijderen?</p>
+              <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je geschiedenis verwijderen?</p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmDelete(false)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>ANNULEREN</button>
                 <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-snow)' }}>VERWIJDEREN</button>

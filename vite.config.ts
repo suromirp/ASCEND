@@ -34,12 +34,12 @@ export default defineConfig({
       // 'prompt': a new build waits until the user taps BIJWERKEN
       // (components/UpdatePrompt.tsx) — no silent second reload + splash.
       registerType: 'prompt',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: BASE_PATH,
-        name: 'ASCEND — Discipline, Progressie, Avontuur',
+        name: 'ASCEND: train, bouw op, ga op pad',
         short_name: 'ASCEND',
-        description: 'Persoonlijk training- en avontuur-commandocentrum: kracht, cardio en bergcapaciteit die samen opbouwen naar een groter doel.',
+        lang: 'nl',
+        description: 'Je persoonlijke trainingsapp: kracht, conditie en bergcapaciteit die samen opbouwen naar je doel.',
         start_url: BASE_PATH,
         scope: BASE_PATH,
         display: 'standalone',
@@ -52,7 +52,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
       },
     }),
   ],

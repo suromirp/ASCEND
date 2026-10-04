@@ -30,7 +30,7 @@ export function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={`${fullWidth ? 'w-full' : 'flex-1'} rounded-xl py-3 text-sm font-semibold tracking-wide transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze-dark))', color: '#15130d' }}
+      style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}
     >
       {children}
     </button>
@@ -53,7 +53,7 @@ export function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       className={`flex-1 rounded-xl border py-2.5 text-xs font-medium tracking-wide transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
-      style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
     >
       {children}
     </button>
@@ -61,18 +61,19 @@ export function SecondaryButton({
 }
 
 export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' }) {
-  const map: Record<string, { symbol: string; color: string }> = {
-    completed: { symbol: '✓', color: 'var(--color-success)' },
-    today: { symbol: '●', color: 'var(--color-gold)' },
-    planned: { symbol: '○', color: 'var(--color-ink-dim)' },
-    moved: { symbol: '↷', color: 'var(--color-sky)' },
-    skipped: { symbol: '×', color: 'var(--color-danger)' },
-    missed: { symbol: '!', color: 'var(--color-warning)' },
+  const map: Record<string, { symbol: string; color: string; label: string }> = {
+    completed: { symbol: '✓', color: 'var(--color-success-text)', label: 'Gedaan' },
+    today: { symbol: '●', color: 'var(--color-gold)', label: 'Vandaag' },
+    planned: { symbol: '○', color: 'var(--color-ink-dim)', label: 'Gepland' },
+    moved: { symbol: '↷', color: 'var(--color-sky)', label: 'Verplaatst' },
+    skipped: { symbol: '×', color: 'var(--color-danger-text)', label: 'Overgeslagen' },
+    missed: { symbol: '!', color: 'var(--color-warning)', label: 'Gemist' },
   };
   const s = map[status];
   return (
     <span className="inline-flex h-5 w-5 items-center justify-center text-xs font-bold" style={{ color: s.color }}>
-      {s.symbol}
+      <span aria-hidden="true">{s.symbol}</span>
+      <span className="sr-only">{s.label}</span>
     </span>
   );
 }
@@ -89,7 +90,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
         onChange(!checked);
       }}
       className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-      style={{ background: checked ? 'var(--color-gold)' : 'var(--color-card-border)' }}
+      style={{ background: checked ? 'var(--color-gold)' : 'var(--color-card-border)', boxShadow: checked ? undefined : 'inset 0 0 0 1px var(--color-control-border)' }}
     >
       <span
         className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full transition-transform"
@@ -108,7 +109,7 @@ export function InfoButton({ onClick, label = 'Meer informatie' }: { onClick: ()
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border"
+      className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border before:absolute before:-inset-2.5 before:content-['']"
       style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-gold)' }}
     >
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
