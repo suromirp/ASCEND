@@ -291,8 +291,21 @@ export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
 
 export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
   {
+    key: 'long_run_outdoor',
+    label: 'Hardlopen, buiten',
+    role: 'PRIMARY',
+    environment: 'outdoor',
+    garminProfile: 'Run',
+    durationHint: 'geplande duur',
+    how: 'Rustig, gelijkmatig tempo (RPE 3-4/10), gesprekstempo blijft mogelijk. Stukjes wandelen ertussen mag (run/walk), vooral bergop. Bouw afstand op t.o.v. vorige week met max +10%.',
+    why: 'De klassieke marathon-lange-duurloop: bouwt aerobe uithouding en de mentale/fysieke gewenning aan lang op de been zijn.',
+    whenNotIdeal: ['geen route met hoogteverschil beschikbaar en D+ is het hoofddoel deze week'],
+    fields: { distance: true, elevation: true },
+    sources: [MARATHONHANDBOOK_TEN_PERCENT],
+  },
+  {
     key: 'long_hike_outdoor',
-    label: 'Lange hike met D+ — buiten',
+    label: 'Wandelen met D+, buiten',
     role: 'PRIMARY',
     environment: 'outdoor',
     garminProfile: 'Hike',
@@ -303,21 +316,8 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
     sources: [TRAILRUNNER_MOUNTAIN_TRAINING, RUNINFINITE_VERTICAL_GAIN],
   },
   {
-    key: 'long_run_outdoor',
-    label: 'Lange duurloop — buiten',
-    role: 'PRIMARY',
-    environment: 'outdoor',
-    garminProfile: 'Run',
-    durationHint: 'geplande duur',
-    how: 'Rustig, gelijkmatig tempo (RPE 3-4/10), gesprekstempo blijft mogelijk. Bouw afstand op t.o.v. vorige week met max +10%.',
-    why: 'De klassieke marathon-lange-duurloop: bouwt aerobe uithouding en de mentale/fysieke gewenning aan lang op de been zijn.',
-    whenNotIdeal: ['geen route met hoogteverschil beschikbaar en D+ is het hoofddoel deze week'],
-    fields: { distance: true, elevation: true },
-    sources: [MARATHONHANDBOOK_TEN_PERCENT],
-  },
-  {
     key: 'long_run_treadmill',
-    label: 'Lange duurloop — treadmill',
+    label: 'Hardlopen, loopband',
     role: 'FALLBACK',
     environment: 'treadmill',
     garminProfile: 'Treadmill',
@@ -423,6 +423,18 @@ export function findModalityByKey(key: string | undefined): ModalityDefinition |
     const found = list.find((m) => m.key === key);
     if (found) return found;
   }
+  return undefined;
+}
+
+// The sport a chosen way of training actually is, when its name says so:
+// the long run done as a run counts as running, done as a hike as hiking
+// (production feedback: a zone-2 run/walk was stored as a hike because
+// the session's template is the outdoor kind).
+export function modalitySport(key: string | undefined): 'running' | 'hiking' | 'cycling' | undefined {
+  if (!key) return undefined;
+  if (isCyclingModality(key)) return 'cycling';
+  if (/(^|_)run(_|$)/.test(key)) return 'running';
+  if (/hike|walk/.test(key)) return 'hiking';
   return undefined;
 }
 
