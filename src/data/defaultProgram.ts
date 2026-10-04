@@ -324,6 +324,10 @@ function buildProgram(): Program {
 function buildPlannedSessions(program: Program, templates: SessionTemplate[]): PlannedSession[] {
   const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
   const sessions: PlannedSession[] = [];
+  // Week 1 starts this Monday, but nothing is planned on the days before the
+  // app was installed (production bug: a fresh install opened on Saturday
+  // showed five "missed" sessions and a coach asking to catch them up).
+  const firstDay = todayISO();
 
   for (let week = 0; week < totalWeeks; week++) {
     const weekStart = addDays(program.startDate, week * 7);
@@ -331,6 +335,7 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
       .filter((t) => t.defaultDayOfWeek)
       .forEach((t, order) => {
         const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
+        if (date < firstDay) return;
         sessions.push({
           id: makeId('planned'),
           templateId: t.id,

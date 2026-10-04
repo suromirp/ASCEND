@@ -23,12 +23,28 @@ function planned(id: string, scheduledDate: string): PlannedSession {
 }
 
 describe('computeReadiness', () => {
-  it('returns all zeros/neutral for no data at all', () => {
+  it('with no data, rest is fine, nothing is due and the overall leaves consistency out', () => {
     const result = computeReadiness([], [], 28, ASOF);
-    expect(result.recovery).toBe(0);
+    // Every day without training is a rest day.
+    expect(result.recovery).toBe(100);
     expect(result.consistency).toBe(0);
+    expect(result.consistencyBasis).toBe(0);
+    expect(result.overall).toBe(100);
     // No subjective data yet is never read as a bad signal.
     expect(result.subjectiveSignal).toBe(100);
+  });
+
+  it('an unlogged rest day is never a miss and counts as recovery (audit 2026-10)', () => {
+    const rest = { id: 'r', templateId: 'tpl_recovery', scheduledDate: '2026-09-01', weekStartDate: '2026-08-31', status: 'planned' as const, order: 0 };
+    const result = computeReadiness([], [rest], 28, ASOF, undefined, undefined, { isRest: (p) => p.templateId === 'tpl_recovery' });
+    expect(result.consistencyBasis).toBe(0);
+  });
+
+  it('a session dropped after it was missed still counts as missed', () => {
+    const s = { id: 'm', templateId: 'tpl_x', scheduledDate: '2026-09-01', weekStartDate: '2026-08-31', status: 'skipped' as const, order: 0 };
+    const result = computeReadiness([], [s], 28, ASOF, undefined, undefined, { droppedAfterMissIds: new Set(['m']) });
+    expect(result.consistencyBasis).toBe(1);
+    expect(result.consistency).toBe(0);
   });
 
   it('reaches 100% recovery at 1 recovery session/week over a 28-day window', () => {
