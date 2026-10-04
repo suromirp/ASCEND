@@ -10,7 +10,9 @@ import { targetPackWeightKg } from '../engine/demand';
 import { computeGoalProgress } from '../engine/progression';
 import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
-import { daysBetween, todayISO } from '../utils/dates';
+import { daysBetween, formatDateNL, todayISO } from '../utils/dates';
+import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
@@ -78,10 +80,10 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 }
 
 export function AscendPage() {
-  const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings, templateById, planChangeLog } = useAppData();
+  const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings, templateById, planChangeLog } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showPackingList, setShowPackingList] = useState(false);
-  const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
+  const [showLadder, setShowLadder] = useState(false);
   // Archiving (below) sets status:'archived' in place rather than removing
   // the row, so every "find the live goal" lookup here must exclude it —
   // otherwise the dedicated GR5/Marathon cards would keep showing an
@@ -125,7 +127,6 @@ export function AscendPage() {
   // re-link to GR5's own id-pinned goalMilestones. Surfaced here so a
   // mis-click (or an old habit of "archiving" instead of pausing) is
   // recoverable.
-  const archivedGoals = trainingGoals.filter((g) => g.status === 'archived');
   const milestonesForGoal = useMemo(() => goalMilestones.filter((m) => m.goalId === goal?.id), [goalMilestones, goal?.id]);
   const progress = useMemo(
     () => (goal ? computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs) : null),
@@ -134,104 +135,142 @@ export function AscendPage() {
   const selectedMilestone = progress?.milestones.find((m) => m.definition.id === selectedMilestoneId);
   const selectedDetail = selectedMilestone ? getGR5MilestoneDetail(selectedMilestone.definition.order) : undefined;
 
+  const navigate = useNavigate();
+  const weeksLeft = goal?.targetDate ? Math.max(0, Math.ceil(daysBetween(todayISO(), goal.targetDate) / 7)) : undefined;
+  const cleared = progress ? progress.milestones.filter((m) => m.status === 'completed').length : 0;
+  const marathonDate = marathonGoal?.targetDate ?? settings.marathonTargetDate;
+  const otherGoals = [
+    ...(marathonGoal && marathonGoal.status === 'active' ? [{ id: marathonGoal.id, name: marathonGoal.name, date: marathonDate }] : []),
+    ...customGoals.filter((g) => g.status === 'active').map((g) => ({ id: g.id, name: g.name, date: g.targetDate })),
+  ];
+
+  // Ascend is the overview: where you stand toward your goal. Setting goals
+  // up lives on its own page (/doelen), so data and setup no longer mix
+  // (production feedback: "te slordig", "raar dat dit bij elkaar staat").
   return (
-    <div className="animate-page-in flex flex-col gap-6 px-4 pb-10 pt-6">
-      <div>
-        <Eyebrow>ASCEND READINESS</Eyebrow>
-        <p className="mt-1 font-display text-4xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</p>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ben je er nu klaar voor — herstel, consistentie, hoe recente sessies aanvoelden.</p>
-      </div>
-
-      <Card className="flex flex-col gap-4">
-        <MetricBar label="HERSTEL" value={readiness.recovery} accent="alpine" />
-        <MetricBar label="CONSISTENTIE" value={readiness.consistency} />
-        <MetricBar label="SESSIE-RESPONS" value={readiness.subjectiveSignal} />
-      </Card>
-
-      {readinessTrend.some((p) => p.value > 0) && (
-        <Card>
-          <Eyebrow>READINESS TREND — 8 WEKEN</Eyebrow>
-          <div className="mt-3">
-            <TrendLineChart points={readinessTrend} formatValue={(v) => `${v}%`} />
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
+      {goal ? (
+        <div>
+          <Eyebrow>HOOFDDOEL</Eyebrow>
+          <p className="mt-1 font-display text-3xl" style={{ color: 'var(--color-ink)' }}>{goal.name}</p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+            {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
+            {weeksLeft !== undefined && <span style={{ color: 'var(--color-gold)' }}>nog {weeksLeft} {weeksLeft === 1 ? 'week' : 'weken'}</span>}
+            {progress && <span>kamp {cleared} van {progress.milestones.length}</span>}
           </div>
+          <div className="mt-2"><RouteLine goal={goal} /></div>
+        </div>
+      ) : (
+        <Card className="flex flex-col gap-3">
+          <Eyebrow>HOOFDDOEL</Eyebrow>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je hebt nog geen hoofddoel. Stel er een in, dan bouwt ASCEND je training ernaartoe op.</p>
+          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOEL INSTELLEN</PrimaryButton>
         </Card>
       )}
 
-      <div>
-        <Eyebrow>CAPACITEIT</Eyebrow>
-        <p className="mt-1 font-display text-4xl" style={{ color: 'var(--color-gold)' }}>{capacity.overall}%</p>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat je de afgelopen weken aantoonbaar hebt opgebouwd.</p>
-      </div>
+      {progress && goal && progress.currentMilestone && !showLadder && (
+        <Card className="flex flex-col gap-2">
+          <Eyebrow>VOLGEND KAMP</Eyebrow>
+          <button onClick={() => setSelectedMilestoneId(progress.currentMilestone!.definition.id)} className="text-left">
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{progress.currentMilestone.definition.title}</p>
+            {getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle && (
+              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-gold)' }}>{getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle}</p>
+            )}
+          </button>
+          <div className="mt-1 flex gap-1">
+            {progress.milestones.map((m) => (
+              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-gold)' : m.status === 'current' ? 'var(--color-bronze-dark)' : 'var(--color-card-border)' }} />
+            ))}
+          </div>
+          <button onClick={() => setShowLadder(true)} className="min-h-11 text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Alle {progress.milestones.length} kampen bekijken</button>
+        </Card>
+      )}
+
+      {progress && goal && showLadder && (
+        <>
+          <AscentLadder
+            progress={progress}
+            description={GR5_TRACK_DESCRIPTION}
+            onMarkCleared={(milestoneId) => clearMilestoneManually(goal.id, milestoneId)}
+            onSelectMilestone={setSelectedMilestoneId}
+          />
+          <button onClick={() => setShowLadder(false)} className="-mt-3 min-h-11 text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Inklappen</button>
+        </>
+      )}
 
       <Card className="flex flex-col gap-4">
+        <div className="flex items-baseline justify-between">
+          <Eyebrow>KLAAR VOOR MEER?</Eyebrow>
+          <span className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</span>
+        </div>
+        <MetricBar label="HERSTEL" value={readiness.recovery} accent="alpine" />
+        {readiness.consistencyBasis > 0 && <MetricBar label="CONSISTENTIE" value={readiness.consistency} />}
+        <MetricBar label="SESSIE-RESPONS" value={readiness.subjectiveSignal} />
+        {readinessTrend.length > 1 && (
+          <details>
+            <summary className="cursor-pointer text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verloop van de laatste weken</summary>
+            <div className="mt-3"><TrendLineChart points={readinessTrend} formatValue={(v) => `${v}%`} /></div>
+          </details>
+        )}
+      </Card>
+
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-baseline justify-between">
+          <Eyebrow>WAT JE AL AANKUNT</Eyebrow>
+          <span className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>{capacity.overall}%</span>
+        </div>
+        <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat je de afgelopen vier weken aantoonbaar hebt opgebouwd.</p>
         <MetricBar label="KRACHT" value={capacity.strength} />
         <MetricBar label="CARDIO" value={capacity.cardio} />
         <MetricBar label="KLIMMEN / D+" value={capacity.climbing} accent="alpine" />
         <MetricBar label="UITHOUDING" value={capacity.endurance} />
-        <MetricBar label="RUGZAKCAPACITEIT" value={capacity.packCapability} />
+        <MetricBar label="RUGZAK" value={capacity.packCapability} />
       </Card>
+
+      {otherGoals.length > 0 && (
+        <Card className="flex flex-col gap-2">
+          <Eyebrow>OOK ONDERWEG NAAR</Eyebrow>
+          {otherGoals.map((g) => (
+            <div key={g.id} className="flex items-baseline justify-between text-sm">
+              <span style={{ color: 'var(--color-ink)' }}>{g.name}</span>
+              <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{g.date ? formatDateNL(g.date) : 'geen datum'}</span>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOELEN BEHEREN</PrimaryButton>
 
       <StrengthProgressionCard logs={sessionLogs} />
 
-      <StrengthProgramCard />
-
-      {goal && (
-        <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} onArchive={() => archiveGoal(goal.id)} />
-      )}
-
-      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => archiveGoal(marathonGoal.id) : undefined} />
-
-      <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
-
-      <ArchivedGoalsCard goals={archivedGoals} onUnarchive={unarchiveGoal} />
-
-      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL</SecondaryButton>
-      {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
-
-      <GoalFocusCard />
-
-      {progress && goal && (
-        <AscentLadder
-          progress={progress}
-          description={GR5_TRACK_DESCRIPTION}
-          onMarkCleared={(milestoneId) => clearMilestoneManually(goal.id, milestoneId)}
-          onSelectMilestone={setSelectedMilestoneId}
-        />
-      )}
-
       <Card className="flex flex-col gap-3">
-        <Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow>
-        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Hardlopen blijft in het schema — het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
-          De verhouding verschuift wel steeds meer richting echte hiking-specificiteit naarmate de GR5 dichterbij komt.
-        </p>
-        <ul className="flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
-          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>4× kracht / hypertrofie</li>
-          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1–2× hardlopen — aerobe basis, later snelheid/drempel</li>
-          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1× bergspecifiek — incline / D+ / echte hike</li>
-          <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>regelmatig: lange hike, afdaling, rugzak, back-to-back</li>
-        </ul>
-        <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
-            <a
-              key={s.label}
-              href={s.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs underline underline-offset-2"
-              style={{ color: 'var(--color-sky)' }}
-            >
-              {s.label} ↗
-            </a>
-          ))}
-        </div>
+        <details>
+          <summary className="cursor-pointer"><Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow></summary>
+          <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+            Hardlopen blijft in het schema: het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
+            De verhouding verschuift wel steeds meer richting echt bergwandelen naarmate de GR5 dichterbij komt.
+          </p>
+          <ul className="mt-2 flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
+            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>3 tot 4 keer kracht</li>
+            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1 tot 2 keer hardlopen: aerobe basis, later snelheid en drempel</li>
+            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1 keer bergspecifiek: helling, D+ of een echte hike</li>
+            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>regelmatig: lange hike, afdalen, rugzak, twee dagen achter elkaar</li>
+          </ul>
+          <div className="mt-3 flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+            {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
+              <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+                {s.label} ↗
+              </a>
+            ))}
+          </div>
+        </details>
       </Card>
 
       <Card className="flex flex-col gap-3">
         <button onClick={() => setShowPackingList((s) => !s)} className="flex items-center justify-between gap-3 text-left">
           <div>
-            <Eyebrow>LATER: ALPINE / GR5-MATERIAAL</Eyebrow>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog niet nodig voor Maand 1 — de volledige uitrusting voor een echte GR5-etappe.</p>
+            <Eyebrow>UITRUSTING VOOR DE GR5</Eyebrow>
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Wat je voor een echte etappe nodig hebt. Nu nog niet nodig.</p>
           </div>
           <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>{showPackingList ? '−' : '+'}</span>
         </button>
@@ -249,14 +288,7 @@ export function AscendPage() {
             <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{GR5_PACKING_NOTE}</p>
             <div className="flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
               {GR5_PACKING_SOURCES.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs underline underline-offset-2"
-                  style={{ color: 'var(--color-sky)' }}
-                >
+                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
                   {s.label} ↗
                 </a>
               ))}
@@ -272,6 +304,45 @@ export function AscendPage() {
           onClose={() => setSelectedMilestoneId(null)}
         />
       )}
+    </div>
+  );
+}
+
+// Doelen beheren: everything you set up (main goal, marathon, other goals,
+// the strength block, how goals weigh against each other). Reached from
+// the Ascend overview.
+export function GoalsPage() {
+  const { trainingGoals, goalMilestones, sessionLogs, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
+  const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
+  const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
+  const customGoals = trainingGoals.filter((g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id));
+  const archivedGoals = trainingGoals.filter((g) => g.status === 'archived');
+
+  return (
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-4">
+      <div className="flex items-center gap-1">
+        <BackButton fallback="/ascend" />
+        <div>
+          <Eyebrow>DOELEN</Eyebrow>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je naartoe traint, en hoe zwaar elk doel meeweegt.</p>
+        </div>
+      </div>
+
+      {goal && <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} onArchive={() => archiveGoal(goal.id)} />}
+
+      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => archiveGoal(marathonGoal.id) : undefined} />
+
+      <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
+
+      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL</SecondaryButton>
+      {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
+
+      <GoalFocusCard />
+
+      <StrengthProgramCard />
+
+      <ArchivedGoalsCard goals={archivedGoals} onUnarchive={unarchiveGoal} />
     </div>
   );
 }
