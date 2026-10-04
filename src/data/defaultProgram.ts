@@ -423,17 +423,17 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
 function buildObjective(): Objective {
   const objectiveId = 'obj_gr5';
   const defs: Array<[string, Objective['milestones'][number]['requirement']]> = [
-    ['40 min makkelijk tempo — hardlopen of stevig wandelen', { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 }],
+    ['40 min rustig: hardlopen of stevig wandelen', { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 }],
     ['60 min bergconditie volhouden', { kind: 'duration', activityType: 'hiking', minMinutes: 60 }],
     ['15 km wandeling', { kind: 'distance', minKm: 15 }],
     ['Twee dagen achter elkaar (licht)', { kind: 'consecutiveDays', days: 2 }],
     ['300 D+', { kind: 'elevation', minMeters: 300 }],
-    ['Lichte rugzaksessie — 8 kg / 10 km', { kind: 'backpack', minWeightKg: 8, minKm: 10 }],
+    ['Lichte rugzaktocht: 8 kg, 10 km', { kind: 'backpack', minWeightKg: 8, minKm: 10 }],
     ['500 D+ / 300 D−', { kind: 'elevation', minMeters: 500, minLossMeters: 300 }],
     ['750 D+ / 500 D−', { kind: 'elevation', minMeters: 750, minLossMeters: 500 }],
     ['1000 D+ / 750 D−', { kind: 'elevation', minMeters: 1000, minLossMeters: 750 }],
     ['15 km + 1000 D+', { kind: 'distanceAndElevation', minKm: 15, minMeters: 1000 }],
-    ['Volledige rugzaksessie — 12 kg / 15 km', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
+    ['Volle rugzaktocht: 12 kg, 15 km', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
     ['Weekend bergsimulatie', { kind: 'manual' }],
     ['GR5 KLAAR', { kind: 'manual' }],
   ];
