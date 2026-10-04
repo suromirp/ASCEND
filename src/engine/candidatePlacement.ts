@@ -620,7 +620,7 @@ export function weekCandidatesToAlternatives(
       return {
         action: 'add',
         newSessionDraft: template ? { templateId: template.id, scheduledDate: p.date, weekStartDate } : undefined,
-        reason: 'Alternatieve plaatsing uit de zoekstrategie — niet gekozen als beste optie.',
+        reason: 'Alternatieve plaatsing uit de zoekstrategie, niet gekozen als beste optie.',
       };
     });
     const consequences = candidate.worstFinding

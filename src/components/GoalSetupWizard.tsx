@@ -597,7 +597,7 @@ function PreviewStep({
               const meta = REQUIREMENT_KIND_META[r.kind as EditableRequirementKind];
               return (
                 <li key={r.id}>
-                  {meta?.label ?? r.kind}: {r.target ? formatCapabilityValue(r.target) : '—'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
+                  {meta?.label ?? r.kind}: {r.target ? formatCapabilityValue(r.target) : '–'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
                 </li>
               );
             })}

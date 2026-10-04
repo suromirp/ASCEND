@@ -44,7 +44,7 @@ export function computeCapabilityGap(demand: CapabilityDemand, estimate: Capabil
       status: 'unknown',
       confidence: estimate.confidence,
       criticality: demand.criticality,
-      explanation: 'Hier is nog niets over jou bekend — geen tekortkoming, gewoon nog niet gemeten.',
+      explanation: 'Hier is nog niets over jou bekend, geen tekortkoming, gewoon nog niet gemeten.',
     };
   }
 
@@ -63,7 +63,7 @@ export function computeCapabilityGap(demand: CapabilityDemand, estimate: Capabil
       status: 'unknown',
       confidence: estimate.confidence,
       criticality: demand.criticality,
-      explanation: 'Wat dit doel vraagt en wat er over jou bekend is, zijn niet rechtstreeks te vergelijken — geen tekortkoming, gewoon niet in dezelfde eenheid.',
+      explanation: 'Wat dit doel vraagt en wat er over jou bekend is, zijn niet rechtstreeks te vergelijken, geen tekortkoming, gewoon niet in dezelfde eenheid.',
     };
   }
 

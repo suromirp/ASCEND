@@ -342,12 +342,12 @@ function PlanView({ plan }: { plan: WorkoutPlan }) {
               >
                 <p className="text-[10px] tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
                 <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
-                <p className="mt-0.5 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/ — | \(/)[0]}</p>
+                <p className="mt-0.5 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
               </div>
             ))}
           </div>
-          {plan.weeks.find((w) => w.current)?.note.includes('—') && (
-            <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Deze week: {plan.weeks.find((w) => w.current)!.note.split(' — ').slice(1).join(' — ')}</p>
+          {plan.weeks.find((w) => w.current)?.note.includes('–') && (
+            <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Deze week: {plan.weeks.find((w) => w.current)!.note.split(', ').slice(1).join(', ')}</p>
           )}
         </>
       )}

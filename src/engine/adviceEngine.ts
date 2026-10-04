@@ -244,7 +244,7 @@ function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
     trigger: 'strength_irregular',
     ruleId: 'STRENGTH-REGULARITY',
     title: `Kracht: ${done} van ${window.length} sessies afgevinkt`,
-    effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de Ascend-pagina.',
+    effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de ASCEND-pagina.',
     why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. ASCEND kijkt bij kracht alleen naar regelmaat. Gewichten en progressie blijven in MacroFactor.',
     priority: 2,
   }];

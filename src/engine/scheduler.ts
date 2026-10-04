@@ -436,7 +436,7 @@ export function proposeNoTimeToday(
     } else {
       proposals.push({
         changes: [{ sessionId: session.id, templateId: session.templateId, templateName: templateName(templateById, session.templateId), fromDate: todayDate, toDate: todayDate }],
-        reason: 'Geen vrije dag meer deze week — sessie wordt overgeslagen.',
+        reason: 'Geen vrije dag meer deze week, sessie wordt overgeslagen.',
         resolved: false,
       });
     }

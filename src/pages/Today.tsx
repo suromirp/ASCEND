@@ -203,7 +203,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
             De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
-            rustiger te gaan — minder herhalingen, lagere helling, of een kortere sessie.
+            rustiger te gaan, minder herhalingen, lagere helling, of een kortere sessie.
           </p>
         </Card>
       )}
@@ -277,12 +277,12 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         </Card>
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistencyBasis === 0 ? '—' : `${readiness.consistency}%`}</p>
+          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistencyBasis === 0 ? '–' : `${readiness.consistency}%`}</p>
         </Card>
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK IN FASE</p>
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>
-            {position ? `${position.weekInPhase}/${position.phase.weekCount}` : '—'}
+            {position ? `${position.weekInPhase}/${position.phase.weekCount}` : '–'}
           </p>
         </Card>
         <Card className="text-center">

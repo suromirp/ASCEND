@@ -81,7 +81,7 @@ export function StrengthProgramCard() {
       {!strategy ? (
         <>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            Nog geen krachtblok ingesteld. ASCEND bepaalt frequentie, split en planning — MacroFactor Workouts blijft
+            Nog geen krachtblok ingesteld. ASCEND bepaalt frequentie, split en planning, MacroFactor Workouts blijft
             de oefeningen zelf bepalen.
           </p>
           <PrimaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft() })}>
@@ -99,7 +99,7 @@ export function StrengthProgramCard() {
           {strategy.plannedEndDate && (
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               {daysLeft !== undefined && daysLeft >= 0
-                ? `Loopt af ${formatDateNL(strategy.plannedEndDate)} — nog ${daysLeft} dagen`
+                ? `Loopt af ${formatDateNL(strategy.plannedEndDate)}, nog ${daysLeft} dagen`
                 : `Gepland tot ${formatDateNL(strategy.plannedEndDate)}`}
             </p>
           )}

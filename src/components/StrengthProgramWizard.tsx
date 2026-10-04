@@ -217,7 +217,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
   return (
     <>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Dit begint automatisch vanaf {formatDateNL(forecastStart)} — je planning voor deze en volgende week blijft
+        Dit begint automatisch vanaf {formatDateNL(forecastStart)} , je planning voor deze en volgende week blijft
         intact. Dat raden we ook aan, tenzij je hier nu al mee wil trainen.
       </p>
       {blocked && (
@@ -399,7 +399,7 @@ function FocusStep({
           style={inputStyle}
         />
         <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
-          Zonder bloklengte blijft dit blok open — geen automatische reviewherinnering op einddatum.
+          Zonder bloklengte blijft dit blok open, geen automatische reviewherinnering op einddatum.
         </p>
       </div>
 

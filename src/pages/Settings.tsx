@@ -356,7 +356,7 @@ export function SettingsPage() {
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               {goalDate
                 ? `De fases zijn teruggerekend vanaf je hoofddoel op ${formatDateNL(goalDate)}. De laatste twee weken bouw je af, zodat je fris aan de start staat.`
-                : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij Ascend, dan rekent ASCEND de fases terug tot die dag.'}
+                : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij ASCEND, dan rekent ASCEND de fases terug tot die dag.'}
             </p>
             <div className="flex flex-col gap-2">
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
@@ -604,7 +604,7 @@ export function SettingsPage() {
       )}
 
       <p className="px-1 text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        ASCEND · Train. Progress. Explore. Ascend.
+        ASCEND · Train. Progress. Explore. ASCEND.
       </p>
     </div>
   );

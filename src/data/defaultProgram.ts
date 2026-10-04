@@ -45,7 +45,7 @@ function buildTemplates(): SessionTemplate[] {
       // (borst, rug, schouders) en horen ~48 uur uit elkaar te liggen, net
       // als twee zware beendagen. Di + vr = 3 dagen ertussen.
       defaultDayOfWeek: 2,
-      notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor — MacroFactor bepaalt de gymprogressie.',
+      notes: 'Strength + Hypertrophy. Sets & gewicht bijgehouden in MacroFactor, MacroFactor bepaalt de gymprogressie.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_UPPER,
       baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'heavy', cardioLoad: 'none' },
@@ -74,7 +74,7 @@ function buildTemplates(): SessionTemplate[] {
       // sessie traint kracht en excentrische controle als aanvulling
       // daarop, niet als vervanging.
       notes:
-        'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining — deze sessie is een aanvulling daarop (kracht, excentrische controle), geen vervanging.',
+        'Belangrijkste lower strength-training van de week. Sets & gewicht bijgehouden in MacroFactor. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining, deze sessie is een aanvulling daarop (kracht, excentrische controle), geen vervanging.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'none' },
@@ -127,7 +127,7 @@ function buildTemplates(): SessionTemplate[] {
       // herhalingen in de gym — deze sessie is een aanvulling, geen
       // vervanging.
       notes:
-        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Benen A. Hiking-specifiek: step-ups, step-downs, single-leg, kuiten/soleus. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining — deze sessie is een aanvulling daarop, geen vervanging.',
+        'MacroFactor bepaalt de daadwerkelijke belasting, niet per definitie lichter dan Benen A. Hiking-specifiek: step-ups, step-downs, single-leg, kuiten/soleus. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining, deze sessie is een aanvulling daarop, geen vervanging.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'none' },
@@ -151,7 +151,7 @@ function buildTemplates(): SessionTemplate[] {
       defaultDayOfWeek: 4,
       cardioTarget: { zone: 'RPE 3-4', targetDurationMin: 35 },
       notes:
-        "RPE 3-4/10 — rustig / conversational pace, volledige zinnen kunnen praten. Geen PR's. Garmin + borstband gebruiken. Doel: aerobe basis, efficiënter leren hardlopen, conditie verbeteren zonder woensdag te slopen.",
+        "RPE 3-4/10, rustig / conversational pace, volledige zinnen kunnen praten. Geen PR's. Garmin + borstband gebruiken. Doel: aerobe basis, efficiënter leren hardlopen, conditie verbeteren zonder woensdag te slopen.",
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'moderate' },
@@ -159,21 +159,21 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 1, targetMinutes: 30, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 35, note: 'Opbouw' },
         { weekInPhase: 3, targetMinutes: 40, note: 'Zwaarste week' },
-        { weekInPhase: 4, targetMinutes: 27, note: 'Deload (25-30 min)' },
+        { weekInPhase: 4, targetMinutes: 27, note: 'Rustweek (25-30 min)' },
       ],
     },
     {
       id: 'tpl_bergconditie',
       name: 'Bergconditie',
       type: 'hiking',
-      focus: 'Incline of hike — D+ opbouw',
+      focus: 'Incline of hike, D+ opbouw',
       durationVariants: { full: 50, short: 30 },
       // Geen defaultDayOfWeek meer — opgevolgd door tpl_hill_intervals
       // (scherpere, intervalmatige versie op zaterdag). Template blijft
       // gedefinieerd zodat oudere SessionLogs nog gewoon oplossen.
       outdoorTarget: { targetElevationM: 400 },
       notes:
-        'Optie A — incline treadmill: helling 8-15%, snelheid ±4-5,5 km/u, RPE 4-5/10, niet aan de handgrepen hangen. Optie B — buiten hiken: liefst hoogteverschil, rustig tempo, D+ en tijd op de benen bijhouden. Voorlopig voornamelijk rustige aerobe training. Garmin + borstband gebruiken. Zijn de benen erg vermoeid? Maak deze sessie lichter.',
+        'Optie A, incline treadmill: helling 8-15%, snelheid ±4-5,5 km/u, RPE 4-5/10, niet aan de handgrepen hangen. Optie B, buiten hiken: liefst hoogteverschil, rustig tempo, D+ en tijd op de benen bijhouden. Voorlopig voornamelijk rustige aerobe training. Garmin + borstband gebruiken. Zijn de benen erg vermoeid? Maak deze sessie lichter.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'light', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'moderate' },
@@ -181,19 +181,19 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 1, targetMinutes: 45, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 50, note: 'Opbouw' },
         { weekInPhase: 3, targetMinutes: 60, note: 'Zwaarste week' },
-        { weekInPhase: 4, targetMinutes: 40, note: 'Deload (35-45 min)' },
+        { weekInPhase: 4, targetMinutes: 40, note: 'Rustweek (35-45 min)' },
       ],
     },
     {
       id: 'tpl_hill_intervals',
       name: 'Heuvelintervallen',
       type: 'cardio',
-      focus: 'Snelheid × D+ — bergop intervaltraining',
+      focus: 'Snelheid × D+, bergop intervaltraining',
       durationVariants: { full: 45, short: 30 },
       defaultDayOfWeek: 6,
       cardioTarget: { zone: 'RPE 8-9 op de herhalingen, volledig herstel ertussen' },
       notes:
-        'Herhalingen van 30-90 sec bergop (buiten) of op een treadmill op 4-5% helling, op hoge inspanning (RPE 8-9), met ruime rust/rustig afdalen ertussen. Bouwt tegelijk loopsnelheid/-kracht én D+ voor de GR5 op — dit is de kwaliteitssessie van de week, geen rustige duurloop. Minder impact op de knieën/enkels dan vlakke sprints, dankzij de helling.',
+        'Herhalingen van 30-90 sec bergop (buiten) of op een treadmill op 4-5% helling, op hoge inspanning (RPE 8-9), met ruime rust/rustig afdalen ertussen. Bouwt tegelijk loopsnelheid/-kracht én D+ voor de GR5 op, dit is de kwaliteitssessie van de week, geen rustige duurloop. Minder impact op de knieën/enkels dan vlakke sprints, dankzij de helling.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       // Bergop = grotendeels concentrisch, rustig afdalen ertussen houdt de
@@ -209,10 +209,10 @@ function buildTemplates(): SessionTemplate[] {
         { withTemplateId: 'tpl_mountain_hike', verdict: 'prefer' },
       ],
       weeklyProgression: [
-        { weekInPhase: 1, targetMinutes: 35, note: 'Wennen — 4-5 herhalingen' },
-        { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw — 6 herhalingen' },
-        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week — 8 herhalingen' },
-        { weekInPhase: 4, targetMinutes: 30, note: 'Deload — 4 herhalingen, rustig' },
+        { weekInPhase: 1, targetMinutes: 35, note: 'Wennen, 4-5 herhalingen' },
+        { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw, 6 herhalingen' },
+        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week, 8 herhalingen' },
+        { weekInPhase: 4, targetMinutes: 30, note: 'Rustweek, 4 herhalingen, rustig' },
       ],
     },
     {
@@ -222,12 +222,12 @@ function buildTemplates(): SessionTemplate[] {
       // A run toward the marathon, with D+: it counts as running (sports
       // on/off, History totals), its type keeps the outdoor/D+ logging.
       sport: 'running',
-      focus: 'Uithouding × D+ — richting marathon en GR5',
+      focus: 'Uithouding × D+, richting marathon en GR5',
       durationVariants: { full: 75, short: 45 },
       defaultDayOfWeek: 7,
       outdoorTarget: { targetElevationM: 300 },
       notes:
-        'De langste sessie van de week, op vermoeide benen na zaterdag — precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), afstand en hoogtemeters bouw je zelf op t.o.v. vorige week (richtlijn: max +10-15%). Buiten met D+ heeft de voorkeur boven een vlakke route — dit is de sessie die het meest direct naar de GR5 vertaalt.',
+        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), afstand en hoogtemeters bouw je zelf op t.o.v. vorige week (richtlijn: max +10-15%). Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar de GR5 vertaalt.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       // Langste sessie, op al vermoeide benen, met echte D+/D− — cumulatief
@@ -235,10 +235,10 @@ function buildTemplates(): SessionTemplate[] {
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'heavy' },
       pairingOverride: [{ withTemplateId: 'tpl_hill_intervals', verdict: 'prefer' }],
       weeklyProgression: [
-        { weekInPhase: 1, targetMinutes: 50, note: 'Wennen — rustig tempo, D+ waar mogelijk' },
-        { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw — +10% afstand/D+ t.o.v. week 1' },
-        { weekInPhase: 3, targetMinutes: 70, note: 'Zwaarste week — +10-15% t.o.v. week 2' },
-        { weekInPhase: 4, targetMinutes: 45, note: 'Deload (35-45 min, D+ ook lager)' },
+        { weekInPhase: 1, targetMinutes: 50, note: 'Wennen, rustig tempo, D+ waar mogelijk' },
+        { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw, +10% afstand/D+ t.o.v. week 1' },
+        { weekInPhase: 3, targetMinutes: 70, note: 'Zwaarste week, +10-15% t.o.v. week 2' },
+        { weekInPhase: 4, targetMinutes: 45, note: 'Rustweek (35-45 min, D+ ook lager)' },
       ],
     },
     // Fase 3 — de lange zondag vanaf Bergcapaciteit (engine/programLayout.ts
@@ -441,7 +441,7 @@ function buildObjective(): Objective {
   return {
     id: objectiveId,
     name: 'GR5 / ALPENKLAAR',
-    description: 'Opbouw richting een meerdaagse Alpine trektocht zoals de GR5 — de Alpenfase uit je eigen schema.',
+    description: 'Opbouw richting een meerdaagse Alpine trektocht zoals de GR5, de Alpenfase uit je eigen schema.',
     milestones: defs.map(([title, requirement], i) => ({
       id: `${objectiveId}_m${i + 1}`,
       objectiveId,

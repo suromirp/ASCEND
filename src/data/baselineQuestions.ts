@@ -18,7 +18,7 @@ import { disciplineLabel } from '../models/disciplines';
 export type BaselineDimension = Exclude<CapabilityDimension, 'fatigue_resistance'>;
 
 export const DIMENSION_META: Record<BaselineDimension, { label: string; unit: Unit; question: string; needsDiscipline?: boolean }> = {
-  aerobic_engine: { label: 'Algemene conditie', unit: 'min', question: 'Hoe lang hield je de afgelopen maand je langste stevige cardio-inspanning vol — een duurloop, fietstocht of iets vergelijkbaars? (in minuten)' },
+  aerobic_engine: { label: 'Algemene conditie', unit: 'min', question: 'Hoe lang hield je de afgelopen maand je langste stevige cardio-inspanning vol, een duurloop, fietstocht of iets vergelijkbaars? (in minuten)' },
   sustainable_output: { label: 'Duurzaam tempo', unit: 'min_per_km', question: 'Welk tempo kun je langere tijd volhouden, zonder buiten adem te raken? (in min/km)', needsDiscipline: true },
   // "Uithoudingsvermogen" en "Belastbaarheid" vragen naar hetzelfde
   // getal (hoe lang je doorging) maar met een ander doel: het eerste gaat

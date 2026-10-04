@@ -183,7 +183,7 @@ export function buildConsecutiveRestFixProposal(
     issue: 'Meerdere rustdagen op rij gevonden',
     changes: items,
     alternatives: [],
-    consequences: 'Verwisselt één van de rustdagen met de dichtstbijzijnde andere sessie — verder verandert er niets.',
+    consequences: 'Verwisselt één van de rustdagen met de dichtstbijzijnde andere sessie, verder verandert er niets.',
     explanation: 'ASCEND controleert je actuele planning op patronen die waarschijnlijk niet bewust zo zijn ingepland.',
     createdAt: new Date().toISOString(),
   };

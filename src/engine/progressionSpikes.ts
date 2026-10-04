@@ -106,8 +106,8 @@ export function detectRecentSpike(logsMostRecentFirst: SessionLog[]): SpikeSigna
   if (dimensions.length === 0) return { detected: false, dimensions: [] };
 
   const reason = dimensions.length > 1
-    ? `Deze sessie combineert meerdere nieuwe pieken tegelijk — ${parts.join(', ')}. Dat is een groter risico dan één enkele grotere sessie.`
-    : `Deze sessie is aanzienlijk groter dan wat je de afgelopen ${BASELINE_WINDOW_DAYS} dagen gewend was — ${parts.join(', ')}.`;
+    ? `Deze sessie combineert meerdere nieuwe pieken tegelijk, ${parts.join(', ')}. Dat is een groter risico dan één enkele grotere sessie.`
+    : `Deze sessie is aanzienlijk groter dan wat je de afgelopen ${BASELINE_WINDOW_DAYS} dagen gewend was, ${parts.join(', ')}.`;
 
   return { detected: true, dimensions, reason };
 }

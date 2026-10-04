@@ -70,7 +70,7 @@ export function TodayMissionCard({
       {quickComplete ? (
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Duur (min) — uit MacroFactor</label>
+            <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Duur (min), uit MacroFactor</label>
             <input
               type="number"
               value={quickDuration}
@@ -94,7 +94,7 @@ export function TodayMissionCard({
           </div>
         </div>
       ) : (
-        <PrimaryButton onClick={() => onStart('full')}>SESSIE STARTEN</PrimaryButton>
+        <PrimaryButton onClick={() => onStart('full')}>TRAINING STARTEN</PrimaryButton>
       )}
 
       <div className="flex gap-2">

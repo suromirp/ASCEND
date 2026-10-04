@@ -99,8 +99,8 @@ function pickSwapCandidate(
     const template = templateById.get(candidate.session.templateId);
     const name = template?.name ?? candidate.session.templateId;
     const reason = candidate.relevancePct === 0
-      ? `${name} draagt momenteel niet aantoonbaar bij aan een actief doel — deze dag is vrijgemaakt.`
-      : `${name} draagt het minst bij aan je actieve doelen van de sessies deze week (${Math.round(candidate.relevancePct)}% Goal Focus) — vrijgemaakt omdat een doel op dit moment onder druk staat of dichtbij is.`;
+      ? `${name} draagt momenteel niet aantoonbaar bij aan een actief doel, deze dag is vrijgemaakt.`
+      : `${name} draagt het minst bij aan je actieve doelen van de sessies deze week (${Math.round(candidate.relevancePct)}% Goal Focus), vrijgemaakt omdat een doel op dit moment onder druk staat of dichtbij is.`;
     return { session: candidate.session, reason };
   }
 

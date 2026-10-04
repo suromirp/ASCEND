@@ -89,7 +89,7 @@ export function suggestSameDayOrder(
       const axis = findSameAxisHighStacking(activeTemplates[i], activeTemplates[j]);
       if (axis) {
         return {
-          reason: `${activeTemplates[i].name} en ${activeTemplates[j].name} staan vandaag beide gepland en scoren allebei zwaar op ${AXIS_LABEL_NL[axis]}. Overweeg er een paar uur tussen te zetten, of één ervan een andere dag te geven — dit stapelt dezelfde belasting twee keer op één dag.`,
+          reason: `${activeTemplates[i].name} en ${activeTemplates[j].name} staan vandaag beide gepland en scoren allebei zwaar op ${AXIS_LABEL_NL[axis]}. Overweeg er een paar uur tussen te zetten, of één ervan een andere dag te geven, dit stapelt dezelfde belasting twee keer op één dag.`,
         };
       }
     }
@@ -109,6 +109,6 @@ export function suggestSameDayOrder(
   const enduranceName = templateById.get(enduranceSession.templateId)?.name ?? enduranceSession.templateId;
 
   return {
-    reason: `${strengthName} en ${enduranceName} staan vandaag beide gepland. Zet er bij voorkeur een paar uur tussen — een zware sessie vlak vóór de andere kan de kwaliteit ervan drukken, ook al is dat op de langere termijn meestal geen probleem.`,
+    reason: `${strengthName} en ${enduranceName} staan vandaag beide gepland. Zet er bij voorkeur een paar uur tussen, een zware sessie vlak vóór de andere kan de kwaliteit ervan drukken, ook al is dat op de langere termijn meestal geen probleem.`,
   };
 }
