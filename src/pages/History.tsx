@@ -1,10 +1,11 @@
 import { formatNumberNL } from '../utils/number';
 import { logSport } from '../engine/sports';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
+import { isIllnessDay } from '../engine/illness';
 import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
@@ -30,11 +31,15 @@ function computeMonthSummary(logs: SessionLog[]) {
   return { strengthCount, runningKm, hikingKm, cyclingKm, elevation, elevationLoss, machineVertical, totalMinutes, avgCadence, avgPower };
 }
 
-function countMissed(plannedSessions: PlannedSession[], sessionLogs: SessionLog[], start: string, end: string) {
+// Only sessions that really were missed: in the past, not logged, not
+// skipped on purpose (a move, an illness, the coach), not a rest day and
+// not a day you were ill.
+function countMissed(plannedSessions: PlannedSession[], sessionLogs: SessionLog[], start: string, end: string, isRest: (p: PlannedSession) => boolean, wasIll: (date: string) => boolean) {
+  const today = todayISO();
   return plannedSessions.filter((p) => {
-    if (p.scheduledDate < start || p.scheduledDate > end) return false;
-    const { status } = deriveSessionStatus(p, sessionLogs);
-    return status === 'skipped' || status === 'missed';
+    if (p.scheduledDate < start || p.scheduledDate > end || p.scheduledDate >= today) return false;
+    if (isRest(p) || wasIll(p.scheduledDate)) return false;
+    return deriveSessionStatus(p, sessionLogs).status === 'missed';
   }).length;
 }
 
@@ -55,7 +60,9 @@ function formatDelta(current: number, previous: number, opts?: { unit?: string; 
 }
 
 export function HistoryPage() {
-  const { sessionLogs, plannedSessions, templateById } = useAppData();
+  const { sessionLogs, plannedSessions, templateById, settings } = useAppData();
+  const isRest = useCallback((p: PlannedSession) => templateById.get(p.templateId)?.type === 'recovery', [templateById]);
+  const wasIll = useCallback((date: string) => isIllnessDay(date, settings.illnessEpisodes, todayISO()), [settings.illnessEpisodes]);
   const [anchor, setAnchor] = useState(todayISO());
   const { start, end } = monthBounds(anchor);
   const { start: prevStart, end: prevEnd } = monthBounds(shiftMonthAnchor(anchor, -1));
@@ -70,8 +77,8 @@ export function HistoryPage() {
     [sessionLogs, prevStart, prevEnd],
   );
 
-  const missedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, start, end), [plannedSessions, sessionLogs, start, end]);
-  const prevMissedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, prevStart, prevEnd), [plannedSessions, sessionLogs, prevStart, prevEnd]);
+  const missedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, start, end, isRest, wasIll), [plannedSessions, sessionLogs, start, end, isRest, wasIll]);
+  const prevMissedCount = useMemo(() => countMissed(plannedSessions, sessionLogs, prevStart, prevEnd, isRest, wasIll), [plannedSessions, sessionLogs, prevStart, prevEnd, isRest, wasIll]);
 
   const summary = useMemo(() => computeMonthSummary(monthLogs), [monthLogs]);
   const prevSummary = useMemo(() => computeMonthSummary(prevMonthLogs), [prevMonthLogs]);

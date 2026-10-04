@@ -116,6 +116,8 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
+import { setDurationAdjustments } from '../engine/substitutions';
+import { recoveryDurationAdjustments } from '../engine/illness';
 import { requestPersistentStorage } from '../storage/persistence';
 import { onDatabaseBlocked } from '../storage/database';
 
@@ -401,6 +403,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setInjuryNotes(injuries);
     setCapabilityEvidence(manualEvidence);
     setGoalEngineConfig(engineConfig);
+    // Volume after illness follows the illness history everywhere a
+    // duration is shown or planned.
+    setDurationAdjustments(recoveryDurationAdjustments(loadedSettings.illnessEpisodes));
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);

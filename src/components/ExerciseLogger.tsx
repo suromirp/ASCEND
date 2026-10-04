@@ -13,6 +13,7 @@ import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StretchList } from './StretchList';
 import { CountdownTimer } from './CountdownTimer';
+import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -55,6 +56,12 @@ export function ExerciseLogger({
   const [notes, setNotes] = useState('');
   const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(undefined);
   const [saving, setSaving] = useState(false);
+  // The day it was actually done. Ticking off a session from an earlier
+  // day defaults to that day; a loose training can be logged for a past
+  // day too (production bug: everything landed on today).
+  const today = todayISO();
+  const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
+  const [doneOn, setDoneOn] = useState<string>(plannedInPast ? scheduledDate! : today);
   const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
 
   const exercises = exercisesForVariant(template, variant);
@@ -150,6 +157,7 @@ export function ExerciseLogger({
 
     const input: LogSessionInput = {
       plannedSessionId,
+      completedDate: doneOn,
       templateId: template.id,
       type: template.type,
       sport: isCyclingModality(modalityKey) ? 'cycling' : templateSport(template),
@@ -198,6 +206,34 @@ export function ExerciseLogger({
 
         <h1 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
         {template.focus && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
+
+        {(plannedInPast || !plannedSessionId) && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+            <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
+            {plannedInPast ? (
+              [scheduledDate!, today].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDoneOn(d)}
+                  className="rounded-full border px-3 py-1.5"
+                  style={{ borderColor: doneOn === d ? 'var(--color-gold)' : 'var(--color-card-border)', color: doneOn === d ? 'var(--color-gold)' : 'var(--color-ink)' }}
+                >
+                  {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
+                </button>
+              ))
+            ) : (
+              <input
+                type="date"
+                value={doneOn}
+                max={today}
+                min={addDays(today, -60)}
+                onChange={(e) => e.target.value && setDoneOn(e.target.value)}
+                className="rounded-lg border bg-transparent px-2 py-1.5"
+                style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)', colorScheme: 'dark' }}
+              />
+            )}
+          </div>
+        )}
 
         {availableVariants(template).length > 1 && (
           <div className="mt-4 flex gap-2">
