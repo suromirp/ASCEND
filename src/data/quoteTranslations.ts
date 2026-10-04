@@ -1,9 +1,7 @@
-// Dutch versions of the quote library (data/quoteLibrary.ts), own
-// translations from the English or Latin source. `latin` marks quotes whose
-// original is worth showing too (short Latin), the rest show only Dutch.
-// Quotes not listed here are not shown: military, Spartan and "suffer now"
-// sayings pull toward gym bravado instead of Stoic calm (audit 2026-10,
-// 1.4), and a few others had nothing to do with training or the mountains.
+// Dutch translations of the quote library (data/quoteLibrary.ts), own
+// translations from the English or Latin source. The quotes themselves are
+// always shown in their original words, on purpose; the translation only
+// appears when you tap "Vertaling" (components/QuoteCard.tsx).
 
 export interface QuoteNl {
   text: string;
@@ -12,7 +10,24 @@ export interface QuoteNl {
   latin?: boolean;
 }
 
+// Quotes without one get no "Vertaling" button.
+
 export const QUOTE_NL: Record<string, QuoteNl> = {
+  Q002: { text: 'De beste wraak is niet te worden zoals wie je onrecht deed.', author: 'Marcus Aurelius', source: 'Overpeinzingen 6.6' },
+  Q021: { text: 'Het leven is een strijd.', author: 'Seneca', source: 'Brieven aan Lucilius 96' },
+  Q032: { text: 'Nu is het tijd om te drinken.', author: 'Horatius', source: 'Oden 1.37', latin: true },
+  Q035: { text: 'De lafaard denkt dat hij eeuwig leeft als hij de strijd maar ontloopt.', author: 'Hávamál', source: 'Strofe 16' },
+  Q037: { text: 'Vee sterft, verwanten sterven, ook jij zelf sterft; maar een goede naam sterft nooit.', author: 'Hávamál', source: 'Strofe 76' },
+  Q038: { text: 'Eén ding weet ik dat nooit sterft: de roem van wat een dode deed.', author: 'Hávamál', source: 'Strofe 77' },
+  Q041: { text: 'Vandaag win je van wie je gisteren was; morgen van wie minder zijn.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q054: { text: 'De triomf van iets groots bereiken.', author: 'Theodore Roosevelt', source: 'Burgerschap in een republiek, 1910' },
+  Q057: { text: 'Kom ze maar halen.', author: 'Leonidas van Sparta (toegeschreven)', source: 'Plutarchus' },
+  Q058: { text: 'Wie durft, wint.', author: 'Special Air Service', source: 'Motto van de SAS' },
+  Q059: { text: 'De enige makkelijke dag was gisteren.', author: 'Navy SEALs', source: 'Spreuk' },
+  Q061: { text: 'Geef niet op. Lijd nu en leef de rest van je leven als kampioen.', author: 'Muhammad Ali' },
+  Q065: { text: 'Waarom zou ik blij zijn? Het werk is niet af.', author: 'Kobe Bryant' },
+  Q066: { text: 'Je mist honderd procent van de schoten die je niet neemt.', author: 'Wayne Gretzky' },
+  Q070: { text: 'Daden, geen woorden.', author: 'Latijnse spreuk', latin: true },
   Q001: { text: 'Verspil geen tijd meer met praten over wat een goed mens is. Wees er een.', author: 'Marcus Aurelius', source: 'Overpeinzingen 10.16' },
   Q003: { text: 'Als iets buiten je je pijn doet, is het niet dat ding dat je stoort, maar je eigen oordeel erover.', author: 'Marcus Aurelius', source: 'Overpeinzingen 8.47' },
   Q004: { text: 'Ik sta op voor het werk dat een mens hoort te doen.', author: 'Marcus Aurelius', source: 'Overpeinzingen 5.1' },
