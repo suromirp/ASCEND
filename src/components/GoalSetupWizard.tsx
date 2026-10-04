@@ -60,7 +60,7 @@ const ADDABLE_KINDS: EditableRequirementKind[] = ['distance', 'elevationGain', '
 const MAKE_MULTI_DAY = '__multi_day__';
 
 const GAP_STATUS_LABEL: Record<GapStatus, string> = {
-  exceeds: 'OVERTREFT', meets: 'VOLDOET', near: 'BIJNA', gap: 'GAT', major_gap: 'GROOT GAT', unknown: 'ONBEKEND',
+  exceeds: 'OVERTREFT', meets: 'VOLDOET', near: 'BIJNA', gap: 'TEKORT', major_gap: 'GROOT TEKORT', unknown: 'ONBEKEND',
 };
 const GAP_STATUS_COLOR: Record<GapStatus, string> = {
   exceeds: 'var(--color-success)', meets: 'var(--color-success)', near: 'var(--color-warning)',
@@ -584,7 +584,7 @@ function PreviewStep({
   return (
     <div className="mt-4 flex flex-col gap-6">
       <section>
-        <Eyebrow>DOELINTERPRETATIE</Eyebrow>
+        <Eyebrow>JOUW DOEL</Eyebrow>
         <p className="mt-1.5 text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{draft.name}</p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           {draft.status === 'active' ? `Doeldatum ${formatDateNL(draft.targetDate)}` : 'Geen datum, dus het doel blijft gepauzeerd tot je er een instelt.'}
@@ -618,7 +618,7 @@ function PreviewStep({
 
       {sortedGaps.length > 0 && (
         <section>
-          <Eyebrow>CAPACITEIT VS. VRAAG</Eyebrow>
+          <Eyebrow>WAT JE KUNT EN WAT HET VRAAGT</Eyebrow>
           {multiDay && (
             <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Vergeleken met één dag van de tocht (je trainingsdag, of anders de gemiddelde loopdag), niet met de totalen.
@@ -632,7 +632,7 @@ function PreviewStep({
 
       {impact.length > 0 && (
         <section>
-          <Eyebrow>VERWACHTE PLANIMPACT</Eyebrow>
+          <Eyebrow>WAT ER IN JE PLANNING VERANDERT</Eyebrow>
           {impact.map((t, i) => (
             <p key={i} className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{t}</p>
           ))}

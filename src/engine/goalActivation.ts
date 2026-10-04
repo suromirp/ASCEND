@@ -160,7 +160,7 @@ function buildCommittedWeekChanges(
     changes,
     alternatives: [],
     consequences: changes.length > 0
-      ? `${changes.length} geplande sessie(s) deze en volgende week dragen al bij aan dit doel en blijven ongewijzigd.`
+      ? `${changes.length} geplande ${changes.length === 1 ? 'training' : 'trainingen'} deze en volgende week ${changes.length === 1 ? 'draagt' : 'dragen'} al bij aan dit doel en ${changes.length === 1 ? 'blijft' : 'blijven'} zoals ze zijn.`
       : 'Geen van de geplande sessies deze en volgende week draagt op dit moment al bij aan dit doel.',
     explanation: 'Gebaseerd op de trainingen die al gepland staan. Er wordt nu niets nieuws toegevoegd.',
     createdAt: new Date().toISOString(),

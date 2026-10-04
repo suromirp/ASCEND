@@ -195,7 +195,7 @@ export function computeSportDisableProposal(
     issue: `${sportLabel} uitgezet`,
     changes: items,
     alternatives: [],
-    consequences: items.length > 0 ? `${items.length} geplande sessie(s) vervallen (${sportLabel.toLowerCase()}). Loggen blijft altijd mogelijk.` : `Er stond niets meer gepland (${sportLabel.toLowerCase()}).`,
+    consequences: items.length > 0 ? `${items.length} geplande ${items.length === 1 ? 'training vervalt' : 'trainingen vervallen'} (${sportLabel.toLowerCase()}). Loggen kan altijd.` : `Er stond niets meer gepland (${sportLabel.toLowerCase()}).`,
     explanation: `${sportLabel} uitgezet in Instellingen → Training.`,
     createdAt: new Date().toISOString(),
   };
