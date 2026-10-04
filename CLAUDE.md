@@ -150,7 +150,10 @@ touching the rest of the file.
 Weeks are derived, not stored: a week is just seven days starting on a
 Monday; which phase/week-number it belongs to is computed from
 `Program.startDate` + `Phase.weekCount` (`utils/dates.ts`), never persisted
-as its own entity.
+as its own entity. The phases themselves are counted back from the main
+goal's date (`engine/programLayout.ts`, applied by
+`storage/database.ts#syncProgramHorizon`): a taper right before the goal,
+nothing planned on or after it, and no empty weeks before it.
 
 **External providers must use generic adapters — do not tightly couple
 domain fields to provider names.** Model `OutdoorMetric` / `RecoveryMetric`

@@ -16,6 +16,8 @@ import {
   CapabilityEvidenceRepo,
   WeeklyPrescriptionsRepo,
   SettingsRepo,
+  GoalMilestonesRepo,
+  syncProgramHorizon,
 } from './database';
 import { migrateToGoalEngine } from './goalMigration';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
@@ -335,5 +337,68 @@ describe('planned sessions always belong to the week of their date', () => {
     await PlannedSessionsRepo.put({ id: 'x', templateId: 'tpl', scheduledDate: '2026-10-06', weekStartDate: '2026-09-28', status: 'moved', order: 0 });
     const [stored] = await PlannedSessionsRepo.getAll();
     expect(stored.weekStartDate).toBe('2026-10-05');
+  });
+});
+
+describe('syncProgramHorizon (Fase 3: plan tot aan het doel)', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  async function setGoal(targetDate: string) {
+    await TrainingGoalsRepo.put({ id: 'g_gr5', name: 'GR5', requirements: [], createdAt: '', updatedAt: '', status: 'active', targetDate });
+    await GoalMilestonesRepo.put({ id: 'g_gr5_m1', goalId: 'g_gr5', order: 1, title: 'x', requirement: { kind: 'manual' } as never });
+  }
+
+  it('plans every week up to the goal, nothing on or after it, and ends with the taper', async () => {
+    const goal = addDays(mondayOfWeek(todayISO()), 40 * 7);
+    await setGoal(goal);
+    const result = await syncProgramHorizon();
+    expect(result.phasesChanged).toBe(true);
+    const [program] = await ProgramsRepo.getAll();
+    expect(program.phases[program.phases.length - 1].id).toBe('phase_taper');
+    const sessions = await PlannedSessionsRepo.getAll();
+    expect(sessions.some((s) => s.scheduledDate >= goal)).toBe(false);
+    const weeks = new Set(sessions.map((s) => s.weekStartDate));
+    for (let w = 1; w < 40; w++) expect(weeks.has(addDays(mondayOfWeek(todayISO()), w * 7))).toBe(true);
+    // Hikes in the mountain phases, the long run before them.
+    expect(sessions.some((s) => s.templateId === 'tpl_mountain_hike')).toBe(true);
+    expect(sessions.some((s) => s.templateId === 'tpl_hike_day_one')).toBe(true);
+    // Idempotent.
+    expect(await syncProgramHorizon()).toEqual({ phasesChanged: false, added: 0, swapped: 0, removed: 0 });
+  });
+
+  it('a goal moved earlier removes the unlogged sessions after it and turns long runs into hikes', async () => {
+    await setGoal(addDays(mondayOfWeek(todayISO()), 40 * 7));
+    await syncProgramHorizon();
+    const earlier = addDays(mondayOfWeek(todayISO()), 10 * 7);
+    await setGoal(earlier);
+    const result = await syncProgramHorizon();
+    expect(result.removed).toBeGreaterThan(0);
+    const sessions = await PlannedSessionsRepo.getAll();
+    expect(sessions.some((s) => s.scheduledDate >= earlier)).toBe(false);
+    // With 10 weeks left there is no basis any more: the Sundays are hikes.
+    const sundays = sessions.filter((s) => s.scheduledDate > addDays(todayISO(), 7) && (s.templateId === 'tpl_long_run' || s.templateId === 'tpl_mountain_hike'));
+    expect(sundays.every((s) => s.templateId === 'tpl_mountain_hike')).toBe(true);
+  });
+
+  it('keeps the long run when the user prefers it, and never touches a logged session', async () => {
+    await setGoal(addDays(mondayOfWeek(todayISO()), 10 * 7));
+    await syncProgramHorizon();
+    const hike = (await PlannedSessionsRepo.getAll()).find((s) => s.templateId === 'tpl_mountain_hike')!;
+    await SessionLogsRepo.put({ id: 'l', plannedSessionId: hike.id, templateId: hike.templateId, type: 'hiking', completedDate: todayISO(), completedAt: new Date().toISOString(), variant: 'full', durationMinutes: 120, source: 'manual' });
+    await SettingsRepo.set({ longSundaySession: 'run' });
+    await syncProgramHorizon();
+    const sessions = await PlannedSessionsRepo.getAll();
+    expect(sessions.find((s) => s.id === hike.id)?.templateId).toBe('tpl_mountain_hike');
+    expect(sessions.filter((s) => s.id !== hike.id).some((s) => s.templateId === 'tpl_mountain_hike' || s.templateId === 'tpl_hike_day_one')).toBe(false);
+  });
+
+  it('without a goal date the planning keeps running past week 16', async () => {
+    const result = await syncProgramHorizon();
+    expect(result.added).toBe(0);
+    const [program] = await ProgramsRepo.getAll();
+    expect(program.phases.reduce((n, p) => n + p.weekCount, 0)).toBeGreaterThanOrEqual(13);
   });
 });

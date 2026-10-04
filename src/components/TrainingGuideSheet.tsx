@@ -224,7 +224,7 @@ export function WorkoutSteps({ plan, compact = false }: { plan: WorkoutPlan; com
   const total = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   const peak = Math.max(...plan.timeline.map((s) => s.intensity)) as Intensity;
   const usedLevels = [...new Set(plan.timeline.filter((s) => s.kind !== 'strength').map((s) => s.intensity))].sort() as Intensity[];
-  const tags = [`±${plan.totalMinutes} min`, plan.timeline.every((s) => s.kind === 'strength') ? 'Kracht' : INTENSITY[peak].label, plan.keyTag].filter((t): t is string => !!t);
+  const tags = [`±${plan.totalMinutes} min`, plan.timeline.every((s) => s.kind === 'strength') ? 'Kracht' : INTENSITY[peak].label, ...plan.targets, plan.keyTag].filter((t): t is string => !!t);
 
   return (
     <>

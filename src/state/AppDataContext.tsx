@@ -99,6 +99,39 @@ function runBootMigrationsOnce(): Promise<void> {
   return bootMigrations;
 }
 
+// The program follows the main goal's date (storage/database.ts
+// #syncProgramHorizon). Checked on every refresh, but only run when
+// something it depends on changed: the goal date, the start of week 1, the
+// sports, the long-Sunday choice, or a new day. Serialized, so two
+// refreshes at once can never add the same weeks twice.
+let lastHorizonKey = '';
+let horizonQueue: Promise<void> = Promise.resolve();
+function syncProgramHorizonWhenChanged(): Promise<void> {
+  // The stored phases are part of the key, so a reset or an import that
+  // rewrites the program also triggers a sync.
+  const currentKey = async () => {
+    const [programs, goals, milestones, settings] = await Promise.all([
+      ProgramsRepo.getAll(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll(), SettingsRepo.get(),
+    ]);
+    return JSON.stringify([
+      todayISO(),
+      programs[0]?.startDate,
+      programs[0]?.phases,
+      programAnchorDate(goals, milestones, todayISO()),
+      settings.longSundaySession,
+      settings.enabledSports,
+    ]);
+  };
+  horizonQueue = horizonQueue
+    .then(async () => {
+      if ((await currentKey()) === lastHorizonKey) return;
+      await syncProgramHorizon();
+      lastHorizonKey = await currentKey();
+    })
+    .catch((err) => console.error('Program horizon sync failed', err));
+  return horizonQueue;
+}
+
 function simpleHash(text: string): string {
   let h = 0;
   for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
@@ -116,10 +149,11 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import { setDurationAdjustments } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima } from '../engine/substitutions';
 import { recoveryDurationAdjustments } from '../engine/illness';
 import { requestPersistentStorage } from '../storage/persistence';
-import { onDatabaseBlocked } from '../storage/database';
+import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
+import { programAnchorDate } from '../engine/programLayout';
 
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
@@ -372,6 +406,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // reload from storage keeps a stale window from writing back old state
   // over a change made elsewhere.
   const refresh = useCallback(async (fromOtherWindow = false) => {
+    if (!fromOtherWindow) await syncProgramHorizonWhenChanged();
     if (!fromOtherWindow) syncChannel?.postMessage('changed');
     const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
@@ -406,6 +441,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Volume after illness follows the illness history everywhere a
     // duration is shown or planned.
     setDurationAdjustments(recoveryDurationAdjustments(loadedSettings.illnessEpisodes));
+    // No session in the next two weeks asks for more than 110% of the
+    // longest of its kind in the last 30 days.
+    setRecentSessionMaxima(recentSessionMaxima(logs, todayISO()));
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);

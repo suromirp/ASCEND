@@ -16,6 +16,7 @@ import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProp
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTemplates, type Sport } from '../engine/sports';
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
+import { programAnchorDate } from '../engine/programLayout';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -66,7 +67,9 @@ export function SettingsPage() {
   const {
     loading, exportData, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
     rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById, restartProgram,
+    refresh, trainingGoals, goalMilestones,
   } = useAppData();
+  const goalDate = programAnchorDate(trainingGoals, goalMilestones, todayISO());
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [tab, setTab] = useState<SettingsTab>(readStoredTab);
   const [status, setStatus] = useState<string | null>(null);
@@ -340,6 +343,26 @@ export function SettingsPage() {
                 ? `Je staat nu in week ${position.weekInProgram} van ${position.totalWeeksInProgram}, ${position.phase.name.toLowerCase()}.`
                 : 'Deze week valt buiten het programma.'}
             </p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              {goalDate
+                ? `De fases zijn teruggerekend vanaf je hoofddoel op ${formatDateNL(goalDate)}. De laatste twee weken bouw je af, zodat je fris aan de start staat.`
+                : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij Ascend, dan rekent ASCEND de fases terug tot die dag.'}
+            </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
+              <OptionList
+                options={[
+                  { value: 'hike' as const, label: 'Bergtocht', note: 'Een lange wandeling met hoogtemeters en een rugzak die stap voor stap zwaarder wordt. In Expeditieklaar ook op zaterdag wandelen.' },
+                  { value: 'run' as const, label: 'Lange duurloop', note: 'Je blijft elke zondag hardlopen, bijvoorbeeld voor een marathon. Hiken train je dan zelf.' },
+                ]}
+                value={settings.longSundaySession ?? 'hike'}
+                onChange={async (v) => {
+                  await updateSettings({ longSundaySession: v });
+                  await refresh();
+                  note('program', v === 'hike' ? 'Vanaf Bergcapaciteit staat er op zondag een bergtocht.' : 'Je houdt elke zondag de lange duurloop.');
+                }}
+              />
+            </div>
             {!confirmingRestart ? (
               <SecondaryButton onClick={() => setConfirmingRestart(true)}>OPNIEUW BEGINNEN BIJ WEEK 1</SecondaryButton>
             ) : (

@@ -1,6 +1,7 @@
 import type { SessionTemplate, ExercisePrescription, SessionVariant } from '../models/training';
 import type { Program } from '../models/program';
-import { resolveProgramWeek } from '../utils/dates';
+import { addDays } from '../utils/dates';
+import { progressionTarget } from './programLayout';
 
 // "Short" keeps core + accessory work, drops optional. "Minimum" keeps only
 // core work — the smallest version of the session that still counts.
@@ -17,36 +18,9 @@ export function durationForVariant(template: SessionTemplate, variant: SessionVa
   return template.durationVariants.full;
 }
 
-// weeklyProgression is defined once per template as a short Wennen →
-// Opbouw → Zwaarste week → Deload shape (data/defaultProgram.ts), keyed by
-// weekInPhase — which resets to 1 at the start of every Phase
-// (utils/dates.ts#resolveProgramWeek). Phase 2-4 today reuse that exact
-// same shape as placeholder content (their own description field says so
-// literally: "Placeholder — nog niet door jou ingevuld"), so a naive
-// weekInPhase lookup would make training visibly reset to the "Wennen"
-// numbers every 4 weeks, forever plateauing at the first cycle's own
-// peak — never actually building further, exactly the symptom a user
-// reported (screens showing week 5 identical to week 1).
-//
-// ASCEND_HEURISTIC(PROGRESSION-CYCLE-CARRYOVER): a purely mechanical
-// carry-over, not new training content — every time this same 4-step
-// shape repeats (weekInProgram, monotonic across the whole program,
-// divided by the shape's own length), the whole shape scales up by +8%
-// per full repeat, capped at 1.3x. The very first cycle (weeks 1-4) is
-// unaffected (multiplier 1.0) — today's numbers stay exactly as they are.
-// Bounded and modest on purpose: this program only spans 16 weeks
-// (utils/dates.ts#resolveProgramWeek returns null beyond it), so this
-// compounds at most 3 times with today's 4-phase x 4-week layout. This is
-// a safety net so a still-placeholder phase 2-4 keeps building rather than
-// silently resetting — it never substitutes for the user's own, real
-// phase-specific content once they write it (see Phase.description).
-const PROGRESSION_CYCLE_GROWTH_PER_REPEAT = 0.08;
-const PROGRESSION_CYCLE_GROWTH_CAP = 1.3;
-
-function progressionCycleMultiplier(weekInProgram: number, cycleLength: number): number {
-  const cycleIndex = Math.floor((weekInProgram - 1) / cycleLength); // 0-indexed: 0 = first pass through the shape
-  return Math.min(1 + PROGRESSION_CYCLE_GROWTH_PER_REPEAT * cycleIndex, PROGRESSION_CYCLE_GROWTH_CAP);
-}
+// Week-by-week targets (SessionTemplate.weeklyProgression) are resolved in
+// engine/programLayout.ts#progressionTarget: the 4-week wave, the growth
+// per cycle, phase-specific steps and the taper.
 
 // Some templates (Easy Run, Bergconditie) target a different duration each
 // week of the training block instead of one fixed number — see
@@ -68,30 +42,53 @@ export function setDurationAdjustments(adjustments: DurationAdjustment[]): void 
   durationAdjustments = adjustments;
 }
 
+// The longest logged minutes per template in the last 30 days, set from
+// the logs by state/AppDataContext on every refresh. A session shown in the
+// next two weeks never asks for more than 110% of that (docs/onderzoek
+// rapport 1: a session more than 10% above the 30-day longest raises the
+// injury risk, HRR 1.64; rapport 2, rule E3). Weeks further out keep their
+// planned number: by then there will be newer logs to measure against.
+// Empty by default, so every pure test sees the plain duration.
+export interface RecentSessionMaxima {
+  asOf: string;
+  minutesByTemplate: Record<string, number>;
+}
+let recentMaxima: RecentSessionMaxima = { asOf: '', minutesByTemplate: {} };
+export function setRecentSessionMaxima(maxima: RecentSessionMaxima): void {
+  recentMaxima = maxima;
+}
+const SESSION_SPIKE_LIMIT = 1.1;
+const SPIKE_CAP_DAYS = 13;
+
+export function recentSessionMaxima(logs: { templateId: string; completedDate: string; durationMinutes: number }[], asOf: string): RecentSessionMaxima {
+  const from = addDays(asOf, -30);
+  const minutesByTemplate: Record<string, number> = {};
+  for (const l of logs) {
+    if (l.completedDate < from || l.completedDate > asOf || !(l.durationMinutes > 0)) continue;
+    minutesByTemplate[l.templateId] = Math.max(minutesByTemplate[l.templateId] ?? 0, l.durationMinutes);
+  }
+  return { asOf, minutesByTemplate };
+}
+
 export function resolveEffectiveFullDuration(
   template: SessionTemplate,
   scheduledDate: string,
   program: Program | null | undefined,
 ): number {
-  const base = baseFullDuration(template, scheduledDate, program);
+  const target = progressionTarget(template, program, scheduledDate);
+  let base = target?.minutes ?? template.durationVariants.full;
+  const longest = recentMaxima.minutesByTemplate[template.id];
+  if (target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
+    // Never below the first "Wennen" step: one short session must not pull
+    // the whole build down.
+    const floor = (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
+    const cap = Math.max(floor, Math.round((longest * SESSION_SPIKE_LIMIT) / 5) * 5);
+    base = Math.min(base, cap);
+  }
   const adjustment = durationAdjustments.find((a) => scheduledDate >= a.from && scheduledDate <= a.until);
   if (!adjustment) return base;
   // Rounded to whole 5 minutes, never below 15.
   return Math.max(15, Math.round((base * adjustment.factor) / 5) * 5);
-}
-
-function baseFullDuration(template: SessionTemplate, scheduledDate: string, program: Program | null | undefined): number {
-  if (template.weeklyProgression && program) {
-    const position = resolveProgramWeek(program, scheduledDate);
-    if (position) {
-      const step = template.weeklyProgression.find((s) => s.weekInPhase === position.weekInPhase);
-      if (step) {
-        const multiplier = progressionCycleMultiplier(position.weekInProgram, template.weeklyProgression.length);
-        return Math.round(step.targetMinutes * multiplier);
-      }
-    }
-  }
-  return template.durationVariants.full;
 }
 
 // Shared by ExerciseLogger (variant picker) and the quick-complete flow
@@ -113,10 +110,7 @@ export function weeklyProgressionNote(
   scheduledDate: string,
   program: Program | null | undefined,
 ): string | undefined {
-  if (!template.weeklyProgression || !program) return undefined;
-  const position = resolveProgramWeek(program, scheduledDate);
-  if (!position) return undefined;
-  return template.weeklyProgression.find((s) => s.weekInPhase === position.weekInPhase)?.note;
+  return progressionTarget(template, program, scheduledDate)?.step.note;
 }
 
 // Short/minimum variants trim the exercise list — meaningful only for
