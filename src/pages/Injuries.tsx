@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import type { InjurySeverity } from '../models/injury';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
@@ -18,7 +18,6 @@ const SEVERITY_COLOR: Record<InjurySeverity, string> = {
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
 export function InjuriesPage() {
-  const navigate = useNavigate();
   const { injuryNotes, addInjury, resolveInjury, deleteInjury } = useAppData();
   const [showForm, setShowForm] = useState(false);
   const [date, setDate] = useState(todayISO());
@@ -44,7 +43,7 @@ export function InjuriesPage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>BLESSURES</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Bijhouden zonder je trainingsgeschiedenis aan te passen</p>

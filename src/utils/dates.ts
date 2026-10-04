@@ -71,9 +71,12 @@ export function weekdayLongNL(iso: string): string {
   return DUTCH_WEEKDAYS_LONG[isoWeekday(iso) - 1];
 }
 
+// "3 oktober"; a date in another year than today gets its year
+// ("11 april 2027"), so a goal date never reads as this year's.
 export function formatDateNL(iso: string): string {
   const d = parseISODate(iso);
-  return `${d.getDate()} ${DUTCH_MONTHS[d.getMonth()]}`;
+  const sameYear = d.getFullYear() === parseISODate(todayISO()).getFullYear();
+  return `${d.getDate()} ${DUTCH_MONTHS[d.getMonth()]}${sameYear ? '' : ` ${d.getFullYear()}`}`;
 }
 
 export function formatMonthNL(iso: string): string {

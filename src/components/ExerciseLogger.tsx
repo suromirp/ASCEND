@@ -136,10 +136,14 @@ export function ExerciseLogger({
 
   async function handleSave() {
     setSaving(true);
-    const strengthData: ExerciseSetLog[] | undefined =
-      template.type === 'strength' && !quickComplete
-        ? exercises.map((e) => ({ exerciseId: e.id, exerciseName: e.exerciseName, sets: setLogs[e.id] ?? [] }))
-        : undefined;
+    // Only sets that were actually filled in: empty rows would read as
+    // 0-rep sets and drag the strength progression down.
+    const filled: ExerciseSetLog[] = template.type === 'strength' && !quickComplete
+      ? exercises
+        .map((e) => ({ exerciseId: e.id, exerciseName: e.exerciseName, sets: (setLogs[e.id] ?? []).filter((set) => set.reps > 0) }))
+        .filter((e) => e.sets.length > 0)
+      : [];
+    const strengthData: ExerciseSetLog[] | undefined = filled.length > 0 ? filled : undefined;
 
     const activityCommon = {
       durationMinutes: duration,

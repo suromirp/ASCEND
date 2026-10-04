@@ -1,14 +1,13 @@
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import { GARMIN_DATA_SCREENS, GARMIN_METRICS, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
 import { Card, Eyebrow } from '../components/ui';
 
 export function GarminGuidePage() {
-  const navigate = useNavigate();
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>GARMIN</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zones, dataschermen en hoe je de metrics leest</p>

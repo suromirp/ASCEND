@@ -5,10 +5,12 @@ import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
+import { useState } from 'react';
+import { useAppData } from '../state/AppDataContext';
 
 const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio', hiking: 'Avontuur', recovery: 'Herstel', adventure: 'Avontuur' };
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
-const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Treadmill', outdoor: 'Buiten' };
+const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
 export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
   const activity = log.outdoorData ?? log.cardioData;
@@ -41,6 +43,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.rpe !== undefined) rows.push({ label: 'RPE', value: `${log.rpe}/10` });
 
   const { closing, requestClose } = useSheetClose(onClose);
+  const { undoLog } = useAppData();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <Portal>
@@ -96,9 +100,22 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
             </div>
           )}
 
-          <button onClick={requestClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            Sluiten
-          </button>
+          {/* A wrongly chosen or double log must be removable (it used to
+              stay forever). Always behind a confirmation. */}
+          {confirmDelete ? (
+            <div className="mt-6 flex flex-col gap-2">
+              <p className="text-xs" style={{ color: 'var(--color-danger)' }}>Deze training uit je geschiedenis verwijderen?</p>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmDelete(false)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>ANNULEREN</button>
+                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-snow)' }}>VERWIJDEREN</button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 flex items-center justify-between">
+              <button onClick={() => setConfirmDelete(true)} className="min-h-11 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verwijderen</button>
+              <button onClick={requestClose} className="min-h-11 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
+            </div>
+          )}
         </Card>
         </div>
       </div>

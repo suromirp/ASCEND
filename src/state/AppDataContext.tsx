@@ -453,7 +453,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const respondToAdvice = useCallback(async (item: Advice, response: 'accepted' | 'declined') => {
-    if (response === 'accepted' && item.proposal) await commitPlanChange(item.proposal, item.title);
+    if (response === 'accepted' && item.proposal && (await commitPlanChange(item.proposal, item.title))) {
+      setRecentChange((prev) => (prev && prev.id === item.proposal!.id ? { ...prev, adviceId: item.id } : prev));
+    }
     const current = (await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {};
     const next = { ...current, [item.id]: { response, at: new Date().toISOString() } };
     await MetaRepo.set('adviceResponses', next);
@@ -467,6 +469,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // frequency or time budget. Never reconstructed from dates.
     if (recentChange.settingsBefore) setSettings(await SettingsRepo.set(recentChange.settingsBefore as Partial<AppSettings>));
     if (recentChange.configBefore) setGoalEngineConfig(await GoalEngineConfigRepo.set(recentChange.configBefore as Partial<GoalEngineConfig>));
+    if (recentChange.adviceId) {
+      const responses = { ...((await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {}) };
+      delete responses[recentChange.adviceId];
+      await MetaRepo.set('adviceResponses', responses);
+      setAdviceResponses(responses);
+    }
     for (const session of recentChange.before) await PlannedSessionsRepo.put(session);
     for (const id of recentChange.addedIds) await PlannedSessionsRepo.delete(id);
     const now = new Date().toISOString();

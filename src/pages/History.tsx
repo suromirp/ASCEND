@@ -136,18 +136,18 @@ export function HistoryPage() {
                   <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
                   <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                     {TYPE_LABEL[log.type]} • {log.durationMinutes} min
-                    {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Treadmill' : environment === 'outdoor' ? ' • Buiten' : ''}
+                    {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Loopband' : environment === 'outdoor' ? ' • Buiten' : ''}
                     {garminType ? ` • Garmin: ${garminType}` : ''}
                     {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}
                     {log.subjectiveFeel === 'worse' ? ' • voelde slechter' : ''}
                     {log.outdoorData?.elevationGainM
-                      ? ` • ${log.outdoorData.elevationGainM} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
+                      ? ` • ${formatNumberNL(log.outdoorData.elevationGainM)} D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
                       : ''}
                     {log.cardioData?.elevationGainM
-                      ? ` • ${log.cardioData.elevationGainM} D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
+                      ? ` • ${formatNumberNL(log.cardioData.elevationGainM)} D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
                       : ''}
-                    {log.outdoorData?.distanceKm ? ` • ${log.outdoorData.distanceKm} km` : ''}
-                    {log.cardioData?.distanceKm ? ` • ${log.cardioData.distanceKm} km` : ''}
+                    {log.outdoorData?.distanceKm ? ` • ${formatNumberNL(log.outdoorData.distanceKm, 1)} km` : ''}
+                    {log.cardioData?.distanceKm ? ` • ${formatNumberNL(log.cardioData.distanceKm, 1)} km` : ''}
                     {log.outdoorData?.steps ? ` • ${log.outdoorData.steps} verdiepingen` : ''}
                   </p>
                 </div>

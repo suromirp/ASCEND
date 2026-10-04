@@ -138,5 +138,7 @@ export interface RecentPlanChange {
   // back too, so the planning and the setting never drift apart.
   settingsBefore?: Record<string, unknown>;
   configBefore?: Record<string, unknown>;
+  // The coach advice this change came from: undo brings the advice back.
+  adviceId?: string;
   createdAt: string;
 }

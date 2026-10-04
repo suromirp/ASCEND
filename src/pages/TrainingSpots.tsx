@@ -4,7 +4,7 @@
 // ride counts as training) or by car/train.
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { FLAT_COUNTRY_TIPS, HOME_PLACES, TRAINING_SPOTS, type SpotUse, type TrainingSpot } from '../data/trainingSpots';
 import { spotsByDistance, travelAdvice, type HomeLocation } from '../engine/trainingSpots';
@@ -24,7 +24,6 @@ const USE_LABEL: Record<SpotUse, string> = {
 };
 
 export function TrainingSpotsPage() {
-  const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const [use, setUse] = useState<SpotUse | undefined>(undefined);
   const [locating, setLocating] = useState(false);
@@ -60,7 +59,7 @@ export function TrainingSpotsPage() {
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }} aria-label="Terug">‹</button>
+        <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSPLEKKEN</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je in Nederland hoogtemeters maakt, bergop en bergaf</p>
