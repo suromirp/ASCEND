@@ -7,7 +7,10 @@ import { activeSwaps, layoutPhases, patternForWeek } from '../engine/programLayo
 import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_RECOVERY } from './stretches';
 
 // ---------------------------------------------------------------------------
-// Session templates — MAAND 1 (BASISFASE).
+// Session templates: de vaste week. Hoe lang en zwaar een sessie in een
+// bepaalde week is, volgt uit weeklyProgression en de fase
+// (engine/programLayout.ts). De bergtocht en wandeldag 1 van 2 nemen vanaf
+// Bergcapaciteit de plek in van de lange duurloop en de intervallen.
 //
 // Herzien van 4x kracht + 1x Easy Run + Bergconditie naar een schema waarin
 // het weekend het bergspecifieke hardloopblok draagt: Upper A/Lower A/Upper B
