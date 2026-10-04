@@ -134,7 +134,10 @@ function buildPrescriptionForLine(
   }
   if (template.type === 'hiking') {
     const candidate = proposeMountainAdventurePrescription({
-      decision,
+      // The line's numbers already carry the taper
+      // (weeklyPrescriptionBuilder.ts#deriveLine); scaling them again in the
+      // specialist tapered twice (audit 2026-10: 400 m x 0.86 x 0.86).
+      decision: { ...decision, taperReductionFactor: undefined },
       plannedSessionId,
       candidateElevationGainM: midpoint(line.elevationGain),
       candidateElevationLossM: midpoint(line.elevationLoss),

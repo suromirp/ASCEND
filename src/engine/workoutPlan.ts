@@ -10,6 +10,7 @@ import { WORKOUTS, type Intensity, type StepKind, type StepSpec, type StructureS
 import { resolveEffectiveFullDuration } from './substitutions';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { resolveProgramWeek } from '../utils/dates';
+import { progressionTarget, waveWeek } from './programLayout';
 
 export interface PlanStep {
   kind: StepKind;
@@ -33,6 +34,8 @@ export interface WorkoutPlan {
   keyTag?: string;
   // Benen / bovenlichaam / conditie, 0-3 (none..heavy).
   load: { label: string; level: number }[];
+  // What this week asks for besides time (mountain hike: D+ and backpack).
+  targets: string[];
   // This phase's weeks, from the template's own weekly progression.
   weeks: { week: number; minutes: number; note: string; current: boolean }[];
 }
@@ -45,9 +48,12 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
   const spec = WORKOUTS[template.id];
   if (!spec) return undefined;
   const totalMinutes = dateIso ? resolveEffectiveFullDuration(template, dateIso, program) : template.durationVariants.full;
+  const target = dateIso ? progressionTarget(template, program, dateIso) : undefined;
   const position = dateIso && program ? resolveProgramWeek(program, dateIso) : null;
-  const weekInPhase = position?.weekInPhase ?? 1;
-  const baseStep = template.weeklyProgression?.find((w) => w.weekInPhase === weekInPhase);
+  // Repeats follow the wave week (1-4), also in a longer phase.
+  const weekInPhase = position ? waveWeek(position) : 1;
+  const phaseSteps = target?.phaseSteps ?? (template.weeklyProgression ?? []).filter((w) => !w.phaseId);
+  const baseStep = phaseSteps.find((w) => w.weekInPhase === weekInPhase) ?? target?.step;
   const scale = baseStep ? totalMinutes / baseStep.targetMinutes : 1;
 
   let repeats: number | undefined;
@@ -90,15 +96,26 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
     { label: 'Conditie', level: LOAD_LEVEL[profile.cardioLoad ?? 'none'] ?? 0 },
   ];
 
-  const weeks = (template.weeklyProgression ?? []).map((w) => ({
+  // Phase-specific steps are explicit numbers; the generic wave is shown
+  // at this cycle's scale.
+  const explicit = phaseSteps.some((w) => w.phaseId);
+  const currentWeek = explicit ? position?.weekInPhase : weekInPhase;
+  const weeks = phaseSteps.map((w) => ({
     week: w.weekInPhase,
-    minutes: Math.round(w.targetMinutes * scale),
+    minutes: explicit ? w.targetMinutes : Math.round(w.targetMinutes * scale),
     note: w.note ?? '',
-    current: !!position && w.weekInPhase === weekInPhase,
+    current: !!position && w.weekInPhase === currentWeek,
   }));
+
+  const step = target?.step;
+  const targets = [
+    step?.elevationGainM ? `${step.elevationGainM} m stijgen en dalen` : undefined,
+    step?.backpackKg ? `Rugzak ${step.backpackKg} kg` : undefined,
+  ].filter((t): t is string => !!t);
 
   return {
     summary: spec.summary(repeats),
+    targets,
     totalMinutes,
     repeats,
     items,

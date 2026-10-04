@@ -2,7 +2,8 @@ import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession } from '../models/training';
 import type { Objective } from '../models/objectives';
 import { makeId } from '../utils/id';
-import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
+import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { activeSwaps, layoutPhases, patternForWeek } from '../engine/programLayout';
 import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_RECOVERY } from './stretches';
 
 // ---------------------------------------------------------------------------
@@ -200,7 +201,10 @@ function buildTemplates(): SessionTemplate[] {
       // combinatie met tpl_long_run (zie de programma-toelichting hierboven)
       // als data i.p.v. de oude hardcoded INTENTIONAL_BACK_TO_BACK_TEMPLATE_IDS
       // in engine/scheduler.ts.
-      pairingOverride: [{ withTemplateId: 'tpl_long_run', verdict: 'prefer' }],
+      pairingOverride: [
+        { withTemplateId: 'tpl_long_run', verdict: 'prefer' },
+        { withTemplateId: 'tpl_mountain_hike', verdict: 'prefer' },
+      ],
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 35, note: 'Wennen — 4-5 herhalingen' },
         { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw — 6 herhalingen' },
@@ -232,6 +236,72 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw — +10% afstand/D+ t.o.v. week 1' },
         { weekInPhase: 3, targetMinutes: 70, note: 'Zwaarste week — +10-15% t.o.v. week 2' },
         { weekInPhase: 4, targetMinutes: 45, note: 'Deload (35-45 min, D+ ook lager)' },
+      ],
+    },
+    // Fase 3 — de lange zondag vanaf Bergcapaciteit (engine/programLayout.ts
+    // PATTERN_SWAPS): een bergtocht met een eigen ladder voor duur, D+ en
+    // rugzak per week (docs/onderzoek rapport 1, "Fase 2 tot en met 4 in
+    // getallen"; rapport 2, regels A1-A3). Rugzak in stappen van hoogstens
+    // 2 kg en nooit in dezelfde week als een D+-stap. Geen vaste weekdag:
+    // de tocht neemt de plek in van de sessie die hij vervangt.
+    {
+      id: 'tpl_mountain_hike',
+      name: 'Bergtocht',
+      type: 'hiking',
+      sport: 'hiking',
+      focus: 'Tijd op de benen × D+ en D- × rugzak, richting de GR5',
+      durationVariants: { full: 180, short: 90 },
+      outdoorTarget: { targetElevationM: 500, backpackWeightKg: 6 },
+      cardioTarget: { zone: 'Zone 1-2, RPE 3-4: je kunt blijven praten' },
+      notes:
+        'Een lange wandeling met zoveel mogelijk hoogteverschil, omhoog en omlaag, met de rugzak van deze week. Rustig tempo, eten en drinken onderweg zoals op de GR5. Geen heuvels in de buurt? Herhaal een helling, een trap of een duin, of loop het stijgende deel op de loopband en het dalen op een trap.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_LOWER,
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
+      pairingOverride: [
+        { withTemplateId: 'tpl_hill_intervals', verdict: 'prefer' },
+        { withTemplateId: 'tpl_hike_day_one', verdict: 'prefer' },
+      ],
+      weeklyProgression: [
+        { phaseId: 'phase_3', weekInPhase: 1, targetMinutes: 120, elevationGainM: 400, backpackKg: 4, note: 'Wennen' },
+        { phaseId: 'phase_3', weekInPhase: 2, targetMinutes: 150, elevationGainM: 450, backpackKg: 4, note: 'Meer hoogtemeters' },
+        { phaseId: 'phase_3', weekInPhase: 3, targetMinutes: 165, elevationGainM: 450, backpackKg: 6, note: 'Rugzak zwaarder' },
+        { phaseId: 'phase_3', weekInPhase: 4, targetMinutes: 105, elevationGainM: 300, backpackKg: 4, note: 'Rustweek' },
+        { phaseId: 'phase_3', weekInPhase: 5, targetMinutes: 180, elevationGainM: 550, backpackKg: 6, note: 'Meer hoogtemeters' },
+        { phaseId: 'phase_3', weekInPhase: 6, targetMinutes: 195, elevationGainM: 550, backpackKg: 8, note: 'Rugzak zwaarder' },
+        { phaseId: 'phase_3', weekInPhase: 7, targetMinutes: 225, elevationGainM: 650, backpackKg: 8, note: 'Zwaarste week' },
+        { phaseId: 'phase_3', weekInPhase: 8, targetMinutes: 150, elevationGainM: 400, backpackKg: 6, note: 'Rustweek' },
+        { phaseId: 'phase_4', weekInPhase: 1, targetMinutes: 240, elevationGainM: 650, backpackKg: 10, note: 'Tweede dag op rij, rugzak zwaarder' },
+        { phaseId: 'phase_4', weekInPhase: 2, targetMinutes: 270, elevationGainM: 800, backpackKg: 10, note: 'Meer hoogtemeters' },
+        { phaseId: 'phase_4', weekInPhase: 3, targetMinutes: 300, elevationGainM: 1000, backpackKg: 12, note: 'Generale repetitie met tochtgewicht' },
+        { phaseId: 'phase_4', weekInPhase: 4, targetMinutes: 180, elevationGainM: 500, backpackKg: 8, note: 'Rustweek' },
+        { phaseId: 'phase_taper', weekInPhase: 1, targetMinutes: 150, elevationGainM: 500, backpackKg: 10, note: 'Minder volume, zelfde tempo' },
+        { phaseId: 'phase_taper', weekInPhase: 2, targetMinutes: 90, elevationGainM: 200, backpackKg: 6, note: 'Kort en fris, weinig dalen' },
+      ],
+    },
+    // Expeditieklaar: de zaterdag wordt de eerste van twee wandeldagen op
+    // rij (rapport 1: back-to-back weekend). Bewust gekoppeld aan de
+    // bergtocht van zondag, zoals de heuvels aan de lange duurloop.
+    {
+      id: 'tpl_hike_day_one',
+      name: 'Wandeldag 1 van 2',
+      type: 'hiking',
+      sport: 'hiking',
+      focus: 'Twee dagen achter elkaar: morgen weer op pad',
+      durationVariants: { full: 150, short: 90 },
+      outdoorTarget: { targetElevationM: 400, backpackWeightKg: 8 },
+      cardioTarget: { zone: 'Zone 1-2, RPE 3: bewust rustig, morgen volgt dag 2' },
+      notes:
+        'De eerste van twee wandeldagen, zoals op de GR5. Rustiger dan zondag, met hoogteverschil en de rugzak. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen weer kunnen vertrekken.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_LOWER,
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
+      pairingOverride: [{ withTemplateId: 'tpl_mountain_hike', verdict: 'prefer' }],
+      weeklyProgression: [
+        { phaseId: 'phase_4', weekInPhase: 1, targetMinutes: 150, elevationGainM: 400, backpackKg: 8, note: 'Wennen aan twee dagen' },
+        { phaseId: 'phase_4', weekInPhase: 2, targetMinutes: 180, elevationGainM: 500, backpackKg: 8, note: 'Iets langer' },
+        { phaseId: 'phase_4', weekInPhase: 3, targetMinutes: 180, elevationGainM: 600, backpackKg: 10, note: 'Zwaarste weekend' },
+        { phaseId: 'phase_4', weekInPhase: 4, targetMinutes: 90, elevationGainM: 250, backpackKg: 6, note: 'Rustweek' },
       ],
     },
     {
@@ -269,11 +339,11 @@ function buildTemplates(): SessionTemplate[] {
 }
 
 // ---------------------------------------------------------------------------
-// Program — Maand 1 is de BASISFASE. Maanden 2-4 zijn nog niet door jou
-// uitgewerkt; ze hergebruiken voorlopig hetzelfde weekpatroon als placeholder
-// (zie README), met alvast de richting uit "LATER / ALPENFASE" verwerkt in de
-// omschrijving. Start op de eerstvolgende maandag zodat Week 1 (WENNEN)
-// meteen aansluit bij vandaag.
+// Program — start op de maandag van deze week, zodat week 1 meteen
+// aansluit bij vandaag. Zonder doeldatum zijn het de vier blokken van vier
+// weken; zodra het hoofddoel een datum heeft, rekent
+// storage/database.ts#syncProgramHorizon de fases terug vanaf die datum
+// (engine/programLayout.ts).
 // ---------------------------------------------------------------------------
 
 function buildProgram(): Program {
@@ -282,43 +352,16 @@ function buildProgram(): Program {
     id: 'prog_ascend',
     name: 'ASCEND PROGRAMMA',
     startDate,
-    phases: [
-      {
-        id: 'phase_1',
-        name: 'BASISFASE',
-        order: 1,
-        weekCount: 4,
-        description: 'Maand 1: 3x kracht, aerobe basis opbouwen, en een weekend-beenblok (heuvelintervallen + lange duurloop) richting zowel hardloopprogressie als de GR5. Wennen → Opbouw → Zwaarste week → Deload.',
-      },
-      {
-        id: 'phase_2',
-        name: 'OPBOUW',
-        order: 2,
-        weekCount: 4,
-        description: 'Placeholder — nog niet door jou ingevuld. Richting uit je notities: 2x hardlopen per week, langere Zone 2, meer incline.',
-      },
-      {
-        id: 'phase_3',
-        name: 'BERGCAPACITEIT',
-        order: 3,
-        weekCount: 4,
-        description: 'Placeholder — nog niet door jou ingevuld. Richting: meer D+, step-ups/step-downs, rugzakgewicht, 2-4+ uur hikes.',
-      },
-      {
-        id: 'phase_4',
-        name: 'EXPEDITIEKLAAR',
-        order: 4,
-        weekCount: 4,
-        description: 'Placeholder — nog niet door jou ingevuld. Richting: 500 → 750 → 1000+ D+, back-to-back hiking days.',
-      },
-    ],
+    phases: layoutPhases(startDate, undefined, todayISO()),
   };
 }
 
 // ---------------------------------------------------------------------------
 // Planned sessions — het vaste weekpatroon herhaald over het hele programma.
-// MA Herstel · DI Easy Run · WO Lower A zwaar · DO Upper A ·
-// VR Upper B · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop
+// MA Herstel · DI Upper A · WO Lower A zwaar · DO Easy Run ·
+// VR Upper B · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop,
+// vanaf Bergcapaciteit op zondag een bergtocht en in Expeditieklaar op
+// zaterdag de eerste van twee wandeldagen.
 // ---------------------------------------------------------------------------
 
 function buildPlannedSessions(program: Program, templates: SessionTemplate[]): PlannedSession[] {
@@ -328,23 +371,24 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
   // app was installed (production bug: a fresh install opened on Saturday
   // showed five "missed" sessions and a coach asking to catch them up).
   const firstDay = todayISO();
+  const pattern = templates.filter((t) => t.defaultDayOfWeek);
+  const swaps = activeSwaps(templates, {}, () => true);
 
   for (let week = 0; week < totalWeeks; week++) {
     const weekStart = addDays(program.startDate, week * 7);
-    templates
-      .filter((t) => t.defaultDayOfWeek)
-      .forEach((t, order) => {
-        const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-        if (date < firstDay) return;
-        sessions.push({
-          id: makeId('planned'),
-          templateId: t.id,
-          scheduledDate: date,
-          weekStartDate: weekStart,
-          status: 'planned',
-          order,
-        });
+    const phaseId = resolveProgramWeek(program, weekStart)?.phase.id;
+    patternForWeek(pattern, templates, swaps, phaseId).forEach(({ template, dayOfWeek }, order) => {
+      const date = addDays(weekStart, dayOfWeek - 1);
+      if (date < firstDay) return;
+      sessions.push({
+        id: makeId('planned'),
+        templateId: template.id,
+        scheduledDate: date,
+        weekStartDate: weekStart,
+        status: 'planned',
+        order,
       });
+    });
   }
   return sessions;
 }

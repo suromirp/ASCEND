@@ -16,7 +16,9 @@ import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
+import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap } from '../engine/programLayout';
+import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
@@ -484,6 +486,9 @@ export interface AppSettings {
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.
   sportFrequency?: Partial<Record<'running' | 'hiking' | 'cycling', number>>;
+  // Fase 3 — the long Sunday from Bergcapaciteit on (engine/programLayout.ts).
+  // Absent = 'hike'. Optional, so older settings need no migration.
+  longSundaySession?: 'hike' | 'run';
   // Ziek gemeld (engine/illness.ts). Optional, so older settings and
   // backups need no migration; travels with the settings in an export.
   illnessEpisodes?: IllnessEpisode[];
@@ -678,25 +683,8 @@ export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff);
   await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
 
-  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
-  const templatesWithDay = templates.filter((t) => t.defaultDayOfWeek);
-  const newSessions: PlannedSession[] = [];
-  for (let week = 0; week < totalWeeks; week++) {
-    const weekStart = addDays(program.startDate, week * 7);
-    templatesWithDay.forEach((t, order) => {
-      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date < cutoff) return;
-      newSessions.push({
-        id: makeId('planned'),
-        templateId: t.id,
-        scheduledDate: date,
-        weekStartDate: weekStart,
-        status: 'planned',
-        order,
-      });
-    });
-  }
-  await putAll('plannedSessions', newSessions);
+  const ctx = await patternContext(templates, () => templates.filter((t) => t.defaultDayOfWeek));
+  await putAll('plannedSessions', patternSessions(program, templates, ctx.pattern, ctx.swaps, { from: cutoff, until: ctx.anchor }));
 
   await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
 }
@@ -784,30 +772,14 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
 
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
-  await ProgramsRepo.put({ ...program, startDate: thisMonday });
+  const ctx = await patternContext(templates, () => templates.filter((t) => t.defaultDayOfWeek));
+  const next = { ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO()) };
+  await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff && !loggedPlannedIds.has(s.id));
   const kept = keptLoggedSlots(existingSessions, loggedPlannedIds, cutoff);
-
-  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
-  const templatesWithDay = templates.filter((t) => t.defaultDayOfWeek);
-  const newSessions: PlannedSession[] = [];
-  for (let week = 0; week < totalWeeks; week++) {
-    const weekStart = addDays(thisMonday, week * 7);
-    templatesWithDay.forEach((t, order) => {
-      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date < cutoff || kept.has(`${t.id}|${date}`)) return;
-      newSessions.push({
-        id: makeId('planned'),
-        templateId: t.id,
-        scheduledDate: date,
-        weekStartDate: weekStart,
-        status: 'planned',
-        order,
-      });
-    });
-  }
+  const newSessions = patternSessions(next, templates, ctx.pattern, ctx.swaps, { from: cutoff, until: ctx.anchor, skipSlot: (id, date) => kept.has(`${id}|${date}`) });
   await replacePlannedSessions(toDelete, newSessions);
 }
 
@@ -855,23 +827,14 @@ export async function rebuildPlanningFromWeekOne(
   const thisMonday = mondayOfWeek(todayISO());
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
-  await ProgramsRepo.put({ ...program, startDate: newStart });
+  const ctx = await patternContext(templates, selectPattern);
+  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO()) };
+  await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff && !loggedPlannedIds.has(s.id));
   const kept = keptLoggedSlots(existingSessions, loggedPlannedIds, cutoff);
-
-  const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
-  const pattern = selectPattern(templates).filter((t) => t.defaultDayOfWeek);
-  const newSessions: PlannedSession[] = [];
-  for (let week = 0; week < totalWeeks; week++) {
-    const weekStart = addDays(newStart, week * 7);
-    pattern.forEach((t, order) => {
-      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date < cutoff || kept.has(`${t.id}|${date}`)) return;
-      newSessions.push({ id: makeId('planned'), templateId: t.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order });
-    });
-  }
+  const newSessions = patternSessions(next, templates, ctx.pattern, ctx.swaps, { from: cutoff, until: ctx.anchor, skipSlot: (id, date) => kept.has(`${id}|${date}`) });
   await replacePlannedSessions(toDelete, newSessions);
   return { created: newSessions.length, removed: toDelete.length };
 }
@@ -891,23 +854,117 @@ export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_wee
 
   const thisMonday = mondayOfWeek(todayISO());
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
-  await ProgramsRepo.put({ ...program, startDate: newStart });
+  const templates = await SessionTemplatesRepo.getAll();
+  const ctx = await patternContext(templates);
+  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO()) };
+  await ProgramsRepo.put(next);
 
-  const weeksWithSessions = new Set(existingSessions.map((s) => s.weekStartDate));
-  const today = todayISO();
+  const weeksWithSessions = new Set(existingSessions.map((s) => mondayOfWeek(s.scheduledDate)));
+  const newSessions = patternSessions(next, templates, ctx.pattern, ctx.swaps, { from: todayISO(), until: ctx.anchor, skipWeek: (w) => weeksWithSessions.has(w) });
+  if (newSessions.length > 0) await putAll('plannedSessions', newSessions);
+}
+
+// --- the program toward the goal date (Fase 3) --------------------------
+
+interface PatternContext {
+  pattern: SessionTemplate[];
+  swaps: PatternSwap[];
+  anchor: string | undefined;
+}
+
+// What a rebuilt week looks like for this user: their sports, the hike
+// swaps they allow, and the goal date nothing may be planned on or after.
+async function patternContext(templates: SessionTemplate[], selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[]): Promise<PatternContext> {
+  const [settings, goals, milestones] = await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
+  const enabledSports = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports };
+  const pattern = selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports });
+  return {
+    pattern,
+    // A hike only replaces a session when the caller's pattern would plan
+    // it too (hike templates have no weekday of their own, hence the probe).
+    swaps: activeSwaps(templates, settings, (t) => isTemplatePlannable(t, enabledSports) && (!selectPattern || selectPattern([{ ...t, defaultDayOfWeek: 7 }]).length > 0)),
+    anchor: programAnchorDate(goals, milestones, todayISO()),
+  };
+}
+
+// The weekly pattern laid over every program week, from `from` on and
+// before `until` (the goal day itself stays free).
+function patternSessions(
+  program: Program,
+  templates: SessionTemplate[],
+  pattern: SessionTemplate[],
+  swaps: PatternSwap[],
+  opts: { from: string; until?: string; skipWeek?: (weekStart: string) => boolean; skipSlot?: (templateId: string, date: string) => boolean },
+): PlannedSession[] {
   const totalWeeks = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
-  const templatesWithDay = (await SessionTemplatesRepo.getAll()).filter((t) => t.defaultDayOfWeek);
-  const newSessions: PlannedSession[] = [];
+  const out: PlannedSession[] = [];
   for (let week = 0; week < totalWeeks; week++) {
-    const weekStart = addDays(newStart, week * 7);
-    if (weeksWithSessions.has(weekStart)) continue;
-    templatesWithDay.forEach((t, order) => {
-      const date = addDays(weekStart, (t.defaultDayOfWeek as number) - 1);
-      if (date < today) return;
-      newSessions.push({ id: makeId('planned'), templateId: t.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order });
+    const weekStart = addDays(mondayOfWeek(program.startDate), week * 7);
+    if (opts.skipWeek?.(weekStart)) continue;
+    const phaseId = resolveProgramWeek(program, weekStart)?.phase.id;
+    patternForWeek(pattern, templates, swaps, phaseId).forEach(({ template, dayOfWeek }, order) => {
+      const date = addDays(weekStart, dayOfWeek - 1);
+      if (date < opts.from || (opts.until && date >= opts.until) || opts.skipSlot?.(template.id, date)) return;
+      out.push({ id: makeId('planned'), templateId: template.id, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order });
     });
   }
-  if (newSessions.length > 0) await putAll('plannedSessions', newSessions);
+  return out;
+}
+
+export interface ProgramHorizonResult {
+  phasesChanged: boolean;
+  added: number;
+  swapped: number;
+  removed: number;
+}
+
+// Keeps the stored program in line with the main goal's date, on every
+// boot and whenever a goal or the related settings change:
+// - the phases are counted back from the goal date (taper right before it),
+// - weeks of the program that have no sessions at all get the weekly
+//   pattern (so there is never an empty week before the goal),
+// - planned, unlogged sessions from today on follow their week's phase
+//   (long run becomes a mountain hike from Bergcapaciteit on, and back),
+// - nothing unlogged stays planned on or after the goal day.
+// History is never touched: logged sessions and past days stay as they are.
+// Idempotent: a second run changes nothing.
+export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
+  const [programs, sessions, logs, templates] = await Promise.all([
+    ProgramsRepo.getAll(),
+    PlannedSessionsRepo.getAll(),
+    SessionLogsRepo.getAll(),
+    SessionTemplatesRepo.getAll(),
+  ]);
+  const program = programs[0];
+  if (!program) return { phasesChanged: false, added: 0, swapped: 0, removed: 0 };
+  const today = todayISO();
+  const ctx = await patternContext(templates);
+  const next: Program = { ...program, phases: layoutPhases(program.startDate, ctx.anchor, today) };
+  const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
+  if (phasesChanged) await ProgramsRepo.put(next);
+
+  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const open = (s: PlannedSession) => s.scheduledDate >= today && !logged.has(s.id);
+  const toRemove = ctx.anchor ? sessions.filter((s) => open(s) && s.scheduledDate >= ctx.anchor!) : [];
+  const removedIds = new Set(toRemove.map((s) => s.id));
+
+  const swapped: PlannedSession[] = [];
+  const templateIds = new Set(templates.map((t) => t.id));
+  for (const s of sessions) {
+    if (!open(s) || removedIds.has(s.id) || s.status === 'skipped') continue;
+    const target = templateForPhase(s.templateId, ctx.swaps, resolveProgramWeek(next, s.scheduledDate)?.phase.id);
+    if (target !== s.templateId && templateIds.has(target)) swapped.push({ ...s, templateId: target });
+  }
+
+  const weeksWithSessions = new Set(sessions.filter((s) => !removedIds.has(s.id)).map((s) => mondayOfWeek(s.scheduledDate)));
+  const added = patternSessions(next, templates, ctx.pattern, ctx.swaps, {
+    from: today,
+    until: ctx.anchor ?? programEndDate(next),
+    skipWeek: (w) => weeksWithSessions.has(w) || addDays(w, 6) < today,
+  });
+
+  if (toRemove.length + swapped.length + added.length > 0) await replacePlannedSessions(toRemove, [...swapped, ...added]);
+  return { phasesChanged, added: added.length, swapped: swapped.length, removed: toRemove.length };
 }
 
 // --- atomic multi-store backup writes -----------------------------------

@@ -51,6 +51,13 @@ export interface WeeklyProgressionStep {
   weekInPhase: number;
   targetMinutes: number;
   note?: string; // e.g. "Wennen", "Deload"
+  // Set for a step that belongs to one phase only (the mountain hike's
+  // D+/backpack ladder, engine/programLayout.ts#progressionTarget). Those
+  // match the exact week in that phase and are never scaled per cycle.
+  phaseId?: string;
+  // What the session asks for besides time, shown with the target.
+  elevationGainM?: number;
+  backpackKg?: number;
 }
 
 // A single mobility item — either a dynamic warm-up move (before training)

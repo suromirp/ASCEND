@@ -138,6 +138,35 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'D+', why: 'Hoogtemeters in je benen, ook omlaag.' },
     ],
   },
+  tpl_mountain_hike: {
+    summary: () => 'Een lange wandeling met hoogteverschil en de rugzak van deze week. Rustig, eten en drinken onderweg zoals op de GR5.',
+    keyTag: 'D+ en D- met rugzak',
+    structure: [
+      { kind: 'warmup', label: 'Rustig inlopen', minutes: 10, intensity: 1, detail: 'Vlak, rugzak goed afstellen' },
+      { kind: 'walk', label: 'Bergtocht', rest: true, intensity: 2, detail: 'Omhoog in kleine passen, omlaag beheerst. Elk uur iets eten.' },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 5, intensity: 1, detail: 'Vlak, daarna rekken' },
+    ],
+    garminSport: 'Wandelen (of Hiken)',
+    builds: [
+      { label: 'Tijd op de benen', why: 'Uren achter elkaar bewegen, zoals een etappe van de GR5.' },
+      { label: 'Afdalen', why: 'Je bovenbenen wennen aan dalen; dat is wat het meest pijn doet op dag 3.' },
+      { label: 'Rugzak', why: 'Schouders, heupen en voeten wennen stap voor stap aan het gewicht.' },
+    ],
+  },
+  tpl_hike_day_one: {
+    summary: () => 'De eerste van twee wandeldagen. Rustiger dan morgen, met hoogteverschil en de rugzak.',
+    keyTag: 'Morgen weer op pad',
+    structure: [
+      { kind: 'warmup', label: 'Rustig inlopen', minutes: 10, intensity: 1 },
+      { kind: 'walk', label: 'Wandeldag 1', rest: true, intensity: 2, detail: 'Bewust rustig, je bewaart iets voor morgen' },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 5, intensity: 1, detail: 'Daarna eten, drinken en rekken' },
+    ],
+    garminSport: 'Wandelen (of Hiken)',
+    builds: [
+      { label: 'Twee dagen op rij', why: 'Op vermoeide benen opnieuw vertrekken, precies wat een meerdaagse tocht vraagt.' },
+      { label: 'Herstel tussen dagen', why: 'Je leert hoe eten, slapen en je benen reageren tussen twee tochten.' },
+    ],
+  },
   tpl_herstel: {
     summary: () => 'Rust of een rustige wandeling. Geen prestatie, alleen bewegen.',
     structure: [{ kind: 'walk', label: 'Rustig wandelen', rest: true, intensity: 1, detail: 'Of volledige rust, allebei goed' }],

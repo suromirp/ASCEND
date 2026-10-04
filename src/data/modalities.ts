@@ -330,6 +330,36 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
   },
 ];
 
+// Fase 3 — the mountain hike and the first of two hiking days. Outdoor
+// with D+ first; a treadmill/stairs combination when there are no hills.
+export const MOUNTAIN_HIKE_MODALITIES: ModalityDefinition[] = [
+  {
+    key: 'mountain_hike_outdoor',
+    label: 'Wandelen met D+, buiten',
+    role: 'PRIMARY',
+    environment: 'outdoor',
+    garminProfile: 'Hike',
+    durationHint: 'geplande duur',
+    how: 'Rustig tempo (RPE 3-4/10), met de rugzak van deze week. Zoek zoveel mogelijk hoogteverschil, omhoog en omlaag. Geen heuvels? Herhaal een helling, trap of duin.',
+    why: 'De meest GR5-specifieke training: echte hoogtemeters, dalen, terrein en het gewicht op je rug.',
+    fields: { distance: true, elevation: true, elevationLoss: true, terrain: true, backpackWeight: true },
+    sources: [PUBMED_LOAD_CARRYING, PUBMED_DOWNHILL_1, NKBV_FIT_DE_BERGEN_IN],
+  },
+  {
+    key: 'mountain_hike_treadmill_stairs',
+    label: 'Loopband op helling en trappen',
+    role: 'FALLBACK',
+    environment: 'treadmill',
+    garminProfile: 'Treadmill',
+    durationHint: 'geplande duur',
+    how: 'Wandelen op 10-15% helling met de rugzak, afgewisseld met trappen omlaag lopen voor het dalen.',
+    why: 'Houdt de klimprikkel en de rugzak vast als buiten niet lukt.',
+    whenNotIdeal: ['mist terrein en een lange, echte afdaling'],
+    fields: { distance: true, inclinePercent: true, elevation: true, backpackWeight: true },
+    sources: [PUBMED_INCLINE_WALKING, PUBMED_STAIR_CLIMBING],
+  },
+];
+
 // Named for the rest day's original weekday (Sunday) — Herstel moved to
 // Monday when the week was reshaped around a weekend hill/long-run block,
 // but this content (rest/recovery-walk options) didn't change, and it's
@@ -400,6 +430,8 @@ export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
   tpl_herstel: SUNDAY_MODALITIES,
   tpl_hill_intervals: HILL_INTERVAL_MODALITIES,
   tpl_long_run: LONG_RUN_MODALITIES,
+  tpl_mountain_hike: MOUNTAIN_HIKE_MODALITIES,
+  tpl_hike_day_one: MOUNTAIN_HIKE_MODALITIES,
 };
 
 export function getModalities(templateId: string): ModalityDefinition[] | undefined {
