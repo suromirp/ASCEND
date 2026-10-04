@@ -206,7 +206,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'OPTIE B — BUITEN HIKEN',
-        body: 'Wanneer mogelijk heeft een echte heuvelroute extra waarde: ongelijke ondergrond, balans, wisselende staplengtes en écht D+/D- die een treadmill niet levert. Log met GPS: duur, afstand, D+, D-, hartslag, RPE.',
+        body: 'Wanneer mogelijk heeft een echte heuvelroute extra waarde: ongelijke ondergrond, balans, wisselende staplengtes en écht D+/D− die een treadmill niet levert. Log met GPS: duur, afstand, D+, D−, hartslag, RPE.',
       },
       {
         heading: 'WANNEER TE ZWAAR?',
@@ -299,7 +299,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
 
   tpl_long_run: {
     subtitle: 'Uithouding × D+ • Richting marathon en GR5',
-    registration: 'Ascend: duur, afstand, D+, D-, gemiddelde hartslag, RPE.',
+    registration: 'Ascend: duur, afstand, D+, D−, gemiddelde hartslag, RPE.',
     sections: [
       {
         heading: 'DOEL',

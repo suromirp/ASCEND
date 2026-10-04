@@ -149,7 +149,7 @@ export interface ExerciseSetLog {
 
 // What the session was actually done on/in — a treadmill run and an
 // outdoor run (or an incline treadmill and a real hike) aren't
-// interchangeable: GPS-based D+/D- only means something outdoors, and the
+// interchangeable: GPS-based D+/D− only means something outdoors, and the
 // incline % estimate only means something on a treadmill. Kept as a coarse
 // tag alongside the richer `modality` below (derived from the chosen
 // modality's own metadata) since it's still the simplest thing for a

@@ -1,6 +1,6 @@
 // ASCEND — Weekly Prescription Builder domain models.
 //
-// Decides WHAT a week needs (session count/duration/volume/D+/D-/intensity
+// Decides WHAT a week needs (session count/duration/volume/D+/D−/intensity
 // per capability, and PROGRESS/CONSOLIDATE/REDUCE/REPLACE/TAPER/KEEP) —
 // never WHERE. Placement stays exclusively engine/candidatePlacement.ts's
 // searchWeeklyPlacement (via engine/weekReconciliation.ts) — this file's

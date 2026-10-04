@@ -89,7 +89,7 @@ export const ALGORITHM_RULES: AlgorithmRuleMetadata[] = [
     evidenceStrength: 'heuristic',
     populationDirectness: 'low',
     evidenceRefs: [],
-    limitations: ['D+/D- progression bands'],
+    limitations: ['D+/D− progression bands'],
     lastReviewed: REVIEWED,
     ruleVersion: 1,
   },

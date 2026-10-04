@@ -15,7 +15,7 @@
 // validated.
 
 import type { CapabilityDemand, PreparationTarget } from '../models/capability';
-import { UNIT_COMPARISON_DIRECTION } from '../models/units';
+import { UNIT_COMPARISON_DIRECTION, formatMeasuredValue } from '../models/units';
 
 // 0.95 = the more ambitious end of the range (closest to fully meeting the
 // raw demand); 0.7 = the more conservative end (furthest from it, still a
@@ -50,7 +50,7 @@ export function computePreparationTargets(demands: CapabilityDemand[]): Preparat
       confidence: 'low',
       ruleClass: 'ascend_heuristic',
       evidenceRefs: [],
-      explanation: `Trainingsdoel afgeleid van de event-eis (${d.demand.amount} ${d.demand.unit}) — niet per se identiek aan het evenement zelf.`,
+      explanation: `Trainingsdoel afgeleid van de eis van je doel (${formatMeasuredValue(d.demand)}). Dat hoeft niet precies gelijk te zijn aan de tocht zelf.`,
     };
   });
 }

@@ -140,7 +140,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
   },
   tpl_mountain_hike: {
     summary: () => 'Een lange wandeling met hoogteverschil en de rugzak van deze week. Rustig, eten en drinken onderweg zoals op de GR5.',
-    keyTag: 'D+ en D- met rugzak',
+    keyTag: 'D+ en D− met rugzak',
     structure: [
       { kind: 'warmup', label: 'Rustig inlopen', minutes: 10, intensity: 1, detail: 'Vlak, rugzak goed afstellen' },
       { kind: 'walk', label: 'Bergtocht', rest: true, intensity: 2, detail: 'Omhoog in kleine passen, omlaag beheerst. Elk uur iets eten.' },

@@ -267,7 +267,7 @@ function CapabilityQuestion({
 
 function unitSuffix(unit: Unit): string {
   if (unit === 'm_elevation_gain') return 'm D+';
-  if (unit === 'm_elevation_loss') return 'm D-';
+  if (unit === 'm_elevation_loss') return 'm D−';
   if (unit === 'days') return 'dagen';
   return unit;
 }

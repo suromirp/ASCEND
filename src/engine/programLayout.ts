@@ -187,7 +187,7 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
 
 // From Bergcapaciteit on, the long Sunday becomes a mountain hike, and in
 // Expeditieklaar the Saturday becomes the first of two hiking days
-// (docs/onderzoek rapport 1: phase 3 shifts to hikes with D+/D- and a pack,
+// (docs/onderzoek rapport 1: phase 3 shifts to hikes with D+/D− and a pack,
 // phase 4 back-to-back days). The hikes take the slot of the session they
 // replace. The user can keep the long run instead (settings), and when
 // hiking is switched off the original sessions simply stay.

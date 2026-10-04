@@ -3,6 +3,7 @@
 // (engine/trainingSpots.ts), with how to get there: on foot, by bike (the
 // ride counts as training) or by car/train.
 
+import { formatNumberNL } from '../utils/number';
 import { useState } from 'react';
 import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
@@ -179,7 +180,7 @@ function SpotCard({ spot, home }: { spot: TrainingSpot; home?: HomeLocation }) {
           <p><span style={{ color: 'var(--color-ink)' }}>Tip:</span> {spot.tip}</p>
           <p><span style={{ color: 'var(--color-ink)' }}>Ondergrond:</span> {spot.terrain}</p>
           <p><span style={{ color: 'var(--color-ink)' }}>Toegang:</span> {spot.access}</p>
-          {spot.station && <p><span style={{ color: 'var(--color-ink)' }}>Station:</span> {spot.station.name}, ±{spot.station.km} km hemelsbreed</p>}
+          {spot.station && <p><span style={{ color: 'var(--color-ink)' }}>Station:</span> {spot.station.name}, ±{formatNumberNL(spot.station.km, 1)} km hemelsbreed</p>}
           {spot.caveat && <p style={{ color: 'var(--color-warning)' }}>Let op: {spot.caveat}</p>}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {spot.sources.map((src) => (

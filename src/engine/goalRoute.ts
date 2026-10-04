@@ -1,7 +1,7 @@
 // ASCEND — route profile of a goal (goal-flow redesign, Fase 1).
 //
 // A multi-day goal is entered the way people actually think about a trip:
-// the route totals (600 km, 30.000 m D+ and D-), the number of walking or
+// the route totals (600 km, 30.000 m D+ and D−), the number of walking or
 // riding days, and — for a trip done in stages — the longest stretch of
 // consecutive days. Training is never compared against those route totals
 // directly (production report: "30.000 m D+" put next to a single training
@@ -134,7 +134,7 @@ export function longestStageDays(requirements: GoalRequirement[], execution: Goa
 // ASCEND_HEURISTIC(DIN-33466-WALKING-TIME): the standard German/Alpine-club
 // walking-time rule — 4 km/h on the flat, 300 m/h up, 500 m/h down; the
 // larger of horizontal and vertical time plus half of the smaller. Turns a
-// typical hiking day (km + D+ + D-) into time on foot, so it can be
+// typical hiking day (km + D+ + D−) into time on foot, so it can be
 // compared with what training history actually records (duration in
 // minutes) instead of a distance that time-based hiking evidence can never
 // match. Not a personal prediction — a widely used signage norm,
