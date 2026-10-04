@@ -55,7 +55,7 @@ export const GARMIN_ZONE_SETUP: GuideCard = {
 
 export const GARMIN_STRAP_USAGE: GuideCard = {
   heading: 'BORSTBAND GEBRUIKEN BIJ',
-  items: ['Easy Run', 'toekomstige tempo runs', 'toekomstige intervallen', 'incline treadmill', 'serieuze hikes wanneer HR-data belangrijk is'],
+  items: ['Rustige duurloop', 'later: tempolopen', 'later: intervallen', 'loopband op helling', 'zware bergwandelingen als de hartslag belangrijk is'],
   body: 'Niet noodzakelijk bij een casual wandeling, normale dagelijkse stappen of een rustdag — het horloge alleen is daar voldoende.',
   note: 'Voor trainingssturing heeft de borstband de voorkeur boven de polssensor: elektroden licht vochtig maken, strak en direct tegen de huid, en vóór de activiteit controleren of de sensor verbonden is.',
   sources: [GARMIN_STRAP_PRIORITY, GARMIN_ELECTRODES],
@@ -64,7 +64,7 @@ export const GARMIN_STRAP_USAGE: GuideCard = {
 export const GARMIN_DATA_SCREENS: GuideCard = {
   heading: 'DATASCHERMEN PER ACTIVITEIT',
   items: [
-    'Easy Run — hoofdscherm: timer, hartslag, hartslagzone, tempo. Tweede scherm: afstand, gem. HR, gem. tempo, cadans.',
+    'Rustige duurloop. Hoofdscherm: timer, hartslag, hartslagzone, tempo. Tweede scherm: afstand, gem. HR, gem. tempo, cadans.',
     'Bergconditie (indoor) — gebruik Treadmill/Indoor Walking of maak een custom activity "Bergconditie" met eigen dataschermen.',
     'Bergconditie (buiten) — met GPS: afstand, Total Ascent, Total Descent, hartslag, RPE.',
   ],

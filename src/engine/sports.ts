@@ -9,7 +9,7 @@ import { findModalityByKey, isCyclingModality, modalitySport } from '../data/mod
 export type Sport = 'running' | 'hiking' | 'cycling';
 export type EnabledSports = Record<Sport, boolean>;
 
-export const SPORT_LABEL: Record<Sport, string> = { running: 'Hardlopen', hiking: 'Hiken', cycling: 'Fietsen' };
+export const SPORT_LABEL: Record<Sport, string> = { running: 'Hardlopen', hiking: 'Wandelen', cycling: 'Fietsen' };
 
 export const DEFAULT_ENABLED_SPORTS: EnabledSports = { running: true, hiking: true, cycling: false };
 

@@ -33,7 +33,7 @@ const ROUTE_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain:
 const OVERRIDE_LABEL: Record<RouteKind, string> = { distance: 'Afstand', elevationGain: 'Stijging', elevationLoss: 'Daling' };
 
 const ROUTE_SPORTS: { value: string; label: string; dayWord: string; verb: string }[] = [
-  { value: 'hiking', label: 'Hiken', dayWord: 'loopdagen', verb: 'lopen' },
+  { value: 'hiking', label: 'Wandelen', dayWord: 'wandeldagen', verb: 'wandelen' },
   { value: 'cycling', label: 'Fietsen', dayWord: 'fietsdagen', verb: 'fietsen' },
 ];
 

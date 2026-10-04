@@ -111,7 +111,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'DOEL',
-        body: 'Aerobe basis en hardloopontwikkeling opbouwen, de dag na Lower A, zonder je herstel of de heuvelintervallen van zaterdag te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit — plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
+        body: 'Aerobe basis en hardloopontwikkeling opbouwen, de dag na Benen A, zonder je herstel of de heuvelintervallen van zaterdag te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit — plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
       },
       {
         heading: 'INTENSITEIT',
@@ -132,7 +132,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'WANNEER TE LANGZAAM?',
-        body: 'Bij een Easy Run is te langzaam veel minder een probleem dan te snel. Zolang je écht rustig loopt met een natuurlijke loopbeweging, hoeft het tempo niet omhoog omdat je hartslag laag is — het hoofddoel is rustig volume verzamelen zonder je herstel van Lower A of de heuvelintervallen te verstoren.',
+        body: 'Bij een rustige duurloop is te langzaam veel minder een probleem dan te snel. Zolang je écht rustig loopt met een natuurlijke loopbeweging, hoeft het tempo niet omhoog omdat je hartslag laag is — het hoofddoel is rustig volume verzamelen zonder je herstel van Benen A of de heuvelintervallen te verstoren.',
       },
       {
         heading: 'GARMIN',
@@ -154,7 +154,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'WAAROM MIDDEN IN DE WEEK?',
-        body: 'Lower A staat ver genoeg na het zware weekend en ver genoeg ervoor, zodat er minstens 48 uur tussen zware beendagen zit. De dag ervoor is een upperdag die je benen spaart, de dag erna een rustige Easy Run. Kracht- en duurtraining combineren is prima verdedigbaar, zolang de loop rond Lower A echt rustig blijft.',
+        body: 'Benen A staat ver genoeg na het zware weekend en ver genoeg ervoor, zodat er minstens 48 uur tussen zware beendagen zit. De dag ervoor is een dag voor het bovenlichaam die je benen spaart, de dag erna een rustige duurloop. Kracht- en duurtraining combineren is prima verdedigbaar, zolang de loop rond Benen A echt rustig blijft.',
       },
       {
         heading: 'CONTROLEPUNT',
@@ -164,7 +164,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'warming-upgewichten voelen ongewoon zwaar',
           'benen zijn iedere woensdag nog sterk vermoeid',
         ],
-        note: 'Bij dit patroon eerst de Easy Run en het weekend lichter maken (korter/langzamer), niet meteen Lower A opofferen.',
+        note: 'Bij dit patroon eerst de rustige duurloop en het weekend lichter maken (korter/langzamer), niet meteen Benen A opofferen.',
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
@@ -177,11 +177,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'DOEL',
-        body: 'Tweede bovenlichaamprikkel van de week — samen met Upper A verdeelt dit het wekelijkse volume over twee sessies. Voor hypertrofie tellen vooral voldoende wekelijks volume en consistentie; voor kracht wegen zwaardere belastingen zwaarder.',
+        body: 'Tweede bovenlichaamprikkel van de week — samen met Bovenlichaam A verdeelt dit het wekelijkse volume over twee sessies. Voor hypertrofie tellen vooral voldoende wekelijks volume en consistentie; voor kracht wegen zwaardere belastingen zwaarder.',
       },
       {
         heading: 'WAAR OP LETTEN',
-        body: 'Geen extra endurance nodig deze dag. Dit is bewust ook een dag zónder zware beenbelasting, ingeklemd tussen woensdag (Lower A) en het zware weekend-beenblok (zaterdag heuvelintervallen, zondag lange duurloop).',
+        body: 'Geen extra endurance nodig deze dag. Dit is bewust ook een dag zónder zware beenbelasting, ingeklemd tussen woensdag (Benen A) en het zware weekend-beenblok (zaterdag heuvelintervallen, zondag lange duurloop).',
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
@@ -189,7 +189,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_bergconditie: {
-    subtitle: 'Alpine Base • Uphill Endurance',
+    subtitle: 'Alpiene basis · bergop uithouding',
     registration: 'Ascend: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
     sections: [
       {
@@ -215,7 +215,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'praten wordt lastig',
           'hartslag lijkt op thresholdtraining',
           'benen zijn zaterdag nog zwaar',
-          'Lower B-prestaties dalen structureel',
+          'Benen B-prestaties dalen structureel',
           'je moet aan de treadmill hangen om tempo vol te houden',
         ],
         note: 'Dan eerst snelheid of helling omlaag — niet meteen de hele training overslaan.',
@@ -232,11 +232,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'DOEL',
-        body: 'Tweede lower-body prikkel van de week. MacroFactor bepaalt de daadwerkelijke belasting — dit is niet per definitie lichter dan Lower A.',
+        body: 'Tweede lower-body prikkel van de week. MacroFactor bepaalt de daadwerkelijke belasting — dit is niet per definitie lichter dan Benen A.',
       },
       {
         heading: 'BELANGRIJKSTE MEETPUNT',
-        body: 'Deze training is de controle of vrijdag (Bergconditie) goed gedoseerd was. Wordt Lower B gedurende meerdere weken aantoonbaar slechter na vrijdag? Pas dan eerst Bergconditie aan — niet meteen de krachttraining schrappen.',
+        body: 'Deze training is de controle of vrijdag (Bergconditie) goed gedoseerd was. Wordt Benen B gedurende meerdere weken aantoonbaar slechter na vrijdag? Pas dan eerst Bergconditie aan — niet meteen de krachttraining schrappen.',
       },
       {
         heading: 'LATER',
@@ -248,7 +248,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_herstel: {
-    subtitle: 'Recovery • Rustige beweging',
+    subtitle: 'Herstel · rustig bewegen',
     registration: 'Training is niet verplicht.',
     sections: [
       {
@@ -287,7 +287,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         items: [
           'techniek/houding verslechtert duidelijk tijdens de herhalingen',
           'geen volledig herstel meer mogelijk tussen herhalingen binnen de geplande tijd',
-          'zondag (Lange Duurloop) is meerdere weken op rij merkbaar slechter na zaterdag',
+          'zondag (lange duurloop) is meerdere weken op rij merkbaar slechter na zaterdag',
         ],
         note: 'Dan eerst het aantal herhalingen of de helling omlaag — niet meteen de hele sessie schrappen.',
       },
@@ -336,7 +336,7 @@ export function getTrainingGuide(templateId: string): TrainingDayGuide | undefin
 // The day a guide belongs to comes from the real schedule, never a label
 // typed into this file (those went stale the moment the weekly pattern
 // changed): the session's own date when there is one, otherwise the
-// template's usual weekday, otherwise "flexibel" (e.g. Lower B, a ride).
+// template's usual weekday, otherwise "flexibel" (e.g. Benen B, a ride).
 const WEEKDAYS_NL = ['MAANDAG', 'DINSDAG', 'WOENSDAG', 'DONDERDAG', 'VRIJDAG', 'ZATERDAG', 'ZONDAG'];
 
 export function guideDayLabel(template: Pick<SessionTemplate, 'defaultDayOfWeek'> | undefined, dateIso?: string): string {

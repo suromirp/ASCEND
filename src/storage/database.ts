@@ -590,10 +590,10 @@ export async function seedIfEmpty(): Promise<void> {
 // replaced by this — same full-overwrite tradeoff syncObjectiveDefinitions/
 // resetToDemoData already make for non-historical data, just scoped to
 // "not this week or earlier" here.
-// v3: swapped Upper A/Upper B's defaultDayOfWeek (data/defaultProgram.ts) —
-// Upper A was displaced from Monday to Friday by an earlier reshape (moving
-// Herstel onto Monday) while Upper B stayed put on Thursday, an unintended
-// side effect that left Upper B landing before Upper A each week with no
+// v3: swapped Bovenlichaam A/Bovenlichaam B's defaultDayOfWeek (data/defaultProgram.ts) —
+// Bovenlichaam A was displaced from Monday to Friday by an earlier reshape (moving
+// Herstel onto Monday) while Bovenlichaam B stayed put on Thursday, an unintended
+// side effect that left Bovenlichaam B landing before Bovenlichaam A each week with no
 // actual training rationale behind the order (confirmed via git history —
 // user bug report). Fixed at the source; this bump carries it to already-
 // seeded devices the same safe way v1->v2 did.
@@ -605,7 +605,7 @@ const SCHEDULE_CONTENT_VERSION = 3;
 // slot (written by v1, since Friday fell after v1's same-day cutoff) — with
 // tpl_hill_intervals/tpl_long_run also freshly written into that week's
 // Saturday/Sunday. Reverts just those three still-unlogged sessions back to
-// the old Friday/Saturday/Sunday templates (Bergconditie/Lower B/Herstel),
+// the old Friday/Saturday/Sunday templates (Bergconditie/Benen B/Herstel),
 // so the in-progress week reads as one coherent plan again; the new pattern
 // still takes over cleanly from the following Monday (already correct,
 // untouched by this).

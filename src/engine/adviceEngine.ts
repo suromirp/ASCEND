@@ -253,7 +253,7 @@ function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
 // --- Rule SAME-MUSCLE-SPACING ------------------------------------------------
 // Trigger: in the coming week, two sessions that load the SAME muscles
 // heavily (both heavy for the upper body, or both heavy for the legs) sit
-// on consecutive days — e.g. Upper A and Upper B, both chest/back/
+// on consecutive days — e.g. Bovenlichaam A and Bovenlichaam B, both chest/back/
 // shoulders. A pairing the program marks as intentional (hill intervals +
 // long run: running the long one on tired legs is the point) is left alone.
 // Rule: heavy work for the same muscles ~48 hours apart, the same spacing

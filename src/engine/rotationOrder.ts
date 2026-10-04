@@ -1,7 +1,7 @@
 // ASCEND — keep a split's sessions in their own order within a week.
 //
-// Production feedback: "waarom plant hij upper b voor a?". Upper A and
-// Upper B have the same type, duration and load profile, so for every
+// Production feedback: "waarom plant hij upper b voor a?". Bovenlichaam A and
+// Bovenlichaam B have the same type, duration and load profile, so for every
 // placement rule (time per day, pairing, load spacing) they are
 // interchangeable and the placement search has no reason to prefer A
 // before B. A training split does: A, then B, the way the external workout
@@ -22,7 +22,7 @@ export function interchangeKey(template: SessionTemplate): string {
 }
 
 // A before B: the default weekday the template was designed for, then its
-// name ("Upper A" < "Upper B", "Dag 2" < "Dag 10").
+// name ("Bovenlichaam A" < "Bovenlichaam B", "Dag 2" < "Dag 10").
 export function compareRotation(a: SessionTemplate, b: SessionTemplate): number {
   return (a.defaultDayOfWeek ?? 99) - (b.defaultDayOfWeek ?? 99) || a.name.localeCompare(b.name, 'nl', { numeric: true }) || a.id.localeCompare(b.id);
 }
