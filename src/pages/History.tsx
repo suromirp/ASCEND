@@ -1,5 +1,5 @@
 import { formatNumberNL } from '../utils/number';
-import { logSport } from '../engine/sports';
+import { logKindLabel, logSport } from '../engine/sports';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -10,7 +10,6 @@ import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
 
-const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio', hiking: 'Avontuur', recovery: 'Herstel', adventure: 'Avontuur' };
 
 function computeMonthSummary(logs: SessionLog[]) {
   const strengthCount = logs.filter((l) => l.type === 'strength').length;
@@ -136,7 +135,7 @@ export function HistoryPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
                   <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                    {TYPE_LABEL[log.type]} • {log.durationMinutes} min
+                    {logKindLabel(log)} • {log.durationMinutes} min
                     {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Loopband' : environment === 'outdoor' ? ' • Buiten' : ''}
                     {garminType ? ` • Garmin: ${garminType}` : ''}
                     {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}

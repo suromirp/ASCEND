@@ -3,14 +3,8 @@ import type { Program } from '../models/program';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { StatusDot } from './ui';
+import { sessionKindLabel } from '../engine/sports';
 
-const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
-  strength: 'Kracht',
-  cardio: 'Cardio',
-  hiking: 'Avontuur',
-  recovery: 'Herstel',
-  adventure: 'Avontuur',
-};
 
 export function SessionCard({
   session,
@@ -54,7 +48,7 @@ export function SessionCard({
           )}
         </div>
         <div className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {TYPE_LABEL[template.type]}
+          {sessionKindLabel(template)}
           {template.focus ? ` • ${template.focus}` : ''}
         </div>
       </div>

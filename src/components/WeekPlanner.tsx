@@ -40,7 +40,7 @@ export function WeekPlanner({
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(date)}</span>
             </div>
             {daySessions.length === 0 ? (
-              <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen sessie gepland</p>
+              <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {daySessions.map((s) => {
