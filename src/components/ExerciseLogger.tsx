@@ -5,7 +5,7 @@ import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingE
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
-import { getModalities, getModality, defaultModality, isCyclingModality } from '../data/modalities';
+import { getModalities, getModality, defaultModality, modalitySport } from '../data/modalities';
 import { GARMIN_SUGGESTED_TYPES, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { ModalityPicker } from './ModalityPicker';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -173,7 +173,7 @@ export function ExerciseLogger({
       completedDate: doneOn,
       templateId: template.id,
       type: template.type,
-      sport: isCyclingModality(modalityKey) ? 'cycling' : templateSport(template),
+      sport: (guidanceMode === 'ascend_guided' ? modalitySport(modalityKey) : undefined) ?? templateSport(template),
       variant,
       durationMinutes: duration,
       rpe: rpe === '' ? undefined : rpe,

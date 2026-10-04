@@ -4,7 +4,7 @@
 // ASCEND just stops putting new sessions of it on the calendar.
 
 import type { SessionTemplate, SessionLog } from '../models/training';
-import { findModalityByKey, isCyclingModality } from '../data/modalities';
+import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
 
 export type Sport = 'running' | 'hiking' | 'cycling';
 export type EnabledSports = Record<Sport, boolean>;
@@ -35,8 +35,12 @@ export function isTemplatePlannable(template: SessionTemplate, enabled: Partial<
 // modality is cycling, not running. Order: the log's own sport field (set
 // when logged), then the chosen modality, then the session type.
 export function logSport(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): Sport | undefined {
-  if (log.sport) return log.sport;
+  // The way it was done wins over what was stored from the template, so a
+  // long run logged as a run counts as running even in older logs.
   const modality = log.cardioData?.modality ?? log.outdoorData?.modality;
+  const fromModality = modalitySport(modality);
+  if (fromModality) return fromModality;
+  if (log.sport) return log.sport;
   if (isCyclingModality(modality)) return 'cycling';
   if (log.type === 'cardio') return 'running';
   if (log.type === 'hiking') return 'hiking';
