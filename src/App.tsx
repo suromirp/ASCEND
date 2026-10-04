@@ -42,11 +42,11 @@ function NavIcon({ id }: { id: string }) {
 }
 
 const TABS = [
-  { to: '/', id: 'today', label: 'TODAY' },
+  { to: '/', id: 'today', label: 'VANDAAG' },
   { to: '/week', id: 'week', label: 'WEEK' },
   { to: '/ascend', id: 'ascend', label: 'ASCEND' },
-  { to: '/history', id: 'history', label: 'HISTORY' },
-  { to: '/more', id: 'more', label: 'MORE' },
+  { to: '/history', id: 'history', label: 'LOGBOEK' },
+  { to: '/more', id: 'more', label: 'MEER' },
 ];
 
 // `fixed` rather than `sticky` — sticky is only pinned relative to its own

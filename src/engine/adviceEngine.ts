@@ -111,7 +111,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     if (!template || template.type === 'recovery') return [];
     const catchUp = isTemplatePlannable(template, inputs.enabledSports) ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
     const title = `${template.name} van ${shortDate(s.scheduledDate)} gemist`;
-    const rule = 'Regel: inhalen op een vrije dag in dezelfde week, zonder twee zware beendagen binnen 48 uur. Lukt dat niet, dan laten vallen. Nooit twee sessies op elkaar stapelen om bij te benen.';
+    const rule = 'ASCEND haalt een gemiste training alleen in op een vrije dag in dezelfde week, en nooit twee zware beendagen binnen 48 uur. Lukt dat niet, dan laten we hem schieten. Twee trainingen op één dag om bij te benen doen we nooit.';
     if (catchUp) {
       return [{
         id: `missed:${s.id}`,
@@ -119,7 +119,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
         ruleId: 'MISSED-CATCH-UP',
         title,
         effect: `Inhalen op ${shortDate(catchUp)}.`,
-        why: `Trigger: geen log voor deze sessie. ${rule}`,
+        why: `Je hebt deze training niet afgevinkt. ${rule}`,
         priority: 3,
         proposal: proposal(title, [{ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] }], `${template.name} schuift naar ${shortDate(catchUp)}.`, rule),
       }];
@@ -130,7 +130,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
       ruleId: 'MISSED-CATCH-UP',
       title,
       effect: 'Laten vallen. Deze week is er geen vrije dag zonder te stapelen.',
-      why: `Trigger: geen log voor deze sessie. ${rule}`,
+      why: `Je hebt deze training niet afgevinkt. ${rule}`,
       priority: 2,
       proposal: proposal(title, [{ plannedSessionId: s.id, action: 'remove', reason: 'Gemist en deze week niet in te halen zonder te stapelen.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] }], `${template.name} vervalt; de rest van de week blijft zoals gepland.`, rule),
     }];
@@ -152,22 +152,22 @@ function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const next = inputs.plannedSessions
     .filter((s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate >= inputs.asOf && daysBetween(recent.completedDate, s.scheduledDate) <= 1)
     .find((s) => { const t = templateById.get(s.templateId); return t ? isLegHeavyTemplate(t) : false; });
-  const signal = recent.rpe !== undefined && recent.rpe >= 8 ? `RPE ${recent.rpe}` : 'zwaarder dan normaal';
-  const rule = 'Regel: na een zware sessie krijgt de eerstvolgende zware beensessie binnen een dag een extra hersteldag, als die plek er is.';
+  const signal = recent.rpe !== undefined && recent.rpe >= 8 ? `zwaarte ${recent.rpe} van 10` : 'zwaarder dan normaal';
+  const rule = 'Na een zware training krijgt de eerstvolgende zware beendag een dag extra herstel, als daar plek voor is.';
   const base = { trigger: 'session_too_hard' as const, ruleId: 'HARD-THEN-SPACE', title: `${loggedName} was zwaar (${signal})`, relatedLogId: recent.id, priority: 4 };
   if (!next) {
-    return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `Trigger: ${signal} gelogd. ${rule}`, priority: 1 }];
+    return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `Je laatste training was zwaar (${signal}). ${rule}`, priority: 1 }];
   }
   const nextTemplate = templateById.get(next.templateId)!;
   const later = findCatchUpDate(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
   if (!later) {
-    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `Trigger: ${signal} gelogd. ${rule}` }];
+    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `Je laatste training was zwaar (${signal}). ${rule}` }];
   }
   return [{
     ...base,
     id: `hard:${recent.id}`,
     effect: `${nextTemplate.name} een dag later: ${shortDate(later)}.`,
-    why: `Trigger: ${signal} gelogd. ${rule}`,
+    why: `Je laatste training was zwaar (${signal}). ${rule}`,
     proposal: proposal(base.title, [{ plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `Extra herstel na ${loggedName} (${signal}).`, generatedBy: ['engine/adviceEngine.ts', 'HARD-THEN-SPACE'] }], `${nextTemplate.name} schuift naar ${shortDate(later)}.`, rule),
   }];
 }
@@ -193,7 +193,7 @@ function tooLightAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
       ruleId: 'LIGHT-TWICE',
       title: `${name} voelde twee keer licht`,
       effect: 'Je hoeft niets te doen. Blijft je herstel goed, dan vraagt de weekplanning vanzelf iets meer zodra je doel dat nodig heeft.',
-      why: 'Trigger: twee keer RPE 3 of lager op dezelfde sessie. Regel: belasting gaat alleen omhoog via de weekplanning, stap voor stap, nooit na één losse sessie.',
+      why: 'Deze training voelde twee keer op rij heel licht (zwaarte 3 of lager). ASCEND verzwaart alleen via de weekplanning, stap voor stap, nooit na één losse training.',
       priority: 1,
       relatedLogId: lastTwo[0].id,
     });
@@ -221,7 +221,7 @@ function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     effect: upcoming.length > 0
       ? `Zware beensessies de komende week: ${upcoming.join(', ')}. Kies de korte variant of sla over als het niet goed voelt.`
       : 'Er staan de komende week geen zware beensessies. Houd het zo tot het beter voelt.',
-    why: 'Trigger: open blessure aan been of voet. Regel: ASCEND plant er niets zwaars bij; jij bepaalt per sessie of het gaat.',
+    why: 'Je hebt een blessure aan been of voet genoteerd. ASCEND plant er niets zwaars bij. Jij bepaalt per training of het gaat.',
     priority: leg.severity === 'ernstig' ? 6 : 5,
   }];
 }
@@ -245,7 +245,7 @@ function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
     ruleId: 'STRENGTH-REGULARITY',
     title: `Kracht: ${done} van ${window.length} sessies afgevinkt`,
     effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de Ascend-pagina.',
-    why: 'Trigger: twee of meer krachtsessies zonder log in 14 dagen. Regel: ASCEND kijkt bij kracht alleen naar regelmaat; gewichten en progressie blijven in MacroFactor.',
+    why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. ASCEND kijkt bij kracht alleen naar regelmaat. Gewichten en progressie blijven in MacroFactor.',
     priority: 2,
   }];
 }
@@ -291,7 +291,7 @@ function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
         .sort((x, y) => Math.abs(daysBetween(b.scheduledDate, x)) - Math.abs(daysBetween(b.scheduledDate, y)));
       const muscles = shared.map((axis) => HEAVY_AXIS_LABEL[axis]).join(' en ');
       const title = `${ta.name} en ${tb.name} op twee dagen achter elkaar`;
-      const why = `Trigger: twee zware sessies voor hetzelfde ${muscles} op opeenvolgende dagen. Regel: zware training voor dezelfde spieren ligt ongeveer 48 uur uit elkaar, zodat ze kunnen herstellen.`;
+      const why = `Er staan twee zware trainingen voor ${muscles} op opeenvolgende dagen. Zware training voor dezelfde spieren hoort ongeveer 48 uur uit elkaar te liggen, zodat ze kunnen herstellen.`;
       const target = candidates[0];
       if (!target) {
         advice.push({ id: `spacing:${b.id}:${b.scheduledDate}`, trigger: 'same_muscles_back_to_back', ruleId: 'SAME-MUSCLE-SPACING', title, effect: `Er is deze week geen dag met 48 uur ertussen. Houd ${tb.name} op ${shortDate(b.scheduledDate)} lichter, of kies de korte variant.`, why, priority: 3 });

@@ -448,7 +448,7 @@ export function ExerciseLogger({
             {fields.steps && (
               <>
                 <Field label="Verdiepingen/stappen" value={steps} onChange={setSteps} />
-                <Field label="Machine-vertical (optioneel)" unit="m" value={machineVerticalM} onChange={setMachineVerticalM} />
+                <Field label="Hoogtemeters op toestel (optioneel)" unit="m" value={machineVerticalM} onChange={setMachineVerticalM} />
               </>
             )}
             {selectedModality?.environment !== 'rest' && <Field label="Gem. hartslag" unit="bpm" value={avgHeartRate} onChange={setAvgHeartRate} />}
@@ -496,7 +496,7 @@ export function ExerciseLogger({
         <div className="mt-6 flex gap-3">
           <SecondaryButton onClick={requestClose}>ANNULEREN</SecondaryButton>
           <PrimaryButton onClick={handleSave} disabled={saving}>
-            {saving ? 'OPSLAAN...' : quickComplete ? 'AFVINKEN' : 'VOLTOOIEN'}
+            {saving ? 'OPSLAAN…' : quickComplete ? 'AFVINKEN' : 'VOLTOOIEN'}
           </PrimaryButton>
         </div>
       </div>

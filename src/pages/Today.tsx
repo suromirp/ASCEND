@@ -280,7 +280,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistencyBasis === 0 ? '—' : `${readiness.consistency}%`}</p>
         </Card>
         <Card className="text-center">
-          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>BLOK</p>
+          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK IN FASE</p>
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>
             {position ? `${position.weekInPhase}/${position.phase.weekCount}` : '—'}
           </p>
@@ -306,14 +306,14 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
       {isMorning ? (
         <DailyStretchCard
-          title="OCHTEND REKKEN"
+          title="OCHTENDREKKEN"
           stretches={MORNING_ROUTINE}
           completed={stretchCompletion.morning === today}
           onToggleComplete={() => toggleStretchRoutine('morning')}
         />
       ) : (
         <DailyStretchCard
-          title="AVOND REKKEN"
+          title="AVONDREKKEN"
           stretches={EVENING_ROUTINE}
           completed={stretchCompletion.evening === today}
           onToggleComplete={() => toggleStretchRoutine('evening')}

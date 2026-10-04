@@ -14,7 +14,7 @@ describe('buildSourceLibrary', () => {
   it('merges a guide source with its evidence registry entry (study type, year, rule)', () => {
     const spike = library.find((s) => s.url?.includes('40623829'));
     expect(spike?.meta).toMatch(/Cohortstudie · 2025/);
-    expect(spike?.usedIn).toContain('Planningsregel: run spike');
+    expect(spike?.usedIn).toContain('Planningsregel: geen loop veel langer dan je langste van de laatste maand');
   });
 
   it('never lists a bare site front page as a source', () => {

@@ -39,6 +39,9 @@ import { isDateAvailable } from './adaptiveReplanner';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { daysBetween, weekDates } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { formatDateNL as fmtDateNL, weekdayShortNL as wdNL } from '../utils/dates';
+
+const dayNL = (iso: string) => `${wdNL(iso).toLowerCase()} ${fmtDateNL(iso)}`;
 
 const MIN_CONSECUTIVE_REST_DAYS_TO_FLAG = 2;
 // How far to look, in either direction, for a session to swap the extra
@@ -157,7 +160,7 @@ export function buildConsecutiveRestFixProposal(
         fromDate: moveable.scheduledDate,
         toDate: partner.scheduledDate,
         pairedWithSessionId: partner.id,
-        reason: `${run.sessions.length} rustdagen op rij (${run.sessions[0].scheduledDate} t/m ${run.sessions[run.sessions.length - 1].scheduledDate}) — verwisseld met ${partner.scheduledDate}.`,
+        reason: `${run.sessions.length} rustdagen op rij (${dayNL(run.sessions[0].scheduledDate)} tot en met ${dayNL(run.sessions[run.sessions.length - 1].scheduledDate)}), daarom gewisseld met ${dayNL(partner.scheduledDate)}.`,
         generatedBy: ['engine/scheduleAnomalies.ts#buildConsecutiveRestFixProposal'],
       },
       {
@@ -166,7 +169,7 @@ export function buildConsecutiveRestFixProposal(
         fromDate: partner.scheduledDate,
         toDate: moveable.scheduledDate,
         pairedWithSessionId: moveable.id,
-        reason: `Ruimt plek voor Herstel op ${partner.scheduledDate}, om de rustdagenreeks op ${moveable.scheduledDate} te doorbreken.`,
+        reason: `Maakt plek voor Herstel op ${dayNL(partner.scheduledDate)}, zodat de rustdagen rond ${dayNL(moveable.scheduledDate)} niet meer op rij vallen.`,
         generatedBy: ['engine/scheduleAnomalies.ts#buildConsecutiveRestFixProposal'],
       },
     );

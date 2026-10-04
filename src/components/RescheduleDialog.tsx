@@ -23,7 +23,7 @@ export function RescheduleDialog({
       >
         <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
-            <Eyebrow>SCHEMA AANPASSING</Eyebrow>
+            <Eyebrow>SCHEMA-AANPASSING</Eyebrow>
             <div className="mt-3 flex flex-col gap-2">
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">

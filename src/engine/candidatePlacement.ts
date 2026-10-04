@@ -20,6 +20,14 @@ import { resolveEffectiveStressProfile } from './stressProfile';
 
 export type LoadOverlapAxis = 'lowerBodyLoad' | 'cardioLoad' | 'upperBodyLoad' | 'eccentricLoad' | 'impact';
 
+const AXIS_NL: Record<string, string> = {
+  lowerBodyLoad: 'de benen',
+  upperBodyLoad: 'het bovenlichaam',
+  cardioLoad: 'je conditie',
+  eccentricLoad: 'het dalen',
+  impact: 'je gewrichten',
+};
+
 export interface LoadOverlapFinding {
   axis: LoadOverlapAxis;
   sessionAId: string;
@@ -587,7 +595,7 @@ export function searchWeeklyPlacement(
 
   if (isCompromised(best)) {
     const reason = best.worstFinding
-      ? `Kon een stapeling van zware belasting niet volledig vermijden (${best.worstFinding.axis}, ${best.worstFinding.daysApart} dag(en) apart). ASCEND vond geen betere verdeling binnen de onderzochte opties.`
+      ? `Twee zware trainingen voor ${AXIS_NL[best.worstFinding.axis] ?? 'dezelfde spieren'} liggen ${best.worstFinding.daysApart === 1 ? '1 dag' : `${best.worstFinding.daysApart} dagen`} uit elkaar. ASCEND vond geen betere verdeling.`
       : 'De cumulatieve belasting van deze week bleef boven de gewenste drempel. ASCEND vond geen betere verdeling binnen de onderzochte opties.';
     return { status: 'compromised', bestFound: best, alternatives, compromisedReason: reason, searchWasTruncated: truncated };
   }
@@ -616,7 +624,7 @@ export function weekCandidatesToAlternatives(
       };
     });
     const consequences = candidate.worstFinding
-      ? `Bevat een belastingsbevinding op ${candidate.worstFinding.axis} (${candidate.worstFinding.daysApart} dag(en) apart) — totale cost ${candidate.totalCost.toFixed(2)}.`
+      ? `Twee zware trainingen voor ${AXIS_NL[candidate.worstFinding.axis] ?? 'dezelfde spieren'} liggen ${candidate.worstFinding.daysApart === 1 ? '1 dag' : `${candidate.worstFinding.daysApart} dagen`} uit elkaar.`
       : `Totale cost ${candidate.totalCost.toFixed(2)}.`;
     return { label: `Alternatief ${i + 1}`, changes, consequences };
   });

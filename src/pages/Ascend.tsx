@@ -47,7 +47,7 @@ function GoalStatusNote({ status, goal }: { status: TrainingGoal['status']; goal
     <>
       {status === 'paused' && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
-          Gepauzeerd, nog geen streefdatum ingesteld. Telt zo nog niet mee bij Goal Focus of het plannen van sessies.
+          Gepauzeerd, nog geen streefdatum ingesteld. Telt zo nog niet mee bij de doelfocus of de planning.
         </p>
       )}
       {missingDays && (
@@ -369,7 +369,7 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
   return (
     <Card>
       <div className="flex items-center justify-between gap-3">
-        <Eyebrow>KRACHT PROGRESSIE</Eyebrow>
+        <Eyebrow>KRACHTPROGRESSIE</Eyebrow>
         <select
           value={activeId}
           onChange={(e) => setSelectedId(e.target.value)}
@@ -387,7 +387,7 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
         </div>
       ) : (
         <p className="mt-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          Nog te weinig loggings van deze oefening om een trend te tonen.
+          Nog te weinig trainingen van deze oefening om een trend te tonen.
         </p>
       )}
     </Card>
@@ -410,7 +410,7 @@ function GR5GoalCard({
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>GR5 DOEL</Eyebrow>
+      <Eyebrow>GR5-DOEL</Eyebrow>
       <GoalStatusNote status={goal.status} goal={goal} />
       <RouteLine goal={goal} />
       {daysLeft !== undefined && (
@@ -543,7 +543,7 @@ function MarathonGoalCard({
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>MARATHON DOEL</Eyebrow>
+      <Eyebrow>MARATHONDOEL</Eyebrow>
       <div className="flex gap-2">
         {(['half', 'full'] as const).map((type) => (
           <button

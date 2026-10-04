@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { addDays, formatMonthNL, mondayOfWeek, resolveProgramWeek, shiftMonthAnchor, todayISO } from '../utils/dates';
+import { addDays, formatHoursMinutesNL, formatMonthNL, mondayOfWeek, resolveProgramWeek, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
@@ -96,7 +96,7 @@ export function WeekPage() {
           )}
           {!monthView && totalWeekMinutes > 0 && (
             <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
-              {Math.floor(Math.round(totalWeekMinutes) / 60)}u {Math.round(totalWeekMinutes) % 60}m gepland
+              {formatHoursMinutesNL(totalWeekMinutes)} gepland
             </p>
           )}
           <span className="text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>

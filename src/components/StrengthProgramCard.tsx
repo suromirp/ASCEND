@@ -3,6 +3,7 @@
 // Workouts keeps owning exercise-level content (§1/§10) — this card never
 // shows or asks for exercise/set/rep detail, only the strategy layer.
 
+import { strengthBlockLabel } from '../utils/splitLabel';
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { StrengthProgramStrategy } from '../models/strengthProgram';
@@ -90,7 +91,7 @@ export function StrengthProgramCard() {
       ) : (
         <>
           <p className="font-display text-xl" style={{ color: 'var(--color-gold)' }}>
-            {strategy.sessionsPerWeek}x/week — {strategy.splitType}
+            {strengthBlockLabel(strategy.sessionsPerWeek, strategy.splitType)}
           </p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {strategy.sessionTemplateIds.map((id) => templateById.get(id)?.name ?? id).join(', ') || 'Geen sessietypes gekozen'}
@@ -118,7 +119,7 @@ export function StrengthProgramCard() {
 
       {strengthRecommendation && (
         <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <Eyebrow>KRACHTBLOK REVIEW</Eyebrow>
+          <Eyebrow>KRACHTBLOK EVALUEREN</Eyebrow>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{strengthRecommendation.rationale}</p>
           <div className="flex flex-col gap-2">
             <div className="flex gap-3">

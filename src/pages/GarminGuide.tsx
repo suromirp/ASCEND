@@ -10,7 +10,7 @@ export function GarminGuidePage() {
         <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>GARMIN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zones, dataschermen en hoe je de metrics leest</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zones, dataschermen en hoe je de meetwaarden leest</p>
         </div>
       </div>
 
