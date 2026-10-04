@@ -414,7 +414,10 @@ function MarathonGoalCard({
 }) {
   const raceType = settings.marathonRaceType;
   const distanceKm = raceType ? RACE_DISTANCE_KM[raceType] : undefined;
-  const daysLeft = settings.marathonTargetDate ? daysBetween(todayISO(), settings.marathonTargetDate) : undefined;
+  // The goal itself is the source of truth for its date: the wizard sets
+  // it there, the quick fields below mirror it into settings.
+  const targetDate = marathonGoal?.targetDate ?? settings.marathonTargetDate;
+  const daysLeft = targetDate ? daysBetween(todayISO(), targetDate) : undefined;
   const [wizardOpen, setWizardOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
@@ -510,7 +513,7 @@ function MarathonGoalCard({
                   <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wedstrijddatum</label>
                   <input
                     type="date"
-                    value={settings.marathonTargetDate ?? ''}
+                    value={targetDate ?? ''}
                     onChange={(e) => onUpdate({ marathonTargetDate: e.target.value || undefined })}
                     className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
                     style={dateInputStyle}

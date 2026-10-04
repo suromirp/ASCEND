@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppData } from '../state/AppDataContext';
+import { useAppData, type UndoRestore } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 import { BackupStatusLine, StorageProtectionCard, SnapshotsCard } from '../components/DataSafetyCards';
 import { ImportWizard } from '../components/ImportWizard';
@@ -59,7 +59,7 @@ function readStoredTab(): SettingsTab {
 
 const PLANNABLE_SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
 
-type PendingImpact = { section: string; title: string; proposal: PlanChangeProposal; lines: string[] };
+type PendingImpact = { section: string; title: string; proposal: PlanChangeProposal; lines: string[]; restore?: UndoRestore };
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -111,7 +111,7 @@ export function SettingsPage() {
   // feedback pattern): nothing to change -> say so; a change the user's
   // "Wijzigingen toepassen" choice lets through -> apply with a notice and
   // undo; otherwise -> ask "nu toepassen / alleen nieuwe planning" first.
-  async function route(section: string, title: string, proposal: PlanChangeProposal) {
+  async function route(section: string, title: string, proposal: PlanChangeProposal, restore?: UndoRestore) {
     const asOf = todayISO();
     const level = classifyChangeImpact(proposal.changes, plannedSessions, asOf);
     if (level === 'hint') {
@@ -120,10 +120,10 @@ export function SettingsPage() {
     }
     const lines = describeChanges(proposal.changes, plannedSessions, templates);
     if (needsConfirmation(level, applyMode)) {
-      setPending({ section, title, proposal, lines });
+      setPending({ section, title, proposal, lines, restore });
       return;
     }
-    await commitPlanChange(proposal, title);
+    await commitPlanChange(proposal, title, restore);
     note(section, 'Opgeslagen en toegepast. Onderaan zie je wat er veranderde, met ongedaan maken.');
   }
 
@@ -137,13 +137,13 @@ export function SettingsPage() {
     if (value === goalEngineConfig.strategy.sameDayPairingPreference) return;
     await updateGoalEngineConfig({ strategy: { ...goalEngineConfig.strategy, sameDayPairingPreference: value } });
     const label = 'Meerdere trainingen op één dag';
-    await route('pairing', label, scheduleFitFor(label, goalEngineConfig.availability.dailyTimeBudget, value));
+    await route('pairing', label, scheduleFitFor(label, goalEngineConfig.availability.dailyTimeBudget, value), { config: { strategy: goalEngineConfig.strategy } });
   }
 
   async function handleBudgetSave(nextBudget: typeof goalEngineConfig.availability.dailyTimeBudget) {
     await updateGoalEngineConfig({ availability: { ...goalEngineConfig.availability, dailyTimeBudget: nextBudget } });
     const label = 'Trainingstijd per dag';
-    await route('budget', label, scheduleFitFor(label, nextBudget, goalEngineConfig.strategy.sameDayPairingPreference));
+    await route('budget', label, scheduleFitFor(label, nextBudget, goalEngineConfig.strategy.sameDayPairingPreference), { config: { availability: goalEngineConfig.availability } });
   }
 
   const frequency = settings.sportFrequency ?? {};
@@ -163,11 +163,12 @@ export function SettingsPage() {
 
   async function handleSportToggle(sport: Sport, on: boolean) {
     const nextEnabled = { ...enabledSports, [sport]: on };
+    const restore: UndoRestore = { settings: { enabledSports } };
     await updateSettings({ enabledSports: nextEnabled });
     if (on) {
       const fixed = frequency[sport];
       if (fixed) {
-        await route('sports', `${SPORT_LABEL[sport]} weer aangezet`, frequencyPlan(sport, fixed));
+        await route('sports', `${SPORT_LABEL[sport]} weer aangezet`, frequencyPlan(sport, fixed), restore);
         return;
       }
       const sportPattern = weeklyPatternTemplates(templates, { enabledSports: nextEnabled }).filter((t) => templateSport(t) === sport);
@@ -179,26 +180,27 @@ export function SettingsPage() {
         sportPattern, SPORT_LABEL[sport], plannedSessions, templates, program,
         goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
       );
-      await route('sports', `${SPORT_LABEL[sport]} weer aangezet`, proposal);
+      await route('sports', `${SPORT_LABEL[sport]} weer aangezet`, proposal, restore);
       return;
     }
     const proposal = computeSportDisableProposal(isSportSession(sport), SPORT_LABEL[sport], plannedSessions, sessionLogs, todayISO());
-    await route('sports', `${SPORT_LABEL[sport]} uitgezet`, proposal);
+    await route('sports', `${SPORT_LABEL[sport]} uitgezet`, proposal, restore);
   }
 
   async function handleFrequency(sport: Sport, perWeek: number | undefined) {
+    const restore: UndoRestore = { settings: { sportFrequency: frequency } };
     await updateSettings({ sportFrequency: { ...frequency, [sport]: perWeek } });
     if (perWeek === undefined) {
       note('sports', `${SPORT_LABEL[sport]} staat op Automatisch. Je huidige planning blijft staan; voortaan bepalen je weekschema en de weekplanning hoe vaak.`);
       return;
     }
-    await route('sports', `${SPORT_LABEL[sport]}: ${perWeek}x per week`, frequencyPlan(sport, perWeek));
+    await route('sports', `${SPORT_LABEL[sport]}: ${perWeek}x per week`, frequencyPlan(sport, perWeek), restore);
   }
 
   async function applyPending() {
     if (!pending) return;
     setApplying(true);
-    await commitPlanChange(pending.proposal, pending.title);
+    await commitPlanChange(pending.proposal, pending.title, pending.restore);
     note(pending.section, 'Opgeslagen en toegepast. Onderaan zie je wat er veranderde, met ongedaan maken.');
     setApplying(false);
     setPending(null);

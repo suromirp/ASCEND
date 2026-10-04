@@ -133,5 +133,10 @@ export interface RecentPlanChange {
   why: string;
   before: PlannedSession[]; // touched rows exactly as they were
   addedIds: string[]; // rows this change created
+  // Settings / engine config exactly as they were before the change that
+  // caused it (a sport switched off, an illness reported). Undo puts these
+  // back too, so the planning and the setting never drift apart.
+  settingsBefore?: Record<string, unknown>;
+  configBefore?: Record<string, unknown>;
   createdAt: string;
 }
