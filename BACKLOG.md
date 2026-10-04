@@ -43,3 +43,12 @@ Instellingen. De huidige stijl blijft als "Klassiek" (legacy), opgepoetst.
   juiste trainen. Rust en deload tellen mee als trouw.
 - Open keuzes: welke stijlen in de app komen en welke variant (A, B of C)
   per scherm.
+
+## Programma: intake en soorten programma
+
+Het plan rekent nu terug vanaf de datum van het hoofddoel (Fase 3). Wat nog open staat:
+
+- Een korte intake bij de eerste start: hoeveel je nu traint, je langste loop en wandeling van de laatste maand, welke dagen je kunt. Daarmee begint week 1 op jouw niveau in plaats van op het standaardniveau.
+- Soorten programma per doel: Bergtocht, Hardlopen, Kracht en Fit. Nu is er één programma, gericht op de GR5, met de keuze om de lange zondag als duurloop te houden.
+- Een herstelweek na het doel, in plaats van een lege planning.
+- Een marathon kort na de GR5 toetsen: eerst de tocht, daarna een marathonblok van 16 tot 18 weken (onderzoek, regel E7).
