@@ -27,7 +27,7 @@ const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNod
   },
   injury_active: {
     label: 'Blessure',
-    color: 'var(--color-danger)',
+    color: 'var(--color-danger-text)',
     icon: <path d="M12 7v10M7 12h10M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />,
   },
   same_muscles_back_to_back: {
@@ -104,7 +104,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
   }
 
   const actions = (
-    <div className="mt-3 flex items-center gap-2">
+    <div className="mt-3 flex flex-wrap items-center gap-2">
       {advice.proposal ? (
         <>
           <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Akkoord</Pill>
@@ -157,10 +157,10 @@ function Pill({ children, onClick, disabled, primary = false }: { children: Reac
     <button
       onClick={onClick}
       disabled={disabled}
-      className="rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all active:scale-[0.97] disabled:opacity-40"
+      className="min-h-[36px] whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all active:scale-[0.97] disabled:opacity-40"
       style={primary
         ? { background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-bg)' }
-        : { boxShadow: 'inset 0 0 0 1px var(--color-card-border)', color: 'var(--color-ink-dim)' }}
+        : { boxShadow: 'inset 0 0 0 1px var(--color-control-border)', color: 'var(--color-ink-dim)' }}
     >
       {children}
     </button>

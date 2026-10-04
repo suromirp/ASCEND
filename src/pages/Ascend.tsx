@@ -656,7 +656,7 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
             <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{g.name || 'Naamloos doel'}</p>
             <div className="flex shrink-0 gap-3">
               <SecondaryButton onClick={() => setEditing(g)}>AANPASSEN</SecondaryButton>
-              <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>archiveren</button>
+              <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>archiveren</button>
             </div>
           </div>
           <GoalStatusNote status={g.status} goal={g} />

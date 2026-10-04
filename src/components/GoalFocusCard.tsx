@@ -12,9 +12,9 @@ import type { FeasibilityStatus } from '../models/feasibility';
 import { Card, Eyebrow } from './ui';
 
 export const FEASIBILITY_LABEL: Record<FeasibilityStatus, { label: string; color: string }> = {
-  on_track: { label: 'OP SCHEMA', color: 'var(--color-success)' },
+  on_track: { label: 'OP SCHEMA', color: 'var(--color-success-text)' },
   challenging: { label: 'UITDAGEND', color: 'var(--color-warning)' },
-  unlikely: { label: 'ONWAARSCHIJNLIJK', color: 'var(--color-danger)' },
+  unlikely: { label: 'ONWAARSCHIJNLIJK', color: 'var(--color-danger-text)' },
   insufficient_data: { label: 'TE WEINIG DATA', color: 'var(--color-ink-dim)' },
 };
 

@@ -1,26 +1,30 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
-import { JUST_UPDATED } from './utils/updateFlag';
+import { SHOW_SPLASH } from './utils/updateFlag';
 import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useOverlayA11y } from './components/useOverlayA11y';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage, GoalsPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsPage } from './pages/Settings';
-import { StretchesPage } from './pages/Stretches';
-import { StretchAreaPage } from './pages/StretchArea';
-import { TrainingGuidePage } from './pages/TrainingGuide';
-import { GarminGuidePage } from './pages/GarminGuide';
-import { SourcesPage } from './pages/Sources';
-import { TrainingSpotsPage } from './pages/TrainingSpots';
-import { InjuriesPage } from './pages/Injuries';
+// Pages you open now and then load on demand, so the first start only
+// downloads what Today needs. The service worker precaches every chunk, so
+// they still work offline.
+const StretchesPage = lazy(() => import('./pages/Stretches').then((m) => ({ default: m.StretchesPage })));
+const StretchAreaPage = lazy(() => import('./pages/StretchArea').then((m) => ({ default: m.StretchAreaPage })));
+const TrainingGuidePage = lazy(() => import('./pages/TrainingGuide').then((m) => ({ default: m.TrainingGuidePage })));
+const GarminGuidePage = lazy(() => import('./pages/GarminGuide').then((m) => ({ default: m.GarminGuidePage })));
+const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
+const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
+const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
 
 function NavIcon({ id }: { id: string }) {
   const icons: Record<string, string> = {
@@ -31,7 +35,7 @@ function NavIcon({ id }: { id: string }) {
     more: 'M4 7h16M4 12h16M4 17h16',
   };
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d={icons[id]} />
     </svg>
   );
@@ -52,6 +56,7 @@ const TABS = [
 function BottomNav() {
   return (
     <nav
+      aria-label="Hoofdmenu"
       className="fixed inset-x-0 bottom-0 z-40 border-t"
       style={{ background: 'rgba(13,13,15,0.92)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
     >
@@ -90,6 +95,27 @@ function AppShell() {
   }, [reportStorageError]);
   const navigate = useNavigate();
   const location = useLocation();
+  useOverlayA11y();
+
+  // Links to the outside world (sources, maps, videos) offline used to open
+  // a bare browser error page. Now they stay put and say why.
+  const [offlineNotice, setOfflineNotice] = useState(false);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (navigator.onLine) return;
+      const link = (e.target as Element | null)?.closest?.('a[href^="http"]');
+      if (!link) return;
+      e.preventDefault();
+      setOfflineNotice(true);
+    };
+    const onOnline = () => setOfflineNotice(false);
+    document.addEventListener('click', onClick, true);
+    window.addEventListener('online', onOnline);
+    return () => {
+      document.removeEventListener('click', onClick, true);
+      window.removeEventListener('online', onOnline);
+    };
+  }, []);
 
   // Armed once per app open, not per settings change — re-arming on every
   // toggle would let a later interaction retrigger it after the user just
@@ -97,8 +123,8 @@ function AppShell() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => playIntroDrumsOnFirstInteraction(settings.introSoundEnabled), []);
 
-  // After an update the splash has been seen already this visit: a quiet
-  // empty frame for the few ms IndexedDB needs, then the app.
+  // Without the splash (later opens today, after an update, reduced
+  // motion): a quiet empty frame for the few ms IndexedDB needs.
   if (bootError) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
@@ -115,7 +141,7 @@ function AppShell() {
     );
   }
 
-  if (loading && JUST_UPDATED) return <div className="flex-1" style={{ background: 'var(--color-bg)' }} />;
+  if (loading && !SHOW_SPLASH) return <div className="flex-1" style={{ background: 'var(--color-bg)' }} />;
 
   if (loading) {
     return (
@@ -134,11 +160,12 @@ function AppShell() {
           <button onClick={dismissStorageNotice} aria-label="Melding sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
         </div>
       )}
-      <div
+      <main
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
         <ErrorBoundary resetKey={location.pathname}>
+          <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
             <Route path="/week" element={<WeekPage />} />
@@ -154,8 +181,15 @@ function AppShell() {
             <Route path="/plekken" element={<TrainingSpotsPage />} />
             <Route path="/blessures" element={<InjuriesPage />} />
           </Routes>
+          </Suspense>
         </ErrorBoundary>
-      </div>
+      </main>
+      {offlineNotice && (
+        <div role="status" className="fixed inset-x-0 z-50 mx-auto flex max-w-md items-center gap-3 border-t px-4 py-3" style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))', background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}>
+          <p className="flex-1 text-xs" style={{ color: 'var(--color-ink)' }}>Je bent offline. Deze link opent zodra je weer verbinding hebt. De rest van ASCEND werkt gewoon.</p>
+          <button onClick={() => setOfflineNotice(false)} aria-label="Melding sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
+        </div>
+      )}
       <BottomNav />
       <ChangeNotice />
       <DebriefSheet />

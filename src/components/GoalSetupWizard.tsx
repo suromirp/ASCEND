@@ -211,14 +211,14 @@ export function GoalSetupWizard({
 
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-success)' }}>Doel geactiveerd.</p>
+                <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Doel geactiveerd.</p>
                 <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
               </div>
             )}
 
             {step.kind === 'error' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{step.message}</p>
+                <p className="text-sm" style={{ color: 'var(--color-danger-text)' }}>{step.message}</p>
                 <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
               </div>
             )}

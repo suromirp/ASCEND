@@ -66,7 +66,7 @@ export function WeightSettingsCard() {
       </p>
       <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={(v) => { setKg(v); setSaved(false); }} />
       <PrimaryButton disabled={!kg} onClick={async () => { if (kg) { await save(kg); setSaved(true); } }}>OPSLAAN</PrimaryButton>
-      {saved && <p className="text-xs" style={{ color: 'var(--color-success)' }}>Opgeslagen.</p>}
+      {saved && <p className="text-xs" style={{ color: 'var(--color-success-text)' }}>Opgeslagen.</p>}
       <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Herinnering op Vandaag</p>
       <div className="flex flex-wrap gap-1.5">
         {REMINDER_OPTIONS.map((o) => {

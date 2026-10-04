@@ -118,14 +118,14 @@ export function StrengthProgramWizard({
 
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-success)' }}>Krachtblok geactiveerd.</p>
+                <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Krachtblok geactiveerd.</p>
                 <CommittedRangeOptIn strategy={step.draft} onClose={requestClose} />
               </div>
             )}
 
             {step.kind === 'error' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{step.message}</p>
+                <p className="text-sm" style={{ color: 'var(--color-danger-text)' }}>{step.message}</p>
                 <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
               </div>
             )}
@@ -193,13 +193,13 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{committedProposal.consequences}</p>
         <div className="flex flex-col gap-2">
           {removed.map((c) => (
-            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger)' }}>− {c.fromDate}: {c.reason}</div>
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>− {c.fromDate}: {c.reason}</div>
           ))}
           {moved.map((c) => (
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>→ {c.fromDate} naar {c.toDate}: {c.reason}</div>
           ))}
           {added.map((c, i) => (
-            <div key={i} className="text-xs" style={{ color: 'var(--color-success)' }}>
+            <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
               + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
             </div>
           ))}
@@ -552,7 +552,7 @@ function PreviewStep({
       {(removed.length > 0 || moved.length > 0 || added.length > 0) && (
         <div className="flex flex-col gap-2">
           {removed.map((c) => (
-            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger)' }}>
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
               − {c.fromDate}: {c.reason}
             </div>
           ))}
@@ -562,7 +562,7 @@ function PreviewStep({
             </div>
           ))}
           {added.map((c, i) => (
-            <div key={i} className="text-xs" style={{ color: 'var(--color-success)' }}>
+            <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
               + {c.newSessionDraft?.scheduledDate}: {templateById.get(c.newSessionDraft?.templateId ?? '')?.name ?? c.newSessionDraft?.templateId}
             </div>
           ))}

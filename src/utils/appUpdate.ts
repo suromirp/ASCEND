@@ -9,9 +9,10 @@ export function setSwRegistration(r: ServiceWorkerRegistration): void {
   registration = r;
 }
 
-export type UpdateCheck = 'update' | 'latest' | 'unavailable';
+export type UpdateCheck = 'update' | 'latest' | 'unavailable' | 'offline';
 
 export async function checkForUpdate(): Promise<UpdateCheck> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return 'offline';
   if (!registration) return 'unavailable';
   try {
     await registration.update();

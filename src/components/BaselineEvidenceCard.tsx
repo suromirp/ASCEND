@@ -64,7 +64,7 @@ export function BaselineEvidenceCard() {
                     {formatMeasuredValue(e.measured)} — {formatDateNL(e.date)}
                   </span>
                 </div>
-                <button onClick={() => deleteCapabilityEvidence(e.id)} className="text-xs" style={{ color: 'var(--color-danger)' }}>
+                <button onClick={() => deleteCapabilityEvidence(e.id)} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
                   verwijderen
                 </button>
               </div>

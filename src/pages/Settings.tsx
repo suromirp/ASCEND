@@ -222,6 +222,8 @@ export function SettingsPage() {
     setCheckingUpdate(false);
     note('update', result === 'update'
       ? 'Er is een nieuwe versie. Zodra die binnen is verschijnt onderin BIJWERKEN.'
+      : result === 'offline'
+        ? 'Je bent offline. Zoeken naar een update kan zodra je verbinding hebt.'
       : result === 'latest'
         ? 'Je hebt de nieuwste versie.'
         : 'Controleren lukt hier niet (bijvoorbeeld in de ontwikkelversie). Herlaad de pagina om de nieuwste versie te krijgen.');
@@ -555,10 +557,10 @@ export function SettingsPage() {
                 ongedaan worden gemaakt. Exporteer eerst een back-up als je iets wilt bewaren.
               </p>
               {!confirmingFullReset ? (
-                <button onClick={() => setConfirmingFullReset(true)} className="text-left text-xs" style={{ color: 'var(--color-danger)' }}>Alles verwijderen…</button>
+                <button onClick={() => setConfirmingFullReset(true)} className="text-left text-xs" style={{ color: 'var(--color-danger-text)' }}>Alles verwijderen…</button>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <p className="text-xs font-semibold" style={{ color: 'var(--color-danger)' }}>Weet je het zeker? Al je gegevens gaan definitief verloren.</p>
+                  <p className="text-xs font-semibold" style={{ color: 'var(--color-danger-text)' }}>Weet je het zeker? Al je gegevens gaan definitief verloren.</p>
                   <button onClick={handleExport} className="text-left text-xs underline" style={{ color: 'var(--color-gold)' }}>Eerst een back-up exporteren</button>
                   <div className="flex gap-3">
                     <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>ANNULEREN</SecondaryButton>

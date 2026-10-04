@@ -203,7 +203,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
 
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-success)' }}>Import geslaagd.</p>
+                <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Import geslaagd.</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Klopt er iets niet? Je kunt de import ongedaan maken. Dat kan later ook via Meer, Gegevens.
                 </p>
@@ -229,7 +229,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
 
             {step.kind === 'error' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-danger)' }}>{step.message}</p>
+                <p className="text-sm" style={{ color: 'var(--color-danger-text)' }}>{step.message}</p>
                 <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
               </div>
             )}
@@ -337,7 +337,7 @@ function PreviewStep({ preview, onConfirm, onBack }: { preview: ImportPreview; o
               </span>
             )}
             {entry.toRemove > 0 && (
-              <span style={{ color: 'var(--color-danger)' }}>{entry.toRemove} verdwijnen, omdat ze niet in de back-up staan</span>
+              <span style={{ color: 'var(--color-danger-text)' }}>{entry.toRemove} verdwijnen, omdat ze niet in de back-up staan</span>
             )}
             {entry.conflicts.length > 0 && (
               <span style={{ color: 'var(--color-warning)' }}>{entry.conflicts.length} verschillen met wat je nu hebt. Jouw huidige versie blijft staan.</span>
@@ -353,7 +353,7 @@ function PreviewStep({ preview, onConfirm, onBack }: { preview: ImportPreview; o
         Trainingen worden bij importeren nooit verwijderd.
       </p>
       {totalRemoved > 0 && (
-        <p className="text-[11px]" style={{ color: 'var(--color-danger)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--color-danger-text)' }}>
           Let op: in totaal verdwijnen {totalRemoved} onderdelen die nu op je toestel staan.
         </p>
       )}
