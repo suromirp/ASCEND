@@ -176,7 +176,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
     return (
       <>
         <p className="text-sm" style={{ color: phase === 'applied' ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>
-          {phase === 'applied' ? 'Toegepast op deze en/of volgende week.' : 'Geen wijzigingen meer nodig voor deze/volgende week.'}
+          {phase === 'applied' ? 'Toegepast op deze week en de volgende.' : 'Deze week en de volgende hoeven niet meer te veranderen.'}
         </p>
         <PrimaryButton onClick={onClose}>SLUITEN</PrimaryButton>
       </>
@@ -543,7 +543,7 @@ function PreviewStep({
       </div>
 
       <div>
-        <Eyebrow>VERWACHTE PLANIMPACT</Eyebrow>
+        <Eyebrow>WAT ER IN JE PLANNING VERANDERT</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{proposal.explanation}</p>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{proposal.consequences}</p>
       </div>

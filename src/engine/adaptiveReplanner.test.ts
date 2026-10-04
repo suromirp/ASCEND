@@ -88,7 +88,7 @@ describe('computeForecastReplan — availability pass', () => {
       availability: fullAvailability({ allowedDays: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'] }),
       asOf: ASOF,
     });
-    expect(result.passiveSummary).toContain('1 sessie(s)');
+    expect(result.passiveSummary).toContain('1 training');
     expect(result.passiveSummary).toMatch(/overgeslagen/);
   });
 

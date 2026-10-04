@@ -53,7 +53,7 @@ function buildPassiveSummary(items: PlanChangeItem[]): string {
   if (counts.move) parts.push(`${counts.move} verplaatst`);
   // A single, one-line summary (v0.1 §11.3) — never a popup for every
   // small shift, whatever the count.
-  return `${items.length} sessie(s) in de vervolgweken bijgewerkt: ${parts.join(', ')}.`;
+  return `${items.length} ${items.length === 1 ? 'training' : 'trainingen'} in de komende weken bijgewerkt: ${parts.join(', ')}.`;
 }
 
 export interface ForecastReplanInputs {

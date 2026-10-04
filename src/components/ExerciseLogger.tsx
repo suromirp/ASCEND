@@ -347,7 +347,7 @@ export function ExerciseLogger({
               ))}
             </div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Optioneel, helpt ASCEND signaleren als Bergconditie op vrijdag zaterdags Benen B twee weken op rij verstoort.
+              Optioneel. Zo ziet ASCEND of een training je de dag erna zwaarder maakt.
             </p>
           </Card>
         )}
@@ -447,7 +447,7 @@ export function ExerciseLogger({
             {fields.elevationLoss && <Field label="Daling" unit="m D-" value={elevationLossM} onChange={setElevationLossM} />}
             {fields.steps && (
               <>
-                <Field label="Verdiepingen/stappen" value={steps} onChange={setSteps} />
+                <Field label="Verdiepingen (trap)" value={steps} onChange={setSteps} />
                 <Field label="Hoogtemeters op toestel (optioneel)" unit="m" value={machineVerticalM} onChange={setMachineVerticalM} />
               </>
             )}
@@ -473,7 +473,7 @@ export function ExerciseLogger({
 
         <Card className="mt-5 flex flex-col gap-3">
           <Field label="Duur" unit="min" value={duration} onChange={(v) => setDuration(typeof v === 'number' ? v : 0)} />
-          <Field label="RPE (1-10)" value={rpe} onChange={setRpe} />
+          <Field label="Zwaarte, RPE (1 tot 10)" value={rpe} onChange={setRpe} />
           {peak && (
             <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Hoe zwaar voelde de hele training? Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){conditioningSteps.some((st) => st.intensity < peak) ? ' in de zware stukken, rustig ertussen' : ''}.
