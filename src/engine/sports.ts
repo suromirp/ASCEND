@@ -22,6 +22,28 @@ export function templateSport(template: SessionTemplate): Sport | undefined {
   return undefined;
 }
 
+// What kind of training this is, in one word, everywhere a session or log
+// is shown. The sport wins over the internal type, so a long run reads
+// "Hardlopen" and not the type it is stored under (production feedback:
+// "Avontuur" on the long run made the sport unclear).
+const TYPE_KIND: Record<SessionTemplate['type'], string> = {
+  strength: 'Kracht',
+  cardio: 'Conditie',
+  hiking: 'Wandelen',
+  recovery: 'Herstel',
+  adventure: 'Tocht',
+};
+
+export function sessionKindLabel(template: SessionTemplate): string {
+  const sport = template.type === 'strength' || template.type === 'recovery' ? undefined : templateSport(template);
+  return sport ? SPORT_LABEL[sport] : TYPE_KIND[template.type];
+}
+
+export function logKindLabel(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): string {
+  const sport = log.type === 'strength' || log.type === 'recovery' ? undefined : logSport(log);
+  return sport ? SPORT_LABEL[sport] : TYPE_KIND[log.type];
+}
+
 export function isSportEnabled(sport: Sport | undefined, enabled: Partial<EnabledSports> | undefined): boolean {
   if (!sport) return true;
   return { ...DEFAULT_ENABLED_SPORTS, ...enabled }[sport];

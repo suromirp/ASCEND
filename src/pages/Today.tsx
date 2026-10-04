@@ -247,7 +247,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           ) : (
             <>
               <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Rust of vrije dag</p>
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen sessie gepland voor vandaag.</p>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland voor vandaag.</p>
             </>
           )}
         </Card>

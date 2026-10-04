@@ -7,14 +7,8 @@ import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { MoveSuggestions } from './MoveSuggestions';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
+import { sessionKindLabel } from '../engine/sports';
 
-const TYPE_LABEL: Record<SessionTemplate['type'], string> = {
-  strength: 'Kracht',
-  cardio: 'Cardio',
-  hiking: 'Avontuur',
-  recovery: 'Herstel',
-  adventure: 'Avontuur',
-};
 
 const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
@@ -60,7 +54,7 @@ export function TodayMissionCard({
         </div>
         <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          {TYPE_LABEL[template.type]} • ±{fullDuration} min{weekNote ? ` • ${weekNote}` : ''}
+          {sessionKindLabel(template)} • ±{fullDuration} min{weekNote ? ` • ${weekNote}` : ''}
         </p>
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
       </div>

@@ -8,8 +8,8 @@ import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
+import { logKindLabel } from '../engine/sports';
 
-const TYPE_LABEL: Record<string, string> = { strength: 'Kracht', cardio: 'Cardio', hiking: 'Avontuur', recovery: 'Herstel', adventure: 'Avontuur' };
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
@@ -61,7 +61,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
           <Eyebrow>{formatDateNL(log.completedDate)}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{templateName}</h3>
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            {TYPE_LABEL[log.type]} • {log.durationMinutes} min
+            {logKindLabel(log)} • {log.durationMinutes} min
           </p>
 
           {log.subjectiveFeel && (
