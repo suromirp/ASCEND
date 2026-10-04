@@ -1,17 +1,22 @@
 import type { Quote } from '../data/quoteLibrary';
 import { authorWikipediaUrl } from '../utils/quotes';
+import { QUOTE_NL } from '../data/quoteTranslations';
 import { Card } from './ui';
 
 export function QuoteCard({ quote }: { quote: Quote }) {
   const wikipediaUrl = authorWikipediaUrl(quote.author);
+  const nl = QUOTE_NL[quote.id];
+  const author = nl?.author ?? quote.author;
 
   return (
     <Card className="text-center">
       <p className="font-display text-base italic leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-        “{quote.quote}”
+        “{nl?.text ?? quote.quote}”
       </p>
+      {nl?.latin && (
+        <p className="mt-1 text-xs italic" style={{ color: 'var(--color-ink-dim)' }} lang="la">{quote.quote}</p>
+      )}
       <p className="mt-2 text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-        –{' '}
         {wikipediaUrl ? (
           <a
             href={wikipediaUrl}
@@ -20,10 +25,10 @@ export function QuoteCard({ quote }: { quote: Quote }) {
             className="underline underline-offset-2"
             style={{ color: 'var(--color-bronze)' }}
           >
-            {quote.author}
+            {author}
           </a>
         ) : (
-          <span style={{ color: 'var(--color-bronze)' }}>{quote.author}</span>
+          <span style={{ color: 'var(--color-bronze)' }}>{author}</span>
         )}
       </p>
       {quote.sourceUrl && (
@@ -34,7 +39,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           className="mt-1 block text-[11px] underline underline-offset-2"
           style={{ color: 'var(--color-sky)' }}
         >
-          {quote.sourceLabel ?? 'Bron'} ↗
+          {nl?.source ?? quote.sourceLabel ?? 'Bron'} ↗
         </a>
       )}
     </Card>
