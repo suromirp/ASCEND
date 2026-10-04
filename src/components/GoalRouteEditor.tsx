@@ -8,7 +8,7 @@
 // lives in engine/goalRoute.ts; this file only edits requirements and
 // renders what that module computes.
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { TrainingGoal, GoalRequirement, GoalExecution } from '../models/goals';
 import type { Unit } from '../models/units';
 import {
@@ -109,6 +109,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
 
   const { settings } = useAppData();
   const packKg = amountOf(reqs, 'packWeight');
+  const lastPackKg = useRef<number | undefined>(undefined);
   const packShare = packKg ? packSharePct(packKg, settings.weightEntries) : undefined;
 
   const packField = (
@@ -129,7 +130,14 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           label="Sport"
           value={discipline}
           options={ROUTE_SPORTS.map((s) => ({ value: s.value, label: s.label }))}
-          onChange={(value) => commit(reqs.map((r) => (r.kind === 'eventDays' || r.kind === 'distance' ? { ...r, discipline: value } : r)).filter((r) => value !== 'cycling' || r.kind !== 'packWeight'))}
+          onChange={(value) => {
+            // Cycling has no pack; switching back restores the weight you
+            // had filled in instead of losing it.
+            if (value === 'cycling' && packKg) lastPackKg.current = packKg;
+            let next = reqs.map((r) => (r.kind === 'eventDays' || r.kind === 'distance' ? { ...r, discipline: value } : r)).filter((r) => value !== 'cycling' || r.kind !== 'packWeight');
+            if (value !== 'cycling' && !packKg && lastPackKg.current) next = setRequirement(next, 'packWeight', false, lastPackKg.current, 'kg', 'SINGLE_EVENT');
+            commit(next);
+          }}
         />
       )}
 

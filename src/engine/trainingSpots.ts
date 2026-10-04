@@ -1,3 +1,4 @@
+import { formatNumberNL } from '../utils/number';
 // ASCEND — distance and how to get there, for the training spots
 // (data/trainingSpots.ts). Pure and local: the home location never leaves
 // the device; distances are straight-line with a route factor, so they are
@@ -37,15 +38,15 @@ export interface TravelAdvice {
 export function travelAdvice(home: HomeLocation, spot: TrainingSpot): TravelAdvice {
   const routeKm = Math.round(straightKm(home, spot) * ROUTE_FACTOR);
   if (routeKm <= 3) {
-    return { routeKm, mode: 'lopen', minutes: Math.round(routeKm * 12), text: `±${routeKm} km: lopend of hardlopend te bereiken, dat is meteen je warming-up.` };
+    return { routeKm, mode: 'lopen', minutes: Math.round(routeKm * 12), text: `±${formatNumberNL(routeKm, 1)} km: lopend of hardlopend te bereiken, dat is meteen je warming-up.` };
   }
   if (routeKm <= MAX_BIKE_KM) {
     const minutes = Math.round((routeKm / BIKE_KMH) * 60);
-    return { routeKm, mode: 'fiets', minutes, text: `±${routeKm} km, ±${minutes} min fietsen. Heen en terug telt als een rustige fietstraining.` };
+    return { routeKm, mode: 'fiets', minutes, text: `±${formatNumberNL(routeKm, 1)} km, ±${minutes} min fietsen. Heen en terug telt als een rustige fietstraining.` };
   }
   const minutes = Math.round((routeKm / CAR_KMH) * 60);
-  const train = spot.station ? ` Of met de trein naar ${spot.station.name}, dan ±${Math.round(spot.station.km * ROUTE_FACTOR * 10) / 10} km lopen.` : '';
-  return { routeKm, mode: 'auto', minutes, text: `±${routeKm} km, ±${minutes} min met de auto.${train}` };
+  const train = spot.station ? ` Of met de trein naar ${spot.station.name}, dan ±${formatNumberNL(Math.round(spot.station.km * ROUTE_FACTOR * 10) / 10, 1)} km lopen.` : '';
+  return { routeKm, mode: 'auto', minutes, text: `±${formatNumberNL(routeKm, 1)} km, ±${minutes} min met de auto.${train}` };
 }
 
 export function spotsByDistance(spots: TrainingSpot[], home: HomeLocation | undefined, use?: SpotUse): TrainingSpot[] {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { TRAINING_GUIDES, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
@@ -12,7 +12,6 @@ import { todayISO } from '../utils/dates';
 
 
 export function TrainingGuidePage() {
-  const navigate = useNavigate();
   const { templateById } = useAppData();
   // The week as it's actually scheduled: sessions with a usual weekday in
   // that order, then the flexible ones.
@@ -27,7 +26,7 @@ export function TrainingGuidePage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSGIDS</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Maand 1 — Basisfase, dag voor dag</p>

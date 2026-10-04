@@ -58,7 +58,9 @@ export function describeChanges(items: PlanChangeItem[], sessions: PlannedSessio
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const nameOf = (templateId: string | undefined) => (templateId ? templateById.get(templateId)?.name : undefined) ?? 'Sessie';
   const lines: string[] = [];
-  for (const item of items) {
+  // In date order, so a long list reads like a calendar.
+  const dateOf = (item: PlanChangeItem) => item.fromDate ?? item.newSessionDraft?.scheduledDate ?? (item.plannedSessionId ? sessionById.get(item.plannedSessionId)?.scheduledDate : undefined) ?? '';
+  for (const item of [...items].sort((a, b) => dateOf(a).localeCompare(dateOf(b)))) {
     const session = item.plannedSessionId ? sessionById.get(item.plannedSessionId) : undefined;
     const name = nameOf(session?.templateId ?? item.newSessionDraft?.templateId);
     switch (item.action) {

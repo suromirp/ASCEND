@@ -216,6 +216,7 @@ function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   const upcoming = inputs.plannedSessions
     .filter((s) => s.status !== 'skipped' && s.scheduledDate >= inputs.asOf && daysBetween(inputs.asOf, s.scheduledDate) <= 6)
     .filter((s) => { const t = templateById.get(s.templateId); return t ? isLegHeavyTemplate(t) : false; })
+    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
     .map((s) => `${templateById.get(s.templateId)?.name} (${shortDate(s.scheduledDate)})`);
   return [{
     id: `injury:${leg.id}`,

@@ -83,6 +83,9 @@ export function WeekPage() {
             // returning to week view, or WeekPlanner's Mon..Sun row labels
             // would be offset from the actual dates.
             if (monthView) setWeekStart(mondayOfWeek(weekStart));
+            // Opening the month view on the week that holds today shows the
+            // month today is in, not the month its Monday falls in.
+            else if (weekStart === mondayOfWeek(todayISO())) setWeekStart(todayISO());
             setMonthView((v) => !v);
           }}
           className="flex flex-col items-center gap-0.5 text-center"

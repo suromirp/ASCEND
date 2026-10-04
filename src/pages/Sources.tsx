@@ -3,7 +3,7 @@
 // where in the app it is used.
 
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
 import { Card } from '../components/ui';
@@ -11,7 +11,6 @@ import { Card } from '../components/ui';
 const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
 
 export function SourcesPage() {
-  const navigate = useNavigate();
   const { templateById } = useAppData();
   const library = useMemo(() => buildSourceLibrary((id) => templateById.get(id)?.name ?? id), [templateById]);
   const [query, setQuery] = useState('');
@@ -22,7 +21,7 @@ export function SourcesPage() {
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }} aria-label="Terug">‹</button>
+        <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>BRONNEN</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar de adviezen in ASCEND op gebaseerd zijn</p>

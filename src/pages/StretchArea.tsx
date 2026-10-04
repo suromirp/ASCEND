@@ -1,3 +1,4 @@
+import { BackButton } from '../components/BackButton';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS } from '../data/stretches';
 import { Card } from '../components/ui';
@@ -25,7 +26,7 @@ export function StretchAreaPage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>{area.label.toUpperCase()}</p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rekoefeningen</p>
