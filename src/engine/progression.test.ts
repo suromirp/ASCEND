@@ -147,14 +147,9 @@ describe('computeGoalProgress', () => {
     expect(progress.completedCount).toBe(1);
   });
 
-  it('clearing an out-of-order milestone does not surface it as completed while an earlier one is still open', () => {
-    // Real, slightly surprising current behavior worth locking in: the
-    // "first incomplete = current" pass unconditionally overwrites every
-    // later milestone's derived status to upcoming/future, even one with
-    // its own GoalMilestoneProgress row — order in the ladder always wins
-    // over an out-of-sequence manual clear for what's *displayed*, though
-    // the underlying GoalMilestoneProgress row is untouched (append-only
-    // history is never lost, only the view-model's status for it here).
+  it('a milestone cleared out of order shows as reached, while the first open one stays current', () => {
+    // Audit 2026-10: a reached milestone used to show as "future" as long as
+    // an earlier one was open, so the ladder hid real progress.
     const progress = computeGoalProgress(
       'goal_test',
       'Test Ladder',
@@ -162,7 +157,7 @@ describe('computeGoalProgress', () => {
       [{ id: 'p1', goalId: 'goal_test', milestoneId: 'm3', clearedDate: '2026-09-10' }],
       [],
     );
-    expect(progress.milestones.map((m) => m.status)).toEqual(['current', 'upcoming', 'future']);
-    expect(progress.completedCount).toBe(0);
+    expect(progress.milestones.map((m) => m.status)).toEqual(['current', 'upcoming', 'completed']);
+    expect(progress.completedCount).toBe(1);
   });
 });
