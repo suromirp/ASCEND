@@ -13,10 +13,15 @@ export function ModalityPicker({
   templateId,
   selectedKey,
   onSelect,
+  collapseDetails = false,
 }: {
   templateId: string;
   selectedKey?: string;
   onSelect: (key: string) => void;
+  // When the day's own plan is shown above, this card's general
+  // description ("begin met 4-5 herhalingen") would contradict it: keep it
+  // as background, folded away.
+  collapseDetails?: boolean;
 }) {
   const modalities = getModalities(templateId);
   if (!modalities) return null;
@@ -45,7 +50,18 @@ export function ModalityPicker({
         </div>
       </div>
 
-      {selected && (
+      {selected && collapseDetails && (
+        <details className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <summary className="cursor-pointer py-2">Meer over: {selected.label}</summary>
+          <p className="mt-1 leading-relaxed">{selected.why}</p>
+          {selected.whenNotIdeal && selected.whenNotIdeal.length > 0 && (
+            <p className="mt-1 leading-relaxed">Minder geschikt bij: {selected.whenNotIdeal.join('; ')}.</p>
+          )}
+          {selected.garminNote && <p className="mt-1 leading-relaxed">{selected.garminProfile ? `Garmin: ${selected.garminProfile}. ` : ''}{selected.garminNote}</p>}
+        </details>
+      )}
+
+      {selected && !collapseDetails && (
         <Card className="flex flex-col gap-2">
           <p className="text-xs font-semibold tracking-wide" style={{ color: ROLE_COLOR[selected.role] }}>
             {ROLE_LABEL[selected.role].toUpperCase()}{selected.durationHint ? ` · ${selected.durationHint}` : ''}

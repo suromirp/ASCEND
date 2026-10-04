@@ -14,6 +14,9 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StretchList } from './StretchList';
 import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
+import { buildWorkoutPlan } from '../engine/workoutPlan';
+import { WorkoutSteps } from './TrainingGuideSheet';
+import { INTENSITY, type Intensity } from '../data/workoutStructure';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -62,6 +65,12 @@ export function ExerciseLogger({
   const today = todayISO();
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
   const [doneOn, setDoneOn] = useState<string>(plannedInPast ? scheduledDate! : today);
+  // The exact same plan the guide shows for this day: steps, minutes,
+  // repeats, RPE and heart-rate zone (production feedback: the training
+  // screen said something different from the info screen).
+  const plan = buildWorkoutPlan(template, scheduledDate ?? today, program);
+  const conditioningSteps = plan?.timeline.filter((s) => s.kind !== 'strength') ?? [];
+  const peak = conditioningSteps.length > 0 ? (Math.max(...conditioningSteps.map((s) => s.intensity)) as Intensity) : undefined;
   const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
 
   const exercises = exercisesForVariant(template, variant);
@@ -210,6 +219,13 @@ export function ExerciseLogger({
 
         <h1 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
         {template.focus && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
+
+        {plan && conditioningSteps.length > 0 && (
+          <Card className="mt-4">
+            <Eyebrow>WAT JE VANDAAG DOET</Eyebrow>
+            <WorkoutSteps plan={plan} compact />
+          </Card>
+        )}
 
         {(plannedInPast || !plannedSessionId) && (
           <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
@@ -360,7 +376,7 @@ export function ExerciseLogger({
             )}
 
             {guidanceMode === 'ascend_guided' && (
-              <ModalityPicker templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} />
+              <ModalityPicker templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} collapseDetails={!!plan} />
             )}
 
             {guidanceMode === 'garmin_suggested' && (
@@ -458,6 +474,11 @@ export function ExerciseLogger({
         <Card className="mt-5 flex flex-col gap-3">
           <Field label="Duur" unit="min" value={duration} onChange={(v) => setDuration(typeof v === 'number' ? v : 0)} />
           <Field label="RPE (1-10)" value={rpe} onChange={setRpe} />
+          {peak && (
+            <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              Hoe zwaar voelde de hele training? Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){conditioningSteps.some((st) => st.intensity < peak) ? ' in de zware stukken, rustig ertussen' : ''}.
+            </p>
+          )}
           <div>
             <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notities</label>
             <textarea
