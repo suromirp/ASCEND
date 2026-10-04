@@ -1,0 +1,73 @@
+// Dutch versions of the quote library (data/quoteLibrary.ts), own
+// translations from the English or Latin source. `latin` marks quotes whose
+// original is worth showing too (short Latin), the rest show only Dutch.
+// Quotes not listed here are not shown: military, Spartan and "suffer now"
+// sayings pull toward gym bravado instead of Stoic calm (audit 2026-10,
+// 1.4), and a few others had nothing to do with training or the mountains.
+
+export interface QuoteNl {
+  text: string;
+  author: string;
+  source?: string;
+  latin?: boolean;
+}
+
+export const QUOTE_NL: Record<string, QuoteNl> = {
+  Q001: { text: 'Verspil geen tijd meer met praten over wat een goed mens is. Wees er een.', author: 'Marcus Aurelius', source: 'Overpeinzingen 10.16' },
+  Q003: { text: 'Als iets buiten je je pijn doet, is het niet dat ding dat je stoort, maar je eigen oordeel erover.', author: 'Marcus Aurelius', source: 'Overpeinzingen 8.47' },
+  Q004: { text: 'Ik sta op voor het werk dat een mens hoort te doen.', author: 'Marcus Aurelius', source: 'Overpeinzingen 5.1' },
+  Q005: { text: 'Doe alles wat je doet alsof het de laatste keer is.', author: 'Marcus Aurelius', source: 'Overpeinzingen 2.5' },
+  Q006: { text: 'Kijk naar binnen. Daar is de bron van het goede, en die blijft opborrelen zolang je blijft graven.', author: 'Marcus Aurelius', source: 'Overpeinzingen 7.59' },
+  Q007: { text: 'Zeg eerst tegen jezelf wie je wilt zijn. Doe dan wat je moet doen.', author: 'Epictetus', source: 'Gesprekken 3.23' },
+  Q008: { text: 'Omstandigheden laten zien wie iemand is.', author: 'Epictetus', source: 'Gesprekken 1.24' },
+  Q009: { text: 'Niets groots ontstaat in één keer.', author: 'Epictetus', source: 'Gesprekken 1.15' },
+  Q010: { text: 'Wil je vooruitgaan, neem het dan voor lief dat anderen je om uiterlijke dingen dwaas vinden.', author: 'Epictetus', source: 'Handboekje 13' },
+  Q011: { text: 'Begin dus bij de kleine dingen.', author: 'Epictetus', source: 'Handboekje 12' },
+  Q012: { text: 'Niet de dingen zelf verontrusten ons, maar hoe we ze zien.', author: 'Epictetus', source: 'Handboekje 5' },
+  Q013: { text: 'Niemand is vrij die geen meester is over zichzelf.', author: 'Epictetus', source: 'Fragmenten' },
+  Q014: { text: 'Wapen je met tevredenheid. Dat is een burcht die niet valt.', author: 'Epictetus', source: 'Fragmenten' },
+  Q015: { text: 'We lijden vaker in onze verbeelding dan in werkelijkheid.', author: 'Seneca', source: 'Brieven aan Lucilius 13' },
+  Q016: { text: 'Tegenslag beproeft deugd zoals vuur goud beproeft.', author: 'Seneca', source: 'Over de voorzienigheid' },
+  Q017: { text: 'Niemand kent zijn kracht of zijn waarde voordat hij op de proef is gesteld.', author: 'Seneca', source: 'Over de voorzienigheid' },
+  Q018: { text: 'De stuurman leer je kennen in de storm.', author: 'Seneca', source: 'Over de voorzienigheid' },
+  Q019: { text: 'Soms is gewoon doorgaan al een daad van moed.', author: 'Seneca', source: 'Brieven aan Lucilius 78' },
+  Q020: { text: 'De weg naar de hoogte is ruw.', author: 'Seneca', source: 'Brieven aan Lucilius 84' },
+  Q022: { text: 'Grote ruïnes hebben plaatsgemaakt voor iets mooiers.', author: 'Seneca', source: 'Brieven aan Lucilius 91' },
+  Q023: { text: 'Het lot helpt wie durft.', author: 'Vergilius', source: 'Aeneis 10.284', latin: true },
+  Q024: { text: 'Het lot vindt een weg.', author: 'Vergilius', source: 'Aeneis 10.113', latin: true },
+  Q025: { text: 'Houd vol, en bewaar jezelf voor betere tijden.', author: 'Vergilius', source: 'Aeneis 1.207', latin: true },
+  Q026: { text: 'Misschien zul je hier later met plezier aan terugdenken.', author: 'Vergilius', source: 'Aeneis 1.203', latin: true },
+  Q027: { text: 'Volhardend werk overwint alles.', author: 'Vergilius', source: 'Georgica 1.145', latin: true },
+  Q028: { text: 'Ze kunnen het, omdat ze geloven dat ze het kunnen.', author: 'Vergilius', source: 'Aeneis 5.231', latin: true },
+  Q029: { text: 'Pluk de dag.', author: 'Horatius', source: 'Oden 1.11', latin: true },
+  Q030: { text: 'Durf te weten.', author: 'Horatius', source: 'Brieven 1.2.40', latin: true },
+  Q031: { text: 'Het geluk is met de dapperen.', author: 'Terentius', source: 'Phormio 203', latin: true },
+  Q033: { text: 'Wie ver trekt, heeft verstand nodig.', author: 'Hávamál', source: 'Strofe 5' },
+  Q034: { text: 'Geen betere last kun je dragen op een lange tocht dan wijsheid.', author: 'Hávamál', source: 'Strofe 10' },
+  Q036: { text: 'Alleen wie ver heeft gezworven, weet hoe de wereld is.', author: 'Hávamál', source: 'Strofe 18' },
+  Q039: { text: 'Ga dapper en blij je weg, zo lang als je leeft.', author: 'Hávamál', source: 'Strofe 15' },
+  Q040: { text: 'Stap voor stap loop je de weg van duizend mijl.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q042: { text: 'Ken één ding goed, en je begrijpt er tienduizend.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q043: { text: 'De weg ligt in het trainen.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q044: { text: 'Zie wat niet te zien is.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q045: { text: 'Let ook op de kleine dingen.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q046: { text: 'Doe niets wat geen nut heeft.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q047: { text: 'Denk licht over jezelf en diep over de wereld.', author: 'Miyamoto Musashi', source: 'Dokkōdō' },
+  Q048: { text: 'Wijk nooit af van de weg.', author: 'Miyamoto Musashi', source: 'Dokkōdō' },
+  Q049: { text: 'Een reis van duizend mijl begint onder je voeten.', author: 'Laozi', source: 'Tao Te Ching 64' },
+  Q050: { text: 'Een boom die je niet kunt omarmen, groeide uit het kleinste scheutje.', author: 'Laozi', source: 'Tao Te Ching 64' },
+  Q051: { text: 'Mensen bederven het vaak als ze bijna klaar zijn.', author: 'Laozi', source: 'Tao Te Ching 64' },
+  Q052: { text: 'Wees aan het eind net zo zorgvuldig als aan het begin.', author: 'Laozi', source: 'Tao Te Ching 64' },
+  Q053: { text: 'De eer gaat naar wie echt in de arena staat.', author: 'Theodore Roosevelt', source: 'Burgerschap in een republiek, 1910' },
+  Q055: { text: 'Als hij faalt, dan faalt hij tenminste terwijl hij groots durfde.', author: 'Theodore Roosevelt', source: 'Burgerschap in een republiek, 1910' },
+  Q056: { text: 'Ik kwam, ik zag, ik overwon.', author: 'Julius Caesar', source: 'Na Zela, 47 v.Chr.', latin: true },
+  Q060: { text: 'Het gevecht wordt gewonnen of verloren ver weg van toeschouwers.', author: 'Muhammad Ali' },
+  Q062: { text: 'Iedereen verliest weleens in het leven.', author: 'Muhammad Ali' },
+  Q063: { text: 'De wil moet sterker zijn dan de techniek.', author: 'Muhammad Ali' },
+  Q064: { text: 'Geen mens is begrensd.', author: 'Eliud Kipchoge' },
+  Q067: { text: 'Het is niet de berg die we bedwingen, maar onszelf.', author: 'Edmund Hillary' },
+  Q068: { text: 'Het einde kroont het werk.', author: 'Latijns spreekwoord', latin: true },
+  Q069: { text: 'Daden, geen woorden.', author: 'Latijnse spreuk', latin: true },
+  Q071: { text: 'Via ruwe wegen naar de sterren.', author: 'Latijnse spreuk', latin: true },
+  Q072: { text: 'Zolang ik adem, hoop ik.', author: 'Latijnse spreuk', latin: true },
+};
