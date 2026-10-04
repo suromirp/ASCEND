@@ -42,23 +42,19 @@ Duurlopen bouwen uithoudingsvermogen. Stijgingstraining bouwt hoogtemeters.
 Consistentie bouwt richting een concreet objectief: de volgende mijlpaal op de
 **Ascent Ladder**, oplopend tot "GR5 KLAAR".
 
-Het standaard schema dat ASCEND meelevert (`src/data/defaultProgram.ts`) is
-niet langer generieke demo-data — het is het echte **Maand 1 / BASISFASE**
-schema: Herstel, Easy Run, Lower A (zware beendag), Upper A, Upper B, en een
-weekend-beenblok van Heuvel-/Incline-Intervallen (zaterdag) gevolgd door een
-Lange Duurloop (zondag) — bewust aaneengesloten, gericht op zowel
-hardloopprogressie als GR5-specifieke D+. Lower B en Bergconditie zijn als
-losse wekelijkse sessies vervangen door dat weekend-blok; hun templates
-blijven wel gedefinieerd zodat oudere geschiedenis nog gewoon oplost. Elke
-sessie volgt de exacte week-op-week progressie (wennen → opbouw → zwaarste
-week → deload) uit dat schema. Maand 2-4 zijn nog placeholders die
-hetzelfde patroon hergebruiken totdat die maanden zijn uitgewerkt — zie
-Roadmap.
+Het schema dat ASCEND meelevert (`src/data/defaultProgram.ts`) is een vaste
+week: Herstel op maandag, Upper A, Lower A (zware beendag), Easy Run, Upper B,
+en een weekendblok van heuvel- of incline-intervallen op zaterdag en een lange
+duurloop op zondag. Elke fase volgt een golf van vier weken: wennen, opbouw,
+zwaarste week, rustweek. Elke nieuwe golf ligt iets hoger dan de vorige.
 
-> **Als je de app al eerder had geopend:** je browser heeft de oude demo-data
-> al lokaal opgeslagen. Ga naar **Meer → Schema opnieuw laden** om over te
-> schakelen naar het echte Maand 1-schema. Dit wist eventuele voortgang die
-> op de oude demo-data was gelogd.
+De fases worden teruggerekend vanaf de datum van je hoofddoel
+(`src/engine/programLayout.ts`): basis, opbouw, bergcapaciteit,
+expeditieklaar en twee weken afbouwen vlak voor vertrek. Vanaf
+Bergcapaciteit wordt de lange zondag een bergtocht met een eigen opbouw van
+duur, hoogtemeters en rugzakgewicht, en in Expeditieklaar wandel je twee
+dagen op rij. Wil je liever blijven hardlopen op zondag, dan kies je dat bij
+Meer, Training.
 
 ## Technologie
 

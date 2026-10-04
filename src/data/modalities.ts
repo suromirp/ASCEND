@@ -49,7 +49,7 @@ export interface ModalityDefinition {
   whenNotIdeal?: string[];
   garminNote?: string;
   fields: ModalityFields;
-  locked?: boolean; // shown but not selectable in Month 1 (LATER_PHASE)
+  locked?: boolean; // shown but not selectable here: it belongs to a later phase (LATER_PHASE)
   sources?: ModalitySource[];
 }
 
@@ -226,7 +226,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
     environment: 'outdoor',
     garminProfile: 'Hike',
     durationHint: 'later',
-    how: 'Nog niet in Maand 1 — later geleidelijk het daadwerkelijk verwachte GR5-rugzakgewicht opbouwen, geen willekeurig zware rugzak.',
+    how: 'Hoort bij de bergtocht vanaf Bergcapaciteit: daar staat per week hoeveel kilo. Op deze dag nog zonder rugzak, zodat de opbouw klopt.',
     why: 'Onderzoek naar load-carriage-training vond het grootste effect wanneer progressieve rugzakbelasting werd toegevoegd naast aerobe en krachttraining. Rugzaklopen verhoogt bovendien de metabole kosten en verandert de bewegingsvraag.',
     fields: { distance: true, elevation: true, elevationLoss: true, backpackWeight: true, terrain: true },
     locked: true,
