@@ -210,14 +210,17 @@ function StepRow({ step }: { step: PlanStep }) {
           <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutesText(step.seconds)}</span>
         </div>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          {isStrength ? step.detail : `${level.label} · ${level.feel} · ${level.zone}${step.detail ? `. ${step.detail}` : ''}`}
+          {isStrength ? step.detail : `${level.label} · ${level.rpe} · ${level.zone} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`}
         </p>
       </div>
     </div>
   );
 }
 
-function PlanView({ plan }: { plan: WorkoutPlan }) {
+// The steps of one session (summary, tags, chart, steps with intensity,
+// RPE and heart-rate zone). Shared by the guide and the training screen,
+// so both always say exactly the same thing.
+export function WorkoutSteps({ plan, compact = false }: { plan: WorkoutPlan; compact?: boolean }) {
   const total = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   const peak = Math.max(...plan.timeline.map((s) => s.intensity)) as Intensity;
   const usedLevels = [...new Set(plan.timeline.filter((s) => s.kind !== 'strength').map((s) => s.intensity))].sort() as Intensity[];
@@ -232,7 +235,7 @@ function PlanView({ plan }: { plan: WorkoutPlan }) {
         ))}
       </div>
 
-      <SectionTitle>OPBOUW</SectionTitle>
+      {!compact && <SectionTitle>OPBOUW</SectionTitle>}
       {/* A chart only says something when the session has steps; one
           continuous block is just the step below. */}
       {plan.timeline.length > 1 && (
@@ -277,6 +280,14 @@ function PlanView({ plan }: { plan: WorkoutPlan }) {
           ),
         )}
       </div>
+    </>
+  );
+}
+
+function PlanView({ plan }: { plan: WorkoutPlan }) {
+  return (
+    <>
+      <WorkoutSteps plan={plan} />
 
       {plan.garmin && (
         <>

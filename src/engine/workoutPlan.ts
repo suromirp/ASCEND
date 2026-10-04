@@ -63,7 +63,20 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
     }
   }
   const restSeconds = Math.max(5 * 60, totalMinutes * 60 - fixed);
-  const toStep = (s: StepSpec): PlanStep => ({ kind: s.kind, label: s.label, seconds: s.rest ? restSeconds : fixedSeconds(s), intensity: s.intensity, detail: s.detail });
+  // Without a flexible main block, the minutes left over go to warming up
+  // and cooling down, so the steps always add up to the planned duration
+  // (production feedback: the chart said 38 min, the session 40).
+  const hasRest = spec.structure.some((s) => !isRepeat(s) && s.rest);
+  const edges = spec.structure.filter((s): s is StepSpec => !isRepeat(s) && (s.kind === 'warmup' || s.kind === 'cooldown'));
+  const leftover = totalMinutes * 60 - fixed;
+  const edgeExtra = !hasRest && edges.length > 0 && leftover > 0 ? Math.round(leftover / edges.length / 60) * 60 : 0;
+  const toStep = (s: StepSpec): PlanStep => ({
+    kind: s.kind,
+    label: s.label,
+    seconds: s.rest ? restSeconds : fixedSeconds(s) + (edges.includes(s) ? edgeExtra : 0),
+    intensity: s.intensity,
+    detail: s.detail,
+  });
   for (const s of spec.structure) {
     if (isRepeat(s)) items.push({ repeat: repeats!, steps: s.steps.map(toStep) });
     else items.push({ step: toStep(s) });
