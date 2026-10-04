@@ -4,7 +4,7 @@ import { resolveProgramWeek } from '../utils/dates';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeGoalProgress } from '../engine/progression';
-import { isIllnessDay } from '../engine/illness';
+import { isIllnessDay, activeIllness, isHeavySession } from '../engine/illness';
 import { computeReadiness } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
@@ -57,9 +57,20 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // when every session today is already completed or skipped, and falling
   // back to one of those would re-show a finished session as if it still
   // needed to be started.
-  const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped');
+  // While ill, today's mission follows the illness for as long as it lasts,
+  // not only the two days cleared when it was reported: nothing with fever
+  // or stomach flu, only light sessions with a cold above the neck.
+  const illness = activeIllness(settings.illnessEpisodes);
+  const allowedWhileIll = (s: PlannedSession) => {
+    if (!illness) return true;
+    if (illness.kind !== 'above_neck') return false;
+    const t = templateById.get(s.templateId);
+    return !!t && !isHeavySession(t);
+  };
+  const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped' && allowedWhileIll(s));
   const secondary = todaySessions.filter((s) => s.id !== primary?.id);
   const allTodayDone = todaySessions.length > 0 && !primary;
+  const anyDoneToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status === 'completed');
 
   const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
@@ -146,6 +157,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         variant,
         durationMinutes: durationMinutes ?? resolveVariantDuration(template, variant, session.scheduledDate, program),
         subjectiveFeel: feel,
+        // Ticked off afterwards: it happened on its own day.
+        completedDate: session.scheduledDate < todayISO() ? session.scheduledDate : undefined,
       });
     } else {
       setLoggingVariant(variant);
@@ -222,8 +235,14 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <Eyebrow>VANDAAG</Eyebrow>
           {allTodayDone ? (
             <>
-              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Klaar voor vandaag</p>
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je sessie(s) van vandaag staan op voltooid.</p>
+              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{anyDoneToday ? 'Klaar voor vandaag' : 'Vandaag geen training'}</p>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                {anyDoneToday
+                  ? 'Je training van vandaag is gedaan.'
+                  : illness
+                    ? 'Je bent ziek gemeld. Rust; wat je nu mist, hoef je niet in te halen.'
+                    : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'}
+              </p>
             </>
           ) : (
             <>

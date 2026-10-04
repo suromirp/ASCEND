@@ -76,6 +76,16 @@ export function recoveryRamp(episodes: IllnessEpisode[] | undefined, asOf: strin
   return { until, heavyFrom: addDays(last.endDate!, Math.ceil(days / 2) + 1), daysLeft: daysBetween(asOf, until) + 1 };
 }
 
+// Building back after illness: the first sessions at about three quarters
+// of the usual volume (docs/onderzoek: return at 70-80%). Covers the whole
+// ramp window; past episodes only, an active one has no window yet.
+export const RETURN_VOLUME_FACTOR = 0.75;
+export function recoveryDurationAdjustments(episodes: IllnessEpisode[] | undefined): { from: string; until: string; factor: number }[] {
+  return (episodes ?? [])
+    .filter((e) => e.endDate)
+    .map((e) => ({ from: e.endDate!, until: addDays(e.endDate!, rampDays(e, e.endDate!)), factor: RETURN_VOLUME_FACTOR }));
+}
+
 function shortDate(iso: string): string {
   return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 }
@@ -151,7 +161,7 @@ export function planIllnessEnd(
       'illness_resolved',
       'Weer beter: rustig opbouwen',
       [...missedWhileIll, ...heavyInRamp],
-      `Tot en met ${shortDate(ramp.until)} bouw je rustig op: trainingen korter en rustiger, zware trainingen pas weer vanaf ${shortDate(ramp.heavyFrom)}. Daarna gaat je schema gewoon verder.`,
+      `Tot en met ${shortDate(ramp.until)} bouw je rustig op: je trainingen zijn ongeveer een kwart korter en rustiger, zware trainingen pas weer vanaf ${shortDate(ramp.heavyFrom)}. Daarna gaat je schema gewoon verder.`,
       'Na ziekte bouw je in ongeveer 1 tot 2 dagen per zieke dag weer op. Gemiste trainingen worden niet ingehaald.',
     ),
   };

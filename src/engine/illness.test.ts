@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planIllnessStart, planIllnessEnd, recoveryRamp, isIllnessDay, activeIllness, rampDays } from './illness';
+import { planIllnessStart, planIllnessEnd, recoveryRamp, isIllnessDay, activeIllness, rampDays, recoveryDurationAdjustments } from './illness';
 import { computeReadiness } from './readiness';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -81,5 +81,25 @@ describe('no catching up while ill', () => {
     expect(computeAdvice(base).some((a) => a.ruleId === 'MISSED-CATCH-UP')).toBe(true);
     const ill = computeAdvice({ ...base, illnessEpisodes: [{ id: 'i', kind: 'above_neck', startDate: '2026-10-09' }] });
     expect(ill.some((a) => a.ruleId === 'MISSED-CATCH-UP')).toBe(false);
+  });
+});
+
+describe('building back after illness at about three quarters volume', () => {
+  it('covers the ramp window after an ended episode only', () => {
+    const windows = recoveryDurationAdjustments([
+      { id: 'a', kind: 'below_neck', startDate: '2026-10-01', endDate: '2026-10-05' },
+      { id: 'b', kind: 'above_neck', startDate: '2026-11-01' },
+    ]);
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({ from: '2026-10-05', factor: 0.75 });
+  });
+
+  it('shortens a planned duration inside the window and nowhere else', async () => {
+    const { setDurationAdjustments, resolveEffectiveFullDuration } = await import('./substitutions');
+    const tpl = { id: 't', name: 'Easy Run', type: 'cardio', durationVariants: { full: 40 } } as never;
+    setDurationAdjustments([{ from: '2026-10-05', until: '2026-10-10', factor: 0.75 }]);
+    expect(resolveEffectiveFullDuration(tpl, '2026-10-06', null)).toBe(30);
+    expect(resolveEffectiveFullDuration(tpl, '2026-10-12', null)).toBe(40);
+    setDurationAdjustments([]);
   });
 });

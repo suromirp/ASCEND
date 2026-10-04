@@ -212,6 +212,9 @@ function buildTemplates(): SessionTemplate[] {
       id: 'tpl_long_run',
       name: 'Lange Duurloop',
       type: 'hiking',
+      // A run toward the marathon, with D+: it counts as running (sports
+      // on/off, History totals), its type keeps the outdoor/D+ logging.
+      sport: 'running',
       focus: 'Uithouding × D+ — richting marathon en GR5',
       durationVariants: { full: 75, short: 45 },
       defaultDayOfWeek: 7,

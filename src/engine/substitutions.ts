@@ -54,11 +54,33 @@ function progressionCycleMultiplier(weekInProgram: number, cycleLength: number):
 // one specific scheduled date, falling back to the static duration when no
 // program/week match is available. Only affects the 'full' variant; short
 // and minimum fallbacks stay fixed regardless of week.
+// Temporary volume adjustments by date, e.g. building back after illness
+// (docs/onderzoek: return at ~70-80% of the usual volume). Set from the
+// user's illness history by state/AppDataContext on every refresh; empty
+// by default, so every pure test sees the plain duration.
+export interface DurationAdjustment {
+  from: string;
+  until: string;
+  factor: number;
+}
+let durationAdjustments: DurationAdjustment[] = [];
+export function setDurationAdjustments(adjustments: DurationAdjustment[]): void {
+  durationAdjustments = adjustments;
+}
+
 export function resolveEffectiveFullDuration(
   template: SessionTemplate,
   scheduledDate: string,
   program: Program | null | undefined,
 ): number {
+  const base = baseFullDuration(template, scheduledDate, program);
+  const adjustment = durationAdjustments.find((a) => scheduledDate >= a.from && scheduledDate <= a.until);
+  if (!adjustment) return base;
+  // Rounded to whole 5 minutes, never below 15.
+  return Math.max(15, Math.round((base * adjustment.factor) / 5) * 5);
+}
+
+function baseFullDuration(template: SessionTemplate, scheduledDate: string, program: Program | null | undefined): number {
   if (template.weeklyProgression && program) {
     const position = resolveProgramWeek(program, scheduledDate);
     if (position) {

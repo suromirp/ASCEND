@@ -58,6 +58,8 @@ export function WeekPage() {
         variant,
         durationMinutes: durationMinutes ?? resolveVariantDuration(template, variant, session.scheduledDate, program),
         subjectiveFeel: feel,
+        // Ticked off afterwards: it happened on its own day.
+        completedDate: session.scheduledDate < todayISO() ? session.scheduledDate : undefined,
       });
     } else {
       setLogging({ session, variant });
