@@ -71,7 +71,7 @@ export function arbitrateContestedSlot(slot: ContestedSlot, goalFocusById: Map<s
       plannedSessionId: slot.plannedSessionId,
       winningGoalId,
       deprioritizedGoalIds,
-      reason: `Deze sessie draagt bij aan meerdere doelen; ${winningGoalId} is expliciet als hoofddoel ingesteld en krijgt daarom voorrang, ongeacht de Goal Focus-score van de andere doelen.`,
+      reason: 'Deze training telt mee voor meerdere doelen. Je hoofddoel krijgt voorrang.',
     };
   }
 
@@ -85,8 +85,8 @@ export function arbitrateContestedSlot(slot: ContestedSlot, goalFocusById: Map<s
     deprioritizedGoalIds,
     reason:
       winningPct !== undefined
-        ? `Deze sessie draagt bij aan meerdere doelen; ${winningGoalId} heeft op dit moment de hoogste Goal Focus (${Math.round(winningPct)}%).`
-        : `Deze sessie draagt bij aan meerdere doelen; ${winningGoalId} krijgt voorrang.`,
+        ? `Deze training telt mee voor meerdere doelen. Het doel met nu de hoogste doelfocus (${Math.round(winningPct)}%) krijgt voorrang.`
+        : 'Deze training telt mee voor meerdere doelen. Eén ervan krijgt voorrang.',
   };
 }
 
@@ -130,7 +130,7 @@ export function applyTaperOverride(decision: ProgressionDecision, daysToGoal: nu
   return {
     ...decision,
     state: 'taper',
-    reason: `${decision.reason} Doel is over ${daysToGoal} dag${daysToGoal === 1 ? '' : 'en'} — tapering: ongeveer ${pct}% volumereductie, intensiteit en frequentie blijven grotendeels behouden.`,
+    reason: `${decision.reason} Doel is over ${daysToGoal} dag${daysToGoal === 1 ? '' : 'en'} Afbouwen voor de tocht: ongeveer ${pct}% minder volume, tempo en aantal trainingen blijven ongeveer gelijk.`,
     ruleId: 'HEURISTIC-ADVENTURE-FRESHEN',
     taperReductionFactor: factor,
   };

@@ -664,7 +664,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         ruleId: 'WEEKLY-PRESCRIPTION',
         title: 'Weekplanning voor de komende weken',
         effect: `${realChanges.length} ${realChanges.length === 1 ? 'wijziging' : 'wijzigingen'} vanaf week +2: ${describeChanges(realChanges, planned, tpls).slice(0, 2).join('; ')}${realChanges.length > 2 ? ' …' : ''}`,
-        why: `Trigger: je doelen, trainingen en herstel van nu. Regel: de weekplanning bepaalt per week wat erin hoort. ${proposal.explanation}`,
+        why: `Op basis van je doelen, je trainingen en je herstel van nu bepaalt de weekplanning per week wat erin hoort. ${proposal.explanation}`,
         priority: 2,
         proposal,
       });

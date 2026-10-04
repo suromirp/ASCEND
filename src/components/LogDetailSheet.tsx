@@ -24,7 +24,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (activity?.guidanceMode) {
     rows.push({
       label: 'Manier van trainen',
-      value: activity.guidanceMode === 'ascend_guided' ? 'ASCEND Guided' : activity.guidanceMode === 'garmin_suggested' ? 'Garmin Suggested' : 'Vrije training',
+      value: activity.guidanceMode === 'ascend_guided' ? 'Volgens ASCEND' : activity.guidanceMode === 'garmin_suggested' ? 'Voorstel van Garmin' : 'Vrije training',
     });
   }
   if (garminType) rows.push({ label: 'Garmin stelde voor', value: garminType });
@@ -34,7 +34,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   }
   if (log.outdoorData?.elevationLossM !== undefined) rows.push({ label: 'Hoogtemeters D-', value: `${log.outdoorData.elevationLossM} m` });
   if (log.outdoorData?.steps !== undefined) rows.push({ label: 'Verdiepingen/stappen', value: `${log.outdoorData.steps}` });
-  if (log.outdoorData?.machineVerticalM !== undefined) rows.push({ label: 'Machine-vertical', value: `${log.outdoorData.machineVerticalM} m` });
+  if (log.outdoorData?.machineVerticalM !== undefined) rows.push({ label: 'Hoogtemeters op toestel', value: `${log.outdoorData.machineVerticalM} m` });
   if (activity?.avgHeartRate !== undefined) rows.push({ label: 'Gem. hartslag', value: `${activity.avgHeartRate} bpm` });
   if (activity?.cadence !== undefined) rows.push({ label: 'Cadans', value: `${activity.cadence}` });
   if (activity?.power !== undefined) rows.push({ label: 'Vermogen', value: `${activity.power} W` });

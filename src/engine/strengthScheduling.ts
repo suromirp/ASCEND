@@ -39,6 +39,7 @@ import type { GoalOverview } from './goalOverview';
 import { resolveHorizonZone, committedWeekStartDates } from './planningHorizon';
 import { reconcileWeeksComposition, type ReconciliationTarget } from './weekReconciliation';
 import { makeId } from '../utils/id';
+import { splitLabel, strengthBlockLabel } from '../utils/splitLabel';
 
 // Only ever the first N ids the strategy lists (N = sessionsPerWeek),
 // never a cross-week rotation — every worked example in the addendum (and
@@ -83,8 +84,8 @@ function buildReconciliationTarget(strategy: StrengthProgramStrategy, source: st
   return {
     isInFamily: (_session, template) => template.type === 'strength',
     targetTemplateIds: targetTemplateIdsForWeek(strategy),
-    removeReason: (template) => `Krachtblok-plaatsing: ${template.name} hoort niet meer bij het actieve krachtblok (${strategy.splitType}).`,
-    addReason: (template) => `Krachtblok-plaatsing: ${template.name} toegevoegd volgens het actieve krachtblok (${strategy.sessionsPerWeek}x/week, ${strategy.splitType}).`,
+    removeReason: (template) => `${template.name} hoort niet meer bij je krachtblok (${splitLabel(strategy.splitType).toLowerCase()}).`,
+    addReason: (template) => `${template.name} toegevoegd volgens je krachtblok (${strengthBlockLabel(strategy.sessionsPerWeek, strategy.splitType)}).`,
     protectedTypes: SWAP_PROTECTED_TYPES,
     urgentSwapThresholdPct: URGENT_GOAL_SWAP_THRESHOLD_PCT,
     calmSwapThresholdPct: CALM_GOAL_SWAP_THRESHOLD_PCT,
@@ -133,17 +134,17 @@ function buildPlan(
   // here anymore.
   const unplaceableCount = noFreeDayWeekCount;
   const unplaceableNote = noFreeDayWeekCount > 0
-    ? ` Let op: in ${noFreeDayWeekCount} week(en) zit elke dag al vol met een andere sessie — er was geen vrije dag om de extra frequentie te plaatsen zonder een bestaande sessie te verplaatsen of te verwijderen — dat is geen "geen wijzigingen nodig", maar een echte planningsgrens.`
+    ? ` Let op: in ${noFreeDayWeekCount} ${noFreeDayWeekCount === 1 ? 'week' : 'weken'} staat er al op elke dag een training. Daar is geen plek voor een extra krachttraining zonder een andere te verplaatsen of te schrappen.`
     : '';
 
   const zoneNote = zoneLabel === 'forecast'
-    ? 'Wordt toegepast op het forecast-bereik (week +2 en verder) na bevestiging — nooit op de huidige of volgende week.'
-    : 'Past ook deze week en/of volgende week aan — sessies die al gepland staan maar niet bij het nieuwe krachtblok horen, worden verplaatst/verwijderd. Al gelogde sessies worden nooit aangepast.';
+    ? 'Wordt na je bevestiging toegepast vanaf over twee weken, nooit op deze of volgende week.'
+    : 'Past ook deze week en de volgende aan. Krachttrainingen die niet bij het nieuwe krachtblok horen, worden verplaatst of geschrapt. Wat je al hebt afgevinkt, blijft staan.';
 
   return {
     id: makeId('planchange'),
     trigger: 'strength_program_changed',
-    issue: items.length > 0 ? 'Krachtblok-plaatsing' : unplaceableCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
+    issue: items.length > 0 ? 'Krachtblok inplannen' : unplaceableCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
     changes: items,
     alternatives,
     consequences: items.length > 0

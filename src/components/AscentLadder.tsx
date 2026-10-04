@@ -38,7 +38,7 @@ export function AscentLadder({
 
       <div className="mt-2 flex flex-col items-center gap-1 py-4">
         <span className="text-2xl" style={{ color: 'var(--color-gold)' }}>△</span>
-        <span className="font-display text-sm tracking-widest" style={{ color: 'var(--color-ink-dim)' }}>SUMMIT</span>
+        <span className="font-display text-sm tracking-widest" style={{ color: 'var(--color-ink-dim)' }}>TOP</span>
       </div>
     </div>
   );

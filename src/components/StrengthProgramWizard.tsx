@@ -6,7 +6,11 @@
 // MacroFactor Workouts' job (§1/§4). Mirrors GoalSetupWizard's sheet/step
 // pattern for a consistent setup-flow feel across the app.
 
+import { SPLIT_PRESET_LABEL, strengthBlockLabel } from '../utils/splitLabel';
 import { useMemo, useState } from 'react';
+import { weekdayShortNL } from '../utils/dates';
+
+const dayNL = (iso: string | undefined) => !iso ? '' : `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 import { useAppData } from '../state/AppDataContext';
 import type { StrengthProgramStrategy, StrengthProgramSource } from '../models/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
@@ -28,11 +32,6 @@ const SOURCE_LABEL: Record<StrengthProgramSource, string> = {
 // stays a plain string, deliberately — models/strengthProgram.ts) — "Anders"
 // falls back to free text so a split outside this list is still just as
 // storable as it was before this menu existed.
-const SPLIT_PRESET_LABEL: Record<string, string> = {
-  upper_lower: 'Upper / Lower',
-  full_body: 'Full Body',
-  push_pull_legs: 'Push / Pull / Legs',
-};
 const SPLIT_PRESETS = Object.keys(SPLIT_PRESET_LABEL);
 const CUSTOM_SPLIT = '__custom__';
 
@@ -193,10 +192,10 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{committedProposal.consequences}</p>
         <div className="flex flex-col gap-2">
           {removed.map((c) => (
-            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>− {c.fromDate}: {c.reason}</div>
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>− {dayNL(c.fromDate)}: {c.reason}</div>
           ))}
           {moved.map((c) => (
-            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>→ {c.fromDate} naar {c.toDate}: {c.reason}</div>
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>→ {dayNL(c.fromDate)} naar {dayNL(c.toDate)}: {c.reason}</div>
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
@@ -297,13 +296,13 @@ function SessionsStep({
           />
         </div>
         <div className="flex-1">
-          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Split</label>
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Indeling</label>
           {customSplit ? (
             <input
               type="text"
               value={local.splitType}
               onChange={(e) => setLocal((s) => ({ ...s, splitType: e.target.value }))}
-              placeholder="bijv. bro_split"
+              placeholder="bijv. mijn indeling"
               className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
               style={inputStyle}
             />
@@ -536,7 +535,7 @@ function PreviewStep({
       <div>
         <Eyebrow>BLOK</Eyebrow>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>
-          {draft.sessionsPerWeek}x/week — {draft.splitType}
+          {strengthBlockLabel(draft.sessionsPerWeek, draft.splitType)}
         </p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           {draft.sessionTemplateIds.map((id) => templateById.get(id)?.name ?? id).join(', ')}
@@ -553,12 +552,12 @@ function PreviewStep({
         <div className="flex flex-col gap-2">
           {removed.map((c) => (
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
-              − {c.fromDate}: {c.reason}
+              − {dayNL(c.fromDate)}: {c.reason}
             </div>
           ))}
           {moved.map((c) => (
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              → {c.fromDate} naar {c.toDate}: {c.reason}
+              → {dayNL(c.fromDate)} naar {dayNL(c.toDate)}: {c.reason}
             </div>
           ))}
           {added.map((c, i) => (

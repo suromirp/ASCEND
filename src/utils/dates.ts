@@ -128,3 +128,11 @@ export function resolveProgramWeek(program: Program, dateIso: string): ResolvedP
   }
   return null;
 }
+
+// "6 uur 25 min", "45 min", "0 min".
+export function formatHoursMinutesNL(totalMinutes: number): string {
+  const m = Math.max(0, Math.round(totalMinutes));
+  const h = Math.floor(m / 60);
+  if (h === 0) return `${m} min`;
+  return m % 60 === 0 ? `${h} uur` : `${h} uur ${m % 60} min`;
+}

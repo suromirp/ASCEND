@@ -196,7 +196,7 @@ describe('computeStrengthPlacementPlan', () => {
       [],
     );
     expect(proposal.changes).toEqual([]);
-    expect(proposal.consequences).toMatch(/geen vrije dag/);
+    expect(proposal.consequences).toMatch(/al op elke dag een training/);
     expect(proposal.issue).not.toBe('Geen aanpassingen nodig');
   });
 
@@ -410,7 +410,7 @@ describe('computeStrengthPlacementPlan — goal-relevance-ranked swap fallback',
       overviews,
     );
     expect(proposal.changes.find((c) => c.action === 'add')).toBeUndefined();
-    expect(proposal.consequences).toMatch(/geen vrije dag/);
+    expect(proposal.consequences).toMatch(/al op elke dag een training/);
   });
 
   it('never swaps out the one candidate with meaningful goal relevance when a lower-relevance candidate is available instead', () => {

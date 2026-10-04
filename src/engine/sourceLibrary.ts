@@ -72,8 +72,33 @@ function splitLabel(label: string): { publisher: string; title: string } {
 }
 
 // "HEURISTIC-RUNNING-PROGRESSION-BANDS" → "running progression bands".
+// The planning rules in plain Dutch, as the Bronnen page shows them.
+const RULE_NAME_NL: Record<string, string> = {
+  'HEURISTIC-ACCUMULATION-REVIEW-3-PROGRESSIONS': 'na drie verzwaringen eerst evalueren',
+  'HEURISTIC-ADVENTURE-FRESHEN': 'afbouwen voor de tocht',
+  'HEURISTIC-CYCLING-PROGRESSION-BANDS': 'hoe snel fietsen zwaarder wordt',
+  'HEURISTIC-ELEVATION-PROGRESSION-BANDS': 'hoe snel de hoogtemeters groeien',
+  'HEURISTIC-FEASIBILITY-CATEGORY-SIMULATION': 'is het doel haalbaar',
+  'HEURISTIC-GOAL-FOCUS-WEIGHTS': 'welk doel voorrang krijgt',
+  'HEURISTIC-LEG-HEAVY-SPACING-PRESETS': 'ruimte tussen zware beendagen',
+  'HEURISTIC-PACK-WEIGHT-BANDS': 'hoe snel de rugzak zwaarder wordt',
+  'HEURISTIC-PEAK-CONFIRMATION-TOLERANCE': 'een piek bevestigen',
+  'HEURISTIC-POOR-RESPONSE-2-OF-3': 'terugschalen als het twee van de drie keer zwaar voelt',
+  'HEURISTIC-PROGRESSION-CONFIDENCE-GATE': 'pas verzwaren met genoeg gegevens',
+  'HEURISTIC-PROGRESSION-READINESS-GATE': 'pas verzwaren als je hersteld bent',
+  'HEURISTIC-PROGRESSION-TREND-GATE': 'pas verzwaren als de trend goed is',
+  'HEURISTIC-RECENCY-BANDS': 'recente trainingen wegen zwaarder',
+  'HEURISTIC-REPEATABLE-ANCHOR-FORMULA': 'wat je herhaaldelijk aankunt',
+  'HEURISTIC-RUNNING-PROGRESSION-BANDS': 'hoe snel hardlopen zwaarder wordt',
+  'HEURISTIC-TID-SAMPLE-SIZE': 'verdeling van rustig en hard werk',
+  'HEURISTIC-VERTICAL-SWITCH-300M': 'wanneer hoogtemeters meetellen',
+  'PRODUCT-ASSESS-INSUFFICIENT-DATA': 'eerst meten bij te weinig gegevens',
+  'PRODUCT-GUARDRAIL-BLOCK': 'je eigen grenzen gaan voor',
+  'RULE-RUN-SPIKE-001': 'geen loop veel langer dan je langste van de laatste maand',
+};
+
 function readableRule(ruleId: string): string {
-  return ruleId.replace(/^(HEURISTIC|RULE)-/, '').replace(/-\d+$/, '').replace(/-/g, ' ').toLowerCase();
+  return RULE_NAME_NL[ruleId] ?? 'een planningsregel';
 }
 
 // A link to a site's front page cites nothing specific.

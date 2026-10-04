@@ -70,7 +70,7 @@ export function CoachCard() {
   return (
     <Card className="flex flex-col gap-4" texture>
       <div className="flex items-baseline justify-between">
-        <Eyebrow>COACH</Eyebrow>
+        <Eyebrow>ADVIES</Eyebrow>
         <span className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
           {advice.length === 1 ? '1 advies' : `${advice.length} adviezen`}
         </span>

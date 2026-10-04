@@ -3,7 +3,7 @@ import { logSport } from '../engine/sports';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { formatDateNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { isIllnessDay } from '../engine/illness';
 import { getModality } from '../data/modalities';
@@ -52,10 +52,10 @@ function formatDelta(current: number, previous: number, opts?: { unit?: string; 
   const diff = current - previous;
   const decimals = opts?.decimals ?? 0;
   const unit = opts?.unit ?? '';
-  const sign = diff > 0 ? '+' : '';
-  const text = `${sign}${formatNumberNL(diff, decimals)}${unit} t.o.v. vorige maand`;
+  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
+  const text = `${sign}${formatNumberNL(Math.abs(diff), decimals)}${unit} t.o.v. vorige maand`;
   const goodDirection = opts?.invert ? diff <= 0 : diff >= 0;
-  const color = diff === 0 ? 'var(--color-ink-dim)' : goodDirection ? 'var(--color-success)' : 'var(--color-danger)';
+  const color = diff === 0 ? 'var(--color-ink-dim)' : goodDirection ? 'var(--color-success-text)' : 'var(--color-danger-text)';
   return { text, color };
 }
 
@@ -106,10 +106,10 @@ export function HistoryPage() {
         {(summary.cyclingKm > 0 || prevSummary.cyclingKm > 0) && (
           <Stat label="Fietsen" value={`${formatNumberNL(summary.cyclingKm, 1)} km`} delta={formatDelta(summary.cyclingKm, prevSummary.cyclingKm, { unit: ' km', decimals: 1 })} />
         )}
-        <Stat label="Trainingstijd" value={`${Math.floor(Math.round(summary.totalMinutes) / 60)}u ${Math.round(summary.totalMinutes) % 60}m`} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
+        <Stat label="Trainingstijd" value={formatHoursMinutesNL(summary.totalMinutes)} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
         <Stat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
         {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D-`} />}
-        {summary.machineVertical > 0 && <Stat label="Machine-vertical" value={`${Math.round(summary.machineVertical)} m`} />}
+        {summary.machineVertical > 0 && <Stat label="Hoogtemeters op toestel" value={`${Math.round(summary.machineVertical)} m`} />}
         {summary.avgCadence !== undefined && <Stat label="Gem. cadans" value={`${summary.avgCadence}`} />}
         {summary.avgPower !== undefined && <Stat label="Gem. vermogen" value={`${summary.avgPower} W`} />}
       </Card>

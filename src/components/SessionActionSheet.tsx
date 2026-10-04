@@ -87,7 +87,7 @@ export function SessionActionSheet({
                 ) : (
                   <div className="flex gap-3">
                     <SecondaryButton onClick={() => setConfirmingUndo(false)}>ANNULEREN</SecondaryButton>
-                    <PrimaryButton onClick={onUndo}>BEVESTIG</PrimaryButton>
+                    <PrimaryButton onClick={onUndo}>BEVESTIGEN</PrimaryButton>
                   </div>
                 )}
               </div>

@@ -123,8 +123,8 @@ export function computeForecastReplan(inputs: ForecastReplanInputs): ForecastRep
     issue: items.length > 0 ? 'Aanpassingen in de vervolgweken' : 'Geen aanpassingen nodig',
     changes: items,
     alternatives: [],
-    consequences: 'Wordt automatisch toegepast op het forecast-bereik (week +2 en verder) — nooit op de huidige of volgende week.',
-    explanation: 'Gebaseerd op de ingestelde trainingsbeschikbaarheid; niets hiervan raakt de bevestigde (committed) weken.',
+    consequences: 'Wordt vanaf over twee weken automatisch toegepast, nooit op deze of volgende week.',
+    explanation: 'Gebaseerd op de tijd die je hebt ingesteld. Deze en volgende week blijven zoals ze zijn.',
     createdAt: new Date().toISOString(),
   };
 

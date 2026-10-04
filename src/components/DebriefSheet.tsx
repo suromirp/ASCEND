@@ -39,7 +39,7 @@ function Sheet({ name, counted, logAdvice, strengthExternal, onClose }: { name: 
         <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-6">
             <div>
-              <Eyebrow>DEBRIEF</Eyebrow>
+              <Eyebrow>TERUGBLIK</Eyebrow>
               <p className="mt-1.5 text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{name}</p>
             </div>
             {counted.length > 0 && !strengthExternal && (

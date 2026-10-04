@@ -36,7 +36,7 @@ export function StretchItems({ stretches, className = 'mt-3 flex flex-col gap-2'
               )}
             </span>
             <span className="flex shrink-0 items-baseline gap-1.5 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              {s.durationSec ? `${s.durationSec}s` : ''}{s.note ? (s.durationSec ? ` • ${s.note}` : s.note) : ''}
+              {s.durationSec ? `${s.durationSec} sec` : ''}{s.note ? (s.durationSec ? ` • ${s.note}` : s.note) : ''}
               {s.durationSec !== undefined && (
                 <button
                   onClick={() => setTimerFor(s)}

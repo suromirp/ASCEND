@@ -127,7 +127,7 @@ export function planIllnessStart(
     `Ziek gemeld: ${ILLNESS_LABEL[kind].toLowerCase()}`,
     changes,
     ILLNESS_GUIDANCE[kind],
-    'Neck check: alleen klachten boven de nek is licht bewegen, koorts of klachten onder de nek is rust. Gemiste trainingen tijdens ziekte worden niet ingehaald.',
+    'Vuistregel: alleen klachten boven de nek is licht bewegen, koorts of klachten onder de nek is rust. Gemiste trainingen tijdens ziekte worden niet ingehaald.',
   );
 }
 

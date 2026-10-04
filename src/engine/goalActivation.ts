@@ -32,10 +32,10 @@ import { daysBetween } from '../utils/dates';
 import { makeId } from '../utils/id';
 
 const STRATEGY_OPTIONS: GoalActivationPlan['strategyOptions'] = [
-  { label: 'Conservatief', description: 'Vaker consolideren; voorkeur voor de lage kant van de bruikbare opbouw-range.' },
-  { label: 'Gebalanceerd', description: 'Standaard: het midden van de bruikbare opbouw-range.' },
-  { label: 'Agressief', description: 'Vaker de bovenkant van de bruikbare range — nooit een stille overschrijding van je ingestelde guardrails.' },
-  { label: 'Aangepast', description: 'Later los instelbaar per stressor.' },
+  { label: 'Conservatief', description: 'Vaker consolideren; liever aan de rustige kant van wat verantwoord is.' },
+  { label: 'Gebalanceerd', description: 'Standaard: het midden van wat verantwoord is.' },
+  { label: 'Agressief', description: 'Vaker aan de bovenkant van wat verantwoord is, maar nooit over je eigen grenzen heen.' },
+  { label: 'Aangepast', description: 'Later per soort belasting in te stellen.' },
 ];
 
 function djb2Hash(str: string): string {
@@ -162,7 +162,7 @@ function buildCommittedWeekChanges(
     consequences: changes.length > 0
       ? `${changes.length} geplande sessie(s) deze en volgende week dragen al bij aan dit doel en blijven ongewijzigd.`
       : 'Geen van de geplande sessies deze en volgende week draagt op dit moment al bij aan dit doel.',
-    explanation: 'Gebaseerd op de bestaande sessie-inhoud (Session Contribution) — er wordt niets nieuws toegevoegd in deze fase.',
+    explanation: 'Gebaseerd op de trainingen die al gepland staan. Er wordt nu niets nieuws toegevoegd.',
     createdAt: new Date().toISOString(),
   };
 }

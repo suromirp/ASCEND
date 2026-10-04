@@ -34,9 +34,9 @@ function deriveSoftFlexMinutes(preferredMinutes: number): number {
 }
 
 const PAIRING_OPTIONS: { value: TrainingStrategyProfile['sameDayPairingPreference']; label: string; note: string }[] = [
-  { value: 'automatic', label: 'Automatisch', note: 'ASCEND beslist zelf op basis van je tijd-budget per dag.' },
+  { value: 'automatic', label: 'Automatisch', note: 'ASCEND beslist zelf op basis van je tijdbudget per dag.' },
   { value: 'always', label: 'Ja', note: 'Plaats zo veel mogelijk sessies samen als de tijd het toelaat.' },
-  { value: 'only_if_useful', label: 'Alleen indien nuttig', note: 'Alleen samenvoegen als er anders écht geen plek is.' },
+  { value: 'only_if_useful', label: 'Alleen als het moet', note: 'Alleen samenvoegen als er anders écht geen plek is.' },
   { value: 'never', label: 'Nee', note: 'Nooit meer dan één training per dag.' },
 ];
 
@@ -61,6 +61,14 @@ function readStoredTab(): SettingsTab {
 const PLANNABLE_SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
 
 type PendingImpact = { section: string; title: string; proposal: PlanChangeProposal; lines: string[]; restore?: UndoRestore };
+
+// The build time in the user's own time zone, e.g. "4 oktober 18:59".
+function buildTimeLocal(): string {
+  const d = new Date(BUILD_TIME);
+  if (Number.isNaN(d.getTime())) return '';
+  const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${formatDateNL(iso)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -305,7 +313,7 @@ export function SettingsPage() {
           <Card className="flex flex-col gap-3">
             <Eyebrow>APP</Eyebrow>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-              Versie {APP_VERSION} · {formatDateNL(BUILD_TIME.slice(0, 10))} {BUILD_TIME.slice(11, 16)} UTC
+              Versie {APP_VERSION} · {buildTimeLocal()}
             </p>
             <SecondaryButton onClick={() => void handleCheckUpdate()} disabled={checkingUpdate}>
               {checkingUpdate ? 'ZOEKEN…' : 'ZOEKEN NAAR UPDATE'}
@@ -319,7 +327,7 @@ export function SettingsPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Geluidseffecten</p>
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Een paar dreunen bij het openen van de app en een chime bij een voltooide sessie of mijlpaal. Het
+                  Een paar lage tonen bij het openen van de app en een klank bij een voltooide sessie of mijlpaal. Het
                   openingsgeluid speelt pas na je eerste tik; zo werken browsers.
                 </p>
               </div>
@@ -428,7 +436,7 @@ export function SettingsPage() {
                           className="flex-1 rounded-lg border py-1 text-xs"
                           style={{ borderColor: selected ? 'var(--color-gold)' : 'var(--color-card-border)', color: selected ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
                         >
-                          {n === undefined ? 'Auto' : `${n}x`}
+                          {n === undefined ? 'Auto' : `${n}×`}
                         </button>
                       );
                     })}
@@ -437,7 +445,7 @@ export function SettingsPage() {
               </div>
             ))}
             <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Auto: je weekschema en de weekplanning bepalen hoe vaak. Een aantal per week: ASCEND houdt dat aan en kiest zelf de dagen. Past het niet, dan zegt ASCEND waarom.
+              Automatisch: je weekschema en de weekplanning bepalen hoe vaak. Een aantal per week: ASCEND houdt dat aan en kiest zelf de dagen. Past het niet, dan zegt ASCEND waarom.
             </p>
             <SectionNote text={notes.sports} />
           </Card>
@@ -476,7 +484,7 @@ export function SettingsPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgehouden in MacroFactor</p>
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Sets, reps en gewicht log je in MacroFactor. Zet dit aan om kracht-sessies in ASCEND in één tik af te
+                  Sets, reps en gewicht log je in MacroFactor. Zet dit aan om krachttrainingen in ASCEND in één tik af te
                   vinken, zonder invulformulier.
                 </p>
               </div>
@@ -522,7 +530,7 @@ export function SettingsPage() {
             <Card className="flex flex-col gap-1">
               <button onClick={() => setShowBaselineEditor(true)} className="flex items-center justify-between gap-3 text-left">
                 <div>
-                  <Eyebrow>BASELINE HANDMATIG INVULLEN</Eyebrow>
+                  <Eyebrow>STARTNIVEAU ZELF INVULLEN</Eyebrow>
                   <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
                     Meestal niet nodig: bij een doel vraagt ASCEND zelf wat nog ontbreekt. Gebruik dit alleen om los van een
                     doel iets vast te leggen.
@@ -553,7 +561,7 @@ export function SettingsPage() {
             <div className="mt-3 flex flex-col gap-2">
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Alles verwijderen en opnieuw beginnen</p>
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Wist al je geschiedenis, doelen, blessures en instellingen en start met het standaard programma. Dit kan niet
+                Wist al je geschiedenis, doelen, blessures en instellingen en start met het standaardprogramma. Dit kan niet
                 ongedaan worden gemaakt. Exporteer eerst een back-up als je iets wilt bewaren.
               </p>
               {!confirmingFullReset ? (

@@ -122,7 +122,7 @@ export function CountdownTimer({
             )}
 
             <div className="flex gap-3">
-              {!editable && <SecondaryButton onClick={reset}>RESET</SecondaryButton>}
+              {!editable && <SecondaryButton onClick={reset}>OPNIEUW</SecondaryButton>}
               {totalSeconds > 0 && (
                 <PrimaryButton onClick={() => setRunning((r) => !r)} disabled={remaining === 0}>
                   {running ? 'PAUZEREN' : remaining === totalSeconds ? 'START' : 'HERVATTEN'}
