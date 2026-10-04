@@ -15,7 +15,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
       <Card texture>
         <Eyebrow>VOLGEND OBJECTIEF</Eyebrow>
         <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-gold)' }}>Alle mijlpalen behaald</p>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName} — klaar voor de expeditie.</p>
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName} , klaar voor de expeditie.</p>
       </Card>
     );
   }

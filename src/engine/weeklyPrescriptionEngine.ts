@@ -271,7 +271,7 @@ export function computeWeeklyPrescriptionPlan(
   // it can never by itself make a week noFreeDay, so this is the only
   // genuine hard-capacity-exhaustion reason left to report.
   const unplaceableNote = noFreeDayWeekCount > 0
-    ? ` Let op: in ${noFreeDayWeekCount} week(en) zit elke dag al vol — er was geen vrije dag om de berekende weekprescriptie volledig te plaatsen.`
+    ? ` Let op: in ${noFreeDayWeekCount} week(en) zit elke dag al vol, er was geen vrije dag om de berekende weekprescriptie volledig te plaatsen.`
     : '';
 
   const proposal: PlanChangeProposal = {
@@ -280,8 +280,8 @@ export function computeWeeklyPrescriptionPlan(
     issue: items.length > 0 ? 'Weekprescriptie bijgewerkt' : noFreeDayWeekCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
     changes: items,
     alternatives,
-    consequences: `Wordt toegepast op het forecast-bereik (week +2 en verder) — nooit op de huidige of volgende week.${unplaceableNote}`,
-    explanation: 'Gebaseerd op actieve doelen, voortgang, herstel en de MacroFactor-krachtbezetting — MacroFactor blijft de inhoud van elke krachtsessie bepalen; dit bestand raakt kracht nooit inhoudelijk.',
+    consequences: `Wordt toegepast op het forecast-bereik (week +2 en verder), nooit op de huidige of volgende week.${unplaceableNote}`,
+    explanation: 'Gebaseerd op actieve doelen, voortgang, herstel en de MacroFactor-krachtbezetting, MacroFactor blijft de inhoud van elke krachtsessie bepalen; dit bestand raakt kracht nooit inhoudelijk.',
     createdAt: new Date().toISOString(),
   };
 

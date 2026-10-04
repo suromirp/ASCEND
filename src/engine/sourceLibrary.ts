@@ -65,9 +65,9 @@ function normalizeUrl(url: string): string {
 
 // "PubMed — trainingsintensiteit bij afstandslopers" → publisher + title.
 function splitLabel(label: string): { publisher: string; title: string } {
-  const [head, ...rest] = label.split(' — ');
+  const [head, ...rest] = label.split(', ');
   if (rest.length === 0) return { publisher: '', title: label };
-  const title = rest.join(' — ');
+  const title = rest.join(', ');
   return { publisher: head, title: title.charAt(0).toUpperCase() + title.slice(1) };
 }
 
@@ -137,7 +137,7 @@ export function buildSourceLibrary(templateName: (id: string) => string): Librar
     }
   }
   for (const spot of TRAINING_SPOTS) {
-    for (const src of spot.sources) add(src.label.includes(' — ') ? src.label : `${src.label.split(',')[0]} — ${src.label.split(',').slice(1).join(',').trim() || src.label}`, src.url, `Trainingsplek: ${spot.name}`);
+    for (const src of spot.sources) add(src.label.includes(', ') ? src.label : `${src.label.split(',')[0]}, ${src.label.split(',').slice(1).join(',').trim() || src.label}`, src.url, `Trainingsplek: ${spot.name}`);
   }
   for (const r of RESEARCH_SOURCES) {
     const key = normalizeUrl(r.url);

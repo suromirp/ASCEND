@@ -152,7 +152,7 @@ function buildPlan(
       : unplaceableCount > 0
         ? unplaceableNote.trim()
         : 'De betreffende week(en) komen al overeen met het actieve krachtblok.',
-    explanation: `Gebaseerd op het actieve krachtblok (${strategy.sessionsPerWeek}x/week, ${strategy.splitType}) — MacroFactor Workouts blijft de inhoud van elke sessie bepalen.`,
+    explanation: `Gebaseerd op het actieve krachtblok (${strategy.sessionsPerWeek}x/week, ${strategy.splitType}), MacroFactor Workouts blijft de inhoud van elke sessie bepalen.`,
     createdAt: new Date().toISOString(),
   };
 }

@@ -38,7 +38,7 @@ function CompletionCard({ event, onDismiss }: { event: CelebrationEvent; onDismi
           {event.kind === 'milestone' ? 'MIJLPAAL BEHAALD' : 'SESSIE VOLTOOID'}
         </p>
         <p className="mt-1.5 font-display text-lg leading-snug" style={{ color: 'var(--color-gold)' }}>“{event.quote.quote}”</p>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>— {event.quote.author}</p>
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>– {event.quote.author}</p>
         {event.title && <p className="mt-2.5 text-xs" style={{ color: 'var(--color-ink)' }}>{event.title}</p>}
         <p className="mt-3 text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>tik om te sluiten</p>
       </button>

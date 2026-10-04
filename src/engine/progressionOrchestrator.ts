@@ -130,7 +130,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     return {
       key,
       state: 'assess',
-      reason: 'Hier is nog te weinig over jou bekend — eerst gegevens verzamelen voordat er een voortgangsbeslissing valt.',
+      reason: 'Hier is nog te weinig over jou bekend, eerst gegevens verzamelen voordat er een voortgangsbeslissing valt.',
       ruleId: 'PRODUCT-ASSESS-INSUFFICIENT-DATA',
       poorResponsePattern: false,
       accumulationReviewDue: false,
@@ -155,17 +155,17 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
 
   if (recoverySignal < READINESS_RECOVER_THRESHOLD) {
     state = 'recover';
-    reason = `Herstelsignaal is laag (${recoverySignal}%) — voorrang aan herstel boven verdere opbouw.`;
+    reason = `Herstelsignaal is laag (${recoverySignal}%), voorrang aan herstel boven verdere opbouw.`;
     ruleId = 'HEURISTIC-PROGRESSION-READINESS-GATE';
   } else if (poorResponsePattern) {
     // §12: repeated poor responses are a stronger capability-reassessment
     // signal than any single one — 'reduce', not just 'consolidate'.
     state = 'reduce';
-    reason = 'Meerdere recente sessies vielen zwaarder uit dan verwacht — belasting tijdelijk verlagen.';
+    reason = 'Meerdere recente sessies vielen zwaarder uit dan verwacht, belasting tijdelijk verlagen.';
     ruleId = 'HEURISTIC-POOR-RESPONSE-2-OF-3';
   } else if (estimate.trend === 'declining') {
     state = 'consolidate';
-    reason = 'De trend hierin is dalend — huidige belasting vasthouden in plaats van opbouwen.';
+    reason = 'De trend hierin is dalend, huidige belasting vasthouden in plaats van opbouwen.';
     ruleId = 'HEURISTIC-PROGRESSION-TREND-GATE';
   } else if (spikeSignal.detected) {
     // engine/progressionSpikes.ts — the most recent session already
@@ -183,11 +183,11 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
     ruleId = 'HEURISTIC-PROGRESSION-READINESS-GATE';
   } else if (estimate.confidence === 'low') {
     state = 'assess';
-    reason = 'Nog te weinig over jou bekend hierover — eerst meer bevestiging verzamelen.';
+    reason = 'Nog te weinig over jou bekend hierover, eerst meer bevestiging verzamelen.';
     ruleId = 'PRODUCT-ASSESS-INSUFFICIENT-DATA';
   } else if (estimate.confidence === 'medium') {
     state = 'consolidate';
-    reason = 'Nog niet genoeg bekend voor een volgende stap — huidige belasting vasthouden.';
+    reason = 'Nog niet genoeg bekend voor een volgende stap, huidige belasting vasthouden.';
     ruleId = 'HEURISTIC-PROGRESSION-CONFIDENCE-GATE';
   } else {
     state = 'progress';
@@ -214,7 +214,7 @@ export function computeProgressionDecision(inputs: ProgressionOrchestratorInputs
   // level — this is that framing actually reaching the explanation a human
   // would read, not a second, silently-conflicting copy of it).
   const finalReason = accumulationReviewDue
-    ? `${reason} Dit is de derde opeenvolgende stap — een natuurlijk controlemoment om samen te checken of dit tempo nog goed voelt, geen automatische terugschaling.`
+    ? `${reason} Dit is de derde opeenvolgende stap, een natuurlijk controlemoment om samen te checken of dit tempo nog goed voelt, geen automatische terugschaling.`
     : reason;
 
   return { key, state, reason: finalReason, ruleId, poorResponsePattern, accumulationReviewDue };

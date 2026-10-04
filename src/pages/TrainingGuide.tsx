@@ -29,7 +29,7 @@ export function TrainingGuidePage() {
         <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSGIDS</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Maand 1 — Basisfase, dag voor dag</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Maand 1, Basisfase, dag voor dag</p>
         </div>
       </div>
 
@@ -38,7 +38,7 @@ export function TrainingGuidePage() {
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Deze maand bouwt de basis waarop later specifiekere GR5-training komt: 3× kracht, aerobe basis opbouwen,
           en een weekend-beenblok (heuvelintervallen + lange duurloop) dat tegelijk hardloopprogressie en
-          bergconditie traint. De GR5 is ±600 km over circa 40 etappes — uiteindelijk tellen dus niet alleen
+          bergconditie traint. De GR5 is ±600 km over circa 40 etappes, uiteindelijk tellen dus niet alleen
           conditie en D+, maar ook langdurig bewegen, afdalen, rugzakbelasting en meerdere dagen achter elkaar.
         </p>
       </Card>

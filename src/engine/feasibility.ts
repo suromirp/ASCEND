@@ -97,7 +97,7 @@ export function computeFeasibility(inputs: FeasibilityInputs): FeasibilityAssess
       goalId,
       status: 'insufficient_data',
       confidence: 'unknown',
-      explanation: 'Dit doel vraagt nog niets concreets van je — er is niets om de haalbaarheid tegen af te zetten.',
+      explanation: 'Dit doel vraagt nog niets concreets van je, er is niets om de haalbaarheid tegen af te zetten.',
     };
   }
 
@@ -108,7 +108,7 @@ export function computeFeasibility(inputs: FeasibilityInputs): FeasibilityAssess
       status: 'insufficient_data',
       bottleneck: criticalGaps.length === 1 ? criticalGaps[0].key : undefined,
       confidence: 'unknown',
-      explanation: 'Nog te weinig over jou bekend om de haalbaarheid van dit doel te beoordelen — geen tekortkoming, gewoon een kwestie van tijd.',
+      explanation: 'Nog te weinig over jou bekend om de haalbaarheid van dit doel te beoordelen, geen tekortkoming, gewoon een kwestie van tijd.',
     };
   }
 

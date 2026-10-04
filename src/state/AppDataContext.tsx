@@ -463,7 +463,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
     const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
     if (unsupported.length > 0) {
-      console.error('commitPlanChange: refusing to apply — unsupported plan change items present', unsupported);
+      console.error('commitPlanChange: refusing to apply, unsupported plan change items present', unsupported);
       return false;
     }
     const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
@@ -575,7 +575,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // malformed or unpaired item) — this is the safety net for if it
       // ever does, not the expected path. The next boot recomputes fresh
       // against then-current data rather than retrying this exact batch.
-      console.error('Adaptive Replanner: refusing to apply — unsupported plan change items present', unsupported);
+      console.error('Adaptive Replanner: refusing to apply, unsupported plan change items present', unsupported);
       return;
     }
 
@@ -675,7 +675,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (unsupported.length > 0) {
       // Same atomicity guarantee as runForecastReplan: never an
       // unintended partial apply.
-      console.error('Weekly Prescription Builder: refusing to apply — unsupported plan change items present', unsupported);
+      console.error('Weekly Prescription Builder: refusing to apply, unsupported plan change items present', unsupported);
       return;
     }
 
@@ -754,7 +754,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (unsupported.length > 0) {
         // Same atomicity guarantee as runForecastReplan: never an
         // unintended partial apply.
-        console.error('Strength placement: refusing to apply — unsupported plan change items present', unsupported);
+        console.error('Strength placement: refusing to apply, unsupported plan change items present', unsupported);
         return;
       }
 
@@ -802,7 +802,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
       if (unsupported.length > 0) {
-        console.error('Strength placement (committed range): refusing to apply — unsupported plan change items present', unsupported);
+        console.error('Strength placement (committed range): refusing to apply, unsupported plan change items present', unsupported);
         return false;
       }
 
@@ -842,7 +842,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
     if (unsupported.length > 0) {
-      console.error('Schedule anomaly fix: refusing to apply — unsupported plan change items present', unsupported);
+      console.error('Schedule anomaly fix: refusing to apply, unsupported plan change items present', unsupported);
       return false;
     }
 

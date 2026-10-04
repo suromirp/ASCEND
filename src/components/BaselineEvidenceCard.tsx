@@ -48,7 +48,7 @@ export function BaselineEvidenceCard() {
     <Card className="flex flex-col gap-3">
       <Eyebrow>STARTNIVEAU</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-        Korte, gerichte vragen over wat je aantoonbaar kunt — helpt ASCEND straks betere doelen en trainingsdoelen
+        Korte, gerichte vragen over wat je aantoonbaar kunt, helpt ASCEND straks betere doelen en trainingsdoelen
         voor te stellen. Handmatige antwoorden, geen verzonnen sessies.
       </p>
 
@@ -61,7 +61,7 @@ export function BaselineEvidenceCard() {
                 <div>
                   <span style={{ color: 'var(--color-ink)' }}>{label}</span>
                   <span className="ml-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                    {formatMeasuredValue(e.measured)} — {formatDateNL(e.date)}
+                    {formatMeasuredValue(e.measured)} – {formatDateNL(e.date)}
                   </span>
                 </div>
                 <button onClick={() => deleteCapabilityEvidence(e.id)} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>

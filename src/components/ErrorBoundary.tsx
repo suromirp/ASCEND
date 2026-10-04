@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="flex flex-1 flex-col gap-4 px-6 py-10" style={{ color: 'var(--color-ink)' }}>
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>Er ging iets mis</p>
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Dit scherm kon niet geladen worden. Maak een screenshot van de melding hieronder en stuur die door — dat
+          Dit scherm kon niet geladen worden. Maak een screenshot van de melding hieronder en stuur die door, dat
           is de snelste weg naar een oplossing.
         </p>
         <pre

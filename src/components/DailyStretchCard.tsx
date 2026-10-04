@@ -22,7 +22,7 @@ export function DailyStretchCard({
         <button
           onClick={onToggleComplete}
           aria-pressed={completed}
-          aria-label={completed ? `${title} afgevinkt — tik om ongedaan te maken` : `${title} afvinken`}
+          aria-label={completed ? `${title} afgevinkt, tik om ongedaan te maken` : `${title} afvinken`}
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs font-bold"
           style={{
             borderColor: completed ? 'var(--color-success)' : 'var(--color-card-border)',

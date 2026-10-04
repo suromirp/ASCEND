@@ -63,7 +63,7 @@ export function proposeRunningPrescription(inputs: RunningSpecialistInputs): Tra
     distanceKm = recentLongestSessionKm * 1.1;
     if (state === 'progress') {
       state = 'consolidate';
-      reason = `${reason} Voorgestelde afstand lag ≥10% boven de langste duurloop van de afgelopen 30 dagen — als risicosignaal afgetopt op een kleinere stap.`;
+      reason = `${reason} Voorgestelde afstand lag ≥10% boven de langste duurloop van de afgelopen 30 dagen, als risicosignaal afgetopt op een kleinere stap.`;
     }
   }
 

@@ -597,7 +597,7 @@ function MarathonGoalCard({
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — uur</label>
+                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd, uur</label>
                   <input
                     type="number"
                     min={0}
@@ -608,7 +608,7 @@ function MarathonGoalCard({
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd — min</label>
+                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doeltijd, min</label>
                   <input
                     type="number"
                     min={0}
@@ -625,7 +625,7 @@ function MarathonGoalCard({
           {longestRunKm > 0 && (
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Langste duurloop tot nu toe: {formatNumberNL(longestRunKm, 1)} km
-              {percentOfDistance !== undefined ? ` — ${percentOfDistance}% van de wedstrijdafstand` : ''}
+              {percentOfDistance !== undefined ? `, ${percentOfDistance}% van de wedstrijdafstand` : ''}
             </p>
           )}
           {onArchive && (

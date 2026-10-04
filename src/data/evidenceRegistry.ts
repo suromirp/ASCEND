@@ -101,7 +101,7 @@ export const EVIDENCE_REGISTRY: EvidenceSource[] = [
   },
   {
     id: 'E-RUN-TID-002',
-    title: 'Polarized versus other endurance TIDs — systematic review/meta-analysis.',
+    title: 'Polarized versus other endurance TIDs, systematic review/meta-analysis.',
     authors: 'Oliveira PS et al.',
     publicationType: 'systematic_review',
     url: 'https://pubmed.ncbi.nlm.nih.gov/38717713/',

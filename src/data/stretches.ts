@@ -25,7 +25,7 @@ export const DYNAMIC_WARMUP: Stretch[] = [
   { name: 'Armcirkels', durationSec: 20, videoUrl: 'https://www.youtube.com/watch?v=YQMidmi9pb4' },
   { name: 'Schouderrollen', durationSec: 20, videoUrl: 'https://www.youtube.com/watch?v=Bv8QPOs7xks' },
   { name: 'Knieheffingen (marcheren met hoge knieën)', durationSec: 45, videoUrl: 'https://www.youtube.com/watch?v=MKusQlu6rYU' },
-  { name: "World's Greatest Stretch (lunge + rotatie)", durationSec: 60, note: 'hamstrings, heupbuigers, borst, schouders — telt als complete warming-up', videoUrl: 'https://www.youtube.com/shorts/ftLV1SkpWAA' },
+  { name: "World's Greatest Stretch (lunge + rotatie)", durationSec: 60, note: 'hamstrings, heupbuigers, borst, schouders, telt als complete warming-up', videoUrl: 'https://www.youtube.com/shorts/ftLV1SkpWAA' },
   { name: 'Wandbrug / kuit-activatie', durationSec: 30, note: 'lichte kuitrek in beweging', videoUrl: 'https://www.youtube.com/watch?v=tPGEUBtiC9g' },
 ];
 
@@ -180,11 +180,11 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
 ];
 
 export const STRETCH_GENERAL_ADVICE = [
-  'Nooit bouncen — rustig en gecontroleerd bewegen.',
+  'Nooit bouncen, rustig en gecontroleerd bewegen.',
   'Adem rustig door tijdens het aanhouden van een stretch.',
   'Bij pijn (niet lichte spanning) direct stoppen.',
-  'Stretch pas als de spieren warm zijn — na een korte warming-up of aan het eind van de training.',
+  'Stretch pas als de spieren warm zijn, na een korte warming-up of aan het eind van de training.',
   'Stretchen voorkomt spierpijn (DOMS) niet aantoonbaar, maar verbetert wel mobiliteit en gewrichtsfunctie op lange termijn.',
 ];
 
-export const STRETCH_SOURCE_NOTE = 'Bron: Mayo Clinic — dynamisch stretchen vóór het sporten, statisch stretchen erna. Video’s: ziekenhuizen, fysiotherapie-kanalen en Special Olympics; "IT-band stretch" is hernoemd naar TFL/laterale-heupstretch en volledige nekrollen zijn vervangen door gecontroleerde nekrotatie, beide op basis van de onderliggende bewegingswetenschap.';
+export const STRETCH_SOURCE_NOTE = 'Bron: Mayo Clinic, dynamisch stretchen vóór het sporten, statisch stretchen erna. Video’s: ziekenhuizen, fysiotherapie-kanalen en Special Olympics; "IT-band stretch" is hernoemd naar TFL/laterale-heupstretch en volledige nekrollen zijn vervangen door gecontroleerde nekrotatie, beide op basis van de onderliggende bewegingswetenschap.';

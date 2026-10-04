@@ -93,7 +93,7 @@ export function wrapAsPlanChangeProposal(
     alternatives,
     consequences: scheduleProposal.resolved
       ? 'Wijziging wordt direct toegepast na bevestiging.'
-      : 'Kon niet automatisch worden opgelost — controleer het schema handmatig.',
+      : 'Kon niet automatisch worden opgelost, controleer het schema handmatig.',
     explanation: scheduleProposal.reason,
     createdAt: new Date().toISOString(),
   };

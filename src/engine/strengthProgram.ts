@@ -97,13 +97,13 @@ export function buildStrengthProgramRecommendation(inputs: StrengthRecommendatio
   const taperingGoal = goalOverviews.find((o) => o.focus.reasons.some((r) => r.component === 'phase'));
   if (taperingGoal && triggers.includes('goal_phase_changed')) {
     rationaleParts.push(
-      `${taperingGoal.goal.name} treedt de taper-fase in — lower-body volume/intensiteit kan gematigd worden zolang dat duurt.`,
+      `${taperingGoal.goal.name} treedt de taper-fase in, lower-body volume/intensiteit kan gematigd worden zolang dat duurt.`,
     );
   }
 
   if (triggers.includes('repeated_leg_conflicts')) {
     rationaleParts.push(
-      'Er waren de laatste tijd herhaaldelijk conflicten tussen zware beensessies en andere training — een lagere frequentie kan dit verminderen.',
+      'Er waren de laatste tijd herhaaldelijk conflicten tussen zware beensessies en andere training, een lagere frequentie kan dit verminderen.',
     );
     suggestedSessionsPerWeek = Math.max(2, suggestedSessionsPerWeek - 1);
   }
@@ -124,7 +124,7 @@ export function buildStrengthProgramRecommendation(inputs: StrengthRecommendatio
     rationaleParts.push('Er is een blessure bijgewerkt sinds dit blok begon.');
   }
   if (rationaleParts.length === 0) {
-    rationaleParts.push('Periodieke check-in — geen specifiek knelpunt gevonden, dit is het huidige blok herhalen.');
+    rationaleParts.push('Periodieke check-in, geen specifiek knelpunt gevonden, dit is het huidige blok herhalen.');
   }
 
   return {

@@ -279,7 +279,7 @@ export function ExerciseLogger({
           <Card className="mt-5">
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Kracht bijgehouden in MacroFactor</p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Sets, reps en gewicht log je in MacroFactor — hier vink je de sessie alleen af. Zet dit uit bij
+              Sets, reps en gewicht log je in MacroFactor, hier vink je de sessie alleen af. Zet dit uit bij
               Instellingen → Krachttraining om weer per oefening in te vullen.
             </p>
           </Card>
@@ -347,7 +347,7 @@ export function ExerciseLogger({
               ))}
             </div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Optioneel — helpt Ascend signaleren als Bergconditie op vrijdag zaterdags Benen B twee weken op rij verstoort.
+              Optioneel, helpt ASCEND signaleren als Bergconditie op vrijdag zaterdags Benen B twee weken op rij verstoort.
             </p>
           </Card>
         )}
@@ -416,7 +416,7 @@ export function ExerciseLogger({
 
             {guidanceMode === 'free' && (
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Vrije training — geen vooraf bepaald doel. Log gewoon wat je daadwerkelijk deed.
+                Vrije training, geen vooraf bepaald doel. Log gewoon wat je daadwerkelijk deed.
               </p>
             )}
 
@@ -425,7 +425,7 @@ export function ExerciseLogger({
               <>
                 <Field label="Helling" unit="%" decimals={1} value={inclinePercent} onChange={setInclinePercent} />
                 <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Vul de helling in — Ascend berekent de geschatte D+ voor je (afstand × helling ÷ 100).
+                  Vul de helling in, ASCEND berekent de geschatte D+ voor je (afstand × helling ÷ 100).
                 </p>
               </>
             )}
@@ -439,7 +439,7 @@ export function ExerciseLogger({
                 />
                 {elevationEstimated && (
                   <p className="-mt-2 text-xs" style={{ color: 'var(--color-gold)' }}>
-                    ≈ geschat uit afstand × helling — geen GPS-meting.
+                    ≈ geschat uit afstand × helling, geen GPS-meting.
                   </p>
                 )}
               </>
@@ -503,7 +503,7 @@ export function ExerciseLogger({
       </div>
 
       {restTimerFor && (
-        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`RUST — ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
+        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`RUST, ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
       )}
     </Portal>
   );

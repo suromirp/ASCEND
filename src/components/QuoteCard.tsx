@@ -11,7 +11,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
         “{quote.quote}”
       </p>
       <p className="mt-2 text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-        —{' '}
+        –{' '}
         {wikipediaUrl ? (
           <a
             href={wikipediaUrl}
