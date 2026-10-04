@@ -60,9 +60,10 @@ function formatDelta(current: number, previous: number, opts?: { unit?: string; 
 }
 
 export function HistoryPage() {
-  const { sessionLogs, plannedSessions, templateById, settings } = useAppData();
+  const { sessionLogs, plannedSessions, templateById, settings, program } = useAppData();
   const isRest = useCallback((p: PlannedSession) => templateById.get(p.templateId)?.type === 'recovery', [templateById]);
-  const wasIll = useCallback((date: string) => isIllnessDay(date, settings.illnessEpisodes, todayISO()), [settings.illnessEpisodes]);
+  // Days before week 1 (leftovers of an earlier schedule) never count.
+  const wasIll = useCallback((date: string) => (program ? date < program.startDate : false) || isIllnessDay(date, settings.illnessEpisodes, todayISO()), [settings.illnessEpisodes, program]);
   const [anchor, setAnchor] = useState(todayISO());
   const { start, end } = monthBounds(anchor);
   const { start: prevStart, end: prevEnd } = monthBounds(shiftMonthAnchor(anchor, -1));
