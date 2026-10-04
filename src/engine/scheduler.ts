@@ -36,7 +36,7 @@ import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandida
 // The muscles a session loads heavily. Heavy work for the same muscles
 // needs ~48 hours before the next heavy session for those muscles — the
 // rule ASCEND always applied to leg days, and since production feedback
-// (Upper A and Upper B on consecutive days) also to the upper body.
+// (Bovenlichaam A and Bovenlichaam B on consecutive days) also to the upper body.
 export type HeavyAxis = 'upperBodyLoad' | 'lowerBodyLoad';
 export const HEAVY_AXIS_LABEL: Record<HeavyAxis, string> = { upperBodyLoad: 'bovenlichaam', lowerBodyLoad: 'benen' };
 
@@ -266,7 +266,7 @@ export function proposeMove(
   sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
   // Days before this date are history: the cascade never moves a session
   // onto one, and never moves a session that already lies there or is
-  // already logged (production feedback: Upper B jumped to yesterday).
+  // already logged (production feedback: Bovenlichaam B jumped to yesterday).
   asOf: string = todayISO(),
 ): ScheduleProposal {
   const templateMap = new Map(templates.map((t) => [t.id, t]));

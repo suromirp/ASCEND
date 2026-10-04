@@ -363,7 +363,7 @@ export function SettingsPage() {
               <OptionList
                 options={[
                   { value: 'hike' as const, label: 'Bergtocht', note: 'Een lange wandeling met hoogtemeters en een rugzak die stap voor stap zwaarder wordt. In Expeditieklaar ook op zaterdag wandelen.' },
-                  { value: 'run' as const, label: 'Lange duurloop', note: 'Je blijft elke zondag hardlopen, bijvoorbeeld voor een marathon. Hiken train je dan zelf.' },
+                  { value: 'run' as const, label: 'Lange duurloop', note: 'Je blijft elke zondag hardlopen, bijvoorbeeld voor een marathon. Bergwandelen train je dan zelf.' },
                 ]}
                 value={settings.longSundaySession ?? 'hike'}
                 onChange={async (v) => {

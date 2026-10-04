@@ -13,8 +13,8 @@ import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_
 // Bergcapaciteit de plek in van de lange duurloop en de intervallen.
 //
 // Herzien van 4x kracht + 1x Easy Run + Bergconditie naar een schema waarin
-// het weekend het bergspecifieke hardloopblok draagt: Upper A/Lower A/Upper B
-// blijven overeind, maar Lower B en Bergconditie zijn geretired als aparte
+// het weekend het bergspecifieke hardloopblok draagt: Bovenlichaam A/Benen A/Bovenlichaam B
+// blijven overeind, maar Benen B en Bergconditie zijn geretired als aparte
 // wekelijkse sessies (tpl_lower_b/tpl_bergconditie blijven wél gedefinieerd
 // zodat oudere SessionLogs die ernaar verwijzen nog gewoon oplossen — zie
 // storage/database.ts syncTemplateAndScheduleDefinitions). Zaterdag +
@@ -37,11 +37,11 @@ function buildTemplates(): SessionTemplate[] {
   return [
     {
       id: 'tpl_upper_a',
-      name: 'Upper A',
+      name: 'Bovenlichaam A',
       type: 'strength',
       focus: 'Borst • Rug • Schouders',
       durationVariants: { full: 75, short: 45, minimum: 20 },
-      // Dinsdag, niet donderdag: Upper A en Upper B trainen dezelfde spieren
+      // Dinsdag, niet donderdag: Bovenlichaam A en Bovenlichaam B trainen dezelfde spieren
       // (borst, rug, schouders) en horen ~48 uur uit elkaar te liggen, net
       // als twee zware beendagen. Di + vr = 3 dagen ertussen.
       defaultDayOfWeek: 2,
@@ -61,7 +61,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_lower_a',
-      name: 'Lower A — Zware Beendag',
+      name: 'Benen A (zwaar)',
       type: 'strength',
       focus: 'Squat • RDL • Hamstrings • Single-leg',
       durationVariants: { full: 75, short: 45, minimum: 20 },
@@ -90,7 +90,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_upper_b',
-      name: 'Upper B',
+      name: 'Bovenlichaam B',
       type: 'strength',
       focus: 'Borst • Rug • Armen',
       durationVariants: { full: 75, short: 45, minimum: 20 },
@@ -111,7 +111,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_lower_b',
-      name: 'Lower B',
+      name: 'Benen B',
       type: 'strength',
       focus: 'Onderlichaam',
       durationVariants: { full: 70, short: 40, minimum: 20 },
@@ -127,7 +127,7 @@ function buildTemplates(): SessionTemplate[] {
       // herhalingen in de gym — deze sessie is een aanvulling, geen
       // vervanging.
       notes:
-        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Lower A. Hiking-specifiek: step-ups, step-downs, single-leg, kuiten/soleus. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining — deze sessie is een aanvulling daarop, geen vervanging.',
+        'MacroFactor bepaalt de daadwerkelijke belasting — niet per definitie lichter dan Benen A. Hiking-specifiek: step-ups, step-downs, single-leg, kuiten/soleus. Lange-duur beenuithouding voor de berg bouw je primair op via wandelen/hiken/rugzaktraining — deze sessie is een aanvulling daarop, geen vervanging.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'light', eccentricLoad: 'moderate', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'none' },
@@ -142,11 +142,11 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_easy_run',
-      name: 'Easy Run',
+      name: 'Rustige duurloop',
       type: 'cardio',
       focus: 'Aerobe basis',
       durationVariants: { full: 35, short: 20 },
-      // Donderdag: de dag na Lower A, rustig en licht voor de benen, en
+      // Donderdag: de dag na Benen A, rustig en licht voor de benen, en
       // ruim voor de heuvelintervallen op zaterdag.
       defaultDayOfWeek: 4,
       cardioTarget: { zone: 'RPE 3-4', targetDurationMin: 35 },
@@ -186,7 +186,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_hill_intervals',
-      name: 'Heuvel-/Incline-Intervallen',
+      name: 'Heuvelintervallen',
       type: 'cardio',
       focus: 'Snelheid × D+ — bergop intervaltraining',
       durationVariants: { full: 45, short: 30 },
@@ -217,7 +217,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_long_run',
-      name: 'Lange Duurloop',
+      name: 'Lange duurloop',
       type: 'hiking',
       // A run toward the marathon, with D+: it counts as running (sports
       // on/off, History totals), its type keeps the outdoor/D+ logging.
@@ -361,8 +361,8 @@ function buildProgram(): Program {
 
 // ---------------------------------------------------------------------------
 // Planned sessions — het vaste weekpatroon herhaald over het hele programma.
-// MA Herstel · DI Upper A · WO Lower A zwaar · DO Easy Run ·
-// VR Upper B · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop,
+// MA Herstel · DI Bovenlichaam A · WO Benen A zwaar · DO Easy Run ·
+// VR Bovenlichaam B · ZA Heuvel-/Incline-Intervallen · ZO Lange Duurloop,
 // vanaf Bergcapaciteit op zondag een bergtocht en in Expeditieklaar op
 // zaterdag de eerste van twee wandeldagen.
 // ---------------------------------------------------------------------------
@@ -440,7 +440,7 @@ function buildObjective(): Objective {
 
   return {
     id: objectiveId,
-    name: 'GR5 / ALPINE READINESS',
+    name: 'GR5 / ALPENKLAAR',
     description: 'Opbouw richting een meerdaagse Alpine trektocht zoals de GR5 — de Alpenfase uit je eigen schema.',
     milestones: defs.map(([title, requirement], i) => ({
       id: `${objectiveId}_m${i + 1}`,

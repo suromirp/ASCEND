@@ -68,7 +68,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     summary: () => 'Tweede bovenlichaamtraining van de week. De inhoud komt uit MacroFactor.',
     structure: [MACROFACTOR_BLOCK],
     builds: [
-      { label: 'Kracht bovenlichaam', why: 'Samen met Upper A verdeel je het weekvolume over twee sessies, beter voor groei.' },
+      { label: 'Kracht bovenlichaam', why: 'Samen met Bovenlichaam A verdeel je het weekvolume over twee sessies, beter voor groei.' },
       { label: 'Spiermassa', why: 'Voldoende wekelijks volume en consistentie tellen het meest.' },
     ],
   },
@@ -94,7 +94,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     garminSport: 'Hardlopen',
     builds: [
       { label: 'Aerobe basis', why: 'Hoe lang je rustig kunt blijven bewegen: de motor onder elke lange dag.' },
-      { label: 'Herstel tussen zware dagen', why: 'Bewust rustig, zodat Lower A en de heuvels er niet onder lijden.' },
+      { label: 'Herstel tussen zware dagen', why: 'Bewust rustig, zodat Benen A en de heuvels er niet onder lijden.' },
     ],
   },
   tpl_bergconditie: {
@@ -146,7 +146,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { kind: 'walk', label: 'Bergtocht', rest: true, intensity: 2, detail: 'Omhoog in kleine passen, omlaag beheerst. Elk uur iets eten.' },
       { kind: 'cooldown', label: 'Uitlopen', minutes: 5, intensity: 1, detail: 'Vlak, daarna rekken' },
     ],
-    garminSport: 'Wandelen (of Hiken)',
+    garminSport: 'Wandelen (of Hike)',
     builds: [
       { label: 'Tijd op de benen', why: 'Uren achter elkaar bewegen, zoals een etappe van de GR5.' },
       { label: 'Afdalen', why: 'Je bovenbenen wennen aan dalen; dat is wat het meest pijn doet op dag 3.' },
@@ -161,7 +161,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { kind: 'walk', label: 'Wandeldag 1', rest: true, intensity: 2, detail: 'Bewust rustig, je bewaart iets voor morgen' },
       { kind: 'cooldown', label: 'Uitlopen', minutes: 5, intensity: 1, detail: 'Daarna eten, drinken en rekken' },
     ],
-    garminSport: 'Wandelen (of Hiken)',
+    garminSport: 'Wandelen (of Hike)',
     builds: [
       { label: 'Twee dagen op rij', why: 'Op vermoeide benen opnieuw vertrekken, precies wat een meerdaagse tocht vraagt.' },
       { label: 'Herstel tussen dagen', why: 'Je leert hoe eten, slapen en je benen reageren tussen twee tochten.' },

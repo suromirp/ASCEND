@@ -126,7 +126,7 @@ export function computeScheduleFit(inputs: ScheduleFitInputs): ScheduleFitResult
         d >= asOf && d >= intended && d < session.scheduledDate
         && dayHasRoomFor(d, template, week, templateById, program, dailyTimeBudget, sameDayPairingPreference)
         && !findHeavyConflict(session.id, template, d, nearby, templateById, sessionLogs)
-        // Never jump ahead of a sibling that comes first (Upper A before B).
+        // Never jump ahead of a sibling that comes first (Bovenlichaam A before B).
         && !week.some((o) => {
           const ot = templateById.get(o.templateId);
           return ot && interchangeKey(ot) === interchangeKey(template) && compareRotation(ot, template) < 0 && o.scheduledDate >= d;

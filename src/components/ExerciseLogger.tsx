@@ -347,7 +347,7 @@ export function ExerciseLogger({
               ))}
             </div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Optioneel — helpt Ascend signaleren als Bergconditie op vrijdag zaterdags Lower B twee weken op rij verstoort.
+              Optioneel — helpt Ascend signaleren als Bergconditie op vrijdag zaterdags Benen B twee weken op rij verstoort.
             </p>
           </Card>
         )}

@@ -254,8 +254,8 @@ function SessionsStep({
 
   // Always recomputed in the canonical template order, regardless of the
   // order templates were toggled in — otherwise the checked set drifts to
-  // "click order" (production bug: re-toggling Upper A after Lower B left
-  // it displayed last, "Upper A, Lower A, Upper B", even though the
+  // "click order" (production bug: re-toggling Bovenlichaam A after Benen B left
+  // it displayed last, "Bovenlichaam A, Benen A, Bovenlichaam B", even though the
   // checklist itself still showed the templates in their fixed order).
   function toggleTemplate(id: string) {
     setLocal((s) => {

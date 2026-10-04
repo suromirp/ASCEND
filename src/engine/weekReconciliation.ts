@@ -146,7 +146,7 @@ export interface ReconciliationTarget {
   // of ending up worse than the non-reflow result, and it never changes
   // WHAT the block's composition is.
   reflowOnChange?: boolean;
-  // Interchangeable sessions of the family (Upper A / Upper B) keep their
+  // Interchangeable sessions of the family (Bovenlichaam A / Bovenlichaam B) keep their
   // own order within a week: A before B (engine/rotationOrder.ts). Opt-in,
   // strength only.
   keepRotationOrder?: boolean;
@@ -259,7 +259,7 @@ export function reconcileWeekComposition(
 
       if (existing) {
         // A real move, not remove + add: remove would leave the old one
-        // behind in the week as "overgeslagen" (production feedback: Upper B
+        // behind in the week as "overgeslagen" (production feedback: Bovenlichaam B
         // showed a red cross on Friday while it had only moved to Sunday).
         items.push({
           plannedSessionId: existing.id,
@@ -438,9 +438,9 @@ export function reconcileWeekComposition(
       const compromisedPrefix = missingOnlyResult.status === 'compromised' ? `Let op: ${missingOnlyResult.compromisedReason} ` : '';
       alternatives = weekCandidatesToAlternatives(missingOnlyResult.alternatives, (sessionOrDraft) => missingOnlyKeyToTemplate.get(sessionOrDraft), weekStart);
 
-      // Rotation order: a new Upper A must not land after a movable Upper B
+      // Rotation order: a new Bovenlichaam A must not land after a movable Bovenlichaam B
       // that is already planned (e.g. a clean start on Wednesday, when
-      // Tuesday's Upper A is already past). Swapping their dates keeps the
+      // Tuesday's Bovenlichaam A is already past). Swapping their dates keeps the
       // week exactly as valid; only then does an existing session move.
       let missingPlacements: DatedPlacement[] = missingOnlyResult.bestFound.placements;
       let rotationHandled = false;

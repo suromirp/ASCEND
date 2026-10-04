@@ -90,7 +90,7 @@ export const GR5_TRAINING_SPLIT_SOURCES: MilestoneSource[] = [
 
 export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
   1: {
-    subtitle: 'Aerobic Base',
+    subtitle: 'Aerobe basis',
     type: 'Ondersteunende conditiemijlpaal',
     goal: '40 minuten onafgebroken comfortabel tempo — hardlopen of stevig doorwandelen, zonder dat het een zware training wordt.',
     why: 'Bouwt aerobe capaciteit en cardiovasculaire efficiëntie op als basis voor de rest van de ladder. Hardlopen en stevig wandelen tellen hier allebei mee als bewijs — het gaat om de aerobe basis zelf, niet om één specifieke discipline. Vervangt bergwandelen met hoogtemeters niet — traint de langdurige belasting, rugzak, terrein en excentrische afdalingen onvoldoende specifiek — maar is een nuttige aanvulling naast klimtraining.',
@@ -105,7 +105,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [PUBMED_INTENSITY_DISTRIBUTION, GARMIN_ZONES],
   },
   2: {
-    subtitle: 'Uphill Endurance',
+    subtitle: 'Bergop uithouding',
     type: 'Eerste bergspecifieke aerobe mijlpaal',
     goal: '60 minuten continu klimmen/wandelen op incline volhouden, zonder dat de sessie een maximale inspanning wordt.',
     why: 'Bergop lopen vraagt sterk meer energie en zuurstof naarmate de helling toeneemt — een incline-sessie traint specifiek de cardiovasculaire kant van klimmen.',
@@ -121,7 +121,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [PUBMED],
   },
   3: {
-    subtitle: 'Time on Feet',
+    subtitle: 'Uren op de benen',
     type: 'Time-on-feet mijlpaal',
     goal: '15 km wandelen zonder dat voeten, gewrichten of algemene vermoeidheid de beperkende factor worden.',
     why: 'Een GR5-etappe is geen uurtje klimmen — je bent vaak 5–8 uur onderweg. Officiële etappes zijn bijvoorbeeld 15,8 km/6u05/+1422 m of 22,6 km/7u38. Puur cardiovasculair fit zijn is dus niet genoeg.',
@@ -137,7 +137,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [GR5_ALPES],
   },
   4: {
-    subtitle: 'Back-to-Back — Licht',
+    subtitle: 'Twee dagen achter elkaar, licht',
     type: 'Vroege gewenningsmijlpaal voor opeenvolgende dagen',
     goal: 'Twee dagen na elkaar actief zijn — geen rustdag ertussen — op een niveau dat je al gewend bent.',
     why: 'De GR5 bestaat uit tientallen opeenvolgende etappedagen, niet losse geïsoleerde trainingsdagen. Vroeg wennen aan trainen zonder rustdag ertussen — ook op licht niveau — is iets dat één enkele lange sessie nooit kan simuleren.',
@@ -150,7 +150,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [PUBMED_INJURY_LOAD],
   },
   5: {
-    subtitle: 'Vertical Base I — Ascent',
+    subtitle: 'Hoogtemeters I, omhoog',
     type: 'Eerste echte verticale belasting (stijgen)',
     goal: 'Minstens 300 hoogtemeters stijgen.',
     why: 'Vanaf dit niveau gaat training meer op bergwandelen lijken dan op gewoon wandelen. Afdalen is fysiologisch fundamenteel anders dan klimmen — de quadriceps moeten excentrisch remmen — en die tolerantie bouwt doorgaans trager op dan stijgcapaciteit. Daarom staat D− hier bewust nog niet verplicht: de eigen afdaal-as begint een trede verderop, op een lager niveau dan deze stijgtrede.',
@@ -159,7 +159,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [PUBMED_DOWNHILL],
   },
   6: {
-    subtitle: 'Load Carriage I — Licht',
+    subtitle: 'Rugzak I, licht',
     type: 'Eerste rugzakblootstelling',
     goal: '8 kg rugzak dragen over minimaal 10 km.',
     why: 'Rugzakgewicht in één late sprong naar het volledige eventgewicht introduceren slaat de geleidelijke gewenning over. Vroege, lichtere blootstelling aan gewicht op de rug (schouders, heupen, houding, voetenwerk) bouwt daar geleidelijker naartoe — onderzoek naar load-carriage-training vindt de grootste vooruitgang bij progressieve, herhaalde training mét belasting, niet bij één zware sessie.',
@@ -168,7 +168,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [PUBMED_LOAD_CARRYING],
   },
   7: {
-    subtitle: 'Vertical Base II',
+    subtitle: 'Hoogtemeters II',
     type: 'Opbouw lokale spieruithouding + eerste D--as',
     goal: '500 hoogtemeters stijgen; los daarvan minstens 300 hoogtemeters gecontroleerd afdalen.',
     why: 'Lokale musculaire uithouding van quadriceps, glutes, hamstrings en kuiten/soleus wordt vanaf hier steeds belangrijker. D− staat hier bewust op een lager niveau dan D+ — de eigen, tragere opbouw van excentrische tolerantie, niet een simpele kopie van de stijgwaarde.',
@@ -178,7 +178,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [PUBMED_INJURY_LOAD, PUBMED_DOWNHILL],
   },
   8: {
-    subtitle: 'Mountain Endurance',
+    subtitle: 'Berguithouding',
     type: 'Halve bergdag',
     goal: 'Een serieuze halve bergdag kunnen verwerken — 750 D+, met los daarvan minstens 500 D−.',
     why: '750 D+ begint richting een normale Alpine trainingsdag te gaan, met nog ruimte voor verdere progressie. Echt terrein (ongelijke ondergrond, stabiliteit, voetenwerk) wordt vanaf hier steeds belangrijker — dat is op een treadmill niet goed na te bootsen. D− loopt hier bewust nog één trede achter D+ aan.',
@@ -192,7 +192,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [],
   },
   9: {
-    subtitle: 'Alpine Climbing & Descent',
+    subtitle: 'Alpien klimmen en dalen',
     type: 'Kernmijlpaal — stijgen en afdalen groeien nu naar elkaar toe',
     goal: '1000 meter stijgen; los daarvan minstens 750 meter een serieuze afdaling goed verdragen.',
     why: 'De officiële GR5 kent veel etappes rond of boven 1000 D+, sommige richting 1400 D+. Afdalen veroorzaakt relatief veel excentrische spierbelasting terwijl hartslag en zuurstofverbruik juist lager kunnen zijn dan bergop — je kunt dus conditioneel prima afdalen en de volgende dag alsnog forse quadricepsschade voelen. Herhaalde blootstelling aan afdalen bouwt hier weerstand tegen op (het "repeated-bout effect") — de D--as haalt de D+-as hier bewust bijna in, niet volledig gelijk.',
@@ -205,7 +205,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [GR5_ALPES, PUBMED_DOWNHILL],
   },
   10: {
-    subtitle: 'Alpine Day',
+    subtitle: 'Alpiene dag',
     type: 'Eerste echte GR5-etappesimulatie',
     goal: '15 km combineren met minimaal 1000 D+ — niet óf afstand óf hoogtemeters, maar beide tegelijk.',
     why: 'Dat is precies wat de GR5 vraagt. Een officiële etappe is bijvoorbeeld 13,6 km / +1055 m / -814 m; andere dagen zijn aanzienlijk langer.',
@@ -222,7 +222,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [GR5_ALPES],
   },
   11: {
-    subtitle: '15–20 km + 750–1000 D+ met GR5-pack',
+    subtitle: '15 tot 20 km en 750 tot 1000 m D+ met volle GR5-rugzak',
     type: 'Volledige rugzaktest — na de lichtere gewenningssessie eerder in de ladder',
     goal: '15–20 km + 750–1000 D+ met het daadwerkelijk geplande GR5-rugzakgewicht (rond 12 kg), schoenen en uitrusting.',
     why: 'Energiebehoefte stijgt met rugzakgewicht, loopsnelheid én helling. Onderzoek naar load-carriage-training vindt de grootste vooruitgang wanneer kracht- en aerobe training gecombineerd worden met daadwerkelijke, progressieve trainingen mét belasting — precies de combinatie van gym + cardio + trekking, en precies waarom de lichtere 8 kg-sessie eerder in de ladder eraan vooraf ging.',

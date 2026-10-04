@@ -97,7 +97,7 @@ function buildReconciliationTarget(strategy: StrengthProgramStrategy, source: st
     // touches WHAT is in the block (targetTemplateIds above), only WHERE
     // its sessions land relative to each other.
     reflowOnChange: true,
-    // Upper A before Upper B within a week (engine/rotationOrder.ts).
+    // Bovenlichaam A before Bovenlichaam B within a week (engine/rotationOrder.ts).
     keepRotationOrder: true,
   };
 }

@@ -87,7 +87,7 @@ type Step =
 type Preset = 'trek' | 'race' | 'custom';
 
 const PRESET_LABEL: Record<Preset, { label: string; note: string }> = {
-  trek: { label: 'Meerdaagse tocht', note: 'Hiken of fietsen over meerdere dagen, aaneengesloten of in etappes. Zoals de GR5.' },
+  trek: { label: 'Meerdaagse tocht', note: 'Wandelen of fietsen over meerdere dagen, aaneengesloten of in etappes. Zoals de GR5.' },
   race: { label: 'Hardloopwedstrijd', note: 'Eén vaste afstand, optioneel een doeltijd.' },
   custom: { label: 'Ander doel', note: 'Stel zelf samen wat dit doel vraagt, bijvoorbeeld een zware dagtocht.' },
 };
