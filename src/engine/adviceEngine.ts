@@ -24,7 +24,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
+import { respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -84,15 +84,10 @@ function findCatchUpDate(
   for (const date of weekDates(session.weekStartDate)) {
     if (date < fromDate) continue;
     if (!dayHasRoomFor(date, template, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
-    if (isLegHeavyTemplate(template)) {
-      const clash = week.some((other) => {
-        const t = templateById.get(other.templateId);
-        if (!t || !isLegHeavyTemplate(t)) return false;
-        if (other.scheduledDate < inputs.asOf && !loggedIds.has(other.id)) return false; // a missed one isn't load
-        return Math.abs(daysBetween(other.scheduledDate, date)) <= 1;
-      });
-      if (clash) continue;
-    }
+    // Same 48-hour rule as everywhere else, for legs and upper body alike;
+    // a session that was itself missed carries no load.
+    const withLoad = week.filter((other) => other.scheduledDate >= inputs.asOf || loggedIds.has(other.id));
+    if (!respectsHeavySpacing(date, template, withLoad, templateById, inputs.logs, session.id)) continue;
     return date;
   }
   return undefined;

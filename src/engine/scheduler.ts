@@ -425,7 +425,9 @@ export function proposeNoTimeToday(
       (d) => !candidateTemplate || dayHasRoomFor(d, candidateTemplate, working, templateById, program, dailyTimeBudget, sameDayPairingPreference),
     );
     if (freeDay) {
-      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, todayDate);
+      // asOf = tomorrow: no time today means nothing may be cascaded ONTO
+      // today either.
+      const proposal = proposeMove(working, templates, session.id, freeDay, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, addDays(todayDate, 1));
       proposals.push(proposal);
       working = working.map((s) => {
         const change = proposal.changes.find((c) => c.sessionId === s.id);
