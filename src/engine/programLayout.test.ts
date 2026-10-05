@@ -169,7 +169,7 @@ describe('the training screen for a mountain hike', () => {
     const sunday = addDays(GR5, -14 * 7 + 6);
     const plan = buildWorkoutPlan(tpl('tpl_mountain_hike'), sunday, program)!;
     expect(plan.totalMinutes).toBe(120);
-    expect(plan.targets).toEqual(['400 m stijgen en dalen', 'Rugzak 4 kg']);
+    expect(plan.targets).toEqual(['400 m omhoog en omlaag', 'Rugzak 4 kg']);
     expect(plan.timeline.reduce((n, s) => n + s.seconds, 0)).toBe(120 * 60);
     expect(plan.weeks.find((w) => w.current)?.week).toBe(1);
     expect(plan.weeks).toHaveLength(8);

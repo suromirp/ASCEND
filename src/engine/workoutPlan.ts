@@ -11,12 +11,14 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { resolveProgramWeek } from '../utils/dates';
 import { progressionTarget, waveWeek } from './programLayout';
+import { formatNumberNL } from '../utils/number';
 
 export interface PlanStep {
   kind: StepKind;
   label: string;
   seconds: number;
   intensity: Intensity;
+  noTarget?: true;
   detail?: string;
 }
 
@@ -75,12 +77,20 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
   const hasRest = spec.structure.some((s) => !isRepeat(s) && s.rest);
   const edges = spec.structure.filter((s): s is StepSpec => !isRepeat(s) && (s.kind === 'warmup' || s.kind === 'cooldown'));
   const leftover = totalMinutes * 60 - fixed;
-  const edgeExtra = !hasRest && edges.length > 0 && leftover > 0 ? Math.round(leftover / edges.length / 60) * 60 : 0;
+  // Whole minutes, split so the total is exact: an odd leftover minute goes
+  // to the warm-up (audit 2026-10: "±45 min" next to a 46-minute chart).
+  const extraMinutes = !hasRest && edges.length > 0 && leftover > 0 ? Math.round(leftover / 60) : 0;
+  const edgeExtraFor = (s: StepSpec) => {
+    const i = edges.indexOf(s);
+    if (i < 0) return 0;
+    return (Math.floor(extraMinutes / edges.length) + (i < extraMinutes % edges.length ? 1 : 0)) * 60;
+  };
   const toStep = (s: StepSpec): PlanStep => ({
     kind: s.kind,
     label: s.label,
-    seconds: s.rest ? restSeconds : fixedSeconds(s) + (edges.includes(s) ? edgeExtra : 0),
+    seconds: s.rest ? restSeconds : fixedSeconds(s) + edgeExtraFor(s),
     intensity: s.intensity,
+    noTarget: s.noTarget,
     detail: s.detail,
   });
   for (const s of spec.structure) {
@@ -109,8 +119,8 @@ export function buildWorkoutPlan(template: SessionTemplate, dateIso: string | un
 
   const step = target?.step;
   const targets = [
-    step?.elevationGainM ? `${step.elevationGainM} m stijgen en dalen` : undefined,
-    step?.backpackKg ? `Rugzak ${step.backpackKg} kg` : undefined,
+    step?.elevationGainM ? `${formatNumberNL(step.elevationGainM, 0)} m omhoog en omlaag` : undefined,
+    step?.backpackKg ? `Rugzak ${formatNumberNL(step.backpackKg, 1)} kg` : undefined,
   ].filter((t): t is string => !!t);
 
   return {

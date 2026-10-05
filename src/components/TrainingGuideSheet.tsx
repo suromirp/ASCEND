@@ -210,7 +210,7 @@ function StepRow({ step }: { step: PlanStep }) {
           <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutesText(step.seconds)}</span>
         </div>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          {isStrength ? step.detail : `${level.label} · ${level.rpe} · ${level.zone} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`}
+          {isStrength ? step.detail : step.noTarget ? `${level.label} · geen hartslagdoel${step.detail ? `. ${step.detail}` : ''}` : `${level.label} · ${level.rpe} · ${level.zone} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`}
         </p>
       </div>
     </div>

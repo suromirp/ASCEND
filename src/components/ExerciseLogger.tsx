@@ -6,7 +6,7 @@ import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
 import { getModalities, getModality, defaultModality, modalitySport } from '../data/modalities';
-import { GARMIN_SUGGESTED_TYPES, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
+import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
 import { ModalityPicker } from './ModalityPicker';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -395,7 +395,7 @@ export function ExerciseLogger({
                         color: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-ink)',
                       }}
                     >
-                      {t}
+                      {GARMIN_TYPE_LABEL[t] ?? t}
                     </button>
                   ))}
                 </div>
@@ -476,7 +476,7 @@ export function ExerciseLogger({
           <Field label="Zwaarte, RPE (1 tot 10)" value={rpe} onChange={setRpe} />
           {peak && (
             <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Hoe zwaar voelde de hele training? Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){conditioningSteps.some((st) => st.intensity < peak) ? ' in de zware stukken, rustig ertussen' : ''}.
+              Hoe zwaar voelde de hele training? Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){peak >= 3 && conditioningSteps.some((st) => st.intensity <= 2) ? ' in de zware stukken, rustig ertussen' : ''}.
             </p>
           )}
           <div>
@@ -494,7 +494,7 @@ export function ExerciseLogger({
         {template.cooldown && template.cooldown.length > 0 && <StretchList title="AFKOELING (na)" stretches={template.cooldown} />}
 
         <div className="mt-6 flex gap-3">
-          <SecondaryButton onClick={requestClose}>ANNULEREN</SecondaryButton>
+          <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">ANNULEREN</SecondaryButton>
           <PrimaryButton onClick={handleSave} disabled={saving}>
             {saving ? 'OPSLAAN…' : quickComplete ? 'AFVINKEN' : 'VOLTOOIEN'}
           </PrimaryButton>
