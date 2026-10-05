@@ -173,7 +173,9 @@ export function ExerciseLogger({
       completedDate: doneOn,
       templateId: template.id,
       type: template.type,
-      sport: (guidanceMode === 'ascend_guided' ? modalitySport(modalityKey) : undefined) ?? templateSport(template),
+      // The way you trained decides the sport: a ride on a run day is
+      // cycling, also when Garmin suggested the ride.
+      sport: (guidanceMode === 'ascend_guided' ? modalitySport(modalityKey) : guidanceMode === 'garmin_suggested' && garminSuggestedType === 'Bike' ? 'cycling' : undefined) ?? templateSport(template),
       variant,
       durationMinutes: duration,
       rpe: rpe === '' ? undefined : rpe,
