@@ -88,7 +88,7 @@ export const TUESDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'run_treadmill',
-    label: 'Hardlopen, treadmill',
+    label: 'Hardlopen, loopband',
     role: 'EQUIVALENT',
     environment: 'treadmill',
     garminProfile: 'Treadmill',
@@ -114,7 +114,7 @@ export const TUESDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'bike_indoor',
-    label: 'Fietsen, indoor',
+    label: 'Fietsen, binnen',
     role: 'CROSS_TRAINING',
     environment: 'indoor',
     garminProfile: 'Bike Indoor',
@@ -127,7 +127,7 @@ export const TUESDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'run_walk',
-    label: 'Hardlopen/wandelen afgewisseld',
+    label: 'Hardlopen en wandelen afgewisseld',
     role: 'FALLBACK',
     environment: 'outdoor',
     garminProfile: 'Run',
@@ -143,7 +143,7 @@ export const TUESDAY_MODALITIES: ModalityDefinition[] = [
 export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   {
     key: 'incline_treadmill',
-    label: 'Incline treadmill',
+    label: 'Wandelen, loopband op helling',
     role: 'PRIMARY',
     environment: 'treadmill',
     garminProfile: 'Treadmill',
@@ -157,7 +157,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'hill_hike',
-    label: 'Hike met hoogteverschil, buiten',
+    label: 'Wandelen met hoogteverschil, buiten',
     role: 'PRIMARY',
     environment: 'outdoor',
     garminProfile: 'Hike / outdoor wandelen',
@@ -169,7 +169,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'stairmaster',
-    label: 'StairMaster / Stepmill',
+    label: 'Traplopen, StairMaster',
     role: 'EQUIVALENT',
     environment: 'indoor',
     garminProfile: 'Stair Stepper',
@@ -183,7 +183,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'outdoor_stairs',
-    label: 'Buitentrappen',
+    label: 'Traplopen, buiten',
     role: 'EQUIVALENT',
     environment: 'outdoor',
     garminProfile: 'Hike / Stair Stepper',
@@ -196,7 +196,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'trail_hike',
-    label: 'Trail / oneffen terrein',
+    label: 'Wandelen op oneffen paden',
     role: 'EQUIVALENT',
     environment: 'outdoor',
     garminProfile: 'Hike / Trail Run',
@@ -209,7 +209,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'walking_hill_repeats',
-    label: 'Wandel-heuvelherhalingen',
+    label: 'Wandelen, heuvel op en af herhalen',
     role: 'EQUIVALENT',
     environment: 'outdoor',
     garminProfile: 'Hike',
@@ -221,7 +221,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'loaded_hike',
-    label: 'Hike met rugzakgewicht',
+    label: 'Wandelen met rugzak',
     role: 'LATER_PHASE',
     environment: 'outdoor',
     garminProfile: 'Hike',
@@ -234,7 +234,7 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'bike_easy_friday',
-    label: 'Fietsen (noodgreep)',
+    label: 'Fietsen',
     role: 'FALLBACK',
     environment: 'outdoor',
     garminProfile: 'Bike',
@@ -250,12 +250,12 @@ export const FRIDAY_MODALITIES: ModalityDefinition[] = [
 export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
   {
     key: 'hill_repeats_outdoor',
-    label: 'Heuvelherhalingen, buiten',
+    label: 'Hardlopen, buiten op een heuvel',
     role: 'PRIMARY',
     environment: 'outdoor',
     garminProfile: 'Run',
     durationHint: 'geplande duur, incl. warming-up/cooling-down',
-    how: 'Warm 10 min rustig op. Daarna herhaald: 30-90 sec bergop op hoge inspanning (RPE 8-9), rustig aflopen of teruglopen als volledig herstel. Begin met 4-5 herhalingen, bouw op naar 8-10.',
+    how: 'Zoek een helling waar je 1 minuut hard omhoog kunt lopen. Wandel of jog daarna rustig terug naar beneden. Het aantal herhalingen staat in je plan.',
     why: 'Combineert een sterke loop-specifieke snelheidsprikkel met opbouwende D+, de helling verlaagt bovendien de impact per stap t.o.v. vlakke sprints.',
     whenNotIdeal: ['geen toegang tot een bruikbare helling', 'acute beenpijn of ongewone impactgevoeligheid'],
     fields: { distance: true, elevation: true, cadence: true },
@@ -263,12 +263,12 @@ export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'incline_treadmill_intervals',
-    label: 'Incline-intervallen, treadmill',
+    label: 'Hardlopen, loopband op helling',
     role: 'EQUIVALENT',
     environment: 'treadmill',
     garminProfile: 'Treadmill',
     durationHint: 'geplande duur, incl. warming-up/cooling-down',
-    how: 'Helling op 4-5%. Herhaald: 30-90 sec hoog tempo (RPE 8-9), tussendoor helling/snelheid fors omlaag voor volledig herstel. Niet aan de handgrepen hangen.',
+    how: 'Zet de loopband op 4-5% helling. Loop 1 minuut hard, zet daarna helling en snelheid flink omlaag voor de 2 minuten rust. Niet aan de handgrepen hangen.',
     why: 'Even effectief als buiten heuvelrennen voor de snelheids- en D+-prikkel, en volledig los van weer of beschikbaar terrein te plannen.',
     garminNote: 'Total Ascent is op een treadmill niet betrouwbaar, ASCEND schat D+ uit afstand × helling%.',
     fields: { distance: true, inclinePercent: true, elevation: true, cadence: true },
@@ -276,12 +276,12 @@ export const HILL_INTERVAL_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'stairmaster_intervals',
-    label: 'StairMaster-intervallen',
+    label: 'Traplopen, StairMaster',
     role: 'FALLBACK',
     environment: 'indoor',
     garminProfile: 'Stair Stepper',
     durationHint: 'geplande duur',
-    how: 'Herhaald: 30-90 sec hoog tempo, daartussen rustig doorstappen tot volledig herstel, alleen wanneer geen heuvel of treadmill beschikbaar is.',
+    how: 'Alleen als er geen heuvel of loopband is: 1 minuut stevig traplopen, dan 2 minuten rustig doorstappen. Telt als wandelen, niet als hardlopen.',
     why: 'Behoudt de verticale beenprikkel wanneer de primaire opties niet beschikbaar zijn.',
     whenNotIdeal: ['mist de loop-specifieke snelheidscomponent van buiten/treadmill'],
     fields: { steps: true },
@@ -335,7 +335,7 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
 export const MOUNTAIN_HIKE_MODALITIES: ModalityDefinition[] = [
   {
     key: 'mountain_hike_outdoor',
-    label: 'Wandelen met D+, buiten',
+    label: 'Wandelen met hoogtemeters, buiten',
     role: 'PRIMARY',
     environment: 'outdoor',
     garminProfile: 'Hike',
