@@ -209,10 +209,10 @@ function buildTemplates(): SessionTemplate[] {
         { withTemplateId: 'tpl_mountain_hike', verdict: 'prefer' },
       ],
       weeklyProgression: [
-        { weekInPhase: 1, targetMinutes: 35, note: 'Wennen, 4-5 herhalingen' },
-        { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw, 6 herhalingen' },
-        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week, 8 herhalingen' },
-        { weekInPhase: 4, targetMinutes: 30, note: 'Rustweek, 4 herhalingen, rustig' },
+        { weekInPhase: 1, targetMinutes: 35, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 40, note: 'Opbouw' },
+        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 30, note: 'Rustweek, rustig' },
       ],
     },
     {
@@ -227,7 +227,7 @@ function buildTemplates(): SessionTemplate[] {
       defaultDayOfWeek: 7,
       outdoorTarget: { targetElevationM: 300 },
       notes:
-        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), afstand en hoogtemeters bouw je zelf op t.o.v. vorige week (richtlijn: max +10-15%). Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar de GR5 vertaalt.',
+        'De langste sessie van de week, op vermoeide benen na zaterdag, precies die specificiteit is het doel, niet een fout. Rustig tempo (RPE 3-4/10), De minuten bouwt ASCEND voor je op, nooit meer dan 10% boven je langste loop van de afgelopen maand. Buiten met D+ heeft de voorkeur boven een vlakke route, dit is de sessie die het meest direct naar de GR5 vertaalt.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       // Langste sessie, op al vermoeide benen, met echte D+/D− — cumulatief
@@ -235,9 +235,9 @@ function buildTemplates(): SessionTemplate[] {
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'heavy' },
       pairingOverride: [{ withTemplateId: 'tpl_hill_intervals', verdict: 'prefer' }],
       weeklyProgression: [
-        { weekInPhase: 1, targetMinutes: 50, note: 'Wennen, rustig tempo, D+ waar mogelijk' },
-        { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw, +10% afstand/D+ t.o.v. week 1' },
-        { weekInPhase: 3, targetMinutes: 70, note: 'Zwaarste week, +10-15% t.o.v. week 2' },
+        { weekInPhase: 1, targetMinutes: 50, note: 'Wennen, rustig tempo' },
+        { weekInPhase: 2, targetMinutes: 60, note: 'Opbouw' },
+        { weekInPhase: 3, targetMinutes: 70, note: 'Zwaarste week' },
         { weekInPhase: 4, targetMinutes: 45, note: 'Rustweek (35-45 min, D+ ook lager)' },
       ],
     },

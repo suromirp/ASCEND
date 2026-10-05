@@ -28,6 +28,9 @@ export interface StepSpec {
   seconds?: number;
   rest?: true;
   intensity: Intensity;
+  // No zone or RPE to aim for (rest or a recovery walk): the step then
+  // reads "Heel rustig · geen hartslagdoel" instead of a zone.
+  noTarget?: true;
   detail?: string;
 }
 
@@ -115,8 +118,8 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       {
         repeatsByWeek: { 1: 5, 2: 6, 3: 8, 4: 4 },
         steps: [
-          { kind: 'work', label: 'Bergop', seconds: 60, intensity: 4, detail: '30-90 sec, techniek blijft netjes' },
-          { kind: 'recover', label: 'Terug naar beneden', minutes: 2, intensity: 1, detail: 'Wandelen of rustig lopen tot je hersteld bent' },
+          { kind: 'work', label: 'Hard bergop', seconds: 60, intensity: 4, detail: 'Hard maar beheerst, je techniek blijft netjes' },
+          { kind: 'recover', label: 'Terug naar beneden', minutes: 2, intensity: 1, detail: 'Wandelend of heel rustig joggend' },
         ],
       },
       { kind: 'cooldown', label: 'Uitlopen', minutes: 10, intensity: 2 },
@@ -129,8 +132,8 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
   },
   tpl_long_run: {
     summary: () => 'De langste sessie van de week, rustig en met hoogtemeters waar het kan. Bewust op vermoeide benen na de heuvels.',
-    keyTag: 'D+ waar mogelijk',
-    structure: [{ kind: 'run', label: 'Lange duurloop', rest: true, intensity: 2, detail: 'Rustig, D+ waar mogelijk' }],
+    keyTag: '±300 m D+ als het kan',
+    structure: [{ kind: 'run', label: 'Lange duurloop', rest: true, intensity: 2, detail: 'Met hoogteverschil als het kan' }],
     garminSport: 'Hardlopen (of Trailrunning)',
     builds: [
       { label: 'Uithouding', why: 'Tijd op de been: de basis voor lange dagen onderweg.' },
@@ -169,7 +172,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
   },
   tpl_herstel: {
     summary: () => 'Rust of een rustige wandeling. Geen prestatie, alleen bewegen.',
-    structure: [{ kind: 'walk', label: 'Rustig wandelen', rest: true, intensity: 1, detail: 'Of volledige rust, allebei goed' }],
+    structure: [{ kind: 'walk', label: 'Rustig wandelen of rust', rest: true, intensity: 1, noTarget: true, detail: 'Allebei goed. Geen tempo of hartslag om op te letten' }],
     builds: [
       { label: 'Herstel', why: 'De vermoeidheid van het weekend laten zakken voor de nieuwe week begint.' },
     ],

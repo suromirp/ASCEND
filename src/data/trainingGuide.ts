@@ -236,7 +236,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'BELANGRIJKSTE MEETPUNT',
-        body: 'Deze training is de controle of vrijdag (Bergconditie) goed gedoseerd was. Wordt Benen B gedurende meerdere weken aantoonbaar slechter na vrijdag? Pas dan eerst Bergconditie aan, niet meteen de krachttraining schrappen.',
+        body: 'Let op of de dag ervoor je benen al te moe maakt. Wordt Benen B meerdere weken op rij slechter? Maak dan eerst die dag lichter, in plaats van de krachttraining te schrappen.',
       },
       {
         heading: 'LATER',
@@ -276,7 +276,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'UITVOERING',
-        body: '10 min rustig opwarmen. Daarna herhaald: 30-90 sec bergop op hoge inspanning (RPE 8-9/10), tussendoor rustig aflopen of teruglopen tot volledig herstel. Begin Maand 1 met 4-5 herhalingen, bouw op naar 8-10. Sluit af met 10 min rustig uitlopen.',
+        body: '10 min rustig opwarmen. Daarna herhaald: 1 minuut hard bergop (RPE 8-9/10), dan 2 minuten wandelend of heel rustig joggend terug naar beneden. Het aantal herhalingen staat in je plan: van 4 in een rustweek tot 8 in de zwaarste week. Sluit af met 10 min rustig uitlopen.',
       },
       {
         heading: 'WAAROM BERGOP, NIET VLAK?',
@@ -311,7 +311,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'OPBOUW',
-        body: 'Rustig tempo (RPE 3-4/10). Bouw afstand en D+ ten opzichte van vorige week op met maximaal +10-15%, niet meer. Elke 3-4 weken een lichtere week (de rustweek in dit blok).',
+        body: 'Rustig tempo (RPE 3-4/10). ASCEND bouwt de minuten voor je op en vraagt nooit meer dan 10% boven je langste loop van de afgelopen maand. Elke vierde week is een rustweek.',
       },
       {
         heading: 'WANNEER TE ZWAAR?',
@@ -320,7 +320,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'volledige zinnen spreken wordt structureel moeilijk',
           'herstel duurt meerdere dagen langer dan normaal na deze sessie',
         ],
-        note: 'Dan eerst de opbouw vertragen (kleinere stap dan +10%), niet de sessie overslaan.',
+        note: 'Loop dan een paar weken de korte versie of houd de minuten van vorige week aan, in plaats van de training over te slaan.',
       },
     ],
     garminNote: 'Zie de Garmin-gids voor zones en databeelden bij lange duurlopen.',
