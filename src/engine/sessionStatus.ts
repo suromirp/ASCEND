@@ -1,7 +1,7 @@
 import type { PlannedSession, SessionLog } from '../models/training';
 import { todayISO } from '../utils/dates';
 
-export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed';
+export type DisplayStatus = 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest';
 
 export interface DisplaySessionState {
   status: DisplayStatus;
@@ -18,9 +18,14 @@ export interface DisplaySessionState {
 // history quietly renders an untouched past session as an empty upcoming
 // circle, which looks identical to something that simply hasn't happened
 // yet.
-export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[]): DisplaySessionState {
+//
+// A rest day (isRest) is not a training: nothing to tick off, so it is
+// never "missed" and never waits for a log. Logging a walk on it still
+// shows as done.
+export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false): DisplaySessionState {
   const log = logs.find((l) => l.plannedSessionId === session.id);
   if (log) return { status: 'completed', wasMoved: !!session.movedFromDate, log };
+  if (isRest) return { status: 'rest', wasMoved: !!session.movedFromDate };
   if (session.status === 'skipped') return { status: 'skipped', wasMoved: !!session.movedFromDate };
   if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved: !!session.movedFromDate };
   if (session.scheduledDate < todayISO()) return { status: 'missed', wasMoved: !!session.movedFromDate };

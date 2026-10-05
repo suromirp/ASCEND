@@ -67,19 +67,25 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     const t = templateById.get(s.templateId);
     return !!t && !isHeavySession(t);
   };
-  const primary = todaySessions.find((s) => deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped' && allowedWhileIll(s));
-  const secondary = todaySessions.filter((s) => s.id !== primary?.id);
-  const allTodayDone = todaySessions.length > 0 && !primary;
+  // A rest day is no training to start or tick off (production feedback:
+  // "een herstelmoment ga je niet los loggen"). It gets its own quiet card
+  // and never counts in the week's numbers.
+  const isRestSession = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
+  const primary = todaySessions.find((s) => !isRestSession(s) && deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped' && allowedWhileIll(s));
+  const restToday = !primary ? todaySessions.find((s) => isRestSession(s) && s.status !== 'skipped' && !sessionLogs.some((l) => l.plannedSessionId === s.id)) : undefined;
+  const secondary = todaySessions.filter((s) => s.id !== primary?.id && !(restToday && s.id === restToday.id));
+  const allTodayDone = todaySessions.some((s) => !isRestSession(s)) && !primary;
   const anyDoneToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status === 'completed');
 
-  const weekCompletedCount = weekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
+  const weekTrainings = weekSessions.filter((s) => !isRestSession(s));
+  const weekCompletedCount = weekTrainings.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
   // A short look-back nudge — only worth showing right at the week
   // boundary (closing out the week that just ended, or opening the new
   // one), not as a permanent fixture crowding every day's Today screen.
   const showWeeklyReflection = isoWeekday(today) === 7 || isoWeekday(today) === 1;
   const lastWeekStart = addDays(weekStart, -7);
-  const lastWeekSessions = sessionsForWeek(lastWeekStart);
+  const lastWeekSessions = sessionsForWeek(lastWeekStart).filter((s) => !isRestSession(s));
   const lastWeekCompletedCount = lastWeekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
 
   // Weekly nudge to back up: local-only storage means a wiped browser/cache
@@ -230,6 +236,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
           originalDate={primary.movedFromDate}
         />
+      ) : restToday && !allTodayDone ? (
+        <RestDayCard onLogWalk={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }} />
       ) : (
         <Card>
           <Eyebrow>VANDAAG</Eyebrow>
@@ -273,7 +281,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>{weekCompletedCount} / {weekSessions.length}</p>
+          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>{weekCompletedCount} / {weekTrainings.length}</p>
         </Card>
         <Card className="text-center">
           <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
@@ -389,5 +397,25 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       )}
 
     </div>
+  );
+}
+
+// A rest day on Today: nothing to start and nothing to tick off. A walk
+// is welcome, the one at work counts too; logging it is optional.
+function RestDayCard({ onLogWalk }: { onLogWalk: () => void }) {
+  return (
+    <Card texture className="flex flex-col gap-3">
+      <Eyebrow>VANDAAG</Eyebrow>
+      <h2 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>Rustdag</h2>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        Geen training vandaag. Je lichaam bouwt op wat je deze week deed.
+      </p>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+        Wandelen mag, rustig, een kwartier tot een uur. Je wandeling in de pauze op het werk telt ook. Er valt niets af te vinken.
+      </p>
+      <button onClick={onLogWalk} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+        Toch een wandeling vastleggen
+      </button>
+    </Card>
   );
 }

@@ -60,7 +60,7 @@ export function SecondaryButton({
   );
 }
 
-export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' }) {
+export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' }) {
   const map: Record<string, { symbol: string; color: string; label: string }> = {
     completed: { symbol: '✓', color: 'var(--color-success-text)', label: 'Gedaan' },
     today: { symbol: '●', color: 'var(--color-gold)', label: 'Vandaag' },
@@ -68,6 +68,7 @@ export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned
     moved: { symbol: '↷', color: 'var(--color-sky)', label: 'Verplaatst' },
     skipped: { symbol: '×', color: 'var(--color-danger-text)', label: 'Overgeslagen' },
     missed: { symbol: '!', color: 'var(--color-warning)', label: 'Gemist' },
+    rest: { symbol: '–', color: 'var(--color-stone)', label: 'Rustdag' },
   };
   const s = map[status];
   return (

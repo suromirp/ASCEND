@@ -15,6 +15,7 @@ const STATUS_COLOR: Record<DisplayStatus, string> = {
   moved: 'var(--color-sky)',
   skipped: 'var(--color-danger)',
   missed: 'var(--color-warning)',
+  rest: 'var(--color-stone)',
 };
 
 export function MonthCalendar({
@@ -22,11 +23,13 @@ export function MonthCalendar({
   plannedSessions,
   sessionLogs,
   onSelectDate,
+  isRest = () => false,
 }: {
   anchor: string;
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
   onSelectDate: (date: string) => void;
+  isRest?: (session: PlannedSession) => boolean;
 }) {
   const { start, end } = monthBounds(anchor);
   const today = todayISO();
@@ -83,7 +86,7 @@ export function MonthCalendar({
                   <span
                     key={s.id}
                     className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: STATUS_COLOR[deriveSessionStatus(s, sessionLogs).status] }}
+                    style={{ background: STATUS_COLOR[deriveSessionStatus(s, sessionLogs, isRest(s)).status] }}
                   />
                 ))}
               </div>
