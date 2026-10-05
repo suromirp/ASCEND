@@ -17,6 +17,7 @@ import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTempla
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
 import { programAnchorDate } from '../engine/programLayout';
+import { StrengthDurationSettings } from '../components/StrengthDurationSettings';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -490,6 +491,7 @@ export function SettingsPage() {
               </div>
               <Toggle checked={settings.strengthTrackedExternally} onChange={(v) => updateSettings({ strengthTrackedExternally: v })} label="Kracht bijgehouden in MacroFactor" />
             </div>
+            <StrengthDurationSettings />
           </Card>
         </>
       )}

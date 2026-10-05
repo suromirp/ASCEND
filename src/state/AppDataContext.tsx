@@ -149,7 +149,8 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations } from '../engine/substitutions';
+import { learnedStrengthDurations } from '../engine/durationLearning';
 import { recoveryDurationAdjustments } from '../engine/illness';
 import { requestPersistentStorage } from '../storage/persistence';
 import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
@@ -444,6 +445,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // No session in the next two weeks asks for more than 110% of the
     // longest of its kind in the last 30 days.
     setRecentSessionMaxima(recentSessionMaxima(logs, todayISO()));
+    // Strength trainings: your estimate, or the duration learned from logs.
+    setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);

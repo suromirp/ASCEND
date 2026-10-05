@@ -12,10 +12,24 @@ export function exercisesForVariant(template: SessionTemplate, variant: SessionV
   return template.exercises.filter((e) => e.priority === 'core');
 }
 
+// Predicted full minutes for trainings without a week-by-week target
+// (strength): the user's own estimate, or what ASCEND learned from the logs
+// (engine/durationLearning.ts). Set by state/AppDataContext on every
+// refresh; empty by default, so every pure test sees the template value.
+let learnedDurations: Record<string, number> = {};
+export function setLearnedDurations(durations: Record<string, number>): void {
+  learnedDurations = durations;
+}
+
+function fullDuration(template: SessionTemplate): number {
+  return learnedDurations[template.id] ?? template.durationVariants.full;
+}
+
 export function durationForVariant(template: SessionTemplate, variant: SessionVariant): number {
-  if (variant === 'short') return template.durationVariants.short ?? template.durationVariants.full;
-  if (variant === 'minimum') return template.durationVariants.minimum ?? template.durationVariants.short ?? template.durationVariants.full;
-  return template.durationVariants.full;
+  const full = fullDuration(template);
+  if (variant === 'short') return Math.min(full, template.durationVariants.short ?? full);
+  if (variant === 'minimum') return Math.min(full, template.durationVariants.minimum ?? template.durationVariants.short ?? full);
+  return full;
 }
 
 // Week-by-week targets (SessionTemplate.weeklyProgression) are resolved in
@@ -76,7 +90,7 @@ export function resolveEffectiveFullDuration(
   program: Program | null | undefined,
 ): number {
   const target = progressionTarget(template, program, scheduledDate);
-  let base = target?.minutes ?? template.durationVariants.full;
+  let base = target?.minutes ?? fullDuration(template);
   const longest = recentMaxima.minutesByTemplate[template.id];
   if (target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
     // Never below the first "Wennen" step: one short session must not pull
