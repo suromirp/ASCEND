@@ -77,16 +77,16 @@ const RUNBIKECALC_POLARIZED: GuideSource = { label: 'RunBikeCalc, 80/20 polarize
 
 export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   tpl_upper_a: {
-    subtitle: 'Kracht • Hypertrofie • Bovenlichaam',
+    subtitle: 'Kracht · bovenlichaam',
     registration: 'ASCEND: alleen voltooid/niet voltooid. Oefeningen, sets, reps, gewicht en RIR log je in MacroFactor.',
     sections: [
       {
         heading: 'DOEL',
-        body: 'Eerste bovenlichaamtraining van de week, algemene kracht en spiergroei van borst, rug, schouders en armen. Krachttraining blijft ook naast hardlopen en hiken belangrijk: het kan bij lopers zelfs de running economy verbeteren.',
+        body: 'Eerste bovenlichaamtraining van de week, algemene kracht en spiergroei van borst, rug, schouders en armen. Krachttraining blijft ook naast hardlopen en hiken belangrijk: het kan je zelfs zuiniger laten lopen.',
       },
       {
         heading: 'UITVOERING',
-        body: 'Het volledige programma, oefeningen, sets, reps, gewicht, RIR, rusttijden, draait in MacroFactor Workouts. Dat hoeft niet nogmaals in ASCEND te worden vastgelegd. MacroFactor gebruikt je gelogde gewichten, reps en RIR voor Smart Progression en past toekomstige aanbevelingen daarop aan.',
+        body: 'Het volledige programma staat in MacroFactor Workouts: oefeningen, sets, herhalingen, gewicht, rust en hoeveel herhalingen je in de tank houdt (RIR). Dat hoef je niet nog eens in ASCEND vast te leggen. MacroFactor past je volgende trainingen aan op wat je logt.',
       },
       {
         heading: 'WAAR OP LETTEN',
@@ -111,11 +111,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'DOEL',
-        body: 'Aerobe basis en hardloopontwikkeling opbouwen, de dag na Benen A, zonder je herstel of de heuvelintervallen van zaterdag te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit, plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
+        body: 'Aerobe basis en hardloopontwikkeling opbouwen, zonder je herstel van de beentraining of de heuvelintervallen in het weekend te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit, plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
       },
       {
         heading: 'INTENSITEIT',
-        body: 'RPE ongeveer 3–4/10, ontspannen lopen, volledige zinnen kunnen spreken, geen PR, geen tempo-/thresholdrun. De talk test correspondeert redelijk met een intensiteit rond of onder de aerobe drempel en is een bruikbare praktische maatstaf om rustige duurtraining te sturen.',
+        body: 'RPE ongeveer 3-4 van 10: ontspannen lopen en hele zinnen kunnen praten. Geen record, geen tempoloop. De praattest is een goede maatstaf: kun je praten, dan zit je rond of onder je aerobe drempel, precies waar deze training hoort.',
       },
       {
         heading: 'WANNEER TE HARD?',
@@ -128,7 +128,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'het laatste deel voelt als een tempo-/wedstrijdtraining',
           'de heuvelintervallen op zaterdag zijn merkbaar slechter door deze run',
         ],
-        note: 'Tempo is géén doel. Op een warme dag, met wind of vermoeidheid kan hetzelfde easy effort aanzienlijk langzamer zijn.',
+        note: 'Tempo is géén doel. Op een warme dag, met wind of als je moe bent, is dezelfde rustige inspanning een stuk langzamer.',
       },
       {
         heading: 'WANNEER TE LANGZAAM?',
@@ -136,7 +136,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'GARMIN',
-        body: 'Sportspecifieke running-zones op basis van %LTHR geven een preciezer beeld dan generieke %Max HR-zones. Hoofdscherm: timer, hartslag, hartslagzone, tempo. De borstband heeft de voorkeur boven de polssensor voor trainingssturing.',
+        body: 'Hartslagzones op basis van je drempelhartslag zijn preciezer dan zones op basis van je maximale hartslag. Hoofdscherm: timer, hartslag, hartslagzone, tempo. De borstband heeft de voorkeur boven de polssensor voor trainingssturing.',
       },
     ],
     garminNote: 'Volledige Garmin-instellingen (zones, databeelden, borstband) staan in de Garmin-gids.',
@@ -145,7 +145,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_lower_a: {
-    subtitle: 'Kracht • Belangrijkste lower-body sessie',
+    subtitle: 'Kracht · benen',
     registration: 'ASCEND: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
       {
@@ -162,7 +162,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'squat-/legpressprestaties gaan meerdere weken achteruit',
           'RDL/hinge wordt duidelijk slechter',
           'warming-upgewichten voelen ongewoon zwaar',
-          'benen zijn iedere woensdag nog sterk vermoeid',
+          'je benen zijn op de dag van de beentraining nog steeds erg moe',
         ],
         note: 'Bij dit patroon eerst de rustige duurloop en het weekend lichter maken (korter/langzamer), niet meteen Benen A opofferen.',
       },
@@ -172,16 +172,16 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_upper_b: {
-    subtitle: 'Kracht • Hypertrofie • Bovenlichaam',
+    subtitle: 'Kracht · bovenlichaam',
     registration: 'ASCEND: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
       {
         heading: 'DOEL',
-        body: 'Tweede bovenlichaamprikkel van de week, samen met Bovenlichaam A verdeelt dit het wekelijkse volume over twee sessies. Voor hypertrofie tellen vooral voldoende wekelijks volume en consistentie; voor kracht wegen zwaardere belastingen zwaarder.',
+        body: 'De tweede training voor je bovenlichaam deze week. Samen met Bovenlichaam A verdeel je het werk over twee trainingen. Voor spiergroei tellen vooral genoeg werk per week en regelmaat; voor kracht vooral zwaarder gewicht.',
       },
       {
         heading: 'WAAR OP LETTEN',
-        body: 'Geen extra endurance nodig deze dag. Dit is bewust ook een dag zónder zware beenbelasting, ingeklemd tussen woensdag (Benen A) en het zware weekend-beenblok (zaterdag heuvelintervallen, zondag lange duurloop).',
+        body: 'Geen extra conditietraining nodig vandaag. Dit is bewust een dag zonder zware beenbelasting, tussen de beentraining en het zware weekend.',
       },
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
@@ -197,12 +197,12 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         body: 'Primair: langdurig bergop kunnen bewegen. Secundair: verticale trainingsbelasting opbouwen richting de GR5.',
       },
       {
-        heading: 'OPTIE A, INCLINE TREADMILL',
+        heading: 'OPTIE A, LOOPBAND OP HELLING',
         body: 'Helling ongeveer 8–15%, snelheid meestal 4–5,5 km/u, RPE 4–5/10, een werkgebied, geen verplichte combinatie. Kies snelheid en helling waarmee je de volledige geplande tijd gecontroleerd kunt volhouden, niet automatisch de zwaarste combinatie. Niet structureel aan de handgrepen hangen, dat vermindert bovendien de nauwkeurigheid van Garmins afstandsmeting.',
       },
       {
         heading: 'GESCHATTE D+, GEEN GPS-METING',
-        body: 'Op een treadmill verander je fysiek niet van hoogte, dus Garmins Total Ascent is daar geen betrouwbare maat. ASCEND schat D+ uit afstand × helling% (D+ ≈ afstand in meters × helling% ÷ 100), vul de helling in bij het loggen en ASCEND berekent en vult de schatting voor je in. Dit blijft een trainingsmaat, geen echte hoogtemeting.',
+        body: 'Op een loopband ga je niet echt omhoog, dus de hoogtemeters van je Garmin kloppen daar niet. ASCEND schat D+ uit afstand × helling% (D+ ≈ afstand in meters × helling% ÷ 100), vul de helling in bij het loggen en ASCEND berekent en vult de schatting voor je in. Dit blijft een trainingsmaat, geen echte hoogtemeting.',
       },
       {
         heading: 'OPTIE B, BUITEN HIKEN',
@@ -213,26 +213,26 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         items: [
           'RPE loopt langdurig naar 6–7+',
           'praten wordt lastig',
-          'hartslag lijkt op thresholdtraining',
+          'je hartslag zit op het niveau van een tempoloop',
           'benen zijn zaterdag nog zwaar',
           'Benen B-prestaties dalen structureel',
-          'je moet aan de treadmill hangen om tempo vol te houden',
+          'je moet aan de loopband hangen om het tempo vol te houden',
         ],
         note: 'Dan eerst snelheid of helling omlaag, niet meteen de hele training overslaan.',
       },
     ],
     garminNote: 'Zie de Garmin-gids voor custom-activity- en databeeld-tips bij indoor klimmen.',
-    gear: ['Forerunner 255', 'Garmin borstband', 'trainingsschoenen', 'water', 'treadmill (of buitenroute)'],
+    gear: ['Forerunner 255', 'Garmin borstband', 'trainingsschoenen', 'water', 'loopband (of buitenroute)'],
     sources: [GARMIN_HANDRAIL, GARMIN_CUSTOM_ACTIVITY, GARMIN_INDOOR_ACCELEROMETER, GARMIN_CALIBRATION, GARMIN_ELEVATION_FIELDS, PUBMED_DOWNHILL, PUBMED_LOAD_CARRYING],
   },
 
   tpl_lower_b: {
-    subtitle: 'Kracht • Hypertrofie • Onderlichaam',
+    subtitle: 'Kracht · benen',
     registration: 'ASCEND: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
       {
         heading: 'DOEL',
-        body: 'Tweede lower-body prikkel van de week. MacroFactor bepaalt de daadwerkelijke belasting, dit is niet per definitie lichter dan Benen A.',
+        body: 'De tweede beentraining van de week. MacroFactor bepaalt de daadwerkelijke belasting, dit is niet per definitie lichter dan Benen A.',
       },
       {
         heading: 'BELANGRIJKSTE MEETPUNT',
@@ -293,7 +293,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
     ],
     garminNote: 'Zie de Garmin-gids voor custom-activity- en databeeld-tips bij indoor intervallen.',
-    gear: ['Forerunner 255', 'Garmin borstband', 'hardloopschoenen', 'treadmill (of buiten heuvel/trap)'],
+    gear: ['Forerunner 255', 'Garmin borstband', 'hardloopschoenen', 'loopband (of buiten een heuvel of trap)'],
     sources: [PELOTON_HILL_REPEATS, OUTSIDE_INCLINE_TREADMILL, TRAINIINGPEAKS_TREADMILL_INTERVAL, RUNBIKECALC_POLARIZED],
   },
 
@@ -307,7 +307,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'OP VERMOEIDE BENEN, BEWUST',
-        body: 'Zondag komt direct na zaterdags heuvelintervallen. Dat is geen ongelukkige planning: bergsport-specifieke schema\'s trainen bewust een zwaar weekendblok (klimprikkel, dan een dag op vermoeide benen) omdat dat is wat een meerdaagse tocht als de GR5 daadwerkelijk vraagt.',
+        body: 'De lange duurloop komt direct na de heuvelintervallen. Dat is geen ongelukkige planning: bergsport-specifieke schema\'s trainen bewust een zwaar weekendblok (klimprikkel, dan een dag op vermoeide benen) omdat dat is wat een meerdaagse tocht als de GR5 daadwerkelijk vraagt.',
       },
       {
         heading: 'OPBOUW',
