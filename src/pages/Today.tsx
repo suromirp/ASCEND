@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
-import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
+import { daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeGoalProgress } from '../engine/progression';
 import { isIllnessDay, activeIllness, isHeavySession } from '../engine/illness';
@@ -26,10 +26,10 @@ import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
-import { WeeklyReflectionCard } from '../components/WeeklyReflectionCard';
+import { WeekReviewCard } from '../components/WeekReview';
+import { reviewWeekFor } from '../engine/weekReview';
 import { CoachCard } from '../components/CoachCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
-import { nextWeekChangeLines } from '../engine/changeLog';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
@@ -83,10 +83,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // A short look-back nudge — only worth showing right at the week
   // boundary (closing out the week that just ended, or opening the new
   // one), not as a permanent fixture crowding every day's Today screen.
-  const showWeeklyReflection = isoWeekday(today) === 7 || isoWeekday(today) === 1;
-  const lastWeekStart = addDays(weekStart, -7);
-  const lastWeekSessions = sessionsForWeek(lastWeekStart).filter((s) => !isRestSession(s));
-  const lastWeekCompletedCount = lastWeekSessions.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
+  const reviewWeek = reviewWeekFor(today, isoWeekday(today));
 
   // Weekly nudge to back up: local-only storage means a wiped browser/cache
   // means everything is gone. No reference yet (never exported, never
@@ -299,16 +296,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         </Card>
       </div>
 
-      {showWeeklyReflection && (
-        <WeeklyReflectionCard
-          completed={weekCompletedCount}
-          total={weekSessions.length}
-          lastWeekCompleted={lastWeekCompletedCount}
-          lastWeekTotal={lastWeekSessions.length}
-          streak={streak}
-          nextWeekChanges={nextWeekChangeLines(planChangeLog, plannedSessions, templates, today)}
-        />
-      )}
+      {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
 
       {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
 
