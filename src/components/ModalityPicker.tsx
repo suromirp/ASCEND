@@ -3,7 +3,7 @@ import { isSportEnabled, type EnabledSports } from '../engine/sports';
 
 const ROLE_COLOR: Record<ModalityDefinition['role'], string> = {
   PRIMARY: 'var(--color-gold)',
-  EQUIVALENT: 'var(--color-alpine)',
+  EQUIVALENT: 'var(--color-success-text)',
   CROSS_TRAINING: 'var(--color-sky)',
   FALLBACK: 'var(--color-warning)',
   LATER_PHASE: 'var(--color-ink-dim)',
