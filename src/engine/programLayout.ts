@@ -74,17 +74,42 @@ export function weeksUntilGoal(startDate: string, goalDate: string): number {
   return Math.ceil(daysBetween(mondayOfWeek(startDate), goalDate) / 7);
 }
 
-export function layoutPhasesForGoal(startDate: string, goalDate: string): Phase[] | null {
+// The user's own phase lengths (Settings → Training → Programma). Each one
+// is optional: what is not set follows the automatic layout. The basis is
+// never set directly, it takes whatever weeks are left before the rest.
+export type AdjustablePhaseId = typeof PHASE_OPBOUW | typeof PHASE_BERG | typeof PHASE_EXPEDITIE | typeof PHASE_TAPER;
+export type PhaseLengthOverrides = Partial<Record<AdjustablePhaseId, number>>;
+
+// Taper in single weeks (1 to 3), the other phases in whole waves of four
+// weeks so the rest week stays the fourth week.
+export const PHASE_LENGTH_LIMITS: Record<AdjustablePhaseId, { step: number; min: number; max: number }> = {
+  [PHASE_OPBOUW]: { step: WAVE_LENGTH, min: 0, max: 24 },
+  [PHASE_BERG]: { step: WAVE_LENGTH, min: 0, max: 16 },
+  [PHASE_EXPEDITIE]: { step: WAVE_LENGTH, min: 0, max: 8 },
+  [PHASE_TAPER]: { step: 1, min: 0, max: 3 },
+};
+
+function clampLength(id: AdjustablePhaseId, value: number): number {
+  const { step, min, max } = PHASE_LENGTH_LIMITS[id];
+  return Math.min(max, Math.max(min, Math.round(value / step) * step));
+}
+
+export function layoutPhasesForGoal(startDate: string, goalDate: string, overrides: PhaseLengthOverrides = {}): Phase[] | null {
   const total = weeksUntilGoal(startDate, goalDate);
   if (total < 1) return null;
-  // Two taper weeks when there is room for a real build before them.
-  const taper = total >= 8 ? 2 : total >= 3 ? 1 : 0;
-  let rest = total - taper;
-  const expeditie = Math.min(WAVE_LENGTH, rest);
+  const pick = (id: AdjustablePhaseId, auto: number, rest: number) =>
+    Math.min(rest, overrides[id] !== undefined ? clampLength(id, overrides[id]!) : auto);
+  // Counted back from the goal: taper, Expeditieklaar, Bergcapaciteit,
+  // Opbouw; the basis gets the rest. A choice that doesn't fit before the
+  // goal is shortened, from the earliest phase on.
+  let rest = total;
+  const taper = pick(PHASE_TAPER, total >= 8 ? 2 : total >= 3 ? 1 : 0, rest);
+  rest -= taper;
+  const expeditie = pick(PHASE_EXPEDITIE, Math.min(WAVE_LENGTH, rest), rest);
   rest -= expeditie;
-  const berg = Math.min(rest >= 20 ? 8 : WAVE_LENGTH, rest);
+  const berg = pick(PHASE_BERG, Math.min(rest >= 20 ? 8 : WAVE_LENGTH, rest), rest);
   rest -= berg;
-  const opbouw = Math.min(rest >= 24 ? 12 : rest >= 12 ? 8 : WAVE_LENGTH, rest);
+  const opbouw = pick(PHASE_OPBOUW, Math.min(rest >= 24 ? 12 : rest >= 12 ? 8 : WAVE_LENGTH, rest), rest);
   rest -= opbouw;
   const basis = rest;
   const counts: [string, number][] = [
@@ -108,8 +133,8 @@ export function layoutPhasesWithoutGoal(startDate: string, today: string, horizo
   return [...blocks, phase(PHASE_ONDERHOUD, blocks.length + 1, Math.ceil(extra / WAVE_LENGTH) * WAVE_LENGTH)];
 }
 
-export function layoutPhases(startDate: string, goalDate: string | undefined, today: string): Phase[] {
-  return (goalDate && layoutPhasesForGoal(startDate, goalDate)) || layoutPhasesWithoutGoal(startDate, today);
+export function layoutPhases(startDate: string, goalDate: string | undefined, today: string, overrides?: PhaseLengthOverrides): Phase[] {
+  return (goalDate && layoutPhasesForGoal(startDate, goalDate, overrides)) || layoutPhasesWithoutGoal(startDate, today);
 }
 
 export function programEndDate(program: Program): string {
@@ -166,7 +191,10 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
 
   const own = steps.filter((s) => s.phaseId === position.phase.id);
   if (own.length > 0) {
-    const step = own.find((s) => s.weekInPhase === position.weekInPhase) ?? own.find((s) => s.weekInPhase === wave) ?? own[own.length - 1];
+    // Exact week first; in a phase made longer than its written ladder, the
+    // last written wave repeats instead of starting over at "Wennen".
+    const sameWave = own.filter((s) => ((s.weekInPhase - 1) % WAVE_LENGTH) + 1 === wave).sort((a, b) => b.weekInPhase - a.weekInPhase);
+    const step = own.find((s) => s.weekInPhase === position.weekInPhase) ?? sameWave[0] ?? own[own.length - 1];
     return { step, minutes: step.targetMinutes, phaseSteps: own };
   }
 

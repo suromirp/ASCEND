@@ -120,6 +120,7 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
       programAnchorDate(goals, milestones, todayISO()),
       settings.longSundaySession,
       settings.enabledSports,
+      settings.programPhaseOverrides,
     ]);
   };
   horizonQueue = horizonQueue
