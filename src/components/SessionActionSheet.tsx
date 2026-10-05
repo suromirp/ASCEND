@@ -8,7 +8,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 import { useAppData } from '../state/AppDataContext';
-import { isSportEnabled, templateSport } from '../engine/sports';
+import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sports';
 import { getModalities, isCyclingModality } from '../data/modalities';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
@@ -102,6 +102,35 @@ export function SessionActionSheet({
     );
   }
 
+  // A rest day: nothing to start, move or skip (production feedback: the
+  // Week sheet still offered "START VOLLEDIGE SESSIE" and moving it).
+  if (template.type === 'recovery') {
+    return (
+      <Portal>
+        <div
+          className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+          onClick={requestClose}
+        >
+          <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+            <Card className="rounded-b-none border-b-0 pb-6">
+              <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
+              <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Rustdag</h3>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                Geen training. Wandelen mag, rustig, een kwartier tot een uur. Je wandeling in de pauze op het werk telt ook. Er valt niets af te vinken.
+              </p>
+              <button onClick={() => onStart('full')} className="mt-3 min-h-[40px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                Toch een wandeling vastleggen
+              </button>
+              <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                Sluiten
+              </button>
+            </Card>
+          </div>
+        </div>
+      </Portal>
+    );
+  }
+
   return (
     <Portal>
       <div
@@ -116,11 +145,11 @@ export function SessionActionSheet({
             </div>
             <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              ±{fullDuration} min{note ? ` • ${note}` : ''}{template.focus ? ` • ${template.focus}` : ''}
+              {sessionKindLabel(template)} • ±{fullDuration} min{note ? ` • ${note}` : ''}{template.focus ? ` • ${template.focus}` : ''}
             </p>
             {bikeOption && (
-              <p className="mt-2 text-xs" style={{ color: 'var(--color-alpine)' }}>
-                Kan ook op de fiets, buiten of binnen. Kies dat bij het afvinken.
+              <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                Kan ook op de fiets, buiten of binnen. Kies dat bij Waar train je?
               </p>
             )}
 
@@ -156,7 +185,7 @@ export function SessionActionSheet({
               ) : (
                 variants.map((v) => (
                   <PrimaryButton key={v} onClick={() => onStart(v)}>
-                    {v === 'full' ? 'START VOLLEDIGE SESSIE' : v === 'short' ? 'START KORTE VERSIE' : 'START MINIMUM VERSIE'}
+                    {v === 'full' ? 'TRAINING STARTEN' : v === 'short' ? 'KORTE VERSIE STARTEN' : 'MINIMUMVERSIE STARTEN'}
                   </PrimaryButton>
                 ))
               )}

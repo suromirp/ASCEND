@@ -43,7 +43,7 @@ export function SessionCard({
       <StatusDot status={status} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
-          {template.name}
+          {isRest ? 'Rustdag' : template.name}
           {adjusted && status !== 'completed' ? (
             <span className="ml-2 text-[10px] font-normal" style={{ color: 'var(--color-sky)' }}>aangepast</span>
           ) : wasMoved && status !== 'completed' && (
@@ -51,8 +51,7 @@ export function SessionCard({
           )}
         </div>
         <div className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {sessionKindLabel(template)}
-          {template.focus ? ` • ${template.focus}` : ''}
+          {isRest ? 'Wandelen mag, niets af te vinken' : <>{sessionKindLabel(template)}{template.focus ? ` • ${template.focus}` : ''}</>}
         </div>
       </div>
       <div className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
