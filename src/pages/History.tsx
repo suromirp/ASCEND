@@ -1,3 +1,4 @@
+import { WeekReviewList } from '../components/WeekReview';
 import { formatNumberNL } from '../utils/number';
 import { logKindLabel, logSport } from '../engine/sports';
 import { useCallback, useMemo, useState } from 'react';
@@ -112,6 +113,8 @@ export function HistoryPage() {
         {summary.avgCadence !== undefined && <Stat label="Gem. cadans" value={`${summary.avgCadence}`} />}
         {summary.avgPower !== undefined && <Stat label="Gem. vermogen" value={`${summary.avgPower} W`} />}
       </Card>
+
+      <WeekReviewList />
 
       <div className="flex flex-col gap-2">
         {monthLogs.length === 0 && (
