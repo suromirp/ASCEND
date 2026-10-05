@@ -4,7 +4,7 @@
 // workout to rebuild, what it loads and builds, the weeks of this phase.
 // The full original text stays one tap away under "Meer uitleg".
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { TrainingDayGuide } from '../data/trainingGuide';
 import type { SessionTemplate } from '../models/training';
@@ -14,6 +14,10 @@ import { useAppData } from '../state/AppDataContext';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
+import { SessionHeader } from './SessionHeader';
+import { ModalityGuide } from './ModalityPicker';
+import { buildSessionBrief } from '../engine/sessionBrief';
+import { getModalities } from '../data/modalities';
 
 const INTENSITY_COLOR: Record<Intensity, string> = {
   1: 'var(--color-stone)',
@@ -40,10 +44,16 @@ export function TrainingGuideSheet({
   dateIso?: string;
 }) {
   const navigate = useNavigate();
-  const { program } = useAppData();
+  const { program, templates } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
-  const [moreOpen, setMoreOpen] = useState(!plan);
+  const brief = template ? buildSessionBrief(template, dateIso, program, { templates }) : undefined;
+  // "Te zwaar?" are the guide's own when-to-ease-off sections; the rest is
+  // background.
+  const easeOff = guide.sections.filter((sec) => /ZWAAR|TE HARD|TE VEEL/i.test(sec.heading));
+  const background = guide.sections.filter((sec) => !easeOff.includes(sec));
+  const hasModalities = !!template && (getModalities(template.id)?.length ?? 0) > 0;
+  const showSpots = !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
 
   return (
     <Portal>
@@ -52,124 +62,200 @@ export function TrainingGuideSheet({
         onClick={requestClose}
       >
         <div
-          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
         <Card className="rounded-b-none border-b-0 pb-8">
-          <Eyebrow>{dayLabel}</Eyebrow>
-          <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
-          <p className="mt-0.5 text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>{guide.subtitle}</p>
+          <div className="-mr-2 -mt-2 flex items-center justify-between">
+            <Eyebrow>{dayLabel}</Eyebrow>
+            <button onClick={requestClose} aria-label="Sluiten" className="flex h-11 w-11 items-center justify-center text-lg" style={{ color: 'var(--color-ink-dim)' }}>×</button>
+          </div>
 
-          {plan && <PlanView plan={plan} />}
-
-          {plan?.keyTag?.includes('D+') && (
-            <button
-              onClick={() => { onClose(); navigate('/plekken'); }}
-              className="mt-5 flex w-full items-center justify-between rounded-xl border p-3 text-left"
-              style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
-            >
-              <span>
-                <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
-                <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>Heuvels, trappen en duinen bij jou in de buurt</span>
-              </span>
-              <span style={{ color: 'var(--color-gold)' }}>›</span>
-            </button>
+          {brief ? (
+            <div className="mt-1"><SessionHeader brief={brief} title={title} as="h2" /></div>
+          ) : (
+            <h2 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h2>
           )}
 
-          {plan && (
-            <button
-              onClick={() => setMoreOpen((v) => !v)}
-              className="mt-6 flex w-full items-center justify-between border-t pt-4 text-left"
-              style={{ borderColor: 'var(--color-card-border)' }}
-              aria-expanded={moreOpen}
-            >
-              <span className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>MEER UITLEG</span>
-              <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{moreOpen ? 'sluiten' : 'openen'}</span>
-            </button>
+          {plan && plan.builds.length > 0 && (
+            <>
+              <SectionTitle>WAAROM</SectionTitle>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.builds.map((b) => b.why).join(' ')}</p>
+            </>
           )}
 
-          {moreOpen && (<>
-          <p className="mt-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.registration}</p>
+          {brief && brief.levelsUsed.length > 0 && (
+            <>
+              <SectionTitle>ZO VOELT ELK TEMPO</SectionTitle>
+              <div className="mt-2 flex flex-col gap-1.5">
+                {brief.levelsUsed.map((lvl) => (
+                  <p key={lvl} className="flex items-start gap-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                    <Dot intensity={lvl} />
+                    <span><span style={{ color: 'var(--color-ink)' }}>{INTENSITY[lvl].label}</span> · {INTENSITY[lvl].zone} · {INTENSITY[lvl].rpe} · {INTENSITY[lvl].feel}</span>
+                  </p>
+                ))}
+              </div>
+            </>
+          )}
 
-          {guide.sections.map((section) => (
-            <div key={section.heading} className="mt-4">
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{section.heading}</p>
-              {section.body && <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{section.body}</p>}
-              {section.items && <BulletList items={section.items} className="mt-1.5" />}
-              {section.subsections && (
-                <div className="mt-2 flex flex-col gap-3">
-                  {section.subsections.map((sub) => (
-                    <div key={sub.heading}>
-                      <p className="text-xs font-medium" style={{ color: 'var(--color-bronze)' }}>{sub.heading}</p>
-                      <BulletList items={sub.items} />
+          {plan && plan.load.some((l) => l.level > 0) && (
+            <>
+              <SectionTitle>WAT HET VRAAGT VAN JE LICHAAM</SectionTitle>
+              <div className="mt-3 flex flex-col gap-2">
+                {plan.load.filter((l) => l.level > 0).map((l) => (
+                  <div key={l.label} className="flex items-center gap-3">
+                    <span className="w-24 shrink-0 text-xs" style={{ color: 'var(--color-ink)' }}>{l.label}</span>
+                    <div className="flex flex-1 gap-1">
+                      {[1, 2, 3].map((n) => (
+                        <span key={n} className="h-1.5 flex-1 rounded-full" style={{ background: n <= l.level ? 'var(--color-gold)' : 'var(--color-card-border)' }} />
+                      ))}
+                    </div>
+                    <span className="w-16 shrink-0 text-right text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{LOAD_WORD[l.level]}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="mt-6 flex flex-col border-t" style={{ borderColor: 'var(--color-card-border)' }}>
+            {plan && (
+              <Fold title="De stappen, zoals op je trainingsscherm">
+                <WorkoutSteps plan={plan} compact intro={false} />
+              </Fold>
+            )}
+            {plan?.garmin && (
+              <Fold title="Stappen voor je Garmin">
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                  Maak in Garmin Connect een nieuwe workout van het type {plan.garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
+                </p>
+                <div className="mt-2.5 flex flex-col gap-1">
+                  {plan.garmin.lines.map((line, i) => (
+                    <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-bronze)' : 'var(--color-ink)' }}>{line}</p>
+                  ))}
+                </div>
+              </Fold>
+            )}
+            {plan && plan.weeks.length > 0 && (
+              <Fold title="Deze fase, week voor week">
+                <div className="grid grid-cols-4 gap-1.5">
+                  {plan.weeks.map((w) => (
+                    <div
+                      key={w.week}
+                      className="rounded-lg border px-1.5 py-2 text-center"
+                      style={{ borderColor: w.current ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+                    >
+                      <p className="text-[10px] tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
+                      <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
+                      <p className="mt-0.5 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
                     </div>
                   ))}
                 </div>
-              )}
-              {section.note && (
-                <div
-                  className="mt-2 rounded-xl border p-3 text-xs leading-relaxed"
-                  style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}
-                >
-                  {section.note}
+              </Fold>
+            )}
+            {easeOff.length > 0 && (
+              <Fold title="Te zwaar? Zo pas je het aan">
+                <Sections sections={easeOff} />
+              </Fold>
+            )}
+            {hasModalities && template && (
+              <Fold title="Waar train je het best?">
+                <ModalityGuide templateId={template.id} />
+              </Fold>
+            )}
+            {showSpots && (
+              <button
+                onClick={() => { onClose(); navigate('/plekken'); }}
+                className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
+                style={{ borderColor: 'var(--color-card-border)' }}
+              >
+                <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
+                <span style={{ color: 'var(--color-gold)' }}>›</span>
+              </button>
+            )}
+            <Fold title="Achtergrond en bronnen">
+              <Sections sections={background} />
+              {guide.gear.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>MATERIAAL</p>
+                  <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
                 </div>
               )}
-            </div>
-          ))}
+              {guide.garminNote && (
+                <button
+                  onClick={() => { onClose(); navigate('/garmin'); }}
+                  className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
+                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-sky)' }}
+                >
+                  {guide.garminNote} →
+                </button>
+              )}
+              {guide.sources.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    {guide.sources.map((src) =>
+                      src.url ? (
+                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
+                      ) : (
+                        <span key={src.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{src.label}</span>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+            </Fold>
+          </div>
 
-          {guide.gear.length > 0 && (
-            <div className="mt-4">
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>MATERIAAL</p>
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
-            </div>
-          )}
-
-          {guide.garminNote && (
-            <button
-              onClick={() => {
-                onClose();
-                navigate('/garmin');
-              }}
-              className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
-              style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-sky)' }}
-            >
-              {guide.garminNote} →
-            </button>
-          )}
-
-          {guide.sources.length > 0 && (
-            <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
-              <div className="mt-2 flex flex-col gap-1.5">
-                {guide.sources.map((s) =>
-                  s.url ? (
-                    <a
-                      key={s.label}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline underline-offset-2"
-                      style={{ color: 'var(--color-sky)' }}
-                    >
-                      {s.label} ↗
-                    </a>
-                  ) : (
-                    <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>
-                  ),
-                )}
-              </div>
-            </div>
-          )}
-
-          </>)}
-
-          <button onClick={requestClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <button onClick={requestClose} className="mt-6 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
           </button>
         </Card>
         </div>
       </div>
     </Portal>
+  );
+}
+
+// One foldable row on the info screen.
+function Fold({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b" style={{ borderColor: 'var(--color-card-border)' }}>
+      <button onClick={() => setOpen((o) => !o)} className="flex min-h-[48px] w-full items-center justify-between py-3 text-left" aria-expanded={open}>
+        <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</span>
+        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? 'sluiten' : 'openen ›'}</span>
+      </button>
+      {open && <div className="pb-4">{children}</div>}
+    </div>
+  );
+}
+
+function Sections({ sections }: { sections: TrainingDayGuide['sections'] }) {
+  return (
+    <>
+      {sections.map((section) => (
+        <div key={section.heading} className="mt-3 first:mt-0">
+          <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{section.heading}</p>
+          {section.body && <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{section.body}</p>}
+          {section.items && <BulletList items={section.items} className="mt-1.5" />}
+          {section.subsections && (
+            <div className="mt-2 flex flex-col gap-3">
+              {section.subsections.map((sub) => (
+                <div key={sub.heading}>
+                  <p className="text-xs font-medium" style={{ color: 'var(--color-bronze)' }}>{sub.heading}</p>
+                  <BulletList items={sub.items} />
+                </div>
+              ))}
+            </div>
+          )}
+          {section.note && (
+            <div className="mt-2 rounded-xl border p-3 text-xs leading-relaxed" style={{ borderColor: 'var(--color-warning)', color: 'var(--color-ink-dim)' }}>
+              {section.note}
+            </div>
+          )}
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -220,7 +306,7 @@ function StepRow({ step }: { step: PlanStep }) {
 // The steps of one session (summary, tags, chart, steps with intensity,
 // RPE and heart-rate zone). Shared by the guide and the training screen,
 // so both always say exactly the same thing.
-export function WorkoutSteps({ plan, compact = false }: { plan: WorkoutPlan; compact?: boolean }) {
+export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: WorkoutPlan; compact?: boolean; intro?: boolean }) {
   const total = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   const peak = Math.max(...plan.timeline.map((s) => s.intensity)) as Intensity;
   const usedLevels = [...new Set(plan.timeline.filter((s) => s.kind !== 'strength').map((s) => s.intensity))].sort() as Intensity[];
@@ -228,12 +314,14 @@ export function WorkoutSteps({ plan, compact = false }: { plan: WorkoutPlan; com
 
   return (
     <>
+      {intro && (<>
       <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.summary}</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {tags.map((t) => (
           <span key={t} className="rounded-full border px-2.5 py-0.5 text-[11px]" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{t}</span>
         ))}
       </div>
+      </>)}
 
       {!compact && <SectionTitle>OPBOUW</SectionTitle>}
       {/* A chart only says something when the session has steps; one
@@ -280,77 +368,6 @@ export function WorkoutSteps({ plan, compact = false }: { plan: WorkoutPlan; com
           ),
         )}
       </div>
-    </>
-  );
-}
-
-function PlanView({ plan }: { plan: WorkoutPlan }) {
-  return (
-    <>
-      <WorkoutSteps plan={plan} />
-
-      {plan.garmin && (
-        <>
-          <SectionTitle>IN JE GARMIN</SectionTitle>
-          <div className="mt-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-              Maak in Garmin Connect een nieuwe workout van het type {plan.garmin.sport}, met deze stappen. Stuur hem naar je horloge en start hem als je begint.
-            </p>
-            <div className="mt-2.5 flex flex-col gap-1">
-              {plan.garmin.lines.map((line, i) => (
-                <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-bronze)' : 'var(--color-ink)' }}>{line}</p>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      <SectionTitle>WAT HET BELAST</SectionTitle>
-      <div className="mt-3 flex flex-col gap-2">
-        {plan.load.map((l) => (
-          <div key={l.label} className="flex items-center gap-3">
-            <span className="w-24 shrink-0 text-xs" style={{ color: 'var(--color-ink)' }}>{l.label}</span>
-            <div className="flex flex-1 gap-1">
-              {[1, 2, 3].map((n) => (
-                <span key={n} className="h-1.5 flex-1 rounded-full" style={{ background: n <= l.level ? 'var(--color-gold)' : 'var(--color-card-border)' }} />
-              ))}
-            </div>
-            <span className="w-16 shrink-0 text-right text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{LOAD_WORD[l.level]}</span>
-          </div>
-        ))}
-      </div>
-
-      <SectionTitle>BOUWT AAN</SectionTitle>
-      <div className="mt-3 flex flex-col gap-2.5">
-        {plan.builds.map((b) => (
-          <div key={b.label}>
-            <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ background: 'var(--color-charcoal)', color: 'var(--color-gold)' }}>{b.label}</span>
-            <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{b.why}</p>
-          </div>
-        ))}
-      </div>
-
-      {plan.weeks.length > 0 && (
-        <>
-          <SectionTitle>DEZE FASE</SectionTitle>
-          <div className="mt-3 grid grid-cols-4 gap-1.5">
-            {plan.weeks.map((w) => (
-              <div
-                key={w.week}
-                className="rounded-lg border px-1.5 py-2 text-center"
-                style={{ borderColor: w.current ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
-              >
-                <p className="text-[10px] tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
-                <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
-                <p className="mt-0.5 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
-              </div>
-            ))}
-          </div>
-          {plan.weeks.find((w) => w.current)?.note.includes('–') && (
-            <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Deze week: {plan.weeks.find((w) => w.current)!.note.split(', ').slice(1).join(', ')}</p>
-          )}
-        </>
-      )}
     </>
   );
 }
