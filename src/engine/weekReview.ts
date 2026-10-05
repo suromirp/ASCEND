@@ -20,6 +20,8 @@ import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
 import { durationLabel } from './sessionBrief';
+import { isIllnessDay } from './illness';
+import type { IllnessEpisode } from '../models/illness';
 
 export interface WeekReview {
   weekStart: string;
@@ -45,6 +47,7 @@ interface ReviewInputs {
   program: Program | null | undefined;
   planChangeLog: PlanChangeProposal[];
   asOf: string;
+  illnessEpisodes?: IllnessEpisode[];
 }
 
 const KEY_TEMPLATES = ['tpl_long_run', 'tpl_mountain_hike'];
@@ -64,17 +67,33 @@ function plannedRpeTop(template: SessionTemplate, date: string, program: Program
 }
 
 export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
-  const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf } = inputs;
+  const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes } = inputs;
   if (program && weekStart < mondayOfWeek(program.startDate)) return null;
   const byId = new Map(templates.map((t) => [t.id, t]));
   const weekEnd = addDays(weekStart, 6);
   const isRest = (s: PlannedSession) => byId.get(s.templateId)?.type === 'recovery';
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
 
-  const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && !isRest(s) && s.status !== 'skipped');
+  // A training you skipped (or let go after missing it) still counts as
+  // planned and not done (production feedback: "4 van 4, alles gedaan"
+  // while two trainings were skipped). Not counted: sessions ASCEND itself
+  // took out while rearranging the plan (a new strength block, the weekly
+  // planning), and days you were ill.
+  const removedBy = new Map<string, string>();
+  for (const p of planChangeLog) {
+    if (p.resolution !== 'accepted') continue;
+    for (const c of p.changes) if (c.action === 'remove' && c.plannedSessionId) removedBy.set(c.plannedSessionId, p.trigger);
+  }
+  const countsAsTraining = (s: PlannedSession) => {
+    if (isRest(s) || (illnessEpisodes && isIllnessDay(s.scheduledDate, illnessEpisodes, asOf))) return false;
+    if (s.status !== 'skipped') return true;
+    const trigger = removedBy.get(s.id);
+    return !trigger || trigger === 'session_skipped' || trigger === 'session_missed';
+  };
+  const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s));
   const weekLogs = logs.filter((l) => l.completedDate >= weekStart && l.completedDate <= weekEnd && byId.get(l.templateId)?.type !== 'recovery');
   const done = trainings.filter((s) => loggedIds.has(s.id)).length;
-  const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && s.scheduledDate < asOf).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+  const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && (s.scheduledDate < asOf || s.status === 'skipped')).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
   const minutes = weekLogs.reduce((n, l) => n + (l.durationMinutes || 0), 0);
 
   // Per sport: kilometers and climbing, from what was logged.
@@ -138,7 +157,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   if (missedSessions.length === 0 && trainings.length > 0 && done === trainings.length) {
     advice.push('Alles gedaan wat gepland stond. Zo bouw je op.');
   } else if (missedSessions.length > 0) {
-    const keyMissed = missedSessions.find((s) => KEY_TEMPLATES.includes(s.templateId));
+    // Only a key session that is still open can be caught up; a skipped one
+    // was already let go.
+    const keyMissed = missedSessions.find((s) => KEY_TEMPLATES.includes(s.templateId) && s.status !== 'skipped');
     advice.push(
       `${missedNames.length === 1 ? missedNames[0] : `${missedNames.slice(0, -1).join(', ')} en ${missedNames.at(-1)}`} ${missedNames.length === 1 ? 'schoot' : 'schoten'} erbij in. ` +
       (keyMissed
@@ -149,7 +170,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   // The same training missing two weeks in a row: a pattern, not bad luck.
   const prevStart = addDays(weekStart, -7);
   const prevMissed = new Set(plannedSessions
-    .filter((s) => s.scheduledDate >= prevStart && s.scheduledDate < weekStart && !isRest(s) && s.status !== 'skipped' && !loggedIds.has(s.id) && (!program || s.scheduledDate >= mondayOfWeek(program.startDate)))
+    .filter((s) => s.scheduledDate >= prevStart && s.scheduledDate < weekStart && countsAsTraining(s) && !loggedIds.has(s.id) && (!program || s.scheduledDate >= mondayOfWeek(program.startDate)))
     .map((s) => s.templateId));
   const repeated = [...new Set(missedSessions.map((s) => s.templateId))].find((id) => prevMissed.has(id));
   if (repeated) {

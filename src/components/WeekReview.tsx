@@ -7,8 +7,8 @@ import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 
 function useWeekReview(weekStart: string): WeekReview | null {
-  const { plannedSessions, sessionLogs, templates, program, planChangeLog } = useAppData();
-  return buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO() });
+  const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
+  return buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes });
 }
 
 // On Today, Sunday and Monday: the short version, with the coach's first
@@ -32,12 +32,12 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
 
 // In the Logboek: earlier weeks, newest first.
 export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
-  const { plannedSessions, sessionLogs, templates, program, planChangeLog } = useAppData();
+  const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
   const [openReview, setOpenReview] = useState<WeekReview | null>(null);
   const today = todayISO();
   const thisMonday = addDays(today, -((new Date(today).getDay() + 6) % 7));
   const reviews = Array.from({ length: weeks }, (_, i) => addDays(thisMonday, -7 * (i + 1)))
-    .map((w) => buildWeekReview({ weekStart: w, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today }))
+    .map((w) => buildWeekReview({ weekStart: w, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes }))
     .filter((r): r is WeekReview => !!r && r.planned > 0);
   if (reviews.length === 0) return null;
   return (

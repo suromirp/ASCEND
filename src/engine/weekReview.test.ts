@@ -41,6 +41,23 @@ describe('buildWeekReview', () => {
     expect(review.advice.some((a) => a.includes('zwaarder dan gepland'))).toBe(true);
   });
 
+  // Production feedback: "4 van 4, alles gedaan" while the hill intervals
+  // and the easy run had been skipped.
+  it('counts a skipped training as planned and not done, but not one ASCEND took out itself', () => {
+    const skipped = (s: PlannedSession): PlannedSession => ({ ...s, status: 'skipped' });
+    const planned = [
+      week[0], week[1], week[2], skipped(week[3]), week[4], skipped(week[5]), week[6],
+      { ...ps('old', 'tpl_upper_a', '2026-10-09'), status: 'skipped' as const },
+    ];
+    const logs = ['ua', 'la', 'ub', 'lr'].map((id) => log(id, planned.find((s) => s.id === id)!.templateId, planned.find((s) => s.id === id)!.scheduledDate));
+    const ascendRemoval = { id: 'x', trigger: 'strength_program_changed' as const, issue: '', alternatives: [], consequences: '', explanation: '', createdAt: '2026-10-04T10:00:00Z', resolvedAt: '2026-10-04T10:00:00Z', resolution: 'accepted' as const, changes: [{ plannedSessionId: 'old', action: 'remove' as const, reason: '' }] };
+    const review = buildWeekReview({ weekStart: W, plannedSessions: planned, logs, templates, program, planChangeLog: [ascendRemoval], asOf: '2026-10-12' })!;
+    expect(review.done).toBe(4);
+    expect(review.planned).toBe(6);
+    expect(review.missed).toEqual(['Rustige duurloop', 'Heuvelintervallen']);
+    expect(review.advice[0]).not.toContain('Alles gedaan');
+  });
+
   it('reviews no week before week 1', () => {
     expect(buildWeekReview({ weekStart: '2026-09-21', plannedSessions: [], logs: [], templates, program, planChangeLog: [], asOf: '2026-10-05' })).toBeNull();
   });
