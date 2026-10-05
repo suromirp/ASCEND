@@ -170,6 +170,17 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Herstel tussen dagen', why: 'Je leert hoe eten, slapen en je benen reageren tussen twee tochten.' },
     ],
   },
+  tpl_bike: {
+    summary: () => 'Een rustige rit voor je conditie, zonder de schokken van hardlopen.',
+    structure: [
+      { kind: 'warmup', label: 'Rustig inrijden', minutes: 10, intensity: 1 },
+      { kind: 'run', label: 'Rustig fietsen', rest: true, intensity: 2, detail: 'Gelijkmatig, liever lang dan hard' },
+    ],
+    garminSport: 'Fietsen',
+    builds: [
+      { label: 'Conditie', why: 'Je hart en longen trainen, je benen hebben minder te verduren dan bij een loop.' },
+    ],
+  },
   tpl_herstel: {
     summary: () => 'Rust of een rustige wandeling. Geen prestatie, alleen bewegen.',
     structure: [{ kind: 'walk', label: 'Rustig wandelen of rust', rest: true, intensity: 1, noTarget: true, detail: 'Allebei goed. Geen tempo of hartslag om op te letten' }],

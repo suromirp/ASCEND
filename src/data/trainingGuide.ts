@@ -327,6 +327,102 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     gear: ['Forerunner 255', 'Garmin borstband', 'hardloop-/hikingschoenen', 'water/voeding voor langere duur'],
     sources: [TRAILRUNNER_MOUNTAIN_TRAINING, RUNINFINITE_VERTICAL_GAIN, MARATHONHANDBOOK_TEN_PERCENT],
   },
+
+  // Fase 3: the GR5 sessions from Bergcapaciteit on, and the bike ride.
+  tpl_mountain_hike: {
+    subtitle: 'Wandelen · met rugzak',
+    registration: 'ASCEND: duur, afstand, hoogtemeters omhoog en omlaag, rugzakgewicht, zwaarte.',
+    sections: [
+      {
+        heading: 'DOEL',
+        body: 'De training die het meest op een GR5-dag lijkt: uren op de benen, echte hoogtemeters omhoog en vooral omlaag, en de rugzak op je rug. Duur, hoogtemeters en rugzakgewicht groeien per week in kleine stappen, nooit allemaal tegelijk.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          'Rustig tempo: je kunt blijven praten, ook bergop (zone 1 tot 2, RPE 3-4).',
+          'Bergop kleine passen, bergaf beheerst en met gebogen knieën. Dalen is wat je bovenbenen het meest vraagt.',
+          'Elk uur iets eten en regelmatig drinken, zoals je dat op de GR5 ook doet.',
+          'Geen heuvels in de buurt? Herhaal een helling, trap of duin. Of loop het stijgende deel op de loopband en daal op een trap.',
+        ],
+      },
+      {
+        heading: 'WANNEER TE ZWAAR?',
+        items: [
+          'je knieën gaan zeuren bij het dalen',
+          'je kunt bergop geen hele zinnen meer praten',
+          'je schouders of heupen doen pijn van de rugzak',
+          'je krijgt honger of dorst die niet meer weggaat',
+        ],
+        note: 'Neem dan kleinere passen bij het dalen, gebruik stokken als je die op de GR5 ook gebruikt, of loop de tocht met een kilo of twee minder in je rugzak. Liever de rugzak een week langer op hetzelfde gewicht dan een stap te snel.',
+      },
+      {
+        heading: 'VEILIG OP PAD',
+        body: 'Check de route en het weer, en laat iemand weten waar je loopt en wanneer je terug bent. Dit is de langste training van de week, tot vijf uur in Expeditieklaar.',
+      },
+    ],
+    gear: ['rugzak met het gewicht van deze week', 'water', 'eten voor elk uur', 'regenjas', 'wandelschoenen', 'stokken als je die op de GR5 gebruikt', 'Forerunner 255'],
+    sources: [
+      { label: 'NKBV, fit de bergen in', url: 'https://nkbv.nl/kenniscentrum/fit-de-bergen-in-conditie.html' },
+      { label: 'NKBV, veilig bergwandelen', url: 'https://nkbv.nl/kenniscentrum/veilig-bergwandelen.html' },
+      { label: 'PubMed, trainen voor het dragen van gewicht', url: 'https://pubmed.ncbi.nlm.nih.gov/22130400/' },
+      { label: 'PubMed, voorbereiden op afdalen', url: 'https://pubmed.ncbi.nlm.nih.gov/28288187/' },
+    ],
+  },
+
+  tpl_hike_day_one: {
+    subtitle: 'Wandelen · dag 1 van 2',
+    registration: 'ASCEND: duur, afstand, hoogtemeters omhoog en omlaag, rugzakgewicht, zwaarte.',
+    sections: [
+      {
+        heading: 'DOEL',
+        body: 'Twee dagen achter elkaar wandelen, zoals op de GR5. Deze eerste dag is bewust rustiger dan morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen gewoon weer kunnen vertrekken.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          'Bewust rustig (RPE 3): je bewaart iets voor morgen.',
+          'Hoogteverschil en de rugzak van deze week, net als morgen.',
+          'Na afloop goed eten, drinken en slapen. Je leert hier hoe je herstelt tussen twee tochtdagen.',
+        ],
+      },
+      {
+        heading: 'WANNEER TE ZWAAR?',
+        items: [
+          'je bent na afloop zo moe dat morgen niet lukt',
+          'je knieën of voeten zeuren al aan het eind van vandaag',
+        ],
+        note: 'Maak vandaag dan korter of vlakker. Morgen is de belangrijkste dag van het weekend.',
+      },
+    ],
+    gear: ['rugzak met het gewicht van deze week', 'water', 'eten', 'regenjas', 'wandelschoenen', 'Forerunner 255'],
+    sources: [
+      { label: 'NKBV, fit de bergen in', url: 'https://nkbv.nl/kenniscentrum/fit-de-bergen-in-conditie.html' },
+      { label: 'PubMed, trainen voor het dragen van gewicht', url: 'https://pubmed.ncbi.nlm.nih.gov/22130400/' },
+    ],
+  },
+
+  tpl_bike: {
+    subtitle: 'Fietsen · rustig',
+    registration: 'ASCEND: duur, afstand, zwaarte.',
+    sections: [
+      {
+        heading: 'DOEL',
+        body: 'Een rustige rit voor je conditie, zonder de schokken van hardlopen. Telt als fietsen, niet als hardlopen.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: ['Rustig tempo: je kunt hele zinnen praten (zone 2, RPE 3-4).', 'Liever wat langer rustig dan kort en hard.'],
+      },
+      {
+        heading: 'WANNEER TE ZWAAR?',
+        items: ['je kunt niet meer praten', 'je benen zijn de dag erna nog zwaar voor een krachttraining of loop'],
+        note: 'Fiets dan korter of in een lichtere versnelling.',
+      },
+    ],
+    gear: ['fiets', 'helm', 'water', 'Forerunner 255'],
+    sources: [],
+  },
 };
 
 export function getTrainingGuide(templateId: string): TrainingDayGuide | undefined {
