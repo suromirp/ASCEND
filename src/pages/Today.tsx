@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
-import { daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
+import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { computeGoalProgress } from '../engine/progression';
 import { isIllnessDay, activeIllness, isHeavySession } from '../engine/illness';
@@ -28,6 +28,7 @@ import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeekReviewCard } from '../components/WeekReview';
 import { reviewWeekFor } from '../engine/weekReview';
+import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
@@ -232,6 +233,14 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           suggestions={suggestMoves(primary.id)}
           onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
           originalDate={primary.movedFromDate}
+          coachLine={coachLineForToday({
+            template: primaryTemplate,
+            date: primary.scheduledDate,
+            program,
+            tomorrow: plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1) && s.status !== 'skipped').map((s) => templateById.get(s.templateId)).filter((t): t is SessionTemplate => !!t),
+            yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
+            templateById,
+          })}
         />
       ) : restToday && !allTodayDone ? (
         <RestDayCard onLogWalk={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }} />

@@ -152,6 +152,7 @@ import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations } from '../engine/substitutions';
 import { learnedStrengthDurations } from '../engine/durationLearning';
+import { coachReaction } from '../engine/coach';
 import { recoveryDurationAdjustments } from '../engine/illness';
 import { requestPersistentStorage } from '../storage/persistence';
 import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
@@ -1091,10 +1092,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // Every completion gets a quote — a regular session a lighter one, a
         // milestone clear (if this same log happened to satisfy one) the
         // bigger victory-tier treatment with the milestone's title attached.
+        // The coach reacts in one line to what you filled in (engine/coach.ts).
+        const coachNote = coachReaction(log, (await SessionTemplatesRepo.getAll()).find((t) => t.id === log.templateId), (await ProgramsRepo.getAll())[0] ?? null);
         setCelebration(
           clearedTitle
-            ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote() }
-            : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote() },
+            ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote(), coachNote }
+            : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote(), coachNote },
         );
         // Fase 3 — the debrief (components/DebriefSheet.tsx) opens once the
         // celebration has faded.

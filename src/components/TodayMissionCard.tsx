@@ -23,6 +23,7 @@ export function TodayMissionCard({
   suggestions,
   onPickSuggestion,
   originalDate,
+  coachLine,
 }: {
   template: SessionTemplate;
   fullDuration: number;
@@ -34,6 +35,8 @@ export function TodayMissionCard({
   suggestions: MoveSuggestion[];
   onPickSuggestion: (suggestion: MoveSuggestion) => void;
   originalDate?: string;
+  // engine/coach.ts#coachLineForToday
+  coachLine?: string;
 }) {
   const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -57,6 +60,11 @@ export function TodayMissionCard({
           {sessionKindLabel(template)} • ±{fullDuration} min{weekNote ? ` • ${weekNote}` : ''}
         </p>
         {template.focus && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{template.focus}</p>}
+        {coachLine && (
+          <p className="mt-3 border-l-2 pl-3 text-sm leading-snug" style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-ink)' }}>
+            {coachLine}
+          </p>
+        )}
       </div>
 
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
