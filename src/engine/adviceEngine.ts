@@ -61,6 +61,19 @@ export interface AdviceInputs {
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
 const LEG_BODY_PARTS = ['knie', 'enkel', 'heup', 'hamstring', 'kuit', 'voet', 'achilles', 'quadriceps', 'been', 'benen'];
 
+// A planned session counts as done when it has its own log, or when the
+// same training was logged within two days of it without being linked
+// (logged as a loose training, or on another day than planned).
+function isDone(s: PlannedSession, logs: SessionLog[], loggedIds: Set<string | undefined>): boolean {
+  if (loggedIds.has(s.id)) return true;
+  return logs.some((l) => !l.plannedSessionId && l.templateId === s.templateId && Math.abs(daysBetween(l.completedDate, s.scheduledDate)) <= 2);
+}
+
+// Sessions from before week 1 (an old schedule) are never held against you.
+function inProgram(s: PlannedSession, program: Program | null | undefined): boolean {
+  return !program || s.scheduledDate >= mondayOfWeek(program.startDate);
+}
+
 function shortDate(iso: string): string {
   return `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 }
@@ -103,7 +116,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const recentMissed = inputs.plannedSessions.filter(
-    (s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
+    (s) => s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf),
   );
   return recentMissed.flatMap((s): Advice[] => {
@@ -234,16 +247,17 @@ function strengthAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const window = inputs.plannedSessions.filter((s) => {
     const t = templateById.get(s.templateId);
-    return t?.type === 'strength' && s.status !== 'skipped' && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 14;
+    return t?.type === 'strength' && s.status !== 'skipped' && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 14
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf);
   });
-  const done = window.filter((s) => loggedIds.has(s.id)).length;
+  const done = window.filter((s) => isDone(s, inputs.logs, loggedIds)).length;
   const missed = window.length - done;
   if (window.length === 0 || missed < 2) return [];
   return [{
     id: `strength:${mondayOfWeek(inputs.asOf)}`, // at most once a week
     trigger: 'strength_irregular',
     ruleId: 'STRENGTH-REGULARITY',
-    title: `Kracht: ${done} van ${window.length} sessies afgevinkt`,
+    title: `Kracht: ${done} van ${window.length} trainingen afgevinkt`,
     effect: 'Past het huidige krachtblok nog bij je week? Minder sessies die je echt doet is beter dan meer die je mist. Je kunt het blok aanpassen op de ASCEND-pagina.',
     why: 'Twee of meer krachttrainingen zijn in de laatste 14 dagen niet afgevinkt. ASCEND kijkt bij kracht alleen naar regelmaat. Gewichten en progressie blijven in MacroFactor.',
     priority: 2,

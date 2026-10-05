@@ -65,8 +65,21 @@ describe('STRENGTH-REGULARITY', () => {
     const planned = [ps('a', 'upper', '2026-09-22', '2026-09-21'), ps('b', 'lower', '2026-09-24', '2026-09-21'), ps('c', 'upper', '2026-09-29')];
     const advice = computeAdvice(inputs({ plannedSessions: planned, logs: [log('l', 'upper', '2026-09-29', { plannedSessionId: 'c' })] }));
     const s = advice.find((a) => a.ruleId === 'STRENGTH-REGULARITY');
-    expect(s?.title).toBe('Kracht: 1 van 3 sessies afgevinkt');
+    expect(s?.title).toBe('Kracht: 1 van 3 trainingen afgevinkt');
     expect(s?.proposal).toBeUndefined();
+  });
+
+  // Production feedback: "Kracht: 3 van 6 sessies afgevinkt" while every
+  // strength session of week 1 was done; the three "missed" ones were the
+  // old schedule from before week 1.
+  it('never counts sessions from before week 1, and accepts a loose log of the same training', () => {
+    const program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: [{ id: 'phase_1', name: 'B', order: 1, weekCount: 4 }] };
+    const planned = [
+      ps('old1', 'lower', '2026-09-23', '2026-09-21'), ps('old2', 'upper', '2026-09-24', '2026-09-21'), ps('old3', 'upper', '2026-09-25', '2026-09-21'),
+      ps('a', 'lower', '2026-09-28'), ps('b', 'upper', '2026-09-29'),
+    ];
+    const logs = [log('l1', 'lower', '2026-09-28', { plannedSessionId: 'a' }), log('l2', 'upper', '2026-09-30')];
+    expect(computeAdvice(inputs({ plannedSessions: planned, logs, program })).find((a) => a.ruleId === 'STRENGTH-REGULARITY')).toBeUndefined();
   });
 });
 
