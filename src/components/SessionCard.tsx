@@ -4,6 +4,7 @@ import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { StatusDot } from './ui';
 import { sessionKindLabel } from '../engine/sports';
+import { todayISO } from '../utils/dates';
 
 
 export function SessionCard({
@@ -23,7 +24,9 @@ export function SessionCard({
   // the why lives in the Week page's "door ASCEND aangepast" line.
   adjusted?: boolean;
 }) {
-  const { status, wasMoved } = deriveSessionStatus(session, logs);
+  const isRest = template.type === 'recovery';
+  const { status, wasMoved } = deriveSessionStatus(session, logs, isRest);
+  const isToday = session.scheduledDate === todayISO();
   const dim = status === 'skipped' || status === 'missed';
   const duration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
 
@@ -33,7 +36,7 @@ export function SessionCard({
       className="flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all active:scale-[0.98] active:opacity-75"
       style={{
         background: 'var(--color-surface)',
-        borderColor: status === 'today' ? 'var(--color-gold)' : 'var(--color-card-border)',
+        borderColor: status === 'today' || (isRest && isToday) ? 'var(--color-gold)' : 'var(--color-card-border)',
         opacity: dim ? 0.5 : 1,
       }}
     >
@@ -53,7 +56,7 @@ export function SessionCard({
         </div>
       </div>
       <div className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        {duration} min
+        {isRest && status !== 'completed' ? 'rustdag' : `${duration} min`}
       </div>
     </button>
   );

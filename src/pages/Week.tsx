@@ -33,7 +33,8 @@ export function WeekPage() {
   // asks of you" reading.
   const totalWeekMinutes = sessions.reduce((sum, s) => {
     const template = templateById.get(s.templateId);
-    return template ? sum + resolveVariantDuration(template, 'full', s.scheduledDate, program) : sum;
+    // A rest day is no training time.
+    return template && template.type !== 'recovery' ? sum + resolveVariantDuration(template, 'full', s.scheduledDate, program) : sum;
   }, 0);
 
   // A completed session is still selectable — SessionActionSheet shows an
@@ -117,6 +118,7 @@ export function WeekPage() {
           anchor={weekStart}
           plannedSessions={plannedSessions}
           sessionLogs={sessionLogs}
+          isRest={(s) => templateById.get(s.templateId)?.type === 'recovery'}
           onSelectDate={(date) => {
             setWeekStart(mondayOfWeek(date));
             setMonthView(false);

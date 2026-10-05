@@ -95,7 +95,9 @@ export function ExerciseLogger({
   const hasModalities = !!getModalities(template.id);
   const supportsGuidanceMode = GUIDANCE_MODE_DAYS.has(template.id);
   const [guidanceMode, setGuidanceMode] = useState<GuidanceMode>('ascend_guided');
-  const [modalityKey, setModalityKey] = useState<string | undefined>(() => defaultModality(template.id));
+  // On a rest day the screen only opens to log a walk.
+  const [modalityKey, setModalityKey] = useState<string | undefined>(() =>
+    template.type === 'recovery' && getModality(template.id, 'recovery_walk') ? 'recovery_walk' : defaultModality(template.id));
   const [garminSuggestedType, setGarminSuggestedType] = useState<string>('');
   const selectedModality = modalityKey ? getModality(template.id, modalityKey) : undefined;
   const compatibility = garminSuggestedType ? getCompatibility(template.id, garminSuggestedType) : undefined;
