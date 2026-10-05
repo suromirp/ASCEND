@@ -489,6 +489,10 @@ export interface AppSettings {
   // Fase 3 — the long Sunday from Bergcapaciteit on (engine/programLayout.ts).
   // Absent = 'hike'. Optional, so older settings need no migration.
   longSundaySession?: 'hike' | 'run';
+  // Your own starting estimate of how long a strength training takes, per
+  // template id (engine/durationLearning.ts). ASCEND switches to what it
+  // learns from your logs once there are enough. Optional, no migration.
+  sessionDurationEstimates?: Record<string, number>;
   // Ziek gemeld (engine/illness.ts). Optional, so older settings and
   // backups need no migration; travels with the settings in an export.
   illnessEpisodes?: IllnessEpisode[];
