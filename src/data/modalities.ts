@@ -16,11 +16,11 @@ export interface ModalitySource {
 export type ModalityRole = 'PRIMARY' | 'EQUIVALENT' | 'CROSS_TRAINING' | 'FALLBACK' | 'LATER_PHASE';
 
 export const ROLE_LABEL: Record<ModalityRole, string> = {
-  PRIMARY: 'Primair',
-  EQUIVALENT: 'Gelijkwaardig',
-  CROSS_TRAINING: 'Cross-training',
-  FALLBACK: 'Noodgreep',
-  LATER_PHASE: 'Later',
+  PRIMARY: 'Beste keuze',
+  EQUIVALENT: 'Ook goed',
+  CROSS_TRAINING: 'Andere sport',
+  FALLBACK: 'Als het niet anders kan',
+  LATER_PHASE: 'Later in je plan',
 };
 
 // What the day's log form should show for this modality — keeps the field
@@ -305,8 +305,8 @@ export const LONG_RUN_MODALITIES: ModalityDefinition[] = [
   },
   {
     key: 'long_hike_outdoor',
-    label: 'Wandelen met D+, buiten',
-    role: 'PRIMARY',
+    label: 'Wandelen met hoogtemeters, buiten',
+    role: 'EQUIVALENT',
     environment: 'outdoor',
     garminProfile: 'Hike',
     durationHint: 'geplande duur',
@@ -462,12 +462,37 @@ export function findModalityByKey(key: string | undefined): ModalityDefinition |
 // the long run done as a run counts as running, done as a hike as hiking
 // (production feedback: a zone-2 run/walk was stored as a hike because
 // the session's template is the outdoor kind).
+// The sport each way of training counts as, fixed per key instead of
+// guessed from the key name (audit 2026-10: StairMaster intervals on the
+// hill-interval day were saved as running). Rest and mobility count as no
+// sport, a recovery walk stays recovery.
+const MODALITY_SPORT: Record<string, 'running' | 'hiking' | 'cycling' | undefined> = {
+  run_outdoor: 'running', run_treadmill: 'running', run_walk: 'running',
+  bike_outdoor: 'cycling', bike_indoor: 'cycling', bike_easy_friday: 'cycling', very_easy_bike: 'cycling',
+  incline_treadmill: 'hiking', hill_hike: 'hiking', stairmaster: 'hiking', outdoor_stairs: 'hiking', trail_hike: 'hiking',
+  walking_hill_repeats: 'hiking', loaded_hike: 'hiking',
+  hill_repeats_outdoor: 'running', incline_treadmill_intervals: 'running', stairmaster_intervals: 'hiking',
+  long_run_outdoor: 'running', long_hike_outdoor: 'hiking', long_run_treadmill: 'running',
+  mountain_hike_outdoor: 'hiking', mountain_hike_treadmill_stairs: 'hiking',
+  rest: undefined, recovery_walk: undefined, gentle_mobility: undefined,
+};
+
 export function modalitySport(key: string | undefined): 'running' | 'hiking' | 'cycling' | undefined {
   if (!key) return undefined;
+  if (key in MODALITY_SPORT) return MODALITY_SPORT[key];
+  // Keys from older versions not in the list: read them from the name.
   if (isCyclingModality(key)) return 'cycling';
   if (/(^|_)run(_|$)/.test(key)) return 'running';
   if (/hike|walk/.test(key)) return 'hiking';
   return undefined;
+}
+
+// Every key in the lists has its sport written down (tested).
+export function allModalityKeys(): string[] {
+  return Object.values(MODALITIES_BY_TEMPLATE).flat().map((m) => m.key);
+}
+export function hasFixedSport(key: string): boolean {
+  return key in MODALITY_SPORT;
 }
 
 export function isCyclingModality(key: string | undefined): boolean {
