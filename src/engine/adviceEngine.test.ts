@@ -21,20 +21,31 @@ function inputs(overrides: Partial<AdviceInputs>): AdviceInputs {
 }
 
 describe('MISSED-CATCH-UP', () => {
-  it('proposes catching up on a free day later this week', () => {
-    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'run', '2026-09-29')] }));
+  it('catches up only the key session (long run or mountain hike) on a free day later this week', () => {
+    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29')] }));
     expect(advice[0]).toMatchObject({ ruleId: 'MISSED-CATCH-UP', id: 'missed:m' });
     expect(advice[0].proposal?.changes[0]).toMatchObject({ action: 'move', plannedSessionId: 'm', toDate: '2026-09-30' });
+    // Any other training is let go, not stacked later in the week.
+    const run = computeAdvice(inputs({ plannedSessions: [ps('r', 'run', '2026-09-29')] }));
+    expect(run[0].proposal?.changes[0].action).toBe('remove');
+  });
+
+  it('bundles everything missed into one piece of advice', () => {
+    const advice = computeAdvice(inputs({ plannedSessions: [ps('a', 'upper', '2026-09-28'), ps('b', 'run', '2026-09-29')] }));
+    const missed = advice.filter((a) => a.ruleId === 'MISSED-CATCH-UP');
+    expect(missed).toHaveLength(1);
+    expect(missed[0].title).toBe('2 trainingen gemist: Upper A en Easy Run');
+    expect(missed[0].proposal?.changes.map((c) => c.action)).toEqual(['remove', 'remove']);
   });
 
   it('never stacks: with every remaining day taken it proposes letting it go', () => {
     const full = ['2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04'].map((d, i) => ps(`f${i}`, 'upper', d));
-    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'run', '2026-09-29'), ...full], sameDayPairingPreference: 'never' }));
+    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29'), ...full], sameDayPairingPreference: 'never' }));
     expect(advice.find((a) => a.id === 'missed:m')?.proposal?.changes[0].action).toBe('remove');
   });
 
   it('never catches up a leg-heavy session within 48 hours of another one', () => {
-    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'lower', '2026-09-29'), ps('h', 'hike', '2026-10-01')] }));
+    const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29'), ps('h', 'lower', '2026-10-01')] }));
     const date = advice.find((a) => a.id === 'missed:m')?.proposal?.changes[0].toDate;
     expect(date).not.toBe('2026-09-30');
     expect(date).not.toBe('2026-10-02');

@@ -142,7 +142,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     advice.push(
       `${missedNames.length === 1 ? missedNames[0] : `${missedNames.slice(0, -1).join(', ')} en ${missedNames.at(-1)}`} ${missedNames.length === 1 ? 'schoot' : 'schoten'} erbij in. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week; die mag je in de komende twee weken inhalen als het past. De rest laat je gaan, niet dubbel doen.`
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week; die haalt ASCEND in op een vrije dag als dat nog past. De rest laat je gaan, niet dubbel doen.`
         : 'Laat ze gaan: inhalen door te stapelen helpt niet. Volgende week gewoon weer volgens plan.'),
     );
   }

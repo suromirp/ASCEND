@@ -119,35 +119,55 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     (s) => s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf),
   );
-  return recentMissed.flatMap((s): Advice[] => {
-    const template = templateById.get(s.templateId);
-    if (!template || template.type === 'recovery') return [];
-    const catchUp = isTemplatePlannable(template, inputs.enabledSports) ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
-    const title = `${template.name} van ${shortDate(s.scheduledDate)} gemist`;
-    const rule = 'ASCEND haalt een gemiste training alleen in op een vrije dag in dezelfde week, en nooit twee zware beendagen binnen 48 uur. Lukt dat niet, dan laten we hem schieten. Twee trainingen op één dag om bij te benen doen we nooit.';
+  // One advice for everything missed, not one each (production feedback:
+  // a stack of "gemist" cards). Only a key session (the long run or the
+  // mountain hike) is caught up, on a free day this week that keeps 48
+  // hours from other heavy leg days; everything else is let go
+  // (docs/onderzoek, rapport 2, rule C8: catching up is never stacking).
+  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. De rest laten we gaan: twee trainingen op één dag om bij te benen helpt niet.';
+  const missed = recentMissed
+    .map((s) => ({ s, template: templateById.get(s.templateId) }))
+    .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && m.template.type !== 'recovery')
+    .sort((x, y) => x.s.scheduledDate.localeCompare(y.s.scheduledDate));
+  if (missed.length === 0) return [];
+
+  const items: PlanChangeItem[] = [];
+  const caughtUp: string[] = [];
+  const dropped: string[] = [];
+  for (const { s, template } of missed) {
+    const key = isKeySession(template);
+    const catchUp = key && isTemplatePlannable(template, inputs.enabledSports) ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
     if (catchUp) {
-      return [{
-        id: `missed:${s.id}`,
-        trigger: 'session_missed',
-        ruleId: 'MISSED-CATCH-UP',
-        title,
-        effect: `Inhalen op ${shortDate(catchUp)}.`,
-        why: `Je hebt deze training niet afgevinkt. ${rule}`,
-        priority: 3,
-        proposal: proposal(title, [{ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] }], `${template.name} schuift naar ${shortDate(catchUp)}.`, rule),
-      }];
+      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      caughtUp.push(`${template.name} haal je in op ${shortDate(catchUp)}`);
+    } else {
+      items.push({ plannedSessionId: s.id, action: 'remove', reason: key ? 'Gemist en deze week niet in te halen zonder te stapelen.' : 'Gemist; alleen de sleuteltraining van de week wordt ingehaald.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      dropped.push(template.name);
     }
-    return [{
-      id: `missed:${s.id}`,
-      trigger: 'session_missed',
-      ruleId: 'MISSED-CATCH-UP',
-      title,
-      effect: 'Laten vallen. Deze week is er geen vrije dag zonder te stapelen.',
-      why: `Je hebt deze training niet afgevinkt. ${rule}`,
-      priority: 2,
-      proposal: proposal(title, [{ plannedSessionId: s.id, action: 'remove', reason: 'Gemist en deze week niet in te halen zonder te stapelen.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] }], `${template.name} vervalt; de rest van de week blijft zoals gepland.`, rule),
-    }];
-  });
+  }
+  const names = missed.map((m) => m.template.name);
+  const list = (xs: string[]) => (xs.length === 1 ? xs[0] : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
+  const title = missed.length === 1 ? `${names[0]} van ${shortDate(missed[0].s.scheduledDate)} gemist` : `${missed.length} trainingen gemist: ${list(names)}`;
+  const effect = [
+    caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
+    dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'laten we gaan' : 'laten we gaan'}, de rest van de week blijft zoals gepland.` : '',
+  ].filter(Boolean).join(' ');
+  return [{
+    id: `missed:${missed.map((m) => m.s.id).join('+')}`,
+    trigger: 'session_missed',
+    ruleId: 'MISSED-CATCH-UP',
+    title,
+    effect,
+    why: `${missed.length === 1 ? 'Je hebt deze training niet afgevinkt.' : 'Je hebt deze trainingen niet afgevinkt.'} ${rule}`,
+    priority: caughtUp.length > 0 ? 3 : 2,
+    proposal: proposal(title, items, effect, rule),
+  }];
+}
+
+// The long run and the mountain hike are the week's key sessions: the only
+// ones worth catching up.
+function isKeySession(template: SessionTemplate): boolean {
+  return ['tpl_long_run', 'tpl_mountain_hike', 'tpl_hike_day_one'].includes(template.id) || /lange duurloop|bergtocht/i.test(template.name);
 }
 
 // --- Rule HARD-THEN-SPACE ----------------------------------------------------
