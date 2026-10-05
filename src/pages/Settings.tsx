@@ -18,6 +18,7 @@ import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
 import { programAnchorDate } from '../engine/programLayout';
 import { StrengthDurationSettings } from '../components/StrengthDurationSettings';
+import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -356,9 +357,10 @@ export function SettingsPage() {
             </p>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               {goalDate
-                ? `De fases zijn teruggerekend vanaf je hoofddoel op ${formatDateNL(goalDate)}. De laatste twee weken bouw je af, zodat je fris aan de start staat.`
+                ? `De fases zijn teruggerekend vanaf je hoofddoel op ${formatDateNL(goalDate)}. Vlak voor de start bouw je af, zodat je fris aan de start staat.`
                 : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij ASCEND, dan rekent ASCEND de fases terug tot die dag.'}
             </p>
+            <PhaseEditor goalDate={goalDate} />
             <div className="flex flex-col gap-2">
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
               <OptionList

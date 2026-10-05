@@ -17,7 +17,7 @@ import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
-import { activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap } from '../engine/programLayout';
+import { activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { makeId } from '../utils/id';
 
@@ -493,6 +493,9 @@ export interface AppSettings {
   // template id (engine/durationLearning.ts). ASCEND switches to what it
   // learns from your logs once there are enough. Optional, no migration.
   sessionDurationEstimates?: Record<string, number>;
+  // Your own phase lengths toward the goal (engine/programLayout.ts
+  // #PhaseLengthOverrides). Absent = fully automatic. Optional, no migration.
+  programPhaseOverrides?: PhaseLengthOverrides;
   // Ziek gemeld (engine/illness.ts). Optional, so older settings and
   // backups need no migration; travels with the settings in an export.
   illnessEpisodes?: IllnessEpisode[];
@@ -777,7 +780,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
   const ctx = await patternContext(templates, () => templates.filter((t) => t.defaultDayOfWeek));
-  const next = { ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO()) };
+  const next = { ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides) };
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -832,7 +835,7 @@ export async function rebuildPlanningFromWeekOne(
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
   const ctx = await patternContext(templates, selectPattern);
-  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO()) };
+  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) };
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -860,7 +863,7 @@ export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_wee
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const templates = await SessionTemplatesRepo.getAll();
   const ctx = await patternContext(templates);
-  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO()) };
+  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) };
   await ProgramsRepo.put(next);
 
   const weeksWithSessions = new Set(existingSessions.map((s) => mondayOfWeek(s.scheduledDate)));
@@ -874,6 +877,7 @@ interface PatternContext {
   pattern: SessionTemplate[];
   swaps: PatternSwap[];
   anchor: string | undefined;
+  overrides: PhaseLengthOverrides | undefined;
 }
 
 // What a rebuilt week looks like for this user: their sports, the hike
@@ -888,6 +892,7 @@ async function patternContext(templates: SessionTemplate[], selectPattern?: (tem
     // it too (hike templates have no weekday of their own, hence the probe).
     swaps: activeSwaps(templates, settings, (t) => isTemplatePlannable(t, enabledSports) && (!selectPattern || selectPattern([{ ...t, defaultDayOfWeek: 7 }]).length > 0)),
     anchor: programAnchorDate(goals, milestones, todayISO()),
+    overrides: settings.programPhaseOverrides,
   };
 }
 
@@ -943,7 +948,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   if (!program) return { phasesChanged: false, added: 0, swapped: 0, removed: 0 };
   const today = todayISO();
   const ctx = await patternContext(templates);
-  const next: Program = { ...program, phases: layoutPhases(program.startDate, ctx.anchor, today) };
+  const next: Program = { ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides) };
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
   if (phasesChanged) await ProgramsRepo.put(next);
 

@@ -175,3 +175,25 @@ describe('the training screen for a mountain hike', () => {
     expect(plan.weeks).toHaveLength(8);
   });
 });
+
+describe('your own phase lengths', () => {
+  it('follows the chosen lengths, the basis takes what is left, and a choice that does not fit is shortened', () => {
+    const phases = layoutPhasesForGoal(START, GR5, { phase_2: 4, phase_3: 12, phase_taper: 3 })!;
+    expect(phases.map((p) => [p.id, p.weekCount])).toEqual([
+      ['phase_1', 23], ['phase_2', 4], ['phase_3', 12], ['phase_4', 4], ['phase_taper', 3],
+    ]);
+    // Rounded to whole waves of four, the taper to 1-3 weeks.
+    expect(layoutPhasesForGoal(START, GR5, { phase_2: 5, phase_taper: 9 })!.find((p) => p.id === 'phase_taper')!.weekCount).toBe(3);
+    expect(layoutPhasesForGoal(START, GR5, { phase_2: 5 })!.find((p) => p.id === 'phase_2')!.weekCount).toBe(4);
+    const tight = layoutPhasesForGoal(START, addDays(START, 10 * 7), { phase_3: 16 })!;
+    expect(tight.reduce((n, p) => n + p.weekCount, 0)).toBe(10);
+  });
+
+  it('a longer Bergcapaciteit repeats the last wave of the hike ladder instead of starting over', () => {
+    const program: Program = { id: 'p', name: 'P', startDate: START, phases: layoutPhasesForGoal(START, GR5, { phase_3: 12 })! };
+    const bergStart = addDays(GR5, -(2 + 4 + 12) * 7);
+    const week9 = progressionTarget(tpl('tpl_mountain_hike'), program, addDays(bergStart, 8 * 7 + 6))!;
+    expect(week9.step.weekInPhase).toBe(5);
+    expect(week9.step.backpackKg).toBe(6);
+  });
+});
