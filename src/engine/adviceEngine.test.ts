@@ -207,3 +207,26 @@ describe('REST-SWAP', () => {
     expect(computeAdvice(inputs({ templates: withRest, plannedSessions: legs, logs, asOf: '2026-10-12' })).find((a) => a.ruleId === 'REST-SWAP')).toBeUndefined();
   });
 });
+
+describe('SKIPPED-KEY-TO-REST', () => {
+  const rest = tpl('rest', 'Herstel', 'recovery', light);
+  const longRun: SessionTemplate = { id: 'tpl_long_run', name: 'Lange duurloop', type: 'cardio', durationVariants: { full: 60 }, baseStressProfile: { ...heavy, intensity: 'low' } };
+  const all = [...templates, rest, longRun];
+  // Production feedback: long run skipped on Sunday evening, Monday rest.
+  const planned = [{ ...ps('lr', 'tpl_long_run', '2026-10-11', '2026-10-05'), status: 'skipped' as const }, ps('rd', 'rest', '2026-10-12', '2026-10-12'), ps('ua', 'upper', '2026-10-13', '2026-10-12')];
+
+  it('offers the rest day straight away, the evening of the skip', () => {
+    const advice = computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-11' })).find((a) => a.ruleId === 'SKIPPED-KEY-TO-REST')!;
+    expect(advice.effect).toBe('Doe hem morgen in plaats van je rustdag: vandaag deed je geen training, dus die rust heb je niet nodig.');
+    expect(advice.proposal?.changes).toEqual([
+      expect.objectContaining({ plannedSessionId: 'lr', action: 'move', toDate: '2026-10-12' }),
+      expect.objectContaining({ plannedSessionId: 'rd', action: 'remove' }),
+    ]);
+    // The rest-day swap doesn't compete for the same rest day.
+    expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-12' })).some((a) => a.ruleId === 'REST-SWAP')).toBe(false);
+  });
+
+  it('never offers back what ASCEND itself took out', () => {
+    expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-11', removedByPlanIds: new Set(['lr']) })).some((a) => a.ruleId === 'SKIPPED-KEY-TO-REST')).toBe(false);
+  });
+});
