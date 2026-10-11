@@ -457,6 +457,59 @@ function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
   return [];
 }
 
+// --- Rule REST-PULL ---------------------------------------------------------
+// Trigger: nothing left to train today (moved, skipped or never there),
+// nothing done today, and tomorrow is your rest day. Then today already is
+// a rest day (production feedback: "verplaats je je laatste training van
+// de dag voor de rustdag, dan had je vandaag eigenlijk rust"). Rule: the
+// rest day comes to today and tomorrow gets a training: the one you just
+// moved if it fits, otherwise the nearest one after it that keeps the
+// spacing between heavy sessions. If none fits, say that two rest days in
+// a row are fine too.
+function restPullAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
+  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  const today = inputs.asOf;
+  const tomorrow = addDays(today, 1);
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
+  const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
+  const rest = inputs.plannedSessions.find((s) => s.scheduledDate === tomorrow && isRest(s) && open(s));
+  if (!rest || usedIds.has(rest.id)) return [];
+  if (inputs.plannedSessions.some((s) => s.scheduledDate === today && open(s))) return [];
+  if (inputs.logs.some((l) => l.completedDate === today && templateById.get(l.templateId)?.type !== 'recovery')) return [];
+  if (isIllnessDay(today, inputs.illnessEpisodes, today)) return [];
+  if (inputs.program && today < inputs.program.startDate) return [];
+
+  const restToToday: PlanChangeItem = { plannedSessionId: rest.id, action: 'move', fromDate: tomorrow, toDate: today, reason: 'Vandaag staat er geen training meer: dit is je rustdag.', generatedBy: ['engine/adviceEngine.ts', 'REST-PULL'] };
+  const rule = 'Staat er vandaag geen training meer en is morgen je rustdag, dan is vandaag al een rustdag. ASCEND haalt de rust naar vandaag en zet morgen een training, als die past zonder te dicht op een zware training te zitten.';
+  const title = 'Vandaag geen training meer: rust je vandaag?';
+  // Already a training tomorrow next to the rest day (you moved it there).
+  const tomorrowTraining = inputs.plannedSessions.find((s) => s.scheduledDate === tomorrow && !isRest(s) && open(s));
+  if (tomorrowTraining) {
+    const name = templateById.get(tomorrowTraining.templateId)?.name ?? 'je training';
+    const effect = `Dan is vandaag je rustdag en doe je morgen ${name}.`;
+    return [{ id: `restpull:${rest.id}`, trigger: 'plan_update', ruleId: 'REST-PULL', title, effect, why: rule, priority: 3, proposal: proposal(title, [restToToday], effect, rule) }];
+  }
+  // The training you just moved away from today first, then the nearest ones.
+  const candidates = inputs.plannedSessions
+    .filter((s) => !isRest(s) && open(s) && !usedIds.has(s.id) && s.scheduledDate > tomorrow && daysBetween(tomorrow, s.scheduledDate) <= 5)
+    .sort((a, b) => Number(b.movedFromDate === today) - Number(a.movedFromDate === today) || a.scheduledDate.localeCompare(b.scheduledDate));
+  for (const c of candidates) {
+    const template = templateById.get(c.templateId);
+    if (!template || !isTemplatePlannable(template, inputs.enabledSports)) continue;
+    const others = inputs.plannedSessions.filter((s) => s.id !== c.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= today || loggedIds.has(s.id)));
+    if (!respectsHeavySpacing(tomorrow, template, others, templateById, inputs.logs, c.id)) continue;
+    const effect = `Dan is vandaag je rustdag en doe je morgen ${template.name}${c.movedFromDate === today ? '' : ` (gepland op ${shortDate(c.scheduledDate)})`}.`;
+    const items: PlanChangeItem[] = [restToToday, { plannedSessionId: c.id, action: 'move', fromDate: c.scheduledDate, toDate: tomorrow, reason: 'Naar de oude rustdag: de rust is naar vandaag gegaan.', generatedBy: ['engine/adviceEngine.ts', 'REST-PULL'] }];
+    return [{ id: `restpull:${rest.id}`, trigger: 'plan_update', ruleId: 'REST-PULL', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];
+  }
+  return [{
+    id: `restpull:${rest.id}`, trigger: 'plan_update', ruleId: 'REST-PULL', title: 'Vandaag en morgen rust',
+    effect: 'Morgen past geen training zonder te dicht op een zware training te zitten. Twee rustdagen achter elkaar is ook prima: je komt fris aan bij de volgende.',
+    why: rule, priority: 1,
+  }];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
@@ -468,6 +521,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...missed,
     ...skippedKey,
     ...restSwapAdvice(inputs, templateById, usedIds),
+    ...restPullAdvice(inputs, templateById, usedIds),
     ...tooHardAdvice(inputs, templateById),
     ...tooLightAdvice(inputs, templateById),
     ...injuryAdvice(inputs, templateById),

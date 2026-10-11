@@ -10,12 +10,15 @@ import { MonthCalendar } from '../components/MonthCalendar';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
-import { Eyebrow } from '../components/ui';
+import { Card, Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
+import { AdviceItem } from '../components/CoachCard';
+
+const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -24,6 +27,8 @@ export function WeekPage() {
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
 
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
+  // Rest-day proposals show up right where you just moved a training.
+  const restAdvice = advice.filter((a) => REST_RULES.includes(a.ruleId) && weekStart <= todayISO() && todayISO() <= addDays(weekStart, 6));
   const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery'));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
@@ -114,6 +119,18 @@ export function WeekPage() {
           ›
         </button>
       </div>
+
+      {!monthView && restAdvice.length > 0 && (
+        <Card className="flex flex-col gap-3" texture>
+          <Eyebrow>RUSTDAG</Eyebrow>
+          {restAdvice.map((a) => (
+            <div key={a.id}>
+              <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
+              <AdviceItem advice={a} compact />
+            </div>
+          ))}
+        </Card>
+      )}
 
       {monthView ? (
         <MonthCalendar

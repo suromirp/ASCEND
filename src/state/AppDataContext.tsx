@@ -121,6 +121,7 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
       settings.longSundaySession,
       settings.enabledSports,
       settings.programPhaseOverrides,
+      settings.restDay,
     ]);
   };
   horizonQueue = horizonQueue

@@ -16,9 +16,10 @@ import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
-import { activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
+import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { PATTERN_SWAPS, activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
+import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
@@ -468,6 +469,8 @@ export interface AppSettings {
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
   lastExportReminderDismissedAt?: string;
+  // Your rest day, Monday to Friday (engine/restDay.ts). Unset: Monday.
+  restDay?: RestWeekday;
   // Leg strength and a hard run on one day, 6+ hours apart (engine/scheduler.ts#setHardSameDayAllowed).
   hardSameDay?: boolean;
   // Your own heart rate values (Settings → Training → Mijn hartslag); the
@@ -895,7 +898,7 @@ interface PatternContext {
 async function patternContext(templates: SessionTemplate[], selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[]): Promise<PatternContext> {
   const [settings, goals, milestones] = await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
   const enabledSports = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports };
-  const pattern = selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports });
+  const pattern = arrangeWeekForRestDay(selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports }), templates, settings.restDay);
   return {
     pattern,
     // A hike only replaces a session when the caller's pattern would plan
@@ -973,6 +976,37 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     if (!open(s) || removedIds.has(s.id) || s.status === 'skipped') continue;
     const target = templateForPhase(s.templateId, ctx.swaps, resolveProgramWeek(next, s.scheduledDate)?.phase.id);
     if (target !== s.templateId && templateIds.has(target)) swapped.push({ ...s, templateId: target });
+  }
+
+  // Your rest day changed: planned sessions from today on that still sit on
+  // their old pattern day go to their day in the new spread. Sessions you
+  // moved yourself, skipped or logged, and anything placed elsewhere by the
+  // weekly planning, stay where they are. Only at the change itself.
+  const settings = await SettingsRepo.get();
+  const appliedRestDay = (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
+  const wantedRestDay = settings.restDay ?? 1;
+  if (appliedRestDay !== wantedRestDay) {
+    const daysFor = (restDay: number) => {
+      const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { ...settings, enabledSports: { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports } }), templates, restDay as RestWeekday);
+      const map = new Map(pattern.map((t) => [t.id, t.defaultDayOfWeek as number]));
+      for (const sw of PATTERN_SWAPS) if (map.has(sw.from)) map.set(sw.to, map.get(sw.from)!);
+      return map;
+    };
+    const oldDay = daysFor(appliedRestDay);
+    const newDay = daysFor(wantedRestDay);
+    const swappedById = new Map(swapped.map((x) => [x.id, x]));
+    for (const s of sessions) {
+      if (!open(s) || removedIds.has(s.id) || s.status !== 'planned') continue;
+      const current = swappedById.get(s.id) ?? s;
+      const from = oldDay.get(current.templateId);
+      const to = newDay.get(current.templateId);
+      if (!from || !to || from === to || isoWeekday(s.scheduledDate) !== from) continue;
+      const date = addDays(mondayOfWeek(s.scheduledDate), to - 1);
+      if (date < today || (ctx.anchor && date >= ctx.anchor)) continue;
+      swappedById.set(s.id, { ...current, scheduledDate: date, weekStartDate: mondayOfWeek(date) });
+    }
+    swapped.splice(0, swapped.length, ...swappedById.values());
+    await MetaRepo.set('appliedRestDay', wantedRestDay);
   }
 
   const weeksWithSessions = new Set(sessions.filter((s) => !removedIds.has(s.id)).map((s) => mondayOfWeek(s.scheduledDate)));

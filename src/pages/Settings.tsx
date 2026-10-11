@@ -18,9 +18,12 @@ import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
 import { programAnchorDate } from '../engine/programLayout';
 import { HeartRateSettings } from '../components/HeartRateSettings';
+import { REST_DAY_OPTIONS } from '../engine/restDay';
 import { StrengthDurationSettings } from '../components/StrengthDurationSettings';
 import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
+
+const WEEKDAYS_NL = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const WEEKDAY_LABELS_NL: Record<Weekday, string> = {
@@ -472,6 +475,35 @@ export function SettingsPage() {
             onSave={(nextBudget) => void handleBudgetSave(nextBudget)}
             note={notes.budget}
           />
+
+          <Card className="flex flex-col gap-3">
+            <Eyebrow>RUSTDAG</Eyebrow>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              Op welke dag wil je rust? ASCEND verdeelt de andere trainingen opnieuw over de week, met genoeg afstand tussen
+              zware trainingen. Het weekend blijft voor de lange trainingen.
+            </p>
+            <div className="flex gap-2" role="radiogroup" aria-label="Rustdag">
+              {REST_DAY_OPTIONS.map((d) => {
+                const on = (settings.restDay ?? 1) === d;
+                return (
+                  <button
+                    key={d}
+                    role="radio"
+                    aria-checked={on}
+                    aria-label={WEEKDAYS_NL[d - 1]}
+                    onClick={() => void updateSettings({ restDay: d }).then(() => refresh())}
+                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold tracking-wide"
+                    style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
+                  >
+                    {WEEKDAYS_NL[d - 1].slice(0, 2).toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+              Geldt vanaf vandaag. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
+            </p>
+          </Card>
 
           <Card className="flex flex-col gap-3">
             <Eyebrow>MEERDERE TRAININGEN OP ÉÉN DAG</Eyebrow>

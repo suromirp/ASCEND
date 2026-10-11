@@ -71,7 +71,7 @@ export function MoveSuggestions({
         </div>
       ) : canGoBack ? null : (
         <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Deze en volgende week is er geen dag met genoeg tijd en 48 uur rust voor dezelfde spieren. Kies zelf een dag, of sla hem over.
+          Deze en volgende week is er geen dag met genoeg tijd en genoeg rust voor dezelfde spieren. Kies zelf een dag, of sla hem over.
         </p>
       )}
       <div className="mt-3 flex items-center justify-between">
