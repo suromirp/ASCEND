@@ -267,3 +267,18 @@ describe('REST-PULL', () => {
     expect(computeAdvice(inputs({ templates: all, plannedSessions: [...planned, ps('u', 'upper', '2026-10-15', '2026-10-12')], asOf: '2026-10-15' })).some((a) => a.ruleId === 'REST-PULL')).toBe(false);
   });
 });
+
+describe('catching up into a week that has its own long training', () => {
+  it('makes the caught-up one the short version', () => {
+    const rest = tpl('rest', 'Herstel', 'recovery', light);
+    const longRun: SessionTemplate = { id: 'tpl_long_run', name: 'Lange duurloop', type: 'cardio', durationVariants: { full: 75, short: 45 }, baseStressProfile: { ...heavy, intensity: 'low' } };
+    const planned = [
+      { ...ps('lr', 'tpl_long_run', '2026-10-11', '2026-10-05'), status: 'skipped' as const },
+      ps('rd', 'rest', '2026-10-12', '2026-10-12'), ps('ua', 'upper', '2026-10-13', '2026-10-12'),
+      ps('lr2', 'tpl_long_run', '2026-10-18', '2026-10-12'),
+    ];
+    const advice = computeAdvice(inputs({ templates: [...templates, rest, longRun], plannedSessions: planned, asOf: '2026-10-11' })).find((a) => a.ruleId === 'SKIPPED-KEY-TO-REST')!;
+    expect(advice.proposal?.changes[0]).toMatchObject({ plannedSessionId: 'lr', toDate: '2026-10-12', plannedMinutes: 45 });
+    expect(advice.effect).toContain('Wel korter, 45 minuten');
+  });
+});

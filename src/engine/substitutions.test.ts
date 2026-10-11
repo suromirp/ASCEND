@@ -79,3 +79,18 @@ describe('resolveEffectiveFullDuration — weeklyProgression cross-phase carry-o
     expect(resolveEffectiveFullDuration(tplStrength, mondayOfWeek(9), program)).toBe(75);
   });
 });
+
+describe('fixed length of one session', () => {
+  it('wins over the week\'s progression for that template and date only', async () => {
+    const { setFixedSessionMinutes, resolveEffectiveFullDuration: full } = await import('./substitutions');
+    const { buildDefaultProgramData } = await import('../data/defaultProgram');
+    const { templates: tpls, program: prog } = buildDefaultProgramData();
+    const lr = tpls.find((t) => t.id === 'tpl_long_run')!;
+    const before = full(lr, '2026-10-12', prog);
+    setFixedSessionMinutes([{ templateId: 'tpl_long_run', scheduledDate: '2026-10-12', plannedMinutes: 45 }]);
+    expect(full(lr, '2026-10-12', prog)).toBe(45);
+    expect(full(lr, '2026-10-18', prog)).not.toBe(45);
+    setFixedSessionMinutes([]);
+    expect(full(lr, '2026-10-12', prog)).toBe(before);
+  });
+});

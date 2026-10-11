@@ -84,15 +84,24 @@ export function recentSessionMaxima(logs: { templateId: string; completedDate: s
   return { asOf, minutesByTemplate };
 }
 
+// Sessions with a fixed length of their own (PlannedSession.plannedMinutes),
+// by template and date. Set from the planned sessions on every refresh,
+// like the registries above, so every screen shows the same minutes.
+let fixedMinutes = new Map<string, number>();
+export function setFixedSessionMinutes(sessions: { templateId: string; scheduledDate: string; plannedMinutes?: number; status?: string }[]): void {
+  fixedMinutes = new Map(sessions.filter((s) => s.plannedMinutes && s.status !== 'skipped').map((s) => [`${s.templateId}|${s.scheduledDate}`, s.plannedMinutes!]));
+}
+
 export function resolveEffectiveFullDuration(
   template: SessionTemplate,
   scheduledDate: string,
   program: Program | null | undefined,
 ): number {
   const target = progressionTarget(template, program, scheduledDate);
-  let base = target?.minutes ?? fullDuration(template);
+  const fixed = fixedMinutes.get(`${template.id}|${scheduledDate}`);
+  let base = fixed ?? target?.minutes ?? fullDuration(template);
   const longest = recentMaxima.minutesByTemplate[template.id];
-  if (target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
+  if (!fixed && target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
     // Never below the first "Wennen" step: one short session must not pull
     // the whole build down.
     const floor = (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;

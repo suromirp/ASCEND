@@ -158,7 +158,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
+            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}) }
             : s,
         );
         break;
