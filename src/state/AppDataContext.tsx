@@ -151,7 +151,7 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes } from '../engine/substitutions';
 import { learnedStrengthDurations } from '../engine/durationLearning';
 import { coachReaction } from '../engine/coach';
 import { recoveryDurationAdjustments } from '../engine/illness';
@@ -455,6 +455,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Strength trainings: your estimate, or the duration learned from logs.
     setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
     setHardSameDayAllowed(!!loadedSettings.hardSameDay);
+    setFixedSessionMinutes(planned);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);

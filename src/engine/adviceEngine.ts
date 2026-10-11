@@ -138,6 +138,22 @@ function findRestDayToUse(
   return undefined;
 }
 
+// A key session caught up in the NEXT week, which already has a key session
+// of its own: the short version. Two full long trainings in one week, often
+// after a week with little training, is a jump in volume; the week's own
+// long training keeps the build-up (production feedback, October 2026).
+// Undefined: the session keeps its normal length.
+function catchUpMinutes(session: PlannedSession, template: SessionTemplate, toDate: string, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): number | undefined {
+  const week = mondayOfWeek(toDate);
+  if (week === mondayOfWeek(session.scheduledDate)) return undefined;
+  const ownKey = inputs.plannedSessions.some((o) => {
+    const t = templateById.get(o.templateId);
+    return o.id !== session.id && o.status !== 'skipped' && mondayOfWeek(o.scheduledDate) === week && !!t && isKeySession(t);
+  });
+  if (!ownKey) return undefined;
+  return template.durationVariants.short ?? Math.max(15, Math.round((template.durationVariants.full * 0.75) / 5) * 5);
+}
+
 // --- Rule MISSED-CATCH-UP --------------------------------------------------
 // Trigger: a planned session in the last 3 days has no log and wasn't
 // skipped. Rule: catch up on a free day later this same week, if one
@@ -174,9 +190,10 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById) : undefined;
     if (restDay) {
       usedRest = true;
-      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      const minutes = catchUpMinutes(s, template, restDay.scheduledDate, inputs, templateById);
+      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, plannedMinutes: minutes, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       items.push({ plannedSessionId: restDay.id, action: 'remove', reason: 'Rustdag niet nodig: de dag ervoor deed je geen training.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
-      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training`);
+      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training${minutes ? `. Korter, ${minutes} minuten: deze week staat er al een lange training, en twee volle in één week is te veel ineens` : ''}`);
     } else if (catchUp) {
       items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       caughtUp.push(`${template.name} haal je in op ${shortDate(catchUp)}`);
@@ -447,9 +464,10 @@ function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, Sessio
     const before = rest.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag';
     const rule = 'Een rustdag is er om te herstellen van wat je deed. Sla je de lange training over en deed je die dag verder niets, dan kan hij op de rustdag erna, zolang de afstand tussen zware trainingen klopt.';
     const title = `${template.name} overgeslagen`;
-    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.`;
+    const minutes = catchUpMinutes(s, template, rest.scheduledDate, inputs, templateById);
+    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.${minutes ? ` Wel korter, ${minutes} minuten: deze week staat er al een lange training, en twee volle in één week is te veel ineens.` : ''}`;
     const items: PlanChangeItem[] = [
-      { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, reason: `Overgeslagen op ${shortDate(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
+      { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, plannedMinutes: minutes, reason: `Overgeslagen op ${shortDate(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
       { plannedSessionId: rest.id, action: 'remove', reason: `Rustdag niet nodig: ${before} geen training.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
     ];
     return [{ id: `skippedkey:${s.id}`, trigger: 'session_missed', ruleId: 'SKIPPED-KEY-TO-REST', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];

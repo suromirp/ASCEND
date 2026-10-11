@@ -31,6 +31,8 @@ export interface PlanChangeItem {
   // always two items, each naming the other via this field, each carrying
   // its own new toDate (the partner's original date).
   pairedWithSessionId?: string;
+  // 'move' only: the session gets this fixed length at its new date.
+  plannedMinutes?: number;
   // Groep C, Fase 8 — puur informatief veld, nooit gelezen door
   // applyPlanChangeItems, alleen voor UI/audit: welke andere sessie(s) op
   // dezelfde datum staan als deze PAIR-plaatsing. Meervoud (niet

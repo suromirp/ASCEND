@@ -131,6 +131,10 @@ export interface PlannedSession {
   status: PlannedSessionStatus;
   movedFromDate?: string;
   order: number;
+  // A fixed length for this one session instead of its week's progression,
+  // e.g. a long run caught up in a week that already has its own
+  // (engine/adviceEngine.ts). Optional, additive: older data has none.
+  plannedMinutes?: number;
 }
 
 export type SessionVariant = 'full' | 'short' | 'minimum' | 'custom';
