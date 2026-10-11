@@ -3,7 +3,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 
 export interface CelebrationEvent {
   id: string;
-  kind: 'milestone' | 'session';
+  kind: 'milestone' | 'session' | 'recovery';
   title?: string; // milestone title — only set for kind === 'milestone'
   quote: Quote;
   // The coach's one-line reaction to what you filled in (engine/coach.ts).
@@ -37,7 +37,7 @@ function CompletionCard({ event, onDismiss }: { event: CelebrationEvent; onDismi
         style={{ background: 'rgba(23,23,27,0.94)', borderColor: 'var(--color-bronze)', backdropFilter: 'blur(8px)' }}
       >
         <p className="text-[10px] font-medium tracking-[0.2em]" style={{ color: 'var(--color-bronze)' }}>
-          {event.kind === 'milestone' ? 'MIJLPAAL BEHAALD' : 'TRAINING VOLTOOID'}
+          {event.kind === 'milestone' ? 'MIJLPAAL BEHAALD' : event.kind === 'recovery' ? 'HERSTEL GEDAAN' : 'TRAINING VOLTOOID'}
         </p>
         {event.coachNote && <p className="mt-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{event.coachNote}</p>}
         <p className="mt-1.5 font-display text-lg leading-snug" style={{ color: 'var(--color-gold)' }}>“{event.quote.quote}”</p>

@@ -18,7 +18,7 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -164,7 +164,7 @@ export function WeekPage() {
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
-          onDoneAsPlanned={!selectedLog && selected.scheduledDate <= todayISO() && canTickOffAsPlanned(templateById.get(selected.templateId)!, strengthExternal)
+          onDoneAsPlanned={!selectedLog && selected.scheduledDate <= todayISO() && canTickOffAsPlanned(templateById.get(selected.templateId)!, strengthExternal, settings.restDayMode)
             ? () => {
                 void logSession(asPlannedLog(selected, templateById.get(selected.templateId)!, program, todayISO()));
                 setSelected(null);

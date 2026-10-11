@@ -469,6 +469,8 @@ export interface AppSettings {
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
   lastExportReminderDismissedAt?: string;
+  // Real rest, or a light recovery day of 20-30 minutes (data/restDayCopy.ts).
+  restDayMode?: 'rest' | 'active';
   // Your rest day, Monday to Friday (engine/restDay.ts). Unset: Monday.
   restDay?: RestWeekday;
   // Leg strength and a hard run on one day, 6+ hours apart (engine/scheduler.ts#setHardSameDayAllowed).

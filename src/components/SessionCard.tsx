@@ -2,6 +2,8 @@ import type { PlannedSession, SessionTemplate, SessionLog } from '../models/trai
 import type { Program } from '../models/program';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
+import { REST_DAY_COPY } from '../data/restDayCopy';
+import { useAppData } from '../state/AppDataContext';
 import { StatusDot } from './ui';
 import { sessionKindLabel } from '../engine/sports';
 import { todayISO } from '../utils/dates';
@@ -25,6 +27,7 @@ export function SessionCard({
   adjusted?: boolean;
 }) {
   const isRest = template.type === 'recovery';
+  const restMode = useAppData().settings.restDayMode ?? 'rest';
   const { status, wasMoved } = deriveSessionStatus(session, logs, isRest);
   const isToday = session.scheduledDate === todayISO();
   const dim = status === 'skipped' || status === 'missed';
@@ -43,7 +46,7 @@ export function SessionCard({
       <StatusDot status={status} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
-          {isRest ? 'Rustdag' : template.name}
+          {isRest ? REST_DAY_COPY[restMode].title : template.name}
           {adjusted && status !== 'completed' ? (
             <span className="ml-2 text-[10px] font-normal" style={{ color: 'var(--color-sky)' }}>aangepast</span>
           ) : wasMoved && status !== 'completed' && (
@@ -51,11 +54,11 @@ export function SessionCard({
           )}
         </div>
         <div className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {isRest ? 'Wandelen mag, niets af te vinken' : <>{sessionKindLabel(template)}{template.focus ? ` • ${template.focus}` : ''}</>}
+          {isRest ? REST_DAY_COPY[restMode].line : <>{sessionKindLabel(template)}{template.focus ? ` • ${template.focus}` : ''}</>}
         </div>
       </div>
       <div className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        {isRest && status !== 'completed' ? 'rustdag' : `${duration} min`}
+        {isRest && status !== 'completed' ? REST_DAY_COPY[restMode].badge : `${duration} min`}
       </div>
     </button>
   );
