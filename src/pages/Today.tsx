@@ -23,6 +23,7 @@ import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
+import { FreshStartCard } from '../components/FreshStartCard';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
@@ -186,6 +187,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <StretchMenuButton />
         </div>
       </div>
+
+      <FreshStartCard />
 
       {showExportReminder && (
         <ExportReminderBanner
