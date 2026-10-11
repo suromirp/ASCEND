@@ -25,6 +25,9 @@ describe('asPlannedLog', () => {
 
   it('is not offered for rest, nor for strength logged in MacroFactor', () => {
     expect(canTickOffAsPlanned(tpl('tpl_herstel'), false)).toBe(false);
+    // A light recovery day is ticked off, with its own short length.
+    expect(canTickOffAsPlanned(tpl('tpl_herstel'), false, 'active')).toBe(true);
+    expect(asPlannedLog(ps('tpl_herstel', '2026-10-12'), tpl('tpl_herstel'), program, '2026-10-12').durationMinutes).toBe(25);
     expect(canTickOffAsPlanned(tpl('tpl_upper_a'), true)).toBe(false);
     expect(canTickOffAsPlanned(tpl('tpl_upper_a'), false)).toBe(true);
     expect(canTickOffAsPlanned(tpl('tpl_long_run'), true)).toBe(true);

@@ -503,6 +503,15 @@ export function SettingsPage() {
             <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
               Geldt vanaf vandaag. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
             </p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat doe je op die dag?</p>
+            <OptionList
+              options={[
+                { value: 'rest', label: 'Rust', note: 'Wandelen mag, er valt niets af te vinken.' },
+                { value: 'active', label: 'Lichte hersteldag', note: '20 tot 30 minuten heel rustig wandelen of fietsen, met één tik afgevinkt. Telt niet als training.' },
+              ]}
+              value={settings.restDayMode ?? 'rest'}
+              onChange={(v) => void updateSettings({ restDayMode: v }).then(() => refresh())}
+            />
           </Card>
 
           <Card className="flex flex-col gap-3">

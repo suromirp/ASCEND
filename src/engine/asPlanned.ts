@@ -10,6 +10,7 @@ import type { Program } from '../models/program';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { progressionTarget } from './programLayout';
 import { templateSport } from './sports';
+import { ACTIVE_RECOVERY_MINUTES } from '../data/restDayCopy';
 
 export interface AsPlannedLog {
   plannedSessionId: string;
@@ -23,7 +24,8 @@ export interface AsPlannedLog {
 }
 
 export function asPlannedLog(session: PlannedSession, template: SessionTemplate, program: Program | null | undefined, today: string): AsPlannedLog {
-  const durationMinutes = resolveEffectiveFullDuration(template, session.scheduledDate, program);
+  // A light recovery day: its own short length (data/restDayCopy.ts).
+  const durationMinutes = template.type === 'recovery' ? ACTIVE_RECOVERY_MINUTES : resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const step = progressionTarget(template, program, session.scheduledDate)?.step;
   return {
     plannedSessionId: session.id,
@@ -45,9 +47,10 @@ export function asPlannedLog(session: PlannedSession, template: SessionTemplate,
   };
 }
 
-// Strength logged elsewhere has its own one-tap button; rest is no training.
-export function canTickOffAsPlanned(template: SessionTemplate, strengthExternal: boolean): boolean {
-  if (template.type === 'recovery') return false;
+// Strength logged elsewhere has its own one-tap button; a rest day is
+// nothing to tick off, a light recovery day is.
+export function canTickOffAsPlanned(template: SessionTemplate, strengthExternal: boolean, restDayMode: 'rest' | 'active' = 'rest'): boolean {
+  if (template.type === 'recovery') return restDayMode === 'active';
   if (template.type === 'strength') return !strengthExternal;
   return true;
 }

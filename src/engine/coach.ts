@@ -103,7 +103,7 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
 export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = []): string {
   const pain = painReaction(log, history);
   if (pain) return pain;
-  if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Rust blijft de basis van vandaag.';
+  if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Licht en rustig is precies de bedoeling van vandaag.';
   const top = plannedRpeTop(template, log.completedDate, program);
   const planned = resolveEffectiveFullDuration(template, log.completedDate, program);
   if (log.rpe !== undefined && top !== undefined && log.rpe >= top + 2) {

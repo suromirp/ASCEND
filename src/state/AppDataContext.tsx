@@ -1105,7 +1105,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setCelebration(
           clearedTitle
             ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote(), coachNote }
-            : { id: makeId('celebration'), kind: 'session', quote: pickCompletionQuote(), coachNote },
+            : { id: makeId('celebration'), kind: log.type === 'recovery' ? 'recovery' : 'session', quote: pickCompletionQuote(), coachNote },
         );
         // Fase 3 — the debrief (components/DebriefSheet.tsx) opens once the
         // celebration has faded.

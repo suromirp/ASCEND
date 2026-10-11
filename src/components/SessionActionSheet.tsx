@@ -13,6 +13,7 @@ import { getModalities, isCyclingModality } from '../data/modalities';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
 import { StrengthDoneElsewhere } from './StrengthDoneElsewhere';
+import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 
 export function SessionActionSheet({
@@ -56,6 +57,7 @@ export function SessionActionSheet({
   // intervals and long hikes deliberately don't: their point is time and
   // climbing on foot.
   const { settings } = useAppData();
+  const restMode = settings.restDayMode ?? 'rest';
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
@@ -114,12 +116,13 @@ export function SessionActionSheet({
           <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
             <Card className="rounded-b-none border-b-0 pb-6">
               <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
-              <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Rustdag</h3>
+              <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{REST_DAY_COPY[restMode].title}</h3>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                Geen training. Wandelen mag, rustig, een kwartier tot een uur. Je wandeling in de pauze op het werk telt ook. Er valt niets af te vinken.
+                {REST_DAY_COPY[restMode].detail}
               </p>
+              {restMode === 'active' && onDoneAsPlanned && <SecondaryButton onClick={onDoneAsPlanned} className="mt-3">GEDAAN</SecondaryButton>}
               <button onClick={() => onStart('full')} className="mt-3 min-h-[40px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-                Toch een wandeling vastleggen
+                {restMode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'}
               </button>
               <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 Sluiten

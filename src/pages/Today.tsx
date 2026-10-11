@@ -25,6 +25,7 @@ import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
+import { REST_DAY_COPY, type RestDayMode } from '../data/restDayCopy';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
@@ -34,7 +35,7 @@ import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
@@ -248,7 +249,11 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           })}
         />
       ) : restToday && !allTodayDone ? (
-        <RestDayCard onLogWalk={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }} />
+        <RestDayCard
+          mode={settings.restDayMode ?? 'rest'}
+          onLogWalk={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
+          onDone={() => { const t = templateById.get(restToday.templateId); if (t) void logSession(asPlannedLog(restToday, t, program, today)); }}
+        />
       ) : (
         <Card>
           <Eyebrow>VANDAAG</Eyebrow>
@@ -404,19 +409,17 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
 
 // A rest day on Today: nothing to start and nothing to tick off. A walk
 // is welcome, the one at work counts too; logging it is optional.
-function RestDayCard({ onLogWalk }: { onLogWalk: () => void }) {
+function RestDayCard({ mode, onLogWalk, onDone }: { mode: RestDayMode; onLogWalk: () => void; onDone: () => void }) {
+  const copy = REST_DAY_COPY[mode];
   return (
     <Card texture className="flex flex-col gap-3">
       <Eyebrow>VANDAAG</Eyebrow>
-      <h2 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>Rustdag</h2>
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Geen training vandaag. Je lichaam bouwt op wat je deze week deed.
-      </p>
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-        Wandelen mag, rustig, een kwartier tot een uur. Je wandeling in de pauze op het werk telt ook. Er valt niets af te vinken.
-      </p>
+      <h2 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{copy.title}</h2>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{copy.body}</p>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{copy.detail}</p>
+      {mode === 'active' && <PrimaryButton onClick={onDone}>GEDAAN</PrimaryButton>}
       <button onClick={onLogWalk} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-        Toch een wandeling vastleggen
+        {mode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'}
       </button>
     </Card>
   );
