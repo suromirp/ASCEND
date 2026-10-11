@@ -13,11 +13,11 @@ import { makeId } from '../utils/id';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { StrengthProgramWizard } from './StrengthProgramWizard';
 
-function blankStrategyDraft(): StrengthProgramStrategy {
+function blankStrategyDraft(external: boolean): StrengthProgramStrategy {
   const now = new Date().toISOString();
   return {
     id: makeId('strength'),
-    source: 'macrofactor_workouts',
+    source: external ? 'macrofactor_workouts' : 'manual',
     startDate: todayISO(),
     sessionsPerWeek: 3,
     splitType: 'upper_lower',
@@ -43,7 +43,7 @@ function cloneForRepeat(strategy: StrengthProgramStrategy): StrengthProgramStrat
 }
 
 export function StrengthProgramCard() {
-  const { templates, strengthProgramStrategies, strengthRecommendation, activateStrengthProgram, reportStrengthSchemaEnded, resolveStrengthRecommendation } = useAppData();
+  const { templates, strengthExternal, strengthProgramStrategies, strengthRecommendation, activateStrengthProgram, reportStrengthSchemaEnded, resolveStrengthRecommendation } = useAppData();
   const [wizard, setWizard] = useState<{ mode: 'create' | 'edit'; draft: StrengthProgramStrategy } | null>(null);
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
@@ -58,7 +58,7 @@ export function StrengthProgramCard() {
 
   function reviewNextBlock() {
     if (!strengthRecommendation) return;
-    const base = strategy ?? blankStrategyDraft();
+    const base = strategy ?? blankStrategyDraft(strengthExternal);
     setWizard({
       mode: strategy ? 'edit' : 'create',
       draft: {
@@ -84,7 +84,7 @@ export function StrengthProgramCard() {
             Nog geen krachtblok ingesteld. ASCEND bepaalt frequentie, split en planning, MacroFactor Workouts blijft
             de oefeningen zelf bepalen.
           </p>
-          <PrimaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft() })}>
+          <PrimaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft(strengthExternal) })}>
             KRACHTBLOK STARTEN
           </PrimaryButton>
         </>

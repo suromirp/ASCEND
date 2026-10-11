@@ -86,7 +86,7 @@ describe('buildDefaultStrengthProgramStrategy', () => {
     expect(strategy.sessionTemplateIds).toEqual(['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b']);
     expect(strategy.sessionTemplateIds).not.toContain('tpl_lower_b');
     expect(strategy.status).toBe('active');
-    expect(strategy.source).toBe('macrofactor_workouts');
+    expect(strategy.source).toBe('manual');
     expect(strategy.startDate).toBe('2026-09-09');
   });
 });

@@ -13,7 +13,7 @@ import { AdviceItem } from './CoachCard';
 import { useSheetClose } from '../utils/useSheetClose';
 
 export function DebriefSheet() {
-  const { debriefLogId, dismissDebrief, celebration, sessionLogs, templateById, advice, settings } = useAppData();
+  const { debriefLogId, dismissDebrief, celebration, sessionLogs, templateById, advice, strengthExternal: externalStrength } = useAppData();
   const log = sessionLogs.find((l) => l.id === debriefLogId);
   const logAdvice = advice.filter((a) => a.relatedLogId === debriefLogId);
   const counted = useMemo(() => {
@@ -24,7 +24,7 @@ export function DebriefSheet() {
   if (!log || celebration) return null;
 
   const name = templateById.get(log.templateId)?.name ?? 'Sessie';
-  const strengthExternal = log.type === 'strength' && settings.strengthTrackedExternally;
+  const strengthExternal = log.type === 'strength' && externalStrength;
   // Nothing worth a sheet: no numbers, no advice — the celebration was enough.
   if (logAdvice.length === 0 && (counted.length === 0 || strengthExternal)) return null;
 

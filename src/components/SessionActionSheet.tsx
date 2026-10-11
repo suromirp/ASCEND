@@ -12,9 +12,8 @@ import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sport
 import { getModalities, isCyclingModality } from '../data/modalities';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
+import { StrengthDoneElsewhere } from './StrengthDoneElsewhere';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
-
-const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
 
 export function SessionActionSheet({
   session,
@@ -29,6 +28,7 @@ export function SessionActionSheet({
   onClose,
   suggestions = [],
   onPickSuggestion,
+  onDoneAsPlanned,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -43,13 +43,13 @@ export function SessionActionSheet({
   // One tap moves the session there (engine/moveSuggestions.ts).
   suggestions?: MoveSuggestion[];
   onPickSuggestion?: (suggestion: MoveSuggestion) => void;
+  // One tap with the plan's own minutes (engine/asPlanned.ts).
+  onDoneAsPlanned?: () => void;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const variants = availableVariants(template);
   const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
-  // Same MacroFactor-duration override as TodayMissionCard (see there).
-  const [quickDuration, setQuickDuration] = useState<number | ''>(fullDuration);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
   // Fase 4 — with cycling switched on, say so where a ride is a real
   // alternative for this session (it lists a bike modality). Hill
@@ -157,31 +157,7 @@ export function SessionActionSheet({
 
             <div className="mt-4 flex flex-col gap-2">
               {quickComplete ? (
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Duur (min), uit MacroFactor</label>
-                    <input
-                      type="number"
-                      value={quickDuration}
-                      onChange={(e) => setQuickDuration(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-20 rounded-lg border px-2 py-1.5 text-right text-sm"
-                      style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-                    />
-                  </div>
-                  <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde dit t.o.v. normaal?</p>
-                  <div className="flex gap-2">
-                    {(['better', 'normal', 'worse'] as const).map((f) => (
-                      <PrimaryButton
-                        key={f}
-                        onClick={() => onStart('full', f, quickDuration === '' ? fullDuration : quickDuration)}
-                        fullWidth={false}
-                        className="text-xs"
-                      >
-                        {FEEL_LABEL[f]}
-                      </PrimaryButton>
-                    ))}
-                  </div>
-                </div>
+                <StrengthDoneElsewhere fullDuration={fullDuration} onDone={(feel, minutes) => onStart('full', feel, minutes)} />
               ) : (
                 variants.map((v) => (
                   <PrimaryButton key={v} onClick={() => onStart(v)}>
@@ -189,6 +165,7 @@ export function SessionActionSheet({
                   </PrimaryButton>
                 ))
               )}
+              {onDoneAsPlanned && <SecondaryButton onClick={onDoneAsPlanned}>GEDAAN ZOALS GEPLAND</SecondaryButton>}
             </div>
 
             <div className="mt-5">

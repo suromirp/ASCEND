@@ -49,10 +49,10 @@ export function ExerciseLogger({
   initialVariant?: SessionVariant;
   onClose: () => void;
 }) {
-  const { logSession, settings, templates } = useAppData();
+  const { logSession, settings, strengthExternal, templates } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const [variant, setVariant] = useState<SessionVariant>(initialVariant);
-  const quickComplete = template.type === 'strength' && settings.strengthTrackedExternally;
+  const quickComplete = template.type === 'strength' && strengthExternal;
 
   function resolveDuration(v: SessionVariant): number {
     if (!scheduledDate) return durationForVariant(template, v);

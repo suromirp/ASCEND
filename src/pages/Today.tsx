@@ -24,6 +24,7 @@ import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
+import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
@@ -39,7 +40,7 @@ import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { suggestMoves, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, planChangeLog, templates } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, planChangeLog, templates } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -150,7 +151,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   // starting a strength session skips the exercise-entry modal entirely —
   // it's logged immediately, one tap, instead of opening ExerciseLogger.
   function isQuickComplete(template?: SessionTemplate) {
-    return template?.type === 'strength' && settings.strengthTrackedExternally;
+    return template?.type === 'strength' && strengthExternal;
   }
 
   function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) {
@@ -236,6 +237,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           suggestions={suggestMoves(primary.id)}
           onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
           originalDate={primary.movedFromDate}
+          onDoneAsPlanned={canTickOffAsPlanned(primaryTemplate, strengthExternal) ? () => void logSession(asPlannedLog(primary, primaryTemplate, program, today)) : undefined}
           coachLine={coachLineForToday({
             template: primaryTemplate,
             date: primary.scheduledDate,
