@@ -13,5 +13,10 @@ export const MUSCLE_GROUP_OPTIONS = [
 
 export const BODY_PART_OPTIONS = [
   'Knie', 'Enkel', 'Heup', 'Onderrug', 'Bovenrug', 'Schouder', 'Elleboog', 'Pols',
-  'Nek', 'Hamstring', 'Kuit', 'Voet', 'Achillespees', 'Quadriceps',
+  'Nek', 'Hamstring', 'Kuit', 'Voet', 'Achillespees', 'Quadriceps', 'Scheen',
+] as const;
+
+// After a run or a hike: the spots that usually speak up first.
+export const PAIN_AREA_OPTIONS = [
+  'Knie', 'Scheen', 'Kuit', 'Achillespees', 'Enkel', 'Voet', 'Heup', 'Hamstring', 'Onderrug',
 ] as const;

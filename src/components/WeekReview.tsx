@@ -114,11 +114,16 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
               </Section>
             )}
 
-            {(review.heavier > 0 || review.lighter > 0) && (
+            {(review.heavier > 0 || review.lighter > 0 || review.pain.length > 0) && (
               <Section title="HOE HET VOELDE">
-                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-                  {[review.heavier > 0 ? `${review.heavier} zwaarder dan gepland` : '', review.lighter > 0 ? `${review.lighter} lichter dan gepland` : ''].filter(Boolean).join(', ')}.
-                </p>
+                {(review.heavier > 0 || review.lighter > 0) && (
+                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+                    {[review.heavier > 0 ? `${review.heavier} zwaarder dan gepland` : '', review.lighter > 0 ? `${review.lighter} lichter dan gepland` : ''].filter(Boolean).join(', ')}.
+                  </p>
+                )}
+                {review.pain.length > 0 && (
+                  <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Pijn: {review.pain.join(', ')}.</p>
+                )}
               </Section>
             )}
 

@@ -35,6 +35,7 @@ export interface WeekReview {
   keyPlanned: number; // long run / mountain hike
   keyDone: number;
   heavier: number; // trainings that felt harder than planned
+  pain: string[]; // "knie 2 keer", from what you ticked after a training
   lighter: number;
   avgRpe?: number;
   changes: string[]; // what ASCEND adjusted in this week
@@ -127,6 +128,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     else if (top !== undefined && l.rpe <= top - 3) lighter++;
     else if (l.subjectiveFeel === 'worse') heavier++;
   }
+  const painCount = new Map<string, number>();
+  for (const l of weekLogs) for (const a of l.painAreas ?? []) painCount.set(a, (painCount.get(a) ?? 0) + 1);
+  const pain = [...painCount.entries()].sort((a, b) => b[1] - a[1]).map(([a, n]) => `${a.toLowerCase()}${n > 1 ? ` ${n} keer` : ''}`);
   const avgRpe = rpes.length > 0 ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10 : undefined;
 
   const changes = weekChanges(planChangeLog, plannedSessions, templates, weekStart, asOf, 21).map((c) => c.line);
@@ -179,6 +183,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   if (repeated) {
     advice.push(`${byId.get(repeated)?.name} viel twee weken op rij weg. Past een andere dag beter? Verplaats hem in Week, dan houdt ASCEND er rekening mee.`);
   }
+  if ([...painCount.values()].some((n) => n >= 2) && advice.length < 3) {
+    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Zet het bij Blessures, dan houdt ASCEND er rekening mee, en bouw volgende week niet verder op.');
+  }
   if (heavier >= 2) {
     advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Slaap je genoeg en eet je genoeg? Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk.');
   } else if (lighter >= 2 && advice.length < 3) {
@@ -200,6 +207,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     keyPlanned: trainings.filter((s) => KEY_TEMPLATES.includes(s.templateId)).length,
     keyDone: trainings.filter((s) => KEY_TEMPLATES.includes(s.templateId) && loggedIds.has(s.id)).length,
     heavier,
+    pain,
     lighter,
     avgRpe,
     changes,

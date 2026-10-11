@@ -248,6 +248,9 @@ export interface SessionLog {
   // Saturday (engine/recoveryCheck.ts). Optional everywhere; never
   // required, since MacroFactor's own quick-complete flow stays low-friction.
   subjectiveFeel?: SubjectiveFeel;
+  // Where it hurt during or after (data/bodyAreas.ts, free text allowed).
+  // Optional, additive: older logs and backups simply don't have it.
+  painAreas?: string[];
   source: MetricSource;
 }
 
