@@ -1553,9 +1553,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         respondedIds: new Set(Object.keys(adviceResponses)),
         asOf: todayISO(),
         illnessEpisodes: settings.illnessEpisodes,
+        removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
       }),
     ].sort((a, b) => b.priority - a.priority),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, adviceResponses],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, adviceResponses, planChangeLog],
   );
 
   const value: AppData = {

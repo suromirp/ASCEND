@@ -54,6 +54,9 @@ export interface AdviceInputs {
   enabledSports?: Partial<EnabledSports>;
   respondedIds: Set<string>;
   asOf: string;
+  // Sessions ASCEND itself took out (any accepted 'remove' change): not a
+  // skip of yours, so never offered back (rule SKIPPED-KEY-TO-REST).
+  removedByPlanIds?: Set<string>;
   // Sessions planned while ill are never "gemist" (engine/illness.ts).
   illnessEpisodes?: IllnessEpisode[];
 }
@@ -421,13 +424,49 @@ function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
   return [{ id: `restswap:${rest.id}`, trigger: 'plan_update', ruleId: 'REST-SWAP', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];
 }
 
+// --- Rule SKIPPED-KEY-TO-REST --------------------------------------------------
+// Trigger: you skipped today's (or yesterday's) long run or mountain hike,
+// and a rest day follows right after a day without training. Skipping is
+// usually "not today", not "never" (production feedback: long run and hill
+// intervals skipped on Sunday, Monday a rest day). Rule: the key session
+// takes the rest day, under the same conditions as MISSED-CATCH-UP. Shown
+// straight away, the evening of the skip, not only the next morning.
+function skippedKeyAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
+  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const skipped = inputs.plannedSessions
+    .filter((s) => s.status === 'skipped' && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program)
+      && s.scheduledDate <= inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 1)
+    .map((s) => ({ s, template: templateById.get(s.templateId) }))
+    .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && isKeySession(m.template) && isTemplatePlannable(m.template, inputs.enabledSports))
+    .sort((a, b) => b.s.scheduledDate.localeCompare(a.s.scheduledDate));
+  for (const { s, template } of skipped) {
+    const rest = findRestDayToUse(s, template, inputs, templateById);
+    if (!rest || usedIds.has(rest.id)) continue;
+    const when = rest.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen';
+    const before = rest.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag';
+    const rule = 'Een rustdag is er om te herstellen van wat je deed. Sla je de lange training over en deed je die dag verder niets, dan kan hij op de rustdag erna, zolang de afstand tussen zware trainingen klopt.';
+    const title = `${template.name} overgeslagen`;
+    const effect = `Doe hem ${when} in plaats van je rustdag: ${before} deed je geen training, dus die rust heb je niet nodig.`;
+    const items: PlanChangeItem[] = [
+      { plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: rest.scheduledDate, reason: `Overgeslagen op ${shortDate(s.scheduledDate)}, gedaan op de rustdag erna.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
+      { plannedSessionId: rest.id, action: 'remove', reason: `Rustdag niet nodig: ${before} geen training.`, generatedBy: ['engine/adviceEngine.ts', 'SKIPPED-KEY-TO-REST'] },
+    ];
+    return [{ id: `skippedkey:${s.id}`, trigger: 'session_missed', ruleId: 'SKIPPED-KEY-TO-REST', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];
+  }
+  return [];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
   const missed = missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id));
   const usedIds = new Set(missed.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []));
+  const skippedKey = skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
+  for (const id of skippedKey.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId) ?? [])) if (id) usedIds.add(id);
   return [
     ...missed,
+    ...skippedKey,
     ...restSwapAdvice(inputs, templateById, usedIds),
     ...tooHardAdvice(inputs, templateById),
     ...tooLightAdvice(inputs, templateById),
