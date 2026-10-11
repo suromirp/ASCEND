@@ -468,6 +468,8 @@ export interface AppSettings {
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
   lastExportReminderDismissedAt?: string;
+  // "Nieuw begonnen" card on Today closed with NIEUW BEGINNEN.
+  freshStartDismissedAt?: string;
   // Marathon goal — deliberately not a second Objective/MilestoneDefinition
   // ladder (several screens assume objectives[0] is "the" objective); a
   // standalone settings-backed goal instead, mirroring the GR5 card's UI.
@@ -563,6 +565,9 @@ export async function seedIfEmpty(): Promise<void> {
   await putAll('sessionLogs', sessionLogs);
   await putAll('milestoneProgress', milestoneProgress);
   await MetaRepo.set('seeded', true);
+  // When this device started from an empty database: Today offers to put a
+  // backup back for the first days (engine/freshStart.ts).
+  await MetaRepo.set('seededAt', new Date().toISOString());
   await MetaRepo.set('schemaVersion', SCHEMA_VERSION);
   await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
 }
