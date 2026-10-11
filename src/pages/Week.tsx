@@ -23,7 +23,8 @@ export function WeekPage() {
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
 
-  const sessions = sessionsForWeek(weekStart);
+  // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
+  const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery'));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 

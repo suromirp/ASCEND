@@ -106,6 +106,35 @@ function findCatchUpDate(
   return undefined;
 }
 
+// A planned rest day today or tomorrow, after a day without any training:
+// there is nothing to recover from, so it can carry the missed key
+// session instead (production feedback: "zo'n rustdag is niet meer nodig
+// als je gisteren niks gedaan hebt"). Also works across the week
+// boundary: a long run missed on Sunday lands on Monday's rest day.
+function findRestDayToUse(
+  session: PlannedSession,
+  template: SessionTemplate,
+  inputs: AdviceInputs,
+  templateById: Map<string, SessionTemplate>,
+): PlannedSession | undefined {
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
+  for (const date of [inputs.asOf, addDays(inputs.asOf, 1)]) {
+    const rest = inputs.plannedSessions.find((s) => s.scheduledDate === date && s.status !== 'skipped' && isRest(s) && !loggedIds.has(s.id));
+    if (!rest) continue;
+    const dayBefore = addDays(date, -1);
+    const trainedDayBefore = inputs.logs.some((l) => l.completedDate === dayBefore && templateById.get(l.templateId)?.type !== 'recovery');
+    if (trainedDayBefore) continue;
+    // Nothing else of weight on that day, and 48 hours from the next heavy day.
+    const sameDay = inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== rest.id && s.status !== 'skipped' && !isRest(s));
+    if (sameDay.length > 0) continue;
+    const around = inputs.plannedSessions.filter((s) => s.id !== session.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= inputs.asOf || loggedIds.has(s.id)));
+    if (!respectsHeavySpacing(date, template, around, templateById, inputs.logs, session.id)) continue;
+    return rest;
+  }
+  return undefined;
+}
+
 // --- Rule MISSED-CATCH-UP --------------------------------------------------
 // Trigger: a planned session in the last 3 days has no log and wasn't
 // skipped. Rule: catch up on a free day later this same week, if one
@@ -124,7 +153,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   // mountain hike) is caught up, on a free day this week that keeps 48
   // hours from other heavy leg days; everything else is let go
   // (docs/onderzoek, rapport 2, rule C8: catching up is never stacking).
-  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. De rest laten we gaan: twee trainingen op één dag om bij te benen helpt niet.';
+  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest laten we gaan: twee trainingen op één dag om bij te benen helpt niet.';
   const missed = recentMissed
     .map((s) => ({ s, template: templateById.get(s.templateId) }))
     .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && m.template.type !== 'recovery')
@@ -134,10 +163,18 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   const items: PlanChangeItem[] = [];
   const caughtUp: string[] = [];
   const dropped: string[] = [];
+  let usedRest = false;
   for (const { s, template } of missed) {
     const key = isKeySession(template);
-    const catchUp = key && isTemplatePlannable(template, inputs.enabledSports) ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
-    if (catchUp) {
+    const plannable = key && isTemplatePlannable(template, inputs.enabledSports);
+    const catchUp = plannable ? findCatchUpDate(s, template, inputs, templateById, inputs.asOf) : undefined;
+    const restDay = plannable && !catchUp && !usedRest ? findRestDayToUse(s, template, inputs, templateById) : undefined;
+    if (restDay) {
+      usedRest = true;
+      items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: restDay.scheduledDate, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op je rustdag: de dag ervoor deed je geen training.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      items.push({ plannedSessionId: restDay.id, action: 'remove', reason: 'Rustdag niet nodig: de dag ervoor deed je geen training.', generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
+      caughtUp.push(`${template.name} doe je ${restDay.scheduledDate === inputs.asOf ? 'vandaag' : 'morgen'} in plaats van je rustdag, want ${restDay.scheduledDate === inputs.asOf ? 'gisteren' : 'vandaag'} deed je geen training`);
+    } else if (catchUp) {
       items.push({ plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: catchUp, reason: `Gemist op ${shortDate(s.scheduledDate)}, ingehaald op een vrije dag in dezelfde week.`, generatedBy: ['engine/adviceEngine.ts', 'MISSED-CATCH-UP'] });
       caughtUp.push(`${template.name} haal je in op ${shortDate(catchUp)}`);
     } else {
