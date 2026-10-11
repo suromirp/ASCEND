@@ -20,6 +20,7 @@ import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
 import { GoalFocusCard } from '../components/GoalFocusCard';
+import { OnCourseCard } from '../components/OnCourseCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
@@ -167,6 +168,8 @@ export function AscendPage() {
           <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOEL INSTELLEN</PrimaryButton>
         </Card>
       )}
+
+      {goal?.targetDate && goal.status === 'active' && <OnCourseCard goalName={goal.name} goalDate={goal.targetDate} />}
 
       {progress && goal && progress.currentMilestone && !showLadder && (
         <Card className="flex flex-col gap-2">

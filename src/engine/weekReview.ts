@@ -31,6 +31,9 @@ export interface WeekReview {
   minutes: number;
   perSport: string[]; // "Hardlopen: 18,4 km, 320 m D+"
   missed: string[]; // template names
+  missedTemplateIds: string[];
+  keyPlanned: number; // long run / mountain hike
+  keyDone: number;
   heavier: number; // trainings that felt harder than planned
   lighter: number;
   avgRpe?: number;
@@ -50,7 +53,7 @@ interface ReviewInputs {
   illnessEpisodes?: IllnessEpisode[];
 }
 
-const KEY_TEMPLATES = ['tpl_long_run', 'tpl_mountain_hike'];
+export const KEY_TEMPLATES = ['tpl_long_run', 'tpl_mountain_hike'];
 
 function weekTitle(program: Program | null | undefined, weekStart: string): string {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
@@ -193,6 +196,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     minutes,
     perSport,
     missed: missedNames,
+    missedTemplateIds: missedSessions.map((s) => s.templateId),
+    keyPlanned: trainings.filter((s) => KEY_TEMPLATES.includes(s.templateId)).length,
+    keyDone: trainings.filter((s) => KEY_TEMPLATES.includes(s.templateId) && loggedIds.has(s.id)).length,
     heavier,
     lighter,
     avgRpe,
