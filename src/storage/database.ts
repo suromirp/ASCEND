@@ -468,6 +468,9 @@ export interface AppSettings {
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
   lastExportReminderDismissedAt?: string;
+  // Your own heart rate values (Settings → Training → Mijn hartslag); the
+  // training screens then show zones in bpm (engine/heartRateZones.ts).
+  heartRate?: { maxHr?: number; lthr?: number; restingHr?: number };
   // "Nieuw begonnen" card on Today closed with NIEUW BEGINNEN.
   freshStartDismissedAt?: string;
   // Marathon goal — deliberately not a second Objective/MilestoneDefinition
