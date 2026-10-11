@@ -480,6 +480,16 @@ export function SettingsPage() {
             </p>
             <OptionList options={PAIRING_OPTIONS} value={goalEngineConfig.strategy.sameDayPairingPreference} onChange={(v) => void handlePairingChange(v)} />
             <SectionNote text={notes.pairing} />
+            <div className="flex items-center justify-between gap-4 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+              <div>
+                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Zware dingen op één dag</p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Benen en een zware loop, zoals heuvels, mogen op dezelfde dag: eerst de loop, minstens 6 uur later kracht.
+                  De dagen eromheen blijven dan rustig. Alleen als je tijd per dag het toelaat.
+                </p>
+              </div>
+              <Toggle checked={!!settings.hardSameDay} onChange={(v) => void updateSettings({ hardSameDay: v }).then(() => refresh())} label="Zware dingen op één dag" />
+            </div>
           </Card>
 
           <Card className="flex flex-col gap-3">

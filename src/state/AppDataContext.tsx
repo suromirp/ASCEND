@@ -45,7 +45,7 @@ import {
 import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from '../storage/goalMigration';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { buildMarathonGoal } from '../engine/goalMigration';
-import { proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
@@ -453,6 +453,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setRecentSessionMaxima(recentSessionMaxima(logs, todayISO()));
     // Strength trainings: your estimate, or the duration learned from logs.
     setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
+    setHardSameDayAllowed(!!loadedSettings.hardSameDay);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);
