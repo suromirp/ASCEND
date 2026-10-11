@@ -230,3 +230,40 @@ describe('SKIPPED-KEY-TO-REST', () => {
     expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-11', removedByPlanIds: new Set(['lr']) })).some((a) => a.ruleId === 'SKIPPED-KEY-TO-REST')).toBe(false);
   });
 });
+
+describe('REST-PULL', () => {
+  const rest = tpl('rest', 'Herstel', 'recovery', light);
+  const all = [...templates, rest];
+  // Thursday 15 Oct: the easy run moved from today to Saturday, Friday is the rest day.
+  const moved = { ...ps('er', 'run', '2026-10-17', '2026-10-12'), status: 'moved' as const, movedFromDate: '2026-10-15' };
+
+  it('brings the rest day to today and the training you just moved to tomorrow', () => {
+    const advice = computeAdvice(inputs({ templates: all, plannedSessions: [moved, ps('rd', 'rest', '2026-10-16', '2026-10-12')], asOf: '2026-10-15' })).find((a) => a.ruleId === 'REST-PULL')!;
+    expect(advice.effect).toBe('Dan is vandaag je rustdag en doe je morgen Easy Run.');
+    expect(advice.proposal?.changes).toEqual([
+      expect.objectContaining({ plannedSessionId: 'rd', action: 'move', toDate: '2026-10-15' }),
+      expect.objectContaining({ plannedSessionId: 'er', action: 'move', toDate: '2026-10-16' }),
+    ]);
+  });
+
+  it('takes another training when the moved one would land too close to a heavy one', () => {
+    const lowerMoved = { ...ps('la', 'lower', '2026-10-18', '2026-10-12'), status: 'moved' as const, movedFromDate: '2026-10-15' };
+    const planned = [lowerMoved, ps('rd', 'rest', '2026-10-16', '2026-10-12'), ps('hk', 'hike', '2026-10-17', '2026-10-12'), ps('up', 'upper', '2026-10-19', '2026-10-19')];
+    const advice = computeAdvice(inputs({ templates: all, plannedSessions: planned, asOf: '2026-10-15' })).find((a) => a.ruleId === 'REST-PULL')!;
+    expect(advice.proposal?.changes[1]).toMatchObject({ plannedSessionId: 'up', toDate: '2026-10-16' });
+    expect(advice.effect).toContain('Upper A (gepland op');
+  });
+
+  it('says two rest days are fine when nothing fits', () => {
+    const lowerMoved = { ...ps('la', 'lower', '2026-10-18', '2026-10-12'), status: 'moved' as const, movedFromDate: '2026-10-15' };
+    const advice = computeAdvice(inputs({ templates: all, plannedSessions: [lowerMoved, ps('rd', 'rest', '2026-10-16', '2026-10-12'), ps('hk', 'hike', '2026-10-17', '2026-10-12')], asOf: '2026-10-15' })).find((a) => a.ruleId === 'REST-PULL')!;
+    expect(advice.title).toBe('Vandaag en morgen rust');
+    expect(advice.proposal).toBeUndefined();
+  });
+
+  it('stays quiet when you trained today or still have a training today', () => {
+    const planned = [moved, ps('rd', 'rest', '2026-10-16', '2026-10-12')];
+    expect(computeAdvice(inputs({ templates: all, plannedSessions: planned, logs: [log('l', 'upper', '2026-10-15')], asOf: '2026-10-15' })).some((a) => a.ruleId === 'REST-PULL')).toBe(false);
+    expect(computeAdvice(inputs({ templates: all, plannedSessions: [...planned, ps('u', 'upper', '2026-10-15', '2026-10-12')], asOf: '2026-10-15' })).some((a) => a.ruleId === 'REST-PULL')).toBe(false);
+  });
+});
