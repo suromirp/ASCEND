@@ -22,6 +22,15 @@ export function activeStrengthStrategy(strategies: StrengthProgramStrategy[]): S
   return strategies.find((s) => s.status === 'active' || s.status === 'ending');
 }
 
+// Whether sets and reps are logged outside ASCEND (MacroFactor or another
+// app), so a strength session is ticked off in one tap. One answer for the
+// whole app: the active strength block's source decides; without a block,
+// the older settings switch does (audit 2026-10, 7.2).
+export function strengthTrackedExternally(strategies: StrengthProgramStrategy[], fallback: boolean): boolean {
+  const active = activeStrengthStrategy(strategies);
+  return active ? active.source !== 'manual' : fallback;
+}
+
 export function daysUntilBlockEnd(strategy: StrengthProgramStrategy, asOf: string): number | undefined {
   return strategy.plannedEndDate ? daysBetween(asOf, strategy.plannedEndDate) : undefined;
 }

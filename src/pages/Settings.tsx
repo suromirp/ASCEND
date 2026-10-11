@@ -77,7 +77,7 @@ export function SettingsPage() {
   const {
     loading, exportData, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
     rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById, restartProgram,
-    refresh, trainingGoals, goalMilestones,
+    refresh, trainingGoals, goalMilestones, strengthExternal, setStrengthExternal,
   } = useAppData();
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, todayISO());
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
@@ -487,11 +487,11 @@ export function SettingsPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgehouden in MacroFactor</p>
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Sets, reps en gewicht log je in MacroFactor. Zet dit aan om krachttrainingen in ASCEND in één tik af te
-                  vinken, zonder invulformulier.
+                  Sets, reps en gewicht log je in MacroFactor. Dan vink je een krachttraining in ASCEND in één tik af,
+                  zonder invulformulier. Dit is dezelfde keuze als de bron van je krachtblok.
                 </p>
               </div>
-              <Toggle checked={settings.strengthTrackedExternally} onChange={(v) => updateSettings({ strengthTrackedExternally: v })} label="Kracht bijgehouden in MacroFactor" />
+              <Toggle checked={strengthExternal} onChange={(v) => void setStrengthExternal(v)} label="Kracht bijgehouden in MacroFactor" />
             </div>
             <StrengthDurationSettings />
           </Card>

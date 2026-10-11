@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  strengthTrackedExternally,
   activeStrengthStrategy,
   daysUntilBlockEnd,
   computeStrengthReviewTriggers,
@@ -158,5 +159,19 @@ describe('buildStrengthProgramRecommendation', () => {
     });
     expect(rec.rationale).toMatch(/krachtblok loopt bijna af/);
     expect(rec.rationale).toMatch(/blessure bijgewerkt/);
+  });
+});
+
+describe('strengthTrackedExternally', () => {
+  const block = (source: StrengthProgramStrategy['source'], status: StrengthProgramStrategy['status'] = 'active'): StrengthProgramStrategy => ({
+    id: source, source, startDate: '2026-09-28', sessionsPerWeek: 3, splitType: 'upper_lower', sessionTemplateIds: [], status, createdAt: '', updatedAt: '',
+  });
+  it('follows the active block, so the two settings can never disagree', () => {
+    expect(strengthTrackedExternally([block('macrofactor_workouts')], false)).toBe(true);
+    expect(strengthTrackedExternally([block('manual')], true)).toBe(false);
+  });
+  it('falls back to the settings switch without an active block', () => {
+    expect(strengthTrackedExternally([block('manual', 'completed')], true)).toBe(true);
+    expect(strengthTrackedExternally([], false)).toBe(false);
   });
 });

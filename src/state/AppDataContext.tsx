@@ -143,7 +143,7 @@ import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
 import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
-import { activeStrengthStrategy, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
+import { activeStrengthStrategy, strengthTrackedExternally, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { detectConsecutiveRestDays, buildConsecutiveRestFixProposal } from '../engine/scheduleAnomalies';
 import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
@@ -317,6 +317,9 @@ interface AppData {
   // provider) keeps owning exercise-level content — see
   // models/strengthProgram.ts and engine/strengthScheduling.ts.
   strengthProgramStrategies: StrengthProgramStrategy[];
+  // Strength sets/reps live in MacroFactor (or another app): one-tap tick-off.
+  strengthExternal: boolean;
+  setStrengthExternal: (external: boolean) => Promise<void>;
   // The one currently-unresolved suggestion, if any (§5: "a review is a
   // suggestion, not an automatic rewrite") — never more than one at a time,
   // matching forecastSummary's own "single pending thing to show" shape.
@@ -1313,6 +1316,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [trainingGoals, refresh],
   );
 
+  const strengthExternal = strengthTrackedExternally(strengthProgramStrategies, settings.strengthTrackedExternally);
+
+  // One switch: the settings flag and the active block's source move together.
+  const setStrengthExternal = useCallback(async (external: boolean) => {
+    const active = activeStrengthStrategy(await StrengthProgramStrategiesRepo.getAll());
+    if (active && (active.source !== 'manual') !== external) {
+      await StrengthProgramStrategiesRepo.put({ ...active, source: external ? 'macrofactor_workouts' : 'manual', updatedAt: new Date().toISOString() });
+    }
+    await SettingsRepo.set({ strengthTrackedExternally: external });
+    await refresh();
+  }, [refresh]);
+
   const updateSettings = useCallback(async (patch: Partial<AppSettings>): Promise<AppSettings> => {
     const next = await SettingsRepo.set(patch);
     setSettings(next);
@@ -1656,6 +1671,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     recoverFromIllness,
     dismissRecentChange: () => setRecentChange(null),
     strengthProgramStrategies,
+    strengthExternal,
+    setStrengthExternal,
     strengthRecommendation,
     activateStrengthProgram,
     applyStrengthPlacementToCommittedRange,

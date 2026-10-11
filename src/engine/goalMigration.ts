@@ -125,7 +125,9 @@ export function buildDefaultStrengthProgramStrategy(asOf: string): StrengthProgr
   const now = new Date().toISOString();
   return {
     id: makeId('strength'),
-    source: 'macrofactor_workouts',
+    // Sets and reps in ASCEND until you say you log them in MacroFactor:
+    // the source is also the one-tap switch (engine/strengthProgram.ts).
+    source: 'manual',
     startDate: asOf,
     sessionsPerWeek: 3,
     splitType: 'upper_lower',

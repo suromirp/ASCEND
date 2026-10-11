@@ -12,9 +12,10 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { Eyebrow } from '../components/ui';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -47,7 +48,7 @@ export function WeekPage() {
   // starting a strength session logs it immediately instead of opening the
   // exercise-entry modal.
   function isQuickComplete(template?: SessionTemplate) {
-    return template?.type === 'strength' && settings.strengthTrackedExternally;
+    return template?.type === 'strength' && strengthExternal;
   }
 
   function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) {
@@ -145,6 +146,12 @@ export function WeekPage() {
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
+          onDoneAsPlanned={!selectedLog && selected.scheduledDate <= todayISO() && canTickOffAsPlanned(templateById.get(selected.templateId)!, strengthExternal)
+            ? () => {
+                void logSession(asPlannedLog(selected, templateById.get(selected.templateId)!, program, todayISO()));
+                setSelected(null);
+              }
+            : undefined}
           onStart={(variant, feel, durationMinutes) => {
             startSession(selected, templateById.get(selected.templateId)!, variant, feel, durationMinutes);
             setSelected(null);
