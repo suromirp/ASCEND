@@ -360,6 +360,7 @@ export interface LogSessionInput {
   cardioData?: SessionLog['cardioData'];
   outdoorData?: SessionLog['outdoorData'];
   subjectiveFeel?: SessionLog['subjectiveFeel'];
+  painAreas?: SessionLog['painAreas'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
   completedDate?: string;
@@ -1062,6 +1063,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           cardioData: input.cardioData,
           outdoorData: input.outdoorData,
           subjectiveFeel: input.subjectiveFeel,
+          painAreas: input.painAreas && input.painAreas.length > 0 ? input.painAreas : undefined,
           source: 'manual',
         };
         await SessionLogsRepo.put(log);
@@ -1096,7 +1098,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // milestone clear (if this same log happened to satisfy one) the
         // bigger victory-tier treatment with the milestone's title attached.
         // The coach reacts in one line to what you filled in (engine/coach.ts).
-        const coachNote = coachReaction(log, (await SessionTemplatesRepo.getAll()).find((t) => t.id === log.templateId), (await ProgramsRepo.getAll())[0] ?? null);
+        const coachNote = coachReaction(log, (await SessionTemplatesRepo.getAll()).find((t) => t.id === log.templateId), (await ProgramsRepo.getAll())[0] ?? null, await SessionLogsRepo.getAll());
         setCelebration(
           clearedTitle
             ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote(), coachNote }

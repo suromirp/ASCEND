@@ -13,6 +13,7 @@ import { progressionTarget } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { INTENSITY } from '../data/workoutStructure';
 import { isLegHeavyTemplate } from './scheduler';
+import { addDays } from '../utils/dates';
 
 // The top of the planned effort, e.g. 4 for "RPE 3-4".
 export function plannedRpeTop(template: SessionTemplate, date: string, program: Program | null | undefined): number | undefined {
@@ -42,6 +43,10 @@ export interface CoachLineInputs {
 // One sentence for today's training, the most useful one first.
 export function coachLineForToday({ template, date, program, tomorrow, yesterdayLogs, templateById }: CoachLineInputs): string {
   const note = progressionTarget(template, program, date)?.step.note ?? '';
+  const soreYesterday = yesterdayLogs.flatMap((l) => l.painAreas ?? []);
+  if (soreYesterday.length > 0) {
+    return `Gisteren pijn aan je ${joinNL([...new Set(soreYesterday)].map((a) => a.toLowerCase()))}. Voelt het nog niet goed, kies dan de korte versie of verplaats deze training.`;
+  }
   const heavyYesterday = yesterdayLogs.find((l) => feltHeavy(l, templateById.get(l.templateId), program));
   if (heavyYesterday) {
     return `${templateById.get(heavyYesterday.templateId)?.name ?? 'Gisteren'} voelde zwaar. Begin rustig, en kies de korte versie als het vandaag niet gaat.`;
@@ -71,8 +76,33 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
   return 'Rustig en gelijkmatig. Kun je hele zinnen praten, dan zit je goed.';
 }
 
+// Days back in which the same sore spot counts as "again".
+const PAIN_WINDOW_DAYS = 14;
+
+function joinNL(items: string[]): string {
+  return items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} en ${items.at(-1)}`;
+}
+
+// Pain comes first: it decides what tomorrow looks like. The same spot
+// twice in two weeks is a pattern, worth writing down under Blessures,
+// where ASCEND takes it into account (engine/adviceEngine.ts#injuryAdvice).
+function painReaction(log: SessionLog, history: SessionLog[]): string | undefined {
+  const areas = log.painAreas ?? [];
+  if (areas.length === 0) return undefined;
+  const since = addDays(log.completedDate, -PAIN_WINDOW_DAYS);
+  const again = areas.filter((a) => history.some((l) => l.id !== log.id && l.completedDate >= since && l.completedDate <= log.completedDate && (l.painAreas ?? []).includes(a)));
+  const where = joinNL(areas.map((a) => a.toLowerCase()));
+  if (again.length > 0) {
+    const which = joinNL(again.map((a) => a.toLowerCase()));
+    return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Zet het bij Blessures, dan houdt ASCEND er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
+  }
+  return `Pijn aan je ${where}. Doe het de komende dagen rustig aan: kies de korte versie of een rustdag als het blijft. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
+}
+
 // One reaction after ticking a training off, based on what you filled in.
-export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined): string {
+export function coachReaction(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined, history: SessionLog[] = []): string {
+  const pain = painReaction(log, history);
+  if (pain) return pain;
   if (!template || template.type === 'recovery') return 'Goed dat je bewoog. Rust blijft de basis van vandaag.';
   const top = plannedRpeTop(template, log.completedDate, program);
   const planned = resolveEffectiveFullDuration(template, log.completedDate, program);

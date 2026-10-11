@@ -32,3 +32,19 @@ describe('coachReaction', () => {
     expect(coachReaction(log('tpl_easy_run', '2026-09-29', { durationMinutes: 30, rpe: 3 }), t('tpl_easy_run'), program)).toBe('Gedaan zoals gepland. Zo bouw je op.');
   });
 });
+
+describe('pain after a run or a hike', () => {
+  it('puts pain first, and calls the same spot twice in two weeks a pattern', () => {
+    const now = log('tpl_easy_run', '2026-10-08', { id: 'now', painAreas: ['Knie'] });
+    expect(coachReaction(now, t('tpl_easy_run'), program)).toContain('Pijn aan je knie.');
+    const earlier = log('tpl_long_run', '2026-10-04', { id: 'earlier', painAreas: ['Knie', 'Enkel'] });
+    expect(coachReaction(now, t('tpl_easy_run'), program, [earlier, now])).toMatch(/^Knie deed de afgelopen twee weken vaker pijn\. Zet het bij Blessures/);
+    const longAgo = log('tpl_long_run', '2026-09-20', { id: 'old', painAreas: ['Knie'] });
+    expect(coachReaction(now, t('tpl_easy_run'), program, [longAgo, now])).toContain('Pijn aan je knie.');
+  });
+
+  it("brings yesterday's pain up in today's line", () => {
+    const sore = [log('tpl_long_run', '2026-09-28', { painAreas: ['Achillespees'] })];
+    expect(coachLineForToday({ template: t('tpl_upper_a'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: sore, templateById: byId })).toBe('Gisteren pijn aan je achillespees. Voelt het nog niet goed, kies dan de korte versie of verplaats deze training.');
+  });
+});
