@@ -21,6 +21,32 @@ function inputs(overrides: Partial<AdviceInputs>): AdviceInputs {
 }
 
 describe('MISSED-CATCH-UP', () => {
+  // Production feedback: long run and hill intervals both missed on Sunday,
+  // Monday is a rest day. Nothing to recover from, so Monday carries the
+  // long run; the intervals are let go.
+  it('turns a rest day after a day without training into the catch-up day, across the week boundary', () => {
+    const rest = tpl('rest', 'Herstel', 'recovery', light);
+    const planned = [
+      ps('lr', 'hike', '2026-10-11', '2026-10-05'), ps('hi', 'run', '2026-10-11', '2026-10-05'),
+      ps('rd', 'rest', '2026-10-12', '2026-10-12'), ps('ua', 'upper', '2026-10-13', '2026-10-12'), ps('la', 'lower', '2026-10-14', '2026-10-12'),
+    ];
+    const advice = computeAdvice(inputs({ templates: [...templates, rest], plannedSessions: planned, asOf: '2026-10-12' })).find((a) => a.ruleId === 'MISSED-CATCH-UP')!;
+    expect(advice.proposal?.changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ plannedSessionId: 'lr', action: 'move', toDate: '2026-10-12' }),
+      expect.objectContaining({ plannedSessionId: 'rd', action: 'remove' }),
+      expect.objectContaining({ plannedSessionId: 'hi', action: 'remove' }),
+    ]));
+    expect(advice.effect).toContain('Lange Duurloop doe je vandaag in plaats van je rustdag');
+  });
+
+  it('keeps the rest day when you did train the day before', () => {
+    const rest = tpl('rest', 'Herstel', 'recovery', light);
+    const planned = [ps('lr', 'hike', '2026-10-10', '2026-10-05'), ps('er', 'run', '2026-10-11', '2026-10-05'), ps('rd', 'rest', '2026-10-12', '2026-10-12')];
+    const logs = [log('l', 'run', '2026-10-11', { plannedSessionId: 'er' })];
+    const advice = computeAdvice(inputs({ templates: [...templates, rest], plannedSessions: planned, logs, asOf: '2026-10-12' })).find((a) => a.ruleId === 'MISSED-CATCH-UP')!;
+    expect(advice.proposal?.changes.find((c) => c.plannedSessionId === 'rd')).toBeUndefined();
+  });
+
   it('catches up only the key session (long run or mountain hike) on a free day later this week', () => {
     const advice = computeAdvice(inputs({ plannedSessions: [ps('m', 'hike', '2026-09-29')] }));
     expect(advice[0]).toMatchObject({ ruleId: 'MISSED-CATCH-UP', id: 'missed:m' });
