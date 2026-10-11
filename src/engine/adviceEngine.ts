@@ -383,10 +383,52 @@ function spacingAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   return advice;
 }
 
+// --- Rule REST-SWAP -----------------------------------------------------------
+// Trigger: a rest day today, and yesterday no training at all. There is
+// nothing to recover from (production feedback: "die rustdag is niet meer
+// nodig als je gisteren niks gedaan hebt"). Rule: tomorrow's training moves
+// to today and the rest day to tomorrow, if that keeps the spacing between
+// heavy sessions. Not when ill, and not when the missed-session advice
+// already uses this rest day for a catch-up.
+function restSwapAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
+  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  const today = inputs.asOf;
+  const yesterday = addDays(today, -1);
+  const tomorrow = addDays(today, 1);
+  if (inputs.program && yesterday < inputs.program.startDate) return [];
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const isRest = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
+  const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
+  const rest = inputs.plannedSessions.find((s) => s.scheduledDate === today && isRest(s) && open(s));
+  if (!rest || usedIds.has(rest.id)) return [];
+  if (inputs.plannedSessions.some((s) => s.scheduledDate === today && !isRest(s) && open(s))) return [];
+  if (inputs.logs.some((l) => l.completedDate === yesterday && templateById.get(l.templateId)?.type !== 'recovery')) return [];
+  if (isIllnessDay(yesterday, inputs.illnessEpisodes, today)) return [];
+  const next = inputs.plannedSessions.filter((s) => s.scheduledDate === tomorrow && !isRest(s) && open(s));
+  if (next.length !== 1) return [];
+  const session = next[0];
+  const template = templateById.get(session.templateId);
+  if (!template || !isTemplatePlannable(template, inputs.enabledSports)) return [];
+  const withLoad = inputs.plannedSessions.filter((s) => s.id !== session.id && s.id !== rest.id && s.status !== 'skipped' && (s.scheduledDate >= today || loggedIds.has(s.id)));
+  if (!respectsHeavySpacing(today, template, withLoad, templateById, inputs.logs, session.id)) return [];
+  const rule = 'Een rustdag is er om te herstellen van wat je deed. Deed je de dag ervoor geen training, dan schuift ASCEND de training van morgen naar vandaag en de rust naar morgen, zolang de afstand tussen zware trainingen klopt.';
+  const effect = `Doe ${template.name} vandaag en rust morgen. Gisteren deed je geen training, dus er is vandaag niets om van te herstellen.`;
+  const items: PlanChangeItem[] = [
+    { plannedSessionId: session.id, action: 'move', fromDate: tomorrow, toDate: today, reason: 'Naar voren: gisteren geen training, dus de rustdag van vandaag is niet nodig.', generatedBy: ['engine/adviceEngine.ts', 'REST-SWAP'] },
+    { plannedSessionId: rest.id, action: 'move', fromDate: today, toDate: tomorrow, reason: 'Rustdag een dag later, na de training.', generatedBy: ['engine/adviceEngine.ts', 'REST-SWAP'] },
+  ];
+  const title = 'Gisteren geen training: je rustdag kan een dag schuiven';
+  return [{ id: `restswap:${rest.id}`, trigger: 'plan_update', ruleId: 'REST-SWAP', title, effect, why: rule, priority: 3, proposal: proposal(title, items, effect, rule) }];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
+  // A catch-up you declined leaves the rest day free for the swap.
+  const missed = missedAdvice(inputs, templateById).filter((a) => !inputs.respondedIds.has(a.id));
+  const usedIds = new Set(missed.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []));
   return [
-    ...missedAdvice(inputs, templateById),
+    ...missed,
+    ...restSwapAdvice(inputs, templateById, usedIds),
     ...tooHardAdvice(inputs, templateById),
     ...tooLightAdvice(inputs, templateById),
     ...injuryAdvice(inputs, templateById),

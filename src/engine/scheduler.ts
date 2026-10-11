@@ -3,6 +3,7 @@ import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, mondayOfWeek, todayISO, weekDates, weekdayOf } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
+import { templateSport } from './sports';
 import { detectRecentSpike } from './progressionSpikes';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
@@ -147,11 +148,54 @@ export function findHeavyConflicts(
     // same day, and never the other way round (production feedback: a
     // suggestion put hill intervals on the long run's own Sunday).
     if (isIntentionalBackToBack(template, other) && isIntendedOrder(template, date, other, s.scheduledDate)) return false;
-    const spacing = shared.includes('lowerBodyLoad')
-      ? Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs))
-      : 1;
-    return Math.abs(daysBetween(s.scheduledDate, date)) <= spacing;
+    const gap = Math.abs(daysBetween(s.scheduledDate, date));
+    if (!shared.includes('lowerBodyLoad')) return gap <= 1;
+    if (gap === 0 && hardSameDayAllowed(template, other)) return false;
+    const extra = Math.max(requiredSpacingDays(sessionId, recentLogs), requiredSpacingDays(s.id, recentLogs)) - 1;
+    const first = date <= s.scheduledDate ? template : other;
+    const second = first === template ? other : template;
+    return gap <= legSpacingDays(first, second) + extra;
   });
+}
+
+// ASCEND_HEURISTIC(LEG-SPACING-BY-PAIR): the days that must lie between two
+// heavy leg sessions depend on what kind of load they are, not one flat
+// 48 hours (production feedback, October 2026):
+// - after a hike with a lot of descending (mountain hike, hike day one):
+//   72 hours before the next heavy leg session. Descending is the most
+//   muscle-damaging load there is (eccentric work).
+// - between the easy long run and leg strength, either order: 24 hours.
+//   Long and easy is mostly volume, little muscle damage.
+// - everything else (leg strength and hill intervals, two strength days):
+//   48 hours, as before.
+// Returned as the largest gap in days that still counts as too close:
+// 0 = the next day is fine, 1 = one day between (48h), 2 = two (72h).
+export function legSpacingDays(first: SessionTemplate, second: SessionTemplate): number {
+  const isHike = (t: SessionTemplate) => templateSport(t) === 'hiking' && resolveEffectiveStressProfile(t).eccentricLoad !== 'none';
+  if (isHike(first) && !isHike(second)) return 2;
+  const easyVolume = (t: SessionTemplate) => templateSport(t) === 'running' && resolveEffectiveStressProfile(t).intensity === 'low';
+  if ((easyVolume(first) && second.type === 'strength') || (first.type === 'strength' && easyVolume(second))) return 0;
+  return 1;
+}
+
+// Setting (Training → Zware dingen op één dag): leg strength and a hard
+// run on the same day, at least 6 hours apart, so the days around stay
+// easy. Off by default. Set from the settings on every refresh, like the
+// registries in engine/substitutions.ts.
+let hardSameDay = false;
+export function setHardSameDayAllowed(allowed: boolean): void {
+  hardSameDay = allowed;
+}
+export function isHardSameDayAllowed(): boolean {
+  return hardSameDay;
+}
+
+// Only strength with a run, never two strength sessions or two runs, and
+// never a hike (that's a whole day out).
+function hardSameDayAllowed(a: SessionTemplate, b: SessionTemplate): boolean {
+  if (!hardSameDay) return false;
+  const run = (t: SessionTemplate) => templateSport(t) === 'running';
+  return (a.type === 'strength' && run(b)) || (run(a) && b.type === 'strength');
 }
 
 function isIntendedOrder(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {

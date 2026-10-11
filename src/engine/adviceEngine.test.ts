@@ -26,11 +26,12 @@ describe('MISSED-CATCH-UP', () => {
   // long run; the intervals are let go.
   it('turns a rest day after a day without training into the catch-up day, across the week boundary', () => {
     const rest = tpl('rest', 'Herstel', 'recovery', light);
+    const longRun: SessionTemplate = { id: 'tpl_long_run', name: 'Lange Duurloop', type: 'cardio', durationVariants: { full: 60 }, baseStressProfile: { ...heavy, intensity: 'low' } };
     const planned = [
-      ps('lr', 'hike', '2026-10-11', '2026-10-05'), ps('hi', 'run', '2026-10-11', '2026-10-05'),
+      ps('lr', 'tpl_long_run', '2026-10-11', '2026-10-05'), ps('hi', 'run', '2026-10-11', '2026-10-05'),
       ps('rd', 'rest', '2026-10-12', '2026-10-12'), ps('ua', 'upper', '2026-10-13', '2026-10-12'), ps('la', 'lower', '2026-10-14', '2026-10-12'),
     ];
-    const advice = computeAdvice(inputs({ templates: [...templates, rest], plannedSessions: planned, asOf: '2026-10-12' })).find((a) => a.ruleId === 'MISSED-CATCH-UP')!;
+    const advice = computeAdvice(inputs({ templates: [...templates, rest, longRun], plannedSessions: planned, asOf: '2026-10-12' })).find((a) => a.ruleId === 'MISSED-CATCH-UP')!;
     expect(advice.proposal?.changes).toEqual(expect.arrayContaining([
       expect.objectContaining({ plannedSessionId: 'lr', action: 'move', toDate: '2026-10-12' }),
       expect.objectContaining({ plannedSessionId: 'rd', action: 'remove' }),
@@ -175,5 +176,34 @@ describe('SAME-MUSCLE-SPACING', () => {
   it('leaves the intentional hill-intervals + long-run weekend alone and ignores light sessions', () => {
     const planned = [ps('a', 'run', '2026-10-01'), ps('b', 'upper', '2026-10-02')];
     expect(computeAdvice(inputs({ plannedSessions: planned })).some((x) => x.ruleId === 'SAME-MUSCLE-SPACING')).toBe(false);
+  });
+});
+
+describe('REST-SWAP', () => {
+  const rest = tpl('rest', 'Herstel', 'recovery', light);
+  const withRest = [...templates, rest];
+  // Monday 12 Oct rest, Tuesday Upper A; Sunday nothing was logged.
+  const planned = [ps('rd', 'rest', '2026-10-12', '2026-10-12'), ps('ua', 'upper', '2026-10-13', '2026-10-12'), ps('la', 'lower', '2026-10-14', '2026-10-12')];
+
+  it('moves tomorrow to today and the rest day to tomorrow when yesterday had no training', () => {
+    const advice = computeAdvice(inputs({ templates: withRest, plannedSessions: planned, asOf: '2026-10-12' })).find((a) => a.ruleId === 'REST-SWAP')!;
+    expect(advice.id).toBe('restswap:rd');
+    expect(advice.proposal?.changes).toEqual([
+      expect.objectContaining({ plannedSessionId: 'ua', action: 'move', toDate: '2026-10-12' }),
+      expect.objectContaining({ plannedSessionId: 'rd', action: 'move', toDate: '2026-10-13' }),
+    ]);
+    expect(advice.effect).toBe('Doe Upper A vandaag en rust morgen. Gisteren deed je geen training, dus er is vandaag niets om van te herstellen.');
+  });
+
+  it('keeps the rest day after a day with training', () => {
+    const logs = [log('l', 'run', '2026-10-11')];
+    expect(computeAdvice(inputs({ templates: withRest, plannedSessions: planned, logs, asOf: '2026-10-12' })).find((a) => a.ruleId === 'REST-SWAP')).toBeUndefined();
+  });
+
+  it('does not pull a heavy leg day too close to a hike', () => {
+    // Saturday's hike needs 72 hours before heavy legs: Tuesday is fine, Monday is not.
+    const legs = [ps('hk', 'hike', '2026-10-10', '2026-10-05'), ps('rd', 'rest', '2026-10-12', '2026-10-12'), ps('la', 'lower', '2026-10-13', '2026-10-12')];
+    const logs = [log('l', 'hike', '2026-10-10', { plannedSessionId: 'hk' })];
+    expect(computeAdvice(inputs({ templates: withRest, plannedSessions: legs, logs, asOf: '2026-10-12' })).find((a) => a.ruleId === 'REST-SWAP')).toBeUndefined();
   });
 });

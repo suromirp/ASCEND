@@ -468,6 +468,8 @@ export interface AppSettings {
   // from lastExportedAt so dismissing it actually snoozes for a week,
   // rather than reappearing on the very next app open.
   lastExportReminderDismissedAt?: string;
+  // Leg strength and a hard run on one day, 6+ hours apart (engine/scheduler.ts#setHardSameDayAllowed).
+  hardSameDay?: boolean;
   // Your own heart rate values (Settings → Training → Mijn hartslag); the
   // training screens then show zones in bpm (engine/heartRateZones.ts).
   heartRate?: { maxHr?: number; lthr?: number; restingHr?: number };

@@ -108,6 +108,19 @@ export function suggestSameDayOrder(
   const strengthName = templateById.get(strengthSession.templateId)?.name ?? strengthSession.templateId;
   const enduranceName = templateById.get(enduranceSession.templateId)?.name ?? enduranceSession.templateId;
 
+  // Both heavy for the legs: only on purpose (Training → Zware dingen op
+  // één dag). The run first, it's the quality that counts toward your goal;
+  // the strength at least 6 hours later, when the interference is smallest.
+  const bothLegs = [strengthSession, enduranceSession].every((s) => {
+    const t = templateById.get(s.templateId);
+    return !!t && resolveEffectiveStressProfile(t).lowerBodyLoad === 'heavy';
+  });
+  if (bothLegs) {
+    return {
+      reason: `${enduranceName} en ${strengthName} op één dag: doe eerst ${enduranceName.toLowerCase()} en minstens 6 uur later ${strengthName}. Zo blijven de dagen eromheen rustig.`,
+    };
+  }
+
   return {
     reason: `${strengthName} en ${enduranceName} staan vandaag beide gepland. Zet er bij voorkeur een paar uur tussen, een zware sessie vlak vóór de andere kan de kwaliteit ervan drukken, ook al is dat op de langere termijn meestal geen probleem.`,
   };
