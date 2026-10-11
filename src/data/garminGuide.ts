@@ -3,11 +3,6 @@
 // day (Easy Run and Bergconditie's guides link here rather than repeating
 // it). Shown on pages/GarminGuide.tsx.
 //
-// The personal HR figures below (Max HR / LTHR / resting HR) are the
-// user's own — ASCEND is a single-user, local-only, personal app per
-// CLAUDE.md, so baking in their real training numbers here is the same
-// kind of content as the rest of the program, not a privacy concern.
-//
 // Sources link to the exact pages the user supplied
 // (trainingsschema_bronnen_urls.txt). The Garmin Forerunner 255 manual
 // pages are opaque GUID URLs on a domain this environment can't fetch to
@@ -19,12 +14,6 @@ export interface GuideSource {
   label: string;
   url?: string;
 }
-
-export const GARMIN_PERSONAL_DATA = {
-  maxHr: 204,
-  lthr: 178,
-  restingHr: 49,
-};
 
 export interface GuideCard {
   heading: string;
@@ -48,8 +37,8 @@ const PUBMED_CALORIES: GuideSource = { label: 'PubMed, wetenschappelijke literat
 
 export const GARMIN_ZONE_SETUP: GuideCard = {
   heading: 'HARTSLAGZONES INSTELLEN',
-  body: `Sport Heart Rate → Running → Based on %LTHR, met LTHR ${GARMIN_PERSONAL_DATA.lthr} bpm. Voor hardlopen geven sportspecifieke zones op basis van %LTHR een preciezer beeld dan alleen generieke %Max HR-zones. Laat Max HR- en LTHR automatic detection aan staan zodat Garmin nieuwe betrouwbare waarden kan voorstellen na voldoende activiteiten, de lactaatdrempelmeting vereist wel een compatibele borstband.`,
-  note: `Bekende waarden: Max HR ${GARMIN_PERSONAL_DATA.maxHr} bpm · LTHR ${GARMIN_PERSONAL_DATA.lthr} bpm · Resting HR ${GARMIN_PERSONAL_DATA.restingHr} bpm. Gebruik hartslag niet als enige waarheid, een percentagezone is niet hetzelfde als een laboratoriummeting van je aerobe drempel. Talk test + RPE + HR samen blijven de beste praktische combinatie.`,
+  body: `Sport Heart Rate → Running → Based on %LTHR, met je eigen drempelhartslag (LTHR). Voor hardlopen geven sportspecifieke zones op basis van %LTHR een preciezer beeld dan alleen generieke %Max HR-zones. Laat Max HR- en LTHR automatic detection aan staan zodat Garmin nieuwe betrouwbare waarden kan voorstellen na voldoende activiteiten, de lactaatdrempelmeting vereist wel een compatibele borstband.`,
+  note: `Vul je eigen waarden in bij Meer, Training, Mijn hartslag: dan staan de zones in bpm bij elke training. Gebruik hartslag niet als enige waarheid, een percentagezone is niet hetzelfde als een laboratoriummeting van je aerobe drempel. Talk test + RPE + HR samen blijven de beste praktische combinatie.`,
   sources: [GARMIN_ZONES, GARMIN_AUTO_DETECT],
 };
 

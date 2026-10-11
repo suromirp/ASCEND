@@ -17,6 +17,7 @@ import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTempla
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
 import { programAnchorDate } from '../engine/programLayout';
+import { HeartRateSettings } from '../components/HeartRateSettings';
 import { StrengthDurationSettings } from '../components/StrengthDurationSettings';
 import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
@@ -495,6 +496,8 @@ export function SettingsPage() {
             </div>
             <StrengthDurationSettings />
           </Card>
+
+          <HeartRateSettings />
         </>
       )}
 

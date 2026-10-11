@@ -11,6 +11,7 @@ import type { SessionTemplate } from '../models/training';
 import { INTENSITY, type Intensity } from '../data/workoutStructure';
 import { buildWorkoutPlan, formatClock, type PlanStep, type WorkoutPlan } from '../engine/workoutPlan';
 import { useAppData } from '../state/AppDataContext';
+import { zoneText } from '../engine/heartRateZones';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
@@ -44,7 +45,7 @@ export function TrainingGuideSheet({
   dateIso?: string;
 }) {
   const navigate = useNavigate();
-  const { program, templates } = useAppData();
+  const { program, templates, settings } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
   const brief = template ? buildSessionBrief(template, dateIso, program, { templates }) : undefined;
@@ -91,7 +92,7 @@ export function TrainingGuideSheet({
                 {brief.levelsUsed.map((lvl) => (
                   <p key={lvl} className="flex items-start gap-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                     <Dot intensity={lvl} />
-                    <span><span style={{ color: 'var(--color-ink)' }}>{INTENSITY[lvl].label}</span> · {INTENSITY[lvl].zone} · {INTENSITY[lvl].rpe} · {INTENSITY[lvl].feel}</span>
+                    <span><span style={{ color: 'var(--color-ink)' }}>{INTENSITY[lvl].label}</span> · {zoneText(lvl, INTENSITY[lvl].zone, settings.heartRate)} · {INTENSITY[lvl].rpe} · {INTENSITY[lvl].feel}</span>
                   </p>
                 ))}
               </div>
@@ -285,6 +286,7 @@ function minutesText(seconds: number): string {
 }
 
 function StepRow({ step }: { step: PlanStep }) {
+  const { settings } = useAppData();
   const level = INTENSITY[step.intensity];
   const isStrength = step.kind === 'strength';
   return (
@@ -296,7 +298,7 @@ function StepRow({ step }: { step: PlanStep }) {
           <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutesText(step.seconds)}</span>
         </div>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          {isStrength ? step.detail : step.noTarget ? `${level.label} · geen hartslagdoel${step.detail ? `. ${step.detail}` : ''}` : `${level.label} · ${level.rpe} · ${level.zone} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`}
+          {isStrength ? step.detail : step.noTarget ? `${level.label} · geen hartslagdoel${step.detail ? `. ${step.detail}` : ''}` : `${level.label} · ${level.rpe} · ${zoneText(step.intensity, level.zone, settings.heartRate)} · ${level.feel}${step.detail ? `. ${step.detail}` : ''}`}
         </p>
       </div>
     </div>
