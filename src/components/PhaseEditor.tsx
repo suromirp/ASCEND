@@ -1,15 +1,8 @@
 import { useAppData } from '../state/AppDataContext';
+import { PHASE_COLOR } from '../data/phaseColors';
 import { PHASE_BASIS, PHASE_BERG, PHASE_LENGTH_LIMITS, type AdjustablePhaseId, type PhaseLengthOverrides } from '../engine/programLayout';
 import { addDays, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 
-const PHASE_COLOR: Record<string, string> = {
-  phase_1: 'var(--color-stone)',
-  phase_2: 'var(--color-sky)',
-  phase_3: 'var(--color-bronze)',
-  phase_4: 'var(--color-gold)',
-  phase_taper: 'var(--color-alpine)',
-  phase_onderhoud: 'var(--color-stone)',
-};
 
 // Settings → Training → Programma: the phases toward the goal as one bar,
 // and per phase its length with − and +. The basis takes what is left.

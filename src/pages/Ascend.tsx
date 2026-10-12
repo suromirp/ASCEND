@@ -22,6 +22,7 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui'
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
+import { SeasonCard } from '../components/SeasonCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
@@ -333,9 +334,11 @@ export function GoalsPage() {
         <BackButton fallback="/ascend" />
         <div>
           <Eyebrow>DOELEN</Eyebrow>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je naartoe traint, en hoe zwaar elk doel meeweegt.</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen.</p>
         </div>
       </div>
+
+      <SeasonCard />
 
       {goal && <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} onArchive={() => archiveGoal(goal.id)} />}
 
@@ -343,7 +346,7 @@ export function GoalsPage() {
 
       <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
 
-      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL</SecondaryButton>
+      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL OF TUSSENDOEL</SecondaryButton>
       {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
 
       <GoalFocusCard />
@@ -657,7 +660,7 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>EIGEN DOELEN</Eyebrow>
+      <Eyebrow>TUSSENDOELEN EN ANDERE DOELEN</Eyebrow>
       {goals.map((g) => (
         <div key={g.id} className="flex flex-col gap-2 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
           <div className="flex items-center justify-between gap-3">
