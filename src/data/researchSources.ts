@@ -1711,5 +1711,77 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     "usedIn": [
       "Onderzoek: afdalen, tocht, herstel, fietsen, marathon en kracht"
     ]
+  },
+  {
+    "title": "Vickers en Vertosick 2016, An empirical study of race times in recreational endurance runners, BMC Sports Science, Medicine and Rehabilitation",
+    "publisher": "PubMed Central",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5000509/",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Hurst en Board 2016, Reliability of 5-km running performance in a competitive environment",
+    "publisher": "University of Sunderland",
+    "url": "https://sure.sunderland.ac.uk/6900/",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Stevens e.a. 2015, Reproducibility of outdoor 5 km running time-trial in a competitive environment",
+    "publisher": "Canterbury Christ Church University",
+    "url": "https://repository.canterbury.ac.uk/item/881zx",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Reproduceerbaarheid van 5 en 10 km-tests bij recreatieve lopers (n = 31)",
+    "publisher": "Redalyc",
+    "url": "https://www.redalyc.org/pdf/4013/401341527002.pdf",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Muñoz e.a. 2014, gepolariseerde versus drempeltraining bij recreatieve lopers, besproken in Frontiers in Sports and Active Living 2019",
+    "publisher": "Frontiers",
+    "url": "https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/fspor.2019.00070/pdf",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Drempel- versus gepolariseerde training bij recreatieve 10 km-loopsters",
+    "publisher": "Universidad Pedagógica Nacional",
+    "url": "https://repositorio.upn.edu.co/items/9113163b-6da0-42f3-b3be-77c9a0d5f733/full",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Tapering recommendations for long distance running leading into a major competition",
+    "publisher": "Journal of Australian Strength and Conditioning",
+    "url": "https://lida.sport-iat.de/ta/Record/4045326?lng=en",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
+  },
+  {
+    "title": "Smyth en Lawlor 2021, Longer disciplined tapers improve marathon performance for recreational runners, Frontiers in Sports and Active Living",
+    "publisher": "PubMed Central",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8506252/",
+    "category": "wetenschap",
+    "usedIn": [
+      "Onderzoek: tussendoel hardloopwedstrijd"
+    ]
   }
 ];

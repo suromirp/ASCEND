@@ -117,8 +117,8 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         heading: 'ZO DOE JE HET',
         items: [
           '10 minuten rustig inlopen.',
-          'Blokken van 8 minuten comfortabel zwaar: je kunt nog korte zinnen zeggen, niet meer (RPE 6-7, zone 3).',
-          'Tussen de blokken 2 minuten rustig doorlopen.',
+          'Blokken van 7 minuten comfortabel zwaar: je kunt nog korte zinnen zeggen, niet meer (RPE 6-7, zone 3).',
+          'Tussen de blokken anderhalve minuut rustig doorlopen.',
           '8 minuten uitlopen.',
         ],
         note: 'Niet harder dan drempel. Te hard lopen is de meest gemaakte fout: het voelt goed, maar je herstelt slechter en de week erna lijdt eronder.',

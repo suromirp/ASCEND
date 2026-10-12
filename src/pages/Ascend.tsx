@@ -26,6 +26,7 @@ import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
 import { goalPlanRole, isRaceGoal, RACE_BLOCK_WEEKS } from '../engine/raceBlock';
+import { formatRaceTime, predictRace, TEST_NOISE } from '../engine/racePrediction';
 import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
 import { eventDaysRequirement, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
@@ -679,8 +680,11 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
 // A race before the main goal: tussendoel (its own 8-week block in the
 // plan, engine/raceBlock.ts) or only followed. Other goals are followed.
 function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
-  const { setGoalPlanRole, trainingGoals, goalMilestones } = useAppData();
+  const { setGoalPlanRole, trainingGoals, goalMilestones, sessionLogs } = useAppData();
   if (!isRaceGoal(goal)) return null;
+  const raceKm = goal.requirements.find((r) => r.kind === 'distance' && r.target?.unit === 'km')?.target?.amount;
+  const targetMin = goal.requirements.find((r) => r.kind === 'targetTime' && r.target?.unit === 'min')?.target?.amount;
+  const prediction = raceKm ? predictRace(sessionLogs, raceKm) : undefined;
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
   const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
   const role = goalPlanRole(goal, mainGoalId);
@@ -706,6 +710,17 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
           ? `Past in je plan naar je hoofddoel.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop.` : ''} De wedstrijd komt in je planning, de dagen ervoor blijven licht en de lange duurloop erna is kort.`
           : 'ASCEND volgt dit doel, maar je planning verandert er niet voor.'}
       </p>
+      {prediction?.predictedMinutes !== undefined && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+          Laatste testloop: {formatNumberNL(prediction.latest.km, 1)} km in {formatRaceTime(prediction.latest.minutes)}. Voorspelde {formatNumberNL(raceKm!, 1)} km: <span style={{ color: 'var(--color-gold)' }}>{formatRaceTime(prediction.predictedMinutes)}</span>
+          {targetMin ? `, je doel is ${formatRaceTime(targetMin)}` : ''}.
+          {prediction.change !== undefined && (Math.abs(prediction.change) < TEST_NOISE
+            ? ' Gelijk aan je vorige test: verschillen tot 3 à 4% zijn normale schommeling.'
+            : prediction.change < 0
+              ? ` ${Math.round(-prediction.change * 100)}% sneller dan je vorige test.`
+              : ` ${Math.round(prediction.change * 100)}% langzamer dan je vorige test.`)}
+        </p>
+      )}
     </div>
   );
 }
