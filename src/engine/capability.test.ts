@@ -52,8 +52,13 @@ describe('extractEvidenceFromLog', () => {
   });
 
   it('derives running pace (sustainable_output) only for cardio/running, never implied for hiking', () => {
-    const running = extractEvidenceFromLog(log({ type: 'cardio', durationMinutes: 30, outdoorData: { durationMinutes: 30, distanceKm: 5, source: 'manual' } }));
+    const running = extractEvidenceFromLog(log({ type: 'cardio', durationMinutes: 30, rpe: 7, outdoorData: { durationMinutes: 30, distanceKm: 5, source: 'manual' } }));
     expect(running).toContainEqual(expect.objectContaining({ key: { dimension: 'sustainable_output', discipline: 'running' }, measured: { amount: 6, unit: 'min_per_km' } }));
+    // An easy run is slow on purpose: no evidence about the pace you can hold.
+    const easy = extractEvidenceFromLog(log({ type: 'cardio', durationMinutes: 30, rpe: 3, outdoorData: { durationMinutes: 30, distanceKm: 4, source: 'manual' } }));
+    expect(easy.some((e) => e.key.dimension === 'sustainable_output')).toBe(false);
+    // Its distance does count, in kilometers, for a race goal.
+    expect(easy).toContainEqual(expect.objectContaining({ key: { dimension: 'endurance_duration', discipline: 'running' }, measured: { amount: 4, unit: 'km' } }));
 
     const hiking = extractEvidenceFromLog(log({ type: 'hiking', durationMinutes: 60, outdoorData: { durationMinutes: 60, distanceKm: 5, source: 'manual' } }));
     expect(hiking.some((e) => e.key.dimension === 'sustainable_output')).toBe(false);

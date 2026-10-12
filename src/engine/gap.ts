@@ -61,7 +61,7 @@ export function computeCapabilityGap(demand: CapabilityDemand, estimate: Capabil
       demand: demand.demand,
       currentEstimate,
       status: 'unknown',
-      confidence: estimate.confidence,
+      confidence: 'unknown',
       criticality: demand.criticality,
       explanation: 'Wat dit doel vraagt en wat er over jou bekend is, zijn niet rechtstreeks te vergelijken, geen tekortkoming, gewoon niet in dezelfde eenheid.',
     };
