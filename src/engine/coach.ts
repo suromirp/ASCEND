@@ -24,6 +24,10 @@ export function plannedRpeTop(template: SessionTemplate, date: string, program: 
   return m ? Number(m[2] ?? m[1]) : undefined;
 }
 
+// Planned at most this effort: an easy session. Feeling light there is the
+// point, never a sign it could be more.
+export const EASY_RPE_TOP = 4;
+
 function feltHeavy(log: SessionLog, template: SessionTemplate | undefined, program: Program | null | undefined): boolean {
   if (log.subjectiveFeel === 'worse') return true;
   if (log.rpe === undefined || !template) return false;
@@ -113,7 +117,7 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
   if (log.variant === 'full' && log.durationMinutes > 0 && log.durationMinutes < planned * 0.7) {
     return 'Korter dan gepland. Prima: iets doen is altijd beter dan niets.';
   }
-  if (log.rpe !== undefined && top !== undefined && log.rpe <= top - 3) {
+  if (log.rpe !== undefined && top !== undefined && top > EASY_RPE_TOP && log.rpe <= top - 3) {
     return 'Lichter dan gepland. Een goed teken: je wordt sterker. Blijf het rustig opbouwen.';
   }
   return 'Gedaan zoals gepland. Zo bouw je op.';

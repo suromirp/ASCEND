@@ -282,3 +282,16 @@ describe('catching up into a week that has its own long training', () => {
     expect(advice.effect).toContain('Wel korter, 45 minuten');
   });
 });
+
+describe('LIGHT-TWICE', () => {
+  it('stays quiet for easy sessions, where light is the point', async () => {
+    const { buildDefaultProgramData } = await import('../data/defaultProgram');
+    const { templates: real, program } = buildDefaultProgramData();
+    const lg = (id: string, templateId: string, date: string, rpe: number): SessionLog => ({ id, templateId, type: real.find((t) => t.id === templateId)!.type, completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 60, rpe, source: 'manual' });
+    const base = { templates: real, program, asOf: '2026-10-12' };
+    const easy = [lg('a', 'tpl_long_run', '2026-10-04', 2), lg('b', 'tpl_long_run', '2026-10-12', 2)];
+    expect(computeAdvice(inputs({ ...base, logs: easy })).some((a) => a.ruleId === 'LIGHT-TWICE')).toBe(false);
+    const hard = [lg('c', 'tpl_hill_intervals', '2026-10-03', 3), lg('d', 'tpl_hill_intervals', '2026-10-10', 3)];
+    expect(computeAdvice(inputs({ ...base, logs: hard })).some((a) => a.ruleId === 'LIGHT-TWICE')).toBe(true);
+  });
+});

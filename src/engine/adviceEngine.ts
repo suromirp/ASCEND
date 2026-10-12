@@ -28,6 +28,7 @@ import { respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalB
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -275,8 +276,14 @@ function tooLightAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
   const advice: Advice[] = [];
   for (const [templateId, logs] of byTemplate) {
     const lastTwo = [...logs].sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(0, 2);
+    // An easy session (planned at most RPE 4: easy run, long run) is meant
+    // to feel light; that's no sign it could be more (production feedback:
+    // "lange duurloop voelde twee keer licht" after a zone 2 long run).
+    const template = templateById.get(templateId);
+    const top = template ? plannedRpeTop(template, lastTwo[0]?.completedDate ?? inputs.asOf, inputs.program) : undefined;
+    if (top !== undefined && top <= EASY_RPE_TOP) continue;
     if (lastTwo.length < 2 || !lastTwo.every((l) => l.rpe !== undefined && l.rpe <= 3)) continue;
-    const name = templateById.get(templateId)?.name ?? 'Deze sessie';
+    const name = template?.name ?? 'Deze sessie';
     advice.push({
       id: `light:${lastTwo[0].id}`,
       trigger: 'session_too_light',

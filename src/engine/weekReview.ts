@@ -21,6 +21,7 @@ import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
 import { durationLabel } from './sessionBrief';
 import { isIllnessDay } from './illness';
+import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
 
 export interface WeekReview {
@@ -125,7 +126,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     const t = byId.get(l.templateId);
     const top = t ? plannedRpeTop(t, l.completedDate, program) : undefined;
     if (top !== undefined && l.rpe >= top + 2) heavier++;
-    else if (top !== undefined && l.rpe <= top - 3) lighter++;
+    else if (top !== undefined && top > EASY_RPE_TOP && l.rpe <= top - 3) lighter++;
     else if (l.subjectiveFeel === 'worse') heavier++;
   }
   const painCount = new Map<string, number>();
