@@ -365,6 +365,9 @@ export function SettingsPage() {
                 : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij ASCEND, dan rekent ASCEND de fases terug tot die dag.'}
             </p>
             <PhaseEditor goalDate={goalDate} />
+            <button onClick={() => navigate('/ascend/doelen')} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+              Doelen en tussendoelen beheren
+            </button>
             <div className="flex flex-col gap-2">
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
               <OptionList
