@@ -38,12 +38,14 @@ export function MonthCalendar({
     const map = new Map<string, PlannedSession[]>();
     for (const s of plannedSessions) {
       if (s.scheduledDate < start || s.scheduledDate > end) continue;
+      // A rest day given up for a training is gone, not a red "skipped".
+      if (s.status === 'skipped' && isRest(s)) continue;
       const list = map.get(s.scheduledDate);
       if (list) list.push(s);
       else map.set(s.scheduledDate, [s]);
     }
     return map;
-  }, [plannedSessions, start, end]);
+  }, [plannedSessions, start, end, isRest]);
 
   const cells = useMemo(() => {
     const firstWeekday = isoWeekday(start); // 1 (Mon) .. 7 (Sun)
