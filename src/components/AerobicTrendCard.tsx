@@ -36,14 +36,14 @@ export function AerobicTrendCard() {
         <TrendLineChart points={trend.points} formatValue={(v) => formatPace(-v)} />
       ) : (
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-          {trend.runs === 0 ? 'Nog geen loopjes om te vergelijken.' : 'Nog één week met loopjes.'} Na twee weken zie je hier je lijn.
+          {trend.runs === 0 ? 'Nog geen loopjes om te vergelijken.' : `${trend.runs === 1 ? 'Eén loopje' : `${trend.runs} loopjes`}, nog maar één week.`} Na twee weken met loopjes zie je hier je lijn.
         </p>
       )}
       {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}
       <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Telt mee: vlakke rustige loopjes met afstand, tijd en gemiddelde hartslag ingevuld
-        {hasZones ? ', met een hartslag in zone 2' : ''}.
-        {trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje viel' : 'loopjes vielen'} buiten zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}
+        {hasZones ? ', met een hartslag in zone 2 of een beetje eronder' : ''}.
+        {trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}
         {!hasZones ? ' Vul bij Meer, Training je hartslag in, dan telt alleen zone 2.' : ''}
       </p>
     </Card>

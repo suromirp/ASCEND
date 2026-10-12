@@ -28,12 +28,13 @@ export interface AerobicTrend {
   referenceHr: number;
   points: (TrendPoint & { paceSec: number; runs: number })[]; // per week, oldest first
   runs: number;
-  outsideZone: number; // easy runs left out because the heart rate was outside zone 2
+  outsideZone: number; // easy runs left out: heart rate above zone 2, or far below it
   changeSec?: number; // last 2 weeks vs the 2 weeks a month earlier; negative = faster
 }
 
 const WEEKS = 12;
 const MAX_CLIMB_PER_KM = 15;
+const BELOW_ZONE_BPM = 15;
 // Below this a change is within the normal day-to-day noise.
 export const MEANINGFUL_CHANGE_SEC = 5;
 
@@ -59,7 +60,11 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
     if ((d?.elevationGainM ?? 0) / km > MAX_CLIMB_PER_KM) return [];
     return [{ date: l.completedDate, km, paceSec: (minutes * 60) / km, bpm }];
   });
-  const inZone = band ? candidates.filter((c) => c.bpm >= band[0] && c.bpm <= band[1]) : candidates;
+  // A little under zone 2 still counts (production feedback: two easy long
+  // runs at 137 bpm, run with the watch on the old max-HR zones, left the
+  // card empty): converted to the reference heart rate like the rest, a
+  // bit less precise the further off. Above zone 2 is no easy run anymore.
+  const inZone = band ? candidates.filter((c) => c.bpm >= band[0] - BELOW_ZONE_BPM && c.bpm <= band[1]) : candidates;
   const sortedHr = [...inZone.map((c) => c.bpm)].sort((a, b) => a - b);
   const referenceHr = band ? Math.round((band[0] + band[1]) / 2) : sortedHr[Math.floor(sortedHr.length / 2)] ?? 0;
 
