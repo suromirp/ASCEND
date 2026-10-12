@@ -44,13 +44,14 @@ describe('resolveEffectiveFullDuration — weeklyProgression cross-phase carry-o
     expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(4), program)).toBe(27);
   });
 
-  it('Test PROGRESSION-CYCLE-CARRYOVER: phase 2 (weeks 5-8) scales the same shape up by 8% instead of resetting to phase 1\'s numbers', () => {
+  it('Test PROGRESSION-CYCLE-CARRYOVER: phase 2 (Opbouw, weeks 5-8) builds the runs on by 10% instead of resetting to phase 1\'s numbers', () => {
     const program = fourPhaseProgram();
-    // Week 5 = weekInPhase 1 again (phase 2), but weekInProgram 5 -> cycleIndex 1 -> x1.08.
-    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(5), program)).toBe(Math.round(30 * 1.08));
-    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(6), program)).toBe(Math.round(35 * 1.08));
-    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(7), program)).toBe(Math.round(40 * 1.08));
-    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(8), program)).toBe(Math.round(27 * 1.08));
+    // Week 5 = weekInPhase 1 again, but the first wave of Opbouw: the
+    // running build-up (engine/programLayout.ts#runBuildMultiplier), x1.1.
+    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(5), program)).toBe(Math.round(30 * 1.1));
+    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(6), program)).toBe(Math.round(35 * 1.1));
+    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(7), program)).toBe(Math.round(40 * 1.1));
+    expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(8), program)).toBe(Math.round(27 * 1.1));
     // Never identical to phase 1's own numbers — this is the exact regression this fix closes.
     expect(resolveEffectiveFullDuration(tplEasyRun, mondayOfWeek(5), program)).not.toBe(30);
   });

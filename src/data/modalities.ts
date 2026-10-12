@@ -427,6 +427,7 @@ export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
   tpl_bike: CYCLING_MODALITIES,
   tpl_easy_run: TUESDAY_MODALITIES,
   // Tempo and race: running only, a ride is no threshold run.
+  tpl_strides_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_tempo_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_race: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor'),
   tpl_test_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),

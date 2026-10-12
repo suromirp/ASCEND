@@ -281,6 +281,7 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     "url": "https://www.jospt.org/doi/10.2519/jospt.2014.5164",
     "category": "wetenschap",
     "usedIn": [
+      "Onderzoek: opbouw hardlopen",
       "Onderzoek: trainingsopbouw voor de GR5",
       "Onderzoek: afdalen, tocht, herstel, fietsen, marathon en kracht"
     ]
@@ -291,6 +292,7 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12421110/",
     "category": "wetenschap",
     "usedIn": [
+      "Onderzoek: opbouw hardlopen",
       "Onderzoek: trainingsopbouw voor de GR5"
     ]
   },

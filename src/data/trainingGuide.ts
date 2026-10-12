@@ -50,6 +50,7 @@ const MACROFACTOR_DELOAD: GuideSource = { label: 'MacroFactor, deload: eerste of
 
 const PUBMED_CONCURRENT_TRAINING: GuideSource = { label: 'PubMed, concurrent kracht- en duurtraining', url: 'https://pubmed.ncbi.nlm.nih.gov/28288187/' };
 const PUBMED_INJURY_LOAD_1: GuideSource = { label: 'PubMed, trainingsbelasting en hardloopblessures', url: 'https://pubmed.ncbi.nlm.nih.gov/25010379/' };
+const FRANDSEN_SPIKES: GuideSource = { label: 'Frandsen e.a. 2025, te grote sprong in één loop (BJSM)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12421110/' };
 const PUBMED_INJURY_LOAD_2: GuideSource = { label: 'PubMed, trainingsbelasting en hardloopblessures (vervolg)', url: 'https://pubmed.ncbi.nlm.nih.gov/34749417/' };
 const PUBMED_INTENSITY_DISTRIBUTION: GuideSource = { label: 'PubMed, trainingsintensiteit bij afstandslopers', url: 'https://pubmed.ncbi.nlm.nih.gov/PMC6253751/' };
 const PUBMED_TALK_TEST: GuideSource = { label: 'PubMed, talk test review', url: 'https://pubmed.ncbi.nlm.nih.gov/28709155/' };
@@ -103,6 +104,29 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     ],
     gear: ['MacroFactor Workouts', 'normale gymuitrusting', 'water', 'geschikt schoeisel'],
     sources: [ACSM, MACROFACTOR_LOG, MACROFACTOR_PROGRESSION, MACROFACTOR_MISSED, MACROFACTOR_DELOAD, PUBMED_RUNNING_ECONOMY],
+  },
+
+  tpl_strides_run: {
+    subtitle: 'Hardlopen • Extra loop',
+    registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'In de Opbouw zet ASCEND een vierde loop in je week als de weken ervoor goed gingen: bijna alles gedaan, geen pijn, niet steeds zwaarder dan gepland. Zo groeit je weekvolume, terwijl geen enkele loop meer dan 10% boven je langste van de afgelopen maand komt. Juist zo\'n sprong in één loop hing samen met meer blessures, het weektotaal niet.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          'Rustig hardlopen in zone 2, je kunt hele zinnen praten.',
+          'Aan het eind 6 versnellingen van 20 seconden: rustig optrekken tot ongeveer je 5 km-tempo.',
+          'Ontspannen schouders, snelle korte passen, niet sprinten.',
+          'Ertussen wandelen of heel rustig joggen tot je weer op adem bent.',
+        ],
+        note: 'Moe of stijf? Laat de versnellingen weg en loop alleen het rustige deel. Gaat het een paar weken minder, dan haalt ASCEND deze loop vanzelf weer uit je week.',
+      },
+    ],
+    gear: ['Garmin met borstband', 'hardloopschoenen'],
+    sources: [PUBMED_INJURY_LOAD_1, FRANDSEN_SPIKES],
   },
 
   tpl_tempo_run: {

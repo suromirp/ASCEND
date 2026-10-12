@@ -35,7 +35,7 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   },
   [PHASE_OPBOUW]: {
     name: 'OPBOUW',
-    description: 'Langer rustig duurwerk, meer helling en de lange duurloop groeit verder. Dezelfde golf van vier weken.',
+    description: 'Je lopen bouwen echt op: de lange duurloop groeit elk blok ongeveer 10% tot rond de 2 uur, de rustige loop wordt langer, en als het goed gaat komt er een vierde loop bij. Dezelfde golf van vier weken.',
   },
   [PHASE_BERG]: {
     name: 'BERGCAPACITEIT',
@@ -75,14 +75,17 @@ export function weeksUntilGoal(startDate: string, goalDate: string): number {
 }
 
 // The user's own phase lengths (Settings → Training → Programma). Each one
-// is optional: what is not set follows the automatic layout. The basis is
-// never set directly, it takes whatever weeks are left before the rest.
-export type AdjustablePhaseId = typeof PHASE_OPBOUW | typeof PHASE_BERG | typeof PHASE_EXPEDITIE | typeof PHASE_TAPER;
+// is optional: what is not set follows the automatic layout. Either the
+// basis or the Opbouw fills the weeks that are left: normally the basis,
+// but when you set the basis yourself ("start de opbouw eerder"), the
+// Opbouw takes the rest instead.
+export type AdjustablePhaseId = typeof PHASE_BASIS | typeof PHASE_OPBOUW | typeof PHASE_BERG | typeof PHASE_EXPEDITIE | typeof PHASE_TAPER;
 export type PhaseLengthOverrides = Partial<Record<AdjustablePhaseId, number>>;
 
 // Taper in single weeks (1 to 3), the other phases in whole waves of four
 // weeks so the rest week stays the fourth week.
 export const PHASE_LENGTH_LIMITS: Record<AdjustablePhaseId, { step: number; min: number; max: number }> = {
+  [PHASE_BASIS]: { step: WAVE_LENGTH, min: WAVE_LENGTH, max: 24 },
   [PHASE_OPBOUW]: { step: WAVE_LENGTH, min: 0, max: 24 },
   [PHASE_BERG]: { step: WAVE_LENGTH, min: 0, max: 16 },
   [PHASE_EXPEDITIE]: { step: WAVE_LENGTH, min: 0, max: 8 },
@@ -109,9 +112,16 @@ export function layoutPhasesForGoal(startDate: string, goalDate: string, overrid
   rest -= expeditie;
   const berg = pick(PHASE_BERG, Math.min(rest >= 20 ? 8 : WAVE_LENGTH, rest), rest);
   rest -= berg;
-  const opbouw = pick(PHASE_OPBOUW, Math.min(rest >= 24 ? 12 : rest >= 12 ? 8 : WAVE_LENGTH, rest), rest);
-  rest -= opbouw;
-  const basis = rest;
+  let opbouw: number;
+  let basis: number;
+  if (overrides[PHASE_BASIS] !== undefined) {
+    // Your own basis: the Opbouw runs from its end up to Bergcapaciteit.
+    basis = Math.min(rest, clampLength(PHASE_BASIS, overrides[PHASE_BASIS]!));
+    opbouw = rest - basis;
+  } else {
+    opbouw = pick(PHASE_OPBOUW, Math.min(rest >= 24 ? 12 : rest >= 12 ? 8 : WAVE_LENGTH, rest), rest);
+    basis = rest - opbouw;
+  }
   const counts: [string, number][] = [
     [PHASE_BASIS, basis],
     [PHASE_OPBOUW, opbouw],
@@ -171,6 +181,45 @@ export function cycleMultiplier(weekInProgram: number): number {
   return Math.min(1 + CYCLE_GROWTH_PER_REPEAT * cycleIndex, CYCLE_GROWTH_CAP);
 }
 
+// --- the running build-up in Opbouw -----------------------------------------
+//
+// In the basis every template follows the same slow growth (above), which
+// stops at 1.3x around week 17. In Opbouw the long run and the easy run
+// build on: every wave of four weeks 10% more than the wave before, until
+// a peak (long run about 2 hours). Why 10% per wave: the heaviest week of
+// a wave then sits at most 10% above the heaviest week four weeks earlier,
+// which is the longest run of the previous 30 days. Over 10% raised the
+// injury rate (Frandsen et al. 2025, 5,205 runners); the week total may
+// grow faster without that risk, which is what the extra run in Opbouw is
+// for (engine/extraRun.ts). After Opbouw the runs hold that level. The
+// per-session cap in engine/substitutions.ts still guards every session.
+export const RUN_BUILD_PER_WAVE = 0.1;
+export const RUN_BUILD_PEAK_MINUTES: Record<string, number> = {
+  tpl_long_run: 120,
+  tpl_easy_run: 55,
+};
+
+function opbouwStartWeek(program: Program): { start: number; weeks: number } | undefined {
+  let week = 1;
+  for (const p of program.phases) {
+    if (p.id === PHASE_OPBOUW) return { start: week, weeks: p.weekCount };
+    week += p.weekCount;
+  }
+  return undefined;
+}
+
+export function runBuildMultiplier(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, heaviestStepMinutes: number): number {
+  const basic = cycleMultiplier(position.weekInProgram);
+  const peak = RUN_BUILD_PEAK_MINUTES[template.id];
+  const opbouw = opbouwStartWeek(program);
+  if (!peak || !opbouw || opbouw.weeks === 0 || position.weekInProgram < opbouw.start) return basic;
+  const lastWave = Math.floor((opbouw.weeks - 1) / WAVE_LENGTH);
+  const wave = Math.min(Math.floor((position.weekInProgram - opbouw.start) / WAVE_LENGTH), lastWave);
+  const from = opbouw.start > 1 ? cycleMultiplier(opbouw.start - 1) : 1;
+  const built = from * Math.pow(1 + RUN_BUILD_PER_WAVE, wave + 1);
+  return Math.max(basic, Math.min(built, peak / heaviestStepMinutes));
+}
+
 export interface ProgressionTarget {
   step: WeeklyProgressionStep;
   minutes: number;
@@ -203,7 +252,8 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
   const taper = taperFactor(position);
   const step = generic.find((s) => s.weekInPhase === (taper ? 2 : wave));
   if (!step) return undefined;
-  const scaled = step.targetMinutes * cycleMultiplier(position.weekInProgram);
+  const heaviest = Math.max(...generic.map((s) => s.targetMinutes));
+  const scaled = step.targetMinutes * runBuildMultiplier(template, program, position, heaviest);
   if (taper) {
     const minutes = Math.max(15, Math.round((scaled * taper) / 5) * 5);
     return { step: { ...step, note: position.weekInPhase === position.phase.weekCount ? 'Laatste week voor de start, kort en fris' : 'Minder volume, zelfde tempo' }, minutes, phaseSteps: generic };

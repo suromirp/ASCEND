@@ -100,6 +100,24 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Herstel tussen zware dagen', why: 'Bewust rustig, zodat Benen A en de heuvels er niet onder lijden.' },
     ],
   },
+  tpl_strides_run: {
+    summary: (repeats) => `Rustig hardlopen, met aan het eind ${repeats ?? 6} versnellingen van 20 seconden.`,
+    structure: [
+      { kind: 'run', label: 'Rustig hardlopen', rest: true, intensity: 2, detail: 'Hele zinnen kunnen praten' },
+      {
+        repeatsByWeek: { 1: 6, 2: 6, 3: 6, 4: 4 },
+        steps: [
+          { kind: 'work', label: 'Versnelling', seconds: 20, intensity: 3, detail: 'Soepel snel, ongeveer je 5 km-tempo, niet sprinten' },
+          { kind: 'recover', label: 'Op adem komen', seconds: 60, intensity: 1, detail: 'Wandelen of heel rustig joggen' },
+        ],
+      },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Weekvolume', why: 'Een extra loop maakt je week langer zonder dat één loop te veel groeit.' },
+      { label: 'Loopvaardigheid', why: 'Korte, soepele versnellingen leren je benen sneller te lopen zonder dat het zwaar wordt.' },
+    ],
+  },
   tpl_tempo_run: {
     summary: (repeats) => `Rustig inlopen, ${repeats ?? 2} blokken rond je drempel, rustig uitlopen.`,
     structure: [
