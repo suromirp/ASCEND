@@ -128,6 +128,29 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sources: [PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST],
   },
 
+  tpl_test_run: {
+    subtitle: 'Hardlopen • Meetpunt',
+    registration: 'ASCEND: alleen de 5 km zelf. Afstand 5, de tijd van de test, en de zwaarte die je voelde (meestal 8 of 9).',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'Een rustig loopje zegt niets over je wedstrijdtempo. Een 5 km op tijd wel: daaruit rekent ASCEND hoe haalbaar je doeltijd is, en de tweede test laat zien wat je tempolopen opleverden.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          'Kies een vlakke route of een atletiekbaan.',
+          '10 minuten inlopen met 2 tot 3 korte versnellingen.',
+          '5 km zo snel als je gelijkmatig volhoudt. Start niet te snel: de laatste kilometer mag het zwaarst voelen.',
+          'Rustig uitlopen.',
+        ],
+        note: 'Vul bij het afvinken alleen de test zelf in, niet het in- en uitlopen. Anders klopt je tempo niet.',
+      },
+    ],
+    gear: ['Garmin', 'hardloopschoenen'],
+    sources: [PUBMED_INJURY_LOAD_1],
+  },
+
   tpl_race: {
     subtitle: 'Hardlopen • Wedstrijd',
     registration: 'ASCEND: je tijd, afstand en gemiddelde hartslag. Dit is je nieuwe meetpunt.',

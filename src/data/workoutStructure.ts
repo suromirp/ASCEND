@@ -119,6 +119,19 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Aerobe basis', why: 'Telt ook mee voor je uithouding richting de GR5.' },
     ],
   },
+  tpl_test_run: {
+    summary: () => 'Inlopen, 5 km zo snel als je gelijkmatig volhoudt, uitlopen. Een meetpunt, geen wedstrijd.',
+    structure: [
+      { kind: 'warmup', label: 'Inlopen', minutes: 10, intensity: 2, detail: 'Met 2 tot 3 korte versnellingen' },
+      { kind: 'work', label: '5 km test', rest: true, intensity: 4, detail: 'Gelijkmatig: de laatste km mag het zwaarst voelen, niet de eerste' },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 8, intensity: 2 },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Je echte tempo', why: 'Daarop stemt ASCEND je doeltijd en je tempolopen af.' },
+      { label: 'Vooruitgang', why: 'De tweede test laat zien wat de tempolopen opleverden.' },
+    ],
+  },
   tpl_race: {
     summary: () => 'Je wedstrijd. Goed inlopen, rustig starten, in de tweede helft versnellen als het gaat.',
     structure: [

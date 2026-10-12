@@ -102,6 +102,8 @@ export function buildSessionBrief(
         const block = work && 'repeat' in work ? work.steps.find((st) => st.intensity === 3) : undefined;
         return [total, { value: work && 'repeat' in work && block ? `${work.repeat} × ${Math.round(block.seconds / 60)} min` : 'Blokken', label: 'op drempel' }, { value: 'Zone 3', label: 'korte zinnen' }];
       }
+      case 'test':
+        return [{ value: '5 km', label: 'op tijd' }, { value: 'Gelijkmatig', label: 'niet te snel starten' }, { value: 'Vlak', label: 'route' }];
       case 'race':
         return [total, { value: 'Inlopen', label: 'met versnellingen' }, { value: 'Rustig starten', label: 'eerste km' }];
       case 'strength':

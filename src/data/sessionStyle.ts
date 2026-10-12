@@ -4,7 +4,7 @@
 // stop or ease off during the training itself (audit 2026-10, report 6).
 // Keyed by SessionTemplate.id, like data/workoutStructure.ts.
 
-export type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race';
+export type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test';
 
 export interface SessionStyle {
   styleLabel: string; // after the sport: "HARDLOPEN · BERGOP"
@@ -49,6 +49,12 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     purpose: 'Blokken rond je drempel: het tempo dat je lang kunt volhouden schuift op, richting je wedstrijd.',
     stopSignals: ['je in de blokken niet eens korte zinnen meer kunt zeggen: je loopt te hard', 'je benen nog zwaar zijn van de beentraining: loop de korte versie'],
     facts: 'tempo',
+  },
+  tpl_test_run: {
+    styleLabel: 'test',
+    purpose: 'Een meetpunt: 5 km zo snel als je gelijkmatig volhoudt. Daarna weet ASCEND je echte tempo.',
+    stopSignals: ['je scherpe pijn voelt: stoppen, de test kan een andere keer'],
+    facts: 'test',
   },
   tpl_race: {
     styleLabel: 'wedstrijd',
