@@ -54,6 +54,9 @@ describe('race block', () => {
     expect(c.add).toEqual([expect.objectContaining({ templateId: 'tpl_race', scheduledDate: '2027-03-20', plannedMinutes: 45 })]);
     // Race day: the hill intervals are out. Lower A on Wednesday (3 days before) stays.
     expect(c.remove.map((s) => s.templateId)).toEqual(['tpl_hill_intervals']);
+    // Race week before the race: a taper, the short versions.
+    expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_upper_a', scheduledDate: '2027-03-16', plannedMinutes: 45 }));
+    expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_easy_run', scheduledDate: '2027-03-18', plannedMinutes: 20 }));
     // The day after: the long run short.
     expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_long_run', scheduledDate: '2027-03-21', plannedMinutes: 45 }));
     // Idempotent: with the race there and the changes applied, nothing more.

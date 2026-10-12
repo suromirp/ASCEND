@@ -105,10 +105,14 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     structure: [
       { kind: 'warmup', label: 'Inlopen', minutes: 10, intensity: 2 },
       {
+        // Daniels: threshold work per session at most ~10% of the weekly
+        // running volume, as cruise intervals of about 5:1 work to rest
+        // (docs/onderzoek, Tussendoel hardloopwedstrijd). At ~20 km a week
+        // that is 14 to 21 minutes on threshold.
         repeatsByWeek: { 1: 2, 2: 2, 3: 3, 4: 2 },
         steps: [
-          { kind: 'work', label: 'Drempeltempo', minutes: 8, intensity: 3, detail: 'Comfortabel zwaar, korte zinnen lukken nog' },
-          { kind: 'recover', label: 'Rustig', minutes: 2, intensity: 2, detail: 'Rustig doorlopen' },
+          { kind: 'work', label: 'Drempeltempo', minutes: 7, intensity: 3, detail: 'Comfortabel zwaar, korte zinnen lukken nog' },
+          { kind: 'recover', label: 'Rustig', seconds: 90, intensity: 2, detail: 'Rustig doorlopen' },
         ],
       },
       { kind: 'cooldown', label: 'Uitlopen', minutes: 8, intensity: 2 },

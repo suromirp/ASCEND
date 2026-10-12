@@ -14,6 +14,11 @@
 // - the race is put in the plan on its date;
 // - on race day nothing else, and no hill intervals or heavy leg strength
 //   in the two days before it;
+// - race week is a short taper: the trainings before the race in that week
+//   are their short version (volume down, intensity and frequency kept;
+//   Bosquet et al. 2007; for 5-10 km a taper of about 1 to 2 weeks with the
+//   hardest session 5 to 10 days before the race, which is the last tempo
+//   run on the Thursday of the week before);
 // - the day after, the long run (or mountain hike) is the short version.
 // Everything else of the main plan stays as it is. Outside a block a tempo
 // run goes back to an easy run, so moving or removing the goal undoes it.
@@ -127,8 +132,13 @@ export function applyRaceBlocks(
         remove.push(s);
         continue;
       }
-      // The day after: the long training short.
+      // Race week, before the race: the short version (a taper).
       const short = byId.get(current.templateId)?.durationVariants.short;
+      if (s.scheduledDate >= b.raceWeek && s.scheduledDate < b.raceDate && short && current.plannedMinutes !== short) {
+        update.set(s.id, { ...current, plannedMinutes: short });
+        continue;
+      }
+      // The day after: the long training short.
       if (s.scheduledDate === addDays(b.raceDate, 1) && AFTER_RACE_SHORT.includes(current.templateId) && short && current.plannedMinutes !== short) {
         update.set(s.id, { ...current, plannedMinutes: short });
       }
