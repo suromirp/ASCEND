@@ -197,3 +197,39 @@ describe('your own phase lengths', () => {
     expect(week9.step.backpackKg).toBe(6);
   });
 });
+
+describe('starting Opbouw earlier, and the running build-up in it', () => {
+  // The user's own program: week 1 on 28 Sep 2026, GR5 on 1 Aug 2027.
+  const start = '2026-09-28';
+  const goal = '2027-08-01';
+
+  it('a set basis is fixed, and the Opbouw fills the rest up to Bergcapaciteit', () => {
+    const phases = layoutPhasesForGoal(start, goal, { [PHASE_BASIS]: 4 })!;
+    expect(phases.map((p) => [p.id, p.weekCount])).toEqual([
+      ['phase_1', 4], ['phase_2', 26], ['phase_3', 8], ['phase_4', 4], ['phase_taper', 2],
+    ]);
+  });
+
+  it('the long run builds about 10% per wave in Opbouw up to about 2 hours, then holds', () => {
+    const program: Program = { id: 'p', name: 'P', startDate: start, phases: layoutPhasesForGoal(start, goal, { [PHASE_BASIS]: 4 })! };
+    const long = tpl('tpl_long_run');
+    // The heaviest week (3rd) of every wave.
+    const peaks = [0, 1, 2, 3, 4, 5, 6].map((w) => progressionTarget(long, program, addDays(start, (w * 4 + 2) * 7))!.minutes);
+    expect(peaks).toEqual([70, 77, 85, 93, 102, 113, 120]);
+    // At most 10% (plus rounding to whole minutes) over the wave before.
+    for (let i = 1; i < peaks.length; i++) expect(peaks[i]).toBeLessThanOrEqual(peaks[i - 1] * 1.1 + 1);
+    // Bergcapaciteit (long Sunday kept as a run): holds the level.
+    const berg = progressionTarget(long, program, addDays(start, (30 + 2) * 7))!.minutes;
+    expect(berg).toBe(120);
+    // The easy run stops at about 55 minutes.
+    expect(progressionTarget(tpl('tpl_easy_run'), program, addDays(start, (24 + 2) * 7))!.minutes).toBe(55);
+    // Strength and hills are not part of it.
+    expect(progressionTarget(tpl('tpl_hill_intervals'), program, addDays(start, (24 + 2) * 7))!.minutes).toBe(Math.round(45 * 1.3));
+  });
+
+  it('without a running build-up phase the old growth is untouched', () => {
+    const program = programToGoal();
+    // Week 3 of the program, in the basis.
+    expect(progressionTarget(tpl('tpl_long_run'), program, addDays(START, 2 * 7))!.minutes).toBe(70);
+  });
+});

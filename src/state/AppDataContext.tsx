@@ -122,6 +122,8 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
       settings.enabledSports,
       settings.programPhaseOverrides,
       settings.restDay,
+      // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
+      settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too.
       goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length]),
     ]);

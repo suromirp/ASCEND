@@ -342,6 +342,29 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek' },
       ],
     },
+    // De vierde loop in de Opbouw (engine/extraRun.ts): ASCEND zet hem erin
+    // als de weken ervoor goed gingen. Geen vaste dag: hij komt op de dag
+    // die het verst van de zware beendagen ligt.
+    {
+      id: 'tpl_strides_run',
+      name: 'Rustige loop met versnellingen',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Extra rustige kilometers, plus soepel snel leren lopen',
+      durationVariants: { full: 35, short: 25 },
+      cardioTarget: { zone: 'RPE 3-4, de versnellingen soepel snel' },
+      notes:
+        'Rustig in zone 2, net als je rustige duurloop. Aan het eind 6 versnellingen van 20 seconden: rustig optrekken tot ongeveer je 5 km-tempo, ontspannen, niet sprinten. Ertussen wandelen of heel rustig joggen tot je weer op adem bent. Een extra loop maakt je week langer zonder dat één loop te lang wordt.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 30, note: 'Extra loop' },
+        { weekInPhase: 2, targetMinutes: 35, note: 'Extra loop' },
+        { weekInPhase: 3, targetMinutes: 35, note: 'Extra loop' },
+        { weekInPhase: 4, targetMinutes: 25, note: 'Rustweek' },
+      ],
+    },
     // Een meetpunt in het tussendoelblok (engine/raceBlock.ts): de week
     // ervoor en vier weken voor de wedstrijd, op de plek van de rustige of
     // de tempoloop.

@@ -1,6 +1,6 @@
 import { useAppData } from '../state/AppDataContext';
 import { PHASE_COLOR } from '../data/phaseColors';
-import { PHASE_BASIS, PHASE_BERG, PHASE_LENGTH_LIMITS, type AdjustablePhaseId, type PhaseLengthOverrides } from '../engine/programLayout';
+import { PHASE_BASIS, PHASE_BERG, PHASE_OPBOUW, PHASE_LENGTH_LIMITS, type AdjustablePhaseId, type PhaseLengthOverrides } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { raceBlocks } from '../engine/raceBlock';
 
@@ -30,8 +30,15 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
 
   function change(id: AdjustablePhaseId, current: number, direction: 1 | -1) {
     const { step, min, max } = PHASE_LENGTH_LIMITS[id];
-    const value = Math.min(max, Math.max(min, current + direction * step));
-    void save({ ...overrides, [id]: value });
+    // To the next whole block: a basis of 14 weeks goes to 12 or 16.
+    const snapped = direction < 0 ? Math.ceil(current / step) * step - step : Math.floor(current / step) * step + step;
+    const value = Math.min(max, Math.max(min, snapped));
+    // The basis and the Opbouw share the weeks that are left: the one you
+    // set is fixed, the other fills the rest.
+    const next: PhaseLengthOverrides = { ...overrides, [id]: value };
+    if (id === PHASE_BASIS) delete next[PHASE_OPBOUW];
+    if (id === PHASE_OPBOUW) delete next[PHASE_BASIS];
+    void save(next);
   }
 
   const hikeFrom = rows.find((r) => r.phase.id === PHASE_BERG)?.from;
@@ -63,7 +70,8 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
 
       <div className="flex flex-col">
         {rows.map((r) => {
-          const adjustable = goalDate && r.phase.id !== PHASE_BASIS && r.phase.id in PHASE_LENGTH_LIMITS ? (r.phase.id as AdjustablePhaseId) : undefined;
+          const adjustable = goalDate && r.phase.id in PHASE_LENGTH_LIMITS ? (r.phase.id as AdjustablePhaseId) : undefined;
+          const fills = goalDate && (overrides[PHASE_BASIS] !== undefined ? r.phase.id === PHASE_OPBOUW : r.phase.id === PHASE_BASIS);
           const isNow = weekNow >= r.startWeek && weekNow < r.startWeek + r.phase.weekCount;
           return (
             <div key={r.phase.id} className="flex items-center justify-between gap-3 border-b py-2.5" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -77,7 +85,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
                   <p key={b.goalId} className="text-[11px]" style={{ color: 'var(--color-gold)' }}>⚑ {b.name}, {formatDateNL(b.raceDate)}</p>
                 ))}
                 <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatDateNL(r.from)} tot {formatDateNL(r.until)}{r.phase.id === PHASE_BASIS && goalDate ? ' · vult aan' : ''}
+                  {formatDateNL(r.from)} tot {formatDateNL(r.until)}{fills ? ' · vult aan' : ''}
                 </p>
               </div>
               {adjustable ? (
@@ -96,7 +104,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
 
       <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         {goalDate
-          ? `Je hoeft hier niets te kiezen: ASCEND rekent de fases uit. Naar de start is 2 weken, het best onderbouwde afbouwen. Bergcapaciteit en Expeditieklaar geven de tijd om hoogtemeters en rugzak stap voor stap op te bouwen. Wil je eerder opbouwen, maak dan de Opbouw langer; de basis krijgt wat overblijft. Opbouw, Bergcapaciteit en Expeditieklaar gaan per blok van vier weken, zodat de rustweek op zijn plek blijft.${hikeFrom && settings.longSundaySession !== 'run' ? ` De bergtocht op zondag begint op ${formatDateNL(hikeFrom)}.` : ''}`
+          ? `Je hoeft hier niets te kiezen: ASCEND rekent de fases uit. Naar de start is 2 weken, het best onderbouwde afbouwen. Bergcapaciteit en Expeditieklaar geven de tijd om hoogtemeters en rugzak stap voor stap op te bouwen. Wil je eerder opbouwen, maak dan de basis korter: de Opbouw begint eerder en loopt door tot Bergcapaciteit. In de Opbouw groeien je lange duurloop en je rustige loop elk blok verder, en als het goed gaat komt er een vierde loop bij. De fases gaan per blok van vier weken, zodat de rustweek op zijn plek blijft.${hikeFrom && settings.longSundaySession !== 'run' ? ` De bergtocht op zondag begint op ${formatDateNL(hikeFrom)}.` : ''}`
           : 'Geef je hoofddoel een datum om de fases zelf in te stellen.'}
       </p>
       {goalDate && Object.keys(overrides).length > 0 && (
