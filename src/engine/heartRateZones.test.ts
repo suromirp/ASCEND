@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { zoneBpm, zoneText } from './heartRateZones';
 
 describe('heart rate zones', () => {
-  it('uses LTHR first (Friel running zones)', () => {
-    expect(zoneBpm(2, { lthr: 178, maxHr: 204 })).toEqual([151, 158]);
-    expect(zoneText(2, 'zone 2', { lthr: 178 })).toBe('zone 2, 151 tot 158 bpm');
+  it('uses LTHR first (Garmin %LTHR zones)', () => {
+    expect(zoneBpm(2, { lthr: 179, maxHr: 204 })).toEqual([143, 159]);
+    expect(zoneText(2, 'zone 2', { lthr: 179 })).toBe('zone 2, 143 tot 159 bpm');
   });
   it('falls back to max HR, and to the zone number alone', () => {
     expect(zoneBpm(2, { maxHr: 200 })).toEqual([120, 140]);

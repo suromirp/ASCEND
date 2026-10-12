@@ -1,8 +1,8 @@
 // ASCEND — your own heart rate zones in beats per minute.
 //
-// With a lactate threshold heart rate (LTHR) the zones follow Joe Friel's
-// running zones as a percentage of LTHR, the same basis Garmin offers as
-// "Based on %LTHR". Without LTHR but with a maximum, Garmin's default
+// With a lactate threshold heart rate (LTHR) the zones follow Garmin's own
+// "Based on %LTHR" running zones (65-80, 80-89, 89-95, 95-100+ percent), so
+// ASCEND shows the same numbers as the watch (production feedback). Without LTHR but with a maximum, Garmin's default
 // %Max HR zones. Without either, the training screens keep showing the
 // zone number only. Heart rate stays a guide next to effort (RPE) and the
 // talk test, never the only truth.
@@ -19,11 +19,11 @@ export interface HeartRateSettings {
 
 type Band = [number, number]; // fractions
 
-// Friel, running, % of LTHR.
+// Garmin, running, % of LTHR.
 const LTHR_ZONES: Record<Intensity, Band> = {
-  1: [0.65, 0.84],
-  2: [0.85, 0.89],
-  3: [0.9, 0.94],
+  1: [0.65, 0.8],
+  2: [0.8, 0.89],
+  3: [0.89, 0.95],
   4: [0.95, 1.02],
 };
 

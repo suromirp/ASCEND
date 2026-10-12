@@ -21,6 +21,7 @@ import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PAC
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
+import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
@@ -243,6 +244,8 @@ export function AscendPage() {
       )}
 
       <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOELEN BEHEREN</PrimaryButton>
+
+      <AerobicTrendCard />
 
       <StrengthProgressionCard logs={sessionLogs} />
 
