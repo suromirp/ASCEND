@@ -663,6 +663,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       (t) => isTemplatePlannable(t, appSettings.enabledSports) && !fixedFrequencySports(appSettings).includes(templateSport(t) as Sport),
     );
 
+    // Never a session on or after the main goal's own day (the plan ends the
+    // day before; production: "Lange duurloop toegevoegd op zo 1 augustus
+    // 2027", the GR5 start), nor next to a tussendoel's race on its day.
+    const anchorDay = programAnchorDate(goals, await GoalMilestonesRepo.getAll(), asOf);
+    const raceDays = new Set((await PlannedSessionsRepo.getAll()).filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
+    const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date));
+    proposal.changes = proposal.changes.filter((c) => !blockedDay(c.action === 'add' ? c.newSessionDraft?.scheduledDate : c.action === 'move' ? c.toDate : undefined));
+
     // Geen wijziging (alle lijnen keep én geen items) -> no-op, geen schrijf.
     const allKeep = prescriptions.every((p) => p.lines.every((l) => l.decision === 'keep'));
     if (allKeep && proposal.changes.length === 0) return;

@@ -1,7 +1,8 @@
 import { useAppData } from '../state/AppDataContext';
 import { PHASE_COLOR } from '../data/phaseColors';
 import { PHASE_BASIS, PHASE_BERG, PHASE_LENGTH_LIMITS, type AdjustablePhaseId, type PhaseLengthOverrides } from '../engine/programLayout';
-import { addDays, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
+import { raceBlocks } from '../engine/raceBlock';
 
 
 // Settings → Training → Programma: the phases toward the goal as one bar,
@@ -9,7 +10,7 @@ import { addDays, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 // Saving goes through the settings; storage/database.ts#syncProgramHorizon
 // lays the program out again on the next refresh.
 export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
-  const { program, settings, updateSettings, refresh } = useAppData();
+  const { program, settings, updateSettings, refresh, trainingGoals, goalMilestones } = useAppData();
   if (!program) return null;
   const overrides = settings.programPhaseOverrides ?? {};
   const total = program.phases.reduce((n, p) => n + p.weekCount, 0);
@@ -35,16 +36,30 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
 
   const hikeFrom = rows.find((r) => r.phase.id === PHASE_BERG)?.from;
 
+  // Tussendoelen on the same bar (engine/raceBlock.ts), and per phase row.
+  const ladder = new Set(goalMilestones.map((m) => m.goalId));
+  const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const blocks = raceBlocks(trainingGoals, mainGoalId, goalDate, today);
+  const pct = (date: string) => Math.min(100, Math.max(0, (daysBetween(start, date) / (total * 7)) * 100));
+
   return (
     <div className="flex flex-col gap-3">
       <div className="relative flex h-3 overflow-hidden rounded-full" role="img" aria-label="Je fases tot aan het doel">
         {rows.map((r) => (
           <span key={r.phase.id} style={{ flexGrow: r.phase.weekCount, flexBasis: 0, background: PHASE_COLOR[r.phase.id] ?? 'var(--color-stone)', opacity: 0.85 }} />
         ))}
+        {blocks.map((b) => (
+          <span key={b.goalId} className="absolute inset-y-0" style={{ left: `${pct(b.blockStart)}%`, width: `${pct(b.raceDate) - pct(b.blockStart)}%`, background: 'var(--color-ink)', opacity: 0.25 }} aria-hidden="true" />
+        ))}
         {weekNow >= 0 && weekNow < total && (
           <span className="absolute inset-y-0 w-0.5" style={{ left: `${((weekNow + 0.5) / total) * 100}%`, background: 'var(--color-ink)' }} aria-hidden="true" />
         )}
       </div>
+      {blocks.length > 0 && (
+        <div className="relative -mt-2 h-4" aria-hidden="true">
+          {blocks.map((b) => <span key={b.goalId} className="absolute -translate-x-1/2 text-xs" style={{ left: `${pct(b.raceDate)}%`, color: 'var(--color-gold)' }}>⚑</span>)}
+        </div>
+      )}
 
       <div className="flex flex-col">
         {rows.map((r) => {
@@ -58,6 +73,9 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
                   {r.phase.name.charAt(0) + r.phase.name.slice(1).toLowerCase()}
                   {isNow && <span className="text-[11px]" style={{ color: 'var(--color-gold)' }}>nu</span>}
                 </p>
+                {blocks.filter((b) => b.raceDate >= r.from && b.raceDate <= r.until).map((b) => (
+                  <p key={b.goalId} className="text-[11px]" style={{ color: 'var(--color-gold)' }}>⚑ {b.name}, {formatDateNL(b.raceDate)}</p>
+                ))}
                 <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
                   {formatDateNL(r.from)} tot {formatDateNL(r.until)}{r.phase.id === PHASE_BASIS && goalDate ? ' · vult aan' : ''}
                 </p>
