@@ -20,7 +20,6 @@ import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from 
 import { PATTERN_SWAPS, activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
-import { planExtraRuns } from '../engine/extraRun';
 import { applyRaceBlocks, raceBlocks } from '../engine/raceBlock';
 import { makeId } from '../utils/id';
 
@@ -1040,25 +1039,10 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     pending.delete(r.id);
     if (!addedIds.has(r.id)) toRemove.push(r);
   }
-  // The fourth run in Opbouw, this week and next, when the weeks before
-  // earned it (engine/extraRun.ts).
-  const goneIds = new Set(toRemove.map((x) => x.id));
-  const allNow = [
-    ...sessions.filter((x) => !goneIds.has(x.id)).map((x) => pending.get(x.id) ?? x),
-    ...[...pending.values()].filter((x) => !sessions.some((y) => y.id === x.id)),
-  ];
-  const extra = planExtraRuns({
-    today, program: next, plannedSessions: allNow, logs, templates,
-    planChangeLog: await PlanChangeProposalsRepo.getAll(),
-    illnessEpisodes: settings.illnessEpisodes, ambition: settings.ambition,
-    anchor: ctx.anchor, raceDates: blocks.map((b) => b.raceDate), restDay: settings.restDay,
-    newId: () => makeId('planned'),
-  });
-  for (const x of extra) pending.set(x.id, x);
   const writes = [...pending.values()];
 
   if (toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
-  return { phasesChanged, added: added.length + race.add.length + extra.length, swapped: swapped.length + race.update.length, removed: toRemove.length };
+  return { phasesChanged, added: added.length + race.add.length, swapped: swapped.length + race.update.length, removed: toRemove.length };
 }
 
 // --- atomic multi-store backup writes -----------------------------------

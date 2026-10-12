@@ -29,6 +29,7 @@ import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
+import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -60,6 +61,8 @@ export interface AdviceInputs {
   removedByPlanIds?: Set<string>;
   // Sessions planned while ill are never "gemist" (engine/illness.ts).
   illnessEpisodes?: IllnessEpisode[];
+  // The extra training of the week (engine/extraRun.ts, rule EXTRA-SESSION).
+  extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog'>;
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
@@ -535,6 +538,29 @@ function restPullAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
   }];
 }
 
+// Rule EXTRA-SESSION: when the weeks before earned it, one extra training
+// from the catalogue, the one that serves your biggest gap. A proposal:
+// nothing is planned without Akkoord.
+function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  if (!inputs.extraSession || !inputs.program) return [];
+  const found = proposeExtraSession({
+    ...inputs.extraSession,
+    today: inputs.asOf, program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs,
+    templates: inputs.templates, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds,
+  });
+  if (!found) return [];
+  const template = templateById.get(found.choice.templateId)!;
+  const title = `Extra training: ${template.name}`;
+  const effect = `${found.choice.reason} Voorstel: ${shortDate(found.date)}.`;
+  const why = `${found.earnedReason} Dan mag je week groeien. Dat gaat via een extra korte training, niet via langere: één loop meer dan 10% langer dan je langste van de afgelopen maand gaf meer blessures, een groter weektotaal niet (Frandsen e.a. 2025).`;
+  const items: PlanChangeItem[] = [{
+    action: 'add', newSessionDraft: { templateId: template.id, scheduledDate: found.date, weekStartDate: found.weekStart },
+    reason: found.choice.reason, generatedBy: ['engine/extraRun.ts', 'EXTRA-SESSION'],
+  }];
+  const p = proposal(title, items, effect, why);
+  return [{ id: found.id, trigger: 'plan_update', ruleId: 'EXTRA-SESSION', title, effect, why, priority: 2, proposal: { ...p, trigger: 'new_training_data' } }];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
@@ -552,6 +578,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...injuryAdvice(inputs, templateById),
     ...strengthAdvice(inputs, templateById),
     ...spacingAdvice(inputs, templateById),
+    ...extraSessionAdvice(inputs, templateById),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));

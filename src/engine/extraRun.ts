@@ -1,27 +1,29 @@
-// ASCEND — the fourth run in Opbouw.
+// ASCEND — the extra training in Opbouw and Bergcapaciteit.
 //
-// The week total of running may grow faster than a single run: in the
-// Garmin-RUNSAFE study (Frandsen et al. 2025, 5,205 runners) a run more
-// than 10% over your longest of the last 30 days raised the injury rate,
-// while week-on-week growth of the total did not. Novice runners did not
-// clearly do worse up to about 30% more per two weeks either (Nielsen et
-// al. 2014). So in Opbouw the extra volume comes from one more short, easy
-// run, not from longer runs.
+// The week total may grow faster than a single run: in the Garmin-RUNSAFE
+// study (Frandsen et al. 2025, 5,205 runners) a run more than 10% over your
+// longest of the last 30 days raised the injury rate, while week-on-week
+// growth of the total did not. Novice runners did not clearly do worse up
+// to about 30% more per two weeks either (Nielsen et al. 2014). So the
+// extra volume comes from one more, short session, not from longer runs.
 //
-// It is earned, not given: ASCEND puts it in a week only when the weeks
-// before went well, and stops when they don't. Fixed rules, no AI:
-// - the week is in Opbouw and is not a rest week (4th week of the wave);
-// - no race in that week, and nothing on or after the main goal;
+// It is earned, not given: ASCEND proposes it for a week only when the
+// weeks before went well. Fixed rules, no AI:
+// - the week is in Opbouw or Bergcapaciteit and not a rest week (4th week
+//   of the wave); no race in that week, nothing on or after the main goal;
 // - ambition is not Rustig;
 // - the last finished weeks (at least two, at most four): 80% of the
 //   trainings done and 75% of the long ones (same bar as "Op koers");
 // - no pain after a training and at most one training that felt clearly
 //   heavier than planned in the last 14 days, and not ill now.
-// Only this week and next are decided, so a bad patch never sits in the
-// plan weeks ahead. Once planned it stays; you can skip it like any other.
+//
+// Which training: the one from the catalogue that serves your biggest gap
+// (rankFocusGaps, chooseExtraSession), with that reason in one sentence.
+// It is a proposal (Akkoord / Liever niet, engine/adviceEngine.ts), only
+// for this week or next, so a bad patch never sits in the plan ahead.
 //
 // The day: the free day furthest from the heavy leg days, not your rest
-// day and not a day that already has a run.
+// day and not a day that already has a run or a hike.
 //
 // Pure: no React, no IndexedDB.
 
@@ -31,7 +33,9 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import type { Ambition } from './ambitionLevels';
 import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
-import { PHASE_OPBOUW, waveWeek } from './programLayout';
+import type { CapabilityDimension, Criticality, GapStatus } from '../models/capability';
+import type { GoalOverview } from './goalOverview';
+import { PHASE_BERG, PHASE_OPBOUW, waveWeek } from './programLayout';
 import { buildWeekReview } from './weekReview';
 import { plannedRpeTop } from './coach';
 import { isLegHeavyTemplate } from './scheduler';
@@ -56,7 +60,7 @@ export interface ExtraRunInputs {
   anchor?: string; // main goal date: nothing on or after it
   raceDates?: string[];
   restDay?: number; // 1 = Monday ... 7 = Sunday
-  newId: () => string;
+  newId?: () => string;
 }
 
 export interface ExtraRunVerdict {
@@ -127,23 +131,129 @@ export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], b
   return best?.date;
 }
 
-// The extra runs to add now: for this week and next, where earned.
-export function planExtraRuns(inputs: ExtraRunInputs): PlannedSession[] {
-  const { today, program, plannedSessions, templates, anchor, raceDates, restDay, newId } = inputs;
-  if (!templates.some((t) => t.id === EXTRA_RUN_TEMPLATE_ID)) return [];
+// --- which training: the one that contributes most -------------------------
+
+// The catalogue the extra training is chosen from.
+export const EXTRA_CATALOGUE = ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'];
+
+const DIMENSION_LABEL: Record<CapabilityDimension, string> = {
+  aerobic_engine: 'je conditie',
+  sustainable_output: 'je tempo',
+  endurance_duration: 'lang onderweg zijn',
+  mechanical_tolerance: 'hoeveel je benen aankunnen',
+  ascent_capacity: 'klimmen',
+  descent_tolerance: 'dalen',
+  load_carriage: 'een rugzak dragen',
+  multi_day_durability: 'meerdere dagen achter elkaar',
+  fatigue_resistance: 'volhouden als je moe bent',
+  strength: 'kracht',
+};
+
+export interface FocusGap {
+  dimension: CapabilityDimension;
+  discipline?: string;
+  goalName: string;
+  score: number;
+}
+
+const SEVERITY: Partial<Record<GapStatus, number>> = { major_gap: 3, gap: 2, near: 1, unknown: 1 };
+const CRITICALITY: Partial<Record<Criticality, number>> = { critical: 3, important: 2, supporting: 1 };
+
+// Every open gap of every active goal, biggest first: how far off (a major
+// gap counts three times a near one), how much the goal needs it, and how
+// much weight the goal has right now (Goal Focus). Strength is left out:
+// that is MacroFactor's job.
+export function rankFocusGaps(overviews: GoalOverview[]): FocusGap[] {
+  const out: FocusGap[] = [];
+  for (const o of overviews) {
+    for (const g of o.gaps) {
+      if (g.key.dimension === 'strength') continue;
+      const score = (o.focus.normalizedPct / 100) * (SEVERITY[g.status] ?? 0) * (CRITICALITY[g.criticality] ?? 0);
+      if (score > 0) out.push({ dimension: g.key.dimension, discipline: g.key.discipline, goalName: o.goal.name, score });
+    }
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+
+export interface ExtraChoice {
+  templateId: string;
+  reason: string;
+}
+
+// Fixed rules, per phase. Opbouw is for running, so a running gap gets a
+// run; climbing gets the uphill walk. In Bergcapaciteit the weekend already
+// has hills and a mountain hike, so the extra is low-impact hiking work.
+export function chooseExtraSession(ctx: { phaseId: string; wave: number; inRaceBlock: boolean; afterRace: boolean; gaps: FocusGap[] }): ExtraChoice {
+  if (ctx.afterRace) return { templateId: 'tpl_recovery_run', reason: 'Je wedstrijd is net achter de rug. Een heel rustige loop houdt het ritme erin zonder nieuwe belasting.' };
+  if (ctx.inRaceBlock && ctx.phaseId === PHASE_OPBOUW) {
+    return { templateId: 'tpl_strides_run', reason: 'Je wedstrijd komt eraan en de tempoloop staat er al. De extra loop blijft daarom rustig, met een paar versnellingen.' };
+  }
+  const top = ctx.gaps[0];
+  const what = top ? `${DIMENSION_LABEL[top.dimension]} voor ${top.goalName}` : undefined;
+  const lead = what ? `Je grootste tekort is nu ${what}. ` : '';
+  const d = top?.dimension;
+  if (ctx.phaseId === PHASE_OPBOUW) {
+    if (d === 'sustainable_output') {
+      return ctx.wave === 3
+        ? { templateId: 'tpl_progression_run', reason: `${lead}Een loop met een steviger slot oefent tempo houden als je al even onderweg bent.` }
+        : { templateId: 'tpl_fartlek', reason: `${lead}Korte stevige stukken in een rustige loop schuiven je tempo op, zonder zware training.` };
+    }
+    if (d === 'ascent_capacity' || d === 'descent_tolerance') {
+      return { templateId: 'tpl_bergconditie', reason: `${lead}Bergop wandelen op een helling of trap bouwt dat op, zonder de klap van hardlopen.` };
+    }
+    return { templateId: 'tpl_strides_run', reason: `${lead}Een extra rustige loop maakt je week langer zonder dat één loop te veel groeit. Dat bouwt het veiligst op.` };
+  }
+  if (d === 'ascent_capacity' || d === 'descent_tolerance') {
+    return { templateId: 'tpl_bergconditie', reason: `${lead}Bergop en bergaf wandelen op een helling of trap bouwt dat op, naast je bergtocht.` };
+  }
+  return { templateId: 'tpl_ruck_walk', reason: `${lead}Wandelen met een rugzak bouwt uren onderweg en draagkracht op, met weinig belasting voor je benen.` };
+}
+
+export const EXTRA_PHASES = [PHASE_OPBOUW, PHASE_BERG];
+
+export interface ExtraAdviceInputs extends Omit<ExtraRunInputs, 'newId'> {
+  gaps: FocusGap[];
+  races?: { blockStart: string; raceDate: string }[];
+  respondedIds: Set<string>;
+}
+
+export interface ExtraProposal {
+  id: string; // per week, so a "liever niet" sticks for that week
+  weekStart: string;
+  date: string;
+  choice: ExtraChoice;
+  earnedReason: string;
+}
+
+// The extra training to propose: this week, else next week. Never planned
+// without your Akkoord.
+export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | undefined {
+  const { today, program, plannedSessions, templates, anchor, restDay, races = [], respondedIds, gaps } = inputs;
   const byId = new Map(templates.map((t) => [t.id, t]));
-  const out: PlannedSession[] = [];
   for (const weekStart of [mondayOfWeek(today), addDays(mondayOfWeek(today), 7)]) {
+    const id = `extra:${weekStart}`;
+    if (respondedIds.has(id)) continue;
     const position = resolveProgramWeek(program, weekStart);
-    if (!position || position.phase.id !== PHASE_OPBOUW || waveWeek(position) === 4) continue;
+    if (!position || !EXTRA_PHASES.includes(position.phase.id)) continue;
+    const wave = waveWeek(position);
+    if (wave === 4) continue;
     const weekEnd = addDays(weekStart, 6);
-    if ((raceDates ?? []).some((d) => d >= weekStart && d <= weekEnd)) continue;
+    if (races.some((r) => r.raceDate >= weekStart && r.raceDate <= weekEnd)) continue;
     const week = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd);
-    if (week.some((s) => s.templateId === EXTRA_RUN_TEMPLATE_ID)) continue;
-    if (!extraRunEarned(inputs, weekStart).earned) continue;
+    if (week.some((s) => EXTRA_CATALOGUE.includes(s.templateId))) continue;
+    const verdict = extraRunEarned(inputs, weekStart);
+    if (!verdict.earned) continue;
     const date = extraRunDay(weekStart, week, byId, { today, anchor, restDay });
     if (!date) continue;
-    out.push({ id: newId(), templateId: EXTRA_RUN_TEMPLATE_ID, scheduledDate: date, weekStartDate: weekStart, status: 'planned', order: 9 });
+    const choice = chooseExtraSession({
+      phaseId: position.phase.id,
+      wave,
+      inRaceBlock: races.some((r) => weekStart >= mondayOfWeek(r.blockStart) && weekStart < mondayOfWeek(r.raceDate)),
+      afterRace: races.some((r) => mondayOfWeek(r.raceDate) === addDays(weekStart, -7)),
+      gaps,
+    });
+    if (!byId.has(choice.templateId)) continue;
+    return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }
-  return out;
+  return undefined;
 }

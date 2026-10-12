@@ -1,6 +1,6 @@
-# Opbouw: hoe snel je lopen mogen groeien
+# Opbouw: hoe snel je lopen mogen groeien, en welke extra training
 
-Onderbouwing van de loopopbouw in de Opbouw-fase (`engine/programLayout.ts#runBuildMultiplier`) en de vierde loop (`engine/extraRun.ts`). Per regel staat de sterkte van het bewijs. Opgesteld in oktober 2026.
+Onderbouwing van de loopopbouw in de Opbouw-fase (`engine/programLayout.ts#runBuildMultiplier`) en de extra training (`engine/extraRun.ts`, als voorstel in `engine/adviceEngine.ts`). Per regel staat de sterkte van het bewijs. Opgesteld in oktober 2026.
 
 ## De 10%-regel gaat over één loop, niet over je week
 
@@ -22,18 +22,30 @@ In de basis groeit alles langzaam, 8% per blok, en dat stopt bij 1,3 keer rond w
 
 De lange duurloop stopt rond 2 uur, de rustige loop rond 55 minuten. Daarna, in Bergcapaciteit en Expeditieklaar, blijft dat niveau staan. Twee uur is een gangbare lange duurloop in een marathonopbouw en ruim genoeg als basis voor lange wandeldagen (bewijs: expert).
 
-## Je week groeit via een extra loop
+## Je week groeit via een extra training
 
-Omdat het weektotaal sneller mag groeien dan één loop, komt de extra groei uit een vierde, korte en rustige loop. Daarmee groeit je week zonder dat één loop een sprong maakt (afgeleid van Frandsen e.a. 2025 en Nielsen e.a. 2014).
+Omdat het weektotaal sneller mag groeien dan één loop, komt de extra groei uit één extra, korte training. Daarmee groeit je week zonder dat één loop een sprong maakt (afgeleid van Frandsen e.a. 2025 en Nielsen e.a. 2014).
 
-Die vierde loop is verdiend, niet vast. ASCEND zet hem alleen in een week als:
+Die extra training is verdiend, niet vast, en ASCEND plant hem nooit zonder jouw Akkoord. Je krijgt het voorstel alleen voor een week als:
 
-- je in de Opbouw zit en het geen rustweek is;
+- je in de Opbouw of Bergcapaciteit zit en het geen rustweek of wedstrijdweek is;
 - je ambitie niet op Rustig staat;
 - je de laatste weken minstens 80% van je trainingen deed, en 75% van de lange (dezelfde lat als "Op koers");
 - je de afgelopen twee weken geen pijn aangaf, hooguit één training zwaarder voelde dan gepland, en je niet ziek bent.
 
-ASCEND beslist dat alleen voor deze week en de volgende, zodat een slechte periode nooit weken vooruit in je plan staat. Het blijft bij rustig lopen: in de basisfase en de Opbouw hoort zo'n 75 tot 80% van je training laag-intensief te zijn ([Oliveira e.a. 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11329428/)) (bewijs: matig).
+ASCEND stelt dat alleen voor deze week of de volgende voor, zodat een slechte periode nooit weken vooruit in je plan staat. Zeg je "liever niet", dan geldt dat voor die week.
+
+## Welke extra training: wat het meest bijdraagt
+
+ASCEND kijkt naar het grootste tekort van je actieve doelen: hoe ver je ervan af zit (een groot tekort telt drie keer zo zwaar als bijna), hoe belangrijk het is voor het doel, en hoeveel gewicht het doel nu heeft. Kracht telt hier niet mee, dat regelt MacroFactor. Daarna vaste regels (afgeleid):
+
+- In de Opbouw is tempo het tekort voor een hardloopdoel: een fartlek, en in de zwaarste week van het blok een progressieve duurloop. Allebei blijven grotendeels rustig, zodat je week rond 80% laag-intensief blijft.
+- Klimmen of dalen: bergop wandelen op een helling of trap, zonder de klap van hardlopen.
+- Al het andere in de Opbouw (lang onderweg, conditie, belastbaarheid): een rustige loop met versnellingen. Meer rustige kilometers zijn voor duurvermogen de veiligste stap.
+- In de weken voor een wedstrijd staat de tempoloop er al, dus blijft de extra loop rustig. In de week erna is het een herstelloop.
+- In Bergcapaciteit staan in het weekend al heuvels en een bergtocht. De extra training is daar laagbelastend wandelwerk: een rugzakwandeling, of bergop en bergaf wandelen als klimmen of dalen het tekort is. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht ([PubMed, load-carriage training](https://pubmed.ncbi.nlm.nih.gov/22130400/)) (bewijs: matig).
+
+Bij het voorstel staat in één zin welk tekort het is en waarom deze training. Het blijft bij rustig lopen: in de basisfase en de Opbouw hoort zo'n 75 tot 80% van je training laag-intensief te zijn ([Oliveira e.a. 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11329428/)) (bewijs: matig).
 
 ## De versnellingen
 

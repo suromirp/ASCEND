@@ -106,13 +106,98 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sources: [ACSM, MACROFACTOR_LOG, MACROFACTOR_PROGRESSION, MACROFACTOR_MISSED, MACROFACTOR_DELOAD, PUBMED_RUNNING_ECONOMY],
   },
 
+  tpl_fartlek: {
+    subtitle: 'Hardlopen • Speels tempo',
+    registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'ASCEND kiest deze training als tempo je grootste tekort is voor een hardloopdoel. Korte stevige stukken in een rustige loop laten je tempo opschuiven, terwijl het grootste deel van je week rustig blijft, zoals het hoort (ongeveer 80% laag-intensief).',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          '10 minuten rustig inlopen.',
+          'Een paar keer anderhalve minuut stevig: korte zinnen lukken nog net (zone 3).',
+          'Even lang rustig doorlopen ertussen.',
+          '5 minuten uitlopen.',
+        ],
+        note: 'Op gevoel, niet op het horloge. Een heuvel of een lantaarnpaal als eindpunt mag ook: dat is precies wat fartlek is.',
+      },
+    ],
+    gear: ['Garmin met borstband', 'hardloopschoenen'],
+    sources: [PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST],
+  },
+
+  tpl_progression_run: {
+    subtitle: 'Hardlopen • Progressief',
+    registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'ASCEND kiest deze training als tempo je grootste tekort is, in de zwaarste week van een blok. Rustig beginnen en pas aan het eind steviger: je oefent tempo houden op benen die al moe zijn, zonder dat het een zware training wordt.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          'Rustig in zone 2, hele zinnen kunnen praten.',
+          'De laatste 10 minuten iets steviger, zone 3: korte zinnen lukken nog.',
+          'De laatste paar minuten weer rustig uitlopen.',
+        ],
+        note: 'Niet harder dan zone 3. Wordt het zwaarder, loop dan gewoon rustig uit.',
+      },
+    ],
+    gear: ['Garmin met borstband', 'hardloopschoenen'],
+    sources: [PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST],
+  },
+
+  tpl_recovery_run: {
+    subtitle: 'Hardlopen • Herstel',
+    registration: 'ASCEND: duur en hoe het voelde. Meer hoeft niet.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'ASCEND kiest deze training in de week na je wedstrijd. Heel rustig lopen houdt het ritme erin zonder nieuwe belasting.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: ['Heel rustig, langzamer dan je rustige duurloop.', 'Geen tempo, geen hartslagdoel.'],
+        note: 'Zware of pijnlijke benen? Wandel of sla hem over. Ook dat is herstel.',
+      },
+    ],
+    gear: ['hardloopschoenen'],
+    sources: [PUBMED_INJURY_LOAD_1],
+  },
+
+  tpl_ruck_walk: {
+    subtitle: 'Wandelen • Rugzak',
+    registration: 'ASCEND: duur, afstand, hoogtemeters en het gewicht van je rugzak.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'ASCEND kiest deze training als lang onderweg zijn of een rugzak dragen je grootste tekort is voor de GR5. Wandelen met een rugzak bouwt uren op de been en draagkracht op, met veel minder klap voor je benen dan hardlopen. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          'Ongeveer 6 kilo in je rugzak, strak op je heupen.',
+          'Stevig doorwandelen, hele zinnen kunnen praten.',
+          'Heuvels, duinen of trappen als dat kan, ook naar beneden.',
+        ],
+        note: 'Nooit zwaarder dan de rugzak van je bergtocht die week. Gaan schouders, rug of knieën zeuren: lichter of korter.',
+      },
+    ],
+    gear: ['rugzak met heupband', 'wandelschoenen'],
+    sources: [PUBMED_LOAD_CARRYING],
+  },
+
   tpl_strides_run: {
     subtitle: 'Hardlopen • Extra loop',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
         heading: 'WAAROM',
-        body: 'In de Opbouw zet ASCEND een vierde loop in je week als de weken ervoor goed gingen: bijna alles gedaan, geen pijn, niet steeds zwaarder dan gepland. Zo groeit je weekvolume, terwijl geen enkele loop meer dan 10% boven je langste van de afgelopen maand komt. Juist zo\'n sprong in één loop hing samen met meer blessures, het weektotaal niet.',
+        body: 'In de Opbouw stelt ASCEND een extra loop voor als de weken ervoor goed gingen: bijna alles gedaan, geen pijn, niet steeds zwaarder dan gepland. Zo groeit je weekvolume, terwijl geen enkele loop meer dan 10% boven je langste van de afgelopen maand komt. Juist zo\'n sprong in één loop hing samen met meer blessures, het weektotaal niet.',
       },
       {
         heading: 'ZO DOE JE HET',
@@ -122,7 +207,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'Ontspannen schouders, snelle korte passen, niet sprinten.',
           'Ertussen wandelen of heel rustig joggen tot je weer op adem bent.',
         ],
-        note: 'Moe of stijf? Laat de versnellingen weg en loop alleen het rustige deel. Gaat het een paar weken minder, dan haalt ASCEND deze loop vanzelf weer uit je week.',
+        note: 'Moe of stijf? Laat de versnellingen weg en loop alleen het rustige deel. Gaat het een paar weken minder, dan stelt ASCEND hem niet meer voor.',
       },
     ],
     gear: ['Garmin met borstband', 'hardloopschoenen'],

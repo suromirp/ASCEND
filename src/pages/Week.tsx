@@ -29,6 +29,7 @@ export function WeekPage() {
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.
   const restAdvice = advice.filter((a) => REST_RULES.includes(a.ruleId) && weekStart <= todayISO() && todayISO() <= addDays(weekStart, 6));
+  const extraAdvice = advice.filter((a) => a.ruleId === 'EXTRA-SESSION' && a.proposal?.changes.some((c) => c.newSessionDraft?.weekStartDate === weekStart));
   const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery'));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
@@ -124,6 +125,18 @@ export function WeekPage() {
         <Card className="flex flex-col gap-3" texture>
           <Eyebrow>RUSTDAG</Eyebrow>
           {restAdvice.map((a) => (
+            <div key={a.id}>
+              <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
+              <AdviceItem advice={a} compact />
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {!monthView && extraAdvice.length > 0 && (
+        <Card className="flex flex-col gap-3" texture>
+          <Eyebrow>EXTRA TRAINING</Eyebrow>
+          {extraAdvice.map((a) => (
             <div key={a.id}>
               <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
               <AdviceItem advice={a} compact />
