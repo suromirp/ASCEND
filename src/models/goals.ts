@@ -56,6 +56,10 @@ export interface TrainingGoalBase {
   name: string;
   requirements: GoalRequirement[];
   execution?: GoalExecution;
+  // The goal's place in the plan (engine/raceBlock.ts): 'secondary' (a
+  // tussendoel that gets its own block), or 'track' (only followed). The
+  // main goal is the one with the ascent ladder; unset means automatic.
+  planRole?: 'main' | 'secondary' | 'track';
   createdAt: string;
   updatedAt: string;
 }

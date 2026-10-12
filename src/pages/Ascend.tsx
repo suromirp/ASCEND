@@ -10,7 +10,7 @@ import { targetPackWeightKg } from '../engine/demand';
 import { computeGoalProgress } from '../engine/progression';
 import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
-import { daysBetween, formatDateNL, todayISO } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { MetricBar } from '../components/MetricBar';
@@ -25,6 +25,7 @@ import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
+import { goalPlanRole, isRaceGoal, RACE_BLOCK_WEEKS } from '../engine/raceBlock';
 import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
 import { eventDaysRequirement, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
@@ -667,10 +668,45 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
           </div>
           <GoalStatusNote status={g.status} goal={g} />
           <RouteLine goal={g} />
+          <GoalRoleRow goal={g} />
         </div>
       ))}
       {editing && <GoalSetupWizard mode="edit" initialGoal={editing} onClose={() => setEditing(null)} />}
     </Card>
+  );
+}
+
+// A race before the main goal: tussendoel (its own 8-week block in the
+// plan, engine/raceBlock.ts) or only followed. Other goals are followed.
+function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
+  const { setGoalPlanRole, trainingGoals, goalMilestones } = useAppData();
+  if (!isRaceGoal(goal)) return null;
+  const ladder = new Set(goalMilestones.map((m) => m.goalId));
+  const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const role = goalPlanRole(goal, mainGoalId);
+  const blockStart = goal.targetDate ? addDays(mondayOfWeek(goal.targetDate), -7 * RACE_BLOCK_WEEKS) : undefined;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2" role="radiogroup" aria-label="Rol in je plan">
+        {([['secondary', 'Tussendoel'], ['track', 'Alleen volgen']] as const).map(([value, label]) => (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={role === value}
+            onClick={() => void setGoalPlanRole(goal.id, value)}
+            className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold"
+            style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        {role === 'secondary'
+          ? `Past in je plan naar je hoofddoel.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop.` : ''} De wedstrijd komt in je planning, de dagen ervoor blijven licht en de lange duurloop erna is kort.`
+          : 'ASCEND volgt dit doel, maar je planning verandert er niet voor.'}
+      </p>
+    </div>
   );
 }
 

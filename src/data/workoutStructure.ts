@@ -100,6 +100,36 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Herstel tussen zware dagen', why: 'Bewust rustig, zodat Benen A en de heuvels er niet onder lijden.' },
     ],
   },
+  tpl_tempo_run: {
+    summary: (repeats) => `Rustig inlopen, ${repeats ?? 2} blokken rond je drempel, rustig uitlopen.`,
+    structure: [
+      { kind: 'warmup', label: 'Inlopen', minutes: 10, intensity: 2 },
+      {
+        repeatsByWeek: { 1: 2, 2: 2, 3: 3, 4: 2 },
+        steps: [
+          { kind: 'work', label: 'Drempeltempo', minutes: 8, intensity: 3, detail: 'Comfortabel zwaar, korte zinnen lukken nog' },
+          { kind: 'recover', label: 'Rustig', minutes: 2, intensity: 2, detail: 'Rustig doorlopen' },
+        ],
+      },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 8, intensity: 2 },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Drempel', why: 'Het tempo dat je lang kunt volhouden schuift op: precies wat een 10 km vraagt.' },
+      { label: 'Aerobe basis', why: 'Telt ook mee voor je uithouding richting de GR5.' },
+    ],
+  },
+  tpl_race: {
+    summary: () => 'Je wedstrijd. Goed inlopen, rustig starten, in de tweede helft versnellen als het gaat.',
+    structure: [
+      { kind: 'warmup', label: 'Inlopen', minutes: 12, intensity: 2, detail: 'Met 3 tot 4 korte versnellingen van 20 seconden' },
+      { kind: 'work', label: 'Wedstrijd', rest: true, intensity: 4, detail: 'Eerste km iets rustiger dan je doeltempo' },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Je tussendoel', why: 'Een meetpunt: daarna weet ASCEND je echte tempo.' },
+    ],
+  },
   tpl_bergconditie: {
     summary: () => 'Langdurig bergop stappen, op de loopband op helling of buiten op een heuvelroute.',
     keyTag: 'D+',

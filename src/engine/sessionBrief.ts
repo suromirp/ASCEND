@@ -97,6 +97,13 @@ export function buildSessionBrief(
         const kg = step?.backpackKg ?? template.outdoorTarget?.backpackWeightKg;
         return [total, { value: d ? `${formatNumberNL(d, 0)} m` : 'Heuvels', label: 'omhoog en omlaag' }, { value: kg ? `${formatNumberNL(kg, 1)} kg` : 'Licht', label: 'rugzak' }];
       }
+      case 'tempo': {
+        const work = plan?.items.find((it) => 'repeat' in it);
+        const block = work && 'repeat' in work ? work.steps.find((st) => st.intensity === 3) : undefined;
+        return [total, { value: work && 'repeat' in work && block ? `${work.repeat} × ${Math.round(block.seconds / 60)} min` : 'Blokken', label: 'op drempel' }, { value: 'Zone 3', label: 'korte zinnen' }];
+      }
+      case 'race':
+        return [total, { value: 'Inlopen', label: 'met versnellingen' }, { value: 'Rustig starten', label: 'eerste km' }];
       case 'strength':
         return [total, { value: String(template.exercises?.length ?? 0), label: 'oefeningen' }, { value: 'MacroFactor', label: 'zwaarte volgens' }];
       case 'recovery':

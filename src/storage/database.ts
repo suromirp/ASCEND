@@ -20,6 +20,7 @@ import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from 
 import { PATTERN_SWAPS, activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
+import { applyRaceBlocks, raceBlocks } from '../engine/raceBlock';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
@@ -1018,8 +1019,28 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     skipWeek: (w) => weeksWithSessions.has(w) || addDays(w, 6) < today,
   });
 
-  if (toRemove.length + swapped.length + added.length > 0) await replacePlannedSessions(toRemove, [...swapped, ...added]);
-  return { phasesChanged, added: added.length, swapped: swapped.length, removed: toRemove.length };
+  // A running race before the main goal: its own block (engine/raceBlock.ts).
+  const [goals, milestones] = await Promise.all([TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
+  const ladder = new Set(milestones.map((m) => m.goalId));
+  const mainGoalId = goals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const blocks = raceBlocks(goals, mainGoalId, ctx.anchor, today);
+  const pending = new Map<string, PlannedSession>([...swapped, ...added].map((x) => [x.id, x]));
+  const openNow = [
+    ...sessions.filter((x) => open(x) && !removedIds.has(x.id) && x.status !== 'skipped').map((x) => pending.get(x.id) ?? x),
+    ...added,
+  ];
+  const race = applyRaceBlocks(openNow, blocks, templates, () => makeId('planned'));
+  for (const u of race.update) pending.set(u.id, u);
+  for (const a of race.add) pending.set(a.id, a);
+  const addedIds = new Set(added.map((x) => x.id));
+  for (const r of race.remove) {
+    pending.delete(r.id);
+    if (!addedIds.has(r.id)) toRemove.push(r);
+  }
+  const writes = [...pending.values()];
+
+  if (toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
+  return { phasesChanged, added: added.length + race.add.length, swapped: swapped.length + race.update.length, removed: toRemove.length };
 }
 
 // --- atomic multi-store backup writes -----------------------------------
