@@ -95,14 +95,22 @@ export function extractEvidenceFromLog(log: SessionLog): CapabilityEvidence[] {
     // endurance_duration & mechanical_tolerance are discipline-specific
     // (v0.2 §9.3-§9.4) — direct evidence from time actually spent training
     // in that discipline.
+    const outdoor = log.outdoorData;
+    const cardio = log.cardioData;
+    const distanceKm = outdoor?.distanceKm ?? cardio?.distanceKm;
     if (discipline && log.durationMinutes > 0) {
       push({ dimension: 'endurance_duration', discipline }, { amount: log.durationMinutes, unit: 'min' }, 'direct');
       push({ dimension: 'mechanical_tolerance', discipline }, { amount: log.durationMinutes, unit: 'min' }, 'direct');
     }
+    // A run's distance too: a race goal asks for kilometers, and a run of
+    // 8 km is exactly that evidence (production feedback: "10 km, nog
+    // niets bekend" after an 8 km long run). computeCapabilityEstimate
+    // compares in the goal's own unit, never min against km.
+    if (discipline === 'running' && distanceKm !== undefined && distanceKm > 0) {
+      push({ dimension: 'endurance_duration', discipline }, { amount: distanceKm, unit: 'km' }, 'direct');
+      push({ dimension: 'mechanical_tolerance', discipline }, { amount: distanceKm, unit: 'km' }, 'direct');
+    }
 
-    const outdoor = log.outdoorData;
-    const cardio = log.cardioData;
-    const distanceKm = outdoor?.distanceKm ?? cardio?.distanceKm;
     const elevationGainM = outdoor?.elevationGainM ?? cardio?.elevationGainM;
     const elevationLossM = outdoor?.elevationLossM;
     const backpackWeightKg = outdoor?.backpackWeightKg;
@@ -131,7 +139,11 @@ export function extractEvidenceFromLog(log: SessionLog): CapabilityEvidence[] {
     // running: v0.2 §18.2 explicitly warns a cycling target speed without
     // route/wind/equipment context is unreliable, so no cycling pace
     // evidence is derived here either.
-    if (discipline === 'running' && distanceKm !== undefined && distanceKm > 0 && log.durationMinutes > 0) {
+    // Only from a run that was hard (effort 6 or more): an easy zone 2 run
+    // is slow on purpose and says nothing about the pace you can hold in a
+    // race (production feedback: "nu aantoonbaar 8:47 min/km" against a
+    // 4:30 race pace, from easy runs only).
+    if (discipline === 'running' && distanceKm !== undefined && distanceKm > 0 && log.durationMinutes > 0 && (log.rpe ?? 0) >= SUSTAINED_PACE_MIN_RPE) {
       push({ dimension: 'sustainable_output', discipline }, { amount: log.durationMinutes / distanceKm, unit: 'min_per_km' }, 'derived');
     }
   }
@@ -154,6 +166,10 @@ export function extractEvidenceFromLog(log: SessionLog): CapabilityEvidence[] {
 
   return evidence;
 }
+
+// Effort from which a run's average pace says something about the pace you
+// can sustain (RPE 6 = steady, still controlled).
+export const SUSTAINED_PACE_MIN_RPE = 6;
 
 export function extractEvidenceFromLogs(logs: SessionLog[]): CapabilityEvidence[] {
   return logs.flatMap(extractEvidenceFromLog);
@@ -251,8 +267,14 @@ function relativeDifference(a: MeasuredValue, b: MeasuredValue): number {
   return Math.abs(a.amount - b.amount) / Math.abs(b.amount);
 }
 
-export function computeCapabilityEstimate(key: CapabilityKey, allEvidence: CapabilityEvidence[], asOf: string): CapabilityEstimate {
-  const matching = allEvidence.filter((e) => e.key.dimension === key.dimension && e.key.discipline === key.discipline);
+export function computeCapabilityEstimate(key: CapabilityKey, allEvidence: CapabilityEvidence[], asOf: string, unit?: MeasuredValue['unit']): CapabilityEstimate {
+  const sameKey = allEvidence.filter((e) => e.key.dimension === key.dimension && e.key.discipline === key.discipline);
+  // One unit only: the asked one when there is evidence in it, otherwise
+  // the most common one. Never minutes and kilometers in one estimate.
+  const counts = new Map<string, number>();
+  for (const e of sameKey) counts.set(e.measured.unit, (counts.get(e.measured.unit) ?? 0) + 1);
+  const chosen = unit && counts.has(unit) ? unit : [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  const matching = sameKey.filter((e) => e.measured.unit === chosen);
 
   // No evidence at all: UNKNOWN, never a computed zero (v0.2 §23 — this is
   // the guarantee the Strength Program Strategy Addendum v0.1 leans on for

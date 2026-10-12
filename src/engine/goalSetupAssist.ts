@@ -41,7 +41,7 @@ function demandStatuses(requirements: GoalRequirement[], allEvidence: Capability
     .map((d) => ({
       key: d.key,
       criticality: d.criticality,
-      confidence: computeCapabilityEstimate(d.key, allEvidence, asOf).confidence,
+      confidence: computeCapabilityEstimate(d.key, allEvidence, asOf, d.demand.unit).confidence,
     }));
 }
 

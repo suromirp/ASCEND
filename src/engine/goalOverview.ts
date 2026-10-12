@@ -42,7 +42,7 @@ export function computeActiveGoalOverviews(
 
   const partial = activeGoals.map((goal) => {
     const demands = computeDemand(goal.requirements);
-    const estimates = demands.map((d) => computeCapabilityEstimate(d.key, allEvidence, asOf));
+    const estimates = demands.map((d) => computeCapabilityEstimate(d.key, allEvidence, asOf, d.demand.unit));
     const gaps = computeCapabilityGaps(demands, estimates);
     const daysToGoal = daysBetween(asOf, goal.targetDate);
     const weeksRemaining = Math.ceil(daysToGoal / 7);

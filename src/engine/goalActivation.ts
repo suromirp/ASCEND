@@ -77,7 +77,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
   const { goalDraft, allEvidence, availability, guardrails, plannedSessions, templates, asOf } = inputs;
 
   const demands = computeDemand(goalDraft.requirements);
-  const estimates = demands.map((d) => computeCapabilityEstimate(d.key, allEvidence, asOf));
+  const estimates = demands.map((d) => computeCapabilityEstimate(d.key, allEvidence, asOf, d.demand.unit));
   const gaps = computeCapabilityGaps(demands, estimates);
   const preparationTargets = computePreparationTargets(demands);
 
