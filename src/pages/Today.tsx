@@ -56,7 +56,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const position = program ? resolveProgramWeek(program, today) : null;
   const weekStart = mondayOfWeek(today);
   const weekSessions = sessionsForWeek(weekStart);
-  const todaySessions = weekSessions.filter((s) => s.scheduledDate === today);
+  // A rest day ASCEND gave up for a training is simply gone, as in Week.
+  const todaySessions = weekSessions.filter((s) => s.scheduledDate === today && !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery'));
   // No `?? todaySessions[0]` fallback here: .find() only returns undefined
   // when every session today is already completed or skipped, and falling
   // back to one of those would re-show a finished session as if it still
