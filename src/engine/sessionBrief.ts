@@ -106,6 +106,16 @@ export function buildSessionBrief(
         const work = plan?.items.find((it) => 'repeat' in it);
         return [total, { value: work && 'repeat' in work ? `${work.repeat} × 20 s` : 'Kort', label: 'versnellingen' }, { value: 'Zone 2', label: 'de rest rustig' }];
       }
+      case 'fartlek': {
+        const work = plan?.items.find((it) => 'repeat' in it);
+        return [total, { value: work && 'repeat' in work ? `${work.repeat} × 1,5 min` : 'Stukken', label: 'stevig' }, { value: 'Op gevoel', label: 'niet op het horloge' }];
+      }
+      case 'progression':
+        return [total, { value: 'Zone 2', label: 'het begin' }, { value: '10 min', label: 'laatste stuk steviger' }];
+      case 'ruck': {
+        const kg = template.outdoorTarget?.backpackWeightKg;
+        return [total, { value: kg ? `±${formatNumberNL(kg, 0)} kg` : 'Licht', label: 'rugzak' }, { value: 'Praten kan', label: 'hele zinnen' }];
+      }
       case 'test':
         return [{ value: '5 km', label: 'op tijd' }, { value: 'Gelijkmatig', label: 'niet te snel starten' }, { value: 'Vlak', label: 'route' }];
       case 'race':

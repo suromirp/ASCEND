@@ -427,6 +427,11 @@ export const MODALITIES_BY_TEMPLATE: Record<string, ModalityDefinition[]> = {
   tpl_bike: CYCLING_MODALITIES,
   tpl_easy_run: TUESDAY_MODALITIES,
   // Tempo and race: running only, a ride is no threshold run.
+  tpl_fartlek: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
+  tpl_progression_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
+  tpl_recovery_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
+  tpl_ruck_walk: FRIDAY_MODALITIES.filter((m) => m.key === 'loaded_hike' || m.key === 'outdoor_stairs' || m.key === 'incline_treadmill')
+    .map((m) => (m.key === 'loaded_hike' ? { ...m, label: 'Buiten met rugzak', role: 'PRIMARY' as const, locked: undefined, durationHint: undefined, how: 'Stevig doorwandelen met ongeveer 6 kilo in je rugzak, heuvels of trappen als dat kan.' } : { ...m, role: 'EQUIVALENT' as const })),
   tpl_strides_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_tempo_run: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor' || m.key === 'run_treadmill'),
   tpl_race: TUESDAY_MODALITIES.filter((m) => m.key === 'run_outdoor'),

@@ -163,6 +163,8 @@ import { requestPersistentStorage } from '../storage/persistence';
 import { effectiveAmbition } from '../engine/ambition';
 import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
 import { programAnchorDate } from '../engine/programLayout';
+import { rankFocusGaps } from '../engine/extraRun';
+import { raceBlocks } from '../engine/raceBlock';
 
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
@@ -1563,6 +1565,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions, refresh],
   );
 
+  // What the extra training of the week is chosen from (engine/extraRun.ts).
+  const extraSessionContext = useMemo(() => {
+    const today = todayISO();
+    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    return {
+      gaps: rankFocusGaps(goalOverviews),
+      races: raceBlocks(trainingGoals, mainGoalId, anchor, today),
+      ambition: settings.ambition,
+      anchor,
+      restDay: settings.restDay,
+      planChangeLog,
+    };
+  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, planChangeLog]);
+
   const advice = useMemo(
     () => [
       ...(plannerAdvice && !adviceResponses[plannerAdvice.id] ? [plannerAdvice] : []),
@@ -1579,9 +1597,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         asOf: todayISO(),
         illnessEpisodes: settings.illnessEpisodes,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
+        extraSession: extraSessionContext,
       }),
     ].sort((a, b) => b.priority - a.priority),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, adviceResponses, planChangeLog],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, adviceResponses, planChangeLog, extraSessionContext],
   );
 
   const value: AppData = {

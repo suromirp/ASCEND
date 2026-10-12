@@ -342,8 +342,8 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek' },
       ],
     },
-    // De vierde loop in de Opbouw (engine/extraRun.ts): ASCEND zet hem erin
-    // als de weken ervoor goed gingen. Geen vaste dag: hij komt op de dag
+    // Uit de catalogus voor de extra training (engine/extraRun.ts): ASCEND
+    // stelt hem voor als de weken ervoor goed gingen. Geen vaste dag: hij komt op de dag
     // die het verst van de zware beendagen ligt.
     {
       id: 'tpl_strides_run',
@@ -363,6 +363,89 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 2, targetMinutes: 35, note: 'Extra loop' },
         { weekInPhase: 3, targetMinutes: 35, note: 'Extra loop' },
         { weekInPhase: 4, targetMinutes: 25, note: 'Rustweek' },
+      ],
+    },
+    // De catalogus voor de extra training (engine/extraRun.ts): ASCEND kiest
+    // er per week één uit, naar wat je doel het meest nodig heeft, en vraagt
+    // eerst je akkoord. Geen vaste dag.
+    {
+      id: 'tpl_fartlek',
+      name: 'Fartlek',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Tempo, speels: korte stevige stukken in een rustige loop',
+      durationVariants: { full: 40, short: 30 },
+      cardioTarget: { zone: 'Rustig, met stukken RPE 6-7' },
+      notes:
+        'Rustig inlopen, dan een paar keer 1 tot 2 minuten stevig (korte zinnen lukken nog net), met even lang rustig ertussen. Op gevoel, niet op het horloge. Uitlopen. Leert je benen een hoger tempo zonder de zwaarte van een echte tempoloop.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 35, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 40, note: 'Iets meer stukken' },
+        { weekInPhase: 3, targetMinutes: 40, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 30, note: 'Rustweek' },
+      ],
+    },
+    {
+      id: 'tpl_progression_run',
+      name: 'Progressieve duurloop',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Tempo: rustig beginnen, het laatste stuk iets steviger',
+      durationVariants: { full: 45, short: 30 },
+      cardioTarget: { zone: 'Zone 2, laatste 10 minuten zone 3' },
+      notes:
+        'Begin rustig in zone 2. De laatste 10 minuten iets steviger, zone 3: korte zinnen lukken nog. Niet harder dan dat, en de laatste minuten weer rustig. Oefent tempo houden op vermoeide benen, zonder een zware training te worden.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 40, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 45, note: 'Opbouw' },
+        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek' },
+      ],
+    },
+    {
+      id: 'tpl_recovery_run',
+      name: 'Herstelloop',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Heel rustig losdraaien',
+      durationVariants: { full: 25, short: 20 },
+      cardioTarget: { zone: 'Zone 1, RPE 2-3' },
+      notes:
+        'Heel rustig, langzamer dan je rustige duurloop. Geen tempo, geen doel. Voelen je benen zwaar, dan mag je wandelen of hem overslaan.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'light', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'light' },
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 25, note: 'Herstel' },
+        { weekInPhase: 2, targetMinutes: 25, note: 'Herstel' },
+        { weekInPhase: 3, targetMinutes: 25, note: 'Herstel' },
+        { weekInPhase: 4, targetMinutes: 20, note: 'Rustweek' },
+      ],
+    },
+    {
+      id: 'tpl_ruck_walk',
+      name: 'Rugzakwandeling',
+      type: 'hiking',
+      sport: 'hiking',
+      focus: 'Lang onderweg met een rugzak, zonder de klap van hardlopen',
+      durationVariants: { full: 75, short: 45 },
+      outdoorTarget: { backpackWeightKg: 6 },
+      notes:
+        'Stevig doorwandelen met een rugzak van ongeveer 6 kilo, heuvels of trappen als dat kan. Rustig, je kunt hele zinnen praten. Bouwt uren onderweg en het dragen van een rugzak op, met veel minder belasting voor je benen dan een loop. Nooit zwaarder dan de rugzak van je bergtocht die week.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'light', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 60, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 75, note: 'Langer onderweg' },
+        { weekInPhase: 3, targetMinutes: 90, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 50, note: 'Rustweek' },
       ],
     },
     // Een meetpunt in het tussendoelblok (engine/raceBlock.ts): de week

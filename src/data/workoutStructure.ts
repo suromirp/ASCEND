@@ -100,6 +100,54 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Herstel tussen zware dagen', why: 'Bewust rustig, zodat Benen A en de heuvels er niet onder lijden.' },
     ],
   },
+  tpl_fartlek: {
+    summary: (repeats) => `Rustig inlopen, ${repeats ?? 6} keer 1 tot 2 minuten stevig met rustig ertussen, rustig uitlopen.`,
+    structure: [
+      { kind: 'warmup', label: 'Inlopen', minutes: 10, intensity: 2 },
+      {
+        repeatsByWeek: { 1: 5, 2: 6, 3: 7, 4: 4 },
+        steps: [
+          { kind: 'work', label: 'Stevig', seconds: 90, intensity: 3, detail: 'Op gevoel, korte zinnen lukken nog net' },
+          { kind: 'recover', label: 'Rustig', seconds: 90, intensity: 2, detail: 'Rustig doorlopen' },
+        ],
+      },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 5, intensity: 2 },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Tempo', why: 'Je benen wennen aan een hoger tempo, zonder de zwaarte van een tempoloop.' },
+      { label: 'Aerobe basis', why: 'Het grootste deel blijft rustig.' },
+    ],
+  },
+  tpl_progression_run: {
+    summary: () => 'Rustig hardlopen, de laatste 10 minuten iets steviger.',
+    structure: [
+      { kind: 'run', label: 'Rustig', rest: true, intensity: 2, detail: 'Hele zinnen kunnen praten' },
+      { kind: 'work', label: 'Iets steviger', minutes: 10, intensity: 3, detail: 'Korte zinnen lukken nog' },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 3, intensity: 2 },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Tempo houden', why: 'Steviger lopen als je al even onderweg bent, zoals in een wedstrijd.' },
+      { label: 'Aerobe basis', why: 'Het grootste deel blijft rustig.' },
+    ],
+  },
+  tpl_recovery_run: {
+    summary: () => 'Heel rustig losdraaien. Geen tempo, geen doel.',
+    structure: [{ kind: 'run', label: 'Heel rustig', rest: true, intensity: 1, detail: 'Langzamer dan je rustige duurloop' }],
+    garminSport: 'Hardlopen',
+    builds: [{ label: 'Herstel', why: 'Bloed door je benen zonder nieuwe belasting.' }],
+  },
+  tpl_ruck_walk: {
+    summary: () => 'Stevig doorwandelen met ongeveer 6 kilo in je rugzak, heuvels of trappen als dat kan.',
+    keyTag: 'Rugzak ±6 kg',
+    structure: [{ kind: 'walk', label: 'Wandelen met rugzak', rest: true, intensity: 2, detail: 'Hele zinnen kunnen praten' }],
+    garminSport: 'Wandelen',
+    builds: [
+      { label: 'Uren onderweg', why: 'Lang op de been zijn, de basis van elke dag op de GR5.' },
+      { label: 'Rugzak dragen', why: 'Schouders, rug en heupen wennen aan gewicht, stap voor stap.' },
+    ],
+  },
   tpl_strides_run: {
     summary: (repeats) => `Rustig hardlopen, met aan het eind ${repeats ?? 6} versnellingen van 20 seconden.`,
     structure: [

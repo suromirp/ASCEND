@@ -43,7 +43,7 @@ const MIN_WEEKS = 2;
 // What the current phase is for, in one sentence.
 const PHASE_FOCUS: Record<string, string> = {
   phase_1: 'De basis: rustige kilometers en kracht, zodat je lijf de opbouw straks aankan.',
-  phase_2: 'Opbouw: je lopen worden elk blok langer, en als het goed gaat komt er een vierde loop bij. Elke vierde week rust.',
+  phase_2: 'Opbouw: je lopen worden elk blok langer, en als het goed gaat stelt ASCEND een extra training voor. Elke vierde week rust.',
   phase_3: 'Bergcapaciteit: meer hoogtemeters in je lange training. Die telt nu het zwaarst.',
   phase_4: 'Expeditieklaar: twee lange dagen achter elkaar, zoals op een meerdaagse tocht.',
   phase_taper: 'Afbouwen: minder doen, fris aankomen. Extra trainen helpt nu niet meer.',

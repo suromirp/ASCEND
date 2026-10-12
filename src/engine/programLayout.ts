@@ -35,7 +35,7 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   },
   [PHASE_OPBOUW]: {
     name: 'OPBOUW',
-    description: 'Je lopen bouwen echt op: de lange duurloop groeit elk blok ongeveer 10% tot rond de 2 uur, de rustige loop wordt langer, en als het goed gaat komt er een vierde loop bij. Dezelfde golf van vier weken.',
+    description: 'Je lopen bouwen echt op: de lange duurloop groeit elk blok ongeveer 10% tot rond de 2 uur, de rustige loop wordt langer, en als het goed gaat stelt ASCEND een extra training voor. Dezelfde golf van vier weken.',
   },
   [PHASE_BERG]: {
     name: 'BERGCAPACITEIT',

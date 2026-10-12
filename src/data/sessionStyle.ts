@@ -4,7 +4,7 @@
 // stop or ease off during the training itself (audit 2026-10, report 6).
 // Keyed by SessionTemplate.id, like data/workoutStructure.ts.
 
-export type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides';
+export type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck';
 
 export interface SessionStyle {
   styleLabel: string; // after the sport: "HARDLOPEN · BERGOP"
@@ -43,6 +43,30 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     purpose: 'Rustige kilometers voor je basisconditie, zonder je benen te vermoeien.',
     stopSignals: ['je geen hele zinnen meer kunt praten: ga langzamer of wandel even', 'je benen nog zwaar zijn van de beentraining: loop de korte versie'],
     facts: 'steady',
+  },
+  tpl_fartlek: {
+    styleLabel: 'fartlek',
+    purpose: 'Speels tempo: korte stevige stukken in een rustige loop, voor een sneller tempo zonder zware training.',
+    stopSignals: ['je in de stevige stukken niet eens korte zinnen meer kunt zeggen: rustiger', 'je benen zwaar blijven in de rustige stukken: loop de rest rustig uit'],
+    facts: 'fartlek',
+  },
+  tpl_progression_run: {
+    styleLabel: 'progressief',
+    purpose: 'Rustig beginnen en het laatste stuk iets steviger: tempo houden als je al even onderweg bent.',
+    stopSignals: ['het laatste stuk zwaarder wordt dan korte zinnen: terug naar rustig', 'je scherpe pijn voelt'],
+    facts: 'progression',
+  },
+  tpl_recovery_run: {
+    styleLabel: 'herstel',
+    purpose: 'Heel rustig losdraaien, zodat je benen herstellen.',
+    stopSignals: ['je benen zwaar of pijnlijk zijn: wandel of stop, dat is ook herstel'],
+    facts: 'steady',
+  },
+  tpl_ruck_walk: {
+    styleLabel: 'rugzak',
+    purpose: 'Uren onderweg en een rugzak dragen, met veel minder klap voor je benen dan een loop.',
+    stopSignals: ['je schouders of onderrug gaan zeuren: rugzak strakker op de heupen of lichter', 'je knieën pijn doen bij het dalen: korter stappen of de trap nemen'],
+    facts: 'ruck',
   },
   tpl_strides_run: {
     styleLabel: 'versnellingen',
