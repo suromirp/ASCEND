@@ -342,6 +342,22 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek' },
       ],
     },
+    // Een meetpunt in het tussendoelblok (engine/raceBlock.ts): de week
+    // ervoor en vier weken voor de wedstrijd, op de plek van de rustige of
+    // de tempoloop.
+    {
+      id: 'tpl_test_run',
+      name: 'Testloop 5 km',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Je tempo meten',
+      durationVariants: { full: 45 },
+      notes:
+        '10 minuten inlopen, dan 5 km zo snel als je gelijkmatig kunt volhouden, op een vlakke route. Uitlopen. Vul daarna alleen de 5 km in: afstand 5 en de tijd van de test, met de zwaarte die je voelde. Dan weet ASCEND je echte tempo.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'moderate', eccentricLoad: 'light', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'heavy' },
+    },
     {
       id: 'tpl_race',
       name: 'Wedstrijd',

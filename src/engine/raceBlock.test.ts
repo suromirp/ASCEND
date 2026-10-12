@@ -38,6 +38,16 @@ describe('race block', () => {
     expect(templateForRaceBlock('tpl_easy_run', '2026-12-10', blocks)).toBe('tpl_easy_run');
   });
 
+  it('asks for a 5 km test just before the block and four weeks before the race', () => {
+    expect(templateForRaceBlock('tpl_easy_run', '2027-01-14', blocks)).toBe('tpl_test_run');
+    expect(templateForRaceBlock('tpl_easy_run', '2027-02-18', blocks)).toBe('tpl_test_run');
+    expect(templateForRaceBlock('tpl_tempo_run', '2027-02-18', blocks)).toBe('tpl_test_run');
+    // Gone again when the goal goes.
+    expect(templateForRaceBlock('tpl_test_run', '2027-01-14', [])).toBe('tpl_easy_run');
+    // Other sessions are never touched.
+    expect(templateForRaceBlock('tpl_long_run', '2027-01-14', blocks)).toBe('tpl_long_run');
+  });
+
   it('puts the race in the plan and keeps the days around it light', () => {
     const open = [...week('2027-03-15'), ...week('2027-03-22')];
     const c = applyRaceBlocks(open, blocks, templates, newId);

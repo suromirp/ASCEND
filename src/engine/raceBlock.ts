@@ -8,6 +8,9 @@
 // of RACE_BLOCK_WEEKS weeks:
 // - in those weeks the easy run becomes a tempo run (threshold blocks),
 //   except in race week itself;
+// - a 5 km test run in the week before the block and four weeks before the
+//   race, in the easy/tempo run's place: an easy run says nothing about
+//   race pace, a test does (and ASCEND asks for it, so you don't have to);
 // - the race is put in the plan on its date;
 // - on race day nothing else, and no hill intervals or heavy leg strength
 //   in the two days before it;
@@ -24,6 +27,10 @@ import { addDays, mondayOfWeek } from '../utils/dates';
 export const RACE_BLOCK_WEEKS = 8;
 export const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
 export const RACE_TEMPLATE_ID = 'tpl_race';
+export const TEST_TEMPLATE_ID = 'tpl_test_run';
+// Weeks before race week with a 5 km test: just before the block starts,
+// and halfway, four weeks before the race.
+const TEST_WEEKS_BEFORE_RACE = [RACE_BLOCK_WEEKS + 1, 4];
 const EASY_TEMPLATE_ID = 'tpl_easy_run';
 const BEFORE_RACE_TAKEN_OUT = ['tpl_hill_intervals', 'tpl_lower_a', 'tpl_lower_b'];
 const AFTER_RACE_SHORT = ['tpl_long_run', 'tpl_mountain_hike'];
@@ -66,10 +73,10 @@ export function raceBlocks(goals: TrainingGoal[], mainGoalId: string | undefined
 // Which template a planned session should be on this date: the easy run
 // becomes a tempo run inside a block (not in race week), and back outside.
 export function templateForRaceBlock(templateId: string, date: string, blocks: RaceBlock[]): string {
-  const inBuild = blocks.some((b) => date >= b.blockStart && date < b.raceWeek);
-  if (templateId === EASY_TEMPLATE_ID && inBuild) return TEMPO_TEMPLATE_ID;
-  if (templateId === TEMPO_TEMPLATE_ID && !inBuild) return EASY_TEMPLATE_ID;
-  return templateId;
+  if (![EASY_TEMPLATE_ID, TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID].includes(templateId)) return templateId;
+  const week = mondayOfWeek(date);
+  if (blocks.some((b) => TEST_WEEKS_BEFORE_RACE.some((n) => week === addDays(b.raceWeek, -7 * n)))) return TEST_TEMPLATE_ID;
+  return blocks.some((b) => date >= b.blockStart && date < b.raceWeek) ? TEMPO_TEMPLATE_ID : EASY_TEMPLATE_ID;
 }
 
 export interface RaceBlockChanges {
@@ -87,7 +94,7 @@ export function applyRaceBlocks(
   newId: () => string,
 ): RaceBlockChanges {
   const byId = new Map(templates.map((t) => [t.id, t]));
-  if (!byId.has(TEMPO_TEMPLATE_ID) || !byId.has(RACE_TEMPLATE_ID)) return { update: [], add: [], remove: [] };
+  if (!byId.has(TEMPO_TEMPLATE_ID) || !byId.has(RACE_TEMPLATE_ID) || !byId.has(TEST_TEMPLATE_ID)) return { update: [], add: [], remove: [] };
   const update = new Map<string, PlannedSession>();
   const remove: PlannedSession[] = [];
   const add: PlannedSession[] = [];
