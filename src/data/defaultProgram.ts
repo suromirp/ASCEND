@@ -320,6 +320,41 @@ function buildTemplates(): SessionTemplate[] {
       cooldown: COOLDOWN_RECOVERY,
       baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'none' },
     },
+    // Tussendoel (een hardloopwedstrijd vóór het hoofddoel): in de 8 weken
+    // ervoor wordt de rustige duurloop een tempoloop (engine/raceBlock.ts).
+    // Geen vaste dag: hij neemt de plek van de rustige duurloop in.
+    {
+      id: 'tpl_tempo_run',
+      name: 'Tempoloop',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Drempeltempo, richting je wedstrijd',
+      durationVariants: { full: 45, short: 30 },
+      notes:
+        'Rustig inlopen, dan blokken rond je drempel: comfortabel zwaar, je kunt nog korte zinnen zeggen (RPE 6-7, zone 3). Niet harder dan dat: het gaat om lang volhouden, niet om snel. Uitlopen. Houdt je wedstrijdtempo bij, telt ook gewoon als looptraining voor de GR5.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'moderate', eccentricLoad: 'light', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'heavy' },
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 40, note: 'Wennen aan drempeltempo' },
+        { weekInPhase: 2, targetMinutes: 45, note: 'Iets langer op drempel' },
+        { weekInPhase: 3, targetMinutes: 50, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek' },
+      ],
+    },
+    {
+      id: 'tpl_race',
+      name: 'Wedstrijd',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Je tussendoel',
+      durationVariants: { full: 60 },
+      notes:
+        'Goed inlopen met een paar korte versnellingen. Start iets rustiger dan je doeltempo en versnel in de tweede helft als het gaat. Genieten: dit is waar je voor trainde.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'heavy', eccentricLoad: 'moderate', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'heavy' },
+    },
     // Fase 4 — fietsen. Geen vaste dag in het weekpatroon (geen
     // defaultDayOfWeek): je logt een rit wanneer je fietst, en ASCEND plant
     // er alleen een in als Fietsen aan staat (Instellingen → Training) en de

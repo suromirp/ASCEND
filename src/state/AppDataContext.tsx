@@ -122,6 +122,8 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
       settings.enabledSports,
       settings.programPhaseOverrides,
       settings.restDay,
+      // Tussendoelen (engine/raceBlock.ts) change the plan too.
+      goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length]),
     ]);
   };
   horizonQueue = horizonQueue
@@ -214,6 +216,8 @@ interface AppData {
   proposeSkip: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
   updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => Promise<void>;
+  // Tussendoel or only followed (engine/raceBlock.ts).
+  setGoalPlanRole: (goalId: string, role: 'secondary' | 'track') => Promise<void>;
   // Soft-delete: sets status:'archived' rather than removing the row, so
   // GoalMilestoneProgress/PlanChangeProposal rows that still reference this
   // goalId stay valid (models/goals.ts's GoalStatus already has 'archived'
@@ -1259,6 +1263,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // upserted here by kind. Setting/clearing targetDate also flips the
   // discriminated union's status between 'active' and 'paused', since an
   // active goal cannot exist without one.
+  const setGoalPlanRole = useCallback(async (goalId: string, role: 'secondary' | 'track') => {
+    const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goalId);
+    if (!goal) return;
+    await TrainingGoalsRepo.put({ ...goal, planRole: role, updatedAt: new Date().toISOString() });
+    await refresh();
+  }, [refresh]);
+
   const updateGoal = useCallback(
     async (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => {
       const goal = trainingGoals.find((g) => g.id === goalId);
@@ -1591,6 +1602,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     proposeSkip,
     clearMilestoneManually,
     updateGoal,
+    setGoalPlanRole,
     archiveGoal,
     unarchiveGoal,
     activateGoal,

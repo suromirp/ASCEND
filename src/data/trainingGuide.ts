@@ -105,6 +105,51 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sources: [ACSM, MACROFACTOR_LOG, MACROFACTOR_PROGRESSION, MACROFACTOR_MISSED, MACROFACTOR_DELOAD, PUBMED_RUNNING_ECONOMY],
   },
 
+  tpl_tempo_run: {
+    subtitle: 'Hardlopen • Drempeltempo',
+    registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'Je hebt een hardloopwedstrijd als tussendoel. In de 8 weken ervoor wordt de rustige duurloop een tempoloop: blokken rond je drempel, het tempo dat je ongeveer een uur kunt volhouden. Dat is de training die je 10 km-tempo het meest laat opschuiven, en hij telt ook gewoon mee voor je basis richting de GR5.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          '10 minuten rustig inlopen.',
+          'Blokken van 8 minuten comfortabel zwaar: je kunt nog korte zinnen zeggen, niet meer (RPE 6-7, zone 3).',
+          'Tussen de blokken 2 minuten rustig doorlopen.',
+          '8 minuten uitlopen.',
+        ],
+        note: 'Niet harder dan drempel. Te hard lopen is de meest gemaakte fout: het voelt goed, maar je herstelt slechter en de week erna lijdt eronder.',
+      },
+    ],
+    gear: ['Garmin met borstband', 'hardloopschoenen'],
+    sources: [PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST],
+  },
+
+  tpl_race: {
+    subtitle: 'Hardlopen • Wedstrijd',
+    registration: 'ASCEND: je tijd, afstand en gemiddelde hartslag. Dit is je nieuwe meetpunt.',
+    sections: [
+      {
+        heading: 'DE DAGEN ERVOOR',
+        body: 'ASCEND houdt de dagen voor de wedstrijd licht: geen heuvels of zware beentraining vlak ervoor. De dag erna is de lange duurloop kort.',
+      },
+      {
+        heading: 'OP DE DAG',
+        items: [
+          'Eet zoals je gewend bent, niets nieuws.',
+          'Goed inlopen: 10 tot 15 minuten rustig met 3 tot 4 korte versnellingen.',
+          'Start de eerste kilometer iets rustiger dan je doeltempo.',
+          'Voelt het halverwege goed, versnel dan geleidelijk.',
+        ],
+      },
+    ],
+    gear: ['Garmin', 'je vertrouwde schoenen'],
+    sources: [PUBMED_INJURY_LOAD_1],
+  },
+
   tpl_easy_run: {
     subtitle: 'Cardio • Aerobe basis',
     registration: 'ASCEND: duur, afstand, D+, gemiddelde hartslag, via Garmin Forerunner 255 + borstband.',
