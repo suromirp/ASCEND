@@ -91,6 +91,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                         : 'ASCEND volgt dit doel; alleen een hardloopwedstrijd kan nu een eigen blok krijgen.'}
                 </p>
                 {race && !afterMain && (
+                  <>
                   <div className="flex gap-2" role="radiogroup" aria-label={`Rol van ${g.name}`}>
                     {([['secondary', 'Tussendoel'], ['track', 'Alleen volgen']] as const).map(([value, label]) => (
                       <button
@@ -105,6 +106,10 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                       </button>
                     ))}
                   </div>
+                  <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                    <span style={{ color: 'var(--color-ink)' }}>Tussendoel:</span> ASCEND traint ervoor, met testlopen, tempolopen en een lichte wedstrijdweek. <span style={{ color: 'var(--color-ink)' }}>Alleen volgen:</span> je ziet hoe je ervoor staat, je planning verandert niet.
+                  </p>
+                  </>
                 )}
               </div>
             );
@@ -112,6 +117,9 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
         </div>
       )}
 
+      <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        De lengte van de fases rekent ASCEND zelf uit vanaf je hoofddoel; aanpassen hoeft niet. Wil je eerder opbouwen, maak dan de Opbouw langer: de basis krijgt wat overblijft.
+      </p>
       <button onClick={() => setEditPhases((v) => !v)} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={editPhases}>
         {editPhases ? 'Fases sluiten' : 'Fases aanpassen'}
       </button>
