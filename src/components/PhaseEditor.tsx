@@ -96,7 +96,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
 
       <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         {goalDate
-          ? `Opbouw, Bergcapaciteit en Expeditieklaar gaan per blok van vier weken, zodat de rustweek op zijn plek blijft. De afbouw is 0 tot 3 weken. De basis krijgt de weken die overblijven.${hikeFrom && settings.longSundaySession !== 'run' ? ` De bergtocht op zondag begint op ${formatDateNL(hikeFrom)}.` : ''}`
+          ? `Je hoeft hier niets te kiezen: ASCEND rekent de fases uit. Naar de start is 2 weken, het best onderbouwde afbouwen. Bergcapaciteit en Expeditieklaar geven de tijd om hoogtemeters en rugzak stap voor stap op te bouwen. Wil je eerder opbouwen, maak dan de Opbouw langer; de basis krijgt wat overblijft. Opbouw, Bergcapaciteit en Expeditieklaar gaan per blok van vier weken, zodat de rustweek op zijn plek blijft.${hikeFrom && settings.longSundaySession !== 'run' ? ` De bergtocht op zondag begint op ${formatDateNL(hikeFrom)}.` : ''}`
           : 'Geef je hoofddoel een datum om de fases zelf in te stellen.'}
       </p>
       {goalDate && Object.keys(overrides).length > 0 && (

@@ -710,8 +710,8 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
       </div>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {role === 'secondary'
-          ? `Past in je plan naar je hoofddoel.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop.` : ''} De wedstrijd komt in je planning, de dagen ervoor blijven licht en de lange duurloop erna is kort.`
-          : 'ASCEND volgt dit doel, maar je planning verandert er niet voor.'}
+          ? `Tussendoel: ASCEND traint ervoor.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop, met een testloop de week ervoor.` : ''} De wedstrijd komt in je planning, de wedstrijdweek is licht en de lange duurloop erna kort.`
+          : 'Alleen volgen: je ziet hoe je ervoor staat, maar je planning verandert er niet voor.'}
       </p>
       {prediction?.predictedMinutes !== undefined && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>

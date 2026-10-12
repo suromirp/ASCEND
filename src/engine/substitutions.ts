@@ -1,5 +1,6 @@
 import type { SessionTemplate, ExercisePrescription, SessionVariant } from '../models/training';
 import type { Program } from '../models/program';
+import { ambitionFactor, type Ambition } from './ambitionLevels';
 import { addDays } from '../utils/dates';
 import { progressionTarget } from './programLayout';
 
@@ -84,6 +85,13 @@ export function recentSessionMaxima(logs: { templateId: string; completedDate: s
   return { asOf, minutesByTemplate };
 }
 
+// The ambition in force (engine/ambition.ts#effectiveAmbition), set on every
+// refresh like the registries above.
+let currentAmbition: Ambition = 'standaard';
+export function setAmbition(ambition: Ambition): void {
+  currentAmbition = ambition;
+}
+
 // Sessions with a fixed length of their own (PlannedSession.plannedMinutes),
 // by template and date. Set from the planned sessions on every refresh,
 // like the registries above, so every screen shows the same minutes.
@@ -100,6 +108,11 @@ export function resolveEffectiveFullDuration(
   const target = progressionTarget(template, program, scheduledDate);
   const fixed = fixedMinutes.get(`${template.id}|${scheduledDate}`);
   let base = fixed ?? target?.minutes ?? fullDuration(template);
+  // Ambition (engine/ambition.ts): only on a session that follows the
+  // build-up, rounded to 5 minutes; the 110% cap below still applies.
+  if (!fixed && target && currentAmbition !== 'standaard') {
+    base = Math.max(15, Math.round((base * ambitionFactor(currentAmbition, /rust/i.test(target.step.note ?? ''))) / 5) * 5);
+  }
   const longest = recentMaxima.minutesByTemplate[template.id];
   if (!fixed && target && longest && scheduledDate >= recentMaxima.asOf && scheduledDate <= addDays(recentMaxima.asOf, SPIKE_CAP_DAYS)) {
     // Never below the first "Wennen" step: one short session must not pull

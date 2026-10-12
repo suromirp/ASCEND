@@ -18,6 +18,7 @@ import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
 import { programAnchorDate } from '../engine/programLayout';
 import { HeartRateSettings } from '../components/HeartRateSettings';
+import { AmbitionSettings } from '../components/AmbitionSettings';
 import { REST_DAY_OPTIONS } from '../engine/restDay';
 import { StrengthDurationSettings } from '../components/StrengthDurationSettings';
 import { PhaseEditor } from '../components/PhaseEditor';
@@ -550,6 +551,8 @@ export function SettingsPage() {
             </div>
             <StrengthDurationSettings />
           </Card>
+
+          <AmbitionSettings />
 
           <HeartRateSettings />
         </>
