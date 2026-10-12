@@ -26,13 +26,14 @@ describe('aerobicTrend', () => {
 
   it('leaves out runs outside zone 2, hilly runs and hard sessions', () => {
     const logs = [
-      run('low', 'tpl_long_run', '2026-10-12', 7.98, 68, 137), // the old max-HR zones: below zone 2
+      run('low', 'tpl_long_run', '2026-10-12', 7.98, 68, 137), // a little under zone 2: counts
+      run('tempo', 'tpl_easy_run', '2026-10-16', 5, 30, 168), // above zone 2: no easy run
       run('hilly', 'tpl_easy_run', '2026-10-13', 5, 40, 150, 200),
       run('hills', 'tpl_hill_intervals', '2026-10-14', 5, 40, 150),
       run('ok', 'tpl_easy_run', '2026-10-15', 5, 40, 150),
     ];
     const t = aerobicTrend(logs, templates, program, hr, '2026-10-19');
-    expect(t.runs).toBe(1);
+    expect(t.runs).toBe(2);
     expect(t.outsideZone).toBe(1);
   });
 
