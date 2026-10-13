@@ -106,20 +106,66 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sources: [ACSM, MACROFACTOR_LOG, MACROFACTOR_PROGRESSION, MACROFACTOR_MISSED, MACROFACTOR_DELOAD, PUBMED_RUNNING_ECONOMY],
   },
 
-  tpl_fartlek: {
-    subtitle: 'Hardlopen • Speels tempo',
+  tpl_intervals: {
+    subtitle: 'Hardlopen • Lange intervallen',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
         heading: 'WAAROM',
-        body: 'ASCEND kiest deze training als tempo je grootste tekort is voor een hardloopdoel. Korte stevige stukken in een rustige loop laten je tempo opschuiven, terwijl het grootste deel van je week rustig blijft, zoals het hoort (ongeveer 80% laag-intensief).',
+        body: 'In het blok voor je wedstrijd komen deze intervallen op zaterdag, in plaats van de heuvels. Intervallen van 2 minuten of langer verhogen je conditie (VO2max) aantoonbaar meer dan rustig lopen, vooral bij minstens een kwartier hard werk per keer en een blok van 4 weken of langer. Samen met de tempoloop zijn het je twee kwaliteitstrainingen; meer hoeft niet.',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          '12 minuten inlopen, met aan het eind 3 korte versnellingen.',
+          'Blokken van 4 minuten hard: zone 4, ongeveer je 5 km-tempo. Alleen losse woorden lukken nog.',
+          'Tussen de blokken 3 minuten rustig joggen.',
+          '8 minuten uitlopen.',
+        ],
+        note: 'Gelijkmatig is het doel: het laatste blok even snel als het eerste. Haal je dat duidelijk niet meer, stop dan daar.',
+      },
+    ],
+    gear: ['Garmin met borstband', 'hardloopschoenen'],
+    sources: [PUBMED_INTENSITY_DISTRIBUTION],
+  },
+
+  tpl_hills_descent: {
+    subtitle: 'Hardlopen en wandelen • Op en af',
+    registration: 'ASCEND: duur, D+ en D− als je die hebt, en hoe zwaar het voelde.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'De GR5 vraagt ongeveer 30.000 meter dalen. Dalen beschadigt je bovenbenen het meest, maar na een paar korte afdaalsessies veel minder: dat beschermingseffect houdt weken, en is na 6 tot 9 weken zonder herhaling weg. Daarom wordt de heuveldag om de twee weken "op en af".',
+      },
+      {
+        heading: 'ZO DOE JE HET',
+        items: [
+          '10 minuten opwarmen.',
+          'Een paar keer 1 minuut hard bergop, wandelend terug.',
+          'Daarna rustig en beheerst afdalen, telkens opnieuw: een trappenhuis af, een duin af of een heuvel af.',
+          'Kleine pasjes, knieën licht gebogen, niet rennen.',
+        ],
+        note: 'De eerste keren krijg je spierpijn in je bovenbenen. Dat is de prikkel en het wordt snel minder. Scherpe pijn in je knie: stoppen.',
+      },
+    ],
+    gear: ['hardloopschoenen', 'een trappenhuis, duin of heuvel'],
+    sources: [PUBMED_DOWNHILL],
+  },
+
+  tpl_fartlek: {
+    subtitle: 'Hardlopen • Speelse snelheid',
+    registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
+    sections: [
+      {
+        heading: 'WAAROM',
+        body: 'ASCEND kiest deze training als tempo je grootste tekort is voor een hardloopdoel. Korte harde stukken op ongeveer je 5 tot 10 km-tempo, sneller dan je tempoloop, zodat de twee iets anders trainen. Het grootste deel van je week blijft rustig, zoals het hoort.',
       },
       {
         heading: 'ZO DOE JE HET',
         items: [
           '10 minuten rustig inlopen.',
-          'Een paar keer anderhalve minuut stevig: korte zinnen lukken nog net (zone 3).',
-          'Even lang rustig doorlopen ertussen.',
+          'Stukken van 1 minuut hard: ongeveer je 5 tot 10 km-tempo, alleen losse woorden (zone 4).',
+          'Anderhalve minuut rustig doorlopen ertussen.',
           '5 minuten uitlopen.',
         ],
         note: 'Op gevoel, niet op het horloge. Een heuvel of een lantaarnpaal als eindpunt mag ook: dat is precies wat fartlek is.',
@@ -141,7 +187,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         heading: 'ZO DOE JE HET',
         items: [
           'Rustig in zone 2, hele zinnen kunnen praten.',
-          'De laatste 10 minuten iets steviger, zone 3: korte zinnen lukken nog.',
+          'Het laatste stuk iets steviger, zone 3: korte zinnen lukken nog. Dat stuk groeit van 10 naar 20 minuten.',
           'De laatste paar minuten weer rustig uitlopen.',
         ],
         note: 'Niet harder dan zone 3. Wordt het zwaarder, loop dan gewoon rustig uit.',
@@ -157,7 +203,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'WAAROM',
-        body: 'ASCEND kiest deze training in de week na je wedstrijd. Heel rustig lopen houdt het ritme erin zonder nieuwe belasting.',
+        body: 'ASCEND kiest deze training in de week na je wedstrijd, minstens 48 uur erna. Eerlijk: er is geen bewijs dat een herstelloop je sneller laat herstellen dan rust. Het is rustig extra volume dat het ritme erin houdt. Rust, wandelen of fietsen is net zo goed.',
       },
       {
         heading: 'ZO DOE JE HET',
@@ -531,7 +577,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'je schouders of heupen doen pijn van de rugzak',
           'je krijgt honger of dorst die niet meer weggaat',
         ],
-        note: 'Neem dan kleinere passen bij het dalen, gebruik stokken als je die op de GR5 ook gebruikt, of loop de tocht met een kilo of twee minder in je rugzak. Liever de rugzak een week langer op hetzelfde gewicht dan een stap te snel.',
+        note: 'Neem dan kleinere passen bij het dalen, gebruik stokken (in een kleine studie gaven wandelstokken na een bergtocht minder spierschade en spierpijn, dus oefen er nu al mee), of loop de tocht met een kilo of twee minder in je rugzak. Liever de rugzak een week langer op hetzelfde gewicht dan een stap te snel.',
       },
       {
         heading: 'VEILIG OP PAD',

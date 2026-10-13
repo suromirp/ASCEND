@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor } from './scheduler';
+import { proposeMove, proposeNoTimeToday, proposeSkip, skipSession, dayHasRoomFor, respectsHeavySpacing } from './scheduler';
+import { buildDefaultProgramData } from '../data/defaultProgram';
 import { daysBetween } from '../utils/dates';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { DailyTimeBudget } from '../models/goalEngineConfig';
@@ -314,5 +315,23 @@ describe('proposeMove — same heavy upper-body muscles', () => {
   it('still finds no conflict when the upper days stay 48 hours apart', () => {
     const week = [session('a', 'upper_a', TUE, MON), session('b', 'upper_b', FRI, MON)];
     expect(proposeMove(week, tpls, 'a', WED).reason).toBe('Geen conflicten gevonden.');
+  });
+});
+
+describe('a hard run after heavy leg strength', () => {
+  const real = buildDefaultProgramData().templates;
+  const byId = new Map(real.map((t) => [t.id, t]));
+  const legs = [session('legs', 'tpl_lower_a', WED, MON)];
+  const t = (id: string) => byId.get(id)!;
+
+  it('keeps 48 hours after heavy legs for a tempo run or fartlek, 72 for a test; an easy run may follow the next day', () => {
+    expect(respectsHeavySpacing(THU, t('tpl_tempo_run'), legs, byId)).toBe(false);
+    expect(respectsHeavySpacing(FRI, t('tpl_tempo_run'), legs, byId)).toBe(true);
+    expect(respectsHeavySpacing(THU, t('tpl_fartlek'), legs, byId)).toBe(false);
+    expect(respectsHeavySpacing(FRI, t('tpl_test_run'), legs, byId)).toBe(false);
+    expect(respectsHeavySpacing(SAT, t('tpl_test_run'), legs, byId)).toBe(true);
+    expect(respectsHeavySpacing(THU, t('tpl_easy_run'), legs, byId)).toBe(true);
+    // The run first, heavy legs the day after: fine.
+    expect(respectsHeavySpacing(TUE, t('tpl_tempo_run'), legs, byId)).toBe(true);
   });
 });

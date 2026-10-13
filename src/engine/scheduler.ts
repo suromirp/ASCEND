@@ -142,7 +142,7 @@ export function findHeavyConflicts(
     const other = templateMap.get(s.templateId);
     if (!other) return false;
     const shared = sharedHeavyAxes(template, other);
-    if (shared.length === 0) return false;
+    if (shared.length === 0) return hardRunAfterLegStrength(template, date, other, s.scheduledDate);
     // The intended back-to-back (hill intervals Saturday, long run Sunday)
     // is exactly that: the next day, in that order. Never both on the
     // same day, and never the other way round (production feedback: a
@@ -176,6 +176,37 @@ export function legSpacingDays(first: SessionTemplate, second: SessionTemplate):
   const easyVolume = (t: SessionTemplate) => templateSport(t) === 'running' && resolveEffectiveStressProfile(t).intensity === 'low';
   if ((easyVolume(first) && second.type === 'strength') || (first.type === 'strength' && easyVolume(second))) return 0;
   return 1;
+}
+
+// ASCEND_HEURISTIC(HARD-RUN-AFTER-LEG-STRENGTH): a hard run (tempo,
+// fartlek, intervals, a test or a race) does not count as heavy for the
+// legs, but it is the session heavy leg strength hurts most: strength
+// lowers running performance for about 6 to 24 hours, and coaches keep 48
+// hours between heavy legs and a key run, 72 before a test or race
+// (docs/onderzoek/Trainingsvormen en varianten.md; expert opinion, the 48
+// hours itself was never tested). The other way round (hard run first,
+// strength the next day) is fine. Same day only with the setting "Zware
+// dingen op één dag".
+const TEST_OR_RACE = new Set(['tpl_test_run', 'tpl_race']);
+
+export function isHardRun(t: SessionTemplate): boolean {
+  if (t.type === 'strength' || templateSport(t) !== 'running') return false;
+  // Only what a template says itself: without a profile nothing is assumed.
+  const intensity = t.baseStressProfile?.intensity;
+  return intensity === 'moderate' || intensity === 'high' || TEST_OR_RACE.has(t.id);
+}
+
+function isLegStrength(t: SessionTemplate): boolean {
+  return t.type === 'strength' && isLegHeavyTemplate(t);
+}
+
+function hardRunAfterLegStrength(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {
+  const [strength, strengthDate, run, runDate] = isLegStrength(a) && isHardRun(b) ? [a, aDate, b, bDate] : isLegStrength(b) && isHardRun(a) ? [b, bDate, a, aDate] : [];
+  if (!strength || !run || !strengthDate || !runDate) return false;
+  const gap = daysBetween(strengthDate, runDate);
+  if (gap === 0) return !hardSameDayAllowed(strength, run);
+  if (gap < 0) return false; // the run first: fine
+  return gap <= (TEST_OR_RACE.has(run.id) ? 2 : 1);
 }
 
 // Setting (Training → Zware dingen op één dag): leg strength and a hard

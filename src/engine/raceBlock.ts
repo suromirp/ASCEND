@@ -19,7 +19,18 @@
 //   Bosquet et al. 2007; for 5-10 km a taper of about 1 to 2 weeks with the
 //   hardest session 5 to 10 days before the race, which is the last tempo
 //   run on the Thursday of the week before);
-// - the day after, the long run (or mountain hike) is the short version.
+// - the day after, the long run (or mountain hike) is the short version;
+// - the Saturday hill intervals become long intervals (4 x 4 min) in the
+//   block, except block week 3, which keeps the hills with descending;
+// - a tempo run or test may not sit within 48 hours (a test 72) after
+//   heavy leg strength: the leg day swaps with an upper body day earlier
+//   in the week, and in a test week it is also the short version.
+//
+// Outside a block the Saturday alternates too: every second week of the
+// four-week wave "Heuvels op en af" (hills, then controlled descending) in
+// the basis and Opbouw, so the legs never go long without a descent
+// stimulus (docs/onderzoek/Trainingsvormen en varianten.md). From
+// Bergcapaciteit the Sunday mountain hike does the descending.
 // Everything else of the main plan stays as it is. Outside a block a tempo
 // run goes back to an easy run, so moving or removing the goal undoes it.
 //
@@ -27,7 +38,10 @@
 
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { addDays, mondayOfWeek } from '../utils/dates';
+import type { Program } from '../models/program';
+import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD, waveWeek } from './programLayout';
+import { isLegHeavyTemplate } from './scheduler';
 
 export const RACE_BLOCK_WEEKS = 8;
 export const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
@@ -35,9 +49,17 @@ export const RACE_TEMPLATE_ID = 'tpl_race';
 export const TEST_TEMPLATE_ID = 'tpl_test_run';
 // Weeks before race week with a 5 km test: just before the block starts,
 // and halfway, four weeks before the race.
-const TEST_WEEKS_BEFORE_RACE = [RACE_BLOCK_WEEKS + 1, 4];
+// Plus a first test about 16 weeks out, so ASCEND knows your pace (and
+// what to train) long before the block.
+const TEST_WEEKS_BEFORE_RACE = [16, RACE_BLOCK_WEEKS + 1, 4];
+export const INTERVALS_TEMPLATE_ID = 'tpl_intervals';
+export const HILLS_TEMPLATE_ID = 'tpl_hill_intervals';
+export const HILLS_DESCENT_TEMPLATE_ID = 'tpl_hills_descent';
+const SATURDAY_FAMILY = [HILLS_TEMPLATE_ID, INTERVALS_TEMPLATE_ID, HILLS_DESCENT_TEMPLATE_ID];
+const DESCENT_PHASES = [PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD];
+const DESCENT_BLOCK_WEEK = 3;
 const EASY_TEMPLATE_ID = 'tpl_easy_run';
-const BEFORE_RACE_TAKEN_OUT = ['tpl_hill_intervals', 'tpl_lower_a', 'tpl_lower_b'];
+const BEFORE_RACE_TAKEN_OUT = ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_lower_a', 'tpl_lower_b'];
 const AFTER_RACE_SHORT = ['tpl_long_run', 'tpl_mountain_hike'];
 
 export type GoalPlanRole = 'main' | 'secondary' | 'track';
@@ -77,11 +99,24 @@ export function raceBlocks(goals: TrainingGoal[], mainGoalId: string | undefined
 
 // Which template a planned session should be on this date: the easy run
 // becomes a tempo run inside a block (not in race week), and back outside.
-export function templateForRaceBlock(templateId: string, date: string, blocks: RaceBlock[]): string {
+export function templateForRaceBlock(templateId: string, date: string, blocks: RaceBlock[], program?: Program | null): string {
+  if (SATURDAY_FAMILY.includes(templateId)) return saturdayTemplate(date, blocks, program);
   if (![EASY_TEMPLATE_ID, TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID].includes(templateId)) return templateId;
   const week = mondayOfWeek(date);
   if (blocks.some((b) => TEST_WEEKS_BEFORE_RACE.some((n) => week === addDays(b.raceWeek, -7 * n)))) return TEST_TEMPLATE_ID;
   return blocks.some((b) => date >= b.blockStart && date < b.raceWeek) ? TEMPO_TEMPLATE_ID : EASY_TEMPLATE_ID;
+}
+
+// The Saturday quality session: intervals in a race block (hills with
+// descending in its third week), otherwise hills, with descending in weeks
+// 2 and 4 of the wave in the basis and Opbouw.
+export function saturdayTemplate(date: string, blocks: RaceBlock[], program?: Program | null): string {
+  const week = mondayOfWeek(date);
+  const block = blocks.find((b) => date >= b.blockStart && date < b.raceWeek);
+  if (block) return Math.floor(daysBetween(block.blockStart, week) / 7) + 1 === DESCENT_BLOCK_WEEK ? HILLS_DESCENT_TEMPLATE_ID : INTERVALS_TEMPLATE_ID;
+  const position = program ? resolveProgramWeek(program, date) : null;
+  if (position && DESCENT_PHASES.includes(position.phase.id) && waveWeek(position) % 2 === 0) return HILLS_DESCENT_TEMPLATE_ID;
+  return HILLS_TEMPLATE_ID;
 }
 
 export interface RaceBlockChanges {
@@ -97,9 +132,11 @@ export function applyRaceBlocks(
   blocks: RaceBlock[],
   templates: SessionTemplate[],
   newId: () => string,
+  program?: Program | null,
 ): RaceBlockChanges {
   const byId = new Map(templates.map((t) => [t.id, t]));
   if (!byId.has(TEMPO_TEMPLATE_ID) || !byId.has(RACE_TEMPLATE_ID) || !byId.has(TEST_TEMPLATE_ID)) return { update: [], add: [], remove: [] };
+  const known = (id: string) => byId.has(id) || !SATURDAY_FAMILY.includes(id);
   const update = new Map<string, PlannedSession>();
   const remove: PlannedSession[] = [];
   const add: PlannedSession[] = [];
@@ -111,8 +148,9 @@ export function applyRaceBlocks(
       remove.push(s);
       continue;
     }
-    const target = templateForRaceBlock(s.templateId, s.scheduledDate, blocks);
-    if (target !== s.templateId) update.set(s.id, { ...s, templateId: target });
+    if (s.status !== 'planned') continue;
+    const target = templateForRaceBlock(s.templateId, s.scheduledDate, blocks, program);
+    if (target !== s.templateId && known(target)) update.set(s.id, { ...s, templateId: target });
   }
 
   for (const b of blocks) {
@@ -144,5 +182,33 @@ export function applyRaceBlocks(
       }
     }
   }
+  swapLegsBeforeHardRuns(open, update, byId, new Set(remove.map((r) => r.id)));
   return { update: [...update.values()], add, remove };
+}
+
+// A tempo run or test too soon after heavy leg strength: the leg day swaps
+// with an upper body day earlier in the same week, far enough before the
+// run. In a test week the leg day is also the short version (72 hours is
+// rarely possible in a full week). Applied to the sessions as they will be.
+function swapLegsBeforeHardRuns(open: PlannedSession[], update: Map<string, PlannedSession>, byId: Map<string, SessionTemplate>, removed: Set<string>): void {
+  const now = () => open.filter((s) => !removed.has(s.id) && s.status === 'planned').map((s) => update.get(s.id) ?? s);
+  for (const run of now().filter((s) => s.templateId === TEMPO_TEMPLATE_ID || s.templateId === TEST_TEMPLATE_ID)) {
+    const need = run.templateId === TEST_TEMPLATE_ID ? 3 : 2;
+    const isLegs = (s: PlannedSession) => { const t = byId.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t); };
+    for (const legs of now().filter((s) => isLegs(s) && daysBetween(s.scheduledDate, run.scheduledDate) >= 0 && daysBetween(s.scheduledDate, run.scheduledDate) < need)) {
+      const partner = now()
+        .filter((s) => s.weekStartDate === legs.weekStartDate && s.scheduledDate < legs.scheduledDate && byId.get(s.templateId)?.type === 'strength' && !isLegs(s))
+        .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
+      let moved = legs;
+      if (partner) {
+        moved = { ...legs, scheduledDate: partner.scheduledDate };
+        update.set(partner.id, { ...partner, scheduledDate: legs.scheduledDate });
+        update.set(legs.id, moved);
+      }
+      const short = byId.get(legs.templateId)?.durationVariants.short;
+      if (daysBetween(moved.scheduledDate, run.scheduledDate) < need && short && moved.plannedMinutes !== short) {
+        update.set(legs.id, { ...moved, plannedMinutes: short });
+      }
+    }
+  }
 }

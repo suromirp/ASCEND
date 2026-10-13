@@ -4,7 +4,7 @@
 // stop or ease off during the training itself (audit 2026-10, report 6).
 // Keyed by SessionTemplate.id, like data/workoutStructure.ts.
 
-export type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck';
+export type FactKind = 'steady' | 'intervals' | 'long' | 'hike' | 'strength' | 'recovery' | 'tempo' | 'race' | 'test' | 'strides' | 'fartlek' | 'progression' | 'ruck' | 'vo2' | 'descent';
 
 export interface SessionStyle {
   styleLabel: string; // after the sport: "HARDLOPEN · BERGOP"
@@ -44,10 +44,22 @@ export const SESSION_STYLE: Record<string, SessionStyle> = {
     stopSignals: ['je geen hele zinnen meer kunt praten: ga langzamer of wandel even', 'je benen nog zwaar zijn van de beentraining: loop de korte versie'],
     facts: 'steady',
   },
+  tpl_intervals: {
+    styleLabel: 'intervallen',
+    purpose: 'Lange blokken rond je 5 km-tempo: de training die je conditie het meest laat groeien, richting je wedstrijd.',
+    stopSignals: ['je het laatste blok duidelijk niet meer op tempo haalt: stop daar, de rest is uitlopen', 'je scherpe pijn voelt'],
+    facts: 'vo2',
+  },
+  tpl_hills_descent: {
+    styleLabel: 'op en af',
+    purpose: 'Bergop snelheid, en daarna rustig afdalen zodat je bovenbenen de dalingen van de GR5 leren verdragen.',
+    stopSignals: ['je knie scherp pijn doet bij het dalen: stoppen en de rest wandelen op vlak terrein', 'je benen gaan trillen bij het afdalen: genoeg voor vandaag'],
+    facts: 'descent',
+  },
   tpl_fartlek: {
     styleLabel: 'fartlek',
-    purpose: 'Speels tempo: korte stevige stukken in een rustige loop, voor een sneller tempo zonder zware training.',
-    stopSignals: ['je in de stevige stukken niet eens korte zinnen meer kunt zeggen: rustiger', 'je benen zwaar blijven in de rustige stukken: loop de rest rustig uit'],
+    purpose: 'Speelse snelheid: korte harde stukken in een rustige loop.',
+    stopSignals: ['je na de rustige anderhalve minuut nog niet op adem bent: maak de harde stukken iets rustiger', 'je benen zwaar blijven in de rustige stukken: loop de rest rustig uit'],
     facts: 'fartlek',
   },
   tpl_progression_run: {

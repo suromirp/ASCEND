@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { applyRaceBlocks, goalPlanRole, raceBlocks, templateForRaceBlock } from './raceBlock';
+import { applyRaceBlocks, goalPlanRole, raceBlocks, saturdayTemplate, templateForRaceBlock } from './raceBlock';
+import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession } from '../models/training';
@@ -67,5 +68,42 @@ describe('race block', () => {
   it('takes the race out again when the goal goes', () => {
     const planned = { id: 'r', templateId: 'tpl_race', scheduledDate: '2027-03-20', weekStartDate: mondayOfWeek('2027-03-20'), status: 'planned' as const, order: 0 };
     expect(applyRaceBlocks([planned], [], templates, newId).remove).toEqual([planned]);
+  });
+});
+
+describe('the Saturday, heavy legs before a hard run, and the first test', () => {
+  // The user's program: basis 4 weeks from 28 Sep 2026, then Opbouw.
+  const program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: layoutPhasesForGoal('2026-09-28', '2027-08-01', { [PHASE_BASIS]: 4 })! };
+
+  it('intervals in the block, hills with descending in block week 3, outside it every second week of the wave', () => {
+    expect(saturdayTemplate('2027-01-23', blocks, program)).toBe('tpl_intervals'); // block week 1
+    expect(saturdayTemplate('2027-02-06', blocks, program)).toBe('tpl_hills_descent'); // block week 3
+    expect(saturdayTemplate('2027-03-13', blocks, program)).toBe('tpl_intervals'); // block week 8
+    // Opbouw from 26 Oct: week 1 hills, week 2 op en af, week 3 hills, week 4 op en af.
+    expect(['2026-10-31', '2026-11-07', '2026-11-14', '2026-11-21'].map((d) => saturdayTemplate(d, [], program)))
+      .toEqual(['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_hill_intervals', 'tpl_hills_descent']);
+    // Bergcapaciteit: the Sunday hike does the descending.
+    expect(saturdayTemplate('2027-05-01', [], program)).toBe('tpl_hill_intervals');
+  });
+
+  it('a first test about 16 weeks out', () => {
+    expect(templateForRaceBlock('tpl_easy_run', '2026-11-26', blocks)).toBe('tpl_test_run');
+  });
+
+  it('the leg day swaps with the upper body day before a tempo run, and is short before a test', () => {
+    const block = applyRaceBlocks(week('2027-01-25'), blocks, templates, newId, program);
+    const day = (id: string) => block.update.find((u) => u.id === `2027-01-25-${id}`);
+    expect(day('tpl_easy_run')?.templateId).toBe('tpl_tempo_run'); // Thursday
+    expect(day('tpl_lower_a')?.scheduledDate).toBe('2027-01-26'); // to Tuesday: 48 hours before
+    expect(day('tpl_upper_a')?.scheduledDate).toBe('2027-01-27');
+    expect(day('tpl_lower_a')?.plannedMinutes).toBeUndefined();
+    // Idempotent: run again on the result, nothing changes.
+    const after = week('2027-01-25').map((s) => block.update.find((u) => u.id === s.id) ?? s);
+    expect(applyRaceBlocks(after, blocks, templates, newId, program).update).toEqual([]);
+
+    const test = applyRaceBlocks(week('2027-02-15'), blocks, templates, newId, program); // 4 weeks before: test
+    const legs = test.update.find((u) => u.id === '2027-02-15-tpl_lower_a');
+    expect(legs?.scheduledDate).toBe('2027-02-16');
+    expect(legs?.plannedMinutes).toBe(templates.find((t) => t.id === 'tpl_lower_a')!.durationVariants.short);
   });
 });

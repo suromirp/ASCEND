@@ -27,7 +27,7 @@ import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
 import { goalPlanRole, isRaceGoal, RACE_BLOCK_WEEKS } from '../engine/raceBlock';
-import { formatRaceTime, predictRace, TEST_NOISE } from '../engine/racePrediction';
+import { formatRaceTime, predictRace, predictionRange, TEST_NOISE } from '../engine/racePrediction';
 import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
 import { eventDaysRequirement, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
@@ -710,12 +710,12 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
       </div>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {role === 'secondary'
-          ? `Tussendoel: ASCEND traint ervoor.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop, met een testloop de week ervoor.` : ''} De wedstrijd komt in je planning, de wedstrijdweek is licht en de lange duurloop erna kort.`
+          ? `Tussendoel: ASCEND traint ervoor.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop en worden de heuvels lange intervallen, met een testloop de week ervoor. Een eerste testloop komt al eerder, zodat ASCEND je tempo kent.` : ''} De wedstrijd komt in je planning, de wedstrijdweek is licht en de lange duurloop erna kort.`
           : 'Alleen volgen: je ziet hoe je ervoor staat, maar je planning verandert er niet voor.'}
       </p>
       {prediction?.predictedMinutes !== undefined && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-          Laatste testloop: {formatNumberNL(prediction.latest.km, 1)} km in {formatRaceTime(prediction.latest.minutes)}. Voorspelde {formatNumberNL(raceKm!, 1)} km: <span style={{ color: 'var(--color-gold)' }}>{formatRaceTime(prediction.predictedMinutes)}</span>
+          Laatste testloop: {formatNumberNL(prediction.latest.km, 1)} km in {formatRaceTime(prediction.latest.minutes)}. Voorspelde {formatNumberNL(raceKm!, 1)} km: <span style={{ color: 'var(--color-gold)' }}>tussen {formatRaceTime(predictionRange(prediction.predictedMinutes)[0])} en {formatRaceTime(predictionRange(prediction.predictedMinutes)[1])}</span>
           {targetMin ? `, je doel is ${formatRaceTime(targetMin)}` : ''}.
           {prediction.change !== undefined && (Math.abs(prediction.change) < TEST_NOISE
             ? ' Gelijk aan je vorige test: verschillen tot 3 à 4% zijn normale schommeling.'

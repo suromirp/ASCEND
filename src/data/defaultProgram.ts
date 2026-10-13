@@ -342,6 +342,60 @@ function buildTemplates(): SessionTemplate[] {
         { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek' },
       ],
     },
+    // Zaterdag in het wedstrijdblok (engine/raceBlock.ts): lange intervallen
+    // rond je 5 km-tempo in plaats van de heuvels. Intervallen van 2 minuten
+    // of langer verhogen VO2max meer dan rustig lopen (Milanović 2015, Wen
+    // 2019; 4 x 4 min, Helgerud 2007). Geen vaste dag: de heuvels' plek.
+    {
+      id: 'tpl_intervals',
+      name: 'Intervallen',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Snelheid voor je wedstrijd: lange blokken rond je 5 km-tempo',
+      durationVariants: { full: 55, short: 40 },
+      cardioTarget: { zone: 'Zone 4 in de blokken, ongeveer je 5 km-tempo' },
+      notes:
+        'Rustig inlopen met een paar versnellingen. Dan blokken van 4 minuten hard: zone 4, ongeveer je 5 km-tempo, alleen nog losse woorden. Ertussen 3 minuten rustig joggen. Uitlopen. Gelijkmatig: het laatste blok even snel als het eerste.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'heavy', eccentricLoad: 'light', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'heavy' },
+      pairingOverride: [{ withTemplateId: 'tpl_long_run', verdict: 'prefer' }],
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 50, note: 'Wennen' },
+        { weekInPhase: 2, targetMinutes: 55, note: 'Vier blokken' },
+        { weekInPhase: 3, targetMinutes: 60, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 45, note: 'Rustweek' },
+      ],
+    },
+    // Zaterdag, om de twee weken (engine/raceBlock.ts#saturdayTemplate): de
+    // heuvels met daarna gecontroleerd afdalen. De GR5 vraagt ±30.000 m
+    // dalen; een paar korte afdaalprikkels beschermen weken tegen
+    // spierschade, maar na 6 tot 9 weken zonder herhaling is dat weg
+    // (repeated bout effect; docs/onderzoek/Trainingsvormen en varianten.md).
+    {
+      id: 'tpl_hills_descent',
+      name: 'Heuvels op en af',
+      type: 'cardio',
+      sport: 'running',
+      focus: 'Bergop snelheid, daarna gecontroleerd afdalen voor de GR5',
+      durationVariants: { full: 45, short: 30 },
+      outdoorTarget: { targetElevationM: 150 },
+      notes:
+        'Opwarmen, dan een paar keer 1 minuut hard bergop met wandelend terug. Daarna het nieuwe deel: rustig en beheerst naar beneden, telkens opnieuw. Een trappenhuis af (met de lift of rustig omhoog), een duin af, of een heuvel af. Kleine pasjes, knieën licht gebogen, niet rennen. De eerste keren geeft dit spierpijn in je bovenbenen; dat is precies de prikkel, en het wordt snel minder.',
+      warmup: DYNAMIC_WARMUP,
+      cooldown: COOLDOWN_RUN,
+      baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+      pairingOverride: [
+        { withTemplateId: 'tpl_long_run', verdict: 'prefer' },
+        { withTemplateId: 'tpl_mountain_hike', verdict: 'prefer' },
+      ],
+      weeklyProgression: [
+        { weekInPhase: 1, targetMinutes: 35, note: 'Kort afdalen' },
+        { weekInPhase: 2, targetMinutes: 40, note: 'Op en af' },
+        { weekInPhase: 3, targetMinutes: 45, note: 'Zwaarste week' },
+        { weekInPhase: 4, targetMinutes: 35, note: 'Rustweek, kort afdalen' },
+      ],
+    },
     // Uit de catalogus voor de extra training (engine/extraRun.ts): ASCEND
     // stelt hem voor als de weken ervoor goed gingen. Geen vaste dag: hij komt op de dag
     // die het verst van de zware beendagen ligt.
@@ -373,14 +427,14 @@ function buildTemplates(): SessionTemplate[] {
       name: 'Fartlek',
       type: 'cardio',
       sport: 'running',
-      focus: 'Tempo, speels: korte stevige stukken in een rustige loop',
+      focus: 'Snelheid, speels: korte harde stukken in een rustige loop',
       durationVariants: { full: 40, short: 30 },
-      cardioTarget: { zone: 'Rustig, met stukken RPE 6-7' },
+      cardioTarget: { zone: 'Rustig, met stukken van 1 minuut op 5 tot 10 km-tempo' },
       notes:
-        'Rustig inlopen, dan een paar keer 1 tot 2 minuten stevig (korte zinnen lukken nog net), met even lang rustig ertussen. Op gevoel, niet op het horloge. Uitlopen. Leert je benen een hoger tempo zonder de zwaarte van een echte tempoloop.',
+        'Rustig inlopen, dan stukken van 1 minuut hard: ongeveer je 5 tot 10 km-tempo, alleen losse woorden. Ertussen anderhalve minuut rustig. Op gevoel mag: een lantaarnpaal of bocht als eindpunt. Uitlopen. Sneller dan je tempoloop, zodat de twee niet hetzelfde trainen.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
-      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'moderate' },
+      baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'high', upperBodyLoad: 'none', cardioLoad: 'moderate' },
       weeklyProgression: [
         { weekInPhase: 1, targetMinutes: 35, note: 'Wennen' },
         { weekInPhase: 2, targetMinutes: 40, note: 'Iets meer stukken' },
@@ -395,9 +449,9 @@ function buildTemplates(): SessionTemplate[] {
       sport: 'running',
       focus: 'Tempo: rustig beginnen, het laatste stuk iets steviger',
       durationVariants: { full: 45, short: 30 },
-      cardioTarget: { zone: 'Zone 2, laatste 10 minuten zone 3' },
+      cardioTarget: { zone: 'Zone 2, het laatste stuk zone 3' },
       notes:
-        'Begin rustig in zone 2. De laatste 10 minuten iets steviger, zone 3: korte zinnen lukken nog. Niet harder dan dat, en de laatste minuten weer rustig. Oefent tempo houden op vermoeide benen, zonder een zware training te worden.',
+        'Begin rustig in zone 2. Het laatste stuk (10 tot 20 minuten, staat in je plan) iets steviger, zone 3: korte zinnen lukken nog. Niet harder dan dat, en de laatste minuten weer rustig. Oefent tempo houden op vermoeide benen, zonder een zware training te worden.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'light', impact: 'moderate', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'none', cardioLoad: 'moderate' },
