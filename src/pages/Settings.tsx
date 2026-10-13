@@ -85,6 +85,14 @@ export function SettingsPage() {
     refresh, trainingGoals, goalMilestones, strengthExternal, setStrengthExternal,
   } = useAppData();
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, todayISO());
+  // The long-Sunday choice only matters when the main goal is not a
+  // mountain trek: for a trek the hike is the only sensible answer, so
+  // the choice is hidden (unless the long run was chosen before, so it
+  // can be switched back).
+  const ladderGoalIds = new Set(goalMilestones.map((m) => m.goalId));
+  const mainGoal = trainingGoals.find((g) => g.status === 'active' && ladderGoalIds.has(g.id));
+  const mainIsTrek = !!mainGoal?.requirements.some((r) => r.discipline === 'hiking' || r.kind === 'elevationGain' || r.kind === 'elevationLoss');
+  const showLongSundayChoice = !mainIsTrek || settings.longSundaySession === 'run';
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [tab, setTab] = useState<SettingsTab>(readStoredTab);
   const [status, setStatus] = useState<string | null>(null);
@@ -369,7 +377,7 @@ export function SettingsPage() {
             <button onClick={() => navigate('/ascend/doelen')} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
               Doelen en tussendoelen beheren
             </button>
-            <div className="flex flex-col gap-2">
+            {showLongSundayChoice && <div className="flex flex-col gap-2">
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
               <OptionList
                 options={[
@@ -383,7 +391,7 @@ export function SettingsPage() {
                   note('program', v === 'hike' ? 'Vanaf Bergcapaciteit staat er op zondag een bergtocht.' : 'Je houdt elke zondag de lange duurloop.');
                 }}
               />
-            </div>
+            </div>}
             {!confirmingRestart ? (
               <SecondaryButton onClick={() => setConfirmingRestart(true)}>OPNIEUW BEGINNEN BIJ WEEK 1</SecondaryButton>
             ) : (
