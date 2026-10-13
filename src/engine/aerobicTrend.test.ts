@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aerobicTrend, formatPace } from './aerobicTrend';
+import { aerobicTrend, formatPace, progressMoment } from './aerobicTrend';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog } from '../models/training';
 
@@ -41,5 +41,25 @@ describe('aerobicTrend', () => {
     const same = aerobicTrend([run('a', 'tpl_easy_run', '2026-10-13', 5, 40, 151)], templates, program, hr, '2026-10-19').points[0].paceSec;
     const lowerHr = aerobicTrend([run('a', 'tpl_easy_run', '2026-10-13', 5, 40, 145)], templates, program, hr, '2026-10-19').points[0].paceSec;
     expect(lowerHr).toBeLessThan(same);
+  });
+});
+
+describe('progressMoment: hearing about it', () => {
+  const trend = (changeSec?: number, bpmChange?: number) => ({ referenceHr: 151, points: [], runs: 8, outsideZone: 0, changeSec, bpmChange });
+
+  it('says it once the trend is clearly faster, with the heart rate the other way round, and that it is a trend', () => {
+    const msg = progressMoment(trend(-12, -4.2), undefined, '2026-12-01')!;
+    expect(msg).toContain('12 seconden per km sneller');
+    expect(msg).toContain('ongeveer 4 slagen minder');
+    expect(msg).toContain('de trend over weken');
+    expect(progressMoment(trend(-3, -1), undefined, '2026-12-01')).toBeUndefined();
+    expect(progressMoment(trend(6, 2), undefined, '2026-12-01')).toBeUndefined();
+  });
+
+  it('not again within two weeks, and only when it got better again', () => {
+    const last = { date: '2026-12-01', changeSec: -12 };
+    expect(progressMoment(trend(-20), last, '2026-12-10')).toBeUndefined();
+    expect(progressMoment(trend(-13), last, '2026-12-20')).toBeUndefined();
+    expect(progressMoment(trend(-16), last, '2026-12-20')).toBeDefined();
   });
 });

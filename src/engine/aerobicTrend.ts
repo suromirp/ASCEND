@@ -30,6 +30,10 @@ export interface AerobicTrend {
   runs: number;
   outsideZone: number; // easy runs left out: heart rate above zone 2, or far below it
   changeSec?: number; // last 2 weeks vs the 2 weeks a month earlier; negative = faster
+  // The same change the other way round: at the same pace, about this many
+  // beats more (negative = fewer). Pace and heart rate in proportion, as
+  // above: an estimate, good for a trend.
+  bpmChange?: number;
 }
 
 const WEEKS = 12;
@@ -97,6 +101,28 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
   const recent = avg(addDays(monday, -7), today);
   const earlier = avg(addDays(monday, -35), addDays(monday, -22));
   const changeSec = recent !== undefined && earlier !== undefined ? recent - earlier : undefined;
+  const bpmChange = recent !== undefined && earlier !== undefined ? referenceHr * (recent / earlier - 1) : undefined;
 
-  return { referenceHr, points, runs: inZone.length, outsideZone: candidates.length - inZone.length, changeSec };
+  return { referenceHr, points, runs: inZone.length, outsideZone: candidates.length - inZone.length, changeSec, bpmChange };
+}
+
+// --- the moment you hear about it ------------------------------------------
+
+export interface ProgressCelebrated {
+  date: string;
+  changeSec: number;
+}
+
+// At most every two weeks, and only when it got better again since the
+// last time (at least 3 more seconds), so it stays news.
+const CELEBRATE_EVERY_DAYS = 14;
+const CELEBRATE_FURTHER_SEC = 3;
+
+export function progressMoment(trend: AerobicTrend, last: ProgressCelebrated | undefined, today: string): string | undefined {
+  const c = trend.changeSec;
+  if (c === undefined || c > -MEANINGFUL_CHANGE_SEC) return undefined;
+  if (last && (today < addDays(last.date, CELEBRATE_EVERY_DAYS) || c > last.changeSec - CELEBRATE_FURTHER_SEC)) return undefined;
+  const sec = Math.round(-c);
+  const bpm = trend.bpmChange !== undefined ? Math.round(-trend.bpmChange) : 0;
+  return `Je wordt fitter. Bij dezelfde hartslag loop je ${sec} seconden per km sneller dan een maand geleden${bpm >= 1 ? `; hetzelfde tempo kost je ongeveer ${bpm} ${bpm === 1 ? 'slag' : 'slagen'} minder` : ''}. Dat is de trend over weken, niet één loopje.`;
 }
