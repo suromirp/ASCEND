@@ -19,7 +19,7 @@ export function AerobicTrendCard() {
     verdict = Math.abs(trend.changeSec) < MEANINGFUL_CHANGE_SEC
       ? 'Gelijk aan een maand geleden. Normaal: vooruitgang gaat in weken, niet per loop.'
       : trend.changeSec < 0
-        ? `${sec} seconden per km sneller dan een maand geleden, bij dezelfde hartslag. Je wordt fitter.`
+        ? `${sec} seconden per km sneller dan een maand geleden, bij dezelfde hartslag${trend.bpmChange !== undefined && Math.round(-trend.bpmChange) >= 1 ? `. Anders gezegd: hetzelfde tempo kost je ongeveer ${Math.round(-trend.bpmChange)} slagen minder` : ''}. Je wordt fitter.`
         : `${sec} seconden per km langzamer dan een maand geleden. Moe, warm of weinig geslapen? Kijk hoe het de komende weken gaat.`;
   }
 

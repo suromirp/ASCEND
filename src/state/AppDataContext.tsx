@@ -164,6 +164,7 @@ import { effectiveAmbition } from '../engine/ambition';
 import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
 import { programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
+import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks } from '../engine/raceBlock';
 
 // Turns a failed IndexedDB open/read into something the user can act on.
@@ -1119,7 +1120,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // milestone clear (if this same log happened to satisfy one) the
         // bigger victory-tier treatment with the milestone's title attached.
         // The coach reacts in one line to what you filled in (engine/coach.ts).
-        const coachNote = coachReaction(log, (await SessionTemplatesRepo.getAll()).find((t) => t.id === log.templateId), (await ProgramsRepo.getAll())[0] ?? null, await SessionLogsRepo.getAll());
+        const allTemplates = await SessionTemplatesRepo.getAll();
+        const currentProgram = (await ProgramsRepo.getAll())[0] ?? null;
+        const allLogs = await SessionLogsRepo.getAll();
+        let coachNote = coachReaction(log, allTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs);
+        // Faster at the same heart rate over weeks: said once, right after
+        // an easy run (engine/aerobicTrend.ts#progressMoment).
+        const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate);
+        const lastProgress = await MetaRepo.get<ProgressCelebrated>('aerobicProgressCelebrated');
+        const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate).runs;
+        const progress = counted ? progressMoment(trend, lastProgress, log.completedDate) : undefined;
+        if (progress && trend.changeSec !== undefined) {
+          coachNote = `${coachNote} ${progress}`;
+          await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: trend.changeSec });
+        }
         setCelebration(
           clearedTitle
             ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote(), coachNote }
@@ -1136,7 +1150,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (plannedId) loggingInFlight.current.delete(plannedId);
       }
     },
-    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled, reportStorageError],
+    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled, settings.heartRate, reportStorageError],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
