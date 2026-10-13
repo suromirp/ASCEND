@@ -38,7 +38,7 @@ import type { GoalOverview } from './goalOverview';
 import { PHASE_BERG, PHASE_OPBOUW, waveWeek } from './programLayout';
 import { buildWeekReview } from './weekReview';
 import { plannedRpeTop } from './coach';
-import { isLegHeavyTemplate } from './scheduler';
+import { isLegHeavyTemplate, respectsHeavySpacing } from './scheduler';
 import { templateSport } from './sports';
 
 export const EXTRA_RUN_TEMPLATE_ID = 'tpl_strides_run';
@@ -112,7 +112,7 @@ function isHard(t: SessionTemplate | undefined): boolean {
 }
 
 // The best day in the week for the extra run, or undefined when no day fits.
-export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Map<string, SessionTemplate>, opts: { today: string; anchor?: string; restDay?: number }): string | undefined {
+export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Map<string, SessionTemplate>, opts: { today: string; anchor?: string; restDay?: number; template?: SessionTemplate }): string | undefined {
   const active = weekSessions.filter((s) => s.status !== 'skipped');
   const on = (date: string) => active.filter((s) => s.scheduledDate === date).map((s) => byId.get(s.templateId));
   let best: { date: string; score: number } | undefined;
@@ -122,6 +122,8 @@ export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], b
     if (isoWeekday(date) === (opts.restDay ?? 1)) continue;
     const here = on(date);
     if (here.some((t) => !!t && (isRun(t) || t.type === 'hiking' || isLegHeavyTemplate(t)))) continue;
+    // A hard extra (fartlek, progressive run) not within 48 hours after heavy legs.
+    if (opts.template && !respectsHeavySpacing(date, opts.template, active, byId)) continue;
     // Closer to a hard day costs more; the day before one costs most.
     let score = 0;
     if (on(addDays(date, 1)).some(isHard)) score += 2;
@@ -184,7 +186,7 @@ export interface ExtraChoice {
 // run; climbing gets the uphill walk. In Bergcapaciteit the weekend already
 // has hills and a mountain hike, so the extra is low-impact hiking work.
 export function chooseExtraSession(ctx: { phaseId: string; wave: number; inRaceBlock: boolean; afterRace: boolean; gaps: FocusGap[] }): ExtraChoice {
-  if (ctx.afterRace) return { templateId: 'tpl_recovery_run', reason: 'Je wedstrijd is net achter de rug. Een heel rustige loop houdt het ritme erin zonder nieuwe belasting.' };
+  if (ctx.afterRace) return { templateId: 'tpl_recovery_run', reason: 'Je wedstrijd is net achter de rug. Een heel rustige loop houdt het ritme erin. Sneller herstellen doe je er niet van, rust mag ook.' };
   if (ctx.inRaceBlock && ctx.phaseId === PHASE_OPBOUW) {
     return { templateId: 'tpl_strides_run', reason: 'Je wedstrijd komt eraan en de tempoloop staat er al. De extra loop blijft daarom rustig, met een paar versnellingen.' };
   }
@@ -243,8 +245,6 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     if (week.some((s) => EXTRA_CATALOGUE.includes(s.templateId))) continue;
     const verdict = extraRunEarned(inputs, weekStart);
     if (!verdict.earned) continue;
-    const date = extraRunDay(weekStart, week, byId, { today, anchor, restDay });
-    if (!date) continue;
     const choice = chooseExtraSession({
       phaseId: position.phase.id,
       wave,
@@ -252,7 +252,10 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
       afterRace: races.some((r) => mondayOfWeek(r.raceDate) === addDays(weekStart, -7)),
       gaps,
     });
-    if (!byId.has(choice.templateId)) continue;
+    const template = byId.get(choice.templateId);
+    if (!template) continue;
+    const date = extraRunDay(weekStart, week, byId, { today, anchor, restDay, template });
+    if (!date) continue;
     return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }
   return undefined;

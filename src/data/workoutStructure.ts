@@ -100,14 +100,59 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
       { label: 'Herstel tussen zware dagen', why: 'Bewust rustig, zodat Benen A en de heuvels er niet onder lijden.' },
     ],
   },
+  tpl_intervals: {
+    summary: (repeats) => `Inlopen, ${repeats ?? 4} blokken van 4 minuten hard met 3 minuten rustig, uitlopen.`,
+    structure: [
+      { kind: 'warmup', label: 'Inlopen', minutes: 12, intensity: 2, detail: 'Met aan het eind 3 korte versnellingen' },
+      {
+        // Helgerud 2007: 4 x 4 min at 90-95% of max heart rate, 3 min
+        // active recovery. At least 15 minutes of hard work per session
+        // is where long intervals beat easy running (Wen 2019).
+        repeatsByWeek: { 1: 3, 2: 4, 3: 5, 4: 3 },
+        steps: [
+          { kind: 'work', label: 'Hard', minutes: 4, intensity: 4, detail: 'Ongeveer je 5 km-tempo, alleen losse woorden' },
+          { kind: 'recover', label: 'Rustig', minutes: 3, intensity: 2, detail: 'Rustig joggen' },
+        ],
+      },
+      { kind: 'cooldown', label: 'Uitlopen', minutes: 8, intensity: 2 },
+    ],
+    garminSport: 'Hardlopen',
+    builds: [
+      { label: 'Conditie (VO2max)', why: 'Lange blokken op hoge hartslag laten je conditie het meest groeien.' },
+      { label: 'Wedstrijdtempo', why: 'Tempo houden als het zwaar wordt, precies wat een 10 km vraagt.' },
+    ],
+  },
+  tpl_hills_descent: {
+    summary: (repeats) => `Opwarmen, ${repeats ?? 4} keer hard bergop, daarna rustig en beheerst afdalen.`,
+    keyTag: 'D+ en D−',
+    structure: [
+      { kind: 'warmup', label: 'Opwarmen', minutes: 10, intensity: 2 },
+      {
+        repeatsByWeek: { 1: 3, 2: 4, 3: 5, 4: 3 },
+        steps: [
+          { kind: 'work', label: 'Hard bergop', seconds: 60, intensity: 4, detail: 'Hard maar beheerst' },
+          { kind: 'recover', label: 'Terug naar beneden', minutes: 2, intensity: 1, detail: 'Wandelend' },
+        ],
+      },
+      { kind: 'walk', label: 'Gecontroleerd afdalen', rest: true, intensity: 2, detail: 'Trap, duin of heuvel af. Kleine pasjes, niet rennen' },
+    ],
+    garminSport: 'Hardlopen (of Wandelen)',
+    builds: [
+      { label: 'Afdalen', why: 'Je bovenbenen leren dalen verdragen. Na een paar keer veel minder spierpijn, en die bescherming houdt weken.' },
+      { label: 'Snelheid en D+', why: 'De bergop herhalingen blijven, korter dan op een gewone heuveldag.' },
+    ],
+  },
   tpl_fartlek: {
-    summary: (repeats) => `Rustig inlopen, ${repeats ?? 6} keer 1 tot 2 minuten stevig met rustig ertussen, rustig uitlopen.`,
+    summary: (repeats) => `Rustig inlopen, ${repeats ?? 6} keer 1 minuut hard met rustig ertussen, rustig uitlopen.`,
     structure: [
       { kind: 'warmup', label: 'Inlopen', minutes: 10, intensity: 2 },
       {
-        repeatsByWeek: { 1: 5, 2: 6, 3: 7, 4: 4 },
+        // Faster than the tempo run on purpose: with 90 seconds at zone 3
+        // the two trained nearly the same (docs/onderzoek/Trainingsvormen
+        // en varianten.md). On at 5-10 km pace, expert opinion.
+        repeatsByWeek: { 1: 6, 2: 8, 3: 10, 4: 5 },
         steps: [
-          { kind: 'work', label: 'Stevig', seconds: 90, intensity: 3, detail: 'Op gevoel, korte zinnen lukken nog net' },
+          { kind: 'work', label: 'Hard', seconds: 60, intensity: 4, detail: 'Ongeveer je 5 tot 10 km-tempo, losse woorden' },
           { kind: 'recover', label: 'Rustig', seconds: 90, intensity: 2, detail: 'Rustig doorlopen' },
         ],
       },
@@ -115,15 +160,20 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
     garminSport: 'Hardlopen',
     builds: [
-      { label: 'Tempo', why: 'Je benen wennen aan een hoger tempo, zonder de zwaarte van een tempoloop.' },
+      { label: 'Snelheid', why: 'Korte harde stukken op wedstrijdtempo of sneller: je benen wennen aan snel lopen.' },
       { label: 'Aerobe basis', why: 'Het grootste deel blijft rustig.' },
     ],
   },
   tpl_progression_run: {
-    summary: () => 'Rustig hardlopen, de laatste 10 minuten iets steviger.',
+    summary: (repeats) => `Rustig hardlopen, de laatste ${(repeats ?? 2) * 5} minuten iets steviger.`,
     structure: [
       { kind: 'run', label: 'Rustig', rest: true, intensity: 2, detail: 'Hele zinnen kunnen praten' },
-      { kind: 'work', label: 'Iets steviger', minutes: 10, intensity: 3, detail: 'Korte zinnen lukken nog' },
+      {
+        // The steadier end grows 10, 15, 20 minutes over the wave
+        // (coaching practice: Pfitzinger, Fitzgerald).
+        repeatsByWeek: { 1: 2, 2: 3, 3: 4, 4: 2 },
+        steps: [{ kind: 'work', label: 'Iets steviger', minutes: 5, intensity: 3, detail: 'Korte zinnen lukken nog' }],
+      },
       { kind: 'cooldown', label: 'Uitlopen', minutes: 3, intensity: 2 },
     ],
     garminSport: 'Hardlopen',

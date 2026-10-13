@@ -17,6 +17,14 @@ export const RIEGEL_EXPONENT = 1.06;
 // Beyond this, Riegel underestimates the time (the marathon).
 export const RIEGEL_MAX_KM = 21.1;
 export const TEST_NOISE = 0.035;
+// The prediction as a range, not one time: a test itself varies 1 to 3.5%
+// and Riegel adds its own error (docs/onderzoek, Trainingsvormen en
+// varianten: about 2 to 3% either way).
+export const PREDICTION_SPREAD = 0.025;
+
+export function predictionRange(minutes: number): [number, number] {
+  return [minutes * (1 - PREDICTION_SPREAD), minutes * (1 + PREDICTION_SPREAD)];
+}
 
 export function riegel(minutes: number, fromKm: number, toKm: number): number {
   return minutes * Math.pow(toKm / fromKm, RIEGEL_EXPONENT);

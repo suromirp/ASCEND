@@ -1031,7 +1031,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     ...sessions.filter((x) => open(x) && !removedIds.has(x.id) && x.status !== 'skipped').map((x) => pending.get(x.id) ?? x),
     ...added,
   ];
-  const race = applyRaceBlocks(openNow, blocks, templates, () => makeId('planned'));
+  const race = applyRaceBlocks(openNow, blocks, templates, () => makeId('planned'), next);
   for (const u of race.update) pending.set(u.id, u);
   for (const a of race.add) pending.set(a.id, a);
   const addedIds = new Set(added.map((x) => x.id));
