@@ -50,14 +50,14 @@ const content: KnowledgeContent = {
   ],
   videos: [
     {
-      title: 'How to Fit a Backpacking Pack || REI',
+      title: 'How to Fit a Backpacking Pack',
       channel: 'REI',
       url: 'https://www.youtube.com/watch?v=0SGiGZlppMM',
       language: 'en',
       note: 'Duidelijk stap voor stap: ruglengte, heupgordel, schouderbanden en lastregelbanden.',
     },
     {
-      title: 'How to Pack a Backpack: REI Experts || REI',
+      title: 'How to Pack a Backpack: REI Experts',
       channel: 'REI',
       url: 'https://www.youtube.com/watch?v=HB7ZOjnnFS8',
       language: 'en',

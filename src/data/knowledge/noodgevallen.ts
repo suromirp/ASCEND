@@ -32,10 +32,9 @@ const content: KnowledgeContent = {
       items: [
         'Geef coördinaten in WGS84, het liefst als decimale graden (bijvoorbeeld 45.29812 N, 6.58431 E): eerst breedte, dan lengte, en zeg welk formaat je gebruikt.',
         'Bel je 112 met een moderne Android- of iPhone, dan stuurt je telefoon automatisch je GPS-positie per sms naar de centrale (Advanced Mobile Location). In Frankrijk werkt dat landelijk sinds ongeveer 2020. Zet locatievoorzieningen aan; zonder netwerk gaat er niets.',
-        'De Rega-app stuurt bij een alarm je positie en batterijstand mee. Handig in en vlak bij Zwitserland.',
         'Geen bereik: klim naar een kam of open plek. Een sms komt soms door waar bellen niet lukt.',
-        'Garmin inReach: de SOS-knop gaat via satelliet naar Garmin Response, een centrale die dag en nacht bemand is, de lokale hulpdienst inschakelt en via berichten contact met je houdt. Alleen met een actief abonnement, en de reddingskosten vallen er niet onder. Typ wat er aan de hand is, dat helpt bij de inzet.',
-        'iPhone 14 en nieuwer heeft Noodmelding via satelliet, ook in Frankrijk, Zwitserland en Italië. De lijst van landen en toestellen verandert, dus check hem voor vertrek. Satelliet wil open lucht; in een diep dal kan het minuten duren.',
+        'Garmin inReach: SOS gaat via satelliet naar Garmin Response, een centrale die dag en nacht de lokale hulpdienst inschakelt en via berichten contact houdt. Alleen met een actief abonnement, en de reddingskosten vallen er niet onder. Typ wat er aan de hand is.',
+        'iPhone 14 en nieuwer heeft Noodmelding via satelliet, ook in Frankrijk, Zwitserland en Italië; de lijst verandert, dus check hem voor vertrek. Satelliet wil open lucht, in een diep dal kan het minuten duren.',
       ],
     },
     {
@@ -43,17 +42,16 @@ const content: KnowledgeContent = {
       items: [
         'Alpien noodsignaal: zes keer per minuut (elke tien seconden) fluiten, met licht knipperen of iets fels zwaaien, dan een minuut stilte en herhalen. Het antwoord is drie keer per minuut.',
         'Helikopter: beide armen schuin omhoog in een Y betekent ja, wij hebben hulp nodig. Eén arm schuin omhoog en één schuin omlaag, een N, betekent nee.',
-        'Landingsplek: zo mogelijk een vlak stuk van ongeveer 25 bij 25 meter, vrij van obstakels. Zet alles vast wat kan wegwaaien en loop niet naar de helikopter tot de bemanning je wenkt.',
-        'Wachten: isoleer de gewonde van de grond met rugzak en isomat, trek alle lagen aan, ga uit de wind achter rotsen, kruip in bivakzak of nooddeken en eet iets. Laat een gewonde niet alleen als het kan. Houd je telefoon warm in een binnenzak; kou trekt een batterij snel leeg.',
+        'Landingsplek: zo mogelijk een vlak stuk van ongeveer 25 bij 25 meter. Zet alles vast wat kan wegwaaien en loop pas naar de helikopter als de bemanning je wenkt.',
+        'Wachten: gewonde van de grond isoleren met rugzak en isomat, alle lagen aan, uit de wind, bivakzak of nooddeken, iets eten. Houd je telefoon warm in een binnenzak; kou trekt een batterij snel leeg.',
       ],
     },
     {
       heading: 'Afbreken of alarmeren',
       items: [
-        'Draai om bij onweer dat zich voor de middag opbouwt, bij een sneeuwveld dat te hard of te steil is voor wat je bij je hebt, of als iemand in de groep traag, onhandig of verward wordt.',
-        'Spreek een omkeertijd af voor een hoge pas, en houd je eraan.',
+        'Draai om bij onweer dat zich voor de middag opbouwt, bij een sneeuwveld te hard of te steil voor je uitrusting, of als iemand traag, onhandig of verward wordt. Spreek voor een hoge pas een omkeertijd af en houd je eraan.',
         'Alarmeer als iemand niet meer kan lopen, bij hoofdletsel met verwardheid, letsel aan borst, buik of rug, zware bloeding, ernstige onderkoeling, verergerende hoogteziekte, of als je verdwaald bent en het donker wordt.',
-        'Bel liever vroeg. Een redding bij daglicht en goed weer is veel eenvoudiger dan een zoektocht in de nacht en de mist.',
+        'Bel liever vroeg: een redding bij daglicht en goed weer is veel eenvoudiger dan een zoektocht in nacht en mist.',
       ],
     },
     {
@@ -62,7 +60,7 @@ const content: KnowledgeContent = {
         'Frankrijk: redding door PGHM, CRS en brandweer is in principe gratis, mits gerechtvaardigd. Medische zorg, ambulance en ziekenhuis betaal je wel. Een reddingshelikopter kost 3.000 tot 4.500 euro per uur, en of de gratis redding blijft is in Frankrijk een terugkerend debat.',
         'Zwitserland: redding wordt gefactureerd, en een helikopterinzet loopt al snel in de duizenden franken.',
         'Italië: verschilt per regio. In onder meer Valle d\'Aosta en Piemonte betaal je een eigen bijdrage, en een helikopterredding die de arts aan boord niet gerechtvaardigd vindt kan honderden euro per persoon kosten.',
-        'Vanuit Nederland: je basisverzekering dekt zorg in het buitenland tot het Nederlandse tarief, maar opsporing en redding meestal niet. Kijk in je reisverzekering of bergwandelen buiten gebaande paden en opsporing en redding gedekt zijn. Als lid van de NKBV kun je hun reisverzekering met bergsportdekking afsluiten, die opsporing, redding en repatriëring vergoedt.',
+        'Vanuit Nederland: je basisverzekering dekt zorg in het buitenland tot het Nederlandse tarief, maar opsporing en redding meestal niet. Check of je reisverzekering bergwandelen buiten gebaande paden en opsporing en redding dekt. Als NKBV-lid kun je hun reisverzekering met bergsportdekking afsluiten, inclusief opsporing, redding en repatriëring.',
       ],
     },
   ],
