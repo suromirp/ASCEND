@@ -308,6 +308,7 @@ export function SettingsPage() {
         <>
           <Card className="flex flex-col gap-1">
             <Eyebrow>GIDSEN</Eyebrow>
+            <NavRow label="Kennisbank" note="Navigeren, weer, sneeuw, slapen en meer: alles voor onderweg" onClick={() => navigate('/kennis')} />
             <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
             <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
             <NavRow label="Trainingsplekken" note="Waar je in Nederland bergop en bergaf traint" onClick={() => navigate('/plekken')} />
