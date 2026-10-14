@@ -208,7 +208,14 @@ function opbouwStartWeek(program: Program): { start: number; weeks: number } | u
   return undefined;
 }
 
+// Quality sessions build in their structure (more blocks per week of the
+// wave), not in minutes: a tempo run at most ~10% of the weekly volume
+// (Daniels), intervals around 16 to 20 minutes of hard work (Helgerud 2007).
+// Growing them with the general cycle made a 72-minute interval session.
+const FIXED_LENGTH = new Set(['tpl_tempo_run', 'tpl_intervals']);
+
 export function runBuildMultiplier(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, heaviestStepMinutes: number): number {
+  if (FIXED_LENGTH.has(template.id)) return 1;
   const basic = cycleMultiplier(position.weekInProgram);
   const peak = RUN_BUILD_PEAK_MINUTES[template.id];
   const opbouw = opbouwStartWeek(program);

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { addDays, formatHoursMinutesNL, formatMonthNL, mondayOfWeek, resolveProgramWeek, shiftMonthAnchor, todayISO } from '../utils/dates';
+import { addDays, formatHoursMinutesNL, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
 import { ChangeLogCard } from '../components/ChangeLogCard';
 import { adjustedSessionReasons } from '../engine/changeLog';
-import { MonthCalendar } from '../components/MonthCalendar';
+import { SeasonOverview } from '../components/SeasonOverview';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
@@ -18,7 +18,7 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice } = useAppData();
+  const { suggestMoves, program, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -79,27 +79,18 @@ export function WeekPage() {
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6 pt-6">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => setWeekStart(monthView ? shiftMonthAnchor(weekStart, -1) : addDays(weekStart, -7))}
+          onClick={() => setWeekStart(addDays(weekStart, -7))}
           className="text-lg"
-          style={{ color: 'var(--color-ink-dim)' }}
+          style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
+          aria-label="Vorige week"
         >
           ‹
         </button>
         <button
-          onClick={() => {
-            // Month view's anchor sits on the 1st of the month, not
-            // necessarily a Monday — snap back to a real week start when
-            // returning to week view, or WeekPlanner's Mon..Sun row labels
-            // would be offset from the actual dates.
-            if (monthView) setWeekStart(mondayOfWeek(weekStart));
-            // Opening the month view on the week that holds today shows the
-            // month today is in, not the month its Monday falls in.
-            else if (weekStart === mondayOfWeek(todayISO())) setWeekStart(todayISO());
-            setMonthView((v) => !v);
-          }}
+          onClick={() => setMonthView((v) => !v)}
           className="flex flex-col items-center gap-0.5 text-center"
         >
-          <Eyebrow>{monthView ? formatMonthNL(weekStart) : position ? `WEEK ${position.weekInProgram} • ${position.phase.name}` : 'WEEK'}</Eyebrow>
+          <Eyebrow>{monthView ? 'JAAROVERZICHT' : position ? `WEEK ${position.weekInProgram} • ${position.phase.name}` : 'WEEK'}</Eyebrow>
           {!monthView && weekStart === mondayOfWeek(todayISO()) && (
             <p className="text-[11px]" style={{ color: 'var(--color-gold)' }}>huidige week</p>
           )}
@@ -109,13 +100,14 @@ export function WeekPage() {
             </p>
           )}
           <span className="text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-            {monthView ? '▴ terug naar week' : '▾ maandoverzicht'}
+            {monthView ? '▴ terug naar week' : '▾ jaaroverzicht'}
           </span>
         </button>
         <button
-          onClick={() => setWeekStart(monthView ? shiftMonthAnchor(weekStart, 1) : addDays(weekStart, 7))}
+          onClick={() => setWeekStart(addDays(weekStart, 7))}
           className="text-lg"
-          style={{ color: 'var(--color-ink-dim)' }}
+          style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
+          aria-label="Volgende week"
         >
           ›
         </button>
@@ -146,14 +138,11 @@ export function WeekPage() {
       )}
 
       {monthView ? (
-        <MonthCalendar
-          anchor={weekStart}
-          plannedSessions={plannedSessions}
-          sessionLogs={sessionLogs}
-          isRest={(s) => templateById.get(s.templateId)?.type === 'recovery'}
-          onSelectDate={(date) => {
-            setWeekStart(mondayOfWeek(date));
+        <SeasonOverview
+          onSelectWeek={(w) => {
+            setWeekStart(mondayOfWeek(w));
             setMonthView(false);
+            window.scrollTo({ top: 0 });
           }}
         />
       ) : (
