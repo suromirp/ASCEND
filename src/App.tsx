@@ -15,6 +15,7 @@ import { WeekPage } from './pages/Week';
 import { AscendPage, GoalsPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsPage } from './pages/Settings';
+import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
@@ -175,6 +176,8 @@ function AppShell() {
             <Route path="/more" element={<SettingsPage />} />
             <Route path="/stretches" element={<StretchesPage />} />
             <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
+            <Route path="/kennis" element={<KnowledgePage />} />
+            <Route path="/kennis/:topicId" element={<KnowledgeTopicPage />} />
             <Route path="/gids" element={<TrainingGuidePage />} />
             <Route path="/garmin" element={<GarminGuidePage />} />
             <Route path="/bronnen" element={<SourcesPage />} />

@@ -514,6 +514,9 @@ export interface AppSettings {
   // Ziek gemeld (engine/illness.ts). Optional, so older settings and
   // backups need no migration; travels with the settings in an export.
   illnessEpisodes?: IllnessEpisode[];
+  // Kennisbank: what you marked as read and this week's lesson
+  // (engine/weeklyLesson.ts). Optional and additive; travels in an export.
+  knowledge?: { read?: string[]; week?: { weekStart: string; topicId: string } };
   // Trend weight (engine/bodyWeight.ts), e.g. from MacroFactor, entered
   // about every two weeks. Kept with the settings so it travels in an
   // export without a backup schema change; carries a source like every

@@ -22,6 +22,7 @@ import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
+import { LessonCard } from '../components/LessonCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
@@ -317,6 +318,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
       </div>
 
       {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
+
+      <LessonCard />
 
       {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
 
