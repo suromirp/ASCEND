@@ -9,14 +9,13 @@ const content: KnowledgeContent = {
     {
       heading: 'Hoeveel je verbrandt en wat je nodig hebt',
       body:
-        'Voor iemand van rond de 86 kg met 12 kg op de rug kost een bergdag van 7 tot 8 uur met 1.000 tot 1.500 meter klimmen ruwweg 4.000 tot 5.500 kcal, inclusief je ruststofwisseling. Dat haal je zelden helemaal binnen, en een klein tekort is prima, maar een structureel gat van 1.500 kcal per dag kost je over vier weken spiermassa en herstel. Onderweg werken 30 tot 60 gram koolhydraten per uur (de richtlijn uit de sportvoeding voor inspanning langer dan een uur), bij jouw tempo is 40 tot 60 gram een goed doel: een broodje met jam, een handvol gedroogde vruchten of een reep. Drinken: reken op 0,4 tot 0,8 liter per uur bij warm weer en stijgen, minder in de koelte. Met zweet verlies je per liter grofweg een halve tot een hele gram natrium, dus zout eten op hete dagen is geen luxe.',
+        'Voor iemand van rond de 86 kg met 12 kg op de rug kost een bergdag van 7 tot 8 uur met 1.000 tot 1.500 meter klimmen ruwweg 4.000 tot 5.500 kcal, inclusief je ruststofwisseling. Een klein tekort is prima, een structureel gat van 1.500 kcal per dag kost je over vier weken spiermassa en herstel. Onderweg werken 30 tot 60 gram koolhydraten per uur (de richtlijn uit de sportvoeding voor inspanning langer dan een uur), bij jouw tempo is 40 tot 60 gram een goed doel: een broodje met jam, een handvol gedroogde vruchten of een reep. Drinken: reken op 0,4 tot 0,8 liter per uur bij warm weer en stijgen, minder in de koelte. Met zweet verlies je per liter grofweg een halve tot een hele gram natrium, dus zout eten op hete dagen is geen luxe.',
     },
     {
       heading: 'Wat je eet, overdag en ’s avonds',
       items: [
         'Ontbijt in een refuge is vaak mager (brood, boter, jam, koffie). Neem zelf iets extra: muesli, notenpasta of een paar plakken kaas.',
         'Overdag: brood, comté of beaufort, saucisson, noten, gedroogde abrikozen, chocolade, pain d’épices. Saucisson en kaas leveren ook het zout dat je kwijtraakt.',
-        'Klein en vaak werkt beter dan een grote lunch: elke pauze van vijf minuten is een eetmoment.',
         'Avond: de demi-pension in een gîte of refuge (soep, hoofdgerecht, kaas, dessert) is precies wat je nodig hebt. Eet het allemaal en vraag gerust om een tweede bord.',
         'Eiwit voor herstel: ruwweg 20 tot 30 gram bij het avondeten en ontbijt. Kaas, eieren, linzen en vlees in de refuge-maaltijd dekken dat meestal.',
       ],
@@ -24,7 +23,7 @@ const content: KnowledgeContent = {
     {
       heading: 'Bevoorrading langs de route',
       body:
-        'In de noordelijke helft (Haute-Savoie, Beaufortain, Vanoise) kom je bijna dagelijks langs een dorp, een bemande refuge of een gîte die een panier-repas verkoopt (rond 10 tot 13 euro, de avond ervoor bestellen). Vanaf Ceillac zuidwaarts, door de Ubaye en de Mercantour, worden de gaten groter en zijn de winkels klein: neem daar eten voor 2 tot 3 dagen mee. Denk aan Franse openingstijden: veel épiceries zijn tussen ongeveer 12.30 en 15.30 dicht, op zondagmiddag gesloten en hebben een vaste sluitingsdag, vaak maandag. De bakker opent vroeg, dus koop je brood voor je vertrekt. Kleine verpakkingen zijn lastig te vinden en na half september sluiten veel winkels en refuges; in augustus zit je goed. Check de openingsdagen per etappe in je topoguide of bij het office de tourisme.',
+        'In de noordelijke helft (Haute-Savoie, Beaufortain, Vanoise) kom je bijna dagelijks langs een dorp, een bemande refuge of een gîte die een panier-repas verkoopt (rond 10 tot 13 euro, de avond ervoor bestellen). Vanaf Ceillac zuidwaarts, door de Ubaye en de Mercantour, worden de gaten groter en zijn de winkels klein: neem daar eten voor 2 tot 3 dagen mee. Denk aan Franse openingstijden: veel épiceries zijn tussen ongeveer 12.30 en 15.30 dicht, op zondagmiddag gesloten en hebben een vaste sluitingsdag, vaak maandag. De bakker opent vroeg, dus koop je brood voor je vertrekt. Na half september sluit veel; in augustus zit je goed. Check de openingsdagen per etappe in je topoguide of bij het office de tourisme.',
     },
     {
       heading: 'Water vinden en zuiveren',

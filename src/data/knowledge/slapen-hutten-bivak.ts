@@ -12,7 +12,6 @@ const content: KnowledgeContent = {
         'Een gîte d’étape ligt meestal in een dorp of gehucht, een refuge hoger in de bergen. CAF-refuges worden beheerd door de FFCAM en hebben elk een eigen site (refuge-naam.ffcam.fr) met online reservering; particuliere refuges en gîtes boek je via hun eigen site of telefonisch.',
         'De meeste bemande refuges zijn open van half of eind juni tot half september. Begin augustus en rond 15 augustus (Assomption, Franse feestdag) is het overal vol: boek in het voorjaar, zeker voor de Vanoise en de populaire Haute-Savoie-etappes.',
         'Prijsindicatie FFCAM (seizoen 2025-2026, Refuge de Rabuons): overnachting 23 euro, 11,50 euro voor FFCAM-leden, diner 23 euro, ontbijt 8,50 euro, lunchpakket 12,50 euro. Demi-pension kost je dus rond 55 euro, in gîtes ligt dat vaak tussen 50 en 70 euro. Prijzen verschillen per hut en per jaar, check de tarievenpagina.',
-        'Een lidmaatschap van een club met wederkerigheid (bijvoorbeeld via de NKBV of een Alpenverein) kan de overnachting halveren; vraag na welk bewijs de hut accepteert.',
         'Betaal contant. Rabuons zegt letterlijk dat kaartbetaling niet mogelijk is, en dat geldt voor veel hoge refuges. Pin in de grotere dalen.',
       ],
     },
@@ -36,14 +35,13 @@ const content: KnowledgeContent = {
       items: [
         'Een tent (1 tot 1,5 kg voor een lichte eenpersoons) beschermt tegen onweer met regen, wind en muggen. De Vanoise eist bovendien een kleine tent waar je niet in kunt staan.',
         'Een tarp is lichter en luchtiger, maar op een open alpenweide met wind en een nachtelijke bui heb je ervaring nodig om hem strak en laag te zetten.',
-        'Een bivakzak is het lichtst en het snelst opgezet, maar condens en lange regenavonden maken het zwaar. Goed als noodoptie, niet als hoofdplan voor een maand.',
         'Kies een plek op vlakke, droge grond, niet in een geul of droge beekbedding, niet op een kam of top bij onweerskans, en weg van de kuddes en hun beschermhonden (patous).',
       ],
     },
     {
       heading: 'Slapen op hoogte',
       body:
-        'De meeste GR5-overnachtingen liggen tussen 1.000 en 2.500 meter, dus echte hoogteslaapproblemen zijn zeldzaam. Wel slaap je de eerste nachten boven 2.000 meter vaak lichter en word je vaker wakker. Wat helpt: genoeg eten en drinken bij het diner, alcohol beperken, de eerste dagen niet te hoog slapen, en een warme muts in je tas, want ook in augustus kan het buiten rond het vriespunt zijn.',
+        'De meeste GR5-overnachtingen liggen tussen 1.000 en 2.500 meter, dus echte hoogteslaapproblemen zijn zeldzaam. Wel slaap je de eerste nachten boven 2.000 meter vaak lichter en word je vaker wakker. Wat helpt: goed eten en drinken bij het diner, weinig alcohol, en een muts, want ook in augustus kan het ’s nachts rond het vriespunt zijn.',
     },
   ],
   videos: [
@@ -52,21 +50,21 @@ const content: KnowledgeContent = {
       channel: 'Deutscher Alpenverein (DAV)',
       url: 'https://www.youtube.com/watch?v=ved7Qr2sjzc',
       language: 'de',
-      note: 'De DAV over beter slapen in een hut: oordopjes, slaapzaalgewoontes en wat je meeneemt.',
+      note: 'De Duitse Alpenverein over hoe je in een volle hut toch goed slaapt.',
     },
     {
       title: 'GRANDE TRAVERSEE DES ALPES : GR5 St Gingolph / Modane, le résumé | GTA Partie 1',
       channel: 'La tanière de JR',
       url: 'https://www.youtube.com/watch?v=Gdnyc5W7rmA',
       language: 'fr',
-      note: 'Geeft een beeld van de refuges, gîtes en bivakplekken in de noordelijke helft van de route.',
+      note: 'Samenvatting van de noordelijke helft, Saint-Gingolph tot Modane: goed om terrein en overnachtingsplekken te zien.',
     },
     {
       title: 'La Grande Traversée des Alpes (GR5), le résumé - de Briançon à Menton - 2020',
       channel: "L'Affine Équipe",
       url: 'https://www.youtube.com/watch?v=oSbBSMiF-qQ',
       language: 'fr',
-      note: 'Het zuidelijke deel in beeld, met overnachtingen in de stillere Ubaye en Mercantour.',
+      note: 'Samenvatting van de zuidelijke helft, Briançon tot Menton, waar de dorpen en hutten verder uit elkaar liggen.',
     },
   ],
   sources: [
