@@ -22,14 +22,13 @@ const content: KnowledgeContent = {
         'Haarspeldbochten: loop ze uit. Afsnijden maakt het pad kapot en het steile stuk ertussen is precies waar je onderuit gaat.',
         'Fijn puin: kort en ritmisch, hakken in het puin, gewicht op je voeten en laat het een beetje meeglijden. Grof los blok: test elke steen voor je er gewicht op zet en loop nooit recht onder iemand anders.',
         'Natte rots, kalk en gras: zoek ruwe, matte rots, zet je voet plat met maximaal zoolcontact en mijd glimmende plaatjes en natte wortels.',
-        'Hoge treden: draai je zijwaarts, zet eerst je stokken lager en stap dan. Op echt steile stukken ga je met je gezicht naar de helling en gebruik je je handen.',
-        'Blokkenvelden en klauterpassages: stokken ingeschoven aan de rugzak. Je handen zijn daar meer waard.',
+        'Hoge treden: draai je zijwaarts, zet eerst je stokken lager en stap dan. Op echt steile stukken en klauterpassages gaan de stokken aan de rugzak en daal je met je gezicht naar de helling.',
       ],
     },
     {
       heading: 'Remmen met je benen',
       body:
-        'Bij afdalen werken je quadriceps excentrisch, en die schade voel je één tot twee dagen later als spierpijn. Een deel van het remwerk schuif je naar bilspieren en hamstrings door iets meer vanuit je heupen te zakken, borst licht naar voren, in plaats van alleen in je knieën te buigen. Let op het moment dat je moe wordt: de passen worden langer, de knieën stijver en je voeten gaan slepen. Dat is waar de meeste struikelpartijen gebeuren, laat op de dag in de afdaling. Maak je passen dan bewust korter en ga langzamer. Bij een afdaling van meer dan 1.000 m stop je ongeveer elk uur vijf minuten: benen losschudden, drinken, iets eten. Stop langer als je begint te struikelen, als je concentratie wegzakt of als je scherpe pijn onder of naast je knieschijf voelt.',
+        'Je quadriceps doen het meeste remwerk, en die schade voel je één tot twee dagen later. Een deel schuif je naar bilspieren en hamstrings door meer vanuit je heupen te zakken, borst licht naar voren, in plaats van alleen in je knieën te buigen. Als je moe wordt, worden je passen langer, je knieën stijver en gaan je voeten slepen: precies daar, laat op de dag, gebeuren de meeste struikelpartijen. Maak je passen dan bewust korter. Bij meer dan 1.000 m dalen stop je ongeveer elk uur vijf minuten om te drinken en te eten. Stop langer als je begint te struikelen, je concentratie wegzakt of je scherpe pijn rond je knieschijf voelt.',
     },
     {
       heading: 'Stokken afstellen en gebruiken',
@@ -44,15 +43,14 @@ const content: KnowledgeContent = {
     {
       heading: 'Wat het onderzoek zegt',
       body:
-        'In een studie op de Snowdon (Howatson en collega\'s, 2011) liepen 37 mensen met of zonder stokken naar de top en terug. De stokgroep verloor minder kracht direct na de tocht en 24 en 48 uur later, had minder spierpijn en een lagere CK-waarde, een bloedmerker voor spierschade. Schwameder en collega\'s (1999) maten op een helling van 25 graden 12 tot 25 procent minder grondreactiekracht en kniebelasting met stokken, al gebruikten de proefpersonen daar beide stokken tegelijk. Kleine groepen en één dag, maar de richting is duidelijk.',
+        'Op de Snowdon (Howatson e.a., 2011) liepen 37 mensen met of zonder stokken naar de top en terug. De stokgroep verloor minder kracht tot 48 uur erna, had minder spierpijn en minder spierschade in het bloed. Op een helling van 25 graden (Schwameder e.a., 1999) gaven stokken 12 tot 25 procent minder kniebelasting, al zetten de proefpersonen beide stokken tegelijk. Kleine groepen en één dag, maar de richting is duidelijk.',
     },
     {
       heading: 'Trainen voor afdalingen',
       items: [
         'Excentrische kracht: langzame step-downs van een kastje (drie tot vier tellen naar beneden), Bulgaarse split squats en squats met een langzame neergaande fase. Twee keer per week.',
         'Kuiten en enkels: kuitheffen op één been en balans op één been, voor je achillespees en tegen verzwikken.',
-        'Het herhaalde-inspanningseffect: na één flinke afdaling geven dezelfde afdalingen minstens twee weken lang minder spierschade, mogelijk tot zo\'n zes weken. Loop in de maanden ervoor regelmatig lange afdalingen of trappen naar beneden met je volle rugzak.',
-        'Doe de laatste grote afdaling ongeveer een week tot tien dagen voor vertrek, zodat je hersteld en beschermd begint.',
+        'Na één flinke afdaling geeft dezelfde afdaling minstens twee weken lang minder spierschade, mogelijk tot zes weken. Loop dus regelmatig lange afdalingen of trappen naar beneden met volle rugzak, de laatste grote een week tot tien dagen voor vertrek.',
       ],
     },
   ],
