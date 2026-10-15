@@ -135,6 +135,11 @@ export interface PlannedSession {
   // e.g. a long run caught up in a week that already has its own
   // (engine/adviceEngine.ts). Optional, additive: older data has none.
   plannedMinutes?: number;
+  // Set when the race block swapped this session to another day so a tempo
+  // run or test keeps its distance from heavy legs (engine/raceBlock.ts): so
+  // it can be swapped back when the run moves away. `short`: the minutes were
+  // set to the short version for it. Optional, additive.
+  raceBlock?: { pair: string; from: string; to: string; short?: boolean };
 }
 
 export type SessionVariant = 'full' | 'short' | 'minimum' | 'custom';

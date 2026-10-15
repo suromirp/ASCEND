@@ -108,3 +108,35 @@ describe('the Saturday, heavy legs before a hard run, and the first test', () =>
     expect(legs?.plannedMinutes).toBe(templates.find((t) => t.id === 'tpl_lower_a')!.durationVariants.short);
   });
 });
+
+describe('a swap for a run that moved is swapped back', () => {
+  const program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: layoutPhasesForGoal('2026-09-28', '2027-08-01', { [PHASE_BASIS]: 4 })! };
+
+  it('puts leg strength back on its day, full length, when the test is no longer in that week (also for swaps from before the marker)', () => {
+    // Week of 23 Nov, as in the user's data: leg strength short on Tuesday, upper body on Wednesday, no test any more.
+    const w = week('2026-11-23').map((s) => (s.templateId === 'tpl_lower_a' ? { ...s, scheduledDate: '2026-11-24', plannedMinutes: 45 } : s.templateId === 'tpl_upper_a' ? { ...s, scheduledDate: '2026-11-25' } : s));
+    const c = applyRaceBlocks(w, blocks, templates, newId, program);
+    expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_lower_a', scheduledDate: '2026-11-25' }));
+    expect(c.update.find((u) => u.templateId === 'tpl_lower_a')?.plannedMinutes).toBeUndefined();
+    expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_upper_a', scheduledDate: '2026-11-24' }));
+  });
+
+  it('a marked swap goes back when the test moves away, and stays while it is there', () => {
+    const w = week('2026-10-26').map((s) => (s.templateId === 'tpl_easy_run' ? { ...s, templateId: 'tpl_test_run' } : s));
+    const first = applyRaceBlocks(w, blocks, templates, newId, program);
+    const after = w.map((s) => first.update.find((u) => u.id === s.id) ?? s);
+    const legs = after.find((s) => s.templateId === 'tpl_lower_a')!;
+    expect(legs).toMatchObject({ scheduledDate: '2026-10-27', plannedMinutes: 45, raceBlock: { from: '2026-10-28', to: '2026-10-27', short: true } });
+    // Stable while the test stays.
+    expect(applyRaceBlocks(after, blocks, templates, newId, program).update).toEqual([]);
+    // The test goes to an easy run: swapped back.
+    // The test moves to a week that is no test week (so it turns into an easy run there).
+    const moved = after.map((s) => (s.templateId === 'tpl_test_run' ? { ...s, scheduledDate: '2026-11-05', weekStartDate: '2026-11-02' } : s));
+    const back = applyRaceBlocks(moved, blocks, templates, newId, program);
+    const restored = back.update.find((u) => u.templateId === 'tpl_lower_a')!;
+    expect(restored).toMatchObject({ scheduledDate: '2026-10-28' });
+    expect(restored.plannedMinutes).toBeUndefined();
+    expect(restored.raceBlock).toBeUndefined();
+    expect(back.update.find((u) => u.templateId === 'tpl_upper_a')).toMatchObject({ scheduledDate: '2026-10-27' });
+  });
+});
