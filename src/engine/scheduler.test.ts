@@ -335,3 +335,19 @@ describe('a hard run after heavy leg strength', () => {
     expect(respectsHeavySpacing(TUE, t('tpl_tempo_run'), legs, byId)).toBe(true);
   });
 });
+
+describe('the 5 km test needs fresh legs', () => {
+  const real = buildDefaultProgramData().templates;
+  const byId = new Map(real.map((t) => [t.id, t]));
+  const t = (id: string) => byId.get(id)!;
+  const hills = [session('hills', 'tpl_hill_intervals', SAT, MON)];
+
+  it('not on the day of, or a day next to, hills, a tempo run or the long run; two days apart is fine', () => {
+    expect(respectsHeavySpacing(SAT, t('tpl_test_run'), hills, byId)).toBe(false);
+    expect(respectsHeavySpacing(FRI, t('tpl_test_run'), hills, byId)).toBe(false);
+    expect(respectsHeavySpacing(SUN, t('tpl_test_run'), hills, byId)).toBe(false);
+    expect(respectsHeavySpacing(THU, t('tpl_test_run'), hills, byId)).toBe(true);
+    // An easy run next to the test is fine.
+    expect(respectsHeavySpacing(FRI, t('tpl_test_run'), [session('easy', 'tpl_easy_run', SAT, MON)], byId)).toBe(true);
+  });
+});

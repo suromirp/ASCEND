@@ -142,7 +142,7 @@ export function findHeavyConflicts(
     const other = templateMap.get(s.templateId);
     if (!other) return false;
     const shared = sharedHeavyAxes(template, other);
-    if (shared.length === 0) return hardRunAfterLegStrength(template, date, other, s.scheduledDate);
+    if (shared.length === 0) return hardRunAfterLegStrength(template, date, other, s.scheduledDate) || testNeedsFreshLegs(template, date, other, s.scheduledDate);
     // The intended back-to-back (hill intervals Saturday, long run Sunday)
     // is exactly that: the next day, in that order. Never both on the
     // same day, and never the other way round (production feedback: a
@@ -207,6 +207,17 @@ function hardRunAfterLegStrength(a: SessionTemplate, aDate: string, b: SessionTe
   if (gap === 0) return !hardSameDayAllowed(strength, run);
   if (gap < 0) return false; // the run first: fine
   return gap <= (TEST_OR_RACE.has(run.id) ? 2 : 1);
+}
+
+// A 5 km test is an all-out effort: not on the same day as, or the day
+// before or after, another hard run, hill session or long run (the result
+// would say more about the tired legs than about your pace). Strength is
+// covered by the rule above.
+function testNeedsFreshLegs(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {
+  const [test, other, otherDate, testDate] = a.id === 'tpl_test_run' ? [a, b, bDate, aDate] : b.id === 'tpl_test_run' ? [b, a, aDate, bDate] : [];
+  if (!test || !other || !otherDate || !testDate || other.type === 'strength') return false;
+  if (!(isHardRun(other) || isLegHeavyTemplate(other))) return false;
+  return Math.abs(daysBetween(otherDate, testDate)) <= 1;
 }
 
 // Setting (Training → Zware dingen op één dag): leg strength and a hard
