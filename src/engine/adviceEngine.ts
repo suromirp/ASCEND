@@ -168,7 +168,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const recentMissed = inputs.plannedSessions.filter(
-    (s) => s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
+    (s) => s.templateId !== TEST_RUN_ID && s.status !== 'skipped' && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && s.scheduledDate < inputs.asOf && daysBetween(s.scheduledDate, inputs.asOf) <= 3
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, inputs.asOf),
   );
   // One advice for everything missed, not one each (production feedback:
@@ -229,6 +229,85 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
 // ones worth catching up.
 function isKeySession(template: SessionTemplate): boolean {
   return ['tpl_long_run', 'tpl_mountain_hike', 'tpl_hike_day_one'].includes(template.id) || /lange duurloop|bergtocht/i.test(template.name);
+}
+
+// --- Rule TEST-MAKE-ROOM -----------------------------------------------------
+// Trigger: the 5 km test run was missed or skipped (no time). The test is
+// what sets your race pace, so it is worth more than most trainings around
+// it. Rule: first a free day in the next 9 days that keeps the spacing
+// (a test never within 48 hours after heavy legs, 72 before a test, and not
+// next to another hard run); if there is none, the least important training
+// on a day that does fit goes, and the test takes its place. Never the long
+// run, the mountain hike, a race or leg strength. Always a proposal.
+const TEST_RUN_ID = 'tpl_test_run';
+const TEST_ROOM_DAYS = 9;
+
+// How much a training can be missed, lowest first; undefined: never taken out.
+function removalCost(templateId: string, template: SessionTemplate): number | undefined {
+  if (['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_ruck_walk', 'tpl_bergconditie'].includes(templateId)) return 1;
+  if (templateId === 'tpl_easy_run') return 2;
+  if (template.type === 'strength' && !isLegHeavyTemplate(template)) return 3;
+  if (['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_tempo_run'].includes(templateId)) return 4;
+  return undefined;
+}
+
+function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
+  if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
+  const test = templateById.get(TEST_RUN_ID);
+  if (!test) return [];
+  const today = inputs.asOf;
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
+  // Not in the two weeks before a race: that is the taper.
+  if (inputs.plannedSessions.some((s) => s.templateId === 'tpl_race' && open(s) && daysBetween(today, s.scheduledDate) >= 0 && daysBetween(today, s.scheduledDate) <= 14)) return [];
+  // Another test already waiting in the next two weeks: nothing to arrange.
+  if (inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
+
+  const lost = inputs.plannedSessions
+    .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id)
+      && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today)
+      && (s.status === 'skipped' ? daysBetween(s.scheduledDate, today) >= -14 && daysBetween(s.scheduledDate, today) <= 7 : s.scheduledDate < today && daysBetween(s.scheduledDate, today) <= 7))
+    .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
+  if (!lost) return [];
+
+  const load = (without: Set<string>) => inputs.plannedSessions.filter((s) => s.id !== lost.id && !without.has(s.id) && s.status !== 'skipped' && (s.scheduledDate >= today || loggedIds.has(s.id)));
+  const weekOf = (date: string) => inputs.plannedSessions.filter((s) => s.weekStartDate === mondayOfWeek(date) && s.id !== lost.id && s.status !== 'skipped');
+  const days = Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
+  const why = 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
+  const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
+  const title = `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
+  const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
+
+  // 1. A free day.
+  for (const date of days) {
+    if (!dayHasRoomFor(date, test, weekOf(date), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
+    if (!respectsHeavySpacing(date, test, load(new Set()), templateById, inputs.logs, lost.id)) continue;
+    const effect = `Doe hem ${shortDate(date)}. ${why}`;
+    return [{ id: `testroom:${lost.id}`, trigger: 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) }];
+  }
+
+  // 2. Make room: the least important training on a day where the test fits.
+  type Option = { date: string; cost: number; remove: PlannedSession[] };
+  const options: Option[] = [];
+  for (const date of days) {
+    const there = inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== lost.id && open(s) && templateById.get(s.templateId)?.type !== 'recovery');
+    if (there.length === 0) continue;
+    const costs = there.map((s) => { const t = templateById.get(s.templateId); return t ? removalCost(s.templateId, t) : undefined; });
+    if (costs.some((c) => c === undefined)) continue;
+    if (!respectsHeavySpacing(date, test, load(new Set(there.map((s) => s.id))), templateById, inputs.logs, lost.id)) continue;
+    options.push({ date, cost: Math.max(...(costs as number[])), remove: there });
+  }
+  const best = options.sort((a, b) => a.cost - b.cost || a.date.localeCompare(b.date))[0];
+  if (best) {
+    const names = best.remove.map((s) => templateById.get(s.templateId)?.name ?? 'training');
+    const items: PlanChangeItem[] = [
+      ...best.remove.map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: 'Plaats gemaakt voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
+      moveItem(best.date),
+    ];
+    const effect = `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(best.date)} vervalt en de testloop komt daar. ${why}`;
+    return [{ id: `testroom:${lost.id}`, trigger: 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `${names.join(' en ')} vervalt; de testloop komt op ${shortDate(best.date)}.`, why) }];
+  }
+  return [{ id: `testroom:${lost.id}`, trigger: 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
 }
 
 // --- Rule HARD-THEN-SPACE ----------------------------------------------------
@@ -568,9 +647,11 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const usedIds = new Set(missed.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId).filter((id): id is string => !!id) ?? []));
   const skippedKey = skippedKeyAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   for (const id of skippedKey.flatMap((a) => a.proposal?.changes.map((c) => c.plannedSessionId) ?? [])) if (id) usedIds.add(id);
+  const testRoom = testRunAdvice(inputs, templateById, usedIds).filter((a) => !inputs.respondedIds.has(a.id));
   return [
     ...missed,
     ...skippedKey,
+    ...testRoom,
     ...restSwapAdvice(inputs, templateById, usedIds),
     ...restPullAdvice(inputs, templateById, usedIds),
     ...tooHardAdvice(inputs, templateById),
