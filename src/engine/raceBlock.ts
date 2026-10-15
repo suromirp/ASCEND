@@ -182,7 +182,9 @@ export function applyRaceBlocks(
       }
     }
   }
-  swapLegsBeforeHardRuns(open, update, byId, new Set(remove.map((r) => r.id)));
+  const gone = new Set(remove.map((r) => r.id));
+  restoreLegSwaps(open, update, byId, gone, new Set(blocks.map((b) => b.raceWeek)));
+  swapLegsBeforeHardRuns(open, update, byId, gone);
   return { update: [...update.values()], add, remove };
 }
 
@@ -190,6 +192,54 @@ export function applyRaceBlocks(
 // with an upper body day earlier in the same week, far enough before the
 // run. In a test week the leg day is also the short version (72 hours is
 // rarely possible in a full week). Applied to the sessions as they will be.
+// A swap made for a run that has since moved or gone: back to the day it had.
+// Only while the session is still where the swap put it and you did not move
+// it yourself.
+function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSession>, byId: Map<string, SessionTemplate>, removed: Set<string>, raceWeeks: Set<string>): void {
+  const now = () => open.filter((s) => !removed.has(s.id)).map((s) => update.get(s.id) ?? s);
+  const sessions = now();
+  const runs = sessions.filter((s) => s.status === 'planned' && (s.templateId === TEMPO_TEMPLATE_ID || s.templateId === TEST_TEMPLATE_ID));
+  const marked = sessions.filter((s) => s.raceBlock);
+
+  // Swaps made before sessions carried a marker: leg strength in its short
+  // version, a day before the upper body day of the same week, in a week
+  // with nothing for it to keep its distance from, goes back.
+  const isStrength = (s: PlannedSession, legs: boolean) => { const t = byId.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t) === legs; };
+  for (const legs of sessions.filter((s) => !s.raceBlock && s.status === 'planned' && isStrength(s, true))) {
+    const short = byId.get(legs.templateId)?.durationVariants.short;
+    // Race week has short versions of its own (the taper).
+    if (!short || legs.plannedMinutes !== short || raceWeeks.has(legs.weekStartDate)) continue;
+    const partner = sessions
+      .filter((s) => !s.raceBlock && s.status === 'planned' && s.weekStartDate === legs.weekStartDate && s.scheduledDate > legs.scheduledDate && isStrength(s, false))
+      .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    if (!partner) continue;
+    const needed = runs.some((r) => { const d = daysBetween(partner.scheduledDate, r.scheduledDate); return d >= 0 && d < (r.templateId === TEST_TEMPLATE_ID ? 3 : 2); });
+    if (needed) continue;
+    const { plannedMinutes: _short, ...rest } = legs;
+    void _short;
+    update.set(legs.id, { ...rest, scheduledDate: partner.scheduledDate, weekStartDate: mondayOfWeek(partner.scheduledDate) });
+    update.set(partner.id, { ...partner, scheduledDate: legs.scheduledDate, weekStartDate: mondayOfWeek(legs.scheduledDate) });
+  }
+  for (const legs of marked.filter((s) => s.raceBlock!.pair === s.id)) {
+    const from = legs.raceBlock!.from;
+    const needed = runs.some((r) => {
+      const d = daysBetween(from, r.scheduledDate);
+      return d >= 0 && d < (r.templateId === TEST_TEMPLATE_ID ? 3 : 2);
+    });
+    if (needed) continue;
+    for (const m of marked.filter((s) => s.raceBlock!.pair === legs.id)) {
+      const mark = m.raceBlock!;
+      const { raceBlock: _drop, ...rest } = m;
+      void _drop;
+      const restored: PlannedSession = m.status === 'planned' && m.scheduledDate === mark.to
+        ? { ...rest, scheduledDate: mark.from, weekStartDate: mondayOfWeek(mark.from) }
+        : rest;
+      if (mark.short && restored.plannedMinutes !== undefined && m.status === 'planned' && m.scheduledDate === mark.to) delete restored.plannedMinutes;
+      update.set(m.id, restored);
+    }
+  }
+}
+
 function swapLegsBeforeHardRuns(open: PlannedSession[], update: Map<string, PlannedSession>, byId: Map<string, SessionTemplate>, removed: Set<string>): void {
   const now = () => open.filter((s) => !removed.has(s.id) && s.status === 'planned').map((s) => update.get(s.id) ?? s);
   for (const run of now().filter((s) => s.templateId === TEMPO_TEMPLATE_ID || s.templateId === TEST_TEMPLATE_ID)) {
@@ -201,13 +251,14 @@ function swapLegsBeforeHardRuns(open: PlannedSession[], update: Map<string, Plan
         .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
       let moved = legs;
       if (partner) {
-        moved = { ...legs, scheduledDate: partner.scheduledDate };
-        update.set(partner.id, { ...partner, scheduledDate: legs.scheduledDate });
+        const pair = legs.raceBlock?.pair ?? legs.id;
+        moved = { ...legs, scheduledDate: partner.scheduledDate, raceBlock: { pair, from: legs.raceBlock?.from ?? legs.scheduledDate, to: partner.scheduledDate, short: legs.raceBlock?.short } };
+        update.set(partner.id, { ...partner, scheduledDate: legs.scheduledDate, raceBlock: { pair, from: partner.raceBlock?.from ?? partner.scheduledDate, to: legs.scheduledDate } });
         update.set(legs.id, moved);
       }
       const short = byId.get(legs.templateId)?.durationVariants.short;
       if (daysBetween(moved.scheduledDate, run.scheduledDate) < need && short && moved.plannedMinutes !== short) {
-        update.set(legs.id, { ...moved, plannedMinutes: short });
+        update.set(legs.id, { ...moved, plannedMinutes: short, raceBlock: moved.raceBlock ? { ...moved.raceBlock, short: true } : { pair: legs.id, from: legs.scheduledDate, to: legs.scheduledDate, short: true } });
       }
     }
   }
