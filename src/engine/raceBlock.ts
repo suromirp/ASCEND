@@ -49,9 +49,9 @@ export const RACE_TEMPLATE_ID = 'tpl_race';
 export const TEST_TEMPLATE_ID = 'tpl_test_run';
 // Weeks before race week with a 5 km test: just before the block starts,
 // and halfway, four weeks before the race.
-// Plus a first test about 16 weeks out, so ASCEND knows your pace (and
+// Plus a first test 20 weeks out, at the start of Opbouw in your plan, so ASCEND knows your pace (and
 // what to train) long before the block.
-const TEST_WEEKS_BEFORE_RACE = [16, RACE_BLOCK_WEEKS + 1, 4];
+const TEST_WEEKS_BEFORE_RACE = [20, RACE_BLOCK_WEEKS + 1, 4];
 export const INTERVALS_TEMPLATE_ID = 'tpl_intervals';
 export const HILLS_TEMPLATE_ID = 'tpl_hill_intervals';
 export const HILLS_DESCENT_TEMPLATE_ID = 'tpl_hills_descent';

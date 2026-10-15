@@ -86,8 +86,9 @@ describe('the Saturday, heavy legs before a hard run, and the first test', () =>
     expect(saturdayTemplate('2027-05-01', [], program)).toBe('tpl_hill_intervals');
   });
 
-  it('a first test about 16 weeks out', () => {
-    expect(templateForRaceBlock('tpl_easy_run', '2026-11-26', blocks)).toBe('tpl_test_run');
+  it('a first test 20 weeks out', () => {
+    expect(templateForRaceBlock('tpl_easy_run', '2026-10-29', blocks)).toBe('tpl_test_run');
+    expect(templateForRaceBlock('tpl_easy_run', '2026-11-26', blocks)).toBe('tpl_easy_run');
   });
 
   it('the leg day swaps with the upper body day before a tempo run, and is short before a test', () => {
