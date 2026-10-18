@@ -524,11 +524,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (response === 'accepted' && item.proposal && (await commitPlanChange(item.proposal, item.title))) {
       setRecentChange((prev) => (prev && prev.id === item.proposal!.id ? { ...prev, adviceId: item.id } : prev));
     }
+    // Training through a rest week changes the program, not a session.
+    if (response === 'accepted' && item.restWeekSkip && program) {
+      await ProgramsRepo.put(withRestWeekSkipped(program, item.restWeekSkip, true));
+      await refresh();
+    }
     const current = (await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {};
     const next = { ...current, [item.id]: { response, at: new Date().toISOString() } };
     await MetaRepo.set('adviceResponses', next);
     setAdviceResponses(next);
-  }, [commitPlanChange]);
+  }, [commitPlanChange, program, refresh]);
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;

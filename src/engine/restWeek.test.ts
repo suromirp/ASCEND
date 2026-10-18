@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { restWeekState, withRestWeekSkipped } from './restWeek';
+import { proposeRestWeekSkip, restWeekState, withRestWeekSkipped } from './restWeek';
+import type { PlannedSession } from '../models/training';
 import { layoutPhasesForGoal, PHASE_BASIS, progressionTarget, waveWeek } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { resolveProgramWeek } from '../utils/dates';
@@ -41,5 +42,37 @@ describe('training through a rest week', () => {
     expect(next.reason).toContain('vorige rustweek');
     const pain = [{ completedDate: '2026-10-15', painAreas: ['Knie'] }] as SessionLog[];
     expect(restWeekState(program, '2026-10-19', pain, TODAY).canSkip).toBe(false);
+  });
+});
+
+describe('ASCEND proposes it itself after a light start', () => {
+  const DAYS: [string, number][] = [['tpl_upper_a', 1], ['tpl_easy_run', 3], ['tpl_hill_intervals', 5], ['tpl_long_run', 6]];
+  const planned: PlannedSession[] = [0, 1, 2, 3].flatMap((w) => DAYS.map(([templateId, d]) => {
+    const monday = `2026-${w === 0 ? '09-28' : w === 1 ? '10-05' : w === 2 ? '10-12' : '10-19'}`;
+    const date = new Date(`${monday}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + d);
+    return { id: `${monday}-${templateId}`, templateId, scheduledDate: date.toISOString().slice(0, 10), weekStartDate: monday, status: 'planned' as const, order: d };
+  }));
+  const run = (date: string, min: number, extra: Partial<SessionLog> = {}): SessionLog => ({ id: date + min, templateId: 'tpl_long_run', type: 'hiking', sport: 'running', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: min, source: 'manual', ...extra });
+  const inputs = (logs: SessionLog[], over = {}) => ({ program, plannedSessions: planned, logs, templates, today: TODAY, respondedIds: new Set<string>(), ...over });
+
+  it('proposes it when you ran clearly less than planned', () => {
+    const p = proposeRestWeekSkip(inputs([run('2026-10-04', 68), run('2026-10-12', 70), run('2026-10-15', 55)]))!;
+    expect(p.weekStart).toBe('2026-10-19');
+    expect(p.doneMinutes).toBe(193);
+    expect(p.doneMinutes).toBeLessThan(p.plannedMinutes * 0.75);
+  });
+
+  it('not when you did (nearly) everything, after a "liever niet", or when you are ill', () => {
+    const all = planned.filter((s) => s.scheduledDate <= TODAY && s.templateId !== 'tpl_upper_a').map((s) => run(s.scheduledDate, 80));
+    expect(proposeRestWeekSkip(inputs(all))).toBeUndefined();
+    const light = [run('2026-10-04', 68)];
+    expect(proposeRestWeekSkip(inputs(light, { respondedIds: new Set(['rest-week-skip:2026-10-19']) }))).toBeUndefined();
+    expect(proposeRestWeekSkip(inputs(light, { illnessEpisodes: [{ id: 'i', kind: 'above_neck', startDate: '2026-10-10' }] }))).toBeUndefined();
+    expect(proposeRestWeekSkip(inputs(light, { today: '2026-10-14' }))).toBeUndefined(); // too early in the week before
+  });
+
+  it('only in the basis: from the Opbouw on the rest week stays', () => {
+    // 16 Nov is the rest week of the first Opbouw wave.
+    expect(proposeRestWeekSkip(inputs([], { today: '2026-11-15' }))).toBeUndefined();
   });
 });

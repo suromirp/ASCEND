@@ -17,6 +17,7 @@
 //   decided here — that's the shared feedback pattern (changeImpact.ts);
 //   accepting advice IS the user's confirmation.
 
+import { proposeRestWeekSkip } from './restWeek';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { InjuryNote } from '../models/injury';
@@ -43,6 +44,9 @@ export interface Advice {
   priority: number; // higher first
   proposal?: PlanChangeProposal;
   relatedLogId?: string;
+  // Rule REST-WEEK-SKIP: Akkoord trains through the rest week of this
+  // Monday (engine/restWeek.ts). A program change, not a session change.
+  restWeekSkip?: string;
 }
 
 export interface AdviceInputs {
@@ -640,6 +644,19 @@ function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<string, Sess
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'EXTRA-SESSION', title, effect, why, priority: 2, proposal: { ...p, trigger: 'new_training_data' } }];
 }
 
+function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
+  if (!inputs.program) return [];
+  const found = proposeRestWeekSkip({
+    program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates,
+    today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, respondedIds: inputs.respondedIds,
+  });
+  if (!found) return [];
+  const title = 'Rustweek overslaan?';
+  const effect = `De week van ${shortDate(found.weekStart)} is een rustweek. Je liep de afgelopen weken ${found.doneMinutes} van de ${found.plannedMinutes} geplande minuten, dus er is weinig om van te herstellen. Voorstel: doortrainen als een normale opbouwweek, geen tweede zwaarste week.`;
+  const why = 'Een rustweek is er om de vermoeidheid van de weken ervoor kwijt te raken. Trainers zien hem als hulpmiddel, niet als vaste regel (Bell e.a. 2023), en na een licht begin is er weinig vermoeidheid. Je loopt nog steeds nooit meer dan 10% langer dan je langste loop van de afgelopen maand. Voelen je benen toch zwaar, zet de rustweek dan terug in Week.';
+  return [{ id: found.id, trigger: 'plan_update', ruleId: 'REST-WEEK-SKIP', title, effect, why, priority: 2, restWeekSkip: found.weekStart }];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
@@ -660,6 +677,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...strengthAdvice(inputs, templateById),
     ...spacingAdvice(inputs, templateById),
     ...extraSessionAdvice(inputs, templateById),
+    ...restWeekSkipAdvice(inputs),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
