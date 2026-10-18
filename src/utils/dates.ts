@@ -122,6 +122,7 @@ export function resolveProgramWeek(program: Program, dateIso: string): ResolvedP
         weekInPhase: remaining + 1,
         weekInProgram: weekDiff + 1,
         totalWeeksInProgram,
+        ...(program.skippedRestWeeks?.includes(targetMonday) ? { restSkipped: true as const } : {}),
       };
     }
     remaining -= phase.weekCount;

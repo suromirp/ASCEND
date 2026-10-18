@@ -21,6 +21,10 @@ export interface Program {
   name: string;
   startDate: string; // ISO date, Monday of program week 1
   phases: Phase[];
+  // Rest weeks you chose to train through (Monday ISO dates): that week
+  // counts as a normal build week (engine/restWeek.ts). Optional,
+  // additive: older programs and backups simply don't have it.
+  skippedRestWeeks?: string[];
 }
 
 export interface ResolvedProgramPosition {
@@ -29,4 +33,6 @@ export interface ResolvedProgramPosition {
   weekInPhase: number; // 1-based
   weekInProgram: number; // 1-based
   totalWeeksInProgram: number;
+  // The rest week of this wave is trained through (Program.skippedRestWeeks).
+  restSkipped?: true;
 }

@@ -155,8 +155,11 @@ export function programEndDate(program: Program): string {
 // --- what a week asks for --------------------------------------------------
 
 // Which week of the wave this is (1-4). The taper has no wave of its own.
+// A rest week you chose to train through counts as week 2 of the wave: a
+// normal build week, not a second heaviest week in a row.
 export function waveWeek(position: ResolvedProgramPosition): number {
-  return ((position.weekInPhase - 1) % WAVE_LENGTH) + 1;
+  const wave = ((position.weekInPhase - 1) % WAVE_LENGTH) + 1;
+  return wave === WAVE_LENGTH && position.restSkipped && position.phase.id !== PHASE_TAPER ? 2 : wave;
 }
 
 // Taper volume: first week about 70%, the last about 50% of a normal

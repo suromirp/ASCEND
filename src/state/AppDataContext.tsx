@@ -44,6 +44,7 @@ import {
 } from '../storage/database';
 import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from '../storage/goalMigration';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
+import { withRestWeekSkipped } from '../engine/restWeek';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
@@ -212,6 +213,8 @@ interface AppData {
   // Fill in or correct what the hard part was, afterwards. Only this
   // field; what was logged otherwise stays as it was.
   setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
+  // Train through (or restore) the rest week of this week (engine/restWeek.ts).
+  setRestWeekSkipped: (weekStart: string, skip: boolean) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
   suggestMoves: (sessionId: string) => MoveSuggestion[];
@@ -1173,6 +1176,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [goalMilestoneProgress, refresh],
   );
 
+  const setRestWeekSkipped = useCallback(
+    async (weekStart: string, skip: boolean) => {
+      if (!program) return;
+      await ProgramsRepo.put(withRestWeekSkipped(program, weekStart, skip));
+      await refresh();
+    },
+    [program, refresh],
+  );
+
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
       const log = sessionLogs.find((l) => l.id === logId);
@@ -1657,6 +1669,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     logSession,
     undoLog,
     setLogWorkout,
+    setRestWeekSkipped,
     moveSession,
     suggestMoves,
     applyProposal,
