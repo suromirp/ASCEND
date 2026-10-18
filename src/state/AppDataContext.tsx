@@ -209,6 +209,9 @@ interface AppData {
   reportStorageError: (err: unknown) => void;
   dismissStorageNotice: () => void;
   undoLog: (logId: string) => Promise<void>;
+  // Fill in or correct what the hard part was, afterwards. Only this
+  // field; what was logged otherwise stays as it was.
+  setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
   suggestMoves: (sessionId: string) => MoveSuggestion[];
@@ -372,6 +375,7 @@ export interface LogSessionInput {
   outdoorData?: SessionLog['outdoorData'];
   subjectiveFeel?: SessionLog['subjectiveFeel'];
   painAreas?: SessionLog['painAreas'];
+  workout?: SessionLog['workout'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
   completedDate?: string;
@@ -1086,6 +1090,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           outdoorData: input.outdoorData,
           subjectiveFeel: input.subjectiveFeel,
           painAreas: input.painAreas && input.painAreas.length > 0 ? input.painAreas : undefined,
+          workout: input.workout,
           source: 'manual',
         };
         await SessionLogsRepo.put(log);
@@ -1166,6 +1171,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await refresh();
     },
     [goalMilestoneProgress, refresh],
+  );
+
+  const setLogWorkout = useCallback(
+    async (logId: string, workout: SessionLog['workout']) => {
+      const log = sessionLogs.find((l) => l.id === logId);
+      if (!log) return;
+      await SessionLogsRepo.put({ ...log, workout });
+      await refresh();
+    },
+    [sessionLogs, refresh],
   );
 
   const moveSession = useCallback(
@@ -1641,6 +1656,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     sessionsForWeek,
     logSession,
     undoLog,
+    setLogWorkout,
     moveSession,
     suggestMoves,
     applyProposal,

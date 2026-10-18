@@ -1,5 +1,5 @@
 import { formatNumberNL } from '../utils/number';
-import type { SessionLog } from '../models/training';
+import type { SessionLog, WorkoutDetails } from '../models/training';
 import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL } from '../utils/dates';
@@ -9,6 +9,9 @@ import { Card, Eyebrow } from './ui';
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { logKindLabel } from '../engine/sports';
+import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine/workoutDetails';
+import { buildWorkoutPlan } from '../engine/workoutPlan';
+import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
@@ -20,6 +23,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
 
   const rows: { label: string; value: string }[] = [];
+  const done = workoutLine(log);
+  if (done) rows.push({ label: 'Gedaan', value: done });
   if (modality) rows.push({ label: 'Modaliteit', value: modality.label });
   if (activity?.environment) rows.push({ label: 'Omgeving', value: ENVIRONMENT_LABEL[activity.environment] ?? activity.environment });
   if (activity?.guidanceMode) {
@@ -36,7 +41,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.outdoorData?.elevationLossM !== undefined) rows.push({ label: 'Daling', value: `${formatNumberNL(log.outdoorData.elevationLossM, 0)} m D−` });
   if (log.outdoorData?.steps !== undefined) rows.push({ label: 'Verdiepingen (trap)', value: `${log.outdoorData.steps}` });
   if (log.outdoorData?.machineVerticalM !== undefined) rows.push({ label: 'Hoogtemeters op toestel', value: `${formatNumberNL(log.outdoorData.machineVerticalM, 0)} m` });
-  if (activity?.avgHeartRate !== undefined) rows.push({ label: 'Gem. hartslag', value: `${activity.avgHeartRate} bpm` });
+  if (activity?.avgHeartRate !== undefined) rows.push({ label: log.workout ? 'Gem. hartslag, hele training' : 'Gem. hartslag', value: `${activity.avgHeartRate} bpm` });
   if (activity?.cadence !== undefined) rows.push({ label: 'Cadans', value: `${activity.cadence}` });
   if (activity?.power !== undefined) rows.push({ label: 'Vermogen', value: `${activity.power} W` });
   if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${formatNumberNL(log.outdoorData.backpackWeightKg, 1)} kg` });
@@ -44,8 +49,14 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });
 
   const { closing, requestClose } = useSheetClose(onClose);
-  const { undoLog } = useAppData();
+  const { undoLog, setLogWorkout, templates, program } = useAppData();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Fill in the hard part afterwards: from what was saved, or the plan of that day.
+  const [editing, setEditing] = useState<WorkoutDetails | null>(null);
+  function startEditing() {
+    const template = templates.find((t) => t.id === log.templateId);
+    setEditing(log.workout ?? plannedDetails(log.templateId, template ? buildWorkoutPlan(template, log.completedDate, program) : undefined));
+  }
 
   return (
     <Portal>
@@ -94,6 +105,20 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
             </div>
           )}
 
+          {detailForm(log.templateId) && (editing ? (
+            <div className="mt-4 flex flex-col gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
+              <WorkoutDetailsFields templateId={log.templateId} value={editing} onChange={setEditing} />
+              <div className="flex gap-3">
+                <button onClick={() => setEditing(null)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>ANNULEREN</button>
+                <button onClick={() => void setLogWorkout(log.id, cleanDetails(editing)).then(() => setEditing(null))} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-bg)' }}>OPSLAAN</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={startEditing} className="mt-3 min-h-11 text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
+              {log.workout ? 'Herhalingen en hartslag aanpassen' : form(log.templateId)}
+            </button>
+          ))}
+
           {log.notes && (
             <div className="mt-4">
               <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>NOTITIES</p>
@@ -122,4 +147,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
       </div>
     </Portal>
   );
+}
+
+function form(templateId: string): string {
+  return detailForm(templateId) === 'block' ? 'Vul je stevige stuk in' : 'Vul je herhalingen in';
 }

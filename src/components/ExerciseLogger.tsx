@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { NumberField } from './NumberField';
 import { templateSport } from '../engine/sports';
-import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment, GuidanceMode } from '../models/training';
+import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment, GuidanceMode, WorkoutDetails } from '../models/training';
 import type { Program } from '../models/program';
 import { exercisesForVariant, durationForVariant, availableVariants, resolveVariantDuration } from '../engine/substitutions';
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
@@ -15,6 +15,8 @@ import { StretchList } from './StretchList';
 import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
+import { cleanDetails, detailForm, plannedDetails } from '../engine/workoutDetails';
+import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrainingGuideSheet, WorkoutSteps } from './TrainingGuideSheet';
 import { SessionHeader, StopSignals } from './SessionHeader';
 import { buildSessionBrief } from '../engine/sessionBrief';
@@ -78,6 +80,7 @@ export function ExerciseLogger({
   const plan = buildWorkoutPlan(template, scheduledDate ?? today, program);
   const conditioningSteps = plan?.timeline.filter((s) => s.kind !== 'strength') ?? [];
   const peak = conditioningSteps.length > 0 ? (Math.max(...conditioningSteps.map((s) => s.intensity)) as Intensity) : undefined;
+  const [workout, setWorkout] = useState<WorkoutDetails>(() => plannedDetails(template.id, plan));
   const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
   const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [reachedForm, setReachedForm] = useState(false);
@@ -201,6 +204,7 @@ export function ExerciseLogger({
       notes: notes || undefined,
       subjectiveFeel,
       painAreas: painAreas.length > 0 ? painAreas : undefined,
+      workout: detailForm(template.id) && !isRest ? cleanDetails(workout) : undefined,
       strengthData,
       cardioData:
         template.type === 'cardio' || template.type === 'recovery'
@@ -400,6 +404,7 @@ export function ExerciseLogger({
         ) : (
         <Card className="mt-4 flex flex-col gap-4">
           <Field label="Duur" unit="min" value={duration} onChange={(v) => setDuration(typeof v === 'number' ? v : 0)} />
+          {detailForm(template.id) && <WorkoutDetailsFields templateId={template.id} value={workout} onChange={setWorkout} />}
           <div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE), hoe zwaar voelde de hele training?</p>
             <div className="mt-2 grid grid-cols-10 gap-1" role="radiogroup" aria-label="Zwaarte van 1 tot 10">

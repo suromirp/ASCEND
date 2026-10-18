@@ -260,7 +260,19 @@ export interface SessionLog {
   // Where it hurt during or after (data/bodyAreas.ts, free text allowed).
   // Optional, additive: older logs and backups simply don't have it.
   painAreas?: string[];
+  // What the hard part of an interval, hill or tempo session actually was
+  // (engine/workoutDetails.ts). Optional, additive: older logs and
+  // backups simply don't have it.
+  workout?: WorkoutDetails;
   source: MetricSource;
+}
+
+export interface WorkoutDetails {
+  reps?: number;
+  repSeconds?: number; // length of one hard repeat
+  blockMinutes?: number; // a continuous hard block (tempo, the steady end)
+  peakHeartRate?: number;
+  blockHeartRate?: number; // average heart rate in the block
 }
 
 export type SubjectiveFeel = 'better' | 'normal' | 'worse';
