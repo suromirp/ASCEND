@@ -19,6 +19,7 @@ import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { getModalities } from '../data/modalities';
+import { filterForTraining } from '../engine/trainingSpots';
 
 const INTENSITY_COLOR: Record<Intensity, string> = {
   1: 'var(--color-stone)',
@@ -54,7 +55,10 @@ export function TrainingGuideSheet({
   const easeOff = guide.sections.filter((sec) => /ZWAAR|TE HARD|TE VEEL/i.test(sec.heading));
   const background = guide.sections.filter((sec) => !easeOff.includes(sec));
   const hasModalities = !!template && (getModalities(template.id)?.length ?? 0) > 0;
-  const showSpots = !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
+  // Spots for this training (Trainingsplekken, filtered on it), or any
+  // climbing spot for a D+ session without its own filter.
+  const spotFilter = filterForTraining(template?.id);
+  const showSpots = !!spotFilter || !!plan?.keyTag?.includes('D+') || template?.type === 'hiking';
 
   return (
     <Portal>
@@ -165,7 +169,7 @@ export function TrainingGuideSheet({
             )}
             {showSpots && (
               <button
-                onClick={() => { onClose(); navigate('/plekken'); }}
+                onClick={() => { onClose(); navigate(spotFilter ? `/plekken?training=${template!.id}` : '/plekken'); }}
                 className="flex min-h-[48px] w-full items-center justify-between border-b py-3 text-left"
                 style={{ borderColor: 'var(--color-card-border)' }}
               >

@@ -7,7 +7,28 @@
 // as more certain than it is. Starting with the Utrecht/Amersfoort region,
 // plus the best-known spots elsewhere.
 
-export type SpotUse = 'bergop' | 'bergaf' | 'trap' | 'rugzak' | 'heuvelintervallen' | 'lange tocht';
+export type SpotUse = 'bergop' | 'bergaf' | 'trap' | 'rugzak' | 'heuvelintervallen' | 'lange tocht' | 'vlak' | 'duurloop';
+
+// One measured climb at a spot. From the Amersfoort/Soest research
+// (docs/onderzoek/Trainingsplekken Amersfoort en Soest.md): heights from
+// the AHN elevation model (bare ground, ±0,5 m) or Climbfinder; lengths
+// measured along a straight line unless the source measured the road.
+export interface SpotClimb {
+  name: string;
+  lengthM: number;
+  gainM: number;
+  gradePct: number;
+  surface: string;
+}
+
+// What a catalogue training (data/defaultProgram.ts) looks like at this
+// spot, concretely. `limited`: it can be done here, but another spot
+// suits it better (the text says which).
+export interface SpotSession {
+  templateId: string;
+  how: string;
+  limited?: boolean;
+}
 
 export interface TrainingSpot {
   id: string;
@@ -31,7 +52,15 @@ export interface TrainingSpot {
   caveat?: string;
   region: 'utrecht' | 'elders';
   sources: { label: string; url: string }[];
+  // Spots researched in detail say per training how; the others derive
+  // their trainings from `uses` (engine/trainingSpots.ts#spotTrainings).
+  sessions?: SpotSession[];
+  climbs?: SpotClimb[];
+  parking?: string;
+  lighting?: string;
 }
+
+const AHN = { label: 'AHN hoogtekaart (PDOK), eigen meting', url: 'https://service.pdok.nl/rws/ahn/wcs/v1_0?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities' };
 
 const MUDSWEAT = { label: 'Mud Sweat Trails, hoogtemeters maken in Nederland', url: 'https://www.mudsweattrails.nl/hoogtemeters-maken-nederland/' };
 const HEUVELS = { label: 'Wikipedia, lijst van heuvels in Nederland', url: 'https://nl.wikipedia.org/wiki/Lijst_van_heuvels_in_Nederland' };
@@ -43,18 +72,273 @@ export const TRAINING_SPOTS: TrainingSpot[] = [
     name: 'Amersfoortse Berg',
     place: 'Amersfoort',
     province: 'Utrecht',
-    lat: 52.14307, lon: 5.36588, coordType: 'top',
+    lat: 52.14045, lon: 5.37594, coordType: 'start',
     kind: 'Stuwwal, stadsbos',
-    example: 'Heuvelherhalingen in het bos rond het Belgenmonument, dichtbij huis.',
-    uses: ['bergop', 'heuvelintervallen'],
-    terrain: 'Bospaden en lanen',
+    topM: 45, climbM: 32,
+    example: 'De Hugo de Grootlaan: 660 m bergop met 32 m hoogteverschil, gemiddeld 4,8%. De beste heuvel voor intervallen in Amersfoort.',
+    uses: ['heuvelintervallen', 'bergop', 'bergaf', 'rugzak', 'duurloop'],
+    terrain: 'Asfalt op de lanen, bospaden op de top',
     access: 'Altijd toegankelijk, op loopafstand van Amersfoort Centraal.',
     station: { name: 'Amersfoort Centraal', km: 1.3 },
-    tip: 'De Hugo de Grootlaan en de Belgenlaan zijn de steilste stukken. Goed voor korte heuvelintervallen zonder reistijd.',
-    caveat: 'De hoogte is niet nagemeten; het hoogteverschil is bescheiden.',
+    climbs: [
+      { name: 'Hugo de Grootlaan', lengthM: 660, gainM: 32, gradePct: 4.8, surface: 'asfalt, steilste 100 m 5,9%' },
+      { name: 'Utrechtseweg', lengthM: 1330, gainM: 38, gradePct: 2.9, surface: 'asfalt, drukke weg' },
+    ],
+    sessions: [
+      { templateId: 'tpl_hill_intervals', how: '6 tot 8 keer 60 tot 90 s bergop op de Hugo de Grootlaan, start onderaan aan de oostkant. Dat is 10 tot 16 m omhoog per keer. Wandel of jog terug naar beneden.' },
+      { templateId: 'tpl_hills_descent', how: 'De hele Hugo de Grootlaan rustig op en gecontroleerd af: 4 tot 6 keer is 130 tot 190 m D+ en D−. Asfalt is hard bij het afdalen, dus kort passen en niet remmen op je hakken.' },
+      { templateId: 'tpl_long_run', how: 'Leg de Utrechtseweg en de Hugo de Grootlaan in je route: elke keer over de berg is 30 tot 40 m D+. Twee keer erover geeft ±70 m.' },
+      { templateId: 'tpl_bergconditie', how: 'Stevig bergop wandelen op de Hugo de Grootlaan en rustig af. Eén keer op en neer kost ±14 min, dus in 50 min haal je 3 tot 4 keer, ±100 tot 125 m D+.' },
+      { templateId: 'tpl_ruck_walk', how: 'Zet de berg in je rugzakwandeling: vanuit het centrum de Utrechtseweg op en via de Hugo de Grootlaan terug.' },
+    ],
+    lighting: 'De Hugo de Grootlaan heeft waarschijnlijk straatlantaarns (één kaartgegeven, niet voor de hele weg nagegaan). De bospaden zijn donker.',
+    parking: 'Geen parkeerplaats op de top gevonden. Kom lopend of op de fiets.',
+    tip: 'De Belgenlaan en de Leusderweg lijken steil maar zijn bijna vlak (hooguit 4 m). Het trappetje bij de Prins Willem-Alexanderlaan is maar 4 tot 5 m hoog.',
+    caveat: 'De Utrechtseweg is een drukke doorgaande weg; blijf op het fietspad of de stoep.',
     region: 'utrecht',
-    sources: [{ label: 'OpenStreetMap, Amersfoortse Berg', url: 'https://nominatim.openstreetmap.org/ui/search.html?q=Amersfoortse+Berg' }, { label: 'Climbfinder, beklimmingen provincie Utrecht', url: 'https://climbfinder.com/us/regions/utrecht' }],
+    sources: [{ label: 'Climbfinder, Amersfoortse Berg', url: 'https://climbfinder.com/en/climbs/amersfoortse-berg' }, AHN, { label: 'OpenStreetMap, Hugo de Grootlaan', url: 'https://www.openstreetmap.org/way/6986102' }],
   },
+  {
+    id: 'grasheuvel-waterpark',
+    name: 'Grasheuvel bij het waterpark',
+    place: 'Amersfoort',
+    province: 'Utrecht',
+    lat: 52.1987, lon: 5.3707, coordType: 'top',
+    kind: 'Grasheuvel in het park',
+    topM: 10, climbM: 8,
+    example: 'Een korte, steile grasheuvel bij het waterpark: 8 m hoog, hellingen van 40 tot 50%. Het steilste dat je in Amersfoort vindt.',
+    uses: ['bergop', 'bergaf'],
+    terrain: 'Gras',
+    access: 'Openbaar park.',
+    climbs: [{ name: 'Helling', lengthM: 18, gainM: 8, gradePct: 45, surface: 'gras' }],
+    sessions: [
+      { templateId: 'tpl_hills_descent', how: 'Wandel of jog omhoog en loop gecontroleerd naar beneden. 20 keer is ±160 m D+ en D−. Zo steil bergaf vind je verder nergens dichtbij.' },
+      { templateId: 'tpl_bergconditie', how: 'Stevig bergop wandelen, ongeveer één keer per minuut op en neer. In 45 min is dat ±300 m D+ en D−.' },
+      { templateId: 'tpl_ruck_walk', how: 'Sluit je rugzakwandeling af met 5 tot 10 keer op en af met de rugzak.' },
+      { templateId: 'tpl_hill_intervals', how: 'Alleen korte sprintjes van 10 tot 15 s. Voor herhalingen van 60 s is hij te kort; neem daarvoor de Hugo de Grootlaan.', limited: true },
+    ],
+    lighting: 'Niet bekend; reken op weinig licht.',
+    tip: 'Kort en steil, dus ideaal voor korte bergaf-prikkels tussendoor. Loop naar beneden met kleine, snelle passen.',
+    caveat: 'De naam Grasheuvel bij het waterpark staat in geen enkele bron. We vonden de heuvel via de hoogtekaart. Nat gras is glad.',
+    region: 'utrecht',
+    sources: [AHN, { label: 'OpenStreetMap, het waterpark', url: 'https://www.openstreetmap.org/node/9665331884' }],
+  },
+  {
+    id: 'atletiekbaan-schothorst',
+    name: 'Atletiekbaan Schothorst',
+    place: 'Amersfoort',
+    province: 'Utrecht',
+    lat: 52.17547, lon: 5.37920, coordType: 'start',
+    kind: 'Atletiekbaan (AV Altis)',
+    example: 'Een 400 m-baan: 12,5 rondjes is precies 5 km, vlak en zonder verkeer.',
+    uses: ['vlak'],
+    terrain: 'Kunststofbaan',
+    access: 'Clubbaan van AV Altis, Schothorsterlaan 78. Vrij gebruik vonden we niet: via lidmaatschap, een proeftraining of de Hooglandse Dorpsloop op woensdagavond.',
+    sessions: [
+      { templateId: 'tpl_test_run', how: '12,5 rondjes. Elk rondje zie je meteen of je tempo klopt, dus de eerlijkste plek voor je testloop.' },
+      { templateId: 'tpl_intervals', how: '4 keer 4 minuten is per herhaling ruim 2 rondjes. Wandel of jog 3 minuten tussendoor.' },
+      { templateId: 'tpl_tempo_run', how: 'Het tempostuk in rondjes, en per rondje je tempo checken.' },
+    ],
+    lighting: 'Niet bekend.',
+    tip: 'Lukt de baan niet? Heel Noord-Amersfoort is vlak, dus een gemeten rondje bij Landgoed Schothorst werkt ook.',
+    caveat: 'Openingstijden, verlichting en of je er zonder lidmaatschap mag lopen: niet gevonden. Vraag het de club.',
+    region: 'utrecht',
+    sources: [{ label: 'OpenStreetMap, Atletiekbaan Schothorst', url: 'https://www.openstreetmap.org/way/27218390' }, { label: 'Kidsproof, AV Altis', url: 'https://www.kidsproof.nl/amersfoort/uitje/atletiekvereninging-Altis-Atletiekvereniging-Altis/' }],
+  },
+  {
+    id: 'schothorst-vlak',
+    name: 'Landgoed Schothorst en het Valleikanaal',
+    place: 'Amersfoort',
+    province: 'Utrecht',
+    lat: 52.17901, lon: 5.38697, coordType: 'gebied',
+    kind: 'Park en kanaal, vlak',
+    example: 'Vlakke rondjes door het park en langs het water: goed voor tempo, intervallen en rustige lopen.',
+    uses: ['vlak', 'duurloop'],
+    terrain: 'Paden en fietspaden',
+    access: 'Openbaar.',
+    sessions: [
+      { templateId: 'tpl_tempo_run', how: 'Een vast rondje langs het Valleikanaal: geen hoogteverschil, dus je tempo zegt echt iets.' },
+      { templateId: 'tpl_intervals', how: '4 keer 4 minuten op een recht stuk langs het kanaal, terug joggend.' },
+      { templateId: 'tpl_test_run', how: 'Kan, maar meet de route vooraf met je horloge en loop hem elke test hetzelfde. Een baan is eerlijker.', limited: true },
+      { templateId: 'tpl_easy_run', how: 'Rustig rondje door het landgoed en het Schothorsterbos.' },
+      { templateId: 'tpl_fartlek', how: 'De versnellingen van lantaarnpaal tot lantaarnpaal of brug tot brug.' },
+      { templateId: 'tpl_strides_run', how: 'De versnellingen op een recht, vlak stuk langs het kanaal.' },
+      { templateId: 'tpl_recovery_run', how: 'Heel rustig, helemaal vlak: precies wat een herstelloop nodig heeft.' },
+    ],
+    lighting: 'Langs de fietspaden deels verlicht; in het bos niet.',
+    tip: 'Zoek je een klein klimmetje in een vlakke route? De bruggen over het Valleikanaal in Liendert en over de Eem (Korporaal Cor Strik-brug) zijn ±8 m hoog.',
+    caveat: 'Op mooie dagen druk met wandelaars op de paden rond het landgoed.',
+    region: 'utrecht',
+    sources: [{ label: 'OpenStreetMap, Landgoed Schothorst', url: 'https://www.openstreetmap.org/way/6315859' }, AHN],
+  },
+  {
+    id: 'soesterberg-de-paltz',
+    name: 'De Paltz en Park Vliegbasis Soesterberg',
+    place: 'Soesterberg',
+    province: 'Utrecht',
+    lat: 52.14100, lon: 5.28700, coordType: 'start',
+    kind: 'Stuwwal en oud vliegveld',
+    topM: 45, climbM: 26,
+    example: 'De noordflank van De Paltz: 840 m bergop met 26 m hoogteverschil, en vlakke startbanen voor tempo.',
+    uses: ['heuvelintervallen', 'bergop', 'bergaf', 'vlak', 'duurloop'],
+    terrain: 'Bos- en zandpaden, betonplaten, startbanen',
+    access: 'Dagelijks van zonsopgang tot zonsondergang. Honden niet toegestaan, ook niet aangelijnd. De zuidelijke startbaan is dicht van 15 maart tot 15 augustus.',
+    climbs: [
+      { name: 'Noordflank De Paltz', lengthM: 840, gainM: 26, gradePct: 3.1, surface: 'bos- en zandpad' },
+      { name: 'Soester Hoogt', lengthM: 300, gainM: 13, gradePct: 3.9, surface: 'weg' },
+      { name: 'Radarheuvel', lengthM: 85, gainM: 23, gradePct: 27, surface: 'pad niet bevestigd' },
+    ],
+    sessions: [
+      { templateId: 'tpl_hill_intervals', how: '6 tot 8 keer 60 tot 90 s bergop op de noordflank van De Paltz, 6 tot 10 m per keer. Minder steil dan de Hugo de Grootlaan, wel op zachte grond. Jog terug.' },
+      { templateId: 'tpl_hills_descent', how: 'De hele flank op en af: 4 keer is ±100 m D+ en D−, op zachtere grond dan asfalt.' },
+      { templateId: 'tpl_tempo_run', how: 'Op de oude startbanen: vlak, recht en zonder verkeer.' },
+      { templateId: 'tpl_intervals', how: '4 keer 4 minuten op een startbaan, jog terug.' },
+      { templateId: 'tpl_long_run', how: 'Combineer de flank met de Soester Duinen, net ten noorden: een lange loop met korte klimmetjes.' },
+      { templateId: 'tpl_bergconditie', how: 'Stevig bergop wandelen op de flank en de Soester Hoogt.' },
+    ],
+    parking: 'Parkeerplaats Soester Hoogt, of bij het Nationaal Militair Museum (startpunt van de routes).',
+    lighting: 'Geen verlichting en dicht na zonsondergang: in de winter alleen overdag.',
+    tip: 'De beste klimplek ten westen van Amersfoort. In de oude zandafgraving van De Paltz zijn korte hellingen tot 27%.',
+    caveat: 'De noordflank is op de hoogtekaart in een rechte lijn gemeten; het pad kan iets anders lopen. Of er een pad op de Radarheuvel gaat, konden we niet nagaan. Hardlopen wordt nergens verboden of genoemd.',
+    region: 'utrecht',
+    sources: [{ label: 'Visit Utrecht Region, Park Vliegbasis Soesterberg', url: 'https://www.visitutrechtregion.com/en/locations/262827325/top-park-airbase-soesterberg' }, { label: 'Climbfinder, Soester Hoogt', url: 'https://climbfinder.com/en/climbs/soesterhoogt' }, AHN],
+  },
+  {
+    id: 'soester-duinen',
+    name: 'Soester Duinen',
+    place: 'Soest',
+    province: 'Utrecht',
+    lat: 52.15689, lon: 5.29097, coordType: 'start',
+    kind: 'Stuifzand',
+    topM: 17, climbM: 10,
+    example: 'Korte duinklimmetjes van 8 tot 12 m in mul zand, met stukjes tot 44% steil. Zwaar voor kuiten en enkels, zacht voor je knieën.',
+    uses: ['bergop', 'bergaf', 'rugzak', 'duurloop'],
+    terrain: 'Mul zand en bospad',
+    access: 'Vrij toegankelijk. In de Lange Duinen een grote losloopzone voor honden, in de Korte Duinen aanlijnen.',
+    climbs: [{ name: 'Duintop', lengthM: 125, gainM: 10, gradePct: 8, surface: 'mul zand, korte stukken tot 44%' }],
+    sessions: [
+      { templateId: 'tpl_hills_descent', how: 'Duintjes op en af: 15 keer is ±150 m D+ en D−. Bergaf in zand is zacht voor je knieën.' },
+      { templateId: 'tpl_bergconditie', how: 'Stevig wandelen over de duinen, steeds een top op.' },
+      { templateId: 'tpl_ruck_walk', how: 'De gele (3,5 km) of blauwe route (5 km) met je rugzak. In mul zand kost elke stap meer.' },
+      { templateId: 'tpl_long_run', how: 'De blauwe (5 km) en oranje route (10 km) achter elkaar, eventueel met De Paltz erbij.' },
+      { templateId: 'tpl_easy_run', how: 'Rustig over de bospaden rond de duinen; het zand zelf maakt rustig blijven lastig.' },
+      { templateId: 'tpl_hill_intervals', how: 'Alleen korte versie: 20 tot 30 s een duin op. Voor 60 s herhalingen is De Paltz beter.', limited: true },
+    ],
+    parking: 'Gratis aan de Foekenlaan 25. Ook bij de Sparrenlaan en de Beaufortlaan; voor de Korte Duinen bij Zonnegloren.',
+    lighting: 'Geen verlichting.',
+    tip: 'De Korte Duinen, aan de oostkant van de N412, zijn meestal rustiger.',
+    caveat: 'Niet geschikt voor tempo, intervallen of je testloop: zacht zand en steeds op en af. Neem in de zomer water mee.',
+    region: 'utrecht',
+    sources: [{ label: 'ANWB, wandelen in de Soester Duinen', url: 'https://www.anwb.nl/wandelen/nederland/utrecht/wandelen-in-de-soester-duinen' }, AHN],
+  },
+  {
+    id: 'av-pijnenburg',
+    name: 'Atletiekbaan AV Pijnenburg',
+    place: 'Soest',
+    province: 'Utrecht',
+    lat: 52.15616, lon: 5.28384, coordType: 'start',
+    kind: 'Atletiekbaan',
+    example: 'Een kunststofbaan op 1 km van de Soester Duinen: goed voor je testloop, tempo en intervallen.',
+    uses: ['vlak'],
+    terrain: 'Kunststofbaan',
+    access: 'Clubbaan, Wieksloterweg Oostzijde 10. Vrij gebruik vonden we niet; de club biedt drie gratis proeftrainingen.',
+    sessions: [
+      { templateId: 'tpl_test_run', how: 'Als het een 400 m-baan is: 12,5 rondjes is 5 km.' },
+      { templateId: 'tpl_intervals', how: '4 keer 4 minuten in rondjes, jog of wandel tussendoor.' },
+      { templateId: 'tpl_tempo_run', how: 'Het tempostuk in rondjes.' },
+    ],
+    lighting: 'Niet bekend.',
+    tip: 'Combineer: warm rustig op naar de duinen en weer terug, of andersom.',
+    caveat: 'Lengte van de baan, verlichting en vrij gebruik: niet gevonden. Vraag het de club.',
+    region: 'utrecht',
+    sources: [{ label: 'AV Pijnenburg, route', url: 'https://www.avpijnenburg.nl/route-informatie/' }],
+  },
+  {
+    id: 'vuursche',
+    name: 'Lage Vuursche en Pijnenburg',
+    place: 'Baarn',
+    province: 'Utrecht',
+    lat: 52.17933, lon: 5.22247, coordType: 'gebied',
+    kind: 'Bos en heide',
+    topM: 22,
+    example: 'Mooie, bijna vlakke bossen: de Hooge Vuursche Trail heeft ±55 m D+ op 21 km. Ideaal voor lange rustige kilometers.',
+    uses: ['duurloop', 'rugzak', 'lange tocht'],
+    terrain: 'Bospaden, zandpaden, smalle paadjes',
+    access: 'Vrij toegankelijk bos.',
+    climbs: [{ name: 'Grootste klimmetje', lengthM: 420, gainM: 14, gradePct: 3.4, surface: 'bospad' }],
+    sessions: [
+      { templateId: 'tpl_long_run', how: 'Lange rustige loop over bospaden, zonder verkeer en zonder grote klimmen.' },
+      { templateId: 'tpl_easy_run', how: 'Een rustig rondje vanaf het Bosbad.' },
+      { templateId: 'tpl_ruck_walk', how: 'Een lange rugzakwandeling; tel op tijd en afstand, niet op hoogtemeters.' },
+      { templateId: 'tpl_progression_run', how: 'Lange rechte bospaden: goed om het tempo aan het eind stap voor stap op te voeren.' },
+    ],
+    parking: 'Bij Bosbad De Vuursche, Bosbadlaan 4, Baarn.',
+    lighting: 'Geen verlichting.',
+    tip: 'Let op mountainbikers op de smalle paadjes.',
+    caveat: 'Niet geschikt voor heuvelintervallen of bergaf: hooguit 10 tot 14 m hoogteverschil.',
+    region: 'utrecht',
+    sources: [{ label: 'GoTrail, Hooge Vuursche Trail', url: 'https://gotrail.run/nl/event/hooge-vuursche-trail' }, AHN],
+  },
+  {
+    id: 'pyramide-austerlitz',
+    name: 'Pyramide van Austerlitz',
+    place: 'Woudenberg',
+    province: 'Utrecht',
+    lat: 52.08680, lon: 5.33860, coordType: 'start',
+    kind: 'Stuwwal met monument',
+    topM: 67, climbM: 34,
+    example: 'Van de parkeerplaats naar de voet van het monument is ±18 m omhoog, de trap op het monument nog eens 16 m. Samen 34 m: meer dan de Amersfoortse Berg.',
+    uses: ['bergop', 'bergaf', 'trap', 'rugzak'],
+    terrain: 'Bospaden; een metalen trap van 81 treden op het monument',
+    access: 'Park vrij toegankelijk, Zeisterweg 98. Het monument met de trap: 3 april tot 25 oktober, di tot vr 10 tot 17 uur, za en zo 10 tot 18 uur.',
+    climbs: [
+      { name: 'Parkeerplaats naar de voet van het monument', lengthM: 450, gainM: 18, gradePct: 4, surface: 'bospad' },
+      { name: 'Trap op het monument', lengthM: 21, gainM: 16, gradePct: 75, surface: 'metalen trap, 81 treden' },
+    ],
+    sessions: [
+      { templateId: 'tpl_hill_intervals', how: '60 tot 90 s bergop van de parkeerplaats richting het monument, ±10 m per keer. Kan, maar de Hugo de Grootlaan is steiler en dichterbij.', limited: true },
+      { templateId: 'tpl_hills_descent', how: 'Van de parkeerplaats naar de voet van het monument en terug: 6 keer is ±110 m D+ en D−. Als het monument open is, de trap erbij.' },
+      { templateId: 'tpl_bergconditie', how: 'Stevig wandelen van de parkeerplaats naar de top en terug. Als het monument open is, de trap erbij: 10 keer is 160 m.' },
+      { templateId: 'tpl_ruck_walk', how: 'Met rugzak een paar keer naar de top als vast punt in je wandeling.' },
+      { templateId: 'tpl_mountain_hike', how: 'Een paar keer naar de top is je D+ voor een korte bergtocht; voor meer combineer je met de Kaapse Bossen.', limited: true },
+    ],
+    parking: 'Gratis, ruim genoeg.',
+    lighting: 'Geen verlichting.',
+    tip: 'Kom op de fiets: de rit telt als warming-up.',
+    caveat: 'Op de site staat dat het monument nu dicht is voor onderhoud, en het seizoen eindigt 25 oktober. De klim is gemeten op de hoogtekaart in een rechte lijn, niet langs het pad. Het steilste stuk zit in de heuvel van het monument zelf, en daar kom je alleen via de trap.',
+    region: 'utrecht',
+    sources: [{ label: 'Pyramide van Austerlitz', url: 'https://www.pyramidevanausterlitz.nl' }, { label: 'OpenStreetMap, trap (81 treden)', url: 'https://www.openstreetmap.org/way/28272347' }, AHN],
+  },
+  {
+    id: 'maarn-zandgat',
+    name: 'Zandgat en Maarnse Berg',
+    place: 'Maarn',
+    province: 'Utrecht',
+    lat: 52.06233, lon: 5.33967, coordType: 'start',
+    kind: 'Trap in een oude zandafgraving',
+    topM: 48, climbM: 26,
+    example: 'Een metalen trap van 170 treden, 26 m hoog: 10 keer op en neer is ±260 m D+ en D−. Op de kaart de beste trap in de buurt.',
+    uses: ['trap', 'bergop', 'bergaf', 'rugzak', 'heuvelintervallen'],
+    terrain: 'Metalen trap; asfalt en zandpad op de Maarnse Berg',
+    access: 'Natuurgebied. Een stuk van de Maarnse Bergweg is dicht van zonsondergang tot zonsopgang.',
+    station: { name: 'Maarn', km: 2.2 },
+    climbs: [
+      { name: 'Trap Zandgat', lengthM: 51, gainM: 26, gradePct: 50, surface: 'metalen trap, 170 treden' },
+      { name: 'Maarnse Berg vanaf Maarn', lengthM: 1000, gainM: 29, gradePct: 2.9, surface: 'weg, steilste stuk 4,8%' },
+    ],
+    sessions: [
+      { templateId: 'tpl_bergconditie', how: 'Trap herhalen: 10 keer op en neer is ±260 m D+ en D−.' },
+      { templateId: 'tpl_hills_descent', how: 'Loop de trap bewust naar beneden, rustig en gecontroleerd. Dat traint je bovenbenen voor lange afdalingen.' },
+      { templateId: 'tpl_ruck_walk', how: 'Na een paar weken zonder: de trap met rugzak.' },
+      { templateId: 'tpl_hill_intervals', how: '60 tot 90 s bergop op de Maarnse Berg (Bergweg, Driebergseweg). Rustiger dan de Hugo de Grootlaan.', limited: true },
+    ],
+    lighting: 'Geen verlichting.',
+    tip: 'De trap is steil (±50%): loop omhoog op je voorvoet en houd naar beneden de leuning vast als je moe wordt.',
+    caveat: 'De trap staat op de kaart (OpenStreetMap, 170 treden), maar we vonden geen bron die zegt dat hij er nog is en open is. Ga eerst kijken.',
+    region: 'utrecht',
+    sources: [{ label: 'OpenStreetMap, trap Zandgat Maarn', url: 'https://www.openstreetmap.org/way/246347559' }, { label: 'Climbfinder, Maarnse Berg', url: 'https://climbfinder.com/en/climbs/maarnse-berg-maarn' }, AHN],
+  },
+
   {
     id: 'kwintelooijen',
     name: 'Trap Kwintelooijen',
@@ -112,18 +396,34 @@ export const TRAINING_SPOTS: TrainingSpot[] = [
     name: 'Kaapse Bossen',
     place: 'Doorn',
     province: 'Utrecht',
-    lat: 52.04025, lon: 5.36110, coordType: 'gebied',
+    lat: 52.03044, lon: 5.37732, coordType: 'start',
     kind: 'Stuwwal, bos',
-    example: 'Lange wandelingen over de Heuvelrug met glooiende hoogtemeters.',
-    uses: ['lange tocht', 'rugzak'],
-    terrain: 'Bospaden',
-    access: 'Vrij toegankelijk bos.',
-    station: { name: 'Maarn', km: 2.7 },
-    tip: 'Goed voor lange tochten met rugzak; de hoogteverschillen zijn klein, dus tel op afstand en tijd.',
-    caveat: 'Voor 15 tot 20 km met 200 tot 300 m D+ op de Heuvelrug vonden we maar één bron.',
+    topM: 57, climbM: 42,
+    example: 'Van het Doornse Gat naar de Ruiterberg: 42 m omhoog in 1,1 km. De langste klim in de buurt, en de route Hoogtepunten (8,5 km) gaat er overheen.',
+    uses: ['bergop', 'bergaf', 'heuvelintervallen', 'rugzak', 'lange tocht', 'duurloop'],
+    terrain: 'Bospaden, kronkelige paadjes',
+    access: 'Vrij toegankelijk bos. Honden aangelijnd.',
+    station: { name: 'Maarn', km: 3.7 },
+    climbs: [
+      { name: 'Doornse Gat naar Ruiterberg', lengthM: 1100, gainM: 42, gradePct: 3.8, surface: 'bospad' },
+      { name: 'Steilste stuk', lengthM: 250, gainM: 16, gradePct: 6.5, surface: 'bospad' },
+    ],
+    sessions: [
+      { templateId: 'tpl_mountain_hike', how: 'De route Hoogtepunten Kaapse Bossen, 8,5 km, en vaker de Ruiterberg op voor meer D+. Met rugzak de beste bergtocht-oefening dichtbij.' },
+      { templateId: 'tpl_long_run', how: 'Lange loop over de stuwwal; de klim naar de Ruiterberg erin geeft per keer 42 m D+.' },
+      { templateId: 'tpl_hill_intervals', how: '6 tot 8 keer 60 tot 90 s bergop op het steilste stuk naar de Ruiterberg, 12 tot 18 m per keer.' },
+      { templateId: 'tpl_hills_descent', how: 'De hele klim op en af: 3 keer is ±125 m D+ en D−.' },
+      { templateId: 'tpl_bergconditie', how: 'Stevig wandelen van het Doornse Gat naar de Ruiterberg en terug.' },
+      { templateId: 'tpl_ruck_walk', how: 'De route Hoogtepunten met je rugzak.' },
+    ],
+    parking: 'Doornse Gat, gratis, 30 plekken (Leersumsestraatweg 9a). Of de Groene Entree, gratis, dicht van zonsondergang tot zonsopgang.',
+    lighting: 'Geen verlichting.',
+    tip: 'Uitkijktoren De Kaap (25 m) staat er vlakbij. Download de route vooraf, de bordjes zijn nu slecht te volgen.',
+    caveat: 'De klim is op de hoogtekaart in een rechte lijn gemeten. Voor lange lussen van 20 km is 150 tot 300 m D+ een schatting.',
     region: 'utrecht',
-    sources: [MUDSWEAT],
+    sources: [{ label: 'Natuurmonumenten, route Hoogtepunten Kaapse Bossen', url: 'https://www.natuurmonumenten.nl/natuurgebieden/kaapse-bossen/route/wandelroute-hoogtepunten-kaapse-bossen-doorn' }, { label: 'Staatsbosbeheer, Doornse Gat', url: 'https://www.staatsbosbeheer.nl/activiteiten/utrechtse-heuvelrug/recreatieterrein-doornse-gat-utrechtse-heuvelrug' }, AHN, MUDSWEAT],
   },
+
   {
     id: 'wageningse-berg',
     name: 'Wageningse Berg',

@@ -5,32 +5,26 @@
 
 import { formatNumberNL } from '../utils/number';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { FLAT_COUNTRY_TIPS, HOME_PLACES, TRAINING_SPOTS, type SpotUse, type TrainingSpot } from '../data/trainingSpots';
-import { spotsByDistance, travelAdvice, type HomeLocation } from '../engine/trainingSpots';
+import { filterForTraining, spotSession, spotTrainings, spotsForTraining, TRAINING_FILTERS, travelAdvice, type HomeLocation, type TrainingFilter } from '../engine/trainingSpots';
 import { Card, Eyebrow } from '../components/ui';
 
-const USE_FILTERS: { use?: SpotUse; label: string }[] = [
-  { label: 'Alles' },
-  { use: 'bergaf', label: 'Bergaf' },
-  { use: 'bergop', label: 'Bergop' },
-  { use: 'trap', label: 'Trap' },
-  { use: 'rugzak', label: 'Met rugzak' },
-  { use: 'lange tocht', label: 'Lange tocht' },
-];
-
 const USE_LABEL: Record<SpotUse, string> = {
-  bergop: 'bergop', bergaf: 'bergaf', trap: 'trap', rugzak: 'rugzak', heuvelintervallen: 'heuvelintervallen', 'lange tocht': 'lange tocht',
+  bergop: 'bergop', bergaf: 'bergaf', trap: 'trap', rugzak: 'rugzak', heuvelintervallen: 'heuvelintervallen', 'lange tocht': 'lange tocht', vlak: 'vlak', duurloop: 'duurloop',
 };
 
 export function TrainingSpotsPage() {
-  const { settings, updateSettings } = useAppData();
-  const [use, setUse] = useState<SpotUse | undefined>(undefined);
+  const { settings, updateSettings, templates } = useAppData();
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState<TrainingFilter | undefined>(() => filterForTraining(params.get('training') ?? undefined));
+  const templateName = (id: string) => templates.find((t) => t.id === id)?.name;
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
   const home = settings.homeLocation;
-  const spots = spotsByDistance(TRAINING_SPOTS, home, use);
+  const spots = spotsForTraining(TRAINING_SPOTS, home, filter);
 
   function setHome(next: HomeLocation) {
     void updateSettings({ homeLocation: next });
@@ -63,7 +57,7 @@ export function TrainingSpotsPage() {
         <BackButton />
         <div>
           <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSPLEKKEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je in Nederland hoogtemeters maakt, bergop en bergaf</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je welke training doet, met hoogtemeters en lengte</p>
         </div>
       </div>
 
@@ -95,23 +89,23 @@ export function TrainingSpotsPage() {
       </Card>
 
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1">
-        {USE_FILTERS.map((f) => {
-          const active = use === f.use;
+        {[undefined, ...TRAINING_FILTERS].map((f) => {
+          const active = filter?.label === f?.label;
           return (
             <button
-              key={f.label}
-              onClick={() => setUse(f.use)}
+              key={f?.label ?? 'alles'}
+              onClick={() => setFilter(f)}
               className="shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
               style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
             >
-              {f.label}
+              {f?.label ?? 'Alles'}
             </button>
           );
         })}
       </div>
 
       <div className="flex flex-col gap-3">
-        {spots.map((s) => <SpotCard key={s.id} spot={s} home={home} />)}
+        {spots.map((s) => <SpotCard key={s.id} spot={s} home={home} filter={filter} templateName={templateName} />)}
       </div>
 
       <Card className="flex flex-col gap-2">
@@ -139,7 +133,9 @@ function ClimbGlyph({ climbM }: { climbM?: number }) {
   );
 }
 
-function SpotCard({ spot, home }: { spot: TrainingSpot; home?: HomeLocation }) {
+function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; home?: HomeLocation; filter?: TrainingFilter; templateName: (id: string) => string | undefined }) {
+  const focus = filter ? spotSession(spot, filter.templateIds) : undefined;
+  const trainings = spotTrainings(spot).map(templateName).filter((n): n is string => !!n);
   const [open, setOpen] = useState(false);
   const travel = home ? travelAdvice(home, spot) : undefined;
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lon}`;
@@ -162,6 +158,25 @@ function SpotCard({ spot, home }: { spot: TrainingSpot; home?: HomeLocation }) {
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{spot.example}</p>
 
+      {focus && (
+        <p className="rounded-xl border px-3 py-2 text-sm leading-relaxed" style={{ borderColor: focus.limited ? 'var(--color-card-border)' : 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
+          <span className="block text-[10px] font-medium tracking-[0.16em]" style={{ color: focus.limited ? 'var(--color-ink-dim)' : 'var(--color-gold)' }}>
+            {(templateName(focus.templateId) ?? '').toUpperCase()} HIER{focus.limited ? ' · BEPERKT' : ''}
+          </span>
+          {focus.how}
+        </p>
+      )}
+
+      {spot.climbs && (
+        <div className="flex flex-col gap-0.5">
+          {spot.climbs.map((c) => (
+            <p key={c.name} className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+              <span style={{ color: 'var(--color-ink)' }}>{c.name}</span> · {formatNumberNL(c.lengthM, 0)} m · +{c.gainM} m · {formatNumberNL(c.gradePct, 1)}% · {c.surface}
+            </p>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-1.5">
         {spot.uses.map((u) => (
           <span key={u} className="rounded-full px-2.5 py-0.5 text-[11px]" style={{ background: 'var(--color-charcoal)', color: u === 'bergaf' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{USE_LABEL[u]}</span>
@@ -173,13 +188,19 @@ function SpotCard({ spot, home }: { spot: TrainingSpot; home?: HomeLocation }) {
       )}
 
       <button onClick={() => setOpen((v) => !v)} className="self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
-        {open ? 'minder' : 'tip, toegang en bronnen'}
+        {open ? 'minder' : spot.sessions ? 'alle trainingen, toegang en bronnen' : 'tip, toegang en bronnen'}
       </button>
       {open && (
         <div className="flex flex-col gap-1.5 border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
+          {spot.sessions && spot.sessions.filter((x) => x !== focus).map((x) => (
+            <p key={x.templateId}><span style={{ color: 'var(--color-ink)' }}>{templateName(x.templateId) ?? x.templateId}{x.limited ? ' (beperkt)' : ''}:</span> {x.how}</p>
+          ))}
+          {!spot.sessions && trainings.length > 0 && <p><span style={{ color: 'var(--color-ink)' }}>Geschikt voor:</span> {trainings.join(', ').toLowerCase()}</p>}
           <p><span style={{ color: 'var(--color-ink)' }}>Tip:</span> {spot.tip}</p>
           <p><span style={{ color: 'var(--color-ink)' }}>Ondergrond:</span> {spot.terrain}</p>
           <p><span style={{ color: 'var(--color-ink)' }}>Toegang:</span> {spot.access}</p>
+          {spot.parking && <p><span style={{ color: 'var(--color-ink)' }}>Parkeren:</span> {spot.parking}</p>}
+          {spot.lighting && <p><span style={{ color: 'var(--color-ink)' }}>Licht:</span> {spot.lighting}</p>}
           {spot.station && <p><span style={{ color: 'var(--color-ink)' }}>Station:</span> {spot.station.name}, ±{formatNumberNL(spot.station.km, 1)} km hemelsbreed</p>}
           {spot.caveat && <p style={{ color: 'var(--color-warning)' }}>Let op: {spot.caveat}</p>}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">

@@ -4,7 +4,7 @@ import { formatNumberNL } from '../utils/number';
 // the device; distances are straight-line with a route factor, so they are
 // estimates and the page says so.
 
-import type { SpotUse, TrainingSpot } from '../data/trainingSpots';
+import type { SpotSession, SpotUse, TrainingSpot } from '../data/trainingSpots';
 
 export interface HomeLocation {
   name: string;
@@ -53,4 +53,58 @@ export function spotsByDistance(spots: TrainingSpot[], home: HomeLocation | unde
   const filtered = use ? spots.filter((s) => s.uses.includes(use)) : spots;
   if (!home) return [...filtered].sort((a, b) => (a.region === b.region ? a.name.localeCompare(b.name, 'nl') : a.region === 'utrecht' ? -1 : 1));
   return [...filtered].sort((a, b) => straightKm(home, a) - straightKm(home, b));
+}
+
+// Which catalogue trainings fit a spot. Spots researched in detail list
+// them with a concrete "how"; the others derive them from what the spot
+// offers.
+const USE_TRAININGS: Record<SpotUse, string[]> = {
+  bergop: ['tpl_bergconditie', 'tpl_mountain_hike'],
+  bergaf: ['tpl_hills_descent'],
+  trap: ['tpl_bergconditie', 'tpl_hills_descent'],
+  rugzak: ['tpl_ruck_walk', 'tpl_mountain_hike'],
+  heuvelintervallen: ['tpl_hill_intervals'],
+  'lange tocht': ['tpl_mountain_hike', 'tpl_long_run'],
+  vlak: ['tpl_tempo_run', 'tpl_intervals', 'tpl_test_run'],
+  duurloop: ['tpl_easy_run', 'tpl_long_run'],
+};
+
+export function spotTrainings(spot: TrainingSpot): string[] {
+  if (spot.sessions) return spot.sessions.map((s) => s.templateId);
+  return [...new Set(spot.uses.flatMap((u) => USE_TRAININGS[u]))];
+}
+
+export function spotSession(spot: TrainingSpot, templateIds: string[]): SpotSession | undefined {
+  return spot.sessions?.find((s) => templateIds.includes(s.templateId));
+}
+
+// The filters on the Trainingsplekken page, by training.
+export interface TrainingFilter {
+  label: string;
+  templateIds: string[];
+}
+
+export const TRAINING_FILTERS: TrainingFilter[] = [
+  { label: 'Heuvelintervallen', templateIds: ['tpl_hill_intervals'] },
+  { label: 'Heuvels op en af', templateIds: ['tpl_hills_descent'] },
+  { label: 'Bergop en trap', templateIds: ['tpl_bergconditie'] },
+  { label: 'Rugzak', templateIds: ['tpl_ruck_walk'] },
+  { label: 'Bergtocht', templateIds: ['tpl_mountain_hike', 'tpl_hike_day_one'] },
+  { label: 'Duurloop', templateIds: ['tpl_long_run', 'tpl_easy_run', 'tpl_recovery_run', 'tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run'] },
+  { label: 'Tempo en intervallen', templateIds: ['tpl_tempo_run', 'tpl_intervals'] },
+  { label: 'Testloop', templateIds: ['tpl_test_run', 'tpl_race'] },
+];
+
+export function filterForTraining(templateId: string | undefined): TrainingFilter | undefined {
+  return templateId ? TRAINING_FILTERS.find((f) => f.templateIds.includes(templateId)) : undefined;
+}
+
+// Spots for a training, nearest first; a spot where it only fits in a
+// limited way comes after the ones that suit it well.
+export function spotsForTraining(spots: TrainingSpot[], home: HomeLocation | undefined, filter?: TrainingFilter): TrainingSpot[] {
+  const sorted = spotsByDistance(spots, home);
+  if (!filter) return sorted;
+  const fits = sorted.filter((s) => spotTrainings(s).some((id) => filter.templateIds.includes(id)));
+  const limited = (s: TrainingSpot) => (spotSession(s, filter.templateIds)?.limited ? 1 : 0);
+  return [...fits].sort((a, b) => limited(a) - limited(b));
 }
