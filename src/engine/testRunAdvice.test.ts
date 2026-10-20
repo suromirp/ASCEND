@@ -18,25 +18,24 @@ const skipTest = (list: PlannedSession[]) => list.map((s) => (s.templateId === '
 const roomAdvice = (over: Partial<AdviceInputs> = {}) => computeAdvice(inputs(over)).find((a) => a.ruleId === 'TEST-MAKE-ROOM');
 
 describe('TEST-MAKE-ROOM: the test run is missed or skipped', () => {
-  it('proposes taking out the least important training on a day where the test fits, when there is no free day', () => {
+  it('with no day with fresh legs: the test on Friday, and the hills of that Saturday go (the test is the quality session of that week)', () => {
     const advice = roomAdvice({ plannedSessions: skipTest(planned) })!;
     expect(advice.title).toContain('overgeslagen');
-    expect(advice.effect).toContain('Er is geen vrije dag');
+    expect(advice.effect).toContain('frisse benen');
     const changes = advice.proposal!.changes;
-    // Tuesday 3 Nov: Upper A goes (legs on Wednesday 28 Oct are far enough, Lower A on Wednesday 4 Nov comes after).
     expect(changes).toEqual(expect.arrayContaining([
-      expect.objectContaining({ plannedSessionId: '2026-11-02-1', action: 'remove' }),
-      expect.objectContaining({ plannedSessionId: '2026-10-26-3', action: 'move', toDate: '2026-11-03' }),
+      expect.objectContaining({ plannedSessionId: '2026-10-26-5', action: 'remove' }), // Heuvelintervallen za 31 okt
+      expect.objectContaining({ plannedSessionId: '2026-10-26-3', action: 'move', toDate: '2026-10-30' }),
     ]));
     // Never the long run, the leg strength or a race.
     expect(changes.filter((c) => c.action === 'remove').every((c) => !/-(2|6)$/.test(c.plannedSessionId!))).toBe(true);
   });
 
-  it('prefers a free day when there is one', () => {
-    const noFriday = skipTest(planned).filter((s) => s.id !== '2026-11-02-1'); // Tuesday 3 Nov is free
-    const advice = roomAdvice({ plannedSessions: noFriday })!;
+  it('prefers a free day when there is one, with no hard run in the 2 days before and none the day after', () => {
+    const free = skipTest(planned).filter((s) => s.id !== '2026-10-26-4' && s.id !== '2026-10-26-5'); // Friday free, no hills on Saturday
+    const advice = roomAdvice({ plannedSessions: free })!;
     expect(advice.proposal!.changes).toHaveLength(1);
-    expect(advice.proposal!.changes[0]).toMatchObject({ action: 'move', toDate: '2026-11-03' });
+    expect(advice.proposal!.changes[0]).toMatchObject({ action: 'move', toDate: '2026-10-30' });
     expect(advice.effect).toContain('Doe hem');
   });
 

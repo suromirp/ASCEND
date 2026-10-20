@@ -209,15 +209,18 @@ function hardRunAfterLegStrength(a: SessionTemplate, aDate: string, b: SessionTe
   return gap <= (TEST_OR_RACE.has(run.id) ? 2 : 1);
 }
 
-// A 5 km test is an all-out effort: not on the same day as, or the day
-// before or after, another hard run, hill session or long run (the result
-// would say more about the tired legs than about your pace). Strength is
-// covered by the rule above.
+// A 5 km test is an all-out effort: no hard run, hill session or long run
+// in the 2 days before it, nor the day after (the result would say more
+// about tired legs than about your pace). After heavy descending and long
+// running, leg power and running economy stay down for 24 to 72 hours
+// (Burt & Twist 2011; Assumpção e.a. 2013), so one day was too tight.
+// Strength is covered by the rule above (at least 3 days before).
 function testNeedsFreshLegs(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {
   const [test, other, otherDate, testDate] = a.id === 'tpl_test_run' ? [a, b, bDate, aDate] : b.id === 'tpl_test_run' ? [b, a, aDate, bDate] : [];
   if (!test || !other || !otherDate || !testDate || other.type === 'strength') return false;
   if (!(isHardRun(other) || isLegHeavyTemplate(other))) return false;
-  return Math.abs(daysBetween(otherDate, testDate)) <= 1;
+  const gap = daysBetween(otherDate, testDate); // > 0: the other comes before the test
+  return gap >= 0 ? gap <= 2 : gap >= -1;
 }
 
 // Setting (Training → Zware dingen op één dag): leg strength and a hard

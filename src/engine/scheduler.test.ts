@@ -350,4 +350,12 @@ describe('the 5 km test needs fresh legs', () => {
     // An easy run next to the test is fine.
     expect(respectsHeavySpacing(FRI, t('tpl_test_run'), [session('easy', 'tpl_easy_run', SAT, MON)], byId)).toBe(true);
   });
+
+  it('no hard run or long run in the 2 days before it: the legs need 48 to 72 hours', () => {
+    const before = (id: string) => [session('x', id, MON, MON)];
+    for (const id of ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_long_run']) {
+      expect(respectsHeavySpacing(WED, t('tpl_test_run'), before(id), byId)).toBe(false); // 2 days after
+      expect(respectsHeavySpacing(THU, t('tpl_test_run'), before(id), byId)).toBe(true); // 3 days after
+    }
+  });
 });

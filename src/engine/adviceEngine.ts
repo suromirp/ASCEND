@@ -25,7 +25,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
+import { findHeavyConflicts, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -301,16 +301,23 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) }];
   }
 
-  // 2. Make room: the least important training on a day where the test fits.
+  // 2. Make room: the least important trainings that stand in the way, on
+  // that day or close to it (the hills the day after, an easy run the day
+  // before). In a test week the test is the quality session, so the hills
+  // of that week may go. Never the long run, leg strength or a race.
   type Option = { date: string; cost: number; remove: PlannedSession[] };
   const options: Option[] = [];
   for (const date of days) {
-    const there = inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== lost.id && open(s) && templateById.get(s.templateId)?.type !== 'recovery');
-    if (there.length === 0) continue;
-    const costs = there.map((s) => { const t = templateById.get(s.templateId); return t ? removalCost(s.templateId, t) : undefined; });
+    // What is on that day only has to go when the test doesn't fit next to it.
+    const fitsBeside = dayHasRoomFor(date, test, weekOf(date), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference);
+    const there = fitsBeside ? [] : inputs.plannedSessions.filter((s) => s.scheduledDate === date && s.id !== lost.id && open(s) && templateById.get(s.templateId)?.type !== 'recovery');
+    const blockers = findHeavyConflicts(lost.id, test, date, load(new Set(there.map((s) => s.id))), templateById, inputs.logs);
+    const remove = [...there, ...blockers.filter((b) => !there.some((t) => t.id === b.id))];
+    if (remove.length === 0 || remove.some((s) => loggedIds.has(s.id) || s.scheduledDate < today)) continue;
+    const costs = remove.map((s) => { const t = templateById.get(s.templateId); return t ? removalCost(s.templateId, t) : undefined; });
     if (costs.some((c) => c === undefined)) continue;
-    if (!respectsHeavySpacing(date, test, load(new Set(there.map((s) => s.id))), templateById, inputs.logs, lost.id)) continue;
-    options.push({ date, cost: Math.max(...(costs as number[])), remove: there });
+    if (!respectsHeavySpacing(date, test, load(new Set(remove.map((s) => s.id))), templateById, inputs.logs, lost.id)) continue;
+    options.push({ date, cost: (costs as number[]).reduce((a, b) => a + b, 0), remove });
   }
   const best = options.sort((a, b) => a.cost - b.cost || a.date.localeCompare(b.date))[0];
   if (best) {
@@ -319,7 +326,10 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       ...best.remove.map((s): PlanChangeItem => ({ plannedSessionId: s.id, action: 'remove', reason: 'Plaats gemaakt voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
       moveItem(best.date),
     ];
-    const effect = `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(best.date)} vervalt en de testloop komt daar. ${why}`;
+    const sameDay = best.remove.every((s) => s.scheduledDate === best.date);
+    const effect = sameDay
+      ? `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(best.date)} ${best.remove.length === 1 ? 'vervalt' : 'vervallen'} en de testloop komt daar. ${why}`
+      : `Er is geen dag met frisse benen. Mijn voorstel: de testloop op ${shortDate(best.date)}, en ${best.remove.map((s) => `${templateById.get(s.templateId)?.name ?? 'training'} van ${shortDate(s.scheduledDate)}`).join(' en ')} ${best.remove.length === 1 ? 'vervalt' : 'vervallen'}. In een testweek is de test je kwaliteitstraining. ${why}`;
     return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `${names.join(' en ')} vervalt; de testloop komt op ${shortDate(best.date)}.`, why) }];
   }
   return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];

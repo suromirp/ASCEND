@@ -115,11 +115,6 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       ) : (
         <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Oké</Pill>
       )}
-      {advice.proposal && (
-        <button onClick={() => setShowWeek((v) => !v)} className="text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={showWeek}>
-          {showWeek ? 'week verbergen' : 'week bekijken'}
-        </button>
-      )}
       <button onClick={() => setOpen((v) => !v)} className="ml-auto flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
         waarom
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden>
@@ -129,6 +124,25 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
     </div>
   );
 
+  // "Zo ziet je week eruit": its own row under the actions, the week below
+  // it over the full width of the card.
+  const weekToggle = advice.proposal && (
+    <button
+      onClick={() => setShowWeek((v) => !v)}
+      className="mt-3 flex min-h-[40px] w-full items-center gap-2.5 rounded-xl border px-3 text-left text-xs"
+      style={{ borderColor: showWeek ? 'var(--color-bronze-dark)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}
+      aria-expanded={showWeek}
+    >
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--color-bronze)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+        <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+      </svg>
+      <span className="flex-1">Zo ziet je week eruit</span>
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--color-ink-dim)" strokeWidth="2" style={{ transform: showWeek ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden>
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </button>
+  );
   const weekPreview = showWeek && advice.proposal && <ProposalPreview proposal={advice.proposal} />;
 
   const why = open && (
@@ -142,23 +156,27 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       <div>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{advice.effect}</p>
         {actions}
-        {weekPreview}
         {why}
+        {weekToggle}
+        {weekPreview}
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3">
-      <KindIcon trigger={advice.trigger} />
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-medium tracking-[0.16em]" style={{ color: kind.color }}>{kind.label.toUpperCase()}</p>
-        <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
-        <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
-        {actions}
-        {weekPreview}
-        {why}
+    <div>
+      <div className="flex gap-3">
+        <KindIcon trigger={advice.trigger} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium tracking-[0.16em]" style={{ color: kind.color }}>{kind.label.toUpperCase()}</p>
+          <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
+          <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
+          {actions}
+          {why}
+        </div>
       </div>
+      {weekToggle}
+      {weekPreview}
     </div>
   );
 }
