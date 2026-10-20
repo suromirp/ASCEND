@@ -264,10 +264,16 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
   // Not in the two weeks before a race: that is the taper.
   if (inputs.plannedSessions.some((s) => s.templateId === 'tpl_race' && open(s) && daysBetween(today, s.scheduledDate) >= 0 && daysBetween(today, s.scheduledDate) <= 14)) return [];
+  // A test that sits on your rest day (the rest day moved onto it, or the
+  // test fell on it): that is arranged like a missed one, around its own date.
+  const restDates = new Set(inputs.plannedSessions.filter((s) => open(s) && templateById.get(s.templateId)?.type === 'recovery').map((s) => s.scheduledDate));
+  const onRestDay = inputs.plannedSessions
+    .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && daysBetween(today, s.scheduledDate) <= 14 && restDates.has(s.scheduledDate) && !usedIds.has(s.id))
+    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
   // Another test already waiting in the next two weeks: nothing to arrange.
-  if (inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
+  if (!onRestDay && inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
 
-  const lost = inputs.plannedSessions
+  const lost = onRestDay ?? inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id)
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today)
       && (s.status === 'skipped' ? daysBetween(s.scheduledDate, today) >= -14 && daysBetween(s.scheduledDate, today) <= 7 : s.scheduledDate < today && daysBetween(s.scheduledDate, today) <= 7))
@@ -276,10 +282,15 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
 
   const load = (without: Set<string>) => inputs.plannedSessions.filter((s) => s.id !== lost.id && !without.has(s.id) && s.status !== 'skipped' && (s.scheduledDate >= today || loggedIds.has(s.id)));
   const weekOf = (date: string) => inputs.plannedSessions.filter((s) => s.weekStartDate === mondayOfWeek(date) && s.id !== lost.id && s.status !== 'skipped');
-  const days = Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
+  // The days after today; for a test on your rest day those around its own
+  // date, nearest first, never a rest day itself.
+  const days = onRestDay
+    ? Array.from({ length: 9 }, (_, i) => addDays(lost.scheduledDate, [1, -1, 2, -2, 3, -3, 4, -4, 5][i]))
+      .filter((d) => d > today && !restDates.has(d) && !isIllnessDay(d, inputs.illnessEpisodes, today))
+    : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
   const why = 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
   const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
-  const title = `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
+  const title = onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
   const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
 
   // 1. A free day.
@@ -287,7 +298,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     if (!dayHasRoomFor(date, test, weekOf(date), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
     if (!respectsHeavySpacing(date, test, load(new Set()), templateById, inputs.logs, lost.id)) continue;
     const effect = `Doe hem ${shortDate(date)}. ${why}`;
-    return [{ id: `testroom:${lost.id}`, trigger: 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) }];
+    return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) }];
   }
 
   // 2. Make room: the least important training on a day where the test fits.
@@ -309,9 +320,9 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       moveItem(best.date),
     ];
     const effect = `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(best.date)} vervalt en de testloop komt daar. ${why}`;
-    return [{ id: `testroom:${lost.id}`, trigger: 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `${names.join(' en ')} vervalt; de testloop komt op ${shortDate(best.date)}.`, why) }];
+    return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `${names.join(' en ')} vervalt; de testloop komt op ${shortDate(best.date)}.`, why) }];
   }
-  return [{ id: `testroom:${lost.id}`, trigger: 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
+  return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
 }
 
 // --- Rule HARD-THEN-SPACE ----------------------------------------------------

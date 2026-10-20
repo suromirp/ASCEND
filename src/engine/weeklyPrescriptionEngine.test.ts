@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeWeeklyPrescriptionPlan } from './weeklyPrescriptionEngine';
+import { computeWeeklyPrescriptionPlan, keepsInPlace } from './weeklyPrescriptionEngine';
 import { keyId } from './capability';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { CapabilityGap } from '../models/capability';
@@ -267,5 +267,16 @@ describe('computeWeeklyPrescriptionPlan — the default weekly pattern stays', (
       const removed = result.proposal.changes.filter((c) => c.action === 'remove').map((c) => plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId);
       expect(removed, state).toEqual([]);
     }
+  });
+});
+
+describe('what the weekly prescription never takes out', () => {
+  it('keeps the test runs, the race and the extra trainings, besides the weekly pattern', () => {
+    for (const id of ['tpl_test_run', 'tpl_race', 'tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_ruck_walk']) {
+      expect(keepsInPlace({ id, defaultDayOfWeek: undefined })).toBe(true);
+    }
+    expect(keepsInPlace({ id: 'tpl_long_run', defaultDayOfWeek: 7 })).toBe(true);
+    // A template with no weekday and no reason of its own can still be swapped.
+    expect(keepsInPlace({ id: 'tpl_bergconditie', defaultDayOfWeek: undefined })).toBe(false);
   });
 });

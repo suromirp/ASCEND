@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { applyRaceBlocks, goalPlanRole, raceBlocks, saturdayTemplate, templateForRaceBlock } from './raceBlock';
+import { applyRaceBlocks, goalPlanRole, raceBlocks, revivePrescriptionRemovedTests, saturdayTemplate, templateForRaceBlock } from './raceBlock';
+import type { PlanChangeProposal } from '../models/planChange';
 import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
@@ -138,5 +139,22 @@ describe('a swap for a run that moved is swapped back', () => {
     expect(restored.plannedMinutes).toBeUndefined();
     expect(restored.raceBlock).toBeUndefined();
     expect(back.update.find((u) => u.templateId === 'tpl_upper_a')).toMatchObject({ scheduledDate: '2026-10-27' });
+  });
+});
+
+describe('a test the weekly prescription took out comes back', () => {
+  const sess = (id: string, templateId: string, date: string, status: PlannedSession['status'] = 'skipped'): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: mondayOfWeek(date), status, order: 0 });
+  const removal = (id: string, source: string): PlanChangeProposal => ({
+    id: 'p', trigger: 'weekly_prescription_computed', issue: '', alternatives: [], consequences: '', explanation: '', createdAt: '', resolution: 'accepted',
+    changes: [{ plannedSessionId: id, action: 'remove', reason: '', generatedBy: [source] }],
+  } as unknown as PlanChangeProposal);
+  const prescription = 'engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan';
+
+  it('only a test that the prescription itself removed, still ahead and not logged', () => {
+    const sessions = [sess('t1', 'tpl_test_run', '2026-10-29'), sess('t2', 'tpl_test_run', '2026-11-05'), sess('t3', 'tpl_test_run', '2026-10-10'), sess('t4', 'tpl_test_run', '2026-11-12'), sess('r1', 'tpl_race', '2027-03-20'), sess('e1', 'tpl_easy_run', '2026-10-29')];
+    const proposals = [removal('t1', prescription), removal('t3', prescription), removal('t4', prescription), removal('r1', prescription), removal('e1', prescription), removal('t2', 'engine/adviceEngine.ts')];
+    const back = revivePrescriptionRemovedTests(sessions, proposals, new Set(['t4']), '2026-10-20');
+    expect(back.map((s) => s.id)).toEqual(['t1']); // t2 you skipped yourself, t3 is past, t4 is logged, the race is re-added by the block
+    expect(back[0].status).toBe('planned');
   });
 });

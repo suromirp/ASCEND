@@ -55,3 +55,27 @@ describe('TEST-MAKE-ROOM: the test run is missed or skipped', () => {
     expect(roomAdvice({ plannedSessions: skipTest(planned), respondedIds: new Set(['testroom:2026-10-26-3']) })).toBeUndefined();
   });
 });
+
+describe('TEST-MAKE-ROOM: the test sits on your rest day', () => {
+  // The rest day moved to Thursday, on top of the test: Monday and Tuesday are the other free days of that week.
+  const onRest = [
+    ...weekOf('2026-10-26', 'tpl_test_run').filter((s) => s.templateId !== 'tpl_herstel'),
+    { id: 'rest', templateId: 'tpl_herstel', scheduledDate: THURSDAY, weekStartDate: '2026-10-26', status: 'planned' as const, order: 9 },
+    ...weekOf('2026-11-02'),
+  ];
+  const advice = (over: Partial<AdviceInputs> = {}) => roomAdvice({ plannedSessions: onRest, asOf: '2026-10-21', ...over });
+
+  it('proposes another day for the test, nearest to its own date and never a rest day', () => {
+    const a = advice()!;
+    expect(a.title).toContain('staat op je rustdag');
+    const move = a.proposal!.changes.find((c) => c.action === 'move')!;
+    expect(move.plannedSessionId).toBe('2026-10-26-3');
+    expect(move.toDate).not.toBe(THURSDAY);
+    expect(Math.abs((new Date(move.toDate! + 'T12:00:00Z').getTime() - new Date(THURSDAY + 'T12:00:00Z').getTime()) / 86400000)).toBeLessThanOrEqual(5);
+  });
+
+  it('is quiet when the test is not on a rest day, or after you said no', () => {
+    expect(advice({ plannedSessions: [...planned] })).toBeUndefined();
+    expect(advice({ respondedIds: new Set(['testroom:2026-10-26-3']) })).toBeUndefined();
+  });
+});

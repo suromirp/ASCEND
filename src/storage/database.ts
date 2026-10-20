@@ -20,7 +20,7 @@ import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from 
 import { PATTERN_SWAPS, activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
-import { applyRaceBlocks, raceBlocks } from '../engine/raceBlock';
+import { applyRaceBlocks, raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
@@ -974,6 +974,13 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   if (phasesChanged) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  // Test runs the weekly prescription wrongly took out come back first.
+  const revived = revivePrescriptionRemovedTests(sessions, await PlanChangeProposalsRepo.getAll(), logged, today);
+  if (revived.length > 0) {
+    for (const r of revived) await PlannedSessionsRepo.put(r);
+    const byId = new Map(revived.map((r) => [r.id, r]));
+    sessions.splice(0, sessions.length, ...sessions.map((s) => byId.get(s.id) ?? s));
+  }
   const open = (s: PlannedSession) => s.scheduledDate >= today && !logged.has(s.id);
   const toRemove = ctx.anchor ? sessions.filter((s) => open(s) && s.scheduledDate >= ctx.anchor!) : [];
   const removedIds = new Set(toRemove.map((s) => s.id));

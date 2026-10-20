@@ -36,6 +36,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import type { PlanChangeProposal } from '../models/planChange';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -117,6 +118,24 @@ export function saturdayTemplate(date: string, blocks: RaceBlock[], program?: Pr
   const position = program ? resolveProgramWeek(program, date) : null;
   if (position && DESCENT_PHASES.includes(position.phase.id) && waveWeek(position) % 2 === 0) return HILLS_DESCENT_TEMPLATE_ID;
   return HILLS_TEMPLATE_ID;
+}
+
+// Test runs the weekly prescription took out (it used to count them as
+// "not part of the composition of this week": production feedback, the 5 km
+// test of 29 October and both later tests were skipped without anyone asking).
+// They go back to planned, once, as long as they are still ahead and
+// unlogged. A race is not revived: applyRaceBlocks adds a fresh one itself.
+export function revivePrescriptionRemovedTests(sessions: PlannedSession[], proposals: PlanChangeProposal[], logged: Set<string | undefined>, today: string): PlannedSession[] {
+  const removed = new Set(
+    proposals
+      .filter((p) => p.resolution === 'accepted')
+      .flatMap((p) => p.changes)
+      .filter((c) => c.action === 'remove' && c.plannedSessionId && (c.generatedBy ?? []).some((g) => g.includes('weeklyPrescriptionEngine')))
+      .map((c) => c.plannedSessionId),
+  );
+  return sessions
+    .filter((s) => s.templateId === TEST_TEMPLATE_ID && s.status === 'skipped' && s.scheduledDate >= today && !logged.has(s.id) && removed.has(s.id))
+    .map((s) => ({ ...s, status: 'planned' as const }));
 }
 
 export interface RaceBlockChanges {

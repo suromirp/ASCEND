@@ -37,6 +37,7 @@ import { proposeCyclingPrescription } from './specialists/cycling';
 import { templateSport } from './sports';
 import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
 import { writeTrainingPrescription } from './prescriptionWriter';
+import { EXTRA_CATALOGUE } from './extraRun';
 import { addDays } from '../utils/dates';
 import { makeId } from '../utils/id';
 
@@ -44,6 +45,19 @@ const SOURCE = 'engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan
 // Recovery is never a candidate — same reasoning/precedent as
 // engine/strengthScheduling.ts's own SWAP_PROTECTED_TYPES.
 const PROTECTED_TYPES = new Set(['recovery'] as const);
+// Sessions that sit in a week for their own reason and have no weekday of
+// their own: the test runs and the race (engine/raceBlock.ts) and the extra
+// trainings you accepted (engine/extraRun.ts). The prescription adjusts
+// volume, it never takes these out (production feedback: the 5 km test of
+// 29 October, both later tests and the race were all removed as "hoort niet
+// meer bij de berekende samenstelling").
+// Bergconditie is also a normal candidate of the prescription itself (it
+// swaps it with the long run), so that one stays swappable.
+const KEPT_OUTSIDE_PATTERN = new Set<string>(['tpl_test_run', 'tpl_race', ...EXTRA_CATALOGUE.filter((id) => id !== 'tpl_bergconditie')]);
+
+export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek'>): boolean {
+  return template.defaultDayOfWeek !== undefined || KEPT_OUTSIDE_PATTERN.has(template.id);
+}
 
 // Combines the deduplicated new-session requests (invariant b,
 // dedupeDesiredSlots — non-'keep' lines only) with every 'keep' line's own
@@ -107,7 +121,7 @@ function buildReconciliationTarget(lines: WeeklyPrescription['lines'], desiredSl
     // The user's own weekly pattern (templates with a fixed weekday) is the
     // program; the prescription adds to it and adjusts volume, it never
     // takes a pattern session out.
-    keepInPlace: (_session, template) => template.defaultDayOfWeek !== undefined,
+    keepInPlace: (_session, template) => keepsInPlace(template),
   };
 }
 
