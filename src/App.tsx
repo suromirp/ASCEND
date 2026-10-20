@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
@@ -25,6 +25,7 @@ const TrainingGuidePage = lazy(() => import('./pages/TrainingGuide').then((m) =>
 const GarminGuidePage = lazy(() => import('./pages/GarminGuide').then((m) => ({ default: m.GarminGuidePage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
+const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
 const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
 
 function NavIcon({ id }: { id: string }) {
@@ -94,7 +95,6 @@ function AppShell() {
     window.addEventListener('unhandledrejection', onRejection);
     return () => window.removeEventListener('unhandledrejection', onRejection);
   }, [reportStorageError]);
-  const navigate = useNavigate();
   const location = useLocation();
   useOverlayA11y();
 
@@ -168,7 +168,8 @@ function AppShell() {
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
           <Routes>
-            <Route path="/" element={<TodayPage onOpenLadder={() => navigate('/ascend')} />} />
+            <Route path="/" element={<TodayPage />} />
+            <Route path="/stand" element={<StandingPage />} />
             <Route path="/week" element={<WeekPage />} />
             <Route path="/ascend" element={<AscendPage />} />
             <Route path="/ascend/doelen" element={<GoalsPage />} />

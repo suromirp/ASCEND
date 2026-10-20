@@ -25,6 +25,13 @@
   /* Borders of inputs, toggles and secondary buttons: card-border is for
      cards and barely visible around a control (3:1 for UI parts). */
   --color-control-border: #6e6a62;
+  /* Charts on Je stand: one colour per sport, always in this order (run,
+     strength, walk, other). Validated on the card colour for colour
+     blindness and contrast; never used for status or text. */
+  --color-chart-run: #b38236;
+  --color-chart-strength: #4494c8;
+  --color-chart-walk: #5f9e61;
+  --color-chart-other: #b273ac;
 
   --font-display: 'Marcellus', 'Iowan Old Style', serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;

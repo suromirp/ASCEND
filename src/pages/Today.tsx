@@ -4,10 +4,7 @@ import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
-import { computeGoalProgress } from '../engine/progression';
-import { isIllnessDay, activeIllness, isHeavySession } from '../engine/illness';
-import { computeReadiness, droppedAfterMissIds } from '../engine/readiness';
-import { computeCurrentStreak } from '../engine/streak';
+import { activeIllness, isHeavySession } from '../engine/illness';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
 import { dayOrder, orderDay } from '../engine/dayOrder';
@@ -15,7 +12,6 @@ import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
-import { AdventureCard } from '../components/AdventureCard';
 import { SessionCard } from '../components/SessionCard';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
@@ -25,8 +21,7 @@ import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
-import { LessonCard } from '../components/LessonCard';
-import { LegFatigueCard } from '../components/LegFatigueCard';
+import { StandSummaryCard } from '../components/StandSummaryCard';
 import { MorningCheckInCard } from '../components/MorningCheckInCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
@@ -46,8 +41,8 @@ import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
-export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
-  const { suggestMoves, program, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, planChangeLog, templates } = useAppData();
+export function TodayPage() {
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -94,9 +89,6 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const allTodayDone = todaySessions.some((s) => !isRestSession(s)) && !primary;
   const anyDoneToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status === 'completed');
 
-  const weekTrainings = weekSessions.filter((s) => !isRestSession(s));
-  const weekCompletedCount = weekTrainings.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
-
   // A short look-back nudge — only worth showing right at the week
   // boundary (closing out the week that just ended, or opening the new
   // one), not as a permanent fixture crowding every day's Today screen.
@@ -115,25 +107,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const showExportReminder = !!reminderReference && daysBetween(reminderReference, today) >= 7;
   const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 
-  // Rolling 28-day consistency — the same number the Ascend screen shows, so
-  // "CONSISTENTIE" never means two different things depending on which tab
-  // you're on. Early in a fresh week the literal this-week ratio is 0/low by
-  // definition, which reads as broken; the rolling figure is representative
-  // from day one.
-  const programStart = program?.startDate;
-  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, programStart, (d) => isIllnessDay(d, settings.illnessEpisodes, today), { isRest: (p) => templateById.get(p.templateId)?.type === 'recovery', droppedAfterMissIds: droppedAfterMissIds(planChangeLog) });
-  const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
   const quote = dailyQuote(today);
-
-  // The GR5 goal is the one with milestones — mirrors the old objectives[0]
-  // assumption, now stated explicitly rather than by array position (see
-  // pages/Ascend.tsx).
-  const primaryGoal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
-  const primaryGoalMilestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
-  const objectiveProgress = useMemo(
-    () => (primaryGoal ? computeGoalProgress(primaryGoal.id, primaryGoal.name, primaryGoalMilestones, goalMilestoneProgress, sessionLogs) : null),
-    [primaryGoal, primaryGoalMilestones, goalMilestoneProgress, sessionLogs],
-  );
 
   // A clean move (nothing else has to shift) applies at once, with undo
   // in the notice; anything that pushes another session asks first.
@@ -313,34 +287,10 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         return <SessionCard key={s.id} session={s} template={t} logs={sessionLogs} program={program} onTap={() => setActionSheetSession(s)} />;
       })}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="text-center">
-          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>{weekCompletedCount} / {weekTrainings.length}</p>
-        </Card>
-        <Card className="text-center">
-          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>CONSISTENTIE</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{readiness.consistencyBasis === 0 ? '–' : `${readiness.consistency}%`}</p>
-        </Card>
-        <Card className="text-center">
-          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>WEEK IN FASE</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-ink)' }}>
-            {position ? `${position.weekInPhase}/${position.phase.weekCount}` : '–'}
-          </p>
-        </Card>
-        <Card className="text-center">
-          <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>REEKS</p>
-          <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{streak} {streak === 1 ? 'dag' : 'dagen'}</p>
-        </Card>
-      </div>
+      <StandSummaryCard />
 
-      <LegFatigueCard />
 
       {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
-
-      <LessonCard />
-
-      {objectiveProgress && <AdventureCard progress={objectiveProgress} onOpenLadder={onOpenLadder} />}
 
       {isMorning ? (
         <DailyStretchCard

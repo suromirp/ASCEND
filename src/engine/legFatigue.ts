@@ -43,8 +43,8 @@ const CLIMB_PER_1000 = 4;
 const DESCENT_PER_1000 = 24;
 const RUNNING_DESCENT = 1.5;
 // Planned effort when nothing is logged yet.
-const PLANNED_RPE: Record<string, number> = { low: 4, moderate: 6, high: 8 };
-const PLANNED_STRENGTH_RPE = 8;
+export const PLANNED_RPE: Record<string, number> = { low: 4, moderate: 6, high: 8 };
+export const PLANNED_STRENGTH_RPE = 8;
 // Descent without a log or a target of its own (hills walked back down;
 // the up-and-down session run down).
 const DEFAULT_DESCENT_M: Record<string, number> = { tpl_hill_intervals: 150, tpl_hills_descent: 200 };
