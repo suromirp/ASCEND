@@ -57,6 +57,16 @@ describe('MORNING-CHECK: how the planning reacts', () => {
     expect(a.proposal!.changes[0]).toMatchObject({ plannedSessionId: 'legs', action: 'move' });
   });
 
+  it('more than one good day: options to choose from, the nearest first', () => {
+    const roomy = [ps('legs', 'tpl_lower_a', '2026-11-04'), ps('upper', 'tpl_upper_b', '2026-11-06')];
+    const [a] = morning({ plannedSessions: roomy, checkIns: [{ date: '2026-11-03', legs: 'spierpijn', energy: 'gewoon', sleep: 'goed' }] });
+    expect(a.options!.length).toBeGreaterThan(1);
+    expect(a.options![0].proposal).toBe(a.proposal);
+    const dates = a.options!.map((o) => o.proposal.changes[0].toDate!);
+    expect([...dates].sort()).toEqual(dates);
+    expect(a.options!.every((o) => o.label.startsWith('Benen A'))).toBe(true);
+  });
+
   it('all normal, or one tired signal without a hard session today: nothing', () => {
     expect(morning({ checkIns: [{ date: '2026-11-03', allNormal: true }] })).toEqual([]);
     expect(morning({ checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'moe', sleep: 'goed' }] })).toEqual([]);

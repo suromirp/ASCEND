@@ -133,6 +133,30 @@ function findCatchUpDate(
   return undefined;
 }
 
+// Every good day for `session` from `fromDate` on in its week, nearest first
+// (the same checks as findCatchUpDate), optionally filtered further.
+function catchUpDates(session: PlannedSession, template: SessionTemplate, inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, fromDate: string, accept: (date: string) => boolean = () => true): string[] {
+  const out: string[] = [];
+  for (let from = fromDate, n = 0; n < 7; n++) {
+    const found = findCatchUpDate(session, template, inputs, templateById, from);
+    if (!found) break;
+    if (accept(found)) out.push(found);
+    from = addDays(found, 1);
+  }
+  return out;
+}
+
+// Up to three days to move one session to, as options: the first is the
+// proposal itself. One option only: no choice to show.
+function moveOptions(title: string, item: PlanChangeItem, dates: string[], name: string, why: string, effectFor: (date: string) => string): { proposal: PlanChangeProposal; options?: AdviceOption[] } {
+  const all = dates.slice(0, MAX_OPTIONS).map((d) => ({
+    label: `${name} naar ${shortDate(d)}`,
+    effect: effectFor(d),
+    proposal: proposal(title, [{ ...item, toDate: d }], `${name} schuift naar ${shortDate(d)}.`, why),
+  }));
+  return { proposal: all[0].proposal, options: all.length > 1 ? all : undefined };
+}
+
 // A planned rest day today or tomorrow, after a day without any training:
 // there is nothing to recover from, so it can carry the missed key
 // session instead (production feedback: "zo'n rustdag is niet meer nodig
@@ -233,7 +257,15 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
     dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'laten we gaan' : 'laten we gaan'}, de rest van de week blijft zoals gepland.` : '',
   ].filter(Boolean).join(' ');
+  // One training caught up on a free day: the other free days as options.
+  let options: AdviceOption[] | undefined;
+  const single = items.length === 1 && items[0].action === 'move' && !usedRest ? missed[0] : undefined;
+  if (single) {
+    const dates = catchUpDates(single.s, single.template, inputs, templateById, inputs.asOf);
+    if (dates.length > 1) options = moveOptions(title, items[0], dates, single.template.name, rule, (d) => `${single.template.name} haal je in op ${shortDate(d)}.`).options;
+  }
   return [{
+    options,
     id: `missed:${missed.map((m) => m.s.id).join('+')}`,
     trigger: 'session_missed',
     ruleId: 'MISSED-CATCH-UP',
@@ -454,16 +486,19 @@ function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `Je laatste training was zwaar (${signal}). ${rule}`, priority: 1 }];
   }
   const nextTemplate = templateById.get(next.templateId)!;
-  const later = findCatchUpDate(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
+  const laterDates = catchUpDates(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
+  const later = laterDates[0];
   if (!later) {
     return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `Je laatste training was zwaar (${signal}). ${rule}` }];
   }
+  const hardEffect = (d: string) => `${nextTemplate.name} naar ${shortDate(d)}.`;
+  const moved = moveOptions(base.title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `Extra herstel na ${loggedName} (${signal}).`, generatedBy: ['engine/adviceEngine.ts', 'HARD-THEN-SPACE'] }, laterDates, nextTemplate.name, rule, hardEffect);
   return [{
     ...base,
     id: `hard:${recent.id}`,
-    effect: `${nextTemplate.name} een dag later: ${shortDate(later)}.`,
+    effect: hardEffect(later),
     why: `Je laatste training was zwaar (${signal}). ${rule}`,
-    proposal: proposal(base.title, [{ plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `Extra herstel na ${loggedName} (${signal}).`, generatedBy: ['engine/adviceEngine.ts', 'HARD-THEN-SPACE'] }], `${nextTemplate.name} schuift naar ${shortDate(later)}.`, rule),
+    ...moved,
   }];
 }
 
@@ -806,20 +841,16 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       const t = templateById.get(next.templateId)!;
       // Not next to another hard or leg-heavy session (that day or the day after).
       const clear = (d: string) => !inputs.plannedSessions.some((o) => o.id !== next.id && (o.scheduledDate === d || o.scheduledDate === addDays(d, 1)) && heavy(o, 14));
-      let later: string | undefined;
-      for (let from = addDays(today, sig.sore !== 'none' ? 2 : 1), tries = 0; tries < 5 && !later; tries++) {
-        const found = findCatchUpDate(next, t, inputs, templateById, from);
-        if (!found) break;
-        if (clear(found)) later = found;
-        else from = addDays(found, 1);
-      }
+      const laterDates = catchUpDates(next, t, inputs, templateById, addDays(today, sig.sore !== 'none' ? 2 : 1), clear);
+      const later = laterDates[0];
       const title = `${reason}: ${t.name} later`;
       if (later) {
+        const morningEffect = (d: string) => `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(d)}.${sig.sore === 'flink' ? ' Ook de rustige loop mag vandaag wandelen of fietsen worden.' : ''}`;
         out.push({
           id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 4, title,
-          effect: `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(later)}.${sig.sore === 'flink' ? ' Ook de rustige loop mag vandaag wandelen of fietsen worden.' : ''}`,
+          effect: morningEffect(later),
           why: rule,
-          proposal: proposal(title, [{ plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op de ochtend van ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'MORNING-CHECK'] }], `${t.name} schuift naar ${shortDate(later)}.`, rule),
+          ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op de ochtend van ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'MORNING-CHECK'] }, laterDates, t.name, rule, morningEffect),
         });
       } else {
         out.push({ id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title: `${reason}: houd ${t.name} rustig`, effect: t.type === 'strength' ? `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name}, met lichtere gewichten en ruim reserve (zeker 3 herhalingen over).` : `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name} en houd het rustig (RPE 3 tot 4).`, why: rule });
