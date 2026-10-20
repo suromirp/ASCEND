@@ -2,13 +2,11 @@ import { useState } from 'react';
 import type { DayOrderAdvice } from '../engine/dayOrder';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { Card } from './ui';
+import { WhyPanel, WhyToggle } from './Why';
 
 // Two trainings on one day: the order as a small climb, 1 then 2, with the
 // time between them on the line (engine/dayOrder.ts). A tip, never a block.
 
-const EVIDENCE_LABEL: Record<DayOrderAdvice['evidence'], string> = {
-  sterk: 'sterk bewijs', matig: 'matig bewijs', zwak: 'zwak bewijs', expertopinie: 'expertopinie', afgeleid: 'afgeleid uit onderzoek',
-};
 const TYPE_COLOR: Record<string, string> = { strength: 'var(--color-stone)', cardio: 'var(--color-alpine)', hiking: 'var(--color-sky)', adventure: 'var(--color-sky)', recovery: 'var(--color-ink-dim)' };
 
 export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE VANDAAG' }: { advice: DayOrderAdvice; sessions: PlannedSession[]; templateById: Map<string, SessionTemplate>; title?: string }) {
@@ -48,18 +46,8 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
         {advice.minGapHours && ' Voel je je eerder fit, dan kan het eerder.'}
       </p>
 
-      <button onClick={() => setOpen((v) => !v)} className="self-start text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
-        {open ? 'minder' : 'waarom?'}
-      </button>
-      {open && (
-        <div className="-mt-1 flex flex-col gap-1.5 rounded-lg border-l-2 py-2 pl-3 pr-2 text-xs leading-relaxed" style={{ borderColor: accent, background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>
-          <p>{advice.why}</p>
-          <p style={{ color: 'var(--color-ink)' }}>{EVIDENCE_LABEL[advice.evidence]}</p>
-          {advice.sources.map((src) => (
-            <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
-          ))}
-        </div>
-      )}
+      <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="-my-1 self-start" />
+      {open && <WhyPanel accent={accent} evidence={advice.evidence} sources={advice.sources} className="-mt-1">{advice.why}</WhyPanel>}
     </Card>
   );
 }

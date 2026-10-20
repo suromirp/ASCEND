@@ -280,6 +280,9 @@ export interface SessionLog {
   workout?: WorkoutDetails;
   // Strength: reps left in the hardest (leg) sets, 0 to 4 (RIR). Optional.
   strengthRir?: number;
+  // A hard run or test: how your legs felt at the warm-up, held against the
+  // leg index (engine/learning.ts). Optional, additive.
+  legsAtStart?: 'fris' | 'normaal' | 'zwaar';
   source: MetricSource;
 }
 

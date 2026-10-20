@@ -16,6 +16,7 @@ import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { cleanDetails, detailForm, plannedDetails } from '../engine/workoutDetails';
+import { ASK_LEGS_FOR, type LegsAtStart } from '../engine/learning';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrainingGuideSheet, WorkoutSteps } from './TrainingGuideSheet';
 import { SessionHeader, StopSignals } from './SessionHeader';
@@ -39,6 +40,8 @@ const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'BET
 // meaningful on a day whose whole point is optional/unstructured rest.
 const GUIDANCE_MODE_DAYS = new Set(['tpl_easy_run', 'tpl_bergconditie', 'tpl_hill_intervals', 'tpl_long_run']);
 
+
+const LEGS_OPTIONS: [LegsAtStart, string][] = [['fris', 'Fris'], ['normaal', 'Normaal'], ['zwaar', 'Zwaar']];
 export function ExerciseLogger({
   template,
   plannedSessionId,
@@ -68,6 +71,7 @@ export function ExerciseLogger({
   const [rpe, setRpe] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
   const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(undefined);
+  const [legsAtStart, setLegsAtStart] = useState<LegsAtStart | undefined>(undefined);
   const [painReports, setPainReports] = useState<PainReport[]>([]);
   const [saving, setSaving] = useState(false);
   // The day it was actually done. Ticking off a session from an earlier
@@ -205,6 +209,7 @@ export function ExerciseLogger({
       rpe: rpe === '' || isRest ? undefined : rpe,
       notes: notes || undefined,
       subjectiveFeel,
+      legsAtStart: ASK_LEGS_FOR.has(template.id) && !isRest ? legsAtStart : undefined,
       painAreas: painReports.length > 0 ? painReports.map((p) => p.area) : undefined,
       painReports: painReports.length > 0 ? painReports : undefined,
       workout: detailForm(template.id) && !isRest ? cleanDetails(workout) : undefined,
@@ -441,6 +446,25 @@ export function ExerciseLogger({
 
           {(template.type === 'cardio' || template.type === 'hiking' || (template.type === 'strength' && isLegHeavyTemplate(template))) && (
             <PainReportFields value={painReports} onChange={setPainReports} />
+          )}
+
+          {ASK_LEGS_FOR.has(template.id) && (
+            <div>
+              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelden je benen bij het inlopen? (optioneel; zo leert ASCEND hoe goed de beenindex bij jou klopt)</p>
+              <div className="mt-2 flex gap-2">
+                {LEGS_OPTIONS.map(([v, label]) => (
+                  <button
+                    key={v}
+                    onClick={() => setLegsAtStart(legsAtStart === v ? undefined : v)}
+                    aria-pressed={legsAtStart === v}
+                    className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold tracking-wide"
+                    style={{ borderColor: legsAtStart === v ? 'var(--color-gold)' : 'var(--color-card-border)', color: legsAtStart === v ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {template.type !== 'recovery' && (

@@ -65,7 +65,7 @@ import { describeChanges } from '../engine/changeImpact';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 
-type AdviceResponse = { response: 'accepted' | 'declined'; at: string };
+type AdviceResponse = StoredResponse;
 
 // The boot sequence must run once per page load. React StrictMode mounts
 // effects twice in development; two concurrent seedIfEmpty() calls both saw
@@ -168,6 +168,7 @@ import { coachReaction } from '../engine/coach';
 import { recoveryDurationAdjustments } from '../engine/illness';
 import { requestPersistentStorage } from '../storage/persistence';
 import { effectiveAmbition } from '../engine/ambition';
+import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
 import { programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
@@ -387,6 +388,7 @@ export interface LogSessionInput {
   painReports?: SessionLog['painReports'];
   workout?: SessionLog['workout'];
   strengthRir?: SessionLog['strengthRir'];
+  legsAtStart?: SessionLog['legsAtStart'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
   completedDate?: string;
@@ -544,7 +546,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await refresh();
     }
     const current = (await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {};
-    const next = { ...current, [item.id]: { response, at: new Date().toISOString() } };
+    const next = { ...current, [item.id]: { response, at: new Date().toISOString(), ruleId: item.ruleId } };
     await MetaRepo.set('adviceResponses', next);
     setAdviceResponses(next);
   }, [commitPlanChange, program, refresh]);
@@ -1116,6 +1118,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           painReports: input.painReports && input.painReports.length > 0 ? input.painReports : undefined,
           workout: input.workout,
           strengthRir: input.strengthRir,
+          legsAtStart: input.legsAtStart,
           source: 'manual',
         };
         await SessionLogsRepo.put(log);
@@ -1653,7 +1656,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, planChangeLog]);
 
   const advice = useMemo(
-    () => [
+    // Proposals you kept turning down come last (engine/learning.ts).
+    () => learnFromDeclines([
       ...(plannerAdvice && !adviceResponses[plannerAdvice.id] ? [plannerAdvice] : []),
       ...computeAdvice({
         logs: sessionLogs,
@@ -1671,7 +1675,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
       }),
-    ].sort((a, b) => b.priority - a.priority),
+    ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
     [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext],
   );
 

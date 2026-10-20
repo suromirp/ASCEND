@@ -9,6 +9,7 @@ import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { Advice, AdviceTrigger } from '../engine/adviceEngine';
 import { Card, Eyebrow } from './ui';
+import { WhyPanel, WhyToggle } from './Why';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -115,12 +116,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       ) : (
         <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Oké</Pill>
       )}
-      <button onClick={() => setOpen((v) => !v)} className="ml-auto flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
-        waarom
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden>
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
+      <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="ml-auto" />
     </div>
   );
 
@@ -142,11 +138,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
   );
   const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;
 
-  const why = open && (
-    <p className="mt-2.5 rounded-lg border-l-2 py-2 pl-3 pr-2 text-xs leading-relaxed" style={{ borderColor: kind.color, background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>
-      {advice.why}
-    </p>
-  );
+  const why = open && <WhyPanel accent={kind.color} className="mt-2.5">{advice.why}</WhyPanel>;
 
   if (compact) {
     return (

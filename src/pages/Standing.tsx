@@ -10,6 +10,8 @@ import { WeeklyLoadChart } from '../components/stand/WeeklyLoadChart';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentCard } from '../components/stand/DescentCard';
 import { RouteDayCard } from '../components/stand/RouteDayCard';
+import { IndexCheckCard } from '../components/stand/IndexCheckCard';
+import { indexChecks } from '../engine/learning';
 import { AdventureCard } from '../components/AdventureCard';
 import { LessonCard } from '../components/LessonCard';
 import { freshnessCurve, intensityMix, legCalendar, routeDayRows, weeklyDescent, weeklyLoad } from '../engine/standing';
@@ -51,6 +53,7 @@ export function StandingPage() {
   );
   const mix = useMemo(() => intensityMix(sessionLogs, templates, today, settings.heartRate), [sessionLogs, templates, today, settings.heartRate]);
   const descent = useMemo(() => weeklyDescent(sessionLogs, today), [sessionLogs, today]);
+  const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
   const primaryGoal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
   const routeRows = useMemo(() => (primaryGoal ? routeDayRows(primaryGoal.requirements, sessionLogs, today) : []), [primaryGoal, sessionLogs, today]);
@@ -111,6 +114,7 @@ export function StandingPage() {
         <LegFatigueCard />
         <FreshnessChart points={curve} today={today} />
         <LegCalendar days={calendar} today={today} />
+        <IndexCheckCard checks={checks} />
       </section>
 
       <section ref={(el) => { refs.current.belasting = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Belasting">
