@@ -46,7 +46,7 @@ import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRoutePro
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
 import { buildMarathonGoal } from '../engine/goalMigration';
-import { setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { computeReadiness } from '../engine/readiness';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
@@ -162,7 +162,7 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
-import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition } from '../engine/substitutions';
+import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, resolveVariantDuration } from '../engine/substitutions';
 import { learnedStrengthDurations } from '../engine/durationLearning';
 import { coachReaction } from '../engine/coach';
 import { recoveryDurationAdjustments } from '../engine/illness';
@@ -480,6 +480,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Strength trainings: your estimate, or the duration learned from logs.
     setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
     setHardSameDayAllowed(!!loadedSettings.hardSameDay);
+    // The planner's leg index with the same inputs as the Benen card.
+    const lastWeight = [...(loadedSettings.weightEntries ?? [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.kg;
+    setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, programs[0] ?? null) });
     setFixedSessionMinutes(planned);
     setAmbition(effectiveAmbition(loadedSettings.ambition, logs, new Map(tpls.map((t) => [t.id, t])), programs[0] ?? null, todayISO()).effective);
     setSettings(loadedSettings);

@@ -140,13 +140,32 @@ export function respectsHeavySpacing(
 const FRESH_LIMIT: Record<string, number> = { tpl_test_run: FATIGUE_THRESHOLDS.test.fresh, tpl_race: FATIGUE_THRESHOLDS.race.doubt };
 const isTestLike = (t: SessionTemplate) => FRESH_LIMIT[t.id] !== undefined;
 
+// What the index needs beyond the sessions, the same as the Benen card uses
+// (components/LegFatigueCard.tsx#useLegFatigueInputs): today, your weight
+// and the length each session is actually planned at. Set on every refresh;
+// without it (tests, the first sync at start) the template's full length.
+// docs/onderzoek/Planning op een lijn.md, conflict 5: one index for planner,
+// card and proposal sheet.
+export interface FreshnessContext {
+  today: string;
+  bodyKg?: number;
+  minutesOf: (session: PlannedSession, template: SessionTemplate) => number;
+}
+let freshnessContext: FreshnessContext | undefined;
+export function setFreshnessContext(ctx: FreshnessContext | undefined): void {
+  freshnessContext = ctx;
+}
+
 // The index on `date` from these planned sessions and the logs. Pain and
 // soreness are signals for you, not for placing sessions: left out here.
+// Planned sessions of the 6 weeks before count, as on the card: they say
+// whether your legs are used to it (only the last 10 days add points).
 export function freshnessAt(date: string, sessions: PlannedSession[], templateMap: Map<string, SessionTemplate>, logs: SessionLog[], extra?: { id: string; templateId: string; date: string; plannedMinutes?: number }): LegFatigueResult {
-  const planned = sessions.filter((s) => s.status !== 'skipped' && s.scheduledDate < date && daysBetween(s.scheduledDate, date) <= 10);
+  const ctx = freshnessContext;
+  const planned = sessions.filter((s) => s.status !== 'skipped' && s.scheduledDate < date && daysBetween(s.scheduledDate, date) <= (ctx ? 52 : 10) && (!ctx || s.scheduledDate >= ctx.today));
   if (extra) planned.push({ id: extra.id, templateId: extra.templateId, scheduledDate: extra.date, weekStartDate: mondayOfWeek(extra.date), status: 'planned', order: 0, plannedMinutes: extra.plannedMinutes });
   const quietLogs = logs.filter((l) => l.completedDate < date && daysBetween(l.completedDate, date) <= 52).map((l) => ({ ...l, painAreas: undefined, painReports: undefined }));
-  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01' });
+  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01', bodyKg: ctx?.bodyKg, minutesOf: ctx?.minutesOf });
 }
 
 // The planned sessions that make a test day too heavy, largest first, until
