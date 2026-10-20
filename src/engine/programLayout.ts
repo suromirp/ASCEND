@@ -290,6 +290,24 @@ export const PATTERN_SWAPS: PatternSwap[] = [
   { from: 'tpl_hill_intervals', to: 'tpl_hike_day_one', phases: [PHASE_EXPEDITIE] },
 ];
 
+// The pattern session whose place in the week a session fills: a tempo run
+// or test takes the easy run's day, the Saturday variants (intervals, hills
+// up and down, the first hike day) the hill session's, the mountain hike the
+// long run's. A pattern template is its own slot. What protects a session and
+// where it goes when the rest day changes follows this place, not the
+// template (docs/onderzoek/Planning op een lijn.md, conflicts 1 and 4).
+const SLOT_OF: Record<string, string> = {
+  tpl_tempo_run: 'tpl_easy_run',
+  tpl_test_run: 'tpl_easy_run',
+  tpl_intervals: 'tpl_hill_intervals',
+  tpl_hills_descent: 'tpl_hill_intervals',
+  tpl_hike_day_one: 'tpl_hill_intervals',
+  tpl_mountain_hike: 'tpl_long_run',
+};
+export function patternSlotOf(templateId: string): string {
+  return SLOT_OF[templateId] ?? templateId;
+}
+
 export interface SwapSettings {
   // 'hike' (default): the long Sunday becomes a mountain hike from
   // Bergcapaciteit on. 'run': keep the long run every week.

@@ -18,6 +18,7 @@ import {
   SettingsRepo,
   GoalMilestonesRepo,
   syncProgramHorizon,
+  MetaRepo,
 } from './database';
 import { migrateToGoalEngine } from './goalMigration';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
@@ -325,6 +326,31 @@ describe('restorePatternSessionsRemovedByPrescription', () => {
     expect(after.find((s) => s.id === longRun.id)?.status).toBe('planned');
     expect(after.find((s) => s.id === 'added-berg')).toBeUndefined();
     expect(await restorePatternSessionsRemovedByPrescription()).toBe(0);
+  });
+
+  it('also brings back a mountain hike it took out, and clears skipped copies of the race', async () => {
+    const source = 'engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan';
+    const future = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate > addDays(todayISO(), 14));
+    const sunday = future.find((s) => s.templateId === 'tpl_long_run')!;
+    const hike = { ...sunday, id: 'hike', templateId: 'tpl_mountain_hike', status: 'skipped' as const };
+    await PlannedSessionsRepo.delete(sunday.id);
+    await PlannedSessionsRepo.put(hike);
+    const raceDay = addDays(todayISO(), 60);
+    const race = { id: 'race', templateId: 'tpl_race', scheduledDate: raceDay, weekStartDate: mondayOfWeek(raceDay), status: 'planned' as const, order: 0 };
+    await PlannedSessionsRepo.put(race);
+    await PlannedSessionsRepo.put({ ...race, id: 'race-copy', status: 'skipped' });
+    // The first repair already ran on an earlier version.
+    await MetaRepo.set('patternRestoreDone', true);
+    await PlanChangeProposalsRepo.put({
+      id: 'wp2', trigger: 'weekly_prescription_computed', issue: '', alternatives: [], consequences: '', explanation: '', createdAt: '', resolvedAt: '', resolution: 'accepted',
+      changes: [{ plannedSessionId: 'hike', action: 'remove', generatedBy: [source] }],
+    });
+
+    expect(await restorePatternSessionsRemovedByPrescription()).toBe(1);
+    const after = await PlannedSessionsRepo.getAll();
+    expect(after.find((s) => s.id === 'hike')?.status).toBe('planned');
+    expect(after.find((s) => s.id === 'race')).toBeDefined();
+    expect(after.find((s) => s.id === 'race-copy')).toBeUndefined();
   });
 });
 

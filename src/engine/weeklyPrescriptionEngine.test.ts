@@ -279,4 +279,14 @@ describe('what the weekly prescription never takes out', () => {
     // A template with no weekday and no reason of its own can still be swapped.
     expect(keepsInPlace({ id: 'tpl_bergconditie', defaultDayOfWeek: undefined })).toBe(false);
   });
+
+  it('keeps what fills a slot of the pattern: tempo run, intervals, hills up and down, mountain hike, first hike day', () => {
+    for (const id of ['tpl_tempo_run', 'tpl_intervals', 'tpl_hills_descent', 'tpl_mountain_hike', 'tpl_hike_day_one']) {
+      expect(keepsInPlace({ id, defaultDayOfWeek: undefined }), id).toBe(true);
+    }
+  });
+
+  it('keeps whatever you or an accepted proposal fixed in place', () => {
+    expect(keepsInPlace({ id: 'tpl_bergconditie', defaultDayOfWeek: undefined }, { lock: { by: 'user', at: '' } })).toBe(true);
+  });
 });

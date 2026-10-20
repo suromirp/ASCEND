@@ -18,7 +18,7 @@ import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
-import { PATTERN_SWAPS, activeSwaps, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
+import { PATTERN_SWAPS, activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { applyRaceBlocks, raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
@@ -999,32 +999,32 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     if (target !== s.templateId && templateIds.has(target)) swapped.push({ ...s, templateId: target });
   }
 
-  // Your rest day changed: planned sessions from today on that still sit on
-  // their old pattern day go to their day in the new spread. Sessions you
-  // moved yourself, skipped or logged, and anything placed elsewhere by the
-  // weekly planning, stay where they are. Only at the change itself.
+  // Your rest day changed: every session the system planned goes to the day
+  // its place in the week has in the new spread, by that place, not by its
+  // template: a tempo run or test goes with the easy run, the mountain hike
+  // with the long run (docs/onderzoek/Planning op een lijn.md, conflict 4).
+  // A leg swap of the race block is laid out fresh; the race block below
+  // makes it again where it is still needed. What you moved or skipped
+  // yourself, logged sessions and anything an accepted proposal fixed stay
+  // where they are. Only at the change itself.
   const settings = await SettingsRepo.get();
   const appliedRestDay = (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
   const wantedRestDay = settings.restDay ?? 1;
   if (appliedRestDay !== wantedRestDay) {
-    const daysFor = (restDay: number) => {
-      const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { ...settings, enabledSports: { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports } }), templates, restDay as RestWeekday);
-      const map = new Map(pattern.map((t) => [t.id, t.defaultDayOfWeek as number]));
-      for (const sw of PATTERN_SWAPS) if (map.has(sw.from)) map.set(sw.to, map.get(sw.from)!);
-      return map;
-    };
-    const oldDay = daysFor(appliedRestDay);
-    const newDay = daysFor(wantedRestDay);
+    const newDay = patternDays(templates, settings, wantedRestDay);
     const swappedById = new Map(swapped.map((x) => [x.id, x]));
     for (const s of sessions) {
-      if (!open(s) || removedIds.has(s.id) || s.status !== 'planned') continue;
+      if (!open(s) || removedIds.has(s.id) || s.status === 'moved' || s.lock) continue;
       const current = swappedById.get(s.id) ?? s;
-      const from = oldDay.get(current.templateId);
-      const to = newDay.get(current.templateId);
-      if (!from || !to || from === to || isoWeekday(s.scheduledDate) !== from) continue;
+      const to = newDay.get(patternSlotOf(current.templateId));
+      if (!to || isoWeekday(s.scheduledDate) === to) continue;
       const date = addDays(mondayOfWeek(s.scheduledDate), to - 1);
       if (date < today || (ctx.anchor && date >= ctx.anchor)) continue;
-      swappedById.set(s.id, { ...current, scheduledDate: date, weekStartDate: mondayOfWeek(date) });
+      // A leg swap starts over: no marker, and the full length again.
+      const { raceBlock: mark, ...rest } = current;
+      const fresh: PlannedSession = { ...rest, scheduledDate: date, weekStartDate: mondayOfWeek(date) };
+      if (mark?.short) delete fresh.plannedMinutes;
+      swappedById.set(s.id, fresh);
     }
     swapped.splice(0, swapped.length, ...swappedById.values());
     await MetaRepo.set('appliedRestDay', wantedRestDay);
@@ -1059,6 +1059,15 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
 
   if (toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
   return { phasesChanged, added: added.length + race.add.length, swapped: swapped.length + race.update.length, removed: toRemove.length };
+}
+
+// The weekday of each pattern session for a rest day, the phase variants
+// (mountain hike, first hike day) on the day of the session they replace.
+function patternDays(templates: SessionTemplate[], settings: AppSettings, restDay: number): Map<string, number> {
+  const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { ...settings, enabledSports: { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports } }), templates, restDay as RestWeekday);
+  const map = new Map(pattern.map((t) => [t.id, t.defaultDayOfWeek as number]));
+  for (const sw of PATTERN_SWAPS) if (map.has(sw.from)) map.set(sw.to, map.get(sw.from)!);
+  return map;
 }
 
 // --- atomic multi-store backup writes -----------------------------------
@@ -1166,25 +1175,52 @@ export async function wipeAllData(): Promise<void> {
 export async function restorePatternSessionsRemovedByPrescription(): Promise<number> {
   // One-time repair. Running it on every start used to put a session the
   // user later skipped on purpose straight back into the planning.
-  if (await MetaRepo.get<boolean>('patternRestoreDone')) return 0;
-  const restoredCount = await restorePatternSessionsOnce();
-  await MetaRepo.set('patternRestoreDone', true);
+  let restoredCount = 0;
+  if (!(await MetaRepo.get<boolean>('patternRestoreDone'))) {
+    restoredCount += await restorePatternSessionsOnce((t) => t?.defaultDayOfWeek !== undefined);
+    await MetaRepo.set('patternRestoreDone', true);
+  }
+  // Second repair (docs/onderzoek/Planning op een lijn.md, conflict 1): the
+  // prescription also took out sessions that fill a pattern slot without a
+  // fixed weekday of their own: the tempo runs and intervals of the race
+  // block, the mountain hikes of Expeditieklaar. Back they come, and the
+  // skipped copies of the race left by an older bug go.
+  if (!(await MetaRepo.get<boolean>('slotRestoreDone'))) {
+    restoredCount += await restorePatternSessionsOnce((t, id) => !!t && (t.defaultDayOfWeek !== undefined || patternSlotOf(id) !== id) && id !== 'tpl_test_run');
+    await removeSkippedRaceCopies();
+    await MetaRepo.set('slotRestoreDone', true);
+  }
   return restoredCount;
 }
 
-async function restorePatternSessionsOnce(): Promise<number> {
-  const [proposals, sessions, logs, templates] = await Promise.all([
+// Skipped rows of the race on a day that has an open race: copies, never
+// logged, nothing to keep.
+async function removeSkippedRaceCopies(): Promise<void> {
+  const [sessions, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll()]);
+  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const openRaceDays = new Set(sessions.filter((s) => s.templateId === 'tpl_race' && s.status !== 'skipped').map((s) => s.scheduledDate));
+  for (const s of sessions) {
+    if (s.templateId === 'tpl_race' && s.status === 'skipped' && !logged.has(s.id) && openRaceDays.has(s.scheduledDate)) await PlannedSessionsRepo.delete(s.id);
+  }
+}
+
+async function restorePatternSessionsOnce(isPatternTemplate: (template: SessionTemplate | undefined, templateId: string) => boolean): Promise<number> {
+  const [proposals, sessions, logs, templates, settings] = await Promise.all([
     PlanChangeProposalsRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
+    SettingsRepo.get(),
   ]);
   const today = todayISO();
+  // A restored session goes to its slot's day as the week is now: the rest
+  // day may have changed while it was out.
+  const slotDays = patternDays(templates, settings, settings.restDay ?? 1);
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const byId = new Map(sessions.map((s) => [s.id, s]));
   const fromPrescription = (generatedBy: string[] | undefined) => (generatedBy ?? []).some((g) => g.startsWith('engine/weeklyPrescriptionEngine'));
-  const isPattern = (templateId: string) => templateById.get(templateId)?.defaultDayOfWeek !== undefined;
+  const isPattern = (templateId: string) => isPatternTemplate(templateById.get(templateId), templateId);
   let restored = 0;
 
   for (const proposal of proposals) {
@@ -1194,7 +1230,9 @@ async function restorePatternSessionsOnce(): Promise<number> {
       if (item.action !== 'remove' || !item.plannedSessionId || !fromPrescription(item.generatedBy)) continue;
       const session = byId.get(item.plannedSessionId);
       if (!session || session.status !== 'skipped' || logged.has(session.id) || session.scheduledDate < today || !isPattern(session.templateId)) continue;
-      const back: PlannedSession = { ...session, status: 'planned' };
+      const slotDay = slotDays.get(patternSlotOf(session.templateId));
+      const onSlot = slotDay ? addDays(mondayOfWeek(session.scheduledDate), slotDay - 1) : session.scheduledDate;
+      const back: PlannedSession = { ...session, status: 'planned', ...(onSlot >= today ? { scheduledDate: onSlot } : {}) };
       await PlannedSessionsRepo.put(back);
       byId.set(back.id, back);
       restoredWeeks.add(session.weekStartDate);

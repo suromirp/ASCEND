@@ -12,6 +12,7 @@
 // TrainingPrescription rows and applies the returned PlanChangeItems.
 
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
+import { patternSlotOf } from './programLayout';
 import type { Program } from '../models/program';
 import type { TrainingAvailability, TrainingStrategyProfile } from '../models/goalEngineConfig';
 import type { PlanChangeProposal, PlanChangeItem } from '../models/planChange';
@@ -55,8 +56,11 @@ const PROTECTED_TYPES = new Set(['recovery'] as const);
 // swaps it with the long run), so that one stays swappable.
 const KEPT_OUTSIDE_PATTERN = new Set<string>(['tpl_test_run', 'tpl_race', ...EXTRA_CATALOGUE.filter((id) => id !== 'tpl_bergconditie')]);
 
-export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek'>): boolean {
-  return template.defaultDayOfWeek !== undefined || KEPT_OUTSIDE_PATTERN.has(template.id);
+// Kept: a pattern template, a session that fills a pattern slot (the tempo
+// run, intervals and mountain hike of a race block or phase), a test or race,
+// an extra, and anything you or an accepted proposal fixed in place.
+export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek'>, session?: Pick<PlannedSession, 'lock'>): boolean {
+  return !!session?.lock || template.defaultDayOfWeek !== undefined || patternSlotOf(template.id) !== template.id || KEPT_OUTSIDE_PATTERN.has(template.id);
 }
 
 // Combines the deduplicated new-session requests (invariant b,
@@ -121,7 +125,7 @@ function buildReconciliationTarget(lines: WeeklyPrescription['lines'], desiredSl
     // The user's own weekly pattern (templates with a fixed weekday) is the
     // program; the prescription adds to it and adjusts volume, it never
     // takes a pattern session out.
-    keepInPlace: (_session, template) => keepsInPlace(template),
+    keepInPlace: (session, template) => keepsInPlace(template, session),
   };
 }
 
