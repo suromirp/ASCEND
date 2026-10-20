@@ -236,6 +236,8 @@ export function isHardSameDayAllowed(): boolean {
 // never a hike (that's a whole day out).
 function hardSameDayAllowed(a: SessionTemplate, b: SessionTemplate): boolean {
   if (!hardSameDay) return false;
+  // The test run and the race need fresh legs: never on a day with leg strength.
+  if (['tpl_test_run', 'tpl_race'].some((id) => a.id === id || b.id === id)) return false;
   const run = (t: SessionTemplate) => templateSport(t) === 'running';
   return (a.type === 'strength' && run(b)) || (run(a) && b.type === 'strength');
 }

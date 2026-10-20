@@ -4,6 +4,7 @@
 // "mag wat mooier, visueler"): an icon per kind of advice, the suggestion
 // up front, the why folded into a quiet panel, clear pill actions.
 
+import { ProposalPreview } from './ProposalPreview';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { Advice, AdviceTrigger } from '../engine/adviceEngine';
@@ -94,6 +95,7 @@ export function CoachCard() {
 export function AdviceItem({ advice, compact = false }: { advice: Advice; compact?: boolean }) {
   const { respondToAdvice } = useAppData();
   const [open, setOpen] = useState(false);
+  const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
   const kind = KIND[advice.trigger];
 
@@ -113,6 +115,11 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       ) : (
         <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Oké</Pill>
       )}
+      {advice.proposal && (
+        <button onClick={() => setShowWeek((v) => !v)} className="text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={showWeek}>
+          {showWeek ? 'week verbergen' : 'week bekijken'}
+        </button>
+      )}
       <button onClick={() => setOpen((v) => !v)} className="ml-auto flex items-center gap-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
         waarom
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden>
@@ -121,6 +128,8 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       </button>
     </div>
   );
+
+  const weekPreview = showWeek && advice.proposal && <ProposalPreview proposal={advice.proposal} />;
 
   const why = open && (
     <p className="mt-2.5 rounded-lg border-l-2 py-2 pl-3 pr-2 text-xs leading-relaxed" style={{ borderColor: kind.color, background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>
@@ -133,6 +142,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       <div>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{advice.effect}</p>
         {actions}
+        {weekPreview}
         {why}
       </div>
     );
@@ -146,6 +156,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
         <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
         <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
         {actions}
+        {weekPreview}
         {why}
       </div>
     </div>

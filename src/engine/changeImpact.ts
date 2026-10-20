@@ -88,3 +88,17 @@ export function describeChanges(items: PlanChangeItem[], sessions: PlannedSessio
   }
   return lines;
 }
+
+// The one line of the notice after the weekly prescription ran. Most of its
+// items only adjust the content of a session in the weeks ahead (a replace);
+// those are not "85 sessies aangepast". Moves, additions and removals are
+// counted on their own.
+export function prescriptionSummary(items: PlanChangeItem[]): string {
+  const content = items.filter((c) => c.action === 'replace' || c.action === 'reduce').length;
+  const structural = items.length - content;
+  const parts: string[] = [];
+  if (structural > 0) parts.push(`${structural} ${structural === 1 ? 'training verplaatst, toegevoegd of vervallen' : 'trainingen verplaatst, toegevoegd of vervallen'}`);
+  if (content > 0) parts.push(`${content === 1 ? 'de inhoud van 1 training' : `de inhoud van ${content} trainingen`} in de komende weken bijgesteld`);
+  const text = parts.join(', ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

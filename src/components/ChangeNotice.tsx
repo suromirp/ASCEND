@@ -11,7 +11,7 @@ export function ChangeNotice() {
   const [undoing, setUndoing] = useState(false);
   if (!recentChange) return null;
 
-  const summary = recentChange.lines.length === 1 ? recentChange.lines[0] : `${recentChange.lines.length} sessies aangepast`;
+  const summary = recentChange.summary ?? (recentChange.lines.length === 1 ? recentChange.lines[0] : `${recentChange.lines.length} sessies aangepast`);
 
   async function handleUndo() {
     setUndoing(true);

@@ -60,6 +60,7 @@ import { computeForecastReplan } from '../engine/adaptiveReplanner';
 import { resolveHorizonZone } from '../engine/planningHorizon';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
@@ -759,6 +760,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         trigger: proposal.trigger,
         title: 'Weekplanning bijgewerkt',
         lines: describeChanges(realChanges, planned, tpls),
+        summary: prescriptionSummary(realChanges),
         why: proposal.consequences,
         before: planned.filter((x) => touched.has(x.id)),
         addedIds: updatedSessions.filter((x) => !originalIds.has(x.id)).map((x) => x.id),

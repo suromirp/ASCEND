@@ -132,6 +132,8 @@ export interface RecentPlanChange {
   trigger: EngineEvent;
   title: string;
   lines: string[];
+  // One line for the notice itself; without it: the number of lines.
+  summary?: string;
   why: string;
   before: PlannedSession[]; // touched rows exactly as they were
   addedIds: string[]; // rows this change created
