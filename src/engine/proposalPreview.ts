@@ -15,6 +15,8 @@ export type PreviewChange = 'nieuw' | 'hierheen' | 'weg' | 'vervalt';
 export interface PreviewEntry {
   name: string;
   type: SessionType;
+  templateId: string;
+  plannedMinutes?: number;
   change?: PreviewChange;
   // For a move: the other end (where it came from, or where it goes).
   otherDate?: string;
@@ -50,7 +52,7 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
   const real = items.filter((i) => i.action !== 'keep' && i.action !== 'replace');
   if (real.length === 0) return empty;
   const byId = new Map(templates.map((t) => [t.id, t]));
-  const info = (s: PlannedSession) => ({ name: byId.get(s.templateId)?.name ?? 'Training', type: byId.get(s.templateId)?.type ?? ('cardio' as SessionType) });
+  const info = (s: PlannedSession) => ({ name: byId.get(s.templateId)?.name ?? 'Training', type: byId.get(s.templateId)?.type ?? ('cardio' as SessionType), templateId: s.templateId, plannedMinutes: s.plannedMinutes });
   const before = new Map(sessions.map((s) => [s.id, s]));
   let n = 0;
   const { sessions: after, unsupported } = applyPlanChangeItems(real, sessions, () => `preview-${n++}`);

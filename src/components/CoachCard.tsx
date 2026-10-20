@@ -4,7 +4,7 @@
 // "mag wat mooier, visueler"): an icon per kind of advice, the suggestion
 // up front, the why folded into a quiet panel, clear pill actions.
 
-import { ProposalPreview } from './ProposalPreview';
+import { ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { Advice, AdviceTrigger } from '../engine/adviceEngine';
@@ -124,26 +124,23 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
     </div>
   );
 
-  // "Zo ziet je week eruit": its own row under the actions, the week below
-  // it over the full width of the card.
+  // "Zo ziet je week eruit": its own row under the actions; it opens the
+  // week as a sheet from below, with Akkoord and Liever niet in it.
   const weekToggle = advice.proposal && (
     <button
-      onClick={() => setShowWeek((v) => !v)}
+      onClick={() => setShowWeek(true)}
       className="mt-3 flex min-h-[40px] w-full items-center gap-2.5 rounded-xl border px-3 text-left text-xs"
-      style={{ borderColor: showWeek ? 'var(--color-bronze-dark)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}
-      aria-expanded={showWeek}
+      style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
     >
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--color-bronze)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
         <path d="M3.5 9.5h17M8 3v4M16 3v4" />
       </svg>
       <span className="flex-1">Zo ziet je week eruit</span>
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--color-ink-dim)" strokeWidth="2" style={{ transform: showWeek ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden>
-        <path d="M6 9l6 6 6-6" />
-      </svg>
+      <span style={{ color: 'var(--color-ink-dim)' }} aria-hidden>›</span>
     </button>
   );
-  const weekPreview = showWeek && advice.proposal && <ProposalPreview proposal={advice.proposal} />;
+  const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;
 
   const why = open && (
     <p className="mt-2.5 rounded-lg border-l-2 py-2 pl-3 pr-2 text-xs leading-relaxed" style={{ borderColor: kind.color, background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>

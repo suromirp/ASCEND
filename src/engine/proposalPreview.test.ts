@@ -28,7 +28,7 @@ describe('the week as a proposal would leave it', () => {
     const remove: PlanChangeItem = { plannedSessionId: 'c', action: 'remove', reason: '', generatedBy: ['x'] };
     const { moves, weeks: [w] } = previewProposal([remove], week, templates);
     expect(moves).toEqual([{ name: 'Bovenlichaam B', action: 'remove', from: '2026-10-30' }]);
-    expect(w.days.find((d) => d.date === '2026-10-30')!.entries).toEqual([{ name: 'Bovenlichaam B', type: 'strength', change: 'vervalt' }]);
+    expect(w.days.find((d) => d.date === '2026-10-30')!.entries).toEqual([{ name: 'Bovenlichaam B', type: 'strength', templateId: 'tpl_upper_b', plannedMinutes: undefined, change: 'vervalt' }]);
     expect(previewProposal([{ plannedSessionId: 'c', action: 'replace', reason: '', generatedBy: ['x'] }], week, templates).weeks).toEqual([]);
   });
 });
