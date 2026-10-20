@@ -136,7 +136,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
         <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
         <path d="M3.5 9.5h17M8 3v4M16 3v4" />
       </svg>
-      <span className="flex-1">Zo ziet je week eruit</span>
+      <span className="flex-1">Zo ziet je week eruit{advice.options && advice.options.length > 1 ? <span style={{ color: 'var(--color-ink-dim)' }}> · {advice.options.length} opties</span> : null}</span>
       <span style={{ color: 'var(--color-ink-dim)' }} aria-hidden>›</span>
     </button>
   );

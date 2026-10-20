@@ -75,6 +75,15 @@ describe('TEST-MAKE-ROOM: the test sits on your rest day', () => {
     expect(Math.abs((new Date(move.toDate! + 'T12:00:00Z').getTime() - new Date(THURSDAY + 'T12:00:00Z').getTime()) / 86400000)).toBeLessThanOrEqual(5);
   });
 
+  it('offers up to three options, the smallest change first and the same as the proposal', () => {
+    const a = advice()!;
+    expect(a.options!.length).toBeGreaterThan(1);
+    expect(a.options!.length).toBeLessThanOrEqual(3);
+    expect(a.options![0].proposal).toBe(a.proposal);
+    expect(new Set(a.options!.map((o) => o.label)).size).toBe(a.options!.length);
+    expect(a.options!.every((o) => o.label.startsWith('Testloop '))).toBe(true);
+  });
+
   it('is quiet when the test is not on a rest day, or after you said no', () => {
     expect(advice({ plannedSessions: [...planned] })).toBeUndefined();
     expect(advice({ respondedIds: new Set(['testroom:2026-10-26-3']) })).toBeUndefined();

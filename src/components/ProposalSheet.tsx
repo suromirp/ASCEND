@@ -37,20 +37,23 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
   const { plannedSessions, templates, program, respondToAdvice } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const [busy, setBusy] = useState(false);
-  const data = useMemo(() => (advice.proposal ? previewProposal(advice.proposal.changes, plannedSessions, templates) : { moves: [], weeks: [] }), [advice, plannedSessions, templates]);
+  // With more than one option: the chosen one drives the week shown and Akkoord.
+  const [choice, setChoice] = useState(0);
+  const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
+  const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates]);
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const today = todayISO();
   const fatigueInputs = useLegFatigueInputs();
   // A test or race this proposal moves: how fresh the legs are there, now and after.
   const freshness = useMemo(() => {
-    if (!advice.proposal) return undefined;
-    const item = advice.proposal.changes.find((c) => c.action === 'move' && c.plannedSessionId && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? ''));
+    if (!chosen) return undefined;
+    const item = chosen.changes.find((c) => c.action === 'move' && c.plannedSessionId && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? ''));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' : 'test';
-    const after = applyPlanChangeItems(advice.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview').sessions;
+    const after = applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview').sessions;
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
-  }, [advice, plannedSessions, fatigueInputs]);
+  }, [chosen, plannedSessions, fatigueInputs]);
 
   const minutes = (e: PreviewEntry, date: string) => {
     if (e.type === 'recovery') return undefined;
@@ -59,9 +62,20 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
     return t ? resolveVariantDuration(t, 'full', date, program) : undefined;
   };
 
+  // Per option: how fresh the legs are on the test or race day it gives.
+  const optionFreshness = useMemo(() => (advice.options ?? []).map((o) => {
+    const item = o.proposal.changes.find((c) => c.action === 'move' && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? ''));
+    if (!item?.toDate) return undefined;
+    const kind = plannedSessions.find((x) => x.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' as const : 'test' as const;
+    const after = applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview').sessions;
+    const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
+    return { index: at.index, status: fatigueStatus(at, kind) };
+  }), [advice, plannedSessions, fatigueInputs]);
+
   async function respond(response: 'accepted' | 'declined') {
     setBusy(true);
-    await respondToAdvice(advice, response);
+    const option = advice.options?.[choice];
+    await respondToAdvice(option ? { ...advice, proposal: option.proposal, effect: option.effect } : advice, response);
     setBusy(false);
     requestClose();
   }
@@ -78,6 +92,38 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-3">
               <Eyebrow>VOORSTEL</Eyebrow>
               <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</h3>
+
+              {advice.options && advice.options.length > 1 && (
+                <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Kies een optie">
+                  <p className="text-[10px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{advice.options.length} OPTIES · KIES ER EEN</p>
+                  {advice.options.map((o, i) => {
+                    const on = i === choice;
+                    return (
+                      <button
+                        key={o.label}
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => setChoice(i)}
+                        className="flex min-h-[48px] items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left"
+                        style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)', background: on ? tint('var(--color-gold)', 8) : 'transparent' }}
+                      >
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-ink-dim)' }} aria-hidden>
+                          {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-gold)' }} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{o.label}</span>
+                          {i === 0 && <span className="block text-[11px]" style={{ color: 'var(--color-gold)' }}>de kleinste verandering</span>}
+                        </span>
+                        {optionFreshness[i] && (
+                          <span className="shrink-0 text-right text-[11px] leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-gold)' }}>
+                            benen {formatNumberNL(optionFreshness[i]!.index, 1)}<br />{optionFreshness[i]!.status}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {data.moves.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2.5 rounded-xl border p-3.5" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
