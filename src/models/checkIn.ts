@@ -30,3 +30,17 @@ export interface PainReport {
   worseDuring?: boolean;
   onBone?: boolean; // shin, foot, hip/groin at 3 or more: on one spot on the bone?
 }
+
+// The one weekly question (OSTRC-O2 in short, Clarsen e.a.): did leg, foot or
+// back trouble from training get in the way this week? Asked in the week
+// review; the full overuse questionnaire found about ten times more problems
+// than plain injury registration.
+export type WeeklyTrouble = 'geen' | 'wel_gewoon' | 'minder' | 'niet_kunnen';
+export type TroubleSeverity = 'mild' | 'matig' | 'ernstig';
+
+export interface WeeklyHealthCheck {
+  weekStart: string; // Monday
+  trouble: WeeklyTrouble;
+  area?: string;
+  severity?: TroubleSeverity;
+}

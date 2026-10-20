@@ -6,7 +6,7 @@ import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metr
 import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
 import type { WeightEntry } from '../models/metrics';
-import type { MorningCheckIn } from '../models/checkIn';
+import type { MorningCheckIn, WeeklyHealthCheck } from '../models/checkIn';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -526,6 +526,8 @@ export interface AppSettings {
   // The short morning check-in: legs, energy, sleep (models/checkIn.ts).
   // Optional and additive, travels with the settings in an export.
   morningCheckIns?: MorningCheckIn[];
+  // The one question per week in the week review (models/checkIn.ts).
+  weeklyHealthChecks?: WeeklyHealthCheck[];
   weightReminderSnoozedAt?: string; // ISO date
   // Days between weight reminders; 0 = never remind. Absent = 14.
   weightReminderDays?: number;

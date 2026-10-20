@@ -183,6 +183,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     ['weightEntries', (e) => isRecord(e) && isDate(e.date) && typeof e.kg === 'number' && Number.isFinite(e.kg)],
     ['illnessEpisodes', (e) => hasId(e) && isDate(e.startDate) && typeof e.kind === 'string'],
     ['morningCheckIns', (e) => isRecord(e) && isDate(e.date)],
+    ['weeklyHealthChecks', (e) => isRecord(e) && isDate(e.weekStart) && typeof e.trouble === 'string'],
   ];
   for (const [key, valid] of lists) {
     if (!(key in s)) continue;

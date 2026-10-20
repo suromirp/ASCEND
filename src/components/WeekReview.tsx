@@ -5,10 +5,12 @@ import { addDays, formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton } from './ui';
+import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../models/checkIn';
+import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
 
 function useWeekReview(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
-  return buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes });
+  return buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: todayISO(), illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks });
 }
 
 // On Today, Sunday and Monday: the short version, with the coach's first
@@ -37,7 +39,7 @@ export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
   const today = todayISO();
   const thisMonday = addDays(today, -((new Date(today).getDay() + 6) % 7));
   const reviews = Array.from({ length: weeks }, (_, i) => addDays(thisMonday, -7 * (i + 1)))
-    .map((w) => buildWeekReview({ weekStart: w, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes }))
+    .map((w) => buildWeekReview({ weekStart: w, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks }))
     .filter((r): r is WeekReview => !!r && r.planned > 0);
   if (reviews.length === 0) return null;
   return (
@@ -108,6 +110,10 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
               </Section>
             )}
 
+            <Section title="KLACHTEN">
+              <WeeklyHealthQuestion weekStart={review.weekStart} />
+            </Section>
+
             {review.missed.length > 0 && (
               <Section title="NIET GEDAAN">
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{review.missed.join(', ')}</p>
@@ -148,5 +154,53 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
         </div>
       </div>
     </Portal>
+  );
+}
+
+const TROUBLE: [WeeklyTrouble, string][] = [
+  ['geen', 'Nee, ik kon alles doen'],
+  ['wel_gewoon', 'Ja, maar ik kon gewoon trainen'],
+  ['minder', 'Ja, ik moest minder of anders trainen'],
+  ['niet_kunnen', 'Ja, ik kon niet trainen'],
+];
+const SEVERITY: [TroubleSeverity, string][] = [['mild', 'Mild'], ['matig', 'Matig'], ['ernstig', 'Ernstig']];
+
+// One question a week (OSTRC-O2 in short): did leg, foot or back trouble from
+// training get in the way? Only with a yes: where, and how bad.
+function WeeklyHealthQuestion({ weekStart }: { weekStart: string }) {
+  const { settings, updateSettings } = useAppData();
+  const saved = settings.weeklyHealthChecks?.find((c) => c.weekStart === weekStart);
+  const [draft, setDraft] = useState<WeeklyHealthCheck | undefined>(saved);
+  const save = (next: WeeklyHealthCheck) => {
+    setDraft(next);
+    const others = (settings.weeklyHealthChecks ?? []).filter((c) => c.weekStart !== weekStart);
+    void updateSettings({ weeklyHealthChecks: [...others, next].sort((a, b) => a.weekStart.localeCompare(b.weekStart)).slice(-26) });
+  };
+  const chip = (on: boolean) => ({ borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink)' });
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Had je deze week klachten aan je benen, voeten of rug door het trainen?</p>
+      <div className="flex flex-col gap-1.5">
+        {TROUBLE.map(([k, text]) => (
+          <button key={k} onClick={() => save({ weekStart, trouble: k, area: k === 'geen' ? undefined : draft?.area, severity: k === 'geen' ? undefined : draft?.severity })} aria-pressed={draft?.trouble === k} className="min-h-[42px] rounded-xl border px-3 text-left text-xs" style={chip(draft?.trouble === k)}>
+            {text}
+          </button>
+        ))}
+      </div>
+      {draft && draft.trouble !== 'geen' && (
+        <>
+          <div className="flex flex-wrap gap-1.5">
+            {[...PAIN_AREA_OPTIONS].map((a) => (
+              <button key={a} onClick={() => save({ ...draft, area: draft.area === a ? undefined : a })} aria-pressed={draft.area === a} className="min-h-[36px] rounded-lg border px-2.5 text-xs" style={chip(draft.area === a)}>{a}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {SEVERITY.map(([k, text]) => (
+              <button key={k} onClick={() => save({ ...draft, severity: draft.severity === k ? undefined : k })} aria-pressed={draft.severity === k} className="min-h-[38px] rounded-lg border text-xs" style={chip(draft.severity === k)}>{text}</button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

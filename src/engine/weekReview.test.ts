@@ -68,3 +68,19 @@ describe('buildWeekReview', () => {
     expect(reviewWeekFor('2026-10-08', 4)).toBeUndefined();
   });
 });
+
+describe('the weekly question about trouble', () => {
+  const review = (check?: { trouble: 'geen' | 'wel_gewoon' | 'minder' | 'niet_kunnen'; area?: string; severity?: 'mild' | 'matig' | 'ernstig' }) =>
+    buildWeekReview({ weekStart: W, plannedSessions: week, logs: [log('ua', 'tpl_upper_a', '2026-10-06')], templates, program, planChangeLog: [], asOf: '2026-10-12', weeklyChecks: check ? [{ weekStart: W, ...check }] : [] })!;
+
+  it('no trouble, or no answer: nothing to say', () => {
+    expect(review({ trouble: 'geen' }).advice.join(' ')).not.toContain('klacht');
+    expect(review().weeklyCheck).toBeUndefined();
+  });
+
+  it('trouble that kept you from training: no build-up next week, and write it down under Blessures', () => {
+    expect(review({ trouble: 'niet_kunnen', area: 'Kuit' }).advice[0]).toContain('niet verder op');
+    expect(review({ trouble: 'minder', area: 'Knie', severity: 'matig' }).advice[0]).toContain('zonder extra opbouw');
+    expect(review({ trouble: 'wel_gewoon', severity: 'mild' }).advice.join(' ')).toContain('lichte klacht');
+  });
+});

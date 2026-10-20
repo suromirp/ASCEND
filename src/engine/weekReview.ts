@@ -8,6 +8,7 @@
 // Rest days are never trainings (no counting, never missed). Weeks before
 // week 1 are not reviewed. Pure: no React, no IndexedDB.
 
+import type { WeeklyHealthCheck } from '../models/checkIn';
 import { significantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -43,6 +44,7 @@ export interface WeekReview {
   changes: string[]; // what ASCEND adjusted in this week
   next?: { title: string; note?: string; minutes: number; key?: string };
   advice: string[];
+  weeklyCheck?: WeeklyHealthCheck;
 }
 
 interface ReviewInputs {
@@ -54,6 +56,7 @@ interface ReviewInputs {
   planChangeLog: PlanChangeProposal[];
   asOf: string;
   illnessEpisodes?: IllnessEpisode[];
+  weeklyChecks?: WeeklyHealthCheck[];
 }
 
 export const KEY_TEMPLATES = ['tpl_long_run', 'tpl_mountain_hike'];
@@ -73,7 +76,8 @@ function plannedRpeTop(template: SessionTemplate, date: string, program: Program
 }
 
 export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
-  const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes } = inputs;
+  const { weekStart, plannedSessions, logs, templates, program, planChangeLog, asOf, illnessEpisodes, weeklyChecks } = inputs;
+  const weeklyCheck = weeklyChecks?.find((c) => c.weekStart === weekStart);
   if (program && weekStart < mondayOfWeek(program.startDate)) return null;
   const byId = new Map(templates.map((t) => [t.id, t]));
   const weekEnd = addDays(weekStart, 6);
@@ -188,6 +192,17 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   if ([...painCount.values()].some((n) => n >= 2) && advice.length < 3) {
     advice.push('Dezelfde plek deed deze week meer dan eens pijn. Zet het bij Blessures, dan houdt ASCEND er rekening mee, en bouw volgende week niet verder op.');
   }
+  // The weekly question (OSTRC-style): what the answer means for next week.
+  if (weeklyCheck && weeklyCheck.trouble !== 'geen') {
+    const where = weeklyCheck.area ? ` aan je ${weeklyCheck.area.toLowerCase()}` : '';
+    if (weeklyCheck.trouble === 'niet_kunnen' || weeklyCheck.severity === 'ernstig') {
+      advice.unshift(`Je kon door klachten${where} niet trainen. Bouw volgende week niet verder op, zet het bij Blessures en laat het bekijken als het niet binnen 2 tot 3 weken beter wordt.`);
+    } else if (weeklyCheck.trouble === 'minder' || weeklyCheck.severity === 'matig') {
+      advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
+    } else {
+      advice.push(`Een lichte klacht${where}, zonder dat je minder kon trainen. Let erop; zakt hij niet, meld het dan weer volgende week.`);
+    }
+  }
   if (heavier >= 2) {
     advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Slaap je genoeg en eet je genoeg? Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk.');
   } else if (lighter >= 2 && advice.length < 3) {
@@ -215,6 +230,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     changes,
     next,
     advice: advice.slice(0, 3),
+    weeklyCheck,
   };
 }
 
