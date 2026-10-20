@@ -14,7 +14,7 @@
 // than a hardcoded assumption.
 
 import type { ScheduleProposal } from './scheduler';
-import type { PlannedSession, SessionTemplate } from '../models/training';
+import type { PlanLock, PlannedSession, SessionTemplate } from '../models/training';
 import type { EngineEvent, PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import { isDateInCommittedRange, isDateInForecastRange, type HorizonZone } from './planningHorizon';
 import { makeId } from '../utils/id';
@@ -126,7 +126,10 @@ export function applyPlanChangeItems(
   items: PlanChangeItem[],
   sessions: PlannedSession[],
   idGenerator: () => string = () => makeId('planned'),
+  // An accepted proposal: what it moves, adds or keeps is fixed in place.
+  lock?: PlanLock,
 ): ApplyPlanChangeResult {
+  const locked = lock ? { lock } : {};
   let next = sessions;
   const prescriptionChanges: PlanChangeItem[] = [];
   const unsupported: PlanChangeItem[] = [];
@@ -134,6 +137,9 @@ export function applyPlanChangeItems(
   for (const item of items) {
     switch (item.action) {
       case 'keep':
+        // A session the proposal shows unchanged ("Benen A erna") is part
+        // of what you agreed to.
+        if (lock && item.plannedSessionId) next = next.map((s) => (s.id === item.plannedSessionId ? { ...s, lock } : s));
         break;
       case 'replace':
       case 'reduce':
@@ -158,7 +164,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}) }
+            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }
             : s,
         );
         break;
@@ -175,6 +181,7 @@ export function applyPlanChangeItems(
           weekStartDate: item.newSessionDraft.weekStartDate,
           status: 'planned',
           order: next.length,
+          ...locked,
         };
         next = [...next, created];
         break;
@@ -186,7 +193,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate }
+            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }
             : s,
         );
         break;
@@ -196,7 +203,7 @@ export function applyPlanChangeItems(
           unsupported.push(item);
           break;
         }
-        next = next.map((s) => (s.id === item.plannedSessionId ? { ...s, status: 'skipped' } : s));
+        next = next.map((s) => (s.id === item.plannedSessionId ? { ...s, status: 'skipped', ...locked } : s));
         break;
       }
     }

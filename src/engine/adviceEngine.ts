@@ -422,7 +422,9 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const sameDayLegs = weekOf(date).filter((s) => s.scheduledDate === date && open(s) && (() => { const t = templateById.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t); })());
     const legsName = sameDayLegs.length > 0 ? templateById.get(sameDayLegs[0].templateId)?.name ?? 'Beenkracht' : undefined;
     const legsNote = legsName ? ` ${legsName} die dag pas na de test, liefst 6 uur later (minstens 3): eerst lopen, dan kracht.` : '';
-    candidates.push({ cost: daysFrom(date), date, label: `${shortDate(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${shortDate(date)}.${legsNote} ${why}`, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) });
+    // The leg day the option shows stays as shown: kept, so accepting fixes it.
+    const keeps = sameDayLegs.map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] }));
+    candidates.push({ cost: daysFrom(date), date, label: `${shortDate(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${shortDate(date)}.${legsNote} ${why}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${shortDate(date)}.`, why) });
   }
 
   // 2. Make room: the least important trainings that stand in the way, on

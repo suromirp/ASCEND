@@ -68,6 +68,23 @@ describe('applyPlanChangeItems', () => {
     expect(result.unsupported).toEqual([]);
   });
 
+  it('an accepted proposal locks what it moves and what it keeps in view; the rest stays free', () => {
+    const lock = { by: 'proposal' as const, proposalId: 'p1', at: '2026-09-09T08:00:00Z' };
+    const items: PlanChangeItem[] = [
+      { plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-11', plannedMinutes: 45 },
+      { plannedSessionId: 's2', action: 'keep' },
+    ];
+    const result = applyPlanChangeItems(items, [...sessions, session('s3', 'tpl_z', '2026-09-12', '2026-09-07')], undefined, lock);
+    expect(result.sessions.find((s) => s.id === 's1')).toMatchObject({ scheduledDate: '2026-09-11', plannedMinutes: 45, lock });
+    expect(result.sessions.find((s) => s.id === 's2')).toEqual({ ...sessions[1], lock });
+    expect(result.sessions.find((s) => s.id === 's3')?.lock).toBeUndefined();
+  });
+
+  it('a move keeps the short length it promised (korter, 45 minuten)', () => {
+    const result = applyPlanChangeItems([{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-11', plannedMinutes: 45 }], sessions);
+    expect(result.sessions.find((s) => s.id === 's1')?.plannedMinutes).toBe(45);
+  });
+
   it('move updates scheduledDate/status/movedFromDate on the matched session only', () => {
     const items: PlanChangeItem[] = [{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-11' }];
     const result = applyPlanChangeItems(items, sessions);

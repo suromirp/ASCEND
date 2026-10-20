@@ -142,6 +142,39 @@ describe('a swap for a run that moved is swapped back', () => {
   });
 });
 
+describe('an accepted proposal survives the next sync (production feedback: Benen A went back)', () => {
+  const program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: layoutPhasesForGoal('2026-09-28', '2027-08-01', { [PHASE_BASIS]: 4 })! };
+  const lock = { by: 'proposal' as const, proposalId: 'testroom', at: '2026-10-20T08:00:00Z' };
+  // As after Akkoord on "Testloop di 27 oktober, Benen A erna": the test moved
+  // to Tuesday, Benen A short on Tuesday (kept, so locked), Upper A on Wednesday.
+  const accepted = (withLock: boolean) => week('2026-10-26').map((s): PlannedSession => {
+    if (s.templateId === 'tpl_easy_run') return { ...s, templateId: 'tpl_test_run', scheduledDate: '2026-10-27', status: 'moved', movedFromDate: '2026-10-29', lock };
+    if (s.templateId === 'tpl_lower_a') return { ...s, scheduledDate: '2026-10-27', plannedMinutes: 45, raceBlock: { pair: s.id, from: '2026-10-28', to: '2026-10-27', short: true }, ...(withLock ? { lock } : {}) };
+    if (s.templateId === 'tpl_upper_a') return { ...s, scheduledDate: '2026-10-28', raceBlock: { pair: '2026-10-26-tpl_lower_a', from: '2026-10-27', to: '2026-10-28' } };
+    return s;
+  });
+
+  it('with the lock nothing moves back, and the markers go', () => {
+    const c = applyRaceBlocks(accepted(true), blocks, templates, newId, program);
+    const legs = c.update.find((u) => u.templateId === 'tpl_lower_a');
+    const upper = c.update.find((u) => u.templateId === 'tpl_upper_a');
+    expect(legs).toMatchObject({ scheduledDate: '2026-10-27', plannedMinutes: 45 });
+    expect(legs?.raceBlock).toBeUndefined();
+    expect(upper).toMatchObject({ scheduledDate: '2026-10-28' });
+    expect(upper?.raceBlock).toBeUndefined();
+    // And the run after that changes nothing more.
+    const after = accepted(true).map((s) => c.update.find((u) => u.id === s.id) ?? s);
+    expect(applyRaceBlocks(after, blocks, templates, newId, program).update).toEqual([]);
+  });
+
+  it('a test you moved still counts as a run the legs keep their distance from', () => {
+    // A free leg day the day before the moved test is swapped away or shortened.
+    const w = week('2026-10-26').map((s): PlannedSession => (s.templateId === 'tpl_easy_run' ? { ...s, templateId: 'tpl_test_run', scheduledDate: '2026-10-28', status: 'moved', movedFromDate: '2026-10-29', lock } : s));
+    const c = applyRaceBlocks(w, blocks, templates, newId, program);
+    expect(c.update.find((u) => u.templateId === 'tpl_lower_a')).toBeDefined();
+  });
+});
+
 describe('a test the weekly prescription took out comes back', () => {
   const sess = (id: string, templateId: string, date: string, status: PlannedSession['status'] = 'skipped'): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: mondayOfWeek(date), status, order: 0 });
   const removal = (id: string, source: string): PlanChangeProposal => ({
@@ -156,5 +189,10 @@ describe('a test the weekly prescription took out comes back', () => {
     const back = revivePrescriptionRemovedTests(sessions, proposals, new Set(['t4']), '2026-10-20');
     expect(back.map((s) => s.id)).toEqual(['t1']); // t2 you skipped yourself, t3 is past, t4 is logged, the race is re-added by the block
     expect(back[0].status).toBe('planned');
+  });
+
+  it('once: a revived test you skip yourself stays skipped', () => {
+    const skipped = { ...sess('t1', 'tpl_test_run', '2026-10-29'), lock: { by: 'user' as const, at: '2026-10-20T09:00:00Z' } };
+    expect(revivePrescriptionRemovedTests([skipped], [removal('t1', prescription)], new Set(), '2026-10-21')).toEqual([]);
   });
 });

@@ -141,6 +141,16 @@ export interface PlannedSession {
   // it can be swapped back when the run moves away. `short`: the minutes were
   // set to the short version for it. Optional, additive.
   raceBlock?: { pair: string; from: string; to: string; short?: boolean };
+  // You placed this session yourself, or accepted a proposal that moves it or
+  // shows it here. The automatic planning never moves, swaps, shortens or
+  // retemplates it (docs/onderzoek/Planning op een lijn.md). Optional, additive.
+  lock?: PlanLock;
+}
+
+export interface PlanLock {
+  by: 'user' | 'proposal';
+  proposalId?: string;
+  at: string;
 }
 
 export type SessionVariant = 'full' | 'short' | 'minimum' | 'custom';

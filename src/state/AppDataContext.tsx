@@ -108,6 +108,10 @@ function runBootMigrationsOnce(): Promise<void> {
 // refreshes at once can never add the same weeks twice.
 let lastHorizonKey = '';
 let horizonQueue: Promise<void> = Promise.resolve();
+// Raised after every Akkoord and every move or skip of your own, so the sync
+// checks the week right away instead of the next day (docs/onderzoek/Planning op een
+// lijn.md, conflict 9).
+let planRevision = 0;
 function syncProgramHorizonWhenChanged(): Promise<void> {
   // The stored phases are part of the key, so a reset or an import that
   // rewrites the program also triggers a sync.
@@ -117,6 +121,7 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
     ]);
     return JSON.stringify([
       todayISO(),
+      planRevision,
       programs[0]?.startDate,
       programs[0]?.phases,
       programAnchorDate(goals, milestones, todayISO()),
@@ -494,7 +499,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
     if (real.length === 0) return false;
     const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
-    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+    // What you agreed to stays as you saw it: the moved, added and shown
+    // sessions are locked against the automatic planning.
+    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned, undefined, { by: 'proposal', proposalId: proposal.id, at: new Date().toISOString() });
     if (unsupported.length > 0) {
       console.error('commitPlanChange: refusing to apply, unsupported plan change items present', unsupported);
       return false;
@@ -519,6 +526,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       configBefore: restore?.config,
       createdAt: new Date().toISOString(),
     });
+    planRevision++;
     await refresh();
     return true;
   }, [refresh]);
@@ -1256,15 +1264,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const before: PlannedSession[] = [];
       const lines: string[] = [];
       const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
+      // Your own move or skip is yours: the automatic planning leaves it.
+      // Back on its own day it is the plan's again.
+      const lock = { by: 'user' as const, at: new Date().toISOString() };
       for (const change of proposal.changes) {
         const session = plannedSessions.find((s) => s.id === change.sessionId);
         if (!session) continue;
         before.push(session);
         if (change.toDate === change.fromDate) {
-          await PlannedSessionsRepo.put(skipSessionEngine(session));
+          await PlannedSessionsRepo.put({ ...skipSessionEngine(session), lock });
           lines.push(`${change.templateName} op ${day(change.fromDate)} overgeslagen`);
         } else if (change.toDate === session.movedFromDate) {
-          await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: 'planned', movedFromDate: undefined });
+          await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: 'planned', movedFromDate: undefined, lock: undefined });
           lines.push(`${change.templateName}: terug naar ${day(change.toDate)}`);
         } else {
           await PlannedSessionsRepo.put({
@@ -1272,6 +1283,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             scheduledDate: change.toDate,
             status: 'moved',
             movedFromDate: session.movedFromDate ?? change.fromDate,
+            lock,
           });
           lines.push(`${change.templateName}: ${day(change.fromDate)} → ${day(change.toDate)}`);
         }
@@ -1290,6 +1302,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           createdAt: new Date().toISOString(),
         });
       }
+      planRevision++;
       await refresh();
     },
     [plannedSessions, refresh],
@@ -1596,6 +1609,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // skip rather than a move.
   const applyNoTimeToday = useCallback(
     async (proposals: ScheduleProposal[]) => {
+      const lock = { by: 'user' as const, at: new Date().toISOString() };
       for (const proposal of proposals) {
         for (const change of proposal.changes) {
           const session = plannedSessions.find((s) => s.id === change.sessionId);
@@ -1606,12 +1620,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               scheduledDate: change.toDate,
               status: 'moved',
               movedFromDate: session.movedFromDate ?? change.fromDate,
+              lock,
             });
           } else {
-            await PlannedSessionsRepo.put(skipSessionEngine(session));
+            await PlannedSessionsRepo.put({ ...skipSessionEngine(session), lock });
           }
         }
       }
+      planRevision++;
       await refresh();
     },
     [plannedSessions, refresh],
