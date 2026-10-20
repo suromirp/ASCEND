@@ -23,6 +23,7 @@ import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { LessonCard } from '../components/LessonCard';
+import { LegFatigueCard } from '../components/LegFatigueCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
@@ -316,6 +317,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           <p className="mt-1 font-display text-lg" style={{ color: 'var(--color-gold)' }}>{streak} {streak === 1 ? 'dag' : 'dagen'}</p>
         </Card>
       </div>
+
+      <LegFatigueCard />
 
       {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
 

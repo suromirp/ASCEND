@@ -8,6 +8,11 @@ import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { isLegHeavyTemplate } from '../engine/scheduler';
+import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
+import { useLegFatigueInputs } from './LegFatigueCard';
+import { formatNumberNL } from '../utils/number';
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
 // top what changes, one line each; below the week in the same style as the
@@ -35,6 +40,17 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
   const data = useMemo(() => (advice.proposal ? previewProposal(advice.proposal.changes, plannedSessions, templates) : { moves: [], weeks: [] }), [advice, plannedSessions, templates]);
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const today = todayISO();
+  const fatigueInputs = useLegFatigueInputs();
+  // A test or race this proposal moves: how fresh the legs are there, now and after.
+  const freshness = useMemo(() => {
+    if (!advice.proposal) return undefined;
+    const item = advice.proposal.changes.find((c) => c.action === 'move' && c.plannedSessionId && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? ''));
+    if (!item?.toDate) return undefined;
+    const kind = plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' : 'test';
+    const after = applyPlanChangeItems(advice.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview').sessions;
+    const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
+    return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
+  }, [advice, plannedSessions, fatigueInputs]);
 
   const minutes = (e: PreviewEntry, date: string) => {
     if (e.type === 'recovery') return undefined;
@@ -69,6 +85,13 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
                 </div>
               )}
 
+              {freshness && (
+                <p className="mt-3 flex items-baseline justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-xs" style={{ borderColor: 'var(--color-card-border)' }}>
+                  <span style={{ color: 'var(--color-ink-dim)' }}>Benen op de {freshness.kind === 'race' ? 'wedstrijd' : 'testdag'}, {short(freshness.date)}</span>
+                  <span className="shrink-0 tabular-nums" style={{ color: freshness.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-gold)' }}>{formatNumberNL(freshness.index, 1)} · {freshness.status}</span>
+                </p>
+              )}
+
               {data.weeks.map((w) => (
                 <section key={w.weekStart} className="mt-6">
                   <p className="mb-3 text-[10px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>
@@ -88,7 +111,11 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
                             <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p>
                           ) : (
                             <div className="flex flex-col gap-2">
-                              {d.entries.map((e, i) => <EntryCard key={i} entry={e} minutes={minutes(e, d.date)} />)}
+                              {d.entries.map((e, i) => {
+                                const testThatDay = d.entries.some((o) => (o.templateId === 'tpl_test_run' || o.templateId === 'tpl_race') && o.change !== 'weg' && o.change !== 'vervalt');
+                                const afterTest = testThatDay && e.type === 'strength' && !!byId.get(e.templateId) && isLegHeavyTemplate(byId.get(e.templateId)!);
+                                return <EntryCard key={i} entry={e} minutes={minutes(e, d.date)} afterTest={afterTest} />;
+                              })}
                             </div>
                           )}
                         </div>
@@ -149,7 +176,7 @@ function Glyph({ kind }: { kind: 'move' | 'add' | 'remove' }) {
 
 // A training as a card, like in Week: a coloured dot for the kind of
 // training, the name, the minutes; what changes gets its own state.
-function EntryCard({ entry, minutes }: { entry: PreviewEntry; minutes?: number }) {
+function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes?: number; afterTest?: boolean }) {
   const rest = entry.type === 'recovery';
   const struck = entry.change === 'weg' || entry.change === 'vervalt';
   const highlighted = entry.change === 'hierheen' || entry.change === 'nieuw';
@@ -157,7 +184,8 @@ function EntryCard({ entry, minutes }: { entry: PreviewEntry; minutes?: number }
     : entry.change === 'weg' && entry.otherDate ? `naar ${short(entry.otherDate)}`
     : entry.change === 'vervalt' ? 'vervalt'
     : entry.change === 'nieuw' ? 'nieuw'
-    : rest ? 'Wandelen mag, niets af te vinken' : undefined;
+    : rest ? 'Wandelen mag, niets af te vinken'
+    : afterTest ? 'Na de test, minstens 6 uur later' : undefined;
   return (
     <div
       className="flex items-center gap-3 rounded-2xl border px-4 py-3"

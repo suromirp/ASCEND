@@ -182,6 +182,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   const lists: [string, (v: unknown) => boolean][] = [
     ['weightEntries', (e) => isRecord(e) && isDate(e.date) && typeof e.kg === 'number' && Number.isFinite(e.kg)],
     ['illnessEpisodes', (e) => hasId(e) && isDate(e.startDate) && typeof e.kind === 'string'],
+    ['morningCheckIns', (e) => isRecord(e) && isDate(e.date)],
   ];
   for (const [key, valid] of lists) {
     if (!(key in s)) continue;
