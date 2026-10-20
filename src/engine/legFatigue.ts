@@ -54,13 +54,26 @@ const DEFAULT_BODY_KG = 80;
 
 // Sets near failure work on much longer than sets with reps in reserve
 // (Morán-Navarro e.a. 2017).
+// Anchors 6: 0.7, 7: 0.85, 8: 1.0, 9: 1.3, 10: 1.5, straight lines between
+// them, so one point of RPE never makes the index jump (docs/onderzoek/
+// Betrouwbaarheid beenvermoeidheid-index.md, aanbeveling 3).
+const EFFORT_ANCHORS: [number, number][] = [[6, 0.7], [7, 0.85], [8, 1], [9, 1.3], [10, 1.5]];
 function effortFactor(rpe: number): number {
   if (rpe <= 6) return 0.7;
-  if (rpe < 8) return 0.85;
-  if (rpe < 9) return 1;
-  if (rpe < 10) return 1.3;
-  return 1.5;
+  if (rpe >= 10) return 1.5;
+  const i = EFFORT_ANCHORS.findIndex(([r]) => r > rpe);
+  const [r0, f0] = EFFORT_ANCHORS[i - 1];
+  const [r1, f1] = EFFORT_ANCHORS[i];
+  return f0 + ((rpe - r0) / (r1 - r0)) * (f1 - f0);
 }
+
+// Minutes of strength that count: long breaks don't make a session heavier
+// (95 minutes is not 27% more than 75; same report, aanbeveling 2).
+const MAX_STRENGTH_MINUTES = 75;
+// Descent counts towards adaptation gradually from 50 to 150 m, instead of
+// a hard line at 100 m (aanbeveling 3).
+const DESCENT_ADAPT_FROM = 50;
+const DESCENT_ADAPT_FULL = 150;
 
 // Bounded, so one odd log can't dominate.
 function rpeFactor(logged: number | undefined, planned: number): number {
@@ -179,7 +192,7 @@ type AdaptKind = 'strength' | 'descent';
 function adaptKind(t: SessionTemplate, e: FatigueEvent): AdaptKind | undefined {
   const p = resolveEffectiveStressProfile(t);
   if (t.type === 'strength') return p.lowerBodyLoad !== 'none' && p.eccentricLoad !== 'none' ? 'strength' : undefined;
-  return (e.descentM ?? 0) >= 100 ? 'descent' : undefined;
+  return (e.descentM ?? 0) >= DESCENT_ADAPT_FROM ? 'descent' : undefined;
 }
 
 // 1.0 nothing similar in 6 weeks; 0.8 the last one 3 to 6 weeks ago; 0.75
@@ -201,9 +214,12 @@ export function adaptationFactor(event: FatigueEvent, kind: AdaptKind, all: Fati
 // --- one session's impulse in the three buckets ------------------------------------
 export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, all: FatigueEvent[], byId: Map<string, SessionTemplate>, bodyKg = DEFAULT_BODY_KG): { intensity: number; strength: number; damage: number } {
   const p = resolveEffectiveStressProfile(template);
-  const hours = Math.max(0, event.minutes) / 60;
+  const hours = Math.max(0, template.type === 'strength' ? Math.min(event.minutes, MAX_STRENGTH_MINUTES) : event.minutes) / 60;
   const kind = adaptKind(template, event);
-  const adapt = kind ? adaptationFactor(event, kind, all, byId) : 1;
+  const fullAdapt = kind ? adaptationFactor(event, kind, all, byId) : 1;
+  // For runs and walks the discount grows with the descent itself.
+  const weight = template.type === 'strength' ? 1 : Math.min(1, Math.max(0, ((event.descentM ?? 0) - DESCENT_ADAPT_FROM) / (DESCENT_ADAPT_FULL - DESCENT_ADAPT_FROM)));
+  const adapt = 1 - weight * (1 - fullAdapt);
   const feel = event.feel === 'worse' ? 1.25 : event.feel === 'better' ? 0.9 : 1;
   let intensity = 0;
   let strength = 0;
@@ -274,4 +290,14 @@ export function fatigueWord(index: number): { word: string; level: 0 | 1 | 2 } {
   if (index <= FATIGUE_THRESHOLDS.test.fresh) return { word: 'Fris', level: 0 };
   if (index <= FATIGUE_THRESHOLDS.hard.fresh) return { word: 'Wat vermoeid', level: 1 };
   return { word: 'Vermoeid', level: 2 };
+}
+
+// The index is an estimate: near a threshold it can as well be 2 points
+// higher or lower (docs/onderzoek/Betrouwbaarheid beenvermoeidheid-index.md:
+// between about 6 and 11 single inputs flip the decision). Shown as a band;
+// within 2 of the threshold: "op de grens, beslis bij het inlopen".
+export const FATIGUE_BAND = 2;
+export function fatigueBand(index: number, purpose: FatiguePurpose): { low: number; high: number; nearLine: boolean } {
+  const t = FATIGUE_THRESHOLDS[purpose].fresh;
+  return { low: Math.max(0, Math.round((index - FATIGUE_BAND) * 10) / 10), high: Math.round((index + FATIGUE_BAND) * 10) / 10, nearLine: Math.abs(index - t) <= FATIGUE_BAND };
 }
