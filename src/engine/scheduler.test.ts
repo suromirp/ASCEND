@@ -351,11 +351,21 @@ describe('the 5 km test needs fresh legs', () => {
     expect(respectsHeavySpacing(FRI, t('tpl_test_run'), [session('easy', 'tpl_easy_run', SAT, MON)], byId)).toBe(true);
   });
 
-  it('no hard run or long run in the 2 days before it: the legs need 48 to 72 hours', () => {
-    const before = (id: string) => [session('x', id, MON, MON)];
-    for (const id of ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_long_run']) {
-      expect(respectsHeavySpacing(WED, t('tpl_test_run'), before(id), byId)).toBe(false); // 2 days after
-      expect(respectsHeavySpacing(THU, t('tpl_test_run'), before(id), byId)).toBe(true); // 3 days after
-    }
+  it('before the test the leg fatigue index decides, not a fixed number of days', () => {
+    // A full Lower A the day before: too heavy. Two days before, short: fresh enough.
+    expect(respectsHeavySpacing(THU, t('tpl_test_run'), [session('legs', 'tpl_lower_a', WED, MON)], byId)).toBe(false);
+    expect(respectsHeavySpacing(THU, t('tpl_test_run'), [{ ...session('legs', 'tpl_lower_a', '2026-09-08', MON), plannedMinutes: 45 }], byId)).toBe(true);
+    // Hills alone two days before: fine now (the old rule said no).
+    expect(respectsHeavySpacing(WED, t('tpl_test_run'), [session('x', 'tpl_hill_intervals', MON, MON)], byId)).toBe(true);
+    // Hills Saturday and the long run Sunday (planned at its 300 m target): Monday too heavy, Wednesday fine.
+    const weekend = [session('h', 'tpl_hill_intervals', '2026-09-05', '2026-08-31'), session('l', 'tpl_long_run', '2026-09-06', '2026-08-31')];
+    expect(respectsHeavySpacing(MON, t('tpl_test_run'), weekend, byId)).toBe(false);
+    expect(respectsHeavySpacing(WED, t('tpl_test_run'), weekend, byId)).toBe(true);
+  });
+
+  it('a Lower A placed right before an existing test is a conflict for that test', () => {
+    const test = [session('test', 'tpl_test_run', THU, MON)];
+    expect(respectsHeavySpacing(WED, t('tpl_lower_a'), test, byId)).toBe(false);
+    expect(respectsHeavySpacing(MON, t('tpl_lower_a'), test, byId)).toBe(true);
   });
 });

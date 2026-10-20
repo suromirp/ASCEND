@@ -7,6 +7,7 @@ import { templateSport } from './sports';
 import { detectRecentSpike } from './progressionSpikes';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
+import { FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueResult } from './legFatigue';
 
 // ASCEND's scheduling engine is deterministic on purpose (spec §16, §29):
 // it never guesses and it never runs an LLM in the loop. A future AI layer
@@ -123,7 +124,61 @@ export function respectsHeavySpacing(
   recentLogs: SessionLog[] = [],
   sessionId = '',
 ): boolean {
-  return findHeavyConflicts(sessionId, template, date, sessions, templateMap, recentLogs).length === 0;
+  if (findHeavyConflicts(sessionId, template, date, sessions, templateMap, recentLogs).length > 0) return false;
+  // A test or race also needs fresh legs from what can't be moved (logged sessions).
+  if (FRESH_LIMIT[template.id] !== undefined && freshnessAt(date, sessions.filter((s) => s.id !== sessionId), templateMap, recentLogs).index > FRESH_LIMIT[template.id]) return false;
+  return true;
+}
+
+// --- a test or race: fresh legs by the leg fatigue index ----------------------
+// (engine/legFatigue.ts; docs/onderzoek/Spierbelasting en beenvermoeidheid.md).
+// Before the test the index decides, not a fixed number of days: a short,
+// familiar Lower A two days before is fine, a full one the day before is not,
+// and a first hike after a break counts longer. The day after a test stays
+// easy (expert rule), and on the test day itself only strength after the test,
+// with the setting "Zware dingen op één dag".
+const FRESH_LIMIT: Record<string, number> = { tpl_test_run: FATIGUE_THRESHOLDS.test.fresh, tpl_race: FATIGUE_THRESHOLDS.race.doubt };
+const isTestLike = (t: SessionTemplate) => FRESH_LIMIT[t.id] !== undefined;
+
+// The index on `date` from these planned sessions and the logs. Pain and
+// soreness are signals for you, not for placing sessions: left out here.
+export function freshnessAt(date: string, sessions: PlannedSession[], templateMap: Map<string, SessionTemplate>, logs: SessionLog[], extra?: { id: string; templateId: string; date: string; plannedMinutes?: number }): LegFatigueResult {
+  const planned = sessions.filter((s) => s.status !== 'skipped' && s.scheduledDate < date && daysBetween(s.scheduledDate, date) <= 10);
+  if (extra) planned.push({ id: extra.id, templateId: extra.templateId, scheduledDate: extra.date, weekStartDate: mondayOfWeek(extra.date), status: 'planned', order: 0, plannedMinutes: extra.plannedMinutes });
+  const quietLogs = logs.filter((l) => l.completedDate < date && daysBetween(l.completedDate, date) <= 52).map((l) => ({ ...l, painAreas: undefined }));
+  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01' });
+}
+
+// The planned sessions that make a test day too heavy, largest first, until
+// what is left is under the limit.
+function freshnessBlockers(date: string, limit: number, sessions: PlannedSession[], templateMap: Map<string, SessionTemplate>, logs: SessionLog[]): PlannedSession[] {
+  const result = freshnessAt(date, sessions, templateMap, logs);
+  if (result.index <= limit) return [];
+  const byPlanned = new Map(sessions.map((s) => [s.id, s]));
+  const logToPlanned = new Map(logs.map((l) => [l.id, l.plannedSessionId]));
+  const blockers: PlannedSession[] = [];
+  let left = result.index;
+  for (const c of result.contributions) {
+    if (left <= limit) break;
+    const session = byPlanned.get(c.id) ?? byPlanned.get(logToPlanned.get(c.id) ?? '');
+    // A logged session can't be moved any more: it only counts.
+    if (!session || c.logged) continue;
+    blockers.push(session);
+    left -= c.points;
+  }
+  return blockers;
+}
+
+// Pairwise rules that stay around a test: the same day and the day after.
+function testPairConflict(_test: SessionTemplate, testDate: string, other: SessionTemplate, otherDate: string): boolean {
+  const gap = daysBetween(testDate, otherDate); // > 0: the other comes after the test
+  if (gap === 0) {
+    if (other.type === 'recovery') return false;
+    if (other.type === 'strength') return isLegHeavyTemplate(other) && !hardSameDay;
+    return isHardRun(other) || isLegHeavyTemplate(other) || isTestLike(other);
+  }
+  if (gap === 1) return other.type !== 'strength' && (isHardRun(other) || isLegHeavyTemplate(other));
+  return false;
 }
 
 // Every session that would clash, not just the first: moving one session
@@ -137,12 +192,23 @@ export function findHeavyConflicts(
   templateMap: Map<string, SessionTemplate>,
   recentLogs: SessionLog[] = [],
 ): PlannedSession[] {
-  return sessions.filter((s) => {
+  const pairwise = sessions.filter((s) => {
     if (s.id === sessionId || s.status === 'skipped') return false;
     const other = templateMap.get(s.templateId);
     if (!other) return false;
+    if (isTestLike(template)) return testPairConflict(template, date, other, s.scheduledDate);
+    if (isTestLike(other)) {
+      if (testPairConflict(other, s.scheduledDate, template, date)) return true;
+      // Before the test: does this session make the test day too heavy?
+      const before = daysBetween(date, s.scheduledDate);
+      if (before < 1 || before > 7) return false;
+      const rest = sessions.filter((o) => o.id !== sessionId && o.id !== s.id);
+      const without = freshnessAt(s.scheduledDate, rest, templateMap, recentLogs).index;
+      const withIt = freshnessAt(s.scheduledDate, rest, templateMap, recentLogs, { id: sessionId || 'candidate', templateId: template.id, date, plannedMinutes: sessions.find((o) => o.id === sessionId)?.plannedMinutes }).index;
+      return withIt > FRESH_LIMIT[other.id] && withIt - without >= 0.5;
+    }
     const shared = sharedHeavyAxes(template, other);
-    if (shared.length === 0) return hardRunAfterLegStrength(template, date, other, s.scheduledDate) || testNeedsFreshLegs(template, date, other, s.scheduledDate);
+    if (shared.length === 0) return hardRunAfterLegStrength(template, date, other, s.scheduledDate);
     // The intended back-to-back (hill intervals Saturday, long run Sunday)
     // is exactly that: the next day, in that order. Never both on the
     // same day, and never the other way round (production feedback: a
@@ -156,6 +222,9 @@ export function findHeavyConflicts(
     const second = first === template ? other : template;
     return gap <= legSpacingDays(first, second) + extra;
   });
+  if (!isTestLike(template)) return pairwise;
+  const blockers = freshnessBlockers(date, FRESH_LIMIT[template.id], sessions.filter((s) => s.id !== sessionId), templateMap, recentLogs);
+  return [...pairwise, ...blockers.filter((b) => !pairwise.some((p) => p.id === b.id))];
 }
 
 // ASCEND_HEURISTIC(LEG-SPACING-BY-PAIR): the days that must lie between two
@@ -206,21 +275,8 @@ function hardRunAfterLegStrength(a: SessionTemplate, aDate: string, b: SessionTe
   const gap = daysBetween(strengthDate, runDate);
   if (gap === 0) return !hardSameDayAllowed(strength, run);
   if (gap < 0) return false; // the run first: fine
-  return gap <= (TEST_OR_RACE.has(run.id) ? 2 : 1);
-}
-
-// A 5 km test is an all-out effort: no hard run, hill session or long run
-// in the 2 days before it, nor the day after (the result would say more
-// about tired legs than about your pace). After heavy descending and long
-// running, leg power and running economy stay down for 24 to 72 hours
-// (Burt & Twist 2011; Assumpção e.a. 2013), so one day was too tight.
-// Strength is covered by the rule above (at least 3 days before).
-function testNeedsFreshLegs(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {
-  const [test, other, otherDate, testDate] = a.id === 'tpl_test_run' ? [a, b, bDate, aDate] : b.id === 'tpl_test_run' ? [b, a, aDate, bDate] : [];
-  if (!test || !other || !otherDate || !testDate || other.type === 'strength') return false;
-  if (!(isHardRun(other) || isLegHeavyTemplate(other))) return false;
-  const gap = daysBetween(otherDate, testDate); // > 0: the other comes before the test
-  return gap >= 0 ? gap <= 2 : gap >= -1;
+  if (TEST_OR_RACE.has(run.id)) return false; // the leg fatigue index decides (findHeavyConflicts)
+  return gap <= 1;
 }
 
 // Setting (Training → Zware dingen op één dag): leg strength and a hard
@@ -239,8 +295,6 @@ export function isHardSameDayAllowed(): boolean {
 // never a hike (that's a whole day out).
 function hardSameDayAllowed(a: SessionTemplate, b: SessionTemplate): boolean {
   if (!hardSameDay) return false;
-  // The test run and the race need fresh legs: never on a day with leg strength.
-  if (['tpl_test_run', 'tpl_race'].some((id) => a.id === id || b.id === id)) return false;
   const run = (t: SessionTemplate) => templateSport(t) === 'running';
   return (a.type === 'strength' && run(b)) || (run(a) && b.type === 'strength');
 }

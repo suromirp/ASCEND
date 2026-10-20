@@ -67,8 +67,10 @@ describe('TEST-MAKE-ROOM: the test sits on your rest day', () => {
   it('proposes another day for the test, nearest to its own date and never a rest day', () => {
     const a = advice()!;
     expect(a.title).toContain('staat op je rustdag');
-    const move = a.proposal!.changes.find((c) => c.action === 'move')!;
-    expect(move.plannedSessionId).toBe('2026-10-26-3');
+    const move = a.proposal!.changes.find((c) => c.action === 'move' && c.plannedSessionId === '2026-10-26-3')!;
+    expect(move).toBeDefined();
+    // Nothing is dropped: strength is moved out of the way instead.
+    expect(a.proposal!.changes.some((c) => c.action === 'remove')).toBe(false);
     expect(move.toDate).not.toBe(THURSDAY);
     expect(Math.abs((new Date(move.toDate! + 'T12:00:00Z').getTime() - new Date(THURSDAY + 'T12:00:00Z').getTime()) / 86400000)).toBeLessThanOrEqual(5);
   });
@@ -76,5 +78,24 @@ describe('TEST-MAKE-ROOM: the test sits on your rest day', () => {
   it('is quiet when the test is not on a rest day, or after you said no', () => {
     expect(advice({ plannedSessions: [...planned] })).toBeUndefined();
     expect(advice({ respondedIds: new Set(['testroom:2026-10-26-3']) })).toBeUndefined();
+  });
+});
+
+describe('TEST-MAKE-ROOM: move strength before dropping anything', () => {
+  // A week with room: Thursday and Friday free, but Lower A on Wednesday makes Thursday too heavy.
+  const sparse: PlannedSession[] = [
+    { id: 'rest', templateId: 'tpl_herstel', scheduledDate: '2026-11-02', weekStartDate: '2026-11-02', status: 'planned', order: 0 },
+    { id: 'upA', templateId: 'tpl_upper_a', scheduledDate: '2026-11-03', weekStartDate: '2026-11-02', status: 'planned', order: 1 },
+    { id: 'lowA', templateId: 'tpl_lower_a', scheduledDate: '2026-11-04', weekStartDate: '2026-11-02', status: 'planned', order: 2 },
+    { id: 'hills', templateId: 'tpl_hill_intervals', scheduledDate: '2026-11-07', weekStartDate: '2026-11-02', status: 'planned', order: 5 },
+    { id: 'long', templateId: 'tpl_long_run', scheduledDate: '2026-11-08', weekStartDate: '2026-11-02', status: 'planned', order: 6 },
+    { id: 'test', templateId: 'tpl_test_run', scheduledDate: '2026-11-02', weekStartDate: '2026-11-02', status: 'skipped', order: 9 },
+  ];
+  it('proposes moving a strength session, and drops nothing', () => {
+    const a = roomAdvice({ plannedSessions: sparse, asOf: '2026-11-02' })!;
+    const changes = a.proposal!.changes;
+    expect(changes.some((c) => c.action === 'remove')).toBe(false);
+    expect(changes.find((c) => c.plannedSessionId === 'test')).toMatchObject({ action: 'move' });
+    expect(changes.filter((c) => c.action === 'move' && c.plannedSessionId !== 'test').length).toBeGreaterThan(0);
   });
 });

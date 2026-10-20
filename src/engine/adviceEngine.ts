@@ -17,6 +17,7 @@
 //   decided here — that's the shared feedback pattern (changeImpact.ts);
 //   accepting advice IS the user's confirmation.
 
+import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { proposeRestWeekSkip } from './restWeek';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
@@ -25,7 +26,7 @@ import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../model
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
-import { findHeavyConflicts, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
+import { findHeavyConflicts, freshnessAt, isHardRun, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -293,13 +294,87 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const title = onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
   const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
 
-  // 1. A free day.
-  for (const date of days) {
-    if (!dayHasRoomFor(date, test, weekOf(date), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
-    if (!respectsHeavySpacing(date, test, load(new Set()), templateById, inputs.logs, lost.id)) continue;
-    const effect = `Doe hem ${shortDate(date)}. ${why}`;
-    return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) }];
+  // 1b. Move leg strength out of the way rather than dropping anything: to
+  // after the test, that evening (with "Zware dingen op één dag") or in the
+  // days after. Running first and lifting later leaves the next run alone
+  // (Doma en Deakin 2013; docs/onderzoek/Spierbelasting en beenvermoeidheid.md).
+  // Strength that shares the day (when the test doesn't fit beside it) moves
+  // too, to the nearest day where it fits; nothing is dropped in this step.
+  // Moved leg strength must not leave the next hard session (hills, intervals,
+  // tempo, a long run) in the two days after it too heavy: index 12 at most
+  // (docs/onderzoek/Spierbelasting en beenvermoeidheid.md, "Drempels").
+  function nextHardStaysFresh(d: string, s: PlannedSession, others: PlannedSession[]): boolean {
+    const t = templateById.get(s.templateId);
+    if (!t || !isLegHeavyTemplate(t)) return true;
+    const hard = others.find((o) => { const ot = templateById.get(o.templateId); return !!ot && ot.type !== 'strength' && ot.type !== 'recovery' && (isHardRun(ot) || isLegHeavyTemplate(ot)) && daysBetween(d, o.scheduledDate) >= 0 && daysBetween(d, o.scheduledDate) <= 2; });
+    if (!hard) return true;
+    if (hard.scheduledDate === d) return false; // the same day as a hard session: never
+    return freshnessAt(hard.scheduledDate, others.filter((o) => o.id !== hard.id), templateById, inputs.logs, { id: s.id, templateId: s.templateId, date: d, plannedMinutes: s.plannedMinutes }).index <= FATIGUE_THRESHOLDS.hard.fresh;
   }
+
+  function moveStrengthFor(date: string): Advice[] | undefined {
+    if (!test || !lost) return undefined;
+    const base = load(new Set());
+    const sameDay = base.filter((s) => s.scheduledDate === date && templateById.get(s.templateId)?.type !== 'recovery');
+    const roomOk = dayHasRoomFor(date, test, weekOf(date), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference);
+    const blockers = findHeavyConflicts(lost.id, test, date, base, templateById, inputs.logs);
+    const toMove = [...blockers, ...(roomOk ? [] : sameDay.filter((s) => !blockers.some((b) => b.id === s.id)))];
+    if (toMove.length === 0 || !toMove.every(movable)) return undefined;
+    const testAt: PlannedSession = { ...lost, scheduledDate: date, weekStartDate: mondayOfWeek(date), status: 'planned' };
+    let now = base;
+    const moves: { session: PlannedSession; to: string }[] = [];
+    for (const s of toMove) {
+      const t = templateById.get(s.templateId)!;
+      const legs = isLegHeavyTemplate(t);
+      const others = now.filter((o) => o.id !== s.id);
+      // Leg strength after the test (that evening first); upper body the nearest free day.
+      const targets = legs ? [0, 1, 2, 3] : [1, -1, 2, -2, 3];
+      const to = targets.map((d) => addDays(date, d)).find((d) => {
+        if (d < today || d === s.scheduledDate && d === date || restDates.has(d) || isIllnessDay(d, inputs.illnessEpisodes, today)) return false;
+        const week = [...weekOf(d).filter((o) => o.id !== s.id && !moves.some((m) => m.session.id === o.id)), ...moves.filter((m) => m.to === d).map((m) => ({ ...m.session, scheduledDate: m.to })), ...(d === date ? [testAt] : [])];
+        return dayHasRoomFor(d, t, week, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)
+          && respectsHeavySpacing(d, t, [...others, testAt], templateById, inputs.logs, s.id)
+          && nextHardStaysFresh(d, s, [...others, testAt]);
+      });
+      if (!to) break;
+      moves.push({ session: s, to });
+      now = [...others, { ...s, scheduledDate: to, weekStartDate: mondayOfWeek(to) }];
+    }
+    const weekAfter = [...weekOf(date).filter((o) => !moves.some((m) => m.session.id === o.id)), ...moves.map((m) => ({ ...m.session, scheduledDate: m.to }))];
+    if (moves.length !== toMove.length || !dayHasRoomFor(date, test, weekAfter, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference) || !respectsHeavySpacing(date, test, now, templateById, inputs.logs, lost.id)) return undefined;
+    const moveLines = moves.map((m) => `${templateById.get(m.session.templateId)?.name ?? 'Kracht'} naar ${m.to === date ? `${shortDate(m.to)}, na de test (minstens 6 uur later)` : shortDate(m.to)}`);
+    const items: PlanChangeItem[] = [
+      ...moves.map((m): PlanChangeItem => ({ plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, reason: 'Na de test, zodat je benen fris zijn voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
+      moveItem(date),
+    ];
+    const effect = `Doe hem ${shortDate(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel. ${why}`;
+    return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
+  }
+
+  // 1. Per day, nearest first: a free day, or else (1b below) a day that
+  // becomes free by moving strength, before looking at the next day.
+  const isStrength = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'strength';
+  const movable = (s: PlannedSession) => isStrength(s) && s.scheduledDate >= today && !loggedIds.has(s.id);
+  // The smallest change wins: a day further away weighs one, every training
+  // moved aside two (a free day two days off beats moving two sessions).
+  const daysFrom = (date: string) => (onRestDay ? Math.abs(daysBetween(lost.scheduledDate, date)) : daysBetween(today, date));
+  let bestDay: { cost: number; advice: Advice[] } | undefined;
+  for (const date of days) {
+    const free = dayHasRoomFor(date, test, weekOf(date), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)
+      && respectsHeavySpacing(date, test, load(new Set()), templateById, inputs.logs, lost.id);
+    if (!free) {
+      const moved = moveStrengthFor(date);
+      const cost = moved ? daysFrom(date) + 2 * (moved[0].proposal!.changes.length - 1) : Infinity;
+      if (moved && (!bestDay || cost < bestDay.cost)) bestDay = { cost, advice: moved };
+      continue;
+    }
+    if (bestDay && bestDay.cost <= daysFrom(date)) continue;
+    const sameDayLegs = weekOf(date).filter((s) => s.scheduledDate === date && open(s) && (() => { const t = templateById.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t); })());
+    const legsNote = sameDayLegs.length > 0 ? ` ${templateById.get(sameDayLegs[0].templateId)?.name ?? 'Beenkracht'} die dag pas na de test, minstens 6 uur later: eerst lopen, dan kracht.` : '';
+    const effect = `Doe hem ${shortDate(date)}.${legsNote} ${why}`;
+    bestDay = { cost: daysFrom(date), advice: [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) }] };
+  }
+  if (bestDay) return bestDay.advice;
 
   // 2. Make room: the least important trainings that stand in the way, on
   // that day or close to it (the hills the day after, an easy run the day

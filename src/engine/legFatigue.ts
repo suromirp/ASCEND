@@ -137,6 +137,7 @@ export interface LegFatigueResult {
 export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSessions' | 'templates' | 'today' | 'minutesOf'>): FatigueEvent[] {
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const ownElevation = recentElevation(inputs.logs);
   const events: FatigueEvent[] = inputs.logs.map((l) => {
     const d = l.outdoorData ?? l.cardioData;
     return {
@@ -149,10 +150,26 @@ export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSe
     const t = byId.get(s.templateId);
     if (!t || t.type === 'recovery') continue;
     const minutes = s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
-    const target = t.outdoorTarget?.targetElevationM ?? DEFAULT_DESCENT_M[t.id];
+    // Your own recent climbing for this training when there is some (a long
+    // run in flat country has far less than its 300 m target), else the target.
+    const own = ownElevation.get(t.id);
+    const target = own ?? t.outdoorTarget?.targetElevationM ?? DEFAULT_DESCENT_M[t.id];
     events.push({ id: s.id, templateId: s.templateId, date: s.scheduledDate, minutes, descentM: target, climbM: target, packKg: t.outdoorTarget?.backpackWeightKg, logged: false });
   }
   return events;
+}
+
+// The average logged descent (or climb) per training over its last 4 logs
+// with elevation data.
+function recentElevation(logs: SessionLog[]): Map<string, number> {
+  const per = new Map<string, number[]>();
+  for (const l of [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate))) {
+    const m = l.outdoorData?.elevationLossM ?? l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM;
+    if (m === undefined) continue;
+    const list = per.get(l.templateId) ?? [];
+    if (list.length < 4) per.set(l.templateId, [...list, m]);
+  }
+  return new Map([...per].map(([id, list]) => [id, list.reduce((a, b) => a + b, 0) / list.length]));
 }
 
 // --- adaptation: the repeated bout effect, damage bucket only --------------------
