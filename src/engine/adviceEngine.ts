@@ -318,10 +318,19 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const onRestDay = inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && daysBetween(today, s.scheduledDate) <= 14 && restDates.has(s.scheduledDate) && !usedIds.has(s.id))
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+  // A test in the next two weeks your legs won't be fresh for by the index
+  // (clearly above the line, not just near it: there the card says to decide
+  // at the warm-up). Arranged around its own date too (docs/onderzoek/
+  // Planning op een lijn.md, conflict 6).
+  const notFresh = onRestDay ? undefined : inputs.plannedSessions
+    .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && daysBetween(today, s.scheduledDate) <= 14 && !usedIds.has(s.id)
+      && freshnessAt(s.scheduledDate, inputs.plannedSessions.filter((o) => o.id !== s.id), templateById, inputs.logs).index > FATIGUE_THRESHOLDS.test.doubt)
+    .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+  const around = onRestDay ?? notFresh;
   // Another test already waiting in the next two weeks: nothing to arrange.
-  if (!onRestDay && inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
+  if (!around && inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
 
-  const lost = onRestDay ?? inputs.plannedSessions
+  const lost = around ?? inputs.plannedSessions
     .filter((s) => s.templateId === TEST_RUN_ID && !loggedIds.has(s.id) && !isDone(s, inputs.logs, loggedIds) && inProgram(s, inputs.program) && !inputs.removedByPlanIds?.has(s.id) && !usedIds.has(s.id)
       && !isIllnessDay(s.scheduledDate, inputs.illnessEpisodes, today)
       && (s.status === 'skipped' ? daysBetween(s.scheduledDate, today) >= -14 && daysBetween(s.scheduledDate, today) <= 7 : s.scheduledDate < today && daysBetween(s.scheduledDate, today) <= 7))
@@ -332,13 +341,13 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const weekOf = (date: string) => inputs.plannedSessions.filter((s) => s.weekStartDate === mondayOfWeek(date) && s.id !== lost.id && s.status !== 'skipped');
   // The days after today; for a test on your rest day those around its own
   // date, nearest first, never a rest day itself.
-  const days = onRestDay
+  const days = around
     ? Array.from({ length: 9 }, (_, i) => addDays(lost.scheduledDate, [1, -1, 2, -2, 3, -3, 4, -4, 5][i]))
       .filter((d) => d > today && !restDates.has(d) && !isIllnessDay(d, inputs.illnessEpisodes, today))
     : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
   const why = 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
   const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
-  const title = onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
+  const title = onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${shortDate(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
   const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
 
   // 1b. Move leg strength out of the way rather than dropping anything: to
@@ -395,7 +404,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       moveItem(date),
     ];
     const effect = `Doe hem ${shortDate(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel. ${why}`;
-    return [{ id: `testroom:${lost.id}`, trigger: onRestDay ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
+    return [{ id: `testroom:${lost.id}`, trigger: around ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
   }
 
   // 1. Per day, nearest first: a free day, or else (1b below) a day that
@@ -404,7 +413,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const movable = (s: PlannedSession) => isStrength(s) && s.scheduledDate >= today && !loggedIds.has(s.id);
   // The smallest change wins: a day further away weighs one, every training
   // moved aside two (a free day two days off beats moving two sessions).
-  const daysFrom = (date: string) => (onRestDay ? Math.abs(daysBetween(lost.scheduledDate, date)) : daysBetween(today, date));
+  const daysFrom = (date: string) => (around ? Math.abs(daysBetween(lost.scheduledDate, date)) : daysBetween(today, date));
   type Candidate = { cost: number; date: string; label: string; effect: string; proposal: PlanChangeProposal };
   const candidates: Candidate[] = [];
   for (const date of days) {
@@ -458,7 +467,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   // The best first; up to three different options to choose from.
   for (const c of candidates) c.label = `Testloop ${c.label}`;
   const ranked = candidates.sort((a, b) => a.cost - b.cost || a.date.localeCompare(b.date)).filter((c, n, all) => all.findIndex((o) => o.label === c.label) === n).slice(0, MAX_OPTIONS);
-  const trigger = onRestDay ? 'plan_update' as const : 'session_missed' as const;
+  const trigger = around ? 'plan_update' as const : 'session_missed' as const;
   if (ranked.length > 0) {
     const [first] = ranked;
     return [{ id: `testroom:${lost.id}`, trigger, ruleId: 'TEST-MAKE-ROOM', title, effect: first.effect, why, priority: 3, proposal: first.proposal, options: ranked.length > 1 ? ranked.map((c) => ({ label: c.label, effect: c.effect, proposal: c.proposal })) : undefined }];

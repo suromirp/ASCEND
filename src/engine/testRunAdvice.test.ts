@@ -46,7 +46,8 @@ describe('TEST-MAKE-ROOM: the test run is missed or skipped', () => {
   });
 
   it('stays quiet when another test is already waiting, in the taper, when ill, or after you said no', () => {
-    const withAnother = [...skipTest(planned), { id: 'again', templateId: 'tpl_test_run', scheduledDate: '2026-11-05', weekStartDate: '2026-11-02', status: 'planned' as const, order: 0 }];
+    // The waiting test with fresh legs: no Lower A the day before it.
+    const withAnother = [...skipTest(planned).filter((s) => s.id !== '2026-11-02-2'), { id: 'again', templateId: 'tpl_test_run', scheduledDate: '2026-11-05', weekStartDate: '2026-11-02', status: 'planned' as const, order: 0 }];
     expect(roomAdvice({ plannedSessions: withAnother })).toBeUndefined();
     const race = [...skipTest(planned), { id: 'race', templateId: 'tpl_race', scheduledDate: '2026-11-07', weekStartDate: '2026-11-02', status: 'planned' as const, order: 0 }];
     expect(roomAdvice({ plannedSessions: race })).toBeUndefined();
@@ -85,7 +86,8 @@ describe('TEST-MAKE-ROOM: the test sits on your rest day', () => {
   });
 
   it('is quiet when the test is not on a rest day, or after you said no', () => {
-    expect(advice({ plannedSessions: [...planned] })).toBeUndefined();
+    // With fresh legs for it: no Lower A the day before.
+    expect(advice({ plannedSessions: planned.filter((s) => s.id !== '2026-10-26-2') })).toBeUndefined();
     expect(advice({ respondedIds: new Set(['testroom:2026-10-26-3']) })).toBeUndefined();
   });
 });
@@ -106,5 +108,18 @@ describe('TEST-MAKE-ROOM: move strength before dropping anything', () => {
     expect(changes.some((c) => c.action === 'remove')).toBe(false);
     expect(changes.find((c) => c.plannedSessionId === 'test')).toMatchObject({ action: 'move' });
     expect(changes.filter((c) => c.action === 'move' && c.plannedSessionId !== 'test').length).toBeGreaterThan(0);
+  });
+});
+
+describe('TEST-MAKE-ROOM: a test your legs will not be fresh for', () => {
+  it('proposes another day when the index is clearly above the line (docs/onderzoek/Planning op een lijn.md, conflict 6)', () => {
+    // The test on Thursday, the day after a full Lower A.
+    const a = roomAdvice({ asOf: '2026-10-21' })!;
+    expect(a.title).toContain('nog niet fris');
+    expect(a.proposal!.changes.some((c) => c.action === 'move' && c.plannedSessionId === '2026-10-26-3')).toBe(true);
+  });
+
+  it('is quiet when the legs are fresh for it', () => {
+    expect(roomAdvice({ asOf: '2026-10-21', plannedSessions: planned.filter((s) => s.id !== '2026-10-26-2') })).toBeUndefined();
   });
 });
