@@ -48,6 +48,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${formatNumberNL(log.outdoorData.backpackWeightKg, 1)} kg` });
   if (log.outdoorData?.terrain) rows.push({ label: 'Terrein', value: log.outdoorData.terrain });
   if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });
+  if (log.strengthRir !== undefined) rows.push({ label: 'Over in zwaarste sets', value: log.strengthRir >= 4 ? '4 of meer' : log.strengthRir === 2.5 ? '2 tot 3' : String(log.strengthRir) });
   const pains = painReports(log);
   if (pains.length > 0) {
     rows.push({ label: 'Pijn', value: pains.map((p) => `${p.area}${p.side ? ` ${p.side}` : ''}${log.painReports ? ` ${p.score}/10` : ''}${p.worseDuring ? ', erger' : ''}${p.onBone ? ', op het bot' : ''}`).join('; ') });

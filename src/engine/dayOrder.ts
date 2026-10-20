@@ -35,7 +35,8 @@ export type Evidence = 'sterk' | 'matig' | 'zwak' | 'expertopinie' | 'afgeleid';
 
 export interface DayOrderAdvice {
   order: string[]; // session ids, first one first
-  gapHours?: number; // at least this much between them
+  gapHours?: number; // preferably this much between them
+  minGapHours?: number; // at the least; earlier when you feel fit again
   avoid?: boolean; // better not on one day at all
   headline: string; // "Eerst Tempoloop, dan Benen A"
   reason: string; // one sentence why
@@ -58,6 +59,10 @@ interface Pair { a: PlannedSession; b: PlannedSession; ta: SessionTemplate; tb: 
 const isRun = (r: DayRole) => r === 'hardeLoop' || r === 'langeLoop' || r === 'rustigeLoop' || r === 'heuvelsOpEnAf' || r === 'test' || r === 'race';
 const isHardRun = (r: DayRole) => r === 'hardeLoop' || r === 'heuvelsOpEnAf' || r === 'test' || r === 'race';
 
+// The gap: preferably 6 hours (Doma; Robineau 2016: 6 hours gave the same
+// strength gains as 24), at the least 3 (Schumann 2022: below 3 hours the
+// long-term adaptations suffer). Feel fit again sooner: go sooner. The 6 is a
+// preference, not a wall.
 // One rule per pair of roles, in this priority (the first that fits wins).
 function rule(p: Pair, tomorrowHard: boolean): DayOrderAdvice | undefined {
   const { a, b, ta, tb, ra, rb } = p;
@@ -71,31 +76,31 @@ function rule(p: Pair, tomorrowHard: boolean): DayOrderAdvice | undefined {
   }
   if (has('test')) {
     const x = pick((r) => r === 'test');
-    if (x.or === 'benen') return { order: [x.s.id, x.o.id], gapHours: 6, headline: `Eerst de ${x.t.name.toLowerCase()}, dan ${x.ot.name}`, reason: 'Minstens 6 uur later, of morgen. Een test meet alleen iets als je fris bent.', why: 'Eerst lopen en 6 uur later kracht liet de loopeconomie de dag erna normaal; kracht eerst niet. En de test zelf heeft frisse benen nodig.', evidence: 'matig', sources: [SRC.doma2013, SRC.sporer] };
+    if (x.or === 'benen') return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, headline: `Eerst de ${x.t.name.toLowerCase()}, dan ${x.ot.name}`, reason: 'Liefst 6 uur later, minstens 3, of morgen. Een test meet alleen iets als je fris bent.', why: 'Eerst lopen en 6 uur later kracht liet de loopeconomie de dag erna normaal; kracht eerst niet. En de test zelf heeft frisse benen nodig.', evidence: 'matig', sources: [SRC.doma2013, SRC.sporer] };
     return { order: [x.s.id, x.o.id], headline: `Eerst de ${x.t.name.toLowerCase()}, dan ${x.ot.name}`, reason: 'De test eerst, fris. Wat erna komt mag op elk moment.', why: 'Een test meet je tempo; alles wat ervoor komt, maakt de uitslag minder eerlijk.', evidence: 'afgeleid', sources: [] };
   }
   // 2. Two runs.
   if (isRun(ra) && isRun(rb)) {
     if (isHardRun(ra) && isHardRun(rb)) return { order: [a.id, b.id], avoid: true, headline: 'Twee harde loopjes op één dag', reason: 'Verplaats er één naar een andere dag.', why: 'Twee kwaliteitstrainingen op één dag laten de tweede niet meer goed lukken, en je herstel loopt achter.', evidence: 'expertopinie', sources: [] };
     const x = pick(isHardRun);
-    if (isHardRun(x.r)) return { order: [x.s.id, x.o.id], gapHours: 5, headline: `Eerst ${x.t.name}, dan ${x.ot.name}`, reason: 'De rustige loop minstens 5 uur later, en kort.', why: 'De harde loop is de training die telt; die doe je fris. De rustige loop erna is herstel.', evidence: 'expertopinie', sources: [] };
-    return { order: [a.id, b.id], gapHours: 5, headline: `Twee rustige loopjes`, reason: 'Minstens 5 uur ertussen, de tweede kort.', why: 'Twee keer rustig lopen kan, maar geeft meer klappen dan één langere loop.', evidence: 'expertopinie', sources: [] };
+    if (isHardRun(x.r)) return { order: [x.s.id, x.o.id], gapHours: 5, minGapHours: 3, headline: `Eerst ${x.t.name}, dan ${x.ot.name}`, reason: 'De rustige loop liefst 5 uur later, en kort.', why: 'De harde loop is de training die telt; die doe je fris. De rustige loop erna is herstel.', evidence: 'expertopinie', sources: [] };
+    return { order: [a.id, b.id], gapHours: 5, minGapHours: 3, headline: `Twee rustige loopjes`, reason: 'Liefst 5 uur ertussen, de tweede kort.', why: 'Twee keer rustig lopen kan, maar geeft meer klappen dan één langere loop.', evidence: 'expertopinie', sources: [] };
   }
   // 3. Long run + something.
   if (has('langeLoop')) {
     const x = pick((r) => r === 'langeLoop');
-    if (x.or === 'benen') return { order: [x.s.id, x.o.id], gapHours: 6, avoid: true, headline: `Liever niet op één dag`, reason: `Moet het, doe dan eerst de ${x.t.name.toLowerCase()} en ${x.ot.name} minstens 6 uur later, en houd morgen rustig.`, why: 'Beide zijn zwaar voor je benen. Loop eerst: kracht vooraf maakt een lange loop zwaarder dan andersom.', evidence: 'matig', sources: [SRC.doma2013, SRC.ratamess] };
+    if (x.or === 'benen') return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, avoid: true, headline: `Liever niet op één dag`, reason: `Moet het, doe dan eerst de ${x.t.name.toLowerCase()} en ${x.ot.name} liefst 6 uur later, en houd morgen rustig.`, why: 'Beide zijn zwaar voor je benen. Loop eerst: kracht vooraf maakt een lange loop zwaarder dan andersom.', evidence: 'matig', sources: [SRC.doma2013, SRC.ratamess] };
     return { order: [x.s.id, x.o.id], headline: `Eerst de ${x.t.name.toLowerCase()}, dan ${x.ot.name}`, reason: 'De lange loop eerst en liefst alleen; daarna mag het op elk moment.', why: 'De lange duurloop is de training die het meest naar je doelen vertaalt; die doe je met frisse benen.', evidence: 'afgeleid', sources: [] };
   }
   // 4. Hills up and down + legs.
   if (has('heuvelsOpEnAf') && has('benen')) {
     const x = pick((r) => r === 'heuvelsOpEnAf');
-    return { order: [x.s.id, x.o.id], gapHours: 6, avoid: true, headline: 'Liever niet op één dag', reason: `Bergaf en zware benen geven allebei spierschade, en die stapelt. Moet het: eerst ${x.t.name.toLowerCase()}, ${x.ot.name} minstens 6 uur later.`, why: 'Excentrisch werk (bergaf, het zakken in een squat) geeft de meeste spierschade; twee keer op een dag telt op.', evidence: 'afgeleid', sources: [SRC.doma2014] };
+    return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, avoid: true, headline: 'Liever niet op één dag', reason: `Bergaf en zware benen geven allebei spierschade, en die stapelt. Moet het: eerst ${x.t.name.toLowerCase()}, ${x.ot.name} liefst 6 uur later.`, why: 'Excentrisch werk (bergaf, het zakken in een squat) geeft de meeste spierschade; twee keer op een dag telt op.', evidence: 'afgeleid', sources: [SRC.doma2014] };
   }
   // 5. Hard run + legs.
   if ((isHardRun(ra) && rb === 'benen') || (isHardRun(rb) && ra === 'benen')) {
     const x = pick(isHardRun);
-    return { order: [x.s.id, x.o.id], gapHours: 6, headline: `Eerst ${x.t.name}, dan ${x.ot.name}`, reason: 'Minstens 6 uur later. De loop telt voor je doel en lijdt onder zware benen; de kracht verliest er op termijn niets door. Houd morgen rustig.', why: 'Loop eerst en 6 uur later kracht: de loopeconomie was de dag erna normaal, andersom niet. 6 uur gaf dezelfde krachtwinst als 24 uur.', evidence: 'matig', sources: [SRC.doma2013, SRC.robineau, SRC.schumann] };
+    return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, headline: `Eerst ${x.t.name}, dan ${x.ot.name}`, reason: 'Liefst 6 uur later. De loop telt voor je doel en lijdt onder zware benen; de kracht verliest er op termijn niets door. Houd morgen rustig.', why: 'Loop eerst en 6 uur later kracht: de loopeconomie was de dag erna normaal, andersom niet. 6 uur gaf dezelfde krachtwinst als 24 uur.', evidence: 'matig', sources: [SRC.doma2013, SRC.robineau, SRC.schumann] };
   }
   // 6. Hard run + upper body.
   if ((isHardRun(ra) && rb === 'bovenlichaam') || (isHardRun(rb) && ra === 'bovenlichaam')) {
@@ -105,8 +110,8 @@ function rule(p: Pair, tomorrowHard: boolean): DayOrderAdvice | undefined {
   // 7. Easy run + legs.
   if ((ra === 'rustigeLoop' && rb === 'benen') || (rb === 'rustigeLoop' && ra === 'benen')) {
     const run = pick((r) => r === 'rustigeLoop');
-    if (tomorrowHard) return { order: [run.s.id, run.o.id], gapHours: 6, headline: `Eerst de ${run.t.name.toLowerCase()}, dan ${run.ot.name}`, reason: 'Minstens 6 uur later. Zo staan je benen morgen frisser voor je harde training.', why: 'Kracht na een loop verstoort de loop van de volgende dag niet; kracht vooraf wel.', evidence: 'zwak', sources: [SRC.doma2013] };
-    return { order: [run.o.id, run.s.id], gapHours: 6, headline: `Eerst ${run.ot.name}, dan de ${run.t.name.toLowerCase()}`, reason: 'De loop minstens 6 uur later. Een rustige loop heeft weinig last van kracht, maar een loop vooraf kost je beensessie herhalingen.', why: 'Na een loop haalde je 9 tot 19% minder herhalingen met je benen; een rustige loop 6 uur na zware benen was normaal.', evidence: 'matig', sources: [SRC.ratamess, SRC.doma2014] };
+    if (tomorrowHard) return { order: [run.s.id, run.o.id], gapHours: 6, minGapHours: 3, headline: `Eerst de ${run.t.name.toLowerCase()}, dan ${run.ot.name}`, reason: 'Liefst 6 uur later. Zo staan je benen morgen frisser voor je harde training.', why: 'Kracht na een loop verstoort de loop van de volgende dag niet; kracht vooraf wel.', evidence: 'zwak', sources: [SRC.doma2013] };
+    return { order: [run.o.id, run.s.id], gapHours: 6, minGapHours: 3, headline: `Eerst ${run.ot.name}, dan de ${run.t.name.toLowerCase()}`, reason: 'De loop liefst 6 uur later. Een rustige loop heeft weinig last van kracht, maar een loop vooraf kost je beensessie herhalingen.', why: 'Na een loop haalde je 9 tot 19% minder herhalingen met je benen; een rustige loop 6 uur na zware benen was normaal.', evidence: 'matig', sources: [SRC.ratamess, SRC.doma2014] };
   }
   // 8. Easy endurance (walk, ruck, bike, mountain hike) + legs.
   if ((ra === 'rustigDuur' || ra === 'bergtocht') && rb === 'benen' || (rb === 'rustigDuur' || rb === 'bergtocht') && ra === 'benen') {

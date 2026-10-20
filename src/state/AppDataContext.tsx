@@ -381,6 +381,7 @@ export interface LogSessionInput {
   painAreas?: SessionLog['painAreas'];
   painReports?: SessionLog['painReports'];
   workout?: SessionLog['workout'];
+  strengthRir?: SessionLog['strengthRir'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
   completedDate?: string;
@@ -1103,6 +1104,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           painAreas: input.painAreas && input.painAreas.length > 0 ? input.painAreas : undefined,
           painReports: input.painReports && input.painReports.length > 0 ? input.painReports : undefined,
           workout: input.workout,
+          strengthRir: input.strengthRir,
           source: 'manual',
         };
         await SessionLogsRepo.put(log);

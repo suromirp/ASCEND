@@ -35,7 +35,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
                   {t?.name ?? 'Training'}
                 </p>
                 {!last && i === 0 && advice.gapHours && (
-                  <p className="mt-1 text-[11px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>minstens {advice.gapHours} uur ertussen</p>
+                  <p className="mt-1 text-[11px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>liefst {advice.gapHours} uur ertussen{advice.minGapHours ? `, minstens ${advice.minGapHours}` : ''}</p>
                 )}
               </div>
             </li>
@@ -45,6 +45,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         <span style={{ color: 'var(--color-ink)' }}>{advice.headline}. </span>{advice.reason}
+        {advice.minGapHours && ' Voel je je eerder fit, dan kan het eerder.'}
       </p>
 
       <button onClick={() => setOpen((v) => !v)} className="self-start text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>

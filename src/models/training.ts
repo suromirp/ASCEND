@@ -268,6 +268,8 @@ export interface SessionLog {
   // (engine/workoutDetails.ts). Optional, additive: older logs and
   // backups simply don't have it.
   workout?: WorkoutDetails;
+  // Strength: reps left in the hardest (leg) sets, 0 to 4 (RIR). Optional.
+  strengthRir?: number;
   source: MetricSource;
 }
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, formatHoursMinutesNL, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
@@ -60,7 +61,7 @@ export function WeekPage() {
     return template?.type === 'strength' && strengthExternal;
   }
 
-  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) {
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) {
     if (isQuickComplete(template)) {
       logSession({
         plannedSessionId: session.id,
@@ -69,6 +70,8 @@ export function WeekPage() {
         variant,
         durationMinutes: durationMinutes ?? resolveVariantDuration(template, variant, session.scheduledDate, program),
         subjectiveFeel: feel,
+        rpe: extra?.rpe,
+        strengthRir: extra?.rir,
         // Ticked off afterwards: it happened on its own day.
         completedDate: session.scheduledDate < todayISO() ? session.scheduledDate : undefined,
       });
@@ -192,8 +195,8 @@ export function WeekPage() {
                 setSelected(null);
               }
             : undefined}
-          onStart={(variant, feel, durationMinutes) => {
-            startSession(selected, templateById.get(selected.templateId)!, variant, feel, durationMinutes);
+          onStart={(variant, feel, durationMinutes, extra) => {
+            startSession(selected, templateById.get(selected.templateId)!, variant, feel, durationMinutes, extra);
             setSelected(null);
           }}
           onMove={(date) => {

@@ -66,7 +66,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
             <Section title="WAT JE ZELF KUNT DOEN">
               <Bullet head="Loop in op je gewone tempo">Op je testdag eerst tien minuten rustig. Voelen je benen duidelijk zwaarder dan normaal, stel de test dan een dag uit, ook als het getal fris zegt. Dat gevoel meet jouw benen van vandaag.</Bullet>
               <Bullet head="Vul je RPE in">Vooral na Benen A: zonder RPE gaat ASCEND uit van 8.</Bullet>
-              <Bullet head="Kracht na de test">Eerst lopen en daarna kracht doen, minstens 6 uur later, verstoort je volgende loop niet. Andersom wel.</Bullet>
+              <Bullet head="Kracht na de test">Eerst lopen en daarna kracht doen, liefst 6 uur later en minstens 3, verstoort je volgende loop niet. Voel je je eerder fit, dan kan het eerder. Andersom wel.</Bullet>
             </Section>
 
             <Section title="BRONNEN">

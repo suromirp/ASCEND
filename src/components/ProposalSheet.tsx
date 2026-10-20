@@ -231,7 +231,7 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
     : entry.change === 'vervalt' ? 'vervalt'
     : entry.change === 'nieuw' ? 'nieuw'
     : rest ? 'Wandelen mag, niets af te vinken'
-    : afterTest ? 'Na de test, minstens 6 uur later' : undefined;
+    : afterTest ? 'Na de test, liefst 6 uur later' : undefined;
   return (
     <div
       className="flex items-center gap-3 rounded-2xl border px-4 py-3"

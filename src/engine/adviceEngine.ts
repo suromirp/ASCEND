@@ -389,7 +389,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     }
     const weekAfter = [...weekOf(date).filter((o) => !moves.some((m) => m.session.id === o.id)), ...moves.map((m) => ({ ...m.session, scheduledDate: m.to }))];
     if (moves.length !== toMove.length || !dayHasRoomFor(date, test, weekAfter, templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference) || !respectsHeavySpacing(date, test, now, templateById, inputs.logs, lost.id)) return undefined;
-    const moveLines = moves.map((m) => `${templateById.get(m.session.templateId)?.name ?? 'Kracht'} naar ${m.to === date ? `${shortDate(m.to)}, na de test (minstens 6 uur later)` : shortDate(m.to)}`);
+    const moveLines = moves.map((m) => `${templateById.get(m.session.templateId)?.name ?? 'Kracht'} naar ${m.to === date ? `${shortDate(m.to)}, na de test (liefst 6 uur later)` : shortDate(m.to)}`);
     const items: PlanChangeItem[] = [
       ...moves.map((m): PlanChangeItem => ({ plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, reason: 'Na de test, zodat je benen fris zijn voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
       moveItem(date),
@@ -421,7 +421,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     }
     const sameDayLegs = weekOf(date).filter((s) => s.scheduledDate === date && open(s) && (() => { const t = templateById.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t); })());
     const legsName = sameDayLegs.length > 0 ? templateById.get(sameDayLegs[0].templateId)?.name ?? 'Beenkracht' : undefined;
-    const legsNote = legsName ? ` ${legsName} die dag pas na de test, minstens 6 uur later: eerst lopen, dan kracht.` : '';
+    const legsNote = legsName ? ` ${legsName} die dag pas na de test, liefst 6 uur later (minstens 3): eerst lopen, dan kracht.` : '';
     candidates.push({ cost: daysFrom(date), date, label: `${shortDate(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${shortDate(date)}.${legsNote} ${why}`, proposal: proposal(title, [moveItem(date)], `De testloop komt op ${shortDate(date)}.`, why) });
   }
 

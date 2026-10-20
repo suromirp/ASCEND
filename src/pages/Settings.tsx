@@ -538,7 +538,7 @@ export function SettingsPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Zware dingen op één dag</p>
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Benen en een zware loop, zoals heuvels, mogen op dezelfde dag: eerst de loop, minstens 6 uur later kracht.
+                  Benen en een zware loop, zoals heuvels, mogen op dezelfde dag: eerst de loop, liefst 6 uur later kracht. Minstens 3 uur, en eerder als je je weer fit voelt.
                   De dagen eromheen blijven dan rustig. Alleen als je tijd per dag het toelaat.
                 </p>
               </div>

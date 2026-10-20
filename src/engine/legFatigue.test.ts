@@ -87,3 +87,11 @@ describe('a test on Thursday in the normal week', () => {
     expect(legFatigueOn(THU, inputs([], { plannedSessions: planned, today: THU })).index).toBe(0);
   });
 });
+
+describe('strength from MacroFactor: RPE and reps in reserve', () => {
+  it('reps left in the hardest sets set the effort: 0 left counts heavier than 4 left', () => {
+    const at = (rir: number) => legFatigueOn('2026-11-05', inputs([log('tpl_lower_a', '2026-11-04', 60, { strengthRir: rir })])).index;
+    expect(at(0)).toBeGreaterThan(at(2.5));
+    expect(at(2.5)).toBeGreaterThan(at(4));
+  });
+});

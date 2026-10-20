@@ -120,6 +120,7 @@ export interface FatigueEvent {
   date: string;
   minutes: number;
   rpe?: number;
+  rir?: number; // strength: reps left in the hardest sets
   feel?: SessionLog['subjectiveFeel'];
   descentM?: number;
   climbM?: number;
@@ -155,7 +156,7 @@ export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSe
   const events: FatigueEvent[] = inputs.logs.map((l) => {
     const d = l.outdoorData ?? l.cardioData;
     return {
-      id: l.id, templateId: l.templateId, date: l.completedDate, minutes: l.durationMinutes, rpe: l.rpe, feel: l.subjectiveFeel,
+      id: l.id, templateId: l.templateId, date: l.completedDate, minutes: l.durationMinutes, rpe: l.rpe, rir: l.strengthRir, feel: l.subjectiveFeel,
       descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, logged: true,
     };
   });
@@ -225,7 +226,8 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
   let strength = 0;
   let damage = 0;
   if (template.type === 'strength') {
-    const rpe = event.rpe ?? PLANNED_STRENGTH_RPE;
+    // Reps in reserve say more about the legs than one RPE for the session.
+    const rpe = event.rir !== undefined ? 10 - event.rir : event.rpe ?? PLANNED_STRENGTH_RPE;
     const effort = effortFactor(rpe);
     intensity = STRENGTH_INTENSITY_PER_HOUR * hours * rpeFactor(event.rpe, PLANNED_STRENGTH_RPE);
     strength = LOWER_BODY_PER_HOUR[p.lowerBodyLoad as Level] * hours * effort;

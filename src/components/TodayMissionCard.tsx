@@ -8,7 +8,8 @@ import { MoveSuggestions } from './MoveSuggestions';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
 import { sessionKindLabel } from '../engine/sports';
-import { StrengthDoneElsewhere } from './StrengthDoneElsewhere';
+import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
+import { isLegHeavyTemplate } from '../engine/scheduler';
 
 
 export function TodayMissionCard({
@@ -23,13 +24,12 @@ export function TodayMissionCard({
   onPickSuggestion,
   originalDate,
   coachLine,
-  onDoneAsPlanned,
 }: {
   template: SessionTemplate;
   fullDuration: number;
   weekNote?: string;
   quickComplete?: boolean;
-  onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) => void;
+  onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
   suggestions: MoveSuggestion[];
@@ -38,7 +38,6 @@ export function TodayMissionCard({
   // engine/coach.ts#coachLineForToday
   coachLine?: string;
   // One tap, the plan's own minutes (engine/asPlanned.ts). Absent when not offered.
-  onDoneAsPlanned?: () => void;
 }) {
   const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -68,14 +67,11 @@ export function TodayMissionCard({
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 
       {quickComplete ? (
-        <StrengthDoneElsewhere fullDuration={fullDuration} onDone={(feel, minutes) => onStart('full', feel, minutes)} />
+        <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />
       ) : (
         <PrimaryButton onClick={() => onStart('full')}>TRAINING STARTEN</PrimaryButton>
       )}
 
-      {onDoneAsPlanned && (
-        <SecondaryButton onClick={onDoneAsPlanned}>GEDAAN ZOALS GEPLAND</SecondaryButton>
-      )}
 
       <div className="flex gap-2">
         {!quickComplete && shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}

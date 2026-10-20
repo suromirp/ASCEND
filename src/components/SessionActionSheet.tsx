@@ -12,7 +12,8 @@ import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sport
 import { getModalities, isCyclingModality } from '../data/modalities';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
-import { StrengthDoneElsewhere } from './StrengthDoneElsewhere';
+import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
+import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 
@@ -36,7 +37,7 @@ export function SessionActionSheet({
   program: Program | null;
   quickComplete?: boolean;
   completedLog?: SessionLog;
-  onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) => void;
+  onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
   onUndo?: () => void;
@@ -160,7 +161,7 @@ export function SessionActionSheet({
 
             <div className="mt-4 flex flex-col gap-2">
               {quickComplete ? (
-                <StrengthDoneElsewhere fullDuration={fullDuration} onDone={(feel, minutes) => onStart('full', feel, minutes)} />
+                <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />
               ) : (
                 variants.map((v) => (
                   <PrimaryButton key={v} onClick={() => onStart(v)}>
@@ -168,7 +169,6 @@ export function SessionActionSheet({
                   </PrimaryButton>
                 ))
               )}
-              {onDoneAsPlanned && <SecondaryButton onClick={onDoneAsPlanned}>GEDAAN ZOALS GEPLAND</SecondaryButton>}
             </div>
 
             <div className="mt-5">

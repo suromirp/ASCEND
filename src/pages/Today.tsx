@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
@@ -29,7 +30,7 @@ import { LegFatigueCard } from '../components/LegFatigueCard';
 import { MorningCheckInCard } from '../components/MorningCheckInCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
-import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
+import { asPlannedLog } from '../engine/asPlanned';
 import { REST_DAY_COPY, type RestDayMode } from '../data/restDayCopy';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
@@ -168,7 +169,7 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
     return template?.type === 'strength' && strengthExternal;
   }
 
-  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number) {
+  function startSession(session: PlannedSession, template: SessionTemplate, variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) {
     if (isQuickComplete(template)) {
       logSession({
         plannedSessionId: session.id,
@@ -177,6 +178,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
         variant,
         durationMinutes: durationMinutes ?? resolveVariantDuration(template, variant, session.scheduledDate, program),
         subjectiveFeel: feel,
+        rpe: extra?.rpe,
+        strengthRir: extra?.rir,
         // Ticked off afterwards: it happened on its own day.
         completedDate: session.scheduledDate < todayISO() ? session.scheduledDate : undefined,
       });
@@ -247,13 +250,12 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
           quickComplete={isQuickComplete(primaryTemplate)}
-          onStart={(variant, feel, durationMinutes) => startSession(primary, primaryTemplate, variant, feel, durationMinutes)}
+          onStart={(variant, feel, durationMinutes, extra) => startSession(primary, primaryTemplate, variant, feel, durationMinutes, extra)}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => handleSkip(primary.id)}
           suggestions={suggestMoves(primary.id)}
           onPickSuggestion={(sug) => void applyProposal(sug.proposal)}
           originalDate={primary.movedFromDate}
-          onDoneAsPlanned={canTickOffAsPlanned(primaryTemplate, strengthExternal) ? () => void logSession(asPlannedLog(primary, primaryTemplate, program, today)) : undefined}
           coachLine={coachLineForToday({
             template: primaryTemplate,
             date: primary.scheduledDate,
@@ -388,8 +390,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           program={program}
           quickComplete={isQuickComplete(actionSheetTemplate)}
           completedLog={actionSheetLog}
-          onStart={(variant, feel, durationMinutes) => {
-            startSession(actionSheetSession, actionSheetTemplate, variant, feel, durationMinutes);
+          onStart={(variant, feel, durationMinutes, extra) => {
+            startSession(actionSheetSession, actionSheetTemplate, variant, feel, durationMinutes, extra);
             setActionSheetSession(null);
           }}
           onMove={(date) => {

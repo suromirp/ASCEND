@@ -117,7 +117,7 @@ export function suggestSameDayOrder(
   });
   if (bothLegs) {
     return {
-      reason: `${enduranceName} en ${strengthName} op één dag: doe eerst ${enduranceName.toLowerCase()} en minstens 6 uur later ${strengthName}. Zo blijven de dagen eromheen rustig.`,
+      reason: `${enduranceName} en ${strengthName} op één dag: doe eerst ${enduranceName.toLowerCase()} en liefst 6 uur later ${strengthName} (minstens 3; voel je je eerder fit, dan kan het eerder). Zo blijven de dagen eromheen rustig.`,
     };
   }
 
