@@ -6,6 +6,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { isStopPain, painReports, significantPain } from './pain';
 import type { Program } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { buildWorkoutPlan } from './workoutPlan';
@@ -47,7 +48,7 @@ export interface CoachLineInputs {
 // One sentence for today's training, the most useful one first.
 export function coachLineForToday({ template, date, program, tomorrow, yesterdayLogs, templateById }: CoachLineInputs): string {
   const note = progressionTarget(template, program, date)?.step.note ?? '';
-  const soreYesterday = yesterdayLogs.flatMap((l) => l.painAreas ?? []);
+  const soreYesterday = yesterdayLogs.flatMap((l) => significantPain(l).map((r) => r.area));
   if (soreYesterday.length > 0) {
     return `Gisteren pijn aan je ${joinNL([...new Set(soreYesterday)].map((a) => a.toLowerCase()))}. Voelt het nog niet goed, kies dan de korte versie of verplaats deze training.`;
   }
@@ -90,17 +91,32 @@ function joinNL(items: string[]): string {
 // Pain comes first: it decides what tomorrow looks like. The same spot
 // twice in two weeks is a pattern, worth writing down under Blessures,
 // where ASCEND takes it into account (engine/adviceEngine.ts#injuryAdvice).
+// The pain-monitoring model (docs/onderzoek/Pijn spierpijn en vermoeidheid
+// melden.md): up to 2 is fine if it is gone by the morning, 3 to 5 holds
+// back building on that spot, above 5, worse while going on or on a bone
+// means a stop.
 function painReaction(log: SessionLog, history: SessionLog[]): string | undefined {
-  const areas = log.painAreas ?? [];
-  if (areas.length === 0) return undefined;
+  const reports = painReports(log);
+  if (reports.length === 0) return undefined;
+  const stop = reports.filter(isStopPain);
+  if (stop.length > 0) {
+    const p = stop[0];
+    const why = p.onBone ? 'op één plekje op het bot' : p.worseDuring ? 'die erger werd terwijl je doorging' : `van ${p.score} op 10`;
+    return `Pijn aan je ${p.area.toLowerCase()} ${why}: de komende 2 dagen niet lopen of springen op die plek, fietsen en bovenlichaam mogen. Doet wandelen daarna nog pijn, of doet het 's nachts pijn, laat het dan onderzoeken.`;
+  }
+  const significant = significantPain(log);
+  if (significant.length === 0) {
+    return `Een beetje pijn aan je ${joinNL(reports.map((r) => r.area.toLowerCase()))}. Tot 2 op 10 mag, als het morgenochtend weer weg is. ASCEND vraagt het je morgen.`;
+  }
+  const areas = significant.map((r) => r.area);
   const since = addDays(log.completedDate, -PAIN_WINDOW_DAYS);
-  const again = areas.filter((a) => history.some((l) => l.id !== log.id && l.completedDate >= since && l.completedDate <= log.completedDate && (l.painAreas ?? []).includes(a)));
+  const again = areas.filter((a) => history.some((l) => l.id !== log.id && l.completedDate >= since && l.completedDate <= log.completedDate && significantPain(l).some((r) => r.area === a)));
   const where = joinNL(areas.map((a) => a.toLowerCase()));
   if (again.length > 0) {
     const which = joinNL(again.map((a) => a.toLowerCase()));
     return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Zet het bij Blessures, dan houdt ASCEND er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
   }
-  return `Pijn aan je ${where}. Doe het de komende dagen rustig aan: kies de korte versie of een rustdag als het blijft. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
+  return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken bouwt ASCEND op die plek niet verder op. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
 }
 
 // One reaction after ticking a training off, based on what you filled in.

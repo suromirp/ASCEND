@@ -1,4 +1,5 @@
 import { formatNumberNL } from '../utils/number';
+import { painReports } from '../engine/pain';
 import type { SessionLog, WorkoutDetails } from '../models/training';
 import { getModality } from '../data/modalities';
 import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
@@ -47,6 +48,10 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${formatNumberNL(log.outdoorData.backpackWeightKg, 1)} kg` });
   if (log.outdoorData?.terrain) rows.push({ label: 'Terrein', value: log.outdoorData.terrain });
   if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });
+  const pains = painReports(log);
+  if (pains.length > 0) {
+    rows.push({ label: 'Pijn', value: pains.map((p) => `${p.area}${p.side ? ` ${p.side}` : ''}${log.painReports ? ` ${p.score}/10` : ''}${p.worseDuring ? ', erger' : ''}${p.onBone ? ', op het bot' : ''}`).join('; ') });
+  }
 
   const { closing, requestClose } = useSheetClose(onClose);
   const { undoLog, setLogWorkout, templates, program } = useAppData();

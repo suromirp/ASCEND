@@ -7,6 +7,7 @@
 // append-only and are never mutated once created.
 
 import type { SessionStressProfile } from './prescription';
+import type { PainReport } from './checkIn';
 
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
 
@@ -260,6 +261,9 @@ export interface SessionLog {
   // Where it hurt during or after (data/bodyAreas.ts, free text allowed).
   // Optional, additive: older logs and backups simply don't have it.
   painAreas?: string[];
+  // Pain on a spot with a score (models/checkIn.ts, engine/pain.ts). The
+  // areas above stay filled for older readers. Optional, additive.
+  painReports?: PainReport[];
   // What the hard part of an interval, hill or tempo session actually was
   // (engine/workoutDetails.ts). Optional, additive: older logs and
   // backups simply don't have it.

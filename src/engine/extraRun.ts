@@ -27,6 +27,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { hasSignificantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -76,7 +77,7 @@ export function extraRunEarned(inputs: Omit<ExtraRunInputs, 'newId' | 'anchor' |
 
   const since = addDays(today, -SIGNAL_DAYS);
   const recent = logs.filter((l) => l.completedDate >= since && l.completedDate <= today);
-  if (recent.some((l) => (l.painAreas ?? []).length > 0)) return { earned: false, reason: 'Je gaf de afgelopen twee weken pijn aan na een training.' };
+  if (recent.some(hasSignificantPain)) return { earned: false, reason: 'Je gaf de afgelopen twee weken pijn aan na een training.' };
   const byId = new Map(templates.map((t) => [t.id, t]));
   const heavy = recent.filter((l) => {
     if (l.subjectiveFeel === 'worse') return true;

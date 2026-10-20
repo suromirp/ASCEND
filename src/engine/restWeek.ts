@@ -9,6 +9,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { hasSignificantPain } from './pain';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { IllnessEpisode } from '../models/illness';
@@ -35,7 +36,7 @@ export function restWeekState(program: Program, weekStart: string, logs: Session
     return { isRestWeek, skipped, canSkip: false, reason: 'Je sloeg de vorige rustweek al over. Twee keer achter elkaar doorgaan stapelt vermoeidheid op, juist dan komt de rust binnen.' };
   }
   const since = addDays(today, -14);
-  if (logs.some((l) => l.completedDate >= since && (l.painAreas ?? []).length > 0)) {
+  if (logs.some((l) => l.completedDate >= since && hasSignificantPain(l))) {
     return { isRestWeek, skipped, canSkip: false, reason: 'Je gaf de afgelopen twee weken pijn aan. Dan is deze rustweek juist nodig.' };
   }
   return { isRestWeek, skipped, canSkip: true };

@@ -18,5 +18,5 @@ export const BODY_PART_OPTIONS = [
 
 // After a run or a hike: the spots that usually speak up first.
 export const PAIN_AREA_OPTIONS = [
-  'Knie', 'Scheen', 'Kuit', 'Achillespees', 'Enkel', 'Voet', 'Heup', 'Hamstring', 'Onderrug',
+  'Knie', 'Scheen', 'Kuit', 'Achillespees', 'Enkel', 'Voet', 'Heup of lies', 'Hamstring', 'Onderrug',
 ] as const;

@@ -379,6 +379,7 @@ export interface LogSessionInput {
   outdoorData?: SessionLog['outdoorData'];
   subjectiveFeel?: SessionLog['subjectiveFeel'];
   painAreas?: SessionLog['painAreas'];
+  painReports?: SessionLog['painReports'];
   workout?: SessionLog['workout'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
@@ -1100,6 +1101,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           outdoorData: input.outdoorData,
           subjectiveFeel: input.subjectiveFeel,
           painAreas: input.painAreas && input.painAreas.length > 0 ? input.painAreas : undefined,
+          painReports: input.painReports && input.painReports.length > 0 ? input.painReports : undefined,
           workout: input.workout,
           source: 'manual',
         };
@@ -1644,11 +1646,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         respondedIds: new Set(Object.keys(adviceResponses)),
         asOf: todayISO(),
         illnessEpisodes: settings.illnessEpisodes,
+        checkIns: settings.morningCheckIns,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
       }),
     ].sort((a, b) => b.priority - a.priority),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, adviceResponses, planChangeLog, extraSessionContext],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext],
   );
 
   const value: AppData = {

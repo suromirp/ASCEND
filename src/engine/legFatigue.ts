@@ -14,6 +14,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { significantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { daysBetween, addDays } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
@@ -245,7 +246,7 @@ export function legFatigueOn(date: string, inputs: LegFatigueInputs, events = fa
 
   // Pain in a leg area in the 72 hours before: a signal, not a scale.
   const since = addDays(date, -3);
-  const painRecent = inputs.logs.some((l) => l.completedDate >= since && l.completedDate < date && (l.painAreas ?? []).some((a) => LEG_AREAS.includes(a)));
+  const painRecent = inputs.logs.some((l) => l.completedDate >= since && l.completedDate < date && significantPain(l).some((p) => LEG_AREAS.includes(p.area)));
   if (painRecent) index += PAIN_POINTS;
 
   // Reported soreness sets a floor: "spierpijn" at least the doubt level of a

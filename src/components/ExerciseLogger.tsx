@@ -24,7 +24,9 @@ import { progressionTarget } from '../engine/programLayout';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { formatNumberNL } from '../utils/number';
 import { INTENSITY, type Intensity } from '../data/workoutStructure';
-import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
+import { PainReportFields } from './PainReportFields';
+import { isLegHeavyTemplate } from '../engine/scheduler';
+import type { PainReport } from '../models/checkIn';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -66,7 +68,7 @@ export function ExerciseLogger({
   const [rpe, setRpe] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
   const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(undefined);
-  const [painAreas, setPainAreas] = useState<string[]>([]);
+  const [painReports, setPainReports] = useState<PainReport[]>([]);
   const [saving, setSaving] = useState(false);
   // The day it was actually done. Ticking off a session from an earlier
   // day defaults to that day; a loose training can be logged for a past
@@ -203,7 +205,8 @@ export function ExerciseLogger({
       rpe: rpe === '' || isRest ? undefined : rpe,
       notes: notes || undefined,
       subjectiveFeel,
-      painAreas: painAreas.length > 0 ? painAreas : undefined,
+      painAreas: painReports.length > 0 ? painReports.map((p) => p.area) : undefined,
+      painReports: painReports.length > 0 ? painReports : undefined,
       workout: detailForm(template.id) && !isRest ? cleanDetails(workout) : undefined,
       strengthData,
       cardioData:
@@ -436,26 +439,8 @@ export function ExerciseLogger({
             )}
           </div>
 
-          {(template.type === 'cardio' || template.type === 'hiking') && (
-            <div>
-              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ergens pijn? (optioneel)</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {PAIN_AREA_OPTIONS.map((area) => {
-                  const on = painAreas.includes(area);
-                  return (
-                    <button
-                      key={area}
-                      aria-pressed={on}
-                      onClick={() => setPainAreas((cur) => (on ? cur.filter((a) => a !== area) : [...cur, area]))}
-                      className="min-h-[40px] rounded-lg border px-3 text-xs"
-                      style={{ borderColor: on ? 'var(--color-warning)' : 'var(--color-card-border)', color: on ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}
-                    >
-                      {area}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          {(template.type === 'cardio' || template.type === 'hiking' || (template.type === 'strength' && isLegHeavyTemplate(template))) && (
+            <PainReportFields value={painReports} onChange={setPainReports} />
           )}
 
           {template.type !== 'recovery' && (

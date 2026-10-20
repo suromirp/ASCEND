@@ -17,6 +17,8 @@
 //   decided here — that's the shared feedback pattern (changeImpact.ts);
 //   accepting advice IS the user's confirmation.
 
+import { checkInFor, morningSignals, tiredStreak } from './wellbeing';
+import type { MorningCheckIn } from '../models/checkIn';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { proposeRestWeekSkip } from './restWeek';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
@@ -66,6 +68,8 @@ export interface AdviceInputs {
   removedByPlanIds?: Set<string>;
   // Sessions planned while ill are never "gemist" (engine/illness.ts).
   illnessEpisodes?: IllnessEpisode[];
+  // The morning check-in (engine/wellbeing.ts, rule MORNING-CHECK).
+  checkIns?: MorningCheckIn[];
   // The extra training of the week (engine/extraRun.ts, rule EXTRA-SESSION).
   extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog'>;
 }
@@ -740,6 +744,85 @@ function extraSessionAdvice(inputs: AdviceInputs, templateById: Map<string, Sess
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'EXTRA-SESSION', title, effect, why, priority: 2, proposal: { ...p, trigger: 'new_training_data' } }];
 }
 
+// --- Rule MORNING-CHECK ------------------------------------------------------
+// What the morning check-in says for today and tomorrow (docs/onderzoek/Pijn
+// spierpijn en vermoeidheid melden.md, "Hoe de planning reageert"):
+// - muscle soreness: 1 to 2 days no quality and no heavy legs; easy running,
+//   cycling and upper body stay. The first hard or leg-heavy session moves on.
+// - "Op", or two negatives (tired, slept badly, heavy soreness): a calm day,
+//   today's hard session moves on. One negative: a word, nothing moves.
+// - three tired mornings in a row: a few lighter days, as a word.
+// - the pain spot worse this morning (above 5, or 2 up): 2 to 3 days no
+//   running or jumping on that spot.
+// Always a proposal or a word; nothing moves without you.
+function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
+  const today = inputs.asOf;
+  const checkIn = checkInFor(today, inputs.checkIns);
+  if (!checkIn || checkIn.allNormal) return [];
+  const sig = morningSignals(checkIn, inputs.logs);
+  const out: Advice[] = [];
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const heavy = (s: PlannedSession, days: number) => {
+    const t = templateById.get(s.templateId);
+    return !!t && t.type !== 'recovery' && s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= days && (isHardRun(t) || isLegHeavyTemplate(t));
+  };
+
+  if (sig.spotWorse) {
+    const { area, score } = sig.spotWorse;
+    out.push({
+      id: `morning-pain:${today}`, trigger: 'injury_active', ruleId: 'MORNING-CHECK', priority: 5,
+      title: `${area} vanochtend ${score} van 10`,
+      effect: `Hoger dan na de training. Doe de komende 2 tot 3 dagen geen lopen, springen of bergaf voor je ${area.toLowerCase()}; fietsen en bovenlichaam mogen. Pas weer hardlopen als wandelen hooguit 1 tot 2 doet. Wordt het niet beter in 2 tot 3 weken, laat een fysiotherapeut kijken.`,
+      why: 'Volgens het pijnmonitoringsmodel mag pijn tot 5 op 10, als hij de ochtend erna niet hoger is. Vanochtend is hij hoger: dan krijgt die plek rust (Silbernagel en Thomeé).',
+    });
+  }
+
+  if (sig.sore !== 'none' || sig.rest) {
+    const days = sig.sore !== 'none' ? 1 : 0;
+    const next = inputs.plannedSessions.filter((s) => heavy(s, days)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    const reason = sig.rest ? 'Je bent op of sliep slecht en bent moe' : sig.sore === 'flink' ? 'Flinke spierpijn' : 'Spierpijn';
+    const rule = sig.rest
+      ? 'Bij "op", of bij twee signalen tegelijk, is vandaag een rustige dag: herstel komt eerst (Saw, Main en Gastin 2016).'
+      : 'Met spierpijn zijn je benen 1 tot 2 dagen minder krachtig en minder zuinig; een harde training levert dan minder op (Marcora 2007). Rustig lopen, fietsen en bovenlichaam blijven staan.';
+    if (next) {
+      const t = templateById.get(next.templateId)!;
+      // Not next to another hard or leg-heavy session (that day or the day after).
+      const clear = (d: string) => !inputs.plannedSessions.some((o) => o.id !== next.id && (o.scheduledDate === d || o.scheduledDate === addDays(d, 1)) && heavy(o, 14));
+      let later: string | undefined;
+      for (let from = addDays(today, sig.sore !== 'none' ? 2 : 1), tries = 0; tries < 5 && !later; tries++) {
+        const found = findCatchUpDate(next, t, inputs, templateById, from);
+        if (!found) break;
+        if (clear(found)) later = found;
+        else from = addDays(found, 1);
+      }
+      const title = `${reason}: ${t.name} later`;
+      if (later) {
+        out.push({
+          id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 4, title,
+          effect: `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(later)}.${sig.sore === 'flink' ? ' Ook de rustige loop mag vandaag wandelen of fietsen worden.' : ''}`,
+          why: rule,
+          proposal: proposal(title, [{ plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op de ochtend van ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'MORNING-CHECK'] }], `${t.name} schuift naar ${shortDate(later)}.`, rule),
+        });
+      } else {
+        out.push({ id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title: `${reason}: houd ${t.name} rustig`, effect: t.type === 'strength' ? `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name}, met lichtere gewichten en ruim reserve (zeker 3 herhalingen over).` : `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name} en houd het rustig (RPE 3 tot 4).`, why: rule });
+      }
+    } else if (sig.rest) {
+      out.push({ id: `morning:${today}:rest`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 2, title: 'Een rustige dag', effect: 'Er staat vandaag niets zwaars. Houd het zo: een wandeling of rustig fietsen is genoeg.', why: rule });
+    }
+  } else if (sig.negatives === 1) {
+    const next = inputs.plannedSessions.find((s) => heavy(s, 0));
+    if (next) {
+      const t = templateById.get(next.templateId)!;
+      out.push({ id: `morning:${today}:one`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 2, title: `Moe of slecht geslapen: ${t.name} vandaag`, effect: `Doe hem liefst vroeg op de dag, of kies de korte versie. Voelt het inlopen zwaarder dan normaal, ruil hem dan voor een rustige training.`, why: 'Eén signaal is nog geen reden om iets te schuiven; slaap en vermoeidheid wegen het zwaarst bij een harde training later op de dag (Craven e.a. 2022).' });
+    }
+  }
+
+  if (tiredStreak(today, inputs.checkIns) >= 3) {
+    out.push({ id: `morning-tired:${today}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title: 'Drie ochtenden op rij moe', effect: 'Houd de komende 3 tot 4 dagen ongeveer een kwart minder minuten en geen harde trainingen. Daarna weer gewoon verder.', why: 'Recreatieve lopers die hun schema zo bijstelden op hun ochtendgevoel, gingen meer vooruit dan met een vast schema (Nuuttila e.a. 2022).' });
+  }
+  return out;
+}
+
 function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
   if (!inputs.program) return [];
   const found = proposeRestWeekSkip({
@@ -774,6 +857,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...spacingAdvice(inputs, templateById),
     ...extraSessionAdvice(inputs, templateById),
     ...restWeekSkipAdvice(inputs),
+    ...morningAdvice(inputs, templateById),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))
     .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));

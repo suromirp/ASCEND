@@ -16,6 +16,7 @@
 //
 // Pure: no React, no IndexedDB.
 
+import { hasSignificantPain } from './pain';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { plannedRpeTop } from './coach';
@@ -43,7 +44,7 @@ export function effectiveAmbition(
   if (c !== 'stevig') return { chosen: c, effective: c };
   const since = addDays(today, -SIGNAL_DAYS);
   const recent = logs.filter((l) => l.completedDate >= since && l.completedDate <= today);
-  if (recent.some((l) => (l.painAreas ?? []).length > 0)) {
+  if (recent.some(hasSignificantPain)) {
     return { chosen: c, effective: 'standaard', reason: 'Je gaf de afgelopen twee weken pijn aan na een training.' };
   }
   const heavy = recent.filter((l) => {

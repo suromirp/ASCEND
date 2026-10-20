@@ -8,6 +8,7 @@
 // Rest days are never trainings (no counting, never missed). Weeks before
 // week 1 are not reviewed. Pure: no React, no IndexedDB.
 
+import { significantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -130,7 +131,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     else if (l.subjectiveFeel === 'worse') heavier++;
   }
   const painCount = new Map<string, number>();
-  for (const l of weekLogs) for (const a of l.painAreas ?? []) painCount.set(a, (painCount.get(a) ?? 0) + 1);
+  for (const l of weekLogs) for (const { area: a } of significantPain(l)) painCount.set(a, (painCount.get(a) ?? 0) + 1);
   const pain = [...painCount.entries()].sort((a, b) => b[1] - a[1]).map(([a, n]) => `${a.toLowerCase()}${n > 1 ? ` ${n} keer` : ''}`);
   const avgRpe = rpes.length > 0 ? Math.round((rpes.reduce((a, b) => a + b, 0) / rpes.length) * 10) / 10 : undefined;
 
