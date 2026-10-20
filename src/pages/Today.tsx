@@ -9,6 +9,8 @@ import { computeReadiness, droppedAfterMissIds } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
+import { dayOrder, orderDay } from '../engine/dayOrder';
+import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
@@ -60,7 +62,13 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const weekStart = mondayOfWeek(today);
   const weekSessions = sessionsForWeek(weekStart);
   // A rest day ASCEND gave up for a training is simply gone, as in Week.
-  const todaySessions = weekSessions.filter((s) => s.scheduledDate === today && !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery'));
+  // Two trainings today: in the advised order (engine/dayOrder.ts).
+  const dayOrderAdvice = dayOrder(
+    weekSessions.filter((s) => s.scheduledDate === today && !sessionLogs.some((l) => l.plannedSessionId === s.id)),
+    plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1)),
+    templateById,
+  );
+  const todaySessions = orderDay(weekSessions.filter((s) => s.scheduledDate === today && !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery')), dayOrderAdvice);
   // No `?? todaySessions[0]` fallback here: .find() only returns undefined
   // when every session today is already completed or skipped, and falling
   // back to one of those would re-show a finished session as if it still
@@ -147,7 +155,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
   const showRecoveryWarning = longRunDegrading && primaryTemplate?.id === 'tpl_hill_intervals';
   // Sports-science review, item A2 — a soft, never-blocking suggestion when
   // today combines a strength session with a cardio/hiking one.
-  const concurrentTrainingTip = suggestSameDayOrder(todaySessions, templateById);
+  // The order card has its own say; the old tip only for what it doesn't cover.
+  const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
   const actionSheetLog = actionSheetSession ? sessionLogs.find((l) => l.plannedSessionId === actionSheetSession.id) : undefined;
@@ -220,6 +229,8 @@ export function TodayPage({ onOpenLadder }: { onOpenLadder: () => void }) {
           </p>
         </Card>
       )}
+
+      {dayOrderAdvice && <DayOrderCard advice={dayOrderAdvice} sessions={todaySessions} templateById={templateById} />}
 
       {concurrentTrainingTip && (
         <Card className="flex flex-col gap-1">

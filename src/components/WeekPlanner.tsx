@@ -1,6 +1,7 @@
+import { dayOrder, orderDay } from '../engine/dayOrder';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
-import { weekDates, weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
+import { addDays, weekDates, weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
 import { SessionCard } from './SessionCard';
 import { Eyebrow } from './ui';
 
@@ -26,7 +27,9 @@ export function WeekPlanner({
   return (
     <div className="flex flex-col gap-4">
       {days.map((date, i) => {
-        const daySessions = sessions.filter((s) => s.scheduledDate === date);
+        const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
+        const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
+        const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date), advice);
         const isToday = date === todayISO();
         return (
           <div key={date} className="animate-rise-in" style={{ animationDelay: `${i * 40}ms` }}>
@@ -39,6 +42,12 @@ export function WeekPlanner({
               </span>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(date)}</span>
             </div>
+            {advice && (
+              <p className="mb-2 flex flex-wrap items-center gap-x-1.5 pl-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)' }}>{advice.avoid ? 'Liever niet op één dag' : advice.headline}</span>
+                {advice.gapHours && <span>· minstens {advice.gapHours} uur ertussen</span>}
+              </p>
+            )}
             {daySessions.length === 0 ? (
               <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p>
             ) : (
