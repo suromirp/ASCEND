@@ -10,6 +10,7 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui'
 import { sessionKindLabel } from '../engine/sports';
 import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
 import { isLegHeavyTemplate } from '../engine/scheduler';
+import { WarmupRow } from './WarmupRow';
 
 
 export function TodayMissionCard({
@@ -63,6 +64,8 @@ export function TodayMissionCard({
           </p>
         )}
       </div>
+
+      <WarmupRow template={template} />
 
       {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={todayISO()} dayLabel={guideDayLabel(template, todayISO())} onClose={() => setShowGuide(false)} />}
 

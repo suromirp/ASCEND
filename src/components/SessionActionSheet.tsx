@@ -13,6 +13,7 @@ import { getModalities, isCyclingModality } from '../data/modalities';
 import { weekdayShortNL, formatDateNL } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
 import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
+import { WarmupRow } from './WarmupRow';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
@@ -158,6 +159,8 @@ export function SessionActionSheet({
             )}
 
             {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />}
+
+            {!completedLog && <div className="mt-4"><WarmupRow template={template} /></div>}
 
             <div className="mt-4 flex flex-col gap-2">
               {quickComplete ? (
