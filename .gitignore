@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Werkmappen van helpers (Claude Code worktrees)
+.claude/worktrees/
