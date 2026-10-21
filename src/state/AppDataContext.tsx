@@ -149,7 +149,7 @@ async function primePlanningRegisters() {
 // What the week check put right in the last sync, until refresh() shows it.
 let pendingRepairs: ProgramHorizonResult['repairs'];
 
-function syncProgramHorizonWhenChanged(): Promise<void> {
+function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<void> {
   // The stored phases are part of the key, so a reset or an import that
   // rewrites the program also triggers a sync.
   const currentKey = async () => {
@@ -179,8 +179,12 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
   horizonQueue = horizonQueue
     .then(async () => {
       if ((await currentKey()) === lastHorizonKey) return;
+      await prime?.();
       const result = await syncProgramHorizon();
-      if (result.repairs) pendingRepairs = result.repairs;
+      // Two syncs before one refresh: both notices count.
+      if (result.repairs) pendingRepairs = pendingRepairs
+        ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))] }
+        : result.repairs;
       lastHorizonKey = await currentKey();
     })
     .catch((err) => console.error('Program horizon sync failed', err));
@@ -486,10 +490,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // reload from storage keeps a stale window from writing back old state
   // over a change made elsewhere.
   const refresh = useCallback(async (fromOtherWindow = false) => {
-    if (!fromOtherWindow) {
-      await primePlanningRegisters();
-      await syncProgramHorizonWhenChanged();
-    }
+    if (!fromOtherWindow) await syncProgramHorizonWhenChanged(primePlanningRegisters);
     if (!fromOtherWindow) syncChannel?.postMessage('changed');
     const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
@@ -529,12 +530,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // The week check put something right: say what, with undo.
     const repaired = pendingRepairs;
     pendingRepairs = undefined;
-    if (repaired) {
+    // Not on a fresh install: there is nothing of yours to put right yet.
+    if (repaired && logs.length > 0) {
       const id = makeId('plancheck');
       const why = 'Na elke wijziging controleert ASCEND je weken op vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat het systeem zelf plande, zet het dan recht. Wat jij zelf zette en je test of wedstrijd verschuift het nooit; daarvoor krijg je een voorstel.';
       const now = new Date().toISOString();
       await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
-      setRecentChange({ id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: repaired.added, createdAt: now });
+      setRecentChange((prev) => {
+        // Right after a change of yours (a move, an Akkoord): the repairs
+        // join that notice, so its undo still works and puts everything
+        // back as it was before your change.
+        if (prev && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
+          const known = new Set(prev.before.map((s) => s.id));
+          return { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))] };
+        }
+        return { id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: [], createdAt: now };
+      });
     }
   }, []);
 
@@ -1112,10 +1123,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // check over the result (docs/onderzoek/Planning op een lijn.md,
       // conflict 12).
       void (async () => {
-        await runForecastReplan();
-        await runStrengthReviewCheck();
-        await runWeeklyPrescriptionBuild();
-      })().catch((err) => console.error('Background planning failed', err));
+        // Each on its own: one that fails doesn't stop the next.
+        for (const [name, step] of [['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild]] as const) {
+          try {
+            await step();
+          } catch (err) {
+            console.error(`Background planning (${name}) failed`, err);
+          }
+        }
+      })();
     })();
   }, [refresh, runForecastReplan, runStrengthReviewCheck, runWeeklyPrescriptionBuild]);
 

@@ -956,7 +956,10 @@ export interface ProgramHorizonResult {
   swapped: number;
   removed: number;
   // What the week check put right, for the notice "Planning bijgewerkt".
-  repairs?: { lines: string[]; before: PlannedSession[]; added: string[] };
+  // before: those sessions just before the check (what undo of the check
+  // alone puts back); stored: as they were stored before this run (what
+  // undo of the action that caused the run puts back).
+  repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[] };
 }
 
 // Keeps the stored program in line with the main goal's date, on every
@@ -1078,11 +1081,12 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   const byTemplate = new Map(templates.map((t) => [t.id, t.name]));
   const shown = pass.repairs.filter(visibleRepair);
   const nameOf = (id: string) => byTemplate.get((stored.get(id) ?? asWillBe.find((s) => s.id === id))?.templateId ?? '') ?? 'Training';
+  const repairedIds = [...new Set(shown.map((r) => r.sessionId))];
+  const beforeCheck = new Map(pass.beforeCheck.map((s) => [s.id, s]));
   const repairs = shown.length === 0 ? undefined : {
     lines: shown.map((r) => describeRepair(r, nameOf(r.sessionId))),
-    // As stored before this run: what undo puts back.
-    before: [...new Set(shown.map((r) => r.sessionId))].map((id) => stored.get(id)).filter((s): s is PlannedSession => !!s),
-    added: [...new Set(shown.filter((r) => !stored.has(r.sessionId) && !r.removed).map((r) => r.sessionId))],
+    before: repairedIds.map((id) => beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
+    stored: repairedIds.map((id) => stored.get(id) ?? beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
   };
   const newCount = writes.filter((w) => !stored.has(w.id)).length;
   return { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs };

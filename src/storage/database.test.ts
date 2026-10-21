@@ -453,12 +453,26 @@ describe('one planning run, ending with the week check (docs/onderzoek/Planning 
     } as TrainingGoal);
   }
 
-  it('a second run writes nothing, with a race block and a rest day of your own', async () => {
-    await setGoals();
-    await SettingsRepo.set({ restDay: 4 });
-    await syncProgramHorizon();
-    expect(await syncProgramHorizon()).toMatchObject({ added: 0, swapped: 0, removed: 0 });
-  });
+  for (const restDay of [undefined, 4] as const) {
+    it(`a second run writes nothing, with a race block (rest day ${restDay ?? 'default'})`, async () => {
+      await setGoals();
+      if (restDay) await SettingsRepo.set({ restDay });
+      await syncProgramHorizon();
+      expect(await syncProgramHorizon()).toMatchObject({ added: 0, swapped: 0, removed: 0 });
+      expect(await syncProgramHorizon()).toMatchObject({ added: 0, swapped: 0, removed: 0 });
+    });
+
+    it(`never leaves leg strength on a test day (rest day ${restDay ?? 'default'})`, async () => {
+      await setGoals();
+      if (restDay) await SettingsRepo.set({ restDay });
+      await syncProgramHorizon();
+      await syncProgramHorizon();
+      const open = (await PlannedSessionsRepo.getAll()).filter((s) => s.status !== 'skipped' && s.scheduledDate >= todayISO());
+      for (const test of open.filter((s) => s.templateId === 'tpl_test_run')) {
+        expect(open.filter((s) => s.scheduledDate === test.scheduledDate && ['tpl_lower_a', 'tpl_lower_b'].includes(s.templateId))).toEqual([]);
+      }
+    });
+  }
 
   it('an accepted proposal stays exactly as it was through a week of daily runs', async () => {
     await setGoals();

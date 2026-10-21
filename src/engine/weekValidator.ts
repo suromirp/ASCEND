@@ -15,7 +15,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf, weekdayShortNL } from '../utils/dates';
-import { findHeavyConflicts, freshnessAt, isHardRun, isLegHeavyTemplate } from './scheduler';
+import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isLegHeavyTemplate } from './scheduler';
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 
@@ -39,6 +39,7 @@ export type CheckRule =
   | 'GOAL-DAY' // nothing on or after the main goal's day
   | 'REST-DAY' // the rest day stays free
   | 'TWO-HARD-RUNS' // at most one hard run a day
+  | 'TEST-DAY' // on a test or race day: nothing else hard, strength after it only with "Zware dingen op één dag"
   | 'AFTER-TEST' // the day after a test or race: no hard run, nothing heavy for the legs but strength
   | 'LEG-SPACING' // heavy days for the same muscles far enough apart
   | 'TEST-FRESH' // fresh legs for a test or race, by the leg index
@@ -98,6 +99,15 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
   const active = input.sessions.filter(open).filter((s) => !onlyWeeks || onlyWeeks.has(mondayOfWeek(s.scheduledDate)));
   const all = input.sessions.filter((s) => s.status !== 'skipped');
   const recentLogs = input.logs.filter((l) => daysBetween(l.completedDate, input.today) <= 56);
+  // By date, so each rule looks at a few days instead of the whole plan.
+  const index = (list: PlannedSession[]) => {
+    const map = new Map<string, PlannedSession[]>();
+    for (const s of list) map.set(s.scheduledDate, [...(map.get(s.scheduledDate) ?? []), s]);
+    return map;
+  };
+  const allByDate = index(all);
+  const openByDate = index(input.sessions.filter(open));
+  const around = (date: string, days: number) => Array.from({ length: days * 2 + 1 }, (_, i) => allByDate.get(addDays(date, i - days)) ?? []).flat();
   const tpl = (s: PlannedSession) => byId.get(s.templateId);
   const minutes = (s: PlannedSession) => { const t = tpl(s); return s.plannedMinutes ?? (t ? input.minutesOf?.(s, t) ?? t.durationVariants.full : 0); };
 
@@ -120,7 +130,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       findings.push({ rule: 'REST-DAY', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat op je rustdag (${day(s.scheduledDate)}).` });
     }
 
-    const sameDay = active.filter((o) => o.id !== s.id && o.scheduledDate === s.scheduledDate);
+    const sameDay = (openByDate.get(s.scheduledDate) ?? []).filter((o) => o.id !== s.id);
     // Two hard runs on one day: reported once, on the one that is easiest to move.
     if (isHardRun(t)) {
       for (const o of sameDay) {
@@ -150,7 +160,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
 
     // The day after a test or race.
-    const testBefore = all.find((o) => ANCHORS.has(o.templateId) && daysBetween(o.scheduledDate, s.scheduledDate) === 1);
+    const testBefore = (allByDate.get(addDays(s.scheduledDate, -1)) ?? []).find((o) => ANCHORS.has(o.templateId));
     // The long training the day after, in its short version, is how the race
     // block plans it: easy legs, not a second effort.
     const shortLong = LONG.has(t.id) && !!s.plannedMinutes && !!t.durationVariants.short && s.plannedMinutes <= t.durationVariants.short;
@@ -158,19 +168,28 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       findings.push({ rule: 'AFTER-TEST', date: s.scheduledDate, sessionIds: [s.id, testBefore.id], subjectId: s.id, level: level(s), message: `${name} de dag na de ${testBefore.templateId === 'tpl_race' ? 'wedstrijd' : 'testloop'}.` });
     }
 
+    // On the test or race day itself: reported on the other session.
+    if (ANCHORS.has(t.id)) {
+      for (const o of sameDay) {
+        const ot = tpl(o);
+        if (!ot || !conflictsOnTestDay(ot)) continue;
+        findings.push({ rule: 'TEST-DAY', date: s.scheduledDate, sessionIds: [o.id, s.id], subjectId: o.id, level: level(o), message: `${ot.name} op dezelfde dag als de ${t.id === 'tpl_race' ? 'wedstrijd' : 'testloop'} (${day(s.scheduledDate)}).` });
+      }
+    }
+
     // Fresh legs for a test or race.
     if (ANCHORS.has(t.id)) {
       const limit = t.id === 'tpl_race' ? FATIGUE_THRESHOLDS.race.doubt : FATIGUE_THRESHOLDS.test.fresh;
-      const index = freshnessAt(s.scheduledDate, all.filter((o) => o.id !== s.id), byId, recentLogs).index;
-      if (index > limit) {
-        findings.push({ rule: 'TEST-FRESH', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} op ${day(s.scheduledDate)}: beenindex ${index.toFixed(1).replace('.', ',')}, grens ${limit}.` });
+      const legIndex = freshnessAt(s.scheduledDate, around(s.scheduledDate, 52).filter((o) => o.id !== s.id), byId, recentLogs).index;
+      if (legIndex > limit) {
+        findings.push({ rule: 'TEST-FRESH', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} op ${day(s.scheduledDate)}: beenindex ${legIndex.toFixed(1).replace('.', ',')}, grens ${limit}.` });
       }
       continue;
     }
 
     // Heavy days for the same muscles: each pair once, the later session as
     // the subject unless only the earlier one may be moved.
-    for (const c of findHeavyConflicts(s.id, t, s.scheduledDate, all.filter((o) => Math.abs(daysBetween(o.scheduledDate, s.scheduledDate)) <= 4), byId, recentLogs)) {
+    for (const c of findHeavyConflicts(s.id, t, s.scheduledDate, around(s.scheduledDate, 4), byId, recentLogs)) {
       if (ANCHORS.has(c.templateId)) continue; // TEST-FRESH and AFTER-TEST cover the test
       if (c.scheduledDate > s.scheduledDate || (c.scheduledDate === s.scheduledDate && c.id < s.id)) continue;
       const subject = level(s) === 3 || level(c) !== 3 ? s : c;
@@ -208,24 +227,32 @@ export interface RepairResult {
 
 const MAX_ROUNDS = 60;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'REST-DAY', 'DAY-FULL', 'AFTER-TEST', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 
 export function repairWeeks(input: CheckInput): RepairResult {
   const { byId, logged, until } = context(input);
   const level = (s: PlannedSession) => lockLevel(s, logged, input.today);
+  // What the check may change: the system's own sessions, except a leg day
+  // the race block swapped for a test or tempo run (raceBlock marker). That
+  // swap is the race block's to keep or undo; moving it here would make the
+  // two steps undo each other on every run.
+  const movable = (s: PlannedSession) => level(s) === 3 && !s.raceBlock;
   let sessions = input.sessions;
   const repairs: Repair[] = [];
   const tried = new Set<string>();
 
   // A change is only kept when the weeks around it are better: fewer
-  // findings, and none that wasn't there before.
-  const better = (changed: PlannedSession[], dates: string[]) => {
+  // findings, and none that wasn't there before. The weeks as they are now
+  // are judged once, every candidate against them.
+  const judge = (dates: string[]) => {
     const weeks = new Set(dates.flatMap((d) => [-7, 0, 7].map((o) => mondayOfWeek(addDays(d, o)))));
     const before = validateWeeks({ ...input, sessions }, weeks);
     const beforeKeys = new Set(before.map(key));
-    const after = validateWeeks({ ...input, sessions: changed }, weeks);
-    return after.length < before.length && after.every((f) => beforeKeys.has(key(f)));
+    return (changed: PlannedSession[]) => {
+      const after = validateWeeks({ ...input, sessions: changed }, weeks);
+      return after.length < before.length && after.every((f) => beforeKeys.has(key(f)));
+    };
   };
 
   // Another day in the same week for a session of the system: the nearest
@@ -240,9 +267,10 @@ export function repairWeeks(input: CheckInput): RepairResult {
     // Its own place in the week first (a test goes where the easy run is).
     const slotDay = input.slotDays?.get(patternSlotOf(subject.templateId));
     if (slotDay) candidates.sort((a, b) => Number(isoWeekday(b) === slotDay) - Number(isoWeekday(a) === slotDay));
+    const better = judge([subject.scheduledDate, ...alsoCheck]);
     for (const d of candidates) {
       const moved = sessions.map((s) => (s.id === subject.id ? { ...s, scheduledDate: d, weekStartDate: monday, ...(plannedMinutes ? { plannedMinutes } : {}) } : s));
-      if (!better(moved, [subject.scheduledDate, d, ...alsoCheck])) continue;
+      if (!better(moved)) continue;
       sessions = moved;
       repairs.push({ sessionId: subject.id, rule, from: subject.scheduledDate, to: d, ...(plannedMinutes ? { plannedMinutes } : {}) });
       return true;
@@ -252,11 +280,12 @@ export function repairWeeks(input: CheckInput): RepairResult {
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const findings = validateWeeks({ ...input, sessions });
+    const byIdNow = new Map(sessions.map((s) => [s.id, s]));
     // The system's own sessions, and a test or race made fresh by changing
     // the system's strength before it (also a test you placed yourself).
     const next = findings
       // A test that is on the wrong day itself waits for its proposal first.
-      .filter((f) => (f.level === 3 || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
+      .filter((f) => ((f.level === 3 && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
       .sort((a, b) => RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.date.localeCompare(b.date))[0];
     if (!next) return { sessions, repairs, remaining: findings };
     tried.add(key(next));
@@ -290,11 +319,11 @@ export function repairWeeks(input: CheckInput): RepairResult {
       for (const c of result.contributions) {
         const s = sessions.find((x) => x.id === c.id);
         const ct = s && byId.get(s.templateId);
-        if (!s || !ct || c.logged || level(s) !== 3 || ct.type !== 'strength') continue;
+        if (!s || !ct || c.logged || !movable(s) || ct.type !== 'strength') continue;
         const short = ct.durationVariants.short;
         if (isLegHeavyTemplate(ct) && short && s.plannedMinutes !== short) {
           const shortened = sessions.map((x) => (x.id === s.id ? { ...x, plannedMinutes: short } : x));
-          if (better(shortened, [s.scheduledDate, subject.scheduledDate])) {
+          if (judge([s.scheduledDate, subject.scheduledDate])(shortened)) {
             sessions = shortened;
             repairs.push({ sessionId: s.id, rule: 'TEST-FRESH', from: s.scheduledDate, to: s.scheduledDate, plannedMinutes: short });
             break;
@@ -316,6 +345,7 @@ const REASON: Record<CheckRule, string> = {
   'GOAL-DAY': 'niets op of na de dag van je doel',
   'REST-DAY': 'je rustdag blijft vrij',
   'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
+  'TEST-DAY': 'niets zwaars op de dag van een test of wedstrijd',
   'AFTER-TEST': 'de dag na een test of wedstrijd niets zwaars',
   'LEG-SPACING': 'genoeg ruimte tussen zware dagen voor dezelfde spieren',
   'TEST-FRESH': 'frisse benen voor de test',

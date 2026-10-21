@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
+import { setHardSameDayAllowed } from './scheduler';
 import { lockLevel, repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
@@ -98,7 +99,20 @@ describe('the other rules', () => {
     expect(repairWeeks(input(loggedOnRest, { logs })).repairs).toEqual([]);
   });
 
+  afterEach(() => setHardSameDayAllowed(false));
+
+  it('never puts leg strength on the test day itself, unless "Zware dingen op één dag" is on', () => {
+    let list = set(sessions, `${MONDAY}-0`, { templateId: 'tpl_test_run', scheduledDate: '2026-10-28', lock: { by: 'proposal', at: '' } });
+    list = set(list, `${MONDAY}-2`, { scheduledDate: '2026-10-27' });
+    list = set(list, `${MONDAY}-1`, { scheduledDate: '2026-10-26' });
+    const r = repairWeeks(input(list));
+    expect(r.sessions.filter((s) => s.scheduledDate === '2026-10-28').map((s) => s.templateId)).toEqual(['tpl_test_run']);
+    const onTestDay = set(list, `${MONDAY}-2`, { scheduledDate: '2026-10-28' });
+    expect(validateWeeks(input(onTestDay)).some((f) => f.rule === 'TEST-DAY')).toBe(true);
+  });
+
   it('a test made fresh by moving or shortening leg strength before it, never the long run or the hills', () => {
+    setHardSameDayAllowed(true);
     // Test on Wednesday 28th: Lower A the day before it.
     let list = set(sessions, `${MONDAY}-0`, { templateId: 'tpl_test_run', scheduledDate: '2026-10-28', lock: { by: 'proposal', at: '' } });
     list = set(list, `${MONDAY}-2`, { scheduledDate: '2026-10-27' });

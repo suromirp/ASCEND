@@ -33,6 +33,9 @@ const TYPE_COLOR: Record<SessionType, string> = {
 
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
+// Unique ids for sessions a proposal would add, so two never look like one.
+const previewIds = () => { let n = 0; return () => `preview-${n++}`; };
+
 export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: () => void }) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
@@ -50,7 +53,7 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
     const item = chosen.changes.find((c) => c.action === 'move' && c.plannedSessionId && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? ''));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' : 'test';
-    const after = planPreviewPass(applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview', { by: 'proposal', at: 'preview' }).sessions);
+    const after = planPreviewPass(applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
   }, [chosen, plannedSessions, fatigueInputs, planPreviewPass]);
@@ -67,7 +70,7 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
     const item = o.proposal.changes.find((c) => c.action === 'move' && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? ''));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((x) => x.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' as const : 'test' as const;
-    const after = planPreviewPass(applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview', { by: 'proposal', at: 'preview' }).sessions);
+    const after = planPreviewPass(applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { index: at.index, status: fatigueStatus(at, kind) };
   }), [advice, plannedSessions, fatigueInputs, planPreviewPass]);

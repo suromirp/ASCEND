@@ -188,14 +188,18 @@ function freshnessBlockers(date: string, limit: number, sessions: PlannedSession
   return blockers;
 }
 
+// On a test or race day itself: what else may be there (strength after the
+// test only with "Zware dingen op één dag"). Shared with the week check.
+export function conflictsOnTestDay(other: SessionTemplate): boolean {
+  if (other.type === 'recovery') return false;
+  if (other.type === 'strength') return isLegHeavyTemplate(other) && !hardSameDay;
+  return isHardRun(other) || isLegHeavyTemplate(other) || isTestLike(other);
+}
+
 // Pairwise rules that stay around a test: the same day and the day after.
 function testPairConflict(_test: SessionTemplate, testDate: string, other: SessionTemplate, otherDate: string): boolean {
   const gap = daysBetween(testDate, otherDate); // > 0: the other comes after the test
-  if (gap === 0) {
-    if (other.type === 'recovery') return false;
-    if (other.type === 'strength') return isLegHeavyTemplate(other) && !hardSameDay;
-    return isHardRun(other) || isLegHeavyTemplate(other) || isTestLike(other);
-  }
+  if (gap === 0) return conflictsOnTestDay(other);
   if (gap === 1) return other.type !== 'strength' && (isHardRun(other) || isLegHeavyTemplate(other));
   return false;
 }

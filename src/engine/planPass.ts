@@ -37,21 +37,42 @@ export interface PlanPassResult {
   sessions: PlannedSession[];
   repairs: Repair[];
   remaining: Finding[];
+  // The plan after the race block, before the week check changed anything:
+  // what undoing the check's repairs puts back.
+  beforeCheck: PlannedSession[];
 }
+
+// Race block and week check take turns until neither changes anything: each
+// may act on what the other did, and a second run of the whole pass must
+// change nothing. Bounded; in practice the second round is quiet.
+const MAX_TURNS = 3;
 
 export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassResult {
   const logged = new Set(ctx.logs.map((l) => l.plannedSessionId).filter(Boolean));
-  const open = all.filter((s) => s.scheduledDate >= ctx.today && !logged.has(s.id) && s.status !== 'skipped');
-  const race = applyRaceBlocks(open, ctx.blocks, ctx.templates, ctx.newId, ctx.program);
-  const updated = new Map(race.update.map((u) => [u.id, u]));
-  const gone = new Set(race.remove.map((r) => r.id));
-  const afterRace = [...all.filter((s) => !gone.has(s.id)).map((s) => updated.get(s.id) ?? s), ...race.add];
-  const check = repairWeeks({
-    sessions: afterRace, logs: ctx.logs, templates: ctx.templates, today: ctx.today, restDay: ctx.restDay, goalDay: ctx.goalDay,
-    raceDays: ctx.blocks.map((b) => b.raceDate), program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
-    sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays, minutesOf: ctx.minutesOf, until: ctx.until,
-  });
-  return { sessions: check.sessions, repairs: check.repairs, remaining: check.remaining };
+  let current = all;
+  let beforeCheck: PlannedSession[] | undefined;
+  const repairs: Repair[] = [];
+  let remaining: Finding[] = [];
+  for (let turn = 0; turn < MAX_TURNS; turn++) {
+    const open = current.filter((s) => s.scheduledDate >= ctx.today && !logged.has(s.id) && s.status !== 'skipped');
+    const race = applyRaceBlocks(open, ctx.blocks, ctx.templates, ctx.newId, ctx.program);
+    const updated = new Map(race.update.map((u) => [u.id, u]));
+    const gone = new Set(race.remove.map((r) => r.id));
+    const afterRace = [...current.filter((s) => !gone.has(s.id)).map((s) => updated.get(s.id) ?? s), ...race.add];
+    beforeCheck ??= afterRace;
+    const check = repairWeeks({
+      sessions: afterRace, logs: ctx.logs, templates: ctx.templates, today: ctx.today, restDay: ctx.restDay, goalDay: ctx.goalDay,
+      raceDays: ctx.blocks.map((b) => b.raceDate), program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
+      sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays, minutesOf: ctx.minutesOf, until: ctx.until,
+    });
+    repairs.push(...check.repairs);
+    remaining = check.remaining;
+    current = check.sessions;
+    // The race block is stable on its own result; only a repair can give it
+    // something new to act on.
+    if (check.repairs.length === 0) break;
+  }
+  return { sessions: current, repairs, remaining, beforeCheck: beforeCheck ?? all };
 }
 
 // The weekday of each pattern session for a rest day; the phase variants
