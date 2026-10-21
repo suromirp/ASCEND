@@ -145,6 +145,9 @@ export interface PlannedSession {
   // shows it here. The automatic planning never moves, swaps, shortens or
   // retemplates it (docs/onderzoek/Planning op een lijn.md). Optional, additive.
   lock?: PlanLock;
+  // Planned to walk with poles. Optional, additive; without it the last log
+  // of the same training decides (engine/legFatigue.ts).
+  poles?: boolean;
 }
 
 export interface PlanLock {
@@ -230,6 +233,9 @@ export interface OutdoorMetric {
   power?: number; // e.g. Friday's Easy Bike fallback
   maxElevationM?: number;
   backpackWeightKg?: number;
+  // Walked with poles. Lowers the descent load in the leg fatigue index
+  // (engine/legFatigue.ts). Optional, additive: older logs have none.
+  poles?: boolean;
   terrain?: string;
   weatherNotes?: string;
   technicalDifficulty?: string;

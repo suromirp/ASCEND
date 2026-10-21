@@ -136,7 +136,7 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setHardSameDayAllowed(!!loadedSettings.hardSameDay);
   // The planner's leg index with the same inputs as the Benen card.
   const lastWeight = [...(loadedSettings.weightEntries ?? [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.kg;
-  setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
+  setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
   setFixedSessionMinutes(planned);
   setAmbition(effectiveAmbition(loadedSettings.ambition, logs, new Map(tpls.map((t) => [t.id, t])), program, todayISO()).effective);
 }

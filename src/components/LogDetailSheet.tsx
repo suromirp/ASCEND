@@ -45,6 +45,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (activity?.avgHeartRate !== undefined) rows.push({ label: log.workout ? 'Gem. hartslag, hele training' : 'Gem. hartslag', value: `${activity.avgHeartRate} bpm` });
   if (activity?.cadence !== undefined) rows.push({ label: 'Cadans', value: `${activity.cadence}` });
   if (activity?.power !== undefined) rows.push({ label: 'Vermogen', value: `${activity.power} W` });
+  if (log.outdoorData?.poles) rows.push({ label: 'Wandelstokken', value: 'Met stokken' });
   if (log.outdoorData?.backpackWeightKg !== undefined) rows.push({ label: 'Rugzakgewicht', value: `${formatNumberNL(log.outdoorData.backpackWeightKg, 1)} kg` });
   if (log.outdoorData?.terrain) rows.push({ label: 'Terrein', value: log.outdoorData.terrain });
   if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });

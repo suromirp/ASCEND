@@ -16,6 +16,8 @@
 
 import { significantPain } from './pain';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { Program } from '../models/program';
+import { progressionTarget } from './programLayout';
 import { daysBetween, addDays } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport } from './sports';
@@ -51,6 +53,16 @@ const DEFAULT_DESCENT_M: Record<string, number> = { tpl_hill_intervals: 150, tpl
 // The hill repeats are walked down; everything else of a run is run.
 const WALKED_DOWN = new Set(['tpl_hill_intervals']);
 const DEFAULT_BODY_KG = 80;
+// The pack weighs heavier on the damage layer than on energy cost: going
+// downhill the knee extensors take the load (activity up 104 to 172% with the
+// heaviest pack, Applied Sciences 2020). `1 + 1.5 x pack / body weight` is a
+// derived assumption, not a tested number (docs/visie/Trainingswetenschap.md,
+// knelpunt 6 en idee 4); the other layers keep the plain `1 + pack / body`.
+const DAMAGE_PACK_WEIGHT = 1.5;
+// Walking poles take load off the knee going down: 12 to 25% less force
+// (Schwameder e.a. 1999); 15% is the careful end, applied to the descent in
+// the damage layer only.
+export const POLES_DESCENT_FACTOR = 0.85;
 
 // Sets near failure work on much longer than sets with reps in reserve
 // (Morán-Navarro e.a. 2017).
@@ -108,6 +120,8 @@ export interface LegFatigueInputs {
   templates: SessionTemplate[];
   today: string;
   bodyKg?: number;
+  // The program, to look up the week target (D+ and pack) of a planned session.
+  program?: Program | null;
   // Planned minutes for a session that has no plannedMinutes of its own.
   minutesOf?: (session: PlannedSession, template: SessionTemplate) => number;
   // Morning reports of muscle soreness (pain research: a floor, never lower).
@@ -125,6 +139,7 @@ export interface FatigueEvent {
   descentM?: number;
   climbM?: number;
   packKg?: number;
+  poles?: boolean; // walked with poles
   logged: boolean;
 }
 
@@ -149,15 +164,16 @@ export interface LegFatigueResult {
 }
 
 // --- the events: what happened and what is still planned ------------------------
-export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSessions' | 'templates' | 'today' | 'minutesOf'>): FatigueEvent[] {
+export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSessions' | 'templates' | 'today' | 'minutesOf' | 'program'>): FatigueEvent[] {
   const byId = new Map(inputs.templates.map((t) => [t.id, t]));
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId).filter(Boolean));
   const ownElevation = recentElevation(inputs.logs);
+  const habitPoles = recentPoles(inputs.logs);
   const events: FatigueEvent[] = inputs.logs.map((l) => {
     const d = l.outdoorData ?? l.cardioData;
     return {
       id: l.id, templateId: l.templateId, date: l.completedDate, minutes: l.durationMinutes, rpe: l.rpe, rir: l.strengthRir, feel: l.subjectiveFeel,
-      descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, logged: true,
+      descentM: l.outdoorData?.elevationLossM ?? d?.elevationGainM, climbM: d?.elevationGainM, packKg: l.outdoorData?.backpackWeightKg, poles: l.outdoorData?.poles, logged: true,
     };
   });
   for (const s of inputs.plannedSessions) {
@@ -165,11 +181,16 @@ export function fatigueEvents(inputs: Pick<LegFatigueInputs, 'logs' | 'plannedSe
     const t = byId.get(s.templateId);
     if (!t || t.type === 'recovery') continue;
     const minutes = s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
-    // Your own recent climbing for this training when there is some (a long
-    // run in flat country has far less than its 300 m target), else the target.
+    // The week target of the phase (D+ and pack) when the program has one:
+    // the heaviest weekends are the ones that count, and a few shorter hikes
+    // in the log must not make the heaviest week look light. Otherwise your
+    // own recent climbing for this training when there is some (a long run in
+    // flat country has far less than its 300 m target), else the template's.
+    const step = inputs.program ? progressionTarget(t, inputs.program, s.scheduledDate)?.step : undefined;
     const own = ownElevation.get(t.id);
-    const target = own ?? t.outdoorTarget?.targetElevationM ?? DEFAULT_DESCENT_M[t.id];
-    events.push({ id: s.id, templateId: s.templateId, date: s.scheduledDate, minutes, descentM: target, climbM: target, packKg: t.outdoorTarget?.backpackWeightKg, logged: false });
+    const target = step?.elevationGainM ?? own ?? t.outdoorTarget?.targetElevationM ?? DEFAULT_DESCENT_M[t.id];
+    const packKg = step?.backpackKg ?? t.outdoorTarget?.backpackWeightKg;
+    events.push({ id: s.id, templateId: s.templateId, date: s.scheduledDate, minutes, descentM: target, climbM: target, packKg, poles: s.poles ?? habitPoles.get(t.id), logged: false });
   }
   return events;
 }
@@ -185,6 +206,17 @@ function recentElevation(logs: SessionLog[]): Map<string, number> {
     if (list.length < 4) per.set(l.templateId, [...list, m]);
   }
   return new Map([...per].map(([id, list]) => [id, list.reduce((a, b) => a + b, 0) / list.length]));
+}
+
+// Whether the last log of a training says poles were used: planned sessions
+// of that training carry it on, until a log says otherwise.
+function recentPoles(logs: SessionLog[]): Map<string, boolean> {
+  const result = new Map<string, boolean>();
+  for (const l of [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate))) {
+    const poles = l.outdoorData?.poles;
+    if (poles !== undefined && !result.has(l.templateId)) result.set(l.templateId, poles);
+  }
+  return result;
 }
 
 // --- adaptation: the repeated bout effect, damage bucket only --------------------
@@ -236,10 +268,12 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     const planned = PLANNED_RPE[p.intensity] ?? 4;
     const factor = rpeFactor(event.rpe, planned);
     const pack = event.packKg ? 1 + event.packKg / bodyKg : 1;
+    const damagePack = event.packKg ? 1 + DAMAGE_PACK_WEIGHT * event.packKg / bodyKg : 1;
+    const poles = event.poles ? POLES_DESCENT_FACTOR : 1;
     const running = templateSport(template) === 'running' && !WALKED_DOWN.has(template.id);
     intensity = (INTENSITY_PER_HOUR[p.intensity] ?? 2) * hours * factor * pack;
     strength = (IMPACT_PER_HOUR[p.impact as Level] * hours + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000) * factor * pack;
-    damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * pack * adapt;
+    damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * damagePack * poles * adapt;
   }
   return { intensity: intensity * feel, strength: strength * feel, damage: damage * feel };
 }
