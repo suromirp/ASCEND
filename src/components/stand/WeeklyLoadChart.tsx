@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LOAD_SPORTS, LOAD_JUMP, loadVersusBefore, type LoadSport, type WeekLoad } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
 import { Card, Eyebrow } from '../ui';
-import { dayMonth, roundedTop } from './chartParts';
+import { dayMonth, dayShort as dayShortNL, roundedTop } from './chartParts';
 
 // Je stand → weekly load: minutes × effort per week, per sport. Solid is
 // done, faded is still planned. Tap a week for its numbers.
@@ -39,7 +39,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
       <div>
         <Eyebrow>WEEKBELASTING</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Minuten maal zwaarte, per week. 45 minuten op zwaarte 6 is 270. Vol is gedaan, licht is nog gepland.
+          Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.
         </p>
       </div>
 
@@ -93,24 +93,46 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
       )}
 
       {week && (
-        <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
-          <p>
-            <span className="font-medium">{week.isCurrent ? 'Deze week' : `Week van ${dayMonth(week.weekStart)}`}{week.isRestWeek ? ', rustweek' : ''}: </span>
-            <span className="tabular-nums">{formatNumberNL(week.doneTotal, 0)}</span> gedaan
-            {week.plannedTotal > 0 && <>, nog <span className="tabular-nums">{formatNumberNL(week.plannedTotal, 0)}</span> gepland</>}.
-          </p>
-          {present.some((s) => week.done[s] + week.planned[s] > 0) && (
-            <p style={{ color: 'var(--color-ink-dim)' }}>
-              {present.filter((s) => week.done[s] + week.planned[s] > 0).map((s) => `${SPORT_LABEL[s].split(' ')[0]} ${formatNumberNL(week.done[s] + week.planned[s], 0)}`).join(' · ')}
-            </p>
+        <div className="flex flex-col gap-2 rounded-xl px-3 py-2.5 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
+          <p className="font-medium">{week.isCurrent ? 'Deze week' : `Week van ${dayMonth(week.weekStart)}`}{week.isRestWeek ? ', rustweek' : ''}</p>
+          {week.items.length === 0 ? (
+            <p style={{ color: 'var(--color-ink-dim)' }}>Geen trainingen.</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {week.items.map((it, i) => (
+                <li key={i} className="flex items-baseline justify-between gap-3" style={{ color: it.planned ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
+                  <span className="flex min-w-0 items-baseline gap-1.5">
+                    <span className="h-1.5 w-1.5 shrink-0 translate-y-[-1px] rounded-full" style={{ background: SPORT_COLOR[it.sport], opacity: it.planned ? 0.5 : 1 }} aria-hidden />
+                    <span className="truncate">{dayShortNL(it.date)} {it.name}</span>
+                  </span>
+                  <span className="shrink-0 tabular-nums">
+                    {it.minutes} min × {formatNumberNL(it.effort, 0)}{it.estimated ? '*' : ''} = {formatNumberNL(it.load, 0)}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
+          <div className="flex items-baseline justify-between gap-3 border-t pt-1.5" style={{ borderColor: 'var(--color-card-border)' }}>
+            <span>Totaal</span>
+            <span className="tabular-nums font-medium">
+              {formatNumberNL(week.doneTotal, 0)} gedaan{week.plannedTotal > 0 ? ` + ${formatNumberNL(week.plannedTotal, 0)} gepland = ${formatNumberNL(week.doneTotal + week.plannedTotal, 0)}` : ''}
+            </span>
+          </div>
+          {week.isCurrent && jump && (
+            <div className="flex items-baseline justify-between gap-3" style={{ color: 'var(--color-ink-dim)' }}>
+              <span>Gemiddeld de vier weken ervoor</span>
+              <span className="tabular-nums">{formatNumberNL(jump.before, 0)}</span>
+            </div>
+          )}
+          {week.items.some((it) => it.planned) && <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Grijs is nog gepland, met de zwaarte waarop hij gepland staat.</p>}
+          {week.items.some((it) => it.estimated) && <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>* Geen zwaarte ingevuld: geteld met de geplande zwaarte.</p>}
         </div>
       )}
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict(weeks[currentIdx], jump)}</p>
       {estimatedWeeks > 0 && (
         <p className="text-[11px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Zonder ingevulde zwaarte rekent ASCEND met de geplande zwaarte. Vul je die in, dan klopt de balk beter.
+          Vul na een training de zwaarte in, dan klopt de balk beter.
         </p>
       )}
     </Card>

@@ -30,7 +30,7 @@ export function StandSummaryCard() {
   const items = [
     { label: 'Benen', value: <><span style={{ color: LEVEL_COLOR[level] }}>{word}</span> <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatNumberNL(legs.index, 1)}</span></> },
     { label: 'Week', value: <span className="tabular-nums">{done} / {week.length}</span> },
-    { label: 'Belasting', value: <span style={{ color: jump && jump.doneRatio > LOAD_JUMP ? 'var(--color-warning)' : undefined }}>{load}</span> },
+    { label: 'Belasting', value: <span style={{ color: jump && jump.doneRatio > LOAD_JUMP ? 'var(--color-warning)' : undefined }}>{load}</span>, hint: jump ? 'tegen de 4 weken ervoor' : undefined },
   ];
 
   return (
@@ -45,6 +45,7 @@ export function StandSummaryCard() {
             <div key={it.label}>
               <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{it.label}</p>
               <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{it.value}</p>
+              {'hint' in it && it.hint && <p className="text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{it.hint}</p>}
             </div>
           ))}
         </div>

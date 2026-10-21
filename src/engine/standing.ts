@@ -26,8 +26,21 @@ import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
 export type LoadSport = 'lopen' | 'kracht' | 'wandelen' | 'overig';
 export const LOAD_SPORTS: LoadSport[] = ['lopen', 'kracht', 'wandelen', 'overig'];
 
+// One training as it counts: minutes times effort.
+export interface LoadItem {
+  date: string;
+  name: string;
+  sport: LoadSport;
+  minutes: number;
+  effort: number;
+  load: number;
+  planned: boolean; // still to come
+  estimated: boolean; // done, but no effort filled in: the planned effort
+}
+
 export interface WeekLoad {
   weekStart: string;
+  items: LoadItem[];
   done: Record<LoadSport, number>;
   planned: Record<LoadSport, number>; // still to come (this week from today, later weeks whole)
   doneTotal: number;
@@ -77,12 +90,13 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
   for (let w = -weeksBack; w <= weeksAhead; w++) {
     const weekStart = addDays(current, 7 * w);
     const weekEnd = addDays(weekStart, 7);
-    const week: WeekLoad = { weekStart, done: zero(), planned: zero(), doneTotal: 0, plannedTotal: 0, estimated: 0, isRestWeek: inputs.isRestWeek?.(weekStart) ?? false, isCurrent: w === 0 };
+    const week: WeekLoad = { weekStart, items: [], done: zero(), planned: zero(), doneTotal: 0, plannedTotal: 0, estimated: 0, isRestWeek: inputs.isRestWeek?.(weekStart) ?? false, isCurrent: w === 0 };
     for (const l of inputs.logs) {
       if (l.completedDate < weekStart || l.completedDate >= weekEnd || l.type === 'recovery') continue;
       const t = byId.get(l.templateId);
       const rpe = l.rpe ?? (t ? plannedEffort(t) : 4);
       const load = l.durationMinutes * rpe;
+      week.items.push({ date: l.completedDate, name: t?.name ?? 'Training', sport: sportOfLog(l, t), minutes: l.durationMinutes, effort: rpe, load, planned: false, estimated: l.rpe === undefined });
       week.done[sportOfLog(l, t)] += load;
       week.doneTotal += load;
       if (l.rpe === undefined) week.estimated += load;
@@ -94,9 +108,11 @@ export function weeklyLoad(inputs: LoadInputs, weeksBack = 6, weeksAhead = 1): W
       if (!t || t.type === 'recovery') continue;
       const minutes = s.plannedMinutes ?? inputs.minutesOf?.(s, t) ?? t.durationVariants.full;
       const load = minutes * plannedEffort(t);
+      week.items.push({ date: s.scheduledDate, name: t.name, sport: sportOfTemplate(t), minutes, effort: plannedEffort(t), load, planned: true, estimated: false });
       week.planned[sportOfTemplate(t)] += load;
       week.plannedTotal += load;
     }
+    week.items.sort((a, b) => a.date.localeCompare(b.date));
     weeks.push(week);
   }
   return weeks;
