@@ -71,11 +71,38 @@ export function StandingPage() {
   const weekDone = weekTrainings.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
   const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, program?.startDate, (d) => isIllnessDay(d, settings.illnessEpisodes, today), { isRest: (p) => templateById.get(p.templateId)?.type === 'recovery', droppedAfterMissIds: droppedAfterMissIds(planChangeLog) });
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
-  const tiles = [
-    { label: 'WEEK', value: `${weekDone} / ${weekTrainings.length}`, gold: false },
-    { label: 'CONSISTENTIE', value: readiness.consistencyBasis === 0 ? '–' : `${readiness.consistency}%`, gold: true },
-    { label: 'WEEK IN FASE', value: position ? `${position.weekInPhase}/${position.phase.weekCount}` : '–', gold: false },
-    { label: 'REEKS', value: `${streak} ${streak === 1 ? 'dag' : 'dagen'}`, gold: true },
+  // Each number with what it means, in one plain sentence (production
+  // feedback: "veel te vaag, wat betekenen deze categorieën").
+  const phaseName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  const nextPhase = position && program ? program.phases[position.phaseIndex + 1] : undefined;
+  const restWeek = program ? restWeekState(program, mondayOfWeek(today), sessionLogs, today) : undefined;
+  const dueDone = Math.round((readiness.consistency / 100) * readiness.consistencyBasis);
+  const rows = [
+    {
+      label: 'Deze week',
+      value: `${weekDone} van ${weekTrainings.length}`,
+      text: 'trainingen gedaan',
+      dots: weekTrainings.map((s) => deriveSessionStatus(s, sessionLogs).status === 'completed'),
+    },
+    {
+      label: 'Volgehouden',
+      value: readiness.consistencyBasis === 0 ? '–' : `${readiness.consistency}%`,
+      text: readiness.consistencyBasis === 0
+        ? 'Nog niets om te tellen: dit gaat over de trainingen van de laatste 4 weken.'
+        : `Van de ${readiness.consistencyBasis} trainingen die de laatste 4 weken gepland stonden, deed je er ${dueDone}. Ziek en rustdagen tellen niet mee.`,
+    },
+    {
+      label: 'Fase',
+      value: position ? `week ${position.weekInPhase} van ${position.phase.weekCount}` : '–',
+      text: position
+        ? `${phaseName(position.phase.name)}.${restWeek?.isRestWeek && !restWeek.skipped ? ' Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? ` Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
+        : '',
+    },
+    {
+      label: 'Op rij',
+      value: `${streak} ${streak === 1 ? 'trainingsdag' : 'trainingsdagen'}`,
+      text: 'Achter elkaar alles gedaan wat gepland stond. Dagen zonder training tellen niet mee en breken de reeks niet.',
+    },
   ];
 
   return (
@@ -101,14 +128,24 @@ export function StandingPage() {
         ))}
       </nav>
 
-      <div className="grid grid-cols-2 gap-3">
-        {tiles.map((t) => (
-          <Card key={t.label} className="text-center">
-            <p className="flex min-h-8 items-center justify-center text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{t.label}</p>
-            <p className="mt-1 font-display text-lg" style={{ color: t.gold ? 'var(--color-gold)' : 'var(--color-ink)' }}>{t.value}</p>
-          </Card>
+      <Card className="flex flex-col">
+        {rows.map((r, i) => (
+          <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-[11px] tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{r.label.toUpperCase()}</span>
+              <span className="font-display text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
+            </div>
+            {'dots' in r && r.dots && r.dots.length > 0 && (
+              <div className="flex gap-1.5" aria-hidden>
+                {r.dots.map((done, j) => (
+                  <span key={j} className="h-1.5 flex-1 rounded-full" style={{ background: done ? 'var(--color-bronze)' : 'var(--color-charcoal)' }} />
+                ))}
+              </div>
+            )}
+            {r.text && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{r.text}</p>}
+          </div>
         ))}
-      </div>
+      </Card>
 
       <section ref={(el) => { refs.current.benen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Benen">
         <LegFatigueCard />
