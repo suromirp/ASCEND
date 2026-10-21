@@ -9,8 +9,7 @@
 
 export type SpotUse = 'bergop' | 'bergaf' | 'trap' | 'rugzak' | 'heuvelintervallen' | 'lange tocht' | 'vlak' | 'duurloop';
 
-// One measured climb at a spot. From the Amersfoort/Soest research
-// (docs/onderzoek/Trainingsplekken Amersfoort en Soest.md): heights from
+// One measured climb at a spot. From our spot research: heights from
 // the AHN elevation model (bare ground, ±0,5 m) or Climbfinder; lengths
 // measured along a straight line unless the source measured the road.
 export interface SpotClimb {
@@ -106,7 +105,7 @@ export const TRAINING_SPOTS: TrainingSpot[] = [
     lat: 52.1987, lon: 5.3707, coordType: 'top',
     kind: 'Grasheuvel in het park',
     topM: 10, climbM: 8,
-    example: 'Een korte, steile grasheuvel bij het waterpark: 8 m hoog, hellingen van 40 tot 50%. Het steilste dat je in Amersfoort vindt.',
+    example: 'Een korte, steile grasheuvel bij een waterpark: 8 m hoog, hellingen van 40 tot 50%. Het steilste dat je in Amersfoort vindt.',
     uses: ['bergop', 'bergaf'],
     terrain: 'Gras',
     access: 'Openbaar park.',
@@ -119,7 +118,7 @@ export const TRAINING_SPOTS: TrainingSpot[] = [
     ],
     lighting: 'Niet bekend; reken op weinig licht.',
     tip: 'Kort en steil, dus ideaal voor korte bergaf-prikkels tussendoor. Loop naar beneden met kleine, snelle passen.',
-    caveat: 'De naam Grasheuvel bij het waterpark staat in geen enkele bron. We vonden de heuvel via de hoogtekaart. Nat gras is glad.',
+    caveat: 'De heuvel heeft geen officiële naam; we vonden hem via de hoogtekaart. Nat gras is glad.',
     region: 'utrecht',
     sources: [AHN, { label: 'OpenStreetMap, het waterpark', url: 'https://www.openstreetmap.org/node/9665331884' }],
   },
