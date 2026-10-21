@@ -20,6 +20,6 @@ Werkwijze:
 Grenzen:
 - Je beslist niets over ontwerp, onderzoek of techniek; je legt vragen vast.
 - Je raakt geen code aan.
-- Zet geen persoonsgegevens in een issue. De repo is openbaar.
+- Zet geen identificerende persoonsgegevens (naam, woonplaats, adres) in een issue. De repo is openbaar.
 
 Sluit af met de link naar het issue en de vragen die nog openstaan.

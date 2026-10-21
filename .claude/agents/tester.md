@@ -25,6 +25,6 @@ Is er UI veranderd, bekijk dan de schermen Vandaag, Week en Je stand op telefoon
 Controleer ook, met een korte zoekopdracht op de gewijzigde bestanden:
 - geen U+2013 of U+2014 in nieuwe tekst;
 - geen losse hexkleuren in componenten;
-- geen persoonsgegevens.
+- geen identificerende persoonsgegevens (naam, woonplaats, adres).
 
 Rapporteer: per stap groen of rood met de eerste relevante foutmelding, wat je bekeken hebt, en eerlijk wat je niet kon controleren. Herstel niets zelf.

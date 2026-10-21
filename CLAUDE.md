@@ -252,8 +252,9 @@ afspraken voor elke agent die in deze repo werkt.
   gaat in de app via een voorstel met Akkoord, nooit stil.
 - Besluiten: leg ze vast in `docs/beslissingen/`, één bestand per besluit
   (`JJJJ-MM-DD-onderwerp.md`, sjabloon `_sjabloon.md`), nooit herschrijven.
-- Geen persoonsgegevens: de repo is openbaar. Geen echt gewicht, hartslag,
-  woonplaats of back-upinhoud, ook niet in tests. Testdata is nagemaakt.
+- Geen identificerende persoonsgegevens: de repo is openbaar. Geen naam,
+  woonplaats, wijk, adres, e-mail of werkplek. Trainingsgegevens mogen in
+  onderzoek wel. Testdata in de repo is altijd nagemaakt.
 - Lezen vooraf: eerst `docs/onderzoek/` en `docs/visie/` doorzoeken voordat
   je iets nieuws onderzoekt of ontwerpt.
 - Taal: Nederlandse teksten, menselijk, zonder tabellen en zonder

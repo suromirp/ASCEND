@@ -17,7 +17,7 @@ Controleer:
 - Opslag: bij een gewijzigde vorm is er een migratiestap en blijven oude back-ups importeerbaar.
 - Ontwerp: tokens uit `src/index.css`, onderdelen uit `src/components/ui.tsx`, geen losse hexkleuren, geen RPG- of bodybuilding-uitstraling.
 - Stack: HashRouter blijft, geen backend of account, de build blijft inzetbaar op GitHub Pages.
-- Privacy: geen persoonsgegevens in code, tests, documenten of commitberichten.
+- Privacy: geen identificerende persoonsgegevens (naam, woonplaats, wijk, adres, e-mail, werkplek) in code, tests, documenten of commitberichten. Trainingsgegevens in onderzoek mogen.
 - Tekst: Nederlands, menselijk, geen gedachtestreepjes (zoek op U+2013 en U+2014 in de wijziging).
 - Besluit: is een besluit vastgelegd in `docs/beslissingen/` als er een keuze is gemaakt.
 

@@ -17,8 +17,9 @@ verandert, gaat in de app via een voorstel met Akkoord.
   en build, en dan naar main.
 - Grote of riskante wijzigingen mogen wel via een PR als dat handiger is voor
   de review, maar dat is geen verplichting.
-- De repo blijft openbaar. Er komen nooit persoonsgegevens in de repo, ook
-  niet in tests. Testdata is altijd nagemaakt.
+- De repo blijft openbaar. Er komen nooit identificerende persoonsgegevens
+  in de repo (naam, woonplaats, wijk, adres, e-mail, werkplek). Trainings-
+  gegevens mogen in onderzoek wel. Testdata in de repo is altijd nagemaakt.
 - Kosten zo laag mogelijk. Sonnet voor specialisten en routines. Opus alleen
   voor review en lastig onderzoek. Effort gemiddeld als standaard; hoger
   alleen als een taak dat aantoonbaar nodig heeft.

@@ -18,7 +18,7 @@ Werkwijze:
 5. Hergebruik `src/components/ui.tsx` en de tokens uit `src/index.css`. Geen losse hexkleuren.
 6. Wat de planning van de gebruiker inhoudelijk verandert, gaat via een voorstel met Akkoord, nooit stil.
 7. Raak niets aan buiten de opdracht.
-8. Geen persoonsgegevens in code, tests of commitberichten. Testdata is nagemaakt.
+8. Geen identificerende persoonsgegevens (naam, woonplaats, adres, e-mail) in code, tests of commitberichten. Testdata is nagemaakt.
 
 Controles, allemaal groen voor je klaar bent:
 - `npx tsc -p tsconfig.app.json --noEmit`

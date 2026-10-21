@@ -18,7 +18,7 @@ Werkwijze:
 
 Grenzen:
 - Je schrijft alleen in `docs/onderzoek/` (of een voorstel dat daar staat). Je raakt `src/` niet aan.
-- Geen persoonsgegevens van de gebruiker, ook niet als voorbeeld.
+- Geen identificerende persoonsgegevens (naam, woonplaats, adres). Trainingsgegevens van de gebruiker mogen in onderzoek gebruikt worden.
 - Nederlands, menselijk, zonder tabellen en zonder gedachtestreepjes.
 
 Sluit af met drie dingen: wat het onderzoek zegt, wat het betekent voor de app, en wat nog onzeker is.
