@@ -18,10 +18,13 @@ import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
-import { PATTERN_SWAPS, activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
+import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
-import { applyRaceBlocks, raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
+import { describeRepair, visibleRepair } from '../engine/weekValidator';
+import { patternDays, planPass } from '../engine/planPass';
+import { resolveVariantDuration } from '../engine/substitutions';
+import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
 import { makeId } from '../utils/id';
 
 export const SCHEMA_VERSION = 1;
@@ -952,6 +955,8 @@ export interface ProgramHorizonResult {
   added: number;
   swapped: number;
   removed: number;
+  // What the week check put right, for the notice "Planning bijgewerkt".
+  repairs?: { lines: string[]; before: PlannedSession[]; added: string[] };
 }
 
 // Keeps the stored program in line with the main goal's date, on every
@@ -1042,33 +1047,47 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   const ladder = new Set(milestones.map((m) => m.goalId));
   const mainGoalId = goals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
   const blocks = raceBlocks(goals, mainGoalId, ctx.anchor, today);
+  // The plan as it will be after the steps above, then the last two steps:
+  // the race block and the week check (engine/planPass.ts, the same pass a
+  // proposal is previewed with). The week check repairs only what the
+  // system planned, and says so.
   const pending = new Map<string, PlannedSession>([...swapped, ...added].map((x) => [x.id, x]));
-  const openNow = [
-    ...sessions.filter((x) => open(x) && !removedIds.has(x.id) && x.status !== 'skipped').map((x) => pending.get(x.id) ?? x),
+  const removedNow = new Set(toRemove.map((r) => r.id));
+  const stored = new Map(sessions.map((s) => [s.id, s]));
+  const asWillBe = [
+    ...sessions.filter((s) => !removedNow.has(s.id)).map((s) => pending.get(s.id) ?? s),
     ...added,
   ];
-  const race = applyRaceBlocks(openNow, blocks, templates, () => makeId('planned'), next);
-  for (const u of race.update) pending.set(u.id, u);
-  for (const a of race.add) pending.set(a.id, a);
-  const addedIds = new Set(added.map((x) => x.id));
-  for (const r of race.remove) {
-    pending.delete(r.id);
-    if (!addedIds.has(r.id)) toRemove.push(r);
-  }
-  const writes = [...pending.values()];
+  const engineConfig = await GoalEngineConfigRepo.get();
+  const restDay = settings.restDay ?? 1;
+  const pass = planPass(asWillBe, {
+    today, logs, templates, program: next, blocks, restDay, goalDay: ctx.anchor,
+    dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
+    slotDays: patternDays(templates, settings, restDay),
+    minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
+    newId: () => makeId('planned'),
+  });
+  if (pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
+
+  // Write only what differs from what is stored.
+  const resultIds = new Set(pass.sessions.map((s) => s.id));
+  const writes = pass.sessions.filter((s) => { const was = stored.get(s.id); return !was || JSON.stringify(was) !== JSON.stringify(s); });
+  for (const s of sessions) if (!removedNow.has(s.id) && !resultIds.has(s.id)) toRemove.push(s);
 
   if (toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
-  return { phasesChanged, added: added.length + race.add.length, swapped: swapped.length + race.update.length, removed: toRemove.length };
+  const byTemplate = new Map(templates.map((t) => [t.id, t.name]));
+  const shown = pass.repairs.filter(visibleRepair);
+  const nameOf = (id: string) => byTemplate.get((stored.get(id) ?? asWillBe.find((s) => s.id === id))?.templateId ?? '') ?? 'Training';
+  const repairs = shown.length === 0 ? undefined : {
+    lines: shown.map((r) => describeRepair(r, nameOf(r.sessionId))),
+    // As stored before this run: what undo puts back.
+    before: [...new Set(shown.map((r) => r.sessionId))].map((id) => stored.get(id)).filter((s): s is PlannedSession => !!s),
+    added: [...new Set(shown.filter((r) => !stored.has(r.sessionId) && !r.removed).map((r) => r.sessionId))],
+  };
+  const newCount = writes.filter((w) => !stored.has(w.id)).length;
+  return { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs };
 }
 
-// The weekday of each pattern session for a rest day, the phase variants
-// (mountain hike, first hike day) on the day of the session they replace.
-function patternDays(templates: SessionTemplate[], settings: AppSettings, restDay: number): Map<string, number> {
-  const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { ...settings, enabledSports: { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports } }), templates, restDay as RestWeekday);
-  const map = new Map(pattern.map((t) => [t.id, t.defaultDayOfWeek as number]));
-  for (const sw of PATTERN_SWAPS) if (map.has(sw.from)) map.set(sw.to, map.get(sw.from)!);
-  return map;
-}
 
 // --- atomic multi-store backup writes -----------------------------------
 
@@ -1130,6 +1149,10 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
 
   if (writes.settings) {
     ops.push(tx.objectStore('meta').put(writes.settings, 'settings'));
+    // The plan in the backup was laid out for its own rest day: restored
+    // together, that rest day is already applied, so the sync doesn't lay
+    // the week out again (docs/onderzoek/Planning op een lijn.md, conflict 16).
+    if (writes.plannedSessions?.clear) ops.push(tx.objectStore('meta').put(writes.settings.restDay ?? 1, 'appliedRestDay'));
   }
   for (const [key, value] of Object.entries(writes.meta ?? {})) {
     ops.push(tx.objectStore('meta').put(value, key));

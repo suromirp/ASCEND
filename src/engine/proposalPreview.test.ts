@@ -24,6 +24,17 @@ describe('the week as a proposal would leave it', () => {
     expect(week.find((x) => x.id === 't')!.scheduledDate).toBe('2026-10-29');
   });
 
+  it('shows what the rest of the planning run does with it too (the proefrun)', () => {
+    const move: PlanChangeItem = { plannedSessionId: 't', action: 'move', fromDate: '2026-10-29', toDate: '2026-10-28', reason: '', generatedBy: ['x'] };
+    // The run moves Lower A off the test day, as the race block would.
+    const pass = (list: PlannedSession[]) => list.map((x) => (x.id === 'b' ? { ...x, scheduledDate: '2026-10-30' } : x));
+    const { moves } = previewProposal([move], week, templates, pass);
+    expect(moves).toEqual([
+      { name: 'Benen A (zwaar)', action: 'move', from: '2026-10-28', to: '2026-10-30' },
+      { name: 'Testloop 5 km', action: 'move', from: '2026-10-29', to: '2026-10-28' },
+    ]);
+  });
+
   it('shows a removal struck through, and nothing for content-only changes', () => {
     const remove: PlanChangeItem = { plannedSessionId: 'c', action: 'remove', reason: '', generatedBy: ['x'] };
     const { moves, weeks: [w] } = previewProposal([remove], week, templates);

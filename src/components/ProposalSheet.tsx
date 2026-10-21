@@ -34,13 +34,13 @@ const TYPE_COLOR: Record<SessionType, string> = {
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: () => void }) {
-  const { plannedSessions, templates, program, respondToAdvice } = useAppData();
+  const { plannedSessions, templates, program, respondToAdvice, planPreviewPass } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const [busy, setBusy] = useState(false);
   // With more than one option: the chosen one drives the week shown and Akkoord.
   const [choice, setChoice] = useState(0);
   const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
-  const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates]);
+  const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates, planPreviewPass]);
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const today = todayISO();
   const fatigueInputs = useLegFatigueInputs();
@@ -50,10 +50,10 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
     const item = chosen.changes.find((c) => c.action === 'move' && c.plannedSessionId && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? ''));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' : 'test';
-    const after = applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview').sessions;
+    const after = planPreviewPass(applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview', { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
-  }, [chosen, plannedSessions, fatigueInputs]);
+  }, [chosen, plannedSessions, fatigueInputs, planPreviewPass]);
 
   const minutes = (e: PreviewEntry, date: string) => {
     if (e.type === 'recovery') return undefined;
@@ -67,10 +67,10 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
     const item = o.proposal.changes.find((c) => c.action === 'move' && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? ''));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((x) => x.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' as const : 'test' as const;
-    const after = applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview').sessions;
+    const after = planPreviewPass(applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, () => 'preview', { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { index: at.index, status: fatigueStatus(at, kind) };
-  }), [advice, plannedSessions, fatigueInputs]);
+  }), [advice, plannedSessions, fatigueInputs, planPreviewPass]);
 
   async function respond(response: 'accepted' | 'declined') {
     setBusy(true);

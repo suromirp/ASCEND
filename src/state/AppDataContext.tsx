@@ -107,21 +107,62 @@ function runBootMigrationsOnce(): Promise<void> {
 // sports, the long-Sunday choice, or a new day. Serialized, so two
 // refreshes at once can never add the same weeks twice.
 let lastHorizonKey = '';
+function planFingerprint(planned: PlannedSession[]): number {
+  let h = 0;
+  for (const s of [...planned].sort((a, b) => a.id.localeCompare(b.id))) {
+    const line = `${s.id}|${s.scheduledDate}|${s.status}|${s.templateId}|${s.plannedMinutes ?? ''}|${s.lock ? 1 : 0}`;
+    for (let i = 0; i < line.length; i++) h = (Math.imul(h, 31) + line.charCodeAt(i)) | 0;
+  }
+  return h;
+}
 let horizonQueue: Promise<void> = Promise.resolve();
 // Raised after every Akkoord and every move or skip of your own, so the sync
 // checks the week right away instead of the next day (docs/onderzoek/Planning op een
 // lijn.md, conflict 9).
 let planRevision = 0;
+// The durations, spacing and leg index every planning step reads (engine/
+// substitutions.ts, engine/scheduler.ts). Set before the sync too, so the
+// sync and its week check never work with the state of the refresh before
+// (docs/onderzoek/Planning op een lijn.md, conflict 10).
+function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], planned: PlannedSession[], logs: SessionLog[], loadedSettings: AppSettings) {
+  // Volume after illness follows the illness history everywhere a
+  // duration is shown or planned.
+  setDurationAdjustments(recoveryDurationAdjustments(loadedSettings.illnessEpisodes));
+  // No session in the next two weeks asks for more than 110% of the
+  // longest of its kind in the last 30 days.
+  setRecentSessionMaxima(recentSessionMaxima(logs, todayISO()));
+  // Strength trainings: your estimate, or the duration learned from logs.
+  setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
+  setHardSameDayAllowed(!!loadedSettings.hardSameDay);
+  // The planner's leg index with the same inputs as the Benen card.
+  const lastWeight = [...(loadedSettings.weightEntries ?? [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.kg;
+  setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
+  setFixedSessionMinutes(planned);
+  setAmbition(effectiveAmbition(loadedSettings.ambition, logs, new Map(tpls.map((t) => [t.id, t])), program, todayISO()).effective);
+}
+
+async function primePlanningRegisters() {
+  const [programs, tpls, planned, logs, loadedSettings] = await Promise.all([ProgramsRepo.getAll(), SessionTemplatesRepo.getAll(), PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), SettingsRepo.get()]);
+  setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings);
+}
+
+// What the week check put right in the last sync, until refresh() shows it.
+let pendingRepairs: ProgramHorizonResult['repairs'];
+
 function syncProgramHorizonWhenChanged(): Promise<void> {
   // The stored phases are part of the key, so a reset or an import that
   // rewrites the program also triggers a sync.
   const currentKey = async () => {
-    const [programs, goals, milestones, settings] = await Promise.all([
-      ProgramsRepo.getAll(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll(), SettingsRepo.get(),
+    const [programs, goals, milestones, settings, planned] = await Promise.all([
+      ProgramsRepo.getAll(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll(), SettingsRepo.get(), PlannedSessionsRepo.getAll(),
     ]);
     return JSON.stringify([
       todayISO(),
       planRevision,
+      // Any change to the planned sessions, by whatever step or by you: the
+      // sync and its week check run again (docs/onderzoek/Planning op een
+      // lijn.md, conflict 9).
+      planFingerprint(planned),
       programs[0]?.startDate,
       programs[0]?.phases,
       programAnchorDate(goals, milestones, todayISO()),
@@ -138,7 +179,8 @@ function syncProgramHorizonWhenChanged(): Promise<void> {
   horizonQueue = horizonQueue
     .then(async () => {
       if ((await currentKey()) === lastHorizonKey) return;
-      await syncProgramHorizon();
+      const result = await syncProgramHorizon();
+      if (result.repairs) pendingRepairs = result.repairs;
       lastHorizonKey = await currentKey();
     })
     .catch((err) => console.error('Program horizon sync failed', err));
@@ -168,8 +210,9 @@ import { coachReaction } from '../engine/coach';
 import { recoveryDurationAdjustments } from '../engine/illness';
 import { requestPersistentStorage } from '../storage/persistence';
 import { effectiveAmbition } from '../engine/ambition';
+import { patternDays, planPass } from '../engine/planPass';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
-import { onDatabaseBlocked, syncProgramHorizon } from '../storage/database';
+import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
 import { programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
@@ -332,6 +375,8 @@ interface AppData {
   // Fase 3 — advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];
+  // The rest of the planning run over a proposed week, for its preview.
+  planPreviewPass: (sessions: PlannedSession[]) => PlannedSession[];
   respondToAdvice: (advice: Advice, response: 'accepted' | 'declined') => Promise<void>;
   debriefLogId: string | null;
   dismissDebrief: () => void;
@@ -441,7 +486,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // reload from storage keeps a stale window from writing back old state
   // over a change made elsewhere.
   const refresh = useCallback(async (fromOtherWindow = false) => {
-    if (!fromOtherWindow) await syncProgramHorizonWhenChanged();
+    if (!fromOtherWindow) {
+      await primePlanningRegisters();
+      await syncProgramHorizonWhenChanged();
+    }
     if (!fromOtherWindow) syncChannel?.postMessage('changed');
     const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
@@ -473,24 +521,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setInjuryNotes(injuries);
     setCapabilityEvidence(manualEvidence);
     setGoalEngineConfig(engineConfig);
-    // Volume after illness follows the illness history everywhere a
-    // duration is shown or planned.
-    setDurationAdjustments(recoveryDurationAdjustments(loadedSettings.illnessEpisodes));
-    // No session in the next two weeks asks for more than 110% of the
-    // longest of its kind in the last 30 days.
-    setRecentSessionMaxima(recentSessionMaxima(logs, todayISO()));
-    // Strength trainings: your estimate, or the duration learned from logs.
-    setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
-    setHardSameDayAllowed(!!loadedSettings.hardSameDay);
-    // The planner's leg index with the same inputs as the Benen card.
-    const lastWeight = [...(loadedSettings.weightEntries ?? [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.kg;
-    setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, programs[0] ?? null) });
-    setFixedSessionMinutes(planned);
-    setAmbition(effectiveAmbition(loadedSettings.ambition, logs, new Map(tpls.map((t) => [t.id, t])), programs[0] ?? null, todayISO()).effective);
+    setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);
     setStrengthRecommendation(strengthRecs.find((r) => !r.resolvedAt) ?? null);
+    // The week check put something right: say what, with undo.
+    const repaired = pendingRepairs;
+    pendingRepairs = undefined;
+    if (repaired) {
+      const id = makeId('plancheck');
+      const why = 'Na elke wijziging controleert ASCEND je weken op vaste regels: je rustdag vrij, niet te veel op een dag, genoeg ruimte tussen zware dagen, frisse benen voor een test. Wat het systeem zelf plande, zet het dan recht. Wat jij zelf zette en je test of wedstrijd verschuift het nooit; daarvoor krijg je een voorstel.';
+      const now = new Date().toISOString();
+      await PlanChangeProposalsRepo.put({ id, trigger: 'plan_check', issue: 'Weekcontrole', changes: [], alternatives: [], consequences: repaired.lines.join('; '), explanation: why, createdAt: now, resolvedAt: now, resolution: 'accepted' });
+      setRecentChange({ id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: repaired.added, createdAt: now });
+    }
   }, []);
 
   useEffect(() => {
@@ -564,7 +609,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await MetaRepo.set('adviceResponses', responses);
       setAdviceResponses(responses);
     }
-    for (const session of recentChange.before) await PlannedSessionsRepo.put(session);
+    // Undoing what the week check did is a choice of yours: those sessions
+    // stay where you put them back.
+    const keep = recentChange.trigger === 'plan_check' ? { lock: { by: 'user' as const, at: new Date().toISOString() } } : {};
+    for (const session of recentChange.before) await PlannedSessionsRepo.put({ ...session, ...keep });
     for (const id of recentChange.addedIds) await PlannedSessionsRepo.delete(id);
     const now = new Date().toISOString();
     await PlanChangeProposalsRepo.put({
@@ -1059,9 +1107,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Once per page load, like the migrations above.
       if (backgroundPlanningStarted) return;
       backgroundPlanningStarted = true;
-      void runForecastReplan();
-      void runStrengthReviewCheck();
-      void runWeeklyPrescriptionBuild();
+      // One after the other, never at once: each reads what the one before
+      // wrote, and each ends in a refresh that runs the sync and its week
+      // check over the result (docs/onderzoek/Planning op een lijn.md,
+      // conflict 12).
+      void (async () => {
+        await runForecastReplan();
+        await runStrengthReviewCheck();
+        await runWeeklyPrescriptionBuild();
+      })().catch((err) => console.error('Background planning failed', err));
     })();
   }, [refresh, runForecastReplan, runStrengthReviewCheck, runWeeklyPrescriptionBuild]);
 
@@ -1639,6 +1693,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions, refresh],
   );
 
+  // The rest of the planning run over the week a proposal gives, exactly as
+  // the sync runs it after Akkoord (engine/planPass.ts): for the preview.
+  const planPreviewPass = useCallback((sessions: PlannedSession[]): PlannedSession[] => {
+    const today = todayISO();
+    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    const restDay = settings.restDay ?? 1;
+    let n = 0;
+    return planPass(sessions, {
+      today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
+      dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+      slotDays: patternDays(templates, settings, restDay),
+      minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
+      newId: () => `preview-pass-${n++}`,
+      until: addDays(today, 28),
+    }).sessions;
+  }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
+
   // What the extra training of the week is chosen from (engine/extraRun.ts).
   const extraSessionContext = useMemo(() => {
     const today = todayISO();
@@ -1788,6 +1861,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     dismissForecastSummary: () => setForecastSummary(null),
     planChangeLog,
     advice,
+    planPreviewPass,
     respondToAdvice,
     debriefLogId,
     dismissDebrief: () => setDebriefLogId(null),

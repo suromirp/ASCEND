@@ -314,9 +314,11 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   if (inputs.plannedSessions.some((s) => s.templateId === 'tpl_race' && open(s) && daysBetween(today, s.scheduledDate) >= 0 && daysBetween(today, s.scheduledDate) <= 14)) return [];
   // A test that sits on your rest day (the rest day moved onto it, or the
   // test fell on it): that is arranged like a missed one, around its own date.
+  // Any test ahead, not only the next two weeks: the week check
+  // (engine/weekValidator.ts) leaves where a test goes to you.
   const restDates = new Set(inputs.plannedSessions.filter((s) => open(s) && templateById.get(s.templateId)?.type === 'recovery').map((s) => s.scheduledDate));
   const onRestDay = inputs.plannedSessions
-    .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && daysBetween(today, s.scheduledDate) <= 14 && restDates.has(s.scheduledDate) && !usedIds.has(s.id))
+    .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && restDates.has(s.scheduledDate) && !usedIds.has(s.id))
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
   // A test in the next two weeks your legs won't be fresh for by the index
   // (clearly above the line, not just near it: there the card says to decide

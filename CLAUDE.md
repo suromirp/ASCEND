@@ -141,6 +141,20 @@ land within 48 hours of each other. Moving a session into conflict produces
 a cascade proposal (shown via `RescheduleDialog`) rather than applying
 silently.
 
+**Who may touch a planned session** (`engine/weekValidator.ts#lockLevel`):
+history (logged or past) never; yours (`PlannedSession.lock`, set by your
+own move/skip and by every accepted proposal, or legacy status `'moved'`)
+never by the automatic planning; a test or race only through a proposal;
+everything else the system planned is free. Every planning run ends with
+the same pass (`engine/planPass.ts`): the race block, then the week check,
+which repairs only the system's own sessions and only when the week is
+demonstrably better, and announces it ("Planning bijgewerkt", with undo).
+A proposal's preview runs that same pass, so what it shows is what you get.
+The sync (`storage/database.ts#syncProgramHorizon`) runs whenever the
+stored plan changed (a fingerprint is part of its key), not once a day.
+Background jobs at boot run one after the other, never at once. Design and
+reasoning: `docs/onderzoek/Planning op een lijn.md`.
+
 Readiness percentages (`engine/readiness.ts` — strength, cardio,
 climbing/D+, endurance, recovery, consistency, pack capability) are
 intentionally simple, isolated formulas over the last 28 days of logs, each

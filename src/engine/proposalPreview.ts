@@ -47,7 +47,11 @@ export interface ProposalPreviewData {
 
 const MAX_WEEKS = 2;
 
-export function previewProposal(items: PlanChangeItem[], sessions: PlannedSession[], templates: SessionTemplate[]): ProposalPreviewData {
+// `pass`: the rest of the planning run (engine/planPass.ts) over the week
+// the proposal gives, so what follows from it shows too: a leg day the race
+// block shifts, something the week check puts right. Applied the way Akkoord
+// applies it, with what the proposal shows fixed in place.
+export function previewProposal(items: PlanChangeItem[], sessions: PlannedSession[], templates: SessionTemplate[], pass?: (sessions: PlannedSession[]) => PlannedSession[]): ProposalPreviewData {
   const empty = { moves: [], weeks: [] };
   const real = items.filter((i) => i.action !== 'keep' && i.action !== 'replace');
   if (real.length === 0) return empty;
@@ -55,13 +59,20 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
   const info = (s: PlannedSession) => ({ name: byId.get(s.templateId)?.name ?? 'Training', type: byId.get(s.templateId)?.type ?? ('cardio' as SessionType), templateId: s.templateId, plannedMinutes: s.plannedMinutes });
   const before = new Map(sessions.map((s) => [s.id, s]));
   let n = 0;
-  const { sessions: after, unsupported } = applyPlanChangeItems(real, sessions, () => `preview-${n++}`);
-  if (unsupported.length > 0) return empty;
+  const applied = applyPlanChangeItems(items.filter((i) => i.action !== 'replace'), sessions, () => `preview-${n++}`, { by: 'proposal', at: 'preview' });
+  if (applied.unsupported.length > 0) return empty;
+  const after = pass ? pass(applied.sessions) : applied.sessions;
+  const afterIds = new Set(after.map((s) => s.id));
 
   const moves: PreviewMove[] = [];
   const added = new Set<string>();
   const moved = new Map<string, { from: string; to: string }>();
   const gone: PlannedSession[] = [];
+  for (const s of sessions) {
+    if (afterIds.has(s.id) || s.status === 'skipped') continue;
+    gone.push(s);
+    moves.push({ name: info(s).name, action: 'remove', from: s.scheduledDate });
+  }
   for (const s of after) {
     const was = before.get(s.id);
     if (!was) {

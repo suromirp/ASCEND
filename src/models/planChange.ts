@@ -83,7 +83,10 @@ export type EngineEvent =
   // why the two were split apart.
   | 'weekly_prescription_computed'
   // Ziek gemeld / weer beter (engine/illness.ts).
-  | 'illness_reported' | 'illness_resolved';
+  | 'illness_reported' | 'illness_resolved'
+  // The week check (engine/weekValidator.ts) put right what the system
+  // itself planned.
+  | 'plan_check';
 
 export interface PlanChangeAlternative {
   label: string;

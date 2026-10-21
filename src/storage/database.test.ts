@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { applyPlanChangeItems } from '../engine/proposalEngine';
 import {
   wipeAllData,
   seedIfEmpty,
@@ -24,6 +25,7 @@ import { migrateToGoalEngine } from './goalMigration';
 import { mondayOfWeek, todayISO, addDays } from '../utils/dates';
 import type { InjuryNote } from '../models/injury';
 import type { TrainingGoal } from '../models/goals';
+import type { PlannedSession } from '../models/training';
 import type { CapabilityEvidence } from '../models/capability';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 
@@ -426,5 +428,63 @@ describe('syncProgramHorizon (Fase 3: plan tot aan het doel)', () => {
     expect(result.added).toBe(0);
     const [program] = await ProgramsRepo.getAll();
     expect(program.phases.reduce((n, p) => n + p.weekCount, 0)).toBeGreaterThanOrEqual(13);
+  });
+});
+
+describe('one planning run, ending with the week check (docs/onderzoek/Planning op een lijn.md)', () => {
+  beforeEach(async () => {
+    vi.useRealTimers();
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  async function setGoals() {
+    const monday = mondayOfWeek(todayISO());
+    await TrainingGoalsRepo.put({ id: 'g_gr5', name: 'GR5', requirements: [], createdAt: '', updatedAt: '', status: 'active', targetDate: addDays(monday, 40 * 7) });
+    await GoalMilestonesRepo.put({ id: 'g_gr5_m1', goalId: 'g_gr5', order: 1, title: 'x', requirement: { kind: 'manual' } as never });
+    // A 10 km race as tussendoel, its first test run within the next weeks.
+    await TrainingGoalsRepo.put({
+      id: 'race', name: 'Hardloopwedstrijd', status: 'active', targetDate: addDays(monday, 9 * 7 + 5), createdAt: '', updatedAt: '',
+      requirements: [
+        { id: 'r1', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 10, unit: 'km' }, discipline: 'running' },
+        { id: 'r2', kind: 'targetTime', scope: 'SINGLE_EVENT', target: { amount: 45, unit: 'min' }, discipline: 'running' },
+      ],
+    } as TrainingGoal);
+  }
+
+  it('a second run writes nothing, with a race block and a rest day of your own', async () => {
+    await setGoals();
+    await SettingsRepo.set({ restDay: 4 });
+    await syncProgramHorizon();
+    expect(await syncProgramHorizon()).toMatchObject({ added: 0, swapped: 0, removed: 0 });
+  });
+
+  it('an accepted proposal stays exactly as it was through a week of daily runs', async () => {
+    await setGoals();
+    await syncProgramHorizon();
+    const all = await PlannedSessionsRepo.getAll();
+    const test = all.filter((s) => s.templateId === 'tpl_test_run' && s.status !== 'skipped' && s.scheduledDate > addDays(todayISO(), 9)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    expect(test).toBeDefined();
+    // Akkoord on "test a day earlier, the leg day kept on its own day".
+    const legs = all.find((s) => s.weekStartDate === test.weekStartDate && s.templateId === 'tpl_lower_a' && s.status !== 'skipped')!;
+    const lock = { by: 'proposal' as const, proposalId: 'p', at: new Date().toISOString() };
+    const accepted = applyPlanChangeItems([
+      { plannedSessionId: test.id, action: 'move', fromDate: test.scheduledDate, toDate: addDays(test.scheduledDate, -1) },
+      { plannedSessionId: legs.id, action: 'keep' },
+    ], all, undefined, lock).sessions;
+    for (const id of [test.id, legs.id]) await PlannedSessionsRepo.put(accepted.find((s) => s.id === id)!);
+    const shown = (await PlannedSessionsRepo.getAll()).filter((s) => s.lock);
+
+    vi.useFakeTimers({ toFake: ['Date'] });
+    for (let d = 0; d < 7; d++) {
+      vi.setSystemTime(new Date(`${addDays(todayISO(), 1)}T07:00:00`));
+      await syncProgramHorizon();
+      const now = await PlannedSessionsRepo.getAll();
+      // Day, training, length and status as shown; only the race block's
+      // own swap marker may go (the week is yours now).
+      const seen = (x: PlannedSession | undefined) => x && { date: x.scheduledDate, templateId: x.templateId, status: x.status, minutes: x.plannedMinutes, lock: x.lock };
+      for (const s of shown) expect(seen(now.find((x) => x.id === s.id))).toEqual(seen(s));
+    }
   });
 });

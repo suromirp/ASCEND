@@ -28,6 +28,7 @@ export const TRIGGER_LABEL: Record<EngineEvent, string> = {
   strength_program_changed: 'Krachtblok',
   schedule_anomaly_detected: 'Planning rechtgezet',
   weekly_prescription_computed: 'Weekplanning',
+  plan_check: 'Weekcontrole',
 };
 
 export interface ChangeLogEntry {
