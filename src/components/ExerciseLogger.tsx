@@ -131,6 +131,7 @@ export function ExerciseLogger({
   const [elevationLossM, setElevationLossM] = useState<number | ''>('');
   const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('');
   const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>(() => progressionTarget(template, program, scheduledDate ?? todayISO())?.step.backpackKg ?? '');
+  const [poles, setPoles] = useState(false);
   const [cadence, setCadence] = useState<number | ''>('');
   const [power, setPower] = useState<number | ''>('');
   const [steps, setSteps] = useState<number | ''>('');
@@ -225,6 +226,7 @@ export function ExerciseLogger({
               power: power === '' ? undefined : power,
               elevationLossM: elevationLossM === '' ? undefined : elevationLossM,
               backpackWeightKg: backpackWeightKg === '' ? undefined : backpackWeightKg,
+              poles: fields.elevationLoss && poles ? true : undefined,
               terrain: terrain || undefined,
               steps: steps === '' ? undefined : steps,
               machineVerticalM: machineVerticalM === '' ? undefined : machineVerticalM,
@@ -501,6 +503,18 @@ export function ExerciseLogger({
                 </>
               )}
               {fields.elevationLoss && <Field label="Daling" unit="m D−" value={elevationLossM} onChange={setElevationLossM} placeholder={plannedStep?.elevationGainM ? formatNumberNL(plannedStep.elevationGainM, 0) : undefined} />}
+              {fields.elevationLoss && (
+                <button
+                  type="button"
+                  onClick={() => setPoles((v) => !v)}
+                  aria-pressed={poles}
+                  className="-mt-1 flex min-h-[40px] items-center justify-between rounded-lg border px-3 text-xs font-semibold tracking-wide"
+                  style={{ borderColor: poles ? 'var(--color-gold)' : 'var(--color-card-border)', color: poles ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+                >
+                  <span>Met stokken</span>
+                  <span>{poles ? 'ja' : 'nee'}</span>
+                </button>
+              )}
               {fields.steps && (
                 <>
                   <Field label="Verdiepingen (trap)" value={steps} onChange={setSteps} />

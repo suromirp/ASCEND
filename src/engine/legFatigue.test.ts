@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { damageLeft, fatigueStatus, intensityLeft, legFatigueOn, strengthLeft, type LegFatigueInputs } from './legFatigue';
+import { damageLeft, fatigueEvents, fatigueStatus, intensityLeft, legFatigueOn, POLES_DESCENT_FACTOR, sessionImpulse, strengthLeft, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import type { SessionLog } from '../models/training';
-import { addDays } from '../utils/dates';
+import type { PlannedSession, SessionLog } from '../models/training';
+import { addDays, resolveProgramWeek } from '../utils/dates';
 
-const { templates } = buildDefaultProgramData();
+const { templates, program } = buildDefaultProgramData();
 const type = (id: string) => templates.find((t) => t.id === id)!.type;
 let n = 0;
 const log = (templateId: string, date: string, minutes: number, extra: Partial<SessionLog> = {}): SessionLog => ({
@@ -93,5 +93,113 @@ describe('strength from MacroFactor: RPE and reps in reserve', () => {
     const at = (rir: number) => legFatigueOn('2026-11-05', inputs([log('tpl_lower_a', '2026-11-04', 60, { strengthRir: rir })])).index;
     expect(at(0)).toBeGreaterThan(at(2.5));
     expect(at(2.5)).toBeGreaterThan(at(4));
+  });
+});
+
+// A date in a given week of a phase of the default program (a Sunday).
+function sundayIn(phaseId: string, weekInPhase: number): string {
+  for (let i = 0; i < 700; i++) {
+    const d = addDays(program.startDate, i);
+    const pos = resolveProgramWeek(program, d);
+    if (pos && pos.phase.id === phaseId && pos.weekInPhase === weekInPhase && new Date(`${d}T12:00:00`).getDay() === 0) return d;
+  }
+  throw new Error('no such week');
+}
+const planned = (id: string, templateId: string, date: string, extra: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId, scheduledDate: date, weekStartDate: addDays(date, -6), status: 'planned', order: 0, ...extra });
+const eventsOf = (sessions: PlannedSession[], over: Partial<Parameters<typeof fatigueEvents>[0]> = {}) => fatigueEvents({ logs: [], plannedSessions: sessions, templates, today: '2020-01-01', ...over });
+
+describe('planned hikes use the target of their week', () => {
+  const heaviest = sundayIn('phase_4', 3); // 1000 m, 12 kg
+  const hike = planned('h', 'tpl_mountain_hike', heaviest);
+
+  it('without the program: the 500 m and 6 kg of the template', () => {
+    const [e] = eventsOf([hike]);
+    expect(e.descentM).toBe(500);
+    expect(e.climbM).toBe(500);
+    expect(e.packKg).toBe(6);
+  });
+
+  it('with the program: the D+ and pack of that week, also over your own shorter hikes', () => {
+    const own = [log('tpl_mountain_hike', addDays(heaviest, -14), 120, { outdoorData: { durationMinutes: 120, elevationGainM: 200, elevationLossM: 200, source: 'manual' } })];
+    const e = eventsOf([hike], { program, logs: own }).find((x) => x.id === 'h')!;
+    expect(e.descentM).toBe(1000);
+    expect(e.packKg).toBe(12);
+    // Another week, another target.
+    const [lighter] = eventsOf([planned('h2', 'tpl_mountain_hike', sundayIn('phase_4', 4))], { program });
+    expect(lighter.descentM).toBe(500);
+    expect(lighter.packKg).toBe(8);
+  });
+
+  it('a planned session whose week has no D+ or pack target keeps the old behaviour', () => {
+    const run = planned('r', 'tpl_long_run', heaviest);
+    const withProgram = eventsOf([run], { program })[0];
+    const without = eventsOf([run])[0];
+    expect(withProgram.descentM).toBe(without.descentM);
+    expect(withProgram.packKg).toBe(without.packKg);
+    // Own average still wins over the template when the week has no target.
+    const own = [log('tpl_long_run', addDays(heaviest, -7), 100, { outdoorData: { durationMinutes: 100, elevationGainM: 40, elevationLossM: 40, source: 'manual' } })];
+    expect(eventsOf([run], { program, logs: own }).find((x) => x.id === 'r')!.descentM).toBe(40);
+    expect(eventsOf([run], { program })[0].descentM).not.toBe(40);
+  });
+
+  it('makes the heaviest weekend weigh more in the index', () => {
+    const day = addDays(heaviest, 1);
+    const withProgram = legFatigueOn(day, inputs([], { plannedSessions: [hike], program, today: '2020-01-01' })).index;
+    const without = legFatigueOn(day, inputs([], { plannedSessions: [hike], today: '2020-01-01' })).index;
+    expect(withProgram).toBeGreaterThan(without * 1.5);
+  });
+});
+
+describe('a pack weighs heavier on the damage layer', () => {
+  const hikeTemplate = templates.find((t) => t.id === 'tpl_mountain_hike')!;
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const ev = (over: Partial<FatigueEvent>): FatigueEvent => ({ id: 'e', templateId: 'tpl_mountain_hike', date: '2026-11-01', minutes: 180, descentM: 600, climbM: 600, logged: true, ...over });
+  const impulse = (over: Partial<FatigueEvent>, bodyKg = 80) => { const e = ev(over); return sessionImpulse(e, hikeTemplate, [e], byId, bodyKg); };
+
+  it('damage: 1 + 1.5 x pack / body weight; intensity and strength keep 1 + pack / body weight', () => {
+    const bare = impulse({});
+    const loaded = impulse({ packKg: 16 });
+    expect(loaded.damage / bare.damage).toBeCloseTo(1 + (1.5 * 16) / 80, 5); // 1.30
+    expect(loaded.intensity / bare.intensity).toBeCloseTo(1 + 16 / 80, 5); // 1.20
+    expect(loaded.strength / bare.strength).toBeCloseTo(1 + 16 / 80, 5);
+  });
+
+  it('a heavier body carries the same pack more easily', () => {
+    expect(impulse({ packKg: 16 }, 100).damage).toBeLessThan(impulse({ packKg: 16 }, 70).damage);
+  });
+});
+
+describe('walking poles', () => {
+  const hikeTemplate = templates.find((t) => t.id === 'tpl_mountain_hike')!;
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const ev = (over: Partial<FatigueEvent>): FatigueEvent => ({ id: 'e', templateId: 'tpl_mountain_hike', date: '2026-11-01', minutes: 180, descentM: 600, climbM: 600, packKg: 8, logged: true, ...over });
+  const impulse = (over: Partial<FatigueEvent>) => { const e = ev(over); return sessionImpulse(e, hikeTemplate, [e], byId, 80); };
+
+  it('lowers the descent load in the damage layer by 15%, nothing else', () => {
+    const without = impulse({});
+    const withPoles = impulse({ poles: true });
+    expect(POLES_DESCENT_FACTOR).toBe(0.85);
+    expect(withPoles.damage / without.damage).toBeCloseTo(0.85, 5);
+    expect(withPoles.intensity).toBe(without.intensity);
+    expect(withPoles.strength).toBe(without.strength);
+  });
+
+  it('a log with poles gives a lower index the day after', () => {
+    const outdoor = (poles?: boolean) => ({ durationMinutes: 180, elevationGainM: 600, elevationLossM: 600, backpackWeightKg: 8, poles, source: 'manual' as const });
+    const at = (poles?: boolean) => legFatigueOn('2026-11-02', inputs([log('tpl_mountain_hike', '2026-11-01', 180, { outdoorData: outdoor(poles) })])).index;
+    expect(at(true)).toBeLessThan(at(undefined));
+    expect(at(false)).toBe(at(undefined));
+  });
+
+  it('a log passes the flag to its event; a planned session takes it from its own flag or your last log of that training', () => {
+    const day = '2026-11-20';
+    const logged = log('tpl_mountain_hike', '2026-11-08', 180, { outdoorData: { durationMinutes: 180, elevationLossM: 500, poles: true, source: 'manual' } });
+    expect(eventsOf([], { logs: [logged] })[0].poles).toBe(true);
+    expect(eventsOf([], { logs: [{ ...logged, outdoorData: { durationMinutes: 180, source: 'manual' } }] })[0].poles).toBeUndefined();
+    expect(eventsOf([planned('a', 'tpl_mountain_hike', day)])[0].poles).toBeUndefined();
+    expect(eventsOf([planned('b', 'tpl_mountain_hike', day)], { logs: [logged] }).find((e) => e.id === 'b')!.poles).toBe(true);
+    expect(eventsOf([planned('c', 'tpl_mountain_hike', day, { poles: false })], { logs: [logged] }).find((e) => e.id === 'c')!.poles).toBe(false);
+    const later = log('tpl_mountain_hike', '2026-11-15', 180, { outdoorData: { durationMinutes: 180, elevationLossM: 500, poles: false, source: 'manual' } });
+    expect(eventsOf([planned('d', 'tpl_mountain_hike', day)], { logs: [logged, later] }).find((e) => e.id === 'd')!.poles).toBe(false);
   });
 });

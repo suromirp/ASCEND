@@ -149,6 +149,7 @@ const isTestLike = (t: SessionTemplate) => FRESH_LIMIT[t.id] !== undefined;
 export interface FreshnessContext {
   today: string;
   bodyKg?: number;
+  program?: Program | null;
   minutesOf: (session: PlannedSession, template: SessionTemplate) => number;
 }
 let freshnessContext: FreshnessContext | undefined;
@@ -165,7 +166,7 @@ export function freshnessAt(date: string, sessions: PlannedSession[], templateMa
   const planned = sessions.filter((s) => s.status !== 'skipped' && s.scheduledDate < date && daysBetween(s.scheduledDate, date) <= (ctx ? 52 : 10) && (!ctx || s.scheduledDate >= ctx.today));
   if (extra) planned.push({ id: extra.id, templateId: extra.templateId, scheduledDate: extra.date, weekStartDate: mondayOfWeek(extra.date), status: 'planned', order: 0, plannedMinutes: extra.plannedMinutes });
   const quietLogs = logs.filter((l) => l.completedDate < date && daysBetween(l.completedDate, date) <= 52).map((l) => ({ ...l, painAreas: undefined, painReports: undefined }));
-  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01', bodyKg: ctx?.bodyKg, minutesOf: ctx?.minutesOf });
+  return legFatigueOn(date, { logs: quietLogs, plannedSessions: planned, templates: [...templateMap.values()], today: '0000-01-01', bodyKg: ctx?.bodyKg, program: ctx?.program, minutesOf: ctx?.minutesOf });
 }
 
 // The planned sessions that make a test day too heavy, largest first, until

@@ -23,7 +23,7 @@ export function useLegFatigueInputs(): LegFatigueInputs {
     const weights = settings.weightEntries ?? [];
     const bodyKg = weights.length ? [...weights].sort((a, b) => b.date.localeCompare(a.date))[0].kg : undefined;
     return {
-      logs: sessionLogs, plannedSessions, templates, today, bodyKg,
+      logs: sessionLogs, plannedSessions, templates, today, bodyKg, program,
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       soreness: settings.morningCheckIns?.filter((c) => c.legs === 'spierpijn' || c.legs === 'flink').map((c) => ({ date: c.date, level: c.legs === 'flink' ? 'flink' as const : 'spierpijn' as const })),
     };
