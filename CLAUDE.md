@@ -237,3 +237,30 @@ via `actions/upload-pages-artifact` + `actions/deploy-pages`).
   introducing new hardcoded colors.
 - Do not let the UI drift toward an RPG or generic-bodybuilding-app look —
   keep the Stoic/alpine/premium tone.
+
+## Werkafspraken voor agents
+
+Vastgelegd in `docs/beslissingen/2026-10-21-werkwijze.md`. Dit zijn de
+afspraken voor elke agent die in deze repo werkt.
+
+- Branches: werk op `claude/<onderwerp>`, nooit rechtstreeks op main.
+  Kleine en middelgrote wijzigingen mag je zelf naar main brengen, maar
+  pas na groene controles. Er is geen verplichte PR of merge door de eigenaar.
+- Controles: voor elke push naar main zijn `npx tsc -p tsconfig.app.json
+  --noEmit`, `npm run lint`, `npx vitest run` en `npm run build` groen.
+- Planning van de gebruiker: alles wat zijn planning inhoudelijk verandert
+  gaat in de app via een voorstel met Akkoord, nooit stil.
+- Besluiten: leg ze vast in `docs/beslissingen/`, één bestand per besluit
+  (`JJJJ-MM-DD-onderwerp.md`, sjabloon `_sjabloon.md`), nooit herschrijven.
+- Geen persoonsgegevens: de repo is openbaar. Geen echt gewicht, hartslag,
+  woonplaats of back-upinhoud, ook niet in tests. Testdata is nagemaakt.
+- Lezen vooraf: eerst `docs/onderzoek/` en `docs/visie/` doorzoeken voordat
+  je iets nieuws onderzoekt of ontwerpt.
+- Taal: Nederlandse teksten, menselijk, zonder tabellen en zonder
+  gedachtestreepjes (geen U+2013 en geen U+2014) in nieuwe tekst.
+- Afronding: elke taak eindigt met de uitslag van de controles en wat niet
+  gecontroleerd kon worden.
+- Kosten zo laag mogelijk: Sonnet voor specialisten en routines, Opus alleen
+  voor review en lastig onderzoek, effort gemiddeld als standaard.
+- De rollen staan in `.claude/agents/`, de vaste werkinstructies in
+  `.claude/skills/`.
