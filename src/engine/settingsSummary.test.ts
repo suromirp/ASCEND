@@ -96,7 +96,7 @@ describe('rowSummary: doel en tochten', () => {
   it('zonder doel staat er geen doel en een uitnodiging', () => {
     const s = groupSummary('doel', facts({ goal: null, treks: 0 }));
     expect(s).toEqual({ value: 'Geen doel', dim: true, sub: 'Kies een doel om naartoe te plannen' });
-    expect(rowSummary('doelen', facts({ goal: null }))).toEqual({ value: 'Geen doel', dim: true });
+    expect(rowSummary('doelen', facts({ goal: null }))).toEqual({ value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' });
   });
 
   it('de lange zondag is verborgen bij een bergdoel', () => {

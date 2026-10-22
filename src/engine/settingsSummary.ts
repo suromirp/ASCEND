@@ -192,7 +192,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
 
     // Doel en tochten
     case 'doelen':
-      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${shortDate(f.goal.date)}` } : { value: 'Geen doel', dim: true };
+      return f.goal ? { value: `${shortGoalName(f.goal.name)}, ${shortDate(f.goal.date)}` } : { value: 'Geen doel', dim: true, sub: 'Een doel geeft ASCEND een einddatum' };
     case 'programma':
       return f.position
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }

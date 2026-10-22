@@ -8,6 +8,8 @@ import type { GroupProps } from '../../components/settings/groups/types';
 import { Soon } from '../../components/settings/groups/Soon';
 import { ForgeGroup } from '../../components/settings/groups/ForgeGroup';
 import { PlanningGroup } from '../../components/settings/groups/PlanningGroup';
+import { VandaagGroup } from '../../components/settings/groups/VandaagGroup';
+import { DoelGroup } from '../../components/settings/groups/DoelGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
 import { SETTINGS_ROOT, isSettingsPageId, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
@@ -16,6 +18,8 @@ const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
   planning: PlanningGroup,
   forge: ForgeGroup,
   lichaam: LichaamGroup,
+  vandaag: VandaagGroup,
+  doel: DoelGroup,
 };
 
 // Eén groep: terug naar het overzicht, de titel en de rijen. Een sprong (zoeken, een

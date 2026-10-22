@@ -87,6 +87,46 @@ export interface ChoiceOption<T> {
   note?: string;
 }
 
+// De lijst met opties van een keuze: het gouden vinkje bij de keuze en "Advies" als bronzen
+// label bij het advies. Los te gebruiken in een blad met meer dan één keuze.
+export function ChoiceList<T extends string | number>({
+  label,
+  options,
+  value,
+  advice,
+  onPick,
+}: {
+  label: string;
+  options: ChoiceOption<T>[];
+  value: T;
+  advice?: T;
+  onPick: (value: T) => void;
+}) {
+  return (
+    <div className="st-list" role="radiogroup" aria-label={label}>
+      {options.map((o) => (
+        <button
+          key={String(o.value)}
+          type="button"
+          role="radio"
+          aria-checked={o.value === value}
+          className={`st-opt${o.note ? '' : ' one'}`}
+          onClick={() => onPick(o.value)}
+        >
+          <span>
+            <span className="l">
+              {o.label}
+              {advice !== undefined && o.value === advice && <span className="st-tag">Advies</span>}
+            </span>
+            {o.note && <span className="n st-num">{o.note}</span>}
+          </span>
+          <span className="ck">{o.value === value && <Icon name="gedaan" size={24} />}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Een keuze uit een paar opties, in een onderblad: "Advies" als bronzen label bij
 // het advies, het gouden vinkje bij de keuze, en na een keuze sluit het blad na
 // 240 ms. Bestaat er uitleg, dan staat onderaan een rij "Meer uitleg".
@@ -127,33 +167,16 @@ export function ChoiceSheet<T extends string | number>({
           closeRef.current = close;
           return (
             <>
-              <div className="st-list" role="radiogroup" aria-label={title}>
-                {options.map((o) => {
-                  const selected = o.value === value;
-                  return (
-                    <button
-                      key={String(o.value)}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      className={`st-opt${o.note ? '' : ' one'}`}
-                      onClick={() => {
-                        onPick(o.value);
-                        if (!keepOpen) timer.current = window.setTimeout(() => closeRef.current?.(), 240);
-                      }}
-                    >
-                      <span>
-                        <span className="l">
-                          {o.label}
-                          {advice !== undefined && o.value === advice && <span className="st-tag">Advies</span>}
-                        </span>
-                        {o.note && <span className="n st-num">{o.note}</span>}
-                      </span>
-                      <span className="ck">{selected && <Icon name="gedaan" size={24} />}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <ChoiceList
+                label={title}
+                options={options}
+                value={value}
+                advice={advice}
+                onPick={(v) => {
+                  onPick(v);
+                  if (!keepOpen) timer.current = window.setTimeout(() => closeRef.current?.(), 240);
+                }}
+              />
               {helpKey && SETTINGS_HELP[helpKey] && (
                 <button type="button" className="st-more" style={{ marginTop: 8 }} onClick={() => setHelp(true)}>
                   <span>Meer uitleg</span>
