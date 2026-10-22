@@ -11,6 +11,8 @@ import { PlanningGroup } from '../../components/settings/groups/PlanningGroup';
 import { VandaagGroup } from '../../components/settings/groups/VandaagGroup';
 import { DoelGroup } from '../../components/settings/groups/DoelGroup';
 import { KoppelingenGroup } from '../../components/settings/groups/KoppelingenGroup';
+import { GegevensGroup } from '../../components/settings/groups/GegevensGroup';
+import { GidsenGroup } from '../../components/settings/groups/GidsenGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
 import { SETTINGS_ROOT, isSettingsPageId, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
@@ -22,6 +24,8 @@ const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
   vandaag: VandaagGroup,
   doel: DoelGroup,
   koppelingen: KoppelingenGroup,
+  gegevens: GegevensGroup,
+  gidsen: GidsenGroup,
 };
 
 // Eén groep: terug naar het overzicht, de titel en de rijen. Een sprong (zoeken, een
