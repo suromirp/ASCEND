@@ -170,9 +170,9 @@ describe('what is said when the layout is not known', () => {
   });
 
   it('gives the usual message for a single sheet that is not known', async () => {
-    const e = await refused(makeXlsx([{ name: 'Voeding', rows: [['Date', 'Calories', 'Protein'], [day('2026-10-14'), 2400, 180]] }]));
+    const e = await refused(makeXlsx([{ name: 'Stappen', rows: [['Date', 'Steps', 'Floors'], [day('2026-10-14'), 9400, 12]] }]));
     expect(e.message).toMatch(/niet de Workout Log van MacroFactor/);
-    expect(e.message).toContain('Gevonden kolommen: Date, Calories, Protein');
+    expect(e.message).toContain('Gevonden kolommen: Date, Steps, Floors');
   });
 
   it('says a sheet without a usable weight has none', async () => {
@@ -203,5 +203,36 @@ describe('a CSV through the same door', () => {
     const csv = 'Date,Weight (kg)\n2026-10-13,85.7\n';
     expect(readMacroFactorText(csv, 'Weight Trend.csv').weight?.days).toEqual([{ date: '2026-10-13', trendKg: 85.7 }]);
     expect(readMacroFactorText(csv, 'weight.csv').weight?.days).toEqual([{ date: '2026-10-13', scaleKg: 85.7 }]);
+  });
+});
+
+// MacroFactor's real "xlsx" (seen in an export from October 2026): one sheet
+// named "in", every row a single cell holding the whole CSV line. Made-up
+// workouts, the real shape.
+describe('the xlsx MacroFactor actually writes: CSV text in one cell per row', () => {
+  const lines = [
+    'Date,"Workout Duration","Workout","Exercise","Exercise Base Weight (kg)","Set Type","Weight (kg)","Reps","RIR","Duration","Distance short (m)","Distance long (km)"',
+    '2026-09-30,"1901","Upper Lower (Workout B)","Barbell Back Squat",,"Warm-Up Set","20.0","7.0",,,,',
+    '2026-09-30,"1901","Upper Lower (Workout B)","Barbell Back Squat",,"Standard Set","80.0","6.0","2.0",,,',
+    '2026-09-30,"1901","Upper Lower (Workout B)","Romanian Deadlift",,"Standard Set","70.0","8.0","1.0",,,',
+  ];
+
+  it('reads the workouts, with the duration in seconds', async () => {
+    const content = await readMacroFactorBytes(makeXlsx([{ name: 'in', rows: lines.map((l) => [l]) }]));
+    const workouts = content.workouts!.workouts;
+    expect(workouts).toHaveLength(1);
+    expect(workouts[0].date).toBe('2026-09-30');
+    expect(workouts[0].durationSec).toBe(1901);
+    expect(workouts[0].exercises.map((e) => e.name)).toEqual(['Barbell Back Squat', 'Romanian Deadlift']);
+  });
+
+  it('says plainly that a Food Log is not used', async () => {
+    const food = [
+      'Date,"Time","Food Name","Serving Size","Calories (kcal)","Fat (g)","Carbs (g)","Protein (g)"',
+      '2026-09-29,"07:00","Havermout","g","150","3","27","5"',
+    ];
+    const err = await refused(makeXlsx([{ name: 'in', rows: food.map((l) => [l]) }]));
+    expect(err.message).toContain('Food Log');
+    expect(err.message).toContain('Weight Trend');
   });
 });

@@ -98,8 +98,32 @@ function unknownLayoutMessage(tables: SheetTable[]): string {
   );
 }
 
-export function readMacroFactorTables(tables: SheetTable[]): MacroFactorContent {
+// MacroFactor's own "xlsx" export is CSV in disguise: every row is one cell
+// holding the whole comma separated line (`Date,"Workout Duration",...`).
+// Such a sheet is turned back into a real table before anything else.
+export function unwrapCsvInCells(table: SheetTable): SheetTable {
+  const lines = table.rows
+    .map((row) => row.map(cellText).filter((t) => t.trim() !== ''))
+    .filter((cells) => cells.length > 0);
+  if (lines.length === 0) return table;
+  const oneCellEach = lines.every((cells) => cells.length === 1);
+  if (!oneCellEach || !lines[0][0].includes(',')) return table;
+  return { ...table, rows: parseCsv(lines.map((cells) => cells[0]).join('\n')) };
+}
+
+// The Food Log has the same disguise and is never used by ASCEND: say so
+// plainly instead of listing sixty nutrient columns.
+const isFoodLog = (table: SheetTable) => {
+  const header = (table.rows[0] ?? []).map((c) => cellText(c).toLowerCase());
+  return header.some((h) => h.includes('food name')) || (header.some((h) => h.startsWith('calories')) && header.some((h) => h.startsWith('protein')));
+};
+const FOOD_LOG_MESSAGE =
+  'Dit is je Food Log (wat je at). Die gebruikt ASCEND niet. Kies in MacroFactor bij Granular Export onder Metrics & Analytics Weight Trend en Scale Weight voor je gewicht, of Export Workout Log voor je krachttrainingen.';
+
+export function readMacroFactorTables(input: SheetTable[]): MacroFactorContent {
+  const tables = input.map(unwrapCsvInCells);
   const usable = tables.filter((t) => t.rows.length > 0);
+  if (usable.length > 0 && usable.every(isFoodLog)) throw new MacroFactorFormatError(FOOD_LOG_MESSAGE);
   if (usable.length === 0) throw new MacroFactorFormatError('Het bestand is leeg.');
   const content: MacroFactorContent = { notes: [] };
   const problems: { table: SheetTable; error: MacroFactorFormatError }[] = [];
