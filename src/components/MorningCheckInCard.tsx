@@ -83,7 +83,7 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
         onClick={() => { if (existing) setDraft(existing); setOpen(true); }}
         chevron={!!existing}
         action={existing || painOnly ? undefined : (
-          <button onClick={() => save({ date: today, allNormal: true })} className="ml-2 min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
+          <button onClick={() => save({ date: today, allNormal: true })} className="ml-2 min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold" style={{ boxShadow: 'inset 0 0 0 1px var(--color-control-border)', color: 'var(--color-ink)' }}>
             Alles normaal
           </button>
         )}

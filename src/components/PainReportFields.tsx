@@ -59,7 +59,7 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
               </div>
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel, op het ergste moment? 1 is net te voelen, 10 is niet door te lopen.</p>
-                <div className="mt-1.5 grid grid-cols-10 gap-1" role="radiogroup" aria-label={`Pijn ${p.area} van 1 tot 10`}>
+                <div className="mt-1.5 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label={`Pijn ${p.area} van 1 tot 10`}>
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                     <button
                       key={n}

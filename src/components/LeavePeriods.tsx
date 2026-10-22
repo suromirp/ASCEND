@@ -69,7 +69,7 @@ export function LeavePeriodsCard() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="flex min-w-0 items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: KIND_COLOR[p.kind] }} aria-hidden />
-                    <span className="truncate">{p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}</span>
+                    <span className="break-words">{p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}</span>
                   </p>
                   <button
                     onClick={() => setPlan(planLeave('remove', p))}
@@ -82,7 +82,7 @@ export function LeavePeriodsCard() {
                 </div>
                 <div className="-mt-1.5 pb-2 pl-4 pr-3">
                   <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{describePeriodDates(p, true)} · {describeDayCount(p)}</p>
-                  {p.note && <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--color-ink)' }}>{p.note}</p>}
+                  {p.note && <p className="mt-0.5 break-words text-xs" style={{ color: 'var(--color-ink)' }}>{p.note}</p>}
                 </div>
               </li>
             ))}

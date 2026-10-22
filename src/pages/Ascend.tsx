@@ -15,8 +15,9 @@ import { TrekGoalsCard } from '../components/TrekGoals';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
+import { TrainingSplitSheet } from '../components/TrainingSplitSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
-import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
+import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../data/gr5Details';
 import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
@@ -90,6 +91,7 @@ export function AscendPage() {
   const { sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showLadder, setShowLadder] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
   // Archiving (below) sets status:'archived' in place rather than removing
   // the row, so every "find the live goal" lookup here must exclude it —
   // otherwise the dedicated GR5/Marathon cards would keep showing an
@@ -233,30 +235,19 @@ export function AscendPage() {
 
       <StrengthProgressionCard logs={sessionLogs} />
 
-      <Card className="flex flex-col gap-3">
-        <details>
-          <summary className="flex min-h-[44px] cursor-pointer items-center"><Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow></summary>
-          <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            Hardlopen blijft in het schema: het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
-            De verhouding verschuift wel steeds meer richting echt bergwandelen naarmate de GR5 dichterbij komt.
-          </p>
-          <ul className="mt-2 flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
-            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>3 tot 4 keer kracht</li>
-            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1 tot 2 keer hardlopen: aerobe basis, later snelheid en drempel</li>
-            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>1 keer bergspecifiek: helling, D+ of een echte hike</li>
-            <li className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>regelmatig: lange hike, afdalen, rugzak, twee dagen achter elkaar</li>
-          </ul>
-          <div className="mt-3 flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-            {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
-              <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-                {s.label} ↗
-              </a>
-            ))}
-          </div>
-        </details>
+      <Card className="flex flex-col">
+        <button onClick={() => setSplitOpen(true)} className="flex min-h-[56px] items-center justify-between gap-3 py-1 text-left">
+          <span className="min-w-0">
+            <Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow>
+            <span className="mt-1 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Hoe kracht, hardlopen en bergwerk zich in je week verhouden.</span>
+          </span>
+          <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+        </button>
       </Card>
 
       <JourneyEntryCard />
+
+      {splitOpen && <TrainingSplitSheet onClose={() => setSplitOpen(false)} />}
 
       {selectedMilestone && selectedDetail && (
         <MilestoneDetailSheet
@@ -333,19 +324,18 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
 
   return (
     <Card>
-      <div className="flex items-center justify-between gap-3">
-        <Eyebrow>KRACHTPROGRESSIE</Eyebrow>
-        <select
-          value={activeId}
-          onChange={(e) => setSelectedId(e.target.value)}
-          className="rounded-lg border bg-transparent px-2 py-1 text-xs"
-          style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-        >
-          {exercises.map((ex) => (
-            <option key={ex.id} value={ex.id} style={{ background: 'var(--color-card)' }}>{ex.name}</option>
-          ))}
-        </select>
-      </div>
+      <Eyebrow>KRACHTPROGRESSIE</Eyebrow>
+      <select
+        value={activeId}
+        onChange={(e) => setSelectedId(e.target.value)}
+        aria-label="Oefening"
+        className="mt-2 block min-h-[44px] w-full min-w-0 max-w-full truncate rounded-lg border bg-transparent px-3 py-2 text-sm"
+        style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+      >
+        {exercises.map((ex) => (
+          <option key={ex.id} value={ex.id} style={{ background: 'var(--color-card)' }}>{ex.name}</option>
+        ))}
+      </select>
       {progression.length >= 2 ? (
         <div className="mt-3">
           <TrendLineChart points={progression} formatValue={(v) => `${v} kg`} />
@@ -697,7 +687,7 @@ function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUn
 
   return (
     <Card className="flex flex-col gap-3">
-      <button onClick={() => setOpen((s) => !s)} className="flex items-center justify-between gap-3 text-left">
+      <button onClick={() => setOpen((s) => !s)} className="flex min-h-[44px] items-center justify-between gap-3 text-left">
         <Eyebrow>GEARCHIVEERDE DOELEN ({goals.length})</Eyebrow>
         <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>{open ? '−' : '+'}</span>
       </button>

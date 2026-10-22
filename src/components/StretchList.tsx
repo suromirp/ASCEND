@@ -41,7 +41,7 @@ export function StretchItems({ stretches, className = 'mt-3 flex flex-col gap-2'
                 <button
                   onClick={() => setTimerFor(s)}
                   aria-label={`Timer voor ${s.name}`}
-                  className="inline-flex shrink-0"
+                  className="relative inline-flex shrink-0 before:absolute before:-inset-[15px] before:content-['']"
                   style={{ color: 'var(--color-bronze)' }}
                 >
                   <ClockIcon />

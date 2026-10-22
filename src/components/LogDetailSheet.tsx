@@ -129,7 +129,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
 
           {log.notes && (
             <div className="mt-4">
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>NOTITIES</p>
+              <Eyebrow>NOTITIES</Eyebrow>
               <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{log.notes}</p>
             </div>
           )}

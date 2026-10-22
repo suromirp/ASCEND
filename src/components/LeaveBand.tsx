@@ -24,7 +24,7 @@ export function LeaveBand({ label }: { label: LeaveLabel }) {
         <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: tone.text }}>{label.title.toUpperCase()}</span>
         <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label.line}</span>
       </p>
-      {label.note && <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--color-ink)' }}>{label.note}</p>}
+      {label.note && <p className="mt-0.5 break-words text-xs" style={{ color: 'var(--color-ink)' }}>{label.note}</p>}
     </div>
   );
 }

@@ -183,7 +183,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                       return (
                         <div key={d.date}>
                           <div className="mb-2 flex items-baseline gap-2">
-                            <span className="text-xs font-semibold tracking-wide" style={{ color: d.changed || isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{weekdayShortNL(d.date)}</span>
+                            <span className="text-xs font-semibold" style={{ color: d.changed || isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{weekdayShortNL(d.date)}</span>
                             <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(d.date)}</span>
                             {isToday && <span className="text-xs" style={{ color: 'var(--color-gold)' }}>vandaag</span>}
                           </div>
@@ -278,10 +278,10 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
     >
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: struck ? 'var(--color-ink-dim)' : TYPE_COLOR[entry.type] }} aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium" style={{ color: struck ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: struck ? 'line-through' : undefined }}>
+        <p className="break-words text-sm font-medium" style={{ color: struck ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: struck ? 'line-through' : undefined }}>
           {rest ? 'Rustdag' : entry.name}
         </p>
-        {note && <p className="mt-0.5 truncate text-xs" style={{ color: highlighted ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{note}</p>}
+        {note && <p className="mt-0.5 break-words text-xs" style={{ color: highlighted ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{note}</p>}
       </div>
       {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-gold)' }}>{entry.change === 'nieuw' ? 'NIEUW' : 'HIERHEEN'}</span>}
       {!highlighted && minutes !== undefined && !struck && <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutes} min</span>}

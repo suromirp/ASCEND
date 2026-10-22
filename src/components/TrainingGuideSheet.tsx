@@ -165,7 +165,7 @@ export function TrainingGuideSheet({
                       className="rounded-lg border px-1.5 py-2 text-center"
                       style={{ borderColor: w.current ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
                     >
-                      <p className="text-xs tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
+                      <p className="text-xs" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
                       <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
                       <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
                     </div>
@@ -197,7 +197,7 @@ export function TrainingGuideSheet({
               <Sections sections={background} />
               {guide.gear.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>MATERIAAL</p>
+                  <Eyebrow>MATERIAAL</Eyebrow>
                   <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
                 </div>
               )}
@@ -212,7 +212,7 @@ export function TrainingGuideSheet({
               )}
               {guide.sources.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
+                  <Eyebrow>BRONNEN</Eyebrow>
                   <div className="mt-2 flex flex-col gap-1.5">
                     {guide.sources.map((src) =>
                       src.url ? (
@@ -256,7 +256,7 @@ function Sections({ sections }: { sections: TrainingDayGuide['sections'] }) {
     <>
       {sections.map((section) => (
         <div key={section.heading} className="mt-3 first:mt-0">
-          <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{section.heading}</p>
+          <Eyebrow>{section.heading}</Eyebrow>
           {section.body && <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{section.body}</p>}
           {section.items && <BulletList items={section.items} className="mt-1.5" />}
           {section.subsections && (
@@ -382,7 +382,7 @@ export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: Wo
             <StepRow key={i} step={item.step} />
           ) : (
             <div key={i} className="rounded-xl border-l-2 py-1 pl-3" style={{ borderColor: 'var(--color-bronze)' }}>
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-bronze)' }}>{item.repeat}× HERHALEN</p>
+              <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{item.repeat}× HERHALEN</p>
               <div className="mt-2 flex flex-col gap-3">
                 {item.steps.map((step, j) => <StepRow key={j} step={step} />)}
               </div>

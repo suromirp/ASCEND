@@ -26,7 +26,7 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose }: { row: Time
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
             <Eyebrow>{row.isThisWeek ? 'DEZE WEEK' : 'TAAK'}</Eyebrow>
             <h3 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{task.title}</h3>
-            <p className="text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>{windowLine(row)}</p>
+            <p className="text-xs font-medium" style={{ color: 'var(--color-gold)' }}>{windowLine(row)}</p>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{task.why}</p>
             {task.link && (task.link.url ? (
               <a href={task.link.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] self-start py-2 text-sm underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>

@@ -98,7 +98,7 @@ export function CoachCard() {
       </div>
       <div className="flex items-center gap-2">
         {plain && (
-          <Pill primary disabled={busy} onClick={() => { setBusy(true); void respondToAdvice(first, 'accepted').finally(() => setBusy(false)); }}>Begrepen</Pill>
+          <Pill disabled={busy} onClick={() => { setBusy(true); void respondToAdvice(first, 'accepted').finally(() => setBusy(false)); }}>Begrepen</Pill>
         )}
         <Pill primary={!plain} onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</Pill>
       </div>
@@ -135,11 +135,11 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
     <div className="mt-3 flex flex-wrap items-center gap-2">
       {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime ? (
         <>
-          <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Akkoord</Pill>
+          <Pill onClick={() => void respond('accepted')} disabled={busy}>Akkoord</Pill>
           <Pill onClick={() => void respond('declined')} disabled={busy}>Liever niet</Pill>
         </>
       ) : (
-        <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Begrepen</Pill>
+        <Pill onClick={() => void respond('accepted')} disabled={busy}>Begrepen</Pill>
       )}
       {!whyAlways && <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="ml-auto" />}
     </div>

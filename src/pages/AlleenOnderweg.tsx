@@ -69,7 +69,7 @@ export function AlleenOnderwegPage() {
           </div>
           <a
             href={`tel:${EMERGENCY_NUMBER}`}
-            className="flex min-h-11 items-center whitespace-nowrap rounded-xl border px-4 text-xs font-semibold tracking-wide"
+            className="flex min-h-11 items-center whitespace-nowrap rounded-xl border px-4 text-xs font-semibold"
             style={{ borderColor: 'var(--color-gold)', color: 'var(--color-gold)' }}
           >
             BEL {EMERGENCY_NUMBER}
@@ -82,7 +82,7 @@ export function AlleenOnderwegPage() {
           </div>
           <a
             href={`sms:${SMS_FALLBACK_NUMBER}`}
-            className="flex min-h-11 items-center rounded-xl border px-4 text-xs font-medium tracking-wide"
+            className="flex min-h-11 items-center rounded-xl border px-4 text-xs font-medium"
             style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
           >
             SMS {SMS_FALLBACK_NUMBER}
@@ -106,11 +106,11 @@ export function AlleenOnderwegPage() {
           Meer in de Kennisbank: Als het misgaat
         </button>
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
+          <Eyebrow>BRONNEN</Eyebrow>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_REPORT}</p>
           <div className="mt-1 flex flex-col">
             {ALARM_SOURCES.map((s) => (
-              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
                 {s.label} ↗
               </a>
             ))}
