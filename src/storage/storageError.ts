@@ -31,5 +31,5 @@ export function describeWriteError(err: unknown): string {
   const name = errorName(err);
   if (name === 'QuotaExceededError') return 'Opslaan lukt niet: de opslag op dit toestel is vol. Maak een back-up en ruim ruimte op.';
   if (name === 'AbortError') return ABORTED_WHILE_SAVING;
-  return 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Meer, Gegevens.';
+  return 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Instellingen, Gegevens en back-up.';
 }

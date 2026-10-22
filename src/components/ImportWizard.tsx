@@ -205,7 +205,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Import geslaagd.</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Klopt er iets niet? Je kunt de import ongedaan maken. Dat kan later ook via Meer, Gegevens.
+                  Klopt er iets niet? Je kunt de import ongedaan maken. Dat kan later ook via Instellingen, Gegevens en back-up.
                 </p>
                 <div className="flex gap-3">
                   <SecondaryButton onClick={() => void undoImport(step.snapshotId)}>Ongedaan maken</SecondaryButton>

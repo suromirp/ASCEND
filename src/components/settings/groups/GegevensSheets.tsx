@@ -41,11 +41,11 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
 
   return (
     <Sheet eyebrow="Gegevens en back-up" title="Back-up" line={line} onClose={onClose}>
-      {(close) => (
+      {() => (
         <>
           <div className="st-btns col first">
             <button type="button" className="st-btn gold" disabled={busy} onClick={() => void make()}>Back-up maken</button>
-            <button type="button" className="st-btn" onClick={() => { close(); onImport(); }}>Back-up terugzetten</button>
+            <button type="button" className="st-btn" onClick={() => onImport()}>Back-up terugzetten</button>
           </div>
           {status && <p className="st-hint" style={{ marginLeft: 0 }} role="status">{status}</p>}
           {!status && since > 0 && (
@@ -251,7 +251,7 @@ export function ResetSheet({ onClose, onBackup }: { onClose: () => void; onBacku
       {(close) => (
         <>
           <div className="st-btns col first">
-            <button type="button" className="st-btn" onClick={() => { close(); onBackup(); }}>Eerst een back-up</button>
+            <button type="button" className="st-btn" onClick={() => onBackup()}>Eerst een back-up</button>
           </div>
           {confirming && <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-danger-text)' }} role="alert">Weet je het zeker? Al je gegevens gaan definitief verloren.</p>}
           <div className="st-btns">

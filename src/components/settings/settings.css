@@ -97,7 +97,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 
 /* InfoButton in een rij: klein rondje met onzichtbare rand tot 44 px */
 .st-info { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-card-border); color: var(--color-bronze); display: inline-flex; align-items: center; justify-content: center; flex: none; }
-.st-info::before { content: ''; position: absolute; inset: -12px; }
+.st-info::before { content: ''; position: absolute; inset: -13px; }
 
 /* Geavanceerd */
 .st-more { position: relative; display: grid; grid-template-columns: 1fr 16px; align-items: center; width: 100%; min-height: var(--row); padding: 0 var(--s4); color: var(--color-ink-dim); text-align: left; font-size: 15px; }
