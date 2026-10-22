@@ -216,7 +216,7 @@ import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
-import { showCompletionMoment, showWeatherSwap } from '../engine/overviewSettings';
+import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
 
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
@@ -1156,13 +1156,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (announcement.kind === 'milestone') playMilestoneChime();
       else playSessionCompleteChime();
     }
-    // "Citaten na een training" uit: geen scherm voor een gewone training,
-    // wel voor een behaalde mijlpaal. De terugblik daarna opent gewoon.
-    if (announcement.kind === 'milestone' || showCompletionMoment(settings.overviews)) setCelebration({
+    // "Citaten na een training" uit: het scherm blijft, alleen het citaat
+    // (voor een behaalde mijlpaal blijft het) valt weg.
+    const withQuote = showCompletionQuote(settings.overviews, announcement.kind === 'milestone');
+    setCelebration({
       id: makeId('celebration'),
       kind: announcement.kind,
       title: announcement.title,
-      quote: announcement.kind === 'milestone' ? pickVictoryQuote() : pickCompletionQuote(),
+      quote: withQuote ? (announcement.kind === 'milestone' ? pickVictoryQuote() : pickCompletionQuote()) : undefined,
       coachNote: announcement.coachNote,
       logIds: announcement.logIds,
     });
@@ -1878,7 +1879,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     };
   }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, planChangeLog]);
 
-  const weather = useWeatherForecast(settings.homeLocation, !loading);
+  const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
 
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).

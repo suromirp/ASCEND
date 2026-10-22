@@ -168,3 +168,23 @@ describe('small pieces', () => {
     expect(heaviestSet([{ reps: 10, weightKg: 50, rir: 3 }, { reps: 6, weightKg: 60, rir: 2 }, { reps: 6, weightKg: 60, rir: 0 }])).toEqual({ reps: 6, weightKg: 60, rir: 0 });
   });
 });
+
+describe('time and name of a workout', () => {
+  const header = 'Date,Workout Duration,Workout,Exercise,Set Type,Weight (kg),Reps,RIR\n';
+  it('come from the first working set, not from a warm-up row', () => {
+    const { workouts } = readMacroFactorCsv(
+      header +
+        '2026-10-13 18:00,3000,  PUSH  ,Bench Press (Barbell),Warm-up,40,8,\n' +
+        '2026-10-13 18:07,3000,Push,Bench Press (Barbell),Working,70,8,3\n' +
+        '2026-10-13 18:12,3000,Push,Bench Press (Barbell),Working,70,8,2\n',
+    );
+    expect(workouts).toHaveLength(1);
+    expect(workouts[0].start).toBe('2026-10-13T18:07:00');
+    expect(workouts[0].name).toBe('Push');
+    expect(workouts[0].setCount).toBe(2);
+  });
+  it('a workout without a time still gets the default', () => {
+    const { workouts } = readMacroFactorCsv(header + '2026-10-13,3000,Push,Bench Press (Barbell),Warm-up,40,8,\n2026-10-13,3000,Push,Bench Press (Barbell),Working,70,8,3\n');
+    expect(workouts[0].start).toBe('2026-10-13T12:00:00');
+  });
+});

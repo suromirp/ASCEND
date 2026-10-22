@@ -163,6 +163,10 @@ src/
   utils/         Date math, id generation
 ```
 
+Everything that counts sets (volume, top weights, set totals) goes through
+`engine/workSets.ts#isWorkSet`, so a warm-up set is stored but never counted
+(`docs/beslissingen/2026-10-22-kracht-per-set.md`).
+
 Training definitions, scheduled sessions, and completed session logs are
 separate entities:
 

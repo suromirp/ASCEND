@@ -113,7 +113,7 @@ export function WeightSettingsCard() {
             {last ? ` Laatst ingevuld: ${formatNumberNL(last.kg, 1)} kg op ${formatDateNL(last.date)}.` : ''}
           </p>
           <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={(v) => { setKg(v); setSaved(false); }} />
-          <PrimaryButton disabled={!kg} onClick={async () => { if (kg) { await save(kg); setSaved(true); } }}>Opslaan</PrimaryButton>
+          <SecondaryButton disabled={!kg} onClick={async () => { if (kg) { await save(kg); setSaved(true); } }}>Opslaan</SecondaryButton>
           {saved && <p className="text-xs" style={{ color: 'var(--color-success-text)' }}>Opgeslagen.</p>}
         </>
       )}

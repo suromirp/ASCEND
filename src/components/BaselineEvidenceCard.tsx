@@ -5,7 +5,7 @@ import { todayISO, formatDateNL } from '../utils/dates';
 import { questionMetaFor, DIMENSION_META, DIMENSION_ORDER, dimensionLabel } from '../data/baselineQuestions';
 import { UNIT_LABEL, formatMeasuredValue } from '../models/units';
 import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../models/disciplines';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, SecondaryButton, Eyebrow } from './ui';
 
 const CUSTOM_DISCIPLINE = '__custom__';
 
@@ -144,7 +144,7 @@ export function BaselineEvidenceCard() {
           </div>
           <div className="flex gap-3">
             <SecondaryButton onClick={() => setAdding(false)}>Annuleren</SecondaryButton>
-            <PrimaryButton onClick={handleSave}>Opslaan</PrimaryButton>
+            <SecondaryButton onClick={handleSave}>Opslaan</SecondaryButton>
           </div>
         </div>
       )}

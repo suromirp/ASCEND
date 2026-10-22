@@ -25,7 +25,7 @@ import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 import { getConnection } from '../storage/externalActivities';
 import { SETTINGS_GROUPS, SETTINGS_INDEX, settingsAnchor, type SettingsGroupId, type SettingsIndexItem } from '../data/settingsIndex';
-import { searchSettings } from '../engine/settingsSearch';
+import { searchSettings, settingAvailability, type SettingsVisibility } from '../engine/settingsSearch';
 import { resolveOverviews, type OverviewSettings, type ReviewDay } from '../engine/overviewSettings';
 import type { ReactNode } from 'react';
 
@@ -136,13 +136,22 @@ export function SettingsPage() {
     }, 60);
   }
 
+  // Welke voorwaardelijke instellingen er nu op de pagina staan (zoeken).
+  const visibility: SettingsVisibility = {
+    longSundayChoice: showLongSundayChoice,
+    backupFolder: supportsPreferredDirectory,
+    weekReview: resolveOverviews(settings.overviews).weekReview,
+  };
+
   function openSetting(item: SettingsIndexItem) {
     if (item.route) {
       navigate(item.route);
       return;
     }
     setQuery('');
-    scrollToId(settingsAnchor(item.id));
+    // Staat de instelling er nu niet, dan naar de groep (de regel in het
+    // zoekresultaat zei al waarom).
+    scrollToId(settingAvailability(item.id, visibility).available ? settingsAnchor(item.id) : `groep-${item.group}`);
   }
 
   function jumpToGroup(id: SettingsGroupId) {
@@ -334,7 +343,7 @@ export function SettingsPage() {
         )}
       </div>
 
-      {searching && <SearchResults query={query} onPick={openSetting} />}
+      {searching && <SearchResults query={query} visibility={visibility} onPick={openSetting} />}
 
       {!searching && (
         <>
@@ -563,8 +572,7 @@ export function SettingsPage() {
                     />
                     <div className="flex gap-3">
                       <SecondaryButton onClick={() => setConfirmingRestart(false)} disabled={restarting}>Annuleren</SecondaryButton>
-                      <PrimaryButton
-                        fullWidth={false}
+                      <SecondaryButton
                         disabled={restarting}
                         onClick={async () => {
                           setRestarting(true);
@@ -575,7 +583,7 @@ export function SettingsPage() {
                         }}
                       >
                         {restarting ? 'Bezig…' : 'Bevestigen'}
-                      </PrimaryButton>
+                      </SecondaryButton>
                     </div>
                   </div>
                 )}
@@ -817,7 +825,7 @@ function NavRow({ label, note, onClick }: { label: string; note: string; onClick
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{label}</p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
       </div>
-      <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+      <span className="shrink-0 text-sm" style={{ color: 'var(--color-ink-dim)' }}>›</span>
     </button>
   );
 }
@@ -897,7 +905,7 @@ function DailyBudgetEditor({
       <button onClick={() => setShowAdvanced((v) => !v)} className="min-h-[44px] self-start text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {showAdvanced ? '− verberg harde limiet' : '+ harde limiet per dag'}
       </button>
-      <PrimaryButton onClick={handleSave}>Opslaan</PrimaryButton>
+      <SecondaryButton onClick={handleSave}>Opslaan</SecondaryButton>
       <SectionNote text={note} />
     </Card>
   );
@@ -922,7 +930,7 @@ function GroupSection({ id, children }: { id: SettingsGroupId; children: ReactNo
   );
 }
 
-function SearchResults({ query, onPick }: { query: string; onPick: (item: SettingsIndexItem) => void }) {
+function SearchResults({ query, visibility, onPick }: { query: string; visibility: SettingsVisibility; onPick: (item: SettingsIndexItem) => void }) {
   const results = searchSettings(query, SETTINGS_INDEX);
   if (results.length === 0) {
     return (
@@ -936,18 +944,22 @@ function SearchResults({ query, onPick }: { query: string; onPick: (item: Settin
     <Card className="flex flex-col">
       <Eyebrow>{results.length === 1 ? '1 resultaat' : `${results.length} resultaten`}</Eyebrow>
       <ul className="mt-1 flex flex-col">
-        {results.map(({ item }) => (
+        {results.map(({ item }) => {
+          const availability = settingAvailability(item.id, visibility);
+          return (
           <li key={item.id}>
             <button onClick={() => onPick(item)} className="flex min-h-[44px] w-full items-center justify-between gap-3 py-2 text-left">
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{item.title}</p>
                 <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{item.note}</p>
+                {!availability.available && <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{availability.reason}</p>}
                 <p className="mt-0.5 text-xs" style={{ color: 'var(--color-bronze)' }}>{SETTINGS_GROUPS.find((g) => g.id === item.group)?.title}</p>
               </div>
-              <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+              <span className="shrink-0 text-sm" style={{ color: 'var(--color-ink-dim)' }}>›</span>
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </Card>
   );
@@ -1011,7 +1023,7 @@ function OverviewSettingsCard() {
       <SwitchRow
         id="ochtendcheck"
         title="Ochtendcheck"
-        note="Een korte vraag over je benen, energie en slaap, zodat ASCEND een rustiger dag kan voorstellen als je moe bent."
+        note="Een korte vraag over je benen, energie en slaap, zodat ASCEND een rustiger dag kan voorstellen als je moe bent. Een pijnplek van de laatste twee weken blijft altijd gevolgd, ook als je dit uitzet."
         checked={o.morningCheckIn}
         onChange={(on) => set({ morningCheckIn: on })}
       >
@@ -1039,7 +1051,7 @@ function OverviewSettingsCard() {
       <SwitchRow
         id="citaten"
         title="Citaten na een training"
-        note="Een rustig scherm met een citaat als je een training afrondt. Een behaalde mijlpaal krijgt het scherm altijd."
+        note="Een citaat onder het rustige scherm na een training. Uit zetten haalt alleen het citaat weg, de rest van het scherm blijft. Een behaalde mijlpaal krijgt altijd een citaat."
         checked={o.completionMoment}
         onChange={(on) => set({ completionMoment: on })}
       />

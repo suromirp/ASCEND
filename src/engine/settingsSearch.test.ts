@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeSearch, searchSettings, type SearchableSetting } from './settingsSearch';
+import { CONDITIONAL_SETTING_IDS, normalizeSearch, searchSettings, settingAvailability, type SearchableSetting, type SettingsVisibility } from './settingsSearch';
 import { SETTINGS_GROUPS, SETTINGS_INDEX } from '../data/settingsIndex';
 
 const ids = (q: string) => searchSettings(q, SETTINGS_INDEX).map((r) => r.item.id);
@@ -49,6 +49,14 @@ describe('searchSettings', () => {
     expect(ids('weer bananen')).toEqual([]);
   });
 
+  it('een punt of ander leesteken aan het eind van een woord maakt niet uit', () => {
+    expect(ids('horloge.')).toEqual(ids('horloge'));
+    expect(ids('horloge.')).toContain('garmin');
+    expect(ids('weer, ruilen!')).toContain('weerruil');
+    // Een punt midden in een woord blijft erbij.
+    expect(ids('intervals.icu')).toContain('garmin');
+  });
+
   it('een begin van een woord is genoeg', () => {
     expect(ids('terugbl')).toContain('weekterugblik');
   });
@@ -82,5 +90,34 @@ describe('de index zelf', () => {
   it('bevat geen gedachtestreepjes', () => {
     const all = JSON.stringify([SETTINGS_INDEX, SETTINGS_GROUPS]);
     expect(all).not.toMatch(/[–—]/);
+  });
+});
+
+describe('instellingen die er nu niet staan', () => {
+  const all: SettingsVisibility = { longSundayChoice: true, backupFolder: true, weekReview: true };
+
+  it('staan ze er wel, dan is er niets aan de hand', () => {
+    for (const id of CONDITIONAL_SETTING_IDS) expect(settingAvailability(id, all)).toEqual({ available: true });
+    expect(settingAvailability('garmin', { longSundayChoice: false, backupFolder: false, weekReview: false })).toEqual({ available: true });
+  });
+
+  it('staan ze er niet, dan komt er een korte reden', () => {
+    const none: SettingsVisibility = { longSundayChoice: false, backupFolder: false, weekReview: false };
+    for (const id of CONDITIONAL_SETTING_IDS) {
+      const a = settingAvailability(id, none);
+      expect(a.available).toBe(false);
+      if (!a.available) {
+        expect(a.reason).toMatch(/^Deze keuze verschijnt/);
+        expect(a.reason).not.toMatch(/[–—]/);
+      }
+    }
+  });
+
+  it('elke voorwaardelijke instelling staat in de index, en alleen de voorwaarde telt', () => {
+    const known = new Set(SETTINGS_INDEX.map((i) => i.id));
+    for (const id of CONDITIONAL_SETTING_IDS) expect(known.has(id)).toBe(true);
+    expect(CONDITIONAL_SETTING_IDS.sort()).toEqual(['backupmap', 'lange-zondag', 'weekterugblik-dag']);
+    expect(settingAvailability('weekterugblik-dag', { ...all, weekReview: false }).available).toBe(false);
+    expect(settingAvailability('backupmap', { ...all, weekReview: false }).available).toBe(true);
   });
 });

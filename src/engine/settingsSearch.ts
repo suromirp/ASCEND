@@ -22,10 +22,16 @@ export interface SettingsSearchResult<T extends SearchableSetting = SearchableSe
 }
 
 export function normalizeSearch(text: string): string {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
-const words = (text: string): string[] => normalizeSearch(text).split(/[^a-z0-9.]+/).filter(Boolean);
+// Woorden zonder leestekens aan de randen: "horloge." vindt hetzelfde als
+// "horloge", en "intervals.icu" blijft heel.
+const words = (text: string): string[] =>
+  normalizeSearch(text)
+    .split(/[^a-z0-9.]+/)
+    .map((w) => w.replace(/^\.+|\.+$/g, ''))
+    .filter(Boolean);
 
 // Wat één woord van de zoekopdracht oplevert bij één instelling; 0 = past niet.
 function tokenScore(token: string, item: SearchableSetting): number {
@@ -73,3 +79,44 @@ export function searchSettings<T extends SearchableSetting>(query: string, index
     .sort((a, b) => b.score - a.score || a.order - b.order)
     .map(({ item, score }) => ({ item, score }));
 }
+
+// --- instellingen die er nu niet staan ---------------------------------------
+//
+// Een paar instellingen verschijnen alleen onder een voorwaarde. Een
+// zoekresultaat daarvan zou nergens heen scrollen. De pagina meldt wat er nu
+// geldt; deze functie beslist of het anker er is, en zo niet, waarom niet.
+
+export interface SettingsVisibility {
+  // De keuze voor de lange zondag: alleen als het hoofddoel geen bergtocht is.
+  longSundayChoice: boolean;
+  // De vaste back-upmap: alleen in een browser die een map kan onthouden.
+  backupFolder: boolean;
+  // De weekterugblik staat aan, en dan pas de keuze van de dag.
+  weekReview: boolean;
+}
+
+const UNAVAILABLE_REASON: Record<string, { when: keyof SettingsVisibility; reason: string }> = {
+  'lange-zondag': {
+    when: 'longSundayChoice',
+    reason: 'Deze keuze verschijnt pas als je hoofddoel geen bergtocht is. Bij een bergdoel staat er op zondag altijd een bergtocht.',
+  },
+  backupmap: {
+    when: 'backupFolder',
+    reason: 'Deze keuze verschijnt alleen als je browser een vaste map kan onthouden. Deze nu niet.',
+  },
+  'weekterugblik-dag': {
+    when: 'weekReview',
+    reason: 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
+  },
+};
+
+// Staat de instelling nu op de pagina? Zo niet: een korte regel waarom, en de
+// pagina springt dan naar de groep in plaats van naar een anker dat er niet is.
+export function settingAvailability(id: string, visibility: SettingsVisibility): { available: true } | { available: false; reason: string } {
+  const rule = UNAVAILABLE_REASON[id];
+  if (!rule || visibility[rule.when]) return { available: true };
+  return { available: false, reason: rule.reason };
+}
+
+// Alle id's met een voorwaarde, zodat een test kan controleren dat de index ze kent.
+export const CONDITIONAL_SETTING_IDS = Object.keys(UNAVAILABLE_REASON);

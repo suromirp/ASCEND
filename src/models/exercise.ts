@@ -92,6 +92,7 @@ export const MOVEMENT_PATTERNS = [
   'core',
   'isolation_arm',
   'isolation_shoulder',
+  'isolation_leg', // kniestrekken en kniebuigen op de machine
 ] as const;
 
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
@@ -110,6 +111,7 @@ export const PATTERN_LABEL: Record<MovementPattern, string> = {
   core: 'Romp',
   isolation_arm: 'Isolatie arm',
   isolation_shoulder: 'Isolatie schouder',
+  isolation_leg: 'Isolatie been',
 };
 
 export interface Exercise {

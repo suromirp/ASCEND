@@ -36,7 +36,7 @@ import { QuoteCard } from '../components/QuoteCard';
 import { WeekReviewCard } from '../components/WeekReview';
 import { JourneyWeekCard } from '../components/JourneyWeekCard';
 import { WeeklyQuestionCard } from '../components/WeeklyQuestionCard';
-import { reviewWeekToShow, showMorningCheckIn, showWeeklyQuestion } from '../engine/overviewSettings';
+import { reviewWeekToShow, showMorningCheckInCard, showWeeklyQuestion } from '../engine/overviewSettings';
 import { leaveLabelOn } from '../engine/leave';
 import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
@@ -343,7 +343,7 @@ export function TodayPage() {
 
       <YourDay>
         {isMorning && stretchRow}
-        {showMorningCheckIn(settings.overviews) && <MorningCheckInCard />}
+        {showMorningCheckInCard(settings.overviews, today, sessionLogs) && <MorningCheckInCard />}
         {trainingRows.map((s) => {
           const t = templateById.get(s.templateId);
           if (!t) return null;

@@ -9,6 +9,8 @@
 // Het horlogegedeelte van de ochtendcheck staat NIET hier: dat is al
 // instelbaar met de schakelaars van storage/externalActivities.ts (watch use).
 
+import type { SessionLog } from '../models/training';
+import { recentPainSpot } from './wellbeing';
 import { reviewWeekFor } from './weekReview';
 
 export type ReviewDay = 'both' | 'sunday' | 'monday';
@@ -25,7 +27,7 @@ export interface OverviewSettings {
   weatherLine?: boolean;
   // Ruilvoorstellen bij slecht weer (regel WEATHER-SWAP).
   weatherSwap?: boolean;
-  // Het rustige scherm met een citaat na een training.
+  // Het citaat op het scherm na een training (het scherm zelf blijft).
   completionMoment?: boolean;
 }
 
@@ -71,6 +73,23 @@ export function reviewWeekToShow(today: string, isoWeekday: number, raw: Overvie
 
 export const showWeeklyQuestion = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weeklyQuestion;
 export const showMorningCheckIn = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn;
+// De ochtendcheck is ook de plek waar een pijnplek van de laatste 14 dagen
+// wordt opgevolgd (recentPainSpot, spotWorse). Dat blijft dus gebeuren, ook als
+// je de check zelf uitzet: veiligheid gaat voor een opgeruimd scherm.
+export function showMorningCheckInCard(raw: OverviewSettings | undefined, today: string, logs: SessionLog[]): boolean {
+  return resolveOverviews(raw).morningCheckIn || recentPainSpot(today, logs) !== undefined;
+}
+
+// Het weer hoeft alleen opgehaald te worden als iets het gebruikt: de weerregel
+// of de ruilvoorstellen. Staan beide uit, dan gaat er niets naar de weerdienst.
+export const needsWeather = (raw: OverviewSettings | undefined): boolean => {
+  const r = resolveOverviews(raw);
+  return r.weatherLine || r.weatherSwap;
+};
+
 export const showWeatherLine = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherLine;
 export const showWeatherSwap = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherSwap;
-export const showCompletionMoment = (raw: OverviewSettings | undefined) => resolveOverviews(raw).completionMoment;
+// Het scherm na een training blijft altijd (feiten, coachregel, doel, week en
+// benen). De schakelaar bepaalt alleen of het citaat erbij staat. Een behaalde
+// mijlpaal krijgt het citaat altijd.
+export const showCompletionQuote = (raw: OverviewSettings | undefined, isMilestone = false) => isMilestone || resolveOverviews(raw).completionMoment;

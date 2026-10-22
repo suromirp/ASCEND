@@ -24,6 +24,50 @@ describe('the exercise list itself', () => {
     }
   });
 
+  it('gives an alias only the tool the exercise itself is done with', () => {
+    const tool: [RegExp, (r: string) => boolean][] = [
+      [/\bbarbell\b/i, (r) => r === 'barbell'],
+      [/\bdumbbell\b/i, (r) => r === 'dumbbell'],
+      [/\bcable\b/i, (r) => r === 'cable'],
+      [/\bkettlebell\b/i, () => false],
+      [/\bmachine\b/i, (r) => r.startsWith('machine_') || r === 'assisted_bodyweight'],
+    ];
+    for (const e of EXERCISES) {
+      for (const alias of e.aliases) {
+        for (const [word, ok] of tool) {
+          if (word.test(alias)) expect(ok(e.resistance), `${e.id}: ${alias}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('does not take a doubtful name for an exercise', () => {
+    for (const name of ['Barbell Split Squat', 'Barbell Reverse Lunge', 'Barbell Glute Bridge', 'Kettlebell Goblet Squat', 'Cable Lateral Raise', 'Cable Rope Hammer Curl', 'Dumbbell Overhead Triceps Extension', 'Barbell Shrug', 'Machine Chest Press (Plate Loaded)', 'Tempo Squat', 'French Press', 'Toe Raise', 'Calf Raise']) {
+      expect(matchExercise(name), name).toBeUndefined();
+    }
+  });
+
+  it('counts triceps and biceps as secondary in the compound lifts, and gives the leg machines their own pattern', () => {
+    for (const id of ['bench-press', 'dumbbell-bench-press', 'push-up', 'machine-chest-press', 'dip', 'overhead-press', 'pull-up', 'chin-up', 'assisted-pull-up']) {
+      const e = exerciseById(id)!;
+      expect(e.primary, id).not.toContain('triceps');
+      expect(e.primary, id).not.toContain('biceps');
+    }
+    expect(exerciseById('bench-press')!.secondary).toContain('triceps');
+    expect(exerciseById('chin-up')!.secondary).toContain('biceps');
+    // The isolation exercises keep their arm muscle as primary.
+    expect(exerciseById('triceps-pushdown')!.primary).toContain('triceps');
+    expect(exerciseById('barbell-curl')!.primary).toContain('biceps');
+    for (const id of ['leg-extension', 'lying-leg-curl', 'seated-leg-curl']) expect(exerciseById(id)!.pattern, id).toBe('isolation_leg');
+    expect(exerciseById('back-squat')!.pattern).toBe('squat');
+  });
+
+  it('writes the cable crunch as one word', () => {
+    expect(exerciseById('cable-crunch')!.name).toBe('Kabelcrunch');
+    expect(matchExercise('Kabelcrunch')).toBe('cable-crunch');
+    expect(JSON.stringify(EXERCISES)).not.toContain('hol rugje');
+  });
+
   it('has a short explanation of 3 to 5 points per exercise', () => {
     for (const e of EXERCISES) {
       expect(e.cues.length, e.id).toBeGreaterThanOrEqual(3);

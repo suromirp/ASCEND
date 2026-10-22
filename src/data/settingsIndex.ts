@@ -67,11 +67,11 @@ export const SETTINGS_INDEX: SettingsIndexItem[] = [
   { id: 'weekterugblik', title: 'Weekterugblik', group: 'overzichten', note: 'Een korte terugblik op je week, op Vandaag.', keywords: ['terugblik', 'samenvatting', 'overzicht', 'week', 'review', 'evaluatie'] },
   { id: 'weekterugblik-dag', title: 'Dag van de weekterugblik', group: 'overzichten', note: 'Op welke dag de terugblik verschijnt.', keywords: ['zondag', 'maandag', 'terugblik', 'wanneer', 'dag'] },
   { id: 'weekvraag', title: 'Vraag van de week', group: 'overzichten', note: 'Elke week één vraag om je plan scherp te houden.', keywords: ['vraag', 'stoïcijns', 'stoisch', 'intentie', 'plan', 'week'] },
-  { id: 'ochtendcheck', title: 'Ochtendcheck', group: 'overzichten', note: 'Een korte vraag over benen, energie en slaap, voor je training.', keywords: ['ochtend', 'check', 'slaap', 'benen', 'energie', 'moe', 'spierpijn', 'hrv', 'horloge'] },
+  { id: 'ochtendcheck', title: 'Ochtendcheck', group: 'overzichten', note: 'Een korte vraag over benen, energie en slaap, voor je training. Een pijnplek blijft altijd gevolgd.', keywords: ['ochtend', 'check', 'slaap', 'benen', 'energie', 'moe', 'spierpijn', 'hrv', 'horloge'] },
   { id: 'weerregel', title: 'Weer bij je training', group: 'overzichten', note: 'Een regel met het weer bij je buitentraining.', keywords: ['weer', 'regen', 'temperatuur', 'wind', 'onweer', 'voorspelling', 'buien'] },
   { id: 'weerruil', title: 'Ruilvoorstellen bij slecht weer', group: 'overzichten', note: 'ASCEND stelt voor een buitentraining te ruilen als het weer slecht wordt.', keywords: ['weer', 'ruilen', 'verplaatsen', 'regen', 'storm', 'onweer', 'voorstel'] },
   { id: 'weerplaats', title: 'Plaats voor het weer', group: 'overzichten', note: 'Waarvoor ASCEND het weer opzoekt. Alleen de plaatsnaam gaat de deur uit.', keywords: ['weer', 'stad', 'woonplaats', 'locatie', 'plaats', 'open-meteo', 'privacy'], route: '/weer' },
-  { id: 'citaten', title: 'Citaten na een training', group: 'overzichten', note: 'Een rustig scherm met een citaat als je een training afrondt.', keywords: ['citaat', 'quote', 'gedaan', 'afronden', 'feestje', 'scherm', 'mijlpaal'] },
+  { id: 'citaten', title: 'Citaten na een training', group: 'overzichten', note: 'Een citaat op het rustige scherm na een training. Uit zetten haalt alleen het citaat weg.', keywords: ['citaat', 'quote', 'gedaan', 'afronden', 'feestje', 'scherm', 'mijlpaal'] },
   { id: 'geluid', title: 'Geluidseffecten', group: 'overzichten', note: 'Een paar lage tonen bij het openen en een klank bij een voltooide training.', keywords: ['geluid', 'audio', 'tonen', 'klank', 'stil', 'trommel', 'uitzetten', 'timer'] },
 
   // Koppelingen

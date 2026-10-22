@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_OVERVIEWS, resolveOverviews, reviewWeekToShow, showCompletionMoment, showMorningCheckIn, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
+import type { SessionLog } from '../models/training';
+import { DEFAULT_OVERVIEWS, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
 import { reviewWeekFor } from './weekReview';
 
 describe('resolveOverviews', () => {
@@ -50,12 +51,47 @@ describe('de losse schakelaars', () => {
       ['morningCheckIn', showMorningCheckIn],
       ['weatherLine', showWeatherLine],
       ['weatherSwap', showWeatherSwap],
-      ['completionMoment', showCompletionMoment],
+      ['completionMoment', showCompletionQuote],
     ] as const;
     for (const [key, fn] of fns) {
       expect(fn(undefined)).toBe(true);
       expect(fn({ [key]: false })).toBe(false);
       expect(fn({ [key]: true })).toBe(true);
     }
+  });
+});
+
+const painLog = (date: string, score: number): SessionLog => ({ id: `l-${date}`, templateId: 'tpl_easy_run', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 40, source: 'manual', painReports: [{ area: 'Knie', score }] });
+
+describe('de ochtendcheck en een pijnplek', () => {
+  it('aan: altijd te zien', () => {
+    expect(showMorningCheckInCard(undefined, '2026-11-03', [])).toBe(true);
+  });
+  it('uit zonder pijnplek: weg', () => {
+    expect(showMorningCheckInCard({ morningCheckIn: false }, '2026-11-03', [])).toBe(false);
+  });
+  it('uit, maar een pijnplek van de laatste 14 dagen blijft gevolgd', () => {
+    expect(showMorningCheckInCard({ morningCheckIn: false }, '2026-11-03', [painLog('2026-11-02', 3)])).toBe(true);
+    expect(showMorningCheckInCard({ morningCheckIn: false }, '2026-11-14', [painLog('2026-11-01', 3)])).toBe(true);
+  });
+  it('uit, en de pijn is ouder dan 14 dagen: weg', () => {
+    expect(showMorningCheckInCard({ morningCheckIn: false }, '2026-11-20', [painLog('2026-11-01', 3)])).toBe(false);
+  });
+});
+
+describe('het citaat na een training', () => {
+  it('uit haalt alleen het citaat weg, behalve bij een mijlpaal', () => {
+    expect(showCompletionQuote({ completionMoment: false })).toBe(false);
+    expect(showCompletionQuote({ completionMoment: false }, true)).toBe(true);
+    expect(showCompletionQuote(undefined)).toBe(true);
+  });
+});
+
+describe('het weer ophalen', () => {
+  it('alleen als de weerregel of de ruilvoorstellen aan staan', () => {
+    expect(needsWeather(undefined)).toBe(true);
+    expect(needsWeather({ weatherLine: false })).toBe(true);
+    expect(needsWeather({ weatherSwap: false })).toBe(true);
+    expect(needsWeather({ weatherLine: false, weatherSwap: false })).toBe(false);
   });
 });

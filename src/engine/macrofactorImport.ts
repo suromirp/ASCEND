@@ -302,6 +302,8 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
     date: string;
     time?: string;
     name: string;
+    // Time and name come from the first working set, not from a warm-up row.
+    fromWorkSet: boolean;
     durations: { value: number; clock: boolean }[];
     sets: RawSet[];
     // Every kept row (work and warm-up) in file order.
@@ -337,7 +339,7 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
     const key = `${when.date}|${nameKey(name)}`;
     let group = groups.get(key);
     if (!group) {
-      group = { key, date: when.date, time: when.time, name, durations: [], sets: [], all: [] };
+      group = { key, date: when.date, time: when.time, name, fromWorkSet: false, durations: [], sets: [], all: [] };
       groups.set(key, group);
     }
     if (warmup) {
@@ -346,6 +348,11 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
       set.kind = 'warmup';
       group.all.push({ name: exercise, set });
       continue;
+    }
+    if (!group.fromWorkSet) {
+      group.fromWorkSet = true;
+      group.time = when.time;
+      group.name = name;
     }
     const duration = parseDurationCell(cell('duration'));
     if (duration) group.durations.push(duration);

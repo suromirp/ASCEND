@@ -14,7 +14,9 @@ export interface CelebrationEvent {
   id: string;
   kind: 'milestone' | 'session' | 'recovery';
   title?: string; // milestone title: only set for kind === 'milestone'
-  quote: Quote;
+  // Absent when the user switched the quote off (Meer, "Citaten na een training"):
+  // the screen stays, only the quote goes. A cleared milestone always has one.
+  quote?: Quote;
   // The coach's one-line reaction to what you filled in (engine/coach.ts).
   coachNote?: string;
   // The logs this moment is about: one for a training, several for "Alles
@@ -118,7 +120,7 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
               </Card>
             )}
 
-            <QuoteBlock quote={event.quote} at={720} />
+            {event.quote && <QuoteBlock quote={event.quote} at={720} />}
 
             <div
               className="completion-rise sticky bottom-0 -mx-4 mt-auto px-4 pb-[max(env(safe-area-inset-bottom),20px)] pt-6"
