@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { programCycle } from '../../../engine/macrofactorProgram';
 import { useAppData } from '../../../state/AppDataContext';
 import { MIN_LOGS_TO_LEARN, predictDuration, usableLogCount } from '../../../engine/durationLearning';
 import { smallestBarJump } from '../../../engine/gymProfileEdit';
@@ -116,6 +118,64 @@ export function DurationSheet({ onClose }: { onClose: () => void }) {
           </div>
         ))}
       </div>
+    </Sheet>
+  );
+}
+
+// Het trainingsprogramma uit MacroFactor: welke week het is en welke training wat volgt.
+// Inlezen gaat op de pagina MacroFactor inlezen, als voorstel met Akkoord.
+export function ProgramSheet({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const { settings, updateSettings, templates } = useAppData();
+  const [confirm, setConfirm] = useState(false);
+  const program = settings.strengthModel?.program;
+  const name = (id: string) => templates.find((t) => t.id === id)?.name ?? id;
+  if (!program) {
+    return (
+      <Sheet eyebrow="Forge" title="Programma" line="Nu volgen je krachttrainingen het programma van ASCEND." onClose={onClose}>
+        <p className="st-hint" style={{ marginLeft: 0 }}>Staat er een programma in je MacroFactor-export, dan stelt ASCEND voor je krachttrainingen ermee te vullen.</p>
+        <div className="st-btns col">
+          <button type="button" className="st-btn" onClick={() => navigate('/koppelen/macrofactor')}>MacroFactor inlezen</button>
+        </div>
+      </Sheet>
+    );
+  }
+  return (
+    <Sheet eyebrow="Forge" title={program.name} line={`Week ${programCycle(program, todayISO()) + 1} van ${program.cycleCount}.`} onClose={onClose}>
+      {(close) => (
+        <>
+          <div className="st-list">
+            {program.days.map((d) => (
+              <div key={d.templateId} className="st-row">
+                <span className="t"><span className="st-title-text">{name(d.templateId)}</span></span>
+                <span className="v">{d.name}</span>
+              </div>
+            ))}
+          </div>
+          {confirm && <p className="st-hint" style={{ marginLeft: 0 }} role="alert">Je krachttrainingen krijgen weer de oefeningen van ASCEND. Wat je al deed blijft staan.</p>}
+          <div className="st-btns">
+            {confirm ? (
+              <>
+                <button type="button" className="st-btn" onClick={() => setConfirm(false)}>Annuleren</button>
+                <button
+                  type="button"
+                  className="st-btn"
+                  onClick={() => {
+                    const next = { ...settings.strengthModel };
+                    delete next.program;
+                    void updateSettings({ strengthModel: next });
+                    close();
+                  }}
+                >
+                  Loslaten
+                </button>
+              </>
+            ) : (
+              <button type="button" className="st-btn" onClick={() => setConfirm(true)}>Programma loslaten</button>
+            )}
+          </div>
+        </>
+      )}
     </Sheet>
   );
 }

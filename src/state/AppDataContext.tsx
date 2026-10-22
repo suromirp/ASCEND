@@ -266,6 +266,7 @@ import { activeStrengthStrategy, strengthTrackedExternally, daysUntilBlockEnd, c
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
 import { detectConsecutiveRestDays, buildConsecutiveRestFixProposal } from '../engine/scheduleAnomalies';
 import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
+import { withProgramExercises } from '../engine/macrofactorProgram';
 import { makeId } from '../utils/id';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -565,7 +566,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => void bootMigrationListeners.delete(setBootMigration);
   }, []);
   const [program, setProgram] = useState<Program | null>(null);
-  const [templates, setTemplates] = useState<SessionTemplate[]>([]);
+  // The templates as stored; `templates` below is what the app shows (a
+  // strength program from MacroFactor fills the strength templates).
+  const [storedTemplates, setTemplates] = useState<SessionTemplate[]>([]);
   const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
   const [trainingGoals, setTrainingGoals] = useState<TrainingGoal[]>([]);
@@ -575,6 +578,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [capabilityEvidence, setCapabilityEvidence] = useState<CapabilityEvidence[]>([]);
   const [goalEngineConfig, setGoalEngineConfig] = useState<GoalEngineConfig>(DEFAULT_GOAL_ENGINE_CONFIG);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const strengthProgram = settings.strengthModel?.program;
+  const templates = useMemo(() => withProgramExercises(storedTemplates, strengthProgram, todayISO()), [storedTemplates, strengthProgram]);
   const [stretchCompletion, setStretchCompletion] = useState<StretchCompletion>({});
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [forecastSummary, setForecastSummary] = useState<string | null>(null);

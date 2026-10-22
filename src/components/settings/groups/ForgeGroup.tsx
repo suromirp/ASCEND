@@ -3,7 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveStrengthSettings, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsRow, SettingsSection } from '../SettingsList';
-import { BarsSheet, DurationSheet, PlatesSheet, RackSheet, StackSheet } from './ForgeSheets';
+import { BarsSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
@@ -51,6 +51,13 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         </SettingsSection>
       )}
 
+      <SettingsSection title="In de sportschool">
+        <SummaryRow id="forge-rust" title="Rusttimer vanzelf" facts={facts} onChange={(on) => save({ restAuto: on })} />
+        <SummaryRow id="forge-signaal" title="Signaal na de rust" facts={facts} onClick={() => setSheet('forge-signaal')} />
+        <SummaryRow id="forge-scherm" title="Scherm blijft aan" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
+        <SummaryRow id="forge-programma" title="Programma" facts={facts} onClick={() => setSheet('forge-programma')} />
+      </SettingsSection>
+
       <SettingsSection title="Je sportschool">
         <SummaryRow id="stangen" title="Stangen" facts={facts} onClick={() => setSheet('stangen')} />
         <SummaryRow id="schijven" title="Schijven" facts={facts} onClick={() => setSheet('schijven')} />
@@ -66,6 +73,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={close} />}
       {sheet === 'forge-opwarmen' && <ChoiceFromDef def={CHOICES.opwarmen} value={s.warmup} onPick={(v) => save({ warmup: v })} onClose={close} />}
       {sheet === 'forge-schatting' && <ChoiceFromDef def={CHOICES.schatting} value={s.estimateUpTo as 12 | 15 | 20} onPick={(v) => save({ estimateUpTo: v })} onClose={close} />}
+      {sheet === 'forge-signaal' && <ChoiceFromDef def={CHOICES.restsignaal} value={s.restAlert} onPick={(v) => save({ restAlert: v })} onClose={close} />}
+      {sheet === 'forge-programma' && <ProgramSheet onClose={close} />}
       {sheet === 'stangen' && <BarsSheet onClose={close} />}
       {sheet === 'schijven' && <PlatesSheet onClose={close} />}
       {sheet === 'dumbbells' && <RackSheet onClose={close} />}

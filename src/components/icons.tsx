@@ -163,6 +163,17 @@ const PATHS = {
   plus: <path d="M12 5.5v13M5.5 12h13" />,
   min: <path d="M5.5 12h13" />,
   sluiten: <path d="M7 7l10 10M17 7L7 17" />,
+  // Het workoutscherm van Forge (components/forge/).
+  vinkje: <path d="M5.5 12.5l4.2 4L18.5 7.5" />,
+  meer: (
+    <>
+      <circle cx="6" cy="12" r="0.9" />
+      <circle cx="12" cy="12" r="0.9" />
+      <circle cx="18" cy="12" r="0.9" />
+    </>
+  ),
+  ruilen: <path d="M5 8.5h13M14.5 5l3.5 3.5L14.5 12M19 15.5H6M9.5 12L6 15.5 9.5 19" />,
+  notitie: <path d="M9 3.5h6M10 3.5v5.5l-3 3.5h10l-3-3.5V3.5M12 12.5V20.5" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

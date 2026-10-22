@@ -10,9 +10,13 @@
 // One profile now, but the shape is a list with an active id, so more gyms can
 // come later without changing what is stored.
 
+import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
+
 export type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
 export type WarmupMode = 'smart' | 'scheme' | 'off';
+// What happens when the rest timer of the workout screen runs out.
+export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -49,6 +53,19 @@ export interface StrengthSettings {
   estimateUpTo?: number;
   activeProfileId?: string;
   profiles?: GymProfile[];
+  // The workout screen (components/forge/ForgeWorkout.tsx). The rest timer
+  // starts by itself after a working set and after the last warm-up set.
+  restAuto?: boolean;
+  restAlert?: RestAlert;
+  // Keep the screen on while the workout screen is open.
+  keepScreenOn?: boolean;
+  // Your own rest per exercise (by exercise id), in seconds, over the estimate.
+  restSeconds?: Record<string, number>;
+  // A pinned note per exercise (by exercise id): seat position, grip.
+  exerciseNotes?: Record<string, string>;
+  // The strength program read in from MacroFactor, after Akkoord: it fills the
+  // strength templates (engine/macrofactorProgram.ts). Absent: ASCEND's own.
+  program?: StoredStrengthProgram;
 }
 
 export interface ResolvedStrengthSettings {
@@ -59,6 +76,11 @@ export interface ResolvedStrengthSettings {
   widenRange: boolean;
   estimateUpTo: number;
   profile: GymProfile;
+  restAuto: boolean;
+  restAlert: RestAlert;
+  keepScreenOn: boolean;
+  restSeconds: Record<string, number>;
+  exerciseNotes: Record<string, string>;
 }
 
 export const DEFAULT_PROFILE_ID = 'standaard';
@@ -120,6 +142,28 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
 const PROGRESSIONS: ProgressionFirst[] = ['weight_first', 'reps_first'];
 const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
+export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
+export const REST_LIMITS = { min: 15, max: 600 };
+export const EXERCISE_NOTE_MAX = 200;
+const MAX_PER_EXERCISE_ENTRIES = 300;
+
+// A record keyed by exercise id, with only the entries that make sense.
+function perExercise<T>(raw: unknown, keep: (v: unknown) => T | undefined): Record<string, T> | undefined {
+  if (!isRecord(raw)) return undefined;
+  const out: Record<string, T> = {};
+  let n = 0;
+  for (const [key, value] of Object.entries(raw)) {
+    if (key.length === 0 || key.length > 60 || n >= MAX_PER_EXERCISE_ENTRIES) continue;
+    const kept = keep(value);
+    if (kept === undefined) continue;
+    out[key] = kept;
+    n++;
+  }
+  return n > 0 ? out : undefined;
+}
+
+const restValue = (v: unknown): number | undefined => (isNum(v) && v >= REST_LIMITS.min && v <= REST_LIMITS.max ? Math.round(v) : undefined);
+const noteValue = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, EXERCISE_NOTE_MAX) : undefined);
 export const ESTIMATE_UP_TO_OPTIONS = [12, 15, 20];
 
 // What a backup import keeps of the block: only valid values. Undefined when
@@ -146,6 +190,16 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
     if (profiles.length > 0) out.profiles = profiles;
   }
   if (typeof raw.activeProfileId === 'string' && raw.activeProfileId.length <= 40) out.activeProfileId = raw.activeProfileId;
+  if (typeof raw.restAuto === 'boolean') out.restAuto = raw.restAuto;
+  if (typeof raw.keepScreenOn === 'boolean') out.keepScreenOn = raw.keepScreenOn;
+  const alert = REST_ALERTS.find((a) => a === raw.restAlert);
+  if (alert) out.restAlert = alert;
+  const rest = perExercise(raw.restSeconds, restValue);
+  if (rest) out.restSeconds = rest;
+  const notes = perExercise(raw.exerciseNotes, noteValue);
+  if (notes) out.exerciseNotes = notes;
+  const program = normalizeStrengthProgram(raw.program);
+  if (program) out.program = program;
   return out;
 }
 
@@ -160,6 +214,11 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     widenRange: s.widenRange ?? true,
     estimateUpTo: s.estimateUpTo ?? 20,
     profile,
+    restAuto: s.restAuto ?? true,
+    restAlert: s.restAlert ?? 'sound_vibrate',
+    keepScreenOn: s.keepScreenOn ?? true,
+    restSeconds: s.restSeconds ?? {},
+    exerciseNotes: s.exerciseNotes ?? {},
   };
 }
 
@@ -173,6 +232,21 @@ export function withProfile(raw: StrengthSettings | undefined, patch: Partial<Gy
   const next: GymProfile = { ...current, ...patch, id: current.id };
   const others = (raw?.profiles ?? []).filter((p) => p.id !== current.id);
   return { ...raw, activeProfileId: next.id, profiles: [next, ...others] };
+}
+
+// One entry of a per-exercise record set or cleared (undefined clears it).
+export function withExerciseValue<K extends 'restSeconds' | 'exerciseNotes'>(
+  raw: StrengthSettings | undefined,
+  field: K,
+  exerciseId: string,
+  value: NonNullable<StrengthSettings[K]>[string] | undefined,
+): StrengthSettings {
+  const current = { ...(raw?.[field] ?? {}) } as Record<string, unknown>;
+  if (value === undefined) delete current[exerciseId];
+  else current[exerciseId] = value;
+  const next = { ...raw, [field]: current };
+  if (Object.keys(current).length === 0) delete next[field];
+  return next;
 }
 
 // "1,25; 2,5; 5" or "20 15" to numbers: the way people type a list.

@@ -120,6 +120,18 @@ export const CHOICES = {
       { value: 20, label: 'Tot 20', note: 'Ook hoge bereiken tellen mee', short: 'Tot 20' },
     ],
   }),
+  restsignaal: def({
+    group: 'Forge',
+    title: 'Signaal na de rust',
+    line: 'Een korte toon mengt met je muziek; trillen voel je ook in je zak.',
+    advice: 'sound_vibrate' as 'sound_vibrate' | 'vibrate' | 'sound' | 'off',
+    options: [
+      { value: 'sound_vibrate', label: 'Geluid en trillen', short: 'Geluid en trillen' },
+      { value: 'vibrate', label: 'Alleen trillen', short: 'Trillen' },
+      { value: 'sound', label: 'Alleen geluid', short: 'Geluid' },
+      { value: 'off', label: 'Niets', note: 'Je kijkt zelf op de balk onderaan', short: 'Niets' },
+    ],
+  }),
   herinnering: def({
     group: 'Lichaam',
     title: 'Herinnering',

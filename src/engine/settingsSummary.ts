@@ -235,6 +235,14 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen', hidden: !forge.enabled };
     case 'forge-schatting':
       return { value: choiceShort('schatting', forge.estimateUpTo), hidden: !forge.enabled };
+    case 'forge-rust':
+      return { checked: forge.restAuto };
+    case 'forge-signaal':
+      return { value: choiceShort('restsignaal', forge.restAlert), hidden: !forge.restAuto };
+    case 'forge-scherm':
+      return { checked: forge.keepScreenOn };
+    case 'forge-programma':
+      return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':
       return { value: listWeights(forge.profile.barsKg) };
     case 'schijven':

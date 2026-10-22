@@ -14,17 +14,23 @@ export function draftKey(templateId: string, plannedSessionId: string | undefine
   return `${PREFIX}${plannedSessionId ?? `${templateId}:${scheduledDate ?? 'los'}`}`;
 }
 
-export function saveDraft(key: string, value: unknown): void {
+// The workout screen of Forge keeps its draft in localStorage: an hour in the
+// gym is long enough for the phone to close the app in the background, and
+// sessionStorage does not survive that.
+export type DraftStore = 'session' | 'local';
+const storeOf = (store: DraftStore): Storage => (store === 'local' ? localStorage : sessionStorage);
+
+export function saveDraft(key: string, value: unknown, store: DraftStore = 'session'): void {
   try {
-    sessionStorage.setItem(key, JSON.stringify(value));
+    storeOf(store).setItem(key, JSON.stringify(value));
   } catch {
     // geen opslag: geen concept
   }
 }
 
-export function loadDraft<T extends object>(key: string): Partial<T> | undefined {
+export function loadDraft<T extends object>(key: string, store: DraftStore = 'session'): Partial<T> | undefined {
   try {
-    const raw = sessionStorage.getItem(key);
+    const raw = storeOf(store).getItem(key);
     if (!raw) return undefined;
     const parsed: unknown = JSON.parse(raw);
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Partial<T>) : undefined;
@@ -33,9 +39,9 @@ export function loadDraft<T extends object>(key: string): Partial<T> | undefined
   }
 }
 
-export function clearDraft(key: string): void {
+export function clearDraft(key: string, store: DraftStore = 'session'): void {
   try {
-    sessionStorage.removeItem(key);
+    storeOf(store).removeItem(key);
   } catch {
     // niets te wissen
   }

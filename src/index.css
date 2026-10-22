@@ -35,6 +35,13 @@
   --color-chart-strength: #4494c8;
   --color-chart-walk: #5f9e61;
   --color-chart-other: #b273ac;
+  /* De bolletjes met herhalingen in reserve (RIR) in het workoutscherm van
+     Forge, de kleuren die de eigenaar kent: 0 en 1 rood, 2 oranje, 3 geel,
+     4 en meer steen. Gedempt naar het palet, met donkere tekst erop. */
+  --color-rir-hard: #c45a4f;
+  --color-rir-mid: #d08a3c;
+  --color-rir-easy: #d2b44e;
+  --color-rir-light: #8a8478;
 
   --font-display: 'Marcellus', 'Iowan Old Style', serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -97,6 +104,14 @@ body {
 ::selection {
   background: var(--color-bronze);
   color: var(--color-bg);
+}
+
+/* De tabel per oefening in het workoutscherm van Forge: set, voorschrift,
+   kg, herhalingen, RIR en het afvinkvakje. Past op 360 px breed. */
+.forge-grid {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 60px 48px 28px 36px;
+  column-gap: 6px;
 }
 
 /* Subtle topographic contour texture, used at very low opacity behind
