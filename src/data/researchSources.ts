@@ -1785,5 +1785,86 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     "usedIn": [
       "Onderzoek: tussendoel hardloopwedstrijd"
     ]
+  },
+  {
+      "title": "Vesterinen e.a. 2014, hartslag-loopsnelheidsindex",
+      "publisher": "Lida (IAT Leipzig)",
+      "url": "https://lida.sport-iat.de/ta/Record/4031002",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Muñoz e.a. 2014, trainingsopbouw voor 10 km",
+      "publisher": "PubMed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/23752040/",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Matomäki e.a. 2023, durability en training, Frontiers in Physiology",
+      "publisher": "Frontiers",
+      "url": "https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2023.1128111/full",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Maunder e.a. 2021, durability",
+      "publisher": "Lida (IAT Leipzig)",
+      "url": "https://lida.sport-iat.de/ta/Record/4069575",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Vernillo e.a. 2017, bergaf hardlopen",
+      "publisher": "IAT Leipzig",
+      "url": "https://www.iat.uni-leipzig.de/datenbanken/iks/mint/Record/4043194",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Cabrera-Linares e.a. 2025, validatie van de loopdynamica van de HRM-Pro",
+      "publisher": "PubMed Central",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12431186/",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Miqueleiz e.a. 2025, herhaalbaarheid van contacttijd en pas",
+      "publisher": "PubMed Central",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12127928/",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Zandbergen e.a. 2023, vermoeidheid en loopkinematica",
+      "publisher": "Universiteit Twente",
+      "url": "https://research.utwente.nl/en/publications/effects-of-level-running-induced-fatigue-on-running-kinematics-a-/",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
+  },
+  {
+      "title": "Zhang e.a. 2025, marathon met sensoren, Sports Medicine Open",
+      "publisher": "Sports Medicine Open",
+      "url": "https://sportsmedicine-open.springeropen.com/articles/10.1186/s40798-025-00915-9",
+      "category": "wetenschap",
+      "usedIn": [
+          "Loopinzicht: het blad Waarom"
+      ]
   }
 ];
