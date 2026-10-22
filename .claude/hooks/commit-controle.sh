@@ -12,7 +12,9 @@ cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
 # Zonder geinstalleerde pakketten kunnen we niet controleren: niet blokkeren.
 [ -d node_modules ] || exit 0
 
-if ! git diff --cached --name-only | grep -qE '^(src/|package(-lock)?\.json$|vite\.config|vitest\.config|tsconfig)'; then
+# Staged and unstaged together: the hook runs before the command, so in
+# "git add ... && git commit" nothing is staged yet when it looks.
+if ! { git diff --cached --name-only; git diff --name-only; git ls-files --others --exclude-standard; } | grep -qE '^(src/|package(-lock)?\.json$|vite\.config|vitest\.config|tsconfig)'; then
   exit 0
 fi
 
