@@ -13,6 +13,7 @@
 // - Ticking off is never the main choice for a day still to come. It stays
 //   possible as "Vandaag al doen", as before.
 
+import { mondayOfWeek } from '../utils/dates';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
@@ -48,7 +49,8 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
   workoutWaiting?: boolean;
 }): SheetActions {
   const due = date <= today;
-  if (workoutWaiting && due && kind === 'quick') return { main: 'saveWorkout', rows: [] };
+  // Opslaan first, with Gedaan and Verplaatsen still there if this is not that workout.
+  if (workoutWaiting && due && kind === 'quick') return { main: 'saveWorkout', rows: ['done', 'move'] };
   const tick: SheetAction = kind === 'inApp' ? 'start' : 'done';
   if (skipped) {
     if (canComeBack) return { main: 'backOnPlan', rows: ['move'] };
@@ -76,15 +78,25 @@ export interface MacroFactorSource {
 }
 
 // The MacroFactor workout of this training on this day in the last file read:
-// mapped to this template, not saved yet and not turned down.
+// mapped to this template, not saved yet and not turned down. Saved means a log
+// carries its id, as its own or as the workout it took over the numbers of
+// (manualMeasured.strength.workoutId). A log of the same training in the same
+// week also counts: the MacroFactor card adds the workout to that one, so the
+// sheet must not save a second log for it.
 export function pendingMacroFactorWorkout(
   date: string,
   templateId: string,
   macroFactor: MacroFactorSource | undefined,
-  logs: Pick<SessionLog, 'externalId'>[] = [],
+  logs: (Pick<SessionLog, 'externalId'> & Partial<Pick<SessionLog, 'templateId' | 'completedDate' | 'manualMeasured'>>)[] = [],
 ): MacroFactorWorkout | undefined {
   if (!macroFactor) return undefined;
-  const saved = new Set([...macroFactor.dismissed, ...logs.map((l) => l.externalId).filter((id): id is string => !!id)]);
+  const saved = new Set([
+    ...macroFactor.dismissed,
+    ...logs.map((l) => l.externalId).filter((id): id is string => !!id),
+    ...logs.map((l) => l.manualMeasured?.strength?.workoutId).filter((id): id is string => !!id),
+  ]);
+  const week = mondayOfWeek(date);
+  if (logs.some((l) => l.templateId === templateId && l.completedDate && mondayOfWeek(l.completedDate) === week)) return undefined;
   return macroFactor.workouts.find((w) => w.date === date && macroFactor.mapping[nameKey(w.name)] === templateId && !saved.has(w.externalId));
 }
 

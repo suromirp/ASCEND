@@ -65,7 +65,7 @@ describe('a MacroFactor workout that is already there', () => {
   const mf = { workouts: [workout], mapping: { 'upper b': 'tpl_upper_b' }, dismissed: [] };
 
   it('replaces "Gedaan" with saving it, today or after; not for a day still to come', () => {
-    expect(sessionSheetActions({ date: TODAY, today: TODAY, skipped: false, canComeBack: false, kind: 'quick', workoutWaiting: true })).toEqual({ main: 'saveWorkout', rows: [] });
+    expect(sessionSheetActions({ date: TODAY, today: TODAY, skipped: false, canComeBack: false, kind: 'quick', workoutWaiting: true })).toEqual({ main: 'saveWorkout', rows: ['done', 'move'] });
     expect(sessionSheetActions({ date: '2026-10-23', today: TODAY, skipped: false, canComeBack: false, kind: 'quick', workoutWaiting: true }).main).toBe('move');
   });
 
@@ -74,6 +74,13 @@ describe('a MacroFactor workout that is already there', () => {
     expect(pendingMacroFactorWorkout(TODAY, 'tpl_upper_a', mf)).toBeUndefined();
     expect(pendingMacroFactorWorkout(TODAY, 'tpl_upper_b', mf, [{ externalId: workout.externalId }])).toBeUndefined();
     expect(pendingMacroFactorWorkout(TODAY, 'tpl_upper_b', undefined)).toBeUndefined();
+  });
+
+  it('is not offered again when a log took over its numbers, or the same training is already logged that week', () => {
+    const took = { externalId: 'garmin:1', manualMeasured: { strength: { workoutId: workout.externalId } } } as unknown as NonNullable<Parameters<typeof pendingMacroFactorWorkout>[3]>[number];
+    expect(pendingMacroFactorWorkout(TODAY, 'tpl_upper_b', mf, [took])).toBeUndefined();
+    expect(pendingMacroFactorWorkout(TODAY, 'tpl_upper_b', mf, [{ externalId: undefined, templateId: 'tpl_upper_b', completedDate: '2026-10-19' }])).toBeUndefined();
+    expect(pendingMacroFactorWorkout(TODAY, 'tpl_upper_b', mf, [{ externalId: undefined, templateId: 'tpl_upper_b', completedDate: '2026-10-12' }])?.externalId).toBe(workout.externalId);
   });
 
   it('reads as "Uit MacroFactor: 50 min, 18 sets", from the file or from the log', () => {

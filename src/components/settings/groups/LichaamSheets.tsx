@@ -5,6 +5,7 @@ import { CHOICES } from '../../../data/settingsChoices';
 import { INTENSITY, type Intensity } from '../../../data/workoutStructure';
 import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
 import { zoneBpm } from '../../../engine/heartRateZones';
+import { heartRateProblem, type HeartRateField } from '../../../engine/inputLimits';
 import { shortDate } from '../../../engine/settingsSummary';
 import { formatNumberNL } from '../../../utils/number';
 import { todayISO } from '../../../utils/dates';
@@ -118,18 +119,26 @@ const ZONES: { level: Intensity; color: string }[] = [
 export function HeartRateSheet({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useAppData();
   const hr = settings.heartRate ?? {};
-  const set = (patch: Partial<typeof hr>) => void updateSettings({ heartRate: { ...hr, ...patch } });
+  const [problem, setProblem] = useState<string | null>(null);
+  // A typo like 1700 is not saved: the zones would be nonsense (engine/inputLimits.ts).
+  const set = (field: HeartRateField, value: number | undefined) => {
+    const why = heartRateProblem(field, value, hr);
+    setProblem(why ?? null);
+    if (why) return;
+    void updateSettings({ heartRate: { ...hr, [field]: value } });
+  };
   const zones = ZONES.map((z) => ({ ...z, bpm: zoneBpm(z.level, hr) })).filter((z) => z.bpm);
   return (
     <Sheet eyebrow="Lichaam" title="Hartslag" line="Uit Garmin Connect, bij je hartslagzones." onClose={onClose}>
       <SettingsList>
         <SettingsFieldRow id="hartslag-drempel" title="Drempel" info="drempel">
-          <span style={{ width: 120 }}><NumberField tall unit="bpm" value={hr.lthr} placeholder="--" onChange={(v) => set({ lthr: v })} /></span>
+          <span style={{ width: 120 }}><NumberField tall unit="bpm" value={hr.lthr} placeholder="--" onChange={(v) => set('lthr', v)} /></span>
         </SettingsFieldRow>
         <SettingsFieldRow id="hartslag-max" title="Maximaal">
-          <span style={{ width: 120 }}><NumberField tall unit="bpm" value={hr.maxHr} placeholder="--" onChange={(v) => set({ maxHr: v })} /></span>
+          <span style={{ width: 120 }}><NumberField tall unit="bpm" value={hr.maxHr} placeholder="--" onChange={(v) => set('maxHr', v)} /></span>
         </SettingsFieldRow>
       </SettingsList>
+      {problem && <p className="st-hint" role="alert" style={{ color: 'var(--color-warning)' }}>{problem}</p>}
       {zones.length > 0 ? (
         <>
           <p className="st-lab" style={{ marginTop: 24 }}>Je zones</p>
