@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withProfile } from './strengthSettings';
+import { DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
 
 describe('de standaardwaarden', () => {
   it('zonder instellingen geldt het advies', () => {
@@ -83,5 +83,33 @@ describe('een lijst gewichten typen', () => {
   it('slaat onzin en nul over', () => {
     expect(parseWeightList('x 0 -3 10')).toEqual([10]);
     expect(parseWeightList('')).toEqual([]);
+  });
+});
+
+describe('het workoutscherm', () => {
+  it('standaard: rusttimer vanzelf, geluid en trillen, scherm aan, geen eigen tijden of notities', () => {
+    const r = resolveStrengthSettings(undefined);
+    expect(r).toMatchObject({ restAuto: true, restAlert: 'sound_vibrate', keepScreenOn: true, restSeconds: {}, exerciseNotes: {} });
+  });
+  it('houdt alleen geldige rusttijden en notities', () => {
+    const clean = normalizeStrengthSettings({
+      restAuto: false,
+      restAlert: 'toeter',
+      keepScreenOn: 'ja',
+      restSeconds: { 'back-squat': 240, 'bench-press': 5, x: 'lang', ['y'.repeat(80)]: 90 },
+      exerciseNotes: { 'leg-press': '  stoel op 4  ', 'barbell-row': '', z: 3 },
+    })!;
+    expect(clean.restAuto).toBe(false);
+    expect(clean.restAlert).toBeUndefined();
+    expect(clean.keepScreenOn).toBeUndefined();
+    expect(clean.restSeconds).toEqual({ 'back-squat': 240 });
+    expect(clean.exerciseNotes).toEqual({ 'leg-press': 'stoel op 4' });
+  });
+  it('een waarde per oefening zetten en weer wissen', () => {
+    const on = withExerciseValue({ warmup: 'off' }, 'exerciseNotes', 'leg-press', 'stoel op 4');
+    expect(on).toEqual({ warmup: 'off', exerciseNotes: { 'leg-press': 'stoel op 4' } });
+    const off = withExerciseValue(on, 'exerciseNotes', 'leg-press', undefined);
+    expect(off).toEqual({ warmup: 'off' });
+    expect(withExerciseValue(undefined, 'restSeconds', 'back-squat', 210)).toEqual({ restSeconds: { 'back-squat': 210 } });
   });
 });

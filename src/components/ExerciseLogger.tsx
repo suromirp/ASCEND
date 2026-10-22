@@ -31,6 +31,7 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import type { PainReport } from '../models/checkIn';
 import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/inputLimits';
 import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../utils/loggerDraft';
+import { ForgeWorkout } from './forge/ForgeWorkout';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -57,7 +58,16 @@ interface LoggerDraft {
 }
 
 const LEGS_OPTIONS: [LegsAtStart, string][] = [['fris', 'Fris'], ['normaal', 'Normaal'], ['zwaar', 'Zwaar']];
-export function ExerciseLogger({
+
+type LoggerProps = Parameters<typeof GeneralLogger>[0];
+
+// Een krachttraining opent het workoutscherm van Forge (components/forge/),
+// al het andere dit blad.
+export function ExerciseLogger(props: LoggerProps) {
+  return props.template.type === 'strength' ? <ForgeWorkout {...props} /> : <GeneralLogger {...props} />;
+}
+
+function GeneralLogger({
   template,
   plannedSessionId,
   scheduledDate,

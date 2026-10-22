@@ -297,6 +297,13 @@ function playAlarmPulse(ctx: AudioContext, destination: AudioNode, time: number,
 // steady, unmistakable "timer done" rhythm rather than a melodic run.
 // Deliberately drier than the completion fanfares (little reverb) so it
 // reads as crisp/urgent rather than celebratory.
+// Unlock the audio from inside a tap (the tick of a set), so the alarm at the
+// end of the rest timer may sound later without a tap of its own.
+export function primeAudio() {
+  const ctx = getAudioContext();
+  if (ctx) ensureRunning(ctx);
+}
+
 export function playTimerAlarm(volume = 0.55) {
   const ctx = getAudioContext();
   if (!ctx) return;

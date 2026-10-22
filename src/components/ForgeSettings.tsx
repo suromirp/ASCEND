@@ -8,6 +8,7 @@ import {
   withProfile,
   type GymProfile,
   type ProgressionFirst,
+  type RestAlert,
   type StrengthSettings,
   type WarmupMode,
   type WorkSetsMode,
@@ -98,6 +99,38 @@ export function ForgeSettings() {
         <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Forge openen</span>
         <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
       </button>
+
+      <div className="flex flex-col gap-4 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
+        <p className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>In de sportschool</p>
+        <SwitchLine
+          id="forge-rust"
+          title="Rusttimer vanzelf"
+          note="Start na elke werkset en na je laatste opwarmset, met een rusttijd per oefening: zwaarder en samengesteld langer. Per oefening aan te passen in het workoutscherm."
+          checked={s.restAuto}
+          onChange={(on) => save({ restAuto: on })}
+        />
+        <Anchored id="forge-signaal">
+          <Choice<RestAlert>
+            title="Signaal als de rust om is"
+            note="Een korte toon mengt met je muziek; trillen voel je ook met de telefoon in je zak."
+            value={s.restAlert}
+            onChange={(v) => save({ restAlert: v })}
+            options={[
+              { value: 'sound_vibrate', label: 'Geluid en trillen', note: 'Dit is het advies.' },
+              { value: 'vibrate', label: 'Alleen trillen' },
+              { value: 'sound', label: 'Alleen geluid' },
+              { value: 'off', label: 'Niets', note: 'Je kijkt zelf op de balk onderaan.' },
+            ]}
+          />
+        </Anchored>
+        <SwitchLine
+          id="forge-scherm"
+          title="Scherm aan tijdens je training"
+          note="Het scherm gaat niet uit zolang het workoutscherm open is, zodat je timer en sets in beeld blijven."
+          checked={s.keepScreenOn}
+          onChange={(on) => save({ keepScreenOn: on })}
+        />
+      </div>
 
       {s.enabled && (
         <>

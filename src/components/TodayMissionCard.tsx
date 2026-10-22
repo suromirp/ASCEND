@@ -34,6 +34,7 @@ export function TodayMissionCard({
   quickComplete = false,
   onStart,
   onLog,
+  onShowPlan,
   onMove,
   onSkip,
   suggestions,
@@ -53,6 +54,9 @@ export function TodayMissionCard({
   onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) => void;
   // "Gedaan": het scherm waar je invult hoe het ging, meteen bij het formulier.
   onLog: (variant: SessionVariant) => void;
+  // Kracht in MacroFactor: het voorschrift van Forge om in de sportschool mee
+  // te kijken (components/forge/ForgeWorkout.tsx, zonder invulvelden).
+  onShowPlan?: () => void;
   onMove: (date: string) => void;
   onSkip: () => void;
   suggestions: MoveSuggestion[];
@@ -122,6 +126,9 @@ export function TodayMissionCard({
 
       <div className="-mt-2 flex items-center justify-between gap-3 px-1">
         <button onClick={() => setShowMove(true)} className={LINK} style={{ color: 'var(--color-ink-dim)' }}>Verplaatsen</button>
+        {quickComplete && onShowPlan && (
+          <button onClick={onShowPlan} className={LINK} style={{ color: 'var(--color-ink-dim)' }}>Voorschrift</button>
+        )}
         {!quickComplete && shortVariant && (
           <button onClick={() => (inAppStrength ? onStart('short') : onLog('short'))} className={LINK} style={{ color: 'var(--color-ink-dim)' }}>Korte versie</button>
         )}

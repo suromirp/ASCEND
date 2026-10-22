@@ -262,6 +262,7 @@ export function TodayPage() {
           quickComplete={isQuickComplete(primaryTemplate)}
           onStart={(variant, feel, durationMinutes, extra) => startSession(primary, primaryTemplate, variant, feel, durationMinutes, extra)}
           onLog={(variant) => { setLoggingVariant(variant); setLoggingAtForm(true); setLoggingSession(primary); }}
+          onShowPlan={() => { setLoggingVariant('full'); setLoggingAtForm(false); setLoggingSession(primary); }}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => handleSkip(primary.id)}
           suggestions={suggestMoves(primary.id)}

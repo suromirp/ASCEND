@@ -1,0 +1,828 @@
+// ASCEND: het workoutscherm van Forge. Opbouw en werking zoals MacroFactor
+// Workouts, in de stijl van ASCEND (steen en contour, één gouden knop):
+// per oefening een tabel die altijd open staat, alles vooringevuld, één tik
+// per set, de rusttimer start vanzelf, en bij een stang de schijven per kant.
+// Besluit: docs/beslissingen/2026-10-22-forge-workoutscherm.md. Alle regels
+// staan in engine/forgeWorkout.ts; dit bestand toont ze en bewaart een concept.
+//
+// Met MacroFactor als bron (Instellingen, Krachttraining bijhouden) is het
+// dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
+// te kijken, en één knop om de training af te vinken.
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { exerciseById } from '../../data/exercises';
+import { MUSCLE_LABEL } from '../../models/exercise';
+import { currentBodyKg } from '../../engine/bodyWeight';
+import {
+  addRow,
+  exerciseOf,
+  formatClock,
+  hardestLegRir,
+  legDayLine,
+  planExercise,
+  planState,
+  planWorkout,
+  plateList,
+  plateSteps,
+  previousFor,
+  previousText,
+  progress,
+  removeLastRow,
+  swapOptions,
+  targetText,
+  tickRow,
+  toStrengthData,
+  updateRow,
+  usesPlates,
+  type PlanContext,
+  type PlateStep,
+  type WorkoutExercise,
+  type WorkoutRow,
+} from '../../engine/forgeWorkout';
+import { isLegHeavyTemplate } from '../../engine/scheduler';
+import { templateSport } from '../../engine/sports';
+import { durationForVariant, exercisesForVariant, resolveVariantDuration } from '../../engine/substitutions';
+import { EXERCISE_NOTE_MAX, REST_LIMITS, resolveStrengthSettings, withExerciseValue } from '../../engine/strengthSettings';
+import { getTrainingGuide, guideDayLabel } from '../../data/trainingGuide';
+import type { Program } from '../../models/program';
+import type { SessionTemplate, SessionVariant } from '../../models/training';
+import type { PainReport } from '../../models/checkIn';
+import { useAppData } from '../../state/AppDataContext';
+import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../../utils/dates';
+import { haptics } from '../../utils/haptics';
+import { clearDraft, draftKey, loadDraft, saveDraft } from '../../utils/loggerDraft';
+import { formatNumberNL } from '../../utils/number';
+import { playTimerAlarm, primeAudio } from '../../utils/sound';
+import { useBackToClose } from '../../utils/useBackToClose';
+import { Icon } from '../icons';
+import { NumberField } from '../NumberField';
+import { PainReportFields } from '../PainReportFields';
+import { Portal } from '../Portal';
+import { TrainingGuideSheet } from '../TrainingGuideSheet';
+import { PrimaryButton, SecondaryButton } from '../ui';
+import { ForgeSheet, MenuRow, NumCell, RirBubble, TickBox } from './parts';
+import { useWakeLock } from './useWakeLock';
+
+const DRAFT_VERSION = 1;
+// Een concept ouder dan anderhalve dag is een vergeten training, geen pauze.
+const DRAFT_MAX_AGE_MS = 36 * 60 * 60 * 1000;
+// Na afloop blijft de balk nog even staan, dan verdwijnt hij.
+const REST_DONE_LINGER_MS = 8000;
+
+interface Rest {
+  endsAt: number;
+  total: number;
+  name: string;
+}
+
+interface WorkoutDraft {
+  v: number;
+  savedAt: number;
+  startedAt: number;
+  exercises: WorkoutExercise[];
+  rest?: Rest;
+  column: 'target' | 'previous';
+}
+
+const clock = () => Date.now();
+
+const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
+
+export function ForgeWorkout({
+  template,
+  plannedSessionId,
+  scheduledDate,
+  program,
+  initialVariant = 'full',
+  startAtForm = false,
+  onClose,
+}: {
+  template: SessionTemplate;
+  plannedSessionId?: string;
+  scheduledDate?: string;
+  program?: Program | null;
+  initialVariant?: SessionVariant;
+  startAtForm?: boolean;
+  onClose: () => void;
+}) {
+  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs } = useAppData();
+  const today = todayISO();
+  const date = scheduledDate ?? today;
+  const readOnly = strengthExternal;
+  const strength = resolveStrengthSettings(settings.strengthModel);
+  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
+  const slots = exercisesForVariant(template, initialVariant);
+
+  const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
+  const [restored] = useState(() => {
+    const d = loadDraft<WorkoutDraft>(key, 'local');
+    if (!d || d.v !== DRAFT_VERSION || !Array.isArray(d.exercises) || typeof d.startedAt !== 'number') return undefined;
+    if (typeof d.savedAt === 'number' && Date.now() - d.savedAt > DRAFT_MAX_AGE_MS) return undefined;
+    return d as WorkoutDraft;
+  });
+
+  // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
+  const [ctx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled }));
+  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => restored?.exercises ?? planWorkout(slots, ctx));
+  const [startedAt] = useState(() => restored?.startedAt ?? Date.now());
+  const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
+  const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
+  const [now, setNow] = useState(() => Date.now());
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [swapFor, setSwapFor] = useState<string | null>(null);
+  const [noteFor, setNoteFor] = useState<string | null>(null);
+  const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
+  const [workoutMenu, setWorkoutMenu] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [finishing, setFinishing] = useState(startAtForm);
+  const [showGuide, setShowGuide] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
+
+  useWakeLock(strength.keepScreenOn);
+
+  // De klok van het scherm: verstreken tijd en de rusttimer.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const t = clock();
+      setNow(t);
+      setRest((r) => (r && t > r.endsAt + REST_DONE_LINGER_MS ? undefined : r));
+    }, 500);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Het concept bij elke verandering wegschrijven, ook als je het scherm verlaat.
+  useEffect(() => {
+    if (readOnly) return;
+    saveDraft(key, { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, ...(rest ? { rest } : {}), column } satisfies WorkoutDraft, 'local');
+  }, [key, readOnly, startedAt, workout, rest, column]);
+
+  // Het einde van de rust: één keer trillen en een geluid, zoals ingesteld.
+  const alerted = useRef<number | null>(null);
+  useEffect(() => {
+    if (!rest || now < rest.endsAt || alerted.current === rest.endsAt) return;
+    alerted.current = rest.endsAt;
+    if (now - rest.endsAt < 3000) {
+      if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'vibrate') haptics.alarm();
+      if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'sound') playTimerAlarm();
+    }
+  }, [now, rest, strength.restAlert]);
+
+  // Terug laat de training staan (het concept blijft); weggooien gaat via het menu.
+  useBackToClose(true, onClose);
+
+  const legDay = isLegHeavyTemplate(template);
+  const legLine = useMemo(() => (legDay ? legDayLine(date, { logs: sessionLogs, templates, program, bodyKg }) : undefined), [legDay, date, sessionLogs, templates, program, bodyKg]);
+  const { done, total } = progress(workout);
+  const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const guide = getTrainingGuide(template.id);
+
+  function setExercise(slot: string, update: (ex: WorkoutExercise) => WorkoutExercise) {
+    setWorkout((w) => w.map((e) => (e.slot === slot ? update(e) : e)));
+  }
+
+  function tick(slot: string, rowId: string) {
+    haptics.tap();
+    primeAudio();
+    const result = tickRow(workout, slot, rowId);
+    setWorkout(result.workout);
+    if (result.restSec && strength.restAuto) {
+      const ex = workout.find((e) => e.slot === slot);
+      alerted.current = null;
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: ex?.name ?? '' });
+    }
+  }
+
+  function swap(slot: string, exerciseId: string | null) {
+    const prescription = slots.find((s) => s.id === slot);
+    if (!prescription) return;
+    const state = planState(ctx);
+    const to = exerciseId ? exerciseById(exerciseId) : undefined;
+    setExercise(slot, () => planExercise(prescription, ctx, state, to));
+  }
+
+  function saveStrength(next: typeof settings.strengthModel) {
+    void updateSettings({ strengthModel: next });
+  }
+
+  const menuEx = workout.find((e) => e.slot === menuFor);
+  const swapEx = workout.find((e) => e.slot === swapFor);
+  const noteEx = workout.find((e) => e.slot === noteFor);
+  const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
+
+  return (
+    <Portal>
+      <div className="fixed inset-0 z-50 overflow-y-auto animate-fade-in" style={{ background: 'var(--color-bg)' }}>
+        <div className="mx-auto max-w-md" style={{ paddingBottom: rest ? 120 : 48 }}>
+          <header className="sticky top-0 z-20 border-b px-2" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-card-border)', paddingTop: 'env(safe-area-inset-top)' }}>
+            <div className="flex items-center gap-1 pt-1">
+              <button type="button" onClick={onClose} aria-label="Terug, de training blijft staan" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+                <Icon name="terug" size={22} />
+              </button>
+              <h1 className="min-w-0 flex-1 truncate font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+              <button type="button" onClick={() => setWorkoutMenu(true)} aria-label="Menu van de training" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+                <Icon name="meer" size={22} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setFinishing(true)}
+                className="min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
+                style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}
+              >
+                {readOnly ? 'Afvinken' : 'Afronden'}
+              </button>
+            </div>
+            {!readOnly && (
+              <div className="flex items-center gap-3 px-2 pb-2 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                <span className="font-sans" aria-label="Verstreken tijd">{formatElapsed(elapsed)}</span>
+                <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--color-card-border)' }} aria-hidden="true">
+                  <div className="h-1 rounded-full transition-[width] duration-300" style={{ width: `${total > 0 ? (done / total) * 100 : 0}%`, background: 'var(--color-bronze)' }} />
+                </div>
+                <span className="font-sans">{done} van {total} sets</span>
+              </div>
+            )}
+          </header>
+
+          {(legLine || readOnly) && (
+            <div className="flex flex-col gap-1 px-4 pt-3">
+              {readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
+              {legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>}
+            </div>
+          )}
+
+          {workout.length === 0 && (
+            <p className="px-4 pt-6 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Deze training heeft nog geen oefeningen.</p>
+          )}
+
+          {workout.map((ex, i) => (
+            <ExerciseBlock
+              key={ex.slot}
+              ex={ex}
+              first={i === 0}
+              readOnly={readOnly}
+              column={column}
+              onColumn={() => setColumn((c) => (c === 'target' ? 'previous' : 'target'))}
+              note={strength.exerciseNotes[ex.exerciseId]}
+              focused={focused}
+              onFocus={setFocused}
+              plates={usesPlates(exerciseOf(ex)) ? plateSteps(ex, strength.profile) : undefined}
+              onMenu={() => setMenuFor(ex.slot)}
+              onTick={(rowId) => tick(ex.slot, rowId)}
+              onChange={(rowId, patch) => setExercise(ex.slot, (e) => updateRow(e, rowId, patch))}
+              onRir={(rowId) => setRirFor({ slot: ex.slot, rowId })}
+              onAdd={() => setExercise(ex.slot, (e) => addRow(e, 'work'))}
+            />
+          ))}
+        </div>
+
+        {rest && !readOnly && (
+          <RestBar
+            rest={rest}
+            now={now}
+            onAdd={(s) => setRest((r) => (r ? { ...r, endsAt: Math.max(Date.now(), r.endsAt) + s * 1000, total: r.total + s } : r))}
+            onSkip={() => setRest(undefined)}
+          />
+        )}
+      </div>
+
+      {menuEx && (
+        <ForgeSheet title={menuEx.name} sub={menuEx.swappedFrom ? `In plaats van ${menuEx.swappedFrom}, alleen deze training` : undefined} onClose={() => setMenuFor(null)}>
+          {(close) => (
+            <div className="flex flex-col">
+              {!readOnly && (
+                <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />
+              )}
+              <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
+              {!readOnly && !menuEx.timed && (
+                <>
+                  <MenuRow icon="plus" title="Set toevoegen" onClick={() => { setExercise(menuEx.slot, (e) => addRow(e, 'work')); close(); }} />
+                  <MenuRow icon="plus" title="Opwarmset toevoegen" onClick={() => { setExercise(menuEx.slot, (e) => addRow(e, 'warmup')); close(); }} />
+                </>
+              )}
+              {!readOnly && menuEx.rows.some((r) => !r.done) && menuEx.rows.length > 1 && (
+                <MenuRow icon="min" title="Laatste set weghalen" sub="Een set die je al afvinkte blijft staan." onClick={() => { setExercise(menuEx.slot, removeLastRow); close(); }} />
+              )}
+              {!readOnly && (
+                <MenuRow
+                  icon="timer"
+                  title="Rusttijd"
+                  sub={strength.restSeconds[menuEx.exerciseId] !== undefined ? 'Je eigen tijd voor deze oefening' : 'Geschat: zwaarder en samengesteld langer'}
+                  right={
+                    <RestStepper
+                      seconds={menuEx.restSec}
+                      onChange={(s) => {
+                        setWorkout((w) => w.map((e) => (e.exerciseId === menuEx.exerciseId ? { ...e, restSec: s } : e)));
+                        saveStrength(withExerciseValue(settings.strengthModel, 'restSeconds', menuEx.exerciseId, s));
+                      }}
+                    />
+                  }
+                />
+              )}
+              {!readOnly && menuEx.swappedFrom && (
+                <MenuRow icon="ruilen" title={`Terug naar ${menuEx.swappedFrom}`} onClick={() => { swap(menuEx.slot, null); close(); }} />
+              )}
+              {exerciseOf(menuEx)?.cues && (
+                <div className="mt-3 flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+                  {exerciseOf(menuEx)!.cues.map((c) => (
+                    <p key={c} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{c}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </ForgeSheet>
+      )}
+
+      {swapEx && (
+        <ForgeSheet title={`${swapEx.name} ruilen`} sub="Zelfde spieren, met wat je sportschool heeft. Je programma blijft zoals het is." onClose={() => setSwapFor(null)}>
+          {(close) => {
+            const options = swapOptions(exerciseOf(swapEx), strength.profile, workout.map((e) => e.exerciseId));
+            if (options.length === 0) return <p className="py-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze oefening niet goed genoeg om iets met dezelfde spieren voor te stellen.</p>;
+            return (
+              <div className="flex flex-col">
+                {options.map((o) => (
+                  <MenuRow key={o.id} title={o.name} sub={o.primary.map((m) => MUSCLE_LABEL[m]).join(', ')} onClick={() => { swap(swapEx.slot, o.id); close(); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />
+                ))}
+              </div>
+            );
+          }}
+        </ForgeSheet>
+      )}
+
+      {noteEx && (
+        <NoteSheet
+          name={noteEx.name}
+          value={strength.exerciseNotes[noteEx.exerciseId] ?? ''}
+          onSave={(text) => saveStrength(withExerciseValue(settings.strengthModel, 'exerciseNotes', noteEx.exerciseId, text.trim() === '' ? undefined : text.trim().slice(0, EXERCISE_NOTE_MAX)))}
+          onClose={() => setNoteFor(null)}
+        />
+      )}
+
+      {rirFor && rirRow && (
+        <ForgeSheet title="Hoeveel had je nog over?" sub={rirRow.target.rir !== undefined ? `Het voorschrift is ${rirRow.target.rir} over.` : undefined} onClose={() => setRirFor(null)}>
+          {(close) => (
+            <div className="grid grid-cols-6 gap-2 pt-1" role="radiogroup" aria-label="Herhalingen in reserve">
+              {[0, 1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={rirRow.rir === n}
+                  onClick={() => { setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); close(); }}
+                  className="flex min-h-[48px] items-center justify-center rounded-xl border"
+                  style={{ borderColor: rirRow.rir === n ? 'var(--color-ink)' : 'var(--color-card-border)' }}
+                >
+                  <RirBubble rir={n} label={`${n} over`} />
+                </button>
+              ))}
+            </div>
+          )}
+        </ForgeSheet>
+      )}
+
+      {workoutMenu && (
+        <ForgeSheet title={template.name} onClose={() => { setWorkoutMenu(false); setConfirmDiscard(false); }}>
+          {(close) => (
+            <div className="flex flex-col">
+              {guide && <MenuRow title="Uitleg bij deze training" onClick={() => { close(); setShowGuide(true); }} right={<span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>} />}
+              {!readOnly && !confirmDiscard && (
+                <MenuRow icon="sluiten" title="Training weggooien" sub="Wat je invulde gaat verloren; de training blijft gepland." danger onClick={() => setConfirmDiscard(true)} />
+              )}
+              {confirmDiscard && (
+                <div className="flex flex-col gap-3 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Weggooien? Wat je invulde gaat verloren.</p>
+                  <div className="flex gap-3">
+                    <SecondaryButton onClick={() => setConfirmDiscard(false)}>Annuleren</SecondaryButton>
+                    <button
+                      type="button"
+                      onClick={() => { clearDraft(key, 'local'); close(); onClose(); }}
+                      className="min-h-[44px] flex-1 rounded-xl border text-xs font-medium"
+                      style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger-text)' }}
+                    >
+                      Weggooien
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </ForgeSheet>
+      )}
+
+      {showGuide && guide && (
+        <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={date} dayLabel={guideDayLabel(template, date)} onClose={() => setShowGuide(false)} />
+      )}
+
+      {finishing && (
+        <FinishSheet
+          template={template}
+          readOnly={readOnly}
+          workout={workout}
+          elapsedMinutes={Math.max(1, Math.round(elapsed / 60))}
+          defaultMinutes={scheduledDate ? resolveVariantDuration(template, initialVariant, scheduledDate, program) : durationForVariant(template, initialVariant)}
+          plannedSessionId={plannedSessionId}
+          scheduledDate={scheduledDate}
+          onClose={() => setFinishing(false)}
+          onSave={async (extra) => {
+            const strengthData = readOnly ? undefined : toStrengthData(workout);
+            const rir = readOnly ? undefined : hardestLegRir(workout);
+            const saved = await logSession({
+              plannedSessionId,
+              completedDate: extra.doneOn,
+              templateId: template.id,
+              type: template.type,
+              sport: templateSport(template),
+              variant: initialVariant,
+              durationMinutes: extra.minutes,
+              rpe: extra.rpe,
+              notes: extra.notes || undefined,
+              subjectiveFeel: extra.feel,
+              painAreas: extra.pain.length > 0 ? extra.pain.map((p) => p.area) : undefined,
+              painReports: extra.pain.length > 0 ? extra.pain : undefined,
+              strengthData,
+              ...(rir !== undefined ? { strengthRir: rir } : {}),
+            });
+            if (saved) {
+              clearDraft(key, 'local');
+              onClose();
+            }
+            return saved;
+          }}
+        />
+      )}
+    </Portal>
+  );
+}
+
+function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+// --- één oefening ------------------------------------------------------------------------
+
+function ExerciseBlock({
+  ex,
+  first,
+  readOnly,
+  column,
+  onColumn,
+  note,
+  focused,
+  onFocus,
+  plates,
+  onMenu,
+  onTick,
+  onChange,
+  onRir,
+  onAdd,
+}: {
+  ex: WorkoutExercise;
+  first: boolean;
+  readOnly: boolean;
+  column: 'target' | 'previous';
+  onColumn: () => void;
+  note?: string;
+  focused: string | null;
+  onFocus: (id: string | null) => void;
+  plates?: (PlateStep | undefined)[];
+  onMenu: () => void;
+  onTick: (rowId: string) => void;
+  onChange: (rowId: string, patch: Partial<Pick<WorkoutRow, 'weightKg' | 'reps' | 'rir'>>) => void;
+  onRir: (rowId: string) => void;
+  onAdd: () => void;
+}) {
+  const exercise = exerciseOf(ex);
+  const assisted = exercise?.resistance === 'assisted_bodyweight';
+  const workDone = ex.rows.filter((r) => r.kind === 'work' && r.done).length;
+  const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
+  // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
+  // de tweede kolom zegt dan wat je vorige keer deed.
+  const showPrevious = readOnly || column === 'previous';
+  let workNo = 0;
+  return (
+    <section className={`px-4 pb-2 pt-4 ${first ? '' : 'mt-2 border-t'}`} style={{ borderColor: 'var(--color-card-border)' }} aria-label={ex.name}>
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1 pt-1.5">
+          <h2 className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{ex.name}</h2>
+          <p className="mt-0.5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+            {readOnly ? `${workTotal} sets` : `${workDone} van ${workTotal} sets`} · rust {formatClock(ex.restSec)}
+            {ex.swappedFrom ? ` · voor ${ex.swappedFrom}` : ''}
+          </p>
+        </div>
+        <button type="button" onClick={onMenu} aria-label={`Menu van ${ex.name}`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+          <Icon name="meer" size={22} />
+        </button>
+      </div>
+      {note && (
+        <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
+          <span className="mt-px shrink-0" style={{ color: 'var(--color-bronze)' }}><Icon name="notitie" size={14} /></span>
+          <span>{note}</span>
+        </p>
+      )}
+      {ex.reason && (
+        <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-alpine)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
+      )}
+
+      <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
+        <div role="row" className="forge-grid items-end pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <span role="columnheader" className="text-center">Set</span>
+          {readOnly ? (
+            <span role="columnheader">Vorige</span>
+          ) : (
+            <button type="button" role="columnheader" onClick={onColumn} className="relative flex items-center gap-1 text-left before:absolute before:-inset-y-3 before:inset-x-0 before:content-['']" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
+              {showPrevious ? 'Vorige' : 'Voorschrift'}
+              <Icon name="ruilen" size={12} />
+            </button>
+          )}
+          <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
+          <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Reps'}</span>
+          <span role="columnheader" className="text-center">RIR</span>
+          <span role="columnheader" className="sr-only">Gedaan</span>
+        </div>
+        {ex.rows.map((row, i) => {
+          if (row.kind === 'work') workNo++;
+          const label = row.kind === 'warmup' ? 'W' : String(workNo);
+          const prev = previousText(previousFor(ex, row));
+          const step = plates?.[i];
+          const showPlates = !readOnly && focused === row.id && !!step;
+          return (
+            <div key={row.id}>
+              <div
+                role="row"
+                className="forge-grid items-center rounded-xl py-1 transition-colors"
+                style={{ background: row.done ? 'color-mix(in srgb, var(--color-success) 18%, transparent)' : 'transparent', opacity: row.kind === 'warmup' && !row.done ? 0.78 : 1 }}
+              >
+                <span role="cell" className="flex justify-center">
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
+                    style={{ background: row.done ? 'var(--color-success)' : 'var(--color-surface)', color: row.kind === 'warmup' && !row.done ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}
+                  >
+                    {label}
+                  </span>
+                </span>
+                <span role="cell" className="min-w-0 font-sans text-[13px] leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                  {showPrevious ? (
+                    <span>{prev ?? 'Nog niet'}</span>
+                  ) : (
+                    <>
+                      <span className="block">{targetText(row)}</span>
+                      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
+                    </>
+                  )}
+                </span>
+                {readOnly || ex.timed ? (
+                  <>
+                    <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
+                    <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? (row.target.repsLow === row.target.repsHigh ? row.target.repsLow : `${row.target.repsLow}-${row.target.repsHigh}`) : row.reps}</span>
+                  </>
+                ) : (
+                  <>
+                    <span role="cell">
+                      <NumCell
+                        value={row.weightKg}
+                        onChange={(v) => onChange(row.id, { weightKg: v })}
+                        decimals={2}
+                        allowNegative={assisted}
+                        label={`Gewicht, set ${label}`}
+                        done={row.done}
+                        onFocus={() => onFocus(row.id)}
+                        onBlur={() => onFocus(null)}
+                      />
+                    </span>
+                    <span role="cell">
+                      <NumCell value={row.reps} onChange={(v) => onChange(row.id, { reps: v })} decimals={0} label={`Herhalingen, set ${label}`} done={row.done} />
+                    </span>
+                  </>
+                )}
+                <span role="cell" className="flex justify-center">
+                  {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
+                    <RirBubble
+                      rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
+                      label={`${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`}
+                      onClick={readOnly ? undefined : () => onRir(row.id)}
+                    />
+                  )}
+                </span>
+                <span role="cell" className="flex justify-center">
+                  {!readOnly && <TickBox done={row.done} onClick={() => onTick(row.id)} label={`Set ${label} gedaan`} />}
+                </span>
+              </div>
+              {showPlates && step && <PlateLine step={step} first={i === 0 || !plates?.slice(0, i).some(Boolean)} />}
+            </div>
+          );
+        })}
+      </div>
+      {!readOnly && !ex.timed && (
+        <button type="button" onClick={onAdd} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <Icon name="plus" size={16} /> Set toevoegen
+        </button>
+      )}
+    </section>
+  );
+}
+
+// De schijven bij een stang, onder de rij waarvan je het gewicht intikt.
+function PlateLine({ step, first }: { step: PlateStep; first: boolean }) {
+  const perSide = step.perSide.length > 0 ? step.perSide.map((p) => formatNumberNL(p, 2)).join(' + ') : 'geen schijven';
+  const change = first ? undefined : [step.add.length > 0 ? `erbij ${plateList(step.add)}` : '', step.remove.length > 0 ? `eraf ${plateList(step.remove)}` : ''].filter(Boolean).join(', ');
+  return (
+    <div className="mb-1 ml-9 mr-1 rounded-lg px-3 py-2 font-sans text-xs leading-snug tabular-nums" style={{ background: 'var(--color-surface)', color: 'var(--color-ink-dim)' }}>
+      <p>
+        {step.barKg > 0 ? <>Stang <span style={{ color: 'var(--color-ink)' }}>{formatNumberNL(step.barKg, 2)}</span>, per kant </> : 'Per kant '}
+        <span style={{ color: 'var(--color-ink)' }}>{perSide}</span>
+      </p>
+      {change !== undefined && <p className="mt-0.5">{change === '' ? 'Niets wisselen.' : `Per kant ${change}.`}</p>}
+      {step.shortKg > 0 && <p className="mt-0.5" style={{ color: 'var(--color-warning)' }}>Per kant {formatNumberNL(step.shortKg, 2)} kg te weinig met jouw schijven.</p>}
+    </div>
+  );
+}
+
+// --- de rusttimer ----------------------------------------------------------------------
+
+function RestBar({ rest, now, onAdd, onSkip }: { rest: Rest; now: number; onAdd: (seconds: number) => void; onSkip: () => void }) {
+  const left = Math.max(0, Math.ceil((rest.endsAt - now) / 1000));
+  const over = left === 0;
+  const share = rest.total > 0 ? Math.min(1, 1 - left / rest.total) : 1;
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', paddingBottom: 'env(safe-area-inset-bottom)' }} role="timer" aria-live="off">
+      <div className="h-0.5" style={{ background: 'var(--color-card-border)' }}>
+        <div className="h-0.5 transition-[width] duration-500" style={{ width: `${share * 100}%`, background: over ? 'var(--color-success)' : 'var(--color-bronze)' }} />
+      </div>
+      <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-1.5">
+        <div className="min-w-0 flex-1">
+          <p className="font-sans text-2xl leading-none tabular-nums" style={{ color: over ? 'var(--color-success-text)' : 'var(--color-ink)' }}>{over ? 'Tijd om' : formatClock(left)}</p>
+          <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rust · {rest.name}</p>
+        </div>
+        {!over && (
+          <>
+            <button type="button" onClick={() => onAdd(-15)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden korter">−15</button>
+            <button type="button" onClick={() => onAdd(30)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="30 seconden langer">+30</button>
+          </>
+        )}
+        <button type="button" onClick={onSkip} className="min-h-[44px] rounded-xl border px-3 text-sm" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
+          {over ? 'Sluiten' : 'Overslaan'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RestStepper({ seconds, onChange }: { seconds: number; onChange: (s: number) => void }) {
+  const step = (d: number) => onChange(Math.min(REST_LIMITS.max, Math.max(REST_LIMITS.min, seconds + d)));
+  const btn = 'flex h-11 w-11 items-center justify-center rounded-xl border';
+  return (
+    <span className="flex shrink-0 items-center gap-1">
+      <button type="button" onClick={() => step(-15)} className={btn} style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden korter"><Icon name="min" size={18} /></button>
+      <span className="w-12 text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatClock(seconds)}</span>
+      <button type="button" onClick={() => step(15)} className={btn} style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden langer"><Icon name="plus" size={18} /></button>
+    </span>
+  );
+}
+
+// --- notitie ---------------------------------------------------------------------------
+
+function NoteSheet({ name, value, onSave, onClose }: { name: string; value: string; onSave: (text: string) => void; onClose: () => void }) {
+  const [text, setText] = useState(value);
+  return (
+    <ForgeSheet title={`Notitie bij ${name}`} sub="Staat bij deze oefening, elke training weer." onClose={onClose}>
+      {(close) => (
+        <div className="flex flex-col gap-3">
+          <textarea
+            value={text}
+            maxLength={EXERCISE_NOTE_MAX}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            placeholder="Bijvoorbeeld: stoel op 4, voeten hoog"
+            className="w-full rounded-xl border px-3 py-2 text-sm"
+            style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          />
+          <div className="flex gap-3">
+            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
+            <PrimaryButton fullWidth={false} onClick={() => { onSave(text); close(); }}>Opslaan</PrimaryButton>
+          </div>
+        </div>
+      )}
+    </ForgeSheet>
+  );
+}
+
+// --- afronden ---------------------------------------------------------------------------
+
+interface FinishExtra {
+  minutes: number;
+  rpe?: number;
+  feel?: 'better' | 'normal' | 'worse';
+  pain: PainReport[];
+  notes: string;
+  doneOn: string;
+}
+
+function FinishSheet({
+  template,
+  readOnly,
+  workout,
+  elapsedMinutes,
+  defaultMinutes,
+  plannedSessionId,
+  scheduledDate,
+  onClose,
+  onSave,
+}: {
+  template: SessionTemplate;
+  readOnly: boolean;
+  workout: WorkoutExercise[];
+  elapsedMinutes: number;
+  defaultMinutes: number;
+  plannedSessionId?: string;
+  scheduledDate?: string;
+  onClose: () => void;
+  onSave: (extra: FinishExtra) => Promise<boolean>;
+}) {
+  const today = todayISO();
+  const { done, total } = progress(workout);
+  const anyTicked = workout.some((e) => e.rows.some((r) => r.done));
+  const [minutes, setMinutes] = useState<number | undefined>(readOnly || !anyTicked ? defaultMinutes : elapsedMinutes);
+  const [rpe, setRpe] = useState<number | undefined>();
+  const [feel, setFeel] = useState<FinishExtra['feel']>();
+  const [pain, setPain] = useState<PainReport[]>([]);
+  const [notes, setNotes] = useState('');
+  const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
+  const [doneOn, setDoneOn] = useState(plannedInPast ? scheduledDate! : today);
+  const [saving, setSaving] = useState(false);
+  const notTicked = total - done;
+
+  return (
+    <ForgeSheet
+      title={readOnly ? 'Training afvinken' : 'Training afronden'}
+      sub={readOnly ? 'Sets en gewichten komen uit MacroFactor.' : `${done} van ${total} werksets gedaan.${notTicked > 0 && anyTicked ? ' Wat niet is afgevinkt, wordt niet bewaard.' : ''}`}
+      onClose={onClose}
+    >
+      {(close) => (
+        <div className="flex flex-col gap-4">
+          {!readOnly && !anyTicked && (
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>Je hebt nog geen set afgevinkt. Dan wordt alleen de training afgevinkt, zonder sets.</p>
+          )}
+          {(plannedInPast || !plannedSessionId) && (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
+              {plannedInPast ? (
+                [scheduledDate!, today].map((d) => (
+                  <button key={d} type="button" onClick={() => setDoneOn(d)} className="min-h-[44px] rounded-full border px-3" style={{ borderColor: doneOn === d ? 'var(--color-ink)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+                    {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
+                  </button>
+                ))
+              ) : (
+                <input type="date" value={doneOn} max={today} min={addDays(today, -60)} onChange={(e) => e.target.value && setDoneOn(e.target.value)} className="rounded-lg border bg-transparent px-2" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', colorScheme: 'dark' }} />
+              )}
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Duur</span>
+            <div className="w-32"><NumberField value={minutes} onChange={setMinutes} unit="min" tall /></div>
+          </div>
+          <div>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE) van de hele training, als je wilt</p>
+            <div className="mt-2 grid grid-cols-10 gap-1" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <button key={n} type="button" role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[44px] rounded-lg border font-sans text-sm tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-ink)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-surface)' : 'transparent', color: rpe === n ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Ten opzichte van normaal</p>
+            <div className="mt-2 flex gap-2">
+              {(['better', 'normal', 'worse'] as const).map((f) => (
+                <button key={f} type="button" aria-pressed={feel === f} onClick={() => setFeel(feel === f ? undefined : f)} className="min-h-[44px] flex-1 rounded-lg border text-sm" style={{ borderColor: feel === f ? 'var(--color-ink)' : 'var(--color-card-border)', color: feel === f ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
+                  {FEEL_LABEL[f]}
+                </button>
+              ))}
+            </div>
+          </div>
+          {isLegHeavyTemplate(template) && <PainReportFields value={pain} onChange={setPain} />}
+          <div>
+            <label htmlFor="forge-notes" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notitie bij deze training</label>
+            <textarea id="forge-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} />
+          </div>
+          <div className="flex gap-3">
+            <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
+            <PrimaryButton
+              fullWidth={false}
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true);
+                const ok = await onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn });
+                if (!ok) setSaving(false);
+              }}
+            >
+              {saving ? 'Opslaan…' : readOnly ? 'Afvinken' : 'Opslaan'}
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
+    </ForgeSheet>
+  );
+}
