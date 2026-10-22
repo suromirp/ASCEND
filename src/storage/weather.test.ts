@@ -4,8 +4,9 @@ import { clearWeather, getWeatherState, isFetchDue, onWeatherChange, syncWeather
 import { buildBackupEnvelope } from './backup';
 import { rawOpenMeteo } from '../engine/fixtures/weatherFixture';
 
-const PLACE = { name: 'Teststad', lat: 52.16, lon: 5.39 };
-const OTHER = { name: 'Andersdorp', lat: 51.44, lon: 5.48 };
+// Verzonnen plaatsen: de coördinaten wijzen nergens heen.
+const PLACE = { name: 'Teststad', lat: 50.01, lon: 4.01 };
+const OTHER = { name: 'Andersdorp', lat: 51.02, lon: 5.03 };
 const T0 = new Date('2026-10-22T10:00:00Z');
 const minutesLater = (n: number) => new Date(T0.getTime() + n * 60_000);
 
@@ -55,7 +56,7 @@ describe('syncWeather', () => {
     await syncWeather(PLACE, { fetchImpl: asFetch(f), now: T0 });
     await syncWeather(OTHER, { fetchImpl: asFetch(f), now: minutesLater(1) });
     expect(f).toHaveBeenCalledTimes(2);
-    expect(String(f.mock.calls[1][0])).toContain('latitude=51.44');
+    expect(String(f.mock.calls[1][0])).toContain('latitude=51.02');
     await syncWeather(OTHER, { fetchImpl: asFetch(f), now: minutesLater(2), force: true });
     expect(f).toHaveBeenCalledTimes(3);
   });
@@ -118,7 +119,7 @@ describe('isFetchDue', () => {
     expect(isFetchDue({}, PLACE, T0)).toBe(true);
     const state = { forecast: { fetchedAt: T0.toISOString(), place: PLACE, hours: [], days: [] } };
     expect(isFetchDue(state, PLACE, minutesLater(30))).toBe(false);
-    expect(isFetchDue(state, { ...PLACE, lat: 52.1604 }, minutesLater(30))).toBe(false); // same place after rounding
+    expect(isFetchDue(state, { ...PLACE, lat: 50.0104 }, minutesLater(30))).toBe(false); // same place after rounding
     expect(isFetchDue(state, OTHER, minutesLater(30))).toBe(true);
     expect(isFetchDue(state, PLACE, minutesLater(61))).toBe(true);
     expect(isFetchDue({ forecast: { ...state.forecast, fetchedAt: 'nonsense' } }, PLACE, T0)).toBe(true);

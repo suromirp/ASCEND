@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { changeLabel, computeGr5Readiness, THUIS_DAGEN_OP_RIJ } from './gr5Readiness';
+import { changeLabel, computeGr5Readiness, metersLinkLabel, THUIS_DAGEN_OP_RIJ } from './gr5Readiness';
 import { estimatedHikingMinutes } from './goalRoute';
 import type { GoalRequirement } from '../models/goals';
 import type { SessionLog } from '../models/training';
@@ -79,6 +79,22 @@ describe('Klaar voor de GR5', () => {
     expect(r.percent).toBe(99);
   });
 
+  it('rekent met de getoonde waarden: wat er "gelijk" staat is ook 100%, geen 99% bij "5 uur 30 min van 5 uur 30 min"', () => {
+    // Een paar seconden onder wat de GR5 vraagt: op het scherm hetzelfde getal.
+    const logs = [hike('2026-10-10', DAY_MINUTES - 0.3, 1000, 14), hike('2026-10-11', 150, 400, 14)];
+    const r = computeGr5Readiness(GR5, logs, TODAY)!;
+    const dag = r.meters.find((m) => m.key === 'langsteDag')!;
+    const [best, need] = dag.text.split(' van ');
+    expect(best).toBe(need);
+    expect(dag.share).toBe(1);
+    expect(r.percent).toBe(100);
+    // Kilo's tonen één decimaal: 13,96 kg staat als 14 kg, 13,94 als 13,9 kg.
+    const pack = (kg: number) => computeGr5Readiness(GR5, [hike('2026-10-10', DAY_MINUTES, 1000, kg), hike('2026-10-11', 150, 400, kg)], TODAY)!;
+    expect(pack(13.96).percent).toBe(100);
+    expect(pack(13.94).percent).toBe(99);
+    expect(pack(13.94).sentence).toContain('je rugzak 13,9 van 14 kg');
+  });
+
   it('telt alleen de laatste acht weken: een oude tocht valt weg', () => {
     const r = computeGr5Readiness(GR5, [hike('2026-07-01', DAY_MINUTES, 1000, 14)], TODAY)!;
     expect(r.percent).toBe(0);
@@ -109,5 +125,18 @@ describe('Klaar voor de GR5', () => {
     expect(changeLabel(-3)).toBe('-3 in 4 weken');
     expect(changeLabel(0)).toBe('gelijk aan 4 weken geleden');
     expect(changeLabel(undefined)).toBeUndefined();
+  });
+});
+
+describe('de knop onder het percentage', () => {
+  it('noemt het aantal meters dat meetelt', () => {
+    expect(computeGr5Readiness(GR5, [], TODAY)!.meters).toHaveLength(4);
+    expect(metersLinkLabel(4)).toBe('Bekijk de vier meters');
+    expect(metersLinkLabel(3)).toBe('Bekijk de drie meters');
+    expect(metersLinkLabel(2)).toBe('Bekijk de twee meters');
+    expect(metersLinkLabel(1)).toBe('Bekijk de meter');
+    // Een doel met alleen een rugzakdoel heeft één meter.
+    const one = computeGr5Readiness(GR5.filter((x) => x.kind === 'packWeight'), [], TODAY)!;
+    expect(metersLinkLabel(one.meters.length)).toBe('Bekijk de meter');
   });
 });

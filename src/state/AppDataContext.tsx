@@ -27,7 +27,6 @@ import {
   SettingsRepo,
   MetaRepo,
   StretchCompletionRepo,
-  resetToDemoData,
   resetScheduleToDefault,
   restartProgramAtWeekOne,
   rebuildPlanningFromWeekOne,
@@ -43,7 +42,6 @@ import { withWeekRepeated } from '../engine/repeatWeek';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
-import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
@@ -61,8 +59,10 @@ import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { syncWatchActivities } from '../storage/externalActivities';
-import { syncWatchWorkouts } from '../storage/watchWorkouts';
+import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
+import { announcementFor, type SavedMoment } from '../engine/savedMoments';
+import { recordClearedMilestones } from '../storage/milestoneClearing';
 
 type AdviceResponse = StoredResponse;
 
@@ -251,11 +251,12 @@ interface AppData {
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
   // Resolves false when nothing was stored: the save failed (storageNotice
   // says why) or this planned session already has a log (a double tap).
-  // `quiet`: no moment after Gedaan for this one; the caller saves several
-  // and then calls announceSaved once, so they get one summary instead of one
-  // screen each (MacroFactor "Alles opslaan").
-  logSession: (input: LogSessionInput, opts?: { quiet?: boolean }) => Promise<boolean>;
-  announceSaved: () => void;
+  // `batch`: no moment after Gedaan for this one yet; it goes into the list the
+  // caller owns, and the caller then calls announceSaved(batch) once, so they
+  // get one summary instead of one screen each (MacroFactor "Alles opslaan").
+  // Each caller has its own list: what one saves is never announced by another.
+  logSession: (input: LogSessionInput, opts?: { batch?: SavedMoment[] }) => Promise<boolean>;
+  announceSaved: (batch: SavedMoment[]) => void;
   // A write to local storage failed (storage full, blocked). Shown as a
   // banner so a failed save is never silent.
   storageNotice: string | null;
@@ -379,7 +380,7 @@ interface AppData {
   reportIllness: (kind: IllnessKind) => Promise<void>;
   recoverFromIllness: () => Promise<void>;
   dismissRecentChange: () => void;
-  // Fase 3 — advice engine (engine/adviceEngine.ts) + change log.
+  // Fase 3: advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];
   // The rest of the planning run over a proposed week, for its preview. With
@@ -495,8 +496,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Planned sessions with a log being written right now: a second tap
   // before the first write lands must not create a second log.
   const loggingInFlight = useRef(new Set<string>());
-  // Logs saved quietly, waiting for announceSaved (components/CompletionMoment.tsx).
-  const savedQuietly = useRef<{ logId: string; recovery: boolean; clearedTitle?: string; coachNote?: string }[]>([]);
   const reportStorageError = useCallback((err: unknown) => {
     const name = err instanceof DOMException || err instanceof Error ? err.name : '';
     setStorageNotice(name === 'QuotaExceededError'
@@ -610,6 +609,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
     planRevision++;
     await refresh();
+    // The intervals.icu agenda follows the move now, not at the next opening;
+    // in the background, and nothing happens while the switch is off.
+    void syncWatchWorkoutsAfterPlanChange();
     return true;
   }, [refresh]);
 
@@ -685,6 +687,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
     setRecentChange(null);
     await refresh();
+    void syncWatchWorkoutsAfterPlanChange();
   }, [recentChange, refresh]);
 
   // Phase 6 — the live Adaptive Replanner for the forecast range. Reads
@@ -781,7 +784,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
 
     if (outcome.kind === 'applied') {
-      // Fase 3 — say what changed (melding), even though it was automatic.
+      // Fase 3: say what changed (melding), even though it was automatic.
       const { proposal, realChanges, planned, templates: tpls, updatedSessions } = outcome;
       const touched = new Set(realChanges.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
       const originalIds = new Set(planned.map((s) => s.id));
@@ -1115,36 +1118,33 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions],
   );
 
-  // One moment after Gedaan for everything saved since the last one: a single
-  // log gets its own, several (Alles opslaan) one summary. The debrief follows
-  // for a single log only. A cleared milestone gets the bigger quote and chime.
-  const announceSaved = useCallback(() => {
-    const saved = savedQuietly.current;
-    savedQuietly.current = [];
-    if (saved.length === 0) return;
-    const cleared = saved.filter((s) => s.clearedTitle).at(-1);
-    const last = saved[saved.length - 1];
+  // One moment after Gedaan for what one caller saved (engine/savedMoments.ts):
+  // a single log gets its own, several (Alles opslaan) one summary. The debrief
+  // follows for a single log the user ticked off, not for one ticked off by
+  // itself. A cleared milestone gets the bigger quote and chime.
+  const announceSaved = useCallback((batch: SavedMoment[]) => {
+    const saved = batch.splice(0, batch.length);
+    const announcement = announcementFor(saved);
+    if (!announcement) return;
     haptics.success();
     if (settings.introSoundEnabled) {
-      if (cleared) playMilestoneChime();
+      if (announcement.kind === 'milestone') playMilestoneChime();
       else playSessionCompleteChime();
     }
     setCelebration({
       id: makeId('celebration'),
-      kind: cleared ? 'milestone' : saved.every((s) => s.recovery) ? 'recovery' : 'session',
-      title: cleared?.clearedTitle,
-      quote: cleared ? pickVictoryQuote() : pickCompletionQuote(),
-      // The coach's line only speaks for a single training: three of them
-      // would each say the same.
-      coachNote: saved.length === 1 ? last.coachNote : undefined,
-      logIds: saved.map((s) => s.logId),
+      kind: announcement.kind,
+      title: announcement.title,
+      quote: announcement.kind === 'milestone' ? pickVictoryQuote() : pickCompletionQuote(),
+      coachNote: announcement.coachNote,
+      logIds: announcement.logIds,
     });
-    // Fase 3 — the debrief (components/DebriefSheet.tsx) opens after the moment.
-    if (saved.length === 1) setDebriefLogId(last.logId);
+    // The debrief (components/DebriefSheet.tsx) opens after the moment.
+    if (announcement.debriefLogId) setDebriefLogId(announcement.debriefLogId);
   }, [settings.introSoundEnabled]);
 
   const logSession = useCallback(
-    async (input: LogSessionInput, opts?: { quiet?: boolean }): Promise<boolean> => {
+    async (input: LogSessionInput, opts?: { batch?: SavedMoment[] }): Promise<boolean> => {
       const plannedId = input.plannedSessionId;
       if (plannedId) {
         if (loggingInFlight.current.has(plannedId)) return false;
@@ -1182,24 +1182,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         await SessionLogsRepo.put(log);
 
         // If this log satisfies the current front-of-ladder milestone on any
-        // goal, record the historical moment it was cleared.
-        let clearedTitle: string | undefined;
-        for (const goal of trainingGoals) {
-          const milestonesForGoal = goalMilestones.filter((m) => m.goalId === goal.id);
-          if (milestonesForGoal.length === 0) continue;
-          const progress = computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs);
-          const current = progress.currentMilestone;
-          if (current && requirementAutoSatisfied(current.definition.requirement, [log])) {
-            await GoalMilestoneProgressRepo.put({
-              id: makeId('progress'),
-              goalId: goal.id,
-              milestoneId: current.definition.id,
-              clearedDate: log.completedDate,
-              sourceSessionLogId: log.id,
-            });
-            clearedTitle = current.definition.title;
-          }
-        }
+        // goal, record the historical moment it was cleared. Progress and logs
+        // are read fresh from storage: a copy from the closure would let a log
+        // ticked off right after another clear the same milestone twice.
+        const clearedTitle = await recordClearedMilestones(log);
 
         await refresh();
         // Ticked off by itself from the watch (engine/autoTick.ts): no moment
@@ -1223,8 +1209,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           coachNote = `${coachNote} ${progress}`;
           await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: trend.changeSec });
         }
-        savedQuietly.current.push({ logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote });
-        if (!opts?.quiet) announceSaved();
+        const moment: SavedMoment = { logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote, auto: input.quiet };
+        if (opts?.batch) opts.batch.push(moment);
+        else announceSaved([moment]);
         return true;
       } catch (err) {
         reportStorageError(err);
@@ -1233,7 +1220,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (plannedId) loggingInFlight.current.delete(plannedId);
       }
     },
-    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.heartRate, reportStorageError, announceSaved],
+    [refresh, settings.heartRate, reportStorageError, announceSaved],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
@@ -1880,7 +1867,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       return result.viaDownload ? 'downloaded' : 'saved';
     },
     resetDemoData: async () => {
-      await resetToDemoData();
+      // The coming trainings leave the intervals.icu agenda first (storage/watchWorkouts.ts).
+      await resetAllDataAndAgenda();
       await migrateToGoalEngine();
       await syncGr5MilestoneDefinitions();
       await migrateStrengthProgramDefault();

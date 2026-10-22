@@ -1,4 +1,4 @@
-// ASCEND — a planned training as an intervals.icu workout, for the watch.
+// ASCEND: a planned training as an intervals.icu workout, for the watch.
 //
 // intervals.icu sends the workouts in its agenda to Garmin Connect, and from
 // there to the watch. ASCEND puts the trainings of the coming week in that

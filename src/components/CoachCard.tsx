@@ -1,4 +1,4 @@
-// ASCEND — coach card on Today (Fase 3): the main piece of advice from
+// ASCEND: coach card on Today (Fase 3): the main piece of advice from
 // engine/adviceEngine.ts as one compact card; all of them, each with what ASCEND suggests and, one tap
 // away, why (trigger -> rule -> effect). Visual pass (production feedback:
 // "mag wat mooier, visueler"): an icon per kind of advice, the suggestion

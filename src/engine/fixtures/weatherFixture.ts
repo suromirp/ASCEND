@@ -20,7 +20,7 @@ export function makeForecast(
     days.push({ date, sunrise: `${date}T${options.sunrise ?? '08:05'}`, sunset: `${date}T${options.sunset ?? '18:12'}` });
     for (let h = 0; h < 24; h++) hours.push({ ...MILD, ...tweak(date, h), time: `${date}T${pad(h)}:00` });
   }
-  return { fetchedAt: options.fetchedAt ?? `${start}T06:00:00.000Z`, place: { name: 'Teststad', lat: 52.16, lon: 5.39 }, hours, days };
+  return { fetchedAt: options.fetchedAt ?? `${start}T06:00:00.000Z`, place: { name: 'Teststad', lat: 50, lon: 4 }, hours, days };
 }
 
 // What Open-Meteo answers, in its own shape, for the adapter tests.
@@ -28,8 +28,8 @@ export function rawOpenMeteo(date = '2026-10-22') {
   const time = Array.from({ length: 48 }, (_, i) => `${i < 24 ? date : '2026-10-23'}T${pad(i % 24)}:00`);
   const fill = (v: number) => time.map(() => v);
   return {
-    latitude: 52.168,
-    longitude: 5.394,
+    latitude: 50.0,
+    longitude: 4.0,
     timezone: 'Europe/Amsterdam',
     hourly: {
       time,

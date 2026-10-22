@@ -18,6 +18,7 @@ import {
   strengthRirFor,
   type MacroFactorProposal,
 } from '../engine/macrofactorLink';
+import type { SavedMoment } from '../engine/savedMoments';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from './ui';
 
@@ -39,15 +40,17 @@ export function MacroFactorCard() {
   async function save(list: MacroFactorProposal[]) {
     if (saving) return;
     setSaving(true);
+    // This save's own list: several at once get one summary afterwards, not one
+    // screen each, and a training ticked off by itself meanwhile is not in it.
+    const batch: SavedMoment[] = [];
     try {
-      // Quiet: several at once get one summary afterwards, not one screen each.
       for (const p of list) {
-        if (p.kind === 'new') await logSession(p.draft, { quiet: true });
+        if (p.kind === 'new') await logSession(p.draft, { batch });
         else if (p.kind === 'supplement') await fillInLog(p.log.id, p.workout, p.template);
       }
       await refresh();
     } finally {
-      announceSaved();
+      announceSaved(batch);
       setSaving(false);
     }
   }

@@ -101,8 +101,16 @@ function valueText(unit: MeterPart['unit'], n: number): string {
   return `${fmt(n)} m`;
 }
 
-function part(name: string, unit: MeterPart['unit'], row: RouteDayRow, need = row.need): MeterPart {
-  const best = row.best;
+// Het getal zoals het op het scherm staat: minuten en meters heel, kilo's op
+// één decimaal, dagen heel. Het aandeel wordt op deze getoonde waarden
+// berekend, anders staat er "5 uur 30 min van 5 uur 30 min" bij 99%.
+function shown(unit: MeterPart['unit'], n: number): number {
+  return unit === 'kg' ? Math.round(n * 10) / 10 : Math.round(n);
+}
+
+function part(name: string, unit: MeterPart['unit'], row: RouteDayRow, rawNeed = row.need): MeterPart {
+  const best = shown(unit, row.best);
+  const need = shown(unit, rawNeed);
   const share = need > 0 ? clamp01(best / need) : 0;
   // "9 van 14 kg": de eenheid één keer, achteraan.
   const of = unit === 'min'
@@ -185,6 +193,12 @@ function sentenceOf(meters: Gr5Meter[]): string {
   const list = items.length > 1 ? `${items.slice(0, -1).join(', ')} en ${items.at(-1)}` : items[0];
   if (meters.length === 1) return `Dit meet één ding dat de GR5 vraagt: ${list}.`;
   return `Het gemiddelde van ${COUNT_WORD[meters.length]} dingen die de GR5 vraagt: ${list}.`;
+}
+
+// De tekst van de knop onder het percentage: het aantal meters dat echt meetelt.
+export function metersLinkLabel(count: number): string {
+  if (count === 1) return 'Bekijk de meter';
+  return `Bekijk de ${COUNT_WORD[count] ?? count} meters`;
 }
 
 // Het percentage voor een doel. Undefined als het doel niets heeft om mee te

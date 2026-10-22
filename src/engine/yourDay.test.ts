@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { tomorrowEntry, tomorrowText } from './yourDay';
+import { tomorrowEntry, tomorrowText, trainingRowState } from './yourDay';
+import { deriveSessionStatus } from './sessionStatus';
+import { todayISO } from '../utils/dates';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 
@@ -28,5 +30,21 @@ describe('tomorrowEntry', () => {
     expect(e.kind).toBe('none');
     expect(tomorrowText(e)).toBe('Niets gepland');
     expect(tomorrowText({ kind: 'rest' })).toBe('Rustdag, wandelen mag');
+  });
+});
+
+describe('trainingRowState', () => {
+  it('een overgeslagen training van vandaag ziet er niet uit als nog te doen', () => {
+    const skipped = ps('a', 'tpl_easy_run', todayISO(), 'skipped');
+    expect(trainingRowState(deriveSessionStatus(skipped, []).status, false)).toBe('skipped');
+    // Ook als het de training zou zijn die nu aan de beurt is.
+    expect(trainingRowState(deriveSessionStatus(skipped, []).status, true)).toBe('skipped');
+  });
+
+  it('gedaan, nu en nog te doen', () => {
+    expect(trainingRowState('completed', true)).toBe('done');
+    expect(trainingRowState('today', true)).toBe('now');
+    expect(trainingRowState('today', false)).toBe('todo');
+    expect(trainingRowState('planned', false)).toBe('todo');
   });
 });

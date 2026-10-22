@@ -1,4 +1,4 @@
-// ASCEND — de drie kerngetallen van de missiekaart op Vandaag, als chips.
+// ASCEND: de drie kerngetallen van de missiekaart op Vandaag, als chips.
 //
 // De feiten komen uit de training zelf (engine/sessionBrief.ts: duur, zone,
 // wat de training vraagt). Heeft de gebruiker een testloop gedaan, dan

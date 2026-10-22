@@ -80,7 +80,7 @@ export function MorningCheckInCard() {
         onClick={() => { if (existing) setDraft(existing); setOpen(true); }}
         chevron={!!existing}
         action={existing ? undefined : (
-          <button onClick={() => save({ date: today, allNormal: true })} className="ml-2 min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}>
+          <button onClick={() => save({ date: today, allNormal: true })} className="ml-2 min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
             Alles normaal
           </button>
         )}
@@ -90,7 +90,7 @@ export function MorningCheckInCard() {
       {open && (
         <TodaySheet eyebrow="VANOCHTEND" title="Hoe voel je je, vergeleken met normaal?" onClose={() => setOpen(false)}>
           <div className="flex flex-col gap-3">
-            <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl px-3.5 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}>
+            <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl px-3.5 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
               Alles normaal
             </button>
             {wellness && <WellnessLines reading={wellness} />}

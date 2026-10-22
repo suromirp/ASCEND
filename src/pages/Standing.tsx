@@ -54,7 +54,8 @@ export function StandingPage() {
   const descent = useMemo(() => weeklyDescent(sessionLogs, today), [sessionLogs, today]);
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
-  const primaryGoal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
+  // Not an archived goal, as on Ascend (pages/Ascend.tsx).
+  const primaryGoal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
   // The same number and sentence as on Ascend (engine/gr5Readiness.ts).
   const gr5 = useMemo(() => (primaryGoal ? computeGr5Readiness(primaryGoal.requirements, sessionLogs, today) : undefined), [primaryGoal, sessionLogs, today]);
   const routeDescent = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationLoss')?.value.amount : undefined;
@@ -89,14 +90,14 @@ export function StandingPage() {
     },
     {
       label: 'Volgehouden',
-      value: adherence.enough ? `${adherence.done} van ${adherence.planned}` : '–',
+      value: adherence.enough ? `${adherence.done} van ${adherence.planned}` : 'nog niet',
       text: adherence.enough
         ? `${adherenceSummary(adherence)}. Wat je oversloeg telt als niet gedaan; ziek en rustdagen tellen niet mee. De coach op Ascend telt hetzelfde.`
         : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
     },
     {
       label: 'Fase',
-      value: position ? `week ${position.weekInPhase} van ${position.phase.weekCount}` : '–',
+      value: position ? `week ${position.weekInPhase} van ${position.phase.weekCount}` : 'nog niet',
       text: position
         ? `${phaseName(position.phase.name)}.${restWeek?.isRestWeek && !restWeek.skipped ? ' Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? ` Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
         : '',

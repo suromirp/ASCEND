@@ -25,6 +25,9 @@
   /* Borders of inputs, toggles and secondary buttons: card-border is for
      cards and barely visible around a control (3:1 for UI parts). */
   --color-control-border: #6e6a62;
+  /* Text and knob on a gold button or switch: the dark of the page, kept as
+     its own token so a component never carries a loose hex. */
+  --color-on-gold: #15130d;
   /* Charts on Je stand: one colour per sport, always in this order (run,
      strength, walk, other). Validated on the card colour for colour
      blindness and contrast; never used for status or text. */
@@ -155,6 +158,9 @@ body {
   background: var(--color-gold);
   border-color: var(--color-gold);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-gold) 18%, transparent);
+}
+.day-row[data-state='skipped'] {
+  opacity: 0.6;
 }
 .day-row[data-state='done']::before {
   background: var(--color-success);

@@ -1,4 +1,4 @@
-// ASCEND — local state of "Trainingen naar je horloge sturen".
+// ASCEND: local state of "Trainingen naar je horloge sturen".
 //
 // One record under its own meta key, on this device only:
 // - the switch (default OFF),
@@ -16,7 +16,7 @@
 // engine/watchWorkout.ts, the requests in integrations/intervalsIcu.ts. This
 // file reads the stored plan, asks them, and keeps the books.
 
-import { MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo } from './database';
+import { MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo, resetToDemoData } from './database';
 import { getConnection, isFetchDue, MIN_FETCH_INTERVAL_MINUTES } from './externalActivities';
 import {
   createWorkoutEvents,
@@ -146,6 +146,13 @@ export async function syncWatchWorkouts(options: WorkoutOptions & { force?: bool
   }
 }
 
+// After a plan change you agreed to (a move, a skip, an undo) the agenda follows
+// right away instead of at the next opening of the app: the 15-minute brake is
+// skipped for this one run. Does nothing while the switch is off. Never throws.
+export function syncWatchWorkoutsAfterPlanChange(options: WorkoutOptions = {}): Promise<WorkoutSyncResult> {
+  return syncWatchWorkouts({ ...options, force: true });
+}
+
 export type TestSendResult =
   | { status: 'ok'; name: string; date: string }
   | { status: 'nothing' }
@@ -232,4 +239,17 @@ export async function setWatchWorkoutsEnabled(enabled: boolean, options: Workout
 // double anything (the same external ids are recognised).
 export async function pauseWatchWorkouts(): Promise<void> {
   await putState({ ...(await getWatchWorkoutState()), enabled: false });
+}
+
+// "Alles verwijderen": the coming trainings leave the intervals.icu agenda
+// first, while the connection and the list of what was sent still exist (the
+// reset wipes both), so no orphans stay behind on the watch. Best effort: when
+// that fails, or there is no connection, the reset goes ahead anyway.
+export async function resetAllDataAndAgenda(options: WorkoutOptions = {}): Promise<void> {
+  try {
+    await removeWatchWorkouts(options);
+  } catch {
+    // Never in the way of deleting.
+  }
+  await resetToDemoData();
 }

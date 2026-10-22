@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { changeLabel, type Gr5Readiness } from '../engine/gr5Readiness';
+import { changeLabel, metersLinkLabel, type Gr5Readiness } from '../engine/gr5Readiness';
 import { Gr5ReadinessSheet } from './Gr5ReadinessSheet';
 import { Card, Eyebrow } from './ui';
 
@@ -66,7 +66,7 @@ export function Gr5ReadinessCard({ readiness, compact = false }: { readiness: Gr
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{readiness.sentence}</p>
           {readiness.weakestSentence && <p className="-mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{readiness.weakestSentence}</p>}
           <span className="flex min-h-[44px] items-center justify-between text-sm font-medium" style={{ color: 'var(--color-gold)' }}>
-            Bekijk de vier meters
+            {metersLinkLabel(readiness.meters.length)}
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
           </span>
         </Card>

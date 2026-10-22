@@ -12,7 +12,8 @@ import {
 } from './openMeteo';
 import { rawOpenMeteo } from '../engine/fixtures/weatherFixture';
 
-const PLACE = { name: 'Teststad', lat: 52.15393, lon: 5.37412 };
+// Verzonnen plek: de coördinaten wijzen nergens heen.
+const PLACE = { name: 'Teststad', lat: 50.01234, lon: 4.00678 };
 
 function okFetch(body: unknown, status = 200) {
   return vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
@@ -20,19 +21,19 @@ function okFetch(body: unknown, status = 200) {
 
 describe('requests', () => {
   it('rounds coordinates to two decimals and asks for the hourly fields, sunrise and sunset', () => {
-    expect(roundCoordinate(52.15393)).toBe(52.15);
-    expect(roundCoordinate(5.37912)).toBe(5.38);
+    expect(roundCoordinate(50.01234)).toBe(50.01);
+    expect(roundCoordinate(4.00978)).toBe(4.01);
     const url = new URL(forecastUrl(PLACE));
     expect(url.origin + url.pathname).toBe('https://api.open-meteo.com/v1/forecast');
-    expect(url.searchParams.get('latitude')).toBe('52.15');
-    expect(url.searchParams.get('longitude')).toBe('5.37');
+    expect(url.searchParams.get('latitude')).toBe('50.01');
+    expect(url.searchParams.get('longitude')).toBe('4.01');
     expect(url.searchParams.get('hourly')).toBe('temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code');
     expect(url.searchParams.get('daily')).toBe('sunrise,sunset');
     expect(url.searchParams.get('forecast_days')).toBe('7');
     expect(url.searchParams.get('timezone')).toBe('auto');
     expect(url.searchParams.get('wind_speed_unit')).toBe('kmh');
     // The exact position never leaves the phone.
-    expect(forecastUrl(PLACE)).not.toContain('52.153');
+    expect(forecastUrl(PLACE)).not.toContain('50.012');
     expect(forecastUrl(PLACE)).not.toContain('Teststad');
   });
 
@@ -56,7 +57,7 @@ describe('mapping a forecast', () => {
   it('turns the arrays into hours and days, with the place rounded', async () => {
     const forecast = await fetchForecast(PLACE, { fetchImpl: okFetch(rawOpenMeteo()) as unknown as typeof fetch, now: new Date('2026-10-22T10:00:00Z') });
     expect(forecast.fetchedAt).toBe('2026-10-22T10:00:00.000Z');
-    expect(forecast.place).toEqual({ name: 'Teststad', lat: 52.15, lon: 5.37 });
+    expect(forecast.place).toEqual({ name: 'Teststad', lat: 50.01, lon: 4.01 });
     expect(forecast.hours).toHaveLength(48);
     expect(forecast.hours[0]).toEqual({ time: '2026-10-22T00:00', tempC: 9.3, feelsC: 5.6, precipMm: 0, precipProb: 15, windKmh: 20.9, gustKmh: 42.8, code: 3 });
     expect(forecast.days[0]).toEqual({ date: '2026-10-22', sunrise: '2026-10-22T08:15', sunset: '2026-10-22T18:29' });
@@ -120,20 +121,20 @@ describe('errors read as something to tell the user', () => {
 describe('searching a place', () => {
   const RESPONSE = {
     results: [
-      { id: 1, name: 'Amersfoort', latitude: 52.155, longitude: 5.3875, country: 'Nederland', admin1: 'Utrecht' },
+      { id: 1, name: 'Amersfoort', latitude: 50.1549, longitude: 4.3875, country: 'Nederland', admin1: 'Utrecht' },
       { id: 2, name: 'Amersfoort', latitude: -27.00941, longitude: 29.86643, country: 'Zuid-Afrika', admin1: 'Mpumalanga' },
       { id: 3, name: 'Zonder coordinaten' },
-      { id: 4, name: 'Utrecht', latitude: 52.09, longitude: 5.12, country: 'Nederland', admin1: 'Utrecht' },
+      { id: 4, name: 'Utrecht', latitude: 50.09, longitude: 4.12, country: 'Nederland', admin1: 'Utrecht' },
     ],
   };
 
   it('keeps the places with coordinates, rounded, with province and country to tell them apart', async () => {
     const found = await searchPlaces('Amersfoort', { fetchImpl: okFetch(RESPONSE) as unknown as typeof fetch });
     expect(found).toEqual([
-      { name: 'Amersfoort', lat: 52.16, lon: 5.39, region: 'Utrecht', country: 'Nederland' },
+      { name: 'Amersfoort', lat: 50.15, lon: 4.39, region: 'Utrecht', country: 'Nederland' },
       { name: 'Amersfoort', lat: -27.01, lon: 29.87, region: 'Mpumalanga', country: 'Zuid-Afrika' },
       // The province of a city with the same name adds nothing.
-      { name: 'Utrecht', lat: 52.09, lon: 5.12, region: undefined, country: 'Nederland' },
+      { name: 'Utrecht', lat: 50.09, lon: 4.12, region: undefined, country: 'Nederland' },
     ]);
   });
 

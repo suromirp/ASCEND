@@ -183,6 +183,21 @@ describe('WEATHER-SWAP', () => {
     expect(applied.sessions.find((s) => s.id === 'upper1')?.scheduledDate).toBe('2026-10-03');
   });
 
+  it('does not move a training you pinned yourself, and does not swap one away either', () => {
+    const pinned = { by: 'user', at: '2026-09-29T10:00:00.000Z' } as const;
+    // Your own pinned hike stays where it is, however bad the weather.
+    expect(weatherAdvice(inputs({ plannedSessions: [ps('hike1', 'hike', '2026-10-03', { lock: pinned }), ps('lower1', 'lower', '2026-10-01')], bad: ['2026-10-03'] }), byId)).toEqual([]);
+    expect(weatherAdvice(inputs({ plannedSessions: [ps('hike1', 'hike', '2026-10-03', { status: 'moved' })], bad: ['2026-10-03'] }), byId)).toEqual([]);
+    // The only strength training that could swap is pinned too: no swap.
+    const full = [
+      ps('rest1', 'rest', '2026-09-28'), ps('r1', 'run', '2026-09-29'), ps('r2', 'run', '2026-09-30'), ps('r3', 'run', '2026-10-01'), ps('r4', 'run', '2026-10-02'),
+      ps('hike1', 'hike', '2026-10-03'), ps('upper1', 'upper', '2026-10-04', { lock: pinned }),
+    ];
+    expect(weatherAdvice(inputs({ plannedSessions: full, bad: ['2026-10-03'] }), byId)).toEqual([]);
+    // Without the pin the swap is there.
+    expect(weatherAdvice(inputs({ plannedSessions: full.map((x) => ({ ...x, lock: undefined })), bad: ['2026-10-03'] }), byId)).toHaveLength(1);
+  });
+
   it('does not swap two outdoor trainings with each other', () => {
     const planned = [
       ps('rest1', 'rest', '2026-09-28'), ps('r1', 'run', '2026-09-29'), ps('r2', 'run', '2026-09-30'), ps('r3', 'run', '2026-10-01'), ps('r4', 'run', '2026-10-02'),

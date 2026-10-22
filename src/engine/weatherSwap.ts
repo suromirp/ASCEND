@@ -13,7 +13,8 @@
 // preview ("Zo ziet je week eruit") as every other plan change; nothing moves
 // by itself. "Liever niet" is remembered per training (the id carries the
 // planned session), so ASCEND does not ask again for it. A training that was
-// moved once for the weather is not moved a second time for it.
+// moved once for the weather is not moved a second time for it. A training you
+// pinned yourself (lock) is neither moved nor swapped, as with every other plan change.
 
 import type { Advice, AdviceInputs, AdviceOption } from './adviceEngine';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
@@ -22,6 +23,7 @@ import { activeIllness, recoveryRamp } from './illness';
 import { leaveLabelOn } from './leave';
 import { RACE_TEMPLATE_ID } from './raceBlock';
 import { respectsHeavySpacing, dayHasRoomFor } from './scheduler';
+import { lockLevel } from './weekValidator';
 import { isTemplatePlannable } from './sports';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { VERDICT_RANK, isWeatherSensitive, sessionWeather, usualStartHour, verdictLine, type SessionWeather } from './weather';
@@ -55,6 +57,9 @@ export function weatherAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   const leavePeriods = wx.leave;
   const logged = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const open = (s: PlannedSession) => s.status !== 'skipped' && !logged.has(s.id);
+  // Only what the system planned itself may move (lock level 3), as in leaveProposal.ts:
+  // a training you pinned (your own move or skip, an accepted proposal) stays where it is.
+  const free = (s: PlannedSession) => lockLevel(s, logged, inputs.asOf) === 3;
 
   const weatherOf = (template: SessionTemplate, date: string, session?: PlannedSession): SessionWeather | undefined =>
     sessionWeather({
@@ -74,7 +79,7 @@ export function weatherAdvice(inputs: AdviceInputs, templateById: Map<string, Se
   };
 
   const subjects = inputs.plannedSessions
-    .filter((s) => open(s) && s.scheduledDate >= inputs.asOf && s.scheduledDate <= addDays(inputs.asOf, WEATHER_SWAP_HORIZON_DAYS) && !s.leave && s.templateId !== RACE_TEMPLATE_ID)
+    .filter((s) => open(s) && s.scheduledDate >= inputs.asOf && s.scheduledDate <= addDays(inputs.asOf, WEATHER_SWAP_HORIZON_DAYS) && !s.leave && s.templateId !== RACE_TEMPLATE_ID && free(s))
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate) || a.order - b.order);
 
   const out: Advice[] = [];
@@ -110,7 +115,7 @@ export function weatherAdvice(inputs: AdviceInputs, templateById: Map<string, Se
         if (there.length !== 1 || touched.has(there[0].id)) continue;
         const partner = there[0];
         const partnerTemplate = templateById.get(partner.templateId);
-        if (!partnerTemplate || isWeatherSensitive(partnerTemplate) || partnerTemplate.type === 'recovery' || partner.templateId === RACE_TEMPLATE_ID || partner.leave) continue;
+        if (!partnerTemplate || isWeatherSensitive(partnerTemplate) || partnerTemplate.type === 'recovery' || partner.templateId === RACE_TEMPLATE_ID || partner.leave || !free(partner)) continue;
         const both = new Set([session.id, partner.id]);
         if (!dayHasRoomFor(date, template, weekOthers(session.weekStartDate, both), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;
         if (!dayHasRoomFor(session.scheduledDate, partnerTemplate, weekOthers(session.weekStartDate, both), templateById, inputs.program, inputs.dailyTimeBudget, inputs.sameDayPairingPreference)) continue;

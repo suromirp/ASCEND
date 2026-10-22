@@ -30,7 +30,7 @@ export function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={`${fullWidth ? 'w-full' : 'flex-1'} min-h-[44px] rounded-xl py-3 text-sm font-semibold transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}
+      style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}
     >
       {children}
     </button>
@@ -95,7 +95,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
     >
       <span
         className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full transition-transform"
-        style={{ background: checked ? '#15130d' : 'var(--color-ink-dim)', transform: checked ? 'translateX(1.25rem)' : 'translateX(0)' }}
+        style={{ background: checked ? 'var(--color-on-gold)' : 'var(--color-ink-dim)', transform: checked ? 'translateX(1.25rem)' : 'translateX(0)' }}
       />
     </button>
   );

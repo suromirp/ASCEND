@@ -1,4 +1,4 @@
-// ASCEND — wat het moment na Gedaan laat zien.
+// ASCEND: wat het moment na Gedaan laat zien.
 //
 // De training of trainingen die je net vastlegde, de feiten ervan (van het
 // horloge als die er zijn) en drie betekenisvolle regels: wat dit bijdraagt

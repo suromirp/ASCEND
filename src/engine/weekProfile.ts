@@ -1,4 +1,4 @@
-// ASCEND — het bergprofiel van de week: de belasting van elke dag, en één zin
+// ASCEND: het bergprofiel van de week: de belasting van elke dag, en één zin
 // over de zwaarste dag en de ruimte tussen de beendagen.
 //
 // De maat is één en dezelfde als op Stand ("Belasting per week"): minuten maal

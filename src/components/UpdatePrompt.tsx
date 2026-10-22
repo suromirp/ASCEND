@@ -28,7 +28,7 @@ export function UpdatePrompt() {
         }}
         disabled={updating}
         className="min-h-[44px] shrink-0 rounded-lg px-4 text-xs font-semibold disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}
+        style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}
       >
         {updating ? 'Bezig…' : 'Bijwerken'}
       </button>

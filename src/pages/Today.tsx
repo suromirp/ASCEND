@@ -44,7 +44,7 @@ import { Card, Eyebrow } from '../components/ui';
 import { DayRow, YourDay } from '../components/vandaag/DayRow';
 import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
 import { missionFacts } from '../engine/missionFacts';
-import { tomorrowEntry, tomorrowText } from '../engine/yourDay';
+import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
@@ -326,16 +326,17 @@ export function TodayPage() {
           const { status, wasMoved } = deriveSessionStatus(s, sessionLogs);
           const rest = isRestSession(s);
           const done = status === 'completed';
+          const skipped = status === 'skipped';
           return (
             <DayRow
               key={s.id}
               label={done ? 'Gedaan' : 'Training'}
-              state={done ? 'done' : s.id === primary?.id ? 'now' : 'todo'}
+              state={trainingRowState(status, s.id === primary?.id)}
               onClick={() => setActionSheetSession(s)}
               trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
             >
               {rest ? REST_DAY_COPY[restMode].title : t.name}
-              {wasMoved && !done ? <span style={{ color: 'var(--color-sky)' }}> · verplaatst</span> : null}
+              {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span style={{ color: 'var(--color-sky)' }}> · verplaatst</span> : null}
             </DayRow>
           );
         })}

@@ -6,9 +6,11 @@ import {
   getWatchWorkoutState,
   pauseWatchWorkouts,
   removeWatchWorkouts,
+  resetAllDataAndAgenda,
   sendNextWatchWorkout,
   setWatchWorkoutsEnabled,
   syncWatchWorkouts,
+  syncWatchWorkoutsAfterPlanChange,
 } from './watchWorkouts';
 import { selectWatchWorkouts } from '../engine/watchWorkout';
 import { addDays } from '../utils/dates';
@@ -153,6 +155,26 @@ describe('syncing the coming week', () => {
     expect(agenda.events.size).toBe(sizeBefore);
     expect(agenda.events.get(first[0])!.id).toBe(idBefore);
     expect(agenda.events.get(first[0])!.body.start_date_local).toBe(`${addDays(planned.scheduledDate, 1)}T00:00:00`);
+  });
+
+  it('follows a plan change right away, inside the 15 minutes, and only while the switch is on', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    // Off: nothing goes out.
+    expect(await syncWatchWorkoutsAfterPlanChange({ fetchImpl: agenda.fn, today })).toEqual({ status: 'off' });
+    expect(agenda.calls).toHaveLength(0);
+    await setWatchWorkoutsEnabled(true);
+    const t0 = new Date('2026-10-26T08:00:00Z');
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, now: t0 });
+    const ext = [...agenda.events.keys()][0];
+    const planned = (await PlannedSessionsRepo.getAll()).find((s) => s.id === ext.replace('ascend:', ''))!;
+    await PlannedSessionsRepo.put({ ...planned, scheduledDate: addDays(planned.scheduledDate, 1), status: 'moved' });
+    const soon = new Date(t0.getTime() + 60_000);
+    // The ordinary run is held back by the brake, the one after a plan change is not.
+    expect(await syncWatchWorkouts({ fetchImpl: agenda.fn, today, now: soon })).toEqual({ status: 'too-soon' });
+    const result = await syncWatchWorkoutsAfterPlanChange({ fetchImpl: agenda.fn, today, now: soon });
+    expect(result.status === 'ok' && result.updated).toBeGreaterThanOrEqual(1);
+    expect(agenda.events.get(ext)!.body.start_date_local).toBe(`${addDays(planned.scheduledDate, 1)}T00:00:00`);
   });
 
   it('removes an event when the session is skipped, and leaves the others', async () => {
@@ -313,5 +335,35 @@ describe('unlinking and the backup', () => {
     expect(text).not.toContain('ascend:');
     expect(text).not.toContain(KEY);
     expect(await MetaRepo.get('watchWorkoutsSync')).toBeDefined();
+  });
+});
+
+describe('Alles verwijderen', () => {
+  it('takes the coming trainings out of the agenda first, so no orphans stay on the watch', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(agenda.events.size).toBeGreaterThan(0);
+    await resetAllDataAndAgenda({ fetchImpl: agenda.fn, today });
+    expect(agenda.events.size).toBe(0);
+    // And the reset itself went through: the list of what was sent is gone with the rest.
+    expect((await getWatchWorkoutState()).items).toEqual({});
+  });
+
+  it('still deletes everything when the agenda cannot be reached, and when there is no connection', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const broken = fakeAgenda({ failWith: 500 });
+    await resetAllDataAndAgenda({ fetchImpl: broken.fn, today });
+    expect(broken.calls.length).toBeGreaterThan(0);
+    expect(await SessionLogsRepo.getAll()).toEqual([]);
+    expect((await getWatchWorkoutState()).items).toEqual({});
+    // Nothing connected any more: nothing to call, nothing in the way.
+    const none = fakeAgenda();
+    await resetAllDataAndAgenda({ fetchImpl: none.fn, today });
+    expect(none.calls).toHaveLength(0);
   });
 });

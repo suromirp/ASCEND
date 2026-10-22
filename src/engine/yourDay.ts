@@ -1,4 +1,4 @@
-// ASCEND — "Je dag" op Vandaag: wat er morgen komt, in één regel.
+// ASCEND: "Je dag" op Vandaag: wat er morgen komt, in één regel.
 //
 // Pure: no React, no IndexedDB.
 
@@ -39,4 +39,14 @@ export function tomorrowText(entry: TomorrowEntry): string {
   if (entry.kind === 'training') return `${entry.name}, ${entry.minutes} min`;
   if (entry.kind === 'rest') return 'Rustdag, wandelen mag';
   return 'Niets gepland';
+}
+
+// De stand van een trainingsregel in "Je dag": gedaan, overgeslagen (gedimd, dus
+// niet te verwarren met iets dat nog moet), de training van nu, of nog te doen.
+export type TrainingRowState = 'done' | 'skipped' | 'now' | 'todo';
+
+export function trainingRowState(status: string, isPrimary: boolean): TrainingRowState {
+  if (status === 'completed') return 'done';
+  if (status === 'skipped') return 'skipped';
+  return isPrimary ? 'now' : 'todo';
 }
