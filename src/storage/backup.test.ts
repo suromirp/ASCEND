@@ -339,6 +339,16 @@ describe('vrije periodes in een back-up', () => {
     expect(settings.leavePeriods).toEqual(periods);
   });
 
+  it('a restore keeps a period the device has and the back-up lacks', async () => {
+    // Back-up made before the trek was planned: the sessions it moved carry
+    // its marker, so dropping the period would strand them.
+    await SettingsRepo.set({ leavePeriods: [periods[0]] });
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    await SettingsRepo.set({ leavePeriods: periods });
+    await restore(envelope);
+    expect((await SettingsRepo.get()).leavePeriods?.map((p) => p.id)).toEqual(['leave_a', 'leave_b', 'leave_c']);
+  });
+
   it('a flat export from before backups existed still imports', async () => {
     const legacy = { schemaVersion: 1, exportDate: '2026-06-01T00:00:00.000Z', program: null, templates: [], plannedSessions: [], sessionLogs: [], objectives: [], milestoneProgress: [], settings: {} };
     const backup = normalizeBackupToCurrentModel(legacy);

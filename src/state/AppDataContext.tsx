@@ -601,13 +601,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
     // Training through a rest week changes the program, not a session.
     if (response === 'accepted' && item.restWeekSkip && program) {
-      await ProgramsRepo.put(withRestWeekSkipped(program, item.restWeekSkip, true));
+      await ProgramsRepo.put(withRestWeekSkipped(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), item.restWeekSkip, true));
       await refresh();
     }
     // "Deze week nog een keer" (rule REPEAT-WEEK) changes the program, and the
     // planning round that follows adjusts what the system planned.
     if (response === 'accepted' && item.repeatWeek && program) {
-      await ProgramsRepo.put(withWeekRepeated(program, item.repeatWeek, true));
+      await ProgramsRepo.put(withWeekRepeated(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), item.repeatWeek, true));
       planRevision++;
       await refresh();
     }
@@ -1216,7 +1216,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const setRestWeekSkipped = useCallback(
     async (weekStart: string, skip: boolean) => {
       if (!program) return;
-      await ProgramsRepo.put(withRestWeekSkipped(program, weekStart, skip));
+      await ProgramsRepo.put(withRestWeekSkipped(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), weekStart, skip));
       await refresh();
     },
     [program, refresh],
@@ -1225,7 +1225,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const setWeekRepeated = useCallback(
     async (weekStart: string, repeat: boolean) => {
       if (!program) return;
-      await ProgramsRepo.put(withWeekRepeated(program, weekStart, repeat));
+      await ProgramsRepo.put(withWeekRepeated(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), weekStart, repeat));
       planRevision++;
       await refresh();
     },

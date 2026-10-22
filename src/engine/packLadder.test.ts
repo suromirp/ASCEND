@@ -176,3 +176,27 @@ describe('packLadder, the pure part', () => {
     expect(packLadder([week('build', true)], 14)).toEqual([15]);
   });
 });
+
+describe('a repeated week and the cached ladder', () => {
+  it('gives the same pack whichever program variant filled the cache first', async () => {
+    const { vi } = await import('vitest');
+    const plain = programFor();
+    // A repeated week in the mountain phase: the week after a wave's first.
+    const firstBerg = weeksOf(plain).find((w) => w.phaseId === PHASE_BERG)!.monday;
+    const repeatedMonday = addDays(firstBerg, 7);
+    const repeated: Program = { ...plain, repeatedWeeks: [repeatedMonday] };
+    const kgAround = (mod: typeof import('./programLayout'), program: Program) =>
+      [0, 7, 14].map((d) => mod.packKgOn(program, addDays(firstBerg, d)));
+
+    vi.resetModules();
+    const repeatedFirst = await import('./programLayout');
+    const a = kgAround(repeatedFirst, repeated);
+    vi.resetModules();
+    const plainFirst = await import('./programLayout');
+    plainFirst.packLadderOf(plain);
+    const b = kgAround(plainFirst, repeated);
+    expect(a).toEqual(b);
+    // The repeated week carries the pack of the week before it.
+    expect(a[1]).toBe(a[0]);
+  });
+});

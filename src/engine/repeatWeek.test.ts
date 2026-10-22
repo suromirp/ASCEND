@@ -209,6 +209,13 @@ describe('the advice: Akkoord and Liever niet', () => {
     expect(find(computeAdvice(adviceInputs({ raceGoals })))).toBeUndefined();
   });
 
+  it('a race already run keeps it away too, also when its goal is in the past', () => {
+    // The race was last week: its goal no longer counts as a race block
+    // (raceBlocks only lists races still ahead), its session still does.
+    const race = { ...planned[0], id: 'race_done', templateId: 'tpl_race', scheduledDate: addDays(W2, 5), weekStartDate: W2 };
+    expect(find(computeAdvice(adviceInputs({ plannedSessions: [...planned, race] })))).toBeUndefined();
+  });
+
   it('costSentence says it plainly', () => {
     expect(costSentence(undefined)).toContain('op het niveau van vorige week');
   });

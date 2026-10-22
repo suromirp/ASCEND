@@ -38,7 +38,7 @@ import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
 import { checkTargetTime, racePaces } from './racePaces';
 import { formatRaceTime, testResults } from './racePrediction';
-import type { RaceBlock } from './raceBlock';
+import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
@@ -930,7 +930,13 @@ function repeatWeekAdvice(inputs: AdviceInputs): Advice[] {
   const found = proposeRepeatWeek({
     program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates,
     today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, planChangeLog: inputs.extraSession?.planChangeLog,
-    raceWeeks: (inputs.raceGoals ?? []).map((r) => r.raceWeek), respondedIds: inputs.respondedIds,
+    // Races still ahead (their goals) and races already run (their session
+    // or log): the week after a race is its own recovery, never a repeat.
+    raceWeeks: [...new Set([
+      ...(inputs.raceGoals ?? []).map((r) => r.raceWeek),
+      ...inputs.plannedSessions.filter((s) => s.templateId === RACE_TEMPLATE_ID).map((s) => mondayOfWeek(s.scheduledDate)),
+      ...inputs.logs.filter((l) => l.templateId === RACE_TEMPLATE_ID).map((l) => mondayOfWeek(l.completedDate)),
+    ])], respondedIds: inputs.respondedIds,
   });
   if (!found) return [];
   const title = 'Deze week nog een keer?';
@@ -947,7 +953,7 @@ function tentPackAdvice(inputs: AdviceInputs): Advice[] {
     trigger: 'plan_update',
     ruleId: 'GR5-PACK-TENT',
     title: 'Rugzakdoel voor de GR5 omhoog?',
-    effect: `Je rugzakdoel staat op ${p.fromKg} kg, het gewicht voor een tocht van hut naar hut. ${PACK_WEIGHT_EXPLANATION} Voorstel: je rugzakdoel op ${p.toKg} kg. Alleen dit getal verandert; je trainingen en je planning blijven zoals ze zijn. Slaap je vooral in hutten, dan kies je Liever niet.`,
+    effect: `Je rugzakdoel staat op ${p.fromKg} kg, het gewicht voor een tocht van hut naar hut. ${PACK_WEIGHT_EXPLANATION} Voorstel: je rugzakdoel op ${p.toKg} kg. Wat er dan verandert: je bergtochten en rugzakwandelingen gaan stap voor stap naar dit gewicht (piek ongeveer 1 kg erboven, in de zwaarste weken), en kamp 11 vraagt dan een tocht met ${p.toKg} kg. Wat je al behaalde blijft behaald. Slaap je vooral in hutten, dan kies je Liever niet.`,
     why: 'Zo\'n 12 kg past bij hutten. Met tent, slaapzak, matje, kookspullen, water en eten voor twee tot vier dagen komt een goed gepakte rugzak op 12,5 tot 14,5 kg uit (basisgewicht rond 8 kg, plus 0,8 tot 1 kg eten per dag en 2 tot 3 liter water). Je rugzak-voortgang en de vergelijking met een GR5-dag rekenen tegen dit doelgewicht. Je kunt het altijd zelf aanpassen bij Doelen.',
     priority: 1,
     goalChange: { goalId: p.goalId, packWeightKg: p.toKg },
@@ -967,7 +973,9 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
   const out: Advice[] = [];
   for (const race of inputs.raceGoals ?? []) {
     if (!race.targetMinutes || race.raceDate < inputs.asOf) continue;
-    const km = race.distanceKm ?? 10;
+    // Without a distance there is nothing honest to compare the test with.
+    if (!race.distanceKm) continue;
+    const km = race.distanceKm;
     const paces = racePaces(tests, km);
     if (!paces) continue;
     const check = checkTargetTime(paces, race.targetMinutes, race.raceDate);

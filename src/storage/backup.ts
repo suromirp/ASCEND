@@ -525,6 +525,15 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     for (const e of current.illnessEpisodes ?? []) byId.set(e.id, e);
     merged.illnessEpisodes = [...byId.values()].sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
+  // Free days, holidays and treks: planned sessions on the device carry a
+  // marker of the period that moved them, so a period is never dropped by a
+  // settings restore (it could no longer be removed to put them back).
+  // Union, the device's own period wins.
+  if (incoming.leavePeriods || current.leavePeriods) {
+    const byId = new Map((incoming.leavePeriods ?? []).map((p) => [p.id, p]));
+    for (const p of current.leavePeriods ?? []) byId.set(p.id, p);
+    merged.leavePeriods = [...byId.values()].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }
   // Ticked-off journey tasks are history too: the union, the device wins.
   if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);
   if (incoming.weeklyIntentions || current.weeklyIntentions) {
