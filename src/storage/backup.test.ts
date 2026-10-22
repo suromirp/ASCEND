@@ -206,6 +206,52 @@ describe('backup envelope round-trip', () => {
     expect(backup.settings.weightEntries).toBeUndefined();
   });
 
+  // The question of the week (engine/weeklyQuestion.ts): additive in the
+  // settings, so no schema step, but it must travel in an export, survive a
+  // restore onto a clean device, never drop an answer the device has, and an
+  // old back-up without it must still import.
+  describe('weekly intentions (the question of the week)', () => {
+    const intention = (weekStart: string, answer?: string) => ({ weekStart, questionId: 'WQ-basis-01', question: 'Als je een training moet overslaan, wat doe je dan?', ...(answer ? { answer, answeredAt: `${weekStart}T08:00:00.000Z` } : {}) });
+
+    it('round-trips through export and a full restore onto a clean device', async () => {
+      await SettingsRepo.set({ weeklyIntentions: [intention('2026-10-19', 'Dan loop ik zondag.')] });
+      const envelope = await buildBackupEnvelope();
+      expect((envelope.payload.settings as { weeklyIntentions?: unknown }).weeklyIntentions).toEqual([intention('2026-10-19', 'Dan loop ik zondag.')]);
+      await wipeAllData();
+      expect((await SettingsRepo.get()).weeklyIntentions).toBeUndefined();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).weeklyIntentions).toEqual([intention('2026-10-19', 'Dan loop ik zondag.')]);
+    });
+
+    it('a back-up made before the field existed still imports and leaves the answers on the device alone', async () => {
+      const envelope = await buildBackupEnvelope(); // settings without weeklyIntentions
+      await SettingsRepo.set({ weeklyIntentions: [intention('2026-10-26', 'Mijn plan')] });
+      const backup = normalizeBackupToCurrentModel(envelope);
+      expect(backup.skippedInvalid).toBe(0);
+      expect(backup.settings.weeklyIntentions).toBeUndefined();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).weeklyIntentions).toEqual([intention('2026-10-26', 'Mijn plan')]);
+    });
+
+    it('a restore keeps answers the device has and the back-up lacks, and takes the ones it lacks', async () => {
+      await SettingsRepo.set({ weeklyIntentions: [intention('2026-10-19', 'Uit de back-up')] });
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ weeklyIntentions: [{ ...intention('2026-10-19'), laterOn: '2026-10-20' }, intention('2026-10-26', 'Alleen op het toestel')] });
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).weeklyIntentions).toEqual([intention('2026-10-19', 'Uit de back-up'), intention('2026-10-26', 'Alleen op het toestel')]);
+    });
+
+    it('drops damaged lines on import and counts them', async () => {
+      const envelope = await buildBackupEnvelope();
+      const broken = { ...envelope, payload: { ...envelope.payload, settings: { weeklyIntentions: [intention('2026-10-19', 'goed'), { weekStart: 'nooit', questionId: 'x', question: 'y' }, { weekStart: '2026-10-26', questionId: 'x', question: 'y', answer: 7 }] } } };
+      const backup = normalizeBackupToCurrentModel(broken);
+      expect(backup.settings.weeklyIntentions).toEqual([intention('2026-10-19', 'goed')]);
+      expect(backup.skippedInvalid).toBe(2);
+      const notAList = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { weeklyIntentions: 'oops' } } });
+      expect(notAList.settings.weeklyIntentions).toBeUndefined();
+    });
+  });
+
   it('a damaged file gets a readable message', () => {
     expect(() => parseBackupText('{"backupSchemaVersion": 4, "payl')).toThrow(/beschadigd of onvolledig/);
   });

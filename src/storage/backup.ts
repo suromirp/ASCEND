@@ -44,6 +44,7 @@ import {
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
+import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
 import { migrateExport, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -186,6 +187,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     ['illnessEpisodes', (e) => hasId(e) && isDate(e.startDate) && typeof e.kind === 'string'],
     ['morningCheckIns', (e) => isRecord(e) && isDate(e.date)],
     ['weeklyHealthChecks', (e) => isRecord(e) && isDate(e.weekStart) && typeof e.trouble === 'string'],
+    ['weeklyIntentions', isWeeklyIntention],
   ];
   for (const [key, valid] of lists) {
     if (!(key in s)) continue;
@@ -496,6 +498,9 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
   }
   // Ticked-off journey tasks are history too: the union, the device wins.
   if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);
+  if (incoming.weeklyIntentions || current.weeklyIntentions) {
+    merged.weeklyIntentions = mergeIntentions(incoming.weeklyIntentions, current.weeklyIntentions);
+  }
   return merged;
 }
 

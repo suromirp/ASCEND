@@ -7,6 +7,7 @@ import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../models/checkIn';
 import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
+import { WeeklyPlanSection } from './WeeklyQuestionCard';
 
 function useWeekReview(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
@@ -132,6 +133,8 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                 )}
               </Section>
             )}
+
+            <WeeklyPlanSection weekStart={review.weekStart} />
 
             {review.changes.length > 0 && (
               <Section title="WAT ASCEND AANPASTE">

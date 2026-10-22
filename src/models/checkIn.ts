@@ -44,3 +44,19 @@ export interface WeeklyHealthCheck {
   area?: string;
   severity?: TroubleSeverity;
 }
+
+// The question of the week on Today (engine/weeklyQuestion.ts): one "Als ...,
+// wat doe je dan?" a week, and the one line you answer with, your plan. Kept
+// with the settings (AppSettings.weeklyIntentions), so it travels in an
+// export. Append-only: an answer is never rewritten, and the question is
+// stored as it was shown, so a later wording change cannot alter what you
+// answered. `laterOn` is the day you pressed "Later" (the card is back the
+// next day, until the week is over).
+export interface WeeklyIntention {
+  weekStart: string; // Monday
+  questionId: string;
+  question: string;
+  answer?: string;
+  answeredAt?: string; // ISO date-time
+  laterOn?: string; // ISO date
+}

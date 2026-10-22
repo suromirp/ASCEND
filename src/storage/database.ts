@@ -6,7 +6,7 @@ import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metr
 import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
 import type { WeightEntry } from '../models/metrics';
-import type { MorningCheckIn, WeeklyHealthCheck } from '../models/checkIn';
+import type { MorningCheckIn, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -533,6 +533,10 @@ export interface AppSettings {
   morningCheckIns?: MorningCheckIn[];
   // The one question per week in the week review (models/checkIn.ts).
   weeklyHealthChecks?: WeeklyHealthCheck[];
+  // The question of the week and your one-line plan (engine/weeklyQuestion.ts).
+  // Optional and additive, so older settings and backups need no schema step;
+  // it travels with the settings in an export and is validated on import.
+  weeklyIntentions?: WeeklyIntention[];
   weightReminderSnoozedAt?: string; // ISO date
   // Reisplanner: which tasks on the way to the GR5 are ticked off
   // (engine/journey.ts). Optional and additive, so older settings and
