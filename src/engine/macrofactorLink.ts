@@ -19,7 +19,7 @@ import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
 import { strengthChangeFor, type StrengthChange } from './macrofactorLead';
 import { enrichStrengthData } from './macrofactorEnrich';
-import { findSameWorkoutLog } from './macrofactorSame';
+import { findSameWorkoutLog, logsOfWorkoutsInFile } from './macrofactorSame';
 import type { ExerciseSetLog } from '../models/training';
 
 export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
@@ -154,8 +154,9 @@ export function planMacroFactor(
   const storedIds = new Set(logs.flatMap((l) => [l.externalId, l.manualMeasured?.strength?.workoutId]).filter((id): id is string => !!id));
   const loggedPlanned = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   const claimedLogs = new Set<string>();
-  // Logs a renamed workout already matched by its sets (see macrofactorSame.ts).
-  const sameLogs = new Set<string>();
+  // Logs a renamed workout already matched by its sets (see macrofactorSame.ts),
+  // and from the start every log that belongs to another workout of this file.
+  const sameLogs = logsOfWorkoutsInFile(workouts, logs);
   const claimedPlanned = new Set<string>();
   const proposals: MacroFactorProposal[] = [];
   let alreadyDone = 0;
