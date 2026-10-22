@@ -57,12 +57,12 @@ export const CHOICES = {
   }),
   meerdere: def({
     group: 'Planning',
-    title: 'Twee trainingen op een dag',
+    title: 'Twee trainingen per dag',
     line: 'Als je tijd per dag het toelaat.',
     advice: 'automatic' as 'automatic' | 'always' | 'only_if_useful' | 'never',
     help: 'meerdere',
     options: [
-      { value: 'automatic', label: 'Automatisch', note: 'ASCEND beslist zelf op je tijd per dag' },
+      { value: 'automatic', label: 'Automatisch', note: 'ASCEND beslist zelf op je tijd per dag', short: 'Auto' },
       { value: 'always', label: 'Ja', note: 'Zoveel mogelijk samen als de tijd het toelaat', short: 'Ja' },
       { value: 'only_if_useful', label: 'Alleen als het moet', note: 'Alleen als er anders echt geen plek is', short: 'Alleen nodig' },
       { value: 'never', label: 'Nee', note: 'Nooit meer dan één training per dag', short: 'Nee' },

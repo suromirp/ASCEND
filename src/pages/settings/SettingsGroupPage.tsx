@@ -7,11 +7,13 @@ import { useFlashOnMount, useJumpState } from '../../components/settings/jump';
 import type { GroupProps } from '../../components/settings/groups/types';
 import { Soon } from '../../components/settings/groups/Soon';
 import { ForgeGroup } from '../../components/settings/groups/ForgeGroup';
+import { PlanningGroup } from '../../components/settings/groups/PlanningGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
 import { SETTINGS_ROOT, isSettingsPageId, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
 // Welke inhoud bij welke groep hoort. Een groep die er nog niet is, toont Soon.
 const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
+  planning: PlanningGroup,
   forge: ForgeGroup,
   lichaam: LichaamGroup,
 };

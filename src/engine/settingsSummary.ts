@@ -56,7 +56,7 @@ export interface SettingsFacts {
   // De bron van "Krachttraining bijhouden": dezelfde keuze als het krachtblok.
   strengthExternal: boolean;
   // Wat ASCEND nu doet met je ambitie: terugvallen op Standaard bij pijn.
-  ambition: { chosen: 'rustig' | 'standaard' | 'stevig'; effective: 'rustig' | 'standaard' | 'stevig' };
+  ambition: { chosen: 'rustig' | 'standaard' | 'stevig'; effective: 'rustig' | 'standaard' | 'stevig'; reason?: string };
   // Het gewicht in gebruik.
   weight: { kg: number; source: string; date: string } | null;
   // De koppeling met het horloge; null als er (nog) niet gekeken is.
@@ -164,7 +164,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Planning
     case 'trainingstijd': {
       const n = trainingDays(f);
-      return n > 0 ? { value: `${n} dagen` } : { value: 'Niet ingesteld', dim: true };
+      return n > 0 ? { value: plural(n, 'dag', 'dagen') } : { value: 'Niet ingesteld', dim: true };
     }
     case 'rustdag':
       return { value: WEEKDAYS[restDayIndex(f)] };
@@ -352,7 +352,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
         : enabled.length > 0
           ? `${listNL(enabled.map((sp, i) => (i === 0 ? SPORT_LABEL[sp] : lower(SPORT_LABEL[sp]))))}, weekschema`
           : 'Geen sport ingepland';
-      return { value: `Rust ${WEEKDAYS_SHORT[restDayIndex(f)]}, ${n} dagen`, sub };
+      return { value: `Rust ${WEEKDAYS_SHORT[restDayIndex(f)]}, ${plural(n, 'dag', 'dagen')}`, sub };
     }
     case 'doel': {
       const treks = f.treks;

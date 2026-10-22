@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { ChoiceDef } from '../../../data/settingsChoices';
 import { ChoiceSheet } from '../Sheet';
 
@@ -10,12 +11,14 @@ export function ChoiceFromDef<T extends string | number>({
   onPick,
   onClose,
   keepOpen,
+  footer,
 }: {
   def: ChoiceDef<T>;
   value: T;
   onPick: (value: T) => void;
   onClose: () => void;
   keepOpen?: boolean;
+  footer?: ReactNode;
 }) {
   return (
     <ChoiceSheet<T>
@@ -29,6 +32,7 @@ export function ChoiceFromDef<T extends string | number>({
       onPick={onPick}
       onClose={onClose}
       keepOpen={keepOpen}
+      footer={footer}
     />
   );
 }
