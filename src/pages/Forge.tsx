@@ -14,7 +14,7 @@ import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from '../component
 import { SettingsGearLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow, type ExerciseView } from '../engine/strengthHistory';
+import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, type ComparisonRow, type ExerciseView, type MissingData } from '../engine/strengthHistory';
 import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../engine/strengthModel';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
@@ -97,6 +97,13 @@ export function ForgePage() {
   );
 }
 
+// Wat er aan de sets ontbreekt, en hoe het erbij komt.
+const REFILL_TEXT: Record<MissingData, string> = {
+  rir: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR); ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
+  help: 'Deze sets staan hier nog zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
+  rir_and_help: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR) en zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
+};
+
 function ExerciseCard({ view }: { view: ExerciseView }) {
   const { history, now, next, line, strengthKg, weightMismatch } = view;
   const { settings } = useAppData();
@@ -109,15 +116,20 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
   const chartLine = liftedKg ? line.map((p) => ({ ...p, value: liftedKg + p.value })) : line;
   const count = history.sessions.length;
 
+  const navigate = useNavigate();
   let missing: string | undefined;
+  let refill: MissingData | undefined;
   if (!next) {
+    refill = weightMismatch ? undefined : missingData(history);
     missing = weightMismatch
       ? WEIGHT_MISMATCH_TEXT
-      : strengthKg === undefined
-        ? 'Zonder herhalingen in reserve (RIR) bij de sets kan ASCEND hier geen kracht schatten.'
+      : refill
+        ? REFILL_TEXT[refill]
         : bodyKg === undefined && exercise?.bodyweightFraction !== undefined
-          ? 'Vul je lichaamsgewicht in bij Meer, dan telt deze oefening mee.'
-          : 'Nog geen voorstel mogelijk.';
+          ? 'Vul je lichaamsgewicht in bij Instellingen, Lichaam, dan telt deze oefening mee.'
+          : strengthKg === undefined
+            ? 'Bij deze sets kan ASCEND nog geen kracht schatten.'
+            : 'Nog geen voorstel mogelijk.';
   }
 
   return (
@@ -168,6 +180,11 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
         </div>
       )}
       {missing && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{missing}</p>}
+      {refill && (
+        <button type="button" onClick={() => navigate('/koppelen/macrofactor')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+          MacroFactor opnieuw inlezen
+        </button>
+      )}
     </Card>
   );
 }

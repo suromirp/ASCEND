@@ -268,3 +268,19 @@ export function accuracy(rows: ComparisonRow[]): Accuracy {
   }
   return { total, within, sentence: `Bij ${within} van de ${total} oefeningen zat het voorstel van ASCEND hooguit één stap van het gewicht dat je echt pakte.` };
 }
+
+// Why there is no estimate when the sets themselves are the reason: no reps in
+// reserve, or (on an assisted machine) no help written down. Both come in by
+// reading the MacroFactor export again: "Alles verwerken" fills empty fields.
+export type MissingData = 'rir' | 'help' | 'rir_and_help';
+
+export function missingData(history: ExerciseHistory): MissingData | undefined {
+  const work = history.sessions.flatMap((s) => s.sets.filter(isWorkSet));
+  if (work.length === 0) return undefined;
+  const noRir = work.every((s) => s.rir === undefined);
+  const noHelp = history.exercise?.resistance === 'assisted_bodyweight' && work.every((s) => s.weightKg === undefined);
+  if (noRir && noHelp) return 'rir_and_help';
+  if (noHelp) return 'help';
+  if (noRir) return 'rir';
+  return undefined;
+}

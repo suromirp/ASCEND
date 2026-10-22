@@ -3,7 +3,8 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { SessionLog } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import { legFatigueOn, fatigueEvents } from './legFatigue';
-import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt } from './strengthHistory';
+import { exerciseById } from '../data/exercises';
+import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, type ExerciseHistory } from './strengthHistory';
 import { resolveStrengthSettings } from './strengthSettings';
 
 const { templates, program } = buildDefaultProgramData();
@@ -168,5 +169,22 @@ describe('niets in de bestaande planning of beenindex verandert', () => {
     expect(JSON.stringify(logs)).toBe(before);
     const indexAfter = legFatigueOn('2026-10-16', inputs, fatigueEvents(inputs));
     expect(indexAfter).toEqual(indexBefore);
+  });
+});
+
+describe('wat er aan de sets ontbreekt', () => {
+  const history = (id: string, sets: ExerciseHistory['sessions'][number]['sets']): ExerciseHistory => ({
+    key: id,
+    exercise: exerciseById(id),
+    name: id,
+    sessions: [{ logId: 'l1', trainingName: 'Proef', date: '2026-10-10', sets }],
+  });
+  it('een oude import zonder RIR en zonder hulp op een apparaat met hulp', () => {
+    expect(missingData(history('assisted-pull-up', [{ reps: 6 }, { reps: 7 }]))).toBe('rir_and_help');
+    expect(missingData(history('assisted-pull-up', [{ reps: 6, rir: 1 }]))).toBe('help');
+    expect(missingData(history('lat-pulldown', [{ reps: 8, weightKg: 50 }]))).toBe('rir');
+  });
+  it('niets als de sets compleet zijn, en opwarmsets tellen niet', () => {
+    expect(missingData(history('assisted-pull-up', [{ reps: 10, weightKg: -45, kind: 'warmup' }, { reps: 6, weightKg: -14, rir: 1 }]))).toBeUndefined();
   });
 });
