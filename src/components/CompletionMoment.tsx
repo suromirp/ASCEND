@@ -10,6 +10,7 @@ import { useLegFatigueInputs } from './LegFatigueCard';
 import { Card, Eyebrow, PrimaryButton } from './ui';
 import { Icon } from './icons';
 import { ClothingFeedback } from './ClothingFeedback';
+import { RunInsightCard } from './RunInsightCard';
 import './completion.css';
 
 export interface CelebrationEvent {
@@ -121,6 +122,8 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
                 ))}
               </Card>
             )}
+
+            {event.kind === 'session' && summary.count === 1 && <RunInsightCard logId={event.logIds?.[0]} />}
 
             {summary.items && summary.items.length > 1 && <ItemList items={summary.items} at={560} />}
 

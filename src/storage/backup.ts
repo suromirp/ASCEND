@@ -47,7 +47,8 @@ import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigrat
 import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
 import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
-import { cleanNavigationSettings, migrateExport, migrateLeavePeriods, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
+import { cleanRunInsight } from '../engine/runInsightSettings';
+import { cleanNavigationSettings, migrateExport, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
@@ -275,6 +276,13 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (Object.keys(cleaned.value).length > 0) s.clothingAdjust = cleaned.value;
     else delete s.clothingAdjust;
   }
+  // Loopinzicht: only valid switches stay; the rest is dropped and counted.
+  if ('runInsight' in s) {
+    const cleaned = cleanRunInsight(s.runInsight);
+    skipped.n += cleaned.dropped;
+    if (cleaned.value) s.runInsight = cleaned.value;
+    else delete s.runInsight;
+  }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {
     const { state, skipped: n } = normalizeJourneyState(s.journey);
@@ -307,7 +315,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);

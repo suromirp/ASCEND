@@ -13,17 +13,23 @@
 // Pure: no React, no IndexedDB. A device preference, never part of an export.
 
 import type { RecoveryMetric } from '../models/metrics';
+import type { ExternalActivity } from './activityImport';
 
 export interface WatchUse {
   activities: boolean;
   sleep: boolean;
   restingHeartRate: boolean;
   hrv: boolean;
+  // The series of a run or tocht (heart rate, speed, altitude, the running
+  // dynamics): one request per stored training, of which only a short profile
+  // is kept (docs/beslissingen/2026-10-22-loopinzicht.md). Off: not fetched, not
+  // shown, not counted. Needs `activities`.
+  details: boolean;
 }
 
 export type WatchUseKey = keyof WatchUse;
 
-export const DEFAULT_WATCH_USE: WatchUse = { activities: true, sleep: true, restingHeartRate: true, hrv: true };
+export const DEFAULT_WATCH_USE: WatchUse = { activities: true, sleep: true, restingHeartRate: true, hrv: true, details: true };
 
 // Tolerant: anything that is not an explicit "false" is on, so an older or
 // damaged record never switches something off by accident.
@@ -34,6 +40,7 @@ export function normalizeWatchUse(raw: unknown): WatchUse {
     sleep: r.sleep !== false,
     restingHeartRate: r.restingHeartRate !== false,
     hrv: r.hrv !== false,
+    details: r.details !== false,
   };
 }
 
@@ -63,4 +70,23 @@ export function filterRecovery(metrics: RecoveryMetric[], use: WatchUse): Recove
     if (hasData) kept.push(copy);
   }
   return kept;
+}
+
+// Are the details of runs and tochten wanted? They come with the trainings.
+export function detailsWanted(use: WatchUse): boolean {
+  return use.activities && use.details;
+}
+
+// The activities without what belongs to the details switch: the running
+// dynamics and the list of series. The list is returned as it is when the
+// switch is on.
+export function filterActivityDetails(activities: ExternalActivity[], use: WatchUse): ExternalActivity[] {
+  if (use.details) return activities;
+  return activities.map((a) => {
+    if (!a.dynamics && !a.streamsAvailable) return a;
+    const { dynamics: _d, streamsAvailable: _s, ...rest } = a;
+    void _d;
+    void _s;
+    return rest;
+  });
 }

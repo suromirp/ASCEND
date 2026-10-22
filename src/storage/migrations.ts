@@ -7,6 +7,7 @@
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
+import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
@@ -223,4 +224,115 @@ export function cleanNavigationSettings(raw: { tabBack?: unknown; resumeMinutes?
     else skipped++;
   }
   return { value, skipped };
+}
+
+// --- loopinzicht: SessionLog.detail ---------------------------------------------------
+// The compact profile of a run or tocht (models/activityDetail.ts). The field is
+// optional and additive, and every log travels whole, so the backup schema
+// number does not move (docs/beslissingen/2026-10-22-loopinzicht.md). It is
+// derived from the watch's series and can be fetched again, so a profile that is
+// damaged (hand-edited, cut off) is dropped as a whole and the log keeps
+// everything else; a profile is never half repaired, because a comparison on
+// invented numbers is worse than no comparison. Fields the reader does not know
+// are not kept.
+const fin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const optFin = (v: unknown): boolean => v === undefined || fin(v);
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+const DYNAMICS_KEYS: (keyof RunDynamics)[] = [
+  'stanceTimeMs', 'stanceTimePercent', 'stanceBalanceLeftPct', 'verticalOscillationMm', 'verticalRatioPct', 'stepLengthM',
+  'verticalSpeedMs', 'legSpringStiffness', 'impactLoadingRate',
+];
+
+function readDynamics(raw: unknown): RunDynamics | undefined | null {
+  if (raw === undefined) return undefined;
+  if (!isObj(raw)) return null;
+  const out: RunDynamics = {};
+  for (const key of DYNAMICS_KEYS) {
+    if (raw[key] === undefined) continue;
+    if (!fin(raw[key])) return null;
+    out[key] = raw[key] as number;
+  }
+  return out;
+}
+
+function readSlice(raw: unknown): DetailSlice | undefined {
+  if (!isObj(raw) || !fin(raw.sec) || !fin(raw.distanceM) || !fin(raw.gainM) || !fin(raw.lossM) || !optFin(raw.heartRate) || !optFin(raw.cadence)) return undefined;
+  const dynamics = readDynamics(raw.dynamics);
+  if (dynamics === null) return undefined;
+  return {
+    sec: raw.sec, distanceM: raw.distanceM, gainM: raw.gainM, lossM: raw.lossM,
+    ...(raw.heartRate !== undefined ? { heartRate: raw.heartRate as number } : {}),
+    ...(raw.cadence !== undefined ? { cadence: raw.cadence as number } : {}),
+    ...(dynamics && Object.keys(dynamics).length > 0 ? { dynamics } : {}),
+  };
+}
+
+function readStretch(raw: unknown): TerrainStretch | undefined {
+  if (!isObj(raw) || (raw.kind !== 'climb' && raw.kind !== 'descent')) return undefined;
+  if (!fin(raw.startSec) || !fin(raw.sec) || !fin(raw.distanceM) || !fin(raw.metres) || !fin(raw.gradientPct) || !optFin(raw.heartRate) || !optFin(raw.cadence)) return undefined;
+  let thirds: TerrainStretch['thirds'];
+  if (raw.thirds !== undefined) {
+    if (!Array.isArray(raw.thirds) || raw.thirds.length !== 3) return undefined;
+    thirds = [];
+    for (const t of raw.thirds) {
+      if (!isObj(t) || !fin(t.metresPerHour) || !optFin(t.heartRate) || !optFin(t.cadence)) return undefined;
+      thirds.push({
+        metresPerHour: t.metresPerHour,
+        ...(t.heartRate !== undefined ? { heartRate: t.heartRate as number } : {}),
+        ...(t.cadence !== undefined ? { cadence: t.cadence as number } : {}),
+      });
+    }
+  }
+  return {
+    kind: raw.kind, startSec: raw.startSec, sec: raw.sec, distanceM: raw.distanceM, metres: raw.metres, gradientPct: raw.gradientPct,
+    ...(raw.heartRate !== undefined ? { heartRate: raw.heartRate as number } : {}),
+    ...(raw.cadence !== undefined ? { cadence: raw.cadence as number } : {}),
+    ...(thirds ? { thirds } : {}),
+  };
+}
+
+function readConditions(raw: unknown): DetailConditions | undefined {
+  if (!isObj(raw) || (raw.source !== 'lookup' && raw.source !== 'manual' && raw.source !== 'import')) return undefined;
+  const out: DetailConditions = { source: raw.source };
+  for (const key of ['tempC', 'feelsC', 'windKmh', 'gustKmh', 'humidityPct', 'rainMm'] as const) {
+    if (raw[key] === undefined) continue;
+    if (!fin(raw[key])) return undefined;
+    out[key] = raw[key] as number;
+  }
+  return out;
+}
+
+export function migrateActivityDetail(raw: unknown): ActivityDetail | undefined {
+  if (!isObj(raw) || raw.version !== 1 || typeof raw.source !== 'string') return undefined;
+  if (!Array.isArray(raw.slices) || !Array.isArray(raw.stretches) || !fin(raw.sliceCount) || raw.sliceCount !== raw.slices.length || raw.slices.length === 0 || raw.slices.length > 200) return undefined;
+  if (!fin(raw.movingSec) || !isObj(raw.quality) || !fin(raw.quality.heartRateCoveragePct) || !optFin(raw.quality.gainAgreementPct)) return undefined;
+  const slices = raw.slices.map(readSlice);
+  if (slices.some((s) => !s)) return undefined;
+  const stretches = raw.stretches.map(readStretch);
+  if (stretches.some((s) => !s)) return undefined;
+  const conditions = raw.conditions === undefined ? undefined : readConditions(raw.conditions);
+  return {
+    version: 1,
+    source: raw.source as MetricSource,
+    sliceCount: raw.sliceCount,
+    slices: slices as DetailSlice[],
+    stretches: stretches as TerrainStretch[],
+    ...(conditions ? { conditions } : {}),
+    movingSec: raw.movingSec,
+    quality: {
+      heartRateCoveragePct: raw.quality.heartRateCoveragePct,
+      ...(raw.quality.gainAgreementPct !== undefined ? { gainAgreementPct: raw.quality.gainAgreementPct as number } : {}),
+      ...(raw.quality.chestStrapSeen === true ? { chestStrapSeen: true as const } : {}),
+    },
+  };
+}
+
+// A log as it comes out of a file: the same log, with `detail` only when it is whole.
+export function migrateLogDetail(log: SessionLog): SessionLog {
+  if (!('detail' in log)) return log;
+  const valid = migrateActivityDetail((log as { detail?: unknown }).detail);
+  const { detail: _damaged, ...rest } = log;
+  void _damaged;
+  return valid ? { ...rest, detail: valid } : rest;
 }

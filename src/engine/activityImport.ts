@@ -19,6 +19,7 @@
 import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SubjectiveFeel } from '../models/training';
 import { logSport, templateSport, type Sport } from './sports';
 import { formatNumberNL } from '../utils/number';
+import type { RunDynamics, StreamKind } from '../models/activityDetail';
 
 export type ExternalActivityKind = 'run' | 'hike' | 'ride' | 'strength' | 'other';
 
@@ -48,6 +49,12 @@ export interface ExternalActivity {
   feel?: SubjectiveFeel;
   // On a treadmill or trainer: any climbing is an estimate, not altitude.
   treadmill: boolean;
+  // The averages of the running dynamics, when the source measured them
+  // (models/activityDetail.ts). Comes with the activity, no extra request.
+  dynamics?: RunDynamics;
+  // The series this activity has at its source (heart rate, speed, altitude,
+  // the running dynamics...). Only these are ever asked for.
+  streamsAvailable?: StreamKind[];
 }
 
 export const ACTIVITY_KIND_LABEL: Record<ExternalActivityKind, string> = {
@@ -224,6 +231,7 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     avgHeartRate: activity.avgHeartRate,
     maxHeartRate: activity.maxHeartRate,
     cadence: activity.avgCadence !== undefined ? Math.round(activity.avgCadence) : undefined,
+    dynamics: activity.kind === 'run' || activity.kind === 'hike' ? activity.dynamics : undefined,
     source: activity.source,
   });
 
@@ -417,5 +425,21 @@ export function describeActivityDetails(activity: ExternalActivity): string[] {
   }
   if (activity.rpe !== undefined) lines.push(`Inspanning ${activity.rpe} van 10 (zoals je op je horloge invulde)`);
   if (activity.feel) lines.push(`Gevoel: ${FEEL_LABEL[activity.feel]}`);
+  const form = describeRunForm(activity);
+  if (form) lines.push(form);
   return lines;
+}
+
+// One fact about how a run was run, as it came from the watch: the contact time
+// and the step length. A fact, no judgement: one run says little about form
+// (docs/onderzoek/Loopgegevens en vooruitgang.md, hoofdstuk 3).
+export function describeRunForm(activity: Pick<ExternalActivity, 'kind' | 'dynamics'>): string | undefined {
+  const d = activity.dynamics;
+  if (activity.kind !== 'run' || !d) return undefined;
+  const parts: string[] = [];
+  if (d.stanceTimeMs !== undefined) parts.push(`grondcontact ${formatNumberNL(d.stanceTimeMs, 0)} ms`);
+  if (d.stepLengthM !== undefined) parts.push(`pas ${formatNumberNL(d.stepLengthM, 2)} m`);
+  if (parts.length === 0) return undefined;
+  const line = parts.join(', ');
+  return `Loopvorm: ${line}`;
 }

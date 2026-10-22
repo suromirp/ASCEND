@@ -8,6 +8,8 @@ import { LegCalendar } from '../components/stand/LegCalendar';
 import { WeeklyLoadChart } from '../components/stand/WeeklyLoadChart';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentCard } from '../components/stand/DescentCard';
+import { RunTrendsCard } from '../components/stand/RunTrendsCard';
+import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { IndexCheckCard } from '../components/stand/IndexCheckCard';
 import { indexChecks } from '../engine/learning';
@@ -27,11 +29,13 @@ import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
 // folding: your legs now and ahead, the load per week, the intensity, the
-// descent and your main goal (engine/standing.ts).
+// descent, your running (Lopen: efficiency, long days, climbing and form, with
+// the card Tempo bij zone 2) and your main goal (engine/standing.ts).
 
 const SECTIONS = [
   { id: 'benen', label: 'Benen' },
   { id: 'belasting', label: 'Belasting' },
+  { id: 'lopen', label: 'Lopen' },
   { id: 'doel', label: 'Doel' },
 ] as const;
 
@@ -176,6 +180,11 @@ export function StandingPage() {
             <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}>›</span>
           </button>
         )}
+      </section>
+
+      <section ref={(el) => { refs.current.lopen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Lopen">
+        <RunTrendsCard />
+        <AerobicTrendCard />
       </section>
 
       <section ref={(el) => { refs.current.doel = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Doel">

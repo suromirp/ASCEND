@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData, type UndoRestore } from '../state/AppDataContext';
+import { RunInsightSettingsCard } from '../components/RunInsightSettings';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 import { BackupStatusLine, StorageProtectionCard, SnapshotsCard } from '../components/DataSafetyCards';
 import { ImportWizard } from '../components/ImportWizard';
@@ -645,6 +646,7 @@ export function SettingsPage() {
 
           <GroupSection id="overzichten">
             <OverviewSettingsCard />
+            <RunInsightSettingsCard />
             <Anchor id="geluid">
               <Card className="flex flex-col gap-3">
                 <Eyebrow>GELUID</Eyebrow>

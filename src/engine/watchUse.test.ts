@@ -17,9 +17,9 @@ describe('which watch data is used', () => {
 
   it('asks for wellness only while at least one of the three is on', () => {
     expect(wellnessWanted(DEFAULT_WATCH_USE)).toBe(true);
-    expect(wellnessWanted({ activities: true, sleep: false, restingHeartRate: false, hrv: false })).toBe(false);
-    expect(nothingWanted({ activities: false, sleep: false, restingHeartRate: false, hrv: false })).toBe(true);
-    expect(nothingWanted({ activities: false, sleep: false, restingHeartRate: true, hrv: false })).toBe(false);
+    expect(wellnessWanted({ activities: true, sleep: false, restingHeartRate: false, hrv: false, details: true })).toBe(false);
+    expect(nothingWanted({ activities: false, sleep: false, restingHeartRate: false, hrv: false, details: true })).toBe(true);
+    expect(nothingWanted({ activities: false, sleep: false, restingHeartRate: true, hrv: false, details: true })).toBe(false);
   });
 
   it('leaves out the fields that are switched off, and a record with nothing left', () => {
@@ -52,6 +52,6 @@ describe('the morning check-in with a kind switched off', () => {
   });
 
   it('shows nothing at all when all three are off', () => {
-    expect(todayWellness(today, filterRecovery([...metrics, night(today)], { activities: true, sleep: false, restingHeartRate: false, hrv: false }))).toBeUndefined();
+    expect(todayWellness(today, filterRecovery([...metrics, night(today)], { activities: true, sleep: false, restingHeartRate: false, hrv: false, details: true }))).toBeUndefined();
   });
 });

@@ -23,7 +23,6 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../component
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
-import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { SeasonCard } from '../components/SeasonCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { GoalTripNotes } from '../components/GoalTripNotes';
@@ -251,8 +250,6 @@ export function AscendPage() {
       )}
 
       <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doelen beheren</PrimaryButton>
-
-      <AerobicTrendCard />
 
       <StrengthProgressionCard logs={sessionLogs} />
 
