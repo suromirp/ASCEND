@@ -89,7 +89,7 @@ describe('a file that cannot be read', () => {
 
   it('says which weight columns it looked for when there is none', () => {
     // No weight column: not a weight file, so the general message comes.
-    const e = refused('Date,Calories,Protein\n2026-10-13,2400,180\n');
+    const e = refused('Date,Steps,Floors\n2026-10-13,9400,12\n');
     expect(e.message).toMatch(/niet de Workout Log van MacroFactor, en ook geen bestand met gewicht/);
     expect(e.message).toMatch(/of het gewicht/);
     expect(() => readMacroFactorWeightCsv('Date,Calories\n2026-10-13,2400\n')).toThrow(/geen kolom met gewicht/);
