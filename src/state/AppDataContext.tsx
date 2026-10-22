@@ -37,6 +37,7 @@ import {
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
 import { runBootUnderLock } from '../storage/bootLock';
+import { describeStorageError, describeWriteError } from '../storage/storageError';
 import { storageIsOpen, whenStorageOpen } from '../storage/lifecycle';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
@@ -273,15 +274,6 @@ import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine
 import { raceBlocks } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
 import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
-
-// Turns a failed IndexedDB open/read into something the user can act on.
-function describeStorageError(err: unknown): string {
-  const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen. Helpt dat niet, kies dan in je telefooninstellingen Apps, Chrome, Geforceerd stoppen; je gegevens blijven staan.';
-  if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
-  if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';
-  return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
-}
 
 interface AppData {
   loading: boolean;
@@ -585,10 +577,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // before the first write lands must not create a second log.
   const loggingInFlight = useRef(new Set<string>());
   const reportStorageError = useCallback((err: unknown) => {
-    const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-    setStorageNotice(name === 'QuotaExceededError'
-      ? 'Opslaan lukt niet: de opslag op dit toestel is vol. Maak een back-up en ruim ruimte op.'
-      : 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Meer, Gegevens.');
+    setStorageNotice(describeWriteError(err));
   }, []);
   const [plannerAdvice, setPlannerAdvice] = useState<Advice | null>(null);
   const [strengthProgramStrategies, setStrengthProgramStrategies] = useState<StrengthProgramStrategy[]>([]);
