@@ -36,6 +36,8 @@ import {
 } from '../storage/database';
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
+import { runBootUnderLock } from '../storage/bootLock';
+import { storageIsOpen, whenStorageOpen } from '../storage/lifecycle';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
 import { withWeekRepeated } from '../engine/repeatWeek';
@@ -97,32 +99,32 @@ const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefi
 // than 10 s (a tab frozen in the background), this window says so, with
 // Opnieuw proberen, instead of a black screen or a second run at the same time
 // (docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md).
-class BootLockBusy extends Error {
-  constructor() {
-    super('boot lock busy');
-    this.name = 'BootLockBusy';
-  }
-}
-function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
-  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-  if (!locks) return fn();
-  const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(10_000) : undefined;
-  return (locks.request('ascend-boot', signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
-    // Only the wait for the lock itself; an error from fn goes through as it is.
-    if (signal?.aborted && err === signal.reason) throw new BootLockBusy();
-    throw err;
-  });
-}
-
+// The lock is asked only while the page is in view, let go when it goes out of
+// view between two steps, and kept until a repair that went over its time is
+// really done (storage/bootLock.ts).
+// Resolves when the boot steps are really done, a slow repair included. The
+// planning sync waits for it, so it never writes the plan at the same time.
+let bootSettled: Promise<void> = Promise.resolve();
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= withBootLock(async () => {
-    const { skipped } = await runBootMigrations({ onStep: noteBootMigration });
-    if (skipped.length > 0) console.warn('Opstartstappen overgeslagen tot de volgende keer', skipped);
-  }).catch((err: unknown) => {
-    // Opnieuw proberen in the same page asks for the lock again.
-    bootMigrations = null;
-    throw err;
-  });
+  if (!bootMigrations) {
+    const { ready, settled } = runBootUnderLock({
+      locks: typeof navigator !== 'undefined' ? navigator.locks : undefined,
+      whenOpen: whenStorageOpen,
+      isOpen: storageIsOpen,
+      run: (shouldPause) => runBootMigrations({ onStep: noteBootMigration, shouldPause }),
+    });
+    bootSettled = settled;
+    bootMigrations = ready.then(
+      (skipped) => {
+        if (skipped.length > 0) console.warn('Opstartstappen overgeslagen tot de volgende keer', skipped);
+      },
+      (err: unknown) => {
+        // Opnieuw proberen in the same page asks for the lock again.
+        bootMigrations = null;
+        throw err;
+      },
+    );
+  }
   return bootMigrations;
 }
 
@@ -223,6 +225,9 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boo
   };
   return horizonQueue
     .run(async () => {
+      // A repair from the opening that went over its time may still write the
+      // plan (storage/bootLock.ts): first let it finish.
+      await bootSettled;
       if ((await currentKey()) === lastHorizonKey) return false;
       await prime?.();
       const result = await syncProgramHorizon();
@@ -1176,6 +1181,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // Once per page load, like the migrations.
         if (backgroundPlanningStarted) return;
         backgroundPlanningStarted = true;
+        // A repair from the opening that still runs writes the plan too: the
+        // background steps start when it is done (storage/bootLock.ts).
+        await bootSettled;
         // One after the other, never at once: the sync of today first, then
         // the steps below; each reads what the one before wrote, and each ends
         // in a refresh that runs the sync and its week check over the result

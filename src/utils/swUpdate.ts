@@ -52,7 +52,7 @@ export function startServiceWorkerUpdates(): void {
   started = true;
   trackUserInput();
 
-  const controller = createUpdateController({ now: () => Date.now(), isBusy: () => isAppBusy(), applyUpdate: applyUpdateNow });
+  const controller = createUpdateController({ now: () => Date.now(), isBusy: () => isAppBusy(), isVisible: () => document.visibilityState === 'visible', applyUpdate: applyUpdateNow });
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') controller.hidden();

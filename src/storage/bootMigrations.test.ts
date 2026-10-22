@@ -8,6 +8,10 @@ import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, type BootMigrationRecord } from '
 import { probeStorage } from './storageProbe';
 import { setPageLife, storageOpenFor, whenStorageOpen } from './lifecycle';
 
+// The repairs before the one under test, made instant: with a limit of a few
+// milliseconds a real repair on a busy test machine could go over it too.
+const quickRepairs = { syncGr5MilestoneDefinitions: async () => undefined, migrateStrengthProgramDefault: async () => undefined };
+
 async function countWrites<T>(fn: () => Promise<T>): Promise<string[]> {
   const writes: string[] = [];
   const spies = (['put', 'add', 'delete', 'clear'] as const).map((method) => {
@@ -71,7 +75,7 @@ describe('opstartstappen', () => {
   it('een herstelstap die blijft hangen houdt het openen niet tegen, en loopt de volgende keer weer', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const hangs = () => new Promise<never>(() => undefined);
-    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 50, overrides: { mergeDuplicateWeeklyPrescriptionLines: hangs } });
+    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 50, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: async () => undefined, normalizePlannedSessionWeeks: async () => undefined, mergeDuplicateWeeklyPrescriptionLines: hangs } });
     warn.mockRestore();
     expect(skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines']);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
@@ -133,7 +137,7 @@ describe('een onmisbare stap', () => {
   it('na een hangende herstelstap komen de andere herstelstappen pas de volgende keer', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const hangs = () => new Promise<never>(() => undefined);
-    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 20, overrides: { restorePatternSessionsRemovedByPrescription: hangs } });
+    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 20, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: hangs } });
     warn.mockRestore();
     expect(skipped).toEqual(['restorePatternSessionsRemovedByPrescription', 'normalizePlannedSessionWeeks', 'mergeDuplicateWeeklyPrescriptionLines']);
   });

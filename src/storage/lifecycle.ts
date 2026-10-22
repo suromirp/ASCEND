@@ -37,6 +37,10 @@ export function setPageLife(next: PageLife): void {
   }
 }
 
+export function storageIsOpen(): boolean {
+  return storageOpenFor(life);
+}
+
 // Resolves at once while the app is in view; otherwise when it is back.
 export function whenStorageOpen(): Promise<void> {
   if (storageOpenFor(life)) return Promise.resolve();

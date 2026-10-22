@@ -2,6 +2,36 @@ import { describe, it, expect } from 'vitest';
 import { createUpdateController, COLD_START_WINDOW_MS, AWAY_THRESHOLD_MS, RESUME_WINDOW_MS } from './updatePolicy';
 import { isAppBusy, noteUserInput, RECENT_INPUT_MS } from './appBusy';
 
+describe('automatisch bijwerken: nooit op de achtergrond', () => {
+  it('een tik terwijl de app verborgen is herlaadt niet; terug in beeld wel', () => {
+    let now = 1_000_000;
+    let applied = 0;
+    const controller = createUpdateController({ now: () => now, isBusy: () => false, applyUpdate: () => void applied++ });
+    controller.hidden();
+    now += 2_000;
+    controller.updateWaiting();
+    controller.tick();
+    expect(applied).toBe(0);
+    now += 1_000;
+    controller.visible();
+    expect(applied).toBe(1);
+  });
+
+  it('een pagina die verborgen begint, herlaadt pas als hij in beeld is', () => {
+    let now = 1_000_000;
+    let visible = false;
+    let applied = 0;
+    const controller = createUpdateController({ now: () => now, isBusy: () => false, isVisible: () => visible, applyUpdate: () => void applied++ });
+    now += 2_000;
+    controller.updateWaiting();
+    controller.tick();
+    expect(applied).toBe(0);
+    visible = true;
+    controller.tick();
+    expect(applied).toBe(1);
+  });
+});
+
 function setup(startBusy = false) {
   let now = 1_000_000;
   let busy = startBusy;
