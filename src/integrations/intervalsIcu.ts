@@ -465,3 +465,37 @@ export async function deleteWorkoutEvents(connection: IntervalsConnection, track
     true,
   );
 }
+
+// --- finding what ASCEND once sent -----------------------------------------------
+
+export interface AgendaEvent {
+  id: number;
+  externalId: string;
+  date: string;
+}
+
+export function eventsListUrl(athleteId: string, range: { from: string; to: string }): string {
+  return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/events?oldest=${range.from}&newest=${range.to}&category=WORKOUT`;
+}
+
+// The events in the agenda that ASCEND put there: a workout whose external_id
+// starts with "ascend:". Everything else in the answer is dropped on the spot,
+// so no caller can ever delete it.
+export async function fetchAscendEvents(
+  connection: IntervalsConnection,
+  range: { from: string; to: string },
+  options: FetchOptions = {},
+): Promise<AgendaEvent[]> {
+  const raw = await getJson(connection, (id) => eventsListUrl(id, range), options);
+  if (!Array.isArray(raw)) throw new IntervalsError('response', MESSAGES.response);
+  const out: AgendaEvent[] = [];
+  for (const e of raw as Record<string, unknown>[]) {
+    const id = eventIdOf(e);
+    const ext = e?.external_id;
+    if (id === undefined || typeof ext !== 'string' || !ext.startsWith(WATCH_EXTERNAL_PREFIX)) continue;
+    if (e.category !== undefined && e.category !== 'WORKOUT') continue;
+    const start = typeof e.start_date_local === 'string' ? e.start_date_local.slice(0, 10) : '';
+    out.push({ id, externalId: ext, date: start });
+  }
+  return out;
+}

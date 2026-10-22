@@ -40,6 +40,12 @@ export interface PlanChangeItem {
   // changed back or removed). It is not fixed in place and its length is not
   // fixed either: the phase decides again, like the restore path does.
   restore?: boolean;
+  // 'remove' only: the row goes off the plan entirely instead of becoming a
+  // skipped row. Only for a session a period placed itself (a tochtdag) and
+  // that goes with the period: it never was a training of yours, so nothing
+  // is left behind that could count as not done. Never set on a logged or
+  // past session (engine/leaveProposal.ts).
+  discard?: boolean;
   // Groep C, Fase 8 — puur informatief veld, nooit gelezen door
   // applyPlanChangeItems, alleen voor UI/audit: welke andere sessie(s) op
   // dezelfde datum staan als deze PAIR-plaatsing. Meervoud (niet

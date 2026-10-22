@@ -32,6 +32,9 @@ export interface DayLoad {
   hasTraining: boolean;
   // De training die het zwaarst is voor de benen, als die er is.
   legTemplate?: SessionTemplate;
+  // Een dag van een tocht: de wandeling die de tocht zelf plaatste. Tochtdagen
+  // liggen bewust aaneen, daar hoort geen waarschuwing over rust bij.
+  trekDay?: boolean;
 }
 
 export interface WeekProfileInputs extends Omit<LoadInputs, 'isRestWeek'> {
@@ -65,6 +68,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
     add(s.scheduledDate, byId.get(s.templateId));
   }
 
+  const trekDays = new Set(inputs.plannedSessions.filter((s) => s.leave?.role === 'placed' && s.status !== 'skipped').map((s) => s.scheduledDate));
   return weekDates(monday).map((date) => {
     const items = (week?.items ?? []).filter((i) => i.date === date);
     const legs = (templatesByDate.get(date) ?? []).filter(isLegHeavyTemplate);
@@ -74,6 +78,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
       minutes: items.reduce((n, i) => n + i.minutes, 0),
       hasTraining: items.length > 0,
       legTemplate: legs[0],
+      ...(trekDays.has(date) ? { trekDay: true } : {}),
     };
   });
 }
@@ -95,6 +100,29 @@ export function weekProgress(sessions: PlannedSession[], logs: SessionLog[], tem
   return { done, total };
 }
 
+// The time a week asks, at the top of Week: what is open at its planned
+// length, what is done at the length it actually took. A skipped training and
+// a rest day are no training time (Doorloop, punt 3). The same counting as
+// weekProgress: a skipped training is neither in the count nor in the minutes.
+export function weekMinutes(
+  sessions: PlannedSession[],
+  logs: SessionLog[],
+  templateById: Map<string, SessionTemplate>,
+  minutesOf: (s: PlannedSession, t: SessionTemplate) => number,
+): number {
+  const logged = new Map<string, number>();
+  for (const l of logs) if (l.plannedSessionId) logged.set(l.plannedSessionId, (logged.get(l.plannedSessionId) ?? 0) + l.durationMinutes);
+  let total = 0;
+  for (const s of sessions) {
+    const t = templateById.get(s.templateId);
+    if (!t || t.type === 'recovery') continue;
+    const done = logged.get(s.id);
+    if (done !== undefined) total += done;
+    else if (s.status !== 'skipped') total += minutesOf(s, t);
+  }
+  return total;
+}
+
 // --- de zin onder de kam ---------------------------------------------------------
 
 const NUMBER_WORDS = ['geen', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes'];
@@ -114,7 +142,7 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
   if (legs.length === 1) return `${heaviest} Eén zware beendag (${shortName(legs[0].legTemplate!)}), dus de benen hebben alle ruimte.`;
 
   // Per paar opeenvolgende beendagen: genoeg ruimte volgens de regel van de planner?
-  interface Pair { first: DayLoad; second: DayLoad; gap: number; need: number; intended: boolean }
+  interface Pair { first: DayLoad; second: DayLoad; gap: number; need: number; intended: boolean; trek: boolean }
   const pairs: Pair[] = [];
   for (let i = 1; i < legs.length; i++) {
     const first = legs[i - 1];
@@ -123,7 +151,9 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
       first, second,
       gap: daysBetween(first.date, second.date),
       need: legSpacingDays(first.legTemplate!, second.legTemplate!),
-      intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!),
+      // Two days of one tocht follow each other by design.
+      trek: !!first.trekDay && !!second.trekDay,
+      intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!) || (!!first.trekDay && !!second.trekDay),
     });
   }
   const names = (p: Pair) => `${shortName(p.first.legTemplate!)} en ${shortName(p.second.legTemplate!)}`;
@@ -147,5 +177,6 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
     return `${heaviest} Tussen ${names(regular)} ${between(regular)}, ${verdict}.`;
   }
   const intended = pairs[0];
+  if (pairs.every((p) => p.trek)) return `${heaviest} De tochtdagen liggen bewust achter elkaar.`;
   return `${heaviest} ${names(intended)} liggen bewust achter elkaar, op vermoeide benen.`;
 }

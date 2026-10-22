@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
+import { usePageState } from '../components/usePageState';
+import { useBackToClose } from '../utils/useBackToClose';
+import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
-import { dayLoads, weekProgress } from '../engine/weekProfile';
+import { dayLoads, weekMinutes, weekProgress } from '../engine/weekProfile';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import { ChevronIcon, MapIcon } from '../components/WeekIcons';
@@ -27,10 +30,14 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
+  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
-  const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
-  const [monthView, setMonthView] = useState(false);
+  // The chosen week and the year overview belong to this step in the history:
+  // to a training and back, the page is as you left it.
+  const [weekStart, setWeekStart] = usePageState('weekStart', mondayOfWeek(todayISO()));
+  const [monthView, setMonthView] = usePageState('monthView', false);
+  // The back button leaves the year overview first, then the page.
+  useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
@@ -47,16 +54,10 @@ export function WeekPage() {
   const repeat = program && weekStart >= mondayOfWeek(todayISO()) ? repeatState(program, weekStart) : undefined;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
-  // Sum of each planned session's target ('full' variant) duration — an
-  // at-a-glance weekly volume, not tied to whether a session is already
-  // logged. Mirrors History.tsx's own Trainingstijd stat in including every
-  // session type (recovery included), for the same "total time this week
-  // asks of you" reading.
-  const totalWeekMinutes = sessions.reduce((sum, s) => {
-    const template = templateById.get(s.templateId);
-    // A rest day is no training time.
-    return template && template.type !== 'recovery' ? sum + resolveVariantDuration(template, 'full', s.scheduledDate, program) : sum;
-  }, 0);
+  // The time this week asks: open trainings at their planned length, done ones
+  // at the length they took, a skipped training and a rest day not at all
+  // (engine/weekProfile.ts#weekMinutes).
+  const totalWeekMinutes = weekMinutes(sessions, sessionLogs, templateById, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program));
 
   // De bergkam: belasting per dag van deze week en van de week ervoor (engine/weekProfile.ts).
   const today = todayISO();
@@ -117,7 +118,7 @@ export function WeekPage() {
         <div className="flex flex-col items-center gap-1 text-center">
           <Eyebrow>{monthView ? 'Jaaroverzicht' : position ? `Week ${position.weekInProgram} · ${phaseName}` : 'Week'}</Eyebrow>
           {monthView && (
-            <button onClick={() => { setMonthView(false); window.scrollTo({ top: 0 }); }} className="min-h-[44px] text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={() => { setMonthView(false); scrollMainToTop(); }} className="min-h-[44px] text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
               Terug naar de week
             </button>
           )}
@@ -167,7 +168,7 @@ export function WeekPage() {
           onSelectWeek={(w) => {
             setWeekStart(mondayOfWeek(w));
             setMonthView(false);
-            window.scrollTo({ top: 0 });
+            scrollMainToTop();
           }}
         />
       ) : (
@@ -190,7 +191,7 @@ export function WeekPage() {
         <button
           onClick={() => {
             setMonthView((v) => !v);
-            window.scrollTo({ top: 0 });
+            scrollMainToTop();
           }}
           className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium"
           style={{ color: 'var(--color-ink-dim)' }}
@@ -288,6 +289,13 @@ export function WeekPage() {
           }}
           onSkip={() => {
             setPendingProposal(proposeSkip(selected.id));
+            setSelected(null);
+          }}
+          onBackOnPlan={() => {
+            // Fits on its day: back at once (undo in the notice); a clash asks first.
+            const proposal = proposeBackOnPlan(selected.id);
+            if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
+            else if (proposal.changes.length > 0) setPendingProposal(proposal);
             setSelected(null);
           }}
           onUndo={() => {

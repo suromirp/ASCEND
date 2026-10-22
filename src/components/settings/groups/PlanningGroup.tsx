@@ -1,4 +1,8 @@
+import { useState } from 'react';
 import { useAppData } from '../../../state/AppDataContext';
+import { ProposalSheet } from '../../ProposalSheet';
+import type { RestDayPlan } from '../../../engine/restDayProposal';
+import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
 import { CHOICES } from '../../../data/settingsChoices';
 import { SPORT_LABEL, type Sport } from '../../../engine/sports';
 import { SettingsSection } from '../SettingsList';
@@ -16,16 +20,29 @@ const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
 // Planning: je week, je sporten en hoe ASCEND plant. Alles wat de planning verandert gaat via
 // een voorstel met Akkoord of een melding met ongedaan maken (usePlanSettingChange).
 export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
-  const { settings, updateSettings, goalEngineConfig, refresh } = useAppData();
+  const { settings, updateSettings, goalEngineConfig, refresh, planRestDay, applyRestDay, planPreviewPass } = useAppData();
+  const [restPlan, setRestPlan] = useState<RestDayPlan | null>(null);
+  const [restNote, setRestNote] = useState<string | null>(null);
   const plan = usePlanSettingChange();
   const close = () => setSheet(null);
   const sport = SPORTS.find((s) => sheet === `sport-${s}`);
   const restDay = settings.restDay ?? 1;
 
+  // Een andere rustdag is altijd een voorstel met Akkoord (engine/restDayProposal.ts).
+  function chooseRestDay(day: number) {
+    if (restDay === day) return;
+    const plan = planRestDay(day);
+    if (plan.proposal.changes.length === 0) {
+      void applyRestDay(plan).then(() => setRestNote('Opgeslagen. Je planning hoefde niet te veranderen.'));
+      return;
+    }
+    setRestPlan(plan);
+  }
+
   return (
     <>
-      {plan.note && !sport && (
-        <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>
+      {(restNote || (plan.note && !sport)) && (
+        <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{restNote ?? plan.note}</p>
       )}
 
       <SettingsSection title="Mijn week">
@@ -58,13 +75,13 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceSheet<number>
           eyebrow="Planning"
           title="Rustdag"
-          line="Geldt vanaf vandaag."
+          line="Je ziet eerst wat er verschuift."
           options={REST_DAY_OPTIONS.map((d) => ({ value: d, label: WEEKDAYS_NL[d - 1] }))}
           value={restDay}
           advice={1}
-          onPick={(d) => void updateSettings({ restDay: d as 1 | 2 | 3 | 4 | 5 }).then(() => refresh())}
+          onPick={(d) => chooseRestDay(d)}
           onClose={close}
-          footer={<p className="st-hint" style={{ marginLeft: 0 }}>Wat je zelf verplaatste of afvinkte blijft staan. Het weekend blijft voor de lange trainingen.</p>}
+          footer={<p className="st-hint" style={{ marginLeft: 0 }}>Het geldt pas na Akkoord, ook deze week. Wat je zelf verplaatste of afvinkte blijft staan. Het weekend blijft voor de lange trainingen.</p>}
         />
       )}
       {sheet === 'rustdag-doen' && (
@@ -89,6 +106,32 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         />
       )}
       {plan.impact}
+      {restPlan && (
+        <ProposalSheet
+          advice={{
+            id: `restday:${restPlan.restDay}`,
+            trigger: 'plan_update',
+            ruleId: 'REST-DAY',
+            title: 'Zo ziet je planning eruit',
+            effect: restPlan.proposal.consequences,
+            why: restPlan.proposal.explanation,
+            priority: 0,
+            proposal: restPlan.proposal,
+          }}
+          eyebrow={`Rustdag · ${WEEKDAYS_NL[restPlan.restDay - 1]}`}
+          previewPass={(sessions) => planPreviewPass(sessions, undefined, restPlan.restDay)}
+          leave={settings.leavePeriods}
+          notes={['Wat je zelf verplaatste of al afvinkte, je tochten en een test of wedstrijd die je vastzette.']}
+          listUntil={addDays(mondayOfWeek(todayISO()), 13)}
+          onRespond={async (response) => {
+            if (response === 'accepted') {
+              await applyRestDay(restPlan);
+              setRestNote('Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.');
+            } else setRestNote('Je rustdag en je planning blijven zoals ze waren.');
+          }}
+          onClose={() => setRestPlan(null)}
+        />
+      )}
     </>
   );
 }

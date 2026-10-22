@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import type { SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
+import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { todayISO } from '../utils/dates';
@@ -17,6 +17,7 @@ import { CheckGlyph } from './vandaag/glyphs';
 import type { MissionChip } from '../engine/missionFacts';
 import { WeatherLine } from './WeatherLine';
 import { ClothingAdvice } from './ClothingAdvice';
+import { WatchStatusRow } from './WatchStatusRow';
 
 const LINK = 'inline-flex min-h-[44px] items-center text-sm font-medium';
 
@@ -40,6 +41,7 @@ export function TodayMissionCard({
   originalDate,
   coachLine,
   weatherSlot,
+  session,
 }: {
   template: SessionTemplate;
   fullDuration: number;
@@ -60,6 +62,8 @@ export function TodayMissionCard({
   coachLine?: string;
   // Hier komt de weerregel (WeatherLine) tussen de coachregel en de knop.
   weatherSlot?: ReactNode;
+  // De geplande training zelf: voor de regel over het horloge.
+  session?: PlannedSession;
 }) {
   const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -99,6 +103,7 @@ export function TodayMissionCard({
         )}
         {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-3" />}
         <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
+        {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
       </div>
 
       <WarmupRow template={template} />

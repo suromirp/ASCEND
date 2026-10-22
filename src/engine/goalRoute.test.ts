@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { GoalRequirement } from '../models/goals';
-import { typicalDayValue, averageDayValue, hasTrainingDay, routeDayParts, isMultiDayGoal, normalizeRouteRequirements, estimatedHikingMinutes, routeGoalComplete } from './goalRoute';
+import { goalTiming, typicalDayValue, averageDayValue, hasTrainingDay, routeDayParts, isMultiDayGoal, normalizeRouteRequirements, estimatedHikingMinutes, routeGoalComplete } from './goalRoute';
 
 const trip = (days?: number): GoalRequirement[] => [
   { id: 'd', kind: 'distance', scope: 'TOTAL_EVENT', target: { amount: 600, unit: 'km' }, discipline: 'hiking' },
@@ -82,5 +82,25 @@ describe('gemiddelde loopdag vs. trainingsdag', () => {
   it('without a training day there is nothing to show for it', () => {
     expect(hasTrainingDay(trip(30))).toBe(false);
     expect(routeDayParts(trip(30), 'training')).toEqual([]);
+  });
+});
+
+describe('goalTiming: voor, tijdens en na een doel (Doorloop, punt 10)', () => {
+  const goal = { targetDate: '2027-08-01', requirements: trip(30) };
+  it('telt af tot de start', () => {
+    expect(goalTiming(goal, '2027-07-20')).toEqual({ state: 'ahead', weeksLeft: 2 });
+  });
+  it('is onderweg vanaf de eerste dag tot en met de laatste', () => {
+    expect(goalTiming(goal, '2027-08-01')).toEqual({ state: 'underway', day: 1, days: 30 });
+    expect(goalTiming(goal, '2027-08-02')).toEqual({ state: 'underway', day: 2, days: 30 });
+    expect(goalTiming(goal, '2027-08-30')).toEqual({ state: 'underway', day: 30, days: 30 });
+  });
+  it('is voorbij daarna, en een wedstrijd van een dag de dag erna', () => {
+    expect(goalTiming(goal, '2027-08-31')).toEqual({ state: 'past' });
+    expect(goalTiming({ targetDate: '2027-03-20', requirements: [] }, '2027-03-21')).toEqual({ state: 'past' });
+    expect(goalTiming({ targetDate: '2027-03-20', requirements: [] }, '2027-03-20')).toEqual({ state: 'underway', day: 1, days: 1 });
+  });
+  it('zonder datum telt hij niet af', () => {
+    expect(goalTiming({ requirements: [] }, '2027-03-21')).toEqual({ state: 'undated' });
   });
 });

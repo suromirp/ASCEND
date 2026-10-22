@@ -60,8 +60,8 @@ const ACTION_LABEL: Record<CategoryAction, string> = {
 
 export function ImportWizard({ onClose }: { onClose: () => void }) {
   const { refresh } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
   const [step, setStep] = useState<Step>({ kind: 'picking' });
+  const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying' && step.kind !== 'undoing');
 
   // Runs exactly once on mount — the wizard only ever opens because the
   // user just asked to import, so going straight to the file picker (rather

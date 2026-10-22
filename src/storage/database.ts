@@ -18,19 +18,23 @@ import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
-import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
+import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
+import { strayTrekRows } from '../engine/leaveStrays';
+import { relayoutForRestDay } from '../engine/restDayProposal';
 import { TENT_PACK_KG, packMilestoneUpdate, packWeightOf, programPackGoal, programPackTarget } from '../engine/gr5Profile';
 import { makeId } from '../utils/id';
+import { whenStorageOpen } from './lifecycle';
+import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
 import type { JourneyState } from '../engine/journey';
 import type { PackListState } from '../engine/packList';
 
@@ -99,7 +103,15 @@ interface AscendDB extends DBSchema {
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
 
-export function getDB(): Promise<IDBPDatabase<AscendDB>> {
+// While the app is out of view (or frozen), no new transaction starts: a frozen
+// ASCEND with an open transaction would hold the storage for every other
+// ASCEND (storage/lifecycle.ts). The caller simply waits until it is back.
+export async function getDB(): Promise<IDBPDatabase<AscendDB>> {
+  await whenStorageOpen();
+  return openDatabase();
+}
+
+function openDatabase(): Promise<IDBPDatabase<AscendDB>> {
   if (!dbPromise) {
     dbPromise = openDB<AscendDB>(DB_NAME, DB_VERSION, {
       // Guarded with objectStoreNames.contains(...) on every store — this
@@ -543,9 +555,26 @@ export interface AppSettings {
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
+  // The line about the watch on a training ("Verstuurd naar je horloge om
+  // 19.04", or the offer to link) and the small watch mark in the Week list
+  // (only for sent or failed). Absent = on. Optional and additive.
+  showWatchStatus?: boolean;
+  showWatchStatusOnWeek?: boolean;
+  // What goes before the name of a training sent to the watch: "ASC " (short,
+  // absent = short), "ASCEND \u00b7 " (long) or nothing. Unless none, the
+  // description starts with a dated line. Optional and additive.
+  watchNamePrefix?: 'short' | 'long' | 'none';
+  // Take a done or past training out of the intervals.icu agenda at the next
+  // round. Absent = on. Optional and additive.
+  watchRemoveDone?: boolean;
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';
+  // After the main goal (engine/programLayout.ts#planEndDay): 'stop' (absent =
+  // stop) plans nothing during and after it until you choose a new goal;
+  // 'maintain' plans maintenance weeks once the trip is over. During the trip
+  // itself nothing is planned either way. Optional and additive.
+  afterMainGoal?: 'stop' | 'maintain';
   // Kennisbank: what you marked as read and this week's lesson
   // (engine/weeklyLesson.ts). Optional and additive; travels in an export.
   knowledge?: { read?: string[]; week?: { weekStart: string; topicId: string } };
@@ -597,6 +626,13 @@ export interface AppSettings {
   // so older settings and backups need no migration step; travels with the
   // settings in a backup and is read defensively on import.
   clothingAdjust?: ClothingAdjust;
+  // What the back button does on a tab ('today': to Vandaag first, 'previous':
+  // to the tab before) and for how many minutes after a restart the app opens
+  // where you were (0 = never). Absent = the advice (engine/navigationSettings.ts).
+  // Optional and additive; travels in a backup, where only valid values are kept
+  // (storage/migrations.ts#cleanNavigationSettings).
+  tabBack?: 'today' | 'previous';
+  resumeMinutes?: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -991,7 +1027,8 @@ async function patternContext(templates: SessionTemplate[], selectPattern?: (tem
     // A hike only replaces a session when the caller's pattern would plan
     // it too (hike templates have no weekday of their own, hence the probe).
     swaps: activeSwaps(templates, settings, (t) => isTemplatePlannable(t, enabledSports) && (!selectPattern || selectPattern([{ ...t, defaultDayOfWeek: 7 }]).length > 0)),
-    anchor: programAnchorDate(goals, milestones, todayISO()),
+    // The plan ends on the main goal's day, also during and after it.
+    anchor: planEndDay(goals, milestones, todayISO(), settings.afterMainGoal),
     overrides: settings.programPhaseOverrides,
     packTarget: programPackTarget(goals, milestones),
   };
@@ -1076,8 +1113,16 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   if (phasesChanged || program.packTargetKg !== next.packTargetKg) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const proposals = await PlanChangeProposalsRepo.getAll();
+  // Tochtdagen an older version left behind as skipped rows when a tocht was
+  // changed or removed (engine/leaveStrays.ts): off the plan, never a logged one.
+  const strays = new Set(strayTrekRows(sessions, proposals, logs));
+  if (strays.size > 0) {
+    for (const id of strays) await PlannedSessionsRepo.delete(id);
+    sessions.splice(0, sessions.length, ...sessions.filter((s) => !strays.has(s.id)));
+  }
   // Test runs the weekly prescription wrongly took out come back first.
-  const revived = revivePrescriptionRemovedTests(sessions, await PlanChangeProposalsRepo.getAll(), logged, today);
+  const revived = revivePrescriptionRemovedTests(sessions, proposals, logged, today);
   if (revived.length > 0) {
     for (const r of revived) await PlannedSessionsRepo.put(r);
     const byId = new Map(revived.map((r) => [r.id, r]));
@@ -1107,22 +1152,13 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   const settings = await SettingsRepo.get();
   const appliedRestDay = (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
   const wantedRestDay = settings.restDay ?? 1;
+  // Normally the rest day is laid out by its own proposal with Akkoord
+  // (engine/restDayProposal.ts), which stores appliedRestDay with it; this is
+  // only for a rest day stored some other way (older data).
   if (appliedRestDay !== wantedRestDay) {
-    const newDay = patternDays(templates, settings, wantedRestDay);
     const swappedById = new Map(swapped.map((x) => [x.id, x]));
-    for (const s of sessions) {
-      if (!open(s) || removedIds.has(s.id) || s.status === 'moved' || s.lock || s.leave) continue;
-      const current = swappedById.get(s.id) ?? s;
-      const to = newDay.get(patternSlotOf(current.templateId));
-      if (!to || isoWeekday(s.scheduledDate) === to) continue;
-      const date = addDays(mondayOfWeek(s.scheduledDate), to - 1);
-      if (date < today || (ctx.anchor && date >= ctx.anchor)) continue;
-      // A leg swap starts over: no marker, and the full length again.
-      const { raceBlock: mark, ...rest } = current;
-      const fresh: PlannedSession = { ...rest, scheduledDate: date, weekStartDate: mondayOfWeek(date) };
-      if (mark?.short) delete fresh.plannedMinutes;
-      swappedById.set(s.id, fresh);
-    }
+    const current = sessions.filter((s) => !removedIds.has(s.id)).map((s) => swappedById.get(s.id) ?? s);
+    for (const fresh of relayoutForRestDay(current, { today, anchor: ctx.anchor, logged, slotDays: patternDays(templates, settings, wantedRestDay) })) swappedById.set(fresh.id, fresh);
     swapped.splice(0, swapped.length, ...swappedById.values());
     await MetaRepo.set('appliedRestDay', wantedRestDay);
   }
@@ -1234,6 +1270,9 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
     // 'settings' collapses onto 'meta' — dedupe in case both were present.
     .filter((v, i, arr) => arr.indexOf(v) === i);
   if (storeNames.length === 0) return;
+  // Put-back data has not been through the opening steps yet: forget that they
+  // ran, so the next opening runs them over it (storage/bootMigrations.ts).
+  if (!storeNames.includes('meta')) storeNames.push('meta');
 
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
@@ -1256,6 +1295,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   for (const [key, value] of Object.entries(writes.meta ?? {})) {
     ops.push(tx.objectStore('meta').put(value, key));
   }
+  ops.push(tx.objectStore('meta').delete(BOOT_MIGRATIONS_KEY));
 
   await Promise.all([...ops, tx.done]);
 }

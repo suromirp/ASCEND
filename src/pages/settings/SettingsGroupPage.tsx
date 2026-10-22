@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../../components/icons';
 import { SettingsJumpContext } from '../../components/settings/jumpContext';
@@ -44,10 +44,6 @@ function GroupPageInner({ id }: { id: SettingsPageId }) {
   const [sheet, setSheet] = useState<string | null>(jump.openSheet && jump.jumpTo ? jump.jumpTo : null);
   const Content = GROUPS[id] ?? Soon;
 
-  // Een nieuwe pagina begint bovenaan, tenzij er een rij is om naartoe te springen.
-  useEffect(() => {
-    if (!jump.jumpTo) document.querySelector('main')?.scrollTo({ top: 0 });
-  }, [jump.jumpTo]);
   useFlashOnMount(jump.jumpTo);
 
   return (

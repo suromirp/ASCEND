@@ -33,7 +33,8 @@ import { goalPlanRole, isRaceGoal, RACE_BLOCK_WEEKS } from '../engine/raceBlock'
 import { formatRaceTime, predictRace, predictionRange, TEST_NOISE } from '../engine/racePrediction';
 import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
-import { eventDaysRequirement, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
+import { eventDaysRequirement, goalTiming, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
+import { usePageState } from '../components/usePageState';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -90,7 +91,7 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 export function AscendPage() {
   const { sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
-  const [showLadder, setShowLadder] = useState(false);
+  const [showLadder, setShowLadder] = usePageState('showLadder', false);
   const [splitOpen, setSplitOpen] = useState(false);
   // Archiving (below) sets status:'archived' in place rather than removing
   // the row, so every "find the live goal" lookup here must exclude it —
@@ -125,11 +126,15 @@ export function AscendPage() {
   const selectedDetail = selectedMilestone ? getGR5MilestoneDetail(selectedMilestone.definition.order) : undefined;
 
   const navigate = useNavigate();
-  const weeksLeft = goal?.targetDate ? Math.max(0, Math.ceil(daysBetween(todayISO(), goal.targetDate) / 7)) : undefined;
+  // Ahead, underway (day N of the trip) or past (engine/goalRoute.ts#goalTiming).
+  const timing = goal ? goalTiming(goal, todayISO()) : undefined;
+  const counting = !timing || timing.state === 'ahead' || timing.state === 'undated';
   const marathonDate = marathonGoal?.targetDate ?? settings.marathonTargetDate;
+  // A goal whose day has gone is not one you are on your way to any more.
+  const notPast = (g: { targetDate?: string; requirements: TrainingGoal['requirements'] }) => goalTiming(g, todayISO()).state !== 'past';
   const otherGoals = [
-    ...(marathonGoal && marathonGoal.status === 'active' ? [{ id: marathonGoal.id, name: marathonGoal.name, date: marathonDate }] : []),
-    ...customGoals.filter((g) => g.status === 'active').map((g) => ({ id: g.id, name: g.name, date: g.targetDate })),
+    ...(marathonGoal && marathonGoal.status === 'active' && notPast({ targetDate: marathonDate, requirements: marathonGoal.requirements }) ? [{ id: marathonGoal.id, name: marathonGoal.name, date: marathonDate }] : []),
+    ...customGoals.filter((g) => g.status === 'active' && notPast(g)).map((g) => ({ id: g.id, name: g.name, date: g.targetDate })),
   ];
 
   // Ascend is the overview: where you stand toward your goal. Setting goals
@@ -149,7 +154,9 @@ export function AscendPage() {
           <p className="mt-1 font-display text-3xl" style={{ color: 'var(--color-ink)' }}>{goal.name}</p>
           <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
             {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
-            {weeksLeft !== undefined && <span style={{ color: 'var(--color-gold)' }}>nog {weeksLeft} {weeksLeft === 1 ? 'week' : 'weken'}</span>}
+            {timing?.state === 'ahead' && <span style={{ color: 'var(--color-gold)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
+            {timing?.state === 'underway' && <span style={{ color: 'var(--color-gold)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
+            {timing?.state === 'past' && <span style={{ color: 'var(--color-ink-dim)' }}>voorbij</span>}
           </div>
           <div className="mt-2"><RouteLine goal={goal} /></div>
         </div>
@@ -161,9 +168,23 @@ export function AscendPage() {
         </Card>
       )}
 
-      {gr5 && <Gr5ReadinessCard readiness={gr5} />}
+      {gr5 && counting && <Gr5ReadinessCard readiness={gr5} />}
 
-      {goal?.targetDate && goal.status === 'active' && <OnCourseCard goalName={goal.name} goalDate={goal.targetDate} />}
+      {goal?.targetDate && goal.status === 'active' && counting && <OnCourseCard goalName={goal.name} goalDate={goal.targetDate} />}
+
+      {goal && (timing?.state === 'underway' || timing?.state === 'past') && (
+        <Card className="flex flex-col gap-2">
+          <Eyebrow>{timing.state === 'underway' ? 'ONDERWEG' : 'ACHTER JE'}</Eyebrow>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+            {timing.state === 'underway'
+              ? `Je bent onderweg op de ${goal.name}. Tijdens de tocht plant ASCEND geen training: de tocht is de training.`
+              : settings.afterMainGoal === 'maintain'
+                ? `De ${goal.name} ligt achter je. ASCEND plant onderhoudsweken tot je een nieuw doel kiest of dit doel op behaald zet.`
+                : `De ${goal.name} ligt achter je. Na je hoofddoel plant ASCEND geen training meer, tot je een nieuw doel kiest of dit doel op behaald zet.`}
+          </p>
+          <SecondaryButton onClick={() => navigate('/ascend/doelen')}>Naar je doelen</SecondaryButton>
+        </Card>
+      )}
 
       {progress && goal && progress.currentMilestone && !showLadder && (
         <Card className="flex flex-col gap-2">
@@ -682,7 +703,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
 // its targetDate), from where its own dedicated card (GR5/Marathon) or
 // the custom-goals list above picks it back up, ready for a new date.
 function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUnarchive: (goalId: string) => void }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = usePageState('archivedGoalsOpen', false);
   if (goals.length === 0) return null;
 
   return (

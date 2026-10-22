@@ -55,8 +55,8 @@ export function StrengthProgramWizard({
   onActivated?: () => void;
 }) {
   const { templates, plannedSessions, goalEngineConfig, goalOverviews, program, activateStrengthProgram } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
   const [step, setStep] = useState<Step>({ kind: 'sessions', draft: initialStrategy });
+  const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying');
 
   const strengthTemplates = useMemo(() => templates.filter((t) => t.type === 'strength'), [templates]);
 

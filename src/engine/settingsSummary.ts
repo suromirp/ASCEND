@@ -20,6 +20,7 @@ import { readClothingAdjust } from './clothingFeedback';
 import { backupAge, backupAgoText } from './settingsAttention';
 import { shortGoalName } from './settingsStatus';
 import { MIN_LOGS_TO_LEARN } from './durationLearning';
+import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { formatNumberNL } from '../utils/number';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -199,6 +200,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
         : { value: 'Buiten het programma', dim: true };
     case 'lange-zondag':
       return { value: choiceShort('langeZondag', s.longSundaySession ?? 'hike'), hidden: !f.longSundayVisible };
+    case 'na-hoofddoel':
+      return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'rust-na-tocht':
@@ -276,6 +279,10 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       const c = clothingValue(f);
       return { value: c.value, auto: c.auto, dim: !c.auto, hidden: !o.clothingAdvice };
     }
+    case 'terugknop':
+      return { value: choiceShort('terugknop', resolveNavigation(s).tabBack) };
+    case 'hervatten':
+      return { value: resumeLabel(resolveNavigation(s).resumeMinutes), dim: resolveNavigation(s).resumeMinutes === 0 };
     case 'citaten':
       return { checked: o.completionMoment };
     case 'geluid':
@@ -300,6 +307,14 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: f.watch?.use.hrv !== false, hidden: !watchOn };
     case 'naar-horloge':
       return { checked: !!f.watch?.sendEnabled, hidden: !watchOn };
+    case 'horloge-voorvoegsel':
+      return { value: choiceShort('voorvoegsel', s.watchNamePrefix ?? 'short'), hidden: !watchOn };
+    case 'horloge-gedaan-weghalen':
+      return { checked: s.watchRemoveDone !== false, hidden: !watchOn };
+    case 'horloge-status':
+      return { checked: s.showWatchStatus !== false, hidden: !watchOn };
+    case 'horloge-status-week':
+      return { checked: s.showWatchStatusOnWeek !== false, hidden: !watchOn };
     case 'macrofactor':
       return f.macroFactor?.readAt
         ? { title: 'Laatste export', value: shortDate(f.macroFactor.readAt.slice(0, 10)) }

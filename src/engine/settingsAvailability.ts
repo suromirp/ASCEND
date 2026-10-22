@@ -30,6 +30,10 @@ const REASON: Record<string, string> = {
   rusthartslag: GARMIN_OFF,
   hrv: GARMIN_OFF,
   'naar-horloge': GARMIN_OFF,
+  'horloge-voorvoegsel': GARMIN_OFF,
+  'horloge-gedaan-weghalen': GARMIN_OFF,
+  'horloge-status': GARMIN_OFF,
+  'horloge-status-week': GARMIN_OFF,
   'macrofactor-leidend': MACROFACTOR_OFF,
   'macrofactor-gewicht': MACROFACTOR_OFF,
 };

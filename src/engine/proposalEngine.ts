@@ -252,6 +252,11 @@ export function applyPlanChangeItems(
           unsupported.push(item);
           break;
         }
+        // A session a period placed itself goes with the period: off the plan.
+        if (item.discard) {
+          next = next.filter((s) => s.id !== item.plannedSessionId);
+          break;
+        }
         next = next.map((s) => (s.id === item.plannedSessionId ? withLeave({ ...s, status: 'skipped', ...locked }, item) : s));
         break;
       }

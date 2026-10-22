@@ -10,7 +10,7 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui'
 import { useAppData } from '../state/AppDataContext';
 import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sports';
 import { getModalities, isCyclingModality } from '../data/modalities';
-import { weekdayShortNL, formatDateNL } from '../utils/dates';
+import { weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
 import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
 import { WarmupRow } from './WarmupRow';
@@ -32,6 +32,7 @@ export function SessionActionSheet({
   suggestions = [],
   onPickSuggestion,
   onDoneAsPlanned,
+  onBackOnPlan,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -48,6 +49,8 @@ export function SessionActionSheet({
   onPickSuggestion?: (suggestion: MoveSuggestion) => void;
   // One tap with the plan's own minutes (engine/asPlanned.ts).
   onDoneAsPlanned?: () => void;
+  // "Toch doen": a skipped training back on its own day (only from today on).
+  onBackOnPlan?: () => void;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -64,6 +67,8 @@ export function SessionActionSheet({
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
   const { closing, requestClose } = useSheetClose(onClose);
+  const skipped = session.status === 'skipped';
+  const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= todayISO();
 
   if (completedLog) {
     return (
@@ -174,6 +179,15 @@ export function SessionActionSheet({
               )}
             </div>
 
+            {skipped && (
+              <div className="mt-5">
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                  {canComeBack ? 'Overgeslagen. Wil je hem toch doen, dan zet ASCEND hem terug op deze dag.' : 'Overgeslagen. Die dag is al voorbij; kies hieronder een dag die nog komt.'}
+                </p>
+                {canComeBack && <SecondaryButton onClick={onBackOnPlan} className="mt-2 w-full">Toch doen</SecondaryButton>}
+              </div>
+            )}
+
             <div className="mt-5">
               <MoveSuggestions
                 sessionDate={session.scheduledDate}
@@ -181,7 +195,8 @@ export function SessionActionSheet({
                 suggestions={suggestions}
                 onPick={(sug) => onPickSuggestion?.(sug)}
                 onPickDate={onMove}
-                onSkip={onSkip}
+                onSkip={skipped ? undefined : onSkip}
+                onSameDay={canComeBack ? onBackOnPlan : undefined}
               />
             </div>
 

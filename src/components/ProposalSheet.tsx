@@ -52,9 +52,12 @@ export interface ProposalSheetProps {
   eyebrow?: string;
   // Shown when the proposal changes nothing.
   emptyText?: string;
+  // A change over many weeks (another rest day): only the lines up to this
+  // date are listed, the rest is counted in one sentence.
+  listUntil?: string;
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, eyebrow = 'VOORSTEL', emptyText }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, eyebrow = 'VOORSTEL', emptyText, listUntil }: ProposalSheetProps) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   const planPreviewPass = previewPass ?? contextPass;
   const { closing, requestClose } = useSheetClose(onClose);
@@ -64,6 +67,9 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
   const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass, leave) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates, planPreviewPass, leave]);
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
+  const listed = listUntil ? data.moves.filter((m) => (m.from ?? m.to ?? '') <= listUntil) : data.moves;
+  // Counted from the proposal's own items, so the total is the real number of changes.
+  const later = listUntil && chosen ? chosen.changes.filter((c) => c.action !== 'keep' && (c.fromDate ?? c.toDate ?? '') > listUntil).length : 0;
   const today = todayISO();
   const fatigueInputs = useLegFatigueInputs();
   // A test or race this proposal moves: how fresh the legs are there, now and after.
@@ -150,7 +156,12 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {data.moves.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2.5 rounded-xl border p-3.5" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-                  {data.moves.map((m, i) => <MoveLine key={i} move={m} />)}
+                  {listed.map((m, i) => <MoveLine key={i} move={m} />)}
+                  {later > 0 && (
+                    <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                      {listed.length > 0 ? 'En nog' : 'In de weken daarna'} <span className="tabular-nums">{later}</span> {later === 1 ? 'wijziging' : 'wijzigingen'}{listed.length > 0 ? ' in de weken daarna' : ''}, steeds op dezelfde manier.
+                    </p>
+                  )}
                 </div>
               )}
 

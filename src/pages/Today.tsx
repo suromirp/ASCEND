@@ -22,8 +22,6 @@ import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
-import { StretchMenuButton } from '../components/StretchMenuButton';
-import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { StandSummaryCard } from '../components/StandSummaryCard';
 import { MorningCheckInCard } from '../components/MorningCheckInCard';
@@ -55,9 +53,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { goalTiming } from '../engine/goalRoute';
 
 export function TodayPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -128,6 +127,11 @@ export function TodayPage() {
   const quote = dailyQuote(today);
   // On a holiday day (engine/leave.ts) the empty day says so.
   const onHoliday = leaveLabelOn(today, leavePeriods)?.kind === 'off';
+  // During and after the main goal nothing is planned (engine/programLayout.ts#planEndDay): say why.
+  const mainGoal = trainingGoals.find((g) => g.status === 'active' && goalMilestones.some((m) => m.goalId === g.id));
+  const timingNow = mainGoal ? goalTiming(mainGoal, today) : undefined;
+  // With maintenance weeks after the goal (AppSettings.afterMainGoal) the days after it are ordinary days.
+  const mainTiming = timingNow?.state === 'past' && settings.afterMainGoal === 'maintain' ? undefined : timingNow;
 
   // A clean move (nothing else has to shift) applies at once, with undo
   // in the notice; anything that pushes another session asks first.
@@ -220,9 +224,8 @@ export function TodayPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-3">
-      {/* Het tandwiel staat in de rij erboven (App.tsx); de twee knoppen staan
-          rechts in deze regel, recht onder het tandwiel, zodat de weekregel op
-          één regel past. */}
+      {/* Timer, rekken en het tandwiel staan samen in de rij erboven, naast het
+          logo (App.tsx, TodayTopButtons); deze regel heeft de hele breedte. */}
       <header className="flex min-h-[44px] items-start justify-between gap-3">
         <div className="min-w-0 pt-0.5">
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
@@ -231,10 +234,6 @@ export function TodayPage() {
               Week {position.weekInProgram} · {position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <TimerButton />
-          <StretchMenuButton />
         </div>
       </header>
 
@@ -254,6 +253,7 @@ export function TodayPage() {
 
       {primary && primaryTemplate && mission ? (
         <TodayMissionCard
+          session={primary}
           template={primaryTemplate}
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
@@ -295,8 +295,12 @@ export function TodayPage() {
         />
       ) : (
         <QuietDayCard
-          title={onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
-          body={onHoliday
+          title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
+          body={mainTiming?.state === 'underway'
+            ? 'De tocht is de training. ASCEND plant tot het eind niets.'
+            : mainTiming?.state === 'past'
+              ? 'Na je hoofddoel plant ASCEND geen training meer. Kies een nieuw doel bij Ascend, of zet dit doel op behaald.'
+            : onHoliday
             ? 'Je bent vrij. Er staat niets op de planning.'
             : allTodayDone
               ? illness
@@ -434,6 +438,12 @@ export function TodayPage() {
           }}
           onSkip={() => {
             handleSkip(actionSheetSession.id);
+            setActionSheetSession(null);
+          }}
+          onBackOnPlan={() => {
+            const proposal = proposeBackOnPlan(actionSheetSession.id);
+            if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
+            else if (proposal.changes.length > 0) setPendingProposal(proposal);
             setActionSheetSession(null);
           }}
           onUndo={() => {

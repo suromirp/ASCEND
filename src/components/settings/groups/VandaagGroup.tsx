@@ -1,6 +1,7 @@
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
+import { resolveNavigation } from '../../../engine/navigationSettings';
 import { SettingsSection } from '../SettingsList';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
@@ -14,6 +15,7 @@ export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
   const o = resolveOverviews(settings.overviews);
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte blijft ontbreken en betekent dus de standaard.
   const set = (patch: Partial<OverviewSettings>) => void updateSettings({ overviews: { ...settings.overviews, ...patch } });
+  const nav = resolveNavigation(settings);
   const close = () => setSheet(null);
 
   return (
@@ -38,6 +40,13 @@ export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
       </SettingsSection>
 
+      <SettingsSection title="Terugknop">
+        <SummaryRow id="terugknop" title="Terugknop op een tab" facts={facts} onClick={() => setSheet('terugknop')} />
+        <SummaryRow id="hervatten" title="Na een herstart" facts={facts} onClick={() => setSheet('hervatten')} />
+      </SettingsSection>
+
+      {sheet === 'terugknop' && <ChoiceFromDef def={CHOICES.terugknop} value={nav.tabBack} onPick={(v) => void updateSettings({ tabBack: v })} onClose={close} />}
+      {sheet === 'hervatten' && <ChoiceFromDef def={CHOICES.hervatten} value={nav.resumeMinutes as 0 | 60 | 120 | 240 | 480} onPick={(v) => void updateSettings({ resumeMinutes: v })} onClose={close} />}
       {sheet === 'weekterugblik-dag' && <ChoiceFromDef def={CHOICES.terugblikDag} value={o.weekReviewDay} onPick={(v) => set({ weekReviewDay: v })} onClose={close} />}
       {sheet === 'weerplaats' && <PlaceSheet onClose={close} />}
       {sheet === 'kleding-voorkeur' && <ClothingSheet onClose={close} />}

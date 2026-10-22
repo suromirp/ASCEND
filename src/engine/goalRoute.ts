@@ -34,6 +34,25 @@ export function eventDaysRequirement(requirements: GoalRequirement[]): GoalRequi
   return requirements.find((r) => r.kind === 'eventDays');
 }
 
+// Where you stand in time toward a goal: still ahead (weeks to go), underway
+// (day N of the trip, from its first day through its last), or past. A goal
+// of one day (a race) is underway on its own day only. Never "nog 0 weken"
+// during the trip or a past race as a coming goal (Doorloop, punt 10).
+export type GoalTiming =
+  | { state: 'ahead'; weeksLeft: number }
+  | { state: 'underway'; day: number; days: number }
+  | { state: 'past' }
+  | { state: 'undated' };
+
+export function goalTiming(goal: { targetDate?: string; requirements: GoalRequirement[] }, today: string): GoalTiming {
+  if (!goal.targetDate) return { state: 'undated' };
+  const daysUntil = Math.round((Date.parse(`${goal.targetDate}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
+  if (daysUntil > 0) return { state: 'ahead', weeksLeft: Math.ceil(daysUntil / 7) };
+  const days = Math.max(1, Math.round(eventDaysRequirement(goal.requirements)?.target?.amount ?? 1));
+  const day = 1 - daysUntil;
+  return day <= days ? { state: 'underway', day, days } : { state: 'past' };
+}
+
 // A goal is multi-day once it says so — an eventDays requirement (filled
 // in or still empty) or a longest stage of more than one day. Never
 // inferred from how large a number looks.

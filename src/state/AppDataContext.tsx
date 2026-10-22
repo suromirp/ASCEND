@@ -42,12 +42,13 @@ import { withWeekRepeated } from '../engine/repeatWeek';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
-import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
+import { planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
@@ -68,7 +69,7 @@ import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { createSerialQueue } from '../utils/serialQueue';
-import { runBoot, type BootStep } from '../engine/bootWatch';
+import { runBoot, type BootStep, BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from '../engine/bootWatch';
 
 type AdviceResponse = StoredResponse;
 
@@ -78,6 +79,14 @@ type AdviceResponse = StoredResponse;
 // promise makes the second caller wait for the first instead.
 let bootMigrations: Promise<void> | null = null;
 let backgroundPlanningStarted = false;
+// The part of the migrations that runs, for the watch on the opening screen
+// (engine/bootWatch.ts#bootStepName): never just "migraties".
+let currentBootMigration: string | null = null;
+const bootMigrationListeners = new Set<(id: string) => void>();
+function noteBootMigration(id: string) {
+  currentBootMigration = id;
+  bootMigrationListeners.forEach((fn) => fn(id));
+}
 
 const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ascend-data') : null;
 
@@ -97,6 +106,17 @@ class BootLockBusy extends Error {
 function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
   if (!locks) return fn();
+  // "Toch openen": take the lock from the window that keeps it (a tab Android
+  // froze), once. The boot steps are idempotent and remember per version what
+  // ran, so the rare overlap with a window that wakes up again does no harm.
+  let steal = false;
+  try {
+    steal = sessionStorage.getItem(BOOT_STEAL_FLAG) === '1';
+    if (steal) sessionStorage.removeItem(BOOT_STEAL_FLAG);
+  } catch {
+    // No session storage: wait as usual.
+  }
+  if (steal) return locks.request('ascend-boot', { steal: true }, fn) as Promise<T>;
   const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(10_000) : undefined;
   return (locks.request('ascend-boot', signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
     // Only the wait for the lock itself; an error from fn goes through as it is.
@@ -106,7 +126,10 @@ function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= withBootLock(runBootMigrations).catch((err: unknown) => {
+  bootMigrations ??= withBootLock(async () => {
+    const { skipped } = await runBootMigrations({ onStep: noteBootMigration });
+    if (skipped.length > 0) console.warn('Opstartstappen overgeslagen tot de volgende keer', skipped);
+  }).catch((err: unknown) => {
     // Opnieuw proberen in the same page asks for the lock again.
     bootMigrations = null;
     throw err;
@@ -200,6 +223,8 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boo
       settings.leavePeriods,
       // Soft or strict rest after a bergtocht: switching it plans again at once.
       settings.trekLegRest,
+      // Planning after the main goal (engine/programLayout.ts#planEndDay).
+      settings.afterMainGoal,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack
@@ -248,7 +273,7 @@ import { effectiveAmbition } from '../engine/ambition';
 import { patternDays, planPass } from '../engine/planPass';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
-import { programAnchorDate } from '../engine/programLayout';
+import { planEndDay, programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks } from '../engine/raceBlock';
@@ -258,7 +283,7 @@ import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/ov
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
   const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen.';
+  if (name === 'BootLockBusy') return BOOT_LOCK_BUSY_TEXT;
   if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
   if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';
   return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
@@ -272,6 +297,8 @@ interface AppData {
   bootError: string | null;
   // The step of opening that is running (engine/bootWatch.ts).
   bootStep: BootStep;
+  // The migration step that runs (engine/bootWatch.ts#BOOT_MIGRATIONS), or null.
+  bootMigration: string | null;
   program: Program | null;
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
@@ -338,6 +365,8 @@ interface AppData {
   // applyProposal (below) recognizes the same-date shape proposeSkipEngine
   // produces and calls the skip mutator instead of a move.
   proposeSkip: (sessionId: string) => ScheduleProposal;
+  // "Toch doen": a skipped training back on its own day (engine/scheduler.ts#proposeBackOnPlan).
+  proposeBackOnPlan: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
   updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => Promise<void>;
   // Tussendoel or only followed (engine/raceBlock.ts).
@@ -439,7 +468,11 @@ interface AppData {
   advice: Advice[];
   // The rest of the planning run over a proposed week, for its preview. With
   // `leave`: as if those were your periods (a period you have not agreed to yet).
-  planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[]) => PlannedSession[];
+  planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[], restDay?: number) => PlannedSession[];
+  // Rustdag: changing it is a proposal (engine/restDayProposal.ts); applyRestDay
+  // stores the rest day and the planning together, only on Akkoord.
+  planRestDay: (restDay: number) => RestDayPlan;
+  applyRestDay: (plan: RestDayPlan) => Promise<void>;
   // Vrije dagen, vakanties en tochten (engine/leave.ts). Adding or removing
   // one is a proposal: planLeave computes it, applyLeave stores the period
   // and applies the proposal, only after Akkoord.
@@ -530,6 +563,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [bootError, setBootError] = useState<string | null>(null);
   // Which step of opening is running, for the watch on the opening screen (App.tsx).
   const [bootStep, setBootStep] = useState<BootStep>('migraties');
+  const [bootMigration, setBootMigration] = useState<string | null>(currentBootMigration);
+  useEffect(() => {
+    bootMigrationListeners.add(setBootMigration);
+    return () => void bootMigrationListeners.delete(setBootMigration);
+  }, []);
   const [program, setProgram] = useState<Program | null>(null);
   const [templates, setTemplates] = useState<SessionTemplate[]>([]);
   const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
@@ -663,6 +701,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (!originalIds.has(session.id)) addedIds.push(session.id);
       if (touchedIds.has(session.id) || !originalIds.has(session.id)) await PlannedSessionsRepo.put(session);
     }
+    // A tochtdag that goes with its tocht leaves the plan (item.discard); undo
+    // puts it back from `before`, like every other touched row.
+    const remaining = new Set(updatedSessions.map((s) => s.id));
+    for (const s of planned) if (touchedIds.has(s.id) && !remaining.has(s.id)) await PlannedSessionsRepo.delete(s.id);
     await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
     setRecentChange({
       id: proposal.id,
@@ -740,6 +782,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // report (or a changed kind of illness), a sport switched off, a
     // frequency or time budget. Never reconstructed from dates.
     if (recentChange.settingsBefore) setSettings(await SettingsRepo.set(recentChange.settingsBefore as Partial<AppSettings>));
+    // A rest day put back goes with the layout that undo puts back.
+    if (recentChange.settingsBefore && 'restDay' in recentChange.settingsBefore) await MetaRepo.set('appliedRestDay', (recentChange.settingsBefore as Partial<AppSettings>).restDay ?? 1);
     if (recentChange.configBefore) setGoalEngineConfig(await GoalEngineConfigRepo.set(recentChange.configBefore as Partial<GoalEngineConfig>));
     if (recentChange.adviceId) {
       const responses = { ...((await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {}) };
@@ -1506,7 +1550,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const session = stored.find((s) => s.id === change.sessionId);
         if (!session) continue;
         before.push(session);
-        if (change.toDate === change.fromDate) {
+        if (change.restore) {
+          // "Toch doen": your own choice, so it stays yours against the automatic planning.
+          await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: change.toDate === (session.movedFromDate ?? change.toDate) ? 'planned' : 'moved', lock });
+          lines.push(`${change.templateName} op ${day(change.toDate)} staat weer op de planning`);
+        } else if (change.toDate === change.fromDate) {
           await PlannedSessionsRepo.put({ ...skipSessionEngine(session), lock });
           lines.push(`${change.templateName} op ${day(change.fromDate)} overgeslagen`);
         } else if (change.toDate === session.movedFromDate) {
@@ -1524,12 +1572,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
       }
       if (before.length > 0) {
-        const skipped = proposal.changes.every((c) => c.toDate === c.fromDate);
+        const restored = proposal.changes[0]?.restore === true;
+        const skipped = !restored && proposal.changes.every((c) => c.toDate === c.fromDate);
         const first = proposal.changes[0]?.templateName ?? 'Sessie';
         setRecentChange({
           id: makeId('usermove'),
           trigger: skipped ? 'session_skipped' : 'session_moved',
-          title: skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
+          title: restored ? `${first} staat weer op de planning` : skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
           lines,
           why: proposal.changes.length > 1 ? proposal.reason : '',
           before,
@@ -1550,6 +1599,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       return proposeSkipEngine(session, templates);
     },
     [plannedSessions, templates],
+  );
+
+  const proposeBackOnPlan = useCallback(
+    (sessionId: string): ScheduleProposal => {
+      const session = plannedSessions.find((s) => s.id === sessionId);
+      if (!session) return { changes: [], reason: 'Sessie niet gevonden.', resolved: false };
+      const monday = mondayOfWeek(session.scheduledDate);
+      // The neighbouring weeks too, as for a move: the 48 hours cross the week's edge.
+      const nearby = [-7, 0, 7].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
+      const combined = nearby.some((s) => s.id === sessionId) ? nearby : [...nearby, session];
+      return proposeBackOnPlanEngine(combined, templates, sessionId, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO());
+    },
+    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig],
   );
 
   const clearMilestoneManually = useCallback(
@@ -1877,12 +1939,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   // The rest of the planning run over the week a proposal gives, exactly as
   // the sync runs it after Akkoord (engine/planPass.ts): for the preview.
-  const planPreviewPass = useCallback((sessions: PlannedSession[], leave?: LeavePeriod[]): PlannedSession[] => {
+  const planPreviewPass = useCallback((sessions: PlannedSession[], leave?: LeavePeriod[], restDayOverride?: number): PlannedSession[] => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
-    const restDay = settings.restDay ?? 1;
+    const restDay = restDayOverride ?? settings.restDay ?? 1;
     let n = 0;
     const periods = leave ?? settings.leavePeriods;
     // The weeks near, and the weeks of a period further away.
@@ -1904,7 +1966,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const leavePeriods = useMemo(() => sortPeriods(settings.leavePeriods ?? []), [settings.leavePeriods]);
   const planLeave = useCallback((mode: 'add' | 'remove', period: LeavePeriod, replaces?: LeavePeriod): LeavePlan => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     const restDay = settings.restDay ?? 1;
@@ -1938,10 +2000,41 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
   }, [commitPlanChange, showStatusOnlyChange]);
 
+  // Rustdag: the proposal for another rest day (engine/restDayProposal.ts),
+  // with the same planning run as the sync. Nothing is stored until Akkoord.
+  const planRestDay = useCallback((restDay: number): RestDayPlan => {
+    const today = todayISO();
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    let n = 0;
+    return planRestDayChange({
+      restDay, sessions: plannedSessions, logs: sessionLogs, templates, today, anchor,
+      context: {
+        today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
+        dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+        slotDays: patternDays(templates, settings, restDay),
+        minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
+        newId: () => `restday-${n++}`,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
+      },
+    });
+  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+
+  const applyRestDay = useCallback(async (plan: RestDayPlan) => {
+    await planSettled();
+    const stored = await SettingsRepo.get();
+    const restore = { settings: { restDay: stored.restDay } };
+    // The rest day and its layout go together: the sync does not lay the week out again.
+    setSettings(await SettingsRepo.set({ restDay: plan.restDay as AppSettings['restDay'] }));
+    await MetaRepo.set('appliedRestDay', plan.restDay);
+    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
+  }, [commitPlanChange, showStatusOnlyChange]);
+
   // What the extra training of the week is chosen from (engine/extraRun.ts).
   const extraSessionContext = useMemo(() => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     return {
@@ -1953,7 +2046,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       planChangeLog,
       leave: settings.leavePeriods,
     };
-  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, planChangeLog]);
+  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, settings.afterMainGoal, planChangeLog]);
 
   const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
   useFollowLocation(settings, updateSettings, !loading);
@@ -1989,6 +2082,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     loading,
     bootError,
     bootStep,
+    bootMigration,
     storageNotice,
     reportStorageError,
     dismissStorageNotice: () => setStorageNotice(null),
@@ -2024,6 +2118,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     suggestMoves,
     applyProposal,
     proposeSkip,
+    proposeBackOnPlan,
     clearMilestoneManually,
     updateGoal,
     setGoalPlanRole,
@@ -2108,6 +2203,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     leavePeriods,
     planLeave,
     applyLeave,
+    planRestDay,
+    applyRestDay,
     respondToAdvice,
     debriefLogId,
     dismissDebrief: () => setDebriefLogId(null),

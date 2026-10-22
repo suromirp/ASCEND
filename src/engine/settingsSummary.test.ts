@@ -281,3 +281,31 @@ describe('durationNote', () => {
     expect(durationNote('default', 0, 0)).toBe('Standaard, nog 3 trainingen');
   });
 });
+
+describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('na je hoofddoel: niets meer plannen is het advies', () => {
+    expect(rowSummary('na-hoofddoel', facts()).value).toBe('Niets meer');
+    expect(rowSummary('na-hoofddoel', withSettings({ afterMainGoal: 'maintain' })).value).toBe('Onderhoud');
+  });
+
+  it('de terugknop en het hervatten kennen hun advies', () => {
+    expect(rowSummary('terugknop', facts()).value).toBe('Naar Vandaag');
+    expect(rowSummary('terugknop', withSettings({ tabBack: 'previous' })).value).toBe('Vorige tab');
+    expect(rowSummary('hervatten', facts()).value).toBe('2 uur');
+    expect(rowSummary('hervatten', withSettings({ resumeMinutes: 0 }))).toEqual({ value: 'Uit', dim: true });
+    expect(rowSummary('hervatten', withSettings({ resumeMinutes: 480 })).value).toBe('8 uur');
+  });
+
+  it('de opties voor het sturen naar je horloge staan er alleen met een koppeling', () => {
+    expect(rowSummary('horloge-voorvoegsel', facts())).toEqual({ value: 'Kort', hidden: false });
+    expect(rowSummary('horloge-voorvoegsel', withSettings({ watchNamePrefix: 'none' })).value).toBe('Geen');
+    expect(rowSummary('horloge-gedaan-weghalen', facts()).checked).toBe(true);
+    expect(rowSummary('horloge-gedaan-weghalen', withSettings({ watchRemoveDone: false })).checked).toBe(false);
+    expect(rowSummary('horloge-status', withSettings({ showWatchStatus: false })).checked).toBe(false);
+    expect(rowSummary('horloge-status-week', facts()).checked).toBe(true);
+    const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
+    for (const id of ['horloge-voorvoegsel', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week']) expect(rowSummary(id, unlinked).hidden).toBe(true);
+  });
+});

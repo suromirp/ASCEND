@@ -8,6 +8,7 @@ import { detectRecentSpike } from './progressionSpikes';
 import { resolveEffectiveFullDuration } from './substitutions';
 import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
 import { FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueResult } from './legFatigue';
+import { patternSlotOf } from './programLayout';
 
 // ASCEND's scheduling engine is deterministic on purpose (spec §16, §29):
 // it never guesses and it never runs an LLM in the loop. A future AI layer
@@ -237,7 +238,7 @@ export function findHeavyConflicts(
     // is exactly that: the next day, in that order. Never both on the
     // same day, and never the other way round (production feedback: a
     // suggestion put hill intervals on the long run's own Sunday).
-    if (isIntentionalBackToBack(template, other) && isIntendedOrder(template, date, other, s.scheduledDate)) return false;
+    if (isIntentionalBackToBack(template, other) && isIntendedOrder(template, date, other, s.scheduledDate, templateMap)) return false;
     const gap = Math.abs(daysBetween(s.scheduledDate, date));
     if (!shared.includes('lowerBodyLoad')) return gap <= 1;
     if (gap === 0 && hardSameDayAllowed(template, other)) return false;
@@ -323,11 +324,19 @@ function hardSameDayAllowed(a: SessionTemplate, b: SessionTemplate): boolean {
   return (a.type === 'strength' && run(b)) || (run(a) && b.type === 'strength');
 }
 
-function isIntendedOrder(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string): boolean {
+function isIntendedOrder(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string, templateMap?: Map<string, SessionTemplate>): boolean {
   const gap = daysBetween(aDate, bDate); // > 0: b comes after a
   if (Math.abs(gap) !== 1) return Math.abs(gap) > 1;
-  if (a.defaultDayOfWeek === undefined || b.defaultDayOfWeek === undefined) return true;
-  return gap > 0 ? a.defaultDayOfWeek < b.defaultDayOfWeek : b.defaultDayOfWeek < a.defaultDayOfWeek;
+  // A training without a weekday of its own (Heuvels op en af, a mountain
+  // hike) takes the day of the slot it fills: the hill slot on Saturday, the
+  // long slot on Sunday. Without that, either order counted as intended and a
+  // move could swap the two into the wrong order, still 24 hours apart
+  // (Doorloop, punt 12).
+  const dayOf = (t: SessionTemplate) => t.defaultDayOfWeek ?? templateMap?.get(patternSlotOf(t.id))?.defaultDayOfWeek;
+  const aDay = dayOf(a);
+  const bDay = dayOf(b);
+  if (aDay === undefined || bDay === undefined || aDay === bDay) return true;
+  return gap > 0 ? aDay < bDay : bDay < aDay;
 }
 
 export interface ScheduleChange {
@@ -336,6 +345,9 @@ export interface ScheduleChange {
   templateName: string;
   fromDate: string;
   toDate: string;
+  // A skipped training back on the plan ("Toch doen"). Without it a change
+  // with toDate === fromDate means a skip.
+  restore?: boolean;
 }
 
 export interface ScheduleProposal {
@@ -538,6 +550,35 @@ export function proposeMove(
         : 'Geef een dag meer tijd bij Instellingen, Training, Trainingstijd per dag, of verplaats hem zelf.'
     }`;
   }
+}
+
+// "Toch doen": a skipped training back on its own day. When it fits the rules
+// there, that is all; when it clashes with a heavy session, the same cascade
+// as a move proposes where the other one goes, and you see it first. A day
+// that is already past cannot come back (Doorloop, punt 4).
+export function proposeBackOnPlan(
+  weekSessions: PlannedSession[],
+  templates: SessionTemplate[],
+  sessionId: string,
+  recentLogs: SessionLog[] = [],
+  program?: Program | null,
+  dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>,
+  sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'],
+  asOf: string = todayISO(),
+): ScheduleProposal {
+  const session = weekSessions.find((s) => s.id === sessionId);
+  if (!session || session.status !== 'skipped') return { changes: [], reason: 'Sessie niet gevonden.', resolved: false };
+  if (session.scheduledDate < asOf) return { changes: [], reason: 'Die dag is al voorbij. Kies een dag die nog komt.', resolved: false };
+  const back = weekSessions.map((s) => (s.id === sessionId ? { ...s, status: 'planned' as const } : s));
+  const move = proposeMove(back, templates, sessionId, session.scheduledDate, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, asOf);
+  const [first, ...rest] = move.changes;
+  if (!first) return move;
+  const name = first.templateName;
+  return {
+    ...move,
+    changes: [{ ...first, restore: true }, ...rest],
+    reason: rest.length === 0 && move.resolved ? `${name} staat weer op de planning.` : move.reason,
+  };
 }
 
 export function skipSession(session: PlannedSession): PlannedSession {

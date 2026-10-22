@@ -245,10 +245,11 @@ describe('een tocht meerdere keer wijzigen', () => {
     const s1 = accept(plan('add', t1, [], start), start);
     const change = plan('add', t2, [t1], s1, t1);
     const s2 = accept(change, s1);
-    // The same undo as the app: the touched rows as they were, the added ones gone.
+    // The same undo as the app: the touched rows as they were (also a tochtdag
+    // that went off the plan comes back), the added ones gone.
     const touched = new Set(change.proposal.changes.map((c) => c.plannedSessionId).filter(Boolean));
-    const originalIds = new Set(s1.map((s) => s.id));
-    const undone = s2.filter((s) => originalIds.has(s.id)).map((s) => (touched.has(s.id) ? s1.find((o) => o.id === s.id)! : s));
+    const now = new Map(s2.map((s) => [s.id, s]));
+    const undone = s1.map((o) => (touched.has(o.id) ? o : now.get(o.id)!));
     expect(undone).toEqual(s1);
   });
 });

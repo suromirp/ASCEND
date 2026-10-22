@@ -129,6 +129,13 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     if (!a || a.status === 'skipped') {
       // A leg day the week check let go next to the tocht says why in its own words.
       const own = ownReason(s.id, true);
+      // A tochtdag this period placed itself goes with it: off the plan, not a
+      // skipped row next to the new days (Doorloop, punt 1).
+      const ownPlaced = s.leave?.role === 'placed' && (s.leave.periodId === period.id || s.leave.periodId === replaces?.id) && !base.has(s.id);
+      if (ownPlaced) {
+        items.push({ plannedSessionId: s.id, action: 'remove', discard: true, fromDate: s.scheduledDate, reason: own ?? reasonFor(s, s.scheduledDate, 'remove', !!replaces), generatedBy: SOURCE });
+        continue;
+      }
       items.push({ plannedSessionId: s.id, action: 'remove', fromDate: s.scheduledDate, reason: own ?? reasonFor(s, s.scheduledDate, 'remove', !!replaces && !base.has(s.id)), generatedBy: SOURCE, leave: markOf(s, a, 'dropped') });
     } else if (a.scheduledDate !== s.scheduledDate || minutesChanged(s, a)) {
       const mark = markOf(s, a, 'moved');

@@ -19,6 +19,7 @@ import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils
 import { HIKE_DAY_ONE_LADDER, MOUNTAIN_HIKE_LADDER } from '../data/hikeLadder';
 import { packLadder, type LadderWeek } from './packLadder';
 import { TENT_PACK_KG } from './gr5Profile';
+import { goalTiming } from './goalRoute';
 
 export const PHASE_BASIS = 'phase_1';
 export const PHASE_OPBOUW = 'phase_2';
@@ -68,6 +69,23 @@ export function programAnchorDate(goals: TrainingGoal[], milestones: GoalMilesto
   const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
   if (!main || main.status !== 'active') return undefined;
   return main.targetDate > today ? main.targetDate : undefined;
+}
+
+// The day the plan ends: the main goal's own day, also once it has come.
+// programAnchorDate only gives a goal still ahead (what the screens count down
+// to); this one keeps the plan ending there during the GR5 and after it, so no
+// maintenance weeks appear on the trip itself (Doorloop, punt 10). Only a goal
+// you mark as reached or set aside lets the planning run on without a goal.
+// With the setting "Na je hoofddoel" on maintain (AppSettings.afterMainGoal),
+// maintenance weeks follow once the trip itself is over; never during it.
+export function planEndDay(goals: TrainingGoal[], milestones: GoalMilestone[], today: string, after: 'stop' | 'maintain' = 'stop'): string | undefined {
+  const ahead = programAnchorDate(goals, milestones, today);
+  if (ahead) return ahead;
+  const withLadder = new Set(milestones.map((m) => m.goalId));
+  const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
+  if (main?.status !== 'active') return undefined;
+  if (after === 'maintain' && goalTiming(main, today).state === 'past') return undefined;
+  return main.targetDate;
 }
 
 // Weeks from the program's first Monday up to (not including) the goal

@@ -5,6 +5,7 @@
 // ASCEND years from now.
 
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
+import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
 
@@ -198,4 +199,28 @@ export function migrateLogSets(log: SessionLog): SessionLog {
     next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
   }
   return next;
+}
+
+// --- terugknop en hervatten (optionele instellingen) ---------------------------
+// `settings.tabBack` en `settings.resumeMinutes` (engine/navigationSettings.ts)
+// zijn optioneel en additief: een back-up van voor deze instellingen heeft ze
+// niet en blijft zoals hij is, het advies geldt dan. Staat er wel iets, dan
+// blijft alleen een bekende waarde over; de rest wordt weggelaten en geteld.
+export function cleanNavigationSettings(raw: { tabBack?: unknown; resumeMinutes?: unknown }): {
+  value: { tabBack?: TabBackMode; resumeMinutes?: number };
+  skipped: number;
+} {
+  const value: { tabBack?: TabBackMode; resumeMinutes?: number } = {};
+  let skipped = 0;
+  if (raw.tabBack !== undefined) {
+    const mode = TAB_BACK_MODES.find((m) => m === raw.tabBack);
+    if (mode) value.tabBack = mode;
+    else skipped++;
+  }
+  if (raw.resumeMinutes !== undefined) {
+    const minutes = RESUME_MINUTE_CHOICES.find((m) => m === raw.resumeMinutes);
+    if (minutes !== undefined) value.resumeMinutes = minutes;
+    else skipped++;
+  }
+  return { value, skipped };
 }

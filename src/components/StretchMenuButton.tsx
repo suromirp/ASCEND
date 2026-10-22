@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS } from '../data/stretches';
 import { Icon } from './icons';
+import { useBackToClose } from '../utils/useBackToClose';
 
 export function StretchMenuButton() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  // The back button closes the menu first.
+  useBackToClose(open, () => setOpen(false));
 
   function go(areaId?: string) {
     setOpen(false);

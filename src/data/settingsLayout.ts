@@ -43,7 +43,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     advanced: ['zware-dingen'],
   },
   doel: {
-    rows: ['doelen', 'programma', 'lange-zondag', 'volgende-tocht', 'rust-na-tocht', 'vrije-dagen', 'reisplanner', 'paklijst'],
+    rows: ['doelen', 'programma', 'lange-zondag', 'na-hoofddoel', 'volgende-tocht', 'rust-na-tocht', 'vrije-dagen', 'reisplanner', 'paklijst'],
     advanced: [],
   },
   forge: {
@@ -52,12 +52,13 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
   },
   lichaam: { rows: ['lichaamsgewicht', 'hartslag', 'blessures'], advanced: [] },
   vandaag: {
-    rows: ['ochtendcheck', 'weekterugblik', 'weekterugblik-dag', 'weekvraag', 'weerplaats', 'weerregel', 'weerruil', 'kledingadvies', 'kleding-voorkeur', 'citaten', 'geluid'],
+    rows: ['ochtendcheck', 'weekterugblik', 'weekterugblik-dag', 'weekvraag', 'weerplaats', 'weerregel', 'weerruil', 'kledingadvies', 'kleding-voorkeur', 'citaten', 'geluid', 'terugknop', 'hervatten'],
     advanced: [],
   },
   koppelingen: {
     rows: [
       'garmin', 'garmin-trainingen', 'vanzelf-afvinken', 'garmin-leidend', 'slaap', 'rusthartslag', 'hrv', 'naar-horloge',
+      'horloge-voorvoegsel', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week',
       'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'health-connect',
     ],
     advanced: [],

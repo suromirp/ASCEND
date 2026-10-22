@@ -10,6 +10,9 @@ import { REST_DAY_COPY } from '../data/restDayCopy';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
 import { LegMark, WeekSportIcon, WeekStatusIcon } from './WeekIcons';
+import { Icon } from './icons';
+import { useWatchStatuses } from './useWatchStatus';
+import type { WatchStatusKind } from '../engine/watchStatus';
 import { addDays, weekDates, weekdayShortNL, todayISO } from '../utils/dates';
 import { Eyebrow } from './ui';
 
@@ -30,7 +33,7 @@ const todayStyle = {
 };
 
 function SessionRow({
-  session, template, date, first, logs, program, onTap, adjusted, isToday,
+  session, template, date, first, logs, program, onTap, adjusted, isToday, watch,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -41,6 +44,8 @@ function SessionRow({
   onTap: () => void;
   adjusted: boolean;
   isToday: boolean;
+  // Only 'sent' and 'failed' get a mark; everything else stays quiet.
+  watch?: WatchStatusKind;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
@@ -69,8 +74,11 @@ function SessionRow({
         </span>
         {note && <span className="block text-xs" style={{ color: 'var(--color-sky)' }}>{note}</span>}
       </span>
-      <span className="shrink-0 text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-        {isRest ? (status === 'completed' ? `${duration} min` : REST_DAY_COPY[restMode].badge.toLowerCase() === REST_DAY_COPY[restMode].title.toLowerCase() ? '' : REST_DAY_COPY[restMode].badge) : `${duration} min`}
+      <span className="relative shrink-0 text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+        <span>{isRest ? (status === 'completed' ? `${duration} min` : REST_DAY_COPY[restMode].badge.toLowerCase() === REST_DAY_COPY[restMode].title.toLowerCase() ? '' : REST_DAY_COPY[restMode].badge) : `${duration} min`}</span>
+        {/* Onder de duur, zonder de regel hoger te maken of de naam smaller. */}
+        {watch === 'sent' && <span className="absolute right-0 top-full -mt-0.5" style={{ color: 'var(--color-success-text)' }}><Icon name="horloge" size={14} label="Verstuurd naar je horloge" /></span>}
+        {watch === 'failed' && <span className="absolute right-0 top-full -mt-0.5" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={14} label="Versturen naar je horloge is niet gelukt" /></span>}
       </span>
     </button>
   );
@@ -99,6 +107,8 @@ export function WeekPlanner({
   const days = weekDates(weekStartDate);
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
+  const { statusOf } = useWatchStatuses();
+  const showWatch = useAppData().settings.showWatchStatusOnWeek !== false;
 
   if (days.length === 0) return <Eyebrow>GEEN DATA</Eyebrow>;
 
@@ -113,7 +123,8 @@ export function WeekPlanner({
           const template = templateById.get(s.templateId);
           return template ? [{ s, template }] : [];
         });
-        const showEmpty = rows.length === 0 && (!leaveLabel || leaveLabel.kind === 'free' || leaveLabel.kind === 'light');
+        // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
+        const showEmpty = rows.length === 0 && !leaveLabel;
         return (
           <div key={date} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
             {leaveLabel && (
@@ -135,6 +146,7 @@ export function WeekPlanner({
                 onTap={() => onSelectSession(s)}
                 adjusted={!!adjustedIds?.has(s.id)}
                 isToday={isToday}
+                watch={showWatch ? statusOf(s, template).kind : undefined}
               />
             ))}
             {showEmpty && (

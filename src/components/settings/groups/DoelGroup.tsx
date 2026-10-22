@@ -21,6 +21,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="doelen" title="Hoofddoel" facts={facts} onClick={() => navigate('/ascend/doelen')} />
         <SummaryRow id="programma" title="Programma" facts={facts} onClick={() => setSheet('programma')} />
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
+        <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
       </SettingsSection>
 
       <SettingsSection title="Tochten">
@@ -38,6 +39,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
       {sheet === 'lange-zondag' && (
         <ChoiceFromDef def={CHOICES.langeZondag} value={settings.longSundaySession ?? 'hike'} onPick={(v) => void updateSettings({ longSundaySession: v }).then(() => refresh())} onClose={close} />
+      )}
+      {sheet === 'na-hoofddoel' && (
+        <ChoiceFromDef def={CHOICES.naHoofddoel} value={settings.afterMainGoal ?? 'stop'} onPick={(v) => void updateSettings({ afterMainGoal: v }).then(() => refresh())} onClose={close} />
       )}
       {sheet === 'rust-na-tocht' && (
         <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => void updateSettings({ trekLegRest: v })} onClose={close} />

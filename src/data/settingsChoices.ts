@@ -153,6 +153,50 @@ export const CHOICES = {
       { value: 'strict', label: 'Streng', note: 'Altijd 72 uur' },
     ],
   }),
+  naHoofddoel: def({
+    group: 'Doel en tochten',
+    title: 'Na je hoofddoel',
+    line: 'Tijdens de tocht plant ASCEND nooit.',
+    advice: 'stop' as 'stop' | 'maintain',
+    options: [
+      { value: 'stop', label: 'Niets meer plannen', note: 'Geen training tijdens en na de tocht', short: 'Niets meer' },
+      { value: 'maintain', label: 'Onderhoudsweken', note: 'Gewone weken na de laatste tochtdag', short: 'Onderhoud' },
+    ],
+  }),
+  terugknop: def({
+    group: 'Vandaag en meldingen',
+    title: 'Terugknop op een tab',
+    line: 'Een blad of keuzemenu sluit altijd eerst.',
+    advice: 'today' as 'today' | 'previous',
+    options: [
+      { value: 'today', label: 'Eerst naar Vandaag', note: 'Zoals de meeste Android-apps', short: 'Naar Vandaag' },
+      { value: 'previous', label: 'Naar de vorige tab', note: 'In de volgorde waarin je ze opende', short: 'Vorige tab' },
+    ],
+  }),
+  hervatten: def({
+    group: 'Vandaag en meldingen',
+    title: 'Na een herstart',
+    line: 'Terug op de pagina waar je was, binnen deze tijd.',
+    advice: 120 as 0 | 60 | 120 | 240 | 480,
+    options: [
+      { value: 0, label: 'Uit', note: 'Altijd op Vandaag beginnen' },
+      { value: 60, label: 'Binnen 1 uur' },
+      { value: 120, label: 'Binnen 2 uur' },
+      { value: 240, label: 'Binnen 4 uur' },
+      { value: 480, label: 'Binnen 8 uur' },
+    ],
+  }),
+  voorvoegsel: def({
+    group: 'Koppelingen',
+    title: 'Voorvoegsel voor de naam',
+    line: 'Zo herken je de trainingen van ASCEND.',
+    advice: 'short' as 'short' | 'long' | 'none',
+    options: [
+      { value: 'short', label: 'Kort', note: 'ASC, past het beste op je horloge', short: 'Kort' },
+      { value: 'long', label: 'Lang', note: 'ASCEND, voor de naam', short: 'Lang' },
+      { value: 'none', label: 'Geen', note: 'De naam zoals die is', short: 'Geen' },
+    ],
+  }),
   terugblikDag: def({
     group: 'Vandaag en meldingen',
     title: 'Dag van de terugblik',

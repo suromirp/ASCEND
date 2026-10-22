@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, ProgramsRepo, SettingsRepo,
+  wipeAllData, seedIfEmpty, syncProgramHorizon, PlannedSessionsRepo, SessionLogsRepo, SessionTemplatesRepo, ProgramsRepo, SettingsRepo, PlanChangeProposalsRepo,
 } from './database';
 import { planLeaveChange } from '../engine/leaveProposal';
 import { patternDays } from '../engine/planPass';
@@ -92,5 +92,20 @@ describe('free days, holidays and treks in the daily planning run', () => {
     expect(after.filter((s) => s.scheduledDate < todayISO())).toEqual(pastBefore);
     expect(await SessionLogsRepo.getAll()).toHaveLength(1);
     expect(await syncProgramHorizon()).toEqual(quiet);
+  });
+
+  it('ruimt tochtdagen op die een oudere versie als overgeslagen rij achterliet, nooit een gelogde', async () => {
+    const day = addDays(nextMonday(), 5);
+    const stray = (id: string): PlannedSession => ({ id, templateId: 'tpl_mountain_hike', scheduledDate: day, weekStartDate: mondayOfWeek(day), status: 'skipped', order: 9, lock: { by: 'proposal', proposalId: 'p-weg', at: 'x' } });
+    await PlannedSessionsRepo.put(stray('stray-1'));
+    await PlannedSessionsRepo.put(stray('stray-logged'));
+    await SessionLogsRepo.put({ id: 'log-s', plannedSessionId: 'stray-logged', templateId: 'tpl_mountain_hike', type: 'hiking', completedDate: day, completedAt: `${day}T09:00:00.000Z`, variant: 'full', durationMinutes: 180, source: 'manual' } as never);
+    const base = { alternatives: [], consequences: '', explanation: '', createdAt: 'x', resolvedAt: 'x', resolution: 'accepted' as const };
+    await PlanChangeProposalsRepo.put({ ...base, id: 'p-erbij', trigger: 'leave_added', issue: 'Tocht', changes: [{ action: 'add', newSessionDraft: { templateId: 'tpl_mountain_hike', scheduledDate: day, weekStartDate: mondayOfWeek(day) }, leave: { periodId: 't', role: 'placed', from: day }, generatedBy: ['engine/leaveProposal.ts'] }] });
+    await PlanChangeProposalsRepo.put({ ...base, id: 'p-weg', trigger: 'leave_removed', issue: 'Tocht weg', changes: ['stray-1', 'stray-logged'].map((id) => ({ plannedSessionId: id, action: 'remove' as const, leave: null, generatedBy: ['engine/leaveProposal.ts'] })) });
+    await syncProgramHorizon();
+    const ids = (await PlannedSessionsRepo.getAll()).map((s) => s.id);
+    expect(ids).not.toContain('stray-1');
+    expect(ids).toContain('stray-logged');
   });
 });

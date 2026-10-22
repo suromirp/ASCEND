@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Eyebrow } from '../../components/ui';
+import { usePageState } from '../../components/usePageState';
 import { Icon } from '../../components/icons';
 import { SettingsList, SettingsRow } from '../../components/settings/SettingsList';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
@@ -20,7 +20,7 @@ export function SettingsOverview() {
   const navigate = useNavigate();
   const jump = useJumpState();
   const { facts } = useSettingsFacts();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = usePageState('query', '');
 
   // Een oude link (Forge: `instelling-forge`) zoekt zijn groep op en stuurt door.
   const legacy = normalizeJumpTarget(jump.jumpTo);
