@@ -8,8 +8,10 @@
 //
 // Paths and field names were checked against the official OpenAPI
 // description (https://intervals.icu/api/v1/docs): GET
-// /api/v1/athlete/{id}/activities with `oldest` and `newest`, Basic
-// authentication with the user name "API_KEY" and the key as password.
+// /api/v1/athlete/{id}/activities with `oldest` and `newest`, GET
+// /api/v1/athlete/{id}/wellness.json with `oldest` and `newest` (one record
+// per day: restingHR, hrv, sleepSecs, sleepScore), Basic authentication with
+// the user name "API_KEY" and the key as password.
 //
 // Since October 2026 it also WRITES, but only the planned workouts ASCEND
 // itself puts in the agenda (see "workouts" below): POST
@@ -25,6 +27,7 @@ import type { DataSourceAdapter, DateRange } from './types';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
 import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
+import type { RecoveryMetric } from '../models/metrics';
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu';
 export const INTERVALS_ADAPTER_ID = 'intervals.icu';
@@ -73,6 +76,11 @@ export function basicAuthHeader(apiKey: string): string {
 export function activitiesUrl(athleteId: string, range: DateRange): string {
   const query = new URLSearchParams({ oldest: range.from, newest: range.to });
   return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/activities?${query.toString()}`;
+}
+
+export function wellnessUrl(athleteId: string, range: DateRange): string {
+  const query = new URLSearchParams({ oldest: range.from, newest: range.to });
+  return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/wellness.json?${query.toString()}`;
 }
 
 // --- mapping: intervals.icu fields -> ExternalActivity --------------------------
@@ -169,6 +177,56 @@ export function mapIntervalsActivities(raw: unknown): ExternalActivity[] {
   return out;
 }
 
+// --- mapping: intervals.icu wellness -> RecoveryMetric -------------------------
+
+// The fields we read of an intervals.icu wellness record. `id` is the local
+// day ("2026-10-22"). A field is simply absent when nothing filled it: the
+// Garmin synchronisation for wellness is a switch in intervals.icu itself.
+export interface IntervalsWellness {
+  id?: string;
+  restingHR?: number;
+  hrv?: number;
+  sleepSecs?: number;
+  sleepScore?: number;
+}
+
+// A value outside what a body can do is a glitch of the source, not a night:
+// it is dropped on its own and the rest of the day is kept.
+function within(n: unknown, min: number, max: number): number | undefined {
+  return typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max ? n : undefined;
+}
+
+export function mapIntervalsWellnessRecord(raw: IntervalsWellness): RecoveryMetric | undefined {
+  if (!raw || typeof raw.id !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.id)) return undefined;
+  const restingHeartRate = within(raw.restingHR, 25, 150);
+  const hrv = within(raw.hrv, 1, 400);
+  const sleepScore = within(raw.sleepScore, 0, 100);
+  const sleepSecs = within(raw.sleepSecs, 600, 20 * 3600);
+  if (restingHeartRate === undefined && hrv === undefined && sleepScore === undefined && sleepSecs === undefined) return undefined;
+  const metric: RecoveryMetric = {
+    id: `${INTERVALS_ADAPTER_ID}:${raw.id}`,
+    date: raw.id,
+    // The record does not say who measured it (a watch, or a value typed by
+    // hand in intervals.icu), so it is "import", not "garmin".
+    source: 'import',
+  };
+  if (restingHeartRate !== undefined) metric.restingHeartRate = Math.round(restingHeartRate);
+  if (hrv !== undefined) metric.hrv = Math.round(hrv * 10) / 10;
+  if (sleepScore !== undefined) metric.sleepScore = Math.round(sleepScore);
+  if (sleepSecs !== undefined) metric.sleepMinutes = Math.round(sleepSecs / 60);
+  return metric;
+}
+
+export function mapIntervalsWellness(raw: unknown): RecoveryMetric[] {
+  if (!Array.isArray(raw)) throw new IntervalsError('response', MESSAGES.response);
+  const byDate = new Map<string, RecoveryMetric>();
+  for (const item of raw) {
+    const mapped = mapIntervalsWellnessRecord(item as IntervalsWellness);
+    if (mapped) byDate.set(mapped.date, mapped);
+  }
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
 // --- the request ----------------------------------------------------------------
 
 const TIMEOUT_MS = 15_000;
@@ -177,18 +235,16 @@ export interface FetchOptions {
   fetchImpl?: typeof fetch;
 }
 
-export async function fetchIntervalsActivities(
-  connection: IntervalsConnection,
-  range: DateRange,
-  options: FetchOptions = {},
-): Promise<ExternalActivity[]> {
+// One GET with the user's own key. The error mapping is the same for every
+// endpoint, so the user reads the same sentence for the same problem.
+async function getJson(connection: IntervalsConnection, urlFor: (athleteId: string) => string, options: FetchOptions): Promise<unknown> {
   const { athleteId, apiKey } = normalizeConnection(connection);
   const doFetch = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   let response: Response;
   try {
-    response = await doFetch(activitiesUrl(athleteId, range), {
+    response = await doFetch(urlFor(athleteId), {
       method: 'GET',
       headers: { Authorization: basicAuthHeader(apiKey), Accept: 'application/json' },
       signal: controller.signal,
@@ -206,13 +262,27 @@ export async function fetchIntervalsActivities(
   if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
   if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
 
-  let body: unknown;
   try {
-    body = await response.json();
+    return await response.json();
   } catch {
     throw new IntervalsError('response', MESSAGES.response);
   }
-  return mapIntervalsActivities(body);
+}
+
+export async function fetchIntervalsActivities(
+  connection: IntervalsConnection,
+  range: DateRange,
+  options: FetchOptions = {},
+): Promise<ExternalActivity[]> {
+  return mapIntervalsActivities(await getJson(connection, (id) => activitiesUrl(id, range), options));
+}
+
+export async function fetchIntervalsWellness(
+  connection: IntervalsConnection,
+  range: DateRange,
+  options: FetchOptions = {},
+): Promise<RecoveryMetric[]> {
+  return mapIntervalsWellness(await getJson(connection, (id) => wellnessUrl(id, range), options));
 }
 
 // What to tell the user about any error from this file; anything that is not
@@ -232,6 +302,12 @@ export function createIntervalsIcuAdapter(connection: IntervalsConnection | null
     fetchExternalActivities: async (range) => {
       if (!connection) return [];
       return fetchIntervalsActivities(connection, range, options);
+    },
+    // Sleep, resting heart rate and HRV: the same RecoveryMetric shape any
+    // other source would fill.
+    fetchRecoveryMetrics: async (range) => {
+      if (!connection) return [];
+      return fetchIntervalsWellness(connection, range, options);
     },
   };
 }

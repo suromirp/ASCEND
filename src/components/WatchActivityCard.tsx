@@ -1,10 +1,23 @@
 // ASCEND — "Van je horloge": an activity from the watch (via intervals.icu)
 // that is not stored yet, offered on Today as a voorstel. Nothing is saved
-// until the user taps OPSLAAN (docs/visie/Data zonder handwerk.md, idee 1).
+// until the user taps Opslaan (docs/visie/Data zonder handwerk.md, idee 1),
+// with one exception: an activity that unmistakably belongs to the one planned
+// training of that day is ticked off by itself (engine/autoTick.ts, switch
+// "Vanzelf afvinken" on the link screen), and the card then only asks how it
+// went (components/WatchAskCard.tsx), with "Klopt niet" to undo it.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { dismissActivity, getWatchState, onWatchChange, type WatchActivityState } from '../storage/externalActivities';
+import {
+  dismissActivity,
+  getWatchState,
+  onWatchChange,
+  recordAutoTicked,
+  setAutoLoggedStatus,
+  type WatchActivityState,
+} from '../storage/externalActivities';
+import { canRejectAutoLog, pendingQuestions, planAutoTicks, type FeedbackPatch } from '../engine/autoTick';
+import { WatchAskCard } from './WatchAskCard';
 import {
   activityToDraft,
   candidatePlanned,
@@ -26,11 +39,17 @@ function dayLabel(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
 
+// Waits for the plan to settle at boot before it ticks anything off.
+const AUTO_TICK_DELAY_MS = 1200;
+
 export function WatchActivityCard() {
-  const { plannedSessions, templates, sessionLogs, logSession } = useAppData();
+  const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback } = useAppData();
   const [state, setState] = useState<WatchActivityState | null>(null);
   const [choosing, setChoosing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [later, setLater] = useState<string[]>([]);
+  const ticking = useRef(false);
+  const attempted = useRef(new Set<string>());
 
   useEffect(() => {
     let alive = true;
@@ -43,11 +62,78 @@ export function WatchActivityCard() {
     };
   }, []);
 
+  // Vanzelf afvinken: only what nothing is left to choose about.
+  useEffect(() => {
+    if (!state || !state.autoTick || ticking.current) return;
+    const ticks = planAutoTicks(state.activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs)
+      .filter((t) => !attempted.current.has(t.activity.externalId));
+    if (ticks.length === 0) return;
+    const timer = setTimeout(() => {
+      ticking.current = true;
+      void (async () => {
+        try {
+          for (const { activity, match } of ticks) {
+            attempted.current.add(activity.externalId);
+            const stored = await logSession({ ...activityToDraft(activity, match.template, match.session), quiet: true });
+            if (stored) await recordAutoTicked(activity.externalId);
+          }
+        } finally {
+          ticking.current = false;
+        }
+      })();
+    }, AUTO_TICK_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [state, plannedSessions, templates, sessionLogs, logSession]);
+
+  const questions = useMemo(
+    () => (state ? pendingQuestions(state.autoLogged, sessionLogs).filter((q) => !later.includes(q.entry.externalId)) : []),
+    [state, sessionLogs, later],
+  );
   const proposals = useMemo(
     () => (state ? pendingProposals(state.activities, state.dismissed, plannedSessions, templates, sessionLogs) : []),
     [state, plannedSessions, templates, sessionLogs],
   );
+  const question = questions[0];
   const proposal = proposals[0];
+
+  async function answer(patch: FeedbackPatch) {
+    if (!question || saving) return;
+    setSaving(true);
+    try {
+      await setLogFeedback(question.log.id, patch);
+      await setAutoLoggedStatus(question.entry.externalId, 'done');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // "Klopt niet": the log goes only if it is the one ASCEND made itself a
+  // moment ago and is still unanswered (canRejectAutoLog); the activity then
+  // comes back as an ordinary proposal and is never ticked off again.
+  async function reject() {
+    if (!question || saving || !canRejectAutoLog(question.entry, question.log)) return;
+    setSaving(true);
+    try {
+      await setAutoLoggedStatus(question.entry.externalId, 'rejected');
+      await undoLog(question.log.id);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (question) {
+    return (
+      <WatchAskCard
+        key={question.entry.externalId}
+        log={question.log}
+        template={templates.find((t) => t.id === question.log.templateId)}
+        busy={saving}
+        onAnswer={(patch) => void answer(patch)}
+        onReject={() => void reject()}
+        onLater={() => setLater((l) => [...l, question.entry.externalId])}
+      />
+    );
+  }
   if (!proposal) return null;
 
   async function save(activity: ExternalActivity, template: SessionTemplate, match?: PlannedMatch) {

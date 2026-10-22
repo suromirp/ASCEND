@@ -62,6 +62,7 @@ import { computeAdvice, type Advice } from '../engine/adviceEngine';
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { syncWatchActivities } from '../storage/externalActivities';
 import { syncWatchWorkouts } from '../storage/watchWorkouts';
+import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 
 type AdviceResponse = StoredResponse;
 
@@ -257,6 +258,9 @@ interface AppData {
   reportStorageError: (err: unknown) => void;
   dismissStorageNotice: () => void;
   undoLog: (logId: string) => Promise<void>;
+  // "Hoe ging het?" on a training that was ticked off by itself: adds the RPE,
+  // the feel and any pain to that log, nothing else (engine/autoTick.ts).
+  setLogFeedback: (logId: string, patch: FeedbackPatch) => Promise<void>;
   // Fill in or correct what the hard part was, afterwards. Only this
   // field; what was logged otherwise stays as it was.
   setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
@@ -448,6 +452,10 @@ export interface LogSessionInput {
   source?: SessionLog['source'];
   externalId?: string;
   completedAt?: string;
+  // Ticked off by itself (components/WatchActivityCard.tsx): no chime, no
+  // completion moment and no debrief for something the user did not just do.
+  // A milestone it clears is still celebrated.
+  quiet?: boolean;
 }
 
 // What undo must put back besides the planning itself.
@@ -1160,6 +1168,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
 
         await refresh();
+        if (input.quiet && !clearedTitle) return true;
         haptics.success();
         if (settings.introSoundEnabled) {
           if (clearedTitle) playMilestoneChime();
@@ -1234,6 +1243,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await refresh();
     },
     [program, refresh],
+  );
+
+  const setLogFeedback = useCallback(
+    async (logId: string, patch: FeedbackPatch) => {
+      const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
+      if (!log) return;
+      await SessionLogsRepo.put(applyFeedback(log, patch));
+      await refresh();
+    },
+    [refresh],
   );
 
   const setLogWorkout = useCallback(
@@ -1801,6 +1820,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     sessionsForWeek,
     logSession,
     undoLog,
+    setLogFeedback,
     setLogWorkout,
     setRestWeekSkipped,
     setWeekRepeated,

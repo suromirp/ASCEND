@@ -6,12 +6,18 @@ import { todayISO } from '../utils/dates';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { NotFitLink } from './IllnessCard';
+import { WellnessLines } from './WellnessLines';
+import { useTodayWellness } from './useWellness';
 
 // Vandaag → "Hoe voel je je?" as one line in "Je dag" (the form opens in a
 // sheet; "Alles normaal" is one tap on the line): the morning check-in (docs/onderzoek/Pijn
 // spierpijn en vermoeidheid melden.md). One tap when all is normal, or
 // three short choices: legs, energy, sleep, each compared with normal.
 // With a pain spot in the last 14 days, that spot is scored too.
+// When the watch has told intervals.icu about last night (sleep, resting heart
+// rate, HRV), those come first as lines, sleep is filled in from them, and
+// energy may stay empty: what is left to say is how the legs feel. Without
+// those numbers the card works as it always did.
 
 const LEGS: [LegFeeling, string][] = [['fris', 'Fris'], ['stijf', 'Wat stijf'], ['spierpijn', 'Spierpijn'], ['flink', 'Flinke spierpijn']];
 const ENERGY: [EnergyFeeling, string][] = [['fit', 'Fit'], ['gewoon', 'Gewoon'], ['moe', 'Moe'], ['op', 'Op']];
@@ -26,6 +32,12 @@ export function MorningCheckInCard() {
   const spot = recentPainSpot(today, sessionLogs);
   const [draft, setDraft] = useState<MorningCheckIn>(() => existing ?? { date: today, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
   const ask = shouldAskCheckIn(today, settings.morningCheckIns, sessionLogs, plannedSessions, templates);
+  const wellness = useTodayWellness(today);
+  const suggestedSleep = wellness?.suggestedSleep;
+
+  // Sleep is what the watch says until you pick something else; the numbers
+  // can arrive after the card is on screen, so this is read at render time.
+  const sleep = draft.sleep ?? suggestedSleep;
 
   if (!ask && !existing) return null;
 
@@ -59,7 +71,7 @@ export function MorningCheckInCard() {
     </div>
   );
 
-  const complete = !!(draft.legs && draft.energy && draft.sleep);
+  const complete = !!(draft.legs && sleep && (draft.energy || wellness));
   return (
     <>
       <DayRow
@@ -81,9 +93,10 @@ export function MorningCheckInCard() {
             <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl px-3.5 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}>
               Alles normaal
             </button>
+            {wellness && <WellnessLines reading={wellness} />}
             {row('Benen', LEGS, draft.legs, (legs) => setDraft({ ...draft, legs }))}
-            {row('Energie', ENERGY, draft.energy, (energy) => setDraft({ ...draft, energy }))}
-            {row('Slaap', SLEEP, draft.sleep, (sleep) => setDraft({ ...draft, sleep }))}
+            {row(wellness ? 'Energie (mag leeg blijven)' : 'Energie', ENERGY, draft.energy, (energy) => setDraft({ ...draft, energy }))}
+            {row(wellness && sleep === suggestedSleep ? 'Slaap, ingevuld uit je horloge' : 'Slaap', SLEEP, sleep, (sleep) => setDraft({ ...draft, sleep }))}
             {spot && (
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe is je {spot.area.toLowerCase()} vanochtend? 0 is niets. Na de training was het {spot.lastScore}.</p>
@@ -101,7 +114,7 @@ export function MorningCheckInCard() {
             )}
             <div className="flex items-center justify-between gap-3">
               <NotFitLink />
-              <button disabled={!complete} onClick={() => save({ ...draft, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl border px-4 text-sm font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
+              <button disabled={!complete} onClick={() => save({ ...draft, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl border px-4 text-sm font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
                 Opslaan
               </button>
             </div>

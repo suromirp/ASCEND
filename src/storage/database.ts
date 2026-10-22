@@ -442,7 +442,11 @@ export const BackupSnapshotsRepo = {
   delete: (id: string) => del('backupSnapshots', id),
 };
 
-export const RecoveryMetricsRepo = { getAll: () => getAll('recoveryMetrics') as Promise<RecoveryMetric[]> };
+export const RecoveryMetricsRepo = {
+  getAll: () => getAll('recoveryMetrics') as Promise<RecoveryMetric[]>,
+  putAll: (metrics: RecoveryMetric[]) => putAll('recoveryMetrics', metrics),
+  delete: (id: string) => del('recoveryMetrics', id),
+};
 export const BodyMetricsRepo = { getAll: () => getAll('bodyMetrics') as Promise<BodyMetric[]> };
 export const NutritionMetricsRepo = { getAll: () => getAll('nutritionMetrics') as Promise<NutritionMetric[]> };
 

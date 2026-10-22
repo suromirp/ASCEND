@@ -1,15 +1,18 @@
 // ASCEND — Meer, Garmin koppelen via intervals.icu.
 //
 // Garmin sends every activity to intervals.icu; ASCEND reads the last days
-// from there with the user's own key and offers them on Today. The key stays
-// on this phone and is not part of any export. The other way round, ASCEND
-// can put the planned trainings of the coming week in the intervals.icu
+// from there with the user's own key and offers them on Today (or ticks off
+// the unmistakable ones by itself, switch "Vanzelf afvinken"). The same link
+// brings last night's sleep, resting heart rate and HRV to the morning
+// check-in, once wellness synchronisation is switched on in intervals.icu. The
+// key stays on this phone and is not part of any export. The other way round,
+// ASCEND can put the planned trainings of the coming week in the intervals.icu
 // agenda (switch, default off), which intervals.icu sends on to the watch.
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { BackButton } from '../components/BackButton';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
-import { clearConnection, getConnection, getWatchState, maskKey, saveConnection, syncWatchActivities, type SyncResult, type WatchActivityState } from '../storage/externalActivities';
+import { clearConnection, getConnection, getWatchState, maskKey, saveConnection, setAutoTick, syncWatchActivities, type SyncResult, type WatchActivityState } from '../storage/externalActivities';
 import {
   getWatchWorkoutState,
   pauseWatchWorkouts,
@@ -52,10 +55,26 @@ export function GarminLinkPage() {
       .catch(() => setConnection(null));
   }, []);
 
+  async function changeAutoTick(on: boolean) {
+    setWatch((w) => (w ? { ...w, autoTick: on } : w));
+    try {
+      await setAutoTick(on);
+    } catch {
+      await load();
+    }
+  }
+
   function describeResult(result: SyncResult): Notice {
     if (result.status === 'error') return { tone: 'error', text: result.message };
     if (result.status === 'ok') {
-      return { tone: 'ok', text: `Verbinding werkt. In de laatste 7 dagen vond ASCEND ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'}.` };
+      const activities = `Verbinding werkt. In de laatste 7 dagen vond ASCEND ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'}.`;
+      if (!result.wellness) return { tone: 'ok', text: activities };
+      return {
+        tone: 'ok',
+        text: result.wellness.days > 0
+          ? `${activities} Ook gevonden: slaap en hartslag van ${result.wellness.days} ${result.wellness.days === 1 ? 'dag' : 'dagen'}${result.wellness.today ? ', ook van vandaag' : ''}.`
+          : `${activities} Slaap, rusthartslag en HRV vond ASCEND niet. Zet in intervals.icu de wellness-synchronisatie met Garmin aan (zie hieronder).`,
+      };
     }
     return { tone: 'ok', text: 'Verbinding werkt.' };
   }
@@ -99,7 +118,7 @@ export function GarminLinkPage() {
       await pauseWatchWorkouts();
       await clearConnection();
       setConfirmingUnlink(false);
-      setNotice({ tone: 'ok', text: 'Ontkoppeld. Je API-sleutel en de opgehaalde activiteiten zijn van deze telefoon gewist.' });
+      setNotice({ tone: 'ok', text: 'Ontkoppeld. Je API-sleutel, de opgehaalde activiteiten en je slaap- en hartslaggegevens zijn van deze telefoon gewist.' });
       await load();
     } finally {
       setBusy(false);
@@ -124,7 +143,7 @@ export function GarminLinkPage() {
         <Step n={2}>Koppel daar je Garmin. Vanaf dan komt elke training na het synchroniseren vanzelf op intervals.icu te staan.</Step>
         <Step n={3}>Open de instellingen van intervals.icu, onder Developer Settings. Kopieer je athlete-id en je API-sleutel en plak ze hieronder.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Standaard leest ASCEND alleen. De sleutel blijft op deze telefoon en gaat niet mee in een back-up. Elke nieuwe training krijg je als voorstel op Vandaag; er wordt nooit iets stil opgeslagen. Trainingen naar je horloge sturen staat uit tot jij het aanzet.
+          Standaard leest ASCEND alleen. De sleutel blijft op deze telefoon en gaat niet mee in een back-up. Elke nieuwe training krijg je als voorstel op Vandaag. Alleen een training die onmiskenbaar bij je planning past, vinkt ASCEND zelf af (zie Vanzelf afvinken hieronder), en dan vraagt hij hoe het ging.
         </p>
       </Card>
 
@@ -142,7 +161,7 @@ export function GarminLinkPage() {
           {notice && <NoticeLine notice={notice} />}
           {confirmingUnlink ? (
             <div className="flex flex-col gap-2">
-              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je sleutel en de opgehaalde activiteiten worden van deze telefoon gewist. Wat je al hebt opgeslagen in je logboek blijft.</p>
+              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je sleutel, de opgehaalde activiteiten en je slaap- en hartslaggegevens worden van deze telefoon gewist. Wat je al hebt opgeslagen in je logboek blijft.</p>
               <div className="flex gap-3">
                 <SecondaryButton onClick={() => setConfirmingUnlink(false)} disabled={busy}>Annuleren</SecondaryButton>
                 <PrimaryButton fullWidth={false} onClick={() => void unlink()} disabled={busy}>Ontkoppelen</PrimaryButton>
@@ -197,6 +216,30 @@ export function GarminLinkPage() {
       )}
 
       {connected && <WatchWorkoutsCard />}
+
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>Vanzelf afvinken</Eyebrow>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Vinkt een training van je horloge zelf af</p>
+          <Toggle checked={watch?.autoTick !== false} onChange={(on) => void changeAutoTick(on)} label="Vanzelf afvinken" />
+        </div>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Alleen als het niet anders kan: dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang. Daarna vraagt ASCEND hoe het ging, en met Klopt niet haal je de afvinking weer weg. Bij twijfel krijg je gewoon een voorstel. Een testloop en een wedstrijd vink je altijd zelf af.
+        </p>
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <Eyebrow>Slaap en rusthartslag</Eyebrow>
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+          Wil je dat de ochtendcheck je slaap, rusthartslag en HRV alvast laat zien? Zet dan in intervals.icu de wellness-synchronisatie met Garmin aan.
+        </p>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Open in intervals.icu de instellingen, kies de koppeling met Garmin Connect en zet het ophalen van wellnessgegevens aan. De namen kunnen daar iets afwijken. Zonder die schakelaar komt er van je horloge alleen training binnen, en werkt de ochtendcheck zoals altijd.
+        </p>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          ASCEND vergelijkt rusthartslag en HRV met je eigen gemiddelde van de laatste 4 weken, niet met een norm. Je horloge schat deze waarden: het is een hint en geen oordeel.
+        </p>
+      </Card>
     </div>
   );
 }

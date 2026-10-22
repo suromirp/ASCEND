@@ -15,6 +15,9 @@ export interface RecoveryMetric {
   restingHeartRate?: number;
   hrv?: number;
   sleepScore?: number;
+  // How long the night was, in minutes (generic: the source decides how it
+  // measured it; a watch counts sleep, it does not see it).
+  sleepMinutes?: number;
   bodyBattery?: number;
   stress?: number;
   source: MetricSource;

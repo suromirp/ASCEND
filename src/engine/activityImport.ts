@@ -93,7 +93,7 @@ export interface PlannedMatch {
   template: SessionTemplate;
 }
 
-function plannedMinutes(match: PlannedMatch): number {
+export function plannedMinutes(match: PlannedMatch): number {
   return match.session.plannedMinutes ?? match.template.durationVariants.full;
 }
 

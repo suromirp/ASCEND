@@ -19,10 +19,12 @@ import { todayISO } from '../utils/dates';
 const KEY = 'geheime-sleutel-0123';
 const ATHLETE = 'i12345';
 
-function activitiesFetch(status = 200) {
+// The answers of intervals.icu: activities for the activities URL, wellness
+// records for the wellness URL (empty unless a test gives some).
+function activitiesFetch(status = 200, wellness: unknown[] = []) {
   const start = `${todayISO()}T08:00:00`;
   const body = [{ id: 'i1', start_date_local: start, type: 'Run', source: 'GARMIN_CONNECT', moving_time: 3000, distance: 6500, total_elevation_gain: 30 }];
-  return vi.fn(async () => new Response(JSON.stringify(body), { status }));
+  return vi.fn(async (url: string) => new Response(JSON.stringify(String(url).includes('/wellness') ? wellness : body), { status }));
 }
 
 describe('connection', () => {
@@ -137,7 +139,7 @@ describe('fetching', () => {
     const fetchImpl = activitiesFetch();
     const now = new Date('2026-10-20T09:00:00.000Z');
     const result = await syncWatchActivities({ fetchImpl: fetchImpl as unknown as typeof fetch, now });
-    expect(result).toEqual({ status: 'ok', count: 1 });
+    expect(result).toEqual({ status: 'ok', count: 1, wellness: { days: 0, today: false } });
     const url = (fetchImpl.mock.calls[0] as unknown as [string])[0];
     expect(url).toMatch(/oldest=\d{4}-\d{2}-\d{2}&newest=\d{4}-\d{2}-\d{2}$/);
     const state = await getWatchState();
@@ -152,10 +154,11 @@ describe('fetching', () => {
     const t0 = new Date('2026-10-20T09:00:00.000Z');
     expect((await syncWatchActivities({ fetchImpl: f, now: t0 })).status).toBe('ok');
     expect((await syncWatchActivities({ fetchImpl: f, now: new Date(t0.getTime() + 14 * 60_000) })).status).toBe('too-soon');
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    // One round is two requests: the activities and the wellness records.
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect((await syncWatchActivities({ fetchImpl: f, now: new Date(t0.getTime() + 15 * 60_000) })).status).toBe('ok');
     expect((await syncWatchActivities({ fetchImpl: f, now: new Date(t0.getTime() + 16 * 60_000), force: true })).status).toBe('ok');
-    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(fetchImpl).toHaveBeenCalledTimes(6);
   });
 
   it('knows when a fetch is due', () => {
