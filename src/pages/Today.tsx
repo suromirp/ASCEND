@@ -32,6 +32,7 @@ import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeekReviewCard } from '../components/WeekReview';
+import { JourneyWeekCard } from '../components/JourneyWeekCard';
 import { reviewWeekFor } from '../engine/weekReview';
 import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
@@ -274,6 +275,8 @@ export function TodayPage() {
       <MorningCheckInCard />
 
       <CoachCard />
+
+      <JourneyWeekCard suppress={!!primaryTemplate && isHeavySession(primaryTemplate)} />
 
       <WeightReminder />
 

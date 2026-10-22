@@ -17,7 +17,8 @@ import { MetricBar } from '../components/MetricBar';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
-import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_PACKING_LIST, GR5_PACKING_NOTE, GR5_PACKING_SOURCES, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
+import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
+import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
@@ -88,7 +89,6 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 export function AscendPage() {
   const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings, templateById, planChangeLog } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
-  const [showPackingList, setShowPackingList] = useState(false);
   const [showLadder, setShowLadder] = useState(false);
   // Archiving (below) sets status:'archived' in place rather than removing
   // the row, so every "find the live goal" lookup here must exclude it —
@@ -276,36 +276,7 @@ export function AscendPage() {
         </details>
       </Card>
 
-      <Card className="flex flex-col gap-3">
-        <button onClick={() => setShowPackingList((s) => !s)} className="flex items-center justify-between gap-3 text-left">
-          <div>
-            <Eyebrow>UITRUSTING VOOR DE GR5</Eyebrow>
-            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Wat je voor een echte etappe nodig hebt. Nu nog niet nodig.</p>
-          </div>
-          <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>{showPackingList ? '−' : '+'}</span>
-        </button>
-
-        {showPackingList && (
-          <>
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
-              {GR5_PACKING_LIST.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span style={{ color: 'var(--color-gold)' }}>·</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{GR5_PACKING_NOTE}</p>
-            <div className="flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-              {GR5_PACKING_SOURCES.map((s) => (
-                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-                  {s.label} ↗
-                </a>
-              ))}
-            </div>
-          </>
-        )}
-      </Card>
+      <JourneyEntryCard />
 
       {selectedMilestone && selectedDetail && (
         <MilestoneDetailSheet

@@ -45,6 +45,8 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
 import { migrateExport, type AscendExport } from './migrations';
+import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
+import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
 import {
   CURRENT_BACKUP_SCHEMA_VERSION,
@@ -194,6 +196,19 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     } else {
       s[key] = cleaned;
     }
+  }
+  // Reisplanner and paklijst: kept readable or dropped, never stored half.
+  if ('journey' in s) {
+    const { state, skipped: n } = normalizeJourneyState(s.journey);
+    skipped.n += n;
+    if (state) s.journey = state;
+    else delete s.journey;
+  }
+  if ('packList' in s) {
+    const { state, skipped: n } = normalizePackList(s.packList);
+    skipped.n += n;
+    if (state) s.packList = state;
+    else delete s.packList;
   }
   return s as Partial<AppSettings>;
 }
@@ -479,6 +494,8 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     for (const e of current.illnessEpisodes ?? []) byId.set(e.id, e);
     merged.illnessEpisodes = [...byId.values()].sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
+  // Ticked-off journey tasks are history too: the union, the device wins.
+  if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);
   return merged;
 }
 

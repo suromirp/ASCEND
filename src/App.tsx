@@ -28,6 +28,8 @@ const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default:
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
 const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
+const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
+const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ default: m.PackListPage })));
 
 function NavIcon({ id }: { id: string }) {
   const icons: Record<string, string> = {
@@ -187,6 +189,8 @@ function AppShell() {
             <Route path="/bronnen" element={<SourcesPage />} />
             <Route path="/plekken" element={<TrainingSpotsPage />} />
             <Route path="/blessures" element={<InjuriesPage />} />
+            <Route path="/reis" element={<JourneyPage />} />
+            <Route path="/reis/paklijst" element={<PackListPage />} />
           </Routes>
           </Suspense>
         </ErrorBoundary>

@@ -26,6 +26,8 @@ import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
 import { makeId } from '../utils/id';
+import type { JourneyState } from '../engine/journey';
+import type { PackListState } from '../engine/packList';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
@@ -532,6 +534,14 @@ export interface AppSettings {
   // The one question per week in the week review (models/checkIn.ts).
   weeklyHealthChecks?: WeeklyHealthCheck[];
   weightReminderSnoozedAt?: string; // ISO date
+  // Reisplanner: which tasks on the way to the GR5 are ticked off
+  // (engine/journey.ts). Optional and additive, so older settings and
+  // backups need no schema step; travels with the settings in an export and
+  // is read defensively (normalizeJourneyState).
+  journey?: JourneyState;
+  // Paklijst with weights (engine/packList.ts). Absent means the example
+  // list from data/packList.ts. Same rules as `journey`.
+  packList?: PackListState;
   // Days between weight reminders; 0 = never remind. Absent = 14.
   weightReminderDays?: number;
   // Where you live, for distances to training spots (engine/trainingSpots.ts).
