@@ -113,6 +113,22 @@ describe('errors read as something to tell the user', () => {
     expect(await run(f).catch((e) => e.kind)).toBe('response');
   });
 
+  it('a body that stalls after the headers ends as a connection problem, not forever', async () => {
+    vi.useFakeTimers();
+    try {
+      const f = vi.fn(async (_url: string, init?: RequestInit) => ({
+        status: 200,
+        ok: true,
+        json: () => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))),
+      }));
+      const pending = run(f).catch((e) => e.kind);
+      await vi.advanceTimersByTimeAsync(16_000);
+      expect(await pending).toBe('network');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('anything unknown reads as a connection problem', () => {
     expect(openMeteoErrorMessage(new Error('boom'))).toMatch(/Geen verbinding/);
   });
