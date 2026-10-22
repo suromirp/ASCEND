@@ -23,6 +23,7 @@ import { REST_DAY_OPTIONS } from '../engine/restDay';
 import { StrengthDurationSettings } from '../components/StrengthDurationSettings';
 import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
+import { getConnection } from '../storage/externalActivities';
 
 const WEEKDAYS_NL = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
 
@@ -95,6 +96,10 @@ export function SettingsPage() {
   const showLongSundayChoice = !mainIsTrek || settings.longSundaySession === 'run';
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
   const [tab, setTab] = useState<SettingsTab>(readStoredTab);
+  const [garminLinked, setGarminLinked] = useState(false);
+  useEffect(() => {
+    void getConnection().then((c) => setGarminLinked(!!c)).catch(() => undefined);
+  }, []);
   const [status, setStatus] = useState<string | null>(null);
   const [rebuildStatus, setRebuildStatus] = useState<string | null>(null);
   const [rebuilding, setRebuilding] = useState(false);
@@ -351,11 +356,17 @@ export function SettingsPage() {
             </div>
           </Card>
 
-          <Card className="flex flex-col gap-3 opacity-60">
+          <Card className="flex flex-col gap-3">
             <Eyebrow>INTEGRATIES</Eyebrow>
-            <IntegrationRow name="Garmin" note="Binnenkort" />
-            <IntegrationRow name="Health Connect" note="Binnenkort" />
-            <IntegrationRow name="MacroFactor" note="Binnenkort" />
+            <NavRow
+              label="Garmin koppelen via intervals.icu"
+              note={garminLinked ? 'Verbonden: trainingen van je horloge komen als voorstel op Vandaag' : 'Trainingen van je horloge zonder overtypen'}
+              onClick={() => navigate('/koppelen/garmin')}
+            />
+            <div className="flex flex-col gap-3 opacity-60">
+              <IntegrationRow name="Health Connect" note="Binnenkort" />
+              <IntegrationRow name="MacroFactor" note="Binnenkort" />
+            </div>
           </Card>
         </>
       )}

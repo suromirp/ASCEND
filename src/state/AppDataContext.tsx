@@ -64,6 +64,7 @@ import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
+import { syncWatchActivities } from '../storage/externalActivities';
 
 type AdviceResponse = StoredResponse;
 
@@ -441,6 +442,11 @@ export interface LogSessionInput {
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
   completedDate?: string;
+  // An activity imported from a watch (engine/activityImport.ts): where it
+  // came from, its id there, and when it ended. Absent on manual logs.
+  source?: SessionLog['source'];
+  externalId?: string;
+  completedAt?: string;
 }
 
 // What undo must put back besides the planning itself.
@@ -1124,7 +1130,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // conflict 12).
       void (async () => {
         // Each on its own: one that fails doesn't stop the next.
-        for (const [name, step] of [['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild]] as const) {
+        for (const [name, step] of [['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities]] as const) {
           try {
             await step();
           } catch (err) {
@@ -1167,7 +1173,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         loggingInFlight.current.add(plannedId);
       }
       try {
-        if (plannedId && (await SessionLogsRepo.getAll()).some((l) => l.plannedSessionId === plannedId)) return false;
+        const existing = plannedId || input.externalId ? await SessionLogsRepo.getAll() : [];
+        if (plannedId && existing.some((l) => l.plannedSessionId === plannedId)) return false;
+        // The same watch activity is never stored twice.
+        if (input.externalId && existing.some((l) => l.externalId === input.externalId)) return false;
         const log: SessionLog = {
           id: makeId('log'),
           plannedSessionId: input.plannedSessionId,
@@ -1175,7 +1184,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           type: input.type,
           sport: input.sport,
           completedDate: input.completedDate ?? todayISO(),
-          completedAt: new Date().toISOString(),
+          completedAt: input.completedAt ?? new Date().toISOString(),
           variant: input.variant,
           durationMinutes: input.durationMinutes,
           rpe: input.rpe,
@@ -1189,7 +1198,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           workout: input.workout,
           strengthRir: input.strengthRir,
           legsAtStart: input.legsAtStart,
-          source: 'manual',
+          externalId: input.externalId,
+          source: input.source ?? 'manual',
         };
         await SessionLogsRepo.put(log);
 

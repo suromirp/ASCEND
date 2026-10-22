@@ -17,6 +17,7 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { WeightReminder } from '../components/WeightCard';
+import { WatchActivityCard } from '../components/WatchActivityCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { TimerButton } from '../components/TimerButton';
@@ -217,6 +218,8 @@ export function TodayPage() {
       )}
 
       <IllnessStatusCard />
+
+      <WatchActivityCard />
 
       {primary && primaryTemplate ? (
         <TodayMissionCard

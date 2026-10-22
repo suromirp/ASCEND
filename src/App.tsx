@@ -23,6 +23,7 @@ const StretchesPage = lazy(() => import('./pages/Stretches').then((m) => ({ defa
 const StretchAreaPage = lazy(() => import('./pages/StretchArea').then((m) => ({ default: m.StretchAreaPage })));
 const TrainingGuidePage = lazy(() => import('./pages/TrainingGuide').then((m) => ({ default: m.TrainingGuidePage })));
 const GarminGuidePage = lazy(() => import('./pages/GarminGuide').then((m) => ({ default: m.GarminGuidePage })));
+const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
@@ -181,6 +182,7 @@ function AppShell() {
             <Route path="/kennis/:topicId" element={<KnowledgeTopicPage />} />
             <Route path="/gids" element={<TrainingGuidePage />} />
             <Route path="/garmin" element={<GarminGuidePage />} />
+            <Route path="/koppelen/garmin" element={<GarminLinkPage />} />
             <Route path="/bronnen" element={<SourcesPage />} />
             <Route path="/plekken" element={<TrainingSpotsPage />} />
             <Route path="/blessures" element={<InjuriesPage />} />

@@ -8,6 +8,7 @@
 
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { SessionLog } from '../models/training';
+import type { ExternalActivity } from '../engine/activityImport';
 
 export interface DateRange {
   from: string; // ISO date
@@ -25,4 +26,9 @@ export interface DataSourceAdapter {
   // directly on a Garmin watch) surface as SessionLogs with source set to
   // the adapter id, exactly like a manually logged session would.
   fetchActivities?: (range: DateRange) => Promise<SessionLog[]>;
+  // The same activities as the general ExternalActivity shape, not yet a log:
+  // engine/activityImport.ts turns one into a draft log and proposes the
+  // planned session it belongs to, and the user decides on the Today card.
+  // This is the route intervals.icu uses (integrations/intervalsIcu.ts).
+  fetchExternalActivities?: (range: DateRange) => Promise<ExternalActivity[]>;
 }

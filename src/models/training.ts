@@ -200,12 +200,15 @@ export interface CardioMetric {
   durationMinutes: number;
   distanceKm?: number;
   elevationGainM?: number; // e.g. incline treadmill work counts toward D+ conditioning
+  // Descent, when a wearable measured it (imported activities). Optional.
+  elevationLossM?: number;
   estimatedElevation?: boolean; // see OutdoorMetric.estimatedElevation
   environment?: TrainingEnvironment;
   modality?: ActivityModality;
   guidanceMode?: GuidanceMode;
   garminSuggestedType?: string; // e.g. 'Base', 'Tempo' — only when guidanceMode === 'garmin_suggested'
   avgHeartRate?: number;
+  maxHeartRate?: number; // highest heart rate of the whole activity (imported). Optional.
   hrZones?: number[];
   paceMinPerKm?: number;
   cadence?: number;
@@ -229,6 +232,7 @@ export interface OutdoorMetric {
   // rather than presenting it as measured D+.
   estimatedElevation?: boolean;
   avgHeartRate?: number;
+  maxHeartRate?: number; // highest heart rate of the whole activity (imported). Optional.
   cadence?: number;
   power?: number; // e.g. Friday's Easy Bike fallback
   maxElevationM?: number;
@@ -289,6 +293,10 @@ export interface SessionLog {
   // A hard run or test: how your legs felt at the warm-up, held against the
   // leg index (engine/learning.ts). Optional, additive.
   legsAtStart?: 'fris' | 'normaal' | 'zwaar';
+  // The id of this activity at the place it came from (engine/activityImport.ts),
+  // so the same activity is never imported twice. Absent on manual logs and
+  // on every log made before imports existed. Optional, additive.
+  externalId?: string;
   source: MetricSource;
 }
 
