@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { saveConnection, setWatchUse } from './externalActivities';
-import { attachActivityDetail, wantsDetail } from './activityDetail';
+import { attachActivityDetail, attachDetailToStoredLog, wantsDetail } from './activityDetail';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, parseBackupText, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
 import { CURRENT_BACKUP_SCHEMA_VERSION } from './backupTypes';
 import { migrateActivityDetail, migrateLogDetail } from './migrations';
@@ -156,6 +156,30 @@ describe('fetching the profile after the save', () => {
     const f = requests();
     expect(await attachActivityDetail({ ...ACTIVITY, externalId: 'intervals.icu:i9' }, { fetchImpl: asFetch(f) })).toBe('skipped');
     expect(f).not.toHaveBeenCalled();
+  });
+});
+
+describe('the profile never writes back an older copy of the log', () => {
+  const detail = buildActivityDetail(streams, { source: 'garmin' })!;
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('a feeling given while the series were on their way stays', async () => {
+    await SessionLogsRepo.put(logFor(ACTIVITY));
+    // Another writer between the fetch and the attach (the feeling in the completion moment).
+    const stored = (await SessionLogsRepo.getAll())[0];
+    await SessionLogsRepo.put({ ...stored, subjectiveFeel: 'better' });
+    expect(await attachDetailToStoredLog(stored.id, detail)).toBe(true);
+    const after = (await SessionLogsRepo.getAll())[0];
+    expect(after.subjectiveFeel).toBe('better');
+    expect(after.detail).toBeTruthy();
+  });
+
+  it('a log that already has a profile, or is gone, is left alone', async () => {
+    await SessionLogsRepo.put(logFor(ACTIVITY, { detail }));
+    expect(await attachDetailToStoredLog('log_1', detail)).toBe(false);
+    expect(await attachDetailToStoredLog('log_nope', detail)).toBe(false);
   });
 });
 

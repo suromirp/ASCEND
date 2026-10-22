@@ -12,7 +12,8 @@
 // another time (docs/beslissingen/2026-10-22-loopinzicht.md). One log at a time:
 // background jobs run after each other.
 
-import { SessionLogsRepo, SettingsRepo } from './database';
+import { getDB, SessionLogsRepo, SettingsRepo } from './database';
+import type { ActivityDetail } from '../models/activityDetail';
 import { getConnection, getWatchState } from './externalActivities';
 import type { ExternalActivity } from '../engine/activityImport';
 import { buildActivityDetail } from '../engine/activityDetail';
@@ -80,12 +81,26 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
 
     const detail = buildActivityDetail(streams, { source: activity.source, treadmill: activity.treadmill, reportedGainM: activity.elevationGainM, conditions });
     if (!detail) return 'skipped';
-    // Read again: the log may have changed while the series were on their way.
-    const fresh = (await SessionLogsRepo.getAll()).find((l) => l.id === log.id);
-    if (!fresh || fresh.detail) return 'skipped';
-    await SessionLogsRepo.put({ ...fresh, detail });
-    return 'attached';
+    // Read and write in one transaction: the log may have changed while the
+    // series were on their way (your feeling, a putting back), and this only
+    // adds `detail`, never writes back an older copy of the rest.
+    return (await attachDetailToStoredLog(log.id, detail)) ? 'attached' : 'skipped';
   } catch {
     return 'failed';
   }
+}
+
+// Adds the profile to the log as it is stored now, in one readwrite
+// transaction, and only when it has none yet. Returns whether it was added.
+export async function attachDetailToStoredLog(logId: string, detail: ActivityDetail): Promise<boolean> {
+  const db = await getDB();
+  const tx = db.transaction('sessionLogs', 'readwrite');
+  const current = await tx.store.get(logId);
+  if (!current || current.detail) {
+    await tx.done;
+    return false;
+  }
+  await tx.store.put({ ...current, detail });
+  await tx.done;
+  return true;
 }

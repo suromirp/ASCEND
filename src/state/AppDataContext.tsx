@@ -1482,12 +1482,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
-      const log = sessionLogs.find((l) => l.id === logId);
+      // The stored log, not the one on screen: the run profile may have come in since.
+      const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
       if (!log) return;
       await SessionLogsRepo.put({ ...log, workout });
       await refresh();
     },
-    [sessionLogs, refresh],
+    [refresh],
   );
 
   const moveSession = useCallback(
