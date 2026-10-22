@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { predictDuration, MIN_LOGS_TO_LEARN } from '../engine/durationLearning';
 import { todayISO } from '../utils/dates';
 import { NumberField } from './NumberField';
 
 // Settings → Training → Krachttraining: how long each strength training
-// takes. You set a starting estimate; ASCEND learns from how long the full
-// training really took and says which number it uses now.
+// takes. ASCEND learns it from how long the full training really took (the
+// watch and MacroFactor fill that in), so the fields are advanced: folded
+// away, for a starting estimate before there are enough trainings.
 export function StrengthDurationSettings() {
   const { templates, plannedSessions, sessionLogs, settings, updateSettings, refresh } = useAppData();
+  const [open, setOpen] = useState(false);
   const today = todayISO();
   const strength = templates.filter(
     (t) => t.type === 'strength' && !t.weeklyProgression && (t.defaultDayOfWeek || plannedSessions.some((s) => s.templateId === t.id && s.scheduledDate >= today)),
@@ -28,10 +31,13 @@ export function StrengthDurationSettings() {
       <div>
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Hoe lang een krachttraining duurt</p>
         <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          Vul in hoe lang je denkt dat elke training duurt. Na {MIN_LOGS_TO_LEARN} keer afvinken met de echte duur rekent ASCEND met wat je meestal nodig hebt. Daarmee kloppen je week en je dagbudget.
+          ASCEND leert dit vanzelf uit je trainingen: na {MIN_LOGS_TO_LEARN} keer met de echte duur rekent hij met wat je meestal nodig hebt. Een eigen schatting helpt alleen zolang er nog te weinig trainingen zijn.
         </p>
       </div>
-      {strength.map((t) => {
+      <button onClick={() => setOpen((o) => !o)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+        {open ? '− verberg de duur per training' : '+ geavanceerd: zelf een duur invullen'}
+      </button>
+      {open && strength.map((t) => {
         const prediction = predictDuration(t, sessionLogs, estimates[t.id]);
         const note = prediction.source === 'learned'
           ? `ASCEND rekent nu met ${prediction.minutes} min, wat je meestal nodig had de laatste ${prediction.basedOn} keer.`

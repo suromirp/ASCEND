@@ -172,7 +172,6 @@ export function WeekPage() {
         />
       ) : (
         <>
-          <WeekRidge days={profile.days} previous={profile.previous} today={today} />
           <WeekPlanner
             weekStartDate={weekStart}
             sessions={sessions}
@@ -183,6 +182,7 @@ export function WeekPage() {
             adjustedIds={adjustedIds}
             leave={leavePeriods}
           />
+          <WeekRidge days={profile.days} previous={profile.previous} today={today} />
         </>
       )}
 
