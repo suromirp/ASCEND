@@ -69,6 +69,18 @@ describe('een tocht wijzigen en verwijderen laat geen overgeslagen tochtdagen ac
   });
 });
 
+describe('het tochtvoorstel zet geen twee zware beendagen achter elkaar (Doorloop, punt 13)', () => {
+  it('na Akkoord vindt de weekcontrole geen beendagen te dicht op elkaar rond de tocht', () => {
+    const layout = ['tpl_easy_run', 'tpl_upper_a', 'tpl_lower_a', 'tpl_herstel', 'tpl_upper_b', 'tpl_hills_descent', 'tpl_long_run'];
+    const weekOf = (monday: string): PlannedSession[] => layout.map((templateId, i) => ({ id: `${monday}-${i}`, templateId, scheduledDate: addDays(monday, i), weekStartDate: monday, status: 'planned', order: i }));
+    const base = planPass(WEEKS.flatMap(weekOf), context([])).sessions;
+    const t = trek(3);
+    const after = accept(change('add', t, [], base), base);
+    const spacing = planPass(after, context([t])).remaining.filter((f) => f.rule === 'LEG-SPACING' && f.date >= '2026-10-26' && f.date <= '2026-11-22');
+    expect(spacing).toEqual([]);
+  });
+});
+
 describe('rijen die een oudere versie al achterliet', () => {
   const base = planPass(WEEKS.flatMap(week), context([])).sessions;
   // Zoals de oude versie het deed: een geplaatste tochtdag werd een overgeslagen rij zonder merk.

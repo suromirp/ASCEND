@@ -118,6 +118,17 @@ describe('ridgeSentence', () => {
     expect(s).not.toContain('Let op');
   });
 
+  it('waarschuwt niet tussen twee tochtdagen: een tocht ligt bewust aaneen (Doorloop, punt 13)', () => {
+    const trek = { periodId: 't', role: 'placed' as const };
+    const d = days([], [
+      planned('tpl_mountain_hike', '2026-10-24', { plannedMinutes: 180, leave: { ...trek, from: '2026-10-24' } }),
+      planned('tpl_mountain_hike', '2026-10-25', { plannedMinutes: 180, leave: { ...trek, from: '2026-10-25' } }),
+    ]);
+    const s = ridgeSentence(d, TODAY);
+    expect(s).not.toContain('Let op');
+    expect(s).toContain('tochtdagen');
+  });
+
   it('een enkele beendag en een week zonder beendag', () => {
     expect(ridgeSentence(days([], [planned('tpl_long_run', '2026-10-25', { plannedMinutes: 60 })]), TODAY)).toContain('Eén zware beendag');
     expect(ridgeSentence(days([], [planned('tpl_easy_run', '2026-10-24')]), TODAY)).toMatch(/Geen zware beendag\.$/);

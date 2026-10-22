@@ -32,6 +32,9 @@ export interface DayLoad {
   hasTraining: boolean;
   // De training die het zwaarst is voor de benen, als die er is.
   legTemplate?: SessionTemplate;
+  // Een dag van een tocht: de wandeling die de tocht zelf plaatste. Tochtdagen
+  // liggen bewust aaneen, daar hoort geen waarschuwing over rust bij.
+  trekDay?: boolean;
 }
 
 export interface WeekProfileInputs extends Omit<LoadInputs, 'isRestWeek'> {
@@ -65,6 +68,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
     add(s.scheduledDate, byId.get(s.templateId));
   }
 
+  const trekDays = new Set(inputs.plannedSessions.filter((s) => s.leave?.role === 'placed' && s.status !== 'skipped').map((s) => s.scheduledDate));
   return weekDates(monday).map((date) => {
     const items = (week?.items ?? []).filter((i) => i.date === date);
     const legs = (templatesByDate.get(date) ?? []).filter(isLegHeavyTemplate);
@@ -74,6 +78,7 @@ export function dayLoads(inputs: WeekProfileInputs): DayLoad[] {
       minutes: items.reduce((n, i) => n + i.minutes, 0),
       hasTraining: items.length > 0,
       legTemplate: legs[0],
+      ...(trekDays.has(date) ? { trekDay: true } : {}),
     };
   });
 }
@@ -137,7 +142,7 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
   if (legs.length === 1) return `${heaviest} Eén zware beendag (${shortName(legs[0].legTemplate!)}), dus de benen hebben alle ruimte.`;
 
   // Per paar opeenvolgende beendagen: genoeg ruimte volgens de regel van de planner?
-  interface Pair { first: DayLoad; second: DayLoad; gap: number; need: number; intended: boolean }
+  interface Pair { first: DayLoad; second: DayLoad; gap: number; need: number; intended: boolean; trek: boolean }
   const pairs: Pair[] = [];
   for (let i = 1; i < legs.length; i++) {
     const first = legs[i - 1];
@@ -146,7 +151,9 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
       first, second,
       gap: daysBetween(first.date, second.date),
       need: legSpacingDays(first.legTemplate!, second.legTemplate!),
-      intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!),
+      // Two days of one tocht follow each other by design.
+      trek: !!first.trekDay && !!second.trekDay,
+      intended: isIntentionalBackToBack(first.legTemplate!, second.legTemplate!) || (!!first.trekDay && !!second.trekDay),
     });
   }
   const names = (p: Pair) => `${shortName(p.first.legTemplate!)} en ${shortName(p.second.legTemplate!)}`;
@@ -170,5 +177,6 @@ export function ridgeSentence(days: DayLoad[], today: string): string {
     return `${heaviest} Tussen ${names(regular)} ${between(regular)}, ${verdict}.`;
   }
   const intended = pairs[0];
+  if (pairs.every((p) => p.trek)) return `${heaviest} De tochtdagen liggen bewust achter elkaar.`;
   return `${heaviest} ${names(intended)} liggen bewust achter elkaar, op vermoeide benen.`;
 }
