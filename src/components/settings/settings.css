@@ -69,7 +69,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-row .sw { grid-column: 2; grid-row: 1; justify-self: end; }
 .st-row.two .sw { grid-row: 1 / 3; }
 .st-row.toggle:not(.two) { padding-top: 14px; padding-bottom: 14px; }
-.st-row.field { padding-top: 6px; padding-bottom: 6px; }
+.st-row.field { padding-top: 4px; padding-bottom: 4px; }
 .st-row.field .v { pointer-events: auto; }
 .st-row.field .t { pointer-events: none; }
 .st-row .info-slot { pointer-events: auto; position: relative; z-index: 1; display: inline-flex; }
@@ -182,6 +182,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-box .b { margin-top: var(--s1); font-size: 15px; line-height: 22px; font-variant-numeric: tabular-nums; color: var(--color-ink); }
 .st-box .b i { font-style: normal; color: var(--color-ink-dim); }
 .st-hint { margin: var(--s3) var(--s4) 0; font-size: 13px; line-height: 18px; color: var(--color-ink-dim); }
+.st-sheet-body > .st-hint { margin-left: 0; margin-right: 0; }
 .st-hint.warn { color: var(--color-warning); }
 
 /* Groot getal */
