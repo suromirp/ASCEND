@@ -18,7 +18,7 @@ import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { todayISO, resolveProgramWeek, formatDateNL, addDays, mondayOfWeek } from '../utils/dates';
 import { ProposalSheet } from '../components/ProposalSheet';
 import type { RestDayPlan } from '../engine/restDayProposal';
-import { programAnchorDate } from '../engine/programLayout';
+import { afterMainGoalChange, programAnchorDate } from '../engine/programLayout';
 import { HeartRateSettings } from '../components/HeartRateSettings';
 import { AmbitionSettings } from '../components/AmbitionSettings';
 import { REST_DAY_OPTIONS } from '../engine/restDay';
@@ -103,6 +103,9 @@ export function SettingsPage() {
   const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
   const [pending, setPending] = useState<PendingImpact | null>(null);
   const [restPlan, setRestPlan] = useState<RestDayPlan | null>(null);
+  // "Na je hoofddoel" once the goal is past: a proposal with Akkoord first.
+  const [afterGoalPlan, setAfterGoalPlan] = useState<{ value: 'stop' | 'maintain'; lines: string[] } | null>(null);
+  const [afterGoalBusy, setAfterGoalBusy] = useState(false);
   const [confirmingRestart, setConfirmingRestart] = useState(false);
   const [restartFrom, setRestartFrom] = useState<'this_week' | 'next_week'>('this_week');
   const [restartMode, setRestartMode] = useState<'clean' | 'count_only'>('clean');
@@ -595,6 +598,12 @@ export function SettingsPage() {
                     ]}
                     value={settings.afterMainGoal ?? 'stop'}
                     onChange={async (v) => {
+                      // Is the goal already past, this changes the plan now: first a proposal.
+                      const change = afterMainGoalChange(trainingGoals, goalMilestones, todayISO(), plannedSessions, sessionLogs, settings.afterMainGoal ?? 'stop', v);
+                      if (change.proposal) {
+                        setAfterGoalPlan({ value: v, lines: change.lines });
+                        return;
+                      }
                       await updateSettings({ afterMainGoal: v });
                       await refresh();
                       note('program', v === 'stop' ? 'Na je hoofddoel plant ASCEND niets meer.' : 'Na je hoofddoel plant ASCEND onderhoudsweken. Tot die dag verandert er niets.');
@@ -837,6 +846,38 @@ export function SettingsPage() {
             } else note('restDay', 'Je rustdag en je planning blijven zoals ze waren.');
           }}
           onClose={() => setRestPlan(null)}
+        />
+      )}
+
+      {afterGoalPlan && (
+        <ImpactSheet
+          eyebrow="PLANNING AANPASSEN?"
+          title={afterGoalPlan.value === 'stop' ? 'Na je hoofddoel: niets meer plannen' : 'Na je hoofddoel: onderhoudsweken'}
+          lines={afterGoalPlan.lines}
+          why="Je hoofddoel ligt achter je, dus deze keuze verandert je planning meteen. Daarom eerst je akkoord."
+          primaryLabel="Akkoord"
+          secondaryLabel="Liever niet"
+          note="Met Liever niet blijven de instelling en je planning zoals ze waren."
+          onPrimary={() => {
+            const v = afterGoalPlan.value;
+            setAfterGoalBusy(true);
+            void (async () => {
+              try {
+                await updateSettings({ afterMainGoal: v });
+                await refresh();
+                note('program', v === 'stop' ? 'Opgeslagen en toegepast: na je hoofddoel plant ASCEND niets meer.' : 'Opgeslagen en toegepast: ASCEND plant weer onderhoudsweken.');
+              } finally {
+                setAfterGoalBusy(false);
+                setAfterGoalPlan(null);
+              }
+            })();
+          }}
+          onSecondary={() => {
+            note('program', 'Je instelling en je planning blijven zoals ze waren.');
+            setAfterGoalPlan(null);
+          }}
+          onClose={() => setAfterGoalPlan(null)}
+          busy={afterGoalBusy}
         />
       )}
 
