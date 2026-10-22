@@ -51,7 +51,7 @@ import type { IllnessKind } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
-import { planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
+import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
@@ -665,7 +665,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => syncChannel.removeEventListener('message', onMessage);
   }, [refresh]);
 
-  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore): Promise<boolean> => {
+  // `afterWrites`: runs once the plan rows are stored and before the planning
+  // run, for a setting that goes with this layout (the rest day).
+  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore, afterWrites?: () => Promise<void>): Promise<boolean> => {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
     if (real.length === 0) return false;
     await planSettled();
@@ -701,6 +703,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       configBefore: restore?.config,
       createdAt: new Date().toISOString(),
     });
+    await afterWrites?.();
     planRevision++;
     await refresh();
     // The intervals.icu agenda follows the move now, not at the next opening;
@@ -2011,10 +2014,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await planSettled();
     const stored = await SettingsRepo.get();
     const restore = { settings: { restDay: stored.restDay } };
-    // The rest day and its layout go together: the sync does not lay the week out again.
-    setSettings(await SettingsRepo.set({ restDay: plan.restDay as AppSettings['restDay'] }));
-    await MetaRepo.set('appliedRestDay', plan.restDay);
-    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
+    // The rest day and its layout go together: first the layout, then the rest
+    // day, so a layout that could not be stored never leaves a rest day without
+    // it; the sync after it does not lay the week out again.
+    await applyRestDayInOrder(plan, {
+      commit: (afterWrites) => commitPlanChange(plan.proposal, plan.proposal.issue, restore, afterWrites),
+      storeRestDay: async (day) => {
+        setSettings(await SettingsRepo.set({ restDay: day as AppSettings['restDay'] }));
+        await MetaRepo.set('appliedRestDay', day);
+      },
+      showUnchanged: () => showStatusOnlyChange(plan.proposal, restore),
+    });
   }, [commitPlanChange, showStatusOnlyChange]);
 
   // What the extra training of the week is chosen from (engine/extraRun.ts).

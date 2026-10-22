@@ -125,3 +125,30 @@ export function planRestDayChange(input: RestDayPlanInput): RestDayPlan {
   };
   return { restDay, proposal, near };
 }
+
+// After Akkoord: first the new layout, then the rest day itself (and
+// appliedRestDay), and only then the planning run. A layout that could not be
+// stored (storage full, a refusal) leaves the rest day as it was, so there is
+// never a rest day without its layout. `commit` writes the plan, calls
+// `afterWrites` once the rows are stored and then runs the planning run, so
+// that run already sees the new rest day.
+export async function applyRestDayInOrder(
+  plan: RestDayPlan,
+  deps: {
+    commit: (afterWrites: () => Promise<void>) => Promise<boolean>;
+    storeRestDay: (restDay: number) => Promise<void>;
+    showUnchanged: () => Promise<void>;
+  },
+): Promise<boolean> {
+  if (!plan.proposal.changes.some((c) => c.action !== 'keep')) {
+    await deps.storeRestDay(plan.restDay);
+    await deps.showUnchanged();
+    return true;
+  }
+  let stored = false;
+  const committed = await deps.commit(async () => {
+    await deps.storeRestDay(plan.restDay);
+    stored = true;
+  });
+  return committed && stored;
+}
