@@ -1,9 +1,10 @@
 // Het slot 'ascend-boot': nooit vast zonder te werken, nooit los terwijl er nog
 // geschreven wordt. Alleen nagemaakte gegevens (het demoprogramma).
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { runBootUnderLock, type LockManagerLike } from './bootLock';
+import { BootLockStolen, runBootUnderLock, type LockManagerLike } from './bootLock';
 import { runBootMigrations } from './bootMigrations';
-import { wipeAllData } from './database';
+import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
+import { seedIfEmpty, wipeAllData } from './database';
 
 // Een eenvoudig slot zoals navigator.locks: één houder tegelijk, de rest in de rij.
 function fakeLocks() {
@@ -141,5 +142,63 @@ describe('het opstartslot', () => {
     const p = page(true);
     const { ready } = runBootUnderLock({ locks, whenOpen: p.whenOpen, isOpen: p.isOpen, run: async () => Promise.reject(new Error('stuk')) });
     await expect(ready).rejects.toThrow('stuk');
+  });
+});
+
+describe('Toch openen: het slot overnemen', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('het venster waarvan het slot wordt overgenomen stopt voor de volgende stap en meldt BootLockStolen', async () => {
+    // Zoals Web Locks: wie steelt krijgt het slot meteen, de oude houder krijgt een AbortError.
+    let holderReject: ((err: unknown) => void) | null = null;
+    const log: string[] = [];
+    const locks: LockManagerLike = {
+      request(_name, options, fn) {
+        return new Promise((resolve, reject) => {
+          if (options.steal) {
+            holderReject?.(new DOMException('stolen', 'AbortError'));
+            log.push('gestolen');
+          } else {
+            holderReject = reject;
+          }
+          fn().then(resolve, reject);
+        });
+      },
+    };
+    const p = page(true);
+    const seenA: string[] = [];
+    let stealer: { ready: Promise<string[]>; settled: Promise<void> } | undefined;
+    const a = runBootUnderLock({
+      locks, whenOpen: p.whenOpen, isOpen: p.isOpen,
+      run: (shouldPause, isCancelled) =>
+        runBootMigrations({
+          build: 'v1', shouldPause, isCancelled,
+          onStep: (id) => seenA.push(id),
+          overrides: {
+            seedIfEmpty: async () => {
+              await seedIfEmpty();
+              stealer = runBootUnderLock({ locks, steal: true, whenOpen: p.whenOpen, isOpen: p.isOpen, run: (sp, ic) => runBootMigrations({ build: 'v1', shouldPause: sp, isCancelled: ic }) });
+            },
+          },
+        }),
+    });
+    await expect(a.ready).rejects.toBeInstanceOf(BootLockStolen);
+    await stealer!.ready;
+    await a.settled;
+    await tick(50);
+    expect(log).toEqual(['gestolen']);
+    expect(seenA).toEqual([BOOT_MIGRATIONS_KEY, 'seedIfEmpty']);
+  });
+});
+
+describe('een afgebroken transactie in een stap', () => {
+  it('blijft een AbortError van de stap zelf, geen overgenomen slot', async () => {
+    const { locks } = fakeLocks();
+    const p = page(true);
+    const aborted = new DOMException('The transaction was aborted', 'AbortError');
+    const { ready } = runBootUnderLock({ locks, whenOpen: p.whenOpen, isOpen: p.isOpen, run: async () => Promise.reject(aborted) });
+    await expect(ready).rejects.toBe(aborted);
   });
 });

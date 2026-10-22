@@ -72,7 +72,7 @@ import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { createSerialQueue } from '../utils/serialQueue';
-import { runBoot, type BootStep } from '../engine/bootWatch';
+import { bootLockChoice, runBoot, type BootStep } from '../engine/bootWatch';
 
 type AdviceResponse = StoredResponse;
 
@@ -106,13 +106,23 @@ const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefi
 // Resolves when the boot steps are really done, a slow repair included. The
 // planning sync waits for it, so it never writes the plan at the same time.
 let bootSettled: Promise<void> = Promise.resolve();
+function sessionStorageOrNull(): Storage | null {
+  try {
+    return typeof sessionStorage !== 'undefined' ? sessionStorage : null;
+  } catch {
+    return null;
+  }
+}
 function runBootMigrationsOnce(): Promise<void> {
   if (!bootMigrations) {
     const { ready, settled } = runBootUnderLock({
       locks: typeof navigator !== 'undefined' ? navigator.locks : undefined,
       whenOpen: whenStorageOpen,
       isOpen: storageIsOpen,
-      run: (shouldPause) => runBootMigrations({ onStep: noteBootMigration, shouldPause }),
+      run: (shouldPause, isCancelled) => runBootMigrations({ onStep: noteBootMigration, shouldPause, isCancelled }),
+      // Toch openen (the screen for a lock that stays taken): this one load
+      // takes the lock over (docs/beslissingen/2026-10-22-toch-openen.md).
+      steal: bootLockChoice(sessionStorageOrNull()) === 'steal',
     });
     bootSettled = settled;
     bootMigrations = ready.then(

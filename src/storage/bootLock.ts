@@ -17,10 +17,25 @@
 //   stappen het plan schrijft (de planningssync) wacht op `settled`, zodat de
 //   hangende stap en de sync nooit tegelijk in plannedSessions schrijven.
 
+// Another window holds the lock for longer than BOOT_LOCK_WAIT_MS (often a tab
+// Android paused in the background, which never lets go by itself). The screen
+// says so, with Opnieuw proberen and Toch openen: the next load then takes the
+// lock over (engine/bootWatch.ts#bootLockChoice,
+// docs/beslissingen/2026-10-22-toch-openen.md).
 export class BootLockBusy extends Error {
   constructor() {
     super('boot lock busy');
     this.name = 'BootLockBusy';
+  }
+}
+
+// This window held the lock and another one took it over (Toch openen there).
+// It stops before its next step and says "ASCEND is in een ander venster
+// geopend.", with Opnieuw proberen.
+export class BootLockStolen extends Error {
+  constructor() {
+    super('boot lock stolen');
+    this.name = 'BootLockStolen';
   }
 }
 
@@ -31,10 +46,12 @@ export interface BootRunResult {
   // Een herstelstap die over zijn tijd ging en nog loopt; lost op als hij klaar
   // is (gelukt of niet), nooit met een fout.
   pending?: Promise<void>;
+  // Gestopt omdat een ander venster het slot overnam.
+  cancelled?: boolean;
 }
 
 export interface LockManagerLike {
-  request(name: string, options: { signal?: AbortSignal }, fn: () => Promise<unknown>): Promise<unknown>;
+  request(name: string, options: { signal?: AbortSignal; steal?: boolean }, fn: () => Promise<unknown>): Promise<unknown>;
 }
 
 export const BOOT_LOCK_NAME = 'ascend-boot';
@@ -42,8 +59,11 @@ export const BOOT_LOCK_WAIT_MS = 10_000;
 
 export function runBootUnderLock(deps: {
   locks?: LockManagerLike;
-  // Draait de stappen; `shouldPause` zegt tussen twee stappen of hij moet stoppen.
-  run: (shouldPause: () => boolean) => Promise<BootRunResult>;
+  // Draait de stappen; `shouldPause` zegt tussen twee stappen of hij moet
+  // pauzeren, `isCancelled` of een ander venster het slot overnam.
+  run: (shouldPause: () => boolean, isCancelled: () => boolean) => Promise<BootRunResult>;
+  // Toch openen: de eerste keer het slot overnemen in plaats van wachten.
+  steal?: boolean;
   whenOpen: () => Promise<void>;
   isOpen: () => boolean;
   waitMs?: number;
@@ -55,13 +75,43 @@ export function runBootUnderLock(deps: {
     rejectReady = reject;
   });
   const shouldPause = () => !deps.isOpen();
+  // Set when another window took the lock over: the run stops before its next
+  // step, so two windows never go on writing side by side.
+  let cancelled = false;
+  const isCancelled = () => cancelled;
+  let steal = !!deps.steal;
   const withLock = <T>(fn: () => Promise<T>): Promise<T> => {
     if (!deps.locks) return fn();
-    const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(deps.waitMs ?? BOOT_LOCK_WAIT_MS) : undefined;
-    return (deps.locks.request(BOOT_LOCK_NAME, signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
-      // Alleen het wachten op het slot zelf; een fout uit fn gaat door zoals hij is.
-      if (signal?.aborted && err === signal.reason) throw new BootLockBusy();
+    let started = false;
+    // An error of fn itself (a transaction broken off at freeze is an
+    // AbortError too) goes through as it is; only the lock's own one counts.
+    let fnError: unknown = undefined;
+    const body = () => {
+      started = true;
+      return fn().catch((err: unknown) => {
+        fnError = err;
+        throw err;
+      });
+    };
+    const lostLock = (err: unknown) => {
+      // Web Locks: when another window steals the lock, the request of the
+      // holder ends with an AbortError while its callback still runs.
+      if (started && err !== fnError && err instanceof DOMException && err.name === 'AbortError') {
+        cancelled = true;
+        throw new BootLockStolen();
+      }
       throw err;
+    };
+    if (steal) {
+      // Only the first request; after a pause it waits again like any other.
+      steal = false;
+      return (deps.locks.request(BOOT_LOCK_NAME, { steal: true }, body) as Promise<T>).catch(lostLock);
+    }
+    const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(deps.waitMs ?? BOOT_LOCK_WAIT_MS) : undefined;
+    return (deps.locks.request(BOOT_LOCK_NAME, signal ? { signal } : {}, body) as Promise<T>).catch((err: unknown) => {
+      // Alleen het wachten op het slot zelf; een fout uit fn gaat door zoals hij is.
+      if (!started && signal?.aborted && err === signal.reason) throw new BootLockBusy();
+      return lostLock(err);
     });
   };
   const settled = (async () => {
@@ -70,7 +120,8 @@ export function runBootUnderLock(deps: {
       const result = await withLock(async () => {
         // Tussen het vragen en het krijgen kan hij weer uit beeld zijn geraakt.
         if (shouldPause()) return { skipped: [], paused: true } as BootRunResult;
-        const r = await deps.run(shouldPause);
+        const r = await deps.run(shouldPause, isCancelled);
+        if (r.cancelled) throw new BootLockStolen();
         if (r.paused) return r;
         resolveReady(r.skipped);
         // Het slot blijft vast tot de hangende herstelstap echt klaar is.

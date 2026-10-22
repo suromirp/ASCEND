@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from './engine/bootWatch';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { BootScreen } from './components/BootScreen';
 import { CompletionMoment } from './components/CompletionMoment';
@@ -10,6 +11,8 @@ import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
 import { AppMark } from './components/AppMark';
+import { StretchMenuButton } from './components/StretchMenuButton';
+import { TimerButton } from './components/TimerButton';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { useScrollRestoration } from './components/useScrollRestoration';
 import { resolveNavigation } from './engine/navigationSettings';
@@ -164,6 +167,17 @@ function SettingsGear() {
   );
 }
 
+// Op Vandaag: timer en rekken naast het tandwiel, op dezelfde rij en even groot
+// (44 px), links van het tandwiel met 8 px ertussen.
+function TodayTopButtons() {
+  return (
+    <div className="absolute z-10 flex items-center gap-2" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', right: 'calc(1rem + 44px + 8px)' }}>
+      <TimerButton />
+      <StretchMenuButton />
+    </div>
+  );
+}
+
 function AppShell() {
   const { loading, bootError, settings, celebration, dismissCelebration, storageNotice, dismissStorageNotice, reportStorageError } = useAppData();
 
@@ -272,6 +286,22 @@ function AppShell() {
         >
           Opnieuw proberen
         </button>
+        {bootError === BOOT_LOCK_BUSY_TEXT && (
+          <button
+            onClick={() => {
+              try {
+                sessionStorage.setItem(BOOT_STEAL_FLAG, '1');
+              } catch {
+                // Without session storage the next load simply waits again.
+              }
+              window.location.reload();
+            }}
+            className="min-h-[44px] rounded-xl border px-5 py-2.5 text-xs font-semibold"
+            style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-ink)' }}
+          >
+            Toch openen
+          </button>
+        )}
         <UpdatePrompt />
       </div>
     );
@@ -297,6 +327,7 @@ function AppShell() {
         <div className={`relative ${TOP_ROW_PAD[location.pathname] ?? ''}`}>
         {TAB_ROUTES.includes(location.pathname) && <AppMark />}
         {TAB_ROUTES.includes(location.pathname) && <SettingsGear />}
+        {location.pathname === '/' && <TodayTopButtons />}
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
           <Routes>

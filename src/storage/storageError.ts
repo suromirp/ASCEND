@@ -6,6 +6,8 @@
 // een keer proberen; de privévenster-tekst zou de gebruiker op het verkeerde
 // spoor zetten.
 
+import { BOOT_LOCK_BUSY_TEXT } from '../engine/bootWatch';
+
 export const ABORTED_WHILE_SAVING = 'ASCEND werd weggelegd terwijl hij iets opsloeg. Probeer het opnieuw.';
 
 function errorName(err: unknown): string {
@@ -15,7 +17,9 @@ function errorName(err: unknown): string {
 // Bij het openen: de opslag gaat niet open of een opstartstap mislukt.
 export function describeStorageError(err: unknown): string {
   const name = errorName(err);
-  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen. Helpt dat niet, kies dan in je telefooninstellingen Apps, Chrome, Geforceerd stoppen; je gegevens blijven staan.';
+  if (name === 'BootLockBusy') return BOOT_LOCK_BUSY_TEXT;
+  // Een ander venster nam het openen over (Toch openen daar).
+  if (name === 'BootLockStolen') return 'ASCEND is in een ander venster geopend.';
   if (name === 'AbortError') return ABORTED_WHILE_SAVING;
   if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
   if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';

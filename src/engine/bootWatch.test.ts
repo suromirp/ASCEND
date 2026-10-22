@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { BOOT_STEAL_FLAG, bootLockChoice } from './bootWatch';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, backupFailedLines, bootStepLine, bootStepName, bootStuckLines, bootWatchStage, migrationsToRun, recordAfter, runBoot, storageSilentAdvice, type BootStep } from './bootWatch';
 
 describe('de waakhond bij het openen', () => {
@@ -117,5 +118,34 @@ describe('als het openen hangt', () => {
   it('geen gedachtestreepjes in de teksten', () => {
     const all = [...bootStuckLines('migraties', 'seedIfEmpty', 'silent'), ...bootStuckLines('planning', null, 'answers'), ...backupFailedLines('silent'), ...backupFailedLines(null)].join(' ');
     expect(all).not.toMatch(new RegExp('[\\u2013\\u2014]'));
+  });
+});
+
+describe('wachten op het slot of het overnemen (Toch openen)', () => {
+  const store = (initial: Record<string, string> = {}) => {
+    const data = { ...initial };
+    return { data, getItem: (k: string) => data[k] ?? null, removeItem: (k: string) => void delete data[k] };
+  };
+
+  it('zonder vlag: wachten', () => {
+    expect(bootLockChoice(store())).toBe('wait');
+  });
+
+  it('met de vlag: overnemen, en de vlag is daarna weg (maar één keer)', () => {
+    const s = store({ [BOOT_STEAL_FLAG]: '1' });
+    expect(bootLockChoice(s)).toBe('steal');
+    expect(s.data[BOOT_STEAL_FLAG]).toBeUndefined();
+    expect(bootLockChoice(s)).toBe('wait');
+  });
+
+  it('zonder sessionStorage, of als die een fout geeft: wachten', () => {
+    expect(bootLockChoice(null)).toBe('wait');
+    const broken = { getItem: () => { throw new Error('geblokkeerd'); }, removeItem: () => undefined };
+    expect(bootLockChoice(broken)).toBe('wait');
+  });
+
+  it('een vlag die niet te wissen is, wordt niet gebruikt: anders steelt elke herlaad opnieuw', () => {
+    const sticky = { getItem: () => '1', removeItem: () => { throw new Error('nee'); } };
+    expect(bootLockChoice(sticky)).toBe('wait');
   });
 });

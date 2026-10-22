@@ -52,6 +52,9 @@ export async function runBootMigrations(
     // the caller can let go of the lock. What is done is in meta; the next run
     // goes on from there (storage/bootLock.ts).
     shouldPause?: () => boolean;
+    // Asked before each step: true when another window took the lock over
+    // (Toch openen). This run stops there; that window runs the steps.
+    isCancelled?: () => boolean;
   } = {},
 ): Promise<BootRunResult> {
   const build = options.build ?? currentBuild();
@@ -69,6 +72,7 @@ export async function runBootMigrations(
   for (const step of migrationsToRun(record, build)) {
     const run = options.overrides?.[step.id] ?? STEPS[step.id];
     if (!run) continue;
+    if (options.isCancelled?.()) return pending ? { skipped, cancelled: true, pending } : { skipped, cancelled: true };
     if (!repairsStopped && options.shouldPause?.()) return { skipped, paused: true };
     // Na een herstelstap die bleef hangen, komen de andere herstelstappen deze
     // keer niet: ze schrijven deels dezelfde gegevens, en de hangende kan nog
