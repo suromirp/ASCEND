@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
+import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
 import {
   clearConnection,
   forgetDeclinedAlignments,
@@ -599,6 +599,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
   }
 
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   async function takeAway() {
     setBusy(true);
@@ -644,7 +645,11 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>NAAR JE HORLOGE</Eyebrow>
+      <div className="flex items-start justify-between gap-2">
+        <Eyebrow>NAAR JE HORLOGE</Eyebrow>
+        <InfoButton onClick={() => setShowInfo((v) => !v)} label="Hoe werkt dit, en hoe ruim ik op?" />
+      </div>
+      {showInfo && <WatchInfo />}
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Met de schakelaar hierboven zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda, met je tempo's uit de testloop of je hartslagzones als doel. Verplaats of sla je er een over, dan volgt de agenda. Alleen wat ASCEND zelf heeft gestuurd wordt aangeraakt; je eigen trainingen in intervals.icu blijven met rust.
       </p>
@@ -680,5 +685,35 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
         De test stuurt alleen de eerstvolgende training, ook als de schakelaar uit staat. Kijk daarna in je intervals.icu-agenda of de stappen kloppen.
       </p>
     </Card>
+  );
+}
+
+// In plain words: what runs by itself, how to recognise it and how to clean up.
+// Only what is known is written as fact; what is not known says so.
+function WatchInfo() {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+      <InfoPoint title="Wat vanzelf gaat">
+        Staat de schakelaar aan, dan zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda en werkt ze bij na elke wijziging in je planning. Wat je hebt gedaan of hebt overgeslagen, haalt hij er zelf weer uit. Daarna stuurt intervals.icu ze door naar Garmin Connect.
+      </InfoPoint>
+      <InfoPoint title="Zo herken je ze">
+        De naam begint met ASC (of ASCEND ·, of niets: dat kies je hierboven). In de beschrijving staat bovenaan voor welke dag ASCEND hem plande.
+      </InfoPoint>
+      <InfoPoint title="Opruimen">
+        Opnieuw versturen haalt alle komende ASCEND-trainingen weg en stuurt de komende 7 dagen opnieuw. Weghalen doet alleen het eerste. Beide zoeken ook oude trainingen van ASCEND in je agenda, bijvoorbeeld van een test. Alleen wat ASCEND stuurde gaat weg; je eigen trainingen en je activiteiten blijven staan.
+      </InfoPoint>
+      <InfoPoint title="En in Garmin Connect zelf">
+        ASCEND ziet de lijst Workouts in Garmin Connect niet en kan er niets uit wissen. Staat daar na het weghalen en synchroniseren nog iets van ASCEND, verwijder het dan in Garmin Connect. Of intervals.icu een weggehaalde training ook zelf uit Garmin Connect haalt, is niet zeker: op het forum van intervals.icu staat alleen dat het geplande trainingen die meer dan een dag oud zijn zelf opruimt. Kijk na het weghalen en synchroniseren even in Garmin Connect.
+      </InfoPoint>
+    </div>
+  );
+}
+
+function InfoPoint({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</p>
+      <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{children}</p>
+    </div>
   );
 }
