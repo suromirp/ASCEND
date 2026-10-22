@@ -479,7 +479,7 @@ export function SettingsPage() {
                 )}
               </div>
             ))}
-            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Automatisch: je weekschema en de weekplanning bepalen hoe vaak. Een aantal per week: ASCEND houdt dat aan en kiest zelf de dagen. Past het niet, dan zegt ASCEND waarom.
             </p>
             <SectionNote text={notes.sports} />
@@ -528,7 +528,7 @@ export function SettingsPage() {
                 );
               })}
             </div>
-            <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Geldt vanaf vandaag. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
             </p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat doe je op die dag?</p>

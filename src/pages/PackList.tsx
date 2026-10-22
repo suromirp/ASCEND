@@ -40,7 +40,7 @@ export function PackListPage() {
 
       <Card className="flex flex-col gap-1" texture>
         <Eyebrow>BASISGEWICHT</Eyebrow>
-        <p className="font-display text-4xl" style={{ color: 'var(--color-gold)' }}>{formatKg(baseGrams)}</p>
+        <p className="font-sans tabular-nums text-4xl" style={{ color: 'var(--color-gold)' }}>{formatKg(baseGrams)}</p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Alles wat in je rugzak zit, zonder eten en water. Het is de knop waar je zelf het meest aan kunt draaien.
         </p>
@@ -53,7 +53,7 @@ export function PackListPage() {
           Wat je draagt als je uit een dorp vertrekt: je basisgewicht plus eten en water. We rekenen {formatNumberNL(FOOD_KG_PER_DAY, 1)} kg droog eten per dag en 1 kg per liter water.
         </p>
         <div role="table" aria-label="Vertrekgewicht per aantal dagen eten en liters water" className="flex flex-col">
-          <div role="row" className="flex items-center border-b pb-1.5 text-[11px]" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
+          <div role="row" className="flex items-center border-b pb-1.5 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
             <span role="columnheader" className="flex-1">Eten voor</span>
             {WATER_LITER_OPTIONS.map((l) => (
               <span role="columnheader" key={l} className="w-24 text-right">met {l} liter</span>
@@ -63,7 +63,7 @@ export function PackListPage() {
             <div role="row" key={row.foodDays} className="flex min-h-[40px] items-center border-b last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
               <span role="rowheader" className="flex-1 text-sm" style={{ color: 'var(--color-ink)' }}>{row.foodDays} dagen</span>
               {row.kg.map((kg, i) => (
-                <span role="cell" key={WATER_LITER_OPTIONS[i]} className="w-24 text-right font-display text-lg" style={{ color: 'var(--color-ink)' }}>
+                <span role="cell" key={WATER_LITER_OPTIONS[i]} className="w-24 text-right font-sans tabular-nums text-lg" style={{ color: 'var(--color-ink)' }}>
                   {formatNumberNL(kg, 1)} kg
                 </span>
               ))}

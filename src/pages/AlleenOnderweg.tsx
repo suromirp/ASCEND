@@ -64,7 +64,7 @@ export function AlleenOnderwegPage() {
         <Eyebrow>ALARM</Eyebrow>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="font-display text-5xl leading-none" style={{ color: 'var(--color-gold)' }}>{EMERGENCY_NUMBER}</p>
+            <p className="font-sans tabular-nums text-5xl leading-none" style={{ color: 'var(--color-gold)' }}>{EMERGENCY_NUMBER}</p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Alarmnummer in Frankrijk, ook in de bergen</p>
           </div>
           <a
@@ -77,7 +77,7 @@ export function AlleenOnderwegPage() {
         </div>
         <div className="flex items-center justify-between gap-3 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
           <div>
-            <p className="font-display text-2xl leading-none" style={{ color: 'var(--color-ink)' }}>{SMS_FALLBACK_NUMBER}</p>
+            <p className="font-sans tabular-nums text-2xl leading-none" style={{ color: 'var(--color-ink)' }}>{SMS_FALLBACK_NUMBER}</p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Per sms, als bellen niet lukt</p>
           </div>
           <a
@@ -95,7 +95,7 @@ export function AlleenOnderwegPage() {
         <ol className="flex flex-col gap-3">
           {ALARM_STEPS.map((step, i) => (
             <li key={step} className="flex gap-3 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-              <span className="font-display" style={{ color: 'var(--color-gold)' }}>{i + 1}</span>
+              <span className="font-sans tabular-nums" style={{ color: 'var(--color-gold)' }}>{i + 1}</span>
               <span>{step}</span>
             </li>
           ))}
@@ -106,8 +106,8 @@ export function AlleenOnderwegPage() {
           Meer in de Kennisbank: Als het misgaat
         </button>
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <p className="text-[11px] font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
-          <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_REPORT}</p>
+          <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_REPORT}</p>
           <div className="mt-1 flex flex-col">
             {ALARM_SOURCES.map((s) => (
               <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
@@ -132,17 +132,17 @@ export function AlleenOnderwegPage() {
             <div>
               <label htmlFor="solo-who" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wie is je thuisfront?</label>
               <input id="solo-who" type="text" value={solo.who} maxLength={80} onChange={(e) => updateSolo({ who: e.target.value })} placeholder="Een voornaam of hoe je die persoon noemt" className={inputClass} style={inputStyle} />
-              <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo begint de brief. Het blijft op deze telefoon.</p>
+              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo begint de brief. Het blijft op deze telefoon.</p>
             </div>
             <div>
               <label htmlFor="solo-time" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe laat stuur je elke dag een bericht?</label>
               <input id="solo-time" type="time" value={solo.checkInTime} onChange={(e) => updateSolo({ checkInTime: e.target.value })} className={inputClass} style={inputStyle} />
-              <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Een vast moment, bijvoorbeeld als je de tent staat. Kies een tijd waarop je meestal al bij je slaapplek bent.</p>
+              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Een vast moment, bijvoorbeeld als je de tent staat. Kies een tijd waarop je meestal al bij je slaapplek bent.</p>
             </div>
             <div>
               <label htmlFor="solo-missing" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat doet thuis als je bericht uitblijft?</label>
               <textarea id="solo-missing" value={solo.ifMissing} rows={4} maxLength={2000} onChange={(e) => updateSolo({ ifMissing: e.target.value })} placeholder="Bijvoorbeeld: na twee uur bellen, na zes uur 112 bellen met het etappeplan" className={inputClass} style={inputStyle} />
-              <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Spreek vooraf af hoe lang thuis wacht en wanneer 112 wordt gebeld. In dalen zonder bereik kan een dag stilte normaal zijn.</p>
+              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Spreek vooraf af hoe lang thuis wacht en wanneer 112 wordt gebeld. In dalen zonder bereik kan een dag stilte normaal zijn.</p>
             </div>
 
             <div>
@@ -172,7 +172,7 @@ export function AlleenOnderwegPage() {
             <div>
               <label htmlFor="solo-gear" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe herkent men jou en je tent?</label>
               <textarea id="solo-gear" value={solo.gear} rows={3} maxLength={2000} onChange={(e) => updateSolo({ gear: e.target.value })} placeholder="Kleur van tent, rugzak en jas, en wat je verder bij je hebt" className={inputClass} style={inputStyle} />
-              <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Dit helpt een zoekactie. Het staat in de brief onder uitrusting.</p>
+              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Dit helpt een zoekactie. Het staat in de brief onder uitrusting.</p>
             </div>
           </>
         )}

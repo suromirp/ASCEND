@@ -83,7 +83,7 @@ export function TrainingSpotsPage() {
             {locating ? 'Zoeken…' : 'Mijn locatie'}
           </button>
         </div>
-        <p className="text-[11px] leading-snug" style={{ color: locError ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>
+        <p className="text-xs leading-snug" style={{ color: locError ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>
           {locError ?? 'Je locatie blijft alleen op dit toestel. Afstanden zijn schattingen.'}
         </p>
       </Card>
@@ -148,7 +148,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
         </div>
         <div className="flex shrink-0 flex-col items-end">
           <ClimbGlyph climbM={spot.climbM} />
-          <span className="text-[10px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+          <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
             {spot.climbM ? `±${spot.climbM} m per klim` : spot.topM ? `top ${spot.topM} m` : ''}
           </span>
         </div>
@@ -158,7 +158,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
 
       {focus && (
         <p className="rounded-xl border px-3 py-2 text-sm leading-relaxed" style={{ borderColor: focus.limited ? 'var(--color-card-border)' : 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
-          <span className="block text-[10px] font-medium tracking-[0.16em]" style={{ color: focus.limited ? 'var(--color-ink-dim)' : 'var(--color-gold)' }}>
+          <span className="block text-xs font-medium tracking-[0.16em]" style={{ color: focus.limited ? 'var(--color-ink-dim)' : 'var(--color-gold)' }}>
             {(templateName(focus.templateId) ?? '').toUpperCase()} HIER{focus.limited ? ' · BEPERKT' : ''}
           </span>
           {focus.how}
@@ -177,7 +177,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
 
       <div className="flex flex-wrap gap-1.5">
         {spot.uses.map((u) => (
-          <span key={u} className="rounded-full px-2.5 py-0.5 text-[11px]" style={{ background: 'var(--color-charcoal)', color: u === 'bergaf' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{USE_LABEL[u]}</span>
+          <span key={u} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: 'var(--color-charcoal)', color: u === 'bergaf' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{USE_LABEL[u]}</span>
         ))}
       </div>
 

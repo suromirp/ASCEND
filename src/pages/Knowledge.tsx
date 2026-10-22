@@ -53,7 +53,7 @@ export function KnowledgePage() {
                 >
                   <span className="min-w-0">
                     <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{t.title}</span>
-                    <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{has ? t.summary : 'Volgt nog'}</span>
+                    <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{has ? t.summary : 'Volgt nog'}</span>
                   </span>
                   <span className="shrink-0 text-xs" style={{ color: read.includes(t.id) ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>{read.includes(t.id) ? 'gelezen' : has ? '›' : ''}</span>
                 </button>
@@ -100,7 +100,7 @@ export function KnowledgeTopicPage() {
           {content.videos.map((v) => (
             <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] flex-col justify-center border-b py-2 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
               <span className="text-sm" style={{ color: 'var(--color-gold)' }}>{v.title} ↗</span>
-              <span className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+              <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 {v.channel}{v.minutes ? ` · ${v.minutes} min` : ''}{v.language && v.language !== 'nl' ? ` · ${v.language === 'en' ? 'Engels' : v.language === 'de' ? 'Duits' : 'Frans'}` : ''}{v.note ? ` · ${v.note}` : ''}
               </span>
             </a>

@@ -122,9 +122,15 @@ export function InfoButton({ onClick, label = 'Meer informatie' }: { onClick: ()
   );
 }
 
+// Een getal midden in een zin die in Marcellus staat: Marcellus is voor woorden,
+// Inter voor getallen ("steen en contour", CLAUDE.md).
+export function Num({ children }: { children: ReactNode }) {
+  return <span className="font-sans tabular-nums">{children}</span>;
+}
+
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>
+    <div className="text-xs font-medium uppercase tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>
       {children}
     </div>
   );

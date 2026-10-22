@@ -73,7 +73,7 @@ export function CoachCard() {
     <Card className="flex flex-col gap-4" texture>
       <div className="flex items-baseline justify-between">
         <Eyebrow>ADVIES</Eyebrow>
-        <span className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           {advice.length === 1 ? '1 advies' : `${advice.length} adviezen`}
         </span>
       </div>
@@ -157,7 +157,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       <div className="flex gap-3">
         <KindIcon trigger={advice.trigger} />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium tracking-[0.16em]" style={{ color: kind.color }}>{kind.label.toUpperCase()}</p>
+          <p className="text-xs font-medium tracking-[0.16em]" style={{ color: kind.color }}>{kind.label.toUpperCase()}</p>
           <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
           <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
           {actions}

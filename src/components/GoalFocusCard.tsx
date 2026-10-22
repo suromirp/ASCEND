@@ -47,9 +47,9 @@ export function GoalFocusCard() {
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{goal.name}</p>
-              <span className="font-display text-sm" style={{ color: 'var(--color-gold)' }}>{Math.round(focus.normalizedPct)}%</span>
+              <span className="font-sans tabular-nums text-sm" style={{ color: 'var(--color-gold)' }}>{Math.round(focus.normalizedPct)}%</span>
             </div>
-            <span className="text-[11px] font-medium tracking-wide" style={{ color: badge.color }}>{badge.label}</span>
+            <span className="text-xs font-medium tracking-wide" style={{ color: badge.color }}>{badge.label}</span>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{feasibility.explanation}</p>
             {feasibility.bestPossiblePreparation && (
               <p className="text-xs leading-relaxed" style={{ color: 'var(--color-sky)' }}>{feasibility.bestPossiblePreparation}</p>

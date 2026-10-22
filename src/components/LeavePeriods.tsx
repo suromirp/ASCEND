@@ -218,7 +218,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
                   style={inputStyle}
                 />
               </label>
-              <p className="mt-3 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 Je ziet eerst wat er in je planning verandert. Pas na jouw akkoord wordt de periode bewaard.
               </p>
             </div>

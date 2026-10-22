@@ -103,7 +103,7 @@ export function JourneyPage() {
                       >
                         {row.task.title}
                       </span>
-                      <span className="text-[11px]" style={{ color: row.isThisWeek && row.status !== 'done' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
+                      <span className="text-xs" style={{ color: row.isThisWeek && row.status !== 'done' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
                         {row.isThisWeek && row.status !== 'done' ? `deze week, ${rowMeta(row)}` : rowMeta(row)}
                       </span>
                     </button>

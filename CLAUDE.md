@@ -54,6 +54,34 @@ strings consistent with that unless told otherwise.
   ronde knop van 44 px en verdwijnt na tien minuten; hij blijft niet over
   de inhoud hangen.
 
+### Steen en contour
+
+De vaste stijl, uitgewerkt in `docs/visie/Visuele upgrade en nieuwe ideeën.md`
+(deel 2 en 4) en vastgelegd in `docs/beslissingen/2026-10-22-steen-en-contour.md`.
+De app moet aanvoelen als een goede kaart en een goed horloge.
+
+- Eén gouden accent per scherm: de enige gouden knop of de ene kaart met de
+  gouden gloed. Al het andere is steen: charcoal, haarlijnen, gedempte inkt.
+- Contourlijnen (`topo-texture`) zijn versiering met betekenis en komen
+  alleen op de missiekaart, één per scherm.
+- Marcellus (`font-display`) is alleen voor woorden: paginatitels, namen van
+  trainingen, een oordeel als "Fris". Alle getallen staan in Inter met vaste
+  cijferbreedte (`font-sans tabular-nums`); een getal midden in een zin in
+  Marcellus gaat in `Num` (`ui.tsx`). Eén heel groot getal (40 px of meer) mag
+  in Marcellus, maar liever niet.
+- Niets kleiner dan 12 px (`text-xs` is het minimum, ook voor `Eyebrow` en voor
+  tekst in grafieken). Geen `text-[10px]` of `text-[11px]`.
+- Iconen komen uit één eigen set in `src/components/icons.tsx` (`Icon`): lijn
+  van 1,6 px, ronde uiteinden, de kleur van de omringende tekst. Geen
+  bibliotheek, geen losse tekens als ✓ of ↷ voor iets wat een icoon kan zijn.
+- Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
+  `src/App.tsx`), met de actieve tab in goud en een streepje erboven. Meer is
+  geen tab maar het tandwiel rechtsboven (`SettingsGear`): 44 bij 44 px, op
+  elke tab op precies dezelfde plek, schuift met de pagina mee. Het opent
+  `/more` (instellingen, gegevens en back-up, koppelingen, gidsen en kennis);
+  oude links naar `/more` blijven werken. Een pagina die zelf iets rechtsboven
+  nodig heeft (pijltjes, knoppen) laat daar ruimte voor het tandwiel vrij.
+
 ### Design tokens in code
 
 Theme tokens are defined once in `src/index.css` under `@theme` and
@@ -125,7 +153,7 @@ npm run preview    # preview the production build locally
 ```
 src/
   components/    Reusable UI components — no business logic
-  pages/         The five screens: Today, Week, Ascend, History, Settings
+  pages/         The five tabs: Today, Week, Stand, Ascend, History; Settings (Meer) sits behind the gear
   engine/        All business logic: scheduler, progression, readiness
   models/        TypeScript domain models — no React, no IndexedDB code
   storage/       IndexedDB layer, export/import, schema migrations

@@ -101,14 +101,14 @@ export function WeekPage() {
         >
           <Eyebrow>{monthView ? 'JAAROVERZICHT' : position ? `WEEK ${position.weekInProgram} • ${position.phase.name}` : 'WEEK'}</Eyebrow>
           {!monthView && weekStart === mondayOfWeek(todayISO()) && (
-            <p className="text-[11px]" style={{ color: 'var(--color-gold)' }}>huidige week</p>
+            <p className="text-xs" style={{ color: 'var(--color-gold)' }}>huidige week</p>
           )}
           {!monthView && totalWeekMinutes > 0 && (
-            <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               {formatHoursMinutesNL(totalWeekMinutes)} gepland
             </p>
           )}
-          <span className="text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
+          <span className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
             {monthView ? '▴ terug naar week' : '▾ jaaroverzicht'}
           </span>
         </button>

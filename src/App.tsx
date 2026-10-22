@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, NavLink, Link, useLocation } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
@@ -8,6 +8,7 @@ import { SHOW_SPLASH } from './utils/updateFlag';
 import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Icon, type IconName } from './components/icons';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
@@ -34,28 +35,19 @@ const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ defaul
 const EtappesPage = lazy(() => import('./pages/Etappes').then((m) => ({ default: m.EtappesPage })));
 const AlleenOnderwegPage = lazy(() => import('./pages/AlleenOnderweg').then((m) => ({ default: m.AlleenOnderwegPage })));
 
-function NavIcon({ id }: { id: string }) {
-  const icons: Record<string, string> = {
-    today: 'M12 3l1.6 4.2L18 9l-4.4 1.8L12 15l-1.6-4.2L6 9l4.4-1.8L12 3z',
-    week: 'M4 5h16M4 12h16M4 19h10',
-    ascend: 'M3 18l6-11 4 7 3-5 5 9H3z',
-    history: 'M12 7v5l3 3M4 12a8 8 0 1 1 3 6.3',
-    more: 'M4 7h16M4 12h16M4 17h16',
-  };
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d={icons[id]} />
-    </svg>
-  );
-}
-
-const TABS = [
-  { to: '/', id: 'today', label: 'VANDAAG' },
-  { to: '/week', id: 'week', label: 'WEEK' },
-  { to: '/ascend', id: 'ascend', label: 'ASCEND' },
-  { to: '/history', id: 'history', label: 'LOGBOEK' },
-  { to: '/more', id: 'more', label: 'MEER' },
+// De vijf tabs. Meer is geen tab meer maar het tandwiel rechtsboven
+// (SettingsGear); de route /more blijft bestaan, ook voor oude links.
+const TABS: { to: string; icon: IconName; label: string }[] = [
+  { to: '/', icon: 'vandaag', label: 'VANDAAG' },
+  { to: '/week', icon: 'week', label: 'WEEK' },
+  { to: '/stand', icon: 'stand', label: 'STAND' },
+  { to: '/ascend', icon: 'ascend', label: 'ASCEND' },
+  { to: '/history', icon: 'logboek', label: 'LOGBOEK' },
 ];
+const TAB_ROUTES = TABS.map((t) => t.to);
+// Week en Logboek openen met pijltjes over de volle breedte; die krijgen een
+// eigen rij onder het tandwiel in plaats van eronder te schuiven.
+const GEAR_ROW_ROUTES = ['/week', '/history'];
 
 // `fixed` rather than `sticky` — sticky is only pinned relative to its own
 // scroll container, so on mobile (address bar show/hide, momentum scroll,
@@ -68,21 +60,43 @@ function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t"
       style={{ background: 'rgba(13,13,15,0.92)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
     >
-      <div className="mx-auto flex w-full max-w-md items-center justify-around px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2">
+      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-1.5">
         {TABS.map((tab) => (
           <NavLink
-            key={tab.id}
+            key={tab.to}
             to={tab.to}
             end={tab.to === '/'}
-            className="flex flex-1 flex-col items-center gap-1 py-1 text-[10px] font-medium tracking-wide"
+            className="relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium tracking-[0.06em]"
             style={({ isActive }) => ({ color: isActive ? 'var(--color-gold)' : 'var(--color-ink-dim)' })}
           >
-            <NavIcon id={tab.id} />
-            {tab.label}
+            {({ isActive }) => (
+              <>
+                {isActive && <span aria-hidden="true" className="absolute -top-1.5 h-0.5 w-7 rounded-full" style={{ background: 'var(--color-gold)' }} />}
+                <Icon name={tab.icon} />
+                {tab.label}
+              </>
+            )}
           </NavLink>
         ))}
       </div>
     </nav>
+  );
+}
+
+// Het tandwiel: Meer (instellingen, gegevens en back-up, koppelingen, gidsen
+// en kennis). Op elke tab op precies dezelfde plek, rechtsboven, 44 bij 44 px.
+// Het staat in het scrollvlak, dus het schuift met de pagina mee en hangt
+// niet over de inhoud.
+function SettingsGear() {
+  return (
+    <Link
+      to="/more"
+      aria-label="Meer: instellingen, gegevens, koppelingen en gidsen"
+      className="absolute right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', borderColor: 'var(--color-card-border)', background: 'var(--color-bg)', color: 'var(--color-ink-dim)' }}
+    >
+      <Icon name="tandwiel" />
+    </Link>
   );
 }
 
@@ -172,6 +186,8 @@ function AppShell() {
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
+        <div className={`relative ${GEAR_ROW_ROUTES.includes(location.pathname) ? 'pt-8' : ''}`}>
+        {TAB_ROUTES.includes(location.pathname) && <SettingsGear />}
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
           <Routes>
@@ -200,6 +216,7 @@ function AppShell() {
           </Routes>
           </Suspense>
         </ErrorBoundary>
+        </div>
       </main>
       {offlineNotice && (
         <div role="status" className="fixed inset-x-0 z-50 mx-auto flex max-w-md items-center gap-3 border-t px-4 py-3" style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))', background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)' }}>

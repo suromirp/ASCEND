@@ -102,7 +102,7 @@ export function TrendLineChart({
         </div>
       )}
 
-      <div className="mt-1 flex justify-between text-[10px]" style={{ color: 'var(--color-ink-dim)' }}>
+      <div className="mt-1 flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         <span>{points[0].label}</span>
         <span>{last.label}</span>
       </div>

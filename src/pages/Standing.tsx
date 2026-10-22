@@ -1,7 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { BackButton } from '../components/BackButton';
 import { Card } from '../components/ui';
 import { LegFatigueCard, useLegFatigueInputs } from '../components/LegFatigueCard';
 import { FreshnessChart } from '../components/stand/FreshnessChart';
@@ -108,7 +107,6 @@ export function StandingPage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-4">
       <div>
-        <BackButton fallback="/" />
         <h1 className="font-display text-3xl" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
           {position ? `Week ${position.weekInProgram}, ${position.phase.name}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
@@ -132,8 +130,8 @@ export function StandingPage() {
         {rows.map((r, i) => (
           <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[11px] tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{r.label.toUpperCase()}</span>
-              <span className="font-display text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
+              <span className="text-xs tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{r.label.toUpperCase()}</span>
+              <span className="font-sans text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
             </div>
             {'dots' in r && r.dots && r.dots.length > 0 && (
               <div className="flex gap-1.5" aria-hidden>

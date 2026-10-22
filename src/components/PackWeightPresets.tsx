@@ -33,7 +33,7 @@ export function PackWeightPresets({ value, onPick }: { value: number | undefined
           );
         })}
       </div>
-      <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{PACK_WEIGHT_EXPLANATION}</p>
+      <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{PACK_WEIGHT_EXPLANATION}</p>
     </div>
   );
 }

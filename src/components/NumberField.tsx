@@ -74,8 +74,8 @@ export function NumberField({
           </span>
         )}
       </div>
-      {warning && <p className="mt-1 text-[11px]" style={{ color: 'var(--color-warning)' }}>{warning}</p>}
-      {helper && !warning && <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{helper}</p>}
+      {warning && <p className="mt-1 text-xs" style={{ color: 'var(--color-warning)' }}>{warning}</p>}
+      {helper && !warning && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{helper}</p>}
     </div>
   );
 }

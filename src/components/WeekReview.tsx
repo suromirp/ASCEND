@@ -51,7 +51,7 @@ export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
           <button key={r.weekStart} onClick={() => setOpenReview(r)} className="flex min-h-[48px] items-center justify-between gap-3 border-b py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
             <span>
               <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Week van {formatDateNL(r.weekStart)}</span>
-              <span className="block text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{r.title}</span>
+              <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{r.title}</span>
             </span>
             <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.done} / {r.planned} ›</span>
           </button>
@@ -65,7 +65,7 @@ export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-5">
-      <p className="text-[11px] font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{title}</p>
+      <p className="text-xs font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{title}</p>
       <div className="mt-2">{children}</div>
     </div>
   );
@@ -92,8 +92,8 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                 { value: review.avgRpe !== undefined ? String(review.avgRpe).replace('.', ',') : 'n.v.t.', label: 'gem. zwaarte' },
               ].map((f) => (
                 <div key={f.label} className="rounded-xl border px-2.5 py-2.5" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-                  <p className={`font-display leading-tight ${f.value.length > 9 ? 'text-sm' : 'text-lg'}`} style={{ color: 'var(--color-ink)' }}>{f.value}</p>
-                  <p className="mt-0.5 text-[11px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{f.label}</p>
+                  <p className={`font-sans tabular-nums leading-tight ${f.value.length > 9 ? 'text-sm' : 'text-lg'}`} style={{ color: 'var(--color-ink)' }}>{f.value}</p>
+                  <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{f.label}</p>
                 </div>
               ))}
             </div>

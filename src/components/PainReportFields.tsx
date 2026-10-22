@@ -24,7 +24,7 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
           </button>
         ))}
       </div>
-      <p className="mt-1.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Spierpijn vragen we morgenochtend.</p>
+      <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Spierpijn vragen we morgenochtend.</p>
 
       {asked && (
         <div className="mt-3 flex flex-col gap-3">
@@ -51,14 +51,14 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
                 <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{p.area}</p>
                 <div className="flex gap-1">
                   {(['links', 'rechts', 'beide'] as const).map((side) => (
-                    <button key={side} onClick={() => update(p.area, { side: p.side === side ? undefined : side })} aria-pressed={p.side === side} className="min-h-[44px] rounded-md border px-2 text-[11px]" style={chip(p.side === side, false)}>
+                    <button key={side} onClick={() => update(p.area, { side: p.side === side ? undefined : side })} aria-pressed={p.side === side} className="min-h-[44px] rounded-md border px-2 text-xs" style={chip(p.side === side, false)}>
                       {side}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel, op het ergste moment? 1 is net te voelen, 10 is niet door te lopen.</p>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel, op het ergste moment? 1 is net te voelen, 10 is niet door te lopen.</p>
                 <div className="mt-1.5 grid grid-cols-10 gap-1" role="radiogroup" aria-label={`Pijn ${p.area} van 1 tot 10`}>
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                     <button
@@ -96,7 +96,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       <span className="text-xs" style={{ color: 'var(--color-ink)' }}>{label}</span>
       <div className="flex gap-1">
         {([false, true] as const).map((v) => (
-          <button key={String(v)} onClick={() => onChange(v)} aria-pressed={on === v} className="min-h-[44px] rounded-md border px-2.5 text-[11px]" style={{ borderColor: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-card-border)', color: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-ink-dim)' }}>
+          <button key={String(v)} onClick={() => onChange(v)} aria-pressed={on === v} className="min-h-[44px] rounded-md border px-2.5 text-xs" style={{ borderColor: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-card-border)', color: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-ink-dim)' }}>
             {v ? 'ja' : 'nee'}
           </button>
         ))}

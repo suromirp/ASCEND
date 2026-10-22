@@ -48,9 +48,9 @@ export function SessionCard({
         <div className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
           {isRest ? REST_DAY_COPY[restMode].title : template.name}
           {adjusted && status !== 'completed' ? (
-            <span className="ml-2 text-[10px] font-normal" style={{ color: 'var(--color-sky)' }}>aangepast</span>
+            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-sky)' }}>aangepast</span>
           ) : wasMoved && status !== 'completed' && (
-            <span className="ml-2 text-[10px] font-normal" style={{ color: 'var(--color-sky)' }}>verplaatst</span>
+            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-sky)' }}>verplaatst</span>
           )}
         </div>
         <div className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>

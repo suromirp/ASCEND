@@ -41,7 +41,7 @@ export function RouteDayCard({ goalName, weeksToGo, rows, onOpen }: { goalName: 
               <div className="h-1.5 rounded-full" style={{ background: 'var(--color-charcoal)' }}>
                 <div className="h-full rounded-full" style={{ width: `${Math.max(share * 100, row.best > 0 ? 3 : 0)}%`, background: share >= 1 ? 'var(--color-gold)' : 'var(--color-bronze)' }} />
               </div>
-              {row.bestDate && row.key !== 'dagen' && <span className="text-[10px]" style={{ color: 'var(--color-ink-dim)' }}>beste op {dayMonth(row.bestDate)}</span>}
+              {row.bestDate && row.key !== 'dagen' && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>beste op {dayMonth(row.bestDate)}</span>}
             </div>
           );
         })}

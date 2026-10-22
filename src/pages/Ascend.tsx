@@ -19,7 +19,7 @@ import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../components/ui';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
@@ -209,7 +209,7 @@ export function AscendPage() {
       <Card className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between">
           <Eyebrow>KLAAR VOOR MEER?</Eyebrow>
-          <span className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</span>
+          <span className="font-sans tabular-nums text-2xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</span>
         </div>
         <MetricBar label="HERSTEL" value={readiness.recovery} accent="alpine" />
         {readiness.consistencyBasis > 0 && <MetricBar label="CONSISTENTIE" value={readiness.consistency} />}
@@ -225,7 +225,7 @@ export function AscendPage() {
       <Card className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between">
           <Eyebrow>WAT JE AL AANKUNT</Eyebrow>
-          <span className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>{capacity.overall}%</span>
+          <span className="font-sans tabular-nums text-2xl" style={{ color: 'var(--color-gold)' }}>{capacity.overall}%</span>
         </div>
         <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat je de afgelopen vier weken aantoonbaar hebt opgebouwd.</p>
         <MetricBar label="KRACHT" value={capacity.strength} />
@@ -241,14 +241,14 @@ export function AscendPage() {
           <button onClick={() => navigate('/etappes')} className="flex min-h-[56px] items-center justify-between gap-3 border-b py-2 text-left" style={{ borderColor: 'var(--color-card-border)' }}>
             <span>
               <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Etappeplan</span>
-              <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De 36 etappes, je zwaarste dagen en waar je slaapt. Ook zonder bereik.</span>
+              <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De 36 etappes, je zwaarste dagen en waar je slaapt. Ook zonder bereik.</span>
             </span>
             <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
           </button>
           <button onClick={() => navigate('/onderweg')} className="flex min-h-[56px] items-center justify-between gap-3 py-2 text-left">
             <span>
               <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Alleen onderweg</span>
-              <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alarmnummer, je afspraak met thuis en de vertrekbrief.</span>
+              <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alarmnummer, je afspraak met thuis en de vertrekbrief.</span>
             </span>
             <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
           </button>
@@ -424,7 +424,7 @@ function GR5GoalCard({
       </div>
       {daysLeft !== undefined && (
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
-          {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
+          {daysLeft > 0 ? <>nog <Num>{daysLeft}</Num> dagen</> : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
         </p>
       )}
       {isTaperWindow(daysLeft) && (
@@ -574,7 +574,7 @@ function MarathonGoalCard({
           <GoalStatusNote status={marathonGoal?.status ?? 'paused'} />
           {daysLeft !== undefined && (
             <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
-              {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
+              {daysLeft > 0 ? <>nog <Num>{daysLeft}</Num> dagen</> : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
             </p>
           )}
           {isTaperWindow(daysLeft) && (

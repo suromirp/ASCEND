@@ -118,7 +118,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {advice.options && advice.options.length > 1 && (
                 <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Kies een optie">
-                  <p className="text-[10px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{advice.options.length} OPTIES · KIES ER EEN</p>
+                  <p className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{advice.options.length} OPTIES · KIES ER EEN</p>
                   {advice.options.map((o, i) => {
                     const on = i === choice;
                     return (
@@ -135,10 +135,10 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{o.label}</span>
-                          {i === 0 && <span className="block text-[11px]" style={{ color: 'var(--color-gold)' }}>de kleinste verandering</span>}
+                          {i === 0 && <span className="block text-xs" style={{ color: 'var(--color-gold)' }}>de kleinste verandering</span>}
                         </span>
                         {optionFreshness[i] && (
-                          <span className="shrink-0 text-right text-[11px] leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-gold)' }}>
+                          <span className="shrink-0 text-right text-xs leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-gold)' }}>
                             benen {formatNumberNL(optionFreshness[i]!.index, 1)}<br />{optionFreshness[i]!.status}
                           </span>
                         )}
@@ -160,7 +160,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {notes && notes.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)' }}>
-                  <p className="text-[10px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>BLIJFT STAAN</p>
+                  <p className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>BLIJFT STAAN</p>
                   {notes.map((n) => <p key={n} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{n}</p>)}
                 </div>
               )}
@@ -174,7 +174,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {data.weeks.map((w) => (
                 <section key={w.weekStart} className="mt-6">
-                  <p className="mb-3 text-[10px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>
+                  <p className="mb-3 text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>
                     WEEK VAN {formatDateNL(w.weekStart).toUpperCase()}
                   </p>
                   <div className="flex flex-col gap-4">
@@ -185,7 +185,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                           <div className="mb-2 flex items-baseline gap-2">
                             <span className="text-xs font-semibold tracking-wide" style={{ color: d.changed || isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{weekdayShortNL(d.date)}</span>
                             <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(d.date)}</span>
-                            {isToday && <span className="text-[11px]" style={{ color: 'var(--color-gold)' }}>vandaag</span>}
+                            {isToday && <span className="text-xs" style={{ color: 'var(--color-gold)' }}>vandaag</span>}
                           </div>
                           {d.leave && <div className="mb-2"><LeaveBand label={d.leave} /></div>}
                           {d.entries.length === 0 ? (
@@ -283,7 +283,7 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
         </p>
         {note && <p className="mt-0.5 truncate text-xs" style={{ color: highlighted ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{note}</p>}
       </div>
-      {highlighted && <span className="shrink-0 text-[10px] font-semibold tracking-[0.12em]" style={{ color: 'var(--color-gold)' }}>{entry.change === 'nieuw' ? 'NIEUW' : 'HIERHEEN'}</span>}
+      {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-gold)' }}>{entry.change === 'nieuw' ? 'NIEUW' : 'HIERHEEN'}</span>}
       {!highlighted && minutes !== undefined && !struck && <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutes} min</span>}
     </div>
   );

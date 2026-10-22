@@ -91,7 +91,7 @@ export function StageSheet({
               <Metric label="Omlaag" value={stage.down === null ? 'onbekend' : `${formatNumberNL(stage.down, 0)} m`} />
               <Metric label="Looptijd" value={stage.minutes === null ? 'onbekend' : formatStageTime(stage.minutes)} />
             </div>
-            <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Omhoog en omlaag zijn de hoogtemeters die je in totaal stijgt en daalt. De looptijd is die van de officiële site, zonder lange pauzes.
             </p>
 
@@ -232,7 +232,7 @@ export function StageSheet({
                   {stage.notes.map((n) => (
                     <div key={n.text}>
                       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{n.text}</p>
-                      <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{SOURCE_LABEL[n.source]}</p>
+                      <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{SOURCE_LABEL[n.source]}</p>
                     </div>
                   ))}
                 </div>
@@ -260,7 +260,7 @@ export function StageSheet({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border px-1.5 py-2 text-center" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <p className="text-[10px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{label.toUpperCase()}</p>
+      <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{label.toUpperCase()}</p>
       <p className="mt-0.5 text-[13px] font-medium leading-tight" style={{ color: value === 'onbekend' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{value}</p>
     </div>
   );
@@ -280,7 +280,7 @@ function Fact({ heading, fact }: { heading: string; fact: StageFact }) {
     <div>
       <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{heading}</p>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{fact.text}</p>
-      <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{SOURCE_LABEL[fact.source]}</p>
+      <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{SOURCE_LABEL[fact.source]}</p>
     </div>
   );
 }
@@ -302,7 +302,7 @@ function ToggleRow({ label, hint, checked, disabled, onChange }: { label: string
     <div className={`mt-4 flex items-center justify-between gap-3 ${disabled ? 'opacity-50' : ''}`}>
       <div className="min-w-0">
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{label}</p>
-        <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{hint}</p>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{hint}</p>
       </div>
       {disabled ? <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>niet mogelijk</span> : <Toggle checked={checked} onChange={onChange} label={label} />}
     </div>
@@ -323,7 +323,7 @@ function CompareRows({ rows, showNote = true }: { rows: DayCompareRow[]; showNot
           </span>
         </div>
       ))}
-      {showNote && <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+      {showNote && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         {none
           ? 'Je hebt de laatste acht weken nog geen tocht gelogd waarmee dit te vergelijken is.'
           : 'Je beste dag telt per onderdeel apart. "Gehaald" betekent dat je dit al op één dag deed.'}

@@ -43,9 +43,9 @@ export function StandSummaryCard() {
         <div className="grid grid-cols-3 gap-3">
           {items.map((it) => (
             <div key={it.label}>
-              <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{it.label}</p>
+              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{it.label}</p>
               <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{it.value}</p>
-              {'hint' in it && it.hint && <p className="text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{it.hint}</p>}
+              {'hint' in it && it.hint && <p className="text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{it.hint}</p>}
             </div>
           ))}
         </div>

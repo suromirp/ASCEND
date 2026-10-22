@@ -48,13 +48,13 @@ export function MorningCheckInCard() {
 
   const row = <K extends string>(label: string, options: [K, string][], value: K | undefined, set: (v: K) => void) => (
     <div>
-      <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{label}</p>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</p>
       <div className="mt-1.5 grid grid-cols-4 gap-1.5">
         {options.map(([k, text], i) => {
           const on = value === k;
           const tone = i >= 2 ? 'var(--color-warning)' : 'var(--color-gold)';
           return (
-            <button key={k} onClick={() => set(k)} aria-pressed={on} className="min-h-[44px] rounded-lg border px-1 text-[11px] leading-tight" style={{ borderColor: on ? tone : 'var(--color-card-border)', color: on ? tone : 'var(--color-ink)', background: on ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>
+            <button key={k} onClick={() => set(k)} aria-pressed={on} className="min-h-[44px] rounded-lg border px-1 text-xs leading-tight" style={{ borderColor: on ? tone : 'var(--color-card-border)', color: on ? tone : 'var(--color-ink)', background: on ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>
               {text}
             </button>
           );
@@ -80,12 +80,12 @@ export function MorningCheckInCard() {
       {row('Slaap', SLEEP, draft.sleep, (sleep) => setDraft({ ...draft, sleep }))}
       {spot && (
         <div>
-          <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Hoe is je {spot.area.toLowerCase()} vanochtend? 0 is niets. Na de training was het {spot.lastScore}.</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe is je {spot.area.toLowerCase()} vanochtend? 0 is niets. Na de training was het {spot.lastScore}.</p>
           <div className="mt-1.5 grid grid-cols-11 gap-1">
             {Array.from({ length: 11 }, (_, n) => n).map((n) => {
               const on = draft.spot?.score === n;
               return (
-                <button key={n} onClick={() => setDraft({ ...draft, spot: { area: spot.area, score: n } })} aria-pressed={on} className="min-h-[44px] rounded-md border text-[11px] tabular-nums" style={{ borderColor: on ? 'var(--color-warning)' : 'var(--color-card-border)', background: on ? 'var(--color-warning)' : 'transparent', color: on ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
+                <button key={n} onClick={() => setDraft({ ...draft, spot: { area: spot.area, score: n } })} aria-pressed={on} className="min-h-[44px] rounded-md border text-xs tabular-nums" style={{ borderColor: on ? 'var(--color-warning)' : 'var(--color-card-border)', background: on ? 'var(--color-warning)' : 'transparent', color: on ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
                   {n}
                 </button>
               );

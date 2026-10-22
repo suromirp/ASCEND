@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { StageSheet } from '../components/StageSheet';
-import { Card, Eyebrow, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, Num, SecondaryButton } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useTripPlan } from '../state/useTripPlan';
 import { GR5_SECTIONS, GR5_STAGES, STAGES_SOURCE, STAGES_SOURCE_URL, STAGES_TAKEN_ON, stagesOfSection, type Gr5Stage } from '../data/gr5Stages';
@@ -73,10 +73,10 @@ export function EtappesPage() {
               >
                 <span className="min-w-0">
                   <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{dayLabel(d)}: {d.from} naar {d.to}</span>
-                  <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                  <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                     {formatNumberNL(d.up, 0)} m omhoog en {formatNumberNL(d.down, 0)} m omlaag{d.incomplete ? ' (een waarde ontbreekt bij de site)' : ''}
                   </span>
-                  <span className="block text-[11px] leading-snug" style={{ color: up?.enough && down?.enough ? 'var(--color-success-text)' : 'var(--color-ink-dim)' }}>
+                  <span className="block text-xs leading-snug" style={{ color: up?.enough && down?.enough ? 'var(--color-success-text)' : 'var(--color-ink-dim)' }}>
                     {up && down && (up.best > 0 || down.best > 0)
                       ? `Jouw beste: ${formatNumberNL(up.best, 0)} m omhoog, ${formatNumberNL(down.best, 0)} m omlaag`
                       : 'Nog geen tocht om mee te vergelijken'}
@@ -92,7 +92,7 @@ export function EtappesPage() {
       <Card className="flex flex-col gap-2">
         <Eyebrow>JE PLAN IN CIJFERS</Eyebrow>
         <p className="font-display text-lg" style={{ color: 'var(--color-gold)' }}>
-          {totals.walkDays} loopdagen{totals.restDays > 0 ? ` en ${totals.restDays} ${totals.restDays === 1 ? 'rustdag' : 'rustdagen'}` : ''}
+          <Num>{totals.walkDays}</Num> loopdagen{totals.restDays > 0 ? <> en <Num>{totals.restDays}</Num> {totals.restDays === 1 ? 'rustdag' : 'rustdagen'}</> : ''}
         </p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Samen {formatNumberNL(totals.km, 1)} km, {formatNumberNL(totals.up, 0)} m omhoog en {formatNumberNL(totals.down, 0)} m omlaag, opgeteld uit de etappes{totals.incomplete ? ' (enkele waarden ontbreken bij de site, dus in werkelijkheid iets meer)' : ''}.
@@ -114,7 +114,7 @@ export function EtappesPage() {
       {GR5_SECTIONS.map((section) => (
         <Card key={section.id} className="flex flex-col gap-1">
           <Eyebrow>{`STUK ${section.id} · ${section.name.toUpperCase()}`}</Eyebrow>
-          <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{section.count} etappes</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{section.count} etappes</p>
           {stagesOfSection(section.id).map((stage) => {
             const day = dayOfStage(stage);
             const choice = plan.choices[stage.id];
@@ -133,13 +133,13 @@ export function EtappesPage() {
                   <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
                     <span style={{ color: 'var(--color-gold)' }}>{stage.overall}</span> {stage.from} naar {stage.to}
                   </span>
-                  <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                  <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                     {stage.km === null ? 'afstand onbekend' : `${formatNumberNL(stage.km, 1)} km`}
                     {' · '}{stage.up === null ? 'omhoog onbekend' : `${formatNumberNL(stage.up, 0)} m omhoog`}
                     {' · '}{stage.down === null ? 'omlaag onbekend' : `${formatNumberNL(stage.down, 0)} m omlaag`}
                     {stage.minutes !== null && ` · ${formatStageTime(stage.minutes)}`}
                   </span>
-                  <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-bronze)' }}>
+                  <span className="block text-xs leading-snug" style={{ color: 'var(--color-bronze)' }}>
                     {[
                       !second && day.date ? `${weekdayShortNL(day.date).toLowerCase()} ${formatDateNL(day.date).replace(/ \d{4}$/, '')}` : second ? 'zelfde dag als de vorige' : '',
                       first ? 'met de volgende op één dag' : '',

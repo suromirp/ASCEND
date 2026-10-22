@@ -126,7 +126,7 @@ export function TrainingGuideSheet({
                         <span key={n} className="h-1.5 flex-1 rounded-full" style={{ background: n <= l.level ? 'var(--color-gold)' : 'var(--color-card-border)' }} />
                       ))}
                     </div>
-                    <span className="w-16 shrink-0 text-right text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{LOAD_WORD[l.level]}</span>
+                    <span className="w-16 shrink-0 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>{LOAD_WORD[l.level]}</span>
                   </div>
                 ))}
               </div>
@@ -160,9 +160,9 @@ export function TrainingGuideSheet({
                       className="rounded-lg border px-1.5 py-2 text-center"
                       style={{ borderColor: w.current ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
                     >
-                      <p className="text-[10px] tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
+                      <p className="text-xs tracking-wide" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
                       <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
-                      <p className="mt-0.5 text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
+                      <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
                     </div>
                   ))}
                 </div>
@@ -289,7 +289,7 @@ function BulletList({ items, className = '' }: { items: string[]; className?: st
 }
 
 function SectionTitle({ children }: { children: string }) {
-  return <p className="mt-6 text-[11px] font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{children}</p>;
+  return <p className="mt-6 text-xs font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{children}</p>;
 }
 
 function Dot({ intensity }: { intensity: Intensity }) {
@@ -335,7 +335,7 @@ export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: Wo
       <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.summary}</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {tags.map((t) => (
-          <span key={t} className="rounded-full border px-2.5 py-0.5 text-[11px]" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{t}</span>
+          <span key={t} className="rounded-full border px-2.5 py-0.5 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{t}</span>
         ))}
       </div>
       </>)}
@@ -354,14 +354,14 @@ export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: Wo
             />
           ))}
         </div>
-        <div className="mt-1.5 flex justify-between text-[10px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+        <div className="mt-1.5 flex justify-between text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
           <span>0</span>
           <span>{Math.round(total / 60)} min</span>
         </div>
         {usedLevels.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
             {usedLevels.map((lvl) => (
-              <span key={lvl} className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--color-ink-dim)' }}>
+              <span key={lvl} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 <span className="inline-block h-2 w-2 rounded-full" style={{ background: INTENSITY_COLOR[lvl] }} />
                 {INTENSITY[lvl].label} ({INTENSITY[lvl].rpe})
               </span>

@@ -110,7 +110,7 @@ function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.
             </p>
             <button onClick={requestClose} className="min-h-[44px] mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>

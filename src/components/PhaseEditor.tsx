@@ -79,12 +79,12 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
                 <p className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-ink)' }}>
                   <span className="inline-block h-2 w-2 rounded-full" style={{ background: PHASE_COLOR[r.phase.id] }} aria-hidden="true" />
                   {r.phase.name.charAt(0) + r.phase.name.slice(1).toLowerCase()}
-                  {isNow && <span className="text-[11px]" style={{ color: 'var(--color-gold)' }}>nu</span>}
+                  {isNow && <span className="text-xs" style={{ color: 'var(--color-gold)' }}>nu</span>}
                 </p>
                 {blocks.filter((b) => b.raceDate >= r.from && b.raceDate <= r.until).map((b) => (
-                  <p key={b.goalId} className="text-[11px]" style={{ color: 'var(--color-gold)' }}>⚑ {b.name}, {formatDateNL(b.raceDate)}</p>
+                  <p key={b.goalId} className="text-xs" style={{ color: 'var(--color-gold)' }}>⚑ {b.name}, {formatDateNL(b.raceDate)}</p>
                 ))}
-                <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {formatDateNL(r.from)} tot {formatDateNL(r.until)}{fills ? ' · vult aan' : ''}
                 </p>
               </div>
@@ -102,7 +102,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
         })}
       </div>
 
-      <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         {goalDate
           ? `Je hoeft hier niets te kiezen: ASCEND rekent de fases uit. Naar de start is 2 weken, het best onderbouwde afbouwen. Bergcapaciteit en Expeditieklaar geven de tijd om hoogtemeters en rugzak stap voor stap op te bouwen. Wil je eerder opbouwen, maak dan de basis korter: de Opbouw begint eerder en loopt door tot Bergcapaciteit. In de Opbouw groeien je lange duurloop en je rustige loop elk blok verder, en als het goed gaat stelt ASCEND een extra training voor. De fases gaan per blok van vier weken, zodat de rustweek op zijn plek blijft.${hikeFrom && settings.longSundaySession !== 'run' ? ` De bergtocht op zondag begint op ${formatDateNL(hikeFrom)}.` : ''}`
           : 'Geef je hoofddoel een datum om de fases zelf in te stellen.'}

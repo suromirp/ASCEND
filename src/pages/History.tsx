@@ -176,8 +176,8 @@ function Stat({ label, value, delta }: { label: string; value: string; delta?: {
   return (
     <div>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</p>
-      <p className="mt-0.5 break-words font-display text-xl" style={{ color: 'var(--color-ink)' }}>{value}</p>
-      {delta && <p className="mt-0.5 text-[10px] leading-tight" style={{ color: delta.color }}>{delta.text}</p>}
+      <p className="mt-0.5 break-words font-sans tabular-nums text-xl" style={{ color: 'var(--color-ink)' }}>{value}</p>
+      {delta && <p className="mt-0.5 text-xs leading-tight" style={{ color: delta.color }}>{delta.text}</p>}
     </div>
   );
 }

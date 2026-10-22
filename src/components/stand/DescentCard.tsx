@@ -8,14 +8,14 @@ import { dayMonth, roundedTop } from './chartParts';
 // is mostly a reminder that the stairs and the hills-up-and-down count.
 
 const W = 320;
-const H = 90;
-const BOTTOM = 18;
+const H = 96;
+const BOTTOM = 20;
 
 export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; routeDayDescent?: number }) {
   const max = Math.max(1, ...weeks.map((w) => w.metres));
   const slot = W / weeks.length;
   const barW = Math.min(22, slot * 0.55);
-  const plotH = H - BOTTOM - 10;
+  const plotH = H - BOTTOM - 14;
   const biggest = Math.max(0, ...weeks.map((w) => w.biggestDay));
   const last4 = weeks.slice(-4).reduce((n, w) => n + w.metres, 0);
   return (
@@ -32,13 +32,13 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
           const x = i * slot + (slot - barW) / 2;
           return (
             <g key={w.weekStart}>
-              {w.metres > 0 && <path d={roundedTop(x, 10 + plotH - h, barW, h, 4)} fill="var(--color-bronze)" />}
-              {w.metres > 0 && h > 14 && <text x={x + barW / 2} y={10 + plotH - h - 3} textAnchor="middle" fontSize={8} fill="var(--color-ink-dim)">{formatNumberNL(w.metres, 0)}</text>}
-              <text x={i * slot + slot / 2} y={H - 4} textAnchor="middle" fontSize={9} fill="var(--color-ink-dim)">{i === weeks.length - 1 ? 'nu' : dayMonth(w.weekStart)}</text>
+              {w.metres > 0 && <path d={roundedTop(x, 14 + plotH - h, barW, h, 4)} fill="var(--color-bronze)" />}
+              {w.metres > 0 && h > 16 && <text x={x + barW / 2} y={14 + plotH - h - 3} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{formatNumberNL(w.metres, 0)}</text>}
+              <text x={i * slot + slot / 2} y={H - 5} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{i === weeks.length - 1 ? 'nu' : dayMonth(w.weekStart)}</text>
             </g>
           );
         })}
-        <line x1={0} x2={W} y1={10 + plotH} y2={10 + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
+        <line x1={0} x2={W} y1={14 + plotH} y2={14 + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
       </svg>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
         {last4 === 0
@@ -46,7 +46,7 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
           : <>De laatste vier weken <span className="tabular-nums">{formatNumberNL(last4, 0)}</span> meter bergaf, het meest op één dag <span className="tabular-nums">{formatNumberNL(biggest, 0)}</span> meter.</>}
         {routeDayDescent ? <> Een gewone GR5-dag gaat zo'n <span className="tabular-nums">{formatNumberNL(routeDayDescent, 0)}</span> meter omlaag.</> : null}
       </p>
-      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         In Nederland zijn dalen schaars. De trap, heuvels op en af en de Amerongse Berg tellen allemaal. Op de loopband daal je niet.
       </p>
     </Card>

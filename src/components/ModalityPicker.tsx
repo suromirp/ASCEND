@@ -49,7 +49,7 @@ export function ModalityPicker({
             style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
           >
             <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{m.label}</span>
-            <span className="shrink-0 text-[11px]" style={{ color: ROLE_COLOR[m.role] }}>{ROLE_LABEL[m.role]}</span>
+            <span className="shrink-0 text-xs" style={{ color: ROLE_COLOR[m.role] }}>{ROLE_LABEL[m.role]}</span>
           </button>
         );
       })}
@@ -68,7 +68,7 @@ export function ModalityGuide({ templateId }: { templateId: string }) {
         <div key={m.key}>
           <p className="flex items-baseline justify-between gap-3">
             <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{m.label}</span>
-            <span className="shrink-0 text-[11px]" style={{ color: ROLE_COLOR[m.role] }}>{ROLE_LABEL[m.role]}</span>
+            <span className="shrink-0 text-xs" style={{ color: ROLE_COLOR[m.role] }}>{ROLE_LABEL[m.role]}</span>
           </p>
           <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>{m.how}</p>
           <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{m.why}</p>

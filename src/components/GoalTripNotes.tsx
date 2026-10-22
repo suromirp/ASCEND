@@ -25,7 +25,7 @@ export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPa
   return (
     <div className="flex flex-col gap-2 rounded-xl border px-3 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>RUGZAK OP DEZE TOCHT</span>
+        <span className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>RUGZAK OP DEZE TOCHT</span>
         <button
           onClick={() => { setDraft(stored); setEditing((v) => !v); }}
           className="min-h-11 px-1 text-xs underline"
@@ -58,7 +58,7 @@ export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPa
         </div>
       )}
 
-      {note && <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
+      {note && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
     </div>
   );
 }

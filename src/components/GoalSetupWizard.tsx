@@ -329,7 +329,7 @@ function InterpretStep({
             style={inputStyle}
           />
           {local.status !== 'active' && (
-            <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Zonder datum blijft dit doel gepauzeerd.</p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zonder datum blijft dit doel gepauzeerd.</p>
           )}
         </div>
       </div>
@@ -472,7 +472,7 @@ function RequirementRow({
         <button onClick={onRemove} aria-label={`${meta.label} verwijderen`} className="px-1 pb-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>×</button>
       </div>
       {customDiscipline && (
-        <p className="text-[10px] leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
+        <p className="text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
           Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.{' '}
           <button onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="underline" style={{ color: 'var(--color-ink-dim)' }}>
             terug naar lijst
@@ -538,7 +538,7 @@ function GapRow({ gap, multiDay }: { gap: CapabilityGap; multiDay: boolean }) {
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{capabilityKeyLabel(gap.key)}</span>
-        <span className="shrink-0 whitespace-nowrap text-[11px] font-medium tracking-wide" style={{ color: GAP_STATUS_COLOR[gap.status] }}>{GAP_STATUS_LABEL[gap.status]}</span>
+        <span className="shrink-0 whitespace-nowrap text-xs font-medium tracking-wide" style={{ color: GAP_STATUS_COLOR[gap.status] }}>{GAP_STATUS_LABEL[gap.status]}</span>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
         <dt style={{ color: 'var(--color-ink-dim)' }}>Vraag</dt>
@@ -548,7 +548,7 @@ function GapRow({ gap, multiDay }: { gap: CapabilityGap; multiDay: boolean }) {
         <dt style={{ color: 'var(--color-ink-dim)' }}>Vertrouwen</dt>
         <dd style={{ color: 'var(--color-ink-dim)' }}>{CONFIDENCE_LABEL[gap.confidence]}, {CONFIDENCE_EXPLANATION[gap.confidence]}</dd>
       </dl>
-      {unitMismatch && <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{gap.explanation}</p>}
+      {unitMismatch && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{gap.explanation}</p>}
     </div>
   );
 }
@@ -614,7 +614,7 @@ function PreviewStep({
       <section>
         <div className="flex items-baseline justify-between gap-3">
           <Eyebrow>HAALBAARHEID</Eyebrow>
-          <span className="text-[11px] font-medium tracking-wide" style={{ color: feasibilityBadge.color }}>{feasibilityBadge.label}</span>
+          <span className="text-xs font-medium tracking-wide" style={{ color: feasibilityBadge.color }}>{feasibilityBadge.label}</span>
         </div>
         <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.feasibility.explanation}</p>
         {plan.feasibility.bestPossiblePreparation && (
@@ -626,7 +626,7 @@ function PreviewStep({
         <section>
           <Eyebrow>WAT JE KUNT EN WAT HET VRAAGT</Eyebrow>
           {multiDay && (
-            <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Vergeleken met één dag van de tocht (je trainingsdag, of anders de gemiddelde loopdag), niet met de totalen.
             </p>
           )}

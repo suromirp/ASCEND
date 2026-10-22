@@ -79,7 +79,7 @@ export function CountdownTimer({
 
             <div className="flex flex-col items-center gap-3 py-2">
               <p
-                className="font-display text-6xl"
+                className="font-sans text-6xl"
                 style={{ color: done ? 'var(--color-gold)' : 'var(--color-ink)', fontVariantNumeric: 'tabular-nums' }}
               >
                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}

@@ -58,7 +58,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
         {blocks.map((b) => (
           <span key={b.goalId} className="absolute top-0 -translate-x-1/2 text-xs" style={{ left: `${at(b.raceDate)}%`, color: 'var(--color-gold)' }} aria-hidden="true">⚑</span>
         ))}
-        <div className="mt-1.5 flex justify-between text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+        <div className="mt-1.5 flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <span>{formatDateNL(start)}</span>
           {main?.targetDate && <span>{formatDateNL(main.targetDate)}</span>}
         </div>
@@ -106,7 +106,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                       </button>
                     ))}
                   </div>
-                  <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                  <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                     <span style={{ color: 'var(--color-ink)' }}>Tussendoel:</span> ASCEND traint ervoor, met testlopen, tempolopen en een lichte wedstrijdweek. <span style={{ color: 'var(--color-ink)' }}>Alleen volgen:</span> je ziet hoe je ervoor staat, je planning verandert niet.
                   </p>
                   </>
@@ -117,7 +117,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
         </div>
       )}
 
-      <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         De lengte van de fases rekent ASCEND zelf uit vanaf je hoofddoel; aanpassen hoeft niet. Wil je eerder opbouwen, maak dan de Opbouw langer: de basis krijgt wat overblijft.
       </p>
       <button onClick={() => setEditPhases((v) => !v)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={editPhases}>

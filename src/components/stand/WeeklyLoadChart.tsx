@@ -16,9 +16,9 @@ const SPORT_COLOR: Record<LoadSport, string> = {
 const SPORT_LABEL: Record<LoadSport, string> = { lopen: 'Lopen', kracht: 'Kracht', wandelen: 'Wandelen', overig: 'Fietsen en overig' };
 
 const W = 320;
-const H = 150;
+const H = 158;
 const TOP = 14;
-const BOTTOM = 30;
+const BOTTOM = 38;
 const GAP = 2;
 
 export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
@@ -73,10 +73,10 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
               </g>
               {total === 0 && <rect x={x} y={TOP + plotH - 1} width={barW} height={1} fill="var(--color-card-border)" />}
               {i === selected && <rect x={x - 3} y={TOP + plotH + 3} width={barW + 6} height={2} rx={1} fill="var(--color-gold)" />}
-              <text x={i * slot + slot / 2} y={H - 12} textAnchor="middle" fontSize={9} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
+              <text x={i * slot + slot / 2} y={H - 18} textAnchor="middle" fontSize={12} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
                 {w.isCurrent ? 'nu' : dayMonth(w.weekStart)}
               </text>
-              {w.isRestWeek && <text x={i * slot + slot / 2} y={H - 2} textAnchor="middle" fontSize={8} fill="var(--color-ink-dim)">rust</text>}
+              {w.isRestWeek && <text x={i * slot + slot / 2} y={H - 4} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">rust</text>}
             </g>
           );
         })}
@@ -84,7 +84,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
       </svg>
 
       {(present.length > 1 || jump) && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           {present.length > 1 && present.map((s) => (
             <span key={s} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ background: SPORT_COLOR[s] }} aria-hidden />{SPORT_LABEL[s]}</span>
           ))}
@@ -96,7 +96,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict(weeks[currentIdx], jump)}</p>
       {estimatedWeeks > 0 && (
-        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Vul na een training de zwaarte in, dan klopt de balk beter.
         </p>
       )}
@@ -114,9 +114,9 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl px-3.5 py-3" style={{ background: 'var(--color-charcoal)' }} aria-live="polite">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-[11px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'DEZE WEEK' : `WEEK VAN ${dayMonth(week.weekStart).toUpperCase()}`}{week.isRestWeek ? ' · RUSTWEEK' : ''}</p>
+        <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'DEZE WEEK' : `WEEK VAN ${dayMonth(week.weekStart).toUpperCase()}`}{week.isRestWeek ? ' · RUSTWEEK' : ''}</p>
         <p className="tabular-nums">
-          <span className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(week.doneTotal, 0)}</span>
+          <span className="font-sans tabular-nums text-xl" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(week.doneTotal, 0)}</span>
           {week.plannedTotal > 0 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}> + {formatNumberNL(week.plannedTotal, 0)} gepland</span>}
         </p>
       </div>
@@ -129,7 +129,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
             {average !== undefined && <span className="absolute -inset-y-1 w-0.5 rounded" style={{ left: pct(average), background: 'var(--color-ink)' }} />}
           </div>
           {average !== undefined && (
-            <p className="mt-1.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Streepje: je gemiddelde van de vier weken ervoor, {formatNumberNL(average, 0)}.</p>
+            <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Streepje: je gemiddelde van de vier weken ervoor, {formatNumberNL(average, 0)}.</p>
           )}
         </div>
       )}
@@ -142,7 +142,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
             <li key={i} className="flex items-center gap-3" style={{ opacity: it.planned ? 0.6 : 1 }}>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
-                <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {dayShortNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
                 </p>
               </div>
@@ -157,7 +157,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
         </ul>
       )}
 
-      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Punten per training: minuten maal zwaarte.
         {week.items.some((it) => it.planned) ? ' Lichter: nog gepland.' : ''}
         {week.items.some((it) => it.estimated) ? ' ±: geen zwaarte ingevuld, geteld met de geplande.' : ''}

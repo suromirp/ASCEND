@@ -21,7 +21,7 @@ export function LeaveBand({ label }: { label: LeaveLabel }) {
       style={{ borderColor: tint(tone.color, 50), background: tint(tone.color, 12), borderStyle: label.kind === 'light' ? 'dashed' : 'solid' }}
     >
       <p className="flex flex-wrap items-baseline gap-x-2">
-        <span className="text-[10px] font-semibold tracking-[0.14em]" style={{ color: tone.text }}>{label.title.toUpperCase()}</span>
+        <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: tone.text }}>{label.title.toUpperCase()}</span>
         <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label.line}</span>
       </p>
       {label.note && <p className="mt-0.5 truncate text-xs" style={{ color: 'var(--color-ink)' }}>{label.note}</p>}

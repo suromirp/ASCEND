@@ -135,7 +135,7 @@ export function GoalCapacityStep({
       )}
 
       {unknownRows.length > 0 && (
-        <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           Blijft onbekend: {unknownRows.map((n) => capabilityKeyLabel(n.key)).join(', ')}. ASCEND rekent daar niet mee tot je trainingen er iets over zeggen.
         </p>
       )}
@@ -186,7 +186,7 @@ function RecentActivityBlock({
   return (
     <div className="rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{cyclingDistance ? 'Je zwaarste rit of training van de afgelopen 8 weken' : 'Je zwaarste tocht of training van de afgelopen 8 weken'}</p>
-      <p className="mt-0.5 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Eén activiteit die je echt gedaan hebt. Vul in wat je weet, de rest mag leeg blijven.
       </p>
       <div className="mt-3 grid grid-cols-2 gap-3">
@@ -205,7 +205,7 @@ function RecentActivityBlock({
       <div className="mt-3">
         <PrimaryButton onClick={handleSave} disabled={saving || !filled || daysAgo === undefined}>Opslaan</PrimaryButton>
       </div>
-      <button onClick={onSkip} className="flex min-h-[44px] items-center justify-center mt-2 w-full text-center text-[11px] underline" style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={onSkip} className="flex min-h-[44px] items-center justify-center mt-2 w-full text-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
         Liever per onderdeel antwoorden
       </button>
     </div>
@@ -235,7 +235,7 @@ function CapabilityQuestion({
         <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{capabilityKeyLabel(capKey)}</p>
         <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{ranges ? meta.question.replace(/\s*\(in [^)]*\)\s*$/, '') : meta.question}</p>
         {anchor && (
-          <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Jouw logboek: zwaarste {formatCapabilityValue(anchor.measured)} op {formatDateNL(anchor.date)}.
           </p>
         )}
@@ -258,7 +258,7 @@ function CapabilityQuestion({
         </div>
       ) : (
         meta.unit !== 'min_per_km' && (
-          <button onClick={() => setShowExact(true)} className="inline-flex min-h-[44px] items-center self-start text-[11px] underline" style={{ color: 'var(--color-ink-dim)' }}>precies invullen</button>
+          <button onClick={() => setShowExact(true)} className="inline-flex min-h-[44px] items-center self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>precies invullen</button>
         )
       )}
     </div>

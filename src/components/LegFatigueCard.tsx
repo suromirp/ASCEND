@@ -60,11 +60,11 @@ export function LegFatigueCard() {
         <div>
           <Eyebrow>BENEN</Eyebrow>
           <p className="mt-1 flex items-baseline gap-2">
-            <span className="font-display text-2xl tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
+            <span className="font-sans text-2xl tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
             <span className="text-sm font-medium" style={{ color }}>{word}</span>
           </p>
         </div>
-        <button onClick={() => setOpen((v) => !v)} className="inline-flex min-h-[44px] items-center text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+        <button onClick={() => setOpen((v) => !v)} className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
           {open ? 'minder' : 'hoe werkt dit?'}
         </button>
       </div>
@@ -75,7 +75,7 @@ export function LegFatigueCard() {
           <span key={m} className="absolute -top-0.5 h-3 w-px" style={{ left: pct(m), background: 'var(--color-ink-dim)', opacity: 0.6 }} aria-hidden />
         ))}
       </div>
-      <div className="relative -mt-1.5 h-3 text-[10px]" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
+      <div className="relative -mt-1.5 h-3 text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
         <span className="absolute left-0">fris</span>
         <span className="absolute -translate-x-1/2" style={{ left: pct(FATIGUE_THRESHOLDS.test.fresh) }}>test</span>
         <span className="absolute -translate-x-1/2" style={{ left: pct(FATIGUE_THRESHOLDS.hard.fresh) }}>hard</span>
@@ -84,7 +84,7 @@ export function LegFatigueCard() {
 
       {now.contributions.length > 0 && (
         <div className="flex flex-col gap-1">
-          <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Werkt nog door</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Werkt nog door</p>
           {now.contributions.slice(0, 3).map((c) => (
             <div key={c.id} className="flex items-baseline justify-between gap-3 text-xs">
               <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {short(c.date)}</span></span>

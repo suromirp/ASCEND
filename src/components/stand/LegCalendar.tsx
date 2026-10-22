@@ -27,7 +27,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
       </div>
 
       <div className="grid grid-cols-7 gap-1.5" role="grid" aria-label="Beenbelasting per dag">
-        {WEEKDAYS.map((d) => <span key={d} className="text-center text-[10px]" style={{ color: 'var(--color-ink-dim)' }}>{d}</span>)}
+        {WEEKDAYS.map((d) => <span key={d} className="text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>{d}</span>)}
         {weeks.flatMap((week) => week.map((d) => {
           const i = days.indexOf(d);
           const isToday = d.date === today;
@@ -55,13 +55,13 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
                   aria-hidden
                 />
               )}
-              <span className="relative text-[10px] tabular-nums" style={{ color: d.level >= 3 ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>{Number(d.date.slice(8, 10))}</span>
+              <span className="relative text-xs tabular-nums" style={{ color: d.level >= 3 ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>{Number(d.date.slice(8, 10))}</span>
             </button>
           );
         }))}
       </div>
 
-      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
+      <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
         <span>licht</span>
         {LEVEL_OPACITY.slice(1).map((o) => <span key={o} className="h-2.5 w-4 rounded-sm" style={{ background: 'var(--color-bronze)', opacity: o }} />)}
         <span>zwaar</span>

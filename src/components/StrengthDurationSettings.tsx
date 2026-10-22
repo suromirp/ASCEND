@@ -41,7 +41,7 @@ export function StrengthDurationSettings() {
         return (
           <div key={t.id} className="flex flex-col gap-1">
             <NumberField label={t.name} unit="min" value={estimates[t.id]} placeholder={String(t.durationVariants.full)} onChange={(v) => void setEstimate(t.id, v)} compact />
-            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
           </div>
         );
       })}

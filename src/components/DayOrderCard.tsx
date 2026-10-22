@@ -15,7 +15,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
   const accent = advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)';
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-[10px] font-medium tracking-[0.18em]" style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-bronze)' }}>{advice.avoid ? 'LIEVER NIET OP ÉÉN DAG' : title}</p>
+      <p className="text-xs font-medium tracking-[0.18em]" style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-bronze)' }}>{advice.avoid ? 'LIEVER NIET OP ÉÉN DAG' : title}</p>
 
       <ol className="flex flex-col">
         {ordered.map((s, i) => {
@@ -24,7 +24,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
           return (
             <li key={s.id} className="flex gap-3">
               <div className="flex w-7 shrink-0 flex-col items-center">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border font-display text-sm tabular-nums" style={{ borderColor: accent, color: i === 0 ? 'var(--color-bg)' : accent, background: i === 0 ? accent : 'transparent' }}>{i + 1}</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border font-sans text-sm tabular-nums" style={{ borderColor: accent, color: i === 0 ? 'var(--color-bg)' : accent, background: i === 0 ? accent : 'transparent' }}>{i + 1}</span>
                 {!last && <span className="my-1 w-px flex-1" style={{ minHeight: 22, background: `linear-gradient(${accent}, var(--color-card-border))` }} aria-hidden />}
               </div>
               <div className={`min-w-0 flex-1 ${last ? '' : 'pb-1'}`}>
@@ -33,7 +33,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
                   {t?.name ?? 'Training'}
                 </p>
                 {!last && i === 0 && advice.gapHours && (
-                  <p className="mt-1 text-[11px] tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>liefst {advice.gapHours} uur ertussen{advice.minGapHours ? `, minstens ${advice.minGapHours}` : ''}</p>
+                  <p className="mt-1 text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>liefst {advice.gapHours} uur ertussen{advice.minGapHours ? `, minstens ${advice.minGapHours}` : ''}</p>
                 )}
               </div>
             </li>

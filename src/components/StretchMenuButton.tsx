@@ -1,19 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS } from '../data/stretches';
-
-function StretchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="4" r="1.8" />
-      <path d="M12 6v7" />
-      <path d="M12 8L8 4" />
-      <path d="M12 8L16 4" />
-      <path d="M12 13L9 20" />
-      <path d="M12 13L15 20" />
-    </svg>
-  );
-}
+import { Icon } from './icons';
 
 export function StretchMenuButton() {
   const [open, setOpen] = useState(false);
@@ -33,7 +21,7 @@ export function StretchMenuButton() {
         className="flex h-11 w-11 items-center justify-center rounded-full border"
         style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}
       >
-        <StretchIcon />
+        <Icon name="rekken" size={20} />
       </button>
 
       {open && (

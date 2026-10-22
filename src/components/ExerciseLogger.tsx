@@ -265,7 +265,7 @@ export function ExerciseLogger({
       <div className="mx-auto max-w-md px-4 pb-32 pt-4">
         <div className="mb-3 flex items-center justify-between">
           <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>‹ Terug</button>
-          <span className="text-[11px] font-semibold tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{dateLabel}</span>
+          <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{dateLabel}</span>
         </div>
 
         <SessionHeader brief={brief} title={template.name} />
@@ -440,7 +440,7 @@ export function ExerciseLogger({
               })}
             </div>
             {peak && (
-              <p className="mt-1.5 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 Het plan: {INTENSITY[peak].label.toLowerCase()} ({INTENSITY[peak].rpe}){peak >= 3 && conditioningSteps.some((st) => st.intensity <= 2) ? ' in de zware stukken, rustig ertussen' : ''}.
               </p>
             )}

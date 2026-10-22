@@ -44,7 +44,7 @@ export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: str
           ))}
           {nowIndex >= 0 && <span className="absolute inset-y-0 w-0.5" style={{ left: `${((nowIndex + 0.5) / totalWeeks) * 100}%`, background: 'var(--color-ink)' }} aria-hidden="true" />}
         </div>
-        <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           Elke fase gaat in golven van vier weken: wennen, opbouw, zwaarste week, rustweek. Tik op een fase voor de weken, en op een week om hem te openen.
         </p>
       </Card>
@@ -66,7 +66,7 @@ function PhaseCard({ phase, open, onToggle, onSelectWeek }: { phase: SeasonPhase
           <p className="flex items-center gap-2 text-sm font-semibold tracking-wide" style={{ color: past ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
             <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} aria-hidden="true" />
             {phase.name}
-            {phase.current && <span className="text-[11px] font-normal" style={{ color: 'var(--color-gold)' }}>nu</span>}
+            {phase.current && <span className="text-xs font-normal" style={{ color: 'var(--color-gold)' }}>nu</span>}
           </p>
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {formatDateNL(phase.from)} tot {formatDateNL(phase.until)} · {phase.weeks.length} {phase.weeks.length === 1 ? 'week' : 'weken'}
@@ -109,19 +109,19 @@ function WeekRow({ week, onSelect }: { week: SeasonWeek; onSelect: () => void })
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-sm" style={{ color: week.current ? 'var(--color-gold)' : 'var(--color-ink)' }}>
           Week {week.number} · {formatDateNL(week.weekStart)}
-          {week.current && <span className="text-[11px]"> · nu</span>}
+          {week.current && <span className="text-xs"> · nu</span>}
         </p>
-        <span className="shrink-0 text-[11px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+        <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
           {week.done ? `${week.done.done} van ${week.done.planned} gedaan` : week.totalMinutes > 0 ? formatHoursMinutesNL(week.totalMinutes) : ''}
         </span>
       </div>
-      <p className="text-[11px] tracking-wide" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel.toUpperCase()}</p>
+      <p className="text-xs tracking-wide" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel.toUpperCase()}</p>
       {week.items.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {week.items.map((i, n) => (
             <span
               key={`${n}-${i.label}`}
-              className="rounded-full border px-2 py-0.5 text-[11px]"
+              className="rounded-full border px-2 py-0.5 text-xs"
               style={{
                 borderColor: i.kind === 'race' || i.kind === 'test' ? 'var(--color-bronze)' : 'var(--color-card-border)',
                 color: i.kind === 'race' ? 'var(--color-gold)' : 'var(--color-ink)',

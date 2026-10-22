@@ -75,7 +75,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
                   <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
                 ))}
               </div>
-              <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>De getallen van de index zijn een afstemming op deze studies. De index als geheel is niet in een studie getest. Gebruik hem als kompas, niet als weegschaal.</p>
+              <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>De getallen van de index zijn een afstemming op deze studies. De index als geheel is niet in een studie getest. Gebruik hem als kompas, niet als weegschaal.</p>
             </Section>
           </Card>
         </div>

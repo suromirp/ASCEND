@@ -398,7 +398,7 @@ function FocusStep({
           className="mt-1 w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
           style={inputStyle}
         />
-        <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           Zonder bloklengte blijft dit blok open, geen automatische reviewherinnering op einddatum.
         </p>
       </div>

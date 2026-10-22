@@ -76,8 +76,8 @@ function SourceCard({ source }: { source: LibrarySource }) {
       <button onClick={() => setOpen((v) => !v)} className="text-left" aria-expanded={open}>
         <Eyebrow>{[CATEGORY_LABEL[source.category].toUpperCase(), source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher.toUpperCase() : undefined].filter(Boolean).join(' · ')}</Eyebrow>
         <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{source.title}</p>
-        {source.meta && <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{source.meta}</p>}
-        <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+        {source.meta && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{source.meta}</p>}
+        <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           {source.usedIn.length === 1 ? source.usedIn[0] : `Gebruikt bij ${source.usedIn.length} onderdelen${open ? '' : ' · meer'}`}
         </p>
       </button>

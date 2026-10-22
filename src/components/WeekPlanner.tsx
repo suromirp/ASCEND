@@ -53,7 +53,7 @@ export function WeekPlanner({
               <div className="mb-2"><LeaveBand label={leaveLabel} /></div>
             )}
             {advice && (
-              <p className="mb-2 flex flex-wrap items-center gap-x-1.5 pl-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              <p className="mb-2 flex flex-wrap items-center gap-x-1.5 pl-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)' }}>{advice.avoid ? 'Liever niet op één dag' : advice.headline}</span>
                 {advice.gapHours && <span>· liefst {advice.gapHours} uur ertussen</span>}
               </p>

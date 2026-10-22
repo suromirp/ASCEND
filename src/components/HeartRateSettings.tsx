@@ -33,7 +33,7 @@ export function HeartRateSettings() {
               <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{bpm![0]} tot {bpm![1]} bpm</span>
             </p>
           ))}
-          <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Hartslag is een hulpmiddel naast hoe zwaar het voelt en de praattest, niet de enige maat.
           </p>
         </div>

@@ -40,7 +40,7 @@ export function AerobicTrendCard() {
         </p>
       )}
       {verdict && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{verdict}</p>}
-      <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Telt mee: vlakke rustige loopjes met afstand, tijd en gemiddelde hartslag ingevuld
         {hasZones ? ', met een hartslag in zone 2 of een beetje eronder' : ''}.
         {trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}

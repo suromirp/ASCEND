@@ -18,7 +18,7 @@ export function JourneyWeekCard({ suppress = false }: { suppress?: boolean }) {
       <Card className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between">
           <Eyebrow>DEZE WEEK VOOR DE GR5</Eyebrow>
-          <span className="text-[11px]" style={{ color: 'var(--color-success-text)' }}>gedaan</span>
+          <span className="text-xs" style={{ color: 'var(--color-success-text)' }}>gedaan</span>
         </div>
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{task.title}</p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Volgende week komt er een nieuwe taak.</p>
@@ -33,7 +33,7 @@ export function JourneyWeekCard({ suppress = false }: { suppress?: boolean }) {
     <Card className="flex flex-col gap-2" texture>
       <div className="flex items-baseline justify-between">
         <Eyebrow>DEZE WEEK VOOR DE GR5</Eyebrow>
-        <button onClick={() => navigate('/reis')} className="min-h-[44px] text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={() => navigate('/reis')} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
           Alle taken
         </button>
       </div>

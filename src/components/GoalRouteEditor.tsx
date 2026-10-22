@@ -165,7 +165,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           <NumberField label="Stijging" unit="m D+" value={amountOf(reqs, 'elevationGain')} onChange={(v) => setTotal('elevationGain', v)} placeholder="30.000" />
           <NumberField label="Daling" unit="m D−" value={amountOf(reqs, 'elevationLoss')} onChange={(v) => setTotal('elevationLoss', v)} placeholder="30.000" />
         </div>
-        <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alle hoogtemeters omhoog en omlaag over de volledige tocht.</p>
+        <p className="-mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alle hoogtemeters omhoog en omlaag over de volledige tocht.</p>
         <NumberField
           label={`Aantal ${sport.dayWord}`}
           unit="dagen"
@@ -173,7 +173,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           onChange={(v) => commit(setRequirement(reqs, 'eventDays', false, v, 'days', 'TOTAL_EVENT', discipline))}
           helper="Alleen de dagen dat je echt onderweg bent, rustdagen niet meegeteld. Onderzoek adviseert een rustdag per 6 tot 8 loopdagen."
         />
-        {tripNote && <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{tripNote}</p>}
+        {tripNote && <p className="-mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{tripNote}</p>}
         {execution === 'continuous' && carriesPack && packField}
       </section>
 
@@ -188,21 +188,21 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
             helper={`Het maximale aantal dagen dat je tijdens één etappe achter elkaar verwacht te ${sport.verb}.`}
           />
           {longest !== undefined && days !== undefined && longest > days && (
-            <p className="-mt-2 text-[11px]" style={{ color: 'var(--color-warning)' }}>De langste etappe kan niet langer zijn dan de hele tocht.</p>
+            <p className="-mt-2 text-xs" style={{ color: 'var(--color-warning)' }}>De langste etappe kan niet langer zijn dan de hele tocht.</p>
           )}
           {carriesPack && packField}
         </section>
       )}
 
       <section className="rounded-xl border px-3 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-        <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>
+        <span className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>
           GEMIDDELDE {dayWord.singular.toUpperCase()} · berekend
         </span>
         {averageParts.length > 0 ? (
           <>
             <p className="mt-1.5 text-sm font-medium" style={{ color: trainingDaySet ? 'var(--color-ink)' : 'var(--color-gold)' }}>{averageParts.join(' · ')}</p>
             {days !== undefined && days > 1 && (
-              <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Gebaseerd op {formatNumberNL(days, 0)} {dayWord.plural}.</p>
+              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Gebaseerd op {formatNumberNL(days, 0)} {dayWord.plural}.</p>
             )}
           </>
         ) : (
@@ -213,7 +213,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           {trainingDaySet || editingDay ? (
             <>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>TRAININGSDAG · zelf gekozen</span>
+                <span className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>TRAININGSDAG · zelf gekozen</span>
                 {editingDay ? (
                   <button onClick={() => setEditingDay(false)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>klaar</button>
                 ) : (
@@ -242,7 +242,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
                   })}
                 </div>
               )}
-              <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 ASCEND richt je training op deze dag. Wat je leeg laat, komt uit de gemiddelde {dayWord.singular}. Het gemiddelde zelf blijft gewoon berekend.
               </p>
               {trainingDaySet && (
@@ -251,7 +251,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
             </>
           ) : (
             <>
-              <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 ASCEND traint nu richting de gemiddelde {dayWord.singular}. Wil je je voorbereiden op een zwaardere dag uit de tocht, stel die dan in als trainingsdag.
               </p>
               <button onClick={() => setEditingDay(true)} className="inline-flex min-h-[44px] items-center mt-2 text-xs font-medium underline" style={{ color: 'var(--color-gold)' }}>Trainingsdag instellen</button>
@@ -294,7 +294,7 @@ export function Segmented({
           );
         })}
       </div>
-      {helper && <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{helper}</p>}
+      {helper && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{helper}</p>}
     </div>
   );
 }

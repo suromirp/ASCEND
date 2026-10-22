@@ -64,13 +64,13 @@ export function WeeklyQuestionCard() {
       <p className="font-display text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{question.vraag}</p>
       <div>
         <p className="text-xs italic leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>“{question.bron.tekst}”</p>
-        <p className="mt-1 text-[11px] tracking-wide" style={{ color: 'var(--color-bronze)' }}>
+        <p className="mt-1 text-xs tracking-wide" style={{ color: 'var(--color-bronze)' }}>
           {question.bron.auteur}, {question.bron.werk}
           {question.bron.noot ? <span style={{ color: 'var(--color-ink-dim)' }}>. {question.bron.noot}</span> : null}
         </p>
       </div>
       <div>
-        <label htmlFor={inputId} className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>JOUW PLAN</label>
+        <label htmlFor={inputId} className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>JOUW PLAN</label>
         <input
           id={inputId}
           type="text"
@@ -107,7 +107,7 @@ export function WeeklyPlanSection({ weekStart }: { weekStart: string }) {
   if (!entry?.answer) return null;
   return (
     <div className="mt-5">
-      <p className="text-[11px] font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>JE PLAN VAN DEZE WEEK</p>
+      <p className="text-xs font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>JE PLAN VAN DEZE WEEK</p>
       <div className="mt-2 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{entry.question}</p>
         <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{entry.answer}</p>

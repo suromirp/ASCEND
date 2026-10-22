@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import { CountdownTimer } from './CountdownTimer';
-
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.5 2" />
-    </svg>
-  );
-}
+import { Icon } from './icons';
 
 // A general-purpose entry point for the countdown timer — not tied to any
 // specific exercise or stretch, for anything during a session that needs
@@ -25,7 +17,7 @@ export function TimerButton({ initialSeconds = 60 }: { initialSeconds?: number }
         className="flex h-11 w-11 items-center justify-center rounded-full border"
         style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}
       >
-        <ClockIcon />
+        <Icon name="timer" size={20} />
       </button>
       {open && <CountdownTimer initialSeconds={initialSeconds} onClose={() => setOpen(false)} />}
     </>

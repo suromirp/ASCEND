@@ -32,7 +32,7 @@ export function ChangeLogCard({ weekStart }: { weekStart: string }) {
       {open && (
         <div className="mt-3 flex flex-col gap-2">
           {changes.map((c) => <ChangeRow key={c.key} change={c} />)}
-          <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>Tik op een regel voor de reden.</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Tik op een regel voor de reden.</p>
         </div>
       )}
     </Card>

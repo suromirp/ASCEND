@@ -181,7 +181,7 @@ export function TodayPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pr-14">
           <TimerButton />
           <StretchMenuButton />
         </div>
@@ -206,7 +206,7 @@ export function TodayPage() {
 
       {showRecoveryWarning && (
         <Card className="flex flex-col gap-1">
-          <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
+          <p className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
             De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
             rustiger te gaan, minder herhalingen, lagere helling, of een kortere sessie.
@@ -218,7 +218,7 @@ export function TodayPage() {
 
       {concurrentTrainingTip && (
         <Card className="flex flex-col gap-1">
-          <p className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>TIP VOOR VANDAAG</p>
+          <p className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>TIP VOOR VANDAAG</p>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
         </Card>
       )}

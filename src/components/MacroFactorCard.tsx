@@ -19,7 +19,7 @@ import {
   type MacroFactorProposal,
 } from '../engine/macrofactorLink';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from './ui';
 
 function dayLabel(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
@@ -56,7 +56,7 @@ export function MacroFactorCard() {
       <Eyebrow>UIT MACROFACTOR</Eyebrow>
       <div>
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>
-          {count === 1 ? '1 krachttraining gevonden' : `${count} krachttrainingen gevonden`}
+          {count === 1 ? <><Num>1</Num> krachttraining gevonden</> : <><Num>{count}</Num> krachttrainingen gevonden</>}
         </p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           Uit je bestand met duur, sets en herhalingen. Er wordt niets opgeslagen voordat jij het zegt.

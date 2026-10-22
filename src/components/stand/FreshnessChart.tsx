@@ -10,11 +10,11 @@ import { dayMonth, dayShort } from './chartParts';
 // so it is drawn dashed with its band of uncertainty around it. Tap a day.
 
 const W = 320;
-const H = 170;
+const H = 176;
 const TOP = 10;
-const BOTTOM = 34;
+const BOTTOM = 40;
 const LEFT = 4;
-const RIGHT = 30;
+const RIGHT = 36;
 
 const MARK_LABEL: Record<DayMark, string> = { test: 'test', race: 'wedstrijd', hard: 'hard', legs: 'benen', easy: 'rustig' };
 const MARK_COLOR: Record<DayMark, string> = {
@@ -56,13 +56,13 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
         {[FATIGUE_THRESHOLDS.test.fresh, FATIGUE_THRESHOLDS.hard.fresh].map((t) => (
           <g key={t} aria-hidden>
             <line x1={LEFT} x2={LEFT + plotW} y1={y(t)} y2={y(t)} stroke="var(--color-ink-dim)" strokeDasharray="2 4" strokeWidth={1} opacity={0.5} />
-            <text x={W - 2} y={y(t) + 3} textAnchor="end" fontSize={9} fill="var(--color-ink-dim)">{t === FATIGUE_THRESHOLDS.test.fresh ? 'test' : 'hard'}</text>
+            <text x={W - 2} y={y(t) + 3} textAnchor="end" fontSize={12} fill="var(--color-ink-dim)">{t === FATIGUE_THRESHOLDS.test.fresh ? 'test' : 'hard'}</text>
           </g>
         ))}
         <line x1={LEFT} x2={LEFT + plotW} y1={TOP + plotH} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
         {band && <path d={band} fill="var(--color-bronze)" opacity={0.12} />}
         <line x1={x(todayIdx)} x2={x(todayIdx)} y1={TOP} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
-        <text x={x(todayIdx)} y={TOP + plotH + 26} textAnchor="middle" fontSize={9} fontWeight={600} fill="var(--color-ink)">vandaag</text>
+        <text x={x(todayIdx)} y={TOP + plotH + 30} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--color-ink)">vandaag</text>
         <path d={line(past, 0)} fill="none" stroke="var(--color-bronze)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         <path d={line(ahead, todayIdx)} fill="none" stroke="var(--color-bronze)" strokeWidth={2} strokeDasharray="4 3" strokeLinejoin="round" strokeLinecap="round" />
 
@@ -78,14 +78,14 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
                 ? <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.85} />
                 : <circle cx={cx} cy={cy} r={main.mark === 'easy' ? 2 : 3} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.6} />)}
               {(i % 7 === 0 || i === points.length - 1) && Math.abs(i - todayIdx) > 2
-                ? <text x={cx} y={TOP + plotH + 26} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} fontSize={9} fill="var(--color-ink-dim)">{dayMonth(p.date)}</text>
+                ? <text x={cx} y={TOP + plotH + 30} textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'} fontSize={12} fill="var(--color-ink-dim)">{dayMonth(p.date)}</text>
                 : null}
             </g>
           );
         })}
       </svg>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rotate-45" style={{ background: MARK_COLOR.test }} aria-hidden />test of wedstrijd</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: MARK_COLOR.hard }} aria-hidden />harde loop</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: MARK_COLOR.legs }} aria-hidden />benen</span>

@@ -348,17 +348,17 @@ function PreviewStep({ preview, onConfirm, onBack }: { preview: ImportPreview; o
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Er wordt niets geïmporteerd.</p>
         )}
       </div>
-      <p className="text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
+      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         Vlak voor het importeren bewaart ASCEND een kopie van je huidige gegevens. Daarmee kun je de import ongedaan maken.
         Trainingen worden bij importeren nooit verwijderd.
       </p>
       {totalRemoved > 0 && (
-        <p className="text-[11px]" style={{ color: 'var(--color-danger-text)' }}>
+        <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
           Let op: in totaal verdwijnen {totalRemoved} onderdelen die nu op je toestel staan.
         </p>
       )}
       {totalConflicts > 0 && (
-        <p className="text-[11px]" style={{ color: 'var(--color-warning)' }}>
+        <p className="text-xs" style={{ color: 'var(--color-warning)' }}>
           Bij {totalConflicts} {totalConflicts === 1 ? 'onderdeel' : 'onderdelen'} blijft jouw huidige versie staan.
         </p>
       )}

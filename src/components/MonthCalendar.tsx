@@ -60,7 +60,7 @@ export function MonthCalendar({
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium" style={{ color: 'var(--color-ink-dim)' }}>
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>
         {WEEKDAY_LABELS.map((label) => (
           <span key={label}>{label}</span>
         ))}
