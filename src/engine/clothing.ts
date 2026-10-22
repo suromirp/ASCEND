@@ -345,7 +345,7 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
 function darkText(kind: ClothingKind): string {
   if (kind === 'bike') return 'Licht voor en achter aan, het is verplicht.';
   if (kind === 'mountain') return 'Hoofdlamp met reservebatterij.';
-  return 'Hoofdlamp of lampje, en iets reflecterends of fels op je romp.';
+  return 'Hoofdlamp of lampje, en iets reflecterends of fel gekleurds op je romp.';
 }
 
 // One sentence about the rucksack, for a hike (report, "Rugzakzin bij een tocht").
