@@ -18,7 +18,7 @@ import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
@@ -30,6 +30,7 @@ import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
 import { strayTrekRows } from '../engine/leaveStrays';
+import { relayoutForRestDay } from '../engine/restDayProposal';
 import { TENT_PACK_KG, packMilestoneUpdate, packWeightOf, programPackGoal, programPackTarget } from '../engine/gr5Profile';
 import { makeId } from '../utils/id';
 import type { JourneyState } from '../engine/journey';
@@ -1116,22 +1117,13 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   const settings = await SettingsRepo.get();
   const appliedRestDay = (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
   const wantedRestDay = settings.restDay ?? 1;
+  // Normally the rest day is laid out by its own proposal with Akkoord
+  // (engine/restDayProposal.ts), which stores appliedRestDay with it; this is
+  // only for a rest day stored some other way (older data).
   if (appliedRestDay !== wantedRestDay) {
-    const newDay = patternDays(templates, settings, wantedRestDay);
     const swappedById = new Map(swapped.map((x) => [x.id, x]));
-    for (const s of sessions) {
-      if (!open(s) || removedIds.has(s.id) || s.status === 'moved' || s.lock || s.leave) continue;
-      const current = swappedById.get(s.id) ?? s;
-      const to = newDay.get(patternSlotOf(current.templateId));
-      if (!to || isoWeekday(s.scheduledDate) === to) continue;
-      const date = addDays(mondayOfWeek(s.scheduledDate), to - 1);
-      if (date < today || (ctx.anchor && date >= ctx.anchor)) continue;
-      // A leg swap starts over: no marker, and the full length again.
-      const { raceBlock: mark, ...rest } = current;
-      const fresh: PlannedSession = { ...rest, scheduledDate: date, weekStartDate: mondayOfWeek(date) };
-      if (mark?.short) delete fresh.plannedMinutes;
-      swappedById.set(s.id, fresh);
-    }
+    const current = sessions.filter((s) => !removedIds.has(s.id)).map((s) => swappedById.get(s.id) ?? s);
+    for (const fresh of relayoutForRestDay(current, { today, anchor: ctx.anchor, logged, slotDays: patternDays(templates, settings, wantedRestDay) })) swappedById.set(fresh.id, fresh);
     swapped.splice(0, swapped.length, ...swappedById.values());
     await MetaRepo.set('appliedRestDay', wantedRestDay);
   }

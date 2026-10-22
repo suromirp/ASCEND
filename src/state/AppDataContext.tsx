@@ -48,6 +48,7 @@ import type { IllnessKind } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
+import { planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
@@ -441,7 +442,11 @@ interface AppData {
   advice: Advice[];
   // The rest of the planning run over a proposed week, for its preview. With
   // `leave`: as if those were your periods (a period you have not agreed to yet).
-  planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[]) => PlannedSession[];
+  planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[], restDay?: number) => PlannedSession[];
+  // Rustdag: changing it is a proposal (engine/restDayProposal.ts); applyRestDay
+  // stores the rest day and the planning together, only on Akkoord.
+  planRestDay: (restDay: number) => RestDayPlan;
+  applyRestDay: (plan: RestDayPlan) => Promise<void>;
   // Vrije dagen, vakanties en tochten (engine/leave.ts). Adding or removing
   // one is a proposal: planLeave computes it, applyLeave stores the period
   // and applies the proposal, only after Akkoord.
@@ -746,6 +751,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // report (or a changed kind of illness), a sport switched off, a
     // frequency or time budget. Never reconstructed from dates.
     if (recentChange.settingsBefore) setSettings(await SettingsRepo.set(recentChange.settingsBefore as Partial<AppSettings>));
+    // A rest day put back goes with the layout that undo puts back.
+    if (recentChange.settingsBefore && 'restDay' in recentChange.settingsBefore) await MetaRepo.set('appliedRestDay', (recentChange.settingsBefore as Partial<AppSettings>).restDay ?? 1);
     if (recentChange.configBefore) setGoalEngineConfig(await GoalEngineConfigRepo.set(recentChange.configBefore as Partial<GoalEngineConfig>));
     if (recentChange.adviceId) {
       const responses = { ...((await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {}) };
@@ -1901,12 +1908,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   // The rest of the planning run over the week a proposal gives, exactly as
   // the sync runs it after Akkoord (engine/planPass.ts): for the preview.
-  const planPreviewPass = useCallback((sessions: PlannedSession[], leave?: LeavePeriod[]): PlannedSession[] => {
+  const planPreviewPass = useCallback((sessions: PlannedSession[], leave?: LeavePeriod[], restDayOverride?: number): PlannedSession[] => {
     const today = todayISO();
     const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
-    const restDay = settings.restDay ?? 1;
+    const restDay = restDayOverride ?? settings.restDay ?? 1;
     let n = 0;
     const periods = leave ?? settings.leavePeriods;
     // The weeks near, and the weeks of a period further away.
@@ -1959,6 +1966,37 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(after) }));
     // Undo puts the periods back exactly as they were, with the planning.
     const restore = { settings: { leavePeriods: current } };
+    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
+  }, [commitPlanChange, showStatusOnlyChange]);
+
+  // Rustdag: the proposal for another rest day (engine/restDayProposal.ts),
+  // with the same planning run as the sync. Nothing is stored until Akkoord.
+  const planRestDay = useCallback((restDay: number): RestDayPlan => {
+    const today = todayISO();
+    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    let n = 0;
+    return planRestDayChange({
+      restDay, sessions: plannedSessions, logs: sessionLogs, templates, today, anchor,
+      context: {
+        today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
+        dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+        slotDays: patternDays(templates, settings, restDay),
+        minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
+        newId: () => `restday-${n++}`,
+        leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
+      },
+    });
+  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+
+  const applyRestDay = useCallback(async (plan: RestDayPlan) => {
+    await planSettled();
+    const stored = await SettingsRepo.get();
+    const restore = { settings: { restDay: stored.restDay } };
+    // The rest day and its layout go together: the sync does not lay the week out again.
+    setSettings(await SettingsRepo.set({ restDay: plan.restDay as AppSettings['restDay'] }));
+    await MetaRepo.set('appliedRestDay', plan.restDay);
     if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
   }, [commitPlanChange, showStatusOnlyChange]);
 
@@ -2133,6 +2171,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     leavePeriods,
     planLeave,
     applyLeave,
+    planRestDay,
+    applyRestDay,
     respondToAdvice,
     debriefLogId,
     dismissDebrief: () => setDebriefLogId(null),
