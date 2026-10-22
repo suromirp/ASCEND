@@ -38,6 +38,13 @@ export function RunInsightSettingsCard() {
         checked={r.weather}
         onChange={(on) => set({ weather: on })}
       />
+      <Row
+        id="borstband"
+        title="Mijn hartslag komt van de borstband"
+        note="Zonder borstband vergelijkt ASCEND geen loopjes waarbij de hartslag van een andere bron kan komen. Staat dit aan, dan telt elke loop als gemeten met de band."
+        checked={r.chestStrap}
+        onChange={(on) => set({ chestStrap: on })}
+      />
       <button onClick={() => navigate('/koppelen/garmin')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
         Reeksen van je horloge ophalen: instellen bij Koppelingen
       </button>
