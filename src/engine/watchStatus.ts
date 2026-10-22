@@ -24,7 +24,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { addDays, formatDateNL, toISODate, weekdayLongNL } from '../utils/dates';
 import type { RacePaces } from './racePaces';
-import { buildWatchWorkout, WATCH_DAYS, type TrackedWorkout } from './watchWorkout';
+import { buildWatchWorkout, WATCH_DAYS, type TrackedWorkout, type WatchNamePrefix } from './watchWorkout';
 
 export type WatchStatusKind = 'none' | 'unlinked' | 'sent' | 'stale' | 'pending' | 'later' | 'failed';
 
@@ -48,13 +48,15 @@ export interface WatchStatusContext {
   today: string;
   program?: Program | null;
   paces?: RacePaces;
+  // The same choice the send uses (AppSettings.watchNamePrefix), or the fingerprint differs.
+  namePrefix?: WatchNamePrefix;
   // The ids of planned sessions that have a log.
   logged: Set<string>;
 }
 
 export function watchStatusFor(session: PlannedSession, template: SessionTemplate, ctx: WatchStatusContext): WatchStatus {
   if (session.status === 'skipped' || ctx.logged.has(session.id) || session.scheduledDate < ctx.today) return { kind: 'none' };
-  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces);
+  const workout = buildWatchWorkout(session, template, ctx.program, ctx.paces, { namePrefix: ctx.namePrefix });
   if (!workout) return { kind: 'none' };
   if (!ctx.linked) return { kind: 'unlinked' };
 

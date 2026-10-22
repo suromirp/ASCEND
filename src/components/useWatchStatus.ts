@@ -30,7 +30,7 @@ async function readSnapshot(): Promise<Snapshot | null> {
 }
 
 export function useWatchStatuses(): { statusOf: (session: PlannedSession, template: SessionTemplate) => WatchStatus; ready: boolean; reload: () => Promise<void> } {
-  const { sessionLogs, program } = useAppData();
+  const { sessionLogs, program, settings } = useAppData();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
 
   const reload = useCallback(() => readSnapshot().then(setSnapshot), []);
@@ -68,10 +68,11 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
         today: todayISO(),
         program,
         paces,
+        namePrefix: settings.watchNamePrefix,
         logged,
       });
     },
-    [snapshot, program, paces, logged],
+    [snapshot, program, paces, logged, settings.watchNamePrefix],
   );
 
   return { statusOf, ready: snapshot !== null, reload };

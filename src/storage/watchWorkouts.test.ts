@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, seedIfEmpty, wipeAllData, ProgramsRepo } from './database';
+import { MetaRepo, PlannedSessionsRepo, SessionLogsRepo, SettingsRepo, seedIfEmpty, wipeAllData, ProgramsRepo } from './database';
 import { saveConnection } from './externalActivities';
 import { buildBackupEnvelope } from './backup';
 import {
+  cleanUpWatchWorkouts,
   getWatchWorkoutState,
   pauseWatchWorkouts,
   removeWatchWorkouts,
+  resendWatchWorkouts,
   resetAllDataAndAgenda,
   sendNextWatchWorkout,
   setWatchWorkoutsEnabled,
@@ -24,12 +26,18 @@ const ATHLETE = 'i12345';
 function fakeAgenda(options: { failWith?: number } = {}) {
   const events = new Map<string, { id: number; body: Record<string, unknown> }>();
   const calls: { method: string; url: string; body: unknown }[] = [];
+  // Things the list returns that are not ASCEND's: the owner's own events, other categories.
+  const foreign: unknown[] = [];
   let nextId = 1000;
   const fn = vi.fn(async (url: string, init: RequestInit) => {
     const method = init.method ?? 'GET';
     const body = init.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, url, body });
     if (options.failWith) return new Response('', { status: options.failWith });
+    if (method === 'GET' && url.includes('/events?')) {
+      const list = [...events.entries()].map(([ext, v]) => ({ id: v.id, external_id: ext, category: 'WORKOUT', start_date_local: '2026-10-26T00:00:00', ...v.body }));
+      return new Response(JSON.stringify([...list, ...(foreign as unknown[])]), { status: 200 });
+    }
     if (method === 'POST' && url.endsWith('/events/bulk?upsert=true')) {
       const out = (body as Record<string, unknown>[]).map((e) => {
         const ext = e.external_id as string;
@@ -61,7 +69,7 @@ function fakeAgenda(options: { failWith?: number } = {}) {
     }
     return new Response('', { status: 400 });
   });
-  return { fn: fn as unknown as typeof fetch, events, calls };
+  return { fn: fn as unknown as typeof fetch, events, calls, foreign };
 }
 
 async function setup() {
@@ -207,8 +215,27 @@ describe('syncing the coming week', () => {
     expect((await getWatchWorkoutState()).items[planned.id]).toBeUndefined();
   });
 
-  it('keeps a finished training in the agenda: it stays next to its activity', async () => {
+  it('takes a finished training out of the agenda and the books, and leaves the rest', async () => {
     const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const before = agenda.events.size;
+    const ext = [...agenda.events.keys()][0];
+    const plannedId = ext.replace('ascend:', '');
+    const planned = (await PlannedSessionsRepo.getAll()).find((s) => s.id === plannedId)!;
+    await SessionLogsRepo.put({ id: 'log1', plannedSessionId: plannedId, templateId: planned.templateId, completedDate: planned.scheduledDate } as SessionLog);
+
+    const result = await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(result).toEqual({ status: 'ok', created: 0, updated: 0, removed: 1 });
+    expect(agenda.events.has(ext)).toBe(false);
+    expect(agenda.events.size).toBe(before - 1);
+    expect((await getWatchWorkoutState()).items[plannedId]).toBeUndefined();
+  });
+
+  it('keeps a finished training in the agenda when "Gedane trainingen weghalen" is off', async () => {
+    const { today } = await setup();
+    await SettingsRepo.set({ watchRemoveDone: false });
     const agenda = fakeAgenda();
     await setWatchWorkoutsEnabled(true);
     await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
@@ -378,5 +405,107 @@ describe('Alles verwijderen', () => {
     const none = fakeAgenda();
     await resetAllDataAndAgenda({ fetchImpl: none.fn, today });
     expect(none.calls).toHaveLength(0);
+  });
+});
+
+describe('the ASCEND prefix on what was already sent', () => {
+  it('updates the names at the next round, once, without making doubles', async () => {
+    const { today } = await setup();
+    await SettingsRepo.set({ watchNamePrefix: 'none' });
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const n = agenda.events.size;
+    expect(n).toBeGreaterThan(0);
+    for (const v of agenda.events.values()) expect(String(v.body.name).startsWith('ASC')).toBe(false);
+
+    await SettingsRepo.set({ watchNamePrefix: 'short' });
+    const result = await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(result).toEqual({ status: 'ok', created: 0, updated: n, removed: 0 });
+    expect(agenda.events.size).toBe(n);
+    for (const v of agenda.events.values()) {
+      expect(String(v.body.name).startsWith('ASC ')).toBe(true);
+      expect(String(v.body.description).startsWith('Gepland door ASCEND voor ')).toBe(true);
+    }
+    // And then it is quiet again.
+    expect(await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true })).toEqual({ status: 'ok', created: 0, updated: 0, removed: 0 });
+  });
+});
+
+describe('"Weghalen": cleaning up the agenda', () => {
+  it('removes what ASCEND sent, also what its books lost, and nothing else', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const own = agenda.events.size;
+    // Strays: sent by the test button or an earlier install, not in the books.
+    agenda.events.set('ascend:oude-test', { id: 901, body: { name: 'Oude test' } });
+    agenda.events.set('ascend:eerdere-installatie', { id: 902, body: { name: 'Eerder' } });
+    // The owner's own things, which the list also returns.
+    agenda.events.set('mijn-eigen-training', { id: 5, body: { name: 'Zelf gezet' } });
+    agenda.events.set('ascendant:geen-van-ons', { id: 6, body: { name: 'Lijkt erop' } });
+    agenda.foreign.push({ id: 7, external_id: null, category: 'WORKOUT', name: 'Zonder id' });
+    agenda.foreign.push({ id: 8, external_id: 'ascend:maar-geen-workout', category: 'NOTE', name: 'Notitie' });
+    agenda.foreign.push({ id: 9, name: 'Zonder external_id' });
+
+    const result = await cleanUpWatchWorkouts({ fetchImpl: agenda.fn, today });
+    expect(result).toEqual({ status: 'ok', removed: own + 2, strays: 2 });
+    expect([...agenda.events.keys()].sort()).toEqual(['ascendant:geen-van-ons', 'mijn-eigen-training']);
+    // The delete request names only ASCEND's events.
+    const del = agenda.calls.find((c) => c.url.endsWith('/events/bulk-delete'))!;
+    const ids = (del.body as { id?: number }[]).map((d) => d.id);
+    for (const id of [5, 6, 7, 8, 9]) expect(ids).not.toContain(id);
+    expect(ids).toContain(901);
+    expect(ids).toContain(902);
+    expect((await getWatchWorkoutState()).items).toEqual({});
+    // The list was asked for the coming weeks, workouts only.
+    const list = agenda.calls.find((c) => c.method === 'GET')!;
+    expect(list.url).toContain('category=WORKOUT');
+    expect(list.url).toContain(`oldest=${today}`);
+  });
+
+  it('deletes nothing when the agenda cannot be read', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const before = (await getWatchWorkoutState()).items;
+    const failing = fakeAgenda({ failWith: 500 });
+    const result = await cleanUpWatchWorkouts({ fetchImpl: failing.fn, today });
+    expect(result.status).toBe('error');
+    expect(writes(failing.calls)).toHaveLength(0);
+    expect((await getWatchWorkoutState()).items).toEqual(before);
+  });
+
+  it('needs a connection', async () => {
+    await wipeAllData();
+    expect(await cleanUpWatchWorkouts()).toEqual({ status: 'not-connected' });
+  });
+});
+
+describe('"Opnieuw versturen"', () => {
+  it('cleans up first and sends the coming days again, without making doubles', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const n = agenda.events.size;
+    agenda.events.set('ascend:oude-test', { id: 901, body: { name: 'Oude test' } });
+    agenda.events.set('mijn-eigen-training', { id: 5, body: { name: 'Zelf gezet' } });
+
+    const result = await resendWatchWorkouts({ fetchImpl: agenda.fn, today });
+    expect(result).toEqual({ status: 'ok', removed: n + 1, sent: n });
+    expect(agenda.events.size).toBe(n + 1);
+    expect(agenda.events.has('ascend:oude-test')).toBe(false);
+    expect(agenda.events.has('mijn-eigen-training')).toBe(true);
+    expect(Object.keys((await getWatchWorkoutState()).items)).toHaveLength(n);
+  });
+
+  it('does nothing while the switch is off', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    expect(await resendWatchWorkouts({ fetchImpl: agenda.fn, today })).toEqual({ status: 'off' });
+    expect(agenda.calls).toHaveLength(0);
   });
 });

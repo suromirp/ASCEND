@@ -6,6 +6,9 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import {
   buildWatchWorkout,
   externalIdFor,
+  shortDateNL,
+  WATCH_NAME_PREFIXES,
+  type WatchNamePrefix,
   formatStepDuration,
   paceTarget,
   planWatchSync,
@@ -28,7 +31,8 @@ const session = (templateId: string, over: Partial<PlannedSession> = {}): Planne
   order: 0,
   ...over,
 });
-const build = (templateId: string, withPaces = true, over: Partial<PlannedSession> = {}) => buildWatchWorkout(session(templateId, over), tpl(templateId), program, withPaces ? paces : undefined);
+// The text tests below look at the workout itself, so they run without the ASCEND prefix; the prefix has its own tests.
+const build = (templateId: string, withPaces = true, over: Partial<PlannedSession> = {}, namePrefix: WatchNamePrefix = 'none') => buildWatchWorkout(session(templateId, over), tpl(templateId), program, withPaces ? paces : undefined, { namePrefix });
 
 describe('the pieces of the text', () => {
   it('writes durations in the builder\'s own units', () => {
@@ -168,6 +172,47 @@ describe('every training that is sent', () => {
   });
 });
 
+describe('the ASCEND prefix', () => {
+  it('short: "ASC " before the name, without a middle dot, and a short dated line at the top of the description', () => {
+    const w = build('tpl_tempo_run', true, {}, 'short')!;
+    expect(w.name).toBe(`ASC ${tpl('tpl_tempo_run').name}`);
+    expect(WATCH_NAME_PREFIXES.short).toBe('ASC ');
+    expect(w.description.split('\n')[0]).toBe(`Gepland door ASCEND voor ${shortDateNL(day)}`);
+    expect(w.description.split('\n')[1]).toBe('');
+    expect(w.description).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  it('long: "ASCEND \u00b7 " before the name', () => {
+    expect(build('tpl_easy_run', true, {}, 'long')!.name).toBe(`ASCEND \u00b7 ${tpl('tpl_easy_run').name}`);
+  });
+
+  it('is short when the option is absent, and plain only with "none"', () => {
+    const s = session('tpl_easy_run');
+    const w = buildWatchWorkout(s, tpl('tpl_easy_run'), program)!;
+    expect(w.name).toBe(`ASC ${tpl('tpl_easy_run').name}`);
+    expect(w.description.startsWith('Gepland door ASCEND voor ')).toBe(true);
+    const none = buildWatchWorkout(s, tpl('tpl_easy_run'), program, undefined, { namePrefix: 'none' })!;
+    expect(none.name).toBe(tpl('tpl_easy_run').name);
+    expect(none.description.startsWith('Gepland door')).toBe(false);
+  });
+
+  it('changes the fingerprint, so what was sent without it is updated at the next round', () => {
+    expect(build('tpl_easy_run', true, {}, 'short')!.fingerprint).not.toBe(build('tpl_easy_run')!.fingerprint);
+    expect(build('tpl_easy_run', true, {}, 'short')!.fingerprint).not.toBe(build('tpl_easy_run', true, {}, 'long')!.fingerprint);
+    const plain = build('tpl_easy_run')!;
+    const marked = build('tpl_easy_run', true, {}, 'short')!;
+    const plan = planWatchSync([marked], { [plain.plannedId]: { externalId: plain.externalId, date: plain.date, fingerprint: plain.fingerprint, eventId: 9 } }, day, new Set());
+    expect(plan.update).toHaveLength(1);
+    expect(plan.update[0].tracked.eventId).toBe(9);
+    expect(plan.create).toEqual([]);
+  });
+
+  it('writes the date the same way everywhere', () => {
+    expect(shortDateNL('2026-10-24')).toBe('za 24 okt');
+    expect(shortDateNL('2027-03-01')).toBe('ma 1 mrt');
+  });
+});
+
 describe('the fingerprint', () => {
   it('changes when the session moves or when a later week asks for more', () => {
     const base = build('tpl_tempo_run')!;
@@ -247,11 +292,30 @@ describe('planWatchSync: creating, updating, removing, and leaving things alone'
     expect(plan.update).toEqual([]);
   });
 
-  it('does not remove what is done or past: it stays next to its activity, and is just forgotten', () => {
+  describe('done, past and skipped trainings leave the agenda', () => {
     const past = { externalId: 'ascend:old', date: addDays(day, -2), fingerprint: 'x', eventId: 5 };
-    const plan = planWatchSync([], { old: past, [tempo.plannedId]: tracked(tempo) }, today, new Set([tempo.plannedId]));
-    expect(plan.remove).toEqual([]);
-    expect(plan.forget.sort()).toEqual(['old', tempo.plannedId].sort());
+    const todayStill = build('tpl_easy_run')!; // today, not done: stays
+    const books = { old: past, [tempo.plannedId]: tracked(tempo, 6), [todayStill.plannedId]: tracked(todayStill, 7) };
+
+    it('takes a done training and a past one out, and keeps today\'s that is not done', () => {
+      const plan = planWatchSync([todayStill], books, today, new Set([tempo.plannedId]));
+      expect(plan.remove.map((r) => r.plannedId).sort()).toEqual(['old', tempo.plannedId].sort());
+      expect(plan.remove.every((r) => r.tracked.externalId.startsWith('ascend:'))).toBe(true);
+      expect(plan.forget).toEqual([]);
+      expect(plan.create).toEqual([]);
+      expect(plan.update).toEqual([]);
+    });
+
+    it('takes a skipped one out (it is no longer wanted)', () => {
+      const plan = planWatchSync([], { [tempo.plannedId]: tracked(tempo, 6) }, today, new Set());
+      expect(plan.remove.map((r) => r.plannedId)).toEqual([tempo.plannedId]);
+    });
+
+    it('with removal switched off it only forgets them, as before', () => {
+      const plan = planWatchSync([todayStill], books, today, new Set([tempo.plannedId]), { removeDone: false });
+      expect(plan.remove).toEqual([]);
+      expect(plan.forget.sort()).toEqual(['old', tempo.plannedId].sort());
+    });
   });
 
   it('only ever acts on what ASCEND tracked: an event the owner added himself is not in the list', () => {

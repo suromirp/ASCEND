@@ -548,6 +548,13 @@ export interface AppSettings {
   // (only for sent or failed). Absent = on. Optional and additive.
   showWatchStatus?: boolean;
   showWatchStatusOnWeek?: boolean;
+  // What goes before the name of a training sent to the watch: "ASC " (short,
+  // absent = short), "ASCEND \u00b7 " (long) or nothing. Unless none, the
+  // description starts with a dated line. Optional and additive.
+  watchNamePrefix?: 'short' | 'long' | 'none';
+  // Take a done or past training out of the intervals.icu agenda at the next
+  // round. Absent = on. Optional and additive.
+  watchRemoveDone?: boolean;
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';

@@ -16,11 +16,12 @@
 // engine/watchWorkout.ts, the requests in integrations/intervalsIcu.ts. This
 // file reads the stored plan, asks them, and keeps the books.
 
-import { MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo, resetToDemoData } from './database';
+import { MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo, SettingsRepo, resetToDemoData } from './database';
 import { getConnection, isFetchDue, MIN_FETCH_INTERVAL_MINUTES } from './externalActivities';
 import {
   createWorkoutEvents,
   deleteWorkoutEvents,
+  fetchAscendEvents,
   intervalsErrorMessage,
   updateWorkoutEvent,
   type FetchOptions,
@@ -29,7 +30,7 @@ import {
 import { planWatchSync, selectWatchWorkouts, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import { racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
-import { todayISO } from '../utils/dates';
+import { addDays, todayISO } from '../utils/dates';
 
 const STATE_KEY = 'watchWorkoutsSync';
 
@@ -71,16 +72,17 @@ export interface WorkoutOptions extends FetchOptions {
 
 // What should be on the watch right now, from the stored plan, and which of
 // the planned sessions are done.
-async function loadDesired(today: string): Promise<{ desired: WatchWorkout[]; logged: Set<string> }> {
-  const [programs, templates, sessions, logs] = await Promise.all([
+async function loadDesired(today: string): Promise<{ desired: WatchWorkout[]; logged: Set<string>; removeDone: boolean }> {
+  const [programs, templates, sessions, logs, settings] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
+    SettingsRepo.get(),
   ]);
-  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: racePaces(testResults(logs)), today });
+  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: racePaces(testResults(logs)), today, options: { namePrefix: settings.watchNamePrefix } });
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
-  return { desired, logged };
+  return { desired, logged, removeDone: settings.watchRemoveDone !== false };
 }
 
 export type WorkoutSyncResult =
@@ -112,8 +114,8 @@ export async function syncWatchWorkouts(options: WorkoutOptions & { force?: bool
   const items = { ...state.items };
   const counts = { created: 0, updated: 0, removed: 0 };
   try {
-    const { desired, logged } = await loadDesired(today);
-    const plan = planWatchSync(desired, items, today, logged);
+    const { desired, logged, removeDone } = await loadDesired(today);
+    const plan = planWatchSync(desired, items, today, logged, { removeDone });
     const remember = (w: WatchWorkout, eventId: number | undefined, previous?: TrackedWorkout) => {
       items[w.plannedId] = { externalId: w.externalId, date: w.date, fingerprint: w.fingerprint, eventId: eventId ?? previous?.eventId, sentAt: now.toISOString() };
     };
@@ -258,4 +260,73 @@ export async function resetAllDataAndAgenda(options: WorkoutOptions = {}): Promi
     // Never in the way of deleting.
   }
   await resetToDemoData();
+}
+
+// How far ahead the clean-up looks in the agenda for events ASCEND once sent
+// (a test, an earlier install): about four months.
+export const CLEANUP_DAYS = 120;
+
+export type CleanUpResult =
+  | { status: 'ok'; removed: number; strays: number }
+  | { status: 'not-connected' }
+  | { status: 'error'; message: string };
+
+// "Weghalen": takes every coming training ASCEND sent out of the intervals.icu
+// agenda. That is what ASCEND has written down, plus what the agenda itself
+// still holds with an external_id that starts with "ascend:" (from the test
+// button or an earlier install that the books lost). Nothing else is ever
+// asked for by id, so an event of your own stays. The agenda is read first:
+// when that fails, nothing is deleted.
+export async function cleanUpWatchWorkouts(options: WorkoutOptions = {}): Promise<CleanUpResult> {
+  const today = options.today ?? todayISO();
+  let connection: IntervalsConnection | null;
+  let state: WatchWorkoutState;
+  try {
+    connection = options.connection ?? (await getConnection());
+    if (!connection) return { status: 'not-connected' };
+    state = await getWatchWorkoutState();
+  } catch {
+    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+  }
+  try {
+    const found = await fetchAscendEvents(connection, { from: today, to: addDays(today, CLEANUP_DAYS) }, options);
+    const entries = Object.entries(state.items);
+    const upcoming = entries.filter(([, t]) => t.date >= today).map(([, t]) => t);
+    const known = new Set(upcoming.map((t) => t.externalId));
+    const strays: TrackedWorkout[] = found
+      .filter((e) => !known.has(e.externalId))
+      .map((e) => ({ externalId: e.externalId, date: e.date, fingerprint: '', eventId: e.id }));
+    // Events the agenda knows by id: delete by that id, also for tracked ones whose id was lost.
+    const byExternal = new Map(found.map((e) => [e.externalId, e.id]));
+    const all = [...upcoming.map((t) => ({ ...t, eventId: t.eventId ?? byExternal.get(t.externalId) })), ...strays];
+    await deleteWorkoutEvents(connection, all, options);
+    await putState({ ...state, items: Object.fromEntries(entries.filter(([, t]) => t.date < today)) });
+    return { status: 'ok', removed: all.length, strays: strays.length };
+  } catch (err) {
+    return { status: 'error', message: intervalsErrorMessage(err) };
+  }
+}
+
+export type ResendResult =
+  | { status: 'ok'; removed: number; sent: number }
+  | { status: 'off' }
+  | { status: 'not-connected' }
+  | { status: 'error'; message: string };
+
+// "Opnieuw versturen": clean up first (so nothing is doubled), then send the
+// coming 7 days again, without the 15-minute brake.
+export async function resendWatchWorkouts(options: WorkoutOptions = {}): Promise<ResendResult> {
+  try {
+    if (!(await getWatchWorkoutState()).enabled) return { status: 'off' };
+  } catch {
+    return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
+  }
+  const cleaned = await cleanUpWatchWorkouts(options);
+  if (cleaned.status !== 'ok') return cleaned;
+  const sent = await syncWatchWorkouts({ ...options, force: true });
+  if (sent.status === 'ok') return { status: 'ok', removed: cleaned.removed, sent: sent.created + sent.updated };
+  if (sent.status === 'error') return { status: 'error', message: sent.message };
+  if (sent.status === 'off') return { status: 'off' };
+  if (sent.status === 'not-connected') return { status: 'not-connected' };
+  return { status: 'error', message: 'Versturen is niet gelukt.' };
 }
