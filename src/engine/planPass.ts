@@ -55,7 +55,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
   let remaining: Finding[] = [];
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const open = current.filter((s) => s.scheduledDate >= ctx.today && !logged.has(s.id) && s.status !== 'skipped');
-    const race = applyRaceBlocks(open, ctx.blocks, ctx.templates, ctx.newId, ctx.program);
+    const race = applyRaceBlocks(open, ctx.blocks, ctx.templates, ctx.newId, ctx.program, current);
     const updated = new Map(race.update.map((u) => [u.id, u]));
     const gone = new Set(race.remove.map((r) => r.id));
     const afterRace = [...current.filter((s) => !gone.has(s.id)).map((s) => updated.get(s.id) ?? s), ...race.add];

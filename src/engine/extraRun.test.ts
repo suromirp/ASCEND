@@ -64,6 +64,13 @@ describe('the extra training in Opbouw: when', () => {
     expect(dates('2026-11-02', { plannedSessions: withExtra })).toBe('2026-11-10');
   });
 
+  it('a quiet Saturday run of the race block is not the extra one: the fourth run can still be proposed', () => {
+    const quiet = { id: 'q', templateId: 'tpl_strides_run', scheduledDate: '2026-11-07', weekStartDate: '2026-11-02', status: 'planned' as const, order: 9, blockQuiet: true as const };
+    expect(dates('2026-11-02', { plannedSessions: [...planned, quiet] })).toBe('2026-11-03');
+    // The same session without the marker is an extra run you already have.
+    expect(dates('2026-11-02', { plannedSessions: [...planned, { ...quiet, blockQuiet: undefined }] })).toBe('2026-11-10');
+  });
+
   it('stays out after pain, on Rustig, when ill, or when trainings fell away', () => {
     const today = '2026-11-02';
     const pain = logsFor(planned, today, (s) => (s.scheduledDate === '2026-10-25' ? { painAreas: ['Knie'] } : {}));

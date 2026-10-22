@@ -149,7 +149,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
     const easy = range(minutes.get('tpl_easy_run') ?? [], 'min');
     if (easy) changes.push(`${name('tpl_easy_run')}: ${easy}`);
     if (saturdayNames.size > 0) changes.push(`Zaterdag: ${[...saturdayNames.keys()].join(', ').toLowerCase()}`);
-    if (blockFrom) changes.push(`Wedstrijdblok vanaf ${blockFrom}: tempoloop en intervallen`);
+    if (blockFrom) changes.push(`Wedstrijdblok vanaf ${blockFrom}: tempoloop en intervallen (met drie loopjes per week één van de twee)`);
     if (tests.length) changes.push(`Testloop 5 km: ${tests.join(' en ')}`);
     if (races.length) changes.push(`⚑ Wedstrijd: ${races.join(', ')}`);
 

@@ -34,6 +34,9 @@ export interface TestResult {
   date: string;
   km: number;
   minutes: number;
+  // The log this result comes from: what a debrief or a proposal after the
+  // test hangs on.
+  logId?: string;
 }
 
 export function testResults(logs: SessionLog[]): TestResult[] {
@@ -43,7 +46,7 @@ export function testResults(logs: SessionLog[]): TestResult[] {
       const d = l.cardioData ?? l.outdoorData;
       const km = d?.distanceKm ?? 0;
       const minutes = d?.durationMinutes || l.durationMinutes;
-      return km >= 3 && minutes > 0 ? [{ date: l.completedDate, km, minutes }] : [];
+      return km >= 3 && minutes > 0 ? [{ date: l.completedDate, km, minutes, logId: l.id }] : [];
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 }

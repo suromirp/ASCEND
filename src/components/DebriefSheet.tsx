@@ -4,6 +4,9 @@
 
 import { useMemo } from 'react';
 import { useAppData } from '../state/AppDataContext';
+import { racePaces, testMeaning, type TestMeaning } from '../engine/racePaces';
+import { testResults } from '../engine/racePrediction';
+import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
 import { capabilityKeyLabel } from '../data/baselineQuestions';
 import { formatCapabilityValue } from '../models/units';
@@ -21,17 +24,23 @@ export function DebriefSheet() {
     const seen = new Set<string>();
     return extractEvidenceFromLogs([log]).filter((e) => (seen.has(keyId(e.key)) ? false : (seen.add(keyId(e.key)), true)));
   }, [log]);
+  // A test run: what it means for your paces and your race.
+  const meaning = useMemo(() => {
+    if (!log || log.templateId !== TEST_TEMPLATE_ID) return undefined;
+    const paces = racePaces(testResults(sessionLogs));
+    return paces && paces.test.logId === log.id ? testMeaning(paces) : undefined;
+  }, [log, sessionLogs]);
   if (!log || celebration) return null;
 
   const name = templateById.get(log.templateId)?.name ?? 'Sessie';
   const strengthExternal = log.type === 'strength' && externalStrength;
   // Nothing worth a sheet: no numbers, no advice — the celebration was enough.
-  if (logAdvice.length === 0 && (counted.length === 0 || strengthExternal)) return null;
+  if (logAdvice.length === 0 && !meaning && (counted.length === 0 || strengthExternal)) return null;
 
-  return <Sheet key={log.id} name={name} counted={counted.map((e) => `${capabilityKeyLabel(e.key)}: ${formatCapabilityValue(e.measured)}`)} logAdvice={logAdvice} strengthExternal={strengthExternal} onClose={dismissDebrief} />;
+  return <Sheet key={log.id} name={name} counted={counted.map((e) => `${capabilityKeyLabel(e.key)}: ${formatCapabilityValue(e.measured)}`)} logAdvice={logAdvice} strengthExternal={strengthExternal} meaning={meaning} onClose={dismissDebrief} />;
 }
 
-function Sheet({ name, counted, logAdvice, strengthExternal, onClose }: { name: string; counted: string[]; logAdvice: ReturnType<typeof useAppData>['advice']; strengthExternal: boolean; onClose: () => void }) {
+function Sheet({ name, counted, logAdvice, strengthExternal, meaning, onClose }: { name: string; counted: string[]; logAdvice: ReturnType<typeof useAppData>['advice']; strengthExternal: boolean; meaning?: TestMeaning; onClose: () => void }) {
   const { closing, requestClose } = useSheetClose(onClose);
   return (
     <Portal>
@@ -42,6 +51,24 @@ function Sheet({ name, counted, logAdvice, strengthExternal, onClose }: { name: 
               <Eyebrow>TERUGBLIK</Eyebrow>
               <p className="mt-1.5 text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{name}</p>
             </div>
+            {meaning && (
+              <div>
+                <Eyebrow>DIT BETEKENT JE TEST</Eyebrow>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{meaning.headline}</p>
+                <ul className="mt-3 flex flex-col gap-2.5">
+                  {meaning.rows.map((r) => (
+                    <li key={r.label}>
+                      <p className="flex items-baseline justify-between gap-3 text-sm">
+                        <span style={{ color: 'var(--color-ink)' }}>{r.label}</span>
+                        <span className="tabular-nums" style={{ color: 'var(--color-gold)' }}>{r.value}</span>
+                      </p>
+                      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{r.hint}</p>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{meaning.note}</p>
+              </div>
+            )}
             {counted.length > 0 && !strengthExternal && (
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Telt mee voor</p>

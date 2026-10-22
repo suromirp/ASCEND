@@ -141,6 +141,11 @@ export interface PlannedSession {
   // it can be swapped back when the run moves away. `short`: the minutes were
   // set to the short version for it. Optional, additive.
   raceBlock?: { pair: string; from: string; to: string; short?: boolean };
+  // Set when the race block made this Saturday session a quiet run with
+  // strides because the week has only three runs (engine/raceBlock.ts): so it
+  // can become the quality session again when a fourth run joins, or when the
+  // goal goes. Optional, additive.
+  blockQuiet?: true;
   // You placed this session yourself, or accepted a proposal that moves it or
   // shows it here. The automatic planning never moves, swaps, shortens or
   // retemplates it (docs/onderzoek/Planning op een lijn.md). Optional, additive.

@@ -108,7 +108,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
 
   const actions = (
     <div className="mt-3 flex flex-wrap items-center gap-2">
-      {advice.proposal || advice.restWeekSkip || advice.goalChange ? (
+      {advice.proposal || advice.restWeekSkip || advice.goalChange || advice.goalTargetTime ? (
         <>
           <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Akkoord</Pill>
           <Pill onClick={() => void respond('declined')} disabled={busy}>Liever niet</Pill>

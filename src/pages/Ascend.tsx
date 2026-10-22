@@ -712,7 +712,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
       </div>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {role === 'secondary'
-          ? `Tussendoel: ASCEND traint ervoor.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} wordt de rustige duurloop een tempoloop en worden de heuvels lange intervallen, met een testloop de week ervoor. Een eerste testloop komt al eerder, zodat ASCEND je tempo kent.` : ''} De wedstrijd komt in je planning, de wedstrijdweek is licht en de lange duurloop erna kort.`
+          ? `Tussendoel: ASCEND traint ervoor.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} krijgt elke week een kwaliteitstraining voor je wedstrijd: een tempoloop of lange intervallen. Met drie loopjes per week is dat er één, de belangrijkste van die week; met vier of meer loopjes allebei. Er komt een testloop de week ervoor. Een eerste testloop komt al eerder, zodat ASCEND je tempo kent.` : ''} De wedstrijd komt in je planning, de wedstrijdweek is licht en de lange duurloop erna kort.`
           : 'Alleen volgen: je ziet hoe je ervoor staat, maar je planning verandert er niet voor.'}
       </p>
       {prediction?.predictedMinutes !== undefined && (

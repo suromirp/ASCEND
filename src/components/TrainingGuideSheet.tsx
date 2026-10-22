@@ -18,6 +18,8 @@ import { Card, Eyebrow } from './ui';
 import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
 import { buildSessionBrief } from '../engine/sessionBrief';
+import { paceLine, racePaces } from '../engine/racePaces';
+import { testResults } from '../engine/racePrediction';
 import { getModalities } from '../data/modalities';
 import { filterForTraining } from '../engine/trainingSpots';
 
@@ -46,9 +48,11 @@ export function TrainingGuideSheet({
   dateIso?: string;
 }) {
   const navigate = useNavigate();
-  const { program, templates, settings } = useAppData();
+  const { program, templates, settings, sessionLogs } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
+  // Tempo run and intervals: your pace, from your latest test run.
+  const myPace = template ? paceLine(template.id, racePaces(testResults(sessionLogs))) : undefined;
   const brief = template ? buildSessionBrief(template, dateIso, program, { templates }) : undefined;
   // "Te zwaar?" are the guide's own when-to-ease-off sections; the rest is
   // background.
@@ -86,6 +90,13 @@ export function TrainingGuideSheet({
             <>
               <SectionTitle>WAAROM</SectionTitle>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.builds.map((b) => b.why).join(' ')}</p>
+            </>
+          )}
+
+          {myPace && (
+            <>
+              <SectionTitle>JE TEMPO</SectionTitle>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{myPace}</p>
             </>
           )}
 

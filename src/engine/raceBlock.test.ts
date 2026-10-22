@@ -196,3 +196,135 @@ describe('a test the weekly prescription took out comes back', () => {
     expect(revivePrescriptionRemovedTests([skipped], [removal('t1', prescription)], new Set(), '2026-10-21')).toEqual([]);
   });
 });
+
+// The owner's decision (docs/visie/Trainingswetenschap.md, knelpunt 9): in a
+// week with three runs ONE quality session, the one that matters for that
+// phase of the block; two only from four runs.
+describe('one quality session in a week with three runs', () => {
+  const program = { id: 'p', name: 'P', startDate: '2026-09-28', phases: layoutPhasesForGoal('2026-09-28', '2027-08-01', { [PHASE_BASIS]: 4 })! };
+  // The block weeks (race 20 March 2027, block from 18 January).
+  const BLOCK_WEEK = ['2027-01-18', '2027-01-25', '2027-02-01', '2027-02-08', '2027-02-15', '2027-02-22', '2027-03-01', '2027-03-08'];
+  const plan = (open: PlannedSession[], all?: PlannedSession[]) => {
+    const c = applyRaceBlocks(open, blocks, templates, newId, program, all);
+    const result = open.filter((s) => !c.remove.includes(s)).map((s) => c.update.find((u) => u.id === s.id) ?? s);
+    return { c, result };
+  };
+  // Thursday is the run slot (offset 3 from Monday), Saturday the Saturday slot (offset 5).
+  const onDay = (rs: PlannedSession[], monday: string, offset: number) => rs.find((s) => s.scheduledDate === addDays(monday, offset) && !['tpl_upper_a', 'tpl_upper_b', 'tpl_lower_a', 'tpl_lower_b', 'tpl_herstel'].includes(s.templateId));
+  const quality = ['tpl_tempo_run', 'tpl_test_run', 'tpl_intervals', 'tpl_hills_descent', 'tpl_hill_intervals'];
+  const KEY = ['run', 'run', 'saturday', 'saturday', 'run', 'saturday', 'run', 'run'];
+
+  it('the key session carries each block week: tempo run first and last, hills with descending in week 3, intervals in 4 and 6, the test in 5', () => {
+    BLOCK_WEEK.forEach((monday, i) => {
+      const { result } = plan(week(monday));
+      const thu = onDay(result, monday, 3)!;
+      const sat = onDay(result, monday, 5)!;
+      const expectedRun = i === 4 ? 'tpl_test_run' : KEY[i] === 'run' ? 'tpl_tempo_run' : 'tpl_easy_run';
+      const expectedSat = KEY[i] === 'saturday' ? (i === 2 ? 'tpl_hills_descent' : 'tpl_intervals') : 'tpl_strides_run';
+      expect([monday, thu.templateId, sat.templateId]).toEqual([monday, expectedRun, expectedSat]);
+      // Never two quality sessions in a three-run week, except a test week
+      // where the test is the one.
+      expect(result.filter((s) => quality.includes(s.templateId))).toHaveLength(1);
+    });
+  });
+
+  it('marks the quiet Saturday run, and a second run changes nothing', () => {
+    const { c, result } = plan(week('2027-01-25'));
+    expect(onDay(result, '2027-01-25', 5)).toMatchObject({ templateId: 'tpl_strides_run', blockQuiet: true });
+    const again = plan(result).c;
+    expect(again.update).toEqual([]);
+    expect(again.remove).toEqual([]);
+    expect(c.add.map((a) => a.templateId)).toEqual(['tpl_race']); // only the race itself
+  });
+
+  it('with a fourth run in the week both quality sessions stay (the extra run you accepted counts)', () => {
+    const extra: PlannedSession = { id: 'extra', templateId: 'tpl_strides_run', scheduledDate: '2027-01-27', weekStartDate: '2027-01-25', status: 'planned', order: 9, lock: { by: 'proposal', proposalId: 'extra:2027-01-25', at: '2027-01-20T08:00:00Z' } };
+    const { result } = plan([...week('2027-01-25'), extra]);
+    expect(onDay(result, '2027-01-25', 3)?.templateId).toBe('tpl_tempo_run');
+    expect(onDay(result, '2027-01-25', 5)?.templateId).toBe('tpl_intervals');
+    // Block week 3 (key: Saturday) too: the tempo run comes back on Thursday.
+    const w3 = plan([...week('2027-02-01'), { ...extra, id: 'e3', scheduledDate: '2027-02-03', weekStartDate: '2027-02-01' }]).result;
+    expect(onDay(w3, '2027-02-01', 3)?.templateId).toBe('tpl_tempo_run');
+    expect(onDay(w3, '2027-02-01', 5)?.templateId).toBe('tpl_hills_descent');
+  });
+
+  it('a quiet Saturday becomes the quality session again when the fourth run joins, and quiet again when it goes', () => {
+    const quiet = plan(week('2027-02-08')).result; // block week 4: key Saturday, Thursday easy
+    const extra: PlannedSession = { id: 'extra', templateId: 'tpl_strides_run', scheduledDate: '2027-02-09', weekStartDate: '2027-02-08', status: 'planned', order: 9, lock: { by: 'proposal', at: '2027-02-01T08:00:00Z' } };
+    const four = plan([...quiet, extra]).result;
+    expect(onDay(four, '2027-02-08', 3)?.templateId).toBe('tpl_tempo_run');
+    // The fourth run is skipped again: back to one.
+    const three = plan(four.map((s) => (s.id === 'extra' ? { ...s, status: 'skipped' as const } : s))).result;
+    expect(onDay(three, '2027-02-08', 3)?.templateId).toBe('tpl_easy_run');
+  });
+
+  it('leaves a quality session of yours alone and adds no second one next to it', () => {
+    const mine = { by: 'user' as const, at: '2027-01-20T08:00:00Z' };
+    // Block week 2 (key: Thursday). You locked the Saturday intervals: the free Thursday stays easy.
+    const w = week('2027-01-25').map((s): PlannedSession => (s.templateId === 'tpl_hill_intervals' ? { ...s, templateId: 'tpl_intervals', lock: mine } : s));
+    const { result } = plan(w);
+    expect(onDay(result, '2027-01-25', 5)).toMatchObject({ templateId: 'tpl_intervals', lock: mine });
+    expect(onDay(result, '2027-01-25', 3)?.templateId).toBe('tpl_easy_run');
+    // Block week 3 (key: Saturday). You locked the Thursday tempo run: the free Saturday goes quiet.
+    const w3 = week('2027-02-01').map((s): PlannedSession => (s.templateId === 'tpl_easy_run' ? { ...s, templateId: 'tpl_tempo_run', lock: mine } : s));
+    const r3 = plan(w3).result;
+    expect(onDay(r3, '2027-02-01', 3)).toMatchObject({ templateId: 'tpl_tempo_run', lock: mine });
+    expect(onDay(r3, '2027-02-01', 5)?.templateId).toBe('tpl_strides_run');
+  });
+
+  it('never retemplates a quiet Saturday you fixed in place', () => {
+    const mine = { by: 'user' as const, at: '2027-01-20T08:00:00Z' };
+    const w = week('2027-02-08').map((s): PlannedSession => (s.templateId === 'tpl_hill_intervals' ? { ...s, templateId: 'tpl_strides_run', blockQuiet: true, lock: mine } : s));
+    expect(plan(w).c.update.filter((u) => u.id.endsWith('hill_intervals'))).toEqual([]);
+  });
+
+  it('a quality session already done this week (logged or past) is the week\'s one: nothing is added after it', () => {
+    // Block week 4 (key: Saturday), today is Friday; the Thursday tempo run was done. Only Friday on is open.
+    const all = week('2027-02-08').map((s): PlannedSession => (s.templateId === 'tpl_easy_run' ? { ...s, templateId: 'tpl_tempo_run' } : s));
+    const open = all.filter((s) => s.scheduledDate >= '2027-02-12');
+    const { result } = plan(open, all);
+    expect(onDay(result, '2027-02-08', 5)?.templateId).toBe('tpl_strides_run');
+    // Without the past session known (only the open ones), the Saturday would be the key.
+    expect(onDay(plan(open).result, '2027-02-08', 5)?.templateId).toBe('tpl_intervals');
+  });
+
+  it('counts the runs of the whole week, also the ones already behind you', () => {
+    // Block week 2 (key: Thursday). Open: Thursday, Saturday, Sunday. An extra run happened on Tuesday (past, logged).
+    const extra: PlannedSession = { id: 'x', templateId: 'tpl_strides_run', scheduledDate: '2027-01-26', weekStartDate: '2027-01-25', status: 'planned', order: 9 };
+    const all = [...week('2027-01-25'), extra];
+    const open = all.filter((s) => s.scheduledDate >= '2027-01-28');
+    expect(onDay(plan(open, all).result, '2027-01-25', 5)?.templateId).toBe('tpl_intervals');
+    expect(onDay(plan(open).result, '2027-01-25', 5)?.templateId).toBe('tpl_strides_run');
+  });
+
+  it('the quiet run goes back to the Saturday session when the goal goes, and a test week keeps its test', () => {
+    const quiet = plan(week('2027-01-25')).result; // block week 2: Thursday is the key
+    expect(onDay(quiet, '2027-01-25', 5)).toMatchObject({ templateId: 'tpl_strides_run', blockQuiet: true });
+    const gone = applyRaceBlocks(quiet, [], templates, newId, program);
+    const back = gone.update.find((u) => u.id.endsWith('hill_intervals'))!;
+    // Outside the block: hills (or, in the second week of the wave, hills with descending).
+    expect(['tpl_hill_intervals', 'tpl_hills_descent']).toContain(back.templateId);
+    expect(back.blockQuiet).toBeUndefined();
+    // Test week (block week 5): the test stays the test, Saturday is quiet.
+    const t = plan(week('2027-02-15')).result;
+    expect(onDay(t, '2027-02-15', 3)?.templateId).toBe('tpl_test_run');
+    expect(onDay(t, '2027-02-15', 5)?.templateId).toBe('tpl_strides_run');
+  });
+
+  it('keeps the old behaviour without week information (the exported helpers)', () => {
+    expect(templateForRaceBlock('tpl_easy_run', '2027-02-04', blocks)).toBe('tpl_tempo_run');
+    expect(saturdayTemplate('2027-02-13', blocks, program)).toBe('tpl_intervals');
+    expect(saturdayTemplate('2027-02-13', blocks, program, { runs: 3, fixed: false })).toBe('tpl_intervals'); // week 4: key
+    expect(saturdayTemplate('2027-01-30', blocks, program, { runs: 3, fixed: false })).toBe('tpl_strides_run'); // week 2: not key
+    expect(saturdayTemplate('2027-01-30', blocks, program, { runs: 4, fixed: false })).toBe('tpl_intervals');
+    // Outside a block the week information does not matter.
+    expect(saturdayTemplate('2026-10-31', [], program, { runs: 3, fixed: false })).toBe('tpl_hill_intervals');
+  });
+
+  it('without the strides template the old plan stays: both quality sessions', () => {
+    const without = templates.filter((tp) => tp.id !== 'tpl_strides_run');
+    const c = applyRaceBlocks(week('2027-01-25'), blocks, without, newId, program);
+    expect(c.update.find((u) => u.id.endsWith('hill_intervals'))?.templateId).toBe('tpl_intervals');
+    expect(c.update.find((u) => u.id.endsWith('easy_run'))?.templateId).toBe('tpl_tempo_run');
+  });
+});

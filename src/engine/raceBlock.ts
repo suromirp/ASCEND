@@ -22,6 +22,14 @@
 // - the day after, the long run (or mountain hike) is the short version;
 // - the Saturday hill intervals become long intervals (4 x 4 min) in the
 //   block, except block week 3, which keeps the hills with descending;
+// - but a week with only three runs gets ONE quality session, the one that
+//   matters most for that phase of the block (KEY_BY_BLOCK_WEEK); the other
+//   becomes an easy run (Thursday) or a quiet run with strides (Saturday).
+//   Two quality sessions only from four runs a week (the owner's decision,
+//   docs/visie/Trainingswetenschap.md, knelpunt 9 and idea 11: with three
+//   runs, a long run and heavy leg strength next to it, a second hard session
+//   buys less than one more easy run). A session that is yours, logged or
+//   past counts: it is the week's quality session and nothing is added to it;
 // - a tempo run or test may not sit within 48 hours (a test 72) after
 //   heavy leg strength: the leg day swaps with an upper body day earlier
 //   in the week, and in a test week it is also the short version.
@@ -43,6 +51,7 @@ import type { Program } from '../models/program';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD, waveWeek } from './programLayout';
 import { isLegHeavyTemplate } from './scheduler';
+import { templateSport } from './sports';
 
 export const RACE_BLOCK_WEEKS = 8;
 export const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
@@ -60,6 +69,19 @@ const SATURDAY_FAMILY = [HILLS_TEMPLATE_ID, INTERVALS_TEMPLATE_ID, HILLS_DESCENT
 const DESCENT_PHASES = [PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD];
 const DESCENT_BLOCK_WEEK = 3;
 const EASY_TEMPLATE_ID = 'tpl_easy_run';
+// The quiet run a Saturday becomes in a week with one quality session only.
+export const QUIET_TEMPLATE_ID = 'tpl_strides_run';
+// From this many runs in a week both quality sessions stay.
+export const TWO_QUALITY_MIN_RUNS = 4;
+const QUALITY_TEMPLATES = new Set([TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID, INTERVALS_TEMPLATE_ID, HILLS_TEMPLATE_ID, HILLS_DESCENT_TEMPLATE_ID]);
+// Which slot carries the week when there is room for one quality session, by
+// block week (1 to 8). Threshold work first and last (the tempo run: the
+// closest to race pace for a 10 km, and the hardest session 5 to 10 days
+// before the race is the Thursday of block week 8); week 3 keeps the hills
+// with descending (protects the legs against muscle damage); the long
+// intervals sharpen in the middle; block week 5 is the test (four weeks
+// before the race), which sits on the run slot.
+const KEY_BY_BLOCK_WEEK: ('run' | 'saturday')[] = ['run', 'run', 'saturday', 'saturday', 'run', 'saturday', 'run', 'run'];
 const BEFORE_RACE_TAKEN_OUT = ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_lower_a', 'tpl_lower_b'];
 const AFTER_RACE_SHORT = ['tpl_long_run', 'tpl_mountain_hike'];
 
@@ -98,23 +120,52 @@ export function raceBlocks(goals: TrainingGoal[], mainGoalId: string | undefined
     });
 }
 
+// What a week looks like for the quality rule: how many runs it has (all of
+// them: logged, past, skipped ones left out) and whether a quality session of
+// it is already beyond the block's reach (logged, past, or yours).
+export interface WeekQuality {
+  runs: number;
+  fixed: boolean;
+}
+
+// Which of the two quality slots of a block week keeps its quality session:
+// both from four runs; with fewer, only the key one, and none when a fixed
+// quality session already stands in the week. Without week information (or
+// outside a block) the old behaviour: both.
+function qualitySlots(date: string, blocks: RaceBlock[], quality?: WeekQuality): { run: boolean; saturday: boolean } {
+  const block = blocks.find((b) => date >= b.blockStart && date < b.raceWeek);
+  if (!block || !quality || quality.runs >= TWO_QUALITY_MIN_RUNS) return { run: true, saturday: true };
+  if (quality.fixed) return { run: false, saturday: false };
+  const blockWeek = Math.floor(daysBetween(block.blockStart, mondayOfWeek(date)) / 7);
+  const key = KEY_BY_BLOCK_WEEK[blockWeek] ?? 'run';
+  return { run: key === 'run', saturday: key === 'saturday' };
+}
+
 // Which template a planned session should be on this date: the easy run
-// becomes a tempo run inside a block (not in race week), and back outside.
-export function templateForRaceBlock(templateId: string, date: string, blocks: RaceBlock[], program?: Program | null): string {
-  if (SATURDAY_FAMILY.includes(templateId)) return saturdayTemplate(date, blocks, program);
+// becomes a tempo run inside a block (not in race week, and in a week with
+// three runs only when it is the key session), and back outside. A test week
+// stays a test week: the test is the measuring point, never traded away.
+export function templateForRaceBlock(templateId: string, date: string, blocks: RaceBlock[], program?: Program | null, quality?: WeekQuality): string {
+  if (SATURDAY_FAMILY.includes(templateId)) return saturdayTemplate(date, blocks, program, quality);
   if (![EASY_TEMPLATE_ID, TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID].includes(templateId)) return templateId;
   const week = mondayOfWeek(date);
   if (blocks.some((b) => TEST_WEEKS_BEFORE_RACE.some((n) => week === addDays(b.raceWeek, -7 * n)))) return TEST_TEMPLATE_ID;
-  return blocks.some((b) => date >= b.blockStart && date < b.raceWeek) ? TEMPO_TEMPLATE_ID : EASY_TEMPLATE_ID;
+  if (!blocks.some((b) => date >= b.blockStart && date < b.raceWeek)) return EASY_TEMPLATE_ID;
+  return qualitySlots(date, blocks, quality).run ? TEMPO_TEMPLATE_ID : EASY_TEMPLATE_ID;
 }
 
 // The Saturday quality session: intervals in a race block (hills with
 // descending in its third week), otherwise hills, with descending in weeks
-// 2 and 4 of the wave in the basis and Opbouw.
-export function saturdayTemplate(date: string, blocks: RaceBlock[], program?: Program | null): string {
+// 2 and 4 of the wave in the basis and Opbouw. In a block week that has room
+// for one quality session only and where Saturday is not the key one: a quiet
+// run with strides.
+export function saturdayTemplate(date: string, blocks: RaceBlock[], program?: Program | null, quality?: WeekQuality): string {
   const week = mondayOfWeek(date);
   const block = blocks.find((b) => date >= b.blockStart && date < b.raceWeek);
-  if (block) return Math.floor(daysBetween(block.blockStart, week) / 7) + 1 === DESCENT_BLOCK_WEEK ? HILLS_DESCENT_TEMPLATE_ID : INTERVALS_TEMPLATE_ID;
+  if (block) {
+    if (!qualitySlots(date, blocks, quality).saturday) return QUIET_TEMPLATE_ID;
+    return Math.floor(daysBetween(block.blockStart, week) / 7) + 1 === DESCENT_BLOCK_WEEK ? HILLS_DESCENT_TEMPLATE_ID : INTERVALS_TEMPLATE_ID;
+  }
   const position = program ? resolveProgramWeek(program, date) : null;
   if (position && DESCENT_PHASES.includes(position.phase.id) && waveWeek(position) % 2 === 0) return HILLS_DESCENT_TEMPLATE_ID;
   return HILLS_TEMPLATE_ID;
@@ -161,10 +212,27 @@ export function applyRaceBlocks(
   templates: SessionTemplate[],
   newId: () => string,
   program?: Program | null,
+  // Every planned session, also the logged, past and skipped ones: the runs
+  // of a week are counted over all of them. Without it, over `open`.
+  all?: PlannedSession[],
 ): RaceBlockChanges {
   const byId = new Map(templates.map((t) => [t.id, t]));
   if (!byId.has(TEMPO_TEMPLATE_ID) || !byId.has(RACE_TEMPLATE_ID) || !byId.has(TEST_TEMPLATE_ID)) return { update: [], add: [], remove: [] };
   const known = (id: string) => byId.has(id) || !SATURDAY_FAMILY.includes(id);
+  const everything = all ?? open;
+  const decidable = new Set(open.filter(free).map((s) => s.id));
+  const qualityCache = new Map<string, WeekQuality>();
+  const qualityOf = (date: string): WeekQuality => {
+    const monday = mondayOfWeek(date);
+    let q = qualityCache.get(monday);
+    if (!q) {
+      const week = everything.filter((s) => mondayOfWeek(s.scheduledDate) === monday && s.status !== 'skipped');
+      const isRun = (s: PlannedSession) => { const t = byId.get(s.templateId); return !!t && t.type !== 'strength' && t.type !== 'recovery' && templateSport(t) === 'running'; };
+      q = { runs: week.filter(isRun).length, fixed: week.some((s) => QUALITY_TEMPLATES.has(s.templateId) && !decidable.has(s.id)) };
+      qualityCache.set(monday, q);
+    }
+    return q;
+  };
   const update = new Map<string, PlannedSession>();
   const remove: PlannedSession[] = [];
   const add: PlannedSession[] = [];
@@ -177,8 +245,16 @@ export function applyRaceBlocks(
       continue;
     }
     if (!free(s)) continue;
-    const target = templateForRaceBlock(s.templateId, s.scheduledDate, blocks, program);
-    if (target !== s.templateId && known(target)) update.set(s.id, { ...s, templateId: target });
+    // A quiet Saturday run stands in for the Saturday session: it is judged as
+    // that one, so it goes back to hills, intervals or hills with descending
+    // when the week has room again or the block is gone.
+    const asSaturday = s.templateId === QUIET_TEMPLATE_ID && s.blockQuiet;
+    const target = templateForRaceBlock(asSaturday ? HILLS_TEMPLATE_ID : s.templateId, s.scheduledDate, blocks, program, byId.has(QUIET_TEMPLATE_ID) ? qualityOf(s.scheduledDate) : undefined);
+    if (target !== s.templateId && known(target)) {
+      const { blockQuiet: _quiet, ...rest } = s;
+      void _quiet;
+      update.set(s.id, target === QUIET_TEMPLATE_ID ? { ...rest, templateId: target, blockQuiet: true } : { ...rest, templateId: target });
+    }
   }
 
   for (const b of blocks) {

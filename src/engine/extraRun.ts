@@ -243,7 +243,8 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     const weekEnd = addDays(weekStart, 6);
     if (races.some((r) => r.raceDate >= weekStart && r.raceDate <= weekEnd)) continue;
     const week = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd);
-    if (week.some((s) => EXTRA_CATALOGUE.includes(s.templateId))) continue;
+    // (A quiet Saturday run of the race block is a run in place of the Saturday session, not the extra one.)
+    if (week.some((s) => EXTRA_CATALOGUE.includes(s.templateId) && !s.blockQuiet)) continue;
     const verdict = extraRunEarned(inputs, weekStart);
     if (!verdict.earned) continue;
     const choice = chooseExtraSession({

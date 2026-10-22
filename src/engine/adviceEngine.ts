@@ -35,6 +35,10 @@ import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
+import { checkTargetTime, racePaces } from './racePaces';
+import { formatRaceTime, testResults } from './racePrediction';
+import type { RaceBlock } from './raceBlock';
+import { formatNumberNL } from '../utils/number';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -57,6 +61,9 @@ export interface Advice {
   // Rule GR5-PACK-TENT: Akkoord sets the rucksack target of a goal. A goal
   // setting, not a session change (engine/gr5Profile.ts).
   goalChange?: { goalId: string; packWeightKg: number };
+  // Rule TARGET-TIME: Akkoord sets the target time (minutes) of this goal.
+  // A goal change, not a session change.
+  goalTargetTime?: { goalId: string; minutes: number };
 }
 
 export interface AdviceOption {
@@ -90,6 +97,9 @@ export interface AdviceInputs {
   // The main goal still carries the old hut default of 12 kg (rule
   // GR5-PACK-TENT, engine/gr5Profile.ts#tentPackProposal).
   tentPack?: TentPackProposal;
+  // The races that are a tussendoel (engine/raceBlock.ts), with their target
+  // time: the goal time is held against the test (rule TARGET-TIME).
+  raceGoals?: RaceBlock[];
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
@@ -920,6 +930,45 @@ function tentPackAdvice(inputs: AdviceInputs): Advice[] {
   }];
 }
 
+// --- Rule TARGET-TIME --------------------------------------------------------
+// Trigger: a test run (engine/racePaces.ts) says the target time of a race
+// goal is outside what is realistic by race day. Rule: propose the middle of
+// the realistic band as the new target time. Always a proposal: Akkoord sets
+// it, Liever niet leaves the goal exactly as it is and the same test is not
+// asked about again (the id carries the test date; a newer test is new
+// information and may ask once more, from a narrower band).
+function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
+  const tests = testResults(inputs.logs);
+  if (tests.length === 0) return [];
+  const out: Advice[] = [];
+  for (const race of inputs.raceGoals ?? []) {
+    if (!race.targetMinutes || race.raceDate < inputs.asOf) continue;
+    const km = race.distanceKm ?? 10;
+    const paces = racePaces(tests, km);
+    if (!paces) continue;
+    const check = checkTargetTime(paces, race.targetMinutes, race.raceDate);
+    if (!check) continue;
+    const target = Math.round(race.targetMinutes);
+    const distance = formatNumberNL(km, km % 1 === 0 ? 0 : 1);
+    const test = `${formatNumberNL(paces.test.km, 1)} km in ${formatRaceTime(paces.test.minutes)}`;
+    const now = `${Math.round(check.predictedMinutes)} minuten`;
+    const ambitious = check.verdict === 'ambitious';
+    const title = ambitious
+      ? `Doeltijd ${distance} km: ${target} minuten past nog niet bij je test`
+      : `Doeltijd ${distance} km: ${target} minuten is ruim langzamer dan je test`;
+    const lead = `Je testloop van ${shortDate(paces.test.date)} (${test}) past bij een ${distance} km in ongeveer ${now}.`;
+    const effect = ambitious
+      ? `${lead} Met nog ${check.band.weeks} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten is erg ambitieus. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan.`
+      : `${lead} Met nog ${check.band.weeks} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan.`;
+    const why = 'De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Recreatieve lopers die trainen worden in 10 tot 15 weken 3 tot 6% sneller (Muñoz e.a. 2014, Nuuttila e.a. 2022); wie nog vroeg in zijn looploopbaan zit, kan tot ongeveer 0,8% per week winnen. Dat is doorgerekend tot je wedstrijd, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden als droom, kies dan Liever niet: dan blijft alles staan. Na je volgende testloop kijkt ASCEND opnieuw.';
+    out.push({
+      id: `goaltime:${race.goalId}:${paces.test.date}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,
+      relatedLogId: paces.test.logId, goalTargetTime: { goalId: race.goalId, minutes: check.suggested },
+    });
+  }
+  return out;
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
@@ -942,6 +991,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...extraSessionAdvice(inputs, templateById),
     ...restWeekSkipAdvice(inputs),
     ...tentPackAdvice(inputs),
+    ...targetTimeAdvice(inputs),
     ...morningAdvice(inputs, templateById),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))

@@ -200,6 +200,7 @@ import { programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks } from '../engine/raceBlock';
+import { withTargetMinutes } from '../engine/goals';
 
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
@@ -590,6 +591,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === item.goalChange!.goalId);
       if (goal) {
         await TrainingGoalsRepo.put(withPackWeight(goal, item.goalChange.packWeightKg));
+        await refresh();
+      }
+    }
+    // A goal time proposal changes the goal, and only on Akkoord.
+    if (response === 'accepted' && item.goalTargetTime) {
+      const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === item.goalTargetTime!.goalId);
+      if (goal) {
+        await TrainingGoalsRepo.put(withTargetMinutes(goal, item.goalTargetTime.minutes, new Date().toISOString()));
         await refresh();
       }
     }
@@ -1675,6 +1684,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
+        raceGoals: extraSessionContext.races,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
     [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones],
