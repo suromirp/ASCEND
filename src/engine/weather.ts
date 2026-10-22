@@ -26,7 +26,7 @@ import { daysBetween, isoWeekday, toISODate } from '../utils/dates';
 // the weekend, the usual moments for an evening run and a day out.
 export const DEFAULT_WEEKDAY_HOUR = 18;
 export const DEFAULT_WEEKEND_HOUR = 10;
-const MIN_LOGS = 3;
+export const MIN_LOGS = 3;
 const LOOKBACK_DAYS = 70;
 const EARLIEST_HOUR = 5;
 const LATEST_HOUR = 21;
@@ -222,6 +222,42 @@ export function sessionWeather({ forecast, date, startHour, durationMinutes, now
   };
   result.line = weatherLine(result);
   return result;
+}
+
+// --- the rules as rows to read ---------------------------------------------------
+
+export interface WeatherRuleRow {
+  label: string; // 'Warm'
+  text: string; // 'voelt als 27° of meer'
+}
+
+const mm = (n: number) => String(n).replace('.', ',');
+const degrees = (n: number) => `${n}°`;
+const windText = (avg: number, gust: number) => `gemiddeld ${avg} km/u of vlagen ${gust}`;
+
+// What the Weer page shows under "Zo oordeelt ASCEND": the same numbers the
+// verdict above uses (WEATHER_RULES), written out as short rows, so the page
+// can never say something else than the engine does. 'prima' has no
+// thresholds: it is what is left when nothing below applies.
+export function weatherRuleRows(): { watch: WeatherRuleRow[]; bad: WeatherRuleRow[] } {
+  const R = WEATHER_RULES;
+  return {
+    watch: [
+      { label: 'Warm', text: `voelt als ${degrees(R.heatWatch)} of meer` },
+      { label: 'Koud', text: `voelt als ${degrees(R.coldWatch)} of kouder` },
+      { label: 'Wind', text: windText(R.windWatch, R.gustWatch) },
+      { label: 'Regen', text: `${mm(R.rainWatchTotal)} mm in totaal of ${mm(R.rainWatchHour)} mm in een uur` },
+      { label: 'Sneeuw', text: 'lichte of matige sneeuw' },
+      { label: 'Mist', text: 'zicht beperkt' },
+    ],
+    bad: [
+      { label: 'Onweer', text: 'ook ijzel en zware sneeuw' },
+      { label: 'Storm', text: windText(R.windBad, R.gustBad) },
+      { label: 'Zware regen', text: `${mm(R.rainBadHour)} mm in een uur of ${mm(R.rainBadTotal)} mm in totaal` },
+      { label: 'Extreme hitte', text: `voelt als ${degrees(R.heatBad)} of meer` },
+      { label: 'Strenge kou', text: `voelt als ${degrees(R.coldBad)} of kouder` },
+    ],
+  };
 }
 
 // --- words ---------------------------------------------------------------------

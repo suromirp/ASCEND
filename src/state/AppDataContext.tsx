@@ -59,6 +59,7 @@ import { describeChanges } from '../engine/changeImpact';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 import { useWeatherForecast, type WeatherView } from './useWeather';
+import { useFollowLocation } from './useFollowLocation';
 import { syncWatchActivities } from '../storage/externalActivities';
 import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
@@ -1882,6 +1883,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, planChangeLog]);
 
   const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
+  useFollowLocation(settings, updateSettings, !loading);
 
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).

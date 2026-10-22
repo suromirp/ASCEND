@@ -1087,6 +1087,13 @@ function OverviewSettingsCard() {
         <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Alleen de plaatsnaam gaat naar de weerdienst.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
       </div>
       <SwitchRow
+        id="weervolgt"
+        title="Weer volgt je locatie"
+        note="Heb je Mijn locatie gekozen, dan werkt ASCEND die plek bij als je de app opent (hoogstens eens per uur), zodat het weer klopt onderweg. Zonder toestemming gebeurt er niets."
+        checked={o.weatherFollowsLocation}
+        onChange={(on) => set({ weatherFollowsLocation: on })}
+      />
+      <SwitchRow
         id="citaten"
         title="Citaten na een training"
         note="Een citaat onder het rustige scherm na een training. Uit zetten haalt alleen het citaat weg, de rest van het scherm blijft. Een behaalde mijlpaal krijgt altijd een citaat."

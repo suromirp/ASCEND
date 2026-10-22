@@ -29,6 +29,10 @@ export interface OverviewSettings {
   weatherSwap?: boolean;
   // Het kledingadvies bij het weer (engine/clothing.ts).
   clothingAdvice?: boolean;
+  // "Weer volgt je locatie" (engine/weatherLocation.ts): een plaats die "Mijn
+  // locatie" heet wordt bij het openen van de app bijgewerkt, als de
+  // toestemming er al is. Ontbreekt de sleutel, dan staat hij aan.
+  weatherFollowsLocation?: boolean;
   // Het citaat op het scherm na een training (het scherm zelf blijft).
   completionMoment?: boolean;
 }
@@ -43,6 +47,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weatherLine: true,
   weatherSwap: true,
   clothingAdvice: true,
+  weatherFollowsLocation: true,
   completionMoment: true,
 };
 
@@ -61,6 +66,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
     clothingAdvice: flag('clothingAdvice'),
+    weatherFollowsLocation: flag('weatherFollowsLocation'),
     completionMoment: flag('completionMoment'),
   };
 }
@@ -102,6 +108,7 @@ export const needsWeather = (raw: OverviewSettings | undefined): boolean => {
 
 export const showWeatherLine = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherLine;
 export const showClothingAdvice = (raw: OverviewSettings | undefined) => resolveOverviews(raw).clothingAdvice;
+export const followsLocation = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherFollowsLocation;
 export const showWeatherSwap = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherSwap;
 // Het scherm na een training blijft altijd (feiten, coachregel, doel, week en
 // benen). De schakelaar bepaalt alleen of het citaat erbij staat. Een behaalde
