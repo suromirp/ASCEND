@@ -53,7 +53,7 @@ function buildTemplates(): SessionTemplate[] {
       baseStressProfile: { lowerBodyLoad: 'none', impact: 'none', eccentricLoad: 'none', intensity: 'moderate', upperBodyLoad: 'heavy', cardioLoad: 'none' },
       exercises: [
         { id: 'ex1', exerciseName: 'Bench press', sets: 4, reps: '6-8', priority: 'core' },
-        { id: 'ex2', exerciseName: 'Zittende kabelroeien', sets: 4, reps: '8-10', priority: 'core' },
+        { id: 'ex2', exerciseName: 'Seated Cable Row', sets: 4, reps: '8-10', priority: 'core' },
         { id: 'ex3', exerciseName: 'Overhead press', sets: 3, reps: '8-10', priority: 'core' },
         { id: 'ex4', exerciseName: 'Lat pulldown', sets: 3, reps: '10-12', priority: 'accessory' },
         { id: 'ex5', exerciseName: 'Lateral raises', sets: 3, reps: '12-15', priority: 'accessory' },
