@@ -64,6 +64,7 @@ import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanCha
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 import { announcementFor, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
+import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 
 type AdviceResponse = StoredResponse;
 
@@ -267,6 +268,11 @@ interface AppData {
   // "Hoe ging het?" on a training that was ticked off by itself: adds the RPE,
   // the feel and any pain to that log, nothing else (engine/autoTick.ts).
   setLogFeedback: (logId: string, patch: FeedbackPatch) => Promise<void>;
+  // "Garmin is leidend": typed-in trainings take over the watch's numbers, with
+  // a notice and "Ongedaan maken" (engine/watchAlign.ts). Resolves to how many
+  // were changed. And the other way: the hand-made numbers back.
+  alignWithWatch: (requests: AlignRequest[]) => Promise<number>;
+  restoreFromWatch: (logIds: string[]) => Promise<number>;
   // Fill in or correct what the hard part was, afterwards. Only this
   // field; what was logged otherwise stays as it was.
   setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
@@ -656,6 +662,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
+    // Numbers of the watch taken over by typed-in trainings: the hand-made ones
+    // come back first. When that was all the change did, that is the undo.
+    if (recentChange.alignedLogIds?.length) {
+      await restoreAlignments(recentChange.alignedLogIds);
+      if (recentChange.before.length === 0 && recentChange.addedIds.length === 0) {
+        setRecentChange(null);
+        planRevision++;
+        await refresh();
+        return;
+      }
+    }
     // The setting behind the change goes back exactly as it was: an illness
     // report (or a changed kind of illness), a sport switched off, a
     // frequency or time budget. Never reconstructed from dates.
@@ -1268,6 +1285,50 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  // The notice is set before the refresh, so a repair the week check makes
+  // because of the new numbers joins it and one undo takes both back.
+  const alignWithWatch = useCallback(
+    async (requests: AlignRequest[]): Promise<number> => {
+      const outcome = await applyAlignments(requests);
+      if (outcome.logIds.length === 0) return 0;
+      const n = outcome.logIds.length;
+      const now = new Date().toISOString();
+      setRecentChange({
+        id: makeId('watchalign'),
+        trigger: 'new_training_data',
+        title: 'Bijgewerkt met je horloge',
+        summary: n === 1 ? outcome.lines[0] : `${n} trainingen kregen de cijfers van je horloge`,
+        lines: outcome.lines,
+        why: 'Garmin is leidend: voor een training die je zelf invulde nam ASCEND de lengte, afstand, hartslag en hoogtemeters van je horloge over. Wat jij zelf invulde, zoals gevoel, inspanning en pijn, bleef staan. Je eigen cijfers zijn bewaard; met Ongedaan maken, of later via Terugzetten bij Garmin koppelen, komen ze terug.',
+        before: [],
+        addedIds: [],
+        alignedLogIds: outcome.logIds,
+        createdAt: now,
+      });
+      // The leg index and the week load count with the new numbers: the plan
+      // is checked again, and what the system planned itself may follow.
+      planRevision++;
+      await refresh();
+      void syncWatchWorkoutsAfterPlanChange();
+      return n;
+    },
+    [refresh],
+  );
+
+  const restoreFromWatch = useCallback(
+    async (logIds: string[]): Promise<number> => {
+      const n = await restoreAlignments(logIds);
+      if (n > 0) {
+        setRecentChange((prev) => (prev?.alignedLogIds ? null : prev));
+        planRevision++;
+        await refresh();
+        void syncWatchWorkoutsAfterPlanChange();
+      }
+      return n;
+    },
+    [refresh],
+  );
+
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
       const log = sessionLogs.find((l) => l.id === logId);
@@ -1835,6 +1896,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     announceSaved,
     undoLog,
     setLogFeedback,
+    alignWithWatch,
+    restoreFromWatch,
     setLogWorkout,
     setRestWeekSkipped,
     setWeekRepeated,

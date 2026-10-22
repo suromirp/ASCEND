@@ -175,6 +175,10 @@ separate entities:
 **Never rewrite historical logs when schedules change.** Completion is
 never stored as a flag — a session is "done" the moment a `SessionLog`
 exists that references the `PlannedSession` (`engine/sessionStatus.ts`).
+One deliberate exception, at the owner's explicit request: a log made by hand
+takes over the measured numbers of the watch and keeps its own in
+`SessionLog.manualMeasured`, so it can be put back
+(`docs/beslissingen/2026-10-22-garmin-is-leidend.md`).
 The same append-only pattern applies to `MilestoneProgress` (the record of
 when an Ascent Ladder milestone was actually cleared, vs. the static
 `Objective` / `MilestoneDefinition` ladder).

@@ -6,6 +6,7 @@
 
 import { isLeavePeriod } from '../engine/leave';
 import type { LeavePeriod } from '../models/leave';
+import type { ManualMeasured, MeasuredField, SessionLog } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -60,4 +61,47 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
   if (!Array.isArray(raw)) return { periods: undefined, skipped: 1 };
   const periods = raw.filter(isLeavePeriod).map((p) => ({ id: p.id, kind: p.kind, startDate: p.startDate, endDate: p.endDate, ...(p.note ? { note: p.note } : {}) }));
   return { periods, skipped: raw.length - periods.length };
+}
+
+// --- Garmin is leidend: SessionLog.manualMeasured -----------------------------
+// A log made by hand that took over the watch's numbers keeps the hand-made
+// ones in `manualMeasured` (models/training.ts). The field is optional and
+// additive: a file from before it has none, and every log travels whole, so the
+// backup schema number does not move. This step is a pass-through for a log
+// without the field; a log whose field is damaged (hand-edited, cut off) keeps
+// everything else and loses only that field, because putting back from damaged
+// values would write nonsense into the log.
+const MEASURED_KEYS: MeasuredField[] = ['durationMinutes', 'distanceKm', 'elevationGainM', 'elevationLossM', 'avgHeartRate', 'maxHeartRate', 'cadence', 'estimatedElevation'];
+
+export function migrateManualMeasured(raw: unknown): ManualMeasured | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const m = raw as Record<string, unknown>;
+  if (typeof m.at !== 'string' || (m.block !== 'cardioData' && m.block !== 'outdoorData')) return undefined;
+  if (typeof m.values !== 'object' || m.values === null || Array.isArray(m.values)) return undefined;
+  const values: ManualMeasured['values'] = {};
+  for (const [key, value] of Object.entries(m.values as Record<string, unknown>)) {
+    if (!MEASURED_KEYS.includes(key as MeasuredField)) return undefined;
+    const numeric = key !== 'estimatedElevation';
+    if (value === null || (numeric ? typeof value === 'number' && Number.isFinite(value) : typeof value === 'boolean')) values[key as MeasuredField] = value as number | boolean | null;
+    else return undefined;
+  }
+  const ids = m.clearedProgressIds;
+  return {
+    at: m.at,
+    values,
+    block: m.block,
+    ...(m.blockAdded === true ? { blockAdded: true as const } : {}),
+    ...(typeof m.blockSource === 'string' ? { blockSource: m.blockSource as ManualMeasured['blockSource'] } : {}),
+    ...(Array.isArray(ids) && ids.every((i) => typeof i === 'string') && ids.length > 0 ? { clearedProgressIds: ids as string[] } : {}),
+  };
+}
+
+// A log as it comes out of a file: the same log, with `manualMeasured` only when
+// it is whole.
+export function migrateLogManualMeasured(log: SessionLog): SessionLog {
+  if (!('manualMeasured' in log)) return log;
+  const valid = migrateManualMeasured((log as { manualMeasured?: unknown }).manualMeasured);
+  const { manualMeasured: _damaged, ...rest } = log;
+  void _damaged;
+  return valid ? { ...rest, manualMeasured: valid } : rest;
 }

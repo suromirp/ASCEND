@@ -4,7 +4,10 @@
 // never bound directly to a calendar day. A PlannedSession schedules a
 // template onto a date. A SessionLog records what actually happened.
 // Changing the plan must never rewrite history — SessionLog rows are
-// append-only and are never mutated once created.
+// append-only and are never mutated once created. One exception, at the
+// owner's explicit request: a log made by hand takes over the measured numbers
+// of the watch (`manualMeasured` keeps the hand-made ones, so it can be undone;
+// docs/beslissingen/2026-10-22-garmin-is-leidend.md).
 
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
@@ -261,8 +264,30 @@ export interface OutdoorMetric {
   source: MetricSource;
 }
 
-// The immutable record of what actually happened. Never edited after
-// creation — corrections are made by adding a new log, not mutating this one.
+// The numbers a watch measures, as they were typed in by hand before the
+// watch's own numbers replaced them (engine/watchAlign.ts). Kept on the log, so
+// nothing is lost and "Terugzetten" can put them back. A key is present only
+// for a field the watch changed or added; `null` means: there was no value, so
+// putting back means taking the field away again.
+export type MeasuredField = 'durationMinutes' | 'distanceKm' | 'elevationGainM' | 'elevationLossM' | 'avgHeartRate' | 'maxHeartRate' | 'cadence' | 'estimatedElevation';
+
+export interface ManualMeasured {
+  // When the watch's numbers took over (ISO date-time).
+  at: string;
+  values: Partial<Record<MeasuredField, number | boolean | null>>;
+  // The block of the log that holds the measured fields. `blockAdded`: the log
+  // had no such block, the replacement made it (putting back removes it again).
+  block: 'cardioData' | 'outdoorData';
+  blockAdded?: true;
+  // The source the block had before ('manual' unless the log said otherwise).
+  blockSource?: MetricSource;
+  // The milestones this replacement cleared (GoalMilestoneProgress ids): putting
+  // back takes exactly those away again, the way removing a log does.
+  clearedProgressIds?: string[];
+}
+
+// The record of what actually happened. Corrections are made by adding a new
+// log, not mutating this one (exception: `manualMeasured`, see above).
 export interface SessionLog {
   id: string;
   plannedSessionId?: string; // absent for ad-hoc / unplanned sessions
@@ -306,6 +331,9 @@ export interface SessionLog {
   // so the same activity is never imported twice. Absent on manual logs and
   // on every log made before imports existed. Optional, additive.
   externalId?: string;
+  // A log made by hand that took over the watch's numbers: the hand-made ones
+  // as they were. Optional, additive; present only on such a log.
+  manualMeasured?: ManualMeasured;
   source: MetricSource;
 }
 

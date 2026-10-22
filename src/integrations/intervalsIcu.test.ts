@@ -3,6 +3,7 @@ import {
   IntervalsError,
   activitiesUrl,
   basicAuthHeader,
+  cadenceOf,
   createIntervalsIcuAdapter,
   feelOf,
   fetchIntervalsActivities,
@@ -186,6 +187,25 @@ describe('errors come back as clear Dutch messages, not crashes', () => {
       expect((await failure(okFetch({}, status))).message).not.toContain(CONNECTION.apiKey);
     }
     expect(intervalsErrorMessage(new Error('boom'))).toMatch(/Geen verbinding/);
+  });
+});
+
+describe('cadence', () => {
+  it('keeps steps per minute and doubles a per-foot value, for runs only', () => {
+    expect(cadenceOf('run', 171.4)).toBe(171);
+    expect(cadenceOf('run', 85)).toBe(170);
+    expect(cadenceOf('hike', 108)).toBe(108);
+    expect(cadenceOf('ride', 88)).toBe(88);
+    expect(cadenceOf('run', 0)).toBeUndefined();
+    expect(cadenceOf('run', undefined)).toBeUndefined();
+    expect(cadenceOf('run', 900)).toBeUndefined();
+  });
+
+  it('is part of the mapped activity', () => {
+    const run = mapIntervalsActivity({ id: 1, start_date_local: '2026-10-18T08:12:03', type: 'Run', moving_time: 1800, average_cadence: 86 });
+    expect(run?.avgCadence).toBe(172);
+    expect(mapIntervalsActivity({ id: 2, start_date_local: '2026-10-18T08:12:03', type: 'Run', moving_time: 1800 })?.avgCadence).toBeUndefined();
+    expect(mapIntervalsActivity({ id: 3, start_date_local: '2026-10-18T08:12:03', type: 'WeightTraining', moving_time: 1800, average_cadence: 60 })?.avgCadence).toBeUndefined();
   });
 });
 

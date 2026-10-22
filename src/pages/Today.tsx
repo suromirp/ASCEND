@@ -17,6 +17,7 @@ import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
 import { WeightReminder } from '../components/WeightCard';
 import { WatchActivityCard } from '../components/WatchActivityCard';
+import { WatchAlignCard } from '../components/WatchAlignCard';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { StretchMenuButton } from '../components/StretchMenuButton';
@@ -285,6 +286,7 @@ export function TodayPage() {
 
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />
+      <WatchAlignCard />
 
       <MacroFactorCard />
 

@@ -11,6 +11,10 @@
 //   are a voorstel; nothing is stored until the user taps (the Today card).
 // - History stays append-only. An import only ever makes a NEW log, and a
 //   log that already carries the same externalId means: do nothing.
+// - An activity that belongs to a training typed in by hand (same day, fitting
+//   sort, about the same length) is no new proposal at all. Matching it up
+//   with that log (engine/watchAlign.ts) is a separate, explicit step
+//   (docs/beslissingen/2026-10-22-garmin-is-leidend.md).
 
 import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SubjectiveFeel } from '../models/training';
 import { logSport, templateSport, type Sport } from './sports';
@@ -37,6 +41,8 @@ export interface ExternalActivity {
   elevationLossM?: number;
   avgHeartRate?: number;
   maxHeartRate?: number;
+  // Average cadence in steps (or pedal turns) per minute.
+  avgCadence?: number;
   // How hard it felt, 1 to 10, when it was filled in on the watch.
   rpe?: number;
   feel?: SubjectiveFeel;
@@ -62,6 +68,17 @@ export function activityDate(activity: Pick<ExternalActivity, 'start'>): string 
 // so it is never offered; the user can still log it by hand.
 export function isImportable(activity: ExternalActivity): boolean {
   return activity.kind !== 'other' && activity.durationSec > 0;
+}
+
+// "Duration in the neighbourhood": within 15 minutes or 35 percent of the
+// other length, whichever is more. A 40-minute run done in 52 or 27 counts; a
+// planned 3-hour hike that took 4 hours does not. Used for ticking off a planned
+// training (engine/autoTick.ts) and for matching a typed-in log.
+export const DURATION_MARGIN_MIN = 15;
+export const DURATION_MARGIN_RATIO = 0.35;
+
+export function durationIsClose(actualMinutes: number, otherMinutes: number): boolean {
+  return Math.abs(actualMinutes - otherMinutes) <= Math.max(DURATION_MARGIN_MIN, otherMinutes * DURATION_MARGIN_RATIO);
 }
 
 // --- does this activity fit this template? ---------------------------------
@@ -206,6 +223,7 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     modality: template.type === 'recovery' && activity.kind === 'hike' ? 'recovery_walk' : undefined,
     avgHeartRate: activity.avgHeartRate,
     maxHeartRate: activity.maxHeartRate,
+    cadence: activity.avgCadence !== undefined ? Math.round(activity.avgCadence) : undefined,
     source: activity.source,
   });
 
@@ -228,6 +246,69 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
   return clean(draft);
 }
 
+// --- a training typed in by hand ----------------------------------------------
+
+// A log made by hand: not tied to a watch activity. Only these are ever
+// matched with an activity.
+export function isHandLog(log: Pick<SessionLog, 'source' | 'externalId'>): boolean {
+  return !log.externalId && (log.source ?? 'manual') === 'manual';
+}
+
+function logFitsKind(log: SessionLog, kind: ExternalActivityKind): boolean {
+  if (kind === 'strength') return log.type === 'strength';
+  // A walk on a rest day is logged as a Herstel session.
+  if (kind === 'hike' && log.type === 'recovery') return true;
+  const sport = KIND_SPORT[kind];
+  return sport !== undefined && logSport(log) === sport;
+}
+
+export interface ManualPair {
+  activity: ExternalActivity;
+  log: SessionLog;
+}
+
+// Which activity is the same training as which log made by hand. Same day,
+// a fitting sort, and either a length in the neighbourhood or the only one of
+// that sort on that day on both sides. One log never takes two activities and
+// one activity never two logs: with two runs on a day the closest lengths pair
+// up, and what is left over stays what it is (a new training, or a log with no
+// watch activity).
+export function pairWithManualLogs(activities: ExternalActivity[], logs: SessionLog[]): ManualPair[] {
+  const hand = logs.filter(isHandLog);
+  if (hand.length === 0) return [];
+  const pairs: ManualPair[] = [];
+  const groups = new Map<string, { activities: ExternalActivity[]; kind: ExternalActivityKind; day: string }>();
+  for (const activity of activities) {
+    if (!isImportable(activity)) continue;
+    const key = `${activityDate(activity)}|${activity.kind}`;
+    const group = groups.get(key) ?? { activities: [], kind: activity.kind, day: activityDate(activity) };
+    group.activities.push(activity);
+    groups.set(key, group);
+  }
+  for (const { activities: acts, kind, day } of groups.values()) {
+    const candidates = hand.filter((l) => l.completedDate === day && logFitsKind(l, kind));
+    if (candidates.length === 0) continue;
+    const sole = acts.length === 1 && candidates.length === 1;
+    const options: { activity: ExternalActivity; log: SessionLog; gap: number }[] = [];
+    for (const activity of acts) {
+      for (const log of candidates) {
+        const minutes = activity.durationSec / 60;
+        if (sole || durationIsClose(minutes, log.durationMinutes)) options.push({ activity, log, gap: Math.abs(minutes - log.durationMinutes) });
+      }
+    }
+    options.sort((a, b) => a.gap - b.gap || a.activity.start.localeCompare(b.activity.start) || a.log.id.localeCompare(b.log.id));
+    const usedActivities = new Set<string>();
+    const usedLogs = new Set<string>();
+    for (const option of options) {
+      if (usedActivities.has(option.activity.externalId) || usedLogs.has(option.log.id)) continue;
+      usedActivities.add(option.activity.externalId);
+      usedLogs.add(option.log.id);
+      pairs.push({ activity: option.activity, log: option.log });
+    }
+  }
+  return pairs;
+}
+
 // --- the whole proposal --------------------------------------------------------
 
 export interface ImportProposal {
@@ -236,13 +317,16 @@ export interface ImportProposal {
   match?: PlannedMatch;
   // What it is saved under: the matched template, else the fallback by kind.
   template?: SessionTemplate;
-  // A log from the same day that looks like the same training, made by hand.
-  // Only a hint on the card; saving stays the user's call.
+  // A log from the same day that looks like the same training, made by hand
+  // and already paired with another activity. Only a hint on the card; saving
+  // stays the user's call.
   similarLog?: SessionLog;
 }
 
 // A log made by hand that day, of the same sport and about as long: probably
-// the same training typed in earlier.
+// the same training typed in earlier. proposeImport no longer offers such an
+// activity at all; this stays for the loose hint on a card whose log was
+// already paired with another activity.
 export function findSimilarLog(activity: ExternalActivity, logs: SessionLog[]): SessionLog | undefined {
   const day = activityDate(activity);
   const minutes = activity.durationSec / 60;
@@ -257,14 +341,22 @@ export function findSimilarLog(activity: ExternalActivity, logs: SessionLog[]): 
 
 // Nothing (undefined) when the activity is not for us or already stored:
 // a log with the same externalId exists, or the kind has no place in ASCEND.
+//
+// An activity that is the same training as one typed in by hand is not a
+// proposal either: `matchedIds` holds those (from pairWithManualLogs over all
+// the activities, so two runs on one day are paired together); left out, only
+// this activity is looked at.
 export function proposeImport(
   activity: ExternalActivity,
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
+  matchedIds?: Set<string>,
 ): ImportProposal | undefined {
   if (!isImportable(activity)) return undefined;
   if (logs.some((l) => l.externalId === activity.externalId)) return undefined;
+  const matched = matchedIds ?? new Set(pairWithManualLogs([activity], logs).map((p) => p.activity.externalId));
+  if (matched.has(activity.externalId)) return undefined;
   const match = proposeMatch(activity, planned, templates, logs);
   return {
     activity,
@@ -284,16 +376,17 @@ export function pendingProposals(
   logs: SessionLog[],
 ): ImportProposal[] {
   const dismissed = new Set(dismissedIds);
+  const matchedIds = new Set(pairWithManualLogs(activities, logs).map((p) => p.activity.externalId));
   return [...activities]
     .filter((a) => !dismissed.has(a.externalId))
     .sort((a, b) => b.start.localeCompare(a.start))
-    .map((a) => proposeImport(a, planned, templates, logs))
+    .map((a) => proposeImport(a, planned, templates, logs, matchedIds))
     .filter((p): p is ImportProposal => !!p);
 }
 
 // --- words ------------------------------------------------------------------------
 
-function durationLabel(sec: number): string {
+export function durationLabel(sec: number): string {
   const minutes = Math.max(1, Math.round(sec / 60));
   const h = Math.floor(minutes / 60);
   if (h === 0) return `${minutes} min`;

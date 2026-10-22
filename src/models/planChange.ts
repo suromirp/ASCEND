@@ -155,5 +155,8 @@ export interface RecentPlanChange {
   configBefore?: Record<string, unknown>;
   // The coach advice this change came from: undo brings the advice back.
   adviceId?: string;
+  // Typed-in trainings that took over the watch's numbers (engine/watchAlign.ts):
+  // undo gives their hand-made numbers back. Not part of the plan itself.
+  alignedLogIds?: string[];
   createdAt: string;
 }

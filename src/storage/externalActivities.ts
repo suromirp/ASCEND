@@ -5,7 +5,10 @@
 // - the activities of the last fetch (so the Today card survives a restart),
 //   the ones the user said "Niet opslaan" to, the switch "Vanzelf afvinken"
 //   and the note of every training ASCEND ticked off by itself
-//   (engine/autoTick.ts).
+//   (engine/autoTick.ts),
+// - for "Garmin is leidend": the older activities fetched once to match typed-in
+//   trainings with (engine/watchAlign.ts), the switch, and what the owner
+//   refused or took back.
 //
 // None of it is part of the export. The connection is a secret, and the rest
 // is a cache of someone else's data plus a reminder of a choice;
@@ -17,6 +20,7 @@ import type { ExternalActivity } from '../engine/activityImport';
 import { upsertAutoLogged, withAutoStatus, type AutoLogged, type AutoLoggedStatus } from '../engine/autoTick';
 import { clearWellness, pruneWellness, syncWellness } from './wellness';
 import { nothingWanted, normalizeWatchUse, wellnessWanted, type WatchUse } from '../engine/watchUse';
+import { historyStart } from '../engine/watchAlign';
 import { addDays, todayISO } from '../utils/dates';
 import {
   createIntervalsIcuAdapter,
@@ -49,6 +53,23 @@ export interface WatchActivityState {
   // Which kinds of watch data ASCEND uses (engine/watchUse.ts): the trainings,
   // sleep, resting heart rate and HRV. All on until the user switches one off.
   use: WatchUse;
+  // "Garmin is leidend": the activities of the past, fetched once (and on
+  // request) only to match typed-in trainings with. They are never offered as
+  // new trainings. `historyFrom` is the first day the fetch looked at.
+  history: ExternalActivity[];
+  historyFetchedAt?: string;
+  historyFrom?: string;
+  // The switch: a typed-in training of the last 7 days takes over the watch's
+  // numbers by itself, once the first proposal has been answered. On unless
+  // the user switched it off.
+  garminLeads: boolean;
+  // The first proposal ("N trainingen gelijktrekken") has been answered, with
+  // Akkoord or Liever niet, or there was nothing to propose. Until then nothing
+  // happens by itself.
+  alignResolved: boolean;
+  // externalIds the user refused or took back: not proposed again, not done
+  // by itself.
+  alignDeclined: string[];
 }
 
 // --- the connection ---------------------------------------------------------------
@@ -69,7 +90,16 @@ export async function saveConnection(raw: { athleteId: string; apiKey: string })
 export async function clearConnection(): Promise<void> {
   const state = await getWatchState();
   await MetaRepo.set(CONNECTION_KEY, null);
-  await MetaRepo.set(STATE_KEY, { ...state, activities: [], fetchedAt: undefined, lastError: undefined } satisfies WatchActivityState);
+  await MetaRepo.set(STATE_KEY, {
+    ...state,
+    activities: [],
+    history: [],
+    historyFetchedAt: undefined,
+    historyFrom: undefined,
+    alignResolved: false,
+    fetchedAt: undefined,
+    lastError: undefined,
+  } satisfies WatchActivityState);
   await clearWellness();
   notifyWatchChange();
 }
@@ -91,6 +121,12 @@ export async function getWatchState(): Promise<WatchActivityState> {
     autoTick: stored?.autoTick !== false,
     autoLogged: Array.isArray(stored?.autoLogged) ? stored.autoLogged : [],
     use: normalizeWatchUse(stored?.use),
+    history: Array.isArray(stored?.history) ? stored.history : [],
+    historyFetchedAt: stored?.historyFetchedAt,
+    historyFrom: stored?.historyFrom,
+    garminLeads: stored?.garminLeads !== false,
+    alignResolved: stored?.alignResolved === true,
+    alignDeclined: Array.isArray(stored?.alignDeclined) ? stored.alignDeclined : [],
   };
 }
 
@@ -112,6 +148,33 @@ export async function setAutoTick(on: boolean): Promise<void> {
   await putWatchState({ ...state, autoTick: on });
 }
 
+// The switch "Garmin is leidend".
+export async function setGarminLeads(on: boolean): Promise<void> {
+  const state = await getWatchState();
+  await putWatchState({ ...state, garminLeads: on });
+}
+
+// "Liever niet" on the proposal, or a training put back: these activities are
+// not matched again. Either answers the first proposal.
+export async function declineAlignment(externalIds: string[]): Promise<void> {
+  const state = await getWatchState();
+  const declined = [...new Set([...state.alignDeclined, ...externalIds])];
+  await putWatchState({ ...state, alignDeclined: declined, alignResolved: true });
+}
+
+// "Akkoord" on the first proposal, or nothing was left to propose.
+export async function resolveAlignment(): Promise<void> {
+  const state = await getWatchState();
+  if (state.alignResolved) return;
+  await putWatchState({ ...state, alignResolved: true });
+}
+
+// Show what was refused or put back again as a proposal.
+export async function forgetDeclinedAlignments(): Promise<void> {
+  const state = await getWatchState();
+  await putWatchState({ ...state, alignDeclined: [] });
+}
+
 // A switch of the card "Wat ASCEND van je horloge gebruikt". What goes off
 // leaves the phone at once (the fetched trainings, or that kind of wellness
 // value), so nothing keeps using it. What comes on is fetched by the next
@@ -119,7 +182,14 @@ export async function setAutoTick(on: boolean): Promise<void> {
 export async function setWatchUse(patch: Partial<WatchUse>): Promise<WatchUse> {
   const state = await getWatchState();
   const use = normalizeWatchUse({ ...state.use, ...patch });
-  await putWatchState({ ...state, use, activities: use.activities ? state.activities : [], fetchedAt: use.activities && !state.use.activities ? undefined : state.fetchedAt });
+  await putWatchState({
+    ...state,
+    use,
+    activities: use.activities ? state.activities : [],
+    history: use.activities ? state.history : [],
+    historyFetchedAt: use.activities ? state.historyFetchedAt : undefined,
+    fetchedAt: use.activities && !state.use.activities ? undefined : state.fetchedAt,
+  });
   await pruneWellness(use);
   notifyWatchChange();
   return use;
@@ -180,6 +250,37 @@ export interface SyncOptions extends FetchOptions {
   now?: Date;
 }
 
+export type HistoryResult =
+  | { status: 'not-connected' | 'off' | 'nothing' | 'done' }
+  | { status: 'ok'; count: number; from: string }
+  | { status: 'error'; message: string };
+
+// The one-time fetch of the past, to match typed-in trainings with what the
+// watch measured (engine/watchAlign.ts): from the oldest training typed in by
+// hand, at most 120 days back, next to the usual 7 days. Once; `force` (the
+// user asks) does it again. Nothing typed in, nothing to fetch. The result is
+// kept apart from the recent activities, so an old unlogged activity never
+// turns into a proposal. Never throws.
+export async function syncWatchHistory(options: SyncOptions = {}): Promise<HistoryResult> {
+  const now = options.now ?? new Date();
+  try {
+    const connection = options.connection ?? (await getConnection());
+    if (!connection) return { status: 'not-connected' };
+    const state = await getWatchState();
+    if (!state.use.activities) return { status: 'off' };
+    if (state.historyFetchedAt && !options.force) return { status: 'done' };
+    const today = todayISO();
+    const from = historyStart(await SessionLogsRepo.getAll(), today);
+    if (!from) return { status: 'nothing' };
+    const adapter = createIntervalsIcuAdapter(connection, { fetchImpl: options.fetchImpl });
+    const history = await adapter.fetchExternalActivities!({ from, to: addDays(today, 1) });
+    await putWatchState({ ...(await getWatchState()), history, historyFetchedAt: now.toISOString(), historyFrom: from });
+    return { status: 'ok', count: history.length, from };
+  } catch (err) {
+    return { status: 'error', message: intervalsErrorMessage(err) };
+  }
+}
+
 // Reads the last 7 days from intervals.icu and keeps them for the Today card,
 // and the last four weeks of sleep and heart rate (storage/wellness.ts).
 // Never throws: a failure becomes a message and the app carries on.
@@ -217,6 +318,9 @@ export async function syncWatchActivities(options: SyncOptions = {}): Promise<Sy
     // as far as they are switched on. They never decide whether this fetch
     // counts as a success.
     const wellness = wellnessWanted(use) ? await syncWellness(connection, { fetchImpl: options.fetchImpl, today, use }) : undefined;
+    // The past, once, for "Garmin is leidend". A failure here is no failure of
+    // this fetch: it is tried again at the next one.
+    if (use.activities) await syncWatchHistory({ connection, fetchImpl: options.fetchImpl, now });
     if (wellness?.status === 'ok') notifyWatchChange();
     return { status: 'ok', count: activities.length, wellness: wellness?.status === 'ok' ? { days: wellness.days, today: wellness.today } : undefined };
   } catch (err) {

@@ -102,6 +102,7 @@ export interface IntervalsActivity {
   total_elevation_loss?: number;
   average_heartrate?: number;
   max_heartrate?: number;
+  average_cadence?: number;
   icu_rpe?: number;
   feel?: number;
   trainer?: boolean;
@@ -133,6 +134,16 @@ export function feelOf(feel: number | undefined): SubjectiveFeel | undefined {
   return undefined;
 }
 
+// intervals.icu gives the cadence of a run per foot on some sources (about 85)
+// and as steps per minute on others (about 170); a runner's steps per minute
+// are never below 120, so a smaller number is doubled. Walking and cycling
+// stay as they are.
+export function cadenceOf(kind: ExternalActivityKind, cadence: unknown): number | undefined {
+  if (typeof cadence !== 'number' || !Number.isFinite(cadence) || cadence <= 0 || cadence > 300) return undefined;
+  const perMinute = kind === 'run' && cadence < 120 ? cadence * 2 : cadence;
+  return Math.round(perMinute);
+}
+
 const positive = (n: unknown): number | undefined => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : undefined);
 
 export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity | undefined {
@@ -158,6 +169,7 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
     elevationLossM: typeof raw.total_elevation_loss === 'number' && Number.isFinite(raw.total_elevation_loss) ? Math.abs(raw.total_elevation_loss) : undefined,
     avgHeartRate: positive(raw.average_heartrate),
     maxHeartRate: positive(raw.max_heartrate),
+    avgCadence: kind === 'strength' ? undefined : cadenceOf(kind, raw.average_cadence),
     rpe: rpe !== undefined && rpe <= 10 ? rpe : undefined,
     feel: feelOf(raw.feel),
     treadmill: kind !== 'strength' && (raw.trainer === true || raw.type === 'VirtualRun' || raw.type === 'VirtualRide'),

@@ -12,11 +12,33 @@
 // place: which kinds of data ASCEND uses (trainings, sleep, resting heart
 // rate, HRV) and the two behaviours (tick off by itself, send to the watch).
 // Body weight is not among them: it never comes from the watch.
+// "Garmin is leidend": a training typed in by hand takes over the numbers the
+// watch measured, first as a proposal ("N trainingen gelijktrekken") and later by
+// itself for the last 7 days (switch in the same card), always to be put back
+// (components/WatchAlignCard.tsx).
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { BackButton } from '../components/BackButton';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
-import { clearConnection, getConnection, getWatchState, maskKey, saveConnection, setAutoTick, setWatchUse, syncWatchActivities, type SyncResult, type WatchActivityState } from '../storage/externalActivities';
+import {
+  clearConnection,
+  forgetDeclinedAlignments,
+  getConnection,
+  getWatchState,
+  maskKey,
+  saveConnection,
+  setAutoTick,
+  setGarminLeads,
+  setWatchUse,
+  syncWatchActivities,
+  syncWatchHistory,
+  type SyncResult,
+  type WatchActivityState,
+} from '../storage/externalActivities';
+import { useAppData } from '../state/AppDataContext';
+import { AlignProposalCard, AlignedSheet } from '../components/WatchAlignCard';
+import { useAlignActions, useWatchAlign } from '../components/useWatchAlign';
+import { HISTORY_MAX_DAYS } from '../engine/watchAlign';
 import {
   getWatchWorkoutState,
   pauseWatchWorkouts,
@@ -59,6 +81,30 @@ export function GarminLinkPage() {
       })
       .catch(() => setConnection(null));
   }, []);
+
+  async function changeLeads(on: boolean) {
+    setWatch((w) => (w ? { ...w, garminLeads: on } : w));
+    try {
+      await setGarminLeads(on);
+    } catch {
+      await load();
+    }
+  }
+
+  async function refetchHistory() {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await syncWatchHistory({ force: true });
+      if (result.status === 'ok') setNotice({ tone: 'ok', text: `ASCEND haalde ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'} op vanaf ${formatDateNL(result.from)}.` });
+      else if (result.status === 'nothing') setNotice({ tone: 'ok', text: 'Je hebt geen trainingen met de hand ingevuld, dus er valt niets gelijk te trekken.' });
+      else if (result.status === 'error') setNotice({ tone: 'error', text: result.message });
+      else setNotice({ tone: 'error', text: 'Er is geen koppeling met intervals.icu, of je trainingen staan uit.' });
+    } finally {
+      await load();
+      setBusy(false);
+    }
+  }
 
   async function changeAutoTick(on: boolean) {
     setWatch((w) => (w ? { ...w, autoTick: on } : w));
@@ -148,6 +194,10 @@ export function GarminLinkPage() {
 
   const connected = !!connection;
   const workouts = useWatchWorkoutControls();
+  const { templates } = useAppData();
+  const align = useWatchAlign();
+  const alignActions = useAlignActions(align.items);
+  const [showAligned, setShowAligned] = useState(false);
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -256,6 +306,13 @@ export function GarminLinkPage() {
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
         />
         <UseRow
+          title="Garmin is leidend"
+          text="Vul je een training zelf in en komt hij ook van je horloge binnen, dan neemt ASCEND de gemeten cijfers van je horloge over: duur, afstand, hartslag en hoogtemeters. Wat je zelf invulde, zoals gevoel, inspanning, pijn en het gewicht van je rugzak, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten. Vanzelf gebeurt dit voor trainingen van de laatste 7 dagen, nadat je Akkoord gaf op het eerste voorstel."
+          checked={watch?.garminLeads !== false && watch?.use.activities !== false}
+          onChange={(on) => void changeLeads(on)}
+          note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
+        />
+        <UseRow
           title="Slaap"
           text="Hoe lang de nacht was, in de ochtendcheck."
           checked={watch?.use.sleep !== false}
@@ -286,6 +343,40 @@ export function GarminLinkPage() {
           Gewicht komt nooit uit Garmin. Dat leest ASCEND uit MacroFactor.
         </p>
       </Card>
+
+      {connected && watch?.use.activities !== false && align.items.length > 0 && (
+        <AlignProposalCard
+          items={align.items}
+          templates={templates}
+          busy={alignActions.busy}
+          onApprove={() => void alignActions.approve()}
+          onDecline={() => void alignActions.decline()}
+        />
+      )}
+
+      {connected && watch?.use.activities !== false && (
+        <Card className="flex flex-col gap-3">
+          <Eyebrow>Gelijkgetrokken met je horloge</Eyebrow>
+          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+            {align.aligned.length === 0
+              ? 'Er is nog geen training gelijkgetrokken met je horloge.'
+              : `${align.aligned.length === 1 ? '1 training heeft' : `${align.aligned.length} trainingen hebben`} de cijfers van je horloge overgenomen.`}
+          </p>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            {watch?.historyFetchedAt && watch.historyFrom
+              ? `Voor het gelijktrekken haalde ASCEND eenmalig ook de oudere trainingen op, vanaf ${formatDateNL(watch.historyFrom)}. Dat is hooguit ${HISTORY_MAX_DAYS} dagen terug; nieuwe voorstellen komen uit de laatste 7 dagen.`
+              : `Voor het gelijktrekken haalt ASCEND eenmalig ook de oudere trainingen op, vanaf je oudste training met de hand en hooguit ${HISTORY_MAX_DAYS} dagen terug.`}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {align.aligned.length > 0 && <SecondaryButton onClick={() => setShowAligned(true)} disabled={busy}>Bekijken en terugzetten</SecondaryButton>}
+            <SecondaryButton onClick={() => void refetchHistory()} disabled={busy}>{busy ? 'Bezig…' : 'Oudere trainingen opnieuw ophalen'}</SecondaryButton>
+            {(watch?.alignDeclined.length ?? 0) > 0 && (
+              <SecondaryButton onClick={() => void forgetDeclinedAlignments().then(load)} disabled={busy}>Geweigerde voorstellen weer tonen</SecondaryButton>
+            )}
+          </div>
+        </Card>
+      )}
+      {showAligned && <AlignedSheet aligned={align.aligned} templates={templates} onClose={() => setShowAligned(false)} />}
 
       {connected && <WatchWorkoutsCard controls={workouts} />}
 

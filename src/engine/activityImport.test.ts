@@ -219,12 +219,17 @@ describe('proposeImport', () => {
     expect(proposeImport(run({ durationSec: 0 }), week, templates, [])).toBeUndefined();
   });
 
-  it('warns about a hand-made log of the same day and length, but still proposes', () => {
+  it('does not propose an activity that is the training typed in by hand', () => {
     const typed = log({ plannedSessionId: 'p_wed_run' });
-    const proposal = proposeImport(run(), week, templates, [typed]);
-    expect(proposal).toBeDefined();
-    expect(proposal?.match).toBeUndefined();
-    expect(proposal?.similarLog?.id).toBe('log_1');
+    expect(proposeImport(run(), week, templates, [typed])).toBeUndefined();
+  });
+
+  it('still warns about a hand-made log that another activity already took', () => {
+    const typed = log({ plannedSessionId: 'p_wed_run' });
+    const second = run({ externalId: 'test:run-2', start: '2026-10-14T18:00:00' });
+    const proposals = pendingProposals([run(), second], [], week, templates, [typed]);
+    expect(proposals.map((p) => p.activity.externalId)).toEqual(['test:run-2']);
+    expect(proposals[0].similarLog?.id).toBe('log_1');
   });
 });
 

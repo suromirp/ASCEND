@@ -23,15 +23,26 @@
 // moment ago (canRejectAutoLog).
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { activityDate, candidatePlanned, findSimilarLog, isImportable, plannedMinutes, type ExternalActivity, type PlannedMatch } from './activityImport';
+import {
+  DURATION_MARGIN_MIN,
+  DURATION_MARGIN_RATIO,
+  activityDate,
+  candidatePlanned,
+  durationIsClose,
+  findSimilarLog,
+  isImportable,
+  pairWithManualLogs,
+  plannedMinutes,
+  type ExternalActivity,
+  type PlannedMatch,
+} from './activityImport';
 import { RACE_TEMPLATE_ID, TEST_TEMPLATE_ID } from './raceBlock';
 import { todayISO } from '../utils/dates';
 
-// "Duration in the neighbourhood": within 15 minutes or 35 percent of the
-// plan, whichever is more. A 40-minute run done in 52 or 27 counts; a planned
-// 3-hour hike that took 4 hours does not (that is a different day than planned).
-export const DURATION_MARGIN_MIN = 15;
-export const DURATION_MARGIN_RATIO = 0.35;
+// "Duration in the neighbourhood" lives in activityImport.ts (a typed-in log is
+// matched with the same margin); re-exported here for the callers that know it
+// from this file.
+export { DURATION_MARGIN_MIN, DURATION_MARGIN_RATIO, durationIsClose };
 
 // How long after the tick-off "Hoe ging het?" stays open and "Klopt niet" works.
 export const QUESTION_HOURS = 72;
@@ -54,10 +65,6 @@ export interface AutoTick {
   match: PlannedMatch;
 }
 
-export function durationIsClose(actualMinutes: number, plannedMinutesValue: number): boolean {
-  return Math.abs(actualMinutes - plannedMinutesValue) <= Math.max(DURATION_MARGIN_MIN, plannedMinutesValue * DURATION_MARGIN_RATIO);
-}
-
 const NOT_AUTOMATIC = new Set([TEST_TEMPLATE_ID, RACE_TEMPLATE_ID]);
 
 // The one planned training this activity unmistakably belongs to, or
@@ -78,6 +85,8 @@ export function autoTickMatch(
   if (NOT_AUTOMATIC.has(match.template.id) || NOT_AUTOMATIC.has(match.session.templateId)) return undefined;
   if (!durationIsClose(activity.durationSec / 60, plannedMinutes(match))) return undefined;
   if (findSimilarLog(activity, logs)) return undefined;
+  // The same training typed in by hand, even when its length is further off.
+  if (pairWithManualLogs([activity], logs).length > 0) return undefined;
   return match;
 }
 
