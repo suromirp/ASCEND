@@ -10,8 +10,9 @@
 //
 // The word for the user is "geschatte kracht", never "je max". A strength
 // estimate from one set is not a true maximum; it is a coin to compare sets of
-// the same exercise with each other. So: only sets of at most 12 reps to
-// failure, never converted from one exercise to another.
+// the same exercise with each other. So: only sets up to a limit of reps to
+// failure (the setting; 20 by default, 12 is the strictest choice), never
+// converted from one exercise to another.
 //
 // All numbers below are starting values from the report, not research results.
 // Where this file made its own choice, it says so.
@@ -28,8 +29,11 @@ import { candidatesFor, externalFromLoad, loadFromExternal, nearestIndex, stepAt
 
 // Epley: one rep is about 1/30 of the estimated strength.
 export const EPLEY_DIVISOR = 30;
-// Above this many reps to failure the conversion is too uncertain (Nuzzo, Halperin).
-export const MAX_REPS_TO_FAILURE = 12;
+// The strictest limit: above this many reps to failure the conversion is too
+// uncertain (Nuzzo, Halperin). It is only the fallback when no setting is
+// passed in; the real limit comes from the settings (20 by default), so ranges
+// such as 14 to 16 or 17 to 19 with 2 or 3 in reserve still count.
+export const STRICTEST_REPS_TO_FAILURE = 12;
 // From this many reps in reserve a set counts half; from this many it does not count.
 export const HALF_WEIGHT_FROM_RIR = 4;
 export const NO_ESTIMATE_FROM_RIR = 6;
@@ -72,12 +76,15 @@ export const DEFAULT_RIR = 2;
 export interface LoadContext {
   exercise?: Exercise;
   bodyKg?: number;
-  // Up to how many reps to failure a set counts (the setting; 12 by default).
+  // Up to how many reps to failure a set counts (the setting; 20 by default).
   maxToFailure?: number;
 }
 
 // What moves in total with this set. Undefined when it cannot be known.
 export function setLoad(set: SetLog, ctx: LoadContext): number | undefined {
+  // A set on an assisted machine without a weight says nothing about the help:
+  // it is not "no help", so there is no load to know.
+  if (ctx.exercise?.resistance === 'assisted_bodyweight' && set.weightKg === undefined) return undefined;
   return loadFromExternal(ctx.exercise, set.weightKg ?? 0, ctx.bodyKg);
 }
 
@@ -91,7 +98,7 @@ export function estimateSet(set: SetLog, ctx: LoadContext): SetEstimate | undefi
   if (!isWorkSet(set) || set.rir === undefined || set.reps <= 0) return undefined;
   if (set.rir >= NO_ESTIMATE_FROM_RIR || set.rir < 0) return undefined;
   const toFailure = set.reps + set.rir;
-  if (toFailure > (ctx.maxToFailure ?? MAX_REPS_TO_FAILURE)) return undefined;
+  if (toFailure > (ctx.maxToFailure ?? STRICTEST_REPS_TO_FAILURE)) return undefined;
   const load = setLoad(set, ctx);
   if (load === undefined) return undefined;
   return { strengthKg: load * (1 + toFailure / EPLEY_DIVISOR), weight: set.rir >= HALF_WEIGHT_FROM_RIR ? 0.5 : 1 };
@@ -360,15 +367,19 @@ export function warmupSets(
   } else {
     // Smart: percentages of the estimated strength, so a heavier day (more
     // strength) gets heavier warm-up sets; only what lies under the working weight stays.
+    // The reps only go down as the weight goes up: 40% x 8 and 58% x 4, and for a
+    // heavy weight a light 27% x 10 in front (decision 2026-10-22-forge-opwarmen.md).
     plan = [{ weight: strengthKg * 0.4, reps: 8 }, { weight: strengthKg * 0.58, reps: 4 }];
-    if (heavy) plan.unshift({ weight: strengthKg * 0.27, reps: 6 });
+    if (heavy) plan.unshift({ weight: strengthKg * 0.27, reps: 10 });
   }
   const out: WarmupSet[] = [];
   for (const p of plan) {
     const rounded = candidates[nearestIndex(candidates, p.weight)].externalKg;
     if (rounded >= firstWeightKg * 0.92) continue;
     if (out.length > 0 && rounded <= out[out.length - 1].weightKg) continue;
-    out.push({ weightKg: rounded, reps: p.reps });
+    // Never more reps than the set before it, whatever the plan above says.
+    const reps = out.length > 0 ? Math.min(p.reps, out[out.length - 1].reps) : p.reps;
+    out.push({ weightKg: rounded, reps });
   }
   return out;
 }
@@ -388,6 +399,29 @@ function heaviestWith(candidates: Candidate[], strengthKg: number, rir: number, 
   return 0;
 }
 
+export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. Kijk bij je stangen en dumbbells in de instellingen.';
+
+// The weight of the last training is something the gym profile cannot make
+// (an EZ bar of 12,5 kg when the lightest bar is 15, a dumbbell that is not on
+// the rack). Then there is no proposal, only a sentence that says why. An
+// exercise the list does not know is rounded onto the steps of a machine, so
+// it is never refused.
+export function lastWeightMismatch(input: PrescribeInput): boolean {
+  const { exercise, settings } = input;
+  if (!exercise?.resistance) return false;
+  // Only free weights are fully described by the profile (bars, plates,
+  // dumbbells). A cable or machine stack differs per machine and per gym, so a
+  // logged weight there is taken as a real position on that stack.
+  if (exercise.resistance !== 'barbell' && exercise.resistance !== 'dumbbell') return false;
+  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo };
+  const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
+  const last = points.filter((p) => p.top).at(-1);
+  if (!last?.top) return false;
+  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg });
+  if (!candidates) return false;
+  return !candidates.some((c) => Math.abs(c.externalKg - last.top!.weightKg) < 1e-6);
+}
+
 export function prescribe(input: PrescribeInput): Prescription | undefined {
   const { exercise, settings } = input;
   const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo };
@@ -397,6 +431,11 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   if (!last?.top || strengthKg === undefined) return undefined;
   const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg });
   if (!candidates) return undefined;
+  if (lastWeightMismatch(input)) return undefined;
+  // Did the smoothed strength really go down with the last training? Only then
+  // may a lighter weight be put down to a lower strength.
+  const before = points.slice(0, points.indexOf(last)).reverse().find((p) => p.smoothed !== undefined)?.smoothed;
+  const strengthDropped = before !== undefined && strengthKg < before - 1e-9;
 
   const range = deriveRange(points);
   const { low, high, rir } = range;
@@ -474,7 +513,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       shownRir = rir + (expectedFirst - hi);
     }
   }
-  const sameWeight = idx === lastIdx;
+  const sameWeight = Math.abs(first.externalKg - last.top.weightKg) < 1e-6;
   const targetReps = Math.min(hi, Math.max(lo, sameWeight ? Math.min(last.top.reps + 1, expectedFirst) : expectedFirst));
 
   // The sets: each earlier working set costs the next a share of the strength.
@@ -494,6 +533,15 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     prevIdx = j;
   }
 
+  // The sentence for a lighter weight that follows what happened, not a guess
+  // about strength: the strength did not go down (see strengthDropped).
+  const whyLighter = (): string => {
+    const top = last.top!;
+    if (top.reps < low) return `Vorige keer zat je onder de ${low} tot ${high} herhalingen, dus iets lichter om in het bereik te blijven.`;
+    if (top.rir !== undefined && top.rir < rir) return `Vorige keer was het zwaarder dan bedoeld (${top.rir} over, het streven is ${rir}), dus iets lichter.`;
+    return `Een stap lichter past beter bij ${low} tot ${high} herhalingen met ${rir} over.`;
+  };
+
   const pauseDays = daysBetween(last.date, input.date);
   let kind: PrescriptionKind;
   let reason: string;
@@ -512,16 +560,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason = 'Je geschatte kracht is gestegen, maar per training gaat het gewicht hooguit één stap of 5% omhoog.';
   } else if (cappedDown) {
     kind = 'capped';
-    reason = 'Je geschatte kracht is gedaald, maar per training gaat het gewicht hooguit 10% omlaag.';
+    reason = strengthDropped ? 'Je geschatte kracht is gedaald, maar per training gaat het gewicht hooguit 10% omlaag.' : `${whyLighter()} Per training gaat het gewicht hooguit 10% omlaag.`;
   } else if (pauseDays > BREAK_DAYS) {
     kind = 'pause';
     reason = 'Je deed dit een tijd niet, dus we beginnen op je laatste niveau en kijken na deze training opnieuw.';
-  } else if (idx > lastIdx) {
+  } else if (first.loadKg > lastLoad + 1e-6) {
     kind = 'up';
     reason = 'Je geschatte kracht is gestegen, dus een stap zwaarder.';
-  } else if (idx < lastIdx) {
+  } else if (first.loadKg < lastLoad - 1e-6) {
     kind = 'down';
-    reason = 'Je geschatte kracht is wat lager dan eerder, dus iets lichter.';
+    reason = strengthDropped ? 'Je geschatte kracht is wat lager dan eerder, dus iets lichter.' : whyLighter();
   } else {
     kind = 'same';
     reason = settings.progression === 'reps_first' ? `Eerst herhalingen: zelfde gewicht, tot je ${high} haalt.` : 'Zelfde gewicht als vorige keer, probeer er één herhaling meer te halen.';

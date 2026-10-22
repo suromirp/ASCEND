@@ -79,9 +79,18 @@ export const showWeeklyQuestion = (raw: OverviewSettings | undefined) => resolve
 export const showMorningCheckIn = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn;
 // De ochtendcheck is ook de plek waar een pijnplek van de laatste 14 dagen
 // wordt opgevolgd (recentPainSpot, spotWorse). Dat blijft dus gebeuren, ook als
-// je de check zelf uitzet: veiligheid gaat voor een opgeruimd scherm.
+// je de check zelf uitzet: veiligheid gaat voor een opgeruimd scherm. Maar dan
+// alleen die ene vraag over de pijnplek, niet de hele check (benen, energie,
+// slaap) die je net hebt uitgezet.
+export type MorningCheckInMode = 'full' | 'pain_only' | 'none';
+
+export function morningCheckInMode(raw: OverviewSettings | undefined, today: string, logs: SessionLog[]): MorningCheckInMode {
+  if (resolveOverviews(raw).morningCheckIn) return 'full';
+  return recentPainSpot(today, logs) !== undefined ? 'pain_only' : 'none';
+}
+
 export function showMorningCheckInCard(raw: OverviewSettings | undefined, today: string, logs: SessionLog[]): boolean {
-  return resolveOverviews(raw).morningCheckIn || recentPainSpot(today, logs) !== undefined;
+  return morningCheckInMode(raw, today, logs) !== 'none';
 }
 
 // Het weer hoeft alleen opgehaald te worden als iets het gebruikt: de weerregel

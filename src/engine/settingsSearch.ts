@@ -93,7 +93,11 @@ export interface SettingsVisibility {
   backupFolder: boolean;
   // De weekterugblik staat aan, en dan pas de keuze van de dag.
   weekReview: boolean;
+  // Kracht meerekenen staat aan: dan pas staan de Forge-keuzes en je sportschool er.
+  forgeOn: boolean;
 }
+
+const FORGE_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.';
 
 const UNAVAILABLE_REASON: Record<string, { when: keyof SettingsVisibility; reason: string }> = {
   'lange-zondag': {
@@ -108,6 +112,12 @@ const UNAVAILABLE_REASON: Record<string, { when: keyof SettingsVisibility; reaso
     when: 'weekReview',
     reason: 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
   },
+  'forge-volgorde': { when: 'forgeOn', reason: FORGE_OFF },
+  'forge-sets': { when: 'forgeOn', reason: FORGE_OFF },
+  'forge-opwarmen': { when: 'forgeOn', reason: FORGE_OFF },
+  'forge-bereik': { when: 'forgeOn', reason: FORGE_OFF },
+  'forge-schatting': { when: 'forgeOn', reason: FORGE_OFF },
+  'sportschool': { when: 'forgeOn', reason: FORGE_OFF },
 };
 
 // Staat de instelling nu op de pagina? Zo niet: een korte regel waarom, en de

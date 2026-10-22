@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData, type UndoRestore } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Toggle } from '../components/ui';
 import { BackupStatusLine, StorageProtectionCard, SnapshotsCard } from '../components/DataSafetyCards';
@@ -25,6 +25,7 @@ import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 import { getConnection } from '../storage/externalActivities';
 import { SETTINGS_GROUPS, SETTINGS_INDEX, settingsAnchor, type SettingsGroupId, type SettingsIndexItem } from '../data/settingsIndex';
+import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { searchSettings, settingAvailability, type SettingsVisibility } from '../engine/settingsSearch';
 import { ForgeSettings } from '../components/ForgeSettings';
 import { resolveOverviews, type OverviewSettings, type ReviewDay } from '../engine/overviewSettings';
@@ -68,6 +69,7 @@ function buildTimeLocal(): string {
 
 export function SettingsPage() {
   const navigate = useNavigate();
+  const jumpTo = (useLocation().state as { jumpTo?: string } | null)?.jumpTo;
   const {
     loading, exportData, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
     rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById, restartProgram,
@@ -143,6 +145,7 @@ export function SettingsPage() {
     longSundayChoice: showLongSundayChoice,
     backupFolder: supportsPreferredDirectory,
     weekReview: resolveOverviews(settings.overviews).weekReview,
+    forgeOn: resolveStrengthSettings(settings.strengthModel).enabled,
   };
 
   function openSetting(item: SettingsIndexItem) {
@@ -155,6 +158,12 @@ export function SettingsPage() {
     // zoekresultaat zei al waarom).
     scrollToId(settingAvailability(item.id, visibility).available ? settingsAnchor(item.id) : `groep-${item.group}`);
   }
+
+  // Een andere pagina kan hier een instelling openen (Forge: "Naar de instellingen").
+  useEffect(() => {
+    if (jumpTo) scrollToId(jumpTo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpTo]);
 
   function jumpToGroup(id: SettingsGroupId) {
     scrollToId(`groep-${id}`);

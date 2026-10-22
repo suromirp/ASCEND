@@ -47,3 +47,11 @@ De schakelaar Kracht meerekenen uit. De velden en de pagina blijven dan leeg; er
 ## Aanvulling bij het samenvoegen (22 oktober 2026)
 
 De standaard voor "Sets die meetellen voor je kracht" is 20 herhalingen tot falen, niet 12. Het programma van de eigenaar gebruikt bereiken als 11 tot 13 en 14 tot 16 met 2 over, dus 15 tot 18 tot falen; met 12 als grens zouden die oefeningen geen schatting en geen voorstel krijgen. Boven 12 is de omrekening onzekerder (zie het onderzoek, KR-1), maar binnen één oefening is de trend bruikbaar, en dat is waar Forge op stuurt. Wie de strengste schatting wil, kiest 12.
+
+## Aanvulling: de bovenste band en de grens van 20 (22 oktober 2026)
+
+De grens "tot hoeveel herhalingen een set meetelt" heet in de code de strengste grens (12, `STRICTEST_REPS_TO_FAILURE`) en is alleen de terugval; de echte grens komt uit de instellingen en is standaard 20. Met die 20 vallen ook de bovenste banden binnen: bereiken als 17 tot 19 met 2 of 3 over (19 tot 22 tot falen) vallen er voor een deel boven. Een set van 19 herhalingen met 2 over is 21 tot falen en telt dus niet mee, tenzij je de grens verhoogt; de hogere banden krijgen daardoor vaak minder schattingen dan de middelste. Dat is bewust: boven 20 is de omrekening te onzeker, en wie veel in die band traint ziet de lijn van die oefening later of niet.
+
+Bij het gewicht dat het sportschoolprofiel niet kan maken (een EZ-stang van 12,5 kg bij een lichtste stang van 15 kg, een dumbbell die niet in het rek staat) doet Forge geen voorstel en zegt: "Dit gewicht past niet bij je sportschool. Kijk bij je stangen en dumbbells in de instellingen." Een oefening die de lijst niet kent wordt nog steeds afgerond op de stap van toestellen.
+
+Een lichter voorschrift noemt als reden wat er echt gebeurde (onder het bereik, of zwaarder dan bedoeld). "Je geschatte kracht is lager" staat er alleen als de gladgestreken kracht echt daalde.

@@ -94,15 +94,15 @@ describe('de index zelf', () => {
 });
 
 describe('instellingen die er nu niet staan', () => {
-  const all: SettingsVisibility = { longSundayChoice: true, backupFolder: true, weekReview: true };
+  const all: SettingsVisibility = { longSundayChoice: true, backupFolder: true, weekReview: true, forgeOn: true };
 
   it('staan ze er wel, dan is er niets aan de hand', () => {
     for (const id of CONDITIONAL_SETTING_IDS) expect(settingAvailability(id, all)).toEqual({ available: true });
-    expect(settingAvailability('garmin', { longSundayChoice: false, backupFolder: false, weekReview: false })).toEqual({ available: true });
+    expect(settingAvailability('garmin', { longSundayChoice: false, backupFolder: false, weekReview: false, forgeOn: false })).toEqual({ available: true });
   });
 
   it('staan ze er niet, dan komt er een korte reden', () => {
-    const none: SettingsVisibility = { longSundayChoice: false, backupFolder: false, weekReview: false };
+    const none: SettingsVisibility = { longSundayChoice: false, backupFolder: false, weekReview: false, forgeOn: false };
     for (const id of CONDITIONAL_SETTING_IDS) {
       const a = settingAvailability(id, none);
       expect(a.available).toBe(false);
@@ -116,8 +116,17 @@ describe('instellingen die er nu niet staan', () => {
   it('elke voorwaardelijke instelling staat in de index, en alleen de voorwaarde telt', () => {
     const known = new Set(SETTINGS_INDEX.map((i) => i.id));
     for (const id of CONDITIONAL_SETTING_IDS) expect(known.has(id)).toBe(true);
-    expect(CONDITIONAL_SETTING_IDS.sort()).toEqual(['backupmap', 'lange-zondag', 'weekterugblik-dag']);
+    expect(CONDITIONAL_SETTING_IDS.sort()).toEqual(['backupmap', 'forge-bereik', 'forge-opwarmen', 'forge-schatting', 'forge-sets', 'forge-volgorde', 'lange-zondag', 'sportschool', 'weekterugblik-dag']);
     expect(settingAvailability('weekterugblik-dag', { ...all, weekReview: false }).available).toBe(false);
     expect(settingAvailability('backupmap', { ...all, weekReview: false }).available).toBe(true);
+  });
+
+  it('de Forge-keuzes verschijnen pas als Kracht meerekenen aan staat', () => {
+    for (const id of ['forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-bereik', 'forge-schatting', 'sportschool']) {
+      expect(settingAvailability(id, { ...all, forgeOn: true }).available).toBe(true);
+      expect(settingAvailability(id, { ...all, forgeOn: false })).toEqual({ available: false, reason: 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.' });
+    }
+    // De schakelaar zelf staat er altijd.
+    expect(settingAvailability('forge', { ...all, forgeOn: false }).available).toBe(true);
   });
 });

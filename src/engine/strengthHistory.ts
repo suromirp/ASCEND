@@ -17,6 +17,7 @@ import {
   analyseSessions,
   deriveRange,
   describePlannedSet,
+  lastWeightMismatch,
   prescribe,
   referenceWeight,
   topSetOf,
@@ -158,6 +159,8 @@ export interface ExerciseView {
   // The last point of the line, with the reps and reps in reserve it is for.
   now?: { weightKg: number; reps: number; rir: number };
   next?: Prescription;
+  // The last weight is something the gym profile cannot make: no proposal.
+  weightMismatch?: boolean;
   // The estimated strength (shown in the explanation only).
   strengthKg?: number;
 }
@@ -175,8 +178,10 @@ export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengt
     line.push({ label: formatDateNL(p.date), value: ref.weightKg });
     now = { weightKg: ref.weightKg, reps: ref.reps, rir: range.rir };
   }
-  const next = prescribe({ exercise: history.exercise, sessions: history.sessions, date: lastDateOrToday(history, today), bodyKg, settings, tired: tiredNow });
-  return { history, points, range, line, now, next, strengthKg: [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed };
+  const input = { exercise: history.exercise, sessions: history.sessions, date: lastDateOrToday(history, today), bodyKg, settings, tired: tiredNow };
+  const next = prescribe(input);
+  const weightMismatch = !next && lastWeightMismatch(input);
+  return { history, points, range, line, now, next, ...(weightMismatch ? { weightMismatch } : {}), strengthKg: [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed };
 }
 
 // A training can be today itself; the prescription is for after the last one.

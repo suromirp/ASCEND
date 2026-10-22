@@ -11,9 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from '../components/ui';
+import { settingsAnchor } from '../data/settingsIndex';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow, type ExerciseView } from '../engine/strengthHistory';
-import { describePlannedSet, formatWeight } from '../engine/strengthModel';
+import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../engine/strengthModel';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, todayISO } from '../utils/dates';
@@ -60,7 +61,7 @@ export function ForgePage() {
             Zet je het aan, dan rekent ASCEND stil mee met de krachttrainingen die je uit MacroFactor inleest. Je planning verandert er niet door.
           </p>
           <PrimaryButton onClick={() => void updateSettings({ strengthModel: { ...settings.strengthModel, enabled: true } })}>Aanzetten</PrimaryButton>
-          <SecondaryButton onClick={() => navigate('/more')}>Naar de instellingen</SecondaryButton>
+          <SecondaryButton onClick={() => navigate('/more', { state: { jumpTo: settingsAnchor('forge') } })}>Naar de instellingen</SecondaryButton>
         </Card>
       )}
 
@@ -83,7 +84,7 @@ export function ForgePage() {
             <ExerciseCard key={v.history.key} view={v} />
           ))}
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
-          <button onClick={() => navigate('/more')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+          <button onClick={() => navigate('/more', { state: { jumpTo: settingsAnchor('forge') } })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
             Instellingen van Forge: sportschool, opwarmen en meer
           </button>
         </>
@@ -93,7 +94,7 @@ export function ForgePage() {
 }
 
 function ExerciseCard({ view }: { view: ExerciseView }) {
-  const { history, now, next, line, strengthKg } = view;
+  const { history, now, next, line, strengthKg, weightMismatch } = view;
   const { settings } = useAppData();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   const exercise = history.exercise;
@@ -101,8 +102,9 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
 
   let missing: string | undefined;
   if (!next) {
-    missing =
-      strengthKg === undefined
+    missing = weightMismatch
+      ? WEIGHT_MISMATCH_TEXT
+      : strengthKg === undefined
         ? 'Zonder herhalingen in reserve (RIR) bij de sets kan ASCEND hier geen kracht schatten.'
         : bodyKg === undefined && exercise?.bodyweightFraction !== undefined
           ? 'Vul je lichaamsgewicht in bij Meer, dan telt deze oefening mee.'

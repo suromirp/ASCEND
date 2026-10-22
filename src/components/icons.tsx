@@ -134,6 +134,8 @@ const PATHS = {
       <path d="M12 7v7M7 9.5l5 1.5 5-1.5M9 21l3-7 3 7" />
     </>
   ),
+  // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
+  verder: <path d="M9.5 6l6 6-6 6" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

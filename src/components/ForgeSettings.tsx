@@ -15,6 +15,7 @@ import {
 } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
 import { formatNumberNL } from '../utils/number';
+import { Icon } from './icons';
 import { NumberField } from './NumberField';
 import { Card, Eyebrow, Toggle } from './ui';
 
@@ -136,7 +137,7 @@ export function ForgeSettings() {
       />
       <button type="button" onClick={() => navigate('/forge')} className="flex min-h-[44px] w-full items-center justify-between gap-3 text-left">
         <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Forge openen</span>
-        <span className="text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+        <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
       </button>
 
       {s.enabled && (

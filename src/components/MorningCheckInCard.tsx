@@ -24,7 +24,9 @@ const ENERGY: [EnergyFeeling, string][] = [['fit', 'Fit'], ['gewoon', 'Gewoon'],
 const SLEEP: [SleepFeeling, string][] = [['goed', 'Goed'], ['gewoon', 'Gewoon'], ['matig', 'Matig'], ['slecht', 'Slecht of kort']];
 const KEEP = 60;
 
-export function MorningCheckInCard() {
+// painOnly: de ochtendcheck staat uit, maar er is een pijnplek van de laatste 14
+// dagen. Dan alleen die vraag, niet benen, energie en slaap.
+export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } = {}) {
   const { settings, updateSettings, sessionLogs, plannedSessions, templates } = useAppData();
   const today = todayISO();
   const existing = checkInFor(today, settings.morningCheckIns);
@@ -32,7 +34,8 @@ export function MorningCheckInCard() {
   const spot = recentPainSpot(today, sessionLogs);
   const [draft, setDraft] = useState<MorningCheckIn>(() => existing ?? { date: today, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
   const ask = shouldAskCheckIn(today, settings.morningCheckIns, sessionLogs, plannedSessions, templates);
-  const wellness = useTodayWellness(today);
+  const allWellness = useTodayWellness(today);
+  const wellness = painOnly ? undefined : allWellness;
   const suggestedSleep = wellness?.suggestedSleep;
 
   // Sleep is what the watch says until you pick something else; the numbers
@@ -71,7 +74,7 @@ export function MorningCheckInCard() {
     </div>
   );
 
-  const complete = !!(draft.legs && sleep && (draft.energy || wellness));
+  const complete = painOnly ? draft.spot !== undefined : !!(draft.legs && sleep && (draft.energy || wellness));
   return (
     <>
       <DayRow
@@ -79,24 +82,24 @@ export function MorningCheckInCard() {
         state={existing ? 'done' : 'todo'}
         onClick={() => { if (existing) setDraft(existing); setOpen(true); }}
         chevron={!!existing}
-        action={existing ? undefined : (
+        action={existing || painOnly ? undefined : (
           <button onClick={() => save({ date: today, allNormal: true })} className="ml-2 min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
             Alles normaal
           </button>
         )}
       >
-        {existing ? `Vanochtend: ${summary}` : 'Hoe voel je je?'}
+        {existing ? `Vanochtend: ${summary}` : painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()}?` : 'Hoe voel je je?'}
       </DayRow>
       {open && (
-        <TodaySheet eyebrow="VANOCHTEND" title="Hoe voel je je, vergeleken met normaal?" onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow="VANOCHTEND" title={painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()} vanochtend?` : 'Hoe voel je je, vergeleken met normaal?'} onClose={() => setOpen(false)}>
           <div className="flex flex-col gap-3">
-            <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl px-3.5 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
+            {!painOnly && <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl px-3.5 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
               Alles normaal
-            </button>
+            </button>}
             {wellness && <WellnessLines reading={wellness} />}
-            {row('Benen', LEGS, draft.legs, (legs) => setDraft({ ...draft, legs }))}
-            {row(wellness ? 'Energie (mag leeg blijven)' : 'Energie', ENERGY, draft.energy, (energy) => setDraft({ ...draft, energy }))}
-            {row(wellness && sleep === suggestedSleep ? 'Slaap, ingevuld uit je horloge' : 'Slaap', SLEEP, sleep, (sleep) => setDraft({ ...draft, sleep }))}
+            {!painOnly && row('Benen', LEGS, draft.legs, (legs) => setDraft({ ...draft, legs }))}
+            {!painOnly && row(wellness ? 'Energie (mag leeg blijven)' : 'Energie', ENERGY, draft.energy, (energy) => setDraft({ ...draft, energy }))}
+            {!painOnly && row(wellness && sleep === suggestedSleep ? 'Slaap, ingevuld uit je horloge' : 'Slaap', SLEEP, sleep, (sleep) => setDraft({ ...draft, sleep }))}
             {spot && (
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe is je {spot.area.toLowerCase()} vanochtend? 0 is niets. Na de training was het {spot.lastScore}.</p>
@@ -113,8 +116,8 @@ export function MorningCheckInCard() {
               </div>
             )}
             <div className="flex items-center justify-between gap-3">
-              <NotFitLink />
-              <button disabled={!complete} onClick={() => save({ ...draft, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl border px-4 text-sm font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
+              {painOnly ? <span /> : <NotFitLink />}
+              <button disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl border px-4 text-sm font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
                 Opslaan
               </button>
             </div>

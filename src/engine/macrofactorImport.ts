@@ -333,7 +333,9 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
     const weight = parseNumber(cell('weight'));
     const rirRaw = parseNumber(cell('rir'));
     const set: MacroFactorSet = { reps: Math.round(reps) };
-    if (weight !== undefined && weight > 0) set.weightKg = Math.round(weight * weightFactor * 100) / 100;
+    // Any weight but 0 is kept, also a negative one: on an assisted machine MacroFactor
+    // writes the help as a negative weight. Dropping it would read as "no help".
+    if (weight !== undefined && weight !== 0) set.weightKg = Math.round(weight * weightFactor * 100) / 100;
     if (rirRaw !== undefined && rirRaw >= 0) set.rir = Math.min(10, rirRaw);
 
     const key = `${when.date}|${nameKey(name)}`;

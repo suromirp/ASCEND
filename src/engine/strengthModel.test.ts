@@ -7,6 +7,7 @@ import {
   describePlannedSet,
   estimateSet,
   expectedReps,
+  lastWeightMismatch,
   prescribe,
   referenceWeight,
   sessionStrength,
@@ -14,6 +15,7 @@ import {
   warmupSets,
   type SessionInput,
 } from './strengthModel';
+import { readMacroFactorRows } from './macrofactorImport';
 import { resolveStrengthSettings } from './strengthSettings';
 import { candidatesFor } from './strengthWeights';
 
@@ -289,7 +291,7 @@ describe('KR-5 de stapgrens', () => {
   it('gaat na een betere training niet lichter dan vorige keer als je het bereik haalde', () => {
     const s: SessionInput[] = [
       { date: '2026-09-01', sets: [work(8, 60, 2), work(8, 60, 2), work(8, 60, 2)] },
-      { date: '2026-09-08', sets: [work(8, 66, 2), work(8, 66, 2), work(8, 66, 2)] },
+      { date: '2026-09-08', sets: [work(8, 67.5, 2), work(8, 67.5, 2), work(8, 67.5, 2)] },
     ];
     const p = prescribe({ exercise: bench, sessions: s, date: '2026-09-15', settings })!;
     expect(p.sets[0].weightKg).toBeGreaterThanOrEqual(65);
@@ -443,5 +445,115 @@ describe('afleidingen', () => {
     const ref = referenceWeight(e, { low: 7, high: 9, rir: 2 }, { exercise: ex('bench-press') })!;
     expect(ref.reps).toBe(8);
     expect(ref.weightKg).toBe(70);
+  });
+});
+
+describe('optrekken met hulp uit een MacroFactor-export', () => {
+  const pull = ex('assisted-pull-up');
+  const rows = (weight: number, date: string) => [
+    ['Date', 'Workout', 'Exercise', 'Set Type', 'Weight (kg)', 'Reps', 'RIR', 'Duration'],
+    [`${date} 18:00`, 'Boven', 'Machine-Assisted Pull-Up', 'Standard', weight, 8, 2, '50:00'],
+    [`${date} 18:05`, 'Boven', 'Machine-Assisted Pull-Up', 'Standard', weight, 8, 2, '50:00'],
+  ];
+  const sessionFrom = (weight: number, date: string): SessionInput => {
+    const w = readMacroFactorRows(rows(weight, date)).workouts[0];
+    return { date, sets: (w.exercises[0].loggedSets ?? w.exercises[0].sets).map((s) => ({ reps: s.reps, ...(s.weightKg !== undefined ? { weightKg: s.weightKg } : {}), ...(s.rir !== undefined ? { rir: s.rir } : {}) })) };
+  };
+  it('bewaart een negatief gewicht uit de export', () => {
+    const w = readMacroFactorRows(rows(-30, '2026-09-01')).workouts[0];
+    expect(w.exercises[0].sets.map((s) => s.weightKg)).toEqual([-30, -30]);
+    expect(w.exercises[0].top.weightKg).toBe(-30);
+  });
+  it('rekent van de import tot het voorschrift met de hulp mee', () => {
+    const sessions = [sessionFrom(-30, '2026-09-01'), sessionFrom(-30, '2026-09-04')];
+    const rx = prescribe({ exercise: pull, sessions, date: '2026-09-08', settings, bodyKg: 80 })!;
+    // De last is 80 - 30 = 50 kg, niet de volle 80 kg zonder hulp.
+    expect(rx.strengthKg).toBeCloseTo(50 * (1 + 10 / 30), 3);
+    expect(rx.sets[0].weightKg).toBeLessThanOrEqual(0);
+    expect(rx.sets[0].weightKg).toBeGreaterThanOrEqual(-35);
+  });
+  it('zonder gewicht bij een hulptoestel komt er geen schatting en geen voorstel', () => {
+    const noWeight: SessionInput = { date: '2026-09-01', sets: [{ reps: 8, rir: 2 }, { reps: 8, rir: 2 }] };
+    expect(estimateSet({ reps: 8, rir: 2 }, { exercise: pull, bodyKg: 80 })).toBeUndefined();
+    expect(prescribe({ exercise: pull, sessions: [noWeight, { ...noWeight, date: '2026-09-04' }], date: '2026-09-08', settings, bodyKg: 80 })).toBeUndefined();
+  });
+  it('een hulp van 5 kg komt alleen voor als die stap bestaat', () => {
+    const sessions = [sessionFrom(-30, '2026-09-01'), sessionFrom(-30, '2026-09-04'), sessionFrom(-30, '2026-09-07')];
+    const coarse = resolveStrengthSettings({ profiles: [{ ...settings.profile, exerciseStepKg: { 'assisted-pull-up': 10 } }], activeProfileId: settings.profile.id });
+    const rx = prescribe({ exercise: pull, sessions, date: '2026-09-10', settings: coarse, bodyKg: 80 })!;
+    expect(rx.sets.every((s) => Math.abs(s.weightKg) % 10 === 0)).toBe(true);
+    const fine = prescribe({ exercise: pull, sessions, date: '2026-09-10', settings, bodyKg: 80 })!;
+    expect(fine.sets.every((s) => Math.abs(s.weightKg) % 5 === 0)).toBe(true);
+  });
+});
+
+describe('de zin bij een lichter voorschrift', () => {
+  const bench = ex('bench-press');
+  const s = (date: string, rows: [number, number, number?][]): SessionInput => ({ date, sets: rows.map(([reps, w, rir]) => work(reps, w, rir)) });
+  it('zegt niet "kracht lager" als de gladgestreken kracht niet daalde', () => {
+    // Vorige keer onder het bereik van 7 tot 9: de kracht steeg wel, het gewicht was te zwaar.
+    const sessions = [s('2026-09-01', [[8, 60, 2], [8, 60, 2]]), s('2026-09-05', [[8, 60, 2], [8, 60, 2]]), s('2026-09-08', [[5, 70, 2], [5, 70, 2]])];
+    const points = analyseSessions(sessions, { exercise: bench });
+    expect(points[2].smoothed!).toBeGreaterThan(points[1].smoothed!);
+    const rx = prescribe({ exercise: bench, sessions, date: '2026-09-12', settings })!;
+    expect(rx.reason).not.toContain('geschatte kracht is wat lager');
+    expect(rx.reason).not.toContain('geschatte kracht is gedaald');
+    if (rx.kind === 'down') expect(rx.reason).toContain('Vorige keer zat je onder');
+  });
+  it('zegt het wel als de kracht echt daalde', () => {
+    const sessions = [s('2026-09-01', [[8, 70, 2], [8, 70, 2]]), s('2026-09-05', [[8, 70, 2], [8, 70, 2]]), s('2026-09-08', [[6, 65, 2], [6, 65, 2]])];
+    const points = analyseSessions(sessions, { exercise: bench });
+    expect(points[2].smoothed!).toBeLessThan(points[1].smoothed!);
+    const rx = prescribe({ exercise: bench, sessions, date: '2026-09-12', settings })!;
+    if (rx.kind === 'down') expect(rx.reason).toContain('kracht is wat lager');
+  });
+});
+
+describe('opwarmen loopt netjes af', () => {
+  const bench = ex('bench-press');
+  const squat = ex('back-squat');
+  const check = (w: { weightKg: number; reps: number }[]) => {
+    for (let i = 1; i < w.length; i++) {
+      expect(w[i].reps).toBeLessThanOrEqual(w[i - 1].reps);
+      expect(w[i].weightKg).toBeGreaterThan(w[i - 1].weightKg);
+    }
+  };
+  it('de herhalingen worden nooit hoger dan bij de set ervoor', () => {
+    for (const [e, first, strength] of [[bench, 67.5, 88], [bench, 80, 100], [squat, 140, 180], [squat, 100, 133], [squat, 200, 260]] as const) {
+      const c = candidatesFor(e, settings.profile, { lastExternalKg: first })!;
+      check(warmupSets(settings, e, c, first, strength));
+    }
+  });
+  it('zwaar begint licht met 10 herhalingen, daarna 8 en 4', () => {
+    const c = candidatesFor(squat, settings.profile, { lastExternalKg: 140 })!;
+    expect(warmupSets(settings, squat, c, 140, 180).map((x) => x.reps)).toEqual([10, 8, 4]);
+  });
+});
+
+describe('een gewicht dat het profiel niet kent', () => {
+  const s = (date: string, w: number): SessionInput => ({ date, sets: [work(10, w, 2), work(10, w, 2)] });
+  it('een EZ-stang van 12,5 kg bij een lichtste stang van 15 geeft geen voorstel', () => {
+    const curl = ex('barbell-curl');
+    const input = { exercise: curl, sessions: [s('2026-09-01', 12.5), s('2026-09-04', 12.5)], date: '2026-09-08', settings };
+    expect(lastWeightMismatch(input)).toBe(true);
+    expect(prescribe(input)).toBeUndefined();
+  });
+  it('een dumbbell die niet in het rek staat geeft geen voorstel', () => {
+    const db = ex('dumbbell-bench-press');
+    const input = { exercise: db, sessions: [s('2026-09-01', 23), s('2026-09-04', 23)], date: '2026-09-08', settings };
+    expect(lastWeightMismatch(input)).toBe(true);
+    expect(prescribe(input)).toBeUndefined();
+  });
+  it('een kabel of machine met een andere stap blijft gewoon een voorstel geven', () => {
+    const fly = ex('cable-fly');
+    const input = { exercise: fly, sessions: [s('2026-09-01', 17.5), s('2026-09-04', 17.5)], date: '2026-09-08', settings };
+    expect(lastWeightMismatch(input)).toBe(false);
+    expect(prescribe(input)).toBeDefined();
+  });
+  it('een gewicht dat wel kan, geeft gewoon een voorstel', () => {
+    const db = ex('dumbbell-bench-press');
+    const input = { exercise: db, sessions: [s('2026-09-01', 22.5), s('2026-09-04', 22.5)], date: '2026-09-08', settings };
+    expect(lastWeightMismatch(input)).toBe(false);
+    expect(prescribe(input)).toBeDefined();
   });
 });

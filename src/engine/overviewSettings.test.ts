@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
-import { DEFAULT_OVERVIEWS, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
+import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
 import { reviewWeekFor } from './weekReview';
 
 describe('resolveOverviews', () => {
@@ -76,6 +76,20 @@ describe('de ochtendcheck en een pijnplek', () => {
   });
   it('uit, en de pijn is ouder dan 14 dagen: weg', () => {
     expect(showMorningCheckInCard({ morningCheckIn: false }, '2026-11-20', [painLog('2026-11-01', 3)])).toBe(false);
+  });
+});
+
+describe('de ochtendcheck: de hele check of alleen de pijnplek', () => {
+  it('aan: de hele check, ook met een pijnplek', () => {
+    expect(morningCheckInMode(undefined, '2026-11-03', [])).toBe('full');
+    expect(morningCheckInMode({ morningCheckIn: true }, '2026-11-03', [painLog('2026-11-02', 3)])).toBe('full');
+  });
+  it('uit met een pijnplek van de laatste 14 dagen: alleen het opvolgen van die plek', () => {
+    expect(morningCheckInMode({ morningCheckIn: false }, '2026-11-03', [painLog('2026-11-02', 3)])).toBe('pain_only');
+  });
+  it('uit zonder pijnplek, of met een oude: niets', () => {
+    expect(morningCheckInMode({ morningCheckIn: false }, '2026-11-03', [])).toBe('none');
+    expect(morningCheckInMode({ morningCheckIn: false }, '2026-11-20', [painLog('2026-11-01', 3)])).toBe('none');
   });
 });
 
