@@ -57,7 +57,7 @@ import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -434,6 +434,12 @@ export function TodayPage() {
           }}
           onSkip={() => {
             handleSkip(actionSheetSession.id);
+            setActionSheetSession(null);
+          }}
+          onBackOnPlan={() => {
+            const proposal = proposeBackOnPlan(actionSheetSession.id);
+            if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
+            else if (proposal.changes.length > 0) setPendingProposal(proposal);
             setActionSheetSession(null);
           }}
           onUndo={() => {

@@ -25,6 +25,7 @@ export function MoveSuggestions({
   onPick,
   onPickDate,
   onSkip,
+  onSameDay,
 }: {
   sessionDate: string;
   // Where a moved session came from: offered first, as "terug naar".
@@ -32,9 +33,19 @@ export function MoveSuggestions({
   suggestions: MoveSuggestion[];
   onPick: (suggestion: MoveSuggestion) => void;
   onPickDate: (date: string) => void;
-  onSkip: () => void;
+  // Absent: no "overslaan" (a training that is already skipped).
+  onSkip?: () => void;
+  // The day it already stands on was picked. A skipped training comes back
+  // there ("Toch doen"); otherwise there is nothing to move, and you are told so.
+  onSameDay?: () => void;
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [sameDayNote, setSameDayNote] = useState(false);
+  const pickDate = (date: string) => {
+    if (date !== sessionDate) { setSameDayNote(false); onPickDate(date); return; }
+    if (onSameDay) onSameDay();
+    else setSameDayNote(true);
+  };
   const canGoBack = !!originalDate && originalDate !== sessionDate && originalDate >= todayISO();
   const visible = canGoBack ? suggestions.filter((sug) => sug.date !== originalDate) : suggestions;
   return (
@@ -78,9 +89,11 @@ export function MoveSuggestions({
         <button onClick={() => setShowDatePicker((v) => !v)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
           Andere dag kiezen
         </button>
-        <button onClick={onSkip} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          Overslaan
-        </button>
+        {onSkip && (
+          <button onClick={onSkip} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+            Overslaan
+          </button>
+        )}
       </div>
       {showDatePicker && (
         <div className="mt-2 rounded-xl border p-2" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -89,8 +102,13 @@ export function MoveSuggestions({
             min={todayISO()}
             className="w-full rounded-lg border bg-transparent px-2 py-1.5 text-sm"
             style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-            onChange={(e) => e.target.value && onPickDate(e.target.value)}
+            onChange={(e) => e.target.value && pickDate(e.target.value)}
           />
+          {sameDayNote && (
+            <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+              Hij staat al op {weekdayLongNL(sessionDate)} {formatDateNL(sessionDate)}. Kies een andere dag om hem te verplaatsen.
+            </p>
+          )}
         </div>
       )}
     </div>

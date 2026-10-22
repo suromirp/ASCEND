@@ -27,7 +27,7 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
+  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -282,6 +282,13 @@ export function WeekPage() {
           }}
           onSkip={() => {
             setPendingProposal(proposeSkip(selected.id));
+            setSelected(null);
+          }}
+          onBackOnPlan={() => {
+            // Fits on its day: back at once (undo in the notice); a clash asks first.
+            const proposal = proposeBackOnPlan(selected.id);
+            if (proposal.resolved && proposal.changes.length === 1) void applyProposal(proposal);
+            else if (proposal.changes.length > 0) setPendingProposal(proposal);
             setSelected(null);
           }}
           onUndo={() => {

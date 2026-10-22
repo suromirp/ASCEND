@@ -28,7 +28,9 @@ export function RescheduleDialog({
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">
                   <span style={{ color: 'var(--color-ink)' }}>{c.templateName}</span>
-                  {c.toDate === c.fromDate ? (
+                  {c.restore ? (
+                    <span style={{ color: 'var(--color-ink-dim)' }}>weer op <span style={{ color: 'var(--color-gold)' }}>{formatDateNL(c.toDate)}</span></span>
+                  ) : c.toDate === c.fromDate ? (
                     <span style={{ color: 'var(--color-danger-text)' }}>wordt overgeslagen</span>
                   ) : (
                     <span style={{ color: 'var(--color-ink-dim)' }}>
@@ -55,7 +57,7 @@ export function RescheduleDialog({
             ) : (
               <div className="mt-5 flex flex-col gap-3">
                 <PrimaryButton onClick={requestClose}>Liever niet</PrimaryButton>
-                <SecondaryButton onClick={onApply}>Toch verplaatsen</SecondaryButton>
+                <SecondaryButton onClick={onApply}>{proposal.changes[0]?.restore ? 'Toch doen' : 'Toch verplaatsen'}</SecondaryButton>
               </div>
             )}
           </Card>

@@ -42,7 +42,7 @@ import { withWeekRepeated } from '../engine/repeatWeek';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
-import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
+import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
@@ -338,6 +338,8 @@ interface AppData {
   // applyProposal (below) recognizes the same-date shape proposeSkipEngine
   // produces and calls the skip mutator instead of a move.
   proposeSkip: (sessionId: string) => ScheduleProposal;
+  // "Toch doen": a skipped training back on its own day (engine/scheduler.ts#proposeBackOnPlan).
+  proposeBackOnPlan: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
   updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => Promise<void>;
   // Tussendoel or only followed (engine/raceBlock.ts).
@@ -1510,7 +1512,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const session = stored.find((s) => s.id === change.sessionId);
         if (!session) continue;
         before.push(session);
-        if (change.toDate === change.fromDate) {
+        if (change.restore) {
+          // "Toch doen": your own choice, so it stays yours against the automatic planning.
+          await PlannedSessionsRepo.put({ ...session, scheduledDate: change.toDate, status: change.toDate === (session.movedFromDate ?? change.toDate) ? 'planned' : 'moved', lock });
+          lines.push(`${change.templateName} op ${day(change.toDate)} staat weer op de planning`);
+        } else if (change.toDate === change.fromDate) {
           await PlannedSessionsRepo.put({ ...skipSessionEngine(session), lock });
           lines.push(`${change.templateName} op ${day(change.fromDate)} overgeslagen`);
         } else if (change.toDate === session.movedFromDate) {
@@ -1528,12 +1534,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
       }
       if (before.length > 0) {
-        const skipped = proposal.changes.every((c) => c.toDate === c.fromDate);
+        const restored = proposal.changes[0]?.restore === true;
+        const skipped = !restored && proposal.changes.every((c) => c.toDate === c.fromDate);
         const first = proposal.changes[0]?.templateName ?? 'Sessie';
         setRecentChange({
           id: makeId('usermove'),
           trigger: skipped ? 'session_skipped' : 'session_moved',
-          title: skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
+          title: restored ? `${first} staat weer op de planning` : skipped ? `${first} overgeslagen` : proposal.changes.length === 1 ? `${first} verplaatst` : 'Sessies verplaatst',
           lines,
           why: proposal.changes.length > 1 ? proposal.reason : '',
           before,
@@ -1554,6 +1561,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       return proposeSkipEngine(session, templates);
     },
     [plannedSessions, templates],
+  );
+
+  const proposeBackOnPlan = useCallback(
+    (sessionId: string): ScheduleProposal => {
+      const session = plannedSessions.find((s) => s.id === sessionId);
+      if (!session) return { changes: [], reason: 'Sessie niet gevonden.', resolved: false };
+      const monday = mondayOfWeek(session.scheduledDate);
+      // The neighbouring weeks too, as for a move: the 48 hours cross the week's edge.
+      const nearby = [-7, 0, 7].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
+      const combined = nearby.some((s) => s.id === sessionId) ? nearby : [...nearby, session];
+      return proposeBackOnPlanEngine(combined, templates, sessionId, sessionLogs, program, goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO());
+    },
+    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig],
   );
 
   const clearMilestoneManually = useCallback(
@@ -2028,6 +2048,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     suggestMoves,
     applyProposal,
     proposeSkip,
+    proposeBackOnPlan,
     clearMilestoneManually,
     updateGoal,
     setGoalPlanRole,
