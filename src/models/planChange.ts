@@ -129,6 +129,10 @@ export interface PlanChangeProposal {
   // "ongedaan maken": the id of the proposal it reverted. The original
   // record stays untouched (append-only); readers skip what was reverted.
   revertsProposalId?: string;
+  // A proposal of a free period or tocht (engine/leaveProposal.ts): which
+  // period it is about. Older stored proposals do not have it; then the marks
+  // on its items say it (engine/leaveStrays.ts).
+  leavePeriodId?: string;
 }
 
 export interface GoalActivationPlan {

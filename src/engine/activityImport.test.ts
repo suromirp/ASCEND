@@ -6,6 +6,7 @@ import {
   candidatePlanned,
   describeActivity,
   describeActivityDetails,
+  describeRunForm,
   fallbackTemplate,
   findSimilarLog,
   pendingProposals,
@@ -272,5 +273,15 @@ describe('words', () => {
       'Gevoel: zoals normaal',
     ]);
     expect(describeActivityDetails(run({ elevationLossM: undefined, avgHeartRate: undefined, maxHeartRate: undefined, rpe: undefined, feel: undefined }))).toEqual([]);
+  });
+
+  it('shows one fact about the form of a run, only for a run and only when it was measured', () => {
+    const dynamics = { stanceTimeMs: 238, stepLengthM: 1.12, verticalRatioPct: 7.8 };
+    expect(describeRunForm(run({ dynamics }))).toBe('Loopvorm: grondcontact 238 ms, pas 1,12 m');
+    expect(describeRunForm(run({ dynamics: { stepLengthM: 1.12 } }))).toBe('Loopvorm: pas 1,12 m');
+    expect(describeRunForm(run({ dynamics: { verticalRatioPct: 7.8 } }))).toBeUndefined();
+    expect(describeRunForm(run())).toBeUndefined();
+    expect(describeRunForm(run({ kind: 'hike', dynamics }))).toBeUndefined();
+    expect(describeActivityDetails(run({ dynamics })).at(-1)).toBe('Loopvorm: grondcontact 238 ms, pas 1,12 m');
   });
 });

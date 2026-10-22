@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Icon } from '../components/icons';
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
@@ -23,7 +24,6 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../component
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
-import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { SeasonCard } from '../components/SeasonCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
 import { GoalTripNotes } from '../components/GoalTripNotes';
@@ -224,14 +224,14 @@ export function AscendPage() {
               <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Etappeplan</span>
               <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De 36 etappes, je zwaarste dagen en waar je slaapt. Ook zonder bereik.</span>
             </span>
-            <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+            <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
           </button>
           <button onClick={() => navigate('/onderweg')} className="flex min-h-[56px] items-center justify-between gap-3 py-2 text-left">
             <span>
               <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Alleen onderweg</span>
               <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alarmnummer, je afspraak met thuis en de vertrekbrief.</span>
             </span>
-            <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+            <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
           </button>
         </Card>
       )}
@@ -252,8 +252,6 @@ export function AscendPage() {
 
       <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doelen beheren</PrimaryButton>
 
-      <AerobicTrendCard />
-
       <StrengthProgressionCard logs={sessionLogs} />
 
       <Card className="flex flex-col">
@@ -262,7 +260,7 @@ export function AscendPage() {
             <Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow>
             <span className="mt-1 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Hoe kracht, hardlopen en bergwerk zich in je week verhouden.</span>
           </span>
-          <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+          <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
         </button>
       </Card>
 

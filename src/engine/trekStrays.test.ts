@@ -6,6 +6,7 @@ import { trekToPeriod } from './trek';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog } from '../models/training';
+import type { PlanChangeProposal } from '../models/planChange';
 import { strayTrekRows } from './leaveStrays';
 import { addDays } from '../utils/dates';
 
@@ -101,5 +102,42 @@ describe('rijen die een oudere versie al achterliet', () => {
     expect(strayTrekRows(s2, [addAccepted.proposal, edit.proposal], [log])).not.toContain(strays[0].id);
     // Zonder een geaccepteerd voorstel dat hem plaatste is het niet aantoonbaar: blijft staan.
     expect(strayTrekRows(s2, [edit.proposal, { ...addAccepted.proposal, resolution: 'rejected' as const }].map((p) => ({ ...p, changes: p.changes.filter((c) => c.action !== 'add') })), [])).toEqual([]);
+  });
+});
+
+describe('alleen een voorstel van dezelfde periode telt als plaatser', () => {
+  const D = '2026-11-07';
+  const placedBy = (id: string, periodId: string): PlanChangeProposal => ({
+    id, trigger: 'leave_added', issue: '', alternatives: [], consequences: '', explanation: '', createdAt: '2026-10-20T08:00:00.000Z', resolution: 'accepted',
+    changes: [{ action: 'add', newSessionDraft: { templateId: 'tpl_mountain_hike', scheduledDate: D, weekStartDate: '2026-11-02' }, toDate: D, reason: '', generatedBy: ['engine/leaveProposal.ts'], leave: { periodId, role: 'placed', from: D } }],
+  });
+  // Een wijziging van een periode die een rij overslaat en zijn merk wist (de oude manier).
+  const removedBy = (id: string, periodId: string): PlanChangeProposal => ({
+    id, trigger: 'leave_added', issue: '', alternatives: [], consequences: '', explanation: '', createdAt: '2026-10-21T08:00:00.000Z', resolution: 'accepted',
+    changes: [
+      { action: 'remove', plannedSessionId: 'x', fromDate: D, reason: '', generatedBy: ['engine/leaveProposal.ts'], leave: null },
+      { action: 'add', newSessionDraft: { templateId: 'tpl_easy_run', scheduledDate: '2026-11-12', weekStartDate: '2026-11-09' }, toDate: '2026-11-12', reason: '', generatedBy: ['engine/leaveProposal.ts'], leave: { periodId, role: 'placed', from: '2026-11-12' } },
+    ],
+  });
+  const row = (proposalId: string): PlannedSession => ({ id: 'x', templateId: 'tpl_mountain_hike', scheduledDate: D, weekStartDate: '2026-11-02', status: 'skipped', order: 0, lock: { by: 'proposal', proposalId, at: 'x' } });
+
+  it('een rij die periode B overslaat terwijl periode A daar iets plaatste, blijft staan', () => {
+    expect(strayTrekRows([row('rB')], [placedBy('pA', 'A'), removedBy('rB', 'B')], [])).toEqual([]);
+  });
+
+  it('dezelfde rij, overgeslagen door een wijziging van periode A zelf, gaat weg', () => {
+    expect(strayTrekRows([row('rA')], [placedBy('pA', 'A'), removedBy('rA', 'A')], [])).toEqual(['x']);
+  });
+
+  it('een oudere verwijdering zonder periode: alleen als maar één periode daar iets plaatste', () => {
+    const r: PlanChangeProposal = { ...removedBy('rX', 'A'), trigger: 'leave_removed', changes: removedBy('rX', 'A').changes.slice(0, 1) };
+    expect(strayTrekRows([row('rX')], [placedBy('pA', 'A'), r], [])).toEqual(['x']);
+    expect(strayTrekRows([row('rX')], [placedBy('pA', 'A'), placedBy('pB', 'B'), r], [])).toEqual([]);
+  });
+
+  it('een nieuw voorstel draagt zijn periode zelf, ook als geen enkele regel een merk heeft', () => {
+    const r: PlanChangeProposal = { ...removedBy('rA', 'A'), leavePeriodId: 'A', changes: removedBy('rA', 'A').changes.slice(0, 1) };
+    expect(strayTrekRows([row('rA')], [placedBy('pA', 'A'), r], [])).toEqual(['x']);
+    expect(strayTrekRows([row('rA')], [placedBy('pA', 'B'), r], [])).toEqual([]);
   });
 });

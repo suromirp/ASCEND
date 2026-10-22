@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { diffWeeklyPrescriptionPlan } from './weeklyPrescriptionDiff';
+import { diffWeeklyPrescriptionPlan, realPlanChanges } from './weeklyPrescriptionDiff';
+import type { PlannedSession } from '../models/training';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeItem } from '../models/planChange';
@@ -77,5 +78,33 @@ describe('diffWeeklyPrescriptionPlan', () => {
     const move: PlanChangeItem = { plannedSessionId: 's2', action: 'move', fromDate: '2026-11-03', toDate: '2026-11-04' };
     const delta = diffWeeklyPrescriptionPlan({ prescriptions: [], newTrainingPrescriptions: [], changes: [move] }, { weekly: [], training: [] });
     expect(delta.changes).toEqual([move]);
+  });
+});
+
+describe('realPlanChanges: wat telt als wijziging van de planning', () => {
+  const session = (id: string, over: Partial<PlannedSession> = {}): PlannedSession =>
+    ({ id, templateId: 'tpl_easy_run', scheduledDate: '2026-11-03', weekStartDate: '2026-11-02', status: 'planned', ...over }) as PlannedSession;
+  const reduce: PlanChangeItem = { plannedSessionId: 's1', action: 'reduce', newPrescriptionId: 'p1', reason: 'r' };
+
+  it('bij de eerste opbouw telt een replace of reduce niet als de rij gelijk blijft', () => {
+    const before = [session('s1')];
+    expect(realPlanChanges([replace('s1', 'p1'), reduce], { initialBuild: true, before, after: [session('s1')] })).toEqual([]);
+  });
+
+  it('bij de eerste opbouw telt een replace of reduce wel als de rij anders wordt', () => {
+    const before = [session('s1')];
+    const after = [session('s1', { plannedMinutes: 30 })];
+    expect(realPlanChanges([reduce], { initialBuild: true, before, after })).toEqual([reduce]);
+  });
+
+  it('bij de eerste opbouw telt een replace voor een rij die verdwijnt of niet bestond wel', () => {
+    expect(realPlanChanges([reduce], { initialBuild: true, before: [session('s1')], after: [] })).toEqual([reduce]);
+    expect(realPlanChanges([reduce], { initialBuild: true, before: [], after: [] })).toEqual([reduce]);
+  });
+
+  it('buiten de eerste opbouw telt elke replace of reduce, en keep nooit', () => {
+    const before = [session('s1')];
+    const keep: PlanChangeItem = { plannedSessionId: 's1', action: 'keep', reason: 'r' };
+    expect(realPlanChanges([keep, reduce], { initialBuild: false, before, after: before })).toEqual([reduce]);
   });
 });

@@ -9,6 +9,7 @@ import { rowSummary, type SettingsFacts } from './settingsSummary';
 
 const FORGE_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.';
 const GARMIN_OFF = 'Deze keuze verschijnt pas als je Garmin hebt gekoppeld.';
+const INSIGHT_OFF = 'Deze keuze verschijnt pas als Inzicht na een training aan staat.';
 const MACROFACTOR_OFF = 'Deze keuze verschijnt pas als je een MacroFactor-export hebt ingelezen.';
 
 const REASON: Record<string, string> = {
@@ -30,6 +31,11 @@ const REASON: Record<string, string> = {
   rusthartslag: GARMIN_OFF,
   hrv: GARMIN_OFF,
   'naar-horloge': GARMIN_OFF,
+  'horloge-details': GARMIN_OFF,
+  'loop-efficientie': INSIGHT_OFF,
+  'loop-langedagen': INSIGHT_OFF,
+  'loop-berg': INSIGHT_OFF,
+  'loop-vorm': INSIGHT_OFF,
   'horloge-voorvoegsel': GARMIN_OFF,
   'horloge-gedaan-weghalen': GARMIN_OFF,
   'horloge-status': GARMIN_OFF,

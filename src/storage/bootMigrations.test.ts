@@ -3,10 +3,14 @@
 // hangen houdt het openen niet tegen. Alleen nagemaakte gegevens (het demoprogramma).
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { missingBootSteps, runBootMigrations } from './bootMigrations';
-import { MetaRepo, applyBackupWrites, wipeAllData } from './database';
+import { MetaRepo, applyBackupWrites, seedIfEmpty, wipeAllData } from './database';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, type BootMigrationRecord } from '../engine/bootWatch';
 import { probeStorage } from './storageProbe';
 import { setPageLife, storageOpenFor, whenStorageOpen } from './lifecycle';
+
+// The repairs before the one under test, made instant: with a limit of a few
+// milliseconds a real repair on a busy test machine could go over it too.
+const quickRepairs = { syncGr5MilestoneDefinitions: async () => undefined, migrateStrengthProgramDefault: async () => undefined };
 
 async function countWrites<T>(fn: () => Promise<T>): Promise<string[]> {
   const writes: string[] = [];
@@ -71,7 +75,7 @@ describe('opstartstappen', () => {
   it('een herstelstap die blijft hangen houdt het openen niet tegen, en loopt de volgende keer weer', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const hangs = () => new Promise<never>(() => undefined);
-    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 50, overrides: { mergeDuplicateWeeklyPrescriptionLines: hangs } });
+    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 50, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: async () => undefined, normalizePlannedSessionWeeks: async () => undefined, mergeDuplicateWeeklyPrescriptionLines: hangs } });
     warn.mockRestore();
     expect(skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines']);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
@@ -133,8 +137,41 @@ describe('een onmisbare stap', () => {
   it('na een hangende herstelstap komen de andere herstelstappen pas de volgende keer', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const hangs = () => new Promise<never>(() => undefined);
-    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 20, overrides: { restorePatternSessionsRemovedByPrescription: hangs } });
+    const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 20, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: hangs } });
     warn.mockRestore();
     expect(skipped).toEqual(['restorePatternSessionsRemovedByPrescription', 'normalizePlannedSessionWeeks', 'mergeDuplicateWeeklyPrescriptionLines']);
+  });
+});
+
+describe('een venster waarvan het slot is overgenomen', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('twee keer tegelijk, de eerste geannuleerd na stap 1: die stopt voor de volgende stap, de tweede loopt alles', async () => {
+    let cancelled = false;
+    const seenA: string[] = [];
+    const seenB: string[] = [];
+    let second: Promise<unknown> | undefined;
+    const first = runBootMigrations({
+      build: 'v1',
+      isCancelled: () => cancelled,
+      onStep: (id) => seenA.push(id),
+      overrides: {
+        seedIfEmpty: async () => {
+          await seedIfEmpty();
+          // Hier neemt een ander venster het slot over (Toch openen) en begint zelf.
+          cancelled = true;
+          second = runBootMigrations({ build: 'v1', onStep: (id) => seenB.push(id) });
+        },
+      },
+    });
+    const resultA = await first;
+    await second;
+    expect(resultA.cancelled).toBe(true);
+    expect(seenA).toEqual([BOOT_MIGRATIONS_KEY, 'seedIfEmpty']);
+    expect(seenB).toContain('mergeDuplicateWeeklyPrescriptionLines');
+    const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
+    expect(record?.done).toHaveLength(BOOT_MIGRATIONS.length);
   });
 });

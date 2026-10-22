@@ -29,7 +29,7 @@ export function EtappesPage() {
   const navigate = useNavigate();
   const { trainingGoals, goalMilestones, sessionLogs } = useAppData();
   const { plan, loaded, choose } = useTripPlan();
-  const [openId, setOpenId] = usePageState<string | null>('openId', null);
+  const [openId, setOpenId] = usePageState<string | null>('openId', null, (v) => v === null || GR5_STAGES.some((st) => st.id === v));
   const today = todayISO();
 
   // Het hoofddoel (het doel met de ladder) bepaalt de startdatum.

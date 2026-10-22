@@ -137,6 +137,42 @@ export function scrollKey(location: { key: string; pathname: string }): string {
   return `scroll|${stepKey(location)}`;
 }
 
+// --- een opgeslagen waarde die niet (meer) klopt --------------------------------
+//
+// Wat in sessionStorage staat kan van een oudere versie zijn, of een week die
+// de pagina niet meer kan tonen. Dan begint de pagina gewoon met zijn
+// beginwaarde. Eerst de soort (een vlag blijft een vlag, een tekst een tekst),
+// dan de eigen controle van de pagina.
+export function restoredPageValue<T>(stored: unknown, initial: T, isValid?: (value: unknown) => boolean): T {
+  if (stored === undefined) return initial;
+  if (initial !== null && initial !== undefined && typeof initial !== 'object' && typeof stored !== typeof initial) return initial;
+  if (isValid && !isValid(stored)) return initial;
+  return stored as T;
+}
+
+function isIsoDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
+const DAY_MS = 86_400_000;
+const dayNumber = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / DAY_MS;
+
+// Week: een maandag, hoogstens twee jaar van vandaag.
+export function validWeekStart(value: unknown, today: string): boolean {
+  if (!isIsoDate(value)) return false;
+  if (new Date(`${value}T00:00:00Z`).getUTCDay() !== 1) return false;
+  return Math.abs(dayNumber(value) - dayNumber(today)) <= 2 * 366;
+}
+
+// Logboek: een dag, niet na deze maand en hoogstens tien jaar terug.
+export function validMonthAnchor(value: unknown, today: string): boolean {
+  if (!isIsoDate(value)) return false;
+  if (value.slice(0, 7) > today.slice(0, 7)) return false;
+  return dayNumber(today) - dayNumber(value) <= 10 * 366;
+}
+
 function sessionStorageOrNull(): StorageLike | null {
   try {
     return typeof sessionStorage === 'undefined' ? null : sessionStorage;

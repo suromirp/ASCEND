@@ -109,6 +109,31 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Horloge', text: 'slaap en hartslag kun je erin laten meetellen bij Koppelingen.' },
     ],
   },
+  loopinzicht: {
+    title: 'Inzicht na een training',
+    lead: 'Na een loop of tocht zie je hoogstens twee regels over wat beter ging en waar je op moet letten.',
+    points: [
+      { head: 'Vergelijkt', text: 'je loop met je eigen rustige loopjes, nooit met anderen.' },
+      { head: 'Onderwerpen', text: 'zet je apart aan of uit onder Geavanceerd.' },
+      { head: 'Reeksen', text: 'komen van je horloge, zet dat aan bij Koppelingen (Details van loopjes).' },
+    ],
+  },
+  borstband: {
+    title: 'Hartslag van de borstband',
+    lead: 'Zonder borstband kan de hartslag van een andere bron komen, en dan vergelijkt ASCEND niet eerlijk.',
+    points: [
+      { head: 'Aan', text: 'elke loop telt als gemeten met de band.' },
+      { head: 'Uit', text: 'ASCEND vergelijkt geen loopjes waarbij de bron kan zijn gewisseld.' },
+    ],
+  },
+  loopweer: {
+    title: 'Weer bij loopinzicht',
+    lead: 'Voor eerlijk vergelijken zoekt ASCEND het weer van die dag op bij Open-Meteo.',
+    points: [
+      { head: 'Wat gaat mee', text: 'alleen een plek afgerond op ongeveer een kilometer.' },
+      { head: 'Uit', text: 'er gaat niets naar de weerdienst voor loopinzicht.' },
+    ],
+  },
   kleding: {
     title: 'Je kleding',
     lead: 'Na een buitentraining kun je tikken of je kleding goed zat.',

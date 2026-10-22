@@ -6,7 +6,7 @@
 // "Vanzelf afvinken" on the link screen), and the card then only asks how it
 // went (components/WatchAskCard.tsx), with "Klopt niet" to undo it.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import {
   dismissActivity,
@@ -18,6 +18,7 @@ import {
 } from '../storage/externalActivities';
 import { canRejectAutoLog, pendingQuestions, planAutoTicks, type FeedbackPatch } from '../engine/autoTick';
 import { WatchAskCard } from './WatchAskCard';
+import { attachActivityDetail } from '../storage/activityDetail';
 import {
   activityToDraft,
   candidatePlanned,
@@ -43,7 +44,7 @@ function dayLabel(iso: string): string {
 const AUTO_TICK_DELAY_MS = 1200;
 
 export function WatchActivityCard() {
-  const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback } = useAppData();
+  const { plannedSessions, templates, sessionLogs, logSession, undoLog, setLogFeedback, refresh } = useAppData();
   const [state, setState] = useState<WatchActivityState | null>(null);
   const [choosing, setChoosing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -62,6 +63,15 @@ export function WatchActivityCard() {
     };
   }, []);
 
+  // The compact profile of a run or tocht (storage/activityDetail.ts): fetched in
+  // the background after the save, never in its way.
+  const addDetail = useCallback(
+    (activity: ExternalActivity) => {
+      void attachActivityDetail(activity).then((result) => (result === 'attached' ? refresh() : undefined));
+    },
+    [refresh],
+  );
+
   // Vanzelf afvinken: only what nothing is left to choose about.
   useEffect(() => {
     if (!state || !state.autoTick || !state.use.activities || ticking.current) return;
@@ -75,7 +85,10 @@ export function WatchActivityCard() {
           for (const { activity, match } of ticks) {
             attempted.current.add(activity.externalId);
             const stored = await logSession({ ...activityToDraft(activity, match.template, match.session), quiet: true });
-            if (stored) await recordAutoTicked(activity.externalId);
+            if (stored) {
+              await recordAutoTicked(activity.externalId);
+              addDetail(activity);
+            }
           }
         } finally {
           ticking.current = false;
@@ -83,7 +96,7 @@ export function WatchActivityCard() {
       })();
     }, AUTO_TICK_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [state, plannedSessions, templates, sessionLogs, logSession]);
+  }, [state, plannedSessions, templates, sessionLogs, logSession, addDetail]);
 
   // Trainings switched off ("Wat ASCEND van je horloge gebruikt"): nothing of
   // the watch is offered or asked here.
@@ -142,7 +155,7 @@ export function WatchActivityCard() {
     if (saving) return;
     setSaving(true);
     try {
-      await logSession(activityToDraft(activity, template, match?.session));
+      if (await logSession(activityToDraft(activity, template, match?.session))) addDetail(activity);
     } finally {
       setSaving(false);
       setChoosing(false);

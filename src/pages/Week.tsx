@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { usePageState } from '../components/usePageState';
+import { validWeekStart } from '../utils/pageMemory';
 import { useBackToClose } from '../utils/useBackToClose';
 import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
@@ -34,7 +35,7 @@ export function WeekPage() {
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
-  const [weekStart, setWeekStart] = usePageState('weekStart', mondayOfWeek(todayISO()));
+  const [weekStart, setWeekStart] = usePageState('weekStart', mondayOfWeek(todayISO()), (v) => validWeekStart(v, todayISO()));
   const [monthView, setMonthView] = usePageState('monthView', false);
   // The back button leaves the year overview first, then the page.
   useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });

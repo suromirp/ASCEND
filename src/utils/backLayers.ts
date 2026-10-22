@@ -18,7 +18,10 @@
 //   weggenavigeerd, de laag is dus ongemerkt verdwenen) wordt bij het terug
 //   gaan overgeslagen, zonder dat de router het ziet.
 // - Een terugknop die wij zelf veroorzaken (of die alleen een laag sluit)
-//   gaat niet door naar de router: de pagina verandert immers niet.
+//   gaat niet door naar de router: de pagina verandert immers niet. Dat
+//   geldt alleen als je uitkomt op de routerstap (history.state.key, of idx)
+//   waarop de laag stond. Kom je verder terug (twee stappen in één keer, de
+//   geschiedenis), dan sluit de laag en hoort de router de nieuwe pagina.
 
 export const LAYER_MARK = 'ascendLayer';
 
@@ -51,6 +54,8 @@ interface Entry {
   layer: BackLayer;
   // Staat er nu een stap met dit id in de geschiedenis?
   pushed: boolean;
+  // De routerstap (key of idx) waarop de laag stond.
+  routerKey?: string;
 }
 
 // Hoe lang we op de popstate van een eigen back() wachten voor we toch door
@@ -61,6 +66,15 @@ export function layerIdOf(state: unknown): number {
   if (typeof state !== 'object' || state === null) return 0;
   const mark = (state as Record<string, unknown>)[LAYER_MARK];
   return typeof mark === 'number' && Number.isFinite(mark) ? mark : 0;
+}
+
+// De stap van de router (react-router zet key en idx in history.state).
+export function routerKeyOf(state: unknown): string | undefined {
+  if (typeof state !== 'object' || state === null) return undefined;
+  const { key, idx } = state as Record<string, unknown>;
+  if (typeof key === 'string') return `key:${key}`;
+  if (typeof idx === 'number') return `idx:${idx}`;
+  return undefined;
 }
 
 export function createBackLayers(host: HistoryHost) {
@@ -76,6 +90,8 @@ export function createBackLayers(host: HistoryHost) {
   // must not see it)? A skip over a stale step ends on a different page: the
   // router has to hear that one.
   let waitingIsOurs = false;
+  // The router step our own back() should land on.
+  let waitingKey: string | undefined;
   let waitTimer: unknown;
 
   function run() {
@@ -89,6 +105,7 @@ export function createBackLayers(host: HistoryHost) {
   function startBack(ours: boolean) {
     waiting = true;
     waitingIsOurs = ours;
+    waitingKey = routerKeyOf(host.getState());
     waitTimer = host.setTimer(() => {
       waiting = false;
       run();
@@ -104,6 +121,7 @@ export function createBackLayers(host: HistoryHost) {
 
   function pushEntry(entry: Entry) {
     if (!live.includes(entry)) return;
+    entry.routerKey = routerKeyOf(host.getState());
     host.pushState(stateWithMark(entry.id));
     entry.pushed = true;
   }
@@ -121,13 +139,18 @@ export function createBackLayers(host: HistoryHost) {
       waiting = false;
       host.clearTimer(waitTimer);
     }
-    let handled = expected;
     const landedOn = layerIdOf(host.getState());
+    const landedKey = routerKeyOf(host.getState());
+    // Ours alone only when we are still on the router step we expected.
+    let handled = expected && landedKey === waitingKey;
 
     // Lagen die na de stap zijn geopend waar we nu op staan, gaan dicht.
     const above = live.filter((l) => l.pushed && l.id > landedOn);
     if (above.length > 0) {
-      handled = true;
+      // Alleen een laag sluiten verandert de pagina niet: de router hoeft het
+      // niet te horen. Kom je op een andere routerstap uit dan waar de lagen
+      // stonden, dan wel.
+      if (above.every((l) => l.routerKey === landedKey)) handled = true;
       const remaining = [...above];
       while (remaining.length > 0) {
         const top = remaining[remaining.length - 1];

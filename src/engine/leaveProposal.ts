@@ -164,6 +164,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: mode === 'add' ? 'leave_added' : 'leave_removed',
+    leavePeriodId: period.id,
     issue: mode === 'add' ? `${replaces ? `${title} gewijzigd` : title}: ${when}` : `${title} verwijderd: ${when}`,
     changes: items,
     alternatives: [],

@@ -2,6 +2,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
 import { resolveNavigation } from '../../../engine/navigationSettings';
+import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { SettingsSection } from '../SettingsList';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
@@ -16,6 +17,9 @@ export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte blijft ontbreken en betekent dus de standaard.
   const set = (patch: Partial<OverviewSettings>) => void updateSettings({ overviews: { ...settings.overviews, ...patch } });
   const nav = resolveNavigation(settings);
+  // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte betekent de standaard.
+  const setInsight = (patch: Partial<RunInsightSettings>) => void updateSettings({ runInsight: { ...settings.runInsight, ...patch } });
+  const setTopic = (topic: InsightTopicSwitch, on: boolean) => setInsight({ topics: { ...settings.runInsight?.topics, [topic]: on } });
   const close = () => setSheet(null);
 
   return (
@@ -38,6 +42,24 @@ export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Na een training">
         <SummaryRow id="citaten" title="Citaat" facts={facts} onChange={(on) => set({ completionMoment: on })} />
         <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Loopinzicht"
+        advancedIds={['loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband']}
+        storageKey="vandaag-loopinzicht"
+        advanced={
+          <>
+            <SummaryRow id="loop-efficientie" title="Efficiëntie" facts={facts} onChange={(on) => setTopic('efficiency', on)} />
+            <SummaryRow id="loop-langedagen" title="Lange dagen" facts={facts} onChange={(on) => setTopic('longDays', on)} />
+            <SummaryRow id="loop-berg" title="Bergop en bergaf" facts={facts} onChange={(on) => setTopic('climbing', on)} />
+            <SummaryRow id="loop-vorm" title="Pas en vorm" facts={facts} onChange={(on) => setTopic('form', on)} />
+            <SummaryRow id="loopweer" title="Weer erbij zoeken" facts={facts} info="loopweer" onChange={(on) => setInsight({ weather: on })} />
+            <SummaryRow id="borstband" title="Hartslag van de borstband" facts={facts} info="borstband" onChange={(on) => setInsight({ chestStrap: on })} />
+          </>
+        }
+      >
+        <SummaryRow id="loopinzicht" title="Inzicht na een training" facts={facts} info="loopinzicht" onChange={(on) => setInsight({ enabled: on })} />
       </SettingsSection>
 
       <SettingsSection title="Terugknop">

@@ -58,3 +58,17 @@ export function findSameWorkoutLog(workout: MacroFactorWorkout, logs: SessionLog
   }
   return best?.log;
 }
+
+// The logs that already belong to a workout of this file: their externalId, or
+// the workout whose numbers a hand-made log took over, is one of the file's
+// workouts. A renamed workout may never pick such a log: two workouts on one
+// day with (nearly) the same sets are then two trainings, not one renamed.
+// Pass the result as `taken` to findSameWorkoutLog.
+export function logsOfWorkoutsInFile(workouts: MacroFactorWorkout[], logs: SessionLog[]): Set<string> {
+  const inFile = new Set(workouts.map((w) => w.externalId));
+  const ids = new Set<string>();
+  for (const l of logs) {
+    if ((l.externalId && inFile.has(l.externalId)) || (l.manualMeasured?.strength?.workoutId && inFile.has(l.manualMeasured.strength.workoutId))) ids.add(l.id);
+  }
+  return ids;
+}

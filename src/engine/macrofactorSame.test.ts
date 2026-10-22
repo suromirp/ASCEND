@@ -5,6 +5,7 @@ import { mondayOfWeek } from '../utils/dates';
 import { readMacroFactorCsv, type MacroFactorWorkout } from './macrofactorImport';
 import { doubtAbout, planMacroFactor, strengthDataFor, type NameMapping } from './macrofactorLink';
 import { findSameWorkoutLog, setOverlap } from './macrofactorSame';
+import { linkRows } from './macrofactorNames';
 
 // Made-up export and plan, as in macrofactorLink.test.ts.
 const CSV = [
@@ -100,5 +101,35 @@ describe('een rij die niet klopt wordt apart gezet', () => {
     const flagged = proposals.filter((p) => p.kind !== 'unmapped' && p.doubt);
     expect(flagged).toHaveLength(1);
     expect(flagged[0].workout.date).toBe('2027-05-01');
+  });
+});
+
+describe('twee workouts op één dag, de ene al opgeslagen', () => {
+  // Dezelfde sets twee keer op één dag, onder twee namen; de eerste staat al in een log.
+  const second: MacroFactorWorkout = { ...original, name: 'Lower A herhaling', externalId: 'macrofactor:2026-10-14:lower a herhaling', start: '2026-10-14T07:00:00' };
+  const mapping: NameMapping = { 'lower a': 'tpl_lower_a', 'lower a herhaling': 'tpl_lower_a' };
+
+  it('de tweede kiest de log van de eerste niet: die hoort bij een andere workout in hetzelfde bestand', () => {
+    const { proposals } = planMacroFactor([original, second], mapping, [], week, templates, [storedLog()]);
+    const forSecond = proposals.filter((p) => p.workout.externalId === second.externalId);
+    expect(forSecond.map((p) => p.kind)).toEqual(['new']);
+    expect(proposals.filter((p) => p.kind !== 'unmapped' && 'log' in p && p.log?.id === 'log_mf').map((p) => p.workout.externalId)).not.toContain(second.externalId);
+  });
+
+  it('ook niet als de eerste zijn cijfers al aan een log met de hand gaf', () => {
+    const manual = storedLog({ id: 'log_hand', externalId: undefined, source: 'manual', manualMeasured: { strength: { workoutId: original.externalId } } as SessionLog['manualMeasured'] });
+    const { proposals } = planMacroFactor([original, second], mapping, [], week, templates, [manual]);
+    expect(proposals.filter((p) => p.workout.externalId === second.externalId).map((p) => p.kind)).toEqual(['new']);
+  });
+
+  it('en de koppellijst vraagt de naam van de tweede gewoon', () => {
+    const rows = linkRows([original, second], {}, [], [storedLog()], templates, {});
+    expect(rows.map((r) => r.key)).toEqual(['lower a herhaling']);
+  });
+
+  it('zonder de eerste in het bestand is het wel dezelfde workout (hernoemd)', () => {
+    const { proposals, alreadyDone } = planMacroFactor([second], mapping, [], week, templates, [storedLog()]);
+    expect(proposals.filter((p) => p.kind === 'new')).toHaveLength(0);
+    expect(alreadyDone + proposals.filter((p) => p.kind === 'enrich').length).toBe(1);
   });
 });

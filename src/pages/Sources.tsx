@@ -15,7 +15,7 @@ export function SourcesPage() {
   const { templateById } = useAppData();
   const library = useMemo(() => buildSourceLibrary((id) => templateById.get(id)?.name ?? id), [templateById]);
   const [query, setQuery] = usePageState('query', '');
-  const [category, setCategory] = usePageState<SourceCategory | undefined>('category', undefined);
+  const [category, setCategory] = usePageState<SourceCategory | undefined>('category', undefined, (v) => v === undefined || (CATEGORY_ORDER as readonly unknown[]).includes(v));
   const shown = searchSources(library, query, category);
   const counts = new Map(CATEGORY_ORDER.map((c) => [c, library.filter((s) => s.category === c).length]));
 

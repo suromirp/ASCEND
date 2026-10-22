@@ -9,6 +9,7 @@
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { SessionLog } from '../models/training';
 import type { ExternalActivity } from '../engine/activityImport';
+import type { StreamSet } from '../models/activityDetail';
 
 export interface DateRange {
   from: string; // ISO date
@@ -31,4 +32,8 @@ export interface DataSourceAdapter {
   // planned session it belongs to, and the user decides on the Today card.
   // This is the route intervals.icu uses (integrations/intervalsIcu.ts).
   fetchExternalActivities?: (range: DateRange) => Promise<ExternalActivity[]>;
+  // The series of one activity (heart rate, speed, altitude, the running
+  // dynamics...) in ASCEND's units, one request. engine/activityDetail.ts turns
+  // them into the compact profile that is kept; the series themselves are not.
+  fetchActivityStreams?: (activity: Pick<ExternalActivity, 'externalId' | 'kind' | 'streamsAvailable'>) => Promise<StreamSet | undefined>;
 }

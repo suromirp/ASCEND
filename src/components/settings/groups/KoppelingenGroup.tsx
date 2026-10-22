@@ -69,6 +69,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
             <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
             <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
             <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
+            <SummaryRow id="horloge-details" title="Details van loopjes" facts={facts} onChange={(on) => void changeUse('details', on)} />
             <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />
             <SummaryRow id="rusthartslag" title="Rusthartslag" facts={facts} onChange={(on) => void changeUse('restingHeartRate', on)} />
             <SummaryRow id="hrv" title="HRV" facts={facts} onChange={(on) => void changeUse('hrv', on)} />

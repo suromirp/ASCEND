@@ -21,6 +21,7 @@ import { backupAge, backupAgoText } from './settingsAttention';
 import { shortGoalName } from './settingsStatus';
 import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
+import { resolveRunInsight } from './runInsightSettings';
 import { formatNumberNL } from '../utils/number';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -279,6 +280,20 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       const c = clothingValue(f);
       return { value: c.value, auto: c.auto, dim: !c.auto, hidden: !o.clothingAdvice };
     }
+    case 'loopinzicht':
+      return { checked: resolveRunInsight(s.runInsight).enabled };
+    case 'loop-efficientie':
+      return { checked: resolveRunInsight(s.runInsight).topics.efficiency, hidden: !resolveRunInsight(s.runInsight).enabled };
+    case 'loop-langedagen':
+      return { checked: resolveRunInsight(s.runInsight).topics.longDays, hidden: !resolveRunInsight(s.runInsight).enabled };
+    case 'loop-berg':
+      return { checked: resolveRunInsight(s.runInsight).topics.climbing, hidden: !resolveRunInsight(s.runInsight).enabled };
+    case 'loop-vorm':
+      return { checked: resolveRunInsight(s.runInsight).topics.form, hidden: !resolveRunInsight(s.runInsight).enabled };
+    case 'loopweer':
+      return { checked: resolveRunInsight(s.runInsight).weather };
+    case 'borstband':
+      return { checked: resolveRunInsight(s.runInsight).chestStrap };
     case 'terugknop':
       return { value: choiceShort('terugknop', resolveNavigation(s).tabBack) };
     case 'hervatten':
@@ -299,6 +314,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: f.watch?.autoTick !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
     case 'garmin-leidend':
       return { checked: f.watch?.leads !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
+    case 'horloge-details':
+      return { checked: f.watch?.use.details !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
     case 'slaap':
       return { checked: f.watch?.use.sleep !== false, hidden: !watchOn };
     case 'rusthartslag':

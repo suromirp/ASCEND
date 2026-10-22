@@ -12,6 +12,7 @@
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
 import type { PlannedLeaveMark } from './leave';
+import type { ActivityDetail, RunDynamics } from './activityDetail';
 
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
 
@@ -233,6 +234,9 @@ export interface CardioMetric {
   paceMinPerKm?: number;
   cadence?: number;
   power?: number;
+  // The averages of the running dynamics, when a device measured them
+  // (models/activityDetail.ts). Optional, additive.
+  dynamics?: RunDynamics;
   source: MetricSource;
 }
 
@@ -255,6 +259,8 @@ export interface OutdoorMetric {
   maxHeartRate?: number; // highest heart rate of the whole activity (imported). Optional.
   cadence?: number;
   power?: number; // e.g. Friday's Easy Bike fallback
+  // The averages of the running dynamics (models/activityDetail.ts). Optional, additive.
+  dynamics?: RunDynamics;
   maxElevationM?: number;
   backpackWeightKg?: number;
   // Walked with poles. Lowers the descent load in the leg fatigue index
@@ -360,6 +366,13 @@ export interface SessionLog {
   // A log made by hand that took over the watch's numbers: the hand-made ones
   // as they were. Optional, additive; present only on such a log.
   manualMeasured?: ManualMeasured;
+  // The compact profile of a run or tocht: 48 pieces, the climbs and descents,
+  // the conditions (models/activityDetail.ts). Derived from the watch's series
+  // and fetched again from there if lost, so it is not part of the "never
+  // rewrite" promise: it is added after the log is made, only to a log that has
+  // none. Optional, additive; the backup schema number does not move
+  // (docs/beslissingen/2026-10-22-loopinzicht.md).
+  detail?: ActivityDetail;
   source: MetricSource;
 }
 

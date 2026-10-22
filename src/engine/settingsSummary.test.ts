@@ -309,3 +309,31 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
     for (const id of ['horloge-voorvoegsel', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week']) expect(rowSummary(id, unlinked).hidden).toBe(true);
   });
 });
+
+describe('rowSummary: loopinzicht en details van loopjes', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('loopinzicht staat standaard aan, met de onderwerpen eronder', () => {
+    expect(rowSummary('loopinzicht', facts()).checked).toBe(true);
+    expect(rowSummary('loop-efficientie', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('loop-vorm', withSettings({ runInsight: { topics: { form: false } } })).checked).toBe(false);
+    expect(rowSummary('loopweer', withSettings({ runInsight: { weather: false } })).checked).toBe(false);
+    expect(rowSummary('borstband', facts()).checked).toBe(true);
+  });
+
+  it('staat loopinzicht uit, dan staan de onderwerpen er niet', () => {
+    const off = withSettings({ runInsight: { enabled: false } });
+    for (const id of ['loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm']) expect(rowSummary(id, off).hidden).toBe(true);
+    expect(rowSummary('loopweer', off).hidden).toBeUndefined();
+  });
+
+  it('details van loopjes volgt Trainingen en de koppeling', () => {
+    expect(rowSummary('horloge-details', facts()).checked).toBe(true);
+    const noDetails = facts({ watch: { linked: true, use: { ...DEFAULT_WATCH_USE, details: false }, autoTick: true, leads: true, sendEnabled: false } });
+    expect(rowSummary('horloge-details', noDetails).checked).toBe(false);
+    const noActivities = facts({ watch: { linked: true, use: { ...DEFAULT_WATCH_USE, activities: false }, autoTick: true, leads: true, sendEnabled: false } });
+    expect(rowSummary('horloge-details', noActivities)).toMatchObject({ checked: false, sub: 'Werkt alleen als Trainingen aan staat' });
+    const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
+    expect(rowSummary('horloge-details', unlinked).hidden).toBe(true);
+  });
+});

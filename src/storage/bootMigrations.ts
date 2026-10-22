@@ -15,6 +15,7 @@ import { seedIfEmpty, syncTemplateAndScheduleDefinitions, ensureDefaultTemplates
 import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from './goalMigration';
 import { syncGr5MilestoneDefinitions } from './goalMilestoneSync';
 import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
+import type { BootRunResult } from './bootLock';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
 
 const STEPS: Record<string, () => Promise<unknown>> = {
@@ -47,8 +48,15 @@ export async function runBootMigrations(
     stepLimitMs?: number;
     // For the tests: a step replaced by another function.
     overrides?: Record<string, () => Promise<unknown>>;
+    // Asked before each step: true stops here (the page went out of view), so
+    // the caller can let go of the lock. What is done is in meta; the next run
+    // goes on from there (storage/bootLock.ts).
+    shouldPause?: () => boolean;
+    // Asked before each step: true when another window took the lock over
+    // (Toch openen). This run stops there; that window runs the steps.
+    isCancelled?: () => boolean;
   } = {},
-): Promise<{ skipped: string[] }> {
+): Promise<BootRunResult> {
   const build = options.build ?? currentBuild();
   const limit = options.stepLimitMs ?? BOOT_STEP_LIMIT_MS;
   // The first read of the opening: when the storage does not answer, it hangs
@@ -57,9 +65,15 @@ export async function runBootMigrations(
   let record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
   const skipped: string[] = [];
   let repairsStopped = false;
+  // The repair that went over its time and still runs. The caller keeps the
+  // lock until it is really done, and the planning sync waits for it, so it
+  // never writes plannedSessions at the same time as the sync.
+  let pending: Promise<void> | undefined;
   for (const step of migrationsToRun(record, build)) {
     const run = options.overrides?.[step.id] ?? STEPS[step.id];
     if (!run) continue;
+    if (options.isCancelled?.()) return pending ? { skipped, cancelled: true, pending } : { skipped, cancelled: true };
+    if (!repairsStopped && options.shouldPause?.()) return { skipped, paused: true };
     // Na een herstelstap die bleef hangen, komen de andere herstelstappen deze
     // keer niet: ze schrijven deels dezelfde gegevens, en de hangende kan nog
     // aan het werk zijn. Volgende keer lopen ze gewoon.
@@ -72,12 +86,13 @@ export async function runBootMigrations(
       await run();
     } else {
       let timer: ReturnType<typeof setTimeout> | undefined;
+      const running = run().catch((err: unknown) => {
+        // Een herstelstap die misgaat houdt het openen niet tegen.
+        console.error(`Opstartstap ${step.id} mislukt`, err);
+        return TIMED_OUT;
+      });
       const outcome = await Promise.race([
-        run().catch((err: unknown) => {
-          // Een herstelstap die misgaat houdt het openen niet tegen.
-          console.error(`Opstartstap ${step.id} mislukt`, err);
-          return TIMED_OUT;
-        }),
+        running,
         new Promise<typeof TIMED_OUT>((resolve) => (timer = setTimeout(() => resolve(TIMED_OUT), limit))),
       ]);
       clearTimeout(timer);
@@ -85,13 +100,14 @@ export async function runBootMigrations(
         console.warn(`Opstartstap ${step.id} niet afgerond; ASCEND opent zonder, volgende keer opnieuw.`);
         skipped.push(step.id);
         repairsStopped = true;
+        pending = running.then(() => undefined);
         continue;
       }
     }
     record = recordAfter(record, build, step);
     await MetaRepo.set(BOOT_MIGRATIONS_KEY, record);
   }
-  return { skipped };
+  return pending ? { skipped, pending } : { skipped };
 }
 
 // Voor de test: elke stap uit engine/bootWatch.ts heeft hier zijn functie.

@@ -36,6 +36,9 @@ import {
 } from '../storage/database';
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
+import { runBootUnderLock } from '../storage/bootLock';
+import { describeStorageError, describeWriteError } from '../storage/storageError';
+import { storageIsOpen, whenStorageOpen } from '../storage/lifecycle';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
 import { withWeekRepeated } from '../engine/repeatWeek';
@@ -48,7 +51,7 @@ import type { IllnessKind } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
-import { planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
+import { applyRestDayInOrder, planRestDayChange, type RestDayPlan } from '../engine/restDayProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
@@ -69,7 +72,7 @@ import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { createSerialQueue } from '../utils/serialQueue';
-import { runBoot, type BootStep, BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from '../engine/bootWatch';
+import { bootLockChoice, runBoot, type BootStep } from '../engine/bootWatch';
 
 type AdviceResponse = StoredResponse;
 
@@ -97,43 +100,42 @@ const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefi
 // than 10 s (a tab frozen in the background), this window says so, with
 // Opnieuw proberen, instead of a black screen or a second run at the same time
 // (docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md).
-class BootLockBusy extends Error {
-  constructor() {
-    super('boot lock busy');
-    this.name = 'BootLockBusy';
-  }
-}
-function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
-  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-  if (!locks) return fn();
-  // "Toch openen": take the lock from the window that keeps it (a tab Android
-  // froze), once. The boot steps are idempotent and remember per version what
-  // ran, so the rare overlap with a window that wakes up again does no harm.
-  let steal = false;
+// The lock is asked only while the page is in view, let go when it goes out of
+// view between two steps, and kept until a repair that went over its time is
+// really done (storage/bootLock.ts).
+// Resolves when the boot steps are really done, a slow repair included. The
+// planning sync waits for it, so it never writes the plan at the same time.
+let bootSettled: Promise<void> = Promise.resolve();
+function sessionStorageOrNull(): Storage | null {
   try {
-    steal = sessionStorage.getItem(BOOT_STEAL_FLAG) === '1';
-    if (steal) sessionStorage.removeItem(BOOT_STEAL_FLAG);
+    return typeof sessionStorage !== 'undefined' ? sessionStorage : null;
   } catch {
-    // No session storage: wait as usual.
+    return null;
   }
-  if (steal) return locks.request('ascend-boot', { steal: true }, fn) as Promise<T>;
-  const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(10_000) : undefined;
-  return (locks.request('ascend-boot', signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
-    // Only the wait for the lock itself; an error from fn goes through as it is.
-    if (signal?.aborted && err === signal.reason) throw new BootLockBusy();
-    throw err;
-  });
 }
-
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= withBootLock(async () => {
-    const { skipped } = await runBootMigrations({ onStep: noteBootMigration });
-    if (skipped.length > 0) console.warn('Opstartstappen overgeslagen tot de volgende keer', skipped);
-  }).catch((err: unknown) => {
-    // Opnieuw proberen in the same page asks for the lock again.
-    bootMigrations = null;
-    throw err;
-  });
+  if (!bootMigrations) {
+    const { ready, settled } = runBootUnderLock({
+      locks: typeof navigator !== 'undefined' ? navigator.locks : undefined,
+      whenOpen: whenStorageOpen,
+      isOpen: storageIsOpen,
+      run: (shouldPause, isCancelled) => runBootMigrations({ onStep: noteBootMigration, shouldPause, isCancelled }),
+      // Toch openen (the screen for a lock that stays taken): this one load
+      // takes the lock over (docs/beslissingen/2026-10-22-toch-openen.md).
+      steal: bootLockChoice(sessionStorageOrNull()) === 'steal',
+    });
+    bootSettled = settled;
+    bootMigrations = ready.then(
+      (skipped) => {
+        if (skipped.length > 0) console.warn('Opstartstappen overgeslagen tot de volgende keer', skipped);
+      },
+      (err: unknown) => {
+        // Opnieuw proberen in the same page asks for the lock again.
+        bootMigrations = null;
+        throw err;
+      },
+    );
+  }
   return bootMigrations;
 }
 
@@ -234,6 +236,9 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boo
   };
   return horizonQueue
     .run(async () => {
+      // A repair from the opening that went over its time may still write the
+      // plan (storage/bootLock.ts): first let it finish.
+      await bootSettled;
       if ((await currentKey()) === lastHorizonKey) return false;
       await prime?.();
       const result = await syncProgramHorizon();
@@ -279,15 +284,6 @@ import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine
 import { raceBlocks } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
 import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
-
-// Turns a failed IndexedDB open/read into something the user can act on.
-function describeStorageError(err: unknown): string {
-  const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-  if (name === 'BootLockBusy') return BOOT_LOCK_BUSY_TEXT;
-  if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
-  if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';
-  return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
-}
 
 interface AppData {
   loading: boolean;
@@ -591,10 +587,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // before the first write lands must not create a second log.
   const loggingInFlight = useRef(new Set<string>());
   const reportStorageError = useCallback((err: unknown) => {
-    const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-    setStorageNotice(name === 'QuotaExceededError'
-      ? 'Opslaan lukt niet: de opslag op dit toestel is vol. Maak een back-up en ruim ruimte op.'
-      : 'Opslaan is niet gelukt. Probeer het opnieuw; lukt het niet, maak dan een back-up via Meer, Gegevens.');
+    setStorageNotice(describeWriteError(err));
   }, []);
   const [plannerAdvice, setPlannerAdvice] = useState<Advice | null>(null);
   const [strengthProgramStrategies, setStrengthProgramStrategies] = useState<StrengthProgramStrategy[]>([]);
@@ -682,7 +675,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => syncChannel.removeEventListener('message', onMessage);
   }, [refresh]);
 
-  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore): Promise<boolean> => {
+  // `afterWrites`: runs once the plan rows are stored and before the planning
+  // run, for a setting that goes with this layout (the rest day).
+  const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore, afterWrites?: () => Promise<void>): Promise<boolean> => {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
     if (real.length === 0) return false;
     await planSettled();
@@ -718,6 +713,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       configBefore: restore?.config,
       createdAt: new Date().toISOString(),
     });
+    await afterWrites?.();
     planRevision++;
     await refresh();
     // The intervals.icu agenda follows the move now, not at the next opening;
@@ -1187,6 +1183,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // Once per page load, like the migrations.
         if (backgroundPlanningStarted) return;
         backgroundPlanningStarted = true;
+        // A repair from the opening that still runs writes the plan too: the
+        // background steps start when it is done (storage/bootLock.ts).
+        await bootSettled;
         // One after the other, never at once: the sync of today first, then
         // the steps below; each reads what the one before wrote, and each ends
         // in a refresh that runs the sync and its week check over the result
@@ -1483,12 +1482,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
-      const log = sessionLogs.find((l) => l.id === logId);
+      // The stored log, not the one on screen: the run profile may have come in since.
+      const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
       if (!log) return;
       await SessionLogsRepo.put({ ...log, workout });
       await refresh();
     },
-    [sessionLogs, refresh],
+    [refresh],
   );
 
   const moveSession = useCallback(
@@ -2025,10 +2025,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await planSettled();
     const stored = await SettingsRepo.get();
     const restore = { settings: { restDay: stored.restDay } };
-    // The rest day and its layout go together: the sync does not lay the week out again.
-    setSettings(await SettingsRepo.set({ restDay: plan.restDay as AppSettings['restDay'] }));
-    await MetaRepo.set('appliedRestDay', plan.restDay);
-    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
+    // The rest day and its layout go together: first the layout, then the rest
+    // day, so a layout that could not be stored never leaves a rest day without
+    // it; the sync after it does not lay the week out again.
+    await applyRestDayInOrder(plan, {
+      commit: (afterWrites) => commitPlanChange(plan.proposal, plan.proposal.issue, restore, afterWrites),
+      storeRestDay: async (day) => {
+        setSettings(await SettingsRepo.set({ restDay: day as AppSettings['restDay'] }));
+        await MetaRepo.set('appliedRestDay', day);
+      },
+      showUnchanged: () => showStatusOnlyChange(plan.proposal, restore),
+    });
   }, [commitPlanChange, showStatusOnlyChange]);
 
   // What the extra training of the week is chosen from (engine/extraRun.ts).

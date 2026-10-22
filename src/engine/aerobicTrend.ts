@@ -34,6 +34,12 @@ export interface AerobicTrend {
   // beats more (negative = fewer). Pace and heart rate in proportion, as
   // above: an estimate, good for a trend.
   bpmChange?: number;
+  // The two averages the change is made of, seconds per km at the reference heart
+  // rate: the last 2 weeks and the 2 weeks a month before. Read by the Lopen
+  // section on Je stand (engine/runTrends.ts), which shows this same trend and no
+  // second one.
+  recentSec?: number;
+  earlierSec?: number;
 }
 
 const WEEKS = 12;
@@ -103,7 +109,7 @@ export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], p
   const changeSec = recent !== undefined && earlier !== undefined ? recent - earlier : undefined;
   const bpmChange = recent !== undefined && earlier !== undefined ? referenceHr * (recent / earlier - 1) : undefined;
 
-  return { referenceHr, points, runs: inZone.length, outsideZone: candidates.length - inZone.length, changeSec, bpmChange };
+  return { referenceHr, points, runs: inZone.length, outsideZone: candidates.length - inZone.length, changeSec, bpmChange, recentSec: recent, earlierSec: earlier };
 }
 
 // --- the moment you hear about it ------------------------------------------

@@ -36,7 +36,7 @@ import { computeCapacity } from '../engine/capacity';
 import { targetPackWeightKg } from '../engine/demand';
 import { computeActiveGoalOverviews } from '../engine/goalOverview';
 import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
-import { diffWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionDiff';
+import { diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { planEndDay } from '../engine/programLayout';
@@ -51,8 +51,6 @@ export type WeeklyPrescriptionStepOutcome =
   | { kind: 'ask'; wrote: false; proposal: PlanChangeProposal; realChanges: PlanChangeItem[]; planned: PlannedSession[]; templates: SessionTemplate[] }
   // Toegepast en vastgelegd (met een regel in het wijzigingslogboek).
   | { kind: 'applied'; wrote: true; proposal: PlanChangeProposal; realChanges: PlanChangeItem[]; planned: PlannedSession[]; templates: SessionTemplate[]; updatedSessions: PlannedSession[] };
-
-const sameSession = (a: PlannedSession, b: PlannedSession) => JSON.stringify(a) === JSON.stringify(b);
 
 export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Promise<WeeklyPrescriptionStepOutcome> {
   const [goals, logs, manualEvidence, planned, tpls, engineConfig, strategies, previousPrescriptions, programs, appSettings, storedTraining] = await Promise.all([
@@ -115,15 +113,21 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   );
   proposal.changes = delta.changes;
 
+  // Eerst uitrekenen wat de wijzigingen met de planning doen (puur, zonder
+  // opslag), zodat de telling hieronder de uitkomst kan vergelijken.
+  const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
+
   // 'keep' is geen wijziging. Bij de eerste opbouw (nog geen enkel voorschrift
   // opgeslagen: een verse installatie of net een back-up teruggezet, want
   // voorschriften zijn afgeleide gegevens en zitten niet in de back-up) is het
-  // invullen van de inhoud van trainingen ook geen wijziging: het toestel had
-  // diezelfde inhoud al. Zonder dit meldde de eerste opening na een back-up
-  // "Weekplanning bijgewerkt (9 trainingen)" bij een planning die al klopte
-  // (Doorloop, punt 14).
+  // invullen van de inhoud van trainingen geen wijziging zolang de rij van de
+  // training gelijk blijft: het toestel had diezelfde inhoud al. Zonder dit
+  // meldde de eerste opening na een back-up "Weekplanning bijgewerkt (9
+  // trainingen)" bij een planning die al klopte (Doorloop, punt 14). Wordt de
+  // rij wel anders, dan telt het gewoon, met de vraag of melding erbij
+  // (engine/weeklyPrescriptionDiff.ts#realPlanChanges).
   const initialBuild = previousPrescriptions.length === 0 && storedTraining.length === 0;
-  const realChanges = proposal.changes.filter((c) => c.action !== 'keep' && !(initialBuild && (c.action === 'replace' || c.action === 'reduce')));
+  const realChanges = realPlanChanges(proposal.changes, { initialBuild, before: planned, after: updatedSessions });
 
   // Fase 3 — "Wijzigingen toepassen: altijd eerst vragen": the forecast
   // changes become a coach item to accept or decline instead of being
@@ -133,7 +137,6 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
     return { kind: 'ask', wrote: false, proposal, realChanges, planned, templates: tpls };
   }
 
-  const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
   if (unsupported.length > 0) {
     // Same atomicity guarantee as runForecastReplan: never an
     // unintended partial apply.
