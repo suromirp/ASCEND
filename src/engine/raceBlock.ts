@@ -310,7 +310,8 @@ function restoreLegSwaps(open: PlannedSession[], update: Map<string, PlannedSess
   // version, a day before the upper body day of the same week, in a week
   // with nothing for it to keep its distance from, goes back.
   const isStrength = (s: PlannedSession, legs: boolean) => { const t = byId.get(s.templateId); return !!t && t.type === 'strength' && isLegHeavyTemplate(t) === legs; };
-  for (const legs of sessions.filter((s) => !s.raceBlock && free(s) && isStrength(s, true))) {
+  // (Not one a tocht shortened: that carries the tocht's mark, engine/weekValidator.ts.)
+  for (const legs of sessions.filter((s) => !s.raceBlock && !s.leave && free(s) && isStrength(s, true))) {
     const short = byId.get(legs.templateId)?.durationVariants.short;
     // Race week has short versions of its own (the taper).
     if (!short || legs.plannedMinutes !== short || raceWeeks.has(legs.weekStartDate)) continue;

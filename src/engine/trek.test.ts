@@ -54,7 +54,10 @@ describe('de afbouw voor een tocht', () => {
     const light = lightDays([goal]);
     expect([...light.keys()].sort()).toEqual(['2026-11-11', '2026-11-12', '2026-11-13', '2026-11-16']);
     expect(light.get('2026-11-16')?.side).toBe('after');
-    expect(leaveLabelOn('2026-11-11', [goal])).toMatchObject({ kind: 'light', title: 'Dag voor je tocht', note: 'Sneeuwhike' });
+    expect(leaveLabelOn('2026-11-11', [goal])).toMatchObject({ kind: 'light', title: 'Drie dagen voor je tocht', note: 'Sneeuwhike' });
+    expect(leaveLabelOn('2026-11-12', [goal])?.title).toBe('Twee dagen voor je tocht');
+    expect(leaveLabelOn('2026-11-13', [goal])?.title).toBe('Dag voor je tocht');
+    expect(leaveLabelOn('2026-11-16', [goal])?.title).toBe('Dag na je tocht');
     const training = trekToPeriod(draft({ importance: 'training' }), 'trek-b');
     expect([...lightDays([training]).keys()].sort()).toEqual(['2026-11-13', '2026-11-16']);
   });
@@ -181,6 +184,146 @@ describe('de hele planningsronde met een tocht', () => {
   });
 });
 
+describe('een tocht meerdere keer wijzigen', () => {
+  const weeks = ['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30', '2026-12-07'];
+  const start = planPass(weeks.flatMap(week), context([])).sessions;
+  const t1 = trekToPeriod(draft({ startDate: '2026-11-15' }), 't1');
+  const t2 = trekToPeriod(draft({ startDate: '2026-12-06' }), 't1'); // same id: the same tocht, changed
+  let n = 0;
+  const plan = (mode: 'add' | 'remove', period: LeavePeriod, existing: LeavePeriod[], sessions: PlannedSession[], replaces?: LeavePeriod) =>
+    planLeaveChange({ mode, period, replaces, existing, sessions, logs: [], templates, today: TODAY, context: (periods) => context(periods, { newId: () => `d-${n++}` }) });
+  const accept = (p: LeavePlan, sessions: PlannedSession[]) =>
+    applyPlanChangeItems(p.proposal.changes, sessions, () => `acc-${n++}`, { by: 'proposal', proposalId: p.proposal.id, at: '2026-10-22T08:00:00.000Z' }).sessions;
+  const shape = (list: PlannedSession[]) => open(list).map((s) => `${s.scheduledDate} ${s.templateId}`).sort();
+  const calm = (list: PlannedSession[], periods: LeavePeriod[]) => expect(planPass(list, context(periods)).repairs).toEqual([]);
+
+  it('aanmaken, wijzigen, verwijderen: de open planning is weer de beginplanning, zonder dubbelen', () => {
+    const s1 = accept(plan('add', t1, [], start), start);
+    calm(s1, [t1]);
+    const s2 = accept(plan('add', t2, [t1], s1, t1), s1);
+    calm(s2, [t2]);
+    const s3 = accept(plan('remove', t2, [t2], s2), s2);
+    expect(shape(s3)).toEqual(shape(start));
+    // Also the length: a leg day the tocht made short is as long as before.
+    expect(s3.filter((x) => x.status !== 'skipped').map((x) => x.plannedMinutes ?? 0).every((m) => m === 0 || m >= 70)).toBe(true);
+    calm(s3, []);
+  });
+
+  it('aanmaken, wijzigen, terugwijzigen, verwijderen: ook dan precies de beginplanning', () => {
+    const s1 = accept(plan('add', t1, [], start), start);
+    const s2 = accept(plan('add', t2, [t1], s1, t1), s1);
+    const s3 = accept(plan('add', t1, [t2], s2, t2), s2);
+    expect(shape(s3)).toEqual(shape(s1));
+    calm(s3, [t1]);
+    const s4 = accept(plan('remove', t1, [t1], s3), s3);
+    expect(shape(s4)).toEqual(shape(start));
+    expect(new Set(shape(s4)).size).toBe(shape(s4).length);
+    calm(s4, []);
+  });
+
+  it('wat een tocht liet vervallen komt terug op zijn eigen rij, zonder merk, en met de goede reden', () => {
+    const s1 = accept(plan('add', t1, [], start), start);
+    const dropped = s1.filter((s) => s.status === 'skipped' && s.leave?.periodId === 't1' && s.leave.role === 'dropped');
+    expect(dropped.length).toBeGreaterThan(0);
+    const change = plan('add', t2, [t1], s1, t1);
+    const back = change.proposal.changes.filter((c) => c.action === 'add' && c.plannedSessionId);
+    expect(back.length).toBeGreaterThan(0);
+    for (const c of back) {
+      expect(c.reason).toMatch(/^Terug naar .*, de tocht ligt nu anders\.$/);
+      expect(c.reason).not.toMatch(/Vrije dag/);
+    }
+    const s2 = accept(change, s1);
+    for (const d of dropped.filter((x) => back.some((c) => c.plannedSessionId === x.id))) {
+      const row = s2.find((s) => s.id === d.id)!;
+      expect(row.status).toBe('planned');
+      expect(row.leave).toBeUndefined();
+    }
+    expect(s2.length).toBeLessThanOrEqual(s1.length + 6);
+  });
+
+  it('ongedaan maken zet de oude rijen terug zoals ze waren', () => {
+    const s1 = accept(plan('add', t1, [], start), start);
+    const change = plan('add', t2, [t1], s1, t1);
+    const s2 = accept(change, s1);
+    // The same undo as the app: the touched rows as they were, the added ones gone.
+    const touched = new Set(change.proposal.changes.map((c) => c.plannedSessionId).filter(Boolean));
+    const originalIds = new Set(s1.map((s) => s.id));
+    const undone = s2.filter((s) => originalIds.has(s.id)).map((s) => (touched.has(s.id) ? s1.find((o) => o.id === s.id)! : s));
+    expect(undone).toEqual(s1);
+  });
+});
+
+describe('het terrein van een tocht kiest de wandeling', () => {
+  const walks = (terrain: TrekDraft['terrain']) => {
+    const period = trekToPeriod(draft({ terrain, startDate: '2026-11-14', days: 2 }), 'trek-t');
+    const run = planPass(['2026-11-09', '2026-11-16'].flatMap(week), context([period]));
+    return [on(run.sessions, '2026-11-14'), on(run.sessions, '2026-11-15'), run] as const;
+  };
+  it('vlak en heuvels een rugzakwandeling, bergen en sneeuw de bergtocht', () => {
+    expect(walks('flat_trail').slice(0, 2)).toEqual([['tpl_ruck_walk'], ['tpl_ruck_walk']]);
+    expect(walks('uneven_trail').slice(0, 2)).toEqual([['tpl_ruck_walk'], ['tpl_ruck_walk']]);
+    expect(walks('mountain').slice(0, 2)).toEqual([['tpl_mountain_hike'], ['tpl_mountain_hike']]);
+    expect(walks('snow').slice(0, 2)).toEqual([['tpl_mountain_hike'], ['tpl_mountain_hike']]);
+  });
+  it('een tweede ronde verandert niets, ook niet bij een rugzakwandeling', () => {
+    const [, , run] = walks('flat_trail');
+    const period = trekToPeriod(draft({ terrain: 'flat_trail', startDate: '2026-11-14', days: 2 }), 'trek-t');
+    expect(planPass(run.sessions, context([period])).repairs).toEqual([]);
+  });
+});
+
+describe('een zware beendag vlak na een tocht', () => {
+  // Tocht on Saturday 14 and Sunday 15 November. Benen A stands on Tuesday 17, two days after: too close
+  // (72 hours after a mountain hike). Wednesday has Boven A, Friday to Sunday are taken.
+  const monday = '2026-11-16';
+  const plan7 = (['tpl_herstel', 'tpl_lower_a', 'tpl_upper_a', 'tpl_herstel', 'tpl_upper_b', 'tpl_hill_intervals', 'tpl_long_run']).map((templateId, i): PlannedSession => ({ id: `w-${i}`, templateId, scheduledDate: addDays(monday, i), weekStartDate: monday, status: 'planned', order: i }));
+  const trekWeekend = trekToPeriod(draft({ startDate: '2026-11-14', importance: 'training' }), 'trek-w');
+  const legDay = 'w-1';
+  const budget = (minutes: number) => Object.fromEntries(['wed'].map((d) => [d, { preferredMinutes: minutes, softFlexMinutes: 0 }])) as PlanPassContext['dailyTimeBudget'];
+
+  it('streng en zonder dag die past: hij valt weg, met een concrete reden in het voorstel', () => {
+    const base = planPass(plan7, context([])).sessions;
+    const change = planLeaveChange({ mode: 'add', period: trekWeekend, existing: [], sessions: base, logs: [], templates, today: TODAY, context: (p) => context(p, { trekRest: 'strict' }) });
+    const item = change.proposal.changes.find((c) => c.plannedSessionId === legDay);
+    expect(item?.action).toBe('remove');
+    expect(item?.reason).toBe('Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.');
+  });
+
+  it('soepel (standaard): de korte versie blijft 48 uur na de tocht staan, met een zin die het uitlegt', () => {
+    const base = planPass(plan7, context([])).sessions;
+    const change = planLeaveChange({ mode: 'add', period: trekWeekend, existing: [], sessions: base, logs: [], templates, today: TODAY, context: (p) => context(p) });
+    const item = change.proposal.changes.find((c) => c.plannedSessionId === legDay);
+    expect(item).toMatchObject({ action: 'move', fromDate: '2026-11-17', toDate: '2026-11-17', plannedMinutes: 45, reason: 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.' });
+    const applied = applyPlanChangeItems(change.proposal.changes, base, () => 'x', { by: 'proposal', proposalId: change.proposal.id, at: '2026-10-22T08:00:00.000Z' }).sessions;
+    expect(applied.find((s) => s.id === legDay)).toMatchObject({ scheduledDate: '2026-11-17', plannedMinutes: 45 });
+    expect(planPass(applied, context(change.periodsAfter)).repairs).toEqual([]);
+  });
+
+  it('soepel verandert niets voor de volle versie of buiten een tocht', () => {
+    // 24 hours after the tocht nothing is soft: the day goes, also on soft.
+    const near = trekToPeriod(draft({ startDate: '2026-11-15', days: 2, importance: 'training' }), 'trek-n'); // Sun 15 and Mon 16
+    const run = planPass(plan7, context([near]));
+    expect(run.repairs.find((r) => r.sessionId === legDay)?.plannedMinutes).not.toBe(45);
+    // Without a tocht the same week is left alone.
+    expect(planPass(plan7, context([])).repairs).toEqual([]);
+  });
+
+  it('past de korte versie op een andere dag van de week, dan gaat hij daarheen in plaats van te vervallen', () => {
+    // Wednesday holds 120 minutes, the other days have no limit but are taken: the full Benen A (75) does not fit next to another training, the short one (45) does.
+    const ctx = (periods: LeavePeriod[]) => context(periods, { dailyTimeBudget: budget(120) });
+    const run = planPass(plan7, ctx([trekWeekend]));
+    const repair = run.repairs.find((r) => r.sessionId === legDay);
+    expect(repair).toMatchObject({ rule: 'LEG-SPACING', from: '2026-11-17', to: '2026-11-18', plannedMinutes: 45 });
+    expect(repair?.removed).toBeUndefined();
+    expect(run.sessions.some((s) => s.id === legDay)).toBe(true);
+  });
+
+  it('buiten tochten verandert er niets: dezelfde week zonder tocht blijft zoals hij was', () => {
+    const base = planPass(plan7, context([])).sessions;
+    expect(base.map((s) => `${s.scheduledDate} ${s.templateId} ${s.plannedMinutes ?? ''}`)).toEqual(plan7.map((s) => `${s.scheduledDate} ${s.templateId} `));
+  });
+});
+
 describe('oude back-ups en de opgeslagen vorm', () => {
   it('een back-up van voor de tochten (geen trek op de periode) importeert zoals eerst', () => {
     const old = [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15', note: 'Weekend' }, { id: 'p2', kind: 'no_training', startDate: '2026-12-24', endDate: '2026-12-31' }];
@@ -191,8 +334,8 @@ describe('oude back-ups en de opgeslagen vorm', () => {
     const p = trekToPeriod(draft(), 'trek-a');
     expect(migrateLeavePeriods(JSON.parse(JSON.stringify([p])))).toEqual({ periods: [p], skipped: 0 });
   });
-  it('beschadigde tochtgegevens: de periode blijft, alleen de gegevens vervallen', () => {
+  it('beschadigde tochtgegevens: de periode blijft, alleen de gegevens vervallen, en dat wordt geteld', () => {
     const bad = [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15', trek: { name: 'X', terrain: 'lava', tent: true, importance: 'goal' } }];
-    expect(migrateLeavePeriods(bad)).toEqual({ periods: [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15' }], skipped: 0 });
+    expect(migrateLeavePeriods(bad)).toEqual({ periods: [{ id: 'p1', kind: 'trek', startDate: '2026-11-14', endDate: '2026-11-15' }], skipped: 1 });
   });
 });

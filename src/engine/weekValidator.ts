@@ -83,6 +83,9 @@ export interface CheckInput {
   until?: string;
   // Periods of free days, holidays and treks (models/leave.ts).
   leave?: LeavePeriod[];
+  // Rest after a tocht (Instellingen): 'soft' (default) accepts the short
+  // version of a heavy leg day from 48 hours after a tocht, 'strict' keeps 72.
+  trekRest?: 'soft' | 'strict';
 }
 
 const LONG = new Set(['tpl_long_run', 'tpl_mountain_hike']);
@@ -160,7 +163,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     // The day before and after a trek: nothing hard, nothing heavy for the legs.
     const lightDay = leave.light.get(s.scheduledDate);
     if (lightDay && !leave.inTrek(s) && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t) || LONG.has(t.id))) {
-      findings.push({ rule: 'LEAVE-LIGHT', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} de dag ${lightDay.side === 'before' ? 'voor' : 'na'} je tocht (${day(s.scheduledDate)}).` });
+      findings.push({ rule: 'LEAVE-LIGHT', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} ${lightDay.side === 'before' ? (lightDay.distance <= 1 ? 'de dag voor je tocht' : `${lightDay.distance} dagen voor je tocht`) : 'de dag na je tocht'} (${day(s.scheduledDate)}).` });
     }
 
     // The rest day stays free; what you put there yourself is your choice.
@@ -234,6 +237,8 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       if (ANCHORS.has(c.templateId)) continue; // TEST-FRESH and AFTER-TEST cover the test
       if (c.scheduledDate > s.scheduledDate || (c.scheduledDate === s.scheduledDate && c.id < s.id)) continue;
       if (leave.inTrek(s) && leave.inTrek(c)) continue; // the days of one trek follow each other on purpose
+      // Soft rest after a tocht: the short version of a heavy leg day may stand 48 hours after a walking day of the tocht.
+      if (input.trekRest !== 'strict' && leave.inTrek(c) && c.scheduledDate < s.scheduledDate && daysBetween(c.scheduledDate, s.scheduledDate) >= 2 && t.type === 'strength' && isLegHeavyTemplate(t) && !!t.durationVariants.short && s.plannedMinutes === t.durationVariants.short) continue;
       const subject = level(s) === 3 || level(c) !== 3 ? s : c;
       findings.push({ rule: 'LEG-SPACING', date: s.scheduledDate, sessionIds: [c.id, s.id], subjectId: subject.id, level: level(subject), message: `${tpl(c)?.name ?? 'Training'} (${day(c.scheduledDate)}) en ${name} (${day(s.scheduledDate)}) te dicht op elkaar.` });
     }
@@ -265,6 +270,17 @@ export interface Repair {
   removed?: boolean;
   // A session the planning put on the plan (it was not there before).
   added?: boolean;
+  // A reason of its own in plain words, when the rule's general one is too vague.
+  reason?: string;
+}
+
+export const SOFT_REST_REASON = 'Iets eerder dan ASCEND graag ziet na je tocht, daarom de korte versie.';
+
+// Why a leg day next to a tocht is let go: concrete, so it is clear it is not a mistake.
+export function legAndTrekReason(afterTrek: boolean): string {
+  return afterTrek
+    ? 'Te dicht na je tocht: na een bergtocht houdt ASCEND 72 uur tot de volgende zware beendag, en deze week is er geen dag voor.'
+    : 'Te dicht voor je tocht: tussen een zware beendag en je tocht houdt ASCEND 48 uur, en deze week is er geen dag voor.';
 }
 
 export interface RepairResult {
@@ -297,16 +313,18 @@ export function repairWeeks(input: CheckInput): RepairResult {
   let sessions = input.sessions;
   const repairs: Repair[] = [];
   const tried = new Set<string>();
+  // While true the rest after a tocht counts the strict 72 hours (the first try before the soft one).
+  let strictRest = false;
 
   // A change is only kept when the weeks around it are better: fewer
   // findings, and none that wasn't there before. The weeks as they are now
   // are judged once, every candidate against them.
   const judge = (dates: string[]) => {
     const weeks = new Set(dates.flatMap((d) => [-7, 0, 7].map((o) => mondayOfWeek(addDays(d, o)))));
-    const before = validateWeeks({ ...input, sessions }, weeks);
+    const before = validateWeeks({ ...input, ...(strictRest ? { trekRest: 'strict' as const } : {}), sessions }, weeks);
     const beforeKeys = new Set(before.map(key));
     return (changed: PlannedSession[]) => {
-      const after = validateWeeks({ ...input, sessions: changed }, weeks);
+      const after = validateWeeks({ ...input, ...(strictRest ? { trekRest: 'strict' as const } : {}), sessions: changed }, weeks);
       return after.length < before.length && after.every((f) => beforeKeys.has(key(f)));
     };
   };
@@ -413,12 +431,40 @@ export function repairWeeks(input: CheckInput): RepairResult {
       continue;
     }
     if (relocate(subject, next.rule)) continue;
-    // The days of a trek stay; a leg day of the system that cannot find another
-    // place within 72 hours of one is let go, so the legs come to the trek fresh
-    // and leave it rested.
-    if (next.rule === 'LEG-SPACING' && next.sessionIds.some((id) => id !== subject.id && sessions.some((o) => o.id === id && leave.inTrek(o)))) {
+    // The days of a trek stay. A leg day of the system next to one first looks
+    // for a day 72 hours away, full and then short (as for TEST-FRESH). Then,
+    // unless the setting says strict, the short version from 48 hours after the
+    // tocht, on its own day or another. Only when none of that fits it is let go.
+    const trekPartner = next.rule === 'LEG-SPACING' ? next.sessionIds.map((id) => sessions.find((o) => o.id === id)).find((o) => !!o && o.id !== subject.id && leave.inTrek(o)) : undefined;
+    if (trekPartner) {
+      const short = t.durationVariants.short;
+      const canShort = t.type === 'strength' && isLegHeavyTemplate(t) && !!short && subject.plannedMinutes !== short;
+      strictRest = true;
+      const strictShort = canShort && relocate(subject, next.rule, [], short);
+      strictRest = false;
+      // A leg day the tocht shortened carries the tocht's mark, so removing the
+      // tocht can put it back and the old leg-swap cleanup leaves it alone.
+      const periodId = leave.days.get(trekPartner.scheduledDate)?.period.id;
+      const mark = (from: string) => {
+        if (periodId) sessions = sessions.map((x) => (x.id === subject.id && !x.leave ? { ...x, leave: { periodId, role: 'moved' as const, from } } : x));
+      };
+      if (strictShort) { mark(subject.scheduledDate); continue; }
+      if (canShort && input.trekRest !== 'strict') {
+        const inPlace = sessions.map((x) => (x.id === subject.id ? { ...x, plannedMinutes: short } : x));
+        if (judge([subject.scheduledDate])(inPlace)) {
+          sessions = inPlace;
+          mark(subject.scheduledDate);
+          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, plannedMinutes: short, reason: SOFT_REST_REASON });
+          continue;
+        }
+        if (relocate(subject, next.rule, [], short)) {
+          repairs[repairs.length - 1].reason = SOFT_REST_REASON;
+          mark(subject.scheduledDate);
+          continue;
+        }
+      }
       sessions = sessions.filter((s) => s.id !== subject.id);
-      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, removed: true });
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, removed: true, reason: legAndTrekReason(subject.scheduledDate > trekPartner.scheduledDate) });
     }
   }
   return { sessions, repairs, remaining: validateWeeks({ ...input, sessions }) };
@@ -428,7 +474,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
 const REASON: Record<RepairRule, string> = {
   'GOAL-DAY': 'niets op of na de dag van je doel',
   'LEAVE-OFF': 'je bent vrij of op tocht',
-  'LEAVE-LIGHT': 'de dag voor en na je tocht blijft licht',
+  'LEAVE-LIGHT': 'de dagen voor en na je tocht blijven licht',
   'LEAVE-PLACE': 'past bij je vrije periode',
   'REST-DAY': 'je rustdag blijft vrij',
   'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
@@ -446,7 +492,7 @@ export function describeRepair(r: Repair, name: string): string {
   const moved = r.from !== r.to ? `${day(r.from)} naar ${day(r.to)}` : '';
   const shorter = r.plannedMinutes ? `korter, ${r.plannedMinutes} minuten` : '';
   const what = r.added ? `erbij op ${day(r.to)}` : r.removed ? 'eruit' : [moved, shorter].filter(Boolean).join(', ') || 'aangepast';
-  return `${name}: ${what} (${REASON[r.rule]})`;
+  return `${name}: ${what} (${r.reason ?? REASON[r.rule]})`;
 }
 
 // Only what you'd notice: a moved, shortened or removed session.

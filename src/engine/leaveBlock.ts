@@ -3,7 +3,7 @@
 // (engine/planPass.ts). Taking things out of a holiday is the week check's
 // job (rules LEAVE-OFF and LEAVE-LIGHT); this step only puts things in:
 //
-// - Trek: every day of the trek gets a mountain hike, unless that day already
+// - Trek: every day of the trek gets a walk (a mountain hike, or an easy backpack walk on flat or hilly terrain), unless that day already
 //   has a walk (the Sunday hike, a hike you placed yourself) or a walk of this
 //   trek that you skipped or moved. Not on a test or race day, a day with
 //   something logged, the past, or on and after the goal's day.
@@ -72,8 +72,15 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
   const sorted = [...days.entries()].sort(([a], [b]) => a.localeCompare(b));
 
   // --- trek: a walk on every day -------------------------------------------------
-  const trekTemplate = byId.has(TREK_TEMPLATE_ID) ? TREK_TEMPLATE_ID : templates.find((t) => isHikingTemplate(t))?.id;
+  const mountainTemplate = byId.has(TREK_TEMPLATE_ID) ? TREK_TEMPLATE_ID : templates.find((t) => isHikingTemplate(t))?.id;
+  // The terrain of a tocht picks the kind of walk: flat and hills an easy
+  // backpack walk (little descent), mountains and snow the mountain hike. The
+  // backpack weight of a tocht is information for now: sessions have no weight
+  // of their own, the template and the pack ladder decide.
+  const trekTemplateFor = (period: LeavePeriod) =>
+    (period.trek?.terrain === 'flat_trail' || period.trek?.terrain === 'uneven_trail') && byId.has(FREE_DAY_WALK_TEMPLATE_ID) && isHikingTemplate(byId.get(FREE_DAY_WALK_TEMPLATE_ID)) ? FREE_DAY_WALK_TEMPLATE_ID : mountainTemplate;
   for (const [date, day] of sorted) {
+    const trekTemplate = trekTemplateFor(day.period);
     if (day.kind !== 'trek' || !trekTemplate || !usable(date) || blocked(date)) continue;
     const served = sessions.some((s) =>
       (s.leave?.periodId === day.period.id && s.leave.role === 'placed' && (s.leave.from ?? s.scheduledDate) === date) ||

@@ -20,7 +20,9 @@ import type { PlannedLeaveMark } from './leave';
 export type PlanChangeAction = 'keep' | 'add' | 'move' | 'swap' | 'reduce' | 'replace' | 'remove';
 
 export interface PlanChangeItem {
-  plannedSessionId?: string; // absent only for 'add' — the row doesn't exist yet
+  // Absent for an 'add' of a new row. An 'add' that names a skipped row brings
+  // that row itself back on the plan (a session a period had let go).
+  plannedSessionId?: string;
   action: PlanChangeAction;
   fromDate?: string;
   toDate?: string;

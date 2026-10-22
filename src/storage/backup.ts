@@ -221,6 +221,16 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.weightFromMacroFactor;
     skipped.n++;
   }
+  // The switches for the next tocht on Vandaag and the rest after a bergtocht:
+  // a yes or a no, or one of two words, or not there.
+  if ('showNextTrek' in s && typeof s.showNextTrek !== 'boolean') {
+    delete s.showNextTrek;
+    skipped.n++;
+  }
+  if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
+    delete s.trekLegRest;
+    skipped.n++;
+  }
   // The switches of "Overzichten en vragen": a record or not there; the engine
   // reads every key defensively (engine/overviewSettings.ts#resolveOverviews).
   if ('overviews' in s && !isRecord(s.overviews)) {

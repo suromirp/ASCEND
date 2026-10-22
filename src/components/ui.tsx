@@ -128,10 +128,12 @@ export function Num({ children }: { children: ReactNode }) {
   return <span className="font-sans tabular-nums">{children}</span>;
 }
 
-export function Eyebrow({ children }: { children: ReactNode }) {
+// `as="span"` inside a button or a line of text, where a div is not allowed.
+export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'div' | 'span' }) {
+  const Tag = as;
   return (
-    <div className="text-xs font-medium uppercase tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>
+    <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-medium uppercase tracking-[0.16em]`} style={{ color: 'var(--color-bronze)' }}>
       {children}
-    </div>
+    </Tag>
   );
 }

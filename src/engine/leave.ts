@@ -129,22 +129,34 @@ export function leaveDays(periods: LeavePeriod[] | undefined): Map<string, Leave
 // The days before and the day after a trek: light, unless that day is itself
 // a holiday or a walking day. Before a tocht you want to be fresh for there
 // are more light days (engine/trekTaper.ts); the day after is always one.
-export function lightDays(periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): Map<string, { period: LeavePeriod; side: 'before' | 'after' }> {
-  const map = new Map<string, { period: LeavePeriod; side: 'before' | 'after' }>();
+export interface LightDay { period: LeavePeriod; side: 'before' | 'after'; // Days from the light day to the tocht (before) or from the tocht (after).
+  distance: number }
+
+export function lightDays(periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): Map<string, LightDay> {
+  const map = new Map<string, LightDay>();
   for (const period of periods ?? []) {
     if (period.kind !== 'trek') continue;
     const before = trekLightDaysBefore(dayCount(period), period.trek?.importance);
-    const dates: [string, 'before' | 'after'][] = [
-      [addDays(period.endDate, 1), 'after'],
-      ...Array.from({ length: before }, (_, i): [string, 'before' | 'after'] => [addDays(period.startDate, -(i + 1)), 'before']),
+    const dates: [string, 'before' | 'after', number][] = [
+      [addDays(period.endDate, 1), 'after', 1],
+      ...Array.from({ length: before }, (_, i): [string, 'before' | 'after', number] => [addDays(period.startDate, -(i + 1)), 'before', i + 1]),
     ];
-    for (const [date, side] of dates) {
+    for (const [date, side, distance] of dates) {
       const day = days.get(date);
       if (day && day.kind !== 'free') continue;
-      if (!map.has(date)) map.set(date, { period, side });
+      if (!map.has(date)) map.set(date, { period, side, distance });
     }
   }
   return map;
+}
+
+// "De dag voor je tocht", "twee dagen voor je tocht": how far the light day is from the tocht.
+const COUNT_WORD = ['', 'één', 'twee', 'drie', 'vier', 'vijf'];
+export function lightDayTitle(side: 'before' | 'after', distance: number): string {
+  if (side === 'after') return 'Dag na je tocht';
+  if (distance <= 1) return 'Dag voor je tocht';
+  const word = COUNT_WORD[distance] ?? String(distance);
+  return `${word.charAt(0).toUpperCase()}${word.slice(1)} dagen voor je tocht`;
 }
 
 // Nothing else may be planned on this day (a holiday or a walking day), e.g.
@@ -174,7 +186,7 @@ export function leaveLabelOn(date: string, periods: LeavePeriod[] | undefined): 
   }
   const light = lightDays(periods, days).get(date);
   if (light) {
-    return { kind: 'light', title: light.side === 'before' ? 'Dag voor je tocht' : 'Dag na je tocht', line: 'Houd het licht', note: light.period.note?.trim() || light.period.trek?.name || undefined };
+    return { kind: 'light', title: lightDayTitle(light.side, light.distance), line: 'Houd het licht', note: light.period.note?.trim() || light.period.trek?.name || undefined };
   }
   return undefined;
 }

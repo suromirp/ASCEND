@@ -536,6 +536,9 @@ export interface AppSettings {
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
+  // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
+  // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
+  trekLegRest?: 'soft' | 'strict';
   // Kennisbank: what you marked as read and this week's lesson
   // (engine/weeklyLesson.ts). Optional and additive; travels in an export.
   knowledge?: { read?: string[]; week?: { weekStart: string; topicId: string } };
@@ -1143,7 +1146,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
-    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
+    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
   });
   if (pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 

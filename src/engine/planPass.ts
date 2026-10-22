@@ -38,6 +38,8 @@ export interface PlanPassContext {
   leave?: LeavePeriod[];
   // Hiking switched off: no extra walk on a free day.
   hikingEnabled?: boolean;
+  // Rest after a tocht: soft (default) or strict (engine/weekValidator.ts).
+  trekRest?: 'soft' | 'strict';
 }
 
 export interface PlanPassResult {
@@ -70,7 +72,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
       logs: ctx.logs, templates: ctx.templates, today: ctx.today, restDay: ctx.restDay, goalDay: ctx.goalDay,
       raceDays: ctx.blocks.map((b) => b.raceDate), program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
       sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays, minutesOf: ctx.minutesOf, until: ctx.until,
-      leave: ctx.leave,
+      leave: ctx.leave, trekRest: ctx.trekRest,
     };
     // Walks on a trek, a long walk on a free day: what the periods put in.
     const placed = applyLeaveBlocks(afterRace, { check: checkInput, newId: ctx.newId, hikingEnabled: ctx.hikingEnabled });

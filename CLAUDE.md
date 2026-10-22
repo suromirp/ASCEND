@@ -231,6 +231,22 @@ Logged and past sessions, what you locked yourself and a test or race are never
 moved by it; they come back as notes in the proposal. Backup schema 5 carries
 the periods; older files import as before (`storage/migrations.ts#migrateLeavePeriods`).
 
+**Tochten as goals of their own** (`LeavePeriod.trek`, `engine/trek.ts`, decision
+`docs/beslissingen/2026-10-22-tochten-als-doel.md`): a tocht is a trek period with
+its details on it, so it plans through the same run as any trek. Its importance
+sets the light days before it (`engine/trekTaper.ts`), its terrain the walk on
+each day (flat and hills an easy backpack walk, mountains and snow the mountain
+hike; the pack weight of a tocht is information only, sessions have no weight of
+their own). Changing a tocht keeps its id and passes `replaces` to
+`planLeaveChange`: the old work is put back first, a session it let go comes back
+on its own row (an `add` item that names the skipped row, mark gone), so a second
+change or the removal never duplicates anything. `AppSettings.showNextTrek` puts
+the next tocht on Vandaag. A heavy leg day right after a tocht keeps 72 hours
+after a mountain hike: it first looks for a day outside that, short or full, and
+with `AppSettings.trekLegRest` soft (the default) the short version may stand 48
+hours after the tocht; only then it is let go, with the reason in plain words
+(`docs/beslissingen/2026-10-22-zware-beendag-na-tocht.md`).
+
 Readiness percentages (`engine/readiness.ts` — strength, cardio,
 climbing/D+, endurance, recovery, consistency, pack capability) are
 intentionally simple, isolated formulas over the last 28 days of logs, each

@@ -1819,7 +1819,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
       until,
-      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
     }).sessions;
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
@@ -1846,7 +1846,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
           until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
-          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
         };
       },
     });

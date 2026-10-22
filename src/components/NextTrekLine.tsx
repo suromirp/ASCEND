@@ -30,7 +30,7 @@ export function NextTrekLine({ onlyWhenOn = false }: { onlyWhenOn?: boolean }) {
     >
       <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="bivak" size={22} /></span>
       <span className="min-w-0 flex-1">
-        <Eyebrow>Volgende tocht</Eyebrow>
+        <Eyebrow as="span">Volgende tocht</Eyebrow>
         <span className="mt-0.5 block truncate font-display text-base" style={{ color: 'var(--color-ink)' }}>{next.trek.name}</span>
         <span className="block text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{describePeriodDates(next.period, true)}</span>
         <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{trekFacts(next.period)}</span>

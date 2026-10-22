@@ -84,6 +84,10 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
     if (!was) {
       added.add(s.id);
       moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate });
+    } else if (was.status === 'skipped' && s.status !== 'skipped') {
+      // A session that was let go and comes back on the plan.
+      added.add(s.id);
+      moves.push({ name: info(s).name, action: 'add', to: s.scheduledDate });
     } else if (was.status !== 'skipped' && s.status === 'skipped') {
       gone.push(was);
       moves.push({ name: info(was).name, action: 'remove', from: was.scheduledDate });

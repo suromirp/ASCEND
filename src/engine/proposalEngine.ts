@@ -184,6 +184,23 @@ export function applyPlanChangeItems(
           unsupported.push(item);
           break;
         }
+        // An 'add' that names a row of a session that was let go: that row
+        // itself comes back on the plan (planned again, on the new day, mark
+        // and old move gone), instead of a second row next to the skipped one.
+        const draft = item.newSessionDraft;
+        const revived = item.plannedSessionId ? next.find((s) => s.id === item.plannedSessionId && s.status === 'skipped') : undefined;
+        if (revived) {
+          next = next.map((s) => {
+            if (s !== revived) return s;
+            // Back where the system had it: not fixed in place, so a later
+            // change of the same period can move it again (with its own proposal).
+            const back: PlannedSession = { ...s, status: 'planned', scheduledDate: draft.scheduledDate, weekStartDate: draft.weekStartDate };
+            delete back.movedFromDate;
+            delete back.lock;
+            return withLeave(back, item);
+          });
+          break;
+        }
         const created: PlannedSession = {
           id: idGenerator(),
           templateId: item.newSessionDraft.templateId,

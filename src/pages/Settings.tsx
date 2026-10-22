@@ -519,6 +519,13 @@ export function SettingsPage() {
                 checked={settings.showNextTrek !== false}
                 onChange={(on) => void updateSettings({ showNextTrek: on })}
               />
+              <SwitchRow
+                id="rust-na-tocht"
+                title="Soepele rust na een bergtocht"
+                note="Aan: een zware beendag mag in de korte versie al 48 uur na je tocht, uit: ASCEND houdt 72 uur."
+                checked={settings.trekLegRest !== 'strict'}
+                onChange={(on) => void updateSettings({ trekLegRest: on ? 'soft' : 'strict' })}
+              />
             </Card>
             <Anchor id="programma">
               <Card className="flex flex-col gap-3">

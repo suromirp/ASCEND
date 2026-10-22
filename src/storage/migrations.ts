@@ -64,16 +64,19 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
   // period (the walking days are still true); only the details are dropped.
   const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
   const valid = raw.filter((p) => isLeavePeriod(p) || (isRecord(p) && isLeavePeriod({ ...p, trek: undefined })));
+  // Damaged details are lost, so they are counted: you hear that they are gone.
+  let lostDetails = 0;
   const periods = valid.map((p) => {
     const rec = p as LeavePeriod;
     const trek = isTrekDetails(rec.trek) ? rec.trek : undefined;
+    if (rec.trek !== undefined && !trek) lostDetails++;
     return {
       id: rec.id, kind: rec.kind, startDate: rec.startDate, endDate: rec.endDate,
       ...(rec.note ? { note: rec.note } : {}),
       ...(trek ? { trek: { name: trek.name.trim(), terrain: trek.terrain, ...(trek.packKg ? { packKg: trek.packKg } : {}), tent: trek.tent, importance: trek.importance } } : {}),
     };
   });
-  return { periods, skipped: raw.length - periods.length };
+  return { periods, skipped: raw.length - periods.length + lostDetails };
 }
 
 // --- Garmin is leidend: SessionLog.manualMeasured -----------------------------

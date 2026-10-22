@@ -68,7 +68,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const windowEnd = addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, AFTER_DAYS);
 
   // What the planning looks like without the period's earlier work.
-  const start = mode === 'remove' ? putBack(sessions, period.id, today, logged) : replaces ? putBack(sessions, replaces.id, today, logged) : sessions;
+  const start = mode === 'remove' ? putBack(sessions, period.id, today, logged, byId) : replaces ? putBack(sessions, replaces.id, today, logged, byId) : sessions;
   const base = new Map(start.map((s) => [s.id, s]));
   // New sessions get ids of their own here, so they can never be mistaken for a stored one.
   let drafts = 0;
@@ -85,6 +85,14 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     return session ? `${nameOf(session.templateId)} past niet meer op ${dayText(date)} door je periode.` : 'Past bij je periode.';
   };
 
+  // A repair of the week check with a reason of its own (a leg day next to the tocht).
+  const ownReason = (id: string, removed = false) => result.repairs.filter((r) => r.sessionId === id && !!r.removed === removed && r.reason).pop()?.reason;
+
+  // A change of length alone counts when it belongs to this tocht: the short
+  // version it made (rest after a tocht), or the full length it gives back.
+  const minutesChanged = (s: PlannedSession, a: PlannedSession) =>
+    a.plannedMinutes !== s.plannedMinutes && (!!ownReason(s.id) || s.leave?.periodId === period.id || s.leave?.periodId === replaces?.id);
+
   const items: PlanChangeItem[] = [];
   const after = new Map(result.sessions.map((s) => [s.id, s]));
   const stored = new Map(sessions.map((s) => [s.id, s]));
@@ -98,7 +106,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     if (!replaces) return { periodId: period.id, role, from: s.scheduledDate };
     const b = base.get(s.id);
     if (!b) return null;
-    if (s.leave?.periodId === replaces.id && a && a.status !== 'skipped' && a.scheduledDate === b.scheduledDate && b.status !== 'skipped') return null;
+    if (s.leave?.periodId === replaces.id && a && a.status !== 'skipped' && a.scheduledDate === b.scheduledDate && a.plannedMinutes === b.plannedMinutes && b.status !== 'skipped') return null;
     return { periodId: period.id, role, from: b.scheduledDate };
   };
   const isBack = (s: PlannedSession, a: PlannedSession | undefined) => !!replaces && s.leave?.periodId === replaces.id && markOf(s, a, 'moved') === null;
@@ -110,17 +118,21 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
       // Let go because of the period, and now back on the plan.
       if (a && a.status !== 'skipped' && inWindow(a.scheduledDate)) {
         const back = !!replaces && base.get(s.id)?.status !== 'skipped';
-        items.push({ action: 'add', newSessionDraft: { templateId: a.templateId, scheduledDate: a.scheduledDate, weekStartDate: mondayOfWeek(a.scheduledDate) }, toDate: a.scheduledDate, reason: reasonFor(a, a.scheduledDate, 'add'), generatedBy: SOURCE, ...(clear || back ? { leave: null } : {}) });
+        // The row itself comes back (not a second one next to the skipped one),
+        // and it loses the mark of the period that let it go.
+        items.push({ plannedSessionId: s.id, action: 'add', newSessionDraft: { templateId: a.templateId, scheduledDate: a.scheduledDate, weekStartDate: mondayOfWeek(a.scheduledDate) }, toDate: a.scheduledDate, reason: reasonFor(a, a.scheduledDate, 'add', back), generatedBy: SOURCE, leave: null });
       }
       continue;
     }
     if (!a || a.status === 'skipped') {
-      items.push({ plannedSessionId: s.id, action: 'remove', fromDate: s.scheduledDate, reason: reasonFor(s, s.scheduledDate, 'remove', !!replaces && !base.has(s.id)), generatedBy: SOURCE, leave: markOf(s, a, 'dropped') });
-    } else if (a.scheduledDate !== s.scheduledDate) {
+      // A leg day the week check let go next to the tocht says why in its own words.
+      const own = ownReason(s.id, true);
+      items.push({ plannedSessionId: s.id, action: 'remove', fromDate: s.scheduledDate, reason: own ?? reasonFor(s, s.scheduledDate, 'remove', !!replaces && !base.has(s.id)), generatedBy: SOURCE, leave: markOf(s, a, 'dropped') });
+    } else if (a.scheduledDate !== s.scheduledDate || minutesChanged(s, a)) {
       items.push({
         plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: a.scheduledDate,
-        ...(a.plannedMinutes !== undefined && a.plannedMinutes !== s.plannedMinutes ? { plannedMinutes: a.plannedMinutes } : {}),
-        reason: reasonFor(s, s.scheduledDate, 'move', isBack(s, a)), generatedBy: SOURCE,
+        ...(a.plannedMinutes !== undefined && a.plannedMinutes !== s.plannedMinutes ? { plannedMinutes: a.plannedMinutes } : a.plannedMinutes === undefined && s.plannedMinutes !== undefined && minutesChanged(s, a) ? { plannedMinutes: byId.get(a.templateId)?.durationVariants.full } : {}),
+        reason: ownReason(s.id) ?? reasonFor(s, s.scheduledDate, 'move', isBack(s, a)), generatedBy: SOURCE,
         leave: markOf(s, a, 'moved'),
       });
     }
@@ -185,7 +197,7 @@ function notesFor(remaining: Finding[], inWindow: (date: string) => boolean, mod
 // Removing a period: what it moved is moved back, what it let go of comes
 // back, what it placed goes. Never what is logged or past, and never what you
 // moved yourself after it.
-function putBack(sessions: PlannedSession[], periodId: string, today: string, logged: Set<string | undefined>): PlannedSession[] {
+function putBack(sessions: PlannedSession[], periodId: string, today: string, logged: Set<string | undefined>, byId: Map<string, SessionTemplate>): PlannedSession[] {
   const out: PlannedSession[] = [];
   for (const s of sessions) {
     const mark = s.leave;
@@ -201,6 +213,9 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
     delete back.lock;
     delete back.leave;
     delete back.movedFromDate;
+    // A heavy leg day the tocht made short (rest after a tocht) is full again.
+    const t = byId.get(s.templateId);
+    if (mark.role === 'moved' && t?.type === 'strength' && back.plannedMinutes !== undefined && back.plannedMinutes === t.durationVariants.short) delete back.plannedMinutes;
     out.push(back);
   }
   return out;
