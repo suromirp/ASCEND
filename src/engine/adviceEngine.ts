@@ -21,6 +21,7 @@ import { checkInFor, morningSignals, tiredStreak } from './wellbeing';
 import type { MorningCheckIn } from '../models/checkIn';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { proposeRestWeekSkip } from './restWeek';
+import { costSentence, proposeRepeatWeek, shortfallSentence } from './repeatWeek';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { InjuryNote } from '../models/injury';
@@ -58,6 +59,10 @@ export interface Advice {
   // Rule REST-WEEK-SKIP: Akkoord trains through the rest week of this
   // Monday (engine/restWeek.ts). A program change, not a session change.
   restWeekSkip?: string;
+  // Rule REPEAT-WEEK: Akkoord lets this week carry last week's load instead
+  // of stepping up (engine/repeatWeek.ts). A program change, not a session
+  // change; the planning round follows it.
+  repeatWeek?: string;
   // Rule GR5-PACK-TENT: Akkoord sets the rucksack target of a goal. A goal
   // setting, not a session change (engine/gr5Profile.ts).
   goalChange?: { goalId: string; packWeightKg: number };
@@ -915,6 +920,25 @@ function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'REST-WEEK-SKIP', title, effect, why, priority: 2, restWeekSkip: found.weekStart }];
 }
 
+// --- Rule REPEAT-WEEK --------------------------------------------------------
+// Trigger: last week clearly fell short (under 60% of the trainings, or the
+// key session missed), and it was no rest week and no ill week. Rule: this
+// week carries last week's load instead of stepping up. Always a proposal:
+// Akkoord records it on the program, Liever niet leaves everything as it is
+// and the question is not asked again for this week.
+function repeatWeekAdvice(inputs: AdviceInputs): Advice[] {
+  const found = proposeRepeatWeek({
+    program: inputs.program, plannedSessions: inputs.plannedSessions, logs: inputs.logs, templates: inputs.templates,
+    today: inputs.asOf, illnessEpisodes: inputs.illnessEpisodes, planChangeLog: inputs.extraSession?.planChangeLog,
+    raceWeeks: (inputs.raceGoals ?? []).map((r) => r.raceWeek), respondedIds: inputs.respondedIds,
+  });
+  if (!found) return [];
+  const title = 'Deze week nog een keer?';
+  const effect = `${shortfallSentence(found)} Voorstel: deze week houdt de belasting van vorige week, in plaats van een stap omhoog. ${costSentence(found.impact)} De rustweek, de golven daarna, de taper en je doeldatum blijven zoals ze waren. Met Liever niet blijft alles staan en vraagt ASCEND er deze week niet meer naar.`;
+  const why = 'Een week herhalen na een tegenvallende week werkt beter dan doorschuiven naar de zwaardere week: je bouwt pas verder als de belasting van vorige week er echt in zit. ASCEND remt alleen. Na een goede week bouwt het niet sneller, want vooruitgang laat je zien in je test, niet in extra minuten; bijsturen door te remmen geeft in studies vooral minder slechte uitkomsten (Nuuttila e.a. 2022). Het kost je doeldatum niets: alleen de zwaarste week van deze golf wordt lichter, de rustweek en alle golven daarna staan nog op de kalender. De 110%-regel houdt de stap daarna klein, want die meet tegen wat je echt liep. Was je ziek, dan geldt het terugkomschema en vraagt ASCEND dit niet. Je kunt het altijd terugzetten in Week.';
+  return [{ id: found.id, trigger: 'plan_update', ruleId: 'REPEAT-WEEK', title, effect, why, priority: 3, repeatWeek: found.weekStart }];
+}
+
 function tentPackAdvice(inputs: AdviceInputs): Advice[] {
   const p = inputs.tentPack;
   if (!p) return [];
@@ -990,6 +1014,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...spacingAdvice(inputs, templateById),
     ...extraSessionAdvice(inputs, templateById),
     ...restWeekSkipAdvice(inputs),
+    ...repeatWeekAdvice(inputs),
     ...tentPackAdvice(inputs),
     ...targetTimeAdvice(inputs),
     ...morningAdvice(inputs, templateById),

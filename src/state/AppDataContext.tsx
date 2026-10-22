@@ -39,6 +39,7 @@ import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/g
 import { runBootMigrations } from '../storage/bootMigrations';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
+import { withWeekRepeated } from '../engine/repeatWeek';
 import { tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
@@ -147,6 +148,8 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
       planFingerprint(planned),
       programs[0]?.startDate,
       programs[0]?.phases,
+      // A repeated week changes the wave week the Saturday follows.
+      programs[0]?.repeatedWeeks,
       programAnchorDate(goals, milestones, todayISO()),
       settings.longSundaySession,
       settings.enabledSports,
@@ -254,6 +257,8 @@ interface AppData {
   setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
   // Train through (or restore) the rest week of this week (engine/restWeek.ts).
   setRestWeekSkipped: (weekStart: string, skip: boolean) => Promise<void>;
+  // Let this week carry last week's load, or take that back (engine/repeatWeek.ts).
+  setWeekRepeated: (weekStart: string, repeat: boolean) => Promise<void>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
   suggestMoves: (sessionId: string) => MoveSuggestion[];
@@ -596,6 +601,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Training through a rest week changes the program, not a session.
     if (response === 'accepted' && item.restWeekSkip && program) {
       await ProgramsRepo.put(withRestWeekSkipped(program, item.restWeekSkip, true));
+      await refresh();
+    }
+    // "Deze week nog een keer" (rule REPEAT-WEEK) changes the program, and the
+    // planning round that follows adjusts what the system planned.
+    if (response === 'accepted' && item.repeatWeek && program) {
+      await ProgramsRepo.put(withWeekRepeated(program, item.repeatWeek, true));
+      planRevision++;
       await refresh();
     }
     // A goal setting (rule GR5-PACK-TENT): only ever on Akkoord.
@@ -1209,6 +1221,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [program, refresh],
   );
 
+  const setWeekRepeated = useCallback(
+    async (weekStart: string, repeat: boolean) => {
+      if (!program) return;
+      await ProgramsRepo.put(withWeekRepeated(program, weekStart, repeat));
+      planRevision++;
+      await refresh();
+    },
+    [program, refresh],
+  );
+
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
       const log = sessionLogs.find((l) => l.id === logId);
@@ -1772,6 +1794,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     undoLog,
     setLogWorkout,
     setRestWeekSkipped,
+    setWeekRepeated,
     moveSession,
     suggestMoves,
     applyProposal,

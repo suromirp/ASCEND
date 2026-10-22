@@ -14,6 +14,7 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { Card, Eyebrow, SecondaryButton } from '../components/ui';
 import { restWeekState } from '../engine/restWeek';
+import { repeatState } from '../engine/repeatWeek';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -21,7 +22,7 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { setRestWeekSkipped, suggestMoves, program, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
+  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -37,6 +38,7 @@ export function WeekPage() {
   const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const restWeek = program && weekStart >= mondayOfWeek(todayISO()) ? restWeekState(program, weekStart, sessionLogs, todayISO()) : undefined;
+  const repeat = program && weekStart >= mondayOfWeek(todayISO()) ? repeatState(program, weekStart) : undefined;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
   // Sum of each planned session's target ('full' variant) duration — an
@@ -147,6 +149,25 @@ export function WeekPage() {
           ) : restWeek.reason ? (
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{restWeek.reason}</p>
           ) : null}
+        </Card>
+      )}
+
+      {!monthView && repeat?.repeated && (
+        <Card className="flex flex-col gap-2">
+          <Eyebrow>DEZE WEEK NOG EEN KEER</Eyebrow>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+            Je minuten, hoogtemeters en rugzak blijven op het niveau van vorige week, in plaats van een stap omhoog. De rustweek en de weken daarna staan nog op de kalender. Gaat het toch goed? Dan kun je de herhaling terugzetten.
+          </p>
+          <SecondaryButton onClick={() => void setWeekRepeated(weekStart, false)}>HERHALING TERUGZETTEN</SecondaryButton>
+        </Card>
+      )}
+
+      {!monthView && repeat?.shifted && !repeat.repeated && (
+        <Card className="flex flex-col gap-2">
+          <Eyebrow>EEN STAP ACHTER</Eyebrow>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+            Eerder in deze golf herhaalde je een week. Deze week bouwt daarom een stap achter op de kalender; de rustweek en de volgende golf lopen weer gewoon door.
+          </p>
         </Card>
       )}
 

@@ -12,7 +12,7 @@
 // Pure: no React, no IndexedDB. storage/database.ts#syncProgramHorizon
 // applies the result to the stored program and planning.
 
-import type { Phase, Program, ResolvedProgramPosition } from '../models/program';
+import { PHASE_TAPER, WAVE_LENGTH, type Phase, type Program, type ResolvedProgramPosition } from '../models/program';
 import type { SessionTemplate, WeeklyProgressionStep } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
@@ -21,12 +21,11 @@ export const PHASE_BASIS = 'phase_1';
 export const PHASE_OPBOUW = 'phase_2';
 export const PHASE_BERG = 'phase_3';
 export const PHASE_EXPEDITIE = 'phase_4';
-export const PHASE_TAPER = 'phase_taper';
+export { PHASE_TAPER, WAVE_LENGTH };
 export const PHASE_ONDERHOUD = 'phase_onderhoud';
 
-// The training wave inside every phase: wennen, opbouw, zwaarste week,
-// deload (3:1, docs/onderzoek rapport 1).
-export const WAVE_LENGTH = 4;
+// The training wave inside every phase (WAVE_LENGTH, models/program.ts):
+// wennen, opbouw, zwaarste week, deload (3:1, docs/onderzoek rapport 1).
 
 const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   [PHASE_BASIS]: {
@@ -154,11 +153,21 @@ export function programEndDate(program: Program): string {
 
 // --- what a week asks for --------------------------------------------------
 
+// The week the load is read from. Normally the calendar's own week; in a
+// repeated week (and the weeks after it in the same wave) the week before
+// ("Deze week nog een keer", engine/repeatWeek.ts).
+export function loadWeekInPhase(position: ResolvedProgramPosition): number {
+  return position.weekInPhase - (position.loadShift ?? 0);
+}
+export function loadWeekInProgram(position: ResolvedProgramPosition): number {
+  return position.weekInProgram - (position.loadShift ?? 0);
+}
+
 // Which week of the wave this is (1-4). The taper has no wave of its own.
 // A rest week you chose to train through counts as week 2 of the wave: a
 // normal build week, not a second heaviest week in a row.
 export function waveWeek(position: ResolvedProgramPosition): number {
-  const wave = ((position.weekInPhase - 1) % WAVE_LENGTH) + 1;
+  const wave = ((loadWeekInPhase(position) - 1) % WAVE_LENGTH) + 1;
   return wave === WAVE_LENGTH && position.restSkipped && position.phase.id !== PHASE_TAPER ? 2 : wave;
 }
 
@@ -219,12 +228,13 @@ const FIXED_LENGTH = new Set(['tpl_tempo_run', 'tpl_intervals']);
 
 export function runBuildMultiplier(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, heaviestStepMinutes: number): number {
   if (FIXED_LENGTH.has(template.id)) return 1;
-  const basic = cycleMultiplier(position.weekInProgram);
+  const week = loadWeekInProgram(position);
+  const basic = cycleMultiplier(week);
   const peak = RUN_BUILD_PEAK_MINUTES[template.id];
   const opbouw = opbouwStartWeek(program);
-  if (!peak || !opbouw || opbouw.weeks === 0 || position.weekInProgram < opbouw.start) return basic;
+  if (!peak || !opbouw || opbouw.weeks === 0 || week < opbouw.start) return basic;
   const lastWave = Math.floor((opbouw.weeks - 1) / WAVE_LENGTH);
-  const wave = Math.min(Math.floor((position.weekInProgram - opbouw.start) / WAVE_LENGTH), lastWave);
+  const wave = Math.min(Math.floor((week - opbouw.start) / WAVE_LENGTH), lastWave);
   const from = opbouw.start > 1 ? cycleMultiplier(opbouw.start - 1) : 1;
   const built = from * Math.pow(1 + RUN_BUILD_PER_WAVE, wave + 1);
   return Math.max(basic, Math.min(built, peak / heaviestStepMinutes));
@@ -253,8 +263,8 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
     // Exact week first; in a phase made longer than its written ladder, the
     // last written wave repeats instead of starting over at "Wennen".
     const sameWave = own.filter((s) => ((s.weekInPhase - 1) % WAVE_LENGTH) + 1 === wave).sort((a, b) => b.weekInPhase - a.weekInPhase);
-    const step = own.find((s) => s.weekInPhase === position.weekInPhase) ?? sameWave[0] ?? own[own.length - 1];
-    return { step, minutes: step.targetMinutes, phaseSteps: own };
+    const step = own.find((s) => s.weekInPhase === loadWeekInPhase(position)) ?? sameWave[0] ?? own[own.length - 1];
+    return { step: repeatNote(step, position), minutes: step.targetMinutes, phaseSteps: own };
   }
 
   const generic = steps.filter((s) => !s.phaseId);
@@ -268,7 +278,12 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
     const minutes = Math.max(15, Math.round((scaled * taper) / 5) * 5);
     return { step: { ...step, note: position.weekInPhase === position.phase.weekCount ? 'Laatste week voor de start, kort en fris' : 'Minder volume, zelfde tempo' }, minutes, phaseSteps: generic };
   }
-  return { step, minutes: Math.round(scaled), phaseSteps: generic };
+  return { step: repeatNote(step, position), minutes: Math.round(scaled), phaseSteps: generic };
+}
+
+// A repeated week says so in its note ("Opbouw (herhaalweek)").
+function repeatNote(step: WeeklyProgressionStep, position: ResolvedProgramPosition): WeeklyProgressionStep {
+  return position.repeated ? { ...step, note: step.note ? `${step.note} (herhaalweek)` : 'Herhaalweek' } : step;
 }
 
 // --- the weekly pattern per phase -------------------------------------------
