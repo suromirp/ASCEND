@@ -112,6 +112,10 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-sets', facts()).value).toBe('Dalend');
     expect(rowSummary('forge-opwarmen', facts()).value).toBe('Slim');
     expect(rowSummary('forge-schatting', facts()).value).toBe('Tot 20');
+    expect(rowSummary('forge-rust', facts()).checked).toBe(true);
+    expect(rowSummary('forge-signaal', facts()).value).toBe('Geluid en trillen');
+    expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
+    expect(rowSummary('forge-programma', facts())).toEqual({ value: 'Van ASCEND', dim: true });
     expect(groupSummary('forge', facts())).toEqual({ value: 'Aan', sub: 'Eerst gewicht, opwarmen slim' });
   });
 

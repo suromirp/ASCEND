@@ -271,7 +271,10 @@ function rangeText(s: SetTarget): string {
 
 export function toPrescriptions(exercises: ProgramExercise[]): ExercisePrescription[] {
   const seen = new Map<string, number>();
-  return exercises.map((e) => {
+  // The short version leaves out the last quarter (from four exercises on); the
+  // first two are the core of the day.
+  const optionalFrom = exercises.length >= 4 ? exercises.length - Math.ceil(exercises.length / 4) : exercises.length;
+  return exercises.map((e, i) => {
     const base = programSlotId(e.name);
     const n = seen.get(base) ?? 0;
     seen.set(base, n + 1);
@@ -280,7 +283,7 @@ export function toPrescriptions(exercises: ProgramExercise[]): ExercisePrescript
       exerciseName: e.name,
       sets: e.sets.length,
       reps: rangeText(e.sets.find((s) => !s.failure) ?? e.sets[0]),
-      priority: 'core' as const,
+      priority: i < 2 ? ('core' as const) : i >= optionalFrom ? ('optional' as const) : ('accessory' as const),
       setTargets: e.sets,
       ...(e.note ? { notes: e.note } : {}),
     };

@@ -114,13 +114,19 @@ export function ForgeWorkout({
   const strength = resolveStrengthSettings(settings.strengthModel);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training.
-  const slots = programExercisesFor(settings.strengthModel?.program, template.id, date) ?? exercisesForVariant(template, initialVariant);
+  const programSlots = programExercisesFor(settings.strengthModel?.program, template.id, date);
+  const slots = exercisesForVariant(programSlots ? { ...template, exercises: programSlots } : template, initialVariant);
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
     const d = loadDraft<WorkoutDraft>(key, 'local');
     if (!d || d.v !== DRAFT_VERSION || !Array.isArray(d.exercises) || typeof d.startedAt !== 'number') return undefined;
-    if (typeof d.savedAt === 'number' && Date.now() - d.savedAt > DRAFT_MAX_AGE_MS) return undefined;
+    const expired = typeof d.savedAt === 'number' && Date.now() - d.savedAt > DRAFT_MAX_AGE_MS;
+    const logged = !!plannedSessionId && sessionLogs.some((l) => l.plannedSessionId === plannedSessionId);
+    if (expired || logged) {
+      clearDraft(key, 'local');
+      return undefined;
+    }
     return d as WorkoutDraft;
   });
 
@@ -172,6 +178,13 @@ export function ForgeWorkout({
 
   // Terug laat de training staan (het concept blijft); weggooien gaat via het menu.
   useBackToClose(true, onClose);
+
+  // De schijven per rij, alleen opnieuw als de sets of je sportschool veranderen (niet bij elke tik van de klok).
+  const strengthModel = settings.strengthModel;
+  const platesBySlot = useMemo(() => {
+    const profile = resolveStrengthSettings(strengthModel).profile;
+    return new Map(workout.map((ex) => [ex.slot, usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined] as const));
+  }, [workout, strengthModel]);
 
   const legDay = isLegHeavyTemplate(template);
   const legLine = useMemo(() => (legDay ? legDayLine(date, { logs: sessionLogs, templates, program, bodyKg }) : undefined), [legDay, date, sessionLogs, templates, program, bodyKg]);
@@ -267,7 +280,7 @@ export function ForgeWorkout({
               note={strength.exerciseNotes[ex.exerciseId]}
               focused={focused}
               onFocus={setFocused}
-              plates={usesPlates(exerciseOf(ex)) ? plateSteps(ex, strength.profile) : undefined}
+              plates={platesBySlot.get(ex.slot)}
               onMenu={() => setMenuFor(ex.slot)}
               onTick={(rowId) => tick(ex.slot, rowId)}
               onChange={(rowId, patch) => setExercise(ex.slot, (e) => updateRow(e, rowId, patch))}
@@ -303,6 +316,18 @@ export function ForgeWorkout({
               )}
               {!readOnly && menuEx.rows.some((r) => !r.done) && menuEx.rows.length > 1 && (
                 <MenuRow icon="min" title="Laatste set weghalen" sub="Een set die je al afvinkte blijft staan." onClick={() => { setExercise(menuEx.slot, removeLastRow); close(); }} />
+              )}
+              {!readOnly && (
+                <MenuRow
+                  icon="timer"
+                  title="Rust starten"
+                  sub="De rusttimer van deze oefening, ook als hij niet vanzelf start."
+                  onClick={() => {
+                    alerted.current = null;
+                    setRest({ endsAt: clock() + menuEx.restSec * 1000, total: menuEx.restSec, name: menuEx.name });
+                    close();
+                  }}
+                />
               )}
               {!readOnly && (
                 <MenuRow
@@ -444,10 +469,9 @@ export function ForgeWorkout({
               strengthData,
               ...(rir !== undefined ? { strengthRir: rir } : {}),
             });
-            if (saved) {
-              clearDraft(key, 'local');
-              onClose();
-            }
+            // Niet opgeslagen betekent: deze training staat al in je logboek. Het concept is dan klaar.
+            clearDraft(key, 'local');
+            if (saved) onClose();
             return saved;
           }}
         />
@@ -455,6 +479,9 @@ export function ForgeWorkout({
     </Portal>
   );
 }
+
+// Hoe lang Opslaan mag duren voordat het scherm zegt dat het langer duurt.
+const SAVE_LIMIT_MS = 15_000;
 
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -540,7 +567,7 @@ function ExerciseBlock({
             </button>
           )}
           <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
-          <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Reps'}</span>
+          <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
           <span role="columnheader" className="text-center">RIR</span>
           <span role="columnheader" className="sr-only">Gedaan</span>
         </div>
@@ -759,7 +786,26 @@ function FinishSheet({
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
   const [doneOn, setDoneOn] = useState(plannedInPast ? scheduledDate! : today);
   const [saving, setSaving] = useState(false);
+  const [outcome, setOutcome] = useState<string | null>(null);
+  const busy = useRef(false);
   const notTicked = total - done;
+
+  async function save() {
+    if (busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    setOutcome(null);
+    const timeout = new Promise<'slow'>((r) => window.setTimeout(() => r('slow'), SAVE_LIMIT_MS));
+    try {
+      const ok = await Promise.race([onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn }), timeout]);
+      if (ok === true) return;
+      setOutcome(ok === 'slow' ? 'Opslaan duurt langer dan normaal. Je sets blijven bewaard; probeer het zo nog eens.' : 'Deze training staat al in je logboek. Er is niets dubbel opgeslagen.');
+    } catch {
+      setOutcome('Opslaan lukte niet. Je sets blijven bewaard; probeer het zo nog eens.');
+    }
+    busy.current = false;
+    setSaving(false);
+  }
 
   return (
     <ForgeSheet
@@ -815,16 +861,13 @@ function FinishSheet({
             <label htmlFor="forge-notes" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notitie bij deze training</label>
             <textarea id="forge-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} />
           </div>
+          {outcome && <p className="text-xs leading-snug" role="status" style={{ color: 'var(--color-warning)' }}>{outcome}</p>}
           <div className="flex gap-3">
             <SecondaryButton onClick={close}>Annuleren</SecondaryButton>
             <PrimaryButton
               fullWidth={false}
               disabled={saving}
-              onClick={async () => {
-                setSaving(true);
-                const ok = await onSave({ minutes: minutes ?? 0, rpe, feel, pain, notes, doneOn });
-                if (!ok) setSaving(false);
-              }}
+              onClick={() => void save()}
             >
               {saving ? 'Opslaan…' : readOnly ? 'Afvinken' : 'Opslaan'}
             </PrimaryButton>

@@ -53,9 +53,9 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection title="In de sportschool">
         <SummaryRow id="forge-rust" title="Rusttimer vanzelf" facts={facts} onChange={(on) => save({ restAuto: on })} />
-        <SummaryRow id="forge-signaal" title="Signaal na de rust" facts={facts} onClick={() => setSheet('forge-signaal')} />
-        <SummaryRow id="forge-scherm" title="Scherm blijft aan" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
-        <SummaryRow id="forge-programma" title="Programma" facts={facts} onClick={() => setSheet('forge-programma')} />
+        <SummaryRow id="forge-signaal" title="Signaal als de rust om is" facts={facts} onClick={() => setSheet('forge-signaal')} />
+        <SummaryRow id="forge-scherm" title="Scherm aan tijdens je training" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
+        <SummaryRow id="forge-programma" title="Programma uit MacroFactor" facts={facts} onClick={() => setSheet('forge-programma')} />
       </SettingsSection>
 
       <SettingsSection title="Je sportschool">

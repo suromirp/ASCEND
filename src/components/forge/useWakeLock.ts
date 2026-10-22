@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 // want de browser laat het los zodra de app op de achtergrond gaat.
 interface WakeLockLike {
   release: () => Promise<void>;
+  released?: boolean;
 }
 
 export function useWakeLock(active: boolean): void {
@@ -15,14 +16,20 @@ export function useWakeLock(active: boolean): void {
     if (!api) return;
     let lock: WakeLockLike | undefined;
     let stopped = false;
+    let pending = false;
     const request = () => {
-      if (document.visibilityState !== 'visible') return;
+      // Nooit twee tegelijk: een lopende aanvraag of een lock die nog geldt is genoeg.
+      if (document.visibilityState !== 'visible' || pending || (lock && !lock.released)) return;
+      pending = true;
       api.request('screen').then(
         (l) => {
+          pending = false;
           if (stopped) void l.release().catch(() => undefined);
           else lock = l;
         },
-        () => undefined,
+        () => {
+          pending = false;
+        },
       );
     };
     request();

@@ -258,6 +258,18 @@ describe('schijven', () => {
     expect(load.perSide).toEqual([]);
     expect(load.shortKg).toBe(0.5);
   });
+  it('een onmogelijk of absurd gewicht rekent meteen, ook voor een hele oefening', () => {
+    const squat = exerciseById('back-squat');
+    const start = performance.now();
+    const odd = plateLoad(61.3, squat, profile)!;
+    expect(odd.shortKg).toBeGreaterThan(0);
+    expect(odd.shortKg).toBeLessThan(Math.min(...profile.platesKg));
+    const huge = plateLoad(2000.5, squat, profile)!;
+    expect(huge.perSide.reduce((n, p) => n + p, 0)).toBeLessThanOrEqual(500);
+    const [ex] = planWorkout([slot('ex8', 'Barbell Back Squat', 3, '5-8')], ctx());
+    plateSteps({ ...ex, rows: ex.rows.map((r) => ({ ...r, weightKg: 999.9 })) }, profile);
+    expect(performance.now() - start).toBeLessThan(200);
+  });
   it('alleen voor een stang of een toestel met schijven', () => {
     expect(plateLoad(40, exerciseById('lat-pulldown'), profile)).toBeUndefined();
     expect(plateLoad(100, exerciseById('leg-press-plates'), profile)!.barKg).toBe(0);

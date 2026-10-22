@@ -122,7 +122,7 @@ export const CHOICES = {
   }),
   restsignaal: def({
     group: 'Forge',
-    title: 'Signaal na de rust',
+    title: 'Signaal als de rust om is',
     line: 'Een korte toon mengt met je muziek; trillen voel je ook in je zak.',
     advice: 'sound_vibrate' as 'sound_vibrate' | 'vibrate' | 'sound' | 'off',
     options: [

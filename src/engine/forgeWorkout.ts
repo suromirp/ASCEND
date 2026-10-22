@@ -270,8 +270,15 @@ export function planWorkout(slots: ExercisePrescription[], ctx: PlanContext): Wo
 
 export const exerciseOf = (ex: Pick<WorkoutExercise, 'exerciseId' | 'known'>): Exercise | undefined => (ex.known ? exerciseById(ex.exerciseId) : undefined);
 
+// The most a row can hold: a typo like 2000 kg becomes 500.
+export const MAX_ROW_KG = 500;
+export const MAX_ROW_REPS = 100;
+
 export function updateRow(ex: WorkoutExercise, rowId: string, patch: Partial<Pick<WorkoutRow, 'weightKg' | 'reps' | 'rir'>>): WorkoutExercise {
-  return { ...ex, rows: ex.rows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)) };
+  const clean = { ...patch };
+  if (clean.weightKg !== undefined) clean.weightKg = Math.min(MAX_ROW_KG, Math.max(0, clean.weightKg));
+  if (clean.reps !== undefined) clean.reps = Math.min(MAX_ROW_REPS, Math.max(0, Math.round(clean.reps)));
+  return { ...ex, rows: ex.rows.map((r) => (r.id === rowId ? { ...r, ...clean } : r)) };
 }
 
 export interface TickResult {
@@ -416,28 +423,56 @@ export interface PlateStep extends PlateLoad {
 
 const cents = (kg: number) => Math.round(kg * 100);
 
-// The fewest plates (of the ones not heavier than `cap`) that make `amount`
-// exactly, heaviest first. Undefined when it cannot be made.
-function fewestPlates(amountKg: number, plates: number[], cap = Infinity): number[] | undefined {
-  const target = cents(amountKg);
-  if (target < 0) return undefined;
-  if (target === 0) return [];
-  const usable = plates.filter((p) => p <= cap + 1e-9).map(cents).filter((p) => p > 0).sort((a, b) => b - a);
-  const best = new Array<number>(target + 1).fill(Infinity);
-  const pick = new Array<number>(target + 1).fill(0);
+// No side is ever loaded beyond this; a typo like 2000 kg stops here instead of
+// making the calculator count for seconds.
+const MAX_SIDE_KG = 500;
+
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+
+// Fewest plates for every amount up to `targetKg`, in steps of the greatest
+// common divisor of the plates, so the table stays small (a few thousand cells).
+function plateTable(targetKg: number, plates: number[], cap: number) {
+  const usable = plates.filter((p) => p <= cap + 1e-9).map(cents).filter((p) => p > 0);
+  const unit = usable.reduce((g, p) => gcd(g, p), 0) || 1;
+  const steps = usable.map((p) => p / unit).sort((a, b) => b - a);
+  const top = Math.floor(cents(Math.min(targetKg, MAX_SIDE_KG)) / unit);
+  const best = new Array<number>(top + 1).fill(Infinity);
+  const pick = new Array<number>(top + 1).fill(0);
   best[0] = 0;
-  for (let t = 1; t <= target; t++) {
-    for (const p of usable) {
+  for (let t = 1; t <= top; t++) {
+    for (const p of steps) {
       if (p <= t && best[t - p] + 1 < best[t]) {
         best[t] = best[t - p] + 1;
         pick[t] = p;
       }
     }
   }
-  if (!Number.isFinite(best[target])) return undefined;
-  const out: number[] = [];
-  for (let t = target; t > 0; t -= pick[t]) out.push(pick[t] / 100);
-  return out.sort((a, b) => b - a);
+  const read = (t: number) => {
+    const out: number[] = [];
+    for (let i = t; i > 0; i -= pick[i]) out.push((pick[i] * unit) / 100);
+    return out.sort((x, y) => y - x);
+  };
+  return { unit, top, best, read };
+}
+
+// The fewest plates (of the ones not heavier than `cap`) that make `amount`
+// exactly, heaviest first. Undefined when it cannot be made.
+function fewestPlates(amountKg: number, plates: number[], cap = Infinity): number[] | undefined {
+  const target = cents(amountKg);
+  if (target < 0 || amountKg > MAX_SIDE_KG) return undefined;
+  if (target === 0) return [];
+  const table = plateTable(amountKg, plates, cap);
+  if (target % table.unit !== 0 || !Number.isFinite(table.best[table.top])) return undefined;
+  return table.read(table.top);
+}
+
+// The heaviest amount not above `amountKg` the plates can make, with the fewest plates.
+function closestPlates(amountKg: number, plates: number[]): { plates: number[]; madeKg: number } {
+  const table = plateTable(amountKg, plates, Infinity);
+  for (let t = table.top; t > 0; t--) {
+    if (Number.isFinite(table.best[t])) return { plates: table.read(t), madeKg: (t * table.unit) / 100 };
+  }
+  return { plates: [], madeKg: 0 };
 }
 
 export function usesPlates(exercise: Exercise | undefined): boolean {
@@ -451,11 +486,8 @@ export function plateLoad(totalKg: number, exercise: Exercise | undefined, profi
   const side = (totalKg - bar) / 2;
   if (side < -1e-9) return { barKg: bar, perSide: [], shortKg: 0 };
   // The heaviest weight not above the side that the plates can make.
-  for (let short = 0; short <= cents(side); short += 1) {
-    const plates = fewestPlates((cents(side) - short) / 100, profile.platesKg);
-    if (plates) return { barKg: bar, perSide: plates, shortKg: short / 100 };
-  }
-  return { barKg: bar, perSide: [], shortKg: side };
+  const made = closestPlates(side, profile.platesKg);
+  return { barKg: bar, perSide: made.plates, shortKg: Math.max(0, cents(side) - cents(made.madeKg)) / 100 };
 }
 
 function diff(from: number[], to: number[]): { add: number[]; remove: number[] } {

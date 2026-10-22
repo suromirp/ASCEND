@@ -42,3 +42,5 @@ Niets.
 ## Terugdraaien
 
 In de instellingen onder Forge op Programma loslaten tikken. In code: `withProgramExercises` niet meer toepassen in `AppDataContext`; het bewaarde programma doet dan niets.
+
+Aanvulling na de review, voor dit besluit live ging: de korte versie van een training met een programma laat het laatste kwart van de oefeningen weg (vanaf vier oefeningen), de eerste twee blijven altijd staan.

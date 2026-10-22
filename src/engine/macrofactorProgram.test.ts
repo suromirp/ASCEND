@@ -13,6 +13,7 @@ import {
   proposeMapping,
   readProgramRows,
   setsText,
+  toPrescriptions,
   withProgramExercises,
 } from './macrofactorProgram';
 import { normalizeStrengthProgram } from './strengthProgramStore';
@@ -177,5 +178,15 @@ describe('gebruiken', () => {
     expect(raise.rows[0].target.failure).toBe(true);
     expect(raise.rows[0].reps).toBe(12);
     expect(raise.rows[0].rir).toBe(0);
+  });
+});
+
+describe('korte versie met een programma', () => {
+  it('laat het laatste kwart weg, de eerste twee blijven altijd', () => {
+    const ex = (name: string) => ({ name, sets: [{ repsMin: 8, repsMax: 10, rir: 2 }] });
+    const five = toPrescriptions(['Barbell Bench Press', 'Barbell Row', 'Lat Pulldown', 'Lateral Raise', 'Cable Curl'].map(ex) as never);
+    expect(five.map((p) => p.priority)).toEqual(['core', 'core', 'accessory', 'optional', 'optional']);
+    const three = toPrescriptions(['Barbell Bench Press', 'Barbell Row', 'Lat Pulldown'].map(ex) as never);
+    expect(three.every((p) => p.priority !== 'optional')).toBe(true);
   });
 });
