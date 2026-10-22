@@ -24,6 +24,8 @@ import type { SessionTemplate } from '../models/training';
 
 const STATE_KEY = 'macrofactorWorkouts';
 const MAPPING_KEY = 'macrofactorMapping';
+// Name keys linked "als losse krachttraining" (a list; same place, same rules as the mapping).
+const LOOSE_KEY = 'macrofactorLoose';
 
 export interface MacroFactorState {
   // When the file was read (ISO timestamp) and what it was called.
@@ -107,20 +109,35 @@ export async function getMapping(): Promise<NameMapping> {
   return stored && typeof stored === 'object' ? stored : {};
 }
 
-// templateId, or null for "niet inlezen".
-export async function setMapping(workoutName: string, templateId: string | null): Promise<void> {
-  const mapping = await getMapping();
-  await MetaRepo.set(MAPPING_KEY, { ...mapping, [nameKey(workoutName)]: templateId });
-  notify();
+export async function getLoose(): Promise<string[]> {
+  const stored = await MetaRepo.get<string[]>(LOOSE_KEY);
+  return Array.isArray(stored) ? stored : [];
+}
+
+async function putLoose(current: string[], key: string, loose: boolean): Promise<string[]> {
+  const without = current.filter((k) => k !== key);
+  return loose ? [...without, key] : without;
+}
+
+// templateId, or null for "niet inlezen". `loose`: as a loose strength
+// training, tied to no planned session (the workouts then become logs without
+// a plannedSessionId, the way a training that was not planned is saved).
+export async function setMapping(workoutName: string, templateId: string | null, loose = false): Promise<void> {
+  await setMappings([{ name: workoutName, templateId, loose }]);
 }
 
 // The suggestions the user confirmed with "Koppelingen klopt": one write for
 // all of them, so the card does not redraw in between.
-export async function setMappings(choices: { name: string; templateId: string | null }[]): Promise<void> {
+export async function setMappings(choices: { name: string; templateId: string | null; loose?: boolean }[]): Promise<void> {
   if (choices.length === 0) return;
   const mapping = { ...(await getMapping()) };
-  for (const { name, templateId } of choices) mapping[nameKey(name)] = templateId;
+  let loose = await getLoose();
+  for (const { name, templateId, loose: isLoose } of choices) {
+    mapping[nameKey(name)] = templateId;
+    loose = await putLoose(loose, nameKey(name), !!isLoose && templateId !== null);
+  }
   await MetaRepo.set(MAPPING_KEY, mapping);
+  await MetaRepo.set(LOOSE_KEY, loose);
   notify();
 }
 
@@ -128,6 +145,7 @@ export async function forgetMapping(workoutName: string): Promise<void> {
   const mapping = { ...(await getMapping()) };
   delete mapping[nameKey(workoutName)];
   await MetaRepo.set(MAPPING_KEY, mapping);
+  await MetaRepo.set(LOOSE_KEY, await putLoose(await getLoose(), nameKey(workoutName), false));
   notify();
 }
 

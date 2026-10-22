@@ -15,11 +15,14 @@ import { BackButton } from '../components/BackButton';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { MacroFactorLeadCard } from '../components/MacroFactorLeadCard';
 import { MacroFactorLinkCard } from '../components/MacroFactorLinkCard';
+import { Icon } from '../components/icons';
+import { Portal } from '../components/Portal';
+import { useSheetClose } from '../utils/useSheetClose';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
 import { MacroFactorFormatError, nameKey } from '../engine/macrofactorImport';
-import { readMacroFactorBytes } from '../engine/macrofactorFile';
+import { importSummary, readMacroFactorBytes } from '../engine/macrofactorFile';
 import { applyWeightImport, planWeightImport, weightEntryFromDay, type MacroFactorWeightResult, type WeightConflict } from '../engine/macrofactorWeight';
 import { hasMacroFactorWeight, MACROFACTOR_FRESH_DAYS } from '../engine/bodyWeight';
 import type { WeightEntry } from '../models/metrics';
@@ -27,7 +30,8 @@ import { formatNumberNL } from '../utils/number';
 import { forgetMapping, importMacroFactorWorkouts, takeSharedFile } from '../storage/macrofactor';
 import { daysBetween, formatDateNL, todayISO } from '../utils/dates';
 
-type Notice = { tone: 'ok' | 'error'; text: string };
+// 'ok' with lines is the calm summary of a file; the other forms are one line.
+type Notice = { tone: 'ok' | 'error'; text?: string; lines?: string[]; details?: string };
 
 function countText(n: number): string {
   return n === 1 ? '1 krachttraining' : `${n} krachttrainingen`;
@@ -48,41 +52,39 @@ export function MacroFactorImportPage() {
   const [params, setParams] = useSearchParams();
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   // The body weight of a file: new days are stored, a day you filled in
   // yourself stays as it is and is offered below.
-  async function storeWeight(file: MacroFactorWeightResult): Promise<string> {
+  async function storeWeight(file: MacroFactorWeightResult) {
     const current = settingsRef.current;
     const weightPlan = planWeightImport(current.weightEntries, file.days);
     await updateSettings({ weightEntries: applyWeightImport(current.weightEntries, weightPlan) });
     setConflicts(weightPlan.conflicts);
     const lastDay = [...file.days].reverse().find((d) => weightEntryFromDay(d));
     const last = lastDay ? weightEntryFromDay(lastDay) : undefined;
-    const parts: string[] = [];
-    if (last) parts.push(`Gewicht gelezen: ${formatNumberNL(last.kg, 1)} kg op ${formatDateNL(last.date)} (${last.basis === 'trend' ? 'trendgewicht' : 'weegschaal'}).`);
-    parts.push(weightPlan.add.length > 0 ? `${daysText(weightPlan.add.length)} opgeslagen.` : 'Dit gewicht stond al in ASCEND.');
-    if (current.weightFromMacroFactor === false) parts.push('Let op: Gewicht uit MacroFactor gebruiken staat uit, dus ASCEND rekent er nog niet mee.');
-    return parts.join(' ');
+    if (!last) return undefined;
+    return { kg: last.kg, date: last.date, basis: last.basis === 'trend' ? ('trend' as const) : ('scale' as const), added: weightPlan.add.length, offInSettings: current.weightFromMacroFactor === false };
   }
 
   async function readData(data: Uint8Array, name?: string) {
     setBusy(true);
     try {
       const content = await readMacroFactorBytes(data, name);
-      const parts: string[] = [];
-      if (content.weight) parts.push(await storeWeight(content.weight));
+      const weight = content.weight ? await storeWeight(content.weight) : undefined;
+      let workoutCount: number | undefined;
       if (content.workouts) {
         const result = await importMacroFactorWorkouts(content.workouts, name);
-        parts.push(`${countText(result.count)} gevonden in het bestand.`);
+        workoutCount = result.count;
       }
-      parts.push(...content.notes);
-      setNotice({ tone: 'ok', text: parts.join(' ') });
+      setNotice({ tone: 'ok', lines: importSummary({ weight, workoutCount, ignoredSheets: content.ignoredSheets }, formatDateNL) });
     } catch (err) {
-      setNotice({
-        tone: 'error',
-        text: err instanceof MacroFactorFormatError ? err.message : 'ASCEND kan dit bestand niet lezen. Kies de export van MacroFactor als xlsx- of CSV-bestand.',
-      });
+      setNotice(
+        err instanceof MacroFactorFormatError
+          ? { tone: 'error', text: err.message, details: err.details }
+          : { tone: 'error', text: 'ASCEND kan dit bestand niet lezen. Kies de export van MacroFactor als xlsx- of CSV-bestand.' },
+      );
     } finally {
       setBusy(false);
     }
@@ -173,10 +175,26 @@ export function MacroFactorImportPage() {
         ) : (
           <SecondaryButton onClick={() => input.current?.click()} disabled={busy}>{busy ? 'Bezig…' : 'Kies bestand'}</SecondaryButton>
         )}
-        {notice && (
-          <p className="text-sm leading-snug" role={notice.tone === 'error' ? 'alert' : 'status'} style={{ color: notice.tone === 'error' ? 'var(--color-danger-text)' : 'var(--color-success-text)' }}>
-            {notice.text}
-          </p>
+        {notice?.lines && (
+          <ul className="flex flex-col gap-1.5" role="status">
+            {notice.lines.map((line) => (
+              <li key={line} className="flex items-start gap-2 text-sm leading-snug" style={{ color: line.startsWith('Voeding') ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
+                <span className="mt-0.5 shrink-0" style={{ color: 'var(--color-ink-dim)' }}>
+                  <Icon name="gedaan" size={16} />
+                </span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {notice?.tone === 'error' && notice.text && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm leading-snug" role="alert" style={{ color: 'var(--color-danger-text)' }}>{notice.text}</p>
+            {notice.details && <SecondaryButton onClick={() => setShowDetails(true)}>Details</SecondaryButton>}
+          </div>
+        )}
+        {notice?.tone === 'ok' && notice.text && (
+          <p className="text-sm leading-snug" role="status" style={{ color: 'var(--color-ink)' }}>{notice.text}</p>
         )}
         {state.readAt && !notice && (
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
@@ -184,6 +202,8 @@ export function MacroFactorImportPage() {
           </p>
         )}
       </Card>
+
+      {showDetails && notice?.details && <DetailsSheet text={notice.details} onClose={() => setShowDetails(false)} />}
 
       <MacroFactorLinkCard primary={unlinked} />
 
@@ -288,5 +308,26 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
       </span>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{children}</p>
     </div>
+  );
+}
+
+// The technical part of a refusal: found sheets and columns, to pass on.
+function DetailsSheet({ text, onClose }: { text: string; onClose: () => void }) {
+  const { closing, requestClose } = useSheetClose(onClose);
+  return (
+    <Portal>
+      <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
+        <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
+            <Eyebrow>Details</Eyebrow>
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              Dit zijn de werkbladen en kolommen die ASCEND in het bestand zag. Geef ze door, dan kan ASCEND ze leren herkennen.
+            </p>
+            <p className="whitespace-pre-line text-xs leading-snug" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{text}</p>
+            <SecondaryButton onClick={requestClose}>Begrepen</SecondaryButton>
+          </Card>
+        </div>
+      </div>
+    </Portal>
   );
 }

@@ -74,24 +74,24 @@ describe('recognising a weight export', () => {
   it('does not take the Weight (kg) column of a workout log for body weight', () => {
     // A workout log that lacks a column gets the workout message, not a weight.
     const e = refused('Date,Workout Duration,Workout,Exercise,Weight (kg)\n2026-10-13,3600,Push,Bench,60\n');
-    expect(e.message).toMatch(/Er ontbreekt een kolom/);
-    expect(e.message).toContain('herhalingen (Reps)');
+    expect(e.details).toMatch(/Er ontbreekt een kolom/);
+    expect(e.details).toContain('herhalingen (Reps)');
   });
 });
 
 describe('a file that cannot be read', () => {
   it('names the missing date column in Dutch', () => {
     const e = refused('Scale Weight (kg),Trend Weight (kg)\n85.5,85.2\n');
-    expect(e.message).toMatch(/Er ontbreekt een kolom in dit bestand: datum \(Date\)/);
-    expect(e.message).toContain('Gevonden kolommen: Scale Weight (kg), Trend Weight (kg)');
+    expect(e.details).toMatch(/Er ontbreekt een kolom in dit bestand: datum \(Date\)/);
+    expect(e.details).toContain('Gevonden kolommen: Scale Weight (kg), Trend Weight (kg)');
     expect(e.missing).toEqual(['datum (Date)']);
   });
 
   it('says which weight columns it looked for when there is none', () => {
     // No weight column: not a weight file, so the general message comes.
     const e = refused('Date,Steps,Floors\n2026-10-13,9400,12\n');
-    expect(e.message).toMatch(/niet de Workout Log van MacroFactor, en ook geen bestand met gewicht/);
-    expect(e.message).toMatch(/of het gewicht/);
+    expect(e.details).toMatch(/niet de Workout Log van MacroFactor, en ook geen bestand met gewicht/);
+    expect(e.details).toMatch(/of het gewicht/);
     expect(() => readMacroFactorWeightCsv('Date,Calories\n2026-10-13,2400\n')).toThrow(/geen kolom met gewicht/);
   });
 
@@ -102,7 +102,7 @@ describe('a file that cannot be read', () => {
 
   it('refuses an empty file and a file without a usable weight', () => {
     expect(refused('').message).toMatch(/leeg/);
-    expect(refused('Date,Scale Weight (kg)\n2026-10-13,\n').message).toMatch(/geen gewicht met een datum/);
+    expect(refused('Date,Scale Weight (kg)\n2026-10-13,\n').details).toMatch(/geen gewicht met een datum/);
   });
 });
 

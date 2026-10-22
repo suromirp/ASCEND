@@ -35,9 +35,9 @@ import { cellText, isXlsx, type Cell, type SheetTable } from './sheetTable';
 export interface MacroFactorContent {
   workouts?: MacroFactorReadResult;
   weight?: MacroFactorWeightResult;
-  // A sheet that looked like workouts or weight but could not be read, while
-  // another sheet could: said to the user, in Dutch.
-  notes: string[];
+  // How many sheets were left alone (food, notes, settings, program templates
+  // and the like). Said in one line, never one error per sheet.
+  ignoredSheets: number;
 }
 
 type Kind = 'workouts' | 'weight' | 'unknown';
@@ -120,12 +120,14 @@ const isFoodLog = (table: SheetTable) => {
 const FOOD_LOG_MESSAGE =
   'Dit is je Food Log (wat je at). Die gebruikt ASCEND niet. Kies in MacroFactor bij Granular Export onder Metrics & Analytics Weight Trend en Scale Weight voor je gewicht, of Export Workout Log voor je krachttrainingen.';
 
+const NOTHING_USABLE_MESSAGE = 'ASCEND vindt in dit bestand geen gewicht en geen krachttrainingen. Kies de Workout Log, of Weight Trend en Scale Weight.';
+
 export function readMacroFactorTables(input: SheetTable[]): MacroFactorContent {
   const tables = input.map(unwrapCsvInCells);
   const usable = tables.filter((t) => t.rows.length > 0);
   if (usable.length > 0 && usable.every(isFoodLog)) throw new MacroFactorFormatError(FOOD_LOG_MESSAGE);
   if (usable.length === 0) throw new MacroFactorFormatError('Het bestand is leeg.');
-  const content: MacroFactorContent = { notes: [] };
+  const content: MacroFactorContent = { ignoredSheets: 0 };
   const problems: { table: SheetTable; error: MacroFactorFormatError }[] = [];
   const unknown: SheetTable[] = [];
 
@@ -150,11 +152,14 @@ export function readMacroFactorTables(input: SheetTable[]): MacroFactorContent {
   }
 
   if (content.workouts || content.weight) {
-    if (usable.length > 1) content.notes = problems.map((p) => `Werkblad ${p.table.name || 'zonder naam'}: ${p.error.message}`);
+    // A sheet that could not be read while another could is left alone, like
+    // the ones that are not recognised: nothing is said per sheet.
+    content.ignoredSheets = problems.length + unknown.length + (input.length - usable.length);
     return content;
   }
-  if (problems.length > 0) throw problems[0].error;
-  throw new MacroFactorFormatError(unknownLayoutMessage(unknown));
+  // Nothing usable at all: one plain line, the technical part behind "Details".
+  const details = problems.length > 0 ? problems.map((p) => `${p.table.name || 'Werkblad'}: ${p.error.message}`).join('\n') : unknownLayoutMessage(unknown);
+  throw new MacroFactorFormatError(NOTHING_USABLE_MESSAGE, problems[0]?.error.missing ?? [], details);
 }
 
 export function readMacroFactorText(text: string, fileName?: string): MacroFactorContent {
@@ -174,4 +179,38 @@ export async function readMacroFactorBytes(bytes: Uint8Array, fileName?: string)
     }
   }
   return readMacroFactorText(new TextDecoder('utf-8').decode(bytes), fileName);
+}
+
+// --- the summary --------------------------------------------------------------------
+
+export interface ImportSummaryInput {
+  // The last weight in the file, with what happened to it.
+  weight?: { kg: number; date: string; basis: 'trend' | 'scale'; added: number; offInSettings: boolean };
+  workoutCount?: number;
+  ignoredSheets: number;
+}
+
+const daysWord = (n: number) => (n === 1 ? '1 dag' : `${n} dagen`);
+
+// A few calm lines for the page, in plain Dutch: weight, workouts, and what is
+// left alone. Pure; the page only shows them.
+export function importSummary(input: ImportSummaryInput, formatDate: (iso: string) => string): string[] {
+  const lines: string[] = [];
+  if (input.weight) {
+    const w = input.weight;
+    const kg = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(w.kg);
+    const what = w.basis === 'trend' ? 'trendgewicht' : 'weegschaal';
+    const stored = w.added > 0 ? `${daysWord(w.added)} opgeslagen.` : 'stond al in ASCEND.';
+    const off = w.offInSettings ? ' Let op: Gewicht uit MacroFactor gebruiken staat uit, dus ASCEND rekent er nog niet mee.' : '';
+    lines.push(`Gewicht: ${kg} kg op ${formatDate(w.date)} (${what}), ${stored}${off}`);
+  } else {
+    lines.push('Gewicht: niet in dit bestand.');
+  }
+  if (input.workoutCount && input.workoutCount > 0) {
+    lines.push(`Trainingen: ${input.workoutCount === 1 ? '1 krachttraining' : `${input.workoutCount} krachttrainingen`} gevonden. Hieronder koppel je ze.`);
+  } else {
+    lines.push('Trainingen: geen in dit bestand. Voor je sets en RIR deel je de Workout Log.');
+  }
+  if (input.ignoredSheets > 0) lines.push('Voeding en andere gegevens laat ASCEND liggen.');
+  return lines;
 }

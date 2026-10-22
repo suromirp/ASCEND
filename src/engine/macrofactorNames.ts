@@ -3,6 +3,7 @@
 //
 // Pure. The suggestion comes from two signals, both read from what ASCEND
 // already knows:
+// 0. (last) The content, when nothing else is known: engine/macrofactorContent.ts.
 // 1. The day. For every workout in the file: which strength template stood
 //    planned that day, or, when the day has a log, which one was logged. Per
 //    name the template that comes up most often wins. A tie, or too little
@@ -20,6 +21,7 @@ import { formatDateNL } from '../utils/dates';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
 import type { NameMapping } from './macrofactorLink';
+import { suggestByContent } from './macrofactorContent';
 
 // --- the exercises ------------------------------------------------------------------
 
@@ -61,7 +63,12 @@ export interface MappingSuggestion {
   votes: number;
   // The latest of those days; for 'exercises' the latest workout.
   date: string;
-  basis: 'planned' | 'logged' | 'exercises';
+  basis: 'planned' | 'logged' | 'exercises' | 'content';
+  // 'content' only: the exercises in words ("Squat, deadlift en beenpers: een beendag").
+  reason?: string;
+  // The workouts of this name are all outside the plan: link them as a loose
+  // strength training, tied to no planned session.
+  loose?: boolean;
 }
 
 interface Tally {
@@ -145,6 +152,26 @@ export function suggestMappings(
   return result;
 }
 
+// What the card shows: the suggestions from the plan and the logs, and for the
+// names those say nothing about, the ones from the exercises
+// (engine/macrofactorContent.ts). Several names may share a template there, as
+// there are more names than trainings.
+export function suggestAll(
+  workouts: MacroFactorWorkout[],
+  planned: PlannedSession[],
+  logs: SessionLog[],
+  templates: SessionTemplate[],
+  programStart?: string,
+): Record<string, MappingSuggestion> {
+  const result = suggestMappings(workouts, planned, logs, templates);
+  for (const [key, c] of Object.entries(suggestByContent(workouts, templates, planned, programStart))) {
+    if (key in result) continue;
+    const dates = workouts.filter((w) => nameKey(w.name) === key).map((w) => w.date).sort();
+    result[key] = { templateId: c.templateId, votes: 0, date: dates[dates.length - 1], basis: 'content', reason: c.reason, loose: c.loose };
+  }
+  return result;
+}
+
 function sideOfName(list: MacroFactorWorkout[]): Side | undefined {
   const sides = list.map(workoutSide);
   const legs = sides.filter((s) => s === 'legs').length;
@@ -155,6 +182,7 @@ function sideOfName(list: MacroFactorWorkout[]): Side | undefined {
 
 // "voorgesteld omdat op 30 september Benen A gepland stond"
 export function describeSuggestion(s: MappingSuggestion, templateName: string): string {
+  if (s.basis === 'content' && s.reason) return s.loose ? `${s.reason}. Valt buiten je planning, daarom als losse krachttraining` : s.reason;
   if (s.basis === 'exercises') return `voorgesteld omdat de oefeningen bij ${templateName} passen`;
   const state = s.basis === 'planned' ? 'gepland' : 'gelogd';
   const more = s.votes > 1 ? `, en op ${s.votes - 1} ${s.votes - 1 === 1 ? 'andere dag' : 'andere dagen'} ook` : '';
@@ -172,6 +200,8 @@ export interface LinkRow {
   // A template id, null for "niet inlezen", undefined when the name is not
   // linked yet (or its template is gone).
   linked: string | null | undefined;
+  // Stored as a loose strength training (tied to no planned session).
+  loose?: boolean;
   suggestion?: MappingSuggestion;
 }
 
@@ -184,6 +214,7 @@ export function linkRows(
   logs: SessionLog[],
   templates: SessionTemplate[],
   suggestions: Record<string, MappingSuggestion>,
+  loose: string[] = [],
 ): LinkRow[] {
   const done = new Set([...dismissed, ...logs.flatMap((l) => [l.externalId, l.manualMeasured?.strength?.workoutId]).filter((id): id is string => !!id)]);
   const known = new Set(templates.map((t) => t.id));
@@ -202,8 +233,21 @@ export function linkRows(
       name: w.name,
       count: 1,
       linked: key in mapping && (stored === null || (stored !== undefined && known.has(stored))) ? stored : undefined,
+      ...(loose.includes(key) ? { loose: true } : {}),
       suggestion: suggestions[key],
     });
   }
   return [...rows.values()];
+}
+
+// The same kind together: sorted by the training a row points at, in the order
+// of the program; names without a suggestion last. Stable, so the order of the
+// file stays within a group.
+export function groupRows(rows: LinkRow[], templates: SessionTemplate[]): LinkRow[] {
+  const order = new Map(templates.map((t, i) => [t.id, i]));
+  const rank = (r: LinkRow) => {
+    const id = typeof r.linked === 'string' ? r.linked : r.suggestion?.templateId;
+    return id !== undefined && order.has(id) ? order.get(id)! : templates.length + (r.linked === null ? 1 : 0);
+  };
+  return [...rows].sort((a, b) => rank(a) - rank(b));
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readMacroFactorBytes, readMacroFactorTables, readMacroFactorText } from './macrofactorFile';
+import { importSummary, readMacroFactorBytes, readMacroFactorTables, readMacroFactorText } from './macrofactorFile';
 import { MacroFactorFormatError, parseCsv } from './macrofactorImport';
 import { makeXlsx, serialOf, type KitCell, type KitSheet } from './xlsxTestKit';
 import workoutCsv from './fixtures/macrofactor-workout-log.csv?raw';
@@ -118,7 +118,7 @@ describe('an export with weight and workouts in one file', () => {
       { date: '2026-10-13', trendKg: 85.7 },
       { date: '2026-10-14', scaleKg: 85.5, trendKg: 85.6 },
     ]);
-    expect(content.notes).toEqual([]);
+    expect(content.ignoredSheets).toBe(1);
   });
 
   it('does not take the weight of the sets for body weight', async () => {
@@ -137,7 +137,7 @@ describe('an export with weight and workouts in one file', () => {
     expect(content.workouts?.workouts).toHaveLength(4);
   });
 
-  it('still imports what it can read, and says which sheet it could not', async () => {
+  it('still imports what it can read and leaves the other sheet alone without a word', async () => {
     const content = await readMacroFactorBytes(
       makeXlsx([
         { name: 'Weight', rows: weightRowsOf() },
@@ -146,8 +146,7 @@ describe('an export with weight and workouts in one file', () => {
     );
     expect(content.weight?.days).toHaveLength(1);
     expect(content.workouts).toBeUndefined();
-    expect(content.notes).toHaveLength(1);
-    expect(content.notes[0]).toMatch(/^Werkblad Oefeningen: Er ontbreken kolommen in dit bestand: .*duur/);
+    expect(content.ignoredSheets).toBe(1);
   });
 });
 
@@ -163,21 +162,24 @@ describe('what is said when the layout is not known', () => {
         { name: 'Stappen', rows: [['Datum', 'Steps (count)'], [day('2026-10-14'), 9000]] },
       ]),
     );
-    expect(e.message).toMatch(/herkent geen werkblad/);
-    expect(e.message).toContain('Voeding (Date, Calories, Protein)');
-    expect(e.message).toContain('Stappen (Datum, Steps (count))');
-    expect(e.message).toMatch(/Geef deze kolomnamen door/);
+    expect(e.message).toMatch(/geen gewicht en geen krachttrainingen/);
+    expect(e.message).not.toContain('Calories');
+    expect(e.details).toMatch(/herkent geen werkblad/);
+    expect(e.details).toContain('Voeding (Date, Calories, Protein)');
+    expect(e.details).toContain('Stappen (Datum, Steps (count))');
+    expect(e.details).toMatch(/Geef deze kolomnamen door/);
   });
 
   it('gives the usual message for a single sheet that is not known', async () => {
     const e = await refused(makeXlsx([{ name: 'Stappen', rows: [['Date', 'Steps', 'Floors'], [day('2026-10-14'), 9400, 12]] }]));
-    expect(e.message).toMatch(/niet de Workout Log van MacroFactor/);
-    expect(e.message).toContain('Gevonden kolommen: Date, Steps, Floors');
+    expect(e.message).toMatch(/geen gewicht en geen krachttrainingen/);
+    expect(e.details).toMatch(/niet de Workout Log van MacroFactor/);
+    expect(e.details).toContain('Gevonden kolommen: Date, Steps, Floors');
   });
 
   it('says a sheet without a usable weight has none', async () => {
     const e = await refused(makeXlsx([{ name: 'Weight', rows: [['Date', 'Scale Weight (kg)'], [day('2026-10-13'), null]] }]));
-    expect(e.message).toMatch(/geen gewicht met een datum/);
+    expect(e.details).toMatch(/geen gewicht met een datum/);
   });
 
   it('says a workbook without rows is empty', async () => {
@@ -187,6 +189,7 @@ describe('what is said when the layout is not known', () => {
   it('writes none of the dashes the app avoids', async () => {
     const e = await refused(makeXlsx([{ name: 'A', rows: [['x', 'y']] }, { name: 'B', rows: [['z']] }]));
     expect(e.message).not.toMatch(/[–—]/);
+    expect(e.details).not.toMatch(/[–—]/);
   });
 });
 
@@ -234,5 +237,46 @@ describe('the xlsx MacroFactor actually writes: CSV text in one cell per row', (
     const err = await refused(makeXlsx([{ name: 'in', rows: food.map((l) => [l]) }]));
     expect(err.message).toContain('Food Log');
     expect(err.message).toContain('Weight Trend');
+  });
+});
+
+describe('the summary of a whole export', () => {
+  const workoutSheet = (): KitSheet => sheetFromCsv('Workout Log', workoutCsv);
+  const manySheets = (): KitSheet[] => [
+    { name: 'Voeding', rows: [['Date', 'Calories', 'Protein'], [day('2026-10-14'), 2400, 180]] },
+    { name: 'Workouts', rows: [['Exercise', 'Notes', 'Set 1 Type', 'Set 1 RIR', 'Set 1 Rest'], ['Squat', '', 'Normal', 2, 90]] },
+    { name: 'Weight Trend', rows: [['Date', 'Trend Weight (kg)'], [day('2026-10-13'), 85.6]] },
+    { name: 'Instellingen', rows: [['Setting', 'Value'], ['Doel', 'Behouden']] },
+  ];
+
+  it('reads the weight, says nothing per sheet and counts the ones it left alone', async () => {
+    const content = await readMacroFactorBytes(makeXlsx(manySheets()));
+    expect(content.weight?.days).toHaveLength(1);
+    expect(content.workouts).toBeUndefined();
+    expect(content.ignoredSheets).toBe(3);
+  });
+
+  it('makes a few calm lines of it', () => {
+    const lines = importSummary({ weight: { kg: 85.6, date: '2026-10-13', basis: 'trend', added: 0, offInSettings: false }, ignoredSheets: 3 }, () => '13 oktober');
+    expect(lines).toEqual([
+      'Gewicht: 85,6 kg op 13 oktober (trendgewicht), stond al in ASCEND.',
+      'Trainingen: geen in dit bestand. Voor je sets en RIR deel je de Workout Log.',
+      'Voeding en andere gegevens laat ASCEND liggen.',
+    ]);
+  });
+
+  it('counts the workouts and the new days, and leaves out the last line when nothing was left alone', async () => {
+    const content = await readMacroFactorBytes(makeXlsx([workoutSheet()]));
+    expect(content.ignoredSheets).toBe(0);
+    const lines = importSummary({ weight: { kg: 80, date: '2026-10-13', basis: 'scale', added: 3, offInSettings: true }, workoutCount: content.workouts?.workouts.length, ignoredSheets: 0 }, () => '13 oktober');
+    expect(lines[0]).toContain('3 dagen opgeslagen.');
+    expect(lines[0]).toContain('staat uit');
+    expect(lines[1]).toBe('Trainingen: 4 krachttrainingen gevonden. Hieronder koppel je ze.');
+    expect(lines).toHaveLength(2);
+    expect(lines.join(' ')).not.toMatch(/[–—]/);
+  });
+
+  it('says there is no weight when the file has none', () => {
+    expect(importSummary({ workoutCount: 1, ignoredSheets: 0 }, () => '')[0]).toBe('Gewicht: niet in dit bestand.');
   });
 });

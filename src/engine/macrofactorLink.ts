@@ -124,6 +124,8 @@ export function planMacroFactor(
   templates: SessionTemplate[],
   logs: SessionLog[],
   leads = true,
+  // Name keys linked "als losse krachttraining": never tied to a planned session.
+  loose: string[] = [],
 ): MacroFactorPlan {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const dismissedSet = new Set(dismissed);
@@ -183,7 +185,7 @@ export function planMacroFactor(
       continue;
     }
 
-    const free = nearest(
+    const free = loose.includes(key) ? undefined : nearest(
       planned.filter(
         (s) => s.templateId === template.id && s.status !== 'skipped' && !loggedPlanned.has(s.id) && !claimedPlanned.has(s.id) && sameWeek(s.scheduledDate, workout.date),
       ),

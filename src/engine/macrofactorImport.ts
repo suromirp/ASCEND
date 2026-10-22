@@ -60,10 +60,14 @@ export interface MacroFactorReadResult {
 // The message is Dutch and meant to be shown as is.
 export class MacroFactorFormatError extends Error {
   readonly missing: string[];
-  constructor(message: string, missing: string[] = []) {
+  // The technical part (found sheets and columns), shown behind "Details" and
+  // never as a block of text.
+  readonly details?: string;
+  constructor(message: string, missing: string[] = [], details?: string) {
     super(message);
     this.name = 'MacroFactorFormatError';
     this.missing = missing;
+    this.details = details;
   }
 }
 
