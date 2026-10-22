@@ -24,12 +24,17 @@
 
 import { migrateGr5ObjectiveData } from '../engine/goalMigration';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { GoalMilestonesRepo, TrainingGoalsRepo, MetaRepo } from './database';
+import { PACK_MILESTONE_ID, TENT_PACK_KG, keepClearedMilestones, packMilestone, packWeightOf } from '../engine/gr5Profile';
+import { GoalMilestoneProgressRepo, GoalMilestonesRepo, SessionLogsRepo, TrainingGoalsRepo, MetaRepo } from './database';
 
 // Bump when data/defaultProgram.ts#buildObjective()'s milestone content
 // changes shape (not for wording-only tweaks, which overwrite for free) —
 // same convention as SCHEDULE_CONTENT_VERSION in storage/database.ts.
-export const GR5_MILESTONE_CONTENT_VERSION = 3;
+// v4: mijlpaal 11, de volle rugzaktocht, vraagt het rugzakdoel (14 kg met
+// tent, of wat het doel zegt) in plaats van vast 12 kg. Wat je behaald had
+// onder de oude eis blijft behaald: daar komt een rij in
+// GoalMilestoneProgress voor (engine/gr5Profile.ts#keepClearedMilestones).
+export const GR5_MILESTONE_CONTENT_VERSION = 4;
 
 export async function syncGr5MilestoneDefinitions(): Promise<void> {
   const version = await MetaRepo.get<number>('gr5MilestoneContentVersion');
@@ -55,7 +60,13 @@ export async function syncGr5MilestoneDefinitions(): Promise<void> {
   // targetDistanceKm (those are the user's own live state, untouched here)
   // and no real progress history (that's what GoalMilestoneProgress already
   // holds, live, unrelated to this content resync).
-  const { milestones } = migrateGr5ObjectiveData(freshObjective, []);
+  const migrated = migrateGr5ObjectiveData(freshObjective, []).milestones;
+  // Mijlpaal 11 volgt het rugzakdoel van dit doel, niet de standaard.
+  const packKg = packWeightOf(goal.requirements) ?? TENT_PACK_KG;
+  const milestones = migrated.map((m) => (m.id === PACK_MILESTONE_ID ? { ...m, ...packMilestone(packKg) } : m));
+  // Eerst vastleggen wat je al behaald had, dan pas de eisen overschrijven.
+  const [before, progress, logs] = await Promise.all([GoalMilestonesRepo.byGoal(goal.id), GoalMilestoneProgressRepo.byGoal(goal.id), SessionLogsRepo.getAll()]);
+  for (const row of keepClearedMilestones(before, milestones, progress, logs)) await GoalMilestoneProgressRepo.put(row);
   for (const m of milestones) await GoalMilestonesRepo.put(m);
   // Version 3: the default English name became Dutch. A name the user
   // chose themselves stays.

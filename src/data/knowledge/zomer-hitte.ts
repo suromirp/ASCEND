@@ -19,7 +19,7 @@ const content: KnowledgeContent = {
     {
       heading: 'Drinken en zout',
       body:
-        'Bergop met 12 kg in de warmte zweet je grofweg een halve tot ruim een liter per uur. In onderzoek bij mannen die in de hitte werkten, bevatte zweet bij gewende mensen gemiddeld zo\'n 45 mmol natrium per liter: ongeveer 1 gram natrium, ofwel 2,5 gram zout, per liter zweet, met grote verschillen tussen mensen. De Wilderness Medical Society raadt aan te drinken op dorst, niet volgens schema. Wie liters gewoon water drinkt zonder zout, kan zijn bloed verdunnen (hyponatriëmie): hoofdpijn, misselijkheid, opgezette handen en verwardheid, wat sterk op hitte-uitputting lijkt. Neem op droge etappes 3 liter capaciteit mee, vul bij elke bron bij en eet zout bij het drinken: bouillon, worst, kaas, chips of elektrolytentabletten. Plas je weinig en donker, dan loop je achter.',
+        'Bergop met je rugzak (12 tot 15 kg met tent) in de warmte zweet je grofweg een halve tot ruim een liter per uur. In onderzoek bij mannen die in de hitte werkten, bevatte zweet bij gewende mensen gemiddeld zo\'n 45 mmol natrium per liter: ongeveer 1 gram natrium, ofwel 2,5 gram zout, per liter zweet, met grote verschillen tussen mensen. De Wilderness Medical Society raadt aan te drinken op dorst, niet volgens schema. Wie liters gewoon water drinkt zonder zout, kan zijn bloed verdunnen (hyponatriëmie): hoofdpijn, misselijkheid, opgezette handen en verwardheid, wat sterk op hitte-uitputting lijkt. Neem op droge etappes 3 liter capaciteit mee, vul bij elke bron bij en eet zout bij het drinken: bouillon, worst, kaas, chips of elektrolytentabletten. Plas je weinig en donker, dan loop je achter.',
     },
     {
       heading: 'Tijd, tempo en wennen',

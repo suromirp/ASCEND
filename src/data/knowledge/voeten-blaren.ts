@@ -7,9 +7,9 @@ const content: KnowledgeContent = {
     'Stop bij het eerste warme plekje, niet bij de eerste pijn: tape nu kost twee minuten, een blaar kost een week.',
   sections: [
     {
-      heading: 'Schoen of trailrunner met 12 kg',
+      heading: 'Schoen of trailrunner met een zware rugzak',
       body:
-        'Met 12 kg en sterke enkels kun je de GR5 prima op trailrunners lopen: ze zijn lichter (gewicht aan je voeten kost naar verhouding veel meer energie dan op je rug), drogen in een paar uur en hebben geen inloopperiode. De prijs: minder steun en bescherming op losse puinhellingen, sneeuwvelden en lange afdalingen met last, en ze slijten snel, reken op 600 tot 900 km per paar. Een lichte wandelschoen of mid-model is het compromis als je enkels gevoelig zijn of je veel puin en sneeuw verwacht. Wat je ook kiest: loop er voor vertrek minstens 100 km in, inclusief lange afdalingen met je volle rugzak.',
+        'Met je rugzak (12 tot 15 kg met tent) en sterke enkels kun je de GR5 prima op trailrunners lopen: ze zijn lichter (gewicht aan je voeten kost naar verhouding veel meer energie dan op je rug), drogen in een paar uur en hebben geen inloopperiode. De prijs: minder steun en bescherming op losse puinhellingen, sneeuwvelden en lange afdalingen met last, en ze slijten snel, reken op 600 tot 900 km per paar. Een lichte wandelschoen of mid-model is het compromis als je enkels gevoelig zijn of je veel puin en sneeuw verwacht. Wat je ook kiest: loop er voor vertrek minstens 100 km in, inclusief lange afdalingen met je volle rugzak.',
     },
     {
       heading: 'Pasvorm, sokken en veters',

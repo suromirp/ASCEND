@@ -16,6 +16,9 @@ import { PHASE_TAPER, WAVE_LENGTH, type Phase, type Program, type ResolvedProgra
 import type { SessionTemplate, WeeklyProgressionStep } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { HIKE_DAY_ONE_LADDER, MOUNTAIN_HIKE_LADDER } from '../data/hikeLadder';
+import { packLadder, type LadderWeek } from './packLadder';
+import { TENT_PACK_KG } from './gr5Profile';
 
 export const PHASE_BASIS = 'phase_1';
 export const PHASE_OPBOUW = 'phase_2';
@@ -38,11 +41,11 @@ const PHASE_TEXT: Record<string, { name: string; description: string }> = {
   },
   [PHASE_BERG]: {
     name: 'BERGCAPACITEIT',
-    description: 'De lange zondag wordt een bergtocht: meer hoogtemeters omhoog en omlaag, en de rugzak gaat in kleine stappen zwaarder.',
+    description: 'De lange zondag wordt een bergtocht: meer hoogtemeters omhoog en omlaag, en de rugzak gaat in stappen van 1 tot 2 kg richting je rugzakdoel, nooit in dezelfde week als meer hoogtemeters.',
   },
   [PHASE_EXPEDITIE]: {
     name: 'EXPEDITIEKLAAR',
-    description: 'Twee wandeldagen achter elkaar in het weekend, richting tochtgewicht en ongeveer 1.000 m stijgen op een dag.',
+    description: 'Twee wandeldagen achter elkaar in het weekend, met de rugzak op tochtgewicht (in de zwaarste weken tot 1 kg erboven) en ongeveer 1.000 m stijgen op een dag.',
   },
   [PHASE_TAPER]: {
     name: 'NAAR DE START',
@@ -247,11 +250,28 @@ export interface ProgressionTarget {
   phaseSteps: WeeklyProgressionStep[];
 }
 
+// The step written for this exact week of the phase; in a phase made longer
+// than its written ladder, the last written wave repeats instead of starting
+// over at "Wennen".
+function ownStepFor(own: WeeklyProgressionStep[], position: ResolvedProgramPosition): WeeklyProgressionStep {
+  const wave = waveWeek(position);
+  const sameWave = own.filter((s) => ((s.weekInPhase - 1) % WAVE_LENGTH) + 1 === wave).sort((a, b) => b.weekInPhase - a.weekInPhase);
+  return own.find((s) => s.weekInPhase === loadWeekInPhase(position)) ?? sameWave[0] ?? own[own.length - 1];
+}
+
 // The target for one template in one program week. Phase-specific steps
 // win (matched on the exact week in the phase first, then on the wave
 // week); otherwise the generic 4-week shape, scaled per cycle, and in the
-// taper a normal build week scaled down.
+// taper a normal build week scaled down. The backpack of the hikes and the
+// rucksack walk comes from the pack ladder (below), not from the steps.
 export function progressionTarget(template: SessionTemplate, program: Program | null | undefined, dateIso: string): ProgressionTarget | undefined {
+  const target = stepTarget(template, program, dateIso);
+  if (!target || !program || !PACK_LADDER_TEMPLATES.has(template.id)) return target;
+  const kg = packKgOn(program, dateIso);
+  return kg === undefined ? target : { ...target, step: { ...target.step, backpackKg: kg } };
+}
+
+function stepTarget(template: SessionTemplate, program: Program | null | undefined, dateIso: string): ProgressionTarget | undefined {
   const steps = template.weeklyProgression;
   if (!steps || !program) return undefined;
   const position = resolveProgramWeek(program, dateIso);
@@ -260,10 +280,7 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
 
   const own = steps.filter((s) => s.phaseId === position.phase.id);
   if (own.length > 0) {
-    // Exact week first; in a phase made longer than its written ladder, the
-    // last written wave repeats instead of starting over at "Wennen".
-    const sameWave = own.filter((s) => ((s.weekInPhase - 1) % WAVE_LENGTH) + 1 === wave).sort((a, b) => b.weekInPhase - a.weekInPhase);
-    const step = own.find((s) => s.weekInPhase === loadWeekInPhase(position)) ?? sameWave[0] ?? own[own.length - 1];
+    const step = ownStepFor(own, position);
     return { step: repeatNote(step, position), minutes: step.targetMinutes, phaseSteps: own };
   }
 
@@ -284,6 +301,77 @@ export function progressionTarget(template: SessionTemplate, program: Program | 
 // A repeated week says so in its note ("Opbouw (herhaalweek)").
 function repeatNote(step: WeeklyProgressionStep, position: ResolvedProgramPosition): WeeklyProgressionStep {
   return position.repeated ? { ...step, note: step.note ? `${step.note} (herhaalweek)` : 'Herhaalweek' } : step;
+}
+
+// --- the backpack ladder ------------------------------------------------------
+//
+// The rucksack walk, the mountain hike and the first hiking day carry the
+// weight of the week. It is worked out for the whole program at once
+// (engine/packLadder.ts) from the pack target of the main goal
+// (Program.packTargetKg, set by storage/database.ts#syncProgramHorizon) and
+// the D+ ladder (data/hikeLadder.ts), so a pack step never lands in a week
+// with more D+, and a goal of 16 kg gives another ladder than one of 12.
+const PACK_LADDER_TEMPLATES = new Set(['tpl_mountain_hike', 'tpl_hike_day_one', 'tpl_ruck_walk']);
+
+// The pack target a program is laid out for: the main goal's own setting,
+// else the default with a tent.
+export function programPackTargetKg(program: Program): number {
+  const kg = program.packTargetKg;
+  return kg !== undefined && Number.isFinite(kg) && kg > 0 ? kg : TENT_PACK_KG;
+}
+
+function hikeElevation(ladder: WeeklyProgressionStep[], position: ResolvedProgramPosition): number | undefined {
+  const own = ladder.filter((s) => s.phaseId === position.phase.id);
+  return own.length > 0 ? ownStepFor(own, position).elevationGainM : undefined;
+}
+
+function ladderWeeks(program: Program): LadderWeek[] {
+  const total = program.phases.reduce((sum, p) => sum + p.weekCount, 0);
+  const first = mondayOfWeek(program.startDate);
+  const weeks: LadderWeek[] = [];
+  // The D+ of the previous build week, per hike: a rise is judged against it.
+  let mountain: number | undefined;
+  let dayOne: number | undefined;
+  for (let i = 0; i < total; i++) {
+    const position = resolveProgramWeek(program, addDays(first, i * 7));
+    if (!position) break;
+    const taper = position.phase.id === PHASE_TAPER;
+    // The fourth week of a wave is a rest week, also when you train through it:
+    // the D+ steps of that week are the light ones.
+    const rest = !taper && ((position.weekInPhase - 1) % WAVE_LENGTH) === WAVE_LENGTH - 1;
+    const kind = taper ? 'taper' : rest ? 'rest' : 'build';
+    const m = hikeElevation(MOUNTAIN_HIKE_LADDER, position);
+    const d = hikeElevation(HIKE_DAY_ONE_LADDER, position);
+    const hike = kind === 'build' && m !== undefined;
+    const elevationRises = hike && ((mountain !== undefined && (m ?? 0) > mountain) || (dayOne !== undefined && d !== undefined && d > dayOne));
+    if (kind === 'build') {
+      if (m !== undefined) mountain = m;
+      if (d !== undefined) dayOne = d;
+    }
+    weeks.push({ kind, hike, elevationRises });
+  }
+  return weeks;
+}
+
+const ladderCache = new Map<string, number[]>();
+const LADDER_CACHE_SIZE = 8;
+
+// The pack in kg for every week of the program, by week number - 1.
+export function packLadderOf(program: Program): number[] {
+  const target = programPackTargetKg(program);
+  const key = `${program.startDate}|${program.phases.map((p) => `${p.id}:${p.weekCount}`).join(',')}|${target}`;
+  const cached = ladderCache.get(key);
+  if (cached) return cached;
+  const ladder = packLadder(ladderWeeks(program), target);
+  if (ladderCache.size >= LADDER_CACHE_SIZE) ladderCache.delete(ladderCache.keys().next().value!);
+  ladderCache.set(key, ladder);
+  return ladder;
+}
+
+export function packKgOn(program: Program, dateIso: string): number | undefined {
+  const position = resolveProgramWeek(program, dateIso);
+  // A repeated week carries the pack of the week before too.
+  return position ? packLadderOf(program)[loadWeekInProgram(position) - 1] : undefined;
 }
 
 // --- the weekly pattern per phase -------------------------------------------

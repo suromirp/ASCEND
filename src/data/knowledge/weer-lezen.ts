@@ -21,7 +21,7 @@ const content: KnowledgeContent = {
       items: [
         'Nulgradenniveau: in augustus meestal tussen 3500 en 4500 m. Zakt het onder de 2500 m, dan is het koud op de passen en kan er verse sneeuw liggen.',
         'Temperatuur: reken op ongeveer 0,6 tot 0,7 °C koeler per 100 m. Is het 26 °C in Modane op 1050 m, dan is het op de Col de Chavière (2796 m) rond de 15 °C, zonder wind.',
-        'Wind op 2000 en 3000 m: windstoten boven de 60 km/u maken een open kam met 12 kg op je rug onrustig en koud. Harde zuidwestenwind op hoogte gaat vaak vooraf aan een front.',
+        'Wind op 2000 en 3000 m: windstoten boven de 60 km/u maken een open kam onrustig en koud, zeker met je rugzak (12 tot 15 kg met tent) op je rug. Harde zuidwestenwind op hoogte gaat vaak vooraf aan een front.',
         'Onweer: lees de tekst, niet het icoontje. "Orages l\'après-midi" is het gewone zomerpatroon. "Orages dès la mi-journée" of onweer in de nacht en de ochtend wijst op een front of heel onstabiele lucht.',
       ],
     },

@@ -26,6 +26,7 @@ import { describeRepair, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
+import { TENT_PACK_KG, packMilestoneUpdate, packWeightOf, programPackGoal, programPackTarget } from '../engine/gr5Profile';
 import { makeId } from '../utils/id';
 import type { JourneyState } from '../engine/journey';
 import type { PackListState } from '../engine/packList';
@@ -830,7 +831,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
   const ctx = await patternContext(templates, () => templates.filter((t) => t.defaultDayOfWeek));
-  const next = { ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides) };
+  const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -885,7 +886,7 @@ export async function rebuildPlanningFromWeekOne(
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
   const ctx = await patternContext(templates, selectPattern);
-  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) };
+  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -913,7 +914,7 @@ export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_wee
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const templates = await SessionTemplatesRepo.getAll();
   const ctx = await patternContext(templates);
-  const next = { ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) };
+  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
   await ProgramsRepo.put(next);
 
   const weeksWithSessions = new Set(existingSessions.map((s) => mondayOfWeek(s.scheduledDate)));
@@ -928,6 +929,16 @@ interface PatternContext {
   swaps: PatternSwap[];
   anchor: string | undefined;
   overrides: PhaseLengthOverrides | undefined;
+  // The main goal's rucksack target, for Program.packTargetKg.
+  packTarget: number | undefined;
+}
+
+// The program with the pack target of its main goal (or without, when the
+// goal has none): the pack ladder reads it from the program.
+function withPackTarget(program: Program, kg: number | undefined): Program {
+  const { packTargetKg: _old, ...rest } = program;
+  void _old;
+  return kg === undefined ? rest : { ...rest, packTargetKg: kg };
 }
 
 // What a rebuilt week looks like for this user: their sports, the hike
@@ -943,6 +954,7 @@ async function patternContext(templates: SessionTemplate[], selectPattern?: (tem
     swaps: activeSwaps(templates, settings, (t) => isTemplatePlannable(t, enabledSports) && (!selectPattern || selectPattern([{ ...t, defaultDayOfWeek: 7 }]).length > 0)),
     anchor: programAnchorDate(goals, milestones, todayISO()),
     overrides: settings.programPhaseOverrides,
+    packTarget: programPackTarget(goals, milestones),
   };
 }
 
@@ -968,6 +980,19 @@ function patternSessions(
     });
   }
   return out;
+}
+
+// Mijlpaal 11 (de volle rugzaktocht) vraagt het rugzakdoel van het doel. Zet
+// je dat doel op een ander gewicht, dan gaat de eis mee. Wat je al behaalde
+// blijft behaald (engine/gr5Profile.ts#keepClearedMilestones); alleen
+// toevoegen of de mijlpaal zelf bijwerken, nooit een behaalde rij aanraken.
+async function syncPackMilestone(goals: TrainingGoal[], milestones: GoalMilestone[], logs: SessionLog[]): Promise<void> {
+  const goal = programPackGoal(goals, milestones);
+  if (!goal) return;
+  const update = packMilestoneUpdate(milestones, await GoalMilestoneProgressRepo.byGoal(goal.id), logs, goal.id, packWeightOf(goal.requirements) ?? TENT_PACK_KG);
+  if (!update) return;
+  for (const row of update.keep) await GoalMilestoneProgressRepo.put(row);
+  await GoalMilestonesRepo.put(update.milestone);
 }
 
 export interface ProgramHorizonResult {
@@ -1005,9 +1030,11 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   if (!program) return { phasesChanged: false, added: 0, swapped: 0, removed: 0 };
   const today = todayISO();
   const ctx = await patternContext(templates);
-  const next: Program = { ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides) };
+  const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides) }, ctx.packTarget);
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
-  if (phasesChanged) await ProgramsRepo.put(next);
+  // The pack target of the goal travels with the phases (the ladder of the
+  // hikes reads it from the program).
+  if (phasesChanged || program.packTargetKg !== next.packTargetKg) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   // Test runs the weekly prescription wrongly took out come back first.
@@ -1070,6 +1097,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
 
   // A running race before the main goal: its own block (engine/raceBlock.ts).
   const [goals, milestones] = await Promise.all([TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
+  await syncPackMilestone(goals, milestones, logs);
   const ladder = new Set(milestones.map((m) => m.goalId));
   const mainGoalId = goals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
   const blocks = raceBlocks(goals, mainGoalId, ctx.anchor, today);

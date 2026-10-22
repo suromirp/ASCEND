@@ -38,6 +38,12 @@ export interface Program {
   // and every later wave stay on the calendar. Optional, additive: older
   // programs and backups simply don't have it.
   repeatedWeeks?: string[];
+  // The rucksack target (kg) of the main goal, copied here by
+  // storage/database.ts#syncProgramHorizon like the phases are laid out from
+  // its date: the pack ladder of the hikes and rucksack walks climbs toward
+  // it (engine/packLadder.ts). Absent = the default with a tent. Optional,
+  // additive: older programs and backups simply don't have it.
+  packTargetKg?: number;
 }
 
 export interface ResolvedProgramPosition {

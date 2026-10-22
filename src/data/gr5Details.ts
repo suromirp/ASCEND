@@ -52,33 +52,34 @@ const PUBMED_LOAD_CARRYING: MilestoneSource = { label: 'PubMed, load-carriage/ru
 const ANDERSON_PACKWEIGHT: MilestoneSource = { label: 'Anderson e.a. 2009, rugzakgewicht en klachten bij langeafstandswandelaars', url: 'https://complete.bioone.org/journals/wilderness-and-environmental-medicine/volume-20/issue-3/08-WEME-OR-196R2.1/The-Impact-of-Footwear-and-Packweight-on-Injury-and-Illness/10.1580/08-WEME-OR-196R2.1.full' };
 const GARMIN_ZONES: MilestoneSource = { label: 'Garmin, sportspecifieke hartslagzones', url: 'https://www8.garmin.com/manuals-apac/webhelp/forerunner255series/EN-SG/GUID-21F7EFD8-1AE2-4E1A-959E-A98B6A297584-1763.html' };
 
-// Full GR5/Alpine kit list — separate from the per-milestone ladder content
-// above, shown as its own reference card on the Ascend page (not tied to
-// any single milestone). "Later" because none of this is needed for Maand
-// 1's incline/hike training; it becomes relevant once the ladder gets
-// closer to a real multi-day GR5 attempt.
+// De uitrustingslijst voor de GR5 met tent en bivak, los van de ladder hierboven
+// en als eigen kaart op de Ascend-pagina getoond (niet aan een mijlpaal
+// gebonden). Slaapzak, tent en matje kies je deze winter en test je in het
+// voorjaar op een eerste nacht buiten; de rest hoef je pas later te regelen.
 export const GR5_PACKING_LIST: string[] = [
-  'ingelopen, geschikte wandelschoenen',
-  'passende kleding voor regen en kou',
-  'rugzak',
-  'water',
-  'EHBO',
+  'wandelschoenen, ingelopen',
+  'tent of tarp',
+  'slaapzak of quilt',
+  'slaapmatje',
+  'brander en pan',
+  'rugzak met heupband',
+  'water en filter',
+  'eten voor 2 tot 4 dagen',
+  'regenjas, warme laag',
+  'handschoenen, muts',
+  'EHBO en blarenset',
   'hoofdlamp',
-  'regenbescherming',
-  'topografische kaart',
-  'GPS / GPX-tracks (offline)',
+  'offline kaart en GPX',
   'kompas',
-  'smartphone',
-  'zonnebril',
-  'zonnebrand',
-  'hoofddeksel',
-  'handschoenen',
-  'nooddeken',
-  'eventueel trekkingstokken',
+  'telefoon en powerbank',
+  'zonnebril, zonnebrand, pet',
+  'noodfluit, nooddeken',
+  'noodzender (satelliet)',
+  'trekkingstokken (optioneel)',
 ];
 
 export const GR5_PACKING_NOTE =
-  'Onnodig zwaar pakken is ongunstig, de etappes zijn al lang genoeg. GPX/offline navigatie is verstandig; let daarbij ook op batterijmanagement, want niet elke hut heeft goede laadmogelijkheden. Reken op weercontrole, routevoorbereiding, voldoende eten/drinken en iemand thuis laten weten welke tocht je doet.';
+  'Met tent, slaapzak, matje, kookspullen, water en eten voor twee tot vier dagen vertrek je uit een dorp met 12,5 tot 14,5 kg. Onnodig zwaar pakken is ongunstig, de etappes zijn al lang genoeg: 2 kg minder aan basisgewicht (alles zonder eten en water) is meer dan een dag eten. Kies tent, slaapzak en matje deze winter en test ze in het voorjaar op een eerste nacht buiten, nog ruim voor de tocht. Neem je stokken mee op de tochten van je training, dan weet je hoe ze in je rugzak zitten. GPX en offline navigatie zijn verstandig; let op je batterij, want onderweg is laden niet altijd mogelijk. Reken op weercontrole, routevoorbereiding, voldoende eten en drinken, en laat iemand thuis weten welke tocht je doet.';
 
 export const GR5_PACKING_SOURCES: MilestoneSource[] = [GR5_ALPES_EQUIPMENT, GR5_ALPES_WAYMARKING, FFRANDONNEE_SACADOS, NKBV];
 
@@ -225,7 +226,7 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
   11: {
     subtitle: '15 tot 20 km en 750 tot 1000 m D+ met je volle bivakrugzak',
     type: 'Volledige rugzaktest, na de lichtere gewenningssessie eerder in de ladder',
-    goal: '15 tot 20 km en 750 tot 1000 m D+ met je echte GR5-uitrusting op je rug: tent, slaapzak, matje, kookspullen, water en eten voor een paar dagen, zoals je straks uit een dorp vertrekt (rond 14 kg, het rugzakdoel dat je bij je doel instelt). Dit kamp vraagt minstens 12 kg; de laatste kilo\'s naar je doelgewicht bouw je in de weekendsimulatie.',
+    goal: '15 tot 20 km en 750 tot 1000 m D+ met je echte GR5-uitrusting op je rug: tent, slaapzak, matje, kookspullen, water en eten voor een paar dagen, zoals je straks uit een dorp vertrekt (rond 14 kg, het rugzakdoel dat je bij je doel instelt). Deze mijlpaal vraagt je rugzakdoel: standaard 14 kg, of het gewicht dat je bij je doel instelde. Zo zwaar draag je dan één volle tocht; in de zwaarste weken van Expeditieklaar loop je tot 1 kg erboven.',
     why: 'Met tent en kookspullen weegt je rugzak bij vertrek uit een dorp ongeveer 12,5 tot 14,5 kg: een basisgewicht van zo\'n 8 kg, plus 0,8 tot 1 kg eten per dag en 2 tot 3 liter water. Dat is zwaarder dan een hutrugzak, en je knieën voelen dat bergaf als eerste. In een enquête onder langeafstandswandelaars gingen zwaardere rugzakken samen met meer klachten, zoals tintelingen. Onderzoek naar load-carriage-training vindt de grootste vooruitgang wanneer kracht- en aerobe training gecombineerd worden met daadwerkelijke, progressieve trainingen mét belasting. Precies daarom ging de lichtere 8 kg-sessie eerder in de ladder hieraan vooraf. Loop je vaak alleen, dan is dit ook de dag waarop je ziet of je zelf tent, kookspullen en navigatie in de hand hebt zonder dat iemand meekijkt.',
     note: 'De officiële GR5-organisatie waarschuwt expliciet tegen onnodig zwaar pakken, de etappes zijn al lang genoeg. Weeg je uitrusting vooraf: 2 kg verschil tussen een comfortabele en een lichte opzet is meer dan een dag eten.',
     achievedWhen: [

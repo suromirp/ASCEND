@@ -189,8 +189,8 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     builds: [{ label: 'Herstel', why: 'Bloed door je benen zonder nieuwe belasting.' }],
   },
   tpl_ruck_walk: {
-    summary: () => 'Stevig doorwandelen met ongeveer 6 kilo in je rugzak, heuvels of trappen als dat kan.',
-    keyTag: 'Rugzak ±6 kg',
+    summary: () => 'Stevig doorwandelen met de rugzak van deze week, heuvels of trappen als dat kan.',
+    keyTag: 'Rugzak, stap voor stap zwaarder',
     structure: [{ kind: 'walk', label: 'Wandelen met rugzak', rest: true, intensity: 2, detail: 'Hele zinnen kunnen praten' }],
     garminSport: 'Wandelen',
     builds: [
@@ -320,7 +320,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
   },
   tpl_hike_day_one: {
-    summary: () => 'De eerste van twee wandeldagen. Rustiger dan morgen, met hoogteverschil en de rugzak.',
+    summary: () => 'De eerste van twee wandeldagen. Rustiger dan morgen, met hoogteverschil en dezelfde rugzak als morgen.',
     keyTag: 'Morgen weer op pad',
     structure: [
       { kind: 'warmup', label: 'Rustig inlopen', minutes: 10, intensity: 1 },

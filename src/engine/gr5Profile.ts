@@ -12,8 +12,12 @@
 // geeft alleen een voorstel (de Akkoord-route van adviceEngine), en alleen
 // voor een doel dat nog op de oude standaard van 12 kg staat.
 
-import type { GoalRequirement, TrainingGoal } from '../models/goals';
+import type { GoalMilestone, GoalMilestoneProgress, GoalRequirement, TrainingGoal } from '../models/goals';
+import type { MilestoneRequirement } from '../models/objectives';
+import type { SessionLog } from '../models/training';
 import { makeId } from '../utils/id';
+import { formatNumberNL } from '../utils/number';
+import { requirementAutoSatisfied } from './progression';
 
 // --- Rugzakdoel ---------------------------------------------------------------
 
@@ -39,6 +43,22 @@ export function withPackWeight(goal: TrainingGoal, kg: number | undefined, now =
     ? [...others, { id: existing?.id ?? makeId('req'), kind: 'packWeight', scope: 'SINGLE_EVENT', target: { amount: kg, unit: 'kg' } }]
     : others;
   return { ...goal, requirements, updatedAt: now };
+}
+
+// The rucksack target the program is laid out for (Program.packTargetKg,
+// engine/packLadder.ts): the main goal's own setting. Undefined when the goal
+// has none; the ladder then works with the default with a tent. The main goal
+// is the one with the Ascent Ladder, an active one first.
+export function programPackTarget(goals: TrainingGoal[], milestones: GoalMilestone[]): number | undefined {
+  const goal = programPackGoal(goals, milestones);
+  const kg = goal ? packWeightOf(goal.requirements) : undefined;
+  return kg !== undefined && Number.isFinite(kg) && kg > 0 ? kg : undefined;
+}
+
+// The goal whose rucksack target the program follows: the main goal.
+export function programPackGoal(goals: TrainingGoal[], milestones: GoalMilestone[]): TrainingGoal | undefined {
+  const withLadder = new Set(milestones.map((m) => m.goalId));
+  return goals.find((g) => g.status === 'active' && withLadder.has(g.id)) ?? goals.find((g) => g.status !== 'archived' && withLadder.has(g.id));
 }
 
 export interface TentPackProposal {
@@ -95,4 +115,69 @@ export function tripShapeNote(walkingDays: number | undefined): string | undefin
   if (!shape || shape.walkingDays < LONG_TRIP_MIN_DAYS) return undefined;
   const rest = shape.restDays === 1 ? '1 rustdag' : `${shape.restDays} rustdagen`;
   return `Met ${rest} (een per ${REST_EVERY_WALKING_DAYS} loopdagen) kost dit ongeveer ${shape.totalDays} dagen in totaal; reken je verlof daarop. De eerste ${SOFT_START_DAYS[0]} tot ${SOFT_START_DAYS[1]} dagen loop je rustiger, op ${SOFT_START_PCT[0]} tot ${SOFT_START_PCT[1]}% van een normale dag. De andere dagen zijn dan iets zwaarder dan het gemiddelde.`;
+}
+
+// --- Mijlpaal 11: de volle rugzaktocht gaat mee met het rugzakdoel -------------
+
+export const PACK_MILESTONE_ID = 'ms_gr5_rugzaksessie';
+const PACK_MILESTONE_KM = 15;
+
+// Titel en eis van mijlpaal 11 bij een rugzakdoel van `kg`.
+export function packMilestone(kg: number): { title: string; requirement: MilestoneRequirement } {
+  return { title: `Volle rugzaktocht: ${formatNumberNL(kg, 1)} kg, ${PACK_MILESTONE_KM} km`, requirement: { kind: 'backpack', minWeightKg: kg, minKm: PACK_MILESTONE_KM } };
+}
+
+// Mijlpalen die je behaalde onder de eerdere eis blijven behaald. Een
+// mijlpaal telt als behaald zodra er een rij in GoalMilestoneProgress staat,
+// of (zonder rij) zodra een log aan de eis voldoet. Wordt de eis zwaarder,
+// dan zou dat tweede stilzwijgend verdwijnen. Daarom krijgt elke mijlpaal die
+// met de oude eis behaald was en met de nieuwe niet, en nog geen rij heeft,
+// er een: de datum van de eerste log die voldeed. Alleen toevoegen, nooit
+// iets veranderen (het logboek van behaalde mijlpalen is append-only).
+export function keepClearedMilestones(
+  before: GoalMilestone[],
+  after: GoalMilestone[],
+  progress: GoalMilestoneProgress[],
+  logs: SessionLog[],
+  newId: () => string = () => makeId('progress'),
+): GoalMilestoneProgress[] {
+  const have = new Set(progress.map((p) => `${p.goalId}|${p.milestoneId}`));
+  const next = new Map(after.map((m) => [`${m.goalId}|${m.id}`, m]));
+  const rows: GoalMilestoneProgress[] = [];
+  for (const old of before) {
+    const key = `${old.goalId}|${old.id}`;
+    const fresh = next.get(key);
+    if (!fresh || have.has(key)) continue;
+    if (!requirementAutoSatisfied(old.requirement, logs) || requirementAutoSatisfied(fresh.requirement, logs)) continue;
+    const dates = logs.filter((l) => requirementAutoSatisfied(old.requirement, [l])).map((l) => l.completedDate).sort();
+    const clearedDate = dates[0] ?? [...logs].map((l) => l.completedDate).sort().pop();
+    if (!clearedDate) continue;
+    rows.push({ id: newId(), goalId: old.goalId, milestoneId: old.id, clearedDate, note: 'Behaald met de eis van toen. Die is later aangepast.' });
+  }
+  return rows;
+}
+
+export interface PackMilestoneUpdate {
+  milestone: GoalMilestone;
+  // Rows that keep an already reached milestone reached (keepClearedMilestones).
+  keep: GoalMilestoneProgress[];
+}
+
+// Mijlpaal 11 van een doel in de pas met het rugzakdoel. Undefined als er niets
+// te doen is: de mijlpaal bestaat niet, is door jou omgebouwd tot iets anders
+// dan een rugzakeis, of staat al goed.
+export function packMilestoneUpdate(
+  milestones: GoalMilestone[],
+  progress: GoalMilestoneProgress[],
+  logs: SessionLog[],
+  goalId: string,
+  packKg: number,
+  newId?: () => string,
+): PackMilestoneUpdate | undefined {
+  const current = milestones.find((m) => m.goalId === goalId && m.id === PACK_MILESTONE_ID);
+  if (!current || current.requirement.kind !== 'backpack') return undefined;
+  const wanted = packMilestone(packKg);
+  if (current.requirement.minWeightKg === packKg && current.title === wanted.title) return undefined;
+  const milestone: GoalMilestone = { ...current, title: wanted.title, requirement: wanted.requirement };
+  return { milestone, keep: keepClearedMilestones([current], [milestone], progress.filter((p) => p.goalId === goalId), logs, newId) };
 }

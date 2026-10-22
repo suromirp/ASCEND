@@ -109,7 +109,7 @@ const planned = (id: string, templateId: string, date: string, extra: Partial<Pl
 const eventsOf = (sessions: PlannedSession[], over: Partial<Parameters<typeof fatigueEvents>[0]> = {}) => fatigueEvents({ logs: [], plannedSessions: sessions, templates, today: '2020-01-01', ...over });
 
 describe('planned hikes use the target of their week', () => {
-  const heaviest = sundayIn('phase_4', 3); // 1000 m, 12 kg
+  const heaviest = sundayIn('phase_4', 3); // 1000 m, 15 kg (14 kg goal plus 1)
   const hike = planned('h', 'tpl_mountain_hike', heaviest);
 
   it('without the program: the 500 m and 6 kg of the template', () => {
@@ -123,11 +123,11 @@ describe('planned hikes use the target of their week', () => {
     const own = [log('tpl_mountain_hike', addDays(heaviest, -14), 120, { outdoorData: { durationMinutes: 120, elevationGainM: 200, elevationLossM: 200, source: 'manual' } })];
     const e = eventsOf([hike], { program, logs: own }).find((x) => x.id === 'h')!;
     expect(e.descentM).toBe(1000);
-    expect(e.packKg).toBe(12);
+    expect(e.packKg).toBe(15);
     // Another week, another target.
     const [lighter] = eventsOf([planned('h2', 'tpl_mountain_hike', sundayIn('phase_4', 4))], { program });
     expect(lighter.descentM).toBe(500);
-    expect(lighter.packKg).toBe(8);
+    expect(lighter.packKg).toBe(13);
   });
 
   it('a planned session whose week has no D+ or pack target keeps the old behaviour', () => {

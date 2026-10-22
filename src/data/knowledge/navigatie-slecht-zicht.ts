@@ -28,7 +28,7 @@ const content: KnowledgeContent = {
     {
       heading: 'Afstand meten zonder zicht',
       body:
-        'In mist wordt elke afstand langer. Tel dubbelpassen: de meeste mensen zetten op vlak terrein zo\'n 60 tot 70 dubbelpassen per 100 m, bergop en met 12 kg meer. Meet je eigen waarde thuis op een atletiekbaan en in een helling. Tijd werkt ook: volgens de DAV-norm (DIN 33466) reken je met 4 km per uur vlak, 300 m stijgen of 500 m dalen per uur. De kleinste van horizontale en verticale tijd halveer je en tel je op bij de grootste. In dichte mist loop je trager, reken op de helft. Je hoogtemeter is in de wolk je beste vriend: zit je op 2450 m en ligt de col op 2510 m, dan weet je hoe ver je nog moet.',
+        'In mist wordt elke afstand langer. Tel dubbelpassen: de meeste mensen zetten op vlak terrein zo\'n 60 tot 70 dubbelpassen per 100 m, bergop en met je rugzak (12 tot 15 kg met tent) meer. Meet je eigen waarde thuis op een atletiekbaan en in een helling. Tijd werkt ook: volgens de DAV-norm (DIN 33466) reken je met 4 km per uur vlak, 300 m stijgen of 500 m dalen per uur. De kleinste van horizontale en verticale tijd halveer je en tel je op bij de grootste. In dichte mist loop je trager, reken op de helft. Je hoogtemeter is in de wolk je beste vriend: zit je op 2450 m en ligt de col op 2510 m, dan weet je hoe ver je nog moet.',
     },
     {
       heading: 'GPS als vangnet, niet als hoofdzaak',

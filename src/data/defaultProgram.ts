@@ -5,6 +5,8 @@ import { makeId } from '../utils/id';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { activeSwaps, layoutPhases, patternForWeek } from '../engine/programLayout';
 import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_RECOVERY } from './stretches';
+import { HIKE_DAY_ONE_LADDER, MOUNTAIN_HIKE_LADDER } from './hikeLadder';
+import { TENT_PACK_KG, packMilestone } from '../engine/gr5Profile';
 
 // ---------------------------------------------------------------------------
 // Session templates: de vaste week. Hoe lang en zwaar een sessie in een
@@ -244,9 +246,12 @@ function buildTemplates(): SessionTemplate[] {
     // Fase 3 — de lange zondag vanaf Bergcapaciteit (engine/programLayout.ts
     // PATTERN_SWAPS): een bergtocht met een eigen ladder voor duur, D+ en
     // rugzak per week (docs/onderzoek rapport 1, "Fase 2 tot en met 4 in
-    // getallen"; rapport 2, regels A1-A3). Rugzak in stappen van hoogstens
-    // 2 kg en nooit in dezelfde week als een D+-stap. Geen vaste weekdag:
-    // de tocht neemt de plek in van de sessie die hij vervangt.
+    // getallen"; rapport 2, regels A1-A3). Duur en D+ staan in
+    // data/hikeLadder.ts. De rugzak staat daar bewust niet: die klimt in
+    // stappen van 1 tot 2 kg naar het rugzakdoel van je doel, nooit in
+    // dezelfde week als een D+-stap (engine/packLadder.ts, gelezen door
+    // progressionTarget). Geen vaste weekdag: de tocht neemt de plek in van de
+    // sessie die hij vervangt.
     {
       id: 'tpl_mountain_hike',
       name: 'Bergtocht',
@@ -257,7 +262,7 @@ function buildTemplates(): SessionTemplate[] {
       outdoorTarget: { targetElevationM: 500, backpackWeightKg: 6 },
       cardioTarget: { zone: 'Zone 1-2, RPE 3-4: je kunt blijven praten' },
       notes:
-        'Een lange wandeling met zoveel mogelijk hoogteverschil, omhoog en omlaag, met de rugzak van deze week. Rustig tempo, eten en drinken onderweg zoals op de GR5. Geen heuvels in de buurt? Herhaal een helling, een trap of een duin, of loop het stijgende deel op de loopband en het dalen op een trap.',
+        'Een lange wandeling met zoveel mogelijk hoogteverschil, omhoog en omlaag, met de rugzak van deze week. Rustig tempo, eten en drinken onderweg zoals op de GR5. Geen heuvels in de buurt? Herhaal een helling, een trap of een duin, of loop het stijgende deel op de loopband en het dalen op een trap. Ga je mee met stokken op de GR5? Loop er in de tochten van deze weken al mee, dan weten je schouders en polsen wat ze moeten doen.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'heavy', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
@@ -265,26 +270,13 @@ function buildTemplates(): SessionTemplate[] {
         { withTemplateId: 'tpl_hill_intervals', verdict: 'prefer' },
         { withTemplateId: 'tpl_hike_day_one', verdict: 'prefer' },
       ],
-      weeklyProgression: [
-        { phaseId: 'phase_3', weekInPhase: 1, targetMinutes: 120, elevationGainM: 400, backpackKg: 4, note: 'Wennen' },
-        { phaseId: 'phase_3', weekInPhase: 2, targetMinutes: 150, elevationGainM: 450, backpackKg: 4, note: 'Meer hoogtemeters' },
-        { phaseId: 'phase_3', weekInPhase: 3, targetMinutes: 165, elevationGainM: 450, backpackKg: 6, note: 'Rugzak zwaarder' },
-        { phaseId: 'phase_3', weekInPhase: 4, targetMinutes: 105, elevationGainM: 300, backpackKg: 4, note: 'Rustweek' },
-        { phaseId: 'phase_3', weekInPhase: 5, targetMinutes: 180, elevationGainM: 550, backpackKg: 6, note: 'Meer hoogtemeters' },
-        { phaseId: 'phase_3', weekInPhase: 6, targetMinutes: 195, elevationGainM: 550, backpackKg: 8, note: 'Rugzak zwaarder' },
-        { phaseId: 'phase_3', weekInPhase: 7, targetMinutes: 225, elevationGainM: 650, backpackKg: 8, note: 'Zwaarste week' },
-        { phaseId: 'phase_3', weekInPhase: 8, targetMinutes: 150, elevationGainM: 400, backpackKg: 6, note: 'Rustweek' },
-        { phaseId: 'phase_4', weekInPhase: 1, targetMinutes: 240, elevationGainM: 650, backpackKg: 10, note: 'Tweede dag op rij, rugzak zwaarder' },
-        { phaseId: 'phase_4', weekInPhase: 2, targetMinutes: 270, elevationGainM: 800, backpackKg: 10, note: 'Meer hoogtemeters' },
-        { phaseId: 'phase_4', weekInPhase: 3, targetMinutes: 300, elevationGainM: 1000, backpackKg: 12, note: 'Generale repetitie met tochtgewicht' },
-        { phaseId: 'phase_4', weekInPhase: 4, targetMinutes: 180, elevationGainM: 500, backpackKg: 8, note: 'Rustweek' },
-        { phaseId: 'phase_taper', weekInPhase: 1, targetMinutes: 150, elevationGainM: 500, backpackKg: 10, note: 'Minder volume, zelfde tempo' },
-        { phaseId: 'phase_taper', weekInPhase: 2, targetMinutes: 90, elevationGainM: 200, backpackKg: 6, note: 'Kort en fris, weinig dalen' },
-      ],
+      weeklyProgression: MOUNTAIN_HIKE_LADDER.map((step) => ({ ...step })),
     },
     // Expeditieklaar: de zaterdag wordt de eerste van twee wandeldagen op
     // rij (rapport 1: back-to-back weekend). Bewust gekoppeld aan de
-    // bergtocht van zondag, zoals de heuvels aan de lange duurloop.
+    // bergtocht van zondag, zoals de heuvels aan de lange duurloop. Dezelfde
+    // rugzak als de zondag (je draagt je tent elke dag), minder hoogtemeters;
+    // de ladder staat in data/hikeLadder.ts.
     {
       id: 'tpl_hike_day_one',
       name: 'Wandeldag 1 van 2',
@@ -295,17 +287,12 @@ function buildTemplates(): SessionTemplate[] {
       outdoorTarget: { targetElevationM: 400, backpackWeightKg: 8 },
       cardioTarget: { zone: 'Zone 1-2, RPE 3: bewust rustig, morgen volgt dag 2' },
       notes:
-        'De eerste van twee wandeldagen, zoals op de GR5. Rustiger dan zondag, met hoogteverschil en de rugzak. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen weer kunnen vertrekken.',
+        'De eerste van twee wandeldagen, zoals op de GR5. Rustiger dan zondag, met hoogteverschil en dezelfde rugzak als morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen weer kunnen vertrekken. Slaap je er een nacht tussen in je tent, dan oefen je ook tent opzetten, koken en slapen, precies wat je op de GR5 elke dag doet.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_LOWER,
       baseStressProfile: { lowerBodyLoad: 'heavy', impact: 'moderate', eccentricLoad: 'moderate', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
       pairingOverride: [{ withTemplateId: 'tpl_mountain_hike', verdict: 'prefer' }],
-      weeklyProgression: [
-        { phaseId: 'phase_4', weekInPhase: 1, targetMinutes: 150, elevationGainM: 400, backpackKg: 8, note: 'Wennen aan twee dagen' },
-        { phaseId: 'phase_4', weekInPhase: 2, targetMinutes: 180, elevationGainM: 500, backpackKg: 8, note: 'Iets langer' },
-        { phaseId: 'phase_4', weekInPhase: 3, targetMinutes: 180, elevationGainM: 600, backpackKg: 10, note: 'Zwaarste weekend' },
-        { phaseId: 'phase_4', weekInPhase: 4, targetMinutes: 90, elevationGainM: 250, backpackKg: 6, note: 'Rustweek' },
-      ],
+      weeklyProgression: HIKE_DAY_ONE_LADDER.map((step) => ({ ...step })),
     },
     {
       id: 'tpl_herstel',
@@ -489,9 +476,9 @@ function buildTemplates(): SessionTemplate[] {
       sport: 'hiking',
       focus: 'Lang onderweg met een rugzak, zonder de klap van hardlopen',
       durationVariants: { full: 75, short: 45 },
-      outdoorTarget: { backpackWeightKg: 6 },
+      outdoorTarget: { backpackWeightKg: 5 },
       notes:
-        'Stevig doorwandelen met een rugzak van ongeveer 6 kilo, heuvels of trappen als dat kan. Rustig, je kunt hele zinnen praten. Bouwt uren onderweg en het dragen van een rugzak op, met veel minder belasting voor je benen dan een loop. Nooit zwaarder dan de rugzak van je bergtocht die week.',
+        'Stevig doorwandelen met de rugzak van deze week, heuvels of trappen als dat kan. Deze winter begin je licht, rond 5 tot 6 kilo; het gewicht klimt in kleine stappen naar je rugzakdoel. Rustig, je kunt hele zinnen praten. Bouwt uren onderweg en het dragen van een rugzak op, met veel minder belasting voor je benen dan een loop. Nooit zwaarder dan de rugzak van je bergtocht die week.',
       warmup: DYNAMIC_WARMUP,
       cooldown: COOLDOWN_RUN,
       baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'light', eccentricLoad: 'light', intensity: 'low', upperBodyLoad: 'light', cardioLoad: 'moderate' },
@@ -644,7 +631,9 @@ function buildObjective(): Objective {
     ['750 D+ / 500 D−', { kind: 'elevation', minMeters: 750, minLossMeters: 500 }],
     ['1000 D+ / 750 D−', { kind: 'elevation', minMeters: 1000, minLossMeters: 750 }],
     ['15 km + 1000 D+', { kind: 'distanceAndElevation', minKm: 15, minMeters: 1000 }],
-    ['Volle rugzaktocht: 12 kg, 15 km', { kind: 'backpack', minWeightKg: 12, minKm: 15 }],
+    // De eis gaat mee met het rugzakdoel (14 kg met tent); een eigen doel
+    // zet storage/goalMilestoneSync.ts en de planningssync er later in.
+    [packMilestone(TENT_PACK_KG).title, packMilestone(TENT_PACK_KG).requirement],
     ['Weekend bergsimulatie', { kind: 'manual' }],
     ['GR5 KLAAR', { kind: 'manual' }],
   ];

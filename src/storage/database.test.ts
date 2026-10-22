@@ -18,6 +18,7 @@ import {
   WeeklyPrescriptionsRepo,
   SettingsRepo,
   GoalMilestonesRepo,
+  GoalMilestoneProgressRepo,
   syncProgramHorizon,
   MetaRepo,
 } from './database';
@@ -500,5 +501,105 @@ describe('one planning run, ending with the week check (docs/onderzoek/Planning 
       const seen = (x: PlannedSession | undefined) => x && { date: x.scheduledDate, templateId: x.templateId, status: x.status, minutes: x.plannedMinutes, lock: x.lock };
       for (const s of shown) expect(seen(now.find((x) => x.id === s.id))).toEqual(seen(s));
     }
+  });
+});
+
+// De rugzakladder en mijlpaal 11 volgen het rugzakdoel van het hoofddoel
+// (engine/packLadder.ts, engine/gr5Profile.ts). Alles via de gewone
+// planningsronde; wat al gebeurd is blijft staan.
+describe('syncProgramHorizon: het rugzakdoel van het doel', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  const goalDate = () => addDays(mondayOfWeek(todayISO()), 40 * 7);
+  async function setGoal(packKg?: number) {
+    const requirements = packKg === undefined ? [] : [{ id: 'req_pack', kind: 'packWeight' as const, scope: 'SINGLE_EVENT' as const, target: { amount: packKg, unit: 'kg' as const } }];
+    await TrainingGoalsRepo.put({ id: 'g_gr5', name: 'GR5', requirements, createdAt: '', updatedAt: '', status: 'active', targetDate: goalDate() });
+    if (!(await GoalMilestonesRepo.getAll()).some((m) => m.id === 'ms_gr5_rugzaksessie')) {
+      await GoalMilestonesRepo.put({ id: 'ms_gr5_rugzaksessie', goalId: 'g_gr5', order: 11, title: 'Volle rugzaktocht: 12 kg, 15 km', requirement: { kind: 'backpack', minWeightKg: 12, minKm: 15 } });
+    }
+  }
+  const hikeLog = (id: string, kg: number, date = addDays(todayISO(), -3)) => SessionLogsRepo.put({
+    id, templateId: 'tpl_mountain_hike', type: 'hiking', completedDate: date, completedAt: `${date}T12:00:00Z`, variant: 'full', durationMinutes: 300,
+    outdoorData: { durationMinutes: 300, distanceKm: 16, backpackWeightKg: kg, source: 'manual' }, source: 'manual',
+  });
+  const milestone = async () => (await GoalMilestonesRepo.getAll()).find((m) => m.id === 'ms_gr5_rugzaksessie')!;
+
+  it('puts the rucksack target of the goal on the program, follows a change, and a second run writes nothing', async () => {
+    await setGoal(16);
+    await syncProgramHorizon();
+    expect((await ProgramsRepo.getAll())[0].packTargetKg).toBe(16);
+
+    // Nothing more to do: not a program, not a planned session is written.
+    const before = JSON.stringify([await ProgramsRepo.getAll(), await PlannedSessionsRepo.getAll()]);
+    expect(await syncProgramHorizon()).toEqual({ phasesChanged: false, added: 0, swapped: 0, removed: 0 });
+    expect(JSON.stringify([await ProgramsRepo.getAll(), await PlannedSessionsRepo.getAll()])).toBe(before);
+
+    // You set the goal to 12 kg: the program follows. A goal without a target: the default.
+    await setGoal(12);
+    await syncProgramHorizon();
+    expect((await ProgramsRepo.getAll())[0].packTargetKg).toBe(12);
+    await setGoal(undefined);
+    await syncProgramHorizon();
+    expect((await ProgramsRepo.getAll())[0].packTargetKg).toBeUndefined();
+  });
+
+  it('the sessions you moved and the history are not touched by a new pack target', async () => {
+    await setGoal(14);
+    await syncProgramHorizon();
+    const hike = (await PlannedSessionsRepo.getAll()).find((s) => s.templateId === 'tpl_mountain_hike' && s.scheduledDate > addDays(todayISO(), 14))!;
+    const mine = { ...hike, scheduledDate: addDays(hike.scheduledDate, -1), weekStartDate: mondayOfWeek(addDays(hike.scheduledDate, -1)), status: 'moved' as const, lock: { by: 'user' as const, at: new Date().toISOString() } };
+    await PlannedSessionsRepo.put(mine);
+    await hikeLog('old', 12);
+    const logsBefore = JSON.stringify(await SessionLogsRepo.getAll());
+    await setGoal(16);
+    await syncProgramHorizon();
+    expect((await PlannedSessionsRepo.getAll()).find((s) => s.id === hike.id)).toMatchObject({ scheduledDate: mine.scheduledDate, status: 'moved' });
+    expect(JSON.stringify(await SessionLogsRepo.getAll())).toBe(logsBefore);
+  });
+
+  it('milestone 11 follows the rucksack target of the goal, and once only', async () => {
+    await setGoal(16);
+    await syncProgramHorizon();
+    expect(await milestone()).toMatchObject({ title: 'Volle rugzaktocht: 16 kg, 15 km', requirement: { kind: 'backpack', minWeightKg: 16, minKm: 15 } });
+    const before = JSON.stringify(await GoalMilestonesRepo.getAll());
+    await syncProgramHorizon();
+    expect(JSON.stringify(await GoalMilestonesRepo.getAll())).toBe(before);
+    // No pack target on the goal: the 14 kg of the tent.
+    await setGoal(undefined);
+    await syncProgramHorizon();
+    expect(await milestone()).toMatchObject({ requirement: { minWeightKg: 14 } });
+  });
+
+  it('a milestone you reached stays reached when the requirement goes up', async () => {
+    await setGoal(12);
+    await hikeLog('l12', 12, '2026-06-01');
+    await hikeLog('l11', 11, '2026-05-01');
+    // Before: reached without a row of its own (a log that fits is enough).
+    expect(await GoalMilestoneProgressRepo.getAll()).toEqual([]);
+    await setGoal(14);
+    await syncProgramHorizon();
+    expect(await milestone()).toMatchObject({ requirement: { minWeightKg: 14 } });
+    const rows = await GoalMilestoneProgressRepo.getAll();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ goalId: 'g_gr5', milestoneId: 'ms_gr5_rugzaksessie', clearedDate: '2026-06-01' });
+    expect(rows[0].sourceSessionLogId).toBeUndefined();
+    // Raised again and lowered again: the row stays, no second one.
+    await setGoal(16);
+    await syncProgramHorizon();
+    await setGoal(12);
+    await syncProgramHorizon();
+    expect(await GoalMilestoneProgressRepo.getAll()).toEqual(rows);
+  });
+
+  it('a milestone cleared by a row keeps that row untouched', async () => {
+    await setGoal(12);
+    await GoalMilestoneProgressRepo.put({ id: 'mine', goalId: 'g_gr5', milestoneId: 'ms_gr5_rugzaksessie', clearedDate: '2026-04-04', note: 'zelf afgevinkt' });
+    await hikeLog('l12', 12, '2026-06-01');
+    await setGoal(16);
+    await syncProgramHorizon();
+    expect(await GoalMilestoneProgressRepo.getAll()).toEqual([{ id: 'mine', goalId: 'g_gr5', milestoneId: 'ms_gr5_rugzaksessie', clearedDate: '2026-04-04', note: 'zelf afgevinkt' }]);
   });
 });

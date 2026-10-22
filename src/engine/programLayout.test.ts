@@ -95,20 +95,41 @@ describe('progressionTarget', () => {
     const pos = resolveProgramWeek(program, bergStart)!;
     expect(pos.phase.id).toBe(PHASE_BERG);
     const t = progressionTarget(tpl('tpl_mountain_hike'), program, bergStart)!;
-    expect(t.step.backpackKg).toBe(4);
+    // The first mountain hike of the winter-light ladder (14 kg goal): 7 kg.
+    expect(t.step.backpackKg).toBe(7);
     expect(t.step.elevationGainM).toBe(400);
-    const rehearsal = progressionTarget(tpl('tpl_mountain_hike'), program, addDays(GR5, -15 - 7))!;
-    expect(rehearsal.step.backpackKg).toBe(12);
-    expect(rehearsal.step.elevationGainM).toBe(1000);
+    // The heaviest weekend: the goal weight plus 1 kg, and 1.000 m up.
+    const heaviest = progressionTarget(tpl('tpl_mountain_hike'), program, addDays(GR5, -15 - 7))!;
+    expect(heaviest.step.backpackKg).toBe(15);
+    expect(heaviest.step.elevationGainM).toBe(1000);
   });
 
   it('never steps the backpack and the D+ up in the same week', () => {
-    const steps = tpl('tpl_mountain_hike').weeklyProgression!.filter((s) => s.phaseId === PHASE_BERG);
-    for (let i = 1; i < steps.length; i++) {
-      const packUp = (steps[i].backpackKg ?? 0) > (steps[i - 1].backpackKg ?? 0);
-      const dUp = (steps[i].elevationGainM ?? 0) > (steps[i - 1].elevationGainM ?? 0);
-      expect(packUp && dUp && steps[i - 1].note !== 'Rustweek').toBe(false);
+    // Over the whole program, through progressionTarget: the D+ of the
+    // mountain hike and of the first hiking day, and the pack they carry.
+    const kgOf = (date: string) => progressionTarget(tpl('tpl_mountain_hike'), program, date)?.step;
+    const dayOne = (date: string) => progressionTarget(tpl('tpl_hike_day_one'), program, date);
+    let previous: { kg: number; up: number; one?: number } | undefined;
+    let checked = 0;
+    for (let w = 0; w < 46; w++) {
+      const date = addDays(START, w * 7);
+      const pos = resolveProgramWeek(program, date)!;
+      const step = kgOf(date);
+      if (!step) continue; // no mountain hike in the basis and Opbouw
+      const rest = step.note === 'Rustweek' || pos.phase.id === PHASE_TAPER;
+      if (rest || !step.backpackKg) continue;
+      if (pos.phase.id === PHASE_BERG || pos.phase.id === PHASE_EXPEDITIE) {
+        const one = dayOne(date)?.step.elevationGainM;
+        if (previous) {
+          const packUp = step.backpackKg > previous.kg;
+          const dUp = (step.elevationGainM ?? 0) > previous.up || (one !== undefined && previous.one !== undefined && one > previous.one);
+          expect(packUp && dUp, `week ${w + 1}`).toBe(false);
+          checked++;
+        }
+        previous = { kg: step.backpackKg, up: step.elevationGainM ?? 0, one: one ?? previous?.one };
+      }
     }
+    expect(checked).toBeGreaterThanOrEqual(8);
   });
 });
 
@@ -169,7 +190,7 @@ describe('the training screen for a mountain hike', () => {
     const sunday = addDays(GR5, -14 * 7 + 6);
     const plan = buildWorkoutPlan(tpl('tpl_mountain_hike'), sunday, program)!;
     expect(plan.totalMinutes).toBe(120);
-    expect(plan.targets).toEqual(['400 m omhoog en omlaag', 'Rugzak 4 kg']);
+    expect(plan.targets).toEqual(['400 m omhoog en omlaag', 'Rugzak 7 kg']);
     expect(plan.timeline.reduce((n, s) => n + s.seconds, 0)).toBe(120 * 60);
     expect(plan.weeks.find((w) => w.current)?.week).toBe(1);
     expect(plan.weeks).toHaveLength(8);
@@ -194,7 +215,8 @@ describe('your own phase lengths', () => {
     const bergStart = addDays(GR5, -(2 + 4 + 12) * 7);
     const week9 = progressionTarget(tpl('tpl_mountain_hike'), program, addDays(bergStart, 8 * 7 + 6))!;
     expect(week9.step.weekInPhase).toBe(5);
-    expect(week9.step.backpackKg).toBe(6);
+    // Not back to the start: the pack ladder is laid over the longer phase.
+    expect(week9.step.backpackKg).toBe(12);
   });
 });
 

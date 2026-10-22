@@ -53,8 +53,11 @@ De fases worden teruggerekend vanaf de datum van je hoofddoel
 expeditieklaar en twee weken afbouwen vlak voor vertrek. Vanaf
 Bergcapaciteit wordt de lange zondag een bergtocht met een eigen opbouw van
 duur, hoogtemeters en rugzakgewicht, en in Expeditieklaar wandel je twee
-dagen op rij. Wil je liever blijven hardlopen op zondag, dan kies je dat bij
-Meer, Training.
+dagen op rij. Het rugzakgewicht begint deze winter licht, rond 5 tot 6 kg, en
+loopt in stappen van 1 tot 2 kg naar het rugzakdoel van je doel (14 kg met
+tent, of wat je instelde), in de zwaarste weken tot 1 kg erboven en nooit in
+dezelfde week als meer hoogtemeters (`src/engine/packLadder.ts`). Wil je liever
+blijven hardlopen op zondag, dan kies je dat bij Meer, Training.
 
 ## Technologie
 

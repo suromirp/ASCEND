@@ -9,7 +9,7 @@ const content: KnowledgeContent = {
     {
       heading: 'Hoeveel je verbrandt en wat je nodig hebt',
       body:
-        'Voor iemand van rond de 80 kg met 12 kg op de rug kost een bergdag van 7 tot 8 uur met 1.000 tot 1.500 meter klimmen ruwweg 4.000 tot 5.500 kcal, inclusief je ruststofwisseling. Een klein tekort is prima, een structureel gat van 1.500 kcal per dag kost je over vier weken spiermassa en herstel. Onderweg werken 30 tot 60 gram koolhydraten per uur (de richtlijn uit de sportvoeding voor inspanning langer dan een uur), bij jouw tempo is 40 tot 60 gram een goed doel: een broodje met jam, een handvol gedroogde vruchten of een reep. Drinken: reken op 0,4 tot 0,8 liter per uur bij warm weer en stijgen, minder in de koelte. Met zweet verlies je per liter grofweg een halve tot een hele gram natrium, dus zout eten op hete dagen is geen luxe.',
+        'Voor iemand van rond de 80 kg met je rugzak (12 tot 15 kg met tent) op de rug kost een bergdag van 7 tot 8 uur met 1.000 tot 1.500 meter klimmen ruwweg 4.000 tot 5.500 kcal, inclusief je ruststofwisseling. Een klein tekort is prima, een structureel gat van 1.500 kcal per dag kost je over vier weken spiermassa en herstel. Onderweg werken 30 tot 60 gram koolhydraten per uur (de richtlijn uit de sportvoeding voor inspanning langer dan een uur), bij jouw tempo is 40 tot 60 gram een goed doel: een broodje met jam, een handvol gedroogde vruchten of een reep. Drinken: reken op 0,4 tot 0,8 liter per uur bij warm weer en stijgen, minder in de koelte. Met zweet verlies je per liter grofweg een halve tot een hele gram natrium, dus zout eten op hete dagen is geen luxe.',
     },
     {
       heading: 'Wat je eet, overdag en ’s avonds',

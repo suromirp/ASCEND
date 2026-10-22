@@ -95,7 +95,10 @@ describe('een herhaalde week in de opslag', () => {
   it('raakt geen vastgezette sessie en geen sessie met een log aan', async () => {
     await boot();
     const { program, monday } = await repeatableMonday();
-    const inWeek = (await PlannedSessionsRepo.getAll()).filter((s) => s.weekStartDate === monday && s.status === 'planned');
+    // Sessions without a leg-swap marker: pinning one of a swapped pair drops
+    // its marker on purpose (engine/raceBlock.ts#restoreLegSwaps), and the ids
+    // are random, so picking one of those made this test flaky.
+    const inWeek = (await PlannedSessionsRepo.getAll()).filter((s) => s.weekStartDate === monday && s.status === 'planned' && !s.raceBlock);
     const pinned = { ...inWeek[0], lock: { by: 'user' as const, at: '2026-10-21T08:00:00Z' } } as PlannedSession;
     const logged = inWeek[1];
     await PlannedSessionsRepo.put(pinned);

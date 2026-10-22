@@ -226,9 +226,10 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       {
         heading: 'ZO DOE JE HET',
         items: [
-          'Ongeveer 6 kilo in je rugzak, strak op je heupen.',
+          'De rugzak van deze week, strak op je heupen. Deze winter begin je licht, rond 5 tot 6 kilo, en het gewicht klimt in kleine stappen.',
           'Stevig doorwandelen, hele zinnen kunnen praten.',
           'Heuvels, duinen of trappen als dat kan, ook naar beneden.',
+          'Loop je op de GR5 met stokken? Neem ze nu al mee en oefen: bergop korter, bergaf langer, en voel hoe je schouders en polsen reageren.',
         ],
         note: 'Nooit zwaarder dan de rugzak van je bergtocht die week. Gaan schouders, rug of knieën zeuren: lichter of korter.',
       },
@@ -558,7 +559,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     sections: [
       {
         heading: 'DOEL',
-        body: 'De training die het meest op een GR5-dag lijkt: uren op de benen, echte hoogtemeters omhoog en vooral omlaag, en de rugzak op je rug. Duur, hoogtemeters en rugzakgewicht groeien per week in kleine stappen, nooit allemaal tegelijk.',
+        body: 'De training die het meest op een GR5-dag lijkt: uren op de benen, echte hoogtemeters omhoog en vooral omlaag, en de rugzak op je rug. Duur, hoogtemeters en rugzakgewicht groeien per week in kleine stappen. Het rugzakgewicht gaat nooit omhoog in een week waarin ook de hoogtemeters omhoog gaan, en loopt naar je rugzakdoel, met in de zwaarste weken tot 1 kg erboven.',
       },
       {
         heading: 'ZO DOE JE HET',
@@ -566,6 +567,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'Rustig tempo: je kunt blijven praten, ook bergop (zone 1 tot 2, RPE 3-4).',
           'Bergop kleine passen, bergaf beheerst en met gebogen knieën. Dalen is wat je bovenbenen het meest vraagt.',
           'Elk uur iets eten en regelmatig drinken, zoals je dat op de GR5 ook doet.',
+          'Loop je op de GR5 met stokken? Oefen er nu al mee: lengte instellen, bergop korter, bergaf langer, en ook met je rugzak van deze week.',
           'Geen heuvels in de buurt? Herhaal een helling, trap of duin. Of loop het stijgende deel op de loopband en daal op een trap.',
         ],
       },
@@ -607,6 +609,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
           'Bewust rustig (RPE 3): je bewaart iets voor morgen.',
           'Hoogteverschil en de rugzak van deze week, net als morgen.',
           'Na afloop goed eten, drinken en slapen. Je leert hier hoe je herstelt tussen twee tochtdagen.',
+          'Slaap je er een nacht tussen in je tent? Dan oefen je ook tent opzetten, koken en slapen, zoals op de GR5 elke dag.',
         ],
       },
       {

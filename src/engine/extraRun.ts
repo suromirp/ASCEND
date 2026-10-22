@@ -209,6 +209,11 @@ export function chooseExtraSession(ctx: { phaseId: string; wave: number; inRaceB
     if (d === 'ascent_capacity' || d === 'descent_tolerance') {
       return { templateId: 'tpl_bergconditie', reason: `${lead}Bergop wandelen op een helling of trap bouwt dat op, zonder de klap van hardlopen.` };
     }
+    // Voeten, huid en schouders wennen trager aan een rugzak dan je conditie:
+    // daarom begint de rugzak in de winter, licht (docs/visie/Trainingswetenschap.md, idee 2).
+    if (d === 'load_carriage') {
+      return { templateId: 'tpl_ruck_walk', reason: `${lead}Een rustige wandeling met een lichte rugzak, deze winter rond 5 tot 6 kilo, laat schouders, heupen en voeten wennen. Dat gaat het makkelijkst nu, ruim voor de zware weken.` };
+    }
     return { templateId: 'tpl_strides_run', reason: `${lead}Een extra rustige loop maakt je week langer zonder dat één loop te veel groeit. Dat bouwt het veiligst op.` };
   }
   if (d === 'ascent_capacity' || d === 'descent_tolerance') {

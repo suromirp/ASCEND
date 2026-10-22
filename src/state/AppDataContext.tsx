@@ -40,7 +40,7 @@ import { runBootMigrations } from '../storage/bootMigrations';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
 import { withWeekRepeated } from '../engine/repeatWeek';
-import { tentPackProposal, withPackWeight } from '../engine/gr5Profile';
+import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
@@ -159,8 +159,9 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
       settings.leavePeriods,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
-      // Tussendoelen (engine/raceBlock.ts) change the plan too.
-      goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length]),
+      // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack
+      // target of the main goal sets the pack ladder (engine/packLadder.ts).
+      goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length, packWeightOf(g.requirements)]),
     ]);
   };
   horizonQueue = horizonQueue

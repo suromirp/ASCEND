@@ -121,8 +121,9 @@ export function buildSessionBrief(
       case 'progression':
         return [total, { value: 'Zone 2', label: 'het begin' }, { value: `${(() => { const w = plan?.items.find((it) => 'repeat' in it); return w && 'repeat' in w ? w.repeat * 5 : 10; })()} min`, label: 'laatste stuk steviger' }];
       case 'ruck': {
-        const kg = template.outdoorTarget?.backpackWeightKg;
-        return [total, { value: kg ? `±${formatNumberNL(kg, 0)} kg` : 'Licht', label: 'rugzak' }, { value: 'Praten kan', label: 'hele zinnen' }];
+        // The pack of this week (engine/packLadder.ts), else the template's.
+        const kg = step?.backpackKg ?? template.outdoorTarget?.backpackWeightKg;
+        return [total, { value: kg ? `${formatNumberNL(kg, 1)} kg` : 'Licht', label: 'rugzak' }, { value: 'Praten kan', label: 'hele zinnen' }];
       }
       case 'test':
         return [{ value: '5 km', label: 'op tijd' }, { value: 'Gelijkmatig', label: 'niet te snel starten' }, { value: 'Vlak', label: 'route' }];

@@ -109,6 +109,10 @@ describe('the extra training: which one contributes most', () => {
     expect(chooseExtraSession({ ...base, gaps: [gap('sustainable_output', '10 km')] }).templateId).toBe('tpl_fartlek');
     expect(chooseExtraSession({ ...base, wave: 3, gaps: [gap('sustainable_output')] }).templateId).toBe('tpl_progression_run');
     expect(chooseExtraSession({ ...base, gaps: [gap('ascent_capacity')] }).templateId).toBe('tpl_bergconditie');
+    // A rucksack gap starts the light pack of the winter, not in the spring.
+    const pack = chooseExtraSession({ ...base, gaps: [gap('load_carriage')] });
+    expect(pack.templateId).toBe('tpl_ruck_walk');
+    expect(pack.reason).toContain('lichte rugzak');
     const easy = chooseExtraSession({ ...base, gaps: [gap('endurance_duration')] });
     expect(easy.templateId).toBe('tpl_strides_run');
     expect(easy.reason).toContain('Je grootste tekort is nu lang onderweg zijn voor GR5.');

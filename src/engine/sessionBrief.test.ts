@@ -32,10 +32,10 @@ describe('buildSessionBrief', () => {
     const sunday = addDays(GR5, -14 * 7 + 6);
     const hike = buildSessionBrief(tpl('tpl_mountain_hike'), sunday, program);
     expect(hike.headline).toBe('WANDELEN · MET RUGZAK');
-    expect(hike.facts.map((f) => f.value)).toEqual(['2 uur', '400 m', '4 kg']);
+    expect(hike.facts.map((f) => f.value)).toEqual(['2 uur', '400 m', '7 kg']);
     const saturday = addDays(GR5, -28 + 5); // Expeditieklaar week 3
     const day1 = buildSessionBrief(tpl('tpl_hike_day_one'), saturday, program, { templates });
-    expect(day1.tomorrow).toBe('Morgen: bergtocht van 5 uur, 1.000 m omhoog, 12 kg rugzak.');
+    expect(day1.tomorrow).toBe('Morgen: bergtocht van 5 uur, 1.000 m omhoog, 15 kg rugzak.');
   });
 
   it('strength defers the effort to MacroFactor, recovery has no target', () => {

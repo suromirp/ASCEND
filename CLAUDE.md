@@ -187,6 +187,17 @@ goal's date (`engine/programLayout.ts`, applied by
 `storage/database.ts#syncProgramHorizon`): a taper right before the goal,
 nothing planned on or after it, and no empty weeks before it.
 
+The backpack of the rucksack walk, the mountain hike and the first hiking day
+is a ladder over the whole program (`engine/packLadder.ts`, read through
+`progressionTarget`): light in the winter, steps of 1 to 2 kg toward the main
+goal's rucksack target, up to 1 kg above it in the heaviest weeks, and never
+raised in a week the D+ is raised (the D+ and duration live in
+`data/hikeLadder.ts`). The target is not hardcoded: `syncProgramHorizon` copies
+it from the goal to `Program.packTargetKg`, the same way it lays out the phases,
+and also keeps milestone 11 (the full rucksack hike) at that weight. A milestone
+you reached under an earlier requirement stays reached
+(`engine/gr5Profile.ts#keepClearedMilestones`).
+
 **External providers must use generic adapters — do not tightly couple
 domain fields to provider names.** Model `OutdoorMetric` / `RecoveryMetric`
 / etc. with a `source` field (`'manual' | 'garmin' | 'health-connect' |
