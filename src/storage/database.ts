@@ -22,7 +22,7 @@ import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/da
 import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
-import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
+import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, visibleRepair } from '../engine/weekValidator';
@@ -548,6 +548,11 @@ export interface AppSettings {
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';
+  // After the main goal (engine/programLayout.ts#planEndDay): 'stop' (absent =
+  // stop) plans nothing during and after it until you choose a new goal;
+  // 'maintain' plans maintenance weeks once the trip is over. During the trip
+  // itself nothing is planned either way. Optional and additive.
+  afterMainGoal?: 'stop' | 'maintain';
   // Kennisbank: what you marked as read and this week's lesson
   // (engine/weeklyLesson.ts). Optional and additive; travels in an export.
   knowledge?: { read?: string[]; week?: { weekStart: string; topicId: string } };
@@ -993,7 +998,8 @@ async function patternContext(templates: SessionTemplate[], selectPattern?: (tem
     // A hike only replaces a session when the caller's pattern would plan
     // it too (hike templates have no weekday of their own, hence the probe).
     swaps: activeSwaps(templates, settings, (t) => isTemplatePlannable(t, enabledSports) && (!selectPattern || selectPattern([{ ...t, defaultDayOfWeek: 7 }]).length > 0)),
-    anchor: programAnchorDate(goals, milestones, todayISO()),
+    // The plan ends on the main goal's day, also during and after it.
+    anchor: planEndDay(goals, milestones, todayISO(), settings.afterMainGoal),
     overrides: settings.programPhaseOverrides,
     packTarget: programPackTarget(goals, milestones),
   };

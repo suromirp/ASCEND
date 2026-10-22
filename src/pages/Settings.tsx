@@ -584,6 +584,21 @@ export function SettingsPage() {
                     }}
                   />
                 </div>}
+                <div id={settingsAnchor('na-hoofddoel')} className="flex flex-col gap-2">
+                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Na je hoofddoel</p>
+                  <OptionList
+                    options={[
+                      { value: 'stop' as const, label: 'Niets meer plannen', note: 'Advies. Tijdens de tocht en daarna staat er geen training, tot je een nieuw doel kiest of dit doel op behaald zet.' },
+                      { value: 'maintain' as const, label: 'Onderhoudsweken', note: 'Na de laatste dag van de tocht plant ASCEND gewone onderhoudsweken. Tijdens de tocht zelf nooit.' },
+                    ]}
+                    value={settings.afterMainGoal ?? 'stop'}
+                    onChange={async (v) => {
+                      await updateSettings({ afterMainGoal: v });
+                      await refresh();
+                      note('program', v === 'stop' ? 'Na je hoofddoel plant ASCEND niets meer.' : 'Na je hoofddoel plant ASCEND onderhoudsweken. Tot die dag verandert er niets.');
+                    }}
+                  />
+                </div>
                 {!confirmingRestart ? (
                   <SecondaryButton onClick={() => setConfirmingRestart(true)}>Opnieuw beginnen bij week 1</SecondaryButton>
                 ) : (

@@ -63,6 +63,7 @@ export const SETTINGS_INDEX: SettingsIndexItem[] = [
   // Doelen en tochten
   { id: 'programma', title: 'Programma en fases', group: 'doelen', note: 'In welke week en fase je zit, en de lengte van de fases.', keywords: ['fase', 'week', 'opnieuw beginnen', 'schone start', 'opbouw', 'afbouwen', 'taper'] },
   { id: 'lange-zondag', title: 'De lange zondag', group: 'doelen', note: 'Of je op zondag een bergtocht of een lange duurloop doet.', keywords: ['zondag', 'bergtocht', 'duurloop', 'wandeling', 'marathon'] },
+  { id: 'na-hoofddoel', title: 'Na je hoofddoel', group: 'doelen', note: 'Of ASCEND na de GR5 niets meer plant (advies) of onderhoudsweken. Tijdens de tocht nooit.', keywords: ['na de gr5', 'onderhoud', 'onderhoudsweken', 'daarna', 'na het doel', 'klaar', 'voorbij'] },
   { id: 'doelen', title: 'Doelen en tussendoelen', group: 'doelen', note: 'Je hoofddoel, je tochten en de stappen ertussen.', keywords: ['gr5', 'doel', 'tocht', 'wedstrijd', 'datum', 'mijlpaal', 'sneeuwhike', 'weekend'], route: '/ascend/doelen' },
   { id: 'rugzak', title: 'Rugzakgewicht', group: 'doelen', note: 'Hoe zwaar je rugzak wordt in de zwaarste weken, per doel.', keywords: ['rugzak', 'gewicht', 'kilo', 'tent', 'slaapzak', 'bepakking', 'pack'], route: '/ascend/doelen' },
   { id: 'volgende-tocht', title: 'Eerstvolgende tocht op Vandaag', group: 'doelen', note: 'Of je volgende tocht als regel op Vandaag staat.', keywords: ['tocht', 'sneeuwhike', 'weekend', 'aftellen', 'trek', 'vandaag'] },

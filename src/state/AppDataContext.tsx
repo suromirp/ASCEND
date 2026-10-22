@@ -201,6 +201,8 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boo
       settings.leavePeriods,
       // Soft or strict rest after a bergtocht: switching it plans again at once.
       settings.trekLegRest,
+      // Planning after the main goal (engine/programLayout.ts#planEndDay).
+      settings.afterMainGoal,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack
@@ -249,7 +251,7 @@ import { effectiveAmbition } from '../engine/ambition';
 import { patternDays, planPass } from '../engine/planPass';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
-import { programAnchorDate } from '../engine/programLayout';
+import { planEndDay, programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks } from '../engine/raceBlock';
@@ -1910,7 +1912,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // the sync runs it after Akkoord (engine/planPass.ts): for the preview.
   const planPreviewPass = useCallback((sessions: PlannedSession[], leave?: LeavePeriod[], restDayOverride?: number): PlannedSession[] => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     const restDay = restDayOverride ?? settings.restDay ?? 1;
@@ -1935,7 +1937,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const leavePeriods = useMemo(() => sortPeriods(settings.leavePeriods ?? []), [settings.leavePeriods]);
   const planLeave = useCallback((mode: 'add' | 'remove', period: LeavePeriod, replaces?: LeavePeriod): LeavePlan => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     const restDay = settings.restDay ?? 1;
@@ -1973,7 +1975,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // with the same planning run as the sync. Nothing is stored until Akkoord.
   const planRestDay = useCallback((restDay: number): RestDayPlan => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     let n = 0;
@@ -2003,7 +2005,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // What the extra training of the week is chosen from (engine/extraRun.ts).
   const extraSessionContext = useMemo(() => {
     const today = todayISO();
-    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     return {
@@ -2015,7 +2017,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       planChangeLog,
       leave: settings.leavePeriods,
     };
-  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, planChangeLog]);
+  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, settings.afterMainGoal, planChangeLog]);
 
   const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
   useFollowLocation(settings, updateSettings, !loading);

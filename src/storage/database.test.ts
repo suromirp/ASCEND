@@ -424,6 +424,27 @@ describe('syncProgramHorizon (Fase 3: plan tot aan het doel)', () => {
     expect(sessions.filter((s) => s.id !== hike.id).some((s) => s.templateId === 'tpl_mountain_hike' || s.templateId === 'tpl_hike_day_one')).toBe(false);
   });
 
+  it('tijdens en na het hoofddoel plant hij niets: geen onderhoudsweken na de GR5 (Doorloop, punt 10)', async () => {
+    const goal = addDays(mondayOfWeek(todayISO()), 10 * 7);
+    await setGoal(goal);
+    await syncProgramHorizon();
+    const [before] = await ProgramsRepo.getAll();
+    try {
+      // Dag 2 van de tocht, en zes weken later.
+      for (const day of [addDays(goal, 1), addDays(goal, 45)]) {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date(`${day}T08:00:00`));
+        await syncProgramHorizon();
+        const open = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate >= todayISO() && s.status !== 'skipped');
+        expect(open).toEqual([]);
+        const [program] = await ProgramsRepo.getAll();
+        expect(program.phases).toEqual(before.phases);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('without a goal date the planning keeps running past week 16', async () => {
     const result = await syncProgramHorizon();
     expect(result.added).toBe(0);

@@ -55,9 +55,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
+import { goalTiming } from '../engine/goalRoute';
 
 export function TodayPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -128,6 +129,11 @@ export function TodayPage() {
   const quote = dailyQuote(today);
   // On a holiday day (engine/leave.ts) the empty day says so.
   const onHoliday = leaveLabelOn(today, leavePeriods)?.kind === 'off';
+  // During and after the main goal nothing is planned (engine/programLayout.ts#planEndDay): say why.
+  const mainGoal = trainingGoals.find((g) => g.status === 'active' && goalMilestones.some((m) => m.goalId === g.id));
+  const timingNow = mainGoal ? goalTiming(mainGoal, today) : undefined;
+  // With maintenance weeks after the goal (AppSettings.afterMainGoal) the days after it are ordinary days.
+  const mainTiming = timingNow?.state === 'past' && settings.afterMainGoal === 'maintain' ? undefined : timingNow;
 
   // A clean move (nothing else has to shift) applies at once, with undo
   // in the notice; anything that pushes another session asks first.
@@ -295,8 +301,12 @@ export function TodayPage() {
         />
       ) : (
         <QuietDayCard
-          title={onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
-          body={onHoliday
+          title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
+          body={mainTiming?.state === 'underway'
+            ? 'De tocht is de training. ASCEND plant tot het eind niets.'
+            : mainTiming?.state === 'past'
+              ? 'Na je hoofddoel plant ASCEND geen training meer. Kies een nieuw doel bij Ascend, of zet dit doel op behaald.'
+            : onHoliday
             ? 'Je bent vrij. Er staat niets op de planning.'
             : allTodayDone
               ? illness

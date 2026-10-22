@@ -39,7 +39,7 @@ import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngin
 import { diffWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionDiff';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
-import { programAnchorDate } from '../engine/programLayout';
+import { planEndDay } from '../engine/programLayout';
 import { isLeaveBlockedDay } from '../engine/leave';
 import { isTemplatePlannable, fixedFrequencySports, templateSport, type Sport } from '../engine/sports';
 
@@ -100,7 +100,7 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   // Never a session on or after the main goal's own day (the plan ends the
   // day before; production: "Lange duurloop toegevoegd op zo 1 augustus
   // 2027", the GR5 start), nor next to a tussendoel's race on its day.
-  const anchorDay = programAnchorDate(goals, await GoalMilestonesRepo.getAll(), asOf);
+  const anchorDay = planEndDay(goals, await GoalMilestonesRepo.getAll(), asOf, appSettings.afterMainGoal);
   const raceDays = new Set(planned.filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
   // Nor on a day of a holiday or a trek (engine/leave.ts).
   const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date) || isLeaveBlockedDay(appSettings.leavePeriods, date));
