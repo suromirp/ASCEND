@@ -1,0 +1,75 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppData } from '../../../state/AppDataContext';
+import type { WatchUseKey } from '../../../engine/watchUse';
+import { getConnection, setAutoTick, setGarminLeads, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
+import { setMacroFactorLeads } from '../../../storage/macrofactor';
+import { setWatchWorkoutsEnabled, syncWatchWorkouts } from '../../../storage/watchWorkouts';
+import { SettingsRow, SettingsSection } from '../SettingsList';
+import { SummaryRow } from './SummaryRow';
+import type { GroupProps } from './types';
+
+// Koppelingen: Garmin via intervals.icu, MacroFactor en (later) Health Connect. De schakelaars van wat
+// ASCEND van je horloge gebruikt staan hier; koppelen en inlezen blijven hun eigen pagina. Wat hier
+// aan of uit gaat is een apparaatvoorkeur en gaat niet mee in een back-up.
+export function KoppelingenGroup({ facts, reload }: GroupProps) {
+  const navigate = useNavigate();
+  const { updateSettings } = useAppData();
+  const [note, setNote] = useState<string | null>(null);
+
+  // Uit: weg van de telefoon. Aan: meteen ophalen, als er een koppeling is.
+  async function changeUse(key: WatchUseKey, on: boolean) {
+    try {
+      await setWatchUse({ [key]: on });
+      if (on && (await getConnection())) await syncWatchActivities({ force: true });
+    } finally {
+      reload();
+    }
+  }
+
+  async function changeSend(on: boolean) {
+    setNote(null);
+    try {
+      const switched = await setWatchWorkoutsEnabled(on);
+      if (switched.status === 'error') setNote(switched.message);
+      else if (on) {
+        const result = await syncWatchWorkouts({ force: true });
+        if (result.status === 'error') setNote(result.message);
+      }
+    } finally {
+      reload();
+    }
+  }
+
+  return (
+    <>
+      {note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-warning)' }} role="status">{note}</p>}
+
+      <SettingsSection title="Garmin">
+        <SummaryRow id="garmin" title="Via intervals.icu" facts={facts} onClick={() => navigate('/koppelen/garmin')} />
+        {/* Zonder koppeling hoort een rij er niet (hidden in engine/settingsSummary.ts). */}
+        <>
+            <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
+            <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
+            <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
+            <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />
+            <SummaryRow id="rusthartslag" title="Rusthartslag" facts={facts} onChange={(on) => void changeUse('restingHeartRate', on)} />
+            <SummaryRow id="hrv" title="HRV" facts={facts} onChange={(on) => void changeUse('hrv', on)} />
+            <SummaryRow id="naar-horloge" title="Trainingen naar je horloge" facts={facts} onChange={(on) => void changeSend(on)} />
+        </>
+      </SettingsSection>
+
+      <SettingsSection title="MacroFactor">
+        <SummaryRow id="macrofactor" title="Laatste export" facts={facts} onClick={() => navigate('/koppelen/macrofactor')} />
+        <>
+            <SummaryRow id="macrofactor-leidend" title="Leidend voor kracht" facts={facts} info="macrofactorLeidend" onChange={(on) => void setMacroFactorLeads(on).finally(reload)} />
+            <SummaryRow id="macrofactor-gewicht" title="Gewicht gebruiken" facts={facts} onChange={(on) => void updateSettings({ weightFromMacroFactor: on })} />
+        </>
+      </SettingsSection>
+
+      <SettingsSection>
+        <SettingsRow id="health-connect" title="Health Connect" kind="static" value="Komt later" dim off />
+      </SettingsSection>
+    </>
+  );
+}

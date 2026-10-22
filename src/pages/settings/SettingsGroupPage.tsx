@@ -10,6 +10,7 @@ import { ForgeGroup } from '../../components/settings/groups/ForgeGroup';
 import { PlanningGroup } from '../../components/settings/groups/PlanningGroup';
 import { VandaagGroup } from '../../components/settings/groups/VandaagGroup';
 import { DoelGroup } from '../../components/settings/groups/DoelGroup';
+import { KoppelingenGroup } from '../../components/settings/groups/KoppelingenGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
 import { SETTINGS_ROOT, isSettingsPageId, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
@@ -20,6 +21,7 @@ const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
   lichaam: LichaamGroup,
   vandaag: VandaagGroup,
   doel: DoelGroup,
+  koppelingen: KoppelingenGroup,
 };
 
 // Eén groep: terug naar het overzicht, de titel en de rijen. Een sprong (zoeken, een
