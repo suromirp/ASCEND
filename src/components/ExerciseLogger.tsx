@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NumberField } from './NumberField';
 import { templateSport } from '../engine/sports';
 import type { SessionTemplate, SessionVariant, ExerciseSetLog, SetLog, TrainingEnvironment, GuidanceMode, WorkoutDetails } from '../models/training';
@@ -48,6 +48,7 @@ export function ExerciseLogger({
   scheduledDate,
   program,
   initialVariant = 'full',
+  startAtForm = false,
   onClose,
 }: {
   template: SessionTemplate;
@@ -55,6 +56,8 @@ export function ExerciseLogger({
   scheduledDate?: string;
   program?: Program | null;
   initialVariant?: SessionVariant;
+  // Vanuit "Gedaan" op Vandaag: meteen bij het formulier "hoe ging het".
+  startAtForm?: boolean;
   onClose: () => void;
 }) {
   const { logSession, settings, strengthExternal, templates } = useAppData();
@@ -89,10 +92,13 @@ export function ExerciseLogger({
   const [workout, setWorkout] = useState<WorkoutDetails>(() => plannedDetails(template.id, plan));
   const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
   const [openExercise, setOpenExercise] = useState<string | null>(null);
-  const [reachedForm, setReachedForm] = useState(false);
+  const [reachedForm, setReachedForm] = useState(startAtForm);
   const [otherOpen, setOtherOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (startAtForm) formRef.current?.scrollIntoView({ block: 'start' });
+  }, [startAtForm]);
   // This week's targets (mountain hike: D+ and backpack), to fill the form.
   const plannedStep = progressionTarget(template, program, scheduledDate ?? today)?.step;
 

@@ -1,5 +1,5 @@
-// ASCEND — coach card on Today (Fase 3): at most two pieces of advice from
-// engine/adviceEngine.ts, each with what ASCEND suggests and, one tap
+// ASCEND — coach card on Today (Fase 3): the main piece of advice from
+// engine/adviceEngine.ts as one compact card; all of them, each with what ASCEND suggests and, one tap
 // away, why (trigger -> rule -> effect). Visual pass (production feedback:
 // "mag wat mooier, visueler"): an icon per kind of advice, the suggestion
 // up front, the why folded into a quiet panel, clear pill actions.
@@ -10,6 +10,7 @@ import { useAppData } from '../state/AppDataContext';
 import type { Advice, AdviceTrigger } from '../engine/adviceEngine';
 import { Card, Eyebrow } from './ui';
 import { WhyPanel, WhyToggle } from './Why';
+import { TodaySheet } from './vandaag/TodaySheet';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -64,36 +65,60 @@ function KindIcon({ trigger }: { trigger: AdviceTrigger }) {
   );
 }
 
+// Vandaag shows one compact card: the most important advice in a few lines,
+// "nog N" for the rest, and the explanation (what, why, the week preview) in
+// a sheet. Advice that changes your plan is never answered from the card
+// itself: "Bekijk" first, Akkoord is in the sheet.
 export function CoachCard() {
-  const { advice } = useAppData();
-  const [showAll, setShowAll] = useState(false);
+  const { advice, respondToAdvice } = useAppData();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   if (advice.length === 0) return null;
-  const shown = showAll ? advice : advice.slice(0, 2);
+  const first = advice[0];
+  const kind = KIND[first.trigger];
+  const plain = !(first.proposal || first.restWeekSkip || first.repeatWeek || first.goalChange || first.goalTargetTime);
+  const more = advice.length - 1;
   return (
-    <Card className="flex flex-col gap-4" texture>
-      <div className="flex items-baseline justify-between">
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
         <Eyebrow>ADVIES</Eyebrow>
-        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {advice.length === 1 ? '1 advies' : `${advice.length} adviezen`}
-        </span>
+        {more > 0 && (
+          <button onClick={() => setOpen(true)} className="-mr-2 min-h-[44px] px-2 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
+            nog {more}
+          </button>
+        )}
       </div>
-      <div className="flex flex-col">
-        {shown.map((a, i) => (
-          <div key={a.id} className={i > 0 ? 'mt-4 border-t pt-4' : ''} style={{ borderColor: 'var(--color-card-border)' }}>
-            <AdviceItem advice={a} />
+      <div className="-mt-2 flex gap-3">
+        <KindIcon trigger={first.trigger} />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium" style={{ color: kind.color }}>{kind.label}</p>
+          <p className="text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{first.title}</p>
+          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{first.effect}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {plain && (
+          <Pill primary disabled={busy} onClick={() => { setBusy(true); void respondToAdvice(first, 'accepted').finally(() => setBusy(false)); }}>Begrepen</Pill>
+        )}
+        <Pill primary={!plain} onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</Pill>
+      </div>
+      {open && (
+        <TodaySheet eyebrow={advice.length === 1 ? 'ADVIES' : `${advice.length} ADVIEZEN`} onClose={() => setOpen(false)}>
+          <div className="flex flex-col">
+            {advice.map((a, i) => (
+              <div key={a.id} className={i > 0 ? 'mt-4 border-t pt-4' : ''} style={{ borderColor: 'var(--color-card-border)' }}>
+                <AdviceItem advice={a} whyAlways />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      {advice.length > 2 && (
-        <button onClick={() => setShowAll((v) => !v)} className="inline-flex min-h-[44px] items-center -mt-1 self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          {showAll ? 'minder tonen' : `nog ${advice.length - 2} tonen`}
-        </button>
+        </TodaySheet>
       )}
     </Card>
   );
 }
 
-export function AdviceItem({ advice, compact = false }: { advice: Advice; compact?: boolean }) {
+// `whyAlways`: the why stands under the advice instead of behind "waarom" (the sheet on Vandaag).
+export function AdviceItem({ advice, compact = false, whyAlways = false }: { advice: Advice; compact?: boolean; whyAlways?: boolean }) {
   const { respondToAdvice } = useAppData();
   const [open, setOpen] = useState(false);
   const [showWeek, setShowWeek] = useState(false);
@@ -116,7 +141,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
       ) : (
         <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Begrepen</Pill>
       )}
-      <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="ml-auto" />
+      {!whyAlways && <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="ml-auto" />}
     </div>
   );
 
@@ -138,7 +163,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
   );
   const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;
 
-  const why = open && <WhyPanel accent={kind.color} className="mt-2.5">{advice.why}</WhyPanel>;
+  const why = (open || whyAlways) && <WhyPanel accent={kind.color} className="mt-2.5">{advice.why}</WhyPanel>;
 
   if (compact) {
     return (

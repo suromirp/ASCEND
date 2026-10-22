@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { Quote } from '../data/quoteLibrary';
 import { authorWikipediaUrl } from '../utils/quotes';
 import { QUOTE_NL } from '../data/quoteTranslations';
-import { Card } from './ui';
 
 export function QuoteCard({ quote }: { quote: Quote }) {
   const wikipediaUrl = authorWikipediaUrl(quote.author);
@@ -11,12 +10,12 @@ export function QuoteCard({ quote }: { quote: Quote }) {
   const [showTranslation, setShowTranslation] = useState(false);
 
   return (
-    <Card className="text-center">
-      <p className="font-display text-base italic leading-relaxed" style={{ color: 'var(--color-ink)' }}>
+    <figure className="flex flex-col items-center px-3 pt-2 text-center">
+      <p className="font-display text-base italic leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         “{quote.quote}”
       </p>
       {translation && (showTranslation ? (
-        <button type="button" onClick={() => setShowTranslation(false)} className="mt-2 w-full text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }} aria-label="Vertaling verbergen">
+        <button type="button" onClick={() => setShowTranslation(false)} className="mt-2 w-full text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }} aria-label="Vertaling verbergen">
           {translation.text}
         </button>
       ) : (
@@ -24,8 +23,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           Vertaling
         </button>
       ))}
-      <p className="mt-2 text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-        –{' '}
+      <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {wikipediaUrl ? (
           <a
             href={wikipediaUrl}
@@ -45,12 +43,12 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           href={quote.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-[44px] items-center mt-1 text-xs underline underline-offset-2"
+          className="flex min-h-[44px] items-center text-xs underline underline-offset-2"
           style={{ color: 'var(--color-sky)' }}
         >
           {quote.sourceLabel ?? 'Bron'} ↗
         </a>
       )}
-    </Card>
+    </figure>
   );
 }

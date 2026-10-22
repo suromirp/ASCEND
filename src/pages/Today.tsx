@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
-import { addDays, daysBetween, isoWeekday, mondayOfWeek, todayISO } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession } from '../engine/illness';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
@@ -12,7 +12,6 @@ import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
-import { SessionCard } from '../components/SessionCard';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
@@ -28,7 +27,7 @@ import { MorningCheckInCard } from '../components/MorningCheckInCard';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { asPlannedLog } from '../engine/asPlanned';
-import { REST_DAY_COPY, type RestDayMode } from '../data/restDayCopy';
+import { REST_DAY_COPY } from '../data/restDayCopy';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
@@ -41,8 +40,15 @@ import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
-import { Card, Eyebrow, PrimaryButton } from '../components/ui';
-import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
+import { Card, Eyebrow } from '../components/ui';
+import { DayRow, YourDay } from '../components/vandaag/DayRow';
+import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard';
+import { missionFacts } from '../engine/missionFacts';
+import { tomorrowEntry, tomorrowText } from '../engine/yourDay';
+import { buildSessionBrief } from '../engine/sessionBrief';
+import { racePaces } from '../engine/racePaces';
+import { testResults } from '../engine/racePrediction';
+import { useNavigate } from 'react-router-dom';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
@@ -56,6 +62,9 @@ export function TodayPage() {
   const [adHocOpen, setAdHocOpen] = useState(false);
   const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
   const [loggingVariant, setLoggingVariant] = useState<SessionVariant>('full');
+  // "Gedaan" opens the logger right at the how-did-it-go form.
+  const [loggingAtForm, setLoggingAtForm] = useState(false);
+  const navigate = useNavigate();
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
 
@@ -90,7 +99,6 @@ export function TodayPage() {
   const isRestSession = (s: PlannedSession) => templateById.get(s.templateId)?.type === 'recovery';
   const primary = todaySessions.find((s) => !isRestSession(s) && deriveSessionStatus(s, sessionLogs).status !== 'completed' && s.status !== 'skipped' && allowedWhileIll(s));
   const restToday = !primary ? todaySessions.find((s) => isRestSession(s) && s.status !== 'skipped' && !sessionLogs.some((l) => l.plannedSessionId === s.id)) : undefined;
-  const secondary = todaySessions.filter((s) => s.id !== primary?.id && !(restToday && s.id === restToday.id));
   const allTodayDone = todaySessions.some((s) => !isRestSession(s)) && !primary;
   const anyDoneToday = todaySessions.some((s) => deriveSessionStatus(s, sessionLogs).status === 'completed');
 
@@ -139,6 +147,15 @@ export function TodayPage() {
   // today combines a strength session with a cardio/hiking one.
   // The order card has its own say; the old tip only for what it doesn't cover.
   const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
+  // The mission's three key numbers; the pace comes from the latest test run.
+  const paces = useMemo(() => racePaces(testResults(sessionLogs)), [sessionLogs]);
+  const mission = primary && primaryTemplate
+    ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces)
+    : undefined;
+  const tomorrow = tomorrowEntry(today, plannedSessions, templateById, program);
+  const tomorrowLine = `Morgen: ${tomorrowText(tomorrow)}`;
+  const doneToday = sessionLogs.filter((l) => l.completedDate === today);
+  const restMode = settings.restDayMode ?? 'rest';
   const loggingTemplate = loggingSession ? templateById.get(loggingSession.templateId) : undefined;
   const actionSheetTemplate = actionSheetSession ? templateById.get(actionSheetSession.templateId) : undefined;
   const actionSheetLog = actionSheetSession ? sessionLogs.find((l) => l.plannedSessionId === actionSheetSession.id) : undefined;
@@ -166,18 +183,28 @@ export function TodayPage() {
       });
     } else {
       setLoggingVariant(variant);
+      setLoggingAtForm(false);
       setLoggingSession(session);
     }
   }
 
+  const restHeader = !!restToday && !primary;
+  const trainingRows = todaySessions.filter((s) => !(restToday && s.id === restToday.id));
+  const stretchRow = isMorning ? (
+    <DailyStretchCard label="Ochtend" title="Rekken" stretches={MORNING_ROUTINE} completed={stretchCompletion.morning === today} onToggleComplete={() => toggleStretchRoutine('morning')} />
+  ) : (
+    <DailyStretchCard label="Avond" title="Rekken" stretches={EVENING_ROUTINE} completed={stretchCompletion.evening === today} onToggleComplete={() => toggleStretchRoutine('evening')} />
+  );
+
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-6">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <AscendAnimatedLogo size={84} />
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-3">
+      {/* Rechts blijft ruimte voor het tandwiel van de app (44 px en een tussenruimte). */}
+      <header className="flex min-h-[44px] items-start justify-between pr-[52px]">
+        <div className="pt-0.5">
+          <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
-            <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-              WEEK {position.weekInProgram} • {position.phase.name}
+            <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
+              Week {position.weekInProgram} · {position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
         </div>
@@ -185,7 +212,10 @@ export function TodayPage() {
           <TimerButton />
           <StretchMenuButton />
         </div>
-      </div>
+      </header>
+
+      {/* Boven de missie alleen wat echt eerst moet: ziek, nieuw begonnen, back-up. */}
+      <IllnessStatusCard />
 
       <FreshStartCard />
 
@@ -198,44 +228,16 @@ export function TodayPage() {
         />
       )}
 
-      {forecastSummary && (
-        <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
-      )}
-
-      <ScheduleAnomalyCard />
-
-      {showRecoveryWarning && (
-        <Card className="flex flex-col gap-1">
-          <p className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-warning)' }}>HERSTEL-SIGNAAL</p>
-          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-            De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
-            rustiger te gaan, minder herhalingen, lagere helling, of een kortere sessie.
-          </p>
-        </Card>
-      )}
-
-      {dayOrderAdvice && <DayOrderCard advice={dayOrderAdvice} sessions={todaySessions} templateById={templateById} />}
-
-      {concurrentTrainingTip && (
-        <Card className="flex flex-col gap-1">
-          <p className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>TIP VOOR VANDAAG</p>
-          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
-        </Card>
-      )}
-
-      <IllnessStatusCard />
-
-      <WatchActivityCard />
-
-      <MacroFactorCard />
-
-      {primary && primaryTemplate ? (
+      {primary && primaryTemplate && mission ? (
         <TodayMissionCard
           template={primaryTemplate}
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
+          chips={mission.chips}
+          paceNote={mission.paceNote}
           quickComplete={isQuickComplete(primaryTemplate)}
           onStart={(variant, feel, durationMinutes, extra) => startSession(primary, primaryTemplate, variant, feel, durationMinutes, extra)}
+          onLog={(variant) => { setLoggingVariant(variant); setLoggingAtForm(true); setLoggingSession(primary); }}
           onMove={(date) => handleMove(primary.id, date)}
           onSkip={() => handleSkip(primary.id)}
           suggestions={suggestMoves(primary.id)}
@@ -249,81 +251,112 @@ export function TodayPage() {
             yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
             templateById,
           })}
+          /* weatherSlot={<WeatherLine />}: de weerregel komt tussen de coachregel en de knop. */
         />
       ) : restToday && !allTodayDone ? (
-        <RestDayCard
-          mode={settings.restDayMode ?? 'rest'}
-          onLogWalk={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
+        <QuietDayCard
+          title={REST_DAY_COPY[restMode].title}
+          body={REST_DAY_COPY[restMode].valley}
+          detail={restMode === 'active' ? REST_DAY_COPY.active.detail : undefined}
+          doneLabel={restMode === 'active' ? 'Gedaan' : undefined}
           onDone={() => { const t = templateById.get(restToday.templateId); if (t) void logSession(asPlannedLog(restToday, t, program, today)); }}
+          linkLabel={restMode === 'active' ? 'Invullen wat je deed' : 'Toch gewandeld?'}
+          onLink={() => { const t = templateById.get(restToday.templateId); if (t) startSession(restToday, t, 'full'); }}
+          tomorrow={tomorrowLine}
+        />
+      ) : allTodayDone && anyDoneToday ? (
+        <DoneTodayCard
+          title="Klaar voor vandaag"
+          line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan, ${doneToday.reduce((sum, l) => sum + l.durationMinutes, 0)} min`}
+          tomorrow={tomorrowLine}
         />
       ) : (
-        <Card>
-          <Eyebrow>VANDAAG</Eyebrow>
-          {allTodayDone ? (
-            <>
-              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{anyDoneToday ? 'Klaar voor vandaag' : onHoliday ? 'Vakantie' : 'Vandaag geen training'}</p>
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                {anyDoneToday
-                  ? 'Je training van vandaag is gedaan.'
-                  : onHoliday
-                    ? 'Je bent vrij. Er staat niets op de planning.'
-                  : illness
-                    ? 'Je bent ziek gemeld. Rust; wat je nu mist, hoef je niet in te halen.'
-                    : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{onHoliday ? 'Vakantie' : 'Rust of vrije dag'}</p>
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{onHoliday ? 'Je bent vrij. Er staat niets op de planning.' : 'Geen training gepland voor vandaag.'}</p>
-            </>
-          )}
+        <QuietDayCard
+          title={onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
+          body={onHoliday
+            ? 'Je bent vrij. Er staat niets op de planning.'
+            : allTodayDone
+              ? illness
+                ? 'Je bent ziek gemeld. Rust; wat je nu mist, hoef je niet in te halen.'
+                : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'
+              : 'Geen training gepland voor vandaag.'}
+          tomorrow={tomorrowLine}
+        />
+      )}
+
+      {/* Direct onder de missie: wat bevestigd moet worden. */}
+      <WatchActivityCard />
+
+      <MacroFactorCard />
+
+      {forecastSummary && (
+        <ForecastAdjustmentBanner summary={forecastSummary} onDismiss={dismissForecastSummary} />
+      )}
+
+      <ScheduleAnomalyCard />
+
+      {showRecoveryWarning && (
+        <Card className="flex flex-col gap-1">
+          <Eyebrow>HERSTELSIGNAAL</Eyebrow>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+            De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
+            rustiger te gaan, minder herhalingen, lagere helling, of een kortere sessie.
+          </p>
         </Card>
       )}
 
-      <MorningCheckInCard />
+      {dayOrderAdvice && <DayOrderCard advice={dayOrderAdvice} sessions={todaySessions} templateById={templateById} />}
+
+      {concurrentTrainingTip && (
+        <Card className="flex flex-col gap-1">
+          <Eyebrow>TIP VOOR VANDAAG</Eyebrow>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
+        </Card>
+      )}
 
       <CoachCard />
 
-      <JourneyWeekCard suppress={!!primaryTemplate && isHeavySession(primaryTemplate)} />
+      {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
 
-      <WeightReminder />
-
-      <div className="-mt-2 flex items-center justify-center gap-5">
-        <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          + losse training loggen
-        </button>
-        <NotFitLink />
-      </div>
-
-      {secondary.map((s) => {
-        const t = templateById.get(s.templateId);
-        if (!t) return null;
-        return <SessionCard key={s.id} session={s} template={t} logs={sessionLogs} program={program} onTap={() => setActionSheetSession(s)} />;
-      })}
+      <YourDay>
+        {isMorning && stretchRow}
+        <MorningCheckInCard />
+        {trainingRows.map((s) => {
+          const t = templateById.get(s.templateId);
+          if (!t) return null;
+          const { status, wasMoved } = deriveSessionStatus(s, sessionLogs);
+          const rest = isRestSession(s);
+          const done = status === 'completed';
+          return (
+            <DayRow
+              key={s.id}
+              label={done ? 'Gedaan' : 'Training'}
+              state={done ? 'done' : s.id === primary?.id ? 'now' : 'todo'}
+              onClick={() => setActionSheetSession(s)}
+              trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
+            >
+              {rest ? REST_DAY_COPY[restMode].title : t.name}
+              {wasMoved && !done ? <span style={{ color: 'var(--color-sky)' }}> · verplaatst</span> : null}
+            </DayRow>
+          );
+        })}
+        {!isMorning && stretchRow}
+        <JourneyWeekCard />
+        <WeeklyQuestionCard />
+        <WeightReminder />
+        <DayRow label="Morgen" onClick={() => navigate('/week')} trailing={tomorrow.kind === 'training' ? `${tomorrow.minutes} min` : undefined}>
+          {tomorrow.kind === 'training' ? tomorrow.name : tomorrowText(tomorrow)}
+        </DayRow>
+      </YourDay>
 
       <StandSummaryCard />
 
-
-      {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
-
-      <WeeklyQuestionCard />
-
-      {isMorning ? (
-        <DailyStretchCard
-          title="OCHTENDREKKEN"
-          stretches={MORNING_ROUTINE}
-          completed={stretchCompletion.morning === today}
-          onToggleComplete={() => toggleStretchRoutine('morning')}
-        />
-      ) : (
-        <DailyStretchCard
-          title="AVONDREKKEN"
-          stretches={EVENING_ROUTINE}
-          completed={stretchCompletion.evening === today}
-          onToggleComplete={() => toggleStretchRoutine('evening')}
-        />
-      )}
+      <div className="-mt-2 flex items-center justify-center gap-5">
+        <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+          + losse training
+        </button>
+        {!primary && <NotFitLink plain />}
+      </div>
 
       <QuoteCard quote={quote} />
 
@@ -335,6 +368,7 @@ export function TodayPage() {
           scheduledDate={loggingSession.scheduledDate}
           program={program}
           initialVariant={loggingVariant}
+          startAtForm={loggingAtForm}
           onClose={() => setLoggingSession(null)}
         />
       )}
@@ -394,23 +428,5 @@ export function TodayPage() {
       )}
 
     </div>
-  );
-}
-
-// A rest day on Today: nothing to start and nothing to tick off. A walk
-// is welcome, the one at work counts too; logging it is optional.
-function RestDayCard({ mode, onLogWalk, onDone }: { mode: RestDayMode; onLogWalk: () => void; onDone: () => void }) {
-  const copy = REST_DAY_COPY[mode];
-  return (
-    <Card texture className="flex flex-col gap-3">
-      <Eyebrow>VANDAAG</Eyebrow>
-      <h2 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{copy.title}</h2>
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{copy.body}</p>
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{copy.detail}</p>
-      {mode === 'active' && <PrimaryButton onClick={onDone}>Gedaan</PrimaryButton>}
-      <button onClick={onLogWalk} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-        {mode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'}
-      </button>
-    </Card>
   );
 }

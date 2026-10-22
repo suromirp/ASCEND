@@ -13,10 +13,13 @@ import {
   weekQuestionContext,
 } from '../engine/weeklyQuestion';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
-import { Card, Eyebrow, PrimaryButton } from './ui';
+import { PrimaryButton } from './ui';
+import { DayRow } from './vandaag/DayRow';
+import { TodaySheet } from './vandaag/TodaySheet';
 
-// The question of the week on Today (engine/weeklyQuestion.ts): one "Als ...,
-// wat doe je dan?" with a short Stoic source, and one line for your plan.
+// The question of the week on Today (engine/weeklyQuestion.ts), as one line in
+// "Je dag": one "Als ..., wat doe je dan?" with a short Stoic source, and one
+// line for your plan. The line opens the question in a sheet.
 // Visible from Monday until you answered; "Later" hides it for the rest of
 // the day. Never red, never "overdue": when the week is over it simply goes.
 export function WeeklyQuestionCard() {
@@ -25,6 +28,7 @@ export function WeeklyQuestionCard() {
   const weekStart = mondayOfWeek(today);
   const [draft, setDraft] = useState('');
   const [savedAnswer, setSavedAnswer] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const inputId = useId();
 
   const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
@@ -38,14 +42,18 @@ export function WeeklyQuestionCard() {
     goalDate: mainGoalDate(trainingGoals, goalMilestones),
   }));
 
-  // Right after saving, the card says so for as long as you stay on the screen.
+  // Right after saving, the line says so for as long as you stay on the screen.
   if (savedAnswer !== null) {
     return (
-      <Card className="flex flex-col gap-1.5">
-        <Eyebrow>VRAAG VAN DE WEEK</Eyebrow>
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Je plan staat erin: {savedAnswer}</p>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Je ziet het terug in je weekterugblik.</p>
-      </Card>
+      <>
+        <DayRow label="Vraag" state="done" onClick={() => setOpen(true)}>Je plan staat erin: {savedAnswer}</DayRow>
+        {open && (
+          <TodaySheet eyebrow="VRAAG VAN DE WEEK" title={question.vraag} onClose={() => setOpen(false)}>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Je plan staat erin: {savedAnswer}</p>
+            <p className="mt-1 text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Je ziet het terug in je weekterugblik.</p>
+          </TodaySheet>
+        )}
+      </>
     );
   }
 
@@ -56,46 +64,54 @@ export function WeeklyQuestionCard() {
     if (next === settings.weeklyIntentions) return;
     void updateSettings({ weeklyIntentions: next });
     setSavedAnswer(intentionForWeek(next, weekStart)?.answer ?? draft.trim());
+    setOpen(false);
   };
 
   return (
-    <Card className="flex flex-col gap-3">
-      <Eyebrow>VRAAG VAN DE WEEK</Eyebrow>
-      <p className="font-display text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{question.vraag}</p>
-      <div>
-        <p className="text-xs italic leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>“{question.bron.tekst}”</p>
-        <p className="mt-1 text-xs tracking-wide" style={{ color: 'var(--color-bronze)' }}>
-          {question.bron.auteur}, {question.bron.werk}
-          {question.bron.noot ? <span style={{ color: 'var(--color-ink-dim)' }}>. {question.bron.noot}</span> : null}
-        </p>
-      </div>
-      <div>
-        <label htmlFor={inputId} className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>JOUW PLAN</label>
-        <input
-          id={inputId}
-          type="text"
-          value={draft}
-          maxLength={MAX_ANSWER_LENGTH}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && draft.trim()) save(); }}
-          enterKeyHint="done"
-          autoComplete="off"
-          placeholder="Dan …"
-          className="mt-1.5 min-h-[44px] w-full rounded-xl border bg-transparent px-3 text-sm"
-          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', background: 'var(--color-charcoal)' }}
-        />
-      </div>
-      <div className="flex items-center gap-4">
-        <PrimaryButton fullWidth={false} disabled={!draft.trim()} onClick={save}>Opslaan</PrimaryButton>
-        <button
-          onClick={() => void updateSettings({ weeklyIntentions: postponeIntention(settings.weeklyIntentions, question, weekStart, today) })}
-          className="min-h-[44px] px-1 text-xs underline"
-          style={{ color: 'var(--color-ink-dim)' }}
-        >
-          Later
-        </button>
-      </div>
-    </Card>
+    <>
+      <DayRow label="Vraag" onClick={() => setOpen(true)}>{question.vraag}</DayRow>
+      {open && (
+        <TodaySheet eyebrow="VRAAG VAN DE WEEK" title={question.vraag} onClose={() => setOpen(false)}>
+          {(close) => (
+            <div className="flex flex-col gap-3">
+              <div>
+                <p className="text-sm italic leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>“{question.bron.tekst}”</p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--color-bronze)' }}>
+                  {question.bron.auteur}, {question.bron.werk}
+                  {question.bron.noot ? <span style={{ color: 'var(--color-ink-dim)' }}>. {question.bron.noot}</span> : null}
+                </p>
+              </div>
+              <div>
+                <label htmlFor={inputId} className="text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>Jouw plan</label>
+                <input
+                  id={inputId}
+                  type="text"
+                  value={draft}
+                  maxLength={MAX_ANSWER_LENGTH}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && draft.trim()) save(); }}
+                  enterKeyHint="done"
+                  autoComplete="off"
+                  placeholder="Dan …"
+                  className="mt-1.5 min-h-[44px] w-full rounded-xl border bg-transparent px-3 text-sm"
+                  style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', background: 'var(--color-charcoal)' }}
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <PrimaryButton fullWidth={false} disabled={!draft.trim()} onClick={save}>Opslaan</PrimaryButton>
+                <button
+                  onClick={() => { void updateSettings({ weeklyIntentions: postponeIntention(settings.weeklyIntentions, question, weekStart, today) }); close(); }}
+                  className="min-h-[44px] px-1 text-sm underline"
+                  style={{ color: 'var(--color-ink-dim)' }}
+                >
+                  Niet nu
+                </button>
+              </div>
+            </div>
+          )}
+        </TodaySheet>
+      )}
+    </>
   );
 }
 

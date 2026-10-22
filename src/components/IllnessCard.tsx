@@ -69,13 +69,14 @@ export function IllnessStatusCard() {
 }
 
 // "Niet fit?" link + the three-choice sheet. Hidden while already ill.
-export function NotFitLink() {
+// `plain`: zonder onderstreping, als gewone tekstknop naast Verplaatsen op de missiekaart.
+export function NotFitLink({ plain = false }: { plain?: boolean }) {
   const { settings, reportIllness } = useAppData();
   const [open, setOpen] = useState(false);
   if (activeIllness(settings.illnessEpisodes)) return null;
   return (
     <>
-      <button onClick={() => setOpen(true)} className="inline-flex min-h-[44px] items-center self-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={() => setOpen(true)} className={plain ? 'inline-flex min-h-[44px] items-center text-sm font-medium' : 'inline-flex min-h-[44px] items-center self-center text-xs underline'} style={{ color: 'var(--color-ink-dim)' }}>
         Niet fit?
       </button>
       {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await reportIllness(kind); }} onClose={() => setOpen(false)} />}

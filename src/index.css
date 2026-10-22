@@ -108,6 +108,59 @@ body {
   );
 }
 
+/* De missiekaart op Vandaag is de enige kaart met hoogtelijnen en een zachte
+   gouden gloed in de hoek (docs/visie/Visuele upgrade en nieuwe ideeën.md,
+   Kaarten). Alleen een achtergrondafbeelding: de kleur van de kaart zet het
+   onderdeel zelf, want een `background` in een style-attribuut zou deze
+   afbeelding weer wissen. */
+.topo-mission {
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--color-gold) 7%, transparent), transparent 60%),
+    repeating-radial-gradient(ellipse at 88% 8%, transparent 0 17px, color-mix(in srgb, var(--color-bronze) 7%, transparent) 18px 19px);
+}
+
+/* Je dag: een dunne lijn met een stip per regel (components/vandaag/DayRow.tsx). */
+.day-line {
+  position: relative;
+  padding-left: 22px;
+}
+.day-line::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 22px;
+  bottom: 22px;
+  width: 1px;
+  background: var(--color-card-border);
+}
+.day-row {
+  position: relative;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+}
+.day-row::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-stone);
+}
+.day-row[data-state='now']::before {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-gold) 18%, transparent);
+}
+.day-row[data-state='done']::before {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
 .font-display {
   font-family: var(--font-display);
 }

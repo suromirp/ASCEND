@@ -1,50 +1,57 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJourney } from './reis/useJourney';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { PrimaryButton, SecondaryButton } from './ui';
+import { DayRow } from './vandaag/DayRow';
+import { TodaySheet } from './vandaag/TodaySheet';
 
-// Today: the one task of the week on the way to the GR5 that is not
-// training. Tick it off or push it to next week. Same idea as the lesson
-// of the week: one a week, kept for the week, never red.
-// `suppress` hides it on a day that belongs to a heavy training, so it
-// never pushes the mission aside.
-export function JourneyWeekCard({ suppress = false }: { suppress?: boolean }) {
+// Vandaag: the one task of the week on the way to the GR5 that is not
+// training, as one line in "Je dag". The line opens the task in a sheet: tick
+// it off or push it to next week. Same idea as the lesson of the week: one a
+// week, kept for the week, never red.
+export function JourneyWeekCard() {
   const navigate = useNavigate();
   const { pick, tick, untick, postpone } = useJourney();
-  if (suppress || !pick || pick.state === 'postponed') return null;
+  const [open, setOpen] = useState(false);
+  if (!pick || pick.state === 'postponed') return null;
   const { task } = pick;
-
-  if (pick.state === 'done') {
-    return (
-      <Card className="flex flex-col gap-1">
-        <div className="flex items-baseline justify-between">
-          <Eyebrow>DEZE WEEK VOOR DE GR5</Eyebrow>
-          <span className="text-xs" style={{ color: 'var(--color-success-text)' }}>gedaan</span>
-        </div>
-        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{task.title}</p>
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Volgende week komt er een nieuwe taak.</p>
-        <button onClick={() => untick(task.id)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-          Toch nog niet gedaan
-        </button>
-      </Card>
-    );
-  }
+  const done = pick.state === 'done';
 
   return (
-    <Card className="flex flex-col gap-2" texture>
-      <div className="flex items-baseline justify-between">
-        <Eyebrow>DEZE WEEK VOOR DE GR5</Eyebrow>
-        <button onClick={() => navigate('/reis')} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-          Alle taken
-        </button>
-      </div>
-      <button onClick={() => navigate(`/reis?taak=${task.id}`)} className="flex flex-col gap-1 text-left">
-        <span className="font-display text-lg leading-snug" style={{ color: 'var(--color-ink)' }}>{task.title}</span>
-        <span className="line-clamp-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{task.why}</span>
-      </button>
-      <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={() => postpone(task.id)}>Volgende week</SecondaryButton>
-        <PrimaryButton onClick={() => tick(task.id, { keepForWeek: true })} fullWidth={false}>Gedaan</PrimaryButton>
-      </div>
-    </Card>
+    <>
+      <DayRow label="Reis" state={done ? 'done' : 'todo'} onClick={() => setOpen(true)}>
+        {task.title}
+      </DayRow>
+      {open && (
+        <TodaySheet eyebrow="DEZE WEEK VOOR DE GR5" title={task.title} onClose={() => setOpen(false)}>
+          {(close) => (
+            <div className="flex flex-col gap-4">
+              <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{task.why}</p>
+              {done ? (
+                <>
+                  <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Gedaan. Volgende week komt er een nieuwe taak.</p>
+                  <button onClick={() => { untick(task.id); close(); }} className="min-h-[44px] self-start text-sm underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                    Toch nog niet gedaan
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-3">
+                  <SecondaryButton onClick={() => { postpone(task.id); close(); }}>Volgende week</SecondaryButton>
+                  <PrimaryButton onClick={() => { tick(task.id, { keepForWeek: true }); close(); }} fullWidth={false}>Gedaan</PrimaryButton>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <button onClick={() => navigate(`/reis?taak=${task.id}`)} className="min-h-[44px] text-sm underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                  Meer over deze taak
+                </button>
+                <button onClick={() => navigate('/reis')} className="min-h-[44px] text-sm underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                  Alle taken
+                </button>
+              </div>
+            </div>
+          )}
+        </TodaySheet>
+      )}
+    </>
   );
 }

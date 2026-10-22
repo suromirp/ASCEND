@@ -6,13 +6,10 @@ import { fatigueWord, legFatigueOn } from '../engine/legFatigue';
 import { LOAD_JUMP, loadVersusBefore, weeklyLoad } from '../engine/standing';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { mondayOfWeek } from '../utils/dates';
-import { formatNumberNL } from '../utils/number';
-import { Card, Eyebrow } from './ui';
+import { ChevronGlyph } from './vandaag/glyphs';
 
 // Vandaag → one quiet line to Je stand (pages/Standing.tsx): your legs,
 // the week and the load, the rest one tap away.
-
-const LEVEL_COLOR = ['var(--color-alpine)', 'var(--color-gold)', 'var(--color-warning)'];
 
 export function StandSummaryCard() {
   const navigate = useNavigate();
@@ -24,32 +21,31 @@ export function StandSummaryCard() {
   const week = sessionsForWeek(mondayOfWeek(today)).filter((s) => templateById.get(s.templateId)?.type !== 'recovery');
   const done = week.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
   const { word, level } = fatigueWord(legs.index);
-  const load = !jump ? '–' : jump.ratio > LOAD_JUMP ? `+${Math.round((jump.ratio - 1) * 100)}%` : jump.ratio < 0.7 ? 'licht' : 'normaal';
   // A jump that is only planned so far is information, not yet a warning.
+  const heavy = !!jump && jump.doneRatio > LOAD_JUMP;
+  const weekWord = !jump
+    ? undefined
+    : jump.ratio > LOAD_JUMP
+      ? `${Math.round((jump.ratio - 1) * 100)}% zwaarder dan de 4 weken ervoor`
+      : jump.ratio < 0.7
+        ? 'lichter dan de 4 weken ervoor'
+        : 'zoals de 4 weken ervoor';
 
-  const items = [
-    { label: 'Benen', value: <><span style={{ color: LEVEL_COLOR[level] }}>{word}</span> <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatNumberNL(legs.index, 1)}</span></> },
-    { label: 'Week', value: <span className="tabular-nums">{done} / {week.length}</span> },
-    { label: 'Belasting', value: <span style={{ color: jump && jump.doneRatio > LOAD_JUMP ? 'var(--color-warning)' : undefined }}>{load}</span>, hint: jump ? 'tegen de 4 weken ervoor' : undefined },
-  ];
-
+  // Colour only on the verdict: a warning for tired legs or a heavy week.
   return (
-    <button onClick={() => navigate('/stand')} className="block w-full text-left" aria-label="Je stand openen">
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <Eyebrow>JE STAND</Eyebrow>
-          <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>alles bekijken ›</span>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {items.map((it) => (
-            <div key={it.label}>
-              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{it.label}</p>
-              <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{it.value}</p>
-              {'hint' in it && it.hint && <p className="text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{it.hint}</p>}
-            </div>
-          ))}
-        </div>
-      </Card>
+    <button
+      onClick={() => navigate('/stand')}
+      aria-label="Je stand openen"
+      className="flex min-h-[56px] w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left"
+      style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
+    >
+      <span className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Benen <span style={{ color: level >= 2 ? 'var(--color-warning)' : 'var(--color-ink)' }}>{word.toLowerCase()}</span>
+        {' · '}
+        <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{done} van {week.length}</span> gedaan
+        {weekWord && <>{' · '}week <span style={{ color: heavy ? 'var(--color-warning)' : 'var(--color-ink)' }}>{weekWord}</span></>}
+      </span>
+      <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>
     </button>
   );
 }

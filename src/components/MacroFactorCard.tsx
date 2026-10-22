@@ -52,7 +52,7 @@ export function MacroFactorCard() {
 
   const count = proposals.length;
   return (
-    <Card texture className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3">
       <Eyebrow>UIT MACROFACTOR</Eyebrow>
       <div>
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>

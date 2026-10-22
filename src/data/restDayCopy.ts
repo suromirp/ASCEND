@@ -7,11 +7,13 @@ export type RestDayMode = 'rest' | 'active';
 
 export const ACTIVE_RECOVERY_MINUTES = 25;
 
-export const REST_DAY_COPY: Record<RestDayMode, { title: string; line: string; badge: string; body: string; detail: string }> = {
+// `valley`: the one sentence on Today's quiet card (a valley, not an empty box).
+export const REST_DAY_COPY: Record<RestDayMode, { title: string; line: string; badge: string; body: string; detail: string; valley: string }> = {
   rest: {
     title: 'Rustdag',
     line: 'Wandelen mag, niets af te vinken',
     badge: 'rustdag',
+    valley: 'Je lichaam bouwt op wat je deze week deed. Wandelen mag, traplopen telt ook.',
     body: 'Geen training vandaag. Je lichaam bouwt op wat je deze week deed.',
     detail: 'Wandelen mag, rustig, een kwartier tot een uur. Je wandeling in de pauze op het werk telt ook. Er valt niets af te vinken.',
   },
@@ -19,6 +21,7 @@ export const REST_DAY_COPY: Record<RestDayMode, { title: string; line: string; b
     title: 'Hersteldag',
     line: '20 tot 30 min heel rustig wandelen of fietsen',
     badge: 'herstel',
+    valley: 'Licht bewegen helpt je benen los te worden, zonder nieuwe vermoeidheid. Het telt niet als training.',
     body: 'Licht bewegen helpt je benen los te worden, zonder nieuwe vermoeidheid. Het telt niet als training.',
     detail: '20 tot 30 minuten heel rustig wandelen of fietsen. Je moet makkelijk kunnen praten. Voel je je moe, dan is gewoon rust ook goed.',
   },

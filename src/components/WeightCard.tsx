@@ -1,5 +1,5 @@
 // ASCEND — body weight, about every two weeks (engine/bodyWeight.ts).
-// WeightReminder sits on Today only when an entry is due; WeightSettingsCard
+// WeightReminder is one line in Today's "Je dag" only when an entry is due; WeightSettingsCard
 // lives in Settings for entering it any time.
 
 import { useState } from 'react';
@@ -10,6 +10,8 @@ import { formatDateNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { NumberField } from './NumberField';
 import { Card, Eyebrow, PrimaryButton } from './ui';
+import { DayRow } from './vandaag/DayRow';
+import { TodaySheet } from './vandaag/TodaySheet';
 
 function useSaveWeight() {
   const { settings, updateSettings } = useAppData();
@@ -22,25 +24,34 @@ export function WeightReminder() {
   const { settings, updateSettings } = useAppData();
   const save = useSaveWeight();
   const [kg, setKg] = useState<number | undefined>(latestWeight(settings.weightEntries)?.kg);
+  const [open, setOpen] = useState(false);
   const today = todayISO();
   if (activeIllness(settings.illnessEpisodes) || !weightDue(settings.weightEntries, settings.weightReminderSnoozedAt, today, settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS)) return null;
   const last = latestWeight(settings.weightEntries);
   return (
-    <Card className="flex flex-col gap-2">
-      <Eyebrow>GEWICHT BIJWERKEN</Eyebrow>
-      <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        {last
-          ? `Je laatste gewicht is van ${formatDateNL(last.date)}. Vul je trendgewicht uit MacroFactor in; een globaal getal is genoeg.`
-          : 'Vul je trendgewicht in, bijvoorbeeld uit MacroFactor. ASCEND gebruikt het alleen voor rugzakgewicht en eiwit per kilo; een globaal getal is genoeg.'}
-      </p>
-      <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={setKg} />
-      <div className="flex items-center gap-4">
-        <PrimaryButton fullWidth={false} disabled={!kg} onClick={() => kg && void save(kg)}>Opslaan</PrimaryButton>
-        <button onClick={() => void updateSettings({ weightReminderSnoozedAt: today })} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          later
-        </button>
-      </div>
-    </Card>
+    <>
+      <DayRow label="Gewicht" onClick={() => setOpen(true)}>Trendgewicht bijwerken</DayRow>
+      {open && (
+        <TodaySheet eyebrow="GEWICHT BIJWERKEN" onClose={() => setOpen(false)}>
+          {(close) => (
+            <div className="flex flex-col gap-2">
+              <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                {last
+                  ? `Je laatste gewicht is van ${formatDateNL(last.date)}. Vul je trendgewicht uit MacroFactor in; een globaal getal is genoeg.`
+                  : 'Vul je trendgewicht in, bijvoorbeeld uit MacroFactor. ASCEND gebruikt het alleen voor rugzakgewicht en eiwit per kilo; een globaal getal is genoeg.'}
+              </p>
+              <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={setKg} />
+              <div className="flex items-center gap-4">
+                <PrimaryButton fullWidth={false} disabled={!kg} onClick={() => { if (kg) { void save(kg); close(); } }}>Opslaan</PrimaryButton>
+                <button onClick={() => { void updateSettings({ weightReminderSnoozedAt: today }); close(); }} className="inline-flex min-h-[44px] items-center text-sm underline" style={{ color: 'var(--color-ink-dim)' }}>
+                  Niet nu
+                </button>
+              </div>
+            </div>
+          )}
+        </TodaySheet>
+      )}
+    </>
   );
 }
 

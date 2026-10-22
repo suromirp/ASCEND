@@ -100,7 +100,7 @@ function ProposalCard({
   const { activity, match, template, similarLog } = proposal;
   const details = describeActivityDetails(activity);
   return (
-    <Card texture className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3">
       <Eyebrow>VAN JE HORLOGE</Eyebrow>
       <div>
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{describeActivity(activity)}</p>
