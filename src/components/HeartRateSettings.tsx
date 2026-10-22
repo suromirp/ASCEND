@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { zoneBpm } from '../engine/heartRateZones';
+import { heartRateProblem, type HeartRateField } from '../engine/inputLimits';
 import { INTENSITY, type Intensity } from '../data/workoutStructure';
 import { Card, Eyebrow } from './ui';
 import { NumberField } from './NumberField';
@@ -9,7 +11,13 @@ import { NumberField } from './NumberField';
 export function HeartRateSettings() {
   const { settings, updateSettings } = useAppData();
   const hr = settings.heartRate ?? {};
-  const set = (patch: Partial<typeof hr>) => void updateSettings({ heartRate: { ...hr, ...patch } });
+  // Een waarde buiten de grenzen wordt niet bewaard; de melding zegt waarom.
+  const [message, setMessage] = useState<string | undefined>();
+  const set = (field: HeartRateField, value: number | undefined) => {
+    const problem = heartRateProblem(field, value, hr);
+    setMessage(problem);
+    if (!problem) void updateSettings({ heartRate: { ...hr, [field]: value } });
+  };
   const levels: Intensity[] = [1, 2, 3, 4];
   const preview = levels.map((l) => ({ l, bpm: zoneBpm(l, hr) })).filter((z) => z.bpm);
 
@@ -21,10 +29,11 @@ export function HeartRateSettings() {
         nauwkeurigst; zonder rekent ASCEND met je maximale hartslag.
       </p>
       <div className="grid grid-cols-3 gap-2">
-        <NumberField compact label="Drempel (LTHR)" unit="bpm" value={hr.lthr} onChange={(v) => set({ lthr: v })} />
-        <NumberField compact label="Maximaal" unit="bpm" value={hr.maxHr} onChange={(v) => set({ maxHr: v })} />
-        <NumberField compact label="In rust" unit="bpm" value={hr.restingHr} onChange={(v) => set({ restingHr: v })} />
+        <NumberField compact label="Drempel (LTHR)" unit="bpm" value={hr.lthr} onChange={(v) => set('lthr', v)} />
+        <NumberField compact label="Maximaal" unit="bpm" value={hr.maxHr} onChange={(v) => set('maxHr', v)} />
+        <NumberField compact label="In rust" unit="bpm" value={hr.restingHr} onChange={(v) => set('restingHr', v)} />
       </div>
+      {message && <p role="alert" className="text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{message}</p>}
       {preview.length > 0 && (
         <div className="flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
           {preview.map(({ l, bpm }) => (

@@ -35,10 +35,12 @@ import { formatNumberNL } from '../utils/number';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { FEASIBILITY_LABEL } from './GoalFocusCard';
 import { Portal } from './Portal';
+import { Icon } from './icons';
 import { NumberField } from './NumberField';
 import { GoalRouteEditor } from './GoalRouteEditor';
 import { TENT_PACK_KG } from '../engine/gr5Profile';
 import { GoalCapacityStep } from './GoalCapacityStep';
+import { goalDateProblem } from '../engine/goalDate';
 import { useSheetClose } from '../utils/useSheetClose';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
@@ -302,7 +304,9 @@ function InterpretStep({
     if (k === 'distance' && hasDuration) return false;
     return true;
   });
-  const canProceed = local.name.trim().length > 0 && (isRoute
+  // Een doel voor een dag die voorbij is, wordt niet geactiveerd.
+  const dateProblem = goalDateProblem(local.status === 'active' ? local.targetDate : undefined, todayISO(), draft.status === 'active' ? draft.targetDate : undefined);
+  const canProceed = local.name.trim().length > 0 && dateProblem === undefined && (isRoute
     ? routeGoalComplete(local)
     : local.requirements.length > 0 && local.requirements.every((r) => (r.target?.amount ?? 0) > 0));
 
@@ -325,9 +329,14 @@ function InterpretStep({
             type="date"
             value={local.status === 'active' ? local.targetDate : ''}
             onChange={(e) => patchDate(e.target.value)}
+            min={todayISO()}
+            aria-invalid={dateProblem !== undefined}
             className="mt-1 w-full rounded-lg border bg-transparent px-2.5 py-1.5 text-sm"
             style={inputStyle}
           />
+          {dateProblem && (
+            <p role="alert" className="mt-1 text-xs" style={{ color: 'var(--color-danger-text)' }}>{dateProblem}</p>
+          )}
           {local.status !== 'active' && (
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zonder datum blijft dit doel gepauzeerd.</p>
           )}
@@ -469,13 +478,21 @@ function RequirementRow({
             )}
           </div>
         )}
-        <button onClick={onRemove} aria-label={`${meta.label} verwijderen`} className="px-1 pb-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>×</button>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`${meta.label} verwijderen`}
+          className="relative mb-1 flex h-6 w-6 shrink-0 items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
+          style={{ color: 'var(--color-ink-dim)' }}
+        >
+          <Icon name="sluiten" size={16} />
+        </button>
       </div>
       {customDiscipline && (
         <p className="text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
           Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.{' '}
           <button onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="underline" style={{ color: 'var(--color-ink-dim)' }}>
-            terug naar lijst
+            Terug naar de lijst
           </button>
         </p>
       )}
@@ -603,7 +620,7 @@ function PreviewStep({
               const meta = REQUIREMENT_KIND_META[r.kind as EditableRequirementKind];
               return (
                 <li key={r.id}>
-                  {meta?.label ?? r.kind}: {r.target ? formatCapabilityValue(r.target) : '–'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
+                  {meta?.label ?? r.kind}: {r.target ? formatCapabilityValue(r.target) : 'nog leeg'}{r.discipline ? ` (${DISCIPLINE_LABEL[r.discipline as keyof typeof DISCIPLINE_LABEL] ?? r.discipline})` : ''}
                 </li>
               );
             })}

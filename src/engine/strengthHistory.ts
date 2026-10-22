@@ -10,7 +10,7 @@ import type { Exercise } from '../models/exercise';
 import type { Program } from '../models/program';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, formatDateNL } from '../utils/dates';
-import { matchExercise, normalizeExerciseName } from './exerciseMatch';
+import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
 import {
@@ -122,7 +122,7 @@ export function exerciseHistories(logs: SessionLog[], templates: SessionTemplate
       const { key, exercise } = exerciseKey(entry.exerciseId, entry.exerciseName);
       let history = map.get(key);
       if (!history) {
-        history = { key, exercise, name: exercise?.name ?? entry.exerciseName, sessions: [] };
+        history = { key, exercise, name: exercise?.name ?? cleanExerciseName(entry.exerciseName), sessions: [] };
         map.set(key, history);
       }
       const existing = history.sessions.find((s) => s.logId === log.id);

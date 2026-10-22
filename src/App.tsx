@@ -12,6 +12,7 @@ import { Icon, type IconName } from './components/icons';
 import { AppMark } from './components/AppMark';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
+import { tapFollowsOverlayClose } from './utils/overlayGuard';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage, GoalsPage } from './pages/Ascend';
@@ -67,6 +68,13 @@ function BottomNav() {
   return (
     <nav
       aria-label="Hoofdmenu"
+      // Een tweede tik op de knop van een blad dat net sluit, valt anders
+      // door op de tab eronder (utils/overlayGuard.ts).
+      onClickCapture={(e) => {
+        if (!tapFollowsOverlayClose()) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }}
       className="fixed inset-x-0 bottom-0 z-40 border-t"
       style={{ background: 'rgba(13,13,15,0.92)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
     >

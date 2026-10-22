@@ -39,6 +39,9 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
   const run = useSyncExternalStore(subscribeRun, getRunState);
   // The rows the user ticked off, by workout id: left out of the next run.
   const [skipped, setSkipped] = useState<string[]>([]);
+  // Rows that do not look right (in the future, an impossible duration) stay
+  // out of "Alles verwerken" until the user ticks them.
+  const [opted, setOpted] = useState<string[]>([]);
   // The outcome shows while this card is there; the next visit starts clean.
   useEffect(() => () => clearRunMessage(), []);
 
@@ -50,8 +53,12 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
   // Never gone halfway: while it runs, and with its outcome, the card stays.
   if (ready.length === 0 && waiting === 0 && run.status === 'idle') return null;
 
-  const chosen = ready.filter((p) => !skipped.includes(p.workout.externalId));
-  const toggle = (id: string) => setSkipped((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const isOn = (p: ReadyProposal) => (p.doubt ? opted.includes(p.workout.externalId) : !skipped.includes(p.workout.externalId));
+  const chosen = ready.filter(isOn);
+  const regular = ready.filter((p) => !p.doubt);
+  const doubtful = ready.filter((p) => p.doubt);
+  const flip = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+  const toggle = (p: ReadyProposal) => (p.doubt ? setOpted((o) => flip(o, p.workout.externalId)) : setSkipped((s) => flip(s, p.workout.externalId)));
 
   function processAll() {
     if (saving || chosen.length === 0) return;
@@ -62,7 +69,10 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
       refresh: () => refresh(),
       leads: state.leads,
       left: ready.length - chosen.length,
-    }).then(() => setSkipped([]));
+    }).then(() => {
+      setSkipped([]);
+      setOpted([]);
+    });
   }
 
   const takeovers = ready.filter((p) => p.kind === 'takeover').length;
@@ -73,7 +83,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
       {ready.length > 0 && (
         <div>
           <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>
-            {ready.length === 1 ? <><Num>1</Num> krachttraining klaar</> : <><Num>{ready.length}</Num> krachttrainingen klaar</>}
+            {regular.length === 0 ? 'Niets klaar om te verwerken' : regular.length === 1 ? <><Num>1</Num> krachttraining klaar</> : <><Num>{regular.length}</Num> krachttrainingen klaar</>}
           </p>
           <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
             Uit je bestand met duur, sets en herhalingen. Met het vinkje laat je een training liggen. Er wordt niets opgeslagen voordat jij op de knop tikt.
@@ -85,12 +95,25 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
           )}
         </div>
       )}
-      {ready.length > 0 && (
+      {regular.length > 0 && (
         <ul className="flex flex-col">
-          {ready.map((p) => (
-            <Row key={p.workout.externalId} proposal={p} on={!skipped.includes(p.workout.externalId)} disabled={saving} onToggle={() => toggle(p.workout.externalId)} />
+          {regular.map((p) => (
+            <Row key={p.workout.externalId} proposal={p} on={isOn(p)} disabled={saving} onToggle={() => toggle(p)} />
           ))}
         </ul>
+      )}
+      {doubtful.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <Eyebrow>Eerst even kijken</Eyebrow>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            {doubtful.length === 1 ? 'Deze training klopt waarschijnlijk niet' : 'Deze trainingen kloppen waarschijnlijk niet'} en {doubtful.length === 1 ? 'doet' : 'doen'} niet mee, tenzij je {doubtful.length === 1 ? 'hem' : 'ze'} aanvinkt.
+          </p>
+          <ul className="flex flex-col">
+            {doubtful.map((p) => (
+              <Row key={p.workout.externalId} proposal={p} on={isOn(p)} disabled={saving} onToggle={() => toggle(p)} />
+            ))}
+          </ul>
+        </div>
       )}
       {(ready.length > 0 || saving) &&
         (primary ? (
@@ -145,6 +168,9 @@ function Row({ proposal, on, disabled, onToggle }: { proposal: ReadyProposal; on
         <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           {describeWorkout(workout)}. {what(proposal)}
         </p>
+        {proposal.doubt && (
+          <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{proposal.doubt}</p>
+        )}
       </div>
     </li>
   );

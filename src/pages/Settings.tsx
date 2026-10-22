@@ -719,7 +719,7 @@ export function SettingsPage() {
                 </Card>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <button onClick={() => setShowBaselineEditor(false)} className="min-h-[44px] self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>− verbergen</button>
+                  <button onClick={() => setShowBaselineEditor(false)} className="min-h-[44px] self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verbergen</button>
                   <BaselineEvidenceCard />
                 </div>
               )}
@@ -786,8 +786,9 @@ export function SettingsPage() {
           title={pending.title}
           lines={pending.lines}
           why={pending.proposal.consequences}
-          primaryLabel="Nu toepassen"
-          secondaryLabel="Alleen nieuwe planning"
+          primaryLabel="Akkoord"
+          secondaryLabel="Liever niet"
+          note="Met Liever niet blijft je bestaande planning zoals hij is. Alleen nieuwe planning gebruikt de nieuwe instelling."
           onPrimary={() => void applyPending()}
           onSecondary={keepForNewPlanning}
           onClose={keepForNewPlanning}
@@ -796,7 +797,7 @@ export function SettingsPage() {
       )}
 
       <p className="px-1 text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        ASCEND · Train. Progress. Explore. ASCEND.
+        ASCEND · Train. Progress. Explore. Ascend.
       </p>
     </div>
   );

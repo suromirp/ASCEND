@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXERCISES, exerciseById } from '../data/exercises';
 import { MOVEMENT_PATTERNS, MUSCLE_GROUPS, RESISTANCES } from '../models/exercise';
-import { matchExercise, normalizeExerciseName } from './exerciseMatch';
+import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 
 describe('the exercise list itself', () => {
   it('has 50 to 80 exercises with unique ids', () => {
@@ -100,6 +100,14 @@ describe('the exercise list itself', () => {
         owner.set(key, e.id);
       }
     }
+  });
+});
+
+describe('the superset code of MacroFactor', () => {
+  it('is left off the name', () => {
+    expect(cleanExerciseName('Hanging Straight Leg Raise ∈ SS1')).toBe('Hanging Straight Leg Raise');
+    expect(cleanExerciseName('Barbell Back Squat')).toBe('Barbell Back Squat');
+    expect(normalizeExerciseName('Barbell Back Squat ∈ SS2')).toBe(normalizeExerciseName('Barbell Back Squat'));
   });
 });
 

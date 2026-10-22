@@ -76,10 +76,10 @@ export function MoveSuggestions({
       )}
       <div className="mt-3 flex items-center justify-between">
         <button onClick={() => setShowDatePicker((v) => !v)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          andere dag kiezen
+          Andere dag kiezen
         </button>
         <button onClick={onSkip} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
-          overslaan
+          Overslaan
         </button>
       </div>
       {showDatePicker && (

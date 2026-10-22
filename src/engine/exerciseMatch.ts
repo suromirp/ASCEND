@@ -10,10 +10,17 @@
 
 import { EXERCISES } from '../data/exercises';
 
+// MacroFactor writes a superset as "Hanging Leg Raise ∈ SS1": the code after
+// the sign says which superset the exercise belongs to, not what it is. It is
+// left off the name wherever a name is shown or compared.
+export function cleanExerciseName(name: string): string {
+  return name.replace(/\s*[\u2208\u220A]\s*SS\d+\s*$/i, '').trim();
+}
+
 // "Barbell Back Squat", "barbell back-squat" and "BARBELL  BACK SQUAT." all
 // become "barbell back squat"; "45° Incline" becomes "45 incline".
 export function normalizeExerciseName(name: string): string {
-  return name
+  return cleanExerciseName(name)
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()

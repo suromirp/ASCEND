@@ -1,6 +1,7 @@
 import type { SessionLog } from '../models/training';
 import { isWorkSet } from './workSets';
 import { formatDateNL } from '../utils/dates';
+import { cleanExerciseName } from './exerciseMatch';
 import type { TrendPoint } from './readiness';
 
 export interface LoggedExercise {
@@ -14,7 +15,7 @@ export function listLoggedExercises(logs: SessionLog[]): LoggedExercise[] {
   const seen = new Map<string, string>();
   for (const log of logs) {
     for (const entry of log.strengthData ?? []) {
-      if (!seen.has(entry.exerciseId)) seen.set(entry.exerciseId, entry.exerciseName);
+      if (!seen.has(entry.exerciseId)) seen.set(entry.exerciseId, cleanExerciseName(entry.exerciseName));
     }
   }
   return Array.from(seen, ([id, name]) => ({ id, name }));
