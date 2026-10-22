@@ -10,6 +10,8 @@
 // One profile now, but the shape is a list with an active id, so more gyms can
 // come later without changing what is stored.
 
+import { normalizeStrengthProgram, type StoredStrengthProgram } from './strengthProgramStore';
+
 export type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
 export type WarmupMode = 'smart' | 'scheme' | 'off';
@@ -61,6 +63,9 @@ export interface StrengthSettings {
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
   exerciseNotes?: Record<string, string>;
+  // The strength program read in from MacroFactor, after Akkoord: it fills the
+  // strength templates (engine/macrofactorProgram.ts). Absent: ASCEND's own.
+  program?: StoredStrengthProgram;
 }
 
 export interface ResolvedStrengthSettings {
@@ -193,6 +198,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (rest) out.restSeconds = rest;
   const notes = perExercise(raw.exerciseNotes, noteValue);
   if (notes) out.exerciseNotes = notes;
+  const program = normalizeStrengthProgram(raw.program);
+  if (program) out.program = program;
   return out;
 }
 

@@ -15,6 +15,8 @@ import { BackButton } from '../components/BackButton';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { MacroFactorLeadCard } from '../components/MacroFactorLeadCard';
 import { MacroFactorLinkCard } from '../components/MacroFactorLinkCard';
+import { ProgramOfferCard, ProgramProposalSheet } from '../components/forge/ProgramProposal';
+import type { MacroFactorProgram } from '../engine/macrofactorProgram';
 import { Icon } from '../components/icons';
 import { Portal } from '../components/Portal';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -53,6 +55,9 @@ export function MacroFactorImportPage() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  // A training program in the file: offered as a proposal, stored only on Akkoord.
+  const [programOffer, setProgramOffer] = useState<MacroFactorProgram | null>(null);
+  const [showProgram, setShowProgram] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   // The body weight of a file: new days are stored, a day you filled in
@@ -78,7 +83,9 @@ export function MacroFactorImportPage() {
         const result = await importMacroFactorWorkouts(content.workouts, name);
         workoutCount = result.count;
       }
-      setNotice({ tone: 'ok', lines: importSummary({ weight, workoutCount, ignoredSheets: content.ignoredSheets }, formatDateNL) });
+      setProgramOffer(content.program ?? null);
+      const program = content.program ? { name: content.program.name, days: content.program.days.length, weeks: content.program.cycleCount } : undefined;
+      setNotice({ tone: 'ok', lines: importSummary({ weight, workoutCount, program, ignoredSheets: content.ignoredSheets }, formatDateNL) });
     } catch (err) {
       setNotice(
         err instanceof MacroFactorFormatError
@@ -204,6 +211,21 @@ export function MacroFactorImportPage() {
       </Card>
 
       {showDetails && notice?.details && <DetailsSheet text={notice.details} onClose={() => setShowDetails(false)} />}
+
+      {programOffer && <ProgramOfferCard program={programOffer} current={settings.strengthModel?.program} onOpen={() => setShowProgram(true)} />}
+      {showProgram && programOffer && (
+        <ProgramProposalSheet
+          program={programOffer}
+          templates={templates}
+          current={settings.strengthModel?.program}
+          onClose={() => setShowProgram(false)}
+          onAccept={async (stored) => {
+            await updateSettings({ strengthModel: { ...settingsRef.current.strengthModel, program: stored } });
+            setProgramOffer(null);
+            setNotice({ tone: 'ok', text: `Je krachttrainingen volgen nu ${stored.name}. Loslaten kan in de instellingen onder Forge.` });
+          }}
+        />
+      )}
 
       <MacroFactorLinkCard primary={unlinked} />
 

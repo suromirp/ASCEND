@@ -28,6 +28,7 @@ import {
   previousText,
   progress,
   removeLastRow,
+  repsText,
   swapOptions,
   targetText,
   tickRow,
@@ -39,6 +40,7 @@ import {
   type WorkoutExercise,
   type WorkoutRow,
 } from '../../engine/forgeWorkout';
+import { programExercisesFor } from '../../engine/macrofactorProgram';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { templateSport } from '../../engine/sports';
 import { durationForVariant, exercisesForVariant, resolveVariantDuration } from '../../engine/substitutions';
@@ -111,7 +113,8 @@ export function ForgeWorkout({
   const readOnly = strengthExternal;
   const strength = resolveStrengthSettings(settings.strengthModel);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const slots = exercisesForVariant(template, initialVariant);
+  // A program from MacroFactor gives the exercises of the week of this training.
+  const slots = programExercisesFor(settings.strengthModel?.program, template.id, date) ?? exercisesForVariant(template, initialVariant);
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
@@ -564,10 +567,15 @@ function ExerciseBlock({
                 </span>
                 <span role="cell" className="min-w-0 font-sans text-[13px] leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
                   {showPrevious ? (
-                    <span>{prev ?? 'Nog niet'}</span>
+                    <span>{prev ?? ''}</span>
                   ) : (
                     <>
-                      <span className="block">{targetText(row)}</span>
+                      <span className="block">
+                        {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
+                        {targetText(row).split(' × ').map((part, k) => (
+                          <span key={k} className="whitespace-nowrap">{k > 0 ? ` × ${part}` : part}</span>
+                        ))}
+                      </span>
                       {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
                     </>
                   )}
@@ -575,7 +583,7 @@ function ExerciseBlock({
                 {readOnly || ex.timed ? (
                   <>
                     <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
-                    <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? (row.target.repsLow === row.target.repsHigh ? row.target.repsLow : `${row.target.repsLow}-${row.target.repsHigh}`) : row.reps}</span>
+                    <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
                   </>
                 ) : (
                   <>

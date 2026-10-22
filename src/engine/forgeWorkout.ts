@@ -20,14 +20,15 @@
 import { EXERCISES, exerciseById } from '../data/exercises';
 import type { Exercise, MovementPattern } from '../models/exercise';
 import type { Program } from '../models/program';
-import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog } from '../models/training';
+import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog, SetTarget } from '../models/training';
 import { formatNumberNL } from '../utils/number';
 import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, prescribe, type Prescription } from './strengthModel';
+import { DEFAULT_RIR, expectedReps, FATIGUE_PER_SET, prescribe, warmupSets, type Prescription, type WarmupSet } from './strengthModel';
+import { setsText } from './macrofactorProgram';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
-import { barFor } from './strengthWeights';
+import { barFor, candidatesFor } from './strengthWeights';
 import { isWorkSet } from './workSets';
 
 // --- the shapes ---------------------------------------------------------------------------
@@ -39,6 +40,8 @@ export interface RowTarget {
   rir?: number;
   // A hold or a plank: seconds instead of reps.
   timedSec?: number;
+  // A set to failure from repsLow ("9+").
+  failure?: boolean;
 }
 
 export interface WorkoutRow {
@@ -164,7 +167,9 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   const exerciseId = exercise?.id ?? slot.id;
   const name = exercise?.name ?? cleanExerciseName(slot.exerciseName);
   const base = parseReps(slot.reps) ?? { repsLow: 8, repsHigh: 10 };
-  const setCount = Math.max(1, Math.min(10, slot.sets || 1));
+  // A program from MacroFactor gives every set its own range and RIR.
+  const targets = slot.setTargets && slot.setTargets.length > 0 ? slot.setTargets.slice(0, 10) : undefined;
+  const setCount = targets ? targets.length : Math.max(1, Math.min(10, slot.sets || 1));
   const history = state.histories.get(found.key);
   const last = lastSession(history, ctx.date);
   const baseRir = slot.rpe !== undefined ? Math.max(0, Math.min(5, 10 - slot.rpe)) : DEFAULT_RIR;
@@ -190,35 +195,70 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   }
 
   const lastTop = last?.sets.filter(isWorkSet).filter((s) => s.reps > 0).sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
+  const fromProgram = rx && targets ? programWeights(rx, targets, exercise, ctx, lastTop?.weightKg, !!(exercise?.loadsLegs && state.tiredNow), patternSeen) : undefined;
+  const warmups = fromProgram?.warmups ?? rx?.warmups ?? [];
   const rows: WorkoutRow[] = [];
-  for (const [i, w] of (rx?.warmups ?? []).entries()) {
+  for (const [i, w] of warmups.entries()) {
     const target: RowTarget = { weightKg: w.weightKg, repsLow: w.reps, repsHigh: w.reps };
     rows.push({ id: `${slot.id}:w${i}`, kind: 'warmup', target, weightKg: w.weightKg, reps: w.reps, done: false });
   }
   for (let i = 0; i < setCount; i++) {
     let target: RowTarget;
-    if (rx) {
+    const t = targets?.[i];
+    if (t) {
+      const weightKg = fromProgram?.weights[i] ?? (rx ? rx.sets[Math.min(i, rx.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg));
+      target = { ...(weightKg !== undefined ? { weightKg } : {}), repsLow: t.repsLow, repsHigh: t.repsHigh, rir: t.rir, ...(t.failure ? { failure: true } : {}) };
+    } else if (rx) {
       const s = rx.sets[Math.min(i, rx.sets.length - 1)];
       target = { weightKg: s.weightKg, repsLow: s.repsLow, repsHigh: s.repsHigh, rir: s.rir };
     } else {
       target = { weightKg: slot.targetWeightKg ?? lastTop?.weightKg, repsLow: base.repsLow, repsHigh: base.repsHigh, rir: baseRir };
     }
-    const reps = i === 0 && rx ? rx.targetReps : midReps(target);
+    const reps = target.failure ? target.repsLow : i === 0 && rx && !targets ? rx.targetReps : midReps(target);
     rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, ...(target.rir !== undefined ? { rir: target.rir } : {}), done: false });
   }
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;
+  const programRest = targets?.find((x) => x.restSec !== undefined)?.restSec;
+  const reason = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${setsText(targets!)}; het gewicht volgt uit je geschatte kracht.` : rx.reason) : undefined;
   return {
     slot: slot.id,
     exerciseId,
     name,
     known: !!exercise,
     rows,
-    ...(rx ? { reason: rx.reason } : {}),
+    ...(reason ? { reason } : {}),
     ...(last ? { previous: last.sets } : {}),
-    restSec: restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
+    restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
   };
+}
+
+// The weight per set when a program asks for its own range and RIR per set:
+// the heaviest weight at which the estimated strength (tired a little per
+// earlier set, unless the sets are equal) still gives the bottom of the
+// range with the asked reps left. A set whose range and RIR are Forge's own
+// keeps Forge's weight, with its limits per training (KR-5).
+function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, patternSeen: boolean): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
+  const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg });
+  if (!candidates) return undefined;
+  let differs = false;
+  const weights = targets.map((t, i) => {
+    if (t.repsLow === rx.range.low && t.repsHigh === rx.range.high && t.rir === rx.range.rir && !t.failure) return rx.sets[Math.min(i, rx.sets.length - 1)].weightKg;
+    differs = true;
+    const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - FATIGUE_PER_SET) ** i;
+    const need = Math.max(1, t.repsLow - (tired ? 1 : 0));
+    let idx = 0;
+    for (let j = candidates.length - 1; j >= 0; j--) {
+      if (expectedReps(strength, candidates[j].loadKg, t.rir) >= need) {
+        idx = j;
+        break;
+      }
+    }
+    return candidates[idx].externalKg;
+  });
+  const warmups = differs ? warmupSets(ctx.settings, exercise, candidates, weights[0], rx.strengthKg, patternSeen) : rx.warmups;
+  return { weights, warmups, differs };
 }
 
 export function planWorkout(slots: ExercisePrescription[], ctx: PlanContext): WorkoutExercise[] {
@@ -330,11 +370,16 @@ export function hardestLegRir(workout: WorkoutExercise[]): number | undefined {
 
 const kgText = (n: number) => formatNumberNL(n, 2);
 
+// "11-13", "8", or "9+" for a set to failure.
+export function repsText(t: RowTarget): string {
+  return t.failure ? `${t.repsLow}+` : t.repsLow === t.repsHigh ? `${t.repsLow}` : `${t.repsLow}-${t.repsHigh}`;
+}
+
 // "47,5 kg x 11-13" in the prescription column. A hold: "45 sec".
 export function targetText(row: WorkoutRow): string {
   const t = row.target;
   if (t.timedSec !== undefined) return `${t.timedSec} sec`;
-  const reps = t.repsLow === t.repsHigh ? `${t.repsLow}` : `${t.repsLow}-${t.repsHigh}`;
+  const reps = repsText(t);
   return t.weightKg !== undefined ? `${kgText(t.weightKg)} kg × ${reps}` : `${reps} herh.`;
 }
 

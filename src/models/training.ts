@@ -29,6 +29,18 @@ export interface ExercisePrescription {
   rpe?: number;
   priority: ExercisePriority;
   notes?: string;
+  // Per set the range and reps in reserve, from a strength program read in
+  // from MacroFactor (engine/macrofactorProgram.ts). Absent: `sets` x `reps`.
+  setTargets?: SetTarget[];
+}
+
+export interface SetTarget {
+  repsLow: number;
+  repsHigh: number;
+  rir: number;
+  // A set to failure ("9+"): at least repsLow, nothing left.
+  failure?: boolean;
+  restSec?: number;
 }
 
 export interface DurationVariants {

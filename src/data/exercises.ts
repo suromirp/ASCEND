@@ -258,7 +258,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je onderrug blijft plat op de grond.',
     'Vaak fout: te snel gaan en dan de rug laten hol staan.',
   ]),
-  ex('hanging-leg-raise', 'Hanging Leg Raise', ['Hanging Knee Raise', 'Captain\'s Chair Leg Raise', 'Beenheffen hangend'], ['core'], ['forearms'], 'bodyweight', 'core', false, [
+  ex('hanging-leg-raise', 'Hanging Leg Raise', ['Hanging Knee Raise', 'Captain\'s Chair Leg Raise', 'Hanging Straight Leg Raise', 'Beenheffen hangend'], ['core'], ['forearms'], 'bodyweight', 'core', false, [
     'Doen: hang aan een stang, til je benen of knieën op zonder te zwaaien.',
     'Let op: kantel je bekken aan het eind iets naar je toe.',
     'Vaak fout: zwaaien in plaats van de buik gebruiken.',
@@ -310,7 +310,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: ellebogen schuin naar achteren, niet wijd.',
     'Vaak fout: je heupen laten zakken.',
   ], 0.65),
-  ex('machine-chest-press', 'Machine Chest Press', ['Chest Press (Machine)', 'Seated Chest Press', 'Borstpers op de machine'], ['chest'], ['front_delts', 'triceps'], 'machine_stack', 'push_horizontal', false, [
+  ex('machine-chest-press', 'Machine Chest Press', ['Chest Press (Machine)', 'Seated Chest Press', 'Pin-Loaded Machine Chest Press', 'Borstpers op de machine'], ['chest'], ['front_delts', 'triceps'], 'machine_stack', 'push_horizontal', false, [
     'Doen: duw de handgrepen naar voren en laat rustig terugkomen.',
     'Let op: stel de zitting zo in dat de handgrepen op borsthoogte zijn.',
     'Vaak fout: je schouders naar voren laten rollen.',

@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { programCycle } from '../engine/macrofactorProgram';
+import { todayISO } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
 import { settingsAnchor } from '../data/settingsIndex';
 import {
@@ -16,7 +18,7 @@ import {
 import { useAppData } from '../state/AppDataContext';
 import { Icon } from './icons';
 import { GymProfileSettings } from './GymProfileSettings';
-import { Card, Eyebrow, Toggle } from './ui';
+import { Card, Eyebrow, SecondaryButton, Toggle } from './ui';
 
 // Settings, group Training, under the heading "Forge": whether ASCEND counts
 // along with your strength trainings, the choices of the advice, and the
@@ -67,6 +69,50 @@ function SwitchLine({ id, title, note, checked, onChange }: { id: string; title:
         <Toggle checked={checked} onChange={onChange} label={title} />
       </div>
     </Anchored>
+  );
+}
+
+// Het trainingsprogramma uit MacroFactor: welke week het is, welke training
+// wat volgt, en loslaten. Inlezen gaat op de pagina MacroFactor inlezen.
+function ProgramLine() {
+  const navigate = useNavigate();
+  const { settings, updateSettings, templates } = useAppData();
+  const [confirm, setConfirm] = useState(false);
+  const program = settings.strengthModel?.program;
+  if (!program) {
+    return (
+      <div>
+        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Programma uit MacroFactor</p>
+        <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Staat er een trainingsprogramma in je MacroFactor-export, dan stelt ASCEND voor je krachttrainingen ermee te vullen: oefeningen, sets, herhalingen en RIR per week. Nu volgen ze het programma van ASCEND.
+        </p>
+        <button type="button" onClick={() => navigate('/koppelen/macrofactor')} className="mt-1 min-h-[44px] text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+          MacroFactor inlezen
+        </button>
+      </div>
+    );
+  }
+  const name = (id: string) => templates.find((t) => t.id === id)?.name ?? id;
+  return (
+    <div className="flex flex-col gap-2">
+      <div>
+        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Programma uit MacroFactor</p>
+        <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          {program.name}, nu in <span className="font-sans tabular-nums">week {programCycle(program, todayISO()) + 1} van {program.cycleCount}</span>. {program.days.map((d) => `${name(d.templateId)} volgt ${d.name}`).join(', ')}.
+        </p>
+      </div>
+      {confirm ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>Loslaten? Je krachttrainingen krijgen weer de oefeningen van ASCEND. Wat je al deed blijft staan.</p>
+          <div className="flex gap-3">
+            <SecondaryButton onClick={() => setConfirm(false)}>Annuleren</SecondaryButton>
+            <SecondaryButton onClick={() => { const next = { ...settings.strengthModel }; delete next.program; void updateSettings({ strengthModel: next }); setConfirm(false); }}>Loslaten</SecondaryButton>
+          </div>
+        </div>
+      ) : (
+        <SecondaryButton onClick={() => setConfirm(true)}>Programma loslaten</SecondaryButton>
+      )}
+    </div>
   );
 }
 
@@ -130,6 +176,9 @@ export function ForgeSettings() {
           checked={s.keepScreenOn}
           onChange={(on) => save({ keepScreenOn: on })}
         />
+        <Anchored id="forge-programma">
+          <ProgramLine />
+        </Anchored>
       </div>
 
       {s.enabled && (
