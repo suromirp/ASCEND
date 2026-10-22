@@ -366,6 +366,11 @@ afspraken voor elke agent die in deze repo werkt.
   pas na groene controles. Er is geen verplichte PR of merge door de eigenaar.
 - Controles: voor elke push naar main zijn `npx tsc -p tsconfig.app.json
   --noEmit`, `npm run lint`, `npx vitest run` en `npm run build` groen.
+  Daarna nog drie poorten: review door Warden, een doorloop in Chromium op
+  360 en 390 px met vertraagde processor door Lookout, en een screenshot van
+  elk veranderd scherm dat de coördinator zelf bekijkt. Elke knop die wacht
+  heeft een grens in tijd en een zichtbare uitkomst; de app start nooit op een
+  leeg scherm (`docs/beslissingen/2026-10-22-kwaliteitspoort.md`).
 - Planning van de gebruiker: alles wat zijn planning inhoudelijk verandert
   gaat in de app via een voorstel met Akkoord, nooit stil.
 - Instellingen: elke keuze die de app voor de gebruiker maakt is instelbaar,
