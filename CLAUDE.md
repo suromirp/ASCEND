@@ -345,6 +345,10 @@ afspraken voor elke agent die in deze repo werkt.
   --noEmit`, `npm run lint`, `npx vitest run` en `npm run build` groen.
 - Planning van de gebruiker: alles wat zijn planning inhoudelijk verandert
   gaat in de app via een voorstel met Akkoord, nooit stil.
+- Instellingen: elke keuze die de app voor de gebruiker maakt is instelbaar,
+  met het advies als standaard en één zin uitleg. Een nieuwe functie zonder
+  instelling is niet af; de instelling komt ook in `src/data/settingsIndex.ts`
+  (`docs/beslissingen/2026-10-22-alles-instelbaar.md`).
 - Besluiten: leg ze vast in `docs/beslissingen/`, één bestand per besluit
   (`JJJJ-MM-DD-onderwerp.md`, sjabloon `_sjabloon.md`), nooit herschrijven.
 - Geen identificerende persoonsgegevens: de repo is openbaar. Geen naam,

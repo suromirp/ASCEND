@@ -35,7 +35,7 @@ import { QuoteCard } from '../components/QuoteCard';
 import { WeekReviewCard } from '../components/WeekReview';
 import { JourneyWeekCard } from '../components/JourneyWeekCard';
 import { WeeklyQuestionCard } from '../components/WeeklyQuestionCard';
-import { reviewWeekFor } from '../engine/weekReview';
+import { reviewWeekToShow, showMorningCheckIn, showWeeklyQuestion } from '../engine/overviewSettings';
 import { leaveLabelOn } from '../engine/leave';
 import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
@@ -108,7 +108,7 @@ export function TodayPage() {
   // A short look-back nudge — only worth showing right at the week
   // boundary (closing out the week that just ended, or opening the new
   // one), not as a permanent fixture crowding every day's Today screen.
-  const reviewWeek = reviewWeekFor(today, isoWeekday(today));
+  const reviewWeek = reviewWeekToShow(today, isoWeekday(today), settings.overviews);
 
   // Weekly nudge to back up: local-only storage means a wiped browser/cache
   // means everything is gone. No reference yet (never exported, never
@@ -340,7 +340,7 @@ export function TodayPage() {
 
       <YourDay>
         {isMorning && stretchRow}
-        <MorningCheckInCard />
+        {showMorningCheckIn(settings.overviews) && <MorningCheckInCard />}
         {trainingRows.map((s) => {
           const t = templateById.get(s.templateId);
           if (!t) return null;
@@ -363,7 +363,7 @@ export function TodayPage() {
         })}
         {!isMorning && stretchRow}
         <JourneyWeekCard />
-        <WeeklyQuestionCard />
+        {showWeeklyQuestion(settings.overviews) && <WeeklyQuestionCard />}
         <WeightReminder />
         <DayRow label="Morgen" onClick={() => navigate('/week')} trailing={tomorrow.kind === 'training' ? `${tomorrow.minutes} min` : undefined}>
           {tomorrow.kind === 'training' ? tomorrow.name : tomorrowText(tomorrow)}

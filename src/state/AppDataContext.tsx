@@ -216,6 +216,7 @@ import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
 import { raceBlocks } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
+import { showCompletionMoment, showWeatherSwap } from '../engine/overviewSettings';
 
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
@@ -1155,7 +1156,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (announcement.kind === 'milestone') playMilestoneChime();
       else playSessionCompleteChime();
     }
-    setCelebration({
+    // "Citaten na een training" uit: geen scherm voor een gewone training,
+    // wel voor een behaalde mijlpaal. De terugblik daarna opent gewoon.
+    if (announcement.kind === 'milestone' || showCompletionMoment(settings.overviews)) setCelebration({
       id: makeId('celebration'),
       kind: announcement.kind,
       title: announcement.title,
@@ -1165,7 +1168,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
     // The debrief (components/DebriefSheet.tsx) opens after the moment.
     if (announcement.debriefLogId) setDebriefLogId(announcement.debriefLogId);
-  }, [settings.introSoundEnabled]);
+  }, [settings.introSoundEnabled, settings.overviews]);
 
   const logSession = useCallback(
     async (input: LogSessionInput, opts?: { batch?: SavedMoment[] }): Promise<boolean> => {
@@ -1898,10 +1901,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
         raceGoals: extraSessionContext.races,
-        weather: weather.forecast ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
+        weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   const value: AppData = {

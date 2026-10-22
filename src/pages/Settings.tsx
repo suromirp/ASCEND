@@ -24,6 +24,10 @@ import { StrengthDurationSettings } from '../components/StrengthDurationSettings
 import { PhaseEditor } from '../components/PhaseEditor';
 import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 import { getConnection } from '../storage/externalActivities';
+import { SETTINGS_GROUPS, SETTINGS_INDEX, settingsAnchor, type SettingsGroupId, type SettingsIndexItem } from '../data/settingsIndex';
+import { searchSettings } from '../engine/settingsSearch';
+import { resolveOverviews, type OverviewSettings, type ReviewDay } from '../engine/overviewSettings';
+import type { ReactNode } from 'react';
 
 const WEEKDAYS_NL = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
 
@@ -47,24 +51,6 @@ const PAIRING_OPTIONS: { value: TrainingStrategyProfile['sameDayPairingPreferenc
   { value: 'only_if_useful', label: 'Alleen als het moet', note: 'Alleen samenvoegen als er anders écht geen plek is.' },
   { value: 'never', label: 'Nee', note: 'Nooit meer dan één training per dag.' },
 ];
-
-type SettingsTab = 'algemeen' | 'training' | 'gegevens' | 'geavanceerd';
-const TABS: { value: SettingsTab; label: string }[] = [
-  { value: 'algemeen', label: 'Algemeen' },
-  { value: 'training', label: 'Training' },
-  { value: 'gegevens', label: 'Gegevens' },
-  { value: 'geavanceerd', label: 'Geavanceerd' },
-];
-const TAB_STORAGE_KEY = 'ascend.settingsTab';
-
-function readStoredTab(): SettingsTab {
-  try {
-    const v = localStorage.getItem(TAB_STORAGE_KEY);
-    return TABS.some((t) => t.value === v) ? (v as SettingsTab) : 'algemeen';
-  } catch {
-    return 'algemeen';
-  }
-}
 
 const PLANNABLE_SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
 
@@ -95,7 +81,6 @@ export function SettingsPage() {
   const mainIsTrek = !!mainGoal?.requirements.some((r) => r.discipline === 'hiking' || r.kind === 'elevationGain' || r.kind === 'elevationLoss');
   const showLongSundayChoice = !mainIsTrek || settings.longSundaySession === 'run';
   const activeInjuryCount = injuryNotes.filter((n) => !n.resolvedDate).length;
-  const [tab, setTab] = useState<SettingsTab>(readStoredTab);
   const [garminLinked, setGarminLinked] = useState(false);
   useEffect(() => {
     void getConnection().then((c) => setGarminLinked(!!c)).catch(() => undefined);
@@ -125,17 +110,43 @@ export function SettingsPage() {
     webBackupFileAdapter.hasPreferredDirectory?.().then(setHasPreferredDirectory);
   }, [supportsPreferredDirectory]);
 
-  function selectTab(next: SettingsTab) {
-    setTab(next);
-    try {
-      localStorage.setItem(TAB_STORAGE_KEY, next);
-    } catch {
-      // per-viewer convenience only
-    }
-  }
-
   function note(section: string, text: string) {
     setNotes((prev) => ({ ...prev, [section]: text }));
+  }
+
+  // Zoeken en springen. Een resultaat zonder pagina scrolt naar het anker op
+  // deze pagina; met een pagina navigeert het erheen.
+  const [query, setQuery] = useState('');
+  const searching = query.trim().length > 0;
+
+  function flash(el: HTMLElement) {
+    el.animate(
+      [{ outline: '1px solid var(--color-bronze)', outlineOffset: '4px' }, { outline: '1px solid transparent', outlineOffset: '4px' }],
+      { duration: 1800, easing: 'ease-out' },
+    );
+  }
+
+  function scrollToId(id: string) {
+    // Pas na het opnieuw tekenen bestaat het element.
+    window.setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      flash(el);
+    }, 60);
+  }
+
+  function openSetting(item: SettingsIndexItem) {
+    if (item.route) {
+      navigate(item.route);
+      return;
+    }
+    setQuery('');
+    scrollToId(settingsAnchor(item.id));
+  }
+
+  function jumpToGroup(id: SettingsGroupId) {
+    scrollToId(`groep-${id}`);
   }
 
   // The one path every schedule-affecting setting goes through (Fase 2
@@ -292,388 +303,443 @@ export function SettingsPage() {
         <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>MEER</p>
       </div>
 
-      <div className="sticky top-0 z-10 -mx-4 px-4 pb-1 pt-1" style={{ background: 'var(--color-bg)' }}>
-        <div className="flex gap-1 rounded-xl border p-1" role="tablist" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-          {TABS.map((t) => (
-            <button
-              key={t.value}
-              role="tab"
-              aria-selected={tab === t.value}
-              onClick={() => selectTab(t.value)}
-              className="min-h-[44px] flex-1 rounded-lg px-1 py-1.5 text-xs font-medium transition-all active:scale-[0.98]"
-              style={tab === t.value ? { background: 'var(--color-card)', color: 'var(--color-gold)', boxShadow: 'inset 0 0 0 1px var(--color-card-border)' } : { color: 'var(--color-ink-dim)' }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-2 px-4 pb-2 pt-1" style={{ background: 'var(--color-bg)' }}>
+        <label htmlFor="settings-search" className="sr-only">Zoek in de instellingen</label>
+        <input
+          id="settings-search"
+          type="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="search"
+          placeholder="Zoek een instelling, bijvoorbeeld horloge"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="min-h-[44px] w-full rounded-xl border px-3 py-2 text-sm"
+          style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+        />
+        {!searching && (
+          <nav aria-label="Groepen" className="-mx-4 flex gap-2 overflow-x-auto px-4">
+            {SETTINGS_GROUPS.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => jumpToGroup(g.id)}
+                className="min-h-[44px] shrink-0 rounded-full border px-3 text-xs"
+                style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
+              >
+                {g.title}
+              </button>
+            ))}
+          </nav>
+        )}
       </div>
 
-      {tab === 'algemeen' && (
+      {searching && <SearchResults query={query} onPick={openSetting} />}
+
+      {!searching && (
         <>
-          <Card className="flex flex-col gap-1">
-            <Eyebrow>GIDSEN</Eyebrow>
-            <NavRow label="Kennisbank" note="Navigeren, weer, sneeuw, slapen en meer: alles voor onderweg" onClick={() => navigate('/kennis')} />
-            <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
-            <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
-            <NavRow label="Trainingsplekken" note="Waar je in Nederland bergop en bergaf traint" onClick={() => navigate('/plekken')} />
-            <NavRow label="Weer" note="Het weer bij je buitentraining, voor je plaats (Open-Meteo)" onClick={() => navigate('/weer')} />
-            <NavRow label="Bronnen" note="Alle onderzoeken en bronnen achter de adviezen" onClick={() => navigate('/bronnen')} />
-          </Card>
-
-          <Card className="flex flex-col gap-1">
-            <Eyebrow>GEZONDHEID</Eyebrow>
-            <NavRow
-              label="Blessures"
-              note={activeInjuryCount > 0 ? `${activeInjuryCount} actief` : 'Geen actieve blessures'}
-              onClick={() => navigate('/blessures')}
-            />
-          </Card>
-
-          <WeightSettingsCard />
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>APP</Eyebrow>
-            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-              Versie {APP_VERSION} · {buildTimeLocal()}
-            </p>
-            <SecondaryButton onClick={() => void handleCheckUpdate()} disabled={checkingUpdate}>
-              {checkingUpdate ? 'Zoeken…' : 'Zoeken naar update'}
-            </SecondaryButton>
-            <SectionNote text={notes.update} />
-          </Card>
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>GELUID</Eyebrow>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Geluidseffecten</p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Een paar lage tonen bij het openen van de app en een klank bij een voltooide sessie of mijlpaal. Het
-                  openingsgeluid speelt pas na je eerste tik; zo werken browsers.
+          <GroupSection id="training">
+            <Anchor id="sporten">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>SPORTEN</Eyebrow>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Welke sporten mag ASCEND inplannen? Uit betekent: geen nieuwe sessies van die sport, ook niet bij een schone start. Loggen kan altijd.
                 </p>
-              </div>
-              <Toggle checked={settings.introSoundEnabled} onChange={(v) => updateSettings({ introSoundEnabled: v })} label="Geluidseffecten" />
-            </div>
-          </Card>
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>INTEGRATIES</Eyebrow>
-            <NavRow
-              label="Garmin koppelen via intervals.icu"
-              note={garminLinked ? 'Verbonden: trainingen van je horloge komen als voorstel op Vandaag' : 'Trainingen van je horloge zonder overtypen'}
-              onClick={() => navigate('/koppelen/garmin')}
-            />
-            <NavRow
-              label="MacroFactor inlezen"
-              note="Krachttrainingen en gewicht uit je export, met echte duur en herhalingen in reserve"
-              onClick={() => navigate('/koppelen/macrofactor')}
-            />
-            <div className="flex flex-col gap-3 opacity-60">
-              <IntegrationRow name="Health Connect" note="Binnenkort" />
-            </div>
-          </Card>
-        </>
-      )}
-
-      {tab === 'training' && (
-        <>
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>PROGRAMMA</Eyebrow>
-            <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-              {position
-                ? `Je staat nu in week ${position.weekInProgram} van ${position.totalWeeksInProgram}, ${position.phase.name.toLowerCase()}.`
-                : 'Deze week valt buiten het programma.'}
-            </p>
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              {goalDate
-                ? `De fases zijn teruggerekend vanaf je hoofddoel op ${formatDateNL(goalDate)}. Vlak voor de start bouw je af, zodat je fris aan de start staat.`
-                : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij ASCEND, dan rekent ASCEND de fases terug tot die dag.'}
-            </p>
-            <PhaseEditor goalDate={goalDate} />
-            <button onClick={() => navigate('/ascend/doelen')} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
-              Doelen en tussendoelen beheren
-            </button>
-            {showLongSundayChoice && <div className="flex flex-col gap-2">
-              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
-              <OptionList
-                options={[
-                  { value: 'hike' as const, label: 'Bergtocht', note: 'Een lange wandeling met hoogtemeters en een rugzak die stap voor stap zwaarder wordt. In Expeditieklaar ook op zaterdag wandelen.' },
-                  { value: 'run' as const, label: 'Lange duurloop', note: 'Je blijft elke zondag hardlopen, bijvoorbeeld voor een marathon. Bergwandelen train je dan zelf.' },
-                ]}
-                value={settings.longSundaySession ?? 'hike'}
-                onChange={async (v) => {
-                  await updateSettings({ longSundaySession: v });
-                  await refresh();
-                  note('program', v === 'hike' ? 'Vanaf Bergcapaciteit staat er op zondag een bergtocht.' : 'Je houdt elke zondag de lange duurloop.');
-                }}
+                {PLANNABLE_SPORTS.map((sport) => (
+                  <div key={sport} className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{SPORT_LABEL[sport]}</p>
+                      <Toggle checked={enabledSports[sport]} onChange={(v) => void handleSportToggle(sport, v)} label={SPORT_LABEL[sport]} />
+                    </div>
+                    {enabledSports[sport] && (
+                      <div className="flex gap-1" role="group" aria-label={`${SPORT_LABEL[sport]} per week`}>
+                        {([undefined, 1, 2, 3, 4, 5] as const).map((n) => {
+                          const selected = frequency[sport] === n;
+                          return (
+                            <button
+                              key={n ?? 'auto'}
+                              onClick={() => void handleFrequency(sport, n)}
+                              className="min-h-[44px] flex-1 rounded-lg border py-1 text-xs"
+                              style={{ borderColor: selected ? 'var(--color-gold)' : 'var(--color-card-border)', color: selected ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+                            >
+                              {n === undefined ? 'Auto' : `${n}×`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                  Automatisch: je weekschema en de weekplanning bepalen hoe vaak. Een aantal per week: ASCEND houdt dat aan en kiest zelf de dagen. Past het niet, dan zegt ASCEND waarom.
+                </p>
+                <SectionNote text={notes.sports} />
+              </Card>
+            </Anchor>
+            <Anchor id="wijzigingen">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>WIJZIGINGEN TOEPASSEN</Eyebrow>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Als ASCEND je planning wil aanpassen, na een training, een gemiste sessie of een andere instelling.
+                </p>
+                <OptionList
+                  options={(Object.keys(CHANGE_APPLY_MODE_LABEL) as ChangeApplyMode[]).map((m) => ({ value: m, ...CHANGE_APPLY_MODE_LABEL[m] }))}
+                  value={applyMode}
+                  onChange={(m) => void updateSettings({ changeApplyMode: m })}
+                />
+              </Card>
+            </Anchor>
+            <Anchor id="trainingstijd">
+              <DailyBudgetEditor
+                key={loading ? 'loading' : 'ready'}
+                dailyTimeBudget={goalEngineConfig.availability.dailyTimeBudget}
+                onSave={(nextBudget) => void handleBudgetSave(nextBudget)}
+                note={notes.budget}
               />
-            </div>}
-            {!confirmingRestart ? (
-              <SecondaryButton onClick={() => setConfirmingRestart(true)}>Opnieuw beginnen bij week 1</SecondaryButton>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <OptionList
-                  options={[
-                    { value: 'clean' as const, label: 'Schone start', note: 'De planning wordt vanaf week 1 opnieuw opgebouwd met je huidige instellingen: sporten aan/uit en je krachtblok. Eigen verplaatsingen vanaf dat moment vervallen. Je geschiedenis blijft.' },
-                    { value: 'count_only' as const, label: 'Alleen de weektelling', note: 'Alleen het weeknummer en de opbouw per week schuiven. Wat er gepland staat blijft precies zoals het is.' },
-                  ]}
-                  value={restartMode}
-                  onChange={setRestartMode}
-                />
-                <OptionList
-                  options={[
-                    { value: 'this_week' as const, label: 'Deze week is week 1', note: 'Vanaf vandaag.' },
-                    { value: 'next_week' as const, label: 'Volgende week is week 1', note: 'Deze week blijft zoals hij is, het programma begint aankomende maandag.' },
-                  ]}
-                  value={restartFrom}
-                  onChange={setRestartFrom}
-                />
-                <div className="flex gap-3">
-                  <SecondaryButton onClick={() => setConfirmingRestart(false)} disabled={restarting}>Annuleren</SecondaryButton>
-                  <PrimaryButton
-                    fullWidth={false}
-                    disabled={restarting}
-                    onClick={async () => {
-                      setRestarting(true);
-                      const summary = await restartProgram(restartFrom, restartMode);
-                      setRestarting(false);
-                      setConfirmingRestart(false);
-                      note('program', summary);
-                    }}
-                  >
-                    {restarting ? 'Bezig…' : 'Bevestigen'}
-                  </PrimaryButton>
+            </Anchor>
+            <Anchor id="rustdag">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>RUSTDAG</Eyebrow>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Op welke dag wil je rust? ASCEND verdeelt de andere trainingen opnieuw over de week, met genoeg afstand tussen
+                  zware trainingen. Het weekend blijft voor de lange trainingen.
+                </p>
+                <div className="flex gap-2" role="radiogroup" aria-label="Rustdag">
+                  {REST_DAY_OPTIONS.map((d) => {
+                    const on = (settings.restDay ?? 1) === d;
+                    return (
+                      <button
+                        key={d}
+                        role="radio"
+                        aria-checked={on}
+                        aria-label={WEEKDAYS_NL[d - 1]}
+                        onClick={() => void updateSettings({ restDay: d }).then(() => refresh())}
+                        className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
+                        style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
+                      >
+                        {WEEKDAYS_NL[d - 1].slice(0, 2).toUpperCase()}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
-            <SectionNote text={notes.program} />
-          </Card>
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>SPORTEN</Eyebrow>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Welke sporten mag ASCEND inplannen? Uit betekent: geen nieuwe sessies van die sport, ook niet bij een schone start. Loggen kan altijd.
-            </p>
-            {PLANNABLE_SPORTS.map((sport) => (
-              <div key={sport} className="flex flex-col gap-2">
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Geldt vanaf vandaag. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
+                </p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat doe je op die dag?</p>
+                <OptionList
+                  options={[
+                    { value: 'rest', label: 'Rust', note: 'Wandelen mag, er valt niets af te vinken.' },
+                    { value: 'active', label: 'Lichte hersteldag', note: '20 tot 30 minuten heel rustig wandelen of fietsen, met één tik afgevinkt. Telt niet als training.' },
+                  ]}
+                  value={settings.restDayMode ?? 'rest'}
+                  onChange={(v) => void updateSettings({ restDayMode: v }).then(() => refresh())}
+                />
+              </Card>
+            </Anchor>
+            <Anchor id="meerdere">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>MEERDERE TRAININGEN OP ÉÉN DAG</Eyebrow>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Mag ASCEND twee sessies op dezelfde dag plannen als je tijd per dag dat toelaat?
+                </p>
+                <OptionList options={PAIRING_OPTIONS} value={goalEngineConfig.strategy.sameDayPairingPreference} onChange={(v) => void handlePairingChange(v)} />
+                <SectionNote text={notes.pairing} />
+                <div className="flex items-center justify-between gap-4 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+                  <div>
+                    <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Zware dingen op één dag</p>
+                    <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                      Benen en een zware loop, zoals heuvels, mogen op dezelfde dag: eerst de loop, liefst 6 uur later kracht. Minstens 3 uur, en eerder als je je weer fit voelt.
+                      De dagen eromheen blijven dan rustig. Alleen als je tijd per dag het toelaat.
+                    </p>
+                  </div>
+                  <Toggle checked={!!settings.hardSameDay} onChange={(v) => void updateSettings({ hardSameDay: v }).then(() => refresh())} label="Zware dingen op één dag" />
+                </div>
+              </Card>
+            </Anchor>
+            <Anchor id="kracht">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>KRACHTTRAINING</Eyebrow>
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{SPORT_LABEL[sport]}</p>
-                  <Toggle checked={enabledSports[sport]} onChange={(v) => void handleSportToggle(sport, v)} label={SPORT_LABEL[sport]} />
+                  <div>
+                    <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgehouden in MacroFactor</p>
+                    <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                      Sets, reps en gewicht log je in MacroFactor. Dan vink je een krachttraining in ASCEND in één tik af,
+                      zonder invulformulier. Dit is dezelfde keuze als de bron van je krachtblok.
+                    </p>
+                  </div>
+                  <Toggle checked={strengthExternal} onChange={(v) => void setStrengthExternal(v)} label="Kracht bijgehouden in MacroFactor" />
                 </div>
-                {enabledSports[sport] && (
-                  <div className="flex gap-1" role="group" aria-label={`${SPORT_LABEL[sport]} per week`}>
-                    {([undefined, 1, 2, 3, 4, 5] as const).map((n) => {
-                      const selected = frequency[sport] === n;
-                      return (
-                        <button
-                          key={n ?? 'auto'}
-                          onClick={() => void handleFrequency(sport, n)}
-                          className="min-h-[44px] flex-1 rounded-lg border py-1 text-xs"
-                          style={{ borderColor: selected ? 'var(--color-gold)' : 'var(--color-card-border)', color: selected ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
-                        >
-                          {n === undefined ? 'Auto' : `${n}×`}
-                        </button>
-                      );
-                    })}
+                <StrengthDurationSettings />
+              </Card>
+            </Anchor>
+            <Anchor id="ambitie">
+              <AmbitionSettings />
+            </Anchor>
+            <Anchor id="hartslag">
+              <HeartRateSettings />
+            </Anchor>
+            <Card className="flex flex-col gap-1">
+              <Eyebrow>Gezondheid</Eyebrow>
+              <NavRow
+                label="Blessures"
+                note={activeInjuryCount > 0 ? `${activeInjuryCount} actief. ASCEND houdt er rekening mee.` : 'Geen actieve blessures. Meld hier waar je last van hebt.'}
+                onClick={() => navigate('/blessures')}
+              />
+            </Card>
+            <Anchor id="lichaamsgewicht">
+              <WeightSettingsCard />
+            </Anchor>
+          </GroupSection>
+
+          <GroupSection id="doelen">
+            <Card className="flex flex-col gap-1">
+              <Eyebrow>Snel naar</Eyebrow>
+              <NavRow label="Doelen en tussendoelen" note="Je hoofddoel, je tochten en de stappen ertussen" onClick={() => navigate('/ascend/doelen')} />
+              <NavRow label="Vrije dagen en vakanties" note="Dagen zonder training of een tocht, op de pagina Week" onClick={() => navigate('/week')} />
+              <NavRow label="Reisplanner" note="Wat je nog moet regelen voor de grote tocht" onClick={() => navigate('/reis')} />
+              <NavRow label="Paklijst" note="Wat in je rugzak gaat en wat dat weegt" onClick={() => navigate('/reis/paklijst')} />
+            </Card>
+            <Anchor id="programma">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>PROGRAMMA</Eyebrow>
+                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+                  {position
+                    ? `Je staat nu in week ${position.weekInProgram} van ${position.totalWeeksInProgram}, ${position.phase.name.toLowerCase()}.`
+                    : 'Deze week valt buiten het programma.'}
+                </p>
+                <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                  {goalDate
+                    ? `De fases zijn teruggerekend vanaf je hoofddoel op ${formatDateNL(goalDate)}. Vlak voor de start bouw je af, zodat je fris aan de start staat.`
+                    : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij ASCEND, dan rekent ASCEND de fases terug tot die dag.'}
+                </p>
+                <PhaseEditor goalDate={goalDate} />
+                <button onClick={() => navigate('/ascend/doelen')} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+                  Doelen en tussendoelen beheren
+                </button>
+                {showLongSundayChoice && <div id={settingsAnchor('lange-zondag')} className="flex flex-col gap-2">
+                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>De lange zondag vanaf Bergcapaciteit</p>
+                  <OptionList
+                    options={[
+                      { value: 'hike' as const, label: 'Bergtocht', note: 'Een lange wandeling met hoogtemeters en een rugzak die stap voor stap zwaarder wordt. In Expeditieklaar ook op zaterdag wandelen.' },
+                      { value: 'run' as const, label: 'Lange duurloop', note: 'Je blijft elke zondag hardlopen, bijvoorbeeld voor een marathon. Bergwandelen train je dan zelf.' },
+                    ]}
+                    value={settings.longSundaySession ?? 'hike'}
+                    onChange={async (v) => {
+                      await updateSettings({ longSundaySession: v });
+                      await refresh();
+                      note('program', v === 'hike' ? 'Vanaf Bergcapaciteit staat er op zondag een bergtocht.' : 'Je houdt elke zondag de lange duurloop.');
+                    }}
+                  />
+                </div>}
+                {!confirmingRestart ? (
+                  <SecondaryButton onClick={() => setConfirmingRestart(true)}>Opnieuw beginnen bij week 1</SecondaryButton>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <OptionList
+                      options={[
+                        { value: 'clean' as const, label: 'Schone start', note: 'De planning wordt vanaf week 1 opnieuw opgebouwd met je huidige instellingen: sporten aan/uit en je krachtblok. Eigen verplaatsingen vanaf dat moment vervallen. Je geschiedenis blijft.' },
+                        { value: 'count_only' as const, label: 'Alleen de weektelling', note: 'Alleen het weeknummer en de opbouw per week schuiven. Wat er gepland staat blijft precies zoals het is.' },
+                      ]}
+                      value={restartMode}
+                      onChange={setRestartMode}
+                    />
+                    <OptionList
+                      options={[
+                        { value: 'this_week' as const, label: 'Deze week is week 1', note: 'Vanaf vandaag.' },
+                        { value: 'next_week' as const, label: 'Volgende week is week 1', note: 'Deze week blijft zoals hij is, het programma begint aankomende maandag.' },
+                      ]}
+                      value={restartFrom}
+                      onChange={setRestartFrom}
+                    />
+                    <div className="flex gap-3">
+                      <SecondaryButton onClick={() => setConfirmingRestart(false)} disabled={restarting}>Annuleren</SecondaryButton>
+                      <PrimaryButton
+                        fullWidth={false}
+                        disabled={restarting}
+                        onClick={async () => {
+                          setRestarting(true);
+                          const summary = await restartProgram(restartFrom, restartMode);
+                          setRestarting(false);
+                          setConfirmingRestart(false);
+                          note('program', summary);
+                        }}
+                      >
+                        {restarting ? 'Bezig…' : 'Bevestigen'}
+                      </PrimaryButton>
+                    </div>
+                  </div>
+                )}
+                <SectionNote text={notes.program} />
+              </Card>
+            </Anchor>
+          </GroupSection>
+
+          <GroupSection id="overzichten">
+            <OverviewSettingsCard />
+            <Anchor id="geluid">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>GELUID</Eyebrow>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Geluidseffecten</p>
+                    <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                      Een paar lage tonen bij het openen van de app en een klank bij een voltooide sessie of mijlpaal. Het
+                      openingsgeluid speelt pas na je eerste tik; zo werken browsers.
+                    </p>
+                  </div>
+                  <Toggle checked={settings.introSoundEnabled} onChange={(v) => updateSettings({ introSoundEnabled: v })} label="Geluidseffecten" />
+                </div>
+              </Card>
+            </Anchor>
+          </GroupSection>
+
+          <GroupSection id="koppelingen">
+            <Anchor id="health-connect">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>Horloge en voeding</Eyebrow>
+                <NavRow
+                  label="Garmin koppelen via intervals.icu"
+                  note={garminLinked ? 'Verbonden: trainingen van je horloge komen als voorstel op Vandaag' : 'Trainingen van je horloge zonder overtypen'}
+                  onClick={() => navigate('/koppelen/garmin')}
+                />
+                <NavRow
+                  label="Wat ASCEND van je horloge gebruikt"
+                  note="Per soort gegeven aan of uit: trainingen, slaap, rusthartslag en HRV"
+                  onClick={() => navigate('/koppelen/garmin')}
+                />
+                <NavRow
+                  label="MacroFactor inlezen"
+                  note="Krachttrainingen en gewicht uit je export, met echte duur en herhalingen in reserve"
+                  onClick={() => navigate('/koppelen/macrofactor')}
+                />
+                <NavRow
+                  label="Gewicht uit MacroFactor gebruiken"
+                  note="Aan of uit, bij het inlezen van je export"
+                  onClick={() => navigate('/koppelen/macrofactor')}
+                />
+                <div className="flex flex-col gap-3 opacity-60">
+                  <IntegrationRow name="Health Connect" note="Komt later" />
+                </div>
+              </Card>
+            </Anchor>
+          </GroupSection>
+
+          <GroupSection id="gegevens">
+            <Anchor id="backup">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>Back-up</Eyebrow>
+                <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                  Alles staat op deze telefoon. Bewaar regelmatig een back-up in een bestand.
+                </p>
+                <BackupStatusLine />
+                <PrimaryButton onClick={handleExport}>Exporteer data</PrimaryButton>
+                <SecondaryButton onClick={() => setShowImportWizard(true)}>Importeer data</SecondaryButton>
+                {status && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{status}</p>}
+              </Card>
+            </Anchor>
+            {supportsPreferredDirectory && (
+              <Anchor id="backupmap">
+                <Card className="flex flex-col gap-3">
+                  <Eyebrow>Back-upmap</Eyebrow>
+                  <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                    Kies een vaste map waar “Exporteer data” automatisch naartoe schrijft, zonder elke keer een opslaanvenster.
+                  </p>
+                  <SecondaryButton onClick={handleChooseDirectory}>{hasPreferredDirectory ? 'Map wijzigen' : 'Map kiezen'}</SecondaryButton>
+                </Card>
+              </Anchor>
+            )}
+            <Anchor id="opslag">
+              <StorageProtectionCard />
+            </Anchor>
+            <Anchor id="momentopnamen">
+              <SnapshotsCard />
+            </Anchor>
+            <Anchor id="versie">
+              <Card className="flex flex-col gap-3">
+                <Eyebrow>APP</Eyebrow>
+                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
+                  Versie {APP_VERSION} · {buildTimeLocal()}
+                </p>
+                <SecondaryButton onClick={() => void handleCheckUpdate()} disabled={checkingUpdate}>
+                  {checkingUpdate ? 'Zoeken…' : 'Zoeken naar update'}
+                </SecondaryButton>
+                <SectionNote text={notes.update} />
+              </Card>
+            </Anchor>
+            <Anchor id="startniveau">
+              {!showBaselineEditor ? (
+                <Card className="flex flex-col gap-1">
+                  <button onClick={() => setShowBaselineEditor(true)} className="flex items-center justify-between gap-3 text-left">
+                    <div>
+                      <Eyebrow>STARTNIVEAU ZELF INVULLEN</Eyebrow>
+                      <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                        Meestal niet nodig: bij een doel vraagt ASCEND zelf wat nog ontbreekt. Gebruik dit alleen om los van een
+                        doel iets vast te leggen.
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>+</span>
+                  </button>
+                </Card>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => setShowBaselineEditor(false)} className="min-h-[44px] self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>− verbergen</button>
+                  <BaselineEvidenceCard />
+                </div>
+              )}
+            </Anchor>
+            <Card className="flex flex-col gap-3">
+              <Eyebrow>OPNIEUW BEGINNEN</Eyebrow>
+              <div id={settingsAnchor('herbouwen')} className="flex flex-col gap-2">
+                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Aanbevelingen opnieuw laten berekenen</p>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Krachtblok-review en aanpassingen voor de komende weken worden normaal ververst als je de app opent. Dit
+                  laat ASCEND nu meteen opnieuw kijken en verwijdert niets.
+                </p>
+                <SecondaryButton onClick={handleRebuildRecommendations} disabled={rebuilding}>{rebuilding ? 'Bezig…' : 'Herbouw aanbevelingen'}</SecondaryButton>
+                {rebuildStatus && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{rebuildStatus}</p>}
+              </div>
+
+              <div id={settingsAnchor('wissen')} className="mt-3 flex flex-col gap-2">
+                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Alles verwijderen en opnieuw beginnen</p>
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  Wist al je geschiedenis, doelen, blessures en instellingen en start met het standaardprogramma. Dit kan niet
+                  ongedaan worden gemaakt. Exporteer eerst een back-up als je iets wilt bewaren.
+                </p>
+                {!confirmingFullReset ? (
+                  <button onClick={() => setConfirmingFullReset(true)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-danger-text)' }}>Alles verwijderen…</button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-semibold" style={{ color: 'var(--color-danger-text)' }}>Weet je het zeker? Al je gegevens gaan definitief verloren.</p>
+                    <button onClick={handleExport} className="inline-flex min-h-[44px] items-center text-left text-xs underline" style={{ color: 'var(--color-gold)' }}>Eerst een back-up exporteren</button>
+                    <div className="flex gap-3">
+                      <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>Annuleren</SecondaryButton>
+                      <button
+                        onClick={handleFullReset}
+                        disabled={fullResetting}
+                        className="min-h-[44px] flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
+                        style={{ background: 'var(--color-danger)', color: '#fff' }}
+                      >
+                        {fullResetting ? 'Bezig…' : 'Ja, alles verwijderen'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            ))}
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Automatisch: je weekschema en de weekplanning bepalen hoe vaak. Een aantal per week: ASCEND houdt dat aan en kiest zelf de dagen. Past het niet, dan zegt ASCEND waarom.
-            </p>
-            <SectionNote text={notes.sports} />
-          </Card>
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>WIJZIGINGEN TOEPASSEN</Eyebrow>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Als ASCEND je planning wil aanpassen, na een training, een gemiste sessie of een andere instelling.
-            </p>
-            <OptionList
-              options={(Object.keys(CHANGE_APPLY_MODE_LABEL) as ChangeApplyMode[]).map((m) => ({ value: m, ...CHANGE_APPLY_MODE_LABEL[m] }))}
-              value={applyMode}
-              onChange={(m) => void updateSettings({ changeApplyMode: m })}
-            />
-          </Card>
-
-          <DailyBudgetEditor
-            key={loading ? 'loading' : 'ready'}
-            dailyTimeBudget={goalEngineConfig.availability.dailyTimeBudget}
-            onSave={(nextBudget) => void handleBudgetSave(nextBudget)}
-            note={notes.budget}
-          />
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>RUSTDAG</Eyebrow>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Op welke dag wil je rust? ASCEND verdeelt de andere trainingen opnieuw over de week, met genoeg afstand tussen
-              zware trainingen. Het weekend blijft voor de lange trainingen.
-            </p>
-            <div className="flex gap-2" role="radiogroup" aria-label="Rustdag">
-              {REST_DAY_OPTIONS.map((d) => {
-                const on = (settings.restDay ?? 1) === d;
-                return (
-                  <button
-                    key={d}
-                    role="radio"
-                    aria-checked={on}
-                    aria-label={WEEKDAYS_NL[d - 1]}
-                    onClick={() => void updateSettings({ restDay: d }).then(() => refresh())}
-                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
-                    style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
-                  >
-                    {WEEKDAYS_NL[d - 1].slice(0, 2).toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Geldt vanaf vandaag. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
-            </p>
-            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat doe je op die dag?</p>
-            <OptionList
-              options={[
-                { value: 'rest', label: 'Rust', note: 'Wandelen mag, er valt niets af te vinken.' },
-                { value: 'active', label: 'Lichte hersteldag', note: '20 tot 30 minuten heel rustig wandelen of fietsen, met één tik afgevinkt. Telt niet als training.' },
-              ]}
-              value={settings.restDayMode ?? 'rest'}
-              onChange={(v) => void updateSettings({ restDayMode: v }).then(() => refresh())}
-            />
-          </Card>
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>MEERDERE TRAININGEN OP ÉÉN DAG</Eyebrow>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Mag ASCEND twee sessies op dezelfde dag plannen als je tijd per dag dat toelaat?
-            </p>
-            <OptionList options={PAIRING_OPTIONS} value={goalEngineConfig.strategy.sameDayPairingPreference} onChange={(v) => void handlePairingChange(v)} />
-            <SectionNote text={notes.pairing} />
-            <div className="flex items-center justify-between gap-4 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-              <div>
-                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Zware dingen op één dag</p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Benen en een zware loop, zoals heuvels, mogen op dezelfde dag: eerst de loop, liefst 6 uur later kracht. Minstens 3 uur, en eerder als je je weer fit voelt.
-                  De dagen eromheen blijven dan rustig. Alleen als je tijd per dag het toelaat.
-                </p>
-              </div>
-              <Toggle checked={!!settings.hardSameDay} onChange={(v) => void updateSettings({ hardSameDay: v }).then(() => refresh())} label="Zware dingen op één dag" />
-            </div>
-          </Card>
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>KRACHTTRAINING</Eyebrow>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgehouden in MacroFactor</p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Sets, reps en gewicht log je in MacroFactor. Dan vink je een krachttraining in ASCEND in één tik af,
-                  zonder invulformulier. Dit is dezelfde keuze als de bron van je krachtblok.
-                </p>
-              </div>
-              <Toggle checked={strengthExternal} onChange={(v) => void setStrengthExternal(v)} label="Kracht bijgehouden in MacroFactor" />
-            </div>
-            <StrengthDurationSettings />
-          </Card>
-
-          <AmbitionSettings />
-
-          <HeartRateSettings />
-        </>
-      )}
-
-      {tab === 'gegevens' && (
-        <>
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>BACK-UP</Eyebrow>
-            <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Alle data staat lokaal op dit apparaat. Exporteer regelmatig een back-up.
-            </p>
-            <BackupStatusLine />
-            <PrimaryButton onClick={handleExport}>Exporteer data</PrimaryButton>
-            <SecondaryButton onClick={() => setShowImportWizard(true)}>Importeer data</SecondaryButton>
-            {status && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{status}</p>}
-          </Card>
-
-          {supportsPreferredDirectory && (
-            <Card className="flex flex-col gap-3">
-              <Eyebrow>BACK-UPMAP</Eyebrow>
-              <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                Kies een vaste map waar “Exporteer data” automatisch naartoe schrijft, zonder elke keer een opslaanvenster.
-              </p>
-              <SecondaryButton onClick={handleChooseDirectory}>{hasPreferredDirectory ? 'Map wijzigen' : 'Map kiezen'}</SecondaryButton>
             </Card>
-          )}
+            {showImportWizard && <ImportWizard onClose={() => setShowImportWizard(false)} />}
+          </GroupSection>
 
-          <StorageProtectionCard />
-          <SnapshotsCard />
-
-          {showImportWizard && <ImportWizard onClose={() => setShowImportWizard(false)} />}
-        </>
-      )}
-
-      {tab === 'geavanceerd' && (
-        <>
-          {!showBaselineEditor ? (
+          <GroupSection id="gidsen">
             <Card className="flex flex-col gap-1">
-              <button onClick={() => setShowBaselineEditor(true)} className="flex items-center justify-between gap-3 text-left">
-                <div>
-                  <Eyebrow>STARTNIVEAU ZELF INVULLEN</Eyebrow>
-                  <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                    Meestal niet nodig: bij een doel vraagt ASCEND zelf wat nog ontbreekt. Gebruik dit alleen om los van een
-                    doel iets vast te leggen.
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>+</span>
-              </button>
+              <Eyebrow>Uitleg en kennis</Eyebrow>
+              <NavRow label="Kennisbank" note="Navigeren, weer, sneeuw, slapen en meer: alles voor onderweg" onClick={() => navigate('/kennis')} />
+              <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
+              <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
+              <NavRow label="Trainingsplekken" note="Waar je in Nederland bergop en bergaf traint" onClick={() => navigate('/plekken')} />
+              <NavRow label="Weer" note="Hoe ASCEND het weer beoordeelt en waar het vandaan komt" onClick={() => navigate('/weer')} />
+              <NavRow label="Bronnen" note="Alle onderzoeken en bronnen achter de adviezen" onClick={() => navigate('/bronnen')} />
             </Card>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <button onClick={() => setShowBaselineEditor(false)} className="min-h-[44px] self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>− verbergen</button>
-              <BaselineEvidenceCard />
-            </div>
-          )}
-
-          <Card className="flex flex-col gap-3">
-            <Eyebrow>OPNIEUW BEGINNEN</Eyebrow>
-            <div className="flex flex-col gap-2">
-              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Aanbevelingen opnieuw laten berekenen</p>
-              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Krachtblok-review en aanpassingen voor de komende weken worden normaal ververst als je de app opent. Dit
-                laat ASCEND nu meteen opnieuw kijken en verwijdert niets.
-              </p>
-              <SecondaryButton onClick={handleRebuildRecommendations} disabled={rebuilding}>{rebuilding ? 'Bezig…' : 'Herbouw aanbevelingen'}</SecondaryButton>
-              {rebuildStatus && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{rebuildStatus}</p>}
-            </div>
-
-            <div className="mt-3 flex flex-col gap-2">
-              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Alles verwijderen en opnieuw beginnen</p>
-              <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Wist al je geschiedenis, doelen, blessures en instellingen en start met het standaardprogramma. Dit kan niet
-                ongedaan worden gemaakt. Exporteer eerst een back-up als je iets wilt bewaren.
-              </p>
-              {!confirmingFullReset ? (
-                <button onClick={() => setConfirmingFullReset(true)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-danger-text)' }}>Alles verwijderen…</button>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs font-semibold" style={{ color: 'var(--color-danger-text)' }}>Weet je het zeker? Al je gegevens gaan definitief verloren.</p>
-                  <button onClick={handleExport} className="inline-flex min-h-[44px] items-center text-left text-xs underline" style={{ color: 'var(--color-gold)' }}>Eerst een back-up exporteren</button>
-                  <div className="flex gap-3">
-                    <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>Annuleren</SecondaryButton>
-                    <button
-                      onClick={handleFullReset}
-                      disabled={fullResetting}
-                      className="min-h-[44px] flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
-                      style={{ background: 'var(--color-danger)', color: '#fff' }}
-                    >
-                      {fullResetting ? 'Bezig…' : 'Ja, alles verwijderen'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
+          </GroupSection>
         </>
       )}
 
@@ -736,7 +802,7 @@ function IntegrationRow({ name, note }: { name: string; note: string }) {
 
 function NavRow({ label, note, onClick }: { label: string; note: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex items-center justify-between gap-3 py-2 text-left">
+    <button onClick={onClick} className="flex min-h-[44px] w-full items-center justify-between gap-3 py-2 text-left">
       <div>
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{label}</p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
@@ -790,11 +856,7 @@ function DailyBudgetEditor({
     <Card className="flex flex-col gap-3">
       <Eyebrow>TRAININGSTIJD PER DAG</Eyebrow>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        Hoeveel tijd heb je normaal per dag? Dit telt alleen als ASCEND een tweede sessie op een dag wil zetten: bij een
-        krachtblok met meer sessies, bij inhalen van een gemiste training of als de weekplanning iets toevoegt. Staat er
-        bij opslaan al meer op een dag dan past, dan schuift ASCEND dat op. Komt er juist ruimte vrij, dan stelt ASCEND voor
-        sessies die later dan bedoeld staan weer naar voren te halen. Een dag zonder tijd telt als vol zodra er één
-        sessie op staat.
+        Hoeveel tijd heb je normaal per dag? ASCEND gebruikt dit om te zien of er nog een tweede training bij past.
       </p>
       <div className="flex flex-col gap-2">
         {WEEKDAY_ORDER.map((day) => (
@@ -827,6 +889,150 @@ function DailyBudgetEditor({
       </button>
       <PrimaryButton onClick={handleSave}>Opslaan</PrimaryButton>
       <SectionNote text={note} />
+    </Card>
+  );
+}
+
+// --- zoeken en groepen ---------------------------------------------------------
+
+function Anchor({ id, children }: { id: string; children: ReactNode }) {
+  return <div id={settingsAnchor(id)} className="scroll-mt-40 rounded-2xl">{children}</div>;
+}
+
+function GroupSection({ id, children }: { id: SettingsGroupId; children: ReactNode }) {
+  const group = SETTINGS_GROUPS.find((g) => g.id === id)!;
+  return (
+    <section id={`groep-${id}`} aria-labelledby={`groep-titel-${id}`} className="flex scroll-mt-40 flex-col gap-4">
+      <div className="border-t pt-5" style={{ borderColor: 'var(--color-card-border)' }}>
+        <h2 id={`groep-titel-${id}`} className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{group.title}</h2>
+        <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{group.note}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SearchResults({ query, onPick }: { query: string; onPick: (item: SettingsIndexItem) => void }) {
+  const results = searchSettings(query, SETTINGS_INDEX);
+  if (results.length === 0) {
+    return (
+      <Card>
+        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Niets gevonden voor “{query.trim()}”.</p>
+        <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Probeer een ander woord, bijvoorbeeld horloge, gewicht of back-up.</p>
+      </Card>
+    );
+  }
+  return (
+    <Card className="flex flex-col">
+      <Eyebrow>{results.length === 1 ? '1 resultaat' : `${results.length} resultaten`}</Eyebrow>
+      <ul className="mt-1 flex flex-col">
+        {results.map(({ item }) => (
+          <li key={item.id}>
+            <button onClick={() => onPick(item)} className="flex min-h-[44px] w-full items-center justify-between gap-3 py-2 text-left">
+              <div>
+                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{item.title}</p>
+                <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{item.note}</p>
+                <p className="mt-0.5 text-xs" style={{ color: 'var(--color-bronze)' }}>{SETTINGS_GROUPS.find((g) => g.id === item.group)?.title}</p>
+              </div>
+              <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// --- Overzichten en vragen -------------------------------------------------------
+
+function SwitchRow({ id, title, note, checked, onChange, children }: { id: string; title: string; note: string; checked: boolean; onChange: (on: boolean) => void; children?: ReactNode }) {
+  return (
+    <div id={settingsAnchor(id)} className="scroll-mt-40 flex flex-col gap-2 rounded-xl py-1">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</p>
+          <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>
+        </div>
+        <Toggle checked={checked} onChange={onChange} label={title} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+const REVIEW_DAY_OPTIONS: { value: ReviewDay; label: string; note: string }[] = [
+  { value: 'both', label: 'Zondag en maandag', note: 'Zondag over de lopende week, maandag over de week die net voorbij is. Zo was het altijd.' },
+  { value: 'sunday', label: 'Alleen zondag', note: 'Over de week die nog loopt.' },
+  { value: 'monday', label: 'Alleen maandag', note: 'Over de week die net voorbij is.' },
+];
+
+function OverviewSettingsCard() {
+  const navigate = useNavigate();
+  const { settings, updateSettings } = useAppData();
+  const o = resolveOverviews(settings.overviews);
+  // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte blijft ontbreken
+  // en betekent dus de standaard.
+  const set = (patch: Partial<OverviewSettings>) => void updateSettings({ overviews: { ...settings.overviews, ...patch } });
+  const place = settings.homeLocation;
+  return (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>Aan of uit</Eyebrow>
+      <SwitchRow
+        id="weekterugblik"
+        title="Weekterugblik"
+        note="Een korte terugblik op Vandaag, zodat je ziet wat je deed. In het logboek blijven eerdere weken staan."
+        checked={o.weekReview}
+        onChange={(on) => set({ weekReview: on })}
+      >
+        {o.weekReview && (
+          <div id={settingsAnchor('weekterugblik-dag')} className="scroll-mt-40 flex flex-col gap-2">
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Op welke dag hij verschijnt</p>
+            <OptionList options={REVIEW_DAY_OPTIONS} value={o.weekReviewDay} onChange={(v) => set({ weekReviewDay: v })} />
+          </div>
+        )}
+      </SwitchRow>
+      <SwitchRow
+        id="weekvraag"
+        title="Vraag van de week"
+        note="Elke week één korte vraag, om je plan voor die week scherp te houden."
+        checked={o.weeklyQuestion}
+        onChange={(on) => set({ weeklyQuestion: on })}
+      />
+      <SwitchRow
+        id="ochtendcheck"
+        title="Ochtendcheck"
+        note="Een korte vraag over je benen, energie en slaap, zodat ASCEND een rustiger dag kan voorstellen als je moe bent."
+        checked={o.morningCheckIn}
+        onChange={(on) => set({ morningCheckIn: on })}
+      >
+        <button onClick={() => navigate('/koppelen/garmin')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+          Slaap en hartslag van je horloge erin: instellen bij Koppelingen
+        </button>
+      </SwitchRow>
+      <SwitchRow
+        id="weerregel"
+        title="Weer bij je training"
+        note={place ? `Een regel met het weer bij je buitentraining, voor ${place.name}.` : 'Een regel met het weer bij je buitentraining. Kies hieronder eerst een plaats.'}
+        checked={o.weatherLine}
+        onChange={(on) => set({ weatherLine: on })}
+      />
+      <SwitchRow
+        id="weerruil"
+        title="Ruilvoorstellen bij slecht weer"
+        note="ASCEND stelt voor een buitentraining naar een betere dag te zetten, altijd met jouw akkoord."
+        checked={o.weatherSwap}
+        onChange={(on) => set({ weatherSwap: on })}
+      />
+      <div id={settingsAnchor('weerplaats')} className="scroll-mt-40">
+        <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Alleen de plaatsnaam gaat naar de weerdienst.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
+      </div>
+      <SwitchRow
+        id="citaten"
+        title="Citaten na een training"
+        note="Een rustig scherm met een citaat als je een training afrondt. Een behaalde mijlpaal krijgt het scherm altijd."
+        checked={o.completionMoment}
+        onChange={(on) => set({ completionMoment: on })}
+      />
     </Card>
   );
 }

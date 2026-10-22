@@ -5,6 +5,7 @@ import { getRecoveryMetrics } from './wellness';
 import { getWatchWorkoutState } from './watchWorkouts';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel } from './backup';
 import { DEFAULT_WATCH_USE } from '../engine/watchUse';
+import { DEFAULT_OVERVIEWS, resolveOverviews } from '../engine/overviewSettings';
 import { addDays, todayISO } from '../utils/dates';
 
 // Made-up data and a mocked fetch only. The switches of the card "Wat ASCEND
@@ -183,5 +184,31 @@ describe('weight and the backup', () => {
     const normalized = normalizeBackupToCurrentModel(envelope);
     expect(normalized.settings?.weightEntries).toHaveLength(1);
     expect(normalized.settings?.weightFromMacroFactor).toBeUndefined();
+  });
+});
+
+describe('the switches of Overzichten en vragen and the backup', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('travel in the export, in the settings', async () => {
+    await SettingsRepo.set({ overviews: { weekReview: false, weekReviewDay: 'sunday', weatherSwap: false } });
+    const roundTripped = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(roundTripped.settings?.overviews).toEqual({ weekReview: false, weekReviewDay: 'sunday', weatherSwap: false });
+  });
+
+  it('an older backup without them still imports, and means how the app always was', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    delete envelope.payload.settings.overviews;
+    const normalized = normalizeBackupToCurrentModel(envelope);
+    expect(normalized.settings?.overviews).toBeUndefined();
+    expect(resolveOverviews(normalized.settings?.overviews)).toEqual(DEFAULT_OVERVIEWS);
+  });
+
+  it('drops a damaged value instead of storing it', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, overviews: 'uit' };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.overviews).toBeUndefined();
   });
 });

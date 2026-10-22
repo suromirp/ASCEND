@@ -220,6 +220,12 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.weightFromMacroFactor;
     skipped.n++;
   }
+  // The switches of "Overzichten en vragen": a record or not there; the engine
+  // reads every key defensively (engine/overviewSettings.ts#resolveOverviews).
+  if ('overviews' in s && !isRecord(s.overviews)) {
+    delete s.overviews;
+    skipped.n++;
+  }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {
     const { state, skipped: n } = normalizeJourneyState(s.journey);

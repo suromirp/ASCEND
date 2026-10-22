@@ -11,11 +11,12 @@ import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isForecastStale, updatedLabel, weatherForTraining } from '../engine/weather';
+import { showWeatherLine } from '../engine/overviewSettings';
 
 const TONE = { prima: 'var(--color-ink-dim)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
 
 export function WeatherLine({ template, date, minutes, className = '' }: { template: SessionTemplate; date: string; minutes?: number; className?: string }) {
-  const { weather, sessionLogs, program } = useAppData();
+  const { weather, sessionLogs, program, settings } = useAppData();
   const now = new Date();
   const w = weatherForTraining({
     forecast: weather.forecast,
@@ -25,7 +26,7 @@ export function WeatherLine({ template, date, minutes, className = '' }: { templ
     durationMinutes: minutes ?? resolveEffectiveFullDuration(template, date, program),
     now,
   });
-  if (!w || !weather.forecast) return null;
+  if (!showWeatherLine(settings.overviews) || !w || !weather.forecast) return null;
 
   const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
   const stale = offline || isForecastStale(weather.forecast.fetchedAt, now);
