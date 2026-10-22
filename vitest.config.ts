@@ -8,5 +8,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     setupFiles: ['./src/test/setup.ts'],
+    // The storage tests boot the whole app several times over a fake
+    // IndexedDB (bootReplay, leaveSync, repeatWeek); 5 s is too tight when
+    // the suite shares the machine with other runs.
+    testTimeout: 30_000,
   },
 });

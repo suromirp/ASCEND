@@ -1,4 +1,9 @@
 import { useMemo, useState } from 'react';
+import { buildWeekReview } from '../engine/weekReview';
+import { dayLoads, weekProgress } from '../engine/weekProfile';
+import { WeekRidge } from '../components/WeekRidge';
+import { WeekReviewSheet } from '../components/WeekReview';
+import { ChevronIcon, MapIcon } from '../components/WeekIcons';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, formatHoursMinutesNL, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
@@ -22,13 +27,14 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
+  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.
@@ -51,6 +57,19 @@ export function WeekPage() {
     // A rest day is no training time.
     return template && template.type !== 'recovery' ? sum + resolveVariantDuration(template, 'full', s.scheduledDate, program) : sum;
   }, 0);
+
+  // De bergkam: belasting per dag van deze week en van de week ervoor (engine/weekProfile.ts).
+  const today = todayISO();
+  const profile = useMemo(() => {
+    const minutesOf = (s: PlannedSession, t: SessionTemplate) => resolveVariantDuration(t, 'full', s.scheduledDate, program);
+    return {
+      days: dayLoads({ weekStart, plannedSessions, logs: sessionLogs, templates, today, minutesOf }),
+      previous: dayLoads({ weekStart: addDays(weekStart, -7), plannedSessions, logs: sessionLogs, templates, today, minutesOf }),
+    };
+  }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
+  const progress = weekProgress(sessions, sessionLogs, templateById);
+  const review = weekStart <= today ? buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks }) : null;
+  const phaseName = position ? position.phase.name.replace(/fase$/i, '') || position.phase.name : '';
 
   // A completed session is still selectable — SessionActionSheet shows an
   // "ongedaan maken" (undo) view for it instead of the start/move/skip one.
@@ -86,41 +105,38 @@ export function WeekPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6 pt-6">
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <button
           onClick={() => setWeekStart(addDays(weekStart, -7))}
-          className="min-h-[44px] min-w-[44px] text-lg"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center"
           style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
           aria-label="Vorige week"
         >
-          ‹
+          <ChevronIcon dir="left" />
         </button>
-        <button
-          onClick={() => setMonthView((v) => !v)}
-          className="flex flex-col items-center gap-0.5 text-center"
-        >
-          <Eyebrow>{monthView ? 'JAAROVERZICHT' : position ? `WEEK ${position.weekInProgram} • ${position.phase.name}` : 'WEEK'}</Eyebrow>
-          {!monthView && weekStart === mondayOfWeek(todayISO()) && (
-            <p className="text-xs" style={{ color: 'var(--color-gold)' }}>huidige week</p>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <Eyebrow>{monthView ? 'Jaaroverzicht' : position ? `Week ${position.weekInProgram} · ${phaseName}` : 'Week'}</Eyebrow>
+          {monthView && (
+            <button onClick={() => { setMonthView(false); window.scrollTo({ top: 0 }); }} className="min-h-[44px] text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
+              Terug naar de week
+            </button>
           )}
-          {!monthView && totalWeekMinutes > 0 && (
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              {formatHoursMinutesNL(totalWeekMinutes)} gepland
+          {!monthView && (
+            <p className="text-[13px] tabular-nums" style={{ color: 'var(--color-ink)' }}>
+              {totalWeekMinutes > 0 ? `${formatHoursMinutesNL(totalWeekMinutes)} gepland` : 'Niets gepland'}
+              {progress.total > 0 && <span style={{ color: 'var(--color-ink-dim)' }}> · {progress.done} van {progress.total} gedaan</span>}
             </p>
           )}
-          <span className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>
-            {monthView ? '▴ terug naar week' : '▾ jaaroverzicht'}
-          </span>
-        </button>
+        </div>
         <button
           onClick={() => setWeekStart(addDays(weekStart, 7))}
-          className="min-h-[44px] min-w-[44px] text-lg"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center"
           style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
           aria-label="Volgende week"
         >
-          ›
+          <ChevronIcon dir="right" />
         </button>
-      </div>
+      </header>
 
       {!monthView && restAdvice.length > 0 && (
         <Card className="flex flex-col gap-3" texture>
@@ -132,6 +148,71 @@ export function WeekPage() {
             </div>
           ))}
         </Card>
+      )}
+
+      {!monthView && extraAdvice.length > 0 && (
+        <Card className="flex flex-col gap-3" texture>
+          <Eyebrow>EXTRA TRAINING</Eyebrow>
+          {extraAdvice.map((a) => (
+            <div key={a.id}>
+              <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
+              <AdviceItem advice={a} compact />
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {monthView ? (
+        <SeasonOverview
+          onSelectWeek={(w) => {
+            setWeekStart(mondayOfWeek(w));
+            setMonthView(false);
+            window.scrollTo({ top: 0 });
+          }}
+        />
+      ) : (
+        <>
+          <WeekRidge days={profile.days} previous={profile.previous} today={today} />
+          <WeekPlanner
+            weekStartDate={weekStart}
+            sessions={sessions}
+            templateById={templateById}
+            logs={sessionLogs}
+            program={program}
+            onSelectSession={selectSession}
+            adjustedIds={adjustedIds}
+            leave={leavePeriods}
+          />
+        </>
+      )}
+
+      <div className="-mt-1 flex items-center justify-between">
+        <button
+          onClick={() => {
+            setMonthView((v) => !v);
+            window.scrollTo({ top: 0 });
+          }}
+          className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium"
+          style={{ color: 'var(--color-ink-dim)' }}
+        >
+          <MapIcon />
+          {monthView ? 'Terug naar de week' : 'Jaaroverzicht'}
+        </button>
+        {!monthView && review && review.planned > 0 && (
+          <button onClick={() => setReviewOpen(true)} className="flex min-h-[44px] items-center gap-0.5 text-sm font-medium" style={{ color: 'var(--color-ink-dim)' }}>
+            Weekterugblik
+            <ChevronIcon dir="right" />
+          </button>
+        )}
+      </div>
+      {!monthView && weekStart !== mondayOfWeek(today) && (
+        <button
+          onClick={() => setWeekStart(mondayOfWeek(today))}
+          className="-mt-2 flex min-h-[44px] items-center self-start text-sm font-medium"
+          style={{ color: 'var(--color-ink-dim)' }}
+        >
+          Naar deze week
+        </button>
       )}
 
       {!monthView && restWeek?.isRestWeek && (
@@ -171,38 +252,7 @@ export function WeekPage() {
         </Card>
       )}
 
-      {!monthView && extraAdvice.length > 0 && (
-        <Card className="flex flex-col gap-3" texture>
-          <Eyebrow>EXTRA TRAINING</Eyebrow>
-          {extraAdvice.map((a) => (
-            <div key={a.id}>
-              <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
-              <AdviceItem advice={a} compact />
-            </div>
-          ))}
-        </Card>
-      )}
-
-      {monthView ? (
-        <SeasonOverview
-          onSelectWeek={(w) => {
-            setWeekStart(mondayOfWeek(w));
-            setMonthView(false);
-            window.scrollTo({ top: 0 });
-          }}
-        />
-      ) : (
-        <WeekPlanner
-          weekStartDate={weekStart}
-          sessions={sessions}
-          templateById={templateById}
-          logs={sessionLogs}
-          program={program}
-          onSelectSession={selectSession}
-          adjustedIds={adjustedIds}
-          leave={leavePeriods}
-        />
-      )}
+      {reviewOpen && review && <WeekReviewSheet review={review} onClose={() => setReviewOpen(false)} />}
 
       {!monthView && <ChangeLogCard weekStart={weekStart} />}
       {!monthView && <LeavePeriodsCard />}
