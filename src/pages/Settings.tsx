@@ -504,8 +504,8 @@ export function SettingsPage() {
                   <div>
                     <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgehouden in MacroFactor</p>
                     <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                      Sets, reps en gewicht log je in MacroFactor. Dan vink je een krachttraining in ASCEND in één tik af,
-                      zonder invulformulier. Dit is dezelfde keuze als de bron van je krachtblok.
+                      Sets, reps en gewicht log je in MacroFactor; ze komen vanzelf binnen. In ASCEND vink je een krachttraining
+                      af met Gedaan, zonder invulformulier. Dit is dezelfde keuze als de bron van je krachtblok.
                     </p>
                   </div>
                   <Toggle checked={strengthExternal} onChange={(v) => void setStrengthExternal(v)} label="Kracht bijgehouden in MacroFactor" />

@@ -427,6 +427,12 @@ export function TodayPage() {
             startSession(actionSheetSession, actionSheetTemplate, variant, feel, durationMinutes, extra);
             setActionSheetSession(null);
           }}
+          onLog={(variant) => {
+            setLoggingVariant(variant);
+            setLoggingAtForm(true);
+            setLoggingSession(actionSheetSession);
+            setActionSheetSession(null);
+          }}
           onMove={(date) => {
             handleMove(actionSheetSession.id, date);
             setActionSheetSession(null);

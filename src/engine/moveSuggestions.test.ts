@@ -37,7 +37,23 @@ describe('suggestMoveDates', () => {
 
   it('says whether the day is free or shared', () => {
     const suggestions = suggestMoveDates(week, templates, 'upperB', [], program, budget, 'automatic', '2026-10-01');
-    expect(suggestions.every((x) => x.note === 'vrije dag' || x.note.startsWith('samen met '))).toBe(true);
+    expect(suggestions.every((x) => (x.free && x.note === 'Vrije dag') || (!x.free && /^Met .*, samen \d+ min$/.test(x.note)))).toBe(true);
+  });
+
+  // Production feedback: two days that already held a long training were
+  // offered before the free day after them.
+  it('puts the free days first, then the days it can share', () => {
+    const now = [
+      s('herstel', 'tpl_herstel', MON),
+      s('easy', 'tpl_easy_run', '2026-10-01'),
+      s('upperB', 'tpl_upper_b', '2026-10-02'),
+      s('long', 'tpl_long_run', '2026-10-04'),
+    ];
+    const suggestions = suggestMoveDates(now, templates, 'upperB', [], program, budget, 'automatic', '2026-10-01');
+    const free = suggestions.map((x) => x.free);
+    expect(free).toContain(true);
+    expect(free).toContain(false);
+    expect(free.lastIndexOf(true)).toBeLessThan(free.indexOf(false));
   });
 
   it('without time per day, sharing a day in the same week beats waiting a week', () => {
@@ -51,7 +67,7 @@ describe('suggestMoveDates', () => {
     const next = week.map((x) => s(`n-${x.id}`, x.templateId, new Date(Date.parse(x.scheduledDate) + 7 * 86400000).toISOString().slice(0, 10), '2026-10-05'));
     const suggestions = suggestMoveDates([...week, ...next], templates, 'upperB', [], program, {}, 'automatic', '2026-10-01');
     expect(suggestions.length).toBeGreaterThan(0);
-    for (const x of suggestions) expect(x.note).toMatch(/^samen met .*, \d+ min$/);
+    for (const x of suggestions) expect(x.note).toMatch(/^Met .*, samen \d+ min$/);
     expect(suggestMoveDates([...week, ...next], templates, 'upperB', [], program, {}, 'never', '2026-10-01')).toEqual([]);
   });
 

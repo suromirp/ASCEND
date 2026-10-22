@@ -1,74 +1,104 @@
 import { useState } from 'react';
 import type { SubjectiveFeel } from '../models/training';
+import { QUICK_RPE_SCALE, type DoneDuration } from '../engine/sessionActions';
+import { ChoiceStrip } from './ChoiceStrip';
 import { PrimaryButton } from './ui';
 
-const FEEL_LABEL: Record<SubjectiveFeel, string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
+const FEELS = [
+  { value: 'better', label: 'Beter' },
+  { value: 'normal', label: 'Normaal' },
+  { value: 'worse', label: 'Slechter' },
+] as const satisfies readonly { value: SubjectiveFeel; label: string }[];
 
 // Reps left in the hardest leg sets (RIR), the scale better founded for
 // strength than one RPE for a whole session (Zourdos e.a. 2016; Halperin
 // e.a. 2022: off by about one rep). Stored as a number: 0, 1, 2.5, 4.
-const RIR: [number, string][] = [[0, '0'], [1, '1'], [2.5, '2 tot 3'], [4, '4 of meer']];
+const RIR = [
+  { value: 0, label: '0' },
+  { value: 1, label: '1' },
+  { value: 2.5, label: '2 tot 3' },
+  { value: 4, label: '4 of meer' },
+] as const;
+
+const RPE = QUICK_RPE_SCALE.map((n) => ({ value: n, label: String(n) }));
 
 export interface StrengthDoneExtra {
   rpe?: number;
   rir?: number;
 }
 
-// Strength logged in MacroFactor: the minutes (prefilled with ASCEND's own
-// estimate, MacroFactor knows the real time), how heavy it was (RPE), for a
-// leg session how many reps were left in the hardest sets, an optional feel,
-// and one clear button that saves. Without RPE the leg fatigue index has to
-// assume 8 (docs/onderzoek/Betrouwbaarheid beenvermoeidheid-index.md).
-export function StrengthDoneElsewhere({ fullDuration, legs = false, onDone }: { fullDuration: number; legs?: boolean; onDone: (feel: SubjectiveFeel | undefined, durationMinutes: number, extra: StrengthDoneExtra) => void }) {
+// Strength kept in MacroFactor, ticked off in ASCEND ("Gedaan"; the sets come
+// in from MacroFactor by themselves, engine/macrofactorLink.ts): the minutes (with where
+// the number comes from: the MacroFactor workout when there is one, else the
+// plan as a proposal), how heavy it was (RPE, one row), for a leg session the
+// reps left in the hardest sets, an optional feel, and one button that saves.
+// Without RPE the leg fatigue index has to assume 8
+// (docs/onderzoek/Betrouwbaarheid beenvermoeidheid-index.md).
+export function StrengthDoneElsewhere({
+  fullDuration,
+  durationSource = 'plan',
+  legs = false,
+  submitLabel = 'Gedaan',
+  onDone,
+}: {
+  fullDuration: number;
+  durationSource?: DoneDuration['source'];
+  legs?: boolean;
+  submitLabel?: string;
+  onDone: (feel: SubjectiveFeel | undefined, durationMinutes: number, extra: StrengthDoneExtra) => void;
+}) {
   const [duration, setDuration] = useState<number | ''>(fullDuration);
   const [feel, setFeel] = useState<SubjectiveFeel | undefined>();
   const [rpe, setRpe] = useState<number | undefined>();
   const [rir, setRir] = useState<number | undefined>();
-  const chip = (on: boolean) => ({ borderColor: on ? 'var(--color-bronze)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' });
+  const label = 'mb-2 block text-[13px]';
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <label htmlFor="mf-duration" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Duur (min), uit MacroFactor</label>
-        <input
-          id="mf-duration"
-          type="number"
-          inputMode="numeric"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value === '' ? '' : Number(e.target.value))}
-          className="w-20 rounded-lg border px-2 py-1.5 text-right text-sm"
-          style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
-        />
-      </div>
+    <div className="flex flex-col gap-4">
+      <label
+        htmlFor="mf-duration"
+        className="flex min-h-[68px] items-center justify-between gap-3 rounded-2xl border px-4 py-2"
+        style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }}
+      >
+        <span className="min-w-0">
+          <span className="block text-[15px]" style={{ color: 'var(--color-ink)' }}>Duur</span>
+          <span className="block text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{durationSource === 'macrofactor' ? 'Uit MacroFactor' : 'Gepland'}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <input
+            id="mf-duration"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            value={duration}
+            onChange={(e) => setDuration(e.target.value === '' ? '' : Number(e.target.value))}
+            className="h-11 w-16 rounded-lg border px-2 text-right font-sans text-[15px] tabular-nums"
+            style={{ background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          />
+          <span className="text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>min</span>
+        </span>
+      </label>
 
-      <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE), hoe zwaar was de hele training?</p>
-      <div className="mb-3 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
-        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-          <button key={n} role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[44px] rounded-lg border text-xs tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-gold)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-gold)' : 'transparent', color: rpe === n ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
-            {n}
-          </button>
-        ))}
+      <div>
+        <span className={label} style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE)</span>
+        <ChoiceStrip label="Zwaarte van 4 tot 10" options={RPE} value={rpe} onChange={setRpe} optional numeric />
       </div>
 
       {legs && (
-        <>
-          <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel herhalingen had je nog over in je zwaarste beensets?</p>
-          <div className="mb-3 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Herhalingen in reserve">
-            {RIR.map(([v, label]) => (
-              <button key={label} role="radio" aria-checked={rir === v} onClick={() => setRir(rir === v ? undefined : v)} className="min-h-[44px] rounded-lg border text-xs" style={chip(rir === v)}>{label}</button>
-            ))}
-          </div>
-        </>
+        <div>
+          <span className={label} style={{ color: 'var(--color-ink-dim)' }}>Herhalingen over in je zwaarste beensets</span>
+          <ChoiceStrip label="Herhalingen in reserve" options={RIR} value={rir} onChange={setRir} optional numeric />
+        </div>
       )}
 
-      <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde het ten opzichte van normaal? (mag leeg blijven)</p>
-      <div className="mb-3 flex gap-2" role="radiogroup" aria-label="Hoe voelde het">
-        {(['better', 'normal', 'worse'] as const).map((f) => (
-          <button key={f} role="radio" aria-checked={feel === f} onClick={() => setFeel((cur) => (cur === f ? undefined : f))} className="min-h-[44px] flex-1 rounded-lg border text-xs" style={chip(feel === f)}>
-            {FEEL_LABEL[f]}
-          </button>
-        ))}
+      <div>
+        <span className={label} style={{ color: 'var(--color-ink-dim)' }}>Gevoel</span>
+        <ChoiceStrip label="Hoe voelde het" options={FEELS} value={feel} onChange={setFeel} optional />
       </div>
-      <PrimaryButton onClick={() => onDone(feel, duration === '' ? fullDuration : duration, { rpe, rir })}>Gedaan in MacroFactor</PrimaryButton>
+
+      <div>
+        <PrimaryButton onClick={() => onDone(feel, duration === '' || duration < 1 ? fullDuration : duration, { rpe, rir })}>{submitLabel}</PrimaryButton>
+        <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Je sets komen vanzelf uit MacroFactor</p>
+      </div>
     </div>
   );
 }
