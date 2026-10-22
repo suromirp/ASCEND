@@ -13,8 +13,8 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
   if (!progress.currentMilestone) {
     return (
       <Card texture>
-        <Eyebrow>VOLGEND OBJECTIEF</Eyebrow>
-        <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-gold)' }}>Alle mijlpalen behaald</p>
+        <Eyebrow>VOLGEND KAMP</Eyebrow>
+        <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-gold)' }}>Alle kampen gehaald</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName} , klaar voor de expeditie.</p>
       </Card>
     );
@@ -26,10 +26,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
   return (
     <button onClick={onOpenLadder} className="block w-full text-left">
       <Card texture>
-        <div className="flex items-baseline justify-between">
-          <Eyebrow>VOLGEND OBJECTIEF</Eyebrow>
-          <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{progress.readinessPct}% GEREED</span>
-        </div>
+        <Eyebrow>VOLGEND KAMP</Eyebrow>
         <p className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{progress.currentMilestone.definition.title}</p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName}</p>
 
@@ -40,10 +37,6 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
               <span style={{ color: m.status === 'current' ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{m.definition.title}</span>
             </div>
           ))}
-        </div>
-
-        <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: 'var(--color-charcoal)' }}>
-          <div className="h-1.5 rounded-full" style={{ width: `${progress.readinessPct}%`, background: 'var(--color-gold)' }} />
         </div>
       </Card>
     </button>

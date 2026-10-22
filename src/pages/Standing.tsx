@@ -8,20 +8,20 @@ import { LegCalendar } from '../components/stand/LegCalendar';
 import { WeeklyLoadChart } from '../components/stand/WeeklyLoadChart';
 import { IntensityMixCard } from '../components/stand/IntensityMixCard';
 import { DescentCard } from '../components/stand/DescentCard';
-import { RouteDayCard } from '../components/stand/RouteDayCard';
+import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { IndexCheckCard } from '../components/stand/IndexCheckCard';
 import { indexChecks } from '../engine/learning';
 import { AdventureCard } from '../components/AdventureCard';
 import { LessonCard } from '../components/LessonCard';
-import { freshnessCurve, intensityMix, legCalendar, routeDayRows, weeklyDescent, weeklyLoad } from '../engine/standing';
+import { freshnessCurve, intensityMix, legCalendar, weeklyDescent, weeklyLoad } from '../engine/standing';
+import { computeGr5Readiness } from '../engine/gr5Readiness';
+import { adherenceSummary, recentAdherence } from '../engine/onCourse';
 import { restWeekState } from '../engine/restWeek';
-import { computeReadiness, droppedAfterMissIds } from '../engine/readiness';
 import { computeCurrentStreak } from '../engine/streak';
 import { computeGoalProgress } from '../engine/progression';
 import { deriveSessionStatus } from '../engine/sessionStatus';
-import { isIllnessDay } from '../engine/illness';
 import { typicalDayValue } from '../engine/goalRoute';
-import { daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -55,9 +55,9 @@ export function StandingPage() {
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
   const primaryGoal = trainingGoals.find((g) => goalMilestones.some((m) => m.goalId === g.id));
-  const routeRows = useMemo(() => (primaryGoal ? routeDayRows(primaryGoal.requirements, sessionLogs, today) : []), [primaryGoal, sessionLogs, today]);
+  // The same number and sentence as on Ascend (engine/gr5Readiness.ts).
+  const gr5 = useMemo(() => (primaryGoal ? computeGr5Readiness(primaryGoal.requirements, sessionLogs, today) : undefined), [primaryGoal, sessionLogs, today]);
   const routeDescent = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationLoss')?.value.amount : undefined;
-  const weeksToGo = primaryGoal?.targetDate && primaryGoal.targetDate > today ? Math.floor(daysBetween(today, primaryGoal.targetDate) / 7) : undefined;
   const milestones = useMemo(() => goalMilestones.filter((m) => m.goalId === primaryGoal?.id), [goalMilestones, primaryGoal?.id]);
   const progress = useMemo(
     () => (primaryGoal ? computeGoalProgress(primaryGoal.id, primaryGoal.name, milestones, goalMilestoneProgress, sessionLogs) : null),
@@ -68,14 +68,18 @@ export function StandingPage() {
   const position = program ? resolveProgramWeek(program, today) : null;
   const weekTrainings = sessionsForWeek(mondayOfWeek(today)).filter((s) => templateById.get(s.templateId)?.type !== 'recovery');
   const weekDone = weekTrainings.filter((s) => deriveSessionStatus(s, sessionLogs).status === 'completed').length;
-  const readiness = computeReadiness(sessionLogs, plannedSessions, 28, today, program?.startDate, (d) => isIllnessDay(d, settings.illnessEpisodes, today), { isRest: (p) => templateById.get(p.templateId)?.type === 'recovery', droppedAfterMissIds: droppedAfterMissIds(planChangeLog) });
+  // The same count as the coach on Ascend (engine/onCourse.ts#recentAdherence): the last
+  // four finished weeks, what you skipped counts as not done.
+  const adherence = useMemo(
+    () => recentAdherence({ today, program, plannedSessions, logs: sessionLogs, templates, planChangeLog, illnessEpisodes: settings.illnessEpisodes }),
+    [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
+  );
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
   // Each number with what it means, in one plain sentence (production
   // feedback: "veel te vaag, wat betekenen deze categorieën").
   const phaseName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   const nextPhase = position && program ? program.phases[position.phaseIndex + 1] : undefined;
   const restWeek = program ? restWeekState(program, mondayOfWeek(today), sessionLogs, today) : undefined;
-  const dueDone = Math.round((readiness.consistency / 100) * readiness.consistencyBasis);
   const rows = [
     {
       label: 'Deze week',
@@ -85,10 +89,10 @@ export function StandingPage() {
     },
     {
       label: 'Volgehouden',
-      value: readiness.consistencyBasis === 0 ? '–' : `${readiness.consistency}%`,
-      text: readiness.consistencyBasis === 0
-        ? 'Nog niets om te tellen: dit gaat over de trainingen van de laatste 4 weken.'
-        : `Van de ${readiness.consistencyBasis} trainingen die de laatste 4 weken gepland stonden, deed je er ${dueDone}. Ziek en rustdagen tellen niet mee.`,
+      value: adherence.enough ? `${adherence.done} van ${adherence.planned}` : '–',
+      text: adherence.enough
+        ? `${adherenceSummary(adherence)}. Wat je oversloeg telt als niet gedaan; ziek en rustdagen tellen niet mee. De coach op Ascend telt hetzelfde.`
+        : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
     },
     {
       label: 'Fase',
@@ -159,7 +163,7 @@ export function StandingPage() {
       </section>
 
       <section ref={(el) => { refs.current.doel = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Doel">
-        {primaryGoal && <RouteDayCard goalName={primaryGoal.name} weeksToGo={weeksToGo} rows={routeRows} onOpen={() => navigate('/ascend')} />}
+        {gr5 && <Gr5ReadinessCard readiness={gr5} compact />}
         {progress && <AdventureCard progress={progress} onOpenLadder={() => navigate('/ascend')} />}
         <LessonCard />
       </section>

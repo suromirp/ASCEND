@@ -222,7 +222,19 @@ Readiness percentages (`engine/readiness.ts` — strength, cardio,
 climbing/D+, endurance, recovery, consistency, pack capability) are
 intentionally simple, isolated formulas over the last 28 days of logs, each
 in its own commented section so a formula can be swapped later without
-touching the rest of the file.
+touching the rest of the file. Those are not shown as progress toward the
+main goal any more.
+
+**One progress language toward the GR5** (`engine/gr5Readiness.ts`, decision
+`docs/beslissingen/2026-10-22-gr5-voortgang-een-percentage.md`): "Klaar voor de
+GR5" is a single percentage, the average of four meters (rugzak, langste dag,
+stijging en daling, dagen achter elkaar), each capped at 100%, always shown
+with the sentence it is made of (`Gr5ReadinessCard`, tap opens the four meters
+in `Gr5ReadinessSheet`). Ascend and Je stand read the same function. The
+milestones stay a ladder ("volgend kamp"), never a second progress number. The
+coach (Ascend) and "Volgehouden" (Je stand) count with the same function,
+`engine/onCourse.ts#recentAdherence`. Do not add another percentage or
+"x van y" for goal progress next to these; extend the engine function instead.
 
 Weeks are derived, not stored: a week is just seven days starting on a
 Monday; which phase/week-number it belongs to is computed from

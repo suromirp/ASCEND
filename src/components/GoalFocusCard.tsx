@@ -45,11 +45,9 @@ export function GoalFocusCard() {
             className={`flex flex-col gap-1.5 ${i > 0 ? 'border-t pt-3' : ''}`}
             style={i > 0 ? { borderColor: 'var(--color-card-border)' } : undefined}
           >
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{goal.name}</p>
-              <span className="font-sans tabular-nums text-sm" style={{ color: 'var(--color-gold)' }}>{Math.round(focus.normalizedPct)}%</span>
-            </div>
-            <span className="text-xs font-medium tracking-wide" style={{ color: badge.color }}>{badge.label}</span>
+            <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{goal.name}</p>
+            <span className="text-xs font-medium" style={{ color: badge.color }}>{badge.label}</span>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Krijgt {Math.round(focus.normalizedPct)}% van de aandacht in je planning. Je voortgang staat bovenaan Ascend.</p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{feasibility.explanation}</p>
             {feasibility.bestPossiblePreparation && (
               <p className="text-xs leading-relaxed" style={{ color: 'var(--color-sky)' }}>{feasibility.bestPossiblePreparation}</p>

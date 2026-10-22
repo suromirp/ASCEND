@@ -53,22 +53,61 @@ function percent(done: number, planned: number): number {
   return planned === 0 ? 1 : done / planned;
 }
 
-export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
-  const { today, goalName, goalDate, program, plannedSessions, logs, templates, planChangeLog, illnessEpisodes } = inputs;
-  const byId = new Map(templates.map((t) => [t.id, t]));
-  const weeksLeft = Math.max(0, Math.ceil(daysBetween(today, goalDate) / 7));
-  const phase = program ? resolveProgramWeek(program, today)?.phase : undefined;
-  const focus = phase ? PHASE_FOCUS[phase.id] : undefined;
+// De telling die de coach (Ascend) en "Volgehouden" (Je stand) allebei
+// gebruiken: de laatste vier afgeronde weken, van maandag tot zondag, op de
+// manier van de weekterugblik. Wat je oversloeg telt als niet gedaan; rustdagen,
+// zieke dagen en wat ASCEND zelf uit het plan haalde tellen niet. Eerder
+// telde Je stand de laatste 28 dagen en liet overgeslagen trainingen weg, zodat
+// de coach "12 van 17" zei en Je stand "14 van 14" voor dezelfde weken.
+export interface Adherence {
+  reviews: WeekReview[];
+  weeks: number;
+  done: number;
+  planned: number;
+  keyDone: number;
+  keyPlanned: number;
+  enough: boolean; // genoeg weken om iets over te zeggen
+}
 
-  // The last four finished weeks inside the program.
+export type AdherenceInputs = Pick<CourseInputs, 'today' | 'program' | 'plannedSessions' | 'logs' | 'templates' | 'planChangeLog' | 'illnessEpisodes'>;
+
+export function recentAdherence(inputs: AdherenceInputs): Adherence {
+  const { today, program, plannedSessions, logs, templates, planChangeLog, illnessEpisodes } = inputs;
   const thisMonday = mondayOfWeek(today);
   const reviews: WeekReview[] = [];
   for (let i = 1; i <= LOOKBACK_WEEKS; i++) {
     const review = buildWeekReview({ weekStart: addDays(thisMonday, -7 * i), plannedSessions, logs, templates, program, planChangeLog, asOf: today, illnessEpisodes });
     if (review && review.planned > 0) reviews.push(review);
   }
+  return {
+    reviews,
+    weeks: reviews.length,
+    done: reviews.reduce((n, r) => n + r.done, 0),
+    planned: reviews.reduce((n, r) => n + r.planned, 0),
+    keyDone: reviews.reduce((n, r) => n + r.keyDone, 0),
+    keyPlanned: reviews.reduce((n, r) => n + r.keyPlanned, 0),
+    enough: reviews.length >= MIN_WEEKS,
+  };
+}
 
-  if (reviews.length < MIN_WEEKS) {
+// "Laatste 4 weken: 12 van 17 trainingen, lange training 3 van 4". Eén zin voor
+// de coach en voor Je stand.
+export function adherenceSummary(a: Adherence): string {
+  return `Laatste ${a.weeks} ${a.weeks === 1 ? 'week' : 'weken'}: ${a.done} van ${a.planned} trainingen` +
+    (a.keyPlanned > 0 ? `, lange training ${a.keyDone} van ${a.keyPlanned}` : '');
+}
+
+export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
+  const { today, goalName, goalDate, program, templates } = inputs;
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const weeksLeft = Math.max(0, Math.ceil(daysBetween(today, goalDate) / 7));
+  const phase = program ? resolveProgramWeek(program, today)?.phase : undefined;
+  const focus = phase ? PHASE_FOCUS[phase.id] : undefined;
+
+  const adherence = recentAdherence(inputs);
+  const { reviews, done, planned, keyDone, keyPlanned } = adherence;
+
+  if (!adherence.enough) {
     return {
       status: 'early',
       headline: 'Net begonnen',
@@ -79,10 +118,6 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
     };
   }
 
-  const done = reviews.reduce((n, r) => n + r.done, 0);
-  const planned = reviews.reduce((n, r) => n + r.planned, 0);
-  const keyDone = reviews.reduce((n, r) => n + r.keyDone, 0);
-  const keyPlanned = reviews.reduce((n, r) => n + r.keyPlanned, 0);
   const share = percent(done, planned);
   const keyShare = percent(keyDone, keyPlanned);
 
@@ -91,9 +126,7 @@ export function assessOnCourse(inputs: CourseInputs): CourseAssessment {
       : share >= 0.6 && keyShare >= 0.5 ? 'nearly'
         : 'behind';
 
-  const weeksWord = reviews.length === 1 ? 'week' : 'weken';
-  const summary = `Laatste ${reviews.length} ${weeksWord}: ${done} van ${planned} trainingen` +
-    (keyPlanned > 0 ? `, lange training ${keyDone} van ${keyPlanned}` : '');
+  const summary = adherenceSummary(adherence);
 
   const lines: string[] = [];
   if (status === 'on') {

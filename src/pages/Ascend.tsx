@@ -3,17 +3,14 @@ import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
 import { useAppData } from '../state/AppDataContext';
-import { isIllnessDay } from '../engine/illness';
-import { computeReadiness, computeReadinessTrend, droppedAfterMissIds } from '../engine/readiness';
-import { computeCapacity } from '../engine/capacity';
-import { targetPackWeightKg } from '../engine/demand';
+import { computeGr5Readiness } from '../engine/gr5Readiness';
 import { computeGoalProgress } from '../engine/progression';
 import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
-import { MetricBar } from '../components/MetricBar';
+import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
@@ -87,7 +84,7 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 }
 
 export function AscendPage() {
-  const { program, sessionLogs, plannedSessions, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings, templateById, planChangeLog } = useAppData();
+  const { sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showLadder, setShowLadder] = useState(false);
   // Archiving (below) sets status:'archived' in place rather than removing
@@ -96,27 +93,6 @@ export function AscendPage() {
   // archived goal as if it were still active.
   const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
 
-  const programStart = program?.startDate;
-  const illnessEpisodes = settings.illnessEpisodes;
-  const readinessExtras = useMemo(() => ({
-    isRest: (p: { templateId: string }) => templateById.get(p.templateId)?.type === 'recovery',
-    droppedAfterMissIds: droppedAfterMissIds(planChangeLog),
-  }), [templateById, planChangeLog]);
-  const readiness = useMemo(() => computeReadiness(sessionLogs, plannedSessions, 28, undefined, programStart, (d) => isIllnessDay(d, illnessEpisodes, todayISO()), readinessExtras), [sessionLogs, plannedSessions, programStart, illnessEpisodes, readinessExtras]);
-  const readinessTrend = useMemo(() => computeReadinessTrend(sessionLogs, plannedSessions, 8, programStart, readinessExtras), [sessionLogs, plannedSessions, programStart, readinessExtras]);
-  // Sports-science review, item B1: capacity ("what have you demonstrably
-  // been building lately") and readiness ("are you acutely ready for more
-  // right now") were previously one flat 7-score average — split into two
-  // engines (engine/capacity.ts vs engine/readiness.ts) and shown here as
-  // two separate cards, not re-averaged back together.
-  // Fase 6 (sports-science review, item D2): pack-capability targets
-  // whichever active goal actually set a pack-weight requirement, not a
-  // universal hard cap.
-  const packWeightTargetKg = useMemo(
-    () => trainingGoals.filter((g) => g.status === 'active').map((g) => targetPackWeightKg(g.requirements)).find((v) => v !== undefined),
-    [trainingGoals],
-  );
-  const capacity = useMemo(() => computeCapacity(sessionLogs, 28, undefined, packWeightTargetKg), [sessionLogs, packWeightTargetKg]);
   // The GR5 goal is always the one with milestones — the marathon goal
   // (migrated from AppSettings) has none. Mirrors the old objectives[0]
   // assumption, now stated explicitly rather than by array position.
@@ -138,12 +114,13 @@ export function AscendPage() {
     () => (goal ? computeGoalProgress(goal.id, goal.name, milestonesForGoal, goalMilestoneProgress, sessionLogs) : null),
     [goal, milestonesForGoal, goalMilestoneProgress, sessionLogs],
   );
+  // The one progress number (engine/gr5Readiness.ts): never a second one next to it.
+  const gr5 = useMemo(() => (goal ? computeGr5Readiness(goal.requirements, sessionLogs, todayISO()) : undefined), [goal, sessionLogs]);
   const selectedMilestone = progress?.milestones.find((m) => m.definition.id === selectedMilestoneId);
   const selectedDetail = selectedMilestone ? getGR5MilestoneDetail(selectedMilestone.definition.order) : undefined;
 
   const navigate = useNavigate();
   const weeksLeft = goal?.targetDate ? Math.max(0, Math.ceil(daysBetween(todayISO(), goal.targetDate) / 7)) : undefined;
-  const cleared = progress ? progress.milestones.filter((m) => m.status === 'completed').length : 0;
   const marathonDate = marathonGoal?.targetDate ?? settings.marathonTargetDate;
   const otherGoals = [
     ...(marathonGoal && marathonGoal.status === 'active' ? [{ id: marathonGoal.id, name: marathonGoal.name, date: marathonDate }] : []),
@@ -162,7 +139,6 @@ export function AscendPage() {
           <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
             {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
             {weeksLeft !== undefined && <span style={{ color: 'var(--color-gold)' }}>nog {weeksLeft} {weeksLeft === 1 ? 'week' : 'weken'}</span>}
-            {progress && <span>kamp {cleared} van {progress.milestones.length}</span>}
           </div>
           <div className="mt-2"><RouteLine goal={goal} /></div>
         </div>
@@ -173,6 +149,8 @@ export function AscendPage() {
           <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doel instellen</PrimaryButton>
         </Card>
       )}
+
+      {gr5 && <Gr5ReadinessCard readiness={gr5} />}
 
       {goal?.targetDate && goal.status === 'active' && <OnCourseCard goalName={goal.name} goalDate={goal.targetDate} />}
 
@@ -205,35 +183,6 @@ export function AscendPage() {
           <button onClick={() => setShowLadder(false)} className="-mt-3 min-h-11 text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Inklappen</button>
         </>
       )}
-
-      <Card className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between">
-          <Eyebrow>KLAAR VOOR MEER?</Eyebrow>
-          <span className="font-sans tabular-nums text-2xl" style={{ color: 'var(--color-gold)' }}>{readiness.overall}%</span>
-        </div>
-        <MetricBar label="HERSTEL" value={readiness.recovery} accent="alpine" />
-        {readiness.consistencyBasis > 0 && <MetricBar label="CONSISTENTIE" value={readiness.consistency} />}
-        <MetricBar label="SESSIE-RESPONS" value={readiness.subjectiveSignal} />
-        {readinessTrend.length > 1 && (
-          <details>
-            <summary className="flex min-h-[44px] cursor-pointer items-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verloop van de laatste weken</summary>
-            <div className="mt-3"><TrendLineChart points={readinessTrend} formatValue={(v) => `${v}%`} /></div>
-          </details>
-        )}
-      </Card>
-
-      <Card className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between">
-          <Eyebrow>WAT JE AL AANKUNT</Eyebrow>
-          <span className="font-sans tabular-nums text-2xl" style={{ color: 'var(--color-gold)' }}>{capacity.overall}%</span>
-        </div>
-        <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat je de afgelopen vier weken aantoonbaar hebt opgebouwd.</p>
-        <MetricBar label="KRACHT" value={capacity.strength} />
-        <MetricBar label="CARDIO" value={capacity.cardio} />
-        <MetricBar label="KLIMMEN / D+" value={capacity.climbing} accent="alpine" />
-        <MetricBar label="UITHOUDING" value={capacity.endurance} />
-        <MetricBar label="RUGZAK" value={capacity.packCapability} />
-      </Card>
 
       {goal && (
         <Card className="flex flex-col gap-1">
@@ -532,7 +481,6 @@ function MarathonGoalCard({
       .map((l) => l.outdoorData?.distanceKm ?? l.cardioData?.distanceKm ?? 0);
     return distances.length > 0 ? Math.max(...distances) : 0;
   }, [sessionLogs]);
-  const percentOfDistance = distanceKm && longestRunKm > 0 ? Math.round((longestRunKm / distanceKm) * 100) : undefined;
 
   const totalMinutes = settings.marathonTargetTimeMinutes;
   const hours = totalMinutes !== undefined ? Math.floor(totalMinutes / 60) : undefined;
@@ -633,8 +581,7 @@ function MarathonGoalCard({
           )}
           {longestRunKm > 0 && (
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Langste duurloop tot nu toe: {formatNumberNL(longestRunKm, 1)} km
-              {percentOfDistance !== undefined ? `, ${percentOfDistance}% van de wedstrijdafstand` : ''}
+              Langste duurloop tot nu toe: {formatNumberNL(longestRunKm, 1)} km{distanceKm ? ` van de ${formatNumberNL(distanceKm, 1)} km` : ''}.
             </p>
           )}
           {onArchive && (

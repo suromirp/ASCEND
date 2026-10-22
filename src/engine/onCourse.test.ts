@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { assessOnCourse } from './onCourse';
+import { adherenceSummary, assessOnCourse, recentAdherence } from './onCourse';
+import { computeReadiness } from './readiness';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
@@ -59,5 +60,37 @@ describe('assessOnCourse', () => {
     expect(a.headline).toBe('Achter op schema');
     expect(a.lines.some((l) => l.includes('Tijd genoeg'))).toBe(true);
     expect(a.lines.length).toBeLessThanOrEqual(3);
+  });
+});
+
+// Eén telling voor de coach (Ascend) en "Volgehouden" (Je stand): eerder zei de
+// coach "12 van 17" terwijl Je stand "14 van 14" zei, omdat Je stand de laatste
+// 28 dagen telde en overgeslagen trainingen als van het plan gehaald zag.
+describe('recentAdherence', () => {
+  it('telt wat je oversloeg als niet gedaan, en de coach en Je stand zeggen hetzelfde', () => {
+    const { planned, logs } = history(5, () => false);
+    // Drie trainingen sloeg je zelf over: ze staan op 'skipped' en hebben geen log.
+    const skippedIds = new Set(['1-tpl_easy_run', '2-tpl_hill_intervals', '3-tpl_upper_b']);
+    const plannedWithSkips = planned.map((p) => (skippedIds.has(p.id) ? { ...p, status: 'skipped' as const } : p));
+    const logsWithoutSkips = logs.filter((l) => !skippedIds.has(l.plannedSessionId!));
+    const inputs = { today: '2026-10-07', program, plannedSessions: plannedWithSkips, logs: logsWithoutSkips, templates, planChangeLog: [] };
+
+    const adherence = recentAdherence(inputs);
+    expect(adherence.planned).toBe(24); // vier weken van zes trainingen, de overgeslagen drie tellen mee
+    expect(adherence.done).toBe(21);
+    expect(adherence.enough).toBe(true);
+
+    const course = assessOnCourse({ ...base, ...inputs });
+    expect(course.summary).toBe(adherenceSummary(adherence));
+    expect(adherenceSummary(adherence)).toContain('21 van 24 trainingen');
+
+    // Zo telde Je stand eerst: overgeslagen trainingen vielen weg, dus alles "gedaan".
+    const readiness = computeReadiness(logsWithoutSkips, plannedWithSkips, 28, '2026-10-07', program.startDate, undefined, { isRest: (p) => templates.find((t) => t.id === p.templateId)?.type === 'recovery' });
+    expect(readiness.consistency).toBe(100);
+  });
+
+  it('te weinig weken: geen telling, ook niet op Je stand', () => {
+    const { planned, logs } = history(2, () => false);
+    expect(recentAdherence({ today: '2026-09-17', program, plannedSessions: planned, logs, templates, planChangeLog: [] }).enough).toBe(false);
   });
 });
