@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { buildWeekReview } from '../engine/weekReview';
-import { dayLoads, weekProgress } from '../engine/weekProfile';
+import { dayLoads, weekMinutes, weekProgress } from '../engine/weekProfile';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import { ChevronIcon, MapIcon } from '../components/WeekIcons';
@@ -47,16 +47,10 @@ export function WeekPage() {
   const repeat = program && weekStart >= mondayOfWeek(todayISO()) ? repeatState(program, weekStart) : undefined;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
-  // Sum of each planned session's target ('full' variant) duration — an
-  // at-a-glance weekly volume, not tied to whether a session is already
-  // logged. Mirrors History.tsx's own Trainingstijd stat in including every
-  // session type (recovery included), for the same "total time this week
-  // asks of you" reading.
-  const totalWeekMinutes = sessions.reduce((sum, s) => {
-    const template = templateById.get(s.templateId);
-    // A rest day is no training time.
-    return template && template.type !== 'recovery' ? sum + resolveVariantDuration(template, 'full', s.scheduledDate, program) : sum;
-  }, 0);
+  // The time this week asks: open trainings at their planned length, done ones
+  // at the length they took, a skipped training and a rest day not at all
+  // (engine/weekProfile.ts#weekMinutes).
+  const totalWeekMinutes = weekMinutes(sessions, sessionLogs, templateById, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program));
 
   // De bergkam: belasting per dag van deze week en van de week ervoor (engine/weekProfile.ts).
   const today = todayISO();
