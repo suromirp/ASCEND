@@ -113,6 +113,19 @@ describe('syncing the coming week', () => {
     expect(Object.keys(state.items)).toHaveLength(agenda.events.size);
     expect(state.syncedAt).toBeDefined();
     expect(state.lastError).toBeUndefined();
+    // Each event remembers when it was written, for the status on the training screen.
+    for (const item of Object.values(state.items)) expect(item.sentAt).toBe(state.syncedAt);
+  });
+
+  it('a forced run is not stopped by the 15-minute brake, as the button "Nu versturen" needs', async () => {
+    const { today } = await setup();
+    const agenda = fakeAgenda();
+    await setWatchWorkoutsEnabled(true);
+    const t0 = new Date('2026-10-26T08:00:00Z');
+    expect((await syncWatchWorkouts({ fetchImpl: agenda.fn, today, now: t0 })).status).toBe('ok');
+    const soon = new Date(t0.getTime() + 60_000);
+    expect(await syncWatchWorkouts({ fetchImpl: agenda.fn, today, now: soon })).toEqual({ status: 'too-soon' });
+    expect((await syncWatchWorkouts({ fetchImpl: agenda.fn, today, now: soon, force: true })).status).toBe('ok');
   });
 
   it('never makes doubles: a second run sends nothing', async () => {

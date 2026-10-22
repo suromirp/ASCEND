@@ -224,6 +224,9 @@ export interface TrackedWorkout {
   date: string;
   fingerprint: string;
   eventId?: number;
+  // When ASCEND last wrote this event to the agenda (ISO timestamp); older
+  // records have none (engine/watchStatus.ts falls back to the last round).
+  sentAt?: string;
 }
 
 export interface SyncPlan {

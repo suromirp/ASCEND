@@ -39,6 +39,7 @@ import { useAppData } from '../state/AppDataContext';
 import { AlignProposalCard, AlignedSheet } from '../components/WatchAlignCard';
 import { useAlignActions, useWatchAlign } from '../components/useWatchAlign';
 import { HISTORY_MAX_DAYS } from '../engine/watchAlign';
+import { watchOverview, watchOverviewText } from '../engine/watchStatus';
 import {
   getWatchWorkoutState,
   pauseWatchWorkouts,
@@ -50,7 +51,7 @@ import {
 } from '../storage/watchWorkouts';
 import type { WatchUseKey } from '../engine/watchUse';
 import { intervalsErrorMessage, normalizeConnection, type IntervalsConnection } from '../integrations/intervalsIcu';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, todayISO } from '../utils/dates';
 
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -194,7 +195,7 @@ export function GarminLinkPage() {
 
   const connected = !!connection;
   const workouts = useWatchWorkoutControls();
-  const { templates } = useAppData();
+  const { templates, settings, updateSettings } = useAppData();
   const align = useWatchAlign();
   const alignActions = useAlignActions(align.items);
   const [showAligned, setShowAligned] = useState(false);
@@ -333,12 +334,24 @@ export function GarminLinkPage() {
         {connected && (
           <UseRow
             title="Trainingen naar je horloge sturen"
-            text="Zet de trainingen van de komende 7 dagen in je intervals.icu-agenda. Standaard uit."
+            text="Staat hij aan, dan gaat het vanzelf: de trainingen van de komende 7 dagen gaan naar je intervals.icu-agenda en van daar naar je horloge. Standaard uit."
             checked={!!workouts.state?.enabled}
             onChange={(on) => void workouts.toggle(on)}
-            note={workouts.busy ? 'Bezig…' : undefined}
+            note={workouts.busy ? 'Bezig…' : workouts.state?.enabled ? watchOverviewText(watchOverview(workouts.state.items, workouts.state.syncedAt, todayISO()), todayISO()) : undefined}
           />
         )}
+        <UseRow
+          title="Status van het versturen"
+          text="Op het trainingsscherm één regel die zegt of de training naar je horloge is gestuurd, en een knop als dat niet lukte."
+          checked={settings.showWatchStatus !== false}
+          onChange={(on) => void updateSettings({ showWatchStatus: on })}
+        />
+        <UseRow
+          title="Markering op Week"
+          text="Een klein horloge achter een training in de weeklijst, alleen als hij is verstuurd of het niet lukte."
+          checked={settings.showWatchStatusOnWeek !== false}
+          onChange={(on) => void updateSettings({ showWatchStatusOnWeek: on })}
+        />
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           Gewicht komt nooit uit Garmin. Dat leest ASCEND uit MacroFactor.
         </p>
@@ -546,7 +559,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       </p>
       {state?.enabled && (
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {state.syncedAt ? `Laatst gestuurd op ${formatDateNL(state.syncedAt.slice(0, 10))} om ${new Date(state.syncedAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}.` : 'Nog niet gestuurd.'} ASCEND werkt het hooguit eens per 15 minuten bij, bij het openen van de app.
+          ASCEND werkt het hooguit eens per 15 minuten bij, bij het openen van de app en na elke wijziging in je planning. Op het trainingsscherm zie je per training of het gelukt is.
         </p>
       )}
       {state?.lastError && !notice && <NoticeLine notice={{ tone: 'error', text: state.lastError }} />}

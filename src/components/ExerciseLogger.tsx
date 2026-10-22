@@ -20,6 +20,7 @@ import { ASK_LEGS_FOR, type LegsAtStart } from '../engine/learning';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrainingGuideSheet, WorkoutSteps } from './TrainingGuideSheet';
 import { SessionHeader, StopSignals } from './SessionHeader';
+import { WatchStatusRow } from './WatchStatusRow';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { progressionTarget } from '../engine/programLayout';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
@@ -60,10 +61,12 @@ export function ExerciseLogger({
   startAtForm?: boolean;
   onClose: () => void;
 }) {
-  const { logSession, settings, strengthExternal, templates } = useAppData();
+  const { logSession, settings, strengthExternal, templates, plannedSessions } = useAppData();
   const { closing, requestClose } = useSheetClose(onClose);
   const [variant, setVariant] = useState<SessionVariant>(initialVariant);
   const quickComplete = template.type === 'strength' && strengthExternal;
+  // The planned session behind this screen: the line about the watch is about it.
+  const plannedSession = plannedSessionId ? plannedSessions.find((p) => p.id === plannedSessionId) : undefined;
 
   function resolveDuration(v: SessionVariant): number {
     if (!scheduledDate) return durationForVariant(template, v);
@@ -275,6 +278,8 @@ export function ExerciseLogger({
         </div>
 
         <SessionHeader brief={brief} title={template.name} />
+
+        {plannedSession && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="mt-3" />}
 
         {availableVariants(template).length > 1 && !restChosen && (
           <div className="mt-4 flex gap-2" role="group" aria-label="Versie">

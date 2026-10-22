@@ -53,8 +53,14 @@ export async function getWatchWorkoutState(): Promise<WatchWorkoutState> {
   };
 }
 
+// Fired after every write, so a screen that shows the status (the training
+// screen, the Week list, the Garmin page) reads it again, also when the write
+// came from the background run at boot.
+export const WATCH_STATE_EVENT = 'ascend-watch-workouts-changed';
+
 async function putState(state: WatchWorkoutState): Promise<void> {
   await MetaRepo.set(STATE_KEY, state);
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') window.dispatchEvent(new Event(WATCH_STATE_EVENT));
 }
 
 export interface WorkoutOptions extends FetchOptions {
@@ -109,7 +115,7 @@ export async function syncWatchWorkouts(options: WorkoutOptions & { force?: bool
     const { desired, logged } = await loadDesired(today);
     const plan = planWatchSync(desired, items, today, logged);
     const remember = (w: WatchWorkout, eventId: number | undefined, previous?: TrackedWorkout) => {
-      items[w.plannedId] = { externalId: w.externalId, date: w.date, fingerprint: w.fingerprint, eventId: eventId ?? previous?.eventId };
+      items[w.plannedId] = { externalId: w.externalId, date: w.date, fingerprint: w.fingerprint, eventId: eventId ?? previous?.eventId, sentAt: now.toISOString() };
     };
 
     try {
@@ -182,7 +188,7 @@ export async function sendNextWatchWorkout(options: WorkoutOptions = {}): Promis
       : (await createWorkoutEvents(connection, [next], options)).get(next.externalId);
     await putState({
       ...state,
-      items: { ...state.items, [next.plannedId]: { externalId: next.externalId, date: next.date, fingerprint: next.fingerprint, eventId: eventId ?? tracked?.eventId } },
+      items: { ...state.items, [next.plannedId]: { externalId: next.externalId, date: next.date, fingerprint: next.fingerprint, eventId: eventId ?? tracked?.eventId, sentAt: (options.now ?? new Date()).toISOString() } },
     });
     return { status: 'ok', name: next.name, date: next.date };
   } catch (err) {

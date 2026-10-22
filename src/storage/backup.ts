@@ -228,6 +228,12 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.showNextTrek;
     skipped.n++;
   }
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek'] as const) {
+    if (key in s && typeof s[key] !== 'boolean') {
+      delete s[key];
+      skipped.n++;
+    }
+  }
   if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;
