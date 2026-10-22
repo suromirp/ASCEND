@@ -165,6 +165,12 @@ export function getDB(): Promise<IDBPDatabase<AscendDB>> {
       blocked() {
         dbBlockedListeners.forEach((fn) => fn());
       },
+      // The browser closed the connection by itself (Android can do that to an
+      // app in the background, or when storage is cleared): the next call opens
+      // a fresh one instead of using the closed connection.
+      terminated() {
+        dbPromise = null;
+      },
     });
   }
   return dbPromise;

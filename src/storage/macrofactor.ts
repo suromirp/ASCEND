@@ -165,14 +165,17 @@ export async function fillInLog(logId: string, workout: MacroFactorWorkout, temp
 
 // Adds the reps in reserve and the warm-up sets to a log that came from this
 // workout, where those are empty (engine/macrofactorEnrich.ts). Only on the tap
-// of the user. Read again here, so what is stored now decides.
-export async function enrichLog(logId: string, workout: MacroFactorWorkout): Promise<boolean> {
+// of the user. Read again here, so what is stored now decides: a second tap on
+// a row that was done already adds nothing and says 'already'. 'gone': the log
+// is not there any more.
+export type EnrichOutcome = 'added' | 'already' | 'gone';
+export async function enrichLog(logId: string, workout: MacroFactorWorkout): Promise<EnrichOutcome> {
   const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
-  if (!log) return false;
+  if (!log) return 'gone';
   const strengthData = enrichStrengthData(log, workout);
-  if (!strengthData) return false;
+  if (!strengthData) return 'already';
   await SessionLogsRepo.put({ ...log, strengthData });
-  return true;
+  return 'added';
 }
 
 // --- a file from "Delen, ASCEND" ---------------------------------------------------------

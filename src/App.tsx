@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
-import { AscendSplashLogo } from './components/AscendSplashLogo';
+import { BootScreen } from './components/BootScreen';
 import { CompletionMoment } from './components/CompletionMoment';
 import { UpdatePrompt, UpdatedNotice } from './components/UpdatePrompt';
 import { SHOW_SPLASH } from './utils/updateFlag';
@@ -173,16 +173,8 @@ function AppShell() {
     );
   }
 
-  if (loading && !SHOW_SPLASH) return <div className="flex-1" style={{ background: 'var(--color-bg)' }} />;
-
-  if (loading) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-10">
-        <AscendSplashLogo size={200} />
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De klim wordt voorbereid…</p>
-      </div>
-    );
-  }
+  // With or without the splash, the watch takes over when opening takes long.
+  if (loading) return <BootScreen splash={SHOW_SPLASH} />;
 
   return (
     <>

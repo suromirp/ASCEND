@@ -219,9 +219,11 @@ export function TodayPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-3">
-      {/* Rechts blijft ruimte voor het tandwiel van de app (44 px en een tussenruimte). */}
-      <header className="flex min-h-[44px] items-start justify-between pr-[52px]">
-        <div className="pt-0.5">
+      {/* Het tandwiel staat in de rij erboven (App.tsx); de twee knoppen staan
+          rechts in deze regel, recht onder het tandwiel, zodat de weekregel op
+          één regel past. */}
+      <header className="flex min-h-[44px] items-start justify-between gap-3">
+        <div className="min-w-0 pt-0.5">
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
             <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
@@ -229,7 +231,7 @@ export function TodayPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 pr-14">
+        <div className="flex shrink-0 items-center gap-2">
           <TimerButton />
           <StretchMenuButton />
         </div>

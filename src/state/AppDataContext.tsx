@@ -67,6 +67,8 @@ import { announcementFor, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
+import { createSerialQueue } from '../utils/serialQueue';
+import { runBoot, type BootStep } from '../engine/bootWatch';
 
 type AdviceResponse = StoredResponse;
 
@@ -83,7 +85,19 @@ const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefi
 // in two tabs at once used to seed the whole program twice.
 function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-  return locks ? (locks.request('ascend-boot', fn) as Promise<T>) : fn();
+  if (!locks) return fn();
+  // A window that holds the lock and never lets go (a tab frozen in the
+  // background, or one that hangs) may not keep this one black for ever: after
+  // 8 s of waiting, this window opens without the lock. Only a fresh install
+  // opened twice at the same moment needed it.
+  const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(8_000) : undefined;
+  return (locks.request('ascend-boot', signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
+    if (signal?.aborted && (err === signal.reason || (err instanceof DOMException && (err.name === 'AbortError' || err.name === 'TimeoutError')))) {
+      console.error('ASCEND: het openingsslot kwam niet vrij, verder zonder slot');
+      return fn();
+    }
+    throw err;
+  });
 }
 
 function runBootMigrationsOnce(): Promise<void> {
@@ -105,7 +119,11 @@ function planFingerprint(planned: PlannedSession[]): number {
   }
   return h;
 }
-let horizonQueue: Promise<void> = Promise.resolve();
+// One sync at a time, and never one that blocks the rest for ever: a run that
+// takes longer than a minute is left to finish on its own and the next one goes
+// on (utils/serialQueue.ts). Such a run does not record its key, so the next
+// refresh tries again.
+const horizonQueue = createSerialQueue({ timeoutMs: 60_000, name: 'Planningssync' });
 // Raised after every Akkoord and every move or skip of your own, so the sync
 // checks the week right away instead of the next day (docs/onderzoek/Planning op een
 // lijn.md, conflict 9).
@@ -139,7 +157,8 @@ async function primePlanningRegisters() {
 // What the week check put right in the last sync, until refresh() shows it.
 let pendingRepairs: ProgramHorizonResult['repairs'];
 
-function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<void> {
+// True when the sync ran (something it depends on had changed).
+function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boolean> {
   // The stored phases are part of the key, so a reset or an import that
   // rewrites the program also triggers a sync.
   const currentKey = async () => {
@@ -173,9 +192,9 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
       goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length, packWeightOf(g.requirements)]),
     ]);
   };
-  horizonQueue = horizonQueue
-    .then(async () => {
-      if ((await currentKey()) === lastHorizonKey) return;
+  return horizonQueue
+    .run(async () => {
+      if ((await currentKey()) === lastHorizonKey) return false;
       await prime?.();
       const result = await syncProgramHorizon();
       // Two syncs before one refresh: both notices count.
@@ -183,9 +202,9 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
         ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))], addedIds: [...(pendingRepairs.addedIds ?? []), ...(result.repairs.addedIds ?? [])] }
         : result.repairs;
       lastHorizonKey = await currentKey();
+      return true;
     })
-    .catch((err) => console.error('Program horizon sync failed', err));
-  return horizonQueue;
+    .then((ran) => ran ?? false);
 }
 
 function simpleHash(text: string): string {
@@ -235,6 +254,8 @@ interface AppData {
   // storage, a newer version open elsewhere). The app shows why instead of
   // an endless splash.
   bootError: string | null;
+  // The step of opening that is running (engine/bootWatch.ts).
+  bootStep: BootStep;
   program: Program | null;
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
@@ -491,6 +512,8 @@ const AppDataContext = createContext<AppData | null>(null);
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
+  // Which step of opening is running, for the watch on the opening screen (App.tsx).
+  const [bootStep, setBootStep] = useState<BootStep>('migraties');
   const [program, setProgram] = useState<Program | null>(null);
   const [templates, setTemplates] = useState<SessionTemplate[]>([]);
   const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
@@ -526,9 +549,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Every write ends in refresh(); telling other open ASCEND windows to
   // reload from storage keeps a stale window from writing back old state
   // over a change made elsewhere.
-  const refresh = useCallback(async (fromOtherWindow = false) => {
-    if (!fromOtherWindow) await syncProgramHorizonWhenChanged(primePlanningRegisters);
-    if (!fromOtherWindow) syncChannel?.postMessage('changed');
+  // Reads everything from storage and shows it. No planning sync here.
+  const loadState = useCallback(async () => {
     const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
@@ -585,6 +607,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       });
     }
   }, []);
+
+  // What you change shows at once; the planning sync runs after it, in its own
+  // queue, and what it changed is read once more. A sync that hangs can never
+  // keep the screen from showing your change.
+  const refresh = useCallback(async (fromOtherWindow = false) => {
+    await loadState();
+    if (fromOtherWindow) return;
+    syncChannel?.postMessage('changed');
+    if (await syncProgramHorizonWhenChanged(primePlanningRegisters)) {
+      await loadState();
+      syncChannel?.postMessage('changed');
+    }
+  }, [loadState]);
 
   useEffect(() => {
     if (!syncChannel) return;
@@ -1082,12 +1117,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const stopBlockedNotice = onDatabaseBlocked(() =>
         setBootError('ASCEND is in een ander venster nog open met een oudere versie. Sluit dat venster om de update af te ronden.'),
       );
+      // First the data, then the app, and only then the planning run in the
+      // background (engine/bootWatch.ts#runBoot): a run that does not finish
+      // can never keep the screen black.
+      const background = async () => {
+        // Once per page load, like the migrations.
+        if (backgroundPlanningStarted) return;
+        backgroundPlanningStarted = true;
+        // One after the other, never at once: the sync of today first, then
+        // the steps below; each reads what the one before wrote, and each ends
+        // in a refresh that runs the sync and its week check over the result
+        // (docs/onderzoek/Planning op een lijn.md, conflict 12).
+        // Each on its own: one that fails doesn't stop the next.
+        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['watch workouts', syncWatchWorkouts]] as const) {
+          try {
+            await step();
+          } catch (err) {
+            console.error(`Background planning (${name}) failed`, err);
+          }
+        }
+      };
+      let ready = false;
       try {
         await Promise.all([
-          (async () => {
-            await runBootMigrationsOnce();
-            await refresh();
-          })(),
+          runBoot({
+            migrate: runBootMigrationsOnce,
+            load: loadState,
+            onStep: setBootStep,
+            onReady: () => {
+              ready = true;
+            },
+            // After the splash, so the planning does not slow the opening down.
+            background: async () => {
+              await minSplashDuration;
+              await background();
+            },
+          }),
           minSplashDuration,
         ]);
       } catch (err) {
@@ -1097,30 +1162,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       } finally {
         stopBlockedNotice();
       }
+      if (!ready) return;
       setBootError(null);
       setLoading(false);
       void requestPersistentStorage();
-      // Fire-and-forget, after the splash — this is background forecast
-      // adaptation, never something the user waits on to see Today/Week.
-      // Once per page load, like the migrations above.
-      if (backgroundPlanningStarted) return;
-      backgroundPlanningStarted = true;
-      // One after the other, never at once: each reads what the one before
-      // wrote, and each ends in a refresh that runs the sync and its week
-      // check over the result (docs/onderzoek/Planning op een lijn.md,
-      // conflict 12).
-      void (async () => {
-        // Each on its own: one that fails doesn't stop the next.
-        for (const [name, step] of [['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['watch workouts', syncWatchWorkouts]] as const) {
-          try {
-            await step();
-          } catch (err) {
-            console.error(`Background planning (${name}) failed`, err);
-          }
-        }
-      })();
     })();
-  }, [refresh, runForecastReplan, runStrengthReviewCheck, runWeeklyPrescriptionBuild]);
+  }, [refresh, loadState, runForecastReplan, runStrengthReviewCheck, runWeeklyPrescriptionBuild]);
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
 
@@ -1589,7 +1636,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (active && (active.source !== 'manual') !== external) {
       await StrengthProgramStrategiesRepo.put({ ...active, source: external ? 'macrofactor_workouts' : 'manual', updatedAt: new Date().toISOString() });
     }
-    await SettingsRepo.set({ strengthTrackedExternally: external });
+    // The switch shows its new place at once; the rest follows in refresh.
+    setSettings(await SettingsRepo.set({ strengthTrackedExternally: external }));
+    setStrengthProgramStrategies(await StrengthProgramStrategiesRepo.getAll());
     await refresh();
   }, [refresh]);
 
@@ -1915,6 +1964,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const value: AppData = {
     loading,
     bootError,
+    bootStep,
     storageNotice,
     reportStorageError,
     dismissStorageNotice: () => setStorageNotice(null),
