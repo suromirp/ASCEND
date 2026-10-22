@@ -17,7 +17,7 @@
 // macrofactor.test.ts).
 
 import { MetaRepo, SessionLogsRepo } from './database';
-import { readMacroFactorCsv, nameKey, type MacroFactorWorkout } from '../engine/macrofactorImport';
+import { readMacroFactorCsv, nameKey, type MacroFactorReadResult, type MacroFactorWorkout } from '../engine/macrofactorImport';
 import { supplementPatch, type NameMapping } from '../engine/macrofactorLink';
 import type { SessionTemplate } from '../models/training';
 
@@ -50,11 +50,19 @@ async function putState(state: MacroFactorState): Promise<void> {
   notify();
 }
 
-// Reads a file's text and keeps its workouts for the card. Throws a
+// Reads a CSV text and keeps its workouts for the card. Throws a
 // MacroFactorFormatError (Dutch message) for a file that is not a Workout Log;
 // then nothing is changed.
 export async function importMacroFactorText(text: string, fileName?: string, now = new Date()): Promise<{ count: number; skippedRows: number }> {
-  const { workouts, skippedRows } = readMacroFactorCsv(text);
+  return importMacroFactorWorkouts(readMacroFactorCsv(text), fileName, now);
+}
+
+// The same for workouts already read from a CSV or an xlsx.
+export async function importMacroFactorWorkouts(
+  { workouts, skippedRows }: MacroFactorReadResult,
+  fileName?: string,
+  now = new Date(),
+): Promise<{ count: number; skippedRows: number }> {
   const state = await getMacroFactorState();
   await putState({ ...state, workouts, readAt: now.toISOString(), fileName });
   return { count: workouts.length, skippedRows };
@@ -115,15 +123,16 @@ export const SHARED_CACHE = 'ascend-gedeeld-v1';
 export const SHARED_FILE_PATH = 'gedeeld-bestand';
 export const SHARED_NAME_HEADER = 'x-bestandsnaam';
 
-// The shared file, once: it is removed from the cache as it is taken.
-export async function takeSharedFile(): Promise<{ text: string; name?: string } | null> {
+// The shared file as bytes (an xlsx is binary and must stay as it came), once:
+// it is removed from the cache as it is taken.
+export async function takeSharedFile(): Promise<{ data: Uint8Array; name?: string } | null> {
   if (typeof caches === 'undefined') return null;
   try {
     const cache = await caches.open(SHARED_CACHE);
     const request = new URL(`${import.meta.env.BASE_URL}${SHARED_FILE_PATH}`, location.origin).toString();
     const response = await cache.match(request);
     if (!response) return null;
-    const text = await response.text();
+    const data = new Uint8Array(await response.arrayBuffer());
     const raw = response.headers.get(SHARED_NAME_HEADER);
     await cache.delete(request);
     let name: string | undefined;
@@ -132,7 +141,7 @@ export async function takeSharedFile(): Promise<{ text: string; name?: string } 
     } catch {
       name = raw ?? undefined;
     }
-    return { text, name };
+    return { data, name };
   } catch {
     return null;
   }

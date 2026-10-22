@@ -1,8 +1,9 @@
 // ASCEND: Meer, MacroFactor inlezen.
 //
-// The strength workouts come from a MacroFactor export (Workout Log, CSV), and
-// so does the body weight (a CSV with the scale weight and/or the trend weight
-// per day, engine/macrofactorWeight.ts). The file arrives in one of two ways:
+// The strength workouts come from a MacroFactor export (Workout Log), and so
+// does the body weight (the scale weight and/or the trend weight per day,
+// engine/macrofactorWeight.ts), as xlsx or CSV. One file may hold both
+// (engine/macrofactorFile.ts). The file arrives in one of two ways:
 // shared straight to ASCEND on Android ("Delen, ASCEND", see
 // public/share-target-sw.js), or picked here with "Kies bestand". ASCEND sees
 // by the columns which of the two it is. It is read on this phone and goes
@@ -16,11 +17,12 @@ import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../compon
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
 import { MacroFactorFormatError, nameKey } from '../engine/macrofactorImport';
-import { applyWeightImport, planWeightImport, readMacroFactorFile, weightEntryFromDay, type MacroFactorWeightResult, type WeightConflict } from '../engine/macrofactorWeight';
+import { readMacroFactorBytes } from '../engine/macrofactorFile';
+import { applyWeightImport, planWeightImport, weightEntryFromDay, type MacroFactorWeightResult, type WeightConflict } from '../engine/macrofactorWeight';
 import { hasMacroFactorWeight, MACROFACTOR_FRESH_DAYS } from '../engine/bodyWeight';
 import type { WeightEntry } from '../models/metrics';
 import { formatNumberNL } from '../utils/number';
-import { forgetMapping, importMacroFactorText, takeSharedFile } from '../storage/macrofactor';
+import { forgetMapping, importMacroFactorWorkouts, takeSharedFile } from '../storage/macrofactor';
 import { daysBetween, formatDateNL, todayISO } from '../utils/dates';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
@@ -62,20 +64,22 @@ export function MacroFactorImportPage() {
     return parts.join(' ');
   }
 
-  async function readText(text: string, name?: string) {
+  async function readData(data: Uint8Array, name?: string) {
     setBusy(true);
     try {
-      const file = readMacroFactorFile(text);
-      if (file.kind === 'weight') {
-        setNotice({ tone: 'ok', text: await storeWeight(file) });
-      } else {
-        const result = await importMacroFactorText(text, name);
-        setNotice({ tone: 'ok', text: `${countText(result.count)} gevonden in het bestand.` });
+      const content = await readMacroFactorBytes(data, name);
+      const parts: string[] = [];
+      if (content.weight) parts.push(await storeWeight(content.weight));
+      if (content.workouts) {
+        const result = await importMacroFactorWorkouts(content.workouts, name);
+        parts.push(`${countText(result.count)} gevonden in het bestand.`);
       }
+      parts.push(...content.notes);
+      setNotice({ tone: 'ok', text: parts.join(' ') });
     } catch (err) {
       setNotice({
         tone: 'error',
-        text: err instanceof MacroFactorFormatError ? err.message : 'ASCEND kan dit bestand niet lezen. Kies de Workout Log of het gewicht van MacroFactor als CSV-bestand.',
+        text: err instanceof MacroFactorFormatError ? err.message : 'ASCEND kan dit bestand niet lezen. Kies de export van MacroFactor als xlsx- of CSV-bestand.',
       });
     } finally {
       setBusy(false);
@@ -98,21 +102,21 @@ export function MacroFactorImportPage() {
     void (async () => {
       const file = await takeSharedFile();
       if (!alive) return;
-      if (file) await readText(file.text, file.name);
+      if (file) await readData(file.data, file.name);
       else setNotice({ tone: 'error', text: 'Er kwam geen bestand binnen. Probeer het opnieuw te delen, of kies het bestand hieronder.' });
       setParams({}, { replace: true });
     })();
     return () => {
       alive = false;
     };
-    // readText and setParams only set state; they must not retrigger the take.
+    // readData and setParams only set state; they must not retrigger the take.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [shared, loading]);
 
   async function onPick(file: File | undefined) {
     if (!file) return;
     try {
-      await readText(await file.text(), file.name);
+      await readData(new Uint8Array(await file.arrayBuffer()), file.name);
     } catch {
       setNotice({ tone: 'error', text: 'ASCEND kan dit bestand niet openen.' });
     }
@@ -137,13 +141,13 @@ export function MacroFactorImportPage() {
       <Card className="flex flex-col gap-3">
         <Eyebrow>DRIE STAPPEN</Eyebrow>
         <Step n={1}>Open MacroFactor en ga naar Meer, dan Data Export. De namen kunnen in jouw versie iets anders heten.</Step>
-        <Step n={2}>Kies Granular Export en Workout Log, kies de periode (bijvoorbeeld de afgelopen week) en tik op Export Workout Log.</Step>
-        <Step n={3}>Tik op Delen en kies ASCEND. Lukt dat niet, bewaar dan het bestand en tik hieronder op Kies bestand.</Step>
+        <Step n={2}>Kies Granular Export. Vink Weight Trend en Scale Weight aan en tik op Export. Voor krachttrainingen tik je op Export Workout Log: de eerste keer 30 dagen, daarna wekelijks 7 dagen.</Step>
+        <Step n={3}>Je krijgt een xlsx-bestand. Tik op Delen en kies ASCEND, voor elk bestand. Lukt dat niet, bewaar dan het bestand en tik hieronder op Kies bestand.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           ASCEND leest het bestand alleen op deze telefoon; het gaat nergens heen. Bij krachttrainingen krijg je een voorstel, er wordt nooit iets stil opgeslagen.
         </p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Wil je ook je gewicht inlezen? Kies bij Granular Export ook het gewicht en deel dat bestand op dezelfde manier. ASCEND ziet aan de kolommen zelf wat erin zit. ASCEND leest CSV, geen Excel-bestand.
+          ASCEND leest xlsx en csv en ziet aan de kolommen zelf wat erin zit: gewicht, krachttrainingen of allebei in één bestand.
         </p>
       </Card>
 
@@ -152,7 +156,7 @@ export function MacroFactorImportPage() {
         <input
           ref={input}
           type="file"
-          accept=".csv,.txt,text/csv,text/comma-separated-values,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream"
+          accept=".csv,.xlsx,.txt,text/csv,text/comma-separated-values,text/plain,application/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream"
           className="sr-only"
           aria-label="Kies de MacroFactor-export"
           onChange={(e) => void onPick(e.target.files?.[0])}

@@ -1,7 +1,9 @@
 // ASCEND: MacroFactor "Workout Log" (Granular Export) lezen
 // (docs/visie/Data zonder handwerk.md, idee 2).
 //
-// Pure and without a library: a CSV text goes in, workouts come out. The
+// Pure and without a library: a table of rows goes in (a CSV text through
+// parseCsv, or a worksheet of an xlsx through engine/xlsx.ts, both as
+// Cell[][]), workouts come out. The
 // columns are found by NAME (case-insensitive, English or Dutch, a unit in
 // the heading such as "(kg)" or "(min)" is read as the unit), never by
 // position, so a reordered or extended export still works. A file that lacks
@@ -9,6 +11,8 @@
 //
 // Nothing in this file knows about ASCEND's plan or logs; that is
 // engine/macrofactorLink.ts. This file only answers "what is in the file".
+
+import { cellText, excelSerialToText, SERIAL_MAX, SERIAL_MIN, type Cell } from './sheetTable';
 
 export interface MacroFactorSet {
   reps: number;
@@ -106,7 +110,7 @@ export function parseCsv(input: string): string[][] {
 
 // --- columns ----------------------------------------------------------------
 
-type ColumnId = 'date' | 'workout' | 'duration' | 'exercise' | 'weight' | 'reps' | 'rir' | 'setType';
+export type ColumnId = 'date' | 'workout' | 'duration' | 'exercise' | 'weight' | 'reps' | 'rir' | 'setType';
 
 // Heading after dropping units and everything that is not a letter or digit.
 const ALIASES: Record<ColumnId, string[]> = {
@@ -133,7 +137,7 @@ const COLUMN_LABEL: Record<ColumnId, string> = {
   setType: 'soort set (Set Type)',
 };
 
-const REQUIRED: ColumnId[] = ['date', 'workout', 'duration', 'exercise', 'weight', 'reps'];
+export const REQUIRED: ColumnId[] = ['date', 'workout', 'duration', 'exercise', 'weight', 'reps'];
 
 export function stripDiacritics(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -151,12 +155,12 @@ export function headingUnit(heading: string): string {
   return stripDiacritics(heading).toLowerCase();
 }
 
-interface ColumnMap {
+export interface ColumnMap {
   index: Partial<Record<ColumnId, number>>;
   headings: string[];
 }
 
-function mapColumns(header: string[]): ColumnMap {
+export function mapColumns(header: string[]): ColumnMap {
   const keys = header.map(headingKey);
   const index: Partial<Record<ColumnId, number>> = {};
   for (const id of Object.keys(ALIASES) as ColumnId[]) {
@@ -192,8 +196,9 @@ function missingMessage(missing: ColumnId[], headings: string[], recognized: num
 
 // --- cells ------------------------------------------------------------------
 
-export function parseNumber(raw: string | undefined): number | undefined {
+export function parseNumber(raw: Cell | undefined): number | undefined {
   if (raw === undefined) return undefined;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : undefined;
   let s = raw.trim().replace(/\s/g, '');
   if (s === '') return undefined;
   if (s.includes(',') && s.includes('.')) {
@@ -214,8 +219,10 @@ const pad2 = (n: string) => n.padStart(2, '0');
 
 // "2026-10-14", "2026-10-14 18:05", "2026-10-14T18:05:00Z" (the clock as
 // written), "14-10-2026", "14.10.2026" and, with slashes, "10/14/2026".
-export function parseDateCell(raw: string | undefined): { date: string; time?: string } | undefined {
-  if (!raw) return undefined;
+export function parseDateCell(raw: Cell | undefined): { date: string; time?: string } | undefined {
+  if (raw === undefined || raw === '') return undefined;
+  // A number in a date column is an Excel serial (an xlsx whose cell had no date format).
+  if (typeof raw === 'number') return raw >= SERIAL_MIN && raw <= SERIAL_MAX ? parseDateCell(excelSerialToText(raw)) : undefined;
   const s = raw.trim();
   const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if (iso) {
@@ -237,8 +244,9 @@ export function parseDateCell(raw: string | undefined): { date: string; time?: s
 }
 
 // A clock-like duration ("1:02:10") in seconds, else a plain number.
-function parseDurationCell(raw: string | undefined): { value: number; clock: boolean } | undefined {
-  if (!raw) return undefined;
+function parseDurationCell(raw: Cell | undefined): { value: number; clock: boolean } | undefined {
+  if (raw === undefined || raw === '') return undefined;
+  if (typeof raw === 'number') return Number.isFinite(raw) && raw > 0 ? { value: raw, clock: false } : undefined;
   const s = raw.trim();
   const clock = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
   if (clock) {
@@ -254,16 +262,21 @@ function parseDurationCell(raw: string | undefined): { value: number; clock: boo
 // be seconds (no workout is five minutes long): read it as minutes.
 const SECONDS_NOT_BELOW = 300;
 
-const isWarmup = (type: string | undefined) => !!type && /warm|opwarm/i.test(stripDiacritics(type));
+const isWarmup = (type: string) => type !== '' && /warm|opwarm/i.test(stripDiacritics(type));
 
 export const LB_TO_KG = 0.45359237;
 
 // --- the reader --------------------------------------------------------------
 
 export function readMacroFactorCsv(text: string): MacroFactorReadResult {
-  const rows = parseCsv(text);
+  return readMacroFactorRows(parseCsv(text));
+}
+
+// The first row is the heading, the rest are the sets.
+export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
   if (rows.length === 0) throw new MacroFactorFormatError('Het bestand is leeg.');
-  const [header, ...body] = rows;
+  const [headerCells, ...body] = rows;
+  const header = headerCells.map(cellText);
   const { index, headings } = mapColumns(header);
   const missing = REQUIRED.filter((id) => index[id] === undefined);
   if (missing.length > 0) {
@@ -291,14 +304,14 @@ export function readMacroFactorCsv(text: string): MacroFactorReadResult {
   for (const cells of body) {
     const cell = (id: ColumnId) => (index[id] === undefined ? undefined : cells[index[id]!]);
     const when = parseDateCell(cell('date'));
-    const name = (cell('workout') ?? '').trim();
-    const exercise = (cell('exercise') ?? '').trim();
+    const name = cellText(cell('workout')).trim();
+    const exercise = cellText(cell('exercise')).trim();
     if (!when || !name || !exercise) {
       skippedRows++;
       continue;
     }
     const reps = parseNumber(cell('reps'));
-    if (isWarmup(cell('setType')) || reps === undefined || reps <= 0) {
+    if (isWarmup(cellText(cell('setType'))) || reps === undefined || reps <= 0) {
       skippedRows++;
       continue;
     }

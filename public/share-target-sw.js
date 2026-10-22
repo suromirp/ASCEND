@@ -5,6 +5,10 @@
 // precache en de routes van workbox niet aan: het luistert alleen naar de
 // ene POST die Android stuurt als je een bestand met ASCEND deelt.
 //
+// Het bestand gaat als binair door (een Blob, nooit als tekst), zodat een
+// xlsx, dat een zip is, ongeschonden aankomt; de pagina leest het als
+// ArrayBuffer.
+//
 // Wat er gebeurt: het gedeelde bestand gaat in een eigen cache, en de
 // pagina krijgt een omleiding naar het scherm "MacroFactor inlezen". Dat
 // scherm haalt het bestand uit de cache en wist het daar meteen. Er gaat
@@ -29,11 +33,11 @@ async function receiveSharedFile(request) {
   try {
     const form = await request.formData();
     const file = form.get(FILE_FIELD);
-    if (file && typeof file === 'object' && typeof file.text === 'function') {
+    if (file && typeof file === 'object' && typeof file.arrayBuffer === 'function') {
       const cache = await caches.open(SHARED_CACHE);
       await cache.put(
         scopeUrl(SHARED_FILE_PATH).toString(),
-        new Response(file, { headers: { 'content-type': 'text/csv', [SHARED_NAME_HEADER]: encodeURIComponent(file.name || '') } }),
+        new Response(file, { headers: { 'content-type': file.type || 'application/octet-stream', [SHARED_NAME_HEADER]: encodeURIComponent(file.name || '') } }),
       );
     } else {
       outcome = 'leeg';

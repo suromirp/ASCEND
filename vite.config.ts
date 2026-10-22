@@ -65,7 +65,15 @@ export default defineConfig({
             files: [
               {
                 name: 'bestand',
-                accept: ['text/csv', 'text/comma-separated-values', 'application/csv', 'application/vnd.ms-excel', '.csv'],
+                accept: [
+                  'text/csv',
+                  'text/comma-separated-values',
+                  'application/csv',
+                  'application/vnd.ms-excel',
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  '.csv',
+                  '.xlsx',
+                ],
               },
             ],
           },

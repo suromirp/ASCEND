@@ -1,0 +1,207 @@
+import { describe, it, expect } from 'vitest';
+import { readMacroFactorBytes, readMacroFactorTables, readMacroFactorText } from './macrofactorFile';
+import { MacroFactorFormatError, parseCsv } from './macrofactorImport';
+import { makeXlsx, serialOf, type KitCell, type KitSheet } from './xlsxTestKit';
+import workoutCsv from './fixtures/macrofactor-workout-log.csv?raw';
+import weightCsv from './fixtures/macrofactor-weight.csv?raw';
+
+// Made-up files only, built in the test. The column names are an educated
+// guess at what MacroFactor writes; the reader finds them by name.
+
+async function refused(bytes: Uint8Array): Promise<MacroFactorFormatError> {
+  try {
+    await readMacroFactorBytes(bytes);
+  } catch (err) {
+    expect(err).toBeInstanceOf(MacroFactorFormatError);
+    return err as MacroFactorFormatError;
+  }
+  throw new Error('expected the file to be refused');
+}
+
+// A CSV fixture as the sheet an export to xlsx would make of it: numbers as
+// numbers, the Date column as real dates.
+function sheetFromCsv(name: string, csv: string): KitSheet {
+  const [header, ...body] = parseCsv(csv);
+  const dateAt = header.findIndex((h) => h.trim().toLowerCase() === 'date');
+  const rows: KitCell[][] = body.map((row) =>
+    row.map((cell, c): KitCell => {
+      if (c === dateAt) return { date: serialOf(cell.slice(0, 10)) };
+      return cell.trim() !== '' && Number.isFinite(Number(cell)) ? Number(cell) : cell;
+    }),
+  );
+  return { name, rows: [header, ...rows] };
+}
+
+const day = (iso: string) => ({ date: serialOf(iso) });
+
+describe('an xlsx with the Workout Log', () => {
+  it('gives the same workouts as the CSV it was made from', async () => {
+    const fromCsv = readMacroFactorText(workoutCsv).workouts;
+    const fromXlsx = (await readMacroFactorBytes(makeXlsx([sheetFromCsv('Workout Log', workoutCsv)]))).workouts;
+    expect(fromXlsx?.workouts).toHaveLength(4);
+    expect(fromXlsx).toEqual(fromCsv);
+  });
+
+  it('reads a duration formatted as a time, and a date with a start time', async () => {
+    const content = await readMacroFactorBytes(
+      makeXlsx([
+        {
+          name: 'Workouts',
+          rows: [
+            ['Date', 'Workout', 'Workout Duration', 'Exercise', 'Weight (kg)', 'Reps'],
+            [{ date: serialOf('2026-10-14', 18 * 3600 + 5 * 60) }, 'Lower A', { time: 3720 / 86400 }, 'Back Squat', 100, 6],
+            [{ date: serialOf('2026-10-14', 18 * 3600 + 5 * 60) }, 'Lower A', { time: 3720 / 86400 }, 'Back Squat', 100, 5],
+          ],
+        },
+      ]),
+    );
+    expect(content.workouts?.workouts[0]).toMatchObject({ date: '2026-10-14', start: '2026-10-14T18:05:00', durationSec: 3720, setCount: 2 });
+  });
+});
+
+describe('an xlsx with weight', () => {
+  const weightRows: KitCell[][] = [
+    ['Date', 'Scale Weight (kg)', 'Weight Trend (kg)'],
+    [day('2026-10-13'), 86.1, 85.7],
+    [day('2026-10-14'), 85.5, 85.6],
+    [day('2026-10-15'), null, 85.5],
+  ];
+
+  it('reads one sheet with both columns', async () => {
+    const content = await readMacroFactorBytes(makeXlsx([{ name: 'Weight', rows: weightRows }]));
+    expect(content.workouts).toBeUndefined();
+    expect(content.weight?.hasTrend).toBe(true);
+    expect(content.weight?.days).toEqual([
+      { date: '2026-10-13', scaleKg: 86.1, trendKg: 85.7 },
+      { date: '2026-10-14', scaleKg: 85.5, trendKg: 85.6 },
+      { date: '2026-10-15', trendKg: 85.5 },
+    ]);
+  });
+
+  it('puts a sheet for the trend and a sheet for the scale together, by day', async () => {
+    const content = await readMacroFactorBytes(
+      makeXlsx([
+        { name: 'Scale Weight', rows: [['Date', 'Weight (kg)'], [day('2026-10-13'), 86.1], [day('2026-10-14'), 85.5]] },
+        { name: 'Weight Trend', rows: [['Date', 'Weight (kg)'], [day('2026-10-13'), 85.7], [day('2026-10-14'), 85.6], [day('2026-10-15'), 85.5]] },
+      ]),
+    );
+    expect(content.weight?.days).toEqual([
+      { date: '2026-10-13', scaleKg: 86.1, trendKg: 85.7 },
+      { date: '2026-10-14', scaleKg: 85.5, trendKg: 85.6 },
+      { date: '2026-10-15', trendKg: 85.5 },
+    ]);
+  });
+
+  it('takes pounds from the heading', async () => {
+    const content = await readMacroFactorBytes(makeXlsx([{ name: 'Weight', rows: [['Date', 'Scale Weight (lbs)'], [day('2026-10-13'), 190]] }]));
+    expect(content.weight?.days[0].scaleKg).toBeCloseTo(86.18, 2);
+  });
+
+  it('reads a date that is a plain number in a column called Date', () => {
+    const content = readMacroFactorTables([{ name: 'Weight', rows: [['Date', 'Weight (kg)'], [serialOf('2026-10-13'), 86.1]] }]);
+    expect(content.weight?.days).toEqual([{ date: '2026-10-13', scaleKg: 86.1 }]);
+  });
+});
+
+describe('an export with weight and workouts in one file', () => {
+  const sheets = (): KitSheet[] => [
+    { name: 'Weight Trend', rows: [['Date', 'Weight Trend (kg)'], [day('2026-10-13'), 85.7], [day('2026-10-14'), 85.6]] },
+    { name: 'Scale Weight', rows: [['Date', 'Scale Weight (kg)'], [day('2026-10-14'), 85.5]] },
+    sheetFromCsv('Workout Log', workoutCsv),
+    { name: 'Voeding', rows: [['Date', 'Calories', 'Protein'], [day('2026-10-14'), 2400, 180]] },
+  ];
+
+  it('imports both and ignores the sheet it does not know', async () => {
+    const content = await readMacroFactorBytes(makeXlsx(sheets()));
+    expect(content.workouts?.workouts).toHaveLength(4);
+    expect(content.weight?.days).toEqual([
+      { date: '2026-10-13', trendKg: 85.7 },
+      { date: '2026-10-14', scaleKg: 85.5, trendKg: 85.6 },
+    ]);
+    expect(content.notes).toEqual([]);
+  });
+
+  it('does not take the weight of the sets for body weight', async () => {
+    const content = await readMacroFactorBytes(makeXlsx([sheetFromCsv('Workout Log', workoutCsv)]));
+    expect(content.weight).toBeUndefined();
+  });
+
+  it('finds the headings under a title row', async () => {
+    const content = await readMacroFactorBytes(
+      makeXlsx([
+        { name: 'Weight', rows: [['MacroFactor export'], [], ['Date', 'Scale Weight (kg)'], [day('2026-10-13'), 86.1]] },
+        { name: 'Log', rows: [['Titel'], ...sheetFromCsv('x', workoutCsv).rows] },
+      ]),
+    );
+    expect(content.weight?.days).toEqual([{ date: '2026-10-13', scaleKg: 86.1 }]);
+    expect(content.workouts?.workouts).toHaveLength(4);
+  });
+
+  it('still imports what it can read, and says which sheet it could not', async () => {
+    const content = await readMacroFactorBytes(
+      makeXlsx([
+        { name: 'Weight', rows: weightRowsOf() },
+        { name: 'Oefeningen', rows: [['Date', 'Workout', 'Exercise', 'Reps'], [day('2026-10-14'), 'Lower A', 'Squat', 5]] },
+      ]),
+    );
+    expect(content.weight?.days).toHaveLength(1);
+    expect(content.workouts).toBeUndefined();
+    expect(content.notes).toHaveLength(1);
+    expect(content.notes[0]).toMatch(/^Werkblad Oefeningen: Er ontbreken kolommen in dit bestand: .*duur/);
+  });
+});
+
+function weightRowsOf(): KitCell[][] {
+  return [['Date', 'Scale Weight (kg)'], [day('2026-10-13'), 86.1]];
+}
+
+describe('what is said when the layout is not known', () => {
+  it('names the columns found, per sheet, when no sheet fits', async () => {
+    const e = await refused(
+      makeXlsx([
+        { name: 'Voeding', rows: [['Date', 'Calories', 'Protein'], [day('2026-10-14'), 2400, 180]] },
+        { name: 'Stappen', rows: [['Datum', 'Steps (count)'], [day('2026-10-14'), 9000]] },
+      ]),
+    );
+    expect(e.message).toMatch(/herkent geen werkblad/);
+    expect(e.message).toContain('Voeding (Date, Calories, Protein)');
+    expect(e.message).toContain('Stappen (Datum, Steps (count))');
+    expect(e.message).toMatch(/Geef deze kolomnamen door/);
+  });
+
+  it('gives the usual message for a single sheet that is not known', async () => {
+    const e = await refused(makeXlsx([{ name: 'Voeding', rows: [['Date', 'Calories', 'Protein'], [day('2026-10-14'), 2400, 180]] }]));
+    expect(e.message).toMatch(/niet de Workout Log van MacroFactor/);
+    expect(e.message).toContain('Gevonden kolommen: Date, Calories, Protein');
+  });
+
+  it('says a sheet without a usable weight has none', async () => {
+    const e = await refused(makeXlsx([{ name: 'Weight', rows: [['Date', 'Scale Weight (kg)'], [day('2026-10-13'), null]] }]));
+    expect(e.message).toMatch(/geen gewicht met een datum/);
+  });
+
+  it('says a workbook without rows is empty', async () => {
+    expect((await refused(makeXlsx([{ name: 'Leeg', rows: [] }]))).message).toMatch(/leeg/);
+  });
+
+  it('writes none of the dashes the app avoids', async () => {
+    const e = await refused(makeXlsx([{ name: 'A', rows: [['x', 'y']] }, { name: 'B', rows: [['z']] }]));
+    expect(e.message).not.toMatch(/[–—]/);
+  });
+});
+
+describe('a CSV through the same door', () => {
+  it('reads the bytes of a CSV, with or without a byte order mark', async () => {
+    const bytes = new TextEncoder().encode(weightCsv);
+    expect((await readMacroFactorBytes(bytes)).weight?.days).toHaveLength(14);
+    const withBom = new Uint8Array([0xef, 0xbb, 0xbf, ...bytes]);
+    expect((await readMacroFactorBytes(withBom)).weight?.days).toHaveLength(14);
+    expect((await readMacroFactorBytes(new TextEncoder().encode(workoutCsv))).workouts?.workouts).toHaveLength(4);
+  });
+
+  it('uses the file name for a plain Weight column', () => {
+    const csv = 'Date,Weight (kg)\n2026-10-13,85.7\n';
+    expect(readMacroFactorText(csv, 'Weight Trend.csv').weight?.days).toEqual([{ date: '2026-10-13', trendKg: 85.7 }]);
+    expect(readMacroFactorText(csv, 'weight.csv').weight?.days).toEqual([{ date: '2026-10-13', scaleKg: 85.7 }]);
+  });
+});

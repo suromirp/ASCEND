@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { applyWeightImport, planWeightImport, readMacroFactorFile, readMacroFactorWeightCsv, weightEntryFromDay } from './macrofactorWeight';
+import { applyWeightImport, planWeightImport, readMacroFactorWeightCsv, weightEntryFromDay } from './macrofactorWeight';
+import { readMacroFactorBytes, readMacroFactorText } from './macrofactorFile';
 import { MacroFactorFormatError } from './macrofactorImport';
 import { currentBodyKg, freshMacroFactorWeight, hasMacroFactorWeight, packSharePct, weightsInUse } from './bodyWeight';
 import type { WeightEntry } from '../models/metrics';
@@ -13,7 +14,7 @@ import workoutCsv from './fixtures/macrofactor-workout-log.csv?raw';
 
 function refused(text: string): MacroFactorFormatError {
   try {
-    readMacroFactorFile(text);
+    readMacroFactorText(text);
   } catch (err) {
     expect(err).toBeInstanceOf(MacroFactorFormatError);
     return err as MacroFactorFormatError;
@@ -25,10 +26,12 @@ const own = (date: string, kg: number): WeightEntry => ({ date, kg, source: 'man
 
 describe('recognising a weight export', () => {
   it('sees a weight file and a workout log apart, through the same door', () => {
-    expect(readMacroFactorFile(weightCsv).kind).toBe('weight');
-    const workouts = readMacroFactorFile(workoutCsv);
-    expect(workouts.kind).toBe('workouts');
-    if (workouts.kind === 'workouts') expect(workouts.workouts).toHaveLength(4);
+    const weight = readMacroFactorText(weightCsv);
+    expect(weight.weight?.days).toHaveLength(14);
+    expect(weight.workouts).toBeUndefined();
+    const workouts = readMacroFactorText(workoutCsv);
+    expect(workouts.weight).toBeUndefined();
+    expect(workouts.workouts?.workouts).toHaveLength(4);
   });
 
   it('reads scale and trend weight per day, oldest first', () => {
@@ -92,11 +95,9 @@ describe('a file that cannot be read', () => {
     expect(() => readMacroFactorWeightCsv('Date,Calories\n2026-10-13,2400\n')).toThrow(/geen kolom met gewicht/);
   });
 
-  it('explains an Excel file instead of showing rubbish', () => {
-    const e = refused('PK\u0003\u0004\u0014\u0000\u0006\u0000garbage');
-    expect(e.message).toMatch(/Excel-bestand/);
-    expect(e.message).toMatch(/CSV/);
-    expect(e.message).toMatch(/Granular Export/);
+  it('says so, in Dutch, when a zip that claims to be an Excel file is broken', async () => {
+    const bytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00, 1, 2, 3, 4, 5, 6]);
+    await expect(readMacroFactorBytes(bytes)).rejects.toThrow(/Excel-bestand kan niet worden geopend/);
   });
 
   it('refuses an empty file and a file without a usable weight', () => {

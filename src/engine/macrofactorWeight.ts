@@ -1,5 +1,5 @@
 // ASCEND: body weight from a MacroFactor export (Granular Export with weight,
-// or the weight sheet of the Quick Export saved as CSV).
+// a CSV or a worksheet of an xlsx, as rows: engine/sheetTable.ts).
 //
 // What is known and what is not (docs/beslissingen/2026-10-22-gewicht-uit-
 // macrofactor.md): MacroFactor's help center says the Quick Export has the
@@ -22,17 +22,8 @@
 
 import type { WeightEntry } from '../models/metrics';
 import { addDays } from '../utils/dates';
-import {
-  headingKey,
-  headingUnit,
-  LB_TO_KG,
-  MacroFactorFormatError,
-  parseCsv,
-  parseDateCell,
-  parseNumber,
-  readMacroFactorCsv,
-  type MacroFactorReadResult,
-} from './macrofactorImport';
+import { headingKey, headingUnit, LB_TO_KG, MacroFactorFormatError, parseCsv, parseDateCell, parseNumber } from './macrofactorImport';
+import { cellText, type Cell } from './sheetTable';
 
 export interface MacroFactorWeightDay {
   date: string;
@@ -49,13 +40,22 @@ export interface MacroFactorWeightResult {
   hasTrend: boolean;
 }
 
-export type MacroFactorFile =
-  | ({ kind: 'workouts' } & MacroFactorReadResult)
-  | ({ kind: 'weight' } & MacroFactorWeightResult);
-
 // --- columns ----------------------------------------------------------------
 
-type WeightColumn = 'date' | 'trend' | 'scale';
+export type WeightColumn = 'date' | 'trend' | 'scale';
+
+// A sheet that holds just one kind of weight may call its column plain
+// "Weight": which kind it is then comes from the sheet name ("Weight Trend").
+export type WeightHint = 'trend' | 'scale';
+
+const GENERIC_WEIGHT = ['weight', 'gewicht', 'bodyweight', 'lichaamsgewicht'];
+
+export function weightHintFromName(name: string | undefined): WeightHint | undefined {
+  const key = headingKey(name ?? '');
+  if (key.includes('trend')) return 'trend';
+  if (key.includes('scale') || key.includes('weegschaal')) return 'scale';
+  return undefined;
+}
 
 const ALIASES: Record<WeightColumn, string[]> = {
   date: ['date', 'datum', 'day', 'dag', 'datetime', 'datumtijd', 'weighdate', 'weighindate', 'measurementdate'],
@@ -79,11 +79,12 @@ const WORKOUT_KEYS = [
   'settype', 'rir', 'workout', 'workoutname', 'workoutduration', 'workoutnaam', 'sets', 'set',
 ];
 
-function mapWeightColumns(header: string[]): Partial<Record<WeightColumn, number>> {
+export function mapWeightColumns(header: string[], hint?: WeightHint): Partial<Record<WeightColumn, number>> {
   const keys = header.map(headingKey);
   const index: Partial<Record<WeightColumn, number>> = {};
   for (const id of ['date', 'trend', 'scale'] as WeightColumn[]) {
-    for (const alias of ALIASES[id]) {
+    const aliases = id === 'trend' && hint === 'trend' ? [...ALIASES.trend, ...GENERIC_WEIGHT] : ALIASES[id];
+    for (const alias of aliases) {
       const at = keys.findIndex((k, i) => k === alias && !Object.values(index).includes(i));
       if (at >= 0) {
         index[id] = at;
@@ -94,7 +95,7 @@ function mapWeightColumns(header: string[]): Partial<Record<WeightColumn, number
   return index;
 }
 
-function isWorkoutLog(header: string[]): boolean {
+export function isWorkoutLog(header: string[]): boolean {
   return header.map(headingKey).some((k) => WORKOUT_KEYS.includes(k));
 }
 
@@ -112,10 +113,16 @@ function plausibleKg(value: number | undefined, factor: number): number | undefi
 // --- the reader --------------------------------------------------------------
 
 export function readMacroFactorWeightCsv(text: string): MacroFactorWeightResult {
-  const rows = parseCsv(text);
+  return readMacroFactorWeightRows(parseCsv(text));
+}
+
+// The first row is the heading. `sheetName` ("Weight Trend") settles which
+// kind of weight a plain "Weight" column is.
+export function readMacroFactorWeightRows(rows: Cell[][], sheetName?: string): MacroFactorWeightResult {
   if (rows.length === 0) throw new MacroFactorFormatError('Het bestand is leeg.');
-  const [header, ...body] = rows;
-  const index = mapWeightColumns(header);
+  const [headerCells, ...body] = rows;
+  const header = headerCells.map(cellText);
+  const index = mapWeightColumns(header, weightHintFromName(sheetName));
   if (index.trend === undefined && index.scale === undefined) {
     throw new MacroFactorFormatError(
       `Dit bestand heeft geen kolom met gewicht. ASCEND zoekt ${COLUMN_LABEL.scale} of ${COLUMN_LABEL.trend}. Kies in MacroFactor bij Granular Export ook het gewicht.`,
@@ -154,25 +161,6 @@ export function readMacroFactorWeightCsv(text: string): MacroFactorWeightResult 
   }
   const days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   return { days, skippedRows, hasTrend: days.some((d) => d.trendKg !== undefined) };
-}
-
-// One door for both kinds of file: "Delen met ASCEND" and "Kies bestand" call
-// this and see which kind of export they were handed.
-export function readMacroFactorFile(text: string): MacroFactorFile {
-  // An .xlsx is a zip file and starts with "PK". Reading it needs a zip
-  // reader; until that is worth the weight the user is told what to do.
-  if (text.startsWith('PK')) {
-    throw new MacroFactorFormatError(
-      'Dit is een Excel-bestand (xlsx), zoals de Quick Export van MacroFactor. ASCEND leest CSV-bestanden. Kies in MacroFactor bij Data Export de Granular Export en vink het gewicht aan. Lukt dat alleen als Excel-bestand, bewaar het dan in Excel of Google Sheets als CSV en kies dat bestand.',
-    );
-  }
-  const rows = parseCsv(text);
-  const header = rows[0];
-  if (header && !isWorkoutLog(header)) {
-    const index = mapWeightColumns(header);
-    if (index.trend !== undefined || index.scale !== undefined) return { kind: 'weight', ...readMacroFactorWeightCsv(text) };
-  }
-  return { kind: 'workouts', ...readMacroFactorCsv(text) };
 }
 
 // --- from file to entries ---------------------------------------------------------
