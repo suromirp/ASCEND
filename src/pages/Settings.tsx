@@ -532,7 +532,7 @@ export function SettingsPage() {
               <SwitchRow
                 id="rust-na-tocht"
                 title="Soepele rust na een bergtocht"
-                note="Aan: een zware beendag mag in de korte versie al 48 uur na je tocht, uit: ASCEND houdt 72 uur. Een wijziging geldt vanaf nu voor de planning."
+                note="Aan: een zware beendag mag in de korte versie al 48 uur na je tocht, uit: ASCEND houdt 72 uur. Dit geldt voor nieuwe en gewijzigde tochten; een tocht die al staat, houdt zijn planning tot je hem wijzigt."
                 checked={settings.trekLegRest !== 'strict'}
                 onChange={(on) => void updateSettings({ trekLegRest: on ? 'soft' : 'strict' })}
               />
