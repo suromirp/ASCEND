@@ -10,6 +10,8 @@ import { computeExerciseProgression, listLoggedExercises } from '../engine/stren
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
+import { NextTrekLine } from '../components/NextTrekLine';
+import { TrekGoalsCard } from '../components/TrekGoals';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { AscentLadder } from '../components/AscentLadder';
 import { MilestoneDetailSheet } from '../components/MilestoneDetailSheet';
@@ -204,6 +206,8 @@ export function AscendPage() {
         </Card>
       )}
 
+      <NextTrekLine />
+
       {otherGoals.length > 0 && (
         <Card className="flex flex-col gap-2">
           <Eyebrow>OOK ONDERWEG NAAR</Eyebrow>
@@ -286,6 +290,8 @@ export function GoalsPage() {
       <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => archiveGoal(marathonGoal.id) : undefined} />
 
       <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
+
+      <TrekGoalsCard />
 
       <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ Nieuw doel of tussendoel</SecondaryButton>
       {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}

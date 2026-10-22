@@ -14,6 +14,7 @@ import type { MilestoneRequirement, MilestoneStatus } from './objectives';
 export type TerrainContext =
   | 'road' | 'flat_trail' | 'uneven_trail' | 'mountain' | 'technical' // running/hiking
   | 'gravel' | 'mtb_trail' | 'indoor'                                  // cycling (road shared)
+  | 'snow'                                                             // a snow hike (tochten, models/leave.ts)
   | 'unknown';
 
 export type GoalStatus = 'active' | 'paused' | 'completed' | 'archived';

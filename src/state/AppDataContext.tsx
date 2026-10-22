@@ -404,7 +404,7 @@ interface AppData {
   // one is a proposal: planLeave computes it, applyLeave stores the period
   // and applies the proposal, only after Akkoord.
   leavePeriods: LeavePeriod[];
-  planLeave: (mode: 'add' | 'remove', period: LeavePeriod) => LeavePlan;
+  planLeave: (mode: 'add' | 'remove', period: LeavePeriod, replaces?: LeavePeriod) => LeavePlan;
   applyLeave: (plan: LeavePlan) => Promise<void>;
   respondToAdvice: (advice: Advice, response: 'accepted' | 'declined') => Promise<void>;
   debriefLogId: string | null;
@@ -1826,7 +1826,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // period (engine/leaveProposal.ts), computed with the same planning run as
   // the sync. Nothing is stored until Akkoord (applyLeave).
   const leavePeriods = useMemo(() => sortPeriods(settings.leavePeriods ?? []), [settings.leavePeriods]);
-  const planLeave = useCallback((mode: 'add' | 'remove', period: LeavePeriod): LeavePlan => {
+  const planLeave = useCallback((mode: 'add' | 'remove', period: LeavePeriod, replaces?: LeavePeriod): LeavePlan => {
     const today = todayISO();
     const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
@@ -1835,7 +1835,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const blocks = raceBlocks(trainingGoals, mainGoalId, anchor, today);
     const slotDays = patternDays(templates, settings, restDay);
     return planLeaveChange({
-      mode, period, existing: settings.leavePeriods ?? [], sessions: plannedSessions, logs: sessionLogs, templates, today,
+      mode, period, replaces, existing: settings.leavePeriods ?? [], sessions: plannedSessions, logs: sessionLogs, templates, today,
       context: (periods) => {
         let n = 0;
         return {
@@ -1844,7 +1844,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           slotDays,
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
           newId: () => `leave-${n++}`,
-          until: addDays(period.endDate, 21),
+          until: addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, 21),
           leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
         };
       },

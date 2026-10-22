@@ -19,7 +19,8 @@
 //
 // Pure: no React, no IndexedDB.
 
-import type { LeaveKind, LeavePeriod } from '../models/leave';
+import type { LeaveKind, LeavePeriod, TrekDetails } from '../models/leave';
+import { trekLightDaysBefore } from './trekTaper';
 import { addDays, daysBetween, formatDateNL, weekdayShortNL } from '../utils/dates';
 
 export const LEAVE_KINDS: LeaveKind[] = ['no_training', 'trek', 'free_days'];
@@ -61,7 +62,20 @@ export function isLeavePeriod(v: unknown): v is LeavePeriod {
     typeof p.startDate === 'string' && DATE_RE.test(p.startDate) &&
     typeof p.endDate === 'string' && DATE_RE.test(p.endDate) &&
     p.endDate >= p.startDate &&
-    (p.note === undefined || typeof p.note === 'string')
+    (p.note === undefined || typeof p.note === 'string') &&
+    (p.trek === undefined || isTrekDetails(p.trek))
+  );
+}
+
+export function isTrekDetails(v: unknown): v is TrekDetails {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+  const t = v as Record<string, unknown>;
+  return (
+    typeof t.name === 'string' && t.name.trim().length > 0 &&
+    (t.terrain === 'flat_trail' || t.terrain === 'uneven_trail' || t.terrain === 'mountain' || t.terrain === 'snow') &&
+    (t.packKg === undefined || (typeof t.packKg === 'number' && Number.isFinite(t.packKg) && t.packKg >= 0)) &&
+    typeof t.tent === 'boolean' &&
+    (t.importance === 'training' || t.importance === 'goal')
   );
 }
 
@@ -112,13 +126,19 @@ export function leaveDays(periods: LeavePeriod[] | undefined): Map<string, Leave
   return map;
 }
 
-// The day before and the day after a trek: light, unless that day is itself
-// a holiday or a walking day.
+// The days before and the day after a trek: light, unless that day is itself
+// a holiday or a walking day. Before a tocht you want to be fresh for there
+// are more light days (engine/trekTaper.ts); the day after is always one.
 export function lightDays(periods: LeavePeriod[] | undefined, days: Map<string, LeaveDay> = leaveDays(periods)): Map<string, { period: LeavePeriod; side: 'before' | 'after' }> {
   const map = new Map<string, { period: LeavePeriod; side: 'before' | 'after' }>();
   for (const period of periods ?? []) {
     if (period.kind !== 'trek') continue;
-    for (const [date, side] of [[addDays(period.startDate, -1), 'before'], [addDays(period.endDate, 1), 'after']] as const) {
+    const before = trekLightDaysBefore(dayCount(period), period.trek?.importance);
+    const dates: [string, 'before' | 'after'][] = [
+      [addDays(period.endDate, 1), 'after'],
+      ...Array.from({ length: before }, (_, i): [string, 'before' | 'after'] => [addDays(period.startDate, -(i + 1)), 'before']),
+    ];
+    for (const [date, side] of dates) {
       const day = days.get(date);
       if (day && day.kind !== 'free') continue;
       if (!map.has(date)) map.set(date, { period, side });
@@ -147,14 +167,14 @@ export function leaveLabelOn(date: string, periods: LeavePeriod[] | undefined): 
   const days = leaveDays(periods);
   const day = days.get(date);
   if (day) {
-    const note = day.period.note?.trim() || undefined;
+    const note = day.period.note?.trim() || day.period.trek?.name || undefined;
     if (day.kind === 'off') return { kind: 'off', title: 'Vakantie', line: 'Geen training', note };
     if (day.kind === 'trek') return { kind: 'trek', title: 'Tochtdag', line: 'Wandelen met je rugzak', note };
     return { kind: 'free', title: 'Vrije dag', line: 'Extra tijd', note };
   }
   const light = lightDays(periods, days).get(date);
   if (light) {
-    return { kind: 'light', title: light.side === 'before' ? 'Dag voor je tocht' : 'Dag na je tocht', line: 'Houd het licht', note: light.period.note?.trim() || undefined };
+    return { kind: 'light', title: light.side === 'before' ? 'Dag voor je tocht' : 'Dag na je tocht', line: 'Houd het licht', note: light.period.note?.trim() || light.period.trek?.name || undefined };
   }
   return undefined;
 }

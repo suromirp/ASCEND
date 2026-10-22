@@ -532,6 +532,9 @@ export interface AppSettings {
   // a backup (backup schema 5, storage/migrations.ts#migrateLeavePeriods).
   // Added and removed only with Akkoord on the proposal that goes with it.
   leavePeriods?: LeavePeriod[];
+  // The next tocht (a trek you set up as a goal of your own, models/leave.ts
+  // TrekDetails) on Vandaag. Absent = on. Optional and additive.
+  showNextTrek?: boolean;
   // Kennisbank: what you marked as read and this week's lesson
   // (engine/weeklyLesson.ts). Optional and additive; travels in an export.
   knowledge?: { read?: string[]; week?: { weekStart: string; topicId: string } };

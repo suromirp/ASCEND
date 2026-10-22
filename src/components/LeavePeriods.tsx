@@ -69,7 +69,7 @@ export function LeavePeriodsCard() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="flex min-w-0 items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: KIND_COLOR[p.kind] }} aria-hidden />
-                    <span className="truncate">{LEAVE_KIND_LABEL[p.kind]}</span>
+                    <span className="truncate">{p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}</span>
                   </p>
                   <button
                     onClick={() => setPlan(planLeave('remove', p))}

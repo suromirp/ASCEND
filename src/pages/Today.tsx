@@ -12,6 +12,7 @@ import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
+import { NextTrekLine } from '../components/NextTrekLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
@@ -306,6 +307,8 @@ export function TodayPage() {
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />
       <WatchAlignCard />
+
+      <NextTrekLine onlyWhenOn />
 
       <MacroFactorCard />
 

@@ -140,3 +140,24 @@ describe('de knop onder het percentage', () => {
     expect(metersLinkLabel(one.meters.length)).toBe('Bekijk de meter');
   });
 });
+
+describe('een eigen tocht telt mee voor de GR5', () => {
+  // Een weekend met tent (twee dagen, rugzak 9 kg), gelogd als gewone wandeling.
+  // Er is geen tweede percentage: dezelfde vier meters worden er beter van.
+  it('een gelopen tocht verhoogt het ene percentage, zonder iets extra te tellen', () => {
+    const leeg = computeGr5Readiness(GR5, [], TODAY)!;
+    const tocht = [hike('2026-10-17', 300, 600, 9), hike('2026-10-18', 280, 500, 9)];
+    const na = computeGr5Readiness(GR5, tocht, TODAY)!;
+    expect(na.percent).toBeGreaterThan(leeg.percent);
+    expect(na.meters.map((m) => m.key)).toEqual(leeg.meters.map((m) => m.key));
+    const by = Object.fromEntries(na.meters.map((m) => [m.key, m.share]));
+    expect(by.rugzak).toBeCloseTo(9 / 14);
+    expect(by.dagen).toBe(1); // twee lange dagen achter elkaar
+  });
+  it('ook een tocht die als avontuur gelogd is telt, een krachttraining niet', () => {
+    const avontuur: SessionLog = { ...hike('2026-10-17', 300, 600, 9), type: 'adventure' };
+    expect(computeGr5Readiness(GR5, [avontuur], TODAY)!.percent).toBeGreaterThan(0);
+    const kracht: SessionLog = { ...hike('2026-10-17', 300, 600, 9), type: 'strength' };
+    expect(computeGr5Readiness(GR5, [kracht], TODAY)!.percent).toBe(0);
+  });
+});

@@ -21,7 +21,8 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { LEAVE_KIND_LABEL, describePeriodDates, leaveLabelOn, sortPeriods } from './leave';
+import { LEAVE_KIND_LABEL, dayCount, describePeriodDates, leaveLabelOn, sortPeriods } from './leave';
+import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import type { Finding } from './weekValidator';
 
@@ -34,6 +35,10 @@ export interface LeavePlanInput {
   period: LeavePeriod;
   // The periods as stored now.
   existing: LeavePeriod[];
+  // Changing a stored period (a tocht you move or change): the period as it
+  // is stored now. What it moved, let go or placed is put back first, then the
+  // planning runs with the new period, so no stray walk is left on the old days.
+  replaces?: LeavePeriod;
   sessions: PlannedSession[];
   logs: SessionLog[];
   templates: SessionTemplate[];
@@ -45,6 +50,7 @@ export interface LeavePlanInput {
 export interface LeavePlan {
   mode: 'add' | 'remove';
   period: LeavePeriod;
+  replaces?: LeavePeriod;
   periodsAfter: LeavePeriod[];
   proposal: PlanChangeProposal;
   // Plain sentences about what stays as it is: yours, a test or a race.
@@ -54,20 +60,22 @@ export interface LeavePlan {
 const dayText = (iso: string) => describePeriodDates({ startDate: iso, endDate: iso });
 
 export function planLeaveChange(input: LeavePlanInput): LeavePlan {
-  const { mode, period, existing, sessions, logs, templates, today } = input;
+  const { mode, period, existing, sessions, logs, templates, today, replaces } = input;
   const periodsAfter = sortPeriods(mode === 'add' ? [...existing.filter((p) => p.id !== period.id), period] : existing.filter((p) => p.id !== period.id));
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const byId = new Map(templates.map((t) => [t.id, t]));
   const nameOf = (templateId: string) => byId.get(templateId)?.name ?? 'Training';
-  const windowEnd = addDays(period.endDate, AFTER_DAYS);
+  const windowEnd = addDays(replaces && replaces.endDate > period.endDate ? replaces.endDate : period.endDate, AFTER_DAYS);
 
   // What the planning looks like without the period's earlier work.
-  const start = mode === 'remove' ? putBack(sessions, period.id, today, logged) : sessions;
+  const start = mode === 'remove' ? putBack(sessions, period.id, today, logged) : replaces ? putBack(sessions, replaces.id, today, logged) : sessions;
+  const base = new Map(start.map((s) => [s.id, s]));
   // New sessions get ids of their own here, so they can never be mistaken for a stored one.
   let drafts = 0;
   const result = planPass(start, { ...input.context(periodsAfter), newId: () => `leave-draft-${++drafts}` });
 
-  const reasonFor = (session: PlannedSession | undefined, date: string, what: 'remove' | 'move' | 'add'): string => {
+  const reasonFor = (session: PlannedSession | undefined, date: string, what: 'remove' | 'move' | 'add', back = false): string => {
+    if (back) return what === 'remove' ? `Hoorde bij de tocht zoals die was: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, de tocht ligt nu anders.`;
     if (mode === 'remove') return what === 'remove' ? `Hoorde bij ${LEAVE_KIND_LABEL[period.kind].toLowerCase()}: ${dayText(date)} vervalt.` : `Terug naar ${dayText(date)}, je periode is weg.`;
     const label = leaveLabelOn(date, periodsAfter);
     if (what === 'add') return label?.kind === 'trek' ? `Tochtdag ${dayText(date)}: een wandeling met je rugzak.` : `Vrije dag ${dayText(date)}: er past een wandeling.`;
@@ -82,6 +90,18 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   const stored = new Map(sessions.map((s) => [s.id, s]));
   const inWindow = (date: string) => date >= today && date <= windowEnd;
   const clear = mode === 'remove';
+  // The mark a changed session gets. Removing: none (it is put back). Changing
+  // a tocht: none when it is back where it naturally was, else a mark of the
+  // new period relative to where it stood after putting back.
+  const markOf = (s: PlannedSession, a: PlannedSession | undefined, role: 'moved' | 'dropped'): PlannedLeaveMark | null => {
+    if (clear) return null;
+    if (!replaces) return { periodId: period.id, role, from: s.scheduledDate };
+    const b = base.get(s.id);
+    if (!b) return null;
+    if (s.leave?.periodId === replaces.id && a && a.status !== 'skipped' && a.scheduledDate === b.scheduledDate && b.status !== 'skipped') return null;
+    return { periodId: period.id, role, from: b.scheduledDate };
+  };
+  const isBack = (s: PlannedSession, a: PlannedSession | undefined) => !!replaces && s.leave?.periodId === replaces.id && markOf(s, a, 'moved') === null;
 
   for (const s of sessions) {
     if (!inWindow(s.scheduledDate) || logged.has(s.id)) continue;
@@ -89,18 +109,19 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     if (s.status === 'skipped') {
       // Let go because of the period, and now back on the plan.
       if (a && a.status !== 'skipped' && inWindow(a.scheduledDate)) {
-        items.push({ action: 'add', newSessionDraft: { templateId: a.templateId, scheduledDate: a.scheduledDate, weekStartDate: mondayOfWeek(a.scheduledDate) }, toDate: a.scheduledDate, reason: reasonFor(a, a.scheduledDate, 'add'), generatedBy: SOURCE, ...(clear ? { leave: null } : {}) });
+        const back = !!replaces && base.get(s.id)?.status !== 'skipped';
+        items.push({ action: 'add', newSessionDraft: { templateId: a.templateId, scheduledDate: a.scheduledDate, weekStartDate: mondayOfWeek(a.scheduledDate) }, toDate: a.scheduledDate, reason: reasonFor(a, a.scheduledDate, 'add'), generatedBy: SOURCE, ...(clear || back ? { leave: null } : {}) });
       }
       continue;
     }
     if (!a || a.status === 'skipped') {
-      items.push({ plannedSessionId: s.id, action: 'remove', fromDate: s.scheduledDate, reason: reasonFor(s, s.scheduledDate, 'remove'), generatedBy: SOURCE, leave: clear ? null : { periodId: period.id, role: 'dropped', from: s.scheduledDate } });
+      items.push({ plannedSessionId: s.id, action: 'remove', fromDate: s.scheduledDate, reason: reasonFor(s, s.scheduledDate, 'remove', !!replaces && !base.has(s.id)), generatedBy: SOURCE, leave: markOf(s, a, 'dropped') });
     } else if (a.scheduledDate !== s.scheduledDate) {
       items.push({
         plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: a.scheduledDate,
         ...(a.plannedMinutes !== undefined && a.plannedMinutes !== s.plannedMinutes ? { plannedMinutes: a.plannedMinutes } : {}),
-        reason: reasonFor(s, s.scheduledDate, 'move'), generatedBy: SOURCE,
-        leave: clear ? null : { periodId: period.id, role: 'moved', from: s.scheduledDate },
+        reason: reasonFor(s, s.scheduledDate, 'move', isBack(s, a)), generatedBy: SOURCE,
+        leave: markOf(s, a, 'moved'),
       });
     }
   }
@@ -112,13 +133,14 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
 
   const label = LEAVE_KIND_LABEL[period.kind];
   const when = describePeriodDates(period);
+  const title = period.trek?.name ? `Tocht ${period.trek.name}` : label;
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: mode === 'add' ? 'leave_added' : 'leave_removed',
-    issue: mode === 'add' ? `${label}: ${when}` : `${label} verwijderd: ${when}`,
+    issue: mode === 'add' ? `${replaces ? `${title} gewijzigd` : title}: ${when}` : `${title} verwijderd: ${when}`,
     changes: items,
     alternatives: [],
-    consequences: explain(mode, period, items.length),
+    consequences: explain(mode, period, items.length, !!replaces),
     explanation: 'Een vrije periode verandert je planning nooit ongemerkt. ASCEND laat zien wat er verschuift, vervalt of erbij komt, en past het pas toe na jouw akkoord. Wat je zelf vastzette, een geplande test of wedstrijd en alles wat al geweest is blijven zoals het is.',
     createdAt: new Date().toISOString(),
   };
@@ -126,21 +148,23 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   // A test or race right before or inside a trek stays where it is: say so.
   if (mode === 'add' && period.kind === 'trek') {
     for (const s of result.sessions) {
-      if (s.status === 'skipped' || !['tpl_test_run', 'tpl_race'].includes(s.templateId) || s.scheduledDate < addDays(period.startDate, -1) || s.scheduledDate > period.endDate) continue;
+      if (s.status === 'skipped' || !['tpl_test_run', 'tpl_race'].includes(s.templateId) || s.scheduledDate < addDays(period.startDate, -trekLightDaysBefore(dayCount(period), period.trek?.importance)) || s.scheduledDate > period.endDate) continue;
       notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verplaats ik niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
     }
   }
-  return { mode, period, periodsAfter, proposal, notes: [...new Set(notes)] };
+  return { mode, period, ...(replaces ? { replaces } : {}), periodsAfter, proposal, notes: [...new Set(notes)] };
 }
 
-function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number): string {
+function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, changed = false): string {
   if (count === 0) {
+    if (changed) return 'Je planning hoefde niet te veranderen. De tocht is bijgewerkt en ASCEND houdt er rekening mee.';
     return mode === 'add'
       ? 'Je planning hoefde niet te veranderen. De periode is bewaard en ASCEND houdt er rekening mee.'
       : 'Je planning hoefde niet te veranderen. De periode is verwijderd.';
   }
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';
   if (period.kind === 'no_training') return 'Op je vakantiedagen staat geen training meer. Wat er stond, is naar een andere dag van die week geschoven of vervallen, binnen de gewone regels voor rust tussen zware dagen.';
+  if (period.kind === 'trek' && period.trek?.importance === 'goal') return 'Elke tochtdag is een wandeldag met je rugzak. De dagen ervoor blijven licht, zodat je fris vertrekt, en de dag erna ook. Zware beendagen houden de gewone rust tot en na de tocht.';
   if (period.kind === 'trek') return 'Elke tochtdag is een wandeldag met je rugzak. De dag ervoor en erna blijft licht, en zware beendagen houden de gewone rust tot en na de tocht.';
   return 'Op je vrije dag past een wandeling, binnen de gewone regels voor rust tussen zware dagen.';
 }
