@@ -33,7 +33,7 @@ const capitalize = (text: string): string => (text ? text.charAt(0).toUpperCase(
 // Een doelnaam kort genoeg voor een vak van een derde van de breedte:
 // "GR5 / ALPENKLAAR" wordt "GR5".
 export function shortGoalName(name: string): string {
-  const first = name.split(/\s+[/–—-]\s+/)[0].trim();
+  const first = name.split(/\s+[/\u2013\u2014-]\s+/)[0].trim();
   if (first.length <= 10) return first;
   const word = first.split(/\s+/)[0];
   return word.length <= 10 ? word : `${word.slice(0, 9)}…`;

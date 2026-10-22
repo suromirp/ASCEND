@@ -11,12 +11,11 @@ import { todayISO } from '../../utils/dates';
 
 type PendingImpact = { title: string; proposal: PlanChangeProposal; lines: string[]; restore?: UndoRestore };
 
-// Alles wat de planning verandert gaat langs hetzelfde pad als op de oude pagina
-// (Fase 2, het patroon van de terugkoppeling): niets te veranderen, dan zegt het dat;
+// Alles wat de planning verandert gaat langs hetzelfde pad (Fase 2, het patroon van de terugkoppeling): niets te veranderen, dan zegt het dat;
 // een wijziging die jouw keuze bij "Wijzigingen" toelaat, past het toe met een melding en
 // ongedaan maken; anders vraagt het eerst Akkoord of Liever niet. De zinnen die vroeger
 // onder de kaarten stonden, komen nu als `note` bovenaan de pagina (en in het blad).
-// Gedrag gelijk aan Settings.tsx: dezelfde engine-functies, dezelfde voorstellen.
+// De engine-functies zijn dezelfde als altijd (changeImpact, scheduleFit, sportFrequency).
 export function usePlanSettingChange(): {
   applyMode: ChangeApplyMode;
   note: string | null;

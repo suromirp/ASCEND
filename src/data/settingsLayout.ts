@@ -7,9 +7,9 @@
 // instelling een plek mist. De id van een rij is ook het anker
 // (`instelling-<id>`), en bij een instelling uit de index is het hetzelfde id.
 
-// De plek van de pagina's. Tijdens het bouwen staan ze naast de oude pagina op
-// /instellingen; de laatste ronde zet dit op /more, het tandwiel en alle oude links.
-export const SETTINGS_ROOT = '/instellingen';
+// De plek van de pagina's: /more is het overzicht (ook voor het tandwiel en oude links),
+// /more/:groep een groep. Een onbekende groep gaat terug naar het overzicht.
+export const SETTINGS_ROOT = '/more';
 
 export type SettingsPageId = 'planning' | 'doel' | 'forge' | 'lichaam' | 'vandaag' | 'koppelingen' | 'gegevens' | 'gidsen';
 

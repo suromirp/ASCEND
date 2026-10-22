@@ -100,6 +100,7 @@ export function SettingsOverview() {
                     key={item.id}
                     id={`zoek-${item.id}`}
                     title={item.title}
+                    result
                     sub={settingsPageTitle(placement.page)}
                     value={availability.available ? value.text : 'Niet nu'}
                     dim={!availability.available || value.dim}

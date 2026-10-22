@@ -25,7 +25,6 @@ import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage, GoalsPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
-import { SettingsPage } from './pages/Settings';
 import { SettingsOverview } from './pages/settings/SettingsOverview';
 import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
@@ -340,9 +339,8 @@ function AppShell() {
             <Route path="/ascend" element={<AscendPage />} />
             <Route path="/ascend/doelen" element={<GoalsPage />} />
             <Route path="/history" element={<HistoryPage />} />
-            <Route path="/more" element={<SettingsPage />} />
-            <Route path="/instellingen" element={<SettingsOverview />} />
-            <Route path="/instellingen/:groep" element={<SettingsGroupPage />} />
+            <Route path="/more" element={<SettingsOverview />} />
+            <Route path="/more/:groep" element={<SettingsGroupPage />} />
             <Route path="/stretches" element={<StretchesPage />} />
             <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
             <Route path="/kennis" element={<KnowledgePage />} />

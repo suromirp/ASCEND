@@ -64,6 +64,22 @@ laat goud over voor de ene knop of het ene vinkje.
   vakken zijn pure functies in `engine/settingsSummary.ts`,
   `engine/settingsStatus.ts` en `engine/settingsAttention.ts`, met tests.
 
+## Waar wat staat
+
+- Planning: Trainingstijd per dag, Rustdag (een andere dag is een voorstel met Akkoord,
+  `2026-10-22-rustdag-als-voorstel.md`), Op je rustdag, Twee trainingen per dag,
+  de drie sporten, Wijzigingen, Ambitie en onder Geavanceerd Benen en een zware loop.
+- Doel en tochten: Hoofddoel, Programma (met Opnieuw bij week 1), De lange zondag,
+  Na je hoofddoel, Volgende tocht op Vandaag, Rust na een bergtocht, Vrije dagen en
+  vakanties, Reisplanner en Paklijst.
+- Vandaag en meldingen: de kaarten op Vandaag, het weer (Plaats, Je kleding), na een
+  training, en Terugknop op een tab en Na een herstart
+  (`2026-10-22-terugknop-en-hervatten.md`).
+- Koppelingen: Garmin met alle schakelaars, ook het voorvoegsel, het weghalen van
+  gedane trainingen en de status van het versturen, MacroFactor en Health Connect.
+- Een groep die niet op een eigen pagina past (Blessures, Doelen, Reisplanner) blijft
+  zijn eigen pagina; de rij opent die.
+
 ## De schakelaar
 
 `Toggle` in `src/components/ui.tsx` staat aan in `--color-bronze-dark` met een
