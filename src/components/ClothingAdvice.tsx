@@ -13,6 +13,7 @@ import { adjustFor } from '../engine/clothingFeedback';
 import { showClothingAdvice } from '../engine/overviewSettings';
 import { templateSport } from '../engine/sports';
 import { useSheetClose } from '../utils/useSheetClose';
+import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
 
@@ -62,7 +63,8 @@ function ClothingSheet({ lines, onClose }: { lines: string[]; onClose: () => voi
             <div className="mt-3 flex flex-col gap-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
               {lines.map((line) => <p key={line}>{line}</p>)}
             </div>
-            <button onClick={requestClose} className="mt-4 min-h-[44px] w-full text-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
+            <SettingsLinkRow page="vandaag" row="kledingadvies" />
+            <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
           </Card>
         </div>
       </div>

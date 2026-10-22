@@ -107,10 +107,11 @@ function BottomNav() {
 // en kennis). Op elke tab op precies dezelfde plek, rechtsboven, 44 bij 44 px.
 // Het staat in het scrollvlak, dus het schuift met de pagina mee en hangt
 // niet over de inhoud.
-function SettingsGear() {
+function SettingsGear({ from }: { from: string }) {
   return (
     <Link
       to="/more"
+      state={{ from }}
       aria-label="Meer: instellingen, gegevens, koppelingen en gidsen"
       className="absolute right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border"
       style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', borderColor: 'var(--color-card-border)', background: 'var(--color-bg)', color: 'var(--color-ink-dim)' }}
@@ -200,7 +201,7 @@ function AppShell() {
       >
         <div className={`relative ${TOP_ROW_PAD[location.pathname] ?? ''}`}>
         {TAB_ROUTES.includes(location.pathname) && <AppMark />}
-        {TAB_ROUTES.includes(location.pathname) && <SettingsGear />}
+        {TAB_ROUTES.includes(location.pathname) && <SettingsGear from={location.pathname} />}
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
           <Routes>

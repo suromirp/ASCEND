@@ -3,6 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
 import { addDays, formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
+import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../models/checkIn';
@@ -152,7 +153,8 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
               </Section>
             )}
 
-            <button onClick={requestClose} className="mt-6 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
+            <div className="mt-4"><SettingsLinkRow page="vandaag" row="weekterugblik" /></div>
+            <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
           </Card>
         </div>
       </div>

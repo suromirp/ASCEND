@@ -5,6 +5,7 @@ import { checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbein
 import { todayISO } from '../utils/dates';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
+import { SettingsLinkRow } from './settings/SettingsLink';
 import { NotFitLink } from './IllnessCard';
 import { WellnessLines } from './WellnessLines';
 import { useTodayWellness } from './useWellness';
@@ -121,6 +122,7 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
                 Opslaan
               </button>
             </div>
+            <SettingsLinkRow page="vandaag" row="ochtendcheck" />
           </div>
         </TodaySheet>
       )}

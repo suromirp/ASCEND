@@ -12,6 +12,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
+import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { MacroFactorLeadCard } from '../components/MacroFactorLeadCard';
 import { MacroFactorLinkCard } from '../components/MacroFactorLinkCard';
@@ -146,6 +147,7 @@ export function MacroFactorImportPage() {
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>krachttrainingen en gewicht zonder overtypen</p>
         </div>
       </div>
+      <SettingsPageLink page="koppelingen" row="macrofactor" label="Instellingen van MacroFactor" />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>DRIE STAPPEN</Eyebrow>
