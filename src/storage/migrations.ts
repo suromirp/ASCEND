@@ -6,7 +6,7 @@
 
 import { isLeavePeriod } from '../engine/leave';
 import type { LeavePeriod } from '../models/leave';
-import type { ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog } from '../models/training';
+import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -139,4 +139,47 @@ export function migrateLogManualMeasured(log: SessionLog): SessionLog {
   const { manualMeasured: _damaged, ...rest } = log;
   void _damaged;
   return valid ? { ...rest, manualMeasured: valid } : rest;
+}
+
+// --- meer per set: SetLog.rir en SetLog.kind ------------------------------------
+// A set can carry the reps in reserve (`rir`, 0 to 10) and its kind (`kind`,
+// 'warmup' or 'work'; absent is a working set). Both are optional and additive:
+// every log travels whole, so the backup schema number does not move and a
+// backup from before the fields (any schema) imports exactly as it did. A set
+// whose new field is damaged (hand-edited) keeps its reps and weight and loses
+// only that field.
+export function migrateSetLog(raw: SetLog): SetLog {
+  if (typeof raw !== 'object' || raw === null || (!('rir' in raw) && !('kind' in raw))) return raw;
+  const { rir, kind, ...rest } = raw as SetLog;
+  const out: SetLog = rest;
+  if (typeof rir === 'number' && Number.isFinite(rir) && rir >= 0 && rir <= 10) out.rir = rir;
+  if (kind === 'warmup' || kind === 'work') out.kind = kind;
+  return out;
+}
+
+function migrateExerciseSets(data: ExerciseSetLog[] | null | undefined): ExerciseSetLog[] | null | undefined {
+  if (!Array.isArray(data)) return data;
+  let changed = false;
+  const next = data.map((e) => {
+    if (!e || !Array.isArray(e.sets)) return e;
+    const sets = e.sets.map(migrateSetLog);
+    if (sets.every((s, i) => s === e.sets[i])) return e;
+    changed = true;
+    return { ...e, sets };
+  });
+  return changed ? next : data;
+}
+
+// A log as it comes out of a file, with every set read by migrateSetLog (also
+// the sets kept for putting back in `manualMeasured.strength`).
+export function migrateLogSets(log: SessionLog): SessionLog {
+  let next = log;
+  const data = migrateExerciseSets(log.strengthData);
+  if (data !== log.strengthData) next = { ...next, strengthData: data as ExerciseSetLog[] };
+  const kept = log.manualMeasured?.strength?.strengthData;
+  const keptNext = migrateExerciseSets(kept);
+  if (keptNext !== kept && log.manualMeasured?.strength) {
+    next = { ...next, manualMeasured: { ...log.manualMeasured, strength: { ...log.manualMeasured.strength, strengthData: keptNext } } };
+  }
+  return next;
 }

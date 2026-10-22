@@ -17,11 +17,12 @@
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, SessionLog, SessionTemplate } from '../models/training';
 import { formatNumberNL } from '../utils/number';
 import type { MacroFactorWorkout } from './macrofactorImport';
-import { minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
+import { isWorkSet } from './workSets';
+import { legacySetShape, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
 
 export const isStrengthTakeover = (log: SessionLog): boolean => !!log.manualMeasured?.strength;
 
-const setCount = (data: ExerciseSetLog[] | undefined): number | undefined => (data ? data.reduce((n, e) => n + e.sets.length, 0) : undefined);
+const setCount = (data: ExerciseSetLog[] | undefined): number | undefined => (data ? data.reduce((n, e) => n + e.sets.filter(isWorkSet).length, 0) : undefined);
 
 // --- what would change ----------------------------------------------------------
 
@@ -42,7 +43,7 @@ export function strengthChangeFor(log: SessionLog, workout: MacroFactorWorkout, 
     if (after !== log.durationMinutes) change.duration = { before: log.durationMinutes, after };
   }
   const data = strengthDataFor(workout, template);
-  if (JSON.stringify(data) !== JSON.stringify(log.strengthData)) change.exercises = { before: setCount(log.strengthData), after: setCount(data)! };
+  if (JSON.stringify(legacySetShape(data)) !== JSON.stringify(legacySetShape(log.strengthData))) change.exercises = { before: setCount(log.strengthData), after: setCount(data)! };
   const rir = strengthRirFor(workout, template);
   if (rir !== undefined && rir !== log.strengthRir) change.rir = { before: log.strengthRir, after: rir };
   return change.duration || change.exercises || change.rir ? change : undefined;

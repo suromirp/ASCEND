@@ -14,6 +14,7 @@
 // §69), not hidden science — isolated here so a formula can be swapped
 // later without touching extraction or the Demand/Gap engines.
 
+import { isWorkSet } from './workSets';
 import type { SessionLog } from '../models/training';
 import type { CapabilityEvidence, CapabilityKey, CapabilityEstimate, CapabilityDimension, RecencyBand, Confidence } from '../models/capability';
 import type { MeasuredValue } from '../models/units';
@@ -157,7 +158,7 @@ export function extractEvidenceFromLog(log: SessionLog): CapabilityEvidence[] {
   // is never interpreted as bad capability".
   if (log.type === 'strength' && log.strengthData && log.strengthData.length > 0) {
     const heaviestSet = log.strengthData
-      .flatMap((exercise) => exercise.sets)
+      .flatMap((exercise) => exercise.sets.filter(isWorkSet))
       .reduce<number>((max, set) => (set.weightKg !== undefined && set.weightKg > max ? set.weightKg : max), 0);
     if (heaviestSet > 0) {
       push({ dimension: 'strength' }, { amount: heaviestSet, unit: 'kg' }, 'direct');

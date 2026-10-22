@@ -1,4 +1,5 @@
 import type { SessionLog } from '../models/training';
+import { isWorkSet } from './workSets';
 import { formatDateNL } from '../utils/dates';
 import type { TrendPoint } from './readiness';
 
@@ -27,7 +28,7 @@ export function computeExerciseProgression(logs: SessionLog[], exerciseId: strin
     .map((log) => {
       const entry = log.strengthData?.find((e) => e.exerciseId === exerciseId);
       if (!entry) return null;
-      const topWeight = entry.sets.reduce((max, s) => Math.max(max, s.weightKg ?? 0), 0);
+      const topWeight = entry.sets.filter(isWorkSet).reduce((max, s) => Math.max(max, s.weightKg ?? 0), 0);
       return topWeight > 0 ? { date: log.completedDate, value: topWeight } : null;
     })
     .filter((p): p is { date: string; value: number } => p !== null)

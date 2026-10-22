@@ -3,8 +3,9 @@
 // by engine/macrofactorLink.ts (a new log, filling in) and
 // engine/macrofactorLead.ts (MacroFactor takes over). Pure.
 
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { SessionLog, SessionTemplate, SetLog } from '../models/training';
 import { resolveEffectiveStressProfile } from './stressProfile';
+import { isWorkSet } from './workSets';
 import { lowestTopRir, nameKey, type MacroFactorWorkout } from './macrofactorImport';
 
 // --- legs and reps in reserve -------------------------------------------------
@@ -41,7 +42,14 @@ export function strengthDataFor(workout: MacroFactorWorkout, template: SessionTe
     return {
       exerciseId,
       exerciseName: exercise.name,
-      sets: exercise.sets.map((s) => (s.weightKg !== undefined ? { reps: s.reps, weightKg: s.weightKg } : { reps: s.reps })),
+      sets: (exercise.loggedSets ?? exercise.sets).map(
+        (s): SetLog => ({
+          reps: s.reps,
+          ...(s.weightKg !== undefined ? { weightKg: s.weightKg } : {}),
+          ...(s.rir !== undefined ? { rir: s.rir } : {}),
+          ...(s.kind === 'warmup' ? { kind: 'warmup' as const } : {}),
+        }),
+      ),
     };
   });
 }
@@ -50,4 +58,16 @@ export function minutesLabel(minutes: number): string {
   const h = Math.floor(minutes / 60);
   if (h === 0) return `${minutes} min`;
   return minutes % 60 === 0 ? `${h} uur` : `${h} uur ${minutes % 60} min`;
+}
+
+// --- working sets only ----------------------------------------------------------
+
+// The sets as ASCEND kept them before reps in reserve and warm-ups were stored:
+// working sets with reps and weight only. Used to find out whether a log
+// already holds what the file holds.
+export function legacySetShape(data: SessionLog['strengthData']): unknown {
+  return data?.map((e) => ({
+    ...e,
+    sets: e.sets.filter(isWorkSet).map((s) => (s.weightKg !== undefined ? { reps: s.reps, weightKg: s.weightKg } : { reps: s.reps })),
+  }));
 }

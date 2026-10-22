@@ -10,6 +10,7 @@
 //
 // Puur: geen React, geen IndexedDB.
 
+import { isWorkSet } from './workSets';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { GoalMilestone, GoalMilestoneProgress, TrainingGoal } from '../models/goals';
 import { computeDemand } from './demand';
@@ -80,8 +81,8 @@ export function logFacts(log: SessionLog): CompletionFacts {
   if (log.durationMinutes > 0) main.push(formatHoursMinutesNL(log.durationMinutes));
 
   if (log.strengthData && log.strengthData.length > 0) {
-    const worked = log.strengthData.filter((e) => e.sets.some((s) => s.reps > 0));
-    const sets = worked.reduce((n, e) => n + e.sets.filter((s) => s.reps > 0).length, 0);
+    const worked = log.strengthData.filter((e) => e.sets.some((s) => isWorkSet(s) && s.reps > 0));
+    const sets = worked.reduce((n, e) => n + e.sets.filter((s) => isWorkSet(s) && s.reps > 0).length, 0);
     if (worked.length > 0) main.push(`${worked.length} ${worked.length === 1 ? 'oefening' : 'oefeningen'}`);
     if (sets > 0) main.push(`${sets} ${sets === 1 ? 'set' : 'sets'}`);
   }

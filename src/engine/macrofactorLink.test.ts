@@ -64,7 +64,12 @@ describe('four workouts, a week of planned sessions', () => {
       source: 'macrofactor',
     });
     expect(lower.draft.strengthData).toHaveLength(4);
-    expect(lower.draft.strengthData![0].sets[0]).toEqual({ reps: 6, weightKg: 100 });
+    // The two warm-up sets are kept as warm-ups; the first working set follows, with its own reps in reserve.
+    expect(lower.draft.strengthData![0].sets.slice(0, 3)).toEqual([
+      { reps: 8, weightKg: 60, kind: 'warmup' },
+      { reps: 5, weightKg: 80, kind: 'warmup' },
+      { reps: 6, weightKg: 100, rir: 2 },
+    ]);
   });
 
   it('puts reps in reserve on leg sessions only', () => {

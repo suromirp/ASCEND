@@ -377,3 +377,53 @@ describe('vrije periodes in een back-up', () => {
     expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: '2027-01-01T00:00:00.000Z', payload: { version: 6 } })).toThrow(/nieuwere versie/);
   });
 });
+
+describe('meer per set in een back-up (rir en kind)', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  const baseLog = (id: string, sets: SessionLog['strengthData']): SessionLog => ({
+    id, templateId: 'tpl_lower_a', type: 'strength', completedDate: '2026-10-14', completedAt: '2026-10-14T18:00:00.000Z',
+    variant: 'full', durationMinutes: 62, source: 'macrofactor', strengthData: sets,
+  });
+  const oldSets = [{ exerciseId: 'sq', exerciseName: 'Squat', sets: [{ reps: 6, weightKg: 100 }, { reps: 5, weightKg: 100, rpe: 8 }] }];
+  const newSets = [{ exerciseId: 'sq', exerciseName: 'Squat', sets: [{ reps: 8, weightKg: 60, kind: 'warmup' as const }, { reps: 6, weightKg: 100, rir: 2 }, { reps: 5, weightKg: 100, rir: 0, kind: 'work' as const }] }];
+  const flat = (logs: SessionLog[]) => ({ schemaVersion: 1, exportDate: '2026-06-01T00:00:00.000Z', program: null, templates: [], plannedSessions: [], sessionLogs: logs, objectives: [], milestoneProgress: [], settings: {} });
+
+  async function restore(payload: unknown) {
+    const backup = normalizeBackupToCurrentModel(payload);
+    const selections = defaultActionsForMode('full_restore');
+    const preview = await buildImportPreview(backup, selections, 'restore_backup_plan');
+    const snapshot = await createPreImportSnapshot();
+    const plan = createImportPlan(backup, 'full_restore', selections, 'restore_backup_plan', preview.diffByCategory.flatMap((d) => d.conflicts), snapshot.id);
+    await applyImportPlan(backup, plan);
+  }
+
+  it('a back-up of the current schema and an older flat export import the sets exactly as they are', async () => {
+    await restore(flat([baseLog('old', oldSets)]));
+    expect((await SessionLogsRepo.getAll())[0].strengthData).toEqual(oldSets);
+
+    await wipeAllData();
+    await SessionLogsRepo.put(baseLog('cur', oldSets));
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    await wipeAllData();
+    await restore(envelope);
+    expect((await SessionLogsRepo.getAll())[0].strengthData).toEqual(oldSets);
+  });
+
+  it('rir and kind survive export and import', async () => {
+    await SessionLogsRepo.put(baseLog('new', newSets));
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    expect(envelope.payload.sessionLogs[0].strengthData).toEqual(newSets);
+    await wipeAllData();
+    await restore(envelope);
+    expect((await SessionLogsRepo.getAll())[0].strengthData).toEqual(newSets);
+  });
+
+  it('a damaged rir or kind is dropped, the reps and weight stay', () => {
+    const damaged = [{ exerciseId: 'sq', exerciseName: 'Squat', sets: [{ reps: 6, weightKg: 100, rir: 'veel', kind: 'zwaar' }, { reps: 5, rir: 11 }, { reps: 4, rir: -1 }] }];
+    const backup = normalizeBackupToCurrentModel(flat([baseLog('bad', damaged as never)]));
+    expect(backup.sessionLogs[0].strengthData![0].sets).toEqual([{ reps: 6, weightKg: 100 }, { reps: 5 }, { reps: 4 }]);
+  });
+});

@@ -170,10 +170,18 @@ export interface PlanLock {
 
 export type SessionVariant = 'full' | 'short' | 'minimum' | 'custom';
 
+export type SetKind = 'warmup' | 'work';
+
 export interface SetLog {
   reps: number;
   weightKg?: number;
   rpe?: number;
+  // Reps in reserve after this set: how many were left (0 = to failure), 0 to 10.
+  // Absent when unknown.
+  rir?: number;
+  // A warm-up set or a working set. Absent means a working set, so every log
+  // from before this field reads as it always did.
+  kind?: SetKind;
 }
 
 export interface ExerciseSetLog {

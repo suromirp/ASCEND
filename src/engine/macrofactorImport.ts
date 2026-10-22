@@ -19,12 +19,18 @@ export interface MacroFactorSet {
   weightKg?: number;
   // Reps in reserve: how many reps were left (0 = to failure).
   rir?: number;
+  // Only 'warmup' is ever set here; absent is a working set.
+  kind?: 'warmup';
 }
 
 export interface MacroFactorExercise {
   name: string;
-  // Working sets in the order of the file (warm-up sets left out).
+  // Working sets in the order of the file (warm-up sets left out). Everything
+  // that counts sets (the leg index, the top set, the set count) reads this.
   sets: MacroFactorSet[];
+  // Every set of the exercise in the order of the file, warm-up sets included
+  // (kind 'warmup'), each with its own reps in reserve. What ASCEND stores.
+  loggedSets?: MacroFactorSet[];
   // The heaviest set: most weight, then most reps, then the fewest reps left.
   top: MacroFactorSet;
 }
@@ -46,7 +52,8 @@ export interface MacroFactorWorkout {
 
 export interface MacroFactorReadResult {
   workouts: MacroFactorWorkout[];
-  // Rows that were skipped (a warm-up, or a set without reps).
+  // Rows that were not counted as a working set (a warm-up, which is kept as a
+  // warm-up set, or a set without reps, which is dropped).
   skippedRows: number;
 }
 
@@ -297,6 +304,8 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
     name: string;
     durations: { value: number; clock: boolean }[];
     sets: RawSet[];
+    // Every kept row (work and warm-up) in file order.
+    all: RawSet[];
   }
   const groups = new Map<string, Group>();
   let skippedRows = 0;
@@ -311,8 +320,12 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
       continue;
     }
     const reps = parseNumber(cell('reps'));
-    if (isWarmup(cellText(cell('setType'))) || reps === undefined || reps <= 0) {
-      skippedRows++;
+    const warmup = isWarmup(cellText(cell('setType')));
+    // A warm-up row still counts as skipped (it is not a working set); it is
+    // kept below as a warm-up set when it has reps.
+    if (warmup) skippedRows++;
+    if (reps === undefined || reps <= 0) {
+      if (!warmup) skippedRows++;
       continue;
     }
     const weight = parseNumber(cell('weight'));
@@ -324,13 +337,22 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
     const key = `${when.date}|${nameKey(name)}`;
     let group = groups.get(key);
     if (!group) {
-      group = { key, date: when.date, time: when.time, name, durations: [], sets: [] };
+      group = { key, date: when.date, time: when.time, name, durations: [], sets: [], all: [] };
       groups.set(key, group);
+    }
+    if (warmup) {
+      // Kept as a warm-up set; it never counts as a working set, never gives
+      // the workout its duration, and a workout with only warm-ups is no workout.
+      set.kind = 'warmup';
+      group.all.push({ name: exercise, set });
+      continue;
     }
     const duration = parseDurationCell(cell('duration'));
     if (duration) group.durations.push(duration);
     group.sets.push({ name: exercise, set });
+    group.all.push({ name: exercise, set });
   }
+  for (const [key, g] of groups) if (g.sets.length === 0) groups.delete(key);
 
   if (groups.size === 0) {
     throw new MacroFactorFormatError('In dit bestand staan geen krachttrainingen met herhalingen. Kies in MacroFactor een periode waarin je hebt getraind.');
@@ -349,7 +371,13 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
       if (list) list.push(set);
       else byExercise.set(name, [set]);
     }
-    const exercises: MacroFactorExercise[] = [...byExercise].map(([name, sets]) => ({ name, sets, top: heaviestSet(sets) }));
+    const everySet = new Map<string, MacroFactorSet[]>();
+    for (const { name, set } of g.all) {
+      const list = everySet.get(name);
+      if (list) list.push(set);
+      else everySet.set(name, [set]);
+    }
+    const exercises: MacroFactorExercise[] = [...byExercise].map(([name, sets]) => ({ name, sets, loggedSets: everySet.get(name) ?? sets, top: heaviestSet(sets) }));
     return {
       externalId: `macrofactor:${g.date}:${nameKey(g.name)}`,
       date: g.date,
