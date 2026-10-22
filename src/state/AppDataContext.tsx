@@ -69,7 +69,7 @@ import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { createSerialQueue } from '../utils/serialQueue';
-import { runBoot, type BootStep } from '../engine/bootWatch';
+import { runBoot, type BootStep, BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from '../engine/bootWatch';
 
 type AdviceResponse = StoredResponse;
 
@@ -106,6 +106,17 @@ class BootLockBusy extends Error {
 function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
   if (!locks) return fn();
+  // "Toch openen": take the lock from the window that keeps it (a tab Android
+  // froze), once. The boot steps are idempotent and remember per version what
+  // ran, so the rare overlap with a window that wakes up again does no harm.
+  let steal = false;
+  try {
+    steal = sessionStorage.getItem(BOOT_STEAL_FLAG) === '1';
+    if (steal) sessionStorage.removeItem(BOOT_STEAL_FLAG);
+  } catch {
+    // No session storage: wait as usual.
+  }
+  if (steal) return locks.request('ascend-boot', { steal: true }, fn) as Promise<T>;
   const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(10_000) : undefined;
   return (locks.request('ascend-boot', signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
     // Only the wait for the lock itself; an error from fn goes through as it is.
@@ -272,7 +283,7 @@ import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/ov
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
   const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen. Helpt dat niet, kies dan in je telefooninstellingen Apps, Chrome, Geforceerd stoppen; je gegevens blijven staan.';
+  if (name === 'BootLockBusy') return BOOT_LOCK_BUSY_TEXT;
   if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
   if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';
   return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';

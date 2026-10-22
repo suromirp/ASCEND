@@ -11,6 +11,11 @@ export type BootStep = 'migraties' | 'gegevens' | 'planning';
 
 export type BootWatchStage = 'quiet' | 'slow' | 'stuck';
 
+// "Toch openen" on the screen for a boot lock that stays taken: the next load
+// takes the lock over (Web Locks steal) instead of waiting for it.
+export const BOOT_STEAL_FLAG = 'ascend-steal-boot-lock';
+export const BOOT_LOCK_BUSY_TEXT = 'Een ander ASCEND-venster houdt het opstarten vast, waarschijnlijk een tabblad in Chrome dat Android heeft gepauzeerd. Sluit ASCEND-tabbladen in Chrome, of tik op Toch openen: dan neemt deze app het over. Je gegevens blijven staan.';
+
 export const BOOT_SLOW_MS = 6_000;
 export const BOOT_STUCK_MS = 20_000;
 

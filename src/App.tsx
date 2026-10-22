@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from './engine/bootWatch';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { BootScreen } from './components/BootScreen';
 import { CompletionMoment } from './components/CompletionMoment';
@@ -272,6 +273,22 @@ function AppShell() {
         >
           Opnieuw proberen
         </button>
+        {bootError === BOOT_LOCK_BUSY_TEXT && (
+          <button
+            onClick={() => {
+              try {
+                sessionStorage.setItem(BOOT_STEAL_FLAG, '1');
+              } catch {
+                // Without session storage the next load simply waits again.
+              }
+              window.location.reload();
+            }}
+            className="min-h-[44px] rounded-xl border px-5 py-2.5 text-xs font-semibold"
+            style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-ink)' }}
+          >
+            Toch openen
+          </button>
+        )}
         <UpdatePrompt />
       </div>
     );
