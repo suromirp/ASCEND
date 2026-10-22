@@ -213,7 +213,10 @@ demonstrably better, and announces it ("Planning bijgewerkt", with undo).
 A proposal's preview runs that same pass, so what it shows is what you get.
 The sync (`storage/database.ts#syncProgramHorizon`) runs whenever the
 stored plan changed (a fingerprint is part of its key), not once a day.
-Background jobs at boot run one after the other, never at once. Design and
+Background jobs at boot run one after the other, never at once. Opening never
+waits for the sync: the app shows the stored data first and syncs in the
+background; whatever changes the plan waits for the queued syncs and then reads
+the stored plan (`docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md`). Design and
 reasoning: `docs/onderzoek/Planning op een lijn.md`.
 
 **Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,
@@ -366,6 +369,11 @@ afspraken voor elke agent die in deze repo werkt.
   pas na groene controles. Er is geen verplichte PR of merge door de eigenaar.
 - Controles: voor elke push naar main zijn `npx tsc -p tsconfig.app.json
   --noEmit`, `npm run lint`, `npx vitest run` en `npm run build` groen.
+  Daarna nog drie poorten: review door Warden, een doorloop in Chromium op
+  360 en 390 px met vertraagde processor door Lookout, en een screenshot van
+  elk veranderd scherm dat de coördinator zelf bekijkt. Elke knop die wacht
+  heeft een grens in tijd en een zichtbare uitkomst; de app start nooit op een
+  leeg scherm (`docs/beslissingen/2026-10-22-kwaliteitspoort.md`).
 - Planning van de gebruiker: alles wat zijn planning inhoudelijk verandert
   gaat in de app via een voorstel met Akkoord, nooit stil.
 - Instellingen: elke keuze die de app voor de gebruiker maakt is instelbaar,
@@ -387,3 +395,7 @@ afspraken voor elke agent die in deze repo werkt.
   voor review en lastig onderzoek, effort gemiddeld als standaard.
 - De rollen staan in `.claude/agents/`, de vaste werkinstructies in
   `.claude/skills/`.
+- Helpers hebben in berichten aan de eigenaar een vaste naam in de stijl van
+  ASCEND: Scout (onderzoek), Sherpa (bouwen), Warden (review), Lookout
+  (UI-controle en testen) en Cartographer (ontwerp), met het onderwerp erbij,
+  bijvoorbeeld "Sherpa Forge".

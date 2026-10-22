@@ -55,7 +55,7 @@ export function ObjectiveCard({
               {definition.title}
             </span>
             {subtitle && (
-              <span className="mt-0.5 block text-xs tracking-wide" style={{ color: 'var(--color-bronze)' }}>{subtitle}</span>
+              <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-bronze)' }}>{subtitle}</span>
             )}
           </span>
           {onSelect && (

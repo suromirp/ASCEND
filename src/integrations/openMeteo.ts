@@ -137,22 +137,26 @@ async function getJson(url: string, options: FetchOptions): Promise<unknown> {
   const doFetch = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  let response: Response;
+  // The timer runs until the body is read too: on a weak mobile connection the
+  // headers can arrive and the body stall, which would leave "Bezig…" forever.
   try {
-    response = await doFetch(url, { method: 'GET', headers: { Accept: 'application/json' }, signal: controller.signal });
-  } catch {
-    // Offline, blocked, timed out: all the same to the user.
-    throw new OpenMeteoError('network', MESSAGES.network);
+    let response: Response;
+    try {
+      response = await doFetch(url, { method: 'GET', headers: { Accept: 'application/json' }, signal: controller.signal });
+    } catch {
+      // Offline, blocked, timed out: all the same to the user.
+      throw new OpenMeteoError('network', MESSAGES.network);
+    }
+    if (response.status === 429) throw new OpenMeteoError('rate', MESSAGES.rate);
+    if (response.status >= 500) throw new OpenMeteoError('server', MESSAGES.server);
+    if (!response.ok) throw new OpenMeteoError('response', MESSAGES.response);
+    try {
+      return await response.json();
+    } catch {
+      throw new OpenMeteoError(controller.signal.aborted ? 'network' : 'response', controller.signal.aborted ? MESSAGES.network : MESSAGES.response);
+    }
   } finally {
     clearTimeout(timer);
-  }
-  if (response.status === 429) throw new OpenMeteoError('rate', MESSAGES.rate);
-  if (response.status >= 500) throw new OpenMeteoError('server', MESSAGES.server);
-  if (!response.ok) throw new OpenMeteoError('response', MESSAGES.response);
-  try {
-    return await response.json();
-  } catch {
-    throw new OpenMeteoError('response', MESSAGES.response);
   }
 }
 

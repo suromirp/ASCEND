@@ -538,7 +538,7 @@ function GapRow({ gap, multiDay }: { gap: CapabilityGap; multiDay: boolean }) {
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{capabilityKeyLabel(gap.key)}</span>
-        <span className="shrink-0 whitespace-nowrap text-xs font-medium tracking-wide" style={{ color: GAP_STATUS_COLOR[gap.status] }}>{GAP_STATUS_LABEL[gap.status]}</span>
+        <span className="shrink-0 whitespace-nowrap text-xs font-medium" style={{ color: GAP_STATUS_COLOR[gap.status] }}>{GAP_STATUS_LABEL[gap.status]}</span>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
         <dt style={{ color: 'var(--color-ink-dim)' }}>Vraag</dt>
@@ -614,7 +614,7 @@ function PreviewStep({
       <section>
         <div className="flex items-baseline justify-between gap-3">
           <Eyebrow>HAALBAARHEID</Eyebrow>
-          <span className="text-xs font-medium tracking-wide" style={{ color: feasibilityBadge.color }}>{feasibilityBadge.label}</span>
+          <span className="text-xs font-medium" style={{ color: feasibilityBadge.color }}>{feasibilityBadge.label}</span>
         </div>
         <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.feasibility.explanation}</p>
         {plan.feasibility.bestPossiblePreparation && (

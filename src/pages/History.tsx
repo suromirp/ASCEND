@@ -136,8 +136,8 @@ export function HistoryPage() {
               <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
                 <span className="text-xs" style={{ color: 'var(--color-ink-dim)', width: '48px' }}>{formatDateNL(log.completedDate)}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
-                  <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                  <p className="break-words text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
+                  <p className="line-clamp-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                     {logKindLabel(log)} • {log.durationMinutes} min
                     {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Loopband' : environment === 'outdoor' ? ' • Buiten' : ''}
                     {garminType ? ` • Garmin: ${garminType}` : ''}

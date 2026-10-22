@@ -63,7 +63,7 @@ function PhaseCard({ phase, open, onToggle, onSelectWeek }: { phase: SeasonPhase
     <Card className="flex flex-col gap-3">
       <button onClick={onToggle} className="flex items-start justify-between gap-3 text-left" aria-expanded={open}>
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-sm font-semibold tracking-wide" style={{ color: past ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
+          <p className="flex items-center gap-2 text-sm font-semibold" style={{ color: past ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
             <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: color }} aria-hidden="true" />
             {phase.name}
             {phase.current && <span className="text-xs font-normal" style={{ color: 'var(--color-gold)' }}>nu</span>}
@@ -115,7 +115,7 @@ function WeekRow({ week, onSelect }: { week: SeasonWeek; onSelect: () => void })
           {week.done ? `${week.done.done} van ${week.done.planned} gedaan` : week.totalMinutes > 0 ? formatHoursMinutesNL(week.totalMinutes) : ''}
         </span>
       </div>
-      <p className="text-xs tracking-wide" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel.toUpperCase()}</p>
+      <p className="text-xs" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel.toUpperCase()}</p>
       {week.items.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {week.items.map((i, n) => (

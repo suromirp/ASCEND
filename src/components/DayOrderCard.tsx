@@ -33,7 +33,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
                   {t?.name ?? 'Training'}
                 </p>
                 {!last && i === 0 && advice.gapHours && (
-                  <p className="mt-1 text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>liefst {advice.gapHours} uur ertussen{advice.minGapHours ? `, minstens ${advice.minGapHours}` : ''}</p>
+                  <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>liefst {advice.gapHours} uur ertussen{advice.minGapHours ? `, minstens ${advice.minGapHours}` : ''}</p>
                 )}
               </div>
             </li>

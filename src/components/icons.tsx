@@ -56,6 +56,19 @@ const PATHS = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  // Waar je bent (een speld) en zoeken (een vergrootglas).
+  locatie: (
+    <>
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+      <circle cx="12" cy="10" r="2.4" />
+    </>
+  ),
+  zoeken: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5L20 20" />
+    </>
+  ),
   // Toestand van een training
   gedaan: (
     <>
@@ -136,6 +149,10 @@ const PATHS = {
   ),
   // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
   verder: <path d="M9.5 6l6 6-6 6" />,
+  // Bij een stapper en een eigen waarde.
+  plus: <path d="M12 5.5v13M5.5 12h13" />,
+  min: <path d="M5.5 12h13" />,
+  sluiten: <path d="M7 7l10 10M17 7L7 17" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

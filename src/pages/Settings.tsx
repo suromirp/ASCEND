@@ -1084,8 +1084,15 @@ function OverviewSettingsCard() {
         </div>
       )}
       <div id={settingsAnchor('weerplaats')} className="scroll-mt-40">
-        <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Alleen de plaatsnaam gaat naar de weerdienst.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
+        <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Naar de weerdienst gaat alleen een plek afgerond op ongeveer een kilometer.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
       </div>
+      <SwitchRow
+        id="weervolgt"
+        title="Weer volgt je locatie"
+        note="Heb je Mijn locatie gekozen, dan werkt ASCEND die plek bij als je de app opent (hoogstens eens per uur), zodat het weer klopt onderweg. Zonder toestemming gebeurt er niets."
+        checked={o.weatherFollowsLocation}
+        onChange={(on) => set({ weatherFollowsLocation: on })}
+      />
       <SwitchRow
         id="citaten"
         title="Citaten na een training"

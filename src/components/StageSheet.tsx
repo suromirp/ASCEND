@@ -80,7 +80,7 @@ export function StageSheet({
             <Eyebrow>{`ETAPPE ${stage.overall} VAN 36 · ${section?.name.toUpperCase() ?? ''}`}</Eyebrow>
             <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{stage.from} naar {stage.to}</h3>
             {day.date && (
-              <p className="mt-0.5 text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>
+              <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
                 {weekdayLongNL(day.date)} {formatDateNL(day.date)} · dag {day.dayNumber} van je tocht
               </p>
             )}
@@ -240,7 +240,7 @@ export function StageSheet({
             )}
 
             <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRON</p>
+              <Eyebrow>BRON</Eyebrow>
               <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                 Cijfers van {STAGES_SOURCE}, overgenomen op {formatDateNL(STAGES_TAKEN_ON)}. De route verandert soms: gebruik voor vertrek de officiële GPX.
               </p>
@@ -260,7 +260,7 @@ export function StageSheet({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border px-1.5 py-2 text-center" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{label.toUpperCase()}</p>
+      <Eyebrow>{label.toUpperCase()}</Eyebrow>
       <p className="mt-0.5 text-[13px] font-medium leading-tight" style={{ color: value === 'onbekend' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{value}</p>
     </div>
   );
@@ -269,7 +269,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 function Block({ heading, children }: { heading: string; children: ReactNode }) {
   return (
     <div className="mt-5">
-      <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{heading}</p>
+      <Eyebrow>{heading}</Eyebrow>
       <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{children}</div>
     </div>
   );
@@ -289,7 +289,7 @@ function Links({ links }: { links: { label: string; url: string }[] }) {
   return (
     <div className="mt-2 flex flex-col gap-1">
       {links.map((l) => (
-        <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+        <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
           {l.label} ↗
         </a>
       ))}

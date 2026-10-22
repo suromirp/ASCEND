@@ -93,7 +93,7 @@ export function WatchAskCard({
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           Zwaarte (RPE), hoe zwaar voelde de hele training?{log.rpe !== undefined && rpe === log.rpe ? ' Zo stond het op je horloge.' : ''}
         </p>
-        <div className="mt-2 grid grid-cols-10 gap-1" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
+        <div className="mt-2 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
             <button
               key={n}

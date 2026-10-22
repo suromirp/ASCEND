@@ -1,10 +1,26 @@
-// Waits for a promise, but never longer than `ms`: after that it gives
-// 'timeout' and the caller moves on (the promise itself carries on). Used so a
-// button never stays on "Bezig…".
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | 'timeout'> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<'timeout'>((resolve) => {
-    timer = setTimeout(() => resolve('timeout'), ms);
+// ASCEND: een belofte die nooit langer duurt dan afgesproken. Een knop mag niet
+// op "Bezig..." blijven staan omdat een antwoord halverwege stokt: na de tijd
+// komt er een fout, en de aanroeper zet de knop terug in een finally.
+
+export class TimeoutError extends Error {
+  constructor(message = 'Het duurde te lang.') {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+export function withTimeout<T>(promise: Promise<T>, ms: number, message?: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new TimeoutError(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }

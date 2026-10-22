@@ -9,7 +9,7 @@ export function BackButton({ fallback = '/more' }: { fallback?: string }) {
     <button
       onClick={() => (canGoBack ? navigate(-1) : navigate(fallback))}
       aria-label="Terug"
-      className="-ml-3 flex h-11 w-11 items-center justify-center text-2xl"
+      className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center text-2xl"
       style={{ color: 'var(--color-ink-dim)' }}
     >
       ‹

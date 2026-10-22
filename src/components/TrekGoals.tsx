@@ -69,7 +69,7 @@ export function TrekGoalsCard() {
               <li key={p.id} className="rounded-xl border py-3 pl-3 pr-1" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }}>
                 <p className="flex items-center gap-2 pr-2 font-display text-base" style={{ color: 'var(--color-ink)' }}>
                   <Icon name="bivak" size={18} />
-                  <span className="min-w-0 truncate">{p.trek!.name}</span>
+                  <span className="min-w-0 break-words">{p.trek!.name}</span>
                 </p>
                 <p className="mt-1 pr-2 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{describePeriodDates(p, true)}</p>
                 <p className="pr-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{trekFacts(p)}</p>

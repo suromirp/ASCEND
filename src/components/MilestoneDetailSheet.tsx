@@ -28,7 +28,7 @@ export function MilestoneDetailSheet({
         <Card className="rounded-b-none border-b-0 pb-8">
           <Eyebrow>{detail.type}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
-          <p className="mt-0.5 text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>{detail.subtitle}</p>
+          <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-gold)' }}>{detail.subtitle}</p>
 
           <Section heading="DOEL">{detail.goal}</Section>
           <Section heading="WAAROM">{detail.why}</Section>
@@ -44,14 +44,14 @@ export function MilestoneDetailSheet({
 
           {detail.achievedWhen && (
             <div className="mt-4">
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BEHAALD WANNEER</p>
+              <Eyebrow>BEHAALD WANNEER</Eyebrow>
               <BulletList items={detail.achievedWhen} />
             </div>
           )}
 
           {detail.achievedWhenGroups && (
             <div className="mt-4 flex flex-col gap-3">
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BEHAALD WANNEER</p>
+              <Eyebrow>BEHAALD WANNEER</Eyebrow>
               {detail.achievedWhenGroups.map((g) => (
                 <div key={g.heading}>
                   <p className="text-xs font-medium" style={{ color: 'var(--color-bronze)' }}>{g.heading}</p>
@@ -67,7 +67,7 @@ export function MilestoneDetailSheet({
 
           {detail.sources.length > 0 && (
             <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>BRONNEN</p>
+              <Eyebrow>BRONNEN</Eyebrow>
               <div className="mt-2 flex flex-col gap-1.5">
                 {detail.sources.map((s) =>
                   s.url ? (
@@ -102,7 +102,7 @@ export function MilestoneDetailSheet({
 function Section({ heading, children }: { heading: string; children: ReactNode }) {
   return (
     <div className="mt-4">
-      <p className="text-xs font-semibold tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{heading}</p>
+      <Eyebrow>{heading}</Eyebrow>
       <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{children}</p>
     </div>
   );

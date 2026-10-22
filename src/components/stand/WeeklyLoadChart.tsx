@@ -114,7 +114,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl px-3.5 py-3" style={{ background: 'var(--color-charcoal)' }} aria-live="polite">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-xs tracking-wide" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'DEZE WEEK' : `WEEK VAN ${dayMonth(week.weekStart).toUpperCase()}`}{week.isRestWeek ? ' · RUSTWEEK' : ''}</p>
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'DEZE WEEK' : `WEEK VAN ${dayMonth(week.weekStart).toUpperCase()}`}{week.isRestWeek ? ' · RUSTWEEK' : ''}</p>
         <p className="tabular-nums">
           <span className="font-sans tabular-nums text-xl" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(week.doneTotal, 0)}</span>
           {week.plannedTotal > 0 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}> + {formatNumberNL(week.plannedTotal, 0)} gepland</span>}
@@ -141,7 +141,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
           {week.items.map((it, i) => (
             <li key={i} className="flex items-center gap-3" style={{ opacity: it.planned ? 0.6 : 1 }}>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
+                <p className="break-words text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {dayShortNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
                 </p>

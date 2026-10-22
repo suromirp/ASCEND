@@ -13,7 +13,7 @@ import { useAppData } from '../state/AppDataContext';
 import { syncWatchWorkouts, type WorkoutSyncResult } from '../storage/watchWorkouts';
 import { watchStatusLine } from '../engine/watchStatus';
 import { todayISO } from '../utils/dates';
-import { withTimeout } from '../utils/withTimeout';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 
 // A send never hangs on "Bezig…": after this long the button comes back and
@@ -21,8 +21,7 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 // and the row follows its outcome).
 const SEND_TIMEOUT_MS = 30_000;
 
-function noteForResult(result: WorkoutSyncResult | 'timeout'): string | null {
-  if (result === 'timeout') return 'Dat duurde te lang. Probeer het zo nog eens.';
+function noteForResult(result: WorkoutSyncResult): string | null {
   if (result.status === 'off') return 'De schakelaar staat uit.';
   if (result.status === 'not-connected') return 'Er is geen koppeling met intervals.icu.';
   return null;
@@ -67,8 +66,8 @@ export function WatchStatusRow({
     setNote(null);
     try {
       setNote(noteForResult(await withTimeout(syncWatchWorkouts({ force: true }), SEND_TIMEOUT_MS)));
-    } catch {
-      setNote('Versturen is niet gelukt. Probeer het zo nog eens.');
+    } catch (err) {
+      setNote(err instanceof TimeoutError ? 'Dat duurde te lang. Probeer het zo nog eens.' : 'Versturen is niet gelukt. Probeer het zo nog eens.');
     } finally {
       setBusy(false);
       await reload();

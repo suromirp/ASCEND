@@ -104,7 +104,7 @@ export function EtappesPage() {
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Cijfers van {STAGES_SOURCE}, overgenomen op {formatDateNL(STAGES_TAKEN_ON)}. De route verandert soms, bijvoorbeeld bij Peisey. Controleer de GPX voor vertrek.
         </p>
-        <a href={STAGES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+        <a href={STAGES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
           Officiële etappes ↗
         </a>
       </Card>

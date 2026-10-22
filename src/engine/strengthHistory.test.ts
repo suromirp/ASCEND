@@ -60,7 +60,7 @@ describe('een volledige reeks nagemaakte trainingen', () => {
   it('kent alle zes oefeningen bij naam uit de lijst, gesorteerd op hoe vaak', () => {
     expect(views.map((v) => v.history.key).sort()).toEqual(['assisted-pull-up', 'back-squat', 'bench-press', 'leg-press', 'romanian-deadlift', 'seated-cable-row']);
     expect(views.map((v) => v.history.sessions.length)).toEqual([...views.map((v) => v.history.sessions.length)].sort((a, b) => b - a));
-    expect(view('assisted-pull-up').history.name).toBe('Optrekken met hulp');
+    expect(view('assisted-pull-up').history.name).toBe('Assisted Pull-Up');
   });
   it('de lijn is het gewicht dat je aankunt bij het bereik, en stijgt met je bankdrukken', () => {
     const line = view('bench-press').line;

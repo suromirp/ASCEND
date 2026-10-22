@@ -62,9 +62,12 @@ describe('the exercise list itself', () => {
     expect(exerciseById('back-squat')!.pattern).toBe('squat');
   });
 
-  it('writes the cable crunch as one word', () => {
-    expect(exerciseById('cable-crunch')!.name).toBe('Kabelcrunch');
+  it('keeps the names English, the way MacroFactor writes them; an old Dutch name still finds its exercise', () => {
+    expect(exerciseById('cable-crunch')!.name).toBe('Cable Crunch');
+    expect(exerciseById('bench-press')!.name).toBe('Barbell Bench Press');
+    expect(exerciseById('back-squat')!.name).toBe('Barbell Back Squat');
     expect(matchExercise('Kabelcrunch')).toBe('cable-crunch');
+    expect(matchExercise('Bankdrukken met stang')).toBe('bench-press');
     expect(JSON.stringify(EXERCISES)).not.toContain('hol rugje');
   });
 

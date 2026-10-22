@@ -135,7 +135,7 @@ export function InjuriesPage() {
             {n.note && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{n.note}</p>}
             <div className="flex gap-3">
               <SecondaryButton onClick={() => deleteInjury(n.id)}>Verwijderen</SecondaryButton>
-              <PrimaryButton onClick={() => resolveInjury(n.id)}>Markeer hersteld</PrimaryButton>
+              <SecondaryButton onClick={() => resolveInjury(n.id)}>Markeer hersteld</SecondaryButton>
             </div>
           </Card>
         ))}

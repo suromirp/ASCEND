@@ -67,7 +67,7 @@ function SessionRow({
       {isRest ? <span className="h-4 w-4 shrink-0" aria-hidden="true" /> : <WeekSportIcon template={template} />}
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className="truncate text-[15px]" style={{ color: isRest ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
+          <span className="min-w-0 break-words text-[15px]" style={{ color: isRest ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
             {isRest ? REST_DAY_COPY[restMode].title : template.name}
           </span>
           {!isRest && isLegHeavyTemplate(template) && <LegMark />}

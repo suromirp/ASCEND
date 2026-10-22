@@ -1,4 +1,4 @@
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, SecondaryButton, Eyebrow } from './ui';
 
 export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport, onDismiss }: {
   logsSinceBackup: number;
@@ -17,7 +17,7 @@ export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport,
       </p>
       <div className="mt-1 flex gap-3">
         <SecondaryButton onClick={onDismiss}>Niet nu</SecondaryButton>
-        <PrimaryButton onClick={onExport} fullWidth={false}>Exporteer</PrimaryButton>
+        <SecondaryButton onClick={onExport}>Exporteer</SecondaryButton>
       </div>
     </Card>
   );

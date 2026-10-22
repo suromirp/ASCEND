@@ -10,97 +10,63 @@
 // MacroFactor name is, is asked once per name on the import page
 // (components/MacroFactorLinkCard.tsx), never here.
 //
-// The result is one moment afterwards (announceSaved with this card's own
-// batch), like "Alles opslaan" always did.
+// The result is one moment afterwards (announceSaved with this run's own
+// batch), like "Alles opslaan" always did. The run itself lives in
+// storage/macrofactorRun.ts: it always ends, shows how far it is ("3 van 10
+// verwerkt"), never does a row twice and goes on when the card is redrawn.
 
-import { useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
-import { enrichLog, fillInLog } from '../storage/macrofactor';
+import { clearRunMessage, getRunState, runMacroFactor, subscribeRun } from '../storage/macrofactorRun';
 import { describeEnrichment } from '../engine/macrofactorEnrich';
-import type { TakeoverRequest } from '../storage/macrofactorLead';
 import { describeStrengthChange } from '../engine/macrofactorLead';
-import { describeWorkout, minutesLabel, type MacroFactorProposal } from '../engine/macrofactorLink';
-import type { SavedMoment } from '../engine/savedMoments';
+import { describeWorkout, minutesLabel } from '../engine/macrofactorLink';
+import { isReady, openProposals, RUN_SLOW_NOTE, runProgressLabel, type ReadyProposal } from '../engine/macrofactorRun';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { Icon } from './icons';
 import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from './ui';
-
-type ReadyProposal = Exclude<MacroFactorProposal, { kind: 'unmapped' }>;
 
 function dayLabel(iso: string): string {
   return iso === todayISO() ? 'vandaag' : `${weekdayLongNL(iso)} ${formatDateNL(iso)}`;
 }
 
-const isReady = (p: MacroFactorProposal): p is ReadyProposal => p.kind !== 'unmapped';
-
 export function MacroFactorCard({ onImportPage = false, primary = true }: { onImportPage?: boolean; primary?: boolean }) {
   const { logSession, announceSaved, refresh, takeOverFromMacroFactor } = useAppData();
   const { plan, state } = useMacroFactor();
   const navigate = useNavigate();
-  const [saving, setSaving] = useState(false);
+  const run = useSyncExternalStore(subscribeRun, getRunState);
   // The rows the user ticked off, by workout id: left out of the next run.
   const [skipped, setSkipped] = useState<string[]>([]);
-  const [result, setResult] = useState<string | null>(null);
+  // The outcome shows while this card is there; the next visit starts clean.
+  useEffect(() => () => clearRunMessage(), []);
 
-  const ready = plan.proposals.filter(isReady);
-  const waiting = plan.proposals.length - ready.length;
-  if (plan.proposals.length === 0 && !result) return null;
+  const saving = run.status === 'running';
+  const allReady = plan.proposals.filter(isReady);
+  // What the run handled stays away, also before the app has read it back.
+  const ready = openProposals(allReady, run.handled);
+  const waiting = plan.proposals.length - allReady.length;
+  // Never gone halfway: while it runs, and with its outcome, the card stays.
+  if (ready.length === 0 && waiting === 0 && run.status === 'idle') return null;
 
   const chosen = ready.filter((p) => !skipped.includes(p.workout.externalId));
   const toggle = (id: string) => setSkipped((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  async function processAll() {
+  function processAll() {
     if (saving || chosen.length === 0) return;
-    setSaving(true);
-    setResult(null);
-    // This run's own list: several at once get one summary afterwards, not one
-    // screen each, and a training ticked off by itself meanwhile is not in it.
-    const batch: SavedMoment[] = [];
-    let created = 0;
-    let changed = 0;
-    let enriched = 0;
-    const enrichedWith = new Set<string>();
-    let failed = 0;
-    let pending: TakeoverRequest[] = [];
-    const flush = async () => {
-      if (pending.length === 0) return;
-      const n = await takeOverFromMacroFactor(pending, batch);
-      changed += n;
-      failed += pending.length - n;
-      pending = [];
-    };
-    try {
-      for (const p of chosen) {
-        if (p.kind === 'takeover') {
-          pending.push({ logId: p.log.id, workout: p.workout, templateId: p.template.id });
-          continue;
-        }
-        await flush();
-        if (p.kind === 'new') {
-          if (await logSession(p.draft, { batch })) created++;
-          else failed++;
-        } else if (p.kind === 'enrich') {
-          const what = describeEnrichment(p.log, p.strengthData);
-          if (await enrichLog(p.log.id, p.workout)) {
-            enriched++;
-            enrichedWith.add(what);
-          } else failed++;
-        } else if (await fillInLog(p.log.id, p.workout, p.template)) changed++;
-        else failed++;
-      }
-      await flush();
-      await refresh();
-    } finally {
-      announceSaved(batch);
-      setSaving(false);
-    }
-    setSkipped([]);
-    setResult(summary(created, changed, enriched, enrichedWith.size === 1 ? [...enrichedWith][0] : 'de herhalingen in reserve en de opwarmsets', failed, ready.length - chosen.length, state.leads));
+    void runMacroFactor(chosen, {
+      logSession: (draft, opts) => logSession(draft, opts),
+      takeOver: takeOverFromMacroFactor,
+      announceSaved,
+      refresh: () => refresh(),
+      leads: state.leads,
+      left: ready.length - chosen.length,
+    }).then(() => setSkipped([]));
   }
 
   const takeovers = ready.filter((p) => p.kind === 'takeover').length;
+  const label = saving ? runProgressLabel(run.done, run.total) : `Alles verwerken (${chosen.length})`;
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow>Uit MacroFactor</Eyebrow>
@@ -126,16 +92,22 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
           ))}
         </ul>
       )}
-      {ready.length > 0 &&
+      {(ready.length > 0 || saving) &&
         (primary ? (
-          <PrimaryButton onClick={() => void processAll()} disabled={saving || chosen.length === 0}>
-            {saving ? 'Bezig…' : `Alles verwerken (${chosen.length})`}
+          <PrimaryButton onClick={processAll} disabled={saving || chosen.length === 0}>
+            {label}
           </PrimaryButton>
         ) : (
-          <SecondaryButton onClick={() => void processAll()} disabled={saving || chosen.length === 0}>
-            {saving ? 'Bezig…' : `Alles verwerken (${chosen.length})`}
+          <SecondaryButton onClick={processAll} disabled={saving || chosen.length === 0}>
+            {label}
           </SecondaryButton>
         ))}
+      {saving && run.slow && (
+        <p className="text-xs leading-snug" role="status" style={{ color: 'var(--color-ink-dim)' }}>{RUN_SLOW_NOTE}</p>
+      )}
+      {!saving && run.message && (
+        <p className="text-sm leading-snug" role="status" style={{ color: run.status === 'stopped' ? 'var(--color-warning)' : 'var(--color-success-text)' }}>{run.message}</p>
+      )}
       {waiting > 0 && (
         <div className="flex flex-col gap-2">
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
@@ -145,23 +117,8 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
           {!onImportPage && <SecondaryButton onClick={() => navigate('/koppelen/macrofactor')}>Namen koppelen</SecondaryButton>}
         </div>
       )}
-      {result && (
-        <p className="text-sm leading-snug" role="status" style={{ color: 'var(--color-success-text)' }}>{result}</p>
-      )}
     </Card>
   );
-}
-
-// "Verwerkt: 8 nieuw opgeslagen en 2 bijgewerkt met MacroFactor. 1 niet gelukt."
-function summary(created: number, changed: number, enriched: number, enrichedWhat: string, failed: number, left: number, leads: boolean): string {
-  const parts: string[] = [];
-  if (created > 0) parts.push(`${created} nieuw opgeslagen`);
-  if (changed > 0) parts.push(`${changed} ${leads ? 'bijgewerkt met MacroFactor' : 'aangevuld'}`);
-  if (enriched > 0) parts.push(`${enriched} aangevuld met ${enrichedWhat}`);
-  let text = parts.length > 0 ? `Verwerkt: ${parts.join(' en ')}.` : 'Er is niets verwerkt.';
-  if (failed > 0) text += ` ${failed} lukte niet.`;
-  if (left > 0) text += ` ${left} liet je liggen.`;
-  return text;
 }
 
 function Row({ proposal, on, disabled, onToggle }: { proposal: ReadyProposal; on: boolean; disabled: boolean; onToggle: () => void }) {
