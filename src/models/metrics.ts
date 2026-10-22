@@ -43,8 +43,15 @@ export interface NutritionMetric {
 
 // A trend-weight reading (engine/bodyWeight.ts). The trend, not one
 // morning on the scale: MacroFactor's trend weight is the intended input.
+//
+// `kg` is the number ASCEND uses. From MacroFactor (engine/macrofactorWeight.ts)
+// it is the trend weight when the export has one, else the scale weight;
+// `basis` says which, and `scaleKg` keeps the weighing of that day when the
+// trend was used. Both are optional, so older entries and backups stay valid.
 export interface WeightEntry {
   date: string; // ISO date
   kg: number;
   source: MetricSource;
+  basis?: 'trend' | 'scale';
+  scaleKg?: number;
 }

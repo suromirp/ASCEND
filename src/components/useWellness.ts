@@ -6,14 +6,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { RecoveryMetric } from '../models/metrics';
 import { todayWellness, type WellnessReading } from '../engine/wellnessCheck';
-import { onWatchChange } from '../storage/externalActivities';
+import { filterRecovery } from '../engine/watchUse';
+import { getWatchState, onWatchChange } from '../storage/externalActivities';
 import { getRecoveryMetrics } from '../storage/wellness';
 
 export function useTodayWellness(today: string): WellnessReading | undefined {
   const [metrics, setMetrics] = useState<RecoveryMetric[]>([]);
   useEffect(() => {
     let alive = true;
-    const load = () => void getRecoveryMetrics().then((m) => alive && setMetrics(m)).catch(() => undefined);
+    // What is switched off on the link screen is left out here too, so it is
+    // not shown and not used, whatever is still stored.
+    const load = () =>
+      void Promise.all([getRecoveryMetrics(), getWatchState()])
+        .then(([m, state]) => alive && setMetrics(filterRecovery(m, state.use)))
+        .catch(() => undefined);
     load();
     const stop = onWatchChange(load);
     return () => {

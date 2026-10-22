@@ -3,6 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from '../engine/legFatigue';
 import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
 import { resolveVariantDuration } from '../engine/substitutions';
+import { currentBodyKg } from '../engine/bodyWeight';
 import { daysBetween, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card, Eyebrow } from './ui';
@@ -20,14 +21,14 @@ export function useLegFatigueInputs(): LegFatigueInputs {
   const { sessionLogs, plannedSessions, templates, program, settings } = useAppData();
   const today = todayISO();
   return useMemo(() => {
-    const weights = settings.weightEntries ?? [];
-    const bodyKg = weights.length ? [...weights].sort((a, b) => b.date.localeCompare(a.date))[0].kg : undefined;
+    // The same weight the planner reads (state/AppDataContext.tsx): MacroFactor's trend weight when it is switched on.
+    const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
     return {
       logs: sessionLogs, plannedSessions, templates, today, bodyKg, program,
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       soreness: settings.morningCheckIns?.filter((c) => c.legs === 'spierpijn' || c.legs === 'flink').map((c) => ({ date: c.date, level: c.legs === 'flink' ? 'flink' as const : 'spierpijn' as const })),
     };
-  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.morningCheckIns, today]);
+  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.morningCheckIns, today]);
 }
 
 export function LegFatigueCard() {

@@ -366,7 +366,7 @@ export function SettingsPage() {
             />
             <NavRow
               label="MacroFactor inlezen"
-              note="Krachttrainingen uit je export, met echte duur en herhalingen in reserve"
+              note="Krachttrainingen en gewicht uit je export, met echte duur en herhalingen in reserve"
               onClick={() => navigate('/koppelen/macrofactor')}
             />
             <div className="flex flex-col gap-3 opacity-60">

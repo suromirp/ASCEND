@@ -10,6 +10,7 @@
 import { RecoveryMetricsRepo } from './database';
 import { BASELINE_DAYS } from '../engine/wellnessCheck';
 import { fetchIntervalsWellness, INTERVALS_ADAPTER_ID, intervalsErrorMessage, type FetchOptions, type IntervalsConnection } from '../integrations/intervalsIcu';
+import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays, todayISO } from '../utils/dates';
 
@@ -27,10 +28,17 @@ export async function getRecoveryMetrics(): Promise<RecoveryMetric[]> {
 
 // Never throws: wellness is a bonus on top of the activities, and a hiccup
 // here must not make the activity fetch look like it failed.
-export async function syncWellness(connection: IntervalsConnection, options: FetchOptions & { today?: string } = {}): Promise<WellnessSyncResult> {
+//
+// `use` says which kinds of watch data are wanted (engine/watchUse.ts): what is
+// switched off is not asked for when all three are off, and is left out of what
+// is stored otherwise.
+export async function syncWellness(connection: IntervalsConnection, options: FetchOptions & { today?: string; use?: WatchUse } = {}): Promise<WellnessSyncResult> {
   try {
     const today = options.today ?? todayISO();
-    const metrics = await fetchIntervalsWellness(connection, { from: addDays(today, -BASELINE_DAYS), to: today }, { fetchImpl: options.fetchImpl });
+    const use = options.use ?? DEFAULT_WATCH_USE;
+    if (!wellnessWanted(use)) return { status: 'ok', days: 0, today: false };
+    const fetched = await fetchIntervalsWellness(connection, { from: addDays(today, -BASELINE_DAYS), to: today }, { fetchImpl: options.fetchImpl });
+    const metrics = filterRecovery(fetched, use);
     const cutoff = addDays(today, -KEEP_DAYS);
     const existing = await RecoveryMetricsRepo.getAll();
     for (const old of existing) {
@@ -48,4 +56,14 @@ export async function clearWellness(): Promise<void> {
   for (const m of await RecoveryMetricsRepo.getAll()) {
     if (m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`)) await RecoveryMetricsRepo.delete(m.id);
   }
+}
+
+// A kind was switched off: it leaves what is stored, so nothing keeps using it.
+// Records of other origin are not touched. Switching it on again fetches it anew.
+export async function pruneWellness(use: WatchUse): Promise<void> {
+  const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`));
+  const kept = filterRecovery(ours, use);
+  const keptIds = new Set(kept.map((m) => m.id));
+  for (const m of ours) if (!keptIds.has(m.id)) await RecoveryMetricsRepo.delete(m.id);
+  if (kept.length > 0 && kept !== ours) await RecoveryMetricsRepo.putAll(kept);
 }

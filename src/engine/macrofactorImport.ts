@@ -135,11 +135,11 @@ const COLUMN_LABEL: Record<ColumnId, string> = {
 
 const REQUIRED: ColumnId[] = ['date', 'workout', 'duration', 'exercise', 'weight', 'reps'];
 
-function stripDiacritics(s: string): string {
+export function stripDiacritics(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
-function headingKey(heading: string): string {
+export function headingKey(heading: string): string {
   return stripDiacritics(heading)
     .toLowerCase()
     .replace(/\([^)]*\)/g, ' ')
@@ -147,7 +147,7 @@ function headingKey(heading: string): string {
     .replace(/[^a-z0-9]/g, '');
 }
 
-function headingUnit(heading: string): string {
+export function headingUnit(heading: string): string {
   return stripDiacritics(heading).toLowerCase();
 }
 
@@ -182,16 +182,17 @@ function missingMessage(missing: ColumnId[], headings: string[], recognized: num
   const found = headings.slice(0, 14).join(', ') + (headings.length > 14 ? ', ...' : '');
   const lead =
     recognized <= 1
-      ? 'Dit lijkt niet de Workout Log van MacroFactor.'
+      ? 'Dit lijkt niet de Workout Log van MacroFactor, en ook geen bestand met gewicht.'
       : missing.length === 1
         ? `Er ontbreekt een kolom in dit bestand: ${COLUMN_LABEL[missing[0]]}.`
         : `Er ontbreken kolommen in dit bestand: ${listWords(missing.map((m) => COLUMN_LABEL[m]))}.`;
-  return `${lead} Kies in MacroFactor bij Granular Export de Workout Log. Gevonden kolommen: ${found || 'geen'}.`;
+  const advice = recognized <= 1 ? 'Kies in MacroFactor bij Granular Export de Workout Log of het gewicht.' : 'Kies in MacroFactor bij Granular Export de Workout Log.';
+  return `${lead} ${advice} Gevonden kolommen: ${found || 'geen'}.`;
 }
 
 // --- cells ------------------------------------------------------------------
 
-function parseNumber(raw: string | undefined): number | undefined {
+export function parseNumber(raw: string | undefined): number | undefined {
   if (raw === undefined) return undefined;
   let s = raw.trim().replace(/\s/g, '');
   if (s === '') return undefined;
@@ -255,7 +256,7 @@ const SECONDS_NOT_BELOW = 300;
 
 const isWarmup = (type: string | undefined) => !!type && /warm|opwarm/i.test(stripDiacritics(type));
 
-const LB_TO_KG = 0.45359237;
+export const LB_TO_KG = 0.45359237;
 
 // --- the reader --------------------------------------------------------------
 

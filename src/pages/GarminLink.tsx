@@ -8,11 +8,15 @@
 // key stays on this phone and is not part of any export. The other way round,
 // ASCEND can put the planned trainings of the coming week in the intervals.icu
 // agenda (switch, default off), which intervals.icu sends on to the watch.
+// The card "Wat ASCEND van je horloge gebruikt" holds every switch in one
+// place: which kinds of data ASCEND uses (trainings, sleep, resting heart
+// rate, HRV) and the two behaviours (tick off by itself, send to the watch).
+// Body weight is not among them: it never comes from the watch.
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { BackButton } from '../components/BackButton';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
-import { clearConnection, getConnection, getWatchState, maskKey, saveConnection, setAutoTick, syncWatchActivities, type SyncResult, type WatchActivityState } from '../storage/externalActivities';
+import { clearConnection, getConnection, getWatchState, maskKey, saveConnection, setAutoTick, setWatchUse, syncWatchActivities, type SyncResult, type WatchActivityState } from '../storage/externalActivities';
 import {
   getWatchWorkoutState,
   pauseWatchWorkouts,
@@ -22,6 +26,7 @@ import {
   syncWatchWorkouts,
   type WatchWorkoutState,
 } from '../storage/watchWorkouts';
+import type { WatchUseKey } from '../engine/watchUse';
 import { intervalsErrorMessage, normalizeConnection, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { formatDateNL } from '../utils/dates';
 
@@ -64,10 +69,26 @@ export function GarminLinkPage() {
     }
   }
 
+  // A switch of the card "Wat ASCEND van je horloge gebruikt". Off: gone from
+  // the phone at once. On: fetched right away, when there is a connection.
+  async function changeUse(key: WatchUseKey, on: boolean) {
+    setWatch((w) => (w ? { ...w, use: { ...w.use, [key]: on } } : w));
+    try {
+      await setWatchUse({ [key]: on });
+      if (on && (await getConnection())) await syncWatchActivities({ force: true });
+    } catch {
+      // The switch shows what was stored once the state is read again.
+    } finally {
+      await load();
+    }
+  }
+
   function describeResult(result: SyncResult): Notice {
     if (result.status === 'error') return { tone: 'error', text: result.message };
     if (result.status === 'ok') {
-      const activities = `Verbinding werkt. In de laatste 7 dagen vond ASCEND ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'}.`;
+      const activities = watch && !watch.use.activities
+        ? 'Verbinding werkt. Je trainingen staan uit, dus die haalt ASCEND niet op.'
+        : `Verbinding werkt. In de laatste 7 dagen vond ASCEND ${result.count} ${result.count === 1 ? 'activiteit' : 'activiteiten'}.`;
       if (!result.wellness) return { tone: 'ok', text: activities };
       return {
         tone: 'ok',
@@ -126,6 +147,7 @@ export function GarminLinkPage() {
   }
 
   const connected = !!connection;
+  const workouts = useWatchWorkoutControls();
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -215,18 +237,57 @@ export function GarminLinkPage() {
         </Card>
       )}
 
-      {connected && <WatchWorkoutsCard />}
-
-      <Card className="flex flex-col gap-3">
-        <Eyebrow>Vanzelf afvinken</Eyebrow>
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Vinkt een training van je horloge zelf af</p>
-          <Toggle checked={watch?.autoTick !== false} onChange={(on) => void changeAutoTick(on)} label="Vanzelf afvinken" />
-        </div>
+      <Card className="flex flex-col gap-4">
+        <Eyebrow>Wat ASCEND van je horloge gebruikt</Eyebrow>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Alleen als het niet anders kan: dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang. Daarna vraagt ASCEND hoe het ging, en met Klopt niet haal je de afvinking weer weg. Bij twijfel krijg je gewoon een voorstel. Een testloop en een wedstrijd vink je altijd zelf af.
+          Tik aan wat je wilt. Wat uit staat haalt ASCEND niet op, laat hij niet zien en gebruikt hij niet in de ochtendcheck of in een berekening. Dit blijft op deze telefoon en gaat niet mee in een back-up.
+        </p>
+        <UseRow
+          title="Trainingen"
+          text="De kaart Van je horloge op Vandaag, met een voorstel voor elke nieuwe training."
+          checked={watch?.use.activities !== false}
+          onChange={(on) => void changeUse('activities', on)}
+        />
+        <UseRow
+          title="Vanzelf afvinken"
+          text="Vinkt een training van je horloge zelf af. Alleen als het niet anders kan: dezelfde dag, één geplande training van dezelfde soort en ongeveer even lang. Daarna vraagt ASCEND hoe het ging, en met Klopt niet haal je de afvinking weer weg. Bij twijfel krijg je gewoon een voorstel. Een testloop en een wedstrijd vink je altijd zelf af."
+          checked={watch?.autoTick !== false && watch?.use.activities !== false}
+          onChange={(on) => void changeAutoTick(on)}
+          note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
+        />
+        <UseRow
+          title="Slaap"
+          text="Hoe lang de nacht was, in de ochtendcheck."
+          checked={watch?.use.sleep !== false}
+          onChange={(on) => void changeUse('sleep', on)}
+        />
+        <UseRow
+          title="Rusthartslag"
+          text="In de ochtendcheck, naast jouw gemiddelde van de laatste 4 weken."
+          checked={watch?.use.restingHeartRate !== false}
+          onChange={(on) => void changeUse('restingHeartRate', on)}
+        />
+        <UseRow
+          title="HRV"
+          text="De variatie tussen je hartslagen in rust, in de ochtendcheck."
+          checked={watch?.use.hrv !== false}
+          onChange={(on) => void changeUse('hrv', on)}
+        />
+        {connected && (
+          <UseRow
+            title="Trainingen naar je horloge sturen"
+            text="Zet de trainingen van de komende 7 dagen in je intervals.icu-agenda. Standaard uit."
+            checked={!!workouts.state?.enabled}
+            onChange={(on) => void workouts.toggle(on)}
+            note={workouts.busy ? 'Bezig…' : undefined}
+          />
+        )}
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Gewicht komt nooit uit Garmin. Dat leest ASCEND uit MacroFactor.
         </p>
       </Card>
+
+      {connected && <WatchWorkoutsCard controls={workouts} />}
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>Slaap en rusthartslag</Eyebrow>
@@ -240,6 +301,19 @@ export function GarminLinkPage() {
           ASCEND vergelijkt rusthartslag en HRV met je eigen gemiddelde van de laatste 4 weken, niet met een norm. Je horloge schat deze waarden: het is een hint en geen oordeel.
         </p>
       </Card>
+    </div>
+  );
+}
+
+function UseRow({ title, text, checked, onChange, note }: { title: string; text: string; checked: boolean; onChange: (on: boolean) => void; note?: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</p>
+        <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{text}</p>
+        {note && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
+      </div>
+      <Toggle checked={checked} onChange={onChange} label={title} />
     </div>
   );
 }
@@ -261,7 +335,20 @@ function NoticeLine({ notice }: { notice: Notice }) {
   );
 }
 
-function WatchWorkoutsCard() {
+interface WatchWorkoutControls {
+  state: WatchWorkoutState | null;
+  busy: boolean;
+  setBusy: (busy: boolean) => void;
+  notice: Notice | null;
+  setNotice: (notice: Notice | null) => void;
+  reload: () => Promise<void>;
+  toggle: (on: boolean) => Promise<void>;
+}
+
+// The state and the switch of "Trainingen naar je horloge sturen", shared by
+// the switch in the card "Wat ASCEND van je horloge gebruikt" and the buttons
+// in the card "Naar je horloge".
+function useWatchWorkoutControls(): WatchWorkoutControls {
   const [state, setState] = useState<WatchWorkoutState | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -278,8 +365,6 @@ function WatchWorkoutsCard() {
       .then(setState)
       .catch(() => setState(null));
   }, []);
-
-  const sent = state ? Object.keys(state.items).length : 0;
 
   async function toggle(on: boolean) {
     setBusy(true);
@@ -303,6 +388,13 @@ function WatchWorkoutsCard() {
       setBusy(false);
     }
   }
+
+  return { state, busy, setBusy, notice, setNotice, reload, toggle };
+}
+
+function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
+  const { state, busy, setBusy, notice, setNotice, reload } = controls;
+  const sent = state ? Object.keys(state.items).length : 0;
 
   async function testOne() {
     setBusy(true);
@@ -355,15 +447,9 @@ function WatchWorkoutsCard() {
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow>NAAR JE HORLOGE</Eyebrow>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Trainingen naar je horloge sturen</p>
-          <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            ASCEND zet de trainingen van de komende 7 dagen in je intervals.icu-agenda, met je tempo's uit de testloop of je hartslagzones als doel. Verplaats of sla je er een over, dan volgt de agenda. Alleen wat ASCEND zelf heeft gestuurd wordt aangeraakt; je eigen trainingen in intervals.icu blijven met rust.
-          </p>
-        </div>
-        <Toggle checked={!!state?.enabled} onChange={(v) => void toggle(v)} label="Trainingen naar je horloge sturen" />
-      </div>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Met de schakelaar hierboven zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda, met je tempo's uit de testloop of je hartslagzones als doel. Verplaats of sla je er een over, dan volgt de agenda. Alleen wat ASCEND zelf heeft gestuurd wordt aangeraakt; je eigen trainingen in intervals.icu blijven met rust.
+      </p>
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Kracht gaat niet mee: die staat in MacroFactor. Zet in intervals.icu bij je Garmin-koppeling aan dat geplande trainingen naar Garmin Connect gaan. Wil je tempodoelen op je horloge, vul dan in intervals.icu bij de instellingen voor hardlopen je drempeltempo in; zonder dat ziet je horloge de tempo's niet. Hartslagdoelen werken altijd.
       </p>

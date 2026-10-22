@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import type { TrainingGoal } from '../models/goals';
 import { useAppData } from '../state/AppDataContext';
-import { packSharePct } from '../engine/bodyWeight';
+import { packSharePct, weightsInUse } from '../engine/bodyWeight';
 import { packWeightOf, tripShapeNote } from '../engine/gr5Profile';
 import { eventDaysRequirement } from '../engine/goalRoute';
 import { formatNumberNL } from '../utils/number';
@@ -19,7 +19,7 @@ export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPa
   const [editing, setEditing] = useState(false);
   const stored = packWeightOf(goal.requirements);
   const [draft, setDraft] = useState<number | undefined>(stored);
-  const share = stored ? packSharePct(stored, settings.weightEntries) : undefined;
+  const share = stored ? packSharePct(stored, weightsInUse(settings.weightEntries, settings.weightFromMacroFactor)) : undefined;
   const note = tripShapeNote(eventDaysRequirement(goal.requirements)?.target?.amount);
 
   return (

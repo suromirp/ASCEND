@@ -33,3 +33,41 @@ export function packSharePct(packKg: number, entries: WeightEntry[] | undefined)
   const last = latestWeight(entries);
   return last && last.kg > 0 ? Math.round((packKg / last.kg) * 100) : undefined;
 }
+
+// --- weight from MacroFactor ---------------------------------------------------------
+//
+// engine/macrofactorWeight.ts puts days from a MacroFactor export in the same
+// list, with source 'macrofactor'. The switch "Gewicht uit MacroFactor
+// gebruiken" (AppSettings.weightFromMacroFactor, on unless set to false) lets
+// the user leave those out again without deleting them. packSharePct above
+// reads the latest entry of the list it is handed; callers hand it
+// weightsInUse(...).
+
+// The entries the app reads. Every place that needs the body weight goes
+// through this, so the switch counts everywhere.
+export function weightsInUse(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined): WeightEntry[] {
+  const all = entries ?? [];
+  return fromMacroFactor === false ? all.filter((e) => e.source !== 'macrofactor') : all;
+}
+
+// The one body weight for the leg index and the rucksack share: the latest
+// entry in use. From MacroFactor that is the trend weight (see
+// engine/macrofactorWeight.ts for why).
+export function currentBodyKg(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined): number | undefined {
+  return latestWeight(weightsInUse(entries, fromMacroFactor))?.kg;
+}
+
+export const MACROFACTOR_FRESH_DAYS = 14;
+
+// The weight ASCEND currently uses, when it comes from MacroFactor and is
+// from the last two weeks: then the question for a weight has no reason to
+// be asked, and the app says where the number comes from instead.
+export function freshMacroFactorWeight(entries: WeightEntry[] | undefined, fromMacroFactor: boolean | undefined, asOf: string): WeightEntry | undefined {
+  const last = latestWeight(weightsInUse(entries, fromMacroFactor));
+  return last && last.source === 'macrofactor' && daysBetween(last.date, asOf) <= MACROFACTOR_FRESH_DAYS ? last : undefined;
+}
+
+// Is there weight from MacroFactor stored at all (switch on or off)?
+export function hasMacroFactorWeight(entries: WeightEntry[] | undefined): boolean {
+  return (entries ?? []).some((e) => e.source === 'macrofactor');
+}

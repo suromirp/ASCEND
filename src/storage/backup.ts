@@ -191,7 +191,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   if (!isRecord(raw)) return undefined;
   const s: Record<string, unknown> = { ...raw };
   const lists: [string, (v: unknown) => boolean][] = [
-    ['weightEntries', (e) => isRecord(e) && isDate(e.date) && typeof e.kg === 'number' && Number.isFinite(e.kg)],
+    ['weightEntries', (e) => isRecord(e) && isDate(e.date) && typeof e.kg === 'number' && Number.isFinite(e.kg) && (e.basis === undefined || e.basis === 'trend' || e.basis === 'scale') && (e.scaleKg === undefined || (typeof e.scaleKg === 'number' && Number.isFinite(e.scaleKg)))],
     ['illnessEpisodes', (e) => hasId(e) && isDate(e.startDate) && typeof e.kind === 'string'],
     ['morningCheckIns', (e) => isRecord(e) && isDate(e.date)],
     ['weeklyHealthChecks', (e) => isRecord(e) && isDate(e.weekStart) && typeof e.trouble === 'string'],
@@ -214,6 +214,11 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     } else {
       s[key] = cleaned;
     }
+  }
+  // The switch for weight from MacroFactor: a yes or a no, or not there.
+  if ('weightFromMacroFactor' in s && typeof s.weightFromMacroFactor !== 'boolean') {
+    delete s.weightFromMacroFactor;
+    skipped.n++;
   }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {

@@ -559,6 +559,11 @@ export interface AppSettings {
   packList?: PackListState;
   // Days between weight reminders; 0 = never remind. Absent = 14.
   weightReminderDays?: number;
+  // "Gewicht uit MacroFactor gebruiken" (engine/bodyWeight.ts#weightsInUse):
+  // absent or true = the weight read from a MacroFactor export counts, false =
+  // it stays stored but is not used. Optional and additive, so older settings
+  // and backups need no schema step; travels with the settings in an export.
+  weightFromMacroFactor?: boolean;
   // Where you live, for distances to training spots (engine/trainingSpots.ts).
   // Only ever stored on this device.
   homeLocation?: { name: string; lat: number; lon: number };

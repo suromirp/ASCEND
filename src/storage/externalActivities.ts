@@ -15,7 +15,8 @@
 import { MetaRepo, SessionLogsRepo } from './database';
 import type { ExternalActivity } from '../engine/activityImport';
 import { upsertAutoLogged, withAutoStatus, type AutoLogged, type AutoLoggedStatus } from '../engine/autoTick';
-import { clearWellness, syncWellness } from './wellness';
+import { clearWellness, pruneWellness, syncWellness } from './wellness';
+import { nothingWanted, normalizeWatchUse, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import { addDays, todayISO } from '../utils/dates';
 import {
   createIntervalsIcuAdapter,
@@ -45,6 +46,9 @@ export interface WatchActivityState {
   // Trainings ASCEND ticked off by itself, and whether "Hoe ging het?" is
   // still open (engine/autoTick.ts).
   autoLogged: AutoLogged[];
+  // Which kinds of watch data ASCEND uses (engine/watchUse.ts): the trainings,
+  // sleep, resting heart rate and HRV. All on until the user switches one off.
+  use: WatchUse;
 }
 
 // --- the connection ---------------------------------------------------------------
@@ -86,6 +90,7 @@ export async function getWatchState(): Promise<WatchActivityState> {
     dismissed: Array.isArray(stored?.dismissed) ? stored.dismissed : [],
     autoTick: stored?.autoTick !== false,
     autoLogged: Array.isArray(stored?.autoLogged) ? stored.autoLogged : [],
+    use: normalizeWatchUse(stored?.use),
   };
 }
 
@@ -105,6 +110,19 @@ export async function dismissActivity(externalId: string): Promise<void> {
 export async function setAutoTick(on: boolean): Promise<void> {
   const state = await getWatchState();
   await putWatchState({ ...state, autoTick: on });
+}
+
+// A switch of the card "Wat ASCEND van je horloge gebruikt". What goes off
+// leaves the phone at once (the fetched trainings, or that kind of wellness
+// value), so nothing keeps using it. What comes on is fetched by the next
+// sync; the caller asks for one right away.
+export async function setWatchUse(patch: Partial<WatchUse>): Promise<WatchUse> {
+  const state = await getWatchState();
+  const use = normalizeWatchUse({ ...state.use, ...patch });
+  await putWatchState({ ...state, use, activities: use.activities ? state.activities : [], fetchedAt: use.activities && !state.use.activities ? undefined : state.fetchedAt });
+  await pruneWellness(use);
+  notifyWatchChange();
+  return use;
 }
 
 // ASCEND ticked a training off by itself: the note of it, with the log it made
@@ -149,6 +167,8 @@ export function isFetchDue(fetchedAt: string | undefined, now: Date, minMinutes 
 export type SyncResult =
   | { status: 'not-connected' }
   | { status: 'too-soon' }
+  // Every kind of watch data is switched off: nothing to fetch.
+  | { status: 'off' }
   | { status: 'ok'; count: number; wellness?: { days: number; today: boolean } }
   | { status: 'error'; message: string };
 
@@ -166,10 +186,15 @@ export interface SyncOptions extends FetchOptions {
 export async function syncWatchActivities(options: SyncOptions = {}): Promise<SyncResult> {
   const now = options.now ?? new Date();
   let connection: IntervalsConnection | null;
+  let use: WatchUse;
   try {
     connection = options.connection ?? (await getConnection());
     if (!connection) return { status: 'not-connected' };
     const state = await getWatchState();
+    use = state.use;
+    // Everything switched off: nothing is fetched in the background. Only
+    // "Verbinding testen" still asks one small question, to check the key.
+    if (nothingWanted(use) && !options.force) return { status: 'off' };
     if (!options.force && !isFetchDue(state.fetchedAt, now)) return { status: 'too-soon' };
   } catch {
     return { status: 'error', message: 'ASCEND kan de opgeslagen koppeling niet lezen.' };
@@ -178,14 +203,22 @@ export async function syncWatchActivities(options: SyncOptions = {}): Promise<Sy
   try {
     const today = todayISO();
     const adapter = createIntervalsIcuAdapter(connection, { fetchImpl: options.fetchImpl });
-    const activities = await adapter.fetchExternalActivities!({ from: addDays(today, -FETCH_DAYS), to: addDays(today, 1) });
+    let activities: ExternalActivity[] = [];
+    if (use.activities) {
+      activities = await adapter.fetchExternalActivities!({ from: addDays(today, -FETCH_DAYS), to: addDays(today, 1) });
+    } else if (options.force) {
+      // Trainings are switched off: this only checks that the key works, and
+      // what comes back is thrown away.
+      await adapter.fetchExternalActivities!({ from: today, to: addDays(today, 1) });
+    }
     const state = await getWatchState();
     await putWatchState({ ...state, activities, fetchedAt: now.toISOString(), lastError: undefined });
-    // Last night's sleep, resting heart rate and HRV for the morning check-in.
-    // They never decide whether this fetch counts as a success.
-    const wellness = await syncWellness(connection, { fetchImpl: options.fetchImpl, today });
-    if (wellness.status === 'ok') notifyWatchChange();
-    return { status: 'ok', count: activities.length, wellness: wellness.status === 'ok' ? { days: wellness.days, today: wellness.today } : undefined };
+    // Last night's sleep, resting heart rate and HRV for the morning check-in,
+    // as far as they are switched on. They never decide whether this fetch
+    // counts as a success.
+    const wellness = wellnessWanted(use) ? await syncWellness(connection, { fetchImpl: options.fetchImpl, today, use }) : undefined;
+    if (wellness?.status === 'ok') notifyWatchChange();
+    return { status: 'ok', count: activities.length, wellness: wellness?.status === 'ok' ? { days: wellness.days, today: wellness.today } : undefined };
   } catch (err) {
     const message = intervalsErrorMessage(err);
     try {

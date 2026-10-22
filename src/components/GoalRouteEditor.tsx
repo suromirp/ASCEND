@@ -25,7 +25,7 @@ import { formatNumberNL } from '../utils/number';
 import { makeId } from '../utils/id';
 import { NumberField } from './NumberField';
 import { useAppData } from '../state/AppDataContext';
-import { packSharePct } from '../engine/bodyWeight';
+import { packSharePct, weightsInUse } from '../engine/bodyWeight';
 import { Eyebrow } from './ui';
 import { PackWeightPresets } from './PackWeightPresets';
 import { tripShapeNote } from '../engine/gr5Profile';
@@ -112,7 +112,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
   const { settings } = useAppData();
   const packKg = amountOf(reqs, 'packWeight');
   const lastPackKg = useRef<number | undefined>(undefined);
-  const packShare = packKg ? packSharePct(packKg, settings.weightEntries) : undefined;
+  const packShare = packKg ? packSharePct(packKg, weightsInUse(settings.weightEntries, settings.weightFromMacroFactor)) : undefined;
 
   const packField = (
     <div className="flex flex-col gap-2">

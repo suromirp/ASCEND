@@ -64,7 +64,7 @@ export function WatchActivityCard() {
 
   // Vanzelf afvinken: only what nothing is left to choose about.
   useEffect(() => {
-    if (!state || !state.autoTick || ticking.current) return;
+    if (!state || !state.autoTick || !state.use.activities || ticking.current) return;
     const ticks = planAutoTicks(state.activities, state.dismissed, state.autoLogged, plannedSessions, templates, sessionLogs)
       .filter((t) => !attempted.current.has(t.activity.externalId));
     if (ticks.length === 0) return;
@@ -85,12 +85,14 @@ export function WatchActivityCard() {
     return () => clearTimeout(timer);
   }, [state, plannedSessions, templates, sessionLogs, logSession]);
 
+  // Trainings switched off ("Wat ASCEND van je horloge gebruikt"): nothing of
+  // the watch is offered or asked here.
   const questions = useMemo(
-    () => (state ? pendingQuestions(state.autoLogged, sessionLogs).filter((q) => !later.includes(q.entry.externalId)) : []),
+    () => (state?.use.activities ? pendingQuestions(state.autoLogged, sessionLogs).filter((q) => !later.includes(q.entry.externalId)) : []),
     [state, sessionLogs, later],
   );
   const proposals = useMemo(
-    () => (state ? pendingProposals(state.activities, state.dismissed, plannedSessions, templates, sessionLogs) : []),
+    () => (state?.use.activities ? pendingProposals(state.activities, state.dismissed, plannedSessions, templates, sessionLogs) : []),
     [state, plannedSessions, templates, sessionLogs],
   );
   const question = questions[0];

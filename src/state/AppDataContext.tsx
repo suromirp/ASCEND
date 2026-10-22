@@ -39,6 +39,7 @@ import { runBootMigrations } from '../storage/bootMigrations';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
 import { withWeekRepeated } from '../engine/repeatWeek';
+import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
@@ -121,7 +122,7 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setLearnedDurations(learnedStrengthDurations(tpls, logs, loadedSettings.sessionDurationEstimates));
   setHardSameDayAllowed(!!loadedSettings.hardSameDay);
   // The planner's leg index with the same inputs as the Benen card.
-  const lastWeight = [...(loadedSettings.weightEntries ?? [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.kg;
+  const lastWeight = currentBodyKg(loadedSettings.weightEntries, loadedSettings.weightFromMacroFactor);
   setFreshnessContext({ today: todayISO(), bodyKg: lastWeight, program, minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program) });
   setFixedSessionMinutes(planned);
   setAmbition(effectiveAmbition(loadedSettings.ambition, logs, new Map(tpls.map((t) => [t.id, t])), program, todayISO()).effective);
