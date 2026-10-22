@@ -59,8 +59,9 @@ const KEPT_OUTSIDE_PATTERN = new Set<string>(['tpl_test_run', 'tpl_race', ...EXT
 // Kept: a pattern template, a session that fills a pattern slot (the tempo
 // run, intervals and mountain hike of a race block or phase), a test or race,
 // an extra, and anything you or an accepted proposal fixed in place.
-export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek'>, session?: Pick<PlannedSession, 'lock'>): boolean {
-  return !!session?.lock || template.defaultDayOfWeek !== undefined || patternSlotOf(template.id) !== template.id || KEPT_OUTSIDE_PATTERN.has(template.id);
+export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek'>, session?: Pick<PlannedSession, 'lock' | 'leave'>): boolean {
+  // A period of yours (free days, holiday, trek) put it there or moved it: leave it.
+  return !!session?.lock || !!session?.leave || template.defaultDayOfWeek !== undefined || patternSlotOf(template.id) !== template.id || KEPT_OUTSIDE_PATTERN.has(template.id);
 }
 
 // Combines the deduplicated new-session requests (invariant b,

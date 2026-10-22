@@ -3,7 +3,9 @@ import { useAppData } from '../state/AppDataContext';
 import { previewProposal, type PreviewEntry, type PreviewMove } from '../engine/proposalPreview';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { Advice } from '../engine/adviceEngine';
-import type { SessionType } from '../models/training';
+import type { PlannedSession, SessionType } from '../models/training';
+import type { LeavePeriod } from '../models/leave';
+import { LeaveBand } from './LeaveBand';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
@@ -36,14 +38,31 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
 // Unique ids for sessions a proposal would add, so two never look like one.
 const previewIds = () => { let n = 0; return () => `preview-${n++}`; };
 
-export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: () => void }) {
-  const { plannedSessions, templates, program, respondToAdvice, planPreviewPass } = useAppData();
+export interface ProposalSheetProps {
+  advice: Advice;
+  onClose: () => void;
+  // Another proposal than a coach advice (a vrije periode): what Akkoord and
+  // Liever niet do, the planning run the preview uses (with the periods as
+  // they would be), those periods for the bands on the days, and plain notes
+  // on what stays as it is.
+  onRespond?: (response: 'accepted' | 'declined') => Promise<void>;
+  previewPass?: (sessions: PlannedSession[]) => PlannedSession[];
+  leave?: LeavePeriod[];
+  notes?: string[];
+  eyebrow?: string;
+  // Shown when the proposal changes nothing.
+  emptyText?: string;
+}
+
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, eyebrow = 'VOORSTEL', emptyText }: ProposalSheetProps) {
+  const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
+  const planPreviewPass = previewPass ?? contextPass;
   const { closing, requestClose } = useSheetClose(onClose);
   const [busy, setBusy] = useState(false);
   // With more than one option: the chosen one drives the week shown and Akkoord.
   const [choice, setChoice] = useState(0);
   const chosen = advice.options?.[choice]?.proposal ?? advice.proposal;
-  const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates, planPreviewPass]);
+  const data = useMemo(() => (chosen ? previewProposal(chosen.changes, plannedSessions, templates, planPreviewPass, leave) : { moves: [], weeks: [] }), [chosen, plannedSessions, templates, planPreviewPass, leave]);
   const byId = useMemo(() => new Map(templates.map((t) => [t.id, t])), [templates]);
   const today = todayISO();
   const fatigueInputs = useLegFatigueInputs();
@@ -78,7 +97,8 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
   async function respond(response: 'accepted' | 'declined') {
     setBusy(true);
     const option = advice.options?.[choice];
-    await respondToAdvice(option ? { ...advice, proposal: option.proposal, effect: option.effect } : advice, response);
+    if (onRespond) await onRespond(response === 'accepted' ? 'accepted' : 'declined');
+    else await respondToAdvice(option ? { ...advice, proposal: option.proposal, effect: option.effect } : advice, response);
     setBusy(false);
     requestClose();
   }
@@ -93,7 +113,7 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-3">
-              <Eyebrow>VOORSTEL</Eyebrow>
+              <Eyebrow>{eyebrow}</Eyebrow>
               <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</h3>
 
               {advice.options && advice.options.length > 1 && (
@@ -134,6 +154,17 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
                 </div>
               )}
 
+              {data.moves.length === 0 && emptyText && (
+                <p className="mt-4 rounded-xl border p-3.5 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>{emptyText}</p>
+              )}
+
+              {notes && notes.length > 0 && (
+                <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)' }}>
+                  <p className="text-[10px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>BLIJFT STAAN</p>
+                  {notes.map((n) => <p key={n} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{n}</p>)}
+                </div>
+              )}
+
               {freshness && (
                 <p className="mt-3 flex items-baseline justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-xs" style={{ borderColor: 'var(--color-card-border)' }}>
                   <span style={{ color: 'var(--color-ink-dim)' }}>Benen op de {freshness.kind === 'race' ? 'wedstrijd' : 'testdag'}, {short(freshness.date)}</span>
@@ -156,8 +187,9 @@ export function ProposalSheet({ advice, onClose }: { advice: Advice; onClose: ()
                             <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(d.date)}</span>
                             {isToday && <span className="text-[11px]" style={{ color: 'var(--color-gold)' }}>vandaag</span>}
                           </div>
+                          {d.leave && <div className="mb-2"><LeaveBand label={d.leave} /></div>}
                           {d.entries.length === 0 ? (
-                            <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p>
+                            d.leave && (d.leave.kind === 'off' || d.leave.kind === 'trek') ? null : <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p>
                           ) : (
                             <div className="flex flex-col gap-2">
                               {d.entries.map((e, i) => {

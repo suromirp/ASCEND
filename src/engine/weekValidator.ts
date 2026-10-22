@@ -13,11 +13,14 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
+import type { LeavePeriod } from '../models/leave';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf, weekdayShortNL } from '../utils/dates';
 import { conflictsOnTestDay, findHeavyConflicts, freshnessAt, isHardRun, isLegHeavyTemplate } from './scheduler';
 import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
+import { leaveDays, lightDays } from './leave';
+import { templateSport } from './sports';
 
 // --- who may touch a session ------------------------------------------------------
 // 0 history: logged, or its day has passed. 1 yours: you placed or moved it,
@@ -37,6 +40,8 @@ export function lockLevel(s: PlannedSession, logged: Set<string | undefined>, to
 // --- the rules --------------------------------------------------------------------
 export type CheckRule =
   | 'GOAL-DAY' // nothing on or after the main goal's day
+  | 'LEAVE-OFF' // nothing on a holiday day, nothing but the walk on a trek day (engine/leave.ts)
+  | 'LEAVE-LIGHT' // the day before and after a trek stays light
   | 'REST-DAY' // the rest day stays free
   | 'TWO-HARD-RUNS' // at most one hard run a day
   | 'TEST-DAY' // on a test or race day: nothing else hard, strength after it only with "Zware dingen op één dag"
@@ -76,6 +81,8 @@ export interface CheckInput {
   minutesOf?: (session: PlannedSession, template: SessionTemplate) => number;
   // Check only up to this day (a preview needs the weeks near, not the year).
   until?: string;
+  // Periods of free days, holidays and treks (models/leave.ts).
+  leave?: LeavePeriod[];
 }
 
 const LONG = new Set(['tpl_long_run', 'tpl_mountain_hike']);
@@ -90,11 +97,27 @@ function context(input: CheckInput) {
   return { byId, logged, until, open };
 }
 
+// The leave periods as the rules read them. A walking day of a trek is a
+// hiking session on a day of a trek: that is the trek itself, so the rest day,
+// the time budget, the one-long-a-week rule and the spacing between its own
+// days do not apply to it, and the check never moves it.
+function leaveContext(input: CheckInput, byId: Map<string, SessionTemplate>) {
+  const days = leaveDays(input.leave);
+  const light = lightDays(input.leave, days);
+  const isWalk = (s: PlannedSession) => {
+    const t = byId.get(s.templateId);
+    return !!t && t.type === 'hiking' && templateSport(t) === 'hiking';
+  };
+  const inTrek = (s: PlannedSession) => days.get(s.scheduledDate)?.kind === 'trek' && isWalk(s);
+  return { days, light, inTrek };
+}
+
 const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}-${Number(iso.slice(5, 7))}`;
 
 export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Finding[] {
   const { byId, logged, until, open } = context(input);
   const level = (s: PlannedSession) => lockLevel(s, logged, input.today);
+  const leave = leaveContext(input, byId);
   const findings: Finding[] = [];
   const active = input.sessions.filter(open).filter((s) => !onlyWeeks || onlyWeeks.has(mondayOfWeek(s.scheduledDate)));
   const all = input.sessions.filter((s) => s.status !== 'skipped');
@@ -125,8 +148,23 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
     if (s.scheduledDate > until) continue;
 
+    // A holiday day has no training, a trek day only its walk. Reported on
+    // the session that has to go; what you locked yourself stays and is
+    // reported only.
+    const leaveDay = leave.days.get(s.scheduledDate);
+    if (leaveDay && (leaveDay.kind === 'off' || (leaveDay.kind === 'trek' && !leave.inTrek(s)))) {
+      const where = leaveDay.kind === 'off' ? 'in je vakantie' : 'op een dag van je tocht';
+      findings.push({ rule: 'LEAVE-OFF', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat ${where} (${day(s.scheduledDate)}).` });
+      continue;
+    }
+    // The day before and after a trek: nothing hard, nothing heavy for the legs.
+    const lightDay = leave.light.get(s.scheduledDate);
+    if (lightDay && !leave.inTrek(s) && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t) || LONG.has(t.id))) {
+      findings.push({ rule: 'LEAVE-LIGHT', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} de dag ${lightDay.side === 'before' ? 'voor' : 'na'} je tocht (${day(s.scheduledDate)}).` });
+    }
+
     // The rest day stays free; what you put there yourself is your choice.
-    if (input.restDay && t.type !== 'recovery' && isoWeekday(s.scheduledDate) === input.restDay && level(s) >= 2) {
+    if (input.restDay && t.type !== 'recovery' && !leave.inTrek(s) && isoWeekday(s.scheduledDate) === input.restDay && level(s) >= 2) {
       findings.push({ rule: 'REST-DAY', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat op je rustdag (${day(s.scheduledDate)}).` });
     }
 
@@ -145,7 +183,9 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     // on its own place in the week.
     const budget = input.dailyTimeBudget?.[weekdayOf(s.scheduledDate)];
     const counted = (o: PlannedSession) => tpl(o)?.type !== 'recovery';
-    if (budget && counted(s) && sameDay.filter(counted).length > 0 && sameDay.filter(counted).every((o) => o.id > s.id)) {
+    // On a free day or a trek day the time is yours: no budget for the day.
+    const timeIsFree = leaveDay?.kind === 'free' || leaveDay?.kind === 'trek';
+    if (budget && !timeIsFree && counted(s) && sameDay.filter(counted).length > 0 && sameDay.filter(counted).every((o) => o.id > s.id)) {
       const dayList = [s, ...sameDay.filter(counted)];
       const total = dayList.reduce((n, o) => n + minutes(o), 0);
       const ceiling = budget.hardMaximumMinutes ?? budget.preferredMinutes + budget.softFlexMinutes;
@@ -164,7 +204,8 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     // The long training the day after, in its short version, is how the race
     // block plans it: easy legs, not a second effort.
     const shortLong = LONG.has(t.id) && !!s.plannedMinutes && !!t.durationVariants.short && s.plannedMinutes <= t.durationVariants.short;
-    if (testBefore && !shortLong && t.type !== 'strength' && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t))) {
+    // A trek is what you chose: the day after a test the walk stays (the proposal says so).
+    if (testBefore && !shortLong && !leave.inTrek(s) && t.type !== 'strength' && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t))) {
       findings.push({ rule: 'AFTER-TEST', date: s.scheduledDate, sessionIds: [s.id, testBefore.id], subjectId: s.id, level: level(s), message: `${name} de dag na de ${testBefore.templateId === 'tpl_race' ? 'wedstrijd' : 'testloop'}.` });
     }
 
@@ -192,6 +233,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     for (const c of findHeavyConflicts(s.id, t, s.scheduledDate, around(s.scheduledDate, 4), byId, recentLogs)) {
       if (ANCHORS.has(c.templateId)) continue; // TEST-FRESH and AFTER-TEST cover the test
       if (c.scheduledDate > s.scheduledDate || (c.scheduledDate === s.scheduledDate && c.id < s.id)) continue;
+      if (leave.inTrek(s) && leave.inTrek(c)) continue; // the days of one trek follow each other on purpose
       const subject = level(s) === 3 || level(c) !== 3 ? s : c;
       findings.push({ rule: 'LEG-SPACING', date: s.scheduledDate, sessionIds: [c.id, s.id], subjectId: subject.id, level: level(subject), message: `${tpl(c)?.name ?? 'Training'} (${day(c.scheduledDate)}) en ${name} (${day(s.scheduledDate)}) te dicht op elkaar.` });
     }
@@ -199,7 +241,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
 
   // One full long session a week.
   const weeks = new Map<string, PlannedSession[]>();
-  for (const s of active) if (LONG.has(s.templateId) && !s.plannedMinutes) weeks.set(s.weekStartDate, [...(weeks.get(s.weekStartDate) ?? []), s]);
+  for (const s of active) if (LONG.has(s.templateId) && !s.plannedMinutes && !leave.inTrek(s)) weeks.set(s.weekStartDate, [...(weeks.get(s.weekStartDate) ?? []), s]);
   for (const list of weeks.values()) {
     if (list.length < 2) continue;
     const sorted = [...list].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
@@ -210,13 +252,19 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
 }
 
 // --- repairing what the system planned ----------------------------------------------
+// A repair is made for a rule of the check, or by the leave step that puts a
+// walk on a trek day or a free day (engine/leaveBlock.ts).
+export type RepairRule = CheckRule | 'LEAVE-PLACE';
+
 export interface Repair {
   sessionId: string;
-  rule: CheckRule;
+  rule: RepairRule;
   from: string;
   to: string;
   plannedMinutes?: number;
   removed?: boolean;
+  // A session the planning put on the plan (it was not there before).
+  added?: boolean;
 }
 
 export interface RepairResult {
@@ -226,9 +274,13 @@ export interface RepairResult {
 }
 
 const MAX_ROUNDS = 60;
+// A holiday or a trek can ask for a repair per session; those get their own rounds.
+const ROUNDS_PER_LEAVE_FINDING = 2;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
+// Two findings are the same finding when this is the same.
+export const findingKey = key;
 
 export function repairWeeks(input: CheckInput): RepairResult {
   const { byId, logged, until } = context(input);
@@ -237,7 +289,11 @@ export function repairWeeks(input: CheckInput): RepairResult {
   // the race block swapped for a test or tempo run (raceBlock marker). That
   // swap is the race block's to keep or undo; moving it here would make the
   // two steps undo each other on every run.
-  const movable = (s: PlannedSession) => level(s) === 3 && !s.raceBlock;
+  const leave = leaveContext(input, byId);
+  // With a holiday or a trek in the plan nothing is stacked on a day that
+  // has no time budget: a session that has to move takes an empty day.
+  const leaveActive = (input.leave?.length ?? 0) > 0;
+  const movable = (s: PlannedSession) => level(s) === 3 && !s.raceBlock && !leave.inTrek(s);
   let sessions = input.sessions;
   const repairs: Repair[] = [];
   const tried = new Set<string>();
@@ -255,14 +311,25 @@ export function repairWeeks(input: CheckInput): RepairResult {
     };
   };
 
+  // A holiday day or a trek day takes nothing else.
+  const isBlockedDay = (d: string) => {
+    const kind = leave.days.get(d)?.kind;
+    return kind === 'off' || kind === 'trek';
+  };
+
   // Another day in the same week for a session of the system: the nearest
   // one that is better. Never the rest day, a race day, the past or the goal.
+  // Without a time budget for that weekday only an empty day takes a session
+  // that had to leave its own day (the same as engine/scheduler.ts#dayHasRoomFor).
+  const hasRoom = (d: string, subject: PlannedSession) =>
+    !!input.dailyTimeBudget?.[weekdayOf(d)] ||
+    !sessions.some((o) => o.id !== subject.id && o.scheduledDate === d && o.status !== 'skipped' && byId.get(o.templateId)?.type !== 'recovery');
   const relocate = (subject: PlannedSession, rule: CheckRule, alsoCheck: string[] = [], plannedMinutes?: number): boolean => {
     const t = byId.get(subject.templateId);
     if (!t) return false;
     const monday = mondayOfWeek(subject.scheduledDate);
     const candidates = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
-      .filter((d) => d !== subject.scheduledDate && d >= input.today && d <= until && (!input.goalDay || d < input.goalDay) && !(input.raceDays ?? []).includes(d) && isoWeekday(d) !== input.restDay)
+      .filter((d) => d !== subject.scheduledDate && d >= input.today && d <= until && (!input.goalDay || d < input.goalDay) && !(input.raceDays ?? []).includes(d) && isoWeekday(d) !== input.restDay && !isBlockedDay(d) && (!leaveActive || hasRoom(d, subject)))
       .sort((a, b) => Math.abs(daysBetween(subject.scheduledDate, a)) - Math.abs(daysBetween(subject.scheduledDate, b)) || a.localeCompare(b));
     // Its own place in the week first (a test goes where the easy run is).
     const slotDay = input.slotDays?.get(patternSlotOf(subject.templateId));
@@ -278,7 +345,9 @@ export function repairWeeks(input: CheckInput): RepairResult {
     return false;
   };
 
-  for (let round = 0; round < MAX_ROUNDS; round++) {
+  const leaveFindings = !input.leave?.length ? 0 : validateWeeks(input).filter((f) => f.rule === 'LEAVE-OFF' || f.rule === 'LEAVE-LIGHT').length;
+  const maxRounds = MAX_ROUNDS + leaveFindings * ROUNDS_PER_LEAVE_FINDING;
+  for (let round = 0; round < maxRounds; round++) {
     const findings = validateWeeks({ ...input, sessions });
     const byIdNow = new Map(sessions.map((s) => [s.id, s]));
     // The system's own sessions, and a test or race made fresh by changing
@@ -303,6 +372,14 @@ export function repairWeeks(input: CheckInput): RepairResult {
       if (!short) continue;
       sessions = sessions.map((s) => (s.id === subject.id ? { ...s, plannedMinutes: short } : s));
       repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, plannedMinutes: short });
+      continue;
+    }
+    if (next.rule === 'LEAVE-OFF' || next.rule === 'LEAVE-LIGHT') {
+      // To another day of that week where it fits; otherwise it is let go.
+      // A rest day (Herstel) is not moved: there is nothing to move.
+      if (t.type !== 'recovery' && relocate(subject, next.rule)) continue;
+      sessions = sessions.filter((s) => s.id !== subject.id);
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, removed: true });
       continue;
     }
     if (next.rule === 'DUPLICATE' || next.rule === 'GOAL-DAY') {
@@ -335,14 +412,24 @@ export function repairWeeks(input: CheckInput): RepairResult {
       }
       continue;
     }
-    relocate(subject, next.rule);
+    if (relocate(subject, next.rule)) continue;
+    // The days of a trek stay; a leg day of the system that cannot find another
+    // place within 72 hours of one is let go, so the legs come to the trek fresh
+    // and leave it rested.
+    if (next.rule === 'LEG-SPACING' && next.sessionIds.some((id) => id !== subject.id && sessions.some((o) => o.id === id && leave.inTrek(o)))) {
+      sessions = sessions.filter((s) => s.id !== subject.id);
+      repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, removed: true });
+    }
   }
   return { sessions, repairs, remaining: validateWeeks({ ...input, sessions }) };
 }
 
 // --- what changed, in words ----------------------------------------------------------
-const REASON: Record<CheckRule, string> = {
+const REASON: Record<RepairRule, string> = {
   'GOAL-DAY': 'niets op of na de dag van je doel',
+  'LEAVE-OFF': 'je bent vrij of op tocht',
+  'LEAVE-LIGHT': 'de dag voor en na je tocht blijft licht',
+  'LEAVE-PLACE': 'past bij je vrije periode',
   'REST-DAY': 'je rustdag blijft vrij',
   'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
   'TEST-DAY': 'niets zwaars op de dag van een test of wedstrijd',
@@ -358,7 +445,7 @@ const REASON: Record<CheckRule, string> = {
 export function describeRepair(r: Repair, name: string): string {
   const moved = r.from !== r.to ? `${day(r.from)} naar ${day(r.to)}` : '';
   const shorter = r.plannedMinutes ? `korter, ${r.plannedMinutes} minuten` : '';
-  const what = r.removed ? 'eruit' : [moved, shorter].filter(Boolean).join(', ') || 'aangepast';
+  const what = r.added ? `erbij op ${day(r.to)}` : r.removed ? 'eruit' : [moved, shorter].filter(Boolean).join(', ') || 'aangepast';
   return `${name}: ${what} (${REASON[r.rule]})`;
 }
 

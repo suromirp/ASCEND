@@ -1,6 +1,9 @@
 import { dayOrder, orderDay } from '../engine/dayOrder';
 import type { PlannedSession, SessionTemplate, SessionLog } from '../models/training';
 import type { Program } from '../models/program';
+import type { LeavePeriod } from '../models/leave';
+import { leaveLabelOn } from '../engine/leave';
+import { LeaveBand } from './LeaveBand';
 import { addDays, weekDates, weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
 import { SessionCard } from './SessionCard';
 import { Eyebrow } from './ui';
@@ -13,6 +16,7 @@ export function WeekPlanner({
   program,
   onSelectSession,
   adjustedIds,
+  leave,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -21,6 +25,8 @@ export function WeekPlanner({
   program?: Program | null;
   onSelectSession: (session: PlannedSession) => void;
   adjustedIds?: Set<string>;
+  // Free days, holidays and treks: shown as a quiet band on their days.
+  leave?: LeavePeriod[];
 }) {
   const days = weekDates(weekStartDate);
 
@@ -31,6 +37,7 @@ export function WeekPlanner({
         const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
         const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date), advice);
         const isToday = date === todayISO();
+        const leaveLabel = leaveLabelOn(date, leave);
         return (
           <div key={date} className="animate-rise-in" style={{ animationDelay: `${i * 40}ms` }}>
             <div className="mb-2 flex items-baseline gap-2">
@@ -42,6 +49,9 @@ export function WeekPlanner({
               </span>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(date)}</span>
             </div>
+            {leaveLabel && (
+              <div className="mb-2"><LeaveBand label={leaveLabel} /></div>
+            )}
             {advice && (
               <p className="mb-2 flex flex-wrap items-center gap-x-1.5 pl-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)' }}>{advice.avoid ? 'Liever niet op één dag' : advice.headline}</span>
@@ -49,7 +59,7 @@ export function WeekPlanner({
               </p>
             )}
             {daySessions.length === 0 ? (
-              <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p>
+              !leaveLabel || leaveLabel.kind === 'free' || leaveLabel.kind === 'light' ? <p className="pl-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</p> : null
             ) : (
               <div className="flex flex-col gap-2">
                 {daySessions.map((s) => {

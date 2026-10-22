@@ -45,6 +45,9 @@ import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeT
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
+import { sortPeriods } from '../engine/leave';
+import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
 import { extractEvidenceFromLogs } from '../engine/capability';
 import { activeGoalDemandKeys } from '../engine/progressionDecisions';
@@ -149,6 +152,8 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
       settings.enabledSports,
       settings.programPhaseOverrides,
       settings.restDay,
+      // Free days, holidays and treks (engine/leave.ts).
+      settings.leavePeriods,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too.
@@ -162,7 +167,7 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
       const result = await syncProgramHorizon();
       // Two syncs before one refresh: both notices count.
       if (result.repairs) pendingRepairs = pendingRepairs
-        ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))] }
+        ? { lines: [...pendingRepairs.lines, ...result.repairs.lines], before: [...pendingRepairs.before, ...result.repairs.before.filter((b) => !pendingRepairs!.before.some((p) => p.id === b.id))], stored: [...pendingRepairs.stored, ...result.repairs.stored.filter((b) => !pendingRepairs!.stored.some((p) => p.id === b.id))], addedIds: [...(pendingRepairs.addedIds ?? []), ...(result.repairs.addedIds ?? [])] }
         : result.repairs;
       lastHorizonKey = await currentKey();
     })
@@ -175,7 +180,7 @@ function simpleHash(text: string): string {
   for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
-import { weeklyPatternTemplates, fixedFrequencySports, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
+import { isSportEnabled, weeklyPatternTemplates, fixedFrequencySports, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
@@ -359,8 +364,15 @@ interface AppData {
   // Fase 3 — advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];
-  // The rest of the planning run over a proposed week, for its preview.
-  planPreviewPass: (sessions: PlannedSession[]) => PlannedSession[];
+  // The rest of the planning run over a proposed week, for its preview. With
+  // `leave`: as if those were your periods (a period you have not agreed to yet).
+  planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[]) => PlannedSession[];
+  // Vrije dagen, vakanties en tochten (engine/leave.ts). Adding or removing
+  // one is a proposal: planLeave computes it, applyLeave stores the period
+  // and applies the proposal, only after Akkoord.
+  leavePeriods: LeavePeriod[];
+  planLeave: (mode: 'add' | 'remove', period: LeavePeriod) => LeavePlan;
+  applyLeave: (plan: LeavePlan) => Promise<void>;
   respondToAdvice: (advice: Advice, response: 'accepted' | 'declined') => Promise<void>;
   debriefLogId: string | null;
   dismissDebrief: () => void;
@@ -527,9 +539,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // back as it was before your change.
         if (prev && prev.trigger !== 'plan_check' && Date.now() - Date.parse(prev.createdAt) < 15_000) {
           const known = new Set(prev.before.map((s) => s.id));
-          return { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))] };
+          return { ...prev, lines: [...prev.lines, ...repaired.lines], before: [...prev.before, ...repaired.stored.filter((s) => !known.has(s.id))], addedIds: [...prev.addedIds, ...(repaired.addedIds ?? [])] };
         }
-        return { id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: [], createdAt: now };
+        return { id, trigger: 'plan_check', title: 'Planning bijgewerkt', lines: repaired.lines, why, before: repaired.before, addedIds: repaired.addedIds ?? [], createdAt: now };
       });
     }
   }, []);
@@ -1631,22 +1643,65 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   // The rest of the planning run over the week a proposal gives, exactly as
   // the sync runs it after Akkoord (engine/planPass.ts): for the preview.
-  const planPreviewPass = useCallback((sessions: PlannedSession[]): PlannedSession[] => {
+  const planPreviewPass = useCallback((sessions: PlannedSession[], leave?: LeavePeriod[]): PlannedSession[] => {
     const today = todayISO();
     const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
     const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
     const restDay = settings.restDay ?? 1;
     let n = 0;
+    const periods = leave ?? settings.leavePeriods;
+    // The weeks near, and the weeks of a period further away.
+    const until = [addDays(today, 28), ...(periods ?? []).map((p) => addDays(p.endDate, 21))].sort().pop()!;
     return planPass(sessions, {
       today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
       slotDays: patternDays(templates, settings, restDay),
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
       newId: () => `preview-pass-${n++}`,
-      until: addDays(today, 28),
+      until,
+      leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
     }).sessions;
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
+
+  // Vrije dagen, vakanties en tochten: the proposal for adding or removing a
+  // period (engine/leaveProposal.ts), computed with the same planning run as
+  // the sync. Nothing is stored until Akkoord (applyLeave).
+  const leavePeriods = useMemo(() => sortPeriods(settings.leavePeriods ?? []), [settings.leavePeriods]);
+  const planLeave = useCallback((mode: 'add' | 'remove', period: LeavePeriod): LeavePlan => {
+    const today = todayISO();
+    const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    const restDay = settings.restDay ?? 1;
+    const blocks = raceBlocks(trainingGoals, mainGoalId, anchor, today);
+    const slotDays = patternDays(templates, settings, restDay);
+    return planLeaveChange({
+      mode, period, existing: settings.leavePeriods ?? [], sessions: plannedSessions, logs: sessionLogs, templates, today,
+      context: (periods) => {
+        let n = 0;
+        return {
+          today, logs: sessionLogs, templates, program, blocks, restDay, goalDay: anchor,
+          dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+          slotDays,
+          minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
+          newId: () => `leave-${n++}`,
+          until: addDays(period.endDate, 21),
+          leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
+        };
+      },
+    });
+  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+
+  const applyLeave = useCallback(async (plan: LeavePlan) => {
+    const stored = await SettingsRepo.get();
+    const current = stored.leavePeriods ?? [];
+    const after = plan.mode === 'add' ? [...current.filter((p) => p.id !== plan.period.id), plan.period] : current.filter((p) => p.id !== plan.period.id);
+    setSettings(await SettingsRepo.set({ leavePeriods: sortPeriods(after) }));
+    // Undo puts the periods back exactly as they were, with the planning.
+    const restore = { settings: { leavePeriods: current } };
+    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
+  }, [commitPlanChange, showStatusOnlyChange]);
 
   // What the extra training of the week is chosen from (engine/extraRun.ts).
   const extraSessionContext = useMemo(() => {
@@ -1661,8 +1716,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       anchor,
       restDay: settings.restDay,
       planChangeLog,
+      leave: settings.leavePeriods,
     };
-  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, planChangeLog]);
+  }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, planChangeLog]);
 
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).
@@ -1800,6 +1856,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     planChangeLog,
     advice,
     planPreviewPass,
+    leavePeriods,
+    planLeave,
+    applyLeave,
     respondToAdvice,
     debriefLogId,
     dismissDebrief: () => setDebriefLogId(null),

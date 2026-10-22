@@ -41,6 +41,8 @@ import { buildWeekReview } from './weekReview';
 import { plannedRpeTop } from './coach';
 import { isLegHeavyTemplate, respectsHeavySpacing } from './scheduler';
 import { templateSport } from './sports';
+import { isLeaveBlockedDay } from './leave';
+import type { LeavePeriod } from '../models/leave';
 
 export const EXTRA_RUN_TEMPLATE_ID = 'tpl_strides_run';
 const LOOKBACK_WEEKS = 4;
@@ -61,6 +63,8 @@ export interface ExtraRunInputs {
   anchor?: string; // main goal date: nothing on or after it
   raceDates?: string[];
   restDay?: number; // 1 = Monday ... 7 = Sunday
+  // Holidays and treks: no extra training on those days (engine/leave.ts).
+  leave?: LeavePeriod[];
   newId?: () => string;
 }
 
@@ -113,7 +117,7 @@ function isHard(t: SessionTemplate | undefined): boolean {
 }
 
 // The best day in the week for the extra run, or undefined when no day fits.
-export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Map<string, SessionTemplate>, opts: { today: string; anchor?: string; restDay?: number; template?: SessionTemplate }): string | undefined {
+export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], byId: Map<string, SessionTemplate>, opts: { today: string; anchor?: string; restDay?: number; template?: SessionTemplate; leave?: LeavePeriod[] }): string | undefined {
   const active = weekSessions.filter((s) => s.status !== 'skipped');
   const on = (date: string) => active.filter((s) => s.scheduledDate === date).map((s) => byId.get(s.templateId));
   let best: { date: string; score: number } | undefined;
@@ -121,6 +125,7 @@ export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], b
     const date = addDays(weekStart, d);
     if (date < opts.today || (opts.anchor && date >= opts.anchor)) continue;
     if (isoWeekday(date) === (opts.restDay ?? 1)) continue;
+    if (isLeaveBlockedDay(opts.leave, date)) continue;
     const here = on(date);
     if (here.some((t) => !!t && (isRun(t) || t.type === 'hiking' || isLegHeavyTemplate(t)))) continue;
     // A hard extra (fartlek, progressive run) not within 48 hours after heavy legs.
@@ -256,7 +261,7 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     });
     const template = byId.get(choice.templateId);
     if (!template) continue;
-    const date = extraRunDay(weekStart, week, byId, { today, anchor, restDay, template });
+    const date = extraRunDay(weekStart, week, byId, { today, anchor, restDay, template, leave: inputs.leave });
     if (!date) continue;
     return { id, weekStart, date, choice, earnedReason: verdict.reason };
   }

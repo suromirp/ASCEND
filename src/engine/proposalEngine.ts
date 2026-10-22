@@ -99,6 +99,16 @@ export function wrapAsPlanChangeProposal(
   };
 }
 
+// A period of free days or a holiday (models/leave.ts) put its mark on the
+// item: it goes on the session, `null` takes an earlier mark off.
+function withLeave(session: PlannedSession, item: PlanChangeItem): PlannedSession {
+  if (item.leave === undefined) return session;
+  const next = { ...session };
+  if (item.leave === null) delete next.leave;
+  else next.leave = item.leave;
+  return next;
+}
+
 export interface ApplyPlanChangeResult {
   // The next PlannedSession[] snapshot — pure, no IO. The caller persists
   // only the rows that actually changed.
@@ -164,7 +174,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }
+            ? withLeave({ ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }, item)
             : s,
         );
         break;
@@ -182,6 +192,7 @@ export function applyPlanChangeItems(
           status: 'planned',
           order: next.length,
           ...locked,
+          ...(item.leave ? { leave: item.leave } : {}),
         };
         next = [...next, created];
         break;
@@ -193,7 +204,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }
+            ? withLeave({ ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }, item)
             : s,
         );
         break;
@@ -203,7 +214,7 @@ export function applyPlanChangeItems(
           unsupported.push(item);
           break;
         }
-        next = next.map((s) => (s.id === item.plannedSessionId ? { ...s, status: 'skipped', ...locked } : s));
+        next = next.map((s) => (s.id === item.plannedSessionId ? withLeave({ ...s, status: 'skipped', ...locked }, item) : s));
         break;
       }
     }

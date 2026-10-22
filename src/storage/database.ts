@@ -5,6 +5,7 @@ import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metrics';
 import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
+import type { LeavePeriod } from '../models/leave';
 import type { WeightEntry } from '../models/metrics';
 import type { MorningCheckIn, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
@@ -19,7 +20,7 @@ import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
-import { DEFAULT_ENABLED_SPORTS, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
+import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
@@ -520,6 +521,11 @@ export interface AppSettings {
   // Ziek gemeld (engine/illness.ts). Optional, so older settings and
   // backups need no migration; travels with the settings in an export.
   illnessEpisodes?: IllnessEpisode[];
+  // Vrije dagen, vakanties en tochten (engine/leave.ts). Optional and
+  // additive, so older settings need no change; travels with the settings in
+  // a backup (backup schema 5, storage/migrations.ts#migrateLeavePeriods).
+  // Added and removed only with Akkoord on the proposal that goes with it.
+  leavePeriods?: LeavePeriod[];
   // Kennisbank: what you marked as read and this week's lesson
   // (engine/weeklyLesson.ts). Optional and additive; travels in an export.
   knowledge?: { read?: string[]; week?: { weekStart: string; topicId: string } };
@@ -973,7 +979,9 @@ export interface ProgramHorizonResult {
   // before: those sessions just before the check (what undo of the check
   // alone puts back); stored: as they were stored before this run (what
   // undo of the action that caused the run puts back).
-  repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[] };
+  // addedIds: sessions the run put on the plan itself (a walk on a trek day):
+  // undo takes those off again.
+  repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[]; addedIds?: string[] };
 }
 
 // Keeps the stored program in line with the main goal's date, on every
@@ -1016,7 +1024,8 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   const swapped: PlannedSession[] = [];
   const templateIds = new Set(templates.map((t) => t.id));
   for (const s of sessions) {
-    if (!open(s) || removedIds.has(s.id) || s.status === 'skipped') continue;
+    // A walk a period of yours put on the plan (engine/leaveBlock.ts) is not a pattern session.
+    if (!open(s) || removedIds.has(s.id) || s.status === 'skipped' || s.leave) continue;
     const target = templateForPhase(s.templateId, ctx.swaps, resolveProgramWeek(next, s.scheduledDate)?.phase.id);
     if (target !== s.templateId && templateIds.has(target)) swapped.push({ ...s, templateId: target });
   }
@@ -1036,7 +1045,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     const newDay = patternDays(templates, settings, wantedRestDay);
     const swappedById = new Map(swapped.map((x) => [x.id, x]));
     for (const s of sessions) {
-      if (!open(s) || removedIds.has(s.id) || s.status === 'moved' || s.lock) continue;
+      if (!open(s) || removedIds.has(s.id) || s.status === 'moved' || s.lock || s.leave) continue;
       const current = swappedById.get(s.id) ?? s;
       const to = newDay.get(patternSlotOf(current.templateId));
       if (!to || isoWeekday(s.scheduledDate) === to) continue;
@@ -1083,6 +1092,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
+    leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports),
   });
   if (pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
@@ -1093,14 +1103,18 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
 
   if (toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
   const byTemplate = new Map(templates.map((t) => [t.id, t.name]));
-  const shown = pass.repairs.filter(visibleRepair);
-  const nameOf = (id: string) => byTemplate.get((stored.get(id) ?? asWillBe.find((s) => s.id === id))?.templateId ?? '') ?? 'Training';
-  const repairedIds = [...new Set(shown.map((r) => r.sessionId))];
+  // Only what you would notice: a session that was never stored and is let go
+  // again in the same run (a pattern week inside a holiday) is not news.
+  const shown = pass.repairs.filter(visibleRepair).filter((r) => !(r.removed && !stored.has(r.sessionId)));
+  const nameOf = (id: string) => byTemplate.get((stored.get(id) ?? asWillBe.find((s) => s.id === id) ?? pass.sessions.find((s) => s.id === id))?.templateId ?? '') ?? 'Training';
+  const addedIds = [...new Set(shown.filter((r) => r.added).map((r) => r.sessionId))].filter((id) => resultIds.has(id));
+  const repairedIds = [...new Set(shown.map((r) => r.sessionId))].filter((id) => !addedIds.includes(id));
   const beforeCheck = new Map(pass.beforeCheck.map((s) => [s.id, s]));
   const repairs = shown.length === 0 ? undefined : {
     lines: shown.map((r) => describeRepair(r, nameOf(r.sessionId))),
     before: repairedIds.map((id) => beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
     stored: repairedIds.map((id) => stored.get(id) ?? beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
+    ...(addedIds.length > 0 ? { addedIds } : {}),
   };
   const newCount = writes.filter((w) => !stored.has(w.id)).length;
   return { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs };

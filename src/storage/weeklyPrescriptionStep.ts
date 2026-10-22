@@ -40,6 +40,7 @@ import { diffWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionDiff';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { programAnchorDate } from '../engine/programLayout';
+import { isLeaveBlockedDay } from '../engine/leave';
 import { isTemplatePlannable, fixedFrequencySports, templateSport, type Sport } from '../engine/sports';
 
 export type WeeklyPrescriptionStepOutcome =
@@ -101,7 +102,8 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   // 2027", the GR5 start), nor next to a tussendoel's race on its day.
   const anchorDay = programAnchorDate(goals, await GoalMilestonesRepo.getAll(), asOf);
   const raceDays = new Set(planned.filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
-  const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date));
+  // Nor on a day of a holiday or a trek (engine/leave.ts).
+  const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date) || isLeaveBlockedDay(appSettings.leavePeriods, date));
   const allowedChanges = proposal.changes.filter((c) => !blockedDay(c.action === 'add' ? c.newSessionDraft?.scheduledDate : c.action === 'move' ? c.toDate : undefined));
 
   // Alleen wat inhoudelijk anders is dan wat er ligt. De engine geeft elke

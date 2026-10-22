@@ -6,6 +6,7 @@ import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
 import { ChangeLogCard } from '../components/ChangeLogCard';
+import { LeavePeriodsCard } from '../components/LeavePeriods';
 import { adjustedSessionReasons } from '../engine/changeLog';
 import { SeasonOverview } from '../components/SeasonOverview';
 import { SessionActionSheet } from '../components/SessionActionSheet';
@@ -20,7 +21,7 @@ import { AdviceItem } from '../components/CoachCard';
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { setRestWeekSkipped, suggestMoves, program, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice } = useAppData();
+  const { setRestWeekSkipped, suggestMoves, program, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
   const [monthView, setMonthView] = useState(false);
@@ -32,7 +33,8 @@ export function WeekPage() {
   // Rest-day proposals show up right where you just moved a training.
   const restAdvice = advice.filter((a) => REST_RULES.includes(a.ruleId) && weekStart <= todayISO() && todayISO() <= addDays(weekStart, 6));
   const extraAdvice = advice.filter((a) => a.ruleId === 'EXTRA-SESSION' && a.proposal?.changes.some((c) => c.newSessionDraft?.weekStartDate === weekStart));
-  const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery'));
+  // What a holiday or a trek let go of is explained by the band on those days: not listed, not counted.
+  const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const restWeek = program && weekStart >= mondayOfWeek(todayISO()) ? restWeekState(program, weekStart, sessionLogs, todayISO()) : undefined;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
@@ -177,10 +179,12 @@ export function WeekPage() {
           program={program}
           onSelectSession={selectSession}
           adjustedIds={adjustedIds}
+          leave={leavePeriods}
         />
       )}
 
       {!monthView && <ChangeLogCard weekStart={weekStart} />}
+      {!monthView && <LeavePeriodsCard />}
 
       {selected && templateById.get(selected.templateId) && (
         <SessionActionSheet

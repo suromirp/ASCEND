@@ -87,9 +87,12 @@ export interface AscendBackupPayloadV4 extends Omit<AscendBackupPayloadV3, 'vers
   adviceResponses: Record<string, unknown> | null;
 }
 
-// V5 (etappeplan en solokaart) adds what the user chose per GR5 stage and
-// the agreement with home. Both are null when never filled in. A V1 to V4
-// file simply has neither, which means "unknown": the device keeps its own.
+// V5 adds what the user chose per GR5 stage and the agreement with home
+// (routePlan, soloPlan; null when never filled in), and `settings.leavePeriods`:
+// periods of free days, holidays and treks (models/leave.ts). A V1 to V4 file
+// has none of these, which means "unknown": the device keeps its own
+// (storage/migrations.ts#migrateLeavePeriods). The version is raised so that
+// an older app says "werk de app bij" instead of silently dropping them.
 export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'version'> {
   version: 5;
   routePlan: RoutePlan | null;

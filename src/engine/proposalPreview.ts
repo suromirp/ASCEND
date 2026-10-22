@@ -6,9 +6,11 @@
 // Pure: no React, no IndexedDB.
 
 import type { PlanChangeItem } from '../models/planChange';
+import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionTemplate, SessionType } from '../models/training';
 import { applyPlanChangeItems } from './proposalEngine';
 import { mondayOfWeek, weekDates } from '../utils/dates';
+import { leaveLabelOn, type LeaveLabel } from './leave';
 
 export type PreviewChange = 'nieuw' | 'hierheen' | 'weg' | 'vervalt';
 
@@ -26,6 +28,8 @@ export interface PreviewDay {
   date: string;
   entries: PreviewEntry[];
   changed: boolean;
+  // The day is part of a holiday, a trek or free days (engine/leave.ts).
+  leave?: LeaveLabel;
 }
 
 export interface PreviewWeek {
@@ -51,7 +55,9 @@ const MAX_WEEKS = 2;
 // the proposal gives, so what follows from it shows too: a leg day the race
 // block shifts, something the week check puts right. Applied the way Akkoord
 // applies it, with what the proposal shows fixed in place.
-export function previewProposal(items: PlanChangeItem[], sessions: PlannedSession[], templates: SessionTemplate[], pass?: (sessions: PlannedSession[]) => PlannedSession[]): ProposalPreviewData {
+// `leave`: the periods after the proposal, so the days show as holiday, trek
+// or free days.
+export function previewProposal(items: PlanChangeItem[], sessions: PlannedSession[], templates: SessionTemplate[], pass?: (sessions: PlannedSession[]) => PlannedSession[], leave?: LeavePeriod[]): ProposalPreviewData {
   const empty = { moves: [], weeks: [] };
   const real = items.filter((i) => i.action !== 'keep' && i.action !== 'replace');
   if (real.length === 0) return empty;
@@ -111,7 +117,7 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
           if (m && m.from === date) entries.push({ ...info(s), change: 'weg', otherDate: m.to });
         }
         for (const s of gone) if (s.scheduledDate === date) entries.push({ ...info(s), change: 'vervalt' });
-        return { date, entries, changed: entries.some((e) => e.change) };
+        return { date, entries, changed: entries.some((e) => e.change), ...(leave?.length ? { leave: leaveLabelOn(date, leave) } : {}) };
       }),
     })),
   };

@@ -93,7 +93,7 @@ export interface AdviceInputs {
   // The morning check-in (engine/wellbeing.ts, rule MORNING-CHECK).
   checkIns?: MorningCheckIn[];
   // The extra training of the week (engine/extraRun.ts, rule EXTRA-SESSION).
-  extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog'>;
+  extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog' | 'leave'>;
   // The main goal still carries the old hut default of 12 kg (rule
   // GR5-PACK-TENT, engine/gr5Profile.ts#tentPackProposal).
   tentPack?: TentPackProposal;

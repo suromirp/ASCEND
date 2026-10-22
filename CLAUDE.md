@@ -155,6 +155,24 @@ stored plan changed (a fingerprint is part of its key), not once a day.
 Background jobs at boot run one after the other, never at once. Design and
 reasoning: `docs/onderzoek/Planning op een lijn.md`.
 
+**Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,
+shown on Week as "Vrije dagen en vakanties"). Three kinds: `no_training` (no
+training on those days; what was there moves to an empty day of that week or is
+let go), `trek` (a mountain hike on every day, the day before and after light,
+rule LEAVE-LIGHT) and `free_days` (an easy backpack walk, or the week's long
+training when its own day is tight, only where the week check finds nothing
+new). They work through the same planning run as everything else:
+`engine/leaveBlock.ts` puts things in (between the race block and the week
+check in `planPass`), the week check takes things out (rules LEAVE-OFF and
+LEAVE-LIGHT in `weekValidator.ts`). Adding or removing a period is always a
+proposal with Akkoord (`engine/leaveProposal.ts` diffs the planning run against
+the stored plan; `ProposalSheet` previews it); the period is stored only on
+Akkoord, and undo puts the setting back. A session a period moved, let go of or
+placed carries `PlannedSession.leave` so removing the period can put it back.
+Logged and past sessions, what you locked yourself and a test or race are never
+moved by it; they come back as notes in the proposal. Backup schema 5 carries
+the periods; older files import as before (`storage/migrations.ts#migrateLeavePeriods`).
+
 Readiness percentages (`engine/readiness.ts` — strength, cardio,
 climbing/D+, endurance, recovery, consistency, pack capability) are
 intentionally simple, isolated formulas over the last 28 days of logs, each

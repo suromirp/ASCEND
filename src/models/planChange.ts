@@ -15,6 +15,7 @@ import type { TrainingGoal } from './goals';
 import type { PlannedSession } from './training';
 import type { CapabilityGap, PreparationTarget } from './capability';
 import type { FeasibilityAssessment } from './feasibility';
+import type { PlannedLeaveMark } from './leave';
 
 export type PlanChangeAction = 'keep' | 'add' | 'move' | 'swap' | 'reduce' | 'replace' | 'remove';
 
@@ -40,6 +41,10 @@ export interface PlanChangeItem {
   // dag ondersteunt (Groep A) — een enkelvoudig ID zou stilzwijgend
   // informatie laten vallen zodra een derde sessie dezelfde dag deelt.
   coPlacedWithSessionIds?: string[];
+  // A period of free days or a holiday (models/leave.ts) caused this item:
+  // the mark goes on the session so removing the period can put it back.
+  // `null` clears an earlier mark. Optional, additive.
+  leave?: PlannedLeaveMark | null;
   // Why this specific item was proposed, and which engine/rule produced
   // it — captured HERE, not only on a referenced TrainingPrescription
   // (newPrescriptionId), because that row is deliberately NOT append-only
@@ -86,7 +91,10 @@ export type EngineEvent =
   | 'illness_reported' | 'illness_resolved'
   // The week check (engine/weekValidator.ts) put right what the system
   // itself planned.
-  | 'plan_check';
+  | 'plan_check'
+  // A period of free days, a holiday or a trek was added or removed
+  // (engine/leaveProposal.ts).
+  | 'leave_added' | 'leave_removed';
 
 export interface PlanChangeAlternative {
   label: string;

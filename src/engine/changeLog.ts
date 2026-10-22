@@ -29,6 +29,8 @@ export const TRIGGER_LABEL: Record<EngineEvent, string> = {
   schedule_anomaly_detected: 'Planning rechtgezet',
   weekly_prescription_computed: 'Weekplanning',
   plan_check: 'Weekcontrole',
+  leave_added: 'Vrije periode toegevoegd',
+  leave_removed: 'Vrije periode verwijderd',
 };
 
 export interface ChangeLogEntry {

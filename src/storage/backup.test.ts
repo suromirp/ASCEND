@@ -5,6 +5,7 @@ import type { SessionLog, PlannedSession } from '../models/training';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
 import type { Program } from '../models/program';
+import type { LeavePeriod } from '../models/leave';
 
 // Phase 0a's original regression (export.ts/import.ts silently dropped
 // injuryNotes) — this now lives against the Phase 0b pipeline that replaced
@@ -140,7 +141,7 @@ describe('backup envelope round-trip', () => {
     expect(await GoalMilestoneProgressRepo.getAll()).toHaveLength(1);
   });
 
-  it('round-trips a real TrainingGoal/GoalMilestone/CapabilityEvidence through export and full-restore import (V4)', async () => {
+  it('round-trips a real TrainingGoal/GoalMilestone/CapabilityEvidence through export and full-restore import (V5)', async () => {
     await TrainingGoalsRepo.put({ id: 'goal1', name: 'Marathon', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'paused' });
     await GoalMilestonesRepo.put({ id: 'ms1', goalId: 'goal1', order: 1, title: 'First', requirement: { kind: 'manual' } });
     await GoalMilestoneProgressRepo.put({ id: 'p1', goalId: 'goal1', milestoneId: 'ms1', clearedDate: '2026-02-01' });
@@ -289,3 +290,80 @@ describe('backup envelope round-trip', () => {
   });
 });
 
+
+// --- vrije dagen en vakanties (backup schema 5) --------------------------------
+
+describe('vrije periodes in een back-up', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  const periods: LeavePeriod[] = [
+    { id: 'leave_a', kind: 'no_training', startDate: '2027-05-06', endDate: '2027-05-09', note: 'Hemelvaart' },
+    { id: 'leave_b', kind: 'trek', startDate: '2027-05-15', endDate: '2027-05-17' },
+    { id: 'leave_c', kind: 'free_days', startDate: '2027-06-03', endDate: '2027-06-04' },
+  ];
+
+  async function restore(envelope: unknown) {
+    const backup = normalizeBackupToCurrentModel(envelope);
+    const selections = defaultActionsForMode('full_restore');
+    const preview = await buildImportPreview(backup, selections, 'restore_backup_plan');
+    const snapshot = await createPreImportSnapshot();
+    const plan = createImportPlan(backup, 'full_restore', selections, 'restore_backup_plan', preview.diffByCategory.flatMap((d) => d.conflicts), snapshot.id);
+    await applyImportPlan(backup, plan);
+    return backup;
+  }
+
+  it('export and restore keep the periods and the marks on sessions', async () => {
+    await SettingsRepo.set({ leavePeriods: periods });
+    await PlannedSessionsRepo.put({ id: 'walk', templateId: 'tpl_mountain_hike', scheduledDate: '2027-05-15', weekStartDate: '2027-05-10', status: 'planned', order: 0, leave: { periodId: 'leave_b', role: 'placed', from: '2027-05-15' } });
+    const envelope = await buildBackupEnvelope();
+    expect(envelope.backupSchemaVersion).toBe(5);
+    expect((envelope.payload.settings as { leavePeriods?: LeavePeriod[] }).leavePeriods).toEqual(periods);
+
+    await wipeAllData();
+    await restore(JSON.parse(JSON.stringify(envelope)));
+    expect((await SettingsRepo.get()).leavePeriods).toEqual(periods);
+    expect((await PlannedSessionsRepo.getAll())[0].leave).toEqual({ periodId: 'leave_b', role: 'placed', from: '2027-05-15' });
+  });
+
+  it('an old backup without periods still imports, and leaves the periods on the device alone', async () => {
+    await SettingsRepo.set({ leavePeriods: periods });
+    const oldBackup = { backupSchemaVersion: 4, createdAt: '2026-10-01T00:00:00.000Z', payload: { version: 4, program: null, templates: [], plannedSessions: [], sessionLogs: [], trainingGoals: [], goalMilestones: [], goalMilestoneProgress: [], capabilityEvidence: [], injuryNotes: [], settings: { restDay: 3 } } };
+    const backup = normalizeBackupToCurrentModel(oldBackup);
+    expect(backup.settings.leavePeriods).toBeUndefined();
+    expect(backup.sourceBackupSchemaVersion).toBe(4);
+    await restore(oldBackup);
+    const settings = await SettingsRepo.get();
+    expect(settings.restDay).toBe(3);
+    expect(settings.leavePeriods).toEqual(periods);
+  });
+
+  it('a flat export from before backups existed still imports', async () => {
+    const legacy = { schemaVersion: 1, exportDate: '2026-06-01T00:00:00.000Z', program: null, templates: [], plannedSessions: [], sessionLogs: [], objectives: [], milestoneProgress: [], settings: {} };
+    const backup = normalizeBackupToCurrentModel(legacy);
+    expect(backup.settings.leavePeriods).toBeUndefined();
+    await expect(restore(legacy)).resolves.not.toThrow();
+    expect((await SettingsRepo.get()).leavePeriods).toBeUndefined();
+  });
+
+  it('drops a period that is incomplete or of an unknown kind, and says how many', () => {
+    const broken = {
+      backupSchemaVersion: 5, createdAt: '2026-10-01T00:00:00.000Z',
+      payload: { version: 5, settings: { leavePeriods: [periods[0], { id: 'x', kind: 'spa', startDate: '2027-05-01', endDate: '2027-05-02' }, { id: 'y', kind: 'trek', startDate: '2027-05-09', endDate: '2027-05-01' }, { kind: 'trek' }] } },
+    };
+    const backup = normalizeBackupToCurrentModel(broken);
+    expect(backup.settings.leavePeriods).toEqual([periods[0]]);
+    expect(backup.skippedInvalid).toBe(3);
+  });
+
+  it('a file that is not a list of periods is ignored, not stored', () => {
+    const backup = normalizeBackupToCurrentModel({ backupSchemaVersion: 5, createdAt: '2026-10-01T00:00:00.000Z', payload: { version: 5, settings: { leavePeriods: 'oops' } } });
+    expect(backup.settings.leavePeriods).toBeUndefined();
+    expect(backup.skippedInvalid).toBe(1);
+  });
+
+  it('a file from a newer app than schema 5 says to update', () => {
+    expect(() => normalizeBackupToCurrentModel({ backupSchemaVersion: 6, createdAt: '2027-01-01T00:00:00.000Z', payload: { version: 6 } })).toThrow(/nieuwere versie/);
+  });
+});

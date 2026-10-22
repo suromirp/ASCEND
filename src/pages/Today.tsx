@@ -36,6 +36,7 @@ import { WeekReviewCard } from '../components/WeekReview';
 import { JourneyWeekCard } from '../components/JourneyWeekCard';
 import { WeeklyQuestionCard } from '../components/WeeklyQuestionCard';
 import { reviewWeekFor } from '../engine/weekReview';
+import { leaveLabelOn } from '../engine/leave';
 import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
@@ -46,7 +47,7 @@ import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
 export function TodayPage() {
-  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates } = useAppData();
+  const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
@@ -68,7 +69,7 @@ export function TodayPage() {
     plannedSessions.filter((s) => s.scheduledDate === addDays(today, 1)),
     templateById,
   );
-  const todaySessions = orderDay(weekSessions.filter((s) => s.scheduledDate === today && !(s.status === 'skipped' && templateById.get(s.templateId)?.type === 'recovery')), dayOrderAdvice);
+  const todaySessions = orderDay(weekSessions.filter((s) => s.scheduledDate === today && !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped'))), dayOrderAdvice);
   // No `?? todaySessions[0]` fallback here: .find() only returns undefined
   // when every session today is already completed or skipped, and falling
   // back to one of those would re-show a finished session as if it still
@@ -112,6 +113,8 @@ export function TodayPage() {
   const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 
   const quote = dailyQuote(today);
+  // On a holiday day (engine/leave.ts) the empty day says so.
+  const onHoliday = leaveLabelOn(today, leavePeriods)?.kind === 'off';
 
   // A clean move (nothing else has to shift) applies at once, with undo
   // in the notice; anything that pushes another session asks first.
@@ -258,10 +261,12 @@ export function TodayPage() {
           <Eyebrow>VANDAAG</Eyebrow>
           {allTodayDone ? (
             <>
-              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{anyDoneToday ? 'Klaar voor vandaag' : 'Vandaag geen training'}</p>
+              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{anyDoneToday ? 'Klaar voor vandaag' : onHoliday ? 'Vakantie' : 'Vandaag geen training'}</p>
               <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
                 {anyDoneToday
                   ? 'Je training van vandaag is gedaan.'
+                  : onHoliday
+                    ? 'Je bent vrij. Er staat niets op de planning.'
                   : illness
                     ? 'Je bent ziek gemeld. Rust; wat je nu mist, hoef je niet in te halen.'
                     : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'}
@@ -269,8 +274,8 @@ export function TodayPage() {
             </>
           ) : (
             <>
-              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Rust of vrije dag</p>
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland voor vandaag.</p>
+              <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{onHoliday ? 'Vakantie' : 'Rust of vrije dag'}</p>
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{onHoliday ? 'Je bent vrij. Er staat niets op de planning.' : 'Geen training gepland voor vandaag.'}</p>
             </>
           )}
         </Card>

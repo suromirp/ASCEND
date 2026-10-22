@@ -8,6 +8,7 @@
 
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
+import type { PlannedLeaveMark } from './leave';
 
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
 
@@ -153,6 +154,9 @@ export interface PlannedSession {
   // Planned to walk with poles. Optional, additive; without it the last log
   // of the same training decides (engine/legFatigue.ts).
   poles?: boolean;
+  // A period of free days or a holiday placed, moved or let go of this
+  // session (models/leave.ts, engine/leave.ts). Optional, additive.
+  leave?: PlannedLeaveMark;
 }
 
 export interface PlanLock {

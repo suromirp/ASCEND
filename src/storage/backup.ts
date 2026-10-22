@@ -45,7 +45,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
 import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
-import { migrateExport, type AscendExport } from './migrations';
+import { migrateExport, migrateLeavePeriods, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
@@ -197,6 +197,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     ['weeklyHealthChecks', (e) => isRecord(e) && isDate(e.weekStart) && typeof e.trouble === 'string'],
     ['weeklyIntentions', isWeeklyIntention],
   ];
+  // Free days, holidays and treks (backup schema 5). A file from before that
+  // simply has none: the key stays absent, which means "not in this backup".
+  if ('leavePeriods' in s) {
+    const leave = migrateLeavePeriods(s.leavePeriods);
+    if (leave.periods === undefined) delete s.leavePeriods;
+    else s.leavePeriods = leave.periods;
+    skipped.n += leave.skipped;
+  }
   for (const [key, valid] of lists) {
     if (!(key in s)) continue;
     const cleaned = cleanList(s[key], valid, skipped);
