@@ -21,6 +21,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
+import type { ClothingAdjust } from '../engine/clothingFeedback';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
@@ -584,6 +585,12 @@ export interface AppSettings {
   // and additive; travels with the settings in a backup, where only valid
   // values are kept (storage/backup.ts).
   strengthModel?: StrengthSettings;
+  // What you told ASCEND about the clothing advice: degrees to dress lighter
+  // (plus) or heavier (minus), per sport, plus or minus 4 at most
+  // (engine/clothingFeedback.ts). Absent = 0 everywhere. Optional and additive,
+  // so older settings and backups need no migration step; travels with the
+  // settings in a backup and is read defensively on import.
+  clothingAdjust?: ClothingAdjust;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

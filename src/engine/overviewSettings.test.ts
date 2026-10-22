@@ -92,6 +92,8 @@ describe('het weer ophalen', () => {
     expect(needsWeather(undefined)).toBe(true);
     expect(needsWeather({ weatherLine: false })).toBe(true);
     expect(needsWeather({ weatherSwap: false })).toBe(true);
-    expect(needsWeather({ weatherLine: false, weatherSwap: false })).toBe(false);
+    expect(needsWeather({ weatherLine: false, weatherSwap: false })).toBe(true);
+    expect(needsWeather({ weatherLine: false, weatherSwap: false, clothingAdvice: false })).toBe(false);
+    expect(needsWeather({ clothingAdvice: false })).toBe(true);
   });
 });

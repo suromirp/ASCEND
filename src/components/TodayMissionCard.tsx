@@ -16,6 +16,7 @@ import { TodaySheet } from './vandaag/TodaySheet';
 import { CheckGlyph } from './vandaag/glyphs';
 import type { MissionChip } from '../engine/missionFacts';
 import { WeatherLine } from './WeatherLine';
+import { ClothingAdvice } from './ClothingAdvice';
 
 const LINK = 'inline-flex min-h-[44px] items-center text-sm font-medium';
 
@@ -97,6 +98,7 @@ export function TodayMissionCard({
           </p>
         )}
         {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-3" />}
+        <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" />
       </div>
 
       <WarmupRow template={template} />

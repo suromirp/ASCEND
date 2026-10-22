@@ -18,6 +18,7 @@ import { Card, Eyebrow } from './ui';
 import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
 import { WeatherLine } from './WeatherLine';
+import { ClothingAdvice } from './ClothingAdvice';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { paceLine, racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
@@ -88,6 +89,7 @@ export function TrainingGuideSheet({
           )}
 
           {template && dateIso && <WeatherLine template={template} date={dateIso} className="mt-2" />}
+          {template && dateIso && <ClothingAdvice template={template} date={dateIso} className="mt-1.5" />}
 
           {plan && plan.builds.length > 0 && (
             <>

@@ -8,6 +8,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { Card, Eyebrow, PrimaryButton } from './ui';
+import { ClothingFeedback } from './ClothingFeedback';
 import './completion.css';
 
 export interface CelebrationEvent {
@@ -119,6 +120,8 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
                 ))}
               </Card>
             )}
+
+            {event.kind === 'session' && summary.count === 1 && <ClothingFeedback logId={event.logIds?.[0]} />}
 
             {event.quote && <QuoteBlock quote={event.quote} at={720} />}
 

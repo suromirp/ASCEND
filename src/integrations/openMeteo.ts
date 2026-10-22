@@ -55,7 +55,7 @@ export function forecastUrl(place: WeatherPlace): string {
   const query = new URLSearchParams({
     latitude: String(roundCoordinate(place.lat)),
     longitude: String(roundCoordinate(place.lon)),
-    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code',
+    hourly: 'temperature_2m,apparent_temperature,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code,uv_index',
     daily: 'sunrise,sunset',
     timezone: 'auto',
     forecast_days: String(FORECAST_DAYS),
@@ -88,6 +88,7 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
   const wind = col('wind_speed_10m');
   const gust = col('wind_gusts_10m');
   const code = col('weather_code');
+  const uv = col('uv_index');
 
   const hours: WeatherHour[] = [];
   const seen = new Set<string>();
@@ -108,6 +109,7 @@ export function mapForecast(raw: unknown, place: WeatherPlace, fetchedAt: string
       windKmh,
       gustKmh: num(gust[i]) ?? windKmh,
       code: num(code[i]) ?? 0,
+      uvIndex: (() => { const u = num(uv[i]); return u === undefined ? undefined : Math.max(0, u); })(),
     });
   });
   if (hours.length === 0) throw new OpenMeteoError('response', MESSAGES.response);

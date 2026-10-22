@@ -27,6 +27,8 @@ export interface OverviewSettings {
   weatherLine?: boolean;
   // Ruilvoorstellen bij slecht weer (regel WEATHER-SWAP).
   weatherSwap?: boolean;
+  // Het kledingadvies bij het weer (engine/clothing.ts).
+  clothingAdvice?: boolean;
   // Het citaat op het scherm na een training (het scherm zelf blijft).
   completionMoment?: boolean;
 }
@@ -40,6 +42,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   morningCheckIn: true,
   weatherLine: true,
   weatherSwap: true,
+  clothingAdvice: true,
   completionMoment: true,
 };
 
@@ -57,6 +60,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     morningCheckIn: flag('morningCheckIn'),
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
+    clothingAdvice: flag('clothingAdvice'),
     completionMoment: flag('completionMoment'),
   };
 }
@@ -84,10 +88,11 @@ export function showMorningCheckInCard(raw: OverviewSettings | undefined, today:
 // of de ruilvoorstellen. Staan beide uit, dan gaat er niets naar de weerdienst.
 export const needsWeather = (raw: OverviewSettings | undefined): boolean => {
   const r = resolveOverviews(raw);
-  return r.weatherLine || r.weatherSwap;
+  return r.weatherLine || r.weatherSwap || r.clothingAdvice;
 };
 
 export const showWeatherLine = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherLine;
+export const showClothingAdvice = (raw: OverviewSettings | undefined) => resolveOverviews(raw).clothingAdvice;
 export const showWeatherSwap = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherSwap;
 // Het scherm na een training blijft altijd (feiten, coachregel, doel, week en
 // benen). De schakelaar bepaalt alleen of het citaat erbij staat. Een behaalde

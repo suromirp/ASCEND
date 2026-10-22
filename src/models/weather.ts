@@ -21,6 +21,7 @@ export interface WeatherHour {
   windKmh: number;
   gustKmh: number;
   code: number; // WMO weather code
+  uvIndex?: number; // UV index of that hour; absent in a forecast fetched before this field
 }
 
 // Sunrise and sunset of one day, local time: 'YYYY-MM-DDTHH:MM'.

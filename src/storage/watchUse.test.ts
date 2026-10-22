@@ -212,3 +212,31 @@ describe('the switches of Overzichten en vragen and the backup', () => {
     expect(normalizeBackupToCurrentModel(envelope).settings?.overviews).toBeUndefined();
   });
 });
+
+describe('your nudge of the clothing advice and the backup', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+
+  it('travels in the export, in the settings', async () => {
+    await SettingsRepo.set({ clothingAdjust: { running: 1.5, cycling: -0.5 } });
+    const roundTripped = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(roundTripped.settings?.clothingAdjust).toEqual({ running: 1.5, cycling: -0.5 });
+  });
+
+  it('an older backup without it still imports, and means no nudge', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    delete envelope.payload.settings.clothingAdjust;
+    const normalized = normalizeBackupToCurrentModel(envelope);
+    expect(normalized.settings?.clothingAdjust).toBeUndefined();
+    expect(normalized.sessionLogs.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it('refuses junk instead of storing it', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = { ...envelope.payload.settings, clothingAdjust: { running: 'heel warm', hiking: 99, skiing: 1 } };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.clothingAdjust).toEqual({ hiking: 4 });
+    envelope.payload.settings = { ...envelope.payload.settings, clothingAdjust: 'warm' };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.clothingAdjust).toBeUndefined();
+  });
+});

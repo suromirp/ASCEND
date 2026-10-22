@@ -28,6 +28,7 @@ import { SETTINGS_GROUPS, SETTINGS_INDEX, settingsAnchor, type SettingsGroupId, 
 import { searchSettings, settingAvailability, type SettingsVisibility } from '../engine/settingsSearch';
 import { ForgeSettings } from '../components/ForgeSettings';
 import { resolveOverviews, type OverviewSettings, type ReviewDay } from '../engine/overviewSettings';
+import { clothingAdjustSummary, hasClothingAdjust } from '../engine/clothingFeedback';
 import type { ReactNode } from 'react';
 
 const WEEKDAYS_NL = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
@@ -1054,6 +1055,25 @@ function OverviewSettingsCard() {
         checked={o.weatherSwap}
         onChange={(on) => set({ weatherSwap: on })}
       />
+      <SwitchRow
+        id="kledingadvies"
+        title="Kledingadvies bij het weer"
+        note="Bij een buitentraining een paar korte regels over wat je aantrekt, op basis van het weer en hoe hard je gaat."
+        checked={o.clothingAdvice}
+        onChange={(on) => set({ clothingAdvice: on })}
+      />
+      {o.clothingAdvice && (
+        <div id={settingsAnchor('kleding-voorkeur')} className="scroll-mt-40 flex flex-col gap-2">
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            Na een buitentraining kun je tikken of je kleding goed zat. ASCEND schuift je voorkeur dan een halve graad op, hooguit vier graden per sport. {clothingAdjustSummary(settings.clothingAdjust)}
+          </p>
+          {hasClothingAdjust(settings.clothingAdjust) && (
+            <SecondaryButton className="self-start px-4" onClick={() => void updateSettings({ clothingAdjust: undefined })}>
+              Je voorkeur bijstellen terug naar standaard
+            </SecondaryButton>
+          )}
+        </div>
+      )}
       <div id={settingsAnchor('weerplaats')} className="scroll-mt-40">
         <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Alleen de plaatsnaam gaat naar de weerdienst.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
       </div>

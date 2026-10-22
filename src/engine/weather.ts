@@ -116,6 +116,7 @@ export interface SessionWeather {
   precipProb?: number; // highest chance of precipitation
   windKmh: number; // highest
   gustKmh: number; // highest
+  uvIndex?: number; // highest UV index in the window; absent when the forecast has none
   verdict: WeatherVerdict;
   // Short words behind the verdict: 'onweer', 'harde wind', 'regen' ...
   reasons: string[];
@@ -174,6 +175,8 @@ export function sessionWeather({ forecast, date, startHour, durationMinutes, now
   const gustKmh = Math.max(...hours.map((h) => h.gustKmh));
   const maxFeels = Math.max(...hours.map((h) => h.feelsC));
   const minFeels = Math.min(...hours.map((h) => h.feelsC));
+  const uvs = hours.map((h) => h.uvIndex).filter((u): u is number => u !== undefined);
+  const uvIndex = uvs.length ? Math.max(...uvs) : undefined;
   const codes = hours.map((h) => h.code);
   const R = WEATHER_RULES;
 
@@ -214,7 +217,7 @@ export function sessionWeather({ forecast, date, startHour, durationMinutes, now
   }
 
   const result: SessionWeather = {
-    date, startHour: from, endHour: to, hours: hours.length, tempC, feelsC, precipMm, precipProb, windKmh, gustKmh,
+    date, startHour: from, endHour: to, hours: hours.length, tempC, feelsC, precipMm, precipProb, windKmh, gustKmh, uvIndex,
     verdict, reasons: [...bad, ...watch], watch, bad, daylight, line: '',
   };
   result.line = weatherLine(result);

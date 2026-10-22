@@ -46,6 +46,7 @@ import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
 import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
 import { normalizeStrengthSettings } from '../engine/strengthSettings';
+import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { migrateExport, migrateLeavePeriods, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -247,6 +248,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
       if (JSON.stringify(clean) !== JSON.stringify(s.strengthModel)) skipped.n++;
       s.strengthModel = clean;
     }
+  }
+  // Your nudge of the clothing advice: only known sports with a finite number
+  // within plus or minus 4 degrees; the rest is dropped and counted.
+  if ('clothingAdjust' in s) {
+    const cleaned = cleanClothingAdjust(s.clothingAdjust);
+    skipped.n += cleaned.skipped;
+    if (Object.keys(cleaned.value).length > 0) s.clothingAdjust = cleaned.value;
+    else delete s.clothingAdjust;
   }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {
