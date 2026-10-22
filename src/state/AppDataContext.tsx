@@ -663,6 +663,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (!originalIds.has(session.id)) addedIds.push(session.id);
       if (touchedIds.has(session.id) || !originalIds.has(session.id)) await PlannedSessionsRepo.put(session);
     }
+    // A tochtdag that goes with its tocht leaves the plan (item.discard); undo
+    // puts it back from `before`, like every other touched row.
+    const remaining = new Set(updatedSessions.map((s) => s.id));
+    for (const s of planned) if (touchedIds.has(s.id) && !remaining.has(s.id)) await PlannedSessionsRepo.delete(s.id);
     await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
     setRecentChange({
       id: proposal.id,

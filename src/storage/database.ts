@@ -29,6 +29,7 @@ import { describeRepair, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
+import { strayTrekRows } from '../engine/leaveStrays';
 import { TENT_PACK_KG, packMilestoneUpdate, packWeightOf, programPackGoal, programPackTarget } from '../engine/gr5Profile';
 import { makeId } from '../utils/id';
 import type { JourneyState } from '../engine/journey';
@@ -1076,8 +1077,16 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   if (phasesChanged || program.packTargetKg !== next.packTargetKg) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const proposals = await PlanChangeProposalsRepo.getAll();
+  // Tochtdagen an older version left behind as skipped rows when a tocht was
+  // changed or removed (engine/leaveStrays.ts): off the plan, never a logged one.
+  const strays = new Set(strayTrekRows(sessions, proposals, logs));
+  if (strays.size > 0) {
+    for (const id of strays) await PlannedSessionsRepo.delete(id);
+    sessions.splice(0, sessions.length, ...sessions.filter((s) => !strays.has(s.id)));
+  }
   // Test runs the weekly prescription wrongly took out come back first.
-  const revived = revivePrescriptionRemovedTests(sessions, await PlanChangeProposalsRepo.getAll(), logged, today);
+  const revived = revivePrescriptionRemovedTests(sessions, proposals, logged, today);
   if (revived.length > 0) {
     for (const r of revived) await PlannedSessionsRepo.put(r);
     const byId = new Map(revived.map((r) => [r.id, r]));
