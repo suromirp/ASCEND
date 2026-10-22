@@ -1494,6 +1494,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // again instead of "verplaatst".
   const applyProposal = useCallback(
     async (proposal: ScheduleProposal) => {
+      await planSettled();
+      const stored = await PlannedSessionsRepo.getAll();
       const before: PlannedSession[] = [];
       const lines: string[] = [];
       const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
@@ -1501,7 +1503,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // Back on its own day it is the plan's again.
       const lock = { by: 'user' as const, at: new Date().toISOString() };
       for (const change of proposal.changes) {
-        const session = plannedSessions.find((s) => s.id === change.sessionId);
+        const session = stored.find((s) => s.id === change.sessionId);
         if (!session) continue;
         before.push(session);
         if (change.toDate === change.fromDate) {
