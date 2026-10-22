@@ -342,3 +342,30 @@ describe('een herlaad op een geopend blad', () => {
     expect(browser.routerEvents).toHaveLength(0);
   });
 });
+
+describe('terug voorbij de pagina van de laag', () => {
+  it('twee stappen terug vanaf een blad op een andere pagina: het blad sluit en de router hoort de nieuwe pagina', () => {
+    const { browser, layers } = setup();
+    browser.routerPush('/b');
+    const a = layer();
+    layers.open(a.layer);
+    // Lang drukken op terug of de geschiedenis: in één keer naar /a.
+    browser.traverse(-2);
+    expect(a.log.closed).toBe(1);
+    expect(browser.state).toMatchObject({ url: '/a' });
+    expect(browser.routerEvents).toHaveLength(1);
+    expect(browser.routerEvents[0]).toMatchObject({ url: '/a' });
+  });
+
+  it('zonder routerstate (key of idx) blijft het zoals het was: de laag sluit, de router hoort niets', () => {
+    const browser = new FakeBrowser();
+    browser.entries = [{ url: '/a' }];
+    const layers = createBackLayers(browser.host);
+    browser.attachRouter();
+    const a = layer();
+    layers.open(a.layer);
+    browser.pressBack();
+    expect(a.log.closed).toBe(1);
+    expect(browser.routerEvents).toHaveLength(0);
+  });
+});
