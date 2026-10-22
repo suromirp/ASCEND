@@ -2,12 +2,23 @@
 //
 // Garmin sends every activity to intervals.icu; ASCEND reads the last days
 // from there with the user's own key and offers them on Today. The key stays
-// on this phone and is not part of any export.
+// on this phone and is not part of any export. The other way round, ASCEND
+// can put the planned trainings of the coming week in the intervals.icu
+// agenda (switch, default off), which intervals.icu sends on to the watch.
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
 import { clearConnection, getConnection, getWatchState, maskKey, saveConnection, syncWatchActivities, type SyncResult, type WatchActivityState } from '../storage/externalActivities';
+import {
+  getWatchWorkoutState,
+  pauseWatchWorkouts,
+  removeWatchWorkouts,
+  sendNextWatchWorkout,
+  setWatchWorkoutsEnabled,
+  syncWatchWorkouts,
+  type WatchWorkoutState,
+} from '../storage/watchWorkouts';
 import { intervalsErrorMessage, normalizeConnection, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { formatDateNL } from '../utils/dates';
 
@@ -85,6 +96,7 @@ export function GarminLinkPage() {
   async function unlink() {
     setBusy(true);
     try {
+      await pauseWatchWorkouts();
       await clearConnection();
       setConfirmingUnlink(false);
       setNotice({ tone: 'ok', text: 'Ontkoppeld. Je API-sleutel en de opgehaalde activiteiten zijn van deze telefoon gewist.' });
@@ -112,7 +124,7 @@ export function GarminLinkPage() {
         <Step n={2}>Koppel daar je Garmin. Vanaf dan komt elke training na het synchroniseren vanzelf op intervals.icu te staan.</Step>
         <Step n={3}>Open de instellingen van intervals.icu, onder Developer Settings. Kopieer je athlete-id en je API-sleutel en plak ze hieronder.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND leest alleen. De sleutel blijft op deze telefoon en gaat niet mee in een back-up. Elke nieuwe training krijg je als voorstel op Vandaag; er wordt nooit iets stil opgeslagen.
+          Standaard leest ASCEND alleen. De sleutel blijft op deze telefoon en gaat niet mee in een back-up. Elke nieuwe training krijg je als voorstel op Vandaag; er wordt nooit iets stil opgeslagen. Trainingen naar je horloge sturen staat uit tot jij het aanzet.
         </p>
       </Card>
 
@@ -183,6 +195,8 @@ export function GarminLinkPage() {
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Werkt de verbinding, dan wordt ze bewaard. Zo niet, dan blijft er niets staan.</p>
         </Card>
       )}
+
+      {connected && <WatchWorkoutsCard />}
     </div>
   );
 }
@@ -201,5 +215,130 @@ function NoticeLine({ notice }: { notice: Notice }) {
     <p role={notice.tone === 'error' ? 'alert' : 'status'} className="text-sm" style={{ color: notice.tone === 'error' ? 'var(--color-danger-text)' : 'var(--color-success-text)' }}>
       {notice.text}
     </p>
+  );
+}
+
+function WatchWorkoutsCard() {
+  const [state, setState] = useState<WatchWorkoutState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<Notice | null>(null);
+
+  const reload = useCallback(async () => {
+    try {
+      setState(await getWatchWorkoutState());
+    } catch {
+      setState(null);
+    }
+  }, []);
+  useEffect(() => {
+    void getWatchWorkoutState()
+      .then(setState)
+      .catch(() => setState(null));
+  }, []);
+
+  const sent = state ? Object.keys(state.items).length : 0;
+
+  async function toggle(on: boolean) {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const switched = await setWatchWorkoutsEnabled(on);
+      if (switched.status === 'error') {
+        setNotice({ tone: 'error', text: switched.message });
+      } else if (on) {
+        const result = await syncWatchWorkouts({ force: true });
+        setNotice(
+          result.status === 'error'
+            ? { tone: 'error', text: result.message }
+            : { tone: 'ok', text: 'Aan. De trainingen van de komende 7 dagen worden naar intervals.icu gestuurd en daarna naar je horloge.' },
+        );
+      } else {
+        setNotice({ tone: 'ok', text: switched.removed > 0 ? 'Uit. De komende trainingen zijn weer uit je intervals.icu-agenda gehaald.' : 'Uit. ASCEND stuurt geen trainingen meer.' });
+      }
+    } finally {
+      await reload();
+      setBusy(false);
+    }
+  }
+
+  async function testOne() {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await sendNextWatchWorkout();
+      if (result.status === 'ok') {
+        setNotice({
+          tone: 'ok',
+          text: `Gelukt. "${result.name}" van ${formatDateNL(result.date)} staat nu in je intervals.icu-agenda. Synchroniseer je horloge met Garmin Connect; dan staat hij ook op je horloge.`,
+        });
+      } else if (result.status === 'nothing') {
+        setNotice({ tone: 'error', text: 'Er staat de komende 7 dagen geen training die naar je horloge kan. Kracht en rustdagen gaan niet mee.' });
+      } else if (result.status === 'not-connected') {
+        setNotice({ tone: 'error', text: 'Er is geen koppeling met intervals.icu.' });
+      } else {
+        setNotice({ tone: 'error', text: `Het is niet gelukt. ${result.message}` });
+      }
+    } finally {
+      await reload();
+      setBusy(false);
+    }
+  }
+
+  async function updateNow() {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await syncWatchWorkouts({ force: true });
+      if (result.status === 'error') setNotice({ tone: 'error', text: result.message });
+      else if (result.status === 'ok') setNotice({ tone: 'ok', text: `Bijgewerkt: ${result.created} nieuw, ${result.updated} aangepast, ${result.removed} weggehaald.` });
+    } finally {
+      await reload();
+      setBusy(false);
+    }
+  }
+
+  async function takeAway() {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await removeWatchWorkouts();
+      setNotice(result.status === 'ok' ? { tone: 'ok', text: 'De trainingen die ASCEND had gestuurd zijn uit je intervals.icu-agenda gehaald.' } : { tone: 'error', text: result.status === 'error' ? result.message : 'Er is geen koppeling met intervals.icu.' });
+    } finally {
+      await reload();
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <Eyebrow>NAAR JE HORLOGE</Eyebrow>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Trainingen naar je horloge sturen</p>
+          <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            ASCEND zet de trainingen van de komende 7 dagen in je intervals.icu-agenda, met je tempo's uit de testloop of je hartslagzones als doel. Verplaats of sla je er een over, dan volgt de agenda. Alleen wat ASCEND zelf heeft gestuurd wordt aangeraakt; je eigen trainingen in intervals.icu blijven met rust.
+          </p>
+        </div>
+        <Toggle checked={!!state?.enabled} onChange={(v) => void toggle(v)} label="Trainingen naar je horloge sturen" />
+      </div>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Kracht gaat niet mee: die staat in MacroFactor. Zet in intervals.icu bij je Garmin-koppeling aan dat geplande trainingen naar Garmin Connect gaan. Wil je tempodoelen op je horloge, vul dan in intervals.icu bij de instellingen voor hardlopen je drempeltempo in; zonder dat ziet je horloge de tempo's niet. Hartslagdoelen werken altijd.
+      </p>
+      {state?.enabled && (
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          {state.syncedAt ? `Laatst gestuurd op ${formatDateNL(state.syncedAt.slice(0, 10))} om ${new Date(state.syncedAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}.` : 'Nog niet gestuurd.'} ASCEND werkt het hooguit eens per 15 minuten bij, bij het openen van de app.
+        </p>
+      )}
+      {state?.lastError && !notice && <NoticeLine notice={{ tone: 'error', text: state.lastError }} />}
+      {notice && <NoticeLine notice={notice} />}
+      <div className="flex flex-wrap gap-3">
+        <SecondaryButton onClick={() => void testOne()} disabled={busy}>{busy ? 'Bezig…' : 'Eén training testen'}</SecondaryButton>
+        {state?.enabled && <SecondaryButton onClick={() => void updateNow()} disabled={busy}>Nu bijwerken</SecondaryButton>}
+        {!state?.enabled && sent > 0 && <SecondaryButton onClick={() => void takeAway()} disabled={busy}>Weghalen uit intervals.icu</SecondaryButton>}
+      </div>
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        De test stuurt alleen de eerstvolgende training, ook als de schakelaar uit staat. Kijk daarna in je intervals.icu-agenda of de stappen kloppen.
+      </p>
+    </Card>
   );
 }

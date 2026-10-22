@@ -60,6 +60,7 @@ import { describeChanges } from '../engine/changeImpact';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 import { syncWatchActivities } from '../storage/externalActivities';
+import { syncWatchWorkouts } from '../storage/watchWorkouts';
 
 type AdviceResponse = StoredResponse;
 
@@ -1062,7 +1063,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // conflict 12).
       void (async () => {
         // Each on its own: one that fails doesn't stop the next.
-        for (const [name, step] of [['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities]] as const) {
+        for (const [name, step] of [['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['watch workouts', syncWatchWorkouts]] as const) {
           try {
             await step();
           } catch (err) {

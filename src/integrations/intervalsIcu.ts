@@ -2,7 +2,8 @@
 //
 // Garmin sends every activity to intervals.icu; this reads the last days
 // from there with the user's own athlete id and API key, straight from the
-// phone (no server of ours, no account). It only ever READS. The key lives
+// phone (no server of ours, no account). Reading is the default; writing only
+// happens when the owner switches on "Trainingen naar je horloge sturen". The key lives
 // on this device (storage/externalActivities.ts) and never in an export.
 //
 // Paths and field names were checked against the official OpenAPI
@@ -10,11 +11,19 @@
 // /api/v1/athlete/{id}/activities with `oldest` and `newest`, Basic
 // authentication with the user name "API_KEY" and the key as password.
 //
+// Since October 2026 it also WRITES, but only the planned workouts ASCEND
+// itself puts in the agenda (see "workouts" below): POST
+// /api/v1/athlete/{id}/events/bulk?upsert=true (create or update on
+// external_id), PUT /events/{eventId}, PUT /events/bulk-delete. The browser's
+// CORS preflight allows POST, PUT and DELETE from any origin with the
+// Authorization and Content-Type headers (tested with curl, 22 October 2026).
+//
 // The mapping from intervals.icu fields to the general ExternalActivity
 // (engine/activityImport.ts) is the only place that knows those field names.
 
 import type { DataSourceAdapter, DateRange } from './types';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
+import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu';
@@ -25,7 +34,7 @@ export interface IntervalsConnection {
   apiKey: string;
 }
 
-export type IntervalsErrorKind = 'input' | 'auth' | 'athlete' | 'rate' | 'server' | 'network' | 'response';
+export type IntervalsErrorKind = 'input' | 'auth' | 'athlete' | 'rate' | 'server' | 'network' | 'response' | 'write' | 'rejected';
 
 // An error whose message is already something to show the user.
 export class IntervalsError extends Error {
@@ -44,6 +53,8 @@ const MESSAGES: Record<Exclude<IntervalsErrorKind, 'input'>, string> = {
   server: 'intervals.icu heeft op dit moment een storing. Probeer het later nog eens; je eigen gegevens in ASCEND zijn niet geraakt.',
   network: 'Geen verbinding met intervals.icu. Controleer je internet en probeer het later opnieuw.',
   response: 'intervals.icu gaf een antwoord dat ASCEND niet begrijpt. Probeer het later nog eens.',
+  write: 'Met deze sleutel mag ASCEND geen trainingen in je agenda zetten. Maak in intervals.icu een nieuwe API-sleutel aan en plak hem opnieuw in ASCEND.',
+  rejected: 'intervals.icu nam de training niet aan. Probeer het later nog eens; blijft het gebeuren, laat het dan weten.',
 };
 
 export function normalizeConnection(raw: { athleteId: string; apiKey: string }): IntervalsConnection {
@@ -223,4 +234,146 @@ export function createIntervalsIcuAdapter(connection: IntervalsConnection | null
       return fetchIntervalsActivities(connection, range, options);
     },
   };
+}
+
+// --- workouts: ASCEND's planned trainings in the agenda -------------------------
+//
+// Everything below only ever touches events ASCEND created itself: it sends
+// external_ids of the form "ascend:<plannedSessionId>", and it deletes and
+// updates only the ones it was handed (the caller takes them from its own
+// list). An event the owner put in intervals.icu himself is never in that
+// list, so it is never touched.
+
+export function eventsBulkUrl(athleteId: string): string {
+  return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/events/bulk?upsert=true`;
+}
+
+export function eventUrl(athleteId: string, eventId: number): string {
+  return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/events/${encodeURIComponent(String(eventId))}`;
+}
+
+export function eventsBulkDeleteUrl(athleteId: string): string {
+  return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/events/bulk-delete`;
+}
+
+// The event as intervals.icu wants it. The description is the workout text;
+// intervals.icu reads the steps from it and builds the file for the watch.
+// `target` says which kind of goal the steps use (heart rate or pace).
+export function workoutEventBody(w: WatchWorkout) {
+  return {
+    category: 'WORKOUT',
+    start_date_local: `${w.date}T00:00:00`,
+    type: w.type,
+    name: w.name,
+    description: w.description,
+    moving_time: w.movingTimeSec,
+    external_id: w.externalId,
+    target: w.target,
+    indoor: false,
+  };
+}
+
+// Result of one write request: the parsed body (when there is one), or the
+// error the user should read. 404 on a delete is not an error: it is gone.
+async function writeRequest(
+  connection: IntervalsConnection,
+  url: string,
+  method: 'POST' | 'PUT' | 'DELETE',
+  body: unknown,
+  options: FetchOptions,
+  accept404 = false,
+): Promise<{ status: number; body: unknown }> {
+  const { apiKey } = normalizeConnection(connection);
+  const doFetch = options.fetchImpl ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await doFetch(url, {
+      method,
+      headers: { Authorization: basicAuthHeader(apiKey), Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch {
+    throw new IntervalsError('network', MESSAGES.network);
+  } finally {
+    clearTimeout(timer);
+  }
+  if (response.status === 401) throw new IntervalsError('auth', MESSAGES.auth);
+  if (response.status === 403) throw new IntervalsError('write', MESSAGES.write);
+  if (response.status === 404) {
+    if (accept404) return { status: 404, body: undefined };
+    throw new IntervalsError('athlete', MESSAGES.athlete);
+  }
+  if (response.status === 429) throw new IntervalsError('rate', MESSAGES.rate);
+  if (response.status >= 500) throw new IntervalsError('server', MESSAGES.server);
+  if (response.status === 400 || response.status === 422) throw new IntervalsError('rejected', MESSAGES.rejected);
+  if (!response.ok) throw new IntervalsError('response', MESSAGES.response);
+  let parsed: unknown;
+  try {
+    const text = await response.text();
+    parsed = text ? JSON.parse(text) : undefined;
+  } catch {
+    throw new IntervalsError('response', MESSAGES.response);
+  }
+  return { status: response.status, body: parsed };
+}
+
+const eventIdOf = (e: unknown): number | undefined => {
+  const id = (e as { id?: unknown } | null)?.id;
+  return typeof id === 'number' && Number.isFinite(id) ? id : undefined;
+};
+
+// Creates the workouts, or updates the ones that already have the same
+// external_id (upsert), in one request. Returns the event id of each.
+export async function createWorkoutEvents(
+  connection: IntervalsConnection,
+  workouts: WatchWorkout[],
+  options: FetchOptions = {},
+): Promise<Map<string, number | undefined>> {
+  const ids = new Map<string, number | undefined>();
+  if (workouts.length === 0) return ids;
+  if (workouts.some((w) => !w.externalId.startsWith(WATCH_EXTERNAL_PREFIX))) throw new IntervalsError('input', 'Interne fout: een training zonder ASCEND-id wordt niet verstuurd.');
+  const { body } = await writeRequest(connection, eventsBulkUrl(normalizeConnection(connection).athleteId), 'POST', workouts.map(workoutEventBody), options);
+  if (!Array.isArray(body)) throw new IntervalsError('response', MESSAGES.response);
+  const byExternal = new Map<string, number | undefined>();
+  for (const e of body) {
+    const ext = (e as { external_id?: unknown } | null)?.external_id;
+    if (typeof ext === 'string') byExternal.set(ext, eventIdOf(e));
+  }
+  for (const w of workouts) ids.set(w.externalId, byExternal.get(w.externalId));
+  return ids;
+}
+
+// Changes one event ASCEND created before. When the event is gone from the
+// agenda (the owner deleted it), it is created again instead.
+export async function updateWorkoutEvent(
+  connection: IntervalsConnection,
+  workout: WatchWorkout,
+  eventId: number | undefined,
+  options: FetchOptions = {},
+): Promise<number | undefined> {
+  if (eventId !== undefined) {
+    const { status, body } = await writeRequest(connection, eventUrl(normalizeConnection(connection).athleteId, eventId), 'PUT', workoutEventBody(workout), options, true);
+    if (status !== 404) return eventIdOf(body) ?? eventId;
+  }
+  return (await createWorkoutEvents(connection, [workout], options)).get(workout.externalId);
+}
+
+// Deletes events ASCEND created before, by id when known and else by its own
+// external_id. Events that are already gone are fine.
+export async function deleteWorkoutEvents(connection: IntervalsConnection, tracked: TrackedWorkout[], options: FetchOptions = {}): Promise<void> {
+  // Belt and braces: whatever the caller hands over, only ASCEND's own ids.
+  const own = tracked.filter((t) => t.externalId.startsWith(WATCH_EXTERNAL_PREFIX));
+  if (own.length === 0) return;
+  const { athleteId } = normalizeConnection(connection);
+  await writeRequest(
+    connection,
+    eventsBulkDeleteUrl(athleteId),
+    'PUT',
+    own.map((t) => (t.eventId !== undefined ? { id: t.eventId } : { external_id: t.externalId })),
+    options,
+    true,
+  );
 }
