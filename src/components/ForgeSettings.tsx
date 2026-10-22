@@ -1,10 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { settingsAnchor } from '../data/settingsIndex';
 import {
   ESTIMATE_UP_TO_OPTIONS,
   normalizeStrengthSettings,
-  parseWeightList,
   resolveStrengthSettings,
   withProfile,
   type GymProfile,
@@ -14,17 +13,14 @@ import {
   type WorkSetsMode,
 } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
-import { formatNumberNL } from '../utils/number';
 import { Icon } from './icons';
-import { NumberField } from './NumberField';
+import { GymProfileSettings } from './GymProfileSettings';
 import { Card, Eyebrow, Toggle } from './ui';
 
 // Settings, group Training, under the heading "Forge": whether ASCEND counts
 // along with your strength trainings, the choices of the advice, and the
 // weights of the gym. Every choice has the advice as its default and one
 // sentence of explanation (docs/beslissingen/2026-10-22-alles-instelbaar.md).
-
-const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
 function Anchored({ id, children }: { id: string; children: ReactNode }) {
   return <div id={settingsAnchor(id)} className="scroll-mt-40 flex flex-col gap-2 rounded-xl py-1">{children}</div>;
@@ -73,41 +69,6 @@ function SwitchLine({ id, title, note, checked, onChange }: { id: string; title:
   );
 }
 
-const fmt = (list: number[]) => list.map((n) => formatNumberNL(n, 2)).join('  ');
-
-// A list of weights typed with spaces between: "1,25  2,5  5". Saved when you
-// leave the field, so a half typed list is never stored.
-function WeightListField({ label, helper, value, onCommit }: { label: string; helper: string; value: number[]; onCommit: (list: number[]) => void }) {
-  const [text, setText] = useState(() => fmt(value));
-  const [synced, setSynced] = useState(value);
-  if (JSON.stringify(value) !== JSON.stringify(synced)) {
-    setSynced(value);
-    if (JSON.stringify(parseWeightList(text)) !== JSON.stringify(value)) setText(fmt(value));
-  }
-  return (
-    <div>
-      <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        {label}
-        <input
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={() => {
-            const list = parseWeightList(text);
-            if (list.length > 0) onCommit(list);
-            else setText(fmt(value));
-          }}
-          className="mt-1 min-h-[44px] w-full rounded-lg border bg-transparent px-2.5 text-sm"
-          style={fieldStyle}
-        />
-      </label>
-      <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{helper}</p>
-    </div>
-  );
-}
-
 export function ForgeSettings() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
@@ -117,8 +78,6 @@ export function ForgeSettings() {
     const next = normalizeStrengthSettings(withProfile(settings.strengthModel, patch));
     if (next) void updateSettings({ strengthModel: next });
   };
-  const d = s.profile.dumbbells;
-  const saveRack = (patch: Partial<GymProfile['dumbbells']>) => saveProfile({ dumbbells: { ...d, ...patch } });
 
   return (
     <Card className="flex flex-col gap-4">
@@ -199,27 +158,7 @@ export function ForgeSettings() {
           </div>
 
           <Anchored id="sportschool">
-            <div className="flex flex-col gap-3 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <div>
-                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Je sportschool</p>
-                <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  ASCEND stelt alleen gewichten voor die je echt kunt maken. Typ de getallen met een spatie ertussen.
-                </p>
-              </div>
-              <WeightListField label="Stangen (kg)" helper="Het gewicht van de lege stangen, de zwaarste eerst." value={s.profile.barsKg} onCommit={(list) => saveProfile({ barsKg: list.sort((a, b) => b - a) })} />
-              <WeightListField label="Schijven (kg)" helper="Elke schijf telt als twee, een aan elke kant." value={s.profile.platesKg} onCommit={(list) => saveProfile({ platesKg: list.sort((a, b) => a - b) })} />
-              <div className="grid grid-cols-2 gap-3">
-                <NumberField label="Lichtste dumbbell" unit="kg" decimals={2} value={d.startKg} onChange={(v) => v !== undefined && saveRack({ startKg: v })} />
-                <NumberField label="Eerste stuk loopt tot" unit="kg" decimals={2} value={d.upToKg} onChange={(v) => v !== undefined && saveRack({ upToKg: v })} />
-                <NumberField label="Stap in het eerste stuk" unit="kg" decimals={2} value={d.stepKg} onChange={(v) => v !== undefined && saveRack({ stepKg: v })} />
-                <NumberField label="Stap daarna" unit="kg" decimals={2} value={d.thenStepKg} onChange={(v) => v !== undefined && saveRack({ thenStepKg: v })} />
-                <NumberField label="Zwaarste dumbbell" unit="kg" decimals={2} value={d.maxKg} onChange={(v) => v !== undefined && saveRack({ maxKg: v })} />
-                <NumberField label="Stap kabels en toestellen" unit="kg" decimals={2} value={s.profile.stackStepKg} onChange={(v) => v !== undefined && saveProfile({ stackStepKg: v })} />
-              </div>
-              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                Voorbeeld: lichtste 2 kg, stap 2 kg tot en met 10 kg, daarna 2,5 kg: 2, 4, 6, 8, 10, 12,5, 15 en zo door.
-              </p>
-            </div>
+            <GymProfileSettings profile={s.profile} onSave={saveProfile} />
           </Anchored>
         </>
       )}

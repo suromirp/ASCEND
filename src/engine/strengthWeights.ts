@@ -9,6 +9,7 @@
 // and the load it makes (`loadKg`). Everything after this works on that list.
 
 import type { Exercise } from '../models/exercise';
+import { dumbbellWeights } from './gymProfileEdit';
 import type { GymProfile } from './strengthSettings';
 
 export interface Candidate {
@@ -86,12 +87,7 @@ function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ct
     case 'machine_plates':
       return plateSums(profile.platesKg).map((s) => r2(2 * s));
     case 'dumbbell': {
-      const d = profile.dumbbells;
-      const light: number[] = [];
-      for (let w = d.startKg; w <= d.upToKg + 1e-9; w += d.stepKg) light.push(r2(w));
-      const heavy: number[] = [];
-      for (let w = light[light.length - 1] + d.thenStepKg; w <= d.maxKg + 1e-9; w += d.thenStepKg) heavy.push(r2(w));
-      return [...light, ...heavy];
+      return dumbbellWeights(profile.dumbbells);
     }
     case 'pack_or_vest':
       return multiples(1, 0, 60);

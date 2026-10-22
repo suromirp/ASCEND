@@ -136,6 +136,10 @@ const PATHS = {
   ),
   // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
   verder: <path d="M9.5 6l6 6-6 6" />,
+  // Bij een stapper en een eigen waarde.
+  plus: <path d="M12 5.5v13M5.5 12h13" />,
+  min: <path d="M5.5 12h13" />,
+  sluiten: <path d="M7 7l10 10M17 7L7 17" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

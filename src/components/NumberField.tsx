@@ -21,6 +21,7 @@ export function NumberField({
   helper,
   placeholder,
   compact = false,
+  tall = false,
 }: {
   label?: string;
   value: number | undefined;
@@ -30,6 +31,8 @@ export function NumberField({
   helper?: string;
   placeholder?: string;
   compact?: boolean;
+  // A tap target of at least 44 px (CLAUDE.md), for fields in settings.
+  tall?: boolean;
 }) {
   const id = useId();
   const [text, setText] = useState(() => toText(value, decimals));
@@ -65,7 +68,7 @@ export function NumberField({
           value={text}
           placeholder={placeholder}
           onChange={(e) => handleChange(e.target.value)}
-          className={`w-full rounded-lg border bg-transparent px-2.5 ${compact ? 'py-1' : 'py-1.5'} text-sm ${unit ? 'pr-14' : ''}`}
+          className={`w-full rounded-lg border bg-transparent px-2.5 ${tall ? 'min-h-[44px] py-1.5' : compact ? 'py-1' : 'py-1.5'} text-sm ${unit ? 'pr-14' : ''}`}
           style={fieldStyle}
         />
         {unit && (
