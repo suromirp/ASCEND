@@ -2,6 +2,7 @@
 // GR5 that are not training, on a timeline with a tick box each
 // (data/journeyTasks.ts, engine/journey.ts). Opened from Ascend.
 
+import { useLayoutEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { Card, Eyebrow, PrimaryButton } from '../components/ui';
@@ -30,9 +31,21 @@ export function JourneyPage() {
   const today = todayISO();
 
   const timeline = goalDate ? journeyTimeline(JOURNEY_TASKS, state, today, goalDate, pick?.task.id) : [];
-  const selectedId = params.get('taak');
+  // The open task lives in state, not in the address: the sheet takes one
+  // step in the history (the back button closes it), and an address that is
+  // rewritten under that step would leave a copy of this page behind. A link
+  // with ?taak= (from Vandaag) opens the sheet once and the address is cleaned.
+  const taakParam = params.get('taak');
+  const [selectedId, setSelectedId] = useState<string | null>(taakParam);
+  useLayoutEffect(() => {
+    if (!taakParam) return;
+    setSelectedId(taakParam);
+    setParams({}, { replace: true });
+    // setParams only sets the address.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [taakParam]);
   const selected = timeline.flatMap((g) => g.tasks).find((r) => r.task.id === selectedId);
-  const closeSheet = () => setParams({}, { replace: true });
+  const closeSheet = () => setSelectedId(null);
 
   const packs = packProgress(items);
 
@@ -96,7 +109,7 @@ export function JourneyPage() {
                     }}
                   >
                     <CheckCircle checked={row.status === 'done'} onToggle={() => (row.status === 'done' ? untick(row.task.id) : tick(row.task.id))} label={`${row.task.title}: ${row.status === 'done' ? 'haal vinkje weg' : 'vink af'}`} />
-                    <button onClick={() => setParams({ taak: row.task.id }, { replace: true })} className="flex min-h-[52px] min-w-0 flex-1 flex-col justify-center py-1.5 pr-2 text-left">
+                    <button onClick={() => setSelectedId(row.task.id)} className="flex min-h-[52px] min-w-0 flex-1 flex-col justify-center py-1.5 pr-2 text-left">
                       <span
                         className="text-sm leading-snug"
                         style={{ color: row.status === 'done' ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: row.status === 'done' ? 'line-through' : undefined }}

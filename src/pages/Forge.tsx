@@ -6,7 +6,7 @@
 // is called "geschatte kracht" and the line shows the weight you can handle at
 // your rep range.
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { TrendLineChart } from '../components/TrendLineChart';
@@ -19,6 +19,7 @@ import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { usePageState } from '../components/usePageState';
 
 const SHOWN_AT_FIRST = 12;
 const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
@@ -28,7 +29,7 @@ export function ForgePage() {
   const { sessionLogs, templates, program, settings, updateSettings } = useAppData();
   const today = todayISO();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = usePageState('showAll', false);
 
   const strengthKey = JSON.stringify(settings.strengthModel ?? null);
   const model = useMemo(() => {

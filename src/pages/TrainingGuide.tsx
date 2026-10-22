@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { TRAINING_GUIDES, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
 import { Card, Eyebrow } from '../components/ui';
 import { todayISO } from '../utils/dates';
+import { usePageState } from '../components/usePageState';
 
 // Fixed weekday order (Ma → Zo) rather than iterating TRAINING_GUIDES —
 // object key order isn't a contract worth relying on, and this reads in
@@ -18,7 +18,7 @@ export function TrainingGuidePage() {
   const dayOrder = Object.keys(TRAINING_GUIDES)
     .filter((id) => templateById.has(id))
     .sort((a, b) => (templateById.get(a)!.defaultDayOfWeek ?? 8) - (templateById.get(b)!.defaultDayOfWeek ?? 8));
-  const [openTemplateId, setOpenTemplateId] = useState<string | null>(null);
+  const [openTemplateId, setOpenTemplateId] = usePageState<string | null>('openTemplateId', null);
 
   const openTemplate = openTemplateId ? templateById.get(openTemplateId) : undefined;
   const openGuide = openTemplateId ? TRAINING_GUIDES[openTemplateId] : undefined;

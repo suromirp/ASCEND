@@ -10,9 +10,14 @@ import '@fontsource/marcellus/latin-400.css'
 import './index.css'
 import App from './App.tsx'
 import { startServiceWorkerUpdates } from './utils/swUpdate'
+import { installBackLayers } from './utils/backLayers'
 
 // Looking for (and applying) a new version does not wait for the app to boot.
 startServiceWorkerUpdates()
+
+// The back button closes sheets before it leaves a page. Listens before the
+// router does, so it has to be installed before the first render.
+installBackLayers()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
