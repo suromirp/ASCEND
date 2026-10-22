@@ -1,4 +1,4 @@
-// ASCEND — the loopinzicht of one stored training, for the screens that show it.
+// ASCEND: the loopinzicht of one stored training, for the screens that show it.
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';

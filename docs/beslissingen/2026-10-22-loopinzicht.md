@@ -30,6 +30,20 @@ Alles wat rekent staat in `engine/` als pure functie. Alles wat de namen van int
 
 Het weer van die dag wordt bij het ophalen van het profiel opgezocht bij Open-Meteo (`past_days`, `forecast`-eindpunt), op de eerste plaats van het spoor of anders je thuisplaats, afgerond op twee decimalen (ongeveer een kilometer). Het spoor zelf wordt nooit bewaard. Zonder plaats of zonder weer vergelijkt de app gewoon zonder; hij verzint niets.
 
+## Keuzes onderweg
+
+Wat het onderzoek open liet, is zo ingevuld. Alles is een eigen aanname die na een paar weken met de echte gegevens van de eigenaar wordt geijkt.
+
+De borstbandinstelling: staat ze aan (standaard), dan telt elke loop als gemeten met de band. Staat ze uit, dan vergelijkt ASCEND alleen loopjes met hetzelfde teken van een band of pod (de grondcontactbalans, die alleen van zo'n sensor komt), zodat er nooit over een wissel van hartslagbron heen wordt vergeleken.
+
+Efficiëntie rekent op het vaste blok van minstens 15 minuten na de eerste 10, helling binnen 2 procent en tempo binnen 8 procent; bij een lange loop alleen op de eerste 40 minuten. Drift rekent op een blok van minstens 45 minuten (helling binnen 3 procent), eerste tegen tweede helft. Voor drift gelden de eigen drempels van het onderzoek (3 procentpunten lager is Beter, boven 8 procent en 3 punten boven het midden is Let op) en niet de algemene regel van anderhalf keer de ruis.
+
+Klimmen worden vergeleken binnen een hellingklasse van vier procent en een rugzak binnen 2 kg; Beter bij 8 procent sneller met een hartslag die niet meer dan 4 slagen hoger is, of 5 slagen lager bij een snelheid binnen 5 procent. Bergaf is alleen een feit: het laatste derde van één daling minstens 15 procent trager zonder oplopende hartslag. Een hoogtemeting die meer dan 40 procent afwijkt van die van het horloge wordt niet vertrouwd.
+
+Pas en vorm na een loop vergelijkt het laatste derde met het eerste derde van dezelfde loop (contacttijd 5 procent langer, pas 4 procent korter of 3 stappen per minuut trager; twee van de drie, of één van twee keer de grens). De vergelijking met eerdere loopjes (4 procent of 10 ms) staat alleen in de trend op Je stand, en daar pas als de laatste twee loopjes op rij hetzelfde laten zien. De balans en de verticale oscillatie worden niet als regel getoond.
+
+Niet gebouwd, want het onderzoek noemt ze als later: de slaap als mogelijke verklaring in het blad Waarom, de vervolgstap 7 (drempel en omrekening van `aerobicTrend`) en stap 8 (bestaande logs aanvullen met een profiel). Wel is `ExternalActivity.streamsAvailable` er al, zodat stap 8 niets hoeft te raden.
+
 ## Afwijking van back-upschema 5
 
 Het back-upschema blijft 5. Een log reist hele mee, net als bij `manualMeasured` (`2026-10-22-garmin-is-leidend.md`), en `detail` is afgeleid en op te halen uit het horloge. Een oudere app die het veld niet kent verliest dus niets wat niet terug te halen is. Dat is een bewuste afwijking van de gedachte achter back-upschema 5 ("een oudere app moet zeggen werk de app bij"), die voor de vrije dagen, vakanties en tochten wel nodig was, omdat die niet terug te halen zijn. De migratie laat een geldig profiel staan en laat een beschadigd profiel als geheel vallen, zonder de rest van de log aan te raken: een vergelijking op half gerepareerde getallen is slechter dan geen vergelijking. Een log zonder het veld blijft zoals hij was. De instellingen van het loopinzicht (`AppSettings.runInsight`) reizen mee met de instellingen; alleen geldige sleutels blijven staan. De schakelaar `details` is een voorkeur van dit toestel en gaat net als de andere horlogeschakelaars niet mee.

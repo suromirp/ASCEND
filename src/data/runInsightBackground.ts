@@ -1,4 +1,4 @@
-// ASCEND — de achtergrond achter het blad "Waarom" bij het loopinzicht: korte
+// ASCEND: de achtergrond achter het blad "Waarom" bij het loopinzicht: korte
 // alinea's met de bewijsgraad erbij, in de stijl van docs/visie. De volledige
 // bronnen staan in data/researchSources.ts en dus bij Meer, Kennis (Bronnen).
 // Uitwerking: docs/onderzoek/Loopgegevens en vooruitgang.md, hoofdstuk 3.

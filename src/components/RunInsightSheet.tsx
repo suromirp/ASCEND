@@ -1,10 +1,10 @@
-// ASCEND — het blad "Waarom" bij het loopinzicht: wat er vergeleken is, hoe sterk
+// ASCEND: het blad "Waarom" bij het loopinzicht: wat er vergeleken is, hoe sterk
 // het verschil is en wat het kan betekenen, met de achtergrond ingeklapt.
 // Gebouwd zoals Gr5ReadinessSheet. Dezelfde bouw voor één loop (na de training) en
 // voor de trend (Je stand).
 
 import { useState } from 'react';
-import type { InsightLine } from '../engine/runInsight';
+import type { InsightLine, SheetModel } from '../engine/runInsight';
 import { RUN_INSIGHT_BACKGROUND } from '../data/runInsightBackground';
 import { formatPace } from '../engine/aerobicTrend';
 import { formatNumberNL } from '../utils/number';
@@ -13,13 +13,11 @@ import { Portal } from './Portal';
 import { TrendLineChart } from './TrendLineChart';
 import { Card, Eyebrow, InfoButton, SecondaryButton } from './ui';
 
-// Wat het blad nodig heeft; een InsightLine past erop, de trend op Je stand maakt
-// er zelf een.
-export type SheetModel = Pick<InsightLine, 'topic' | 'title' | 'figures' | 'series' | 'seriesFormat' | 'strengthText' | 'meaning' | 'basis'> & { word: string };
 
 function formatter(format: InsightLine['seriesFormat']): (v: number) => string {
   if (format === 'pace') return (v) => formatPace(-v);
   if (format === 'percent') return (v) => `${formatNumberNL(-v, 1)}%`;
+  if (format === 'ms') return (v) => `${Math.round(-v)} ms`;
   return (v) => `${Math.round(v)} m per uur`;
 }
 

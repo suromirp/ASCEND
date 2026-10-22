@@ -1,4 +1,4 @@
-// ASCEND — which earlier trainings a run or tocht may be compared with.
+// ASCEND: which earlier trainings a run or tocht may be compared with.
 //
 // A difference is only a difference when the two trainings differed in nothing
 // but what you want to know. So this is mostly a list of exclusions

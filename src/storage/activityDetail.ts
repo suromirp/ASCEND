@@ -1,4 +1,4 @@
-// ASCEND — the compact profile of a stored run or tocht.
+// ASCEND: the compact profile of a stored run or tocht.
 //
 // When a run or tocht from the watch is stored, one request fetches its series
 // (the adapter, integrations/intervalsIcu.ts), the weather of that day is looked

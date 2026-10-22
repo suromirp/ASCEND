@@ -1,4 +1,4 @@
-// ASCEND — which lines of the loopinzicht were shown, for the brake against
+// ASCEND: which lines of the loopinzicht were shown, for the brake against
 // repeating (engine/runInsight.ts, rule 7): the same topic with the same tone
 // only after 14 days and only when it is at least half a noise unit further.
 //

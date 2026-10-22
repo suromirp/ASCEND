@@ -34,8 +34,10 @@ export function runLog(o: RunLogOptions): SessionLog {
   const km = (dist[dist.length - 1] ?? 0) / 1000;
   const templateId = o.templateId ?? 'tpl_easy_run';
   const hiking = templateId === 'tpl_mountain_hike' || templateId === 'tpl_long_run';
+  const hrAt = typeof o.spec.hr === 'function' ? o.spec.hr(o.spec.minutes / 2) : o.spec.hr;
   const metric = {
     durationMinutes: minutes,
+    ...(typeof hrAt === 'number' ? { avgHeartRate: Math.round(hrAt) } : {}),
     distanceKm: Math.round(km * 100) / 100,
     environment: o.treadmill ? ('treadmill' as const) : ('outdoor' as const),
     source: 'garmin' as const,

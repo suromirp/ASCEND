@@ -1,4 +1,4 @@
-// ASCEND — what one run or tocht says, from its compact profile.
+// ASCEND: what one run or tocht says, from its compact profile.
 //
 // Per training, no comparison (that is engine/runComparison.ts): a steady
 // block and the pace at one reference heart rate, the drift over a long run,

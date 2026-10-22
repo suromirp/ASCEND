@@ -1,4 +1,4 @@
-// ASCEND — "Loopinzicht" in Meer (Overzichten en vragen): wat ASCEND na een loop
+// ASCEND: "Loopinzicht" in Meer (Overzichten en vragen): wat ASCEND na een loop
 // of tocht laat zien en hoe hij vergelijkt. Elke keuze heeft het advies als
 // standaard en één zin uitleg; de ids horen bij src/data/settingsIndex.ts.
 // De schakelaar voor het ophalen van de reeksen staat bij Garmin koppelen.

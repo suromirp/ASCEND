@@ -1,4 +1,4 @@
-// ASCEND — what is known about one activity beyond its totals.
+// ASCEND: what is known about one activity beyond its totals.
 //
 // Provider-free (docs/onderzoek/Loopgegevens en vooruitgang.md, hoofdstuk 4):
 // nothing in here names a vendor or a service. `source` stays the existing

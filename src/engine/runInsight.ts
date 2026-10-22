@@ -1,4 +1,4 @@
-// ASCEND — the two lines after a run or tocht: one thing that went better and at
+// ASCEND: the two lines after a run or tocht: one thing that went better and at
 // most one to watch.
 //
 // This is the choice, not the arithmetic (engine/runMetrics.ts) and not the
@@ -89,12 +89,16 @@ export interface InsightLine {
   // The earlier ones as dots (oldest first) and this one last. Higher = better.
   series: (TrendPoint & { current?: boolean })[];
   // How to read a value of the series: pace as m:ss, a percentage or metres per hour.
-  seriesFormat: 'pace' | 'percent' | 'metresPerHour';
+  seriesFormat: 'pace' | 'percent' | 'metresPerHour' | 'ms';
   // "Hoe sterk is dit?" and "Wat het kan betekenen", in plain words.
   strengthText: string;
   meaning: string;
   basis: { logIds: string[]; criteria: string[]; notes: string[] };
 }
+
+// What the sheet "Waarom" needs; an InsightLine fits it, and so does a row of the
+// trend on Je stand (engine/runTrends.ts).
+export type SheetModel = Pick<InsightLine, 'topic' | 'title' | 'figures' | 'series' | 'seriesFormat' | 'strengthText' | 'meaning' | 'basis'> & { word: string };
 
 export interface RunInsight {
   better?: InsightLine;

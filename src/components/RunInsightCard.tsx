@@ -1,4 +1,4 @@
-// ASCEND — de tweede kaart na een loop of tocht (CompletionMoment): hoogstens twee
+// ASCEND: de tweede kaart na een loop of tocht (CompletionMoment): hoogstens twee
 // rijen, "Beter" en "Let op", elk met één zin en rechts "Waarom" dat het blad opent.
 // Alleen woorden: geen icoon, geen kleurvlak, geen pijltje. Staat er niets te
 // zeggen, dan geen kaart, behalve de ene zin met de reden als iets niet te

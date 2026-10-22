@@ -1,4 +1,4 @@
-// ASCEND — from the series of one activity to a compact profile.
+// ASCEND: from the series of one activity to a compact profile.
 //
 // Pure and provider-free (docs/onderzoek/Loopgegevens en vooruitgang.md,
 // hoofdstuk 4): an adapter turns whatever its provider sends into a StreamSet,
