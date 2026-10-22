@@ -18,10 +18,9 @@ import {
 } from '../engine/gymProfileEdit';
 import type { GymProfile } from '../engine/strengthSettings';
 import { formatNumberNL } from '../utils/number';
-import { haptics } from '../utils/haptics';
 import { Icon } from './icons';
 import { NumberField } from './NumberField';
-import { Eyebrow, SecondaryButton } from './ui';
+import { Chip, Eyebrow, SecondaryButton, Stepper } from './ui';
 
 // "Je sportschool" in Instellingen, Training: what is in your gym, as taps
 // instead of typing. The rules (which chip does what, which series you can pick
@@ -29,32 +28,7 @@ import { Eyebrow, SecondaryButton } from './ui';
 // always was.
 
 const kg = (n: number) => formatNumberNL(n, 2);
-const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 const dim = { color: 'var(--color-ink-dim)' };
-
-function Chip({ selected, onClick, children, dashed = false, label }: { selected?: boolean; onClick: () => void; children: ReactNode; dashed?: boolean; label?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        haptics.tap();
-        onClick();
-      }}
-      aria-pressed={selected === undefined ? undefined : selected}
-      aria-label={label}
-      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-full border px-4 text-sm transition-all active:scale-[0.97]"
-      style={{
-        borderColor: selected ? 'var(--color-bronze)' : dashed ? 'var(--color-control-border)' : 'var(--color-card-border)',
-        borderStyle: dashed ? 'dashed' : 'solid',
-        background: selected ? tint('var(--color-bronze)', 16) : 'transparent',
-        color: selected ? 'var(--color-ink)' : 'var(--color-ink-dim)',
-        fontWeight: selected ? 600 : 400,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
 
 function Block({ title, helper, first = false, children }: { title: string; helper: string; first?: boolean; children: ReactNode }) {
   return (
@@ -129,23 +103,18 @@ function WeightPicker({ kind, list, onChange }: { kind: WeightKind; list: number
   );
 }
 
-function Stepper({ label, value, step, min, max, onChange }: { label: string; value: number; step: number; min: number; max: number; onChange: (v: number) => void }) {
-  const btn = 'flex h-11 w-11 shrink-0 items-center justify-center transition-opacity active:opacity-60 disabled:opacity-30';
+function KgStepper({ label, value, step, min, max, onChange }: { label: string; value: number; step: number; min: number; max: number; onChange: (v: number) => void }) {
   return (
-    <div>
-      <p className="text-xs" style={dim}>{label}</p>
-      <div className="mt-1 flex items-center rounded-xl border" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }} role="group" aria-label={label}>
-        <button type="button" className={btn} disabled={value <= min} aria-label={`${label} omlaag`} onClick={() => { haptics.tap(); onChange(Math.max(min, value - step)); }} style={{ color: 'var(--color-ink)' }}>
-          <Icon name="min" size={18} />
-        </button>
-        <span className="min-w-0 flex-1 text-center font-sans text-sm font-semibold tabular-nums" style={{ color: 'var(--color-ink)' }} aria-live="polite">
-          {kg(value)} <span className="text-xs font-normal" style={dim}>kg</span>
-        </span>
-        <button type="button" className={btn} disabled={value >= max} aria-label={`${label} omhoog`} onClick={() => { haptics.tap(); onChange(Math.min(max, value + step)); }} style={{ color: 'var(--color-ink)' }}>
-          <Icon name="plus" size={18} />
-        </button>
-      </div>
-    </div>
+    <Stepper
+      label={label}
+      display={<>{kg(value)} <small>kg</small></>}
+      decLabel={`${label} omlaag`}
+      incLabel={`${label} omhoog`}
+      decDisabled={value <= min}
+      incDisabled={value >= max}
+      onDec={() => onChange(Math.max(min, value - step))}
+      onInc={() => onChange(Math.min(max, value + step))}
+    />
   );
 }
 
@@ -160,8 +129,8 @@ function Dumbbells({ rack, onChange }: { rack: GymProfile['dumbbells']; onChange
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <Stepper label="Lichtste" value={rack.startKg} step={1} min={RACK_LIMITS.startMin} max={Math.min(RACK_LIMITS.startMax, rack.maxKg)} onChange={(v) => onChange(setRackBound(rack, 'startKg', v))} />
-        <Stepper label="Zwaarste" value={rack.maxKg} step={2.5} min={rack.startKg} max={RACK_LIMITS.maxMax} onChange={(v) => onChange(setRackBound(rack, 'maxKg', v))} />
+        <KgStepper label="Lichtste" value={rack.startKg} step={1} min={RACK_LIMITS.startMin} max={Math.min(RACK_LIMITS.startMax, rack.maxKg)} onChange={(v) => onChange(setRackBound(rack, 'startKg', v))} />
+        <KgStepper label="Zwaarste" value={rack.maxKg} step={2.5} min={rack.startKg} max={RACK_LIMITS.maxMax} onChange={(v) => onChange(setRackBound(rack, 'maxKg', v))} />
       </div>
       <div>
         <p className="text-xs" style={dim}>Stap tussen twee dumbbells</p>
