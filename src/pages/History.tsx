@@ -11,6 +11,7 @@ import { getModality } from '../data/modalities';
 import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
 import { usePageState } from '../components/usePageState';
+import { validMonthAnchor } from '../utils/pageMemory';
 
 
 function computeMonthSummary(logs: SessionLog[]) {
@@ -65,7 +66,7 @@ export function HistoryPage() {
   const isRest = useCallback((p: PlannedSession) => templateById.get(p.templateId)?.type === 'recovery', [templateById]);
   // Days before week 1 (leftovers of an earlier schedule) never count.
   const wasIll = useCallback((date: string) => (program ? date < program.startDate : false) || isIllnessDay(date, settings.illnessEpisodes, todayISO()), [settings.illnessEpisodes, program]);
-  const [anchor, setAnchor] = usePageState('anchor', todayISO());
+  const [anchor, setAnchor] = usePageState('anchor', todayISO(), (v) => validMonthAnchor(v, todayISO()));
   const { start, end } = monthBounds(anchor);
   const { start: prevStart, end: prevEnd } = monthBounds(shiftMonthAnchor(anchor, -1));
 

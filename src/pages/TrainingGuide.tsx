@@ -18,7 +18,7 @@ export function TrainingGuidePage() {
   const dayOrder = Object.keys(TRAINING_GUIDES)
     .filter((id) => templateById.has(id))
     .sort((a, b) => (templateById.get(a)!.defaultDayOfWeek ?? 8) - (templateById.get(b)!.defaultDayOfWeek ?? 8));
-  const [openTemplateId, setOpenTemplateId] = usePageState<string | null>('openTemplateId', null);
+  const [openTemplateId, setOpenTemplateId] = usePageState<string | null>('openTemplateId', null, (v) => v === null || (typeof v === 'string' && v in TRAINING_GUIDES));
 
   const openTemplate = openTemplateId ? templateById.get(openTemplateId) : undefined;
   const openGuide = openTemplateId ? TRAINING_GUIDES[openTemplateId] : undefined;

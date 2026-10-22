@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createPageMemory, pageStateKey, scrollKey, stepKey, type StorageLike } from './pageMemory';
+import { createPageMemory, pageStateKey, restoredPageValue, scrollKey, stepKey, validMonthAnchor, validWeekStart, type StorageLike } from './pageMemory';
 
 function fakeStorage(): StorageLike & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -92,5 +92,40 @@ describe('sleutels', () => {
     expect(scrollKey(loc)).toBe('scroll|abc|/more');
     expect(pageStateKey(loc, 'query')).toBe('state|abc|/more|query');
     expect(pageStateKey({ key: 'abd', pathname: '/more' }, 'query')).not.toBe(pageStateKey(loc, 'query'));
+  });
+});
+
+describe('een opgeslagen waarde die niet klopt, wordt genegeerd', () => {
+  const TODAY = '2026-10-22';
+
+  it('niets opgeslagen: de beginwaarde', () => {
+    expect(restoredPageValue(undefined, 'a')).toBe('a');
+  });
+
+  it('een ander soort waarde dan de beginwaarde: de beginwaarde', () => {
+    expect(restoredPageValue(42, false)).toBe(false);
+    expect(restoredPageValue({ x: 1 }, '')).toBe('');
+    expect(restoredPageValue(true, false)).toBe(true);
+  });
+
+  it('een eigen controle van de pagina beslist', () => {
+    expect(restoredPageValue('2019-01-07', '2026-10-19', (v) => validWeekStart(v, TODAY))).toBe('2026-10-19');
+    expect(restoredPageValue('2026-11-02', '2026-10-19', (v) => validWeekStart(v, TODAY))).toBe('2026-11-02');
+  });
+
+  it('een week: een maandag, en niet verder dan twee jaar van vandaag', () => {
+    expect(validWeekStart('2026-10-19', TODAY)).toBe(true);
+    expect(validWeekStart('2026-10-20', TODAY)).toBe(false);
+    expect(validWeekStart('2030-01-07', TODAY)).toBe(false);
+    expect(validWeekStart('2024-01-01', TODAY)).toBe(false);
+    expect(validWeekStart('morgen', TODAY)).toBe(false);
+    expect(validWeekStart(20261019, TODAY)).toBe(false);
+  });
+
+  it('een maand in het logboek: een datum, niet in de toekomst, niet ouder dan tien jaar', () => {
+    expect(validMonthAnchor('2026-09-01', TODAY)).toBe(true);
+    expect(validMonthAnchor('2026-12-01', TODAY)).toBe(false);
+    expect(validMonthAnchor('2010-01-01', TODAY)).toBe(false);
+    expect(validMonthAnchor('2026-13-01', TODAY)).toBe(false);
   });
 });

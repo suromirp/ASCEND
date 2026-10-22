@@ -1,4 +1,5 @@
 import { useSheetClose } from '../utils/useSheetClose';
+import { Icon } from './icons';
 import { GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
@@ -37,8 +38,9 @@ export function TrainingSplitSheet({ onClose }: { onClose: () => void }) {
             </ul>
             <div className="mt-3 flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
               {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
-                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-                  {s.label} ↗
+                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-1 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+                  {s.label}
+                  <Icon name="buiten" size={14} />
                 </a>
               ))}
             </div>

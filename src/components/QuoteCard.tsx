@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Icon } from './icons';
 import type { Quote } from '../data/quoteLibrary';
 import { authorWikipediaUrl, quoteSourceLabel } from '../utils/quotes';
 import { QUOTE_NL } from '../data/quoteTranslations';
@@ -43,10 +44,11 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           href={quote.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-[44px] items-center text-xs underline underline-offset-2"
+          className="flex min-h-[44px] items-center gap-1 text-xs underline underline-offset-2"
           style={{ color: 'var(--color-sky)' }}
         >
-          {quoteSourceLabel(quote.sourceLabel)} ↗
+          {quoteSourceLabel(quote.sourceLabel)}
+          <Icon name="buiten" size={14} />
         </a>
       )}
     </figure>
