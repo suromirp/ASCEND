@@ -9,6 +9,10 @@ import '@fontsource/inter/latin-700.css'
 import '@fontsource/marcellus/latin-400.css'
 import './index.css'
 import App from './App.tsx'
+import { startServiceWorkerUpdates } from './utils/swUpdate'
+
+// Looking for (and applying) a new version does not wait for the app to boot.
+startServiceWorkerUpdates()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

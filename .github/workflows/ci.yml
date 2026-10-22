@@ -1,0 +1,35 @@
+name: Controle
+
+# De kwaliteitspoort voor elke branch en elke pull request. Naar main gaan
+# alleen de deploy-workflow (deploy.yml), die dezelfde controles draait voor
+# hij bouwt; daarom slaat deze main over.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - name: Typecontrole
+        run: npx tsc -b
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test

@@ -31,8 +31,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      // 'prompt': a new build waits until the user taps BIJWERKEN
-      // (components/UpdatePrompt.tsx) — no silent second reload + splash.
+      // 'prompt': a new build waits; utils/swUpdate.ts activates it itself at
+      // a quiet moment (cold start, or back after ~30 min away, never with a
+      // sheet or form open), and BIJWERKEN (components/UpdatePrompt.tsx) is
+      // the safety net — no silent second reload + splash.
       registerType: 'prompt',
       manifest: {
         id: BASE_PATH,

@@ -139,6 +139,7 @@ function AppShell() {
         >
           OPNIEUW PROBEREN
         </button>
+        <UpdatePrompt />
       </div>
     );
   }

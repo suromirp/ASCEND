@@ -1,7 +1,7 @@
 // ASCEND — the service worker registration, kept where Settings can reach
-// it for "Zoeken naar update". components/UpdatePrompt.tsx stores it when
-// the worker registers; the prompt itself still appears through
-// vite-plugin-pwa's needRefresh once a new version has been downloaded.
+// it for "Zoeken naar update". utils/swUpdate.ts stores it when the worker
+// registers; the prompt itself still appears through vite-plugin-pwa's
+// needRefresh once a new version has been downloaded.
 
 let registration: ServiceWorkerRegistration | undefined;
 

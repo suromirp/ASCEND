@@ -11,11 +11,6 @@ import { haptics } from '../utils/haptics';
 import { playMilestoneChime, playSessionCompleteChime } from '../utils/sound';
 import { pickCompletionQuote, pickVictoryQuote } from '../utils/quotes';
 import {
-  seedIfEmpty,
-  syncTemplateAndScheduleDefinitions,
-  ensureDefaultTemplates,
-  restorePatternSessionsRemovedByPrescription,
-  normalizePlannedSessionWeeks,
   ProgramsRepo,
   SessionTemplatesRepo,
   PlannedSessionsRepo,
@@ -25,11 +20,9 @@ import {
   GoalMilestoneProgressRepo,
   InjuryNotesRepo,
   CapabilityEvidenceRepo,
-  TrainingPrescriptionsRepo,
   PlanChangeProposalsRepo,
   StrengthProgramStrategiesRepo,
   StrengthProgramRecommendationsRepo,
-  WeeklyPrescriptionsRepo,
   GoalEngineConfigRepo,
   SettingsRepo,
   MetaRepo,
@@ -42,24 +35,21 @@ import {
   type AppSettings,
   type StretchCompletion,
 } from '../storage/database';
-import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from '../storage/goalMigration';
+import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
+import { runBootMigrations } from '../storage/bootMigrations';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
 import { tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
-import { computeReadiness } from '../engine/readiness';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
 import { suggestMoveDates, type MoveSuggestion } from '../engine/moveSuggestions';
-import { computeCapacity } from '../engine/capacity';
-import { targetPackWeightKg } from '../engine/demand';
 import { extractEvidenceFromLogs } from '../engine/capability';
-import { activeGoalDemandKeys, computeProgressionDecisionsForKeys } from '../engine/progressionDecisions';
+import { activeGoalDemandKeys } from '../engine/progressionDecisions';
 import { computeForecastReplan } from '../engine/adaptiveReplanner';
-import { resolveHorizonZone } from '../engine/planningHorizon';
-import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngine';
+import { runWeeklyPrescriptionStep } from '../storage/weeklyPrescriptionStep';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
@@ -86,20 +76,7 @@ function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= withBootLock(async () => {
-    await seedIfEmpty();
-    // Replaces the retired syncObjectiveDefinitions() — one-time migration
-    // to TrainingGoal/GoalMilestone (Technical Architecture v0.3.1 REVISED,
-    // Phase 1), guarded so it only ever runs once.
-    await migrateToGoalEngine();
-    await migrateGoalRouteProfiles();
-    await syncGr5MilestoneDefinitions();
-    await migrateStrengthProgramDefault();
-    await syncTemplateAndScheduleDefinitions();
-    await ensureDefaultTemplates();
-    await restorePatternSessionsRemovedByPrescription();
-    await normalizePlannedSessionWeeks();
-  });
+  bootMigrations ??= withBootLock(runBootMigrations);
   return bootMigrations;
 }
 
@@ -198,7 +175,7 @@ function simpleHash(text: string): string {
   for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
-import { isTemplatePlannable, weeklyPatternTemplates, fixedFrequencySports, templateSport, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
+import { weeklyPatternTemplates, fixedFrequencySports, DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from '../engine/sports';
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
 import { computeInputStateHash, applyGoalActivationPlan } from '../engine/goalActivation';
 import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '../models/planChange';
@@ -228,7 +205,7 @@ import { raceBlocks } from '../engine/raceBlock';
 function describeStorageError(err: unknown): string {
   const name = err instanceof DOMException || err instanceof Error ? err.name : '';
   if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
-  if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. Herlaad de pagina om de nieuwste versie te krijgen.';
+  if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op BIJWERKEN zodra die knop verschijnt.';
   return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
 }
 
@@ -730,66 +707,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // forecast weeks yet scheduled → no-op, same precedent as
   // runForecastReplan's own activeGoalDemandKeys gate.
   const runWeeklyPrescriptionBuild = useCallback(async () => {
-    const [goals, logs, manualEvidence, planned, tpls, engineConfig, strategies, previousPrescriptions, programs, appSettings] = await Promise.all([
-      TrainingGoalsRepo.getAll(),
-      SessionLogsRepo.getAll(),
-      CapabilityEvidenceRepo.getAll(),
-      PlannedSessionsRepo.getAll(),
-      SessionTemplatesRepo.getAll(),
-      GoalEngineConfigRepo.get(),
-      StrengthProgramStrategiesRepo.getAll(),
-      WeeklyPrescriptionsRepo.getAll(),
-      ProgramsRepo.getAll(),
-      SettingsRepo.get(),
-    ]);
+    // Reading, computing, comparing with what is stored and writing only the
+    // difference lives in storage/weeklyPrescriptionStep.ts (testable without
+    // React). Nothing changed -> nothing written, no notice, no log line.
+    const outcome = await runWeeklyPrescriptionStep();
 
-    const keys = activeGoalDemandKeys(goals);
-    if (keys.length === 0) return; // no active goal's demand to prescribe around
-
-    const asOf = todayISO();
-    const forecastWeekStarts = [
-      ...new Set(planned.filter((s) => resolveHorizonZone(s.weekStartDate, asOf) === 'forecast').map((s) => s.weekStartDate)),
-    ].sort();
-    if (forecastWeekStarts.length === 0) return; // nothing scheduled that far out yet — a real, unresolved dependency (see CLAUDE.md's "16-week horizon" note)
-
-    const allEvidence = [...extractEvidenceFromLogs(logs), ...manualEvidence];
-    const readiness = computeReadiness(logs, planned, 28, asOf, programs[0]?.startDate);
-    const packWeightTargetKg = goals
-      .filter((g) => g.status === 'active')
-      .map((g) => targetPackWeightKg(g.requirements))
-      .find((v) => v !== undefined);
-    const capacity = computeCapacity(logs, 28, asOf, packWeightTargetKg);
-    const recentLogs = [...logs].sort((a, b) => b.completedDate.localeCompare(a.completedDate));
-    const decisionsByKey = computeProgressionDecisionsForKeys(keys, allEvidence, readiness, capacity, engineConfig.guardrails, recentLogs, asOf, goals);
-    const overviews = computeActiveGoalOverviews(goals, allEvidence, engineConfig.availability, engineConfig.guardrails, asOf);
-
-    const { prescriptions, newTrainingPrescriptions, proposal } = computeWeeklyPrescriptionPlan(
-      forecastWeekStarts, goals, overviews, decisionsByKey, planned, tpls, engineConfig.availability,
-      activeStrengthStrategy(strategies) ?? null, previousPrescriptions, [], programs[0] ?? null,
-      engineConfig.strategy.sameDayPairingPreference, asOf,
-      // Sports pinned to a number per week keep that count; the automatic
-      // planning neither adds nor removes their sessions.
-      (t) => isTemplatePlannable(t, appSettings.enabledSports) && !fixedFrequencySports(appSettings).includes(templateSport(t) as Sport),
-    );
-
-    // Never a session on or after the main goal's own day (the plan ends the
-    // day before; production: "Lange duurloop toegevoegd op zo 1 augustus
-    // 2027", the GR5 start), nor next to a tussendoel's race on its day.
-    const anchorDay = programAnchorDate(goals, await GoalMilestonesRepo.getAll(), asOf);
-    const raceDays = new Set((await PlannedSessionsRepo.getAll()).filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
-    const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date));
-    proposal.changes = proposal.changes.filter((c) => !blockedDay(c.action === 'add' ? c.newSessionDraft?.scheduledDate : c.action === 'move' ? c.toDate : undefined));
-
-    // Geen wijziging (alle lijnen keep én geen items) -> no-op, geen schrijf.
-    const allKeep = prescriptions.every((p) => p.lines.every((l) => l.decision === 'keep'));
-    if (allKeep && proposal.changes.length === 0) return;
-
-    // Fase 3 — "Wijzigingen toepassen: altijd eerst vragen": the forecast
-    // changes become a coach item to accept or decline instead of being
-    // applied in the background. A declined set isn't asked again (the id
-    // is derived from the changes themselves).
-    const realChanges = proposal.changes.filter((c) => c.action !== 'keep');
-    if (appSettings.changeApplyMode === 'always_ask' && realChanges.length > 0) {
+    if (outcome.kind === 'ask') {
+      const { proposal, realChanges, planned, templates: tpls } = outcome;
       const signature = realChanges.map((c) => `${c.action}:${c.plannedSessionId ?? c.newSessionDraft?.templateId}:${c.toDate ?? c.newSessionDraft?.scheduledDate ?? ''}`).sort().join('|');
       setPlannerAdvice({
         id: `planner:${simpleHash(signature)}`,
@@ -804,46 +728,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { sessions: updatedSessions, unsupported } = applyPlanChangeItems(proposal.changes, planned);
-    if (unsupported.length > 0) {
-      // Same atomicity guarantee as runForecastReplan: never an
-      // unintended partial apply.
-      console.error('Weekly Prescription Builder: refusing to apply, unsupported plan change items present', unsupported);
-      return;
-    }
-
-    const touchedIds = new Set(proposal.changes.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
-    const originalIds = new Set(planned.map((s) => s.id));
-    for (const session of updatedSessions) {
-      if (touchedIds.has(session.id) || !originalIds.has(session.id)) {
-        await PlannedSessionsRepo.put(session);
-      }
-    }
-
-    // A session gets at most one *current* prescription — replace, never
-    // accumulate, across repeated builder runs on later app opens.
-    for (const prescription of newTrainingPrescriptions) {
-      const existing = await TrainingPrescriptionsRepo.byPlannedSession(prescription.plannedSessionId);
-      if (existing) await TrainingPrescriptionsRepo.delete(existing.id);
-      await TrainingPrescriptionsRepo.put(prescription);
-    }
-
-    // Eén huidige rij per week (Fase 1) — oude rij voor diezelfde week
-    // verwijderen, nieuwe zetten; de audit trail van waarom leeft in
-    // PlanChangeProposalsRepo hieronder, nooit hier gedupliceerd.
-    for (const wp of prescriptions) {
-      const existing = await WeeklyPrescriptionsRepo.byWeekStartDate(wp.weekStartDate);
-      if (existing) await WeeklyPrescriptionsRepo.delete(existing.id);
-      await WeeklyPrescriptionsRepo.put(wp);
-    }
-
-    // Append-only audit trail — resolvedAt/resolution set immediately since
-    // the forecast range auto-applies, never user-confirmed.
-    await PlanChangeProposalsRepo.put({ ...proposal, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
-
-    // Fase 3 — say what changed (melding), even though it was automatic.
-    if (realChanges.length > 0) {
+    if (outcome.kind === 'applied') {
+      // Fase 3 — say what changed (melding), even though it was automatic.
+      const { proposal, realChanges, planned, templates: tpls, updatedSessions } = outcome;
       const touched = new Set(realChanges.map((c) => c.plannedSessionId).filter((id): id is string => Boolean(id)));
+      const originalIds = new Set(planned.map((s) => s.id));
       setRecentChange({
         id: proposal.id,
         trigger: proposal.trigger,
@@ -857,7 +746,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    await refresh();
+    if (outcome.wrote) await refresh();
   }, [refresh]);
 
   // Phase 8 — the single-transaction activation flow for a Strength

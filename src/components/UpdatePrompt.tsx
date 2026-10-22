@@ -1,29 +1,16 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
-import { JUST_UPDATED, markJustUpdated } from '../utils/updateFlag';
-import { setSwRegistration } from '../utils/appUpdate';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { JUST_UPDATED } from '../utils/updateFlag';
+import { subscribeToUpdate, updateIsWaiting, applyUpdateNow } from '../utils/swUpdate';
 
-// vite-plugin-pwa runs in 'prompt' mode (vite.config.ts): a new build is
-// downloaded in the background and then WAITS — nothing reloads by itself
-// (that silent second reload used to replay the whole splash). This bar is
-// the one moment the user is told, and tapping it is the only reload. The
-// app looks for a new version when it's opened again and once an hour.
-const UPDATE_CHECK_MS = 60 * 60 * 1000;
+// The service worker is registered at page load (utils/swUpdate.ts, started
+// from main.tsx) and updates itself at a quiet moment (utils/updatePolicy.ts):
+// on a cold start, and after the app was in the background for about half an
+// hour, never while a sheet or form is open. This bar is the safety net for
+// when the app simply stays open: a new version waits, and tapping BIJWERKEN
+// is the reload. The "Bijgewerkt" notice below confirms either way.
 
 export function UpdatePrompt() {
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    onRegisteredSW(_url, registration) {
-      if (!registration) return;
-      setSwRegistration(registration);
-      setInterval(() => void registration.update(), UPDATE_CHECK_MS);
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') void registration.update();
-      });
-    },
-  });
+  const needRefresh = useSyncExternalStore(subscribeToUpdate, updateIsWaiting);
   const [updating, setUpdating] = useState(false);
 
   if (!needRefresh) return null;
@@ -37,8 +24,7 @@ export function UpdatePrompt() {
       <button
         onClick={() => {
           setUpdating(true);
-          markJustUpdated();
-          void updateServiceWorker(true);
+          applyUpdateNow();
         }}
         disabled={updating}
         className="min-h-[44px] shrink-0 rounded-lg px-4 text-xs font-semibold tracking-wide disabled:opacity-60"

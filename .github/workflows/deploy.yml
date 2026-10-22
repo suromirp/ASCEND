@@ -29,6 +29,15 @@ jobs:
         uses: actions/configure-pages@v6
 
       - run: npm ci
+
+      # De kwaliteitspoort: een rode lint of test stopt de deploy hier, voor
+      # er iets gebouwd of live gezet wordt. (De typecontrole zit in
+      # `npm run build`, dat `tsc -b` draait.)
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+
       - run: npm run build
         env:
           # Derived from the repo's actual GitHub Pages configuration, so

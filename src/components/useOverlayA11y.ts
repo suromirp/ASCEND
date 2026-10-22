@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { OVERLAY_SELECTOR } from '../utils/appBusy';
 
 // Every bottom sheet and dialog in ASCEND is a full-screen `fixed inset-0`
 // backdrop that closes when tapped. This makes them behave as real dialogs
@@ -8,7 +9,6 @@ import { useEffect } from 'react';
 // - focus moves into the sheet when it opens and back to where it was when
 //   it closes,
 // - Escape closes the topmost sheet the same way a tap on the backdrop does.
-const OVERLAY_SELECTOR = '.fixed.inset-0';
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function overlays(): HTMLElement[] {
