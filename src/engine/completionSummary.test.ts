@@ -171,6 +171,25 @@ describe('een kamp en een samenvatting van meer trainingen', () => {
     expect(s.count).toBe(2);
     expect(s.facts.main[0]).toMatch(/ en /);
     expect(s.facts.extra).toEqual(['samen 1 uur 50 min']);
+    expect(s.items).toHaveLength(2);
     expect(s.lines.filter((l) => l.id === 'legs')).toHaveLength(1);
+  });
+
+  it('53 trainingen: een korte samenvatting met aantallen, de lijst apart', () => {
+    const logs: SessionLog[] = [];
+    for (let i = 0; i < 53; i++) {
+      const id = ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_lower_b', 'tpl_easy_run'][i % 5];
+      const day = String(1 + (i % 28)).padStart(2, '0');
+      logs.push(log(id, { completedDate: `2026-10-${day}`, completedAt: `2026-10-${day}T10:00:00Z`, durationMinutes: 50 }));
+    }
+    const s = completionSummary(inputs(logs, logs.map((l) => l.id)));
+    expect(s.count).toBe(53);
+    expect(s.facts.main).toHaveLength(1);
+    expect(s.facts.main[0].length).toBeLessThan(120);
+    expect(s.facts.main[0]).toMatch(/keer/);
+    expect(s.facts.main[0]).toMatch(/en nog 2 andere soorten/);
+    expect(s.facts.extra.join(' ')).toMatch(/van 1 oktober/);
+    expect(s.items).toHaveLength(53);
+    expect(s.items![0]).toMatch(/^1 oktober, /);
   });
 });

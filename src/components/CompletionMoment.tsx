@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Quote } from '../data/quoteLibrary';
 import { QUOTE_NL } from '../data/quoteTranslations';
 import { completionSummary, type CompletionLine } from '../engine/completionSummary';
@@ -8,6 +8,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { Card, Eyebrow, PrimaryButton } from './ui';
+import { Icon } from './icons';
 import { ClothingFeedback } from './ClothingFeedback';
 import './completion.css';
 
@@ -78,7 +79,7 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
         <div className="relative mx-auto flex min-h-full w-full max-w-md flex-col px-4">
           <Contours flag={flag} />
 
-          <div className="relative flex flex-1 flex-col pt-14">
+          <div className="relative flex flex-1 flex-col pb-32 pt-14">
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 mt-[14px]" style={{ height: 80 }} aria-hidden="true" />
               <div className="completion-rise" style={delay(300)}>
@@ -121,16 +122,19 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
               </Card>
             )}
 
+            {summary.items && summary.items.length > 1 && <ItemList items={summary.items} at={560} />}
+
             {event.kind === 'session' && summary.count === 1 && <ClothingFeedback logId={event.logIds?.[0]} />}
 
             {event.quote && <QuoteBlock quote={event.quote} at={720} />}
 
-            <div
-              className="completion-rise sticky bottom-0 -mx-4 mt-auto px-4 pb-[max(env(safe-area-inset-bottom),20px)] pt-6"
-              style={{ background: 'linear-gradient(to top, var(--color-bg) 65%, transparent)', ...delay(780) }}
-            >
-              <PrimaryButton onClick={requestClose}>Verder</PrimaryButton>
-            </div>
+          </div>
+          {/* Verder staat altijd onderaan het scherm, ook bij een lange lijst. */}
+          <div
+            className="completion-rise fixed inset-x-0 bottom-0 z-10 mx-auto w-full max-w-md px-4 pb-[max(env(safe-area-inset-bottom),20px)] pt-6"
+            style={{ background: 'linear-gradient(to top, var(--color-bg) 65%, transparent)', ...delay(780) }}
+          >
+            <PrimaryButton onClick={requestClose}>Verder</PrimaryButton>
           </div>
         </div>
       </div>
@@ -177,6 +181,32 @@ function Contours({ flag }: { flag: boolean }) {
         <path d={`M${CX - 15} ${CY + 1} l9 9 l21 -21`} fill="none" stroke="var(--color-gold)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" pathLength={100} className="completion-draw" style={{ ...delay(420), '--t': '0.28s' } as CSSProperties} />
       )}
     </svg>
+  );
+}
+
+// "Alle 53 trainingen": de lijst achter een uitklapper, zodat het scherm kort blijft.
+function ItemList({ items, at }: { items: string[]; at: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="completion-rise mt-3" style={delay(at)}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex min-h-[44px] w-full items-center justify-between rounded-xl border px-3 text-sm"
+        style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+      >
+        <span>{open ? 'Lijst verbergen' : `Alle ${items.length} trainingen bekijken`}</span>
+        <span style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(-90deg)' : 'rotate(90deg)' }}>
+          <Icon name="verder" size={18} />
+        </span>
+      </button>
+      {open && (
+        <ul className="mt-2 flex flex-col gap-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+          {items.map((item, i) => <li key={i}>{item}</li>)}
+        </ul>
+      )}
+    </div>
   );
 }
 

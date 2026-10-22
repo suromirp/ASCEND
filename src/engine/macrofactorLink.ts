@@ -14,11 +14,12 @@
 //   that has a value, the duration included, stays as it was.
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
-import { daysBetween, mondayOfWeek } from '../utils/dates';
+import { daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
 import { strengthChangeFor, type StrengthChange } from './macrofactorLead';
 import { enrichStrengthData } from './macrofactorEnrich';
+import { findSameWorkoutLog } from './macrofactorSame';
 import type { ExerciseSetLog } from '../models/training';
 
 export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
@@ -76,19 +77,39 @@ export function supplementPatch(log: SessionLog, workout: MacroFactorWorkout, te
 // --- the proposals --------------------------------------------------------------------
 
 export type MacroFactorProposal =
-  | { kind: 'new'; workout: MacroFactorWorkout; template: SessionTemplate; planned?: PlannedSession; draft: SessionLogDraft }
-  | { kind: 'supplement'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; patch: LogPatch }
+  | { kind: 'new'; workout: MacroFactorWorkout; template: SessionTemplate; planned?: PlannedSession; draft: SessionLogDraft; doubt?: string }
+  | { kind: 'supplement'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; patch: LogPatch; doubt?: string }
   // "MacroFactor is leidend voor kracht": the numbers of the file take over the
   // log's own duration, sets and reps in reserve; the old ones are kept on the
   // log (engine/macrofactorLead.ts).
-  | { kind: 'takeover'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; change: StrengthChange }
+  | { kind: 'takeover'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; change: StrengthChange; doubt?: string }
   // A log that came from this very workout earlier lacks the reps in reserve
   // per set and the warm-up sets; the working sets are equal, so only those
   // empty fields are added (engine/macrofactorEnrich.ts).
-  | { kind: 'enrich'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; strengthData: ExerciseSetLog[] }
+  | { kind: 'enrich'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; strengthData: ExerciseSetLog[]; doubt?: string }
   // The name has not been linked yet: the link card on the import page asks
   // once per name (engine/macrofactorNames.ts).
   | { kind: 'unmapped'; workout: MacroFactorWorkout };
+
+// --- a row that does not look right ------------------------------------------------------
+
+// A strength workout of more than five hours is a mistake in the file (a
+// stopwatch left running), not a workout.
+export const LONGEST_PLAUSIBLE_WORKOUT_MIN = 300;
+export const MOST_PLAUSIBLE_REPS = 300;
+export const MOST_PLAUSIBLE_WEIGHT_KG = 1000;
+
+// Why a row is set apart on the card, in one short sentence; undefined when it
+// looks fine. Such a row is not part of "Alles verwerken" unless the user ticks it.
+export function doubtAbout(workout: MacroFactorWorkout, today: string = todayISO()): string | undefined {
+  if (workout.date > today) return `Deze training staat in de toekomst (${formatDateNL(workout.date)}).`;
+  if (workout.durationSec && workout.durationSec / 60 > LONGEST_PLAUSIBLE_WORKOUT_MIN) {
+    return `De duur in het bestand is ${minutesLabel(Math.round(workout.durationSec / 60))}. Dat lijkt te lang.`;
+  }
+  const odd = workout.exercises.some((e) => e.sets.some((s) => s.reps > MOST_PLAUSIBLE_REPS || Math.abs(s.weightKg ?? 0) > MOST_PLAUSIBLE_WEIGHT_KG));
+  if (odd) return 'Een set heeft een onwaarschijnlijk gewicht of aantal herhalingen.';
+  return undefined;
+}
 
 export interface MacroFactorPlan {
   proposals: MacroFactorProposal[];
@@ -126,12 +147,15 @@ export function planMacroFactor(
   leads = true,
   // Name keys linked "als losse krachttraining": never tied to a planned session.
   loose: string[] = [],
+  today: string = todayISO(),
 ): MacroFactorPlan {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const dismissedSet = new Set(dismissed);
   const storedIds = new Set(logs.flatMap((l) => [l.externalId, l.manualMeasured?.strength?.workoutId]).filter((id): id is string => !!id));
   const loggedPlanned = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   const claimedLogs = new Set<string>();
+  // Logs a renamed workout already matched by its sets (see macrofactorSame.ts).
+  const sameLogs = new Set<string>();
   const claimedPlanned = new Set<string>();
   const proposals: MacroFactorProposal[] = [];
   let alreadyDone = 0;
@@ -146,6 +170,18 @@ export function planMacroFactor(
       const storedTemplate = stored ? templateById.get(stored.templateId) : undefined;
       const strengthData = stored ? enrichStrengthData(stored, workout) : undefined;
       if (stored && storedTemplate && strengthData) proposals.push({ kind: 'enrich', workout, template: storedTemplate, log: stored, strengthData });
+      else alreadyDone++;
+      continue;
+    }
+    // The same workout under another name (renamed in MacroFactor, or moved to
+    // another program): the same day and (nearly) the same sets as a log that
+    // came from MacroFactor. It is that log's workout, not a new one.
+    const same = findSameWorkoutLog(workout, logs, sameLogs);
+    if (same) {
+      sameLogs.add(same.id);
+      const sameTemplate = templateById.get(same.templateId);
+      const strengthData = enrichStrengthData(same, workout);
+      if (sameTemplate && strengthData) proposals.push({ kind: 'enrich', workout, template: sameTemplate, log: same, strengthData });
       else alreadyDone++;
       continue;
     }
@@ -195,7 +231,13 @@ export function planMacroFactor(
     if (free) claimedPlanned.add(free.id);
     proposals.push({ kind: 'new', workout, template, planned: free, draft: workoutToDraft(workout, template, free) });
   }
-  return { proposals, alreadyDone };
+  // A row that does not look right is marked, so the card can set it apart.
+  const marked = proposals.map((p) => {
+    if (p.kind === 'unmapped') return p;
+    const doubt = doubtAbout(p.workout, today);
+    return doubt ? { ...p, doubt } : p;
+  });
+  return { proposals: marked, alreadyDone };
 }
 
 // --- words ------------------------------------------------------------------------------

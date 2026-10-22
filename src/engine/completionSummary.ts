@@ -19,7 +19,7 @@ import { resolveSessionContributions } from './sessionContribution';
 import { deriveSessionStatus } from './sessionStatus';
 import { fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
-import { addDays, daysBetween, formatHoursMinutesNL, mondayOfWeek, weekdayLongNL } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, formatHoursMinutesNL, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 
 export interface CompletionLine {
@@ -44,6 +44,25 @@ export interface CompletionSummary {
   lines: CompletionLine[];
   // Hoeveel trainingen dit moment samenvat (meer dan één bij "Alles opslaan").
   count: number;
+  // Bij meer dan één training: één regel per training, oudste eerst. Het scherm
+  // toont die achter een uitklapper, niet als muur van tekst.
+  items?: string[];
+}
+
+// Hoeveel soorten het korte overzicht met naam noemt; de rest wordt geteld.
+const NAMED_KINDS = 3;
+
+// "Benen A 5 keer, Bovenlichaam B 4 keer en nog 2 andere soorten": een korte
+// regel, ook bij tientallen trainingen.
+export function kindsSummary(names: string[]): string {
+  const counts = new Map<string, number>();
+  for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
+  const ranked = [...counts].sort((a, b) => b[1] - a[1]);
+  const label = ([name, n]: [string, number]) => (n > 1 ? `${name} ${n} keer` : name);
+  const named = ranked.slice(0, NAMED_KINDS).map(label);
+  const rest = ranked.length - named.length;
+  if (rest > 0) return `${named.join(', ')} en nog ${rest} ${rest === 1 ? 'andere soort' : 'andere soorten'}`;
+  return joinNL(named);
 }
 
 export interface CompletionInputs {
@@ -237,10 +256,13 @@ export function completionSummary(inputs: CompletionInputs): CompletionSummary {
   const allStrength = newLogs.every((l) => l.type === 'strength');
   const minutes = newLogs.reduce((n, l) => n + l.durationMinutes, 0);
   const title = `${newLogs.length} ${allStrength ? 'krachttrainingen' : 'trainingen'} opgeslagen`;
-  const facts: CompletionFacts = {
-    main: [joinNL(newLogs.map(nameOf))],
-    extra: minutes > 0 ? [`samen ${formatHoursMinutesNL(minutes)}`] : [],
-    fromWatch: newLogs.some(isWatchLog),
-  };
-  return { title, facts, lines, count: newLogs.length };
+  const byDate = [...newLogs].sort((a, b) => a.completedDate.localeCompare(b.completedDate) || a.completedAt.localeCompare(b.completedAt));
+  const first = byDate[0].completedDate;
+  const last = byDate[byDate.length - 1].completedDate;
+  const extra: string[] = [];
+  if (minutes > 0) extra.push(`samen ${formatHoursMinutesNL(minutes)}`);
+  if (first !== last) extra.push(`van ${formatDateNL(first)} tot ${formatDateNL(last)}`);
+  const facts: CompletionFacts = { main: [kindsSummary(newLogs.map(nameOf))], extra, fromWatch: newLogs.some(isWatchLog) };
+  const items = byDate.map((l) => `${formatDateNL(l.completedDate)}, ${nameOf(l)}${l.durationMinutes > 0 ? `, ${l.durationMinutes} min` : ''}`);
+  return { title, facts, lines, count: newLogs.length, items };
 }

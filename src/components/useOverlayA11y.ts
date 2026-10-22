@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { OVERLAY_SELECTOR } from '../utils/appBusy';
+import { noteOverlayClosed } from '../utils/overlayGuard';
 
 // Every bottom sheet and dialog in ASCEND is a full-screen `fixed inset-0`
 // backdrop that closes when tapped. This makes them behave as real dialogs
@@ -31,6 +32,8 @@ export function useOverlayA11y(): void {
       for (const [el, previous] of returnFocus) {
         if (open.includes(el)) continue;
         returnFocus.delete(el);
+        // De tabbalk negeert een tweede tik vlak hierna (utils/overlayGuard.ts).
+        noteOverlayClosed();
         if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
       }
     };

@@ -61,7 +61,7 @@ export function BaselineEvidenceCard() {
                 <div>
                   <span style={{ color: 'var(--color-ink)' }}>{label}</span>
                   <span className="ml-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                    {formatMeasuredValue(e.measured)} – {formatDateNL(e.date)}
+                    {formatMeasuredValue(e.measured)} · {formatDateNL(e.date)}
                   </span>
                 </div>
                 <button onClick={() => deleteCapabilityEvidence(e.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-danger-text)' }}>

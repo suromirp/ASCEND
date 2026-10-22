@@ -8,6 +8,7 @@ import { activeIllness, isHeavySession } from '../engine/illness';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
 import { suggestSameDayOrder } from '../engine/concurrentTraining';
 import { dayOrder, orderDay } from '../engine/dayOrder';
+import { Icon } from '../components/icons';
 import { DayOrderCard } from '../components/DayOrderCard';
 import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
@@ -379,7 +380,8 @@ export function TodayPage() {
 
       <div className="-mt-2 flex items-center justify-center gap-5">
         <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          + losse training
+          <Icon name="plus" size={16} className="mr-1" />
+          Losse training
         </button>
         {!primary && <NotFitLink plain />}
       </div>

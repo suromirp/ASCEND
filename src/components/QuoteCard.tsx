@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Quote } from '../data/quoteLibrary';
-import { authorWikipediaUrl } from '../utils/quotes';
+import { authorWikipediaUrl, quoteSourceLabel } from '../utils/quotes';
 import { QUOTE_NL } from '../data/quoteTranslations';
 
 export function QuoteCard({ quote }: { quote: Quote }) {
@@ -32,10 +32,10 @@ export function QuoteCard({ quote }: { quote: Quote }) {
             className="inline-flex min-h-[44px] items-center underline underline-offset-2"
             style={{ color: 'var(--color-bronze)' }}
           >
-            {quote.author}
+            {translation?.author ?? quote.author}
           </a>
         ) : (
-          <span style={{ color: 'var(--color-bronze)' }}>{quote.author}</span>
+          <span style={{ color: 'var(--color-bronze)' }}>{translation?.author ?? quote.author}</span>
         )}
       </p>
       {quote.sourceUrl && (
@@ -46,7 +46,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           className="flex min-h-[44px] items-center text-xs underline underline-offset-2"
           style={{ color: 'var(--color-sky)' }}
         >
-          {quote.sourceLabel ?? 'Bron'} ↗
+          {quoteSourceLabel(quote.sourceLabel)} ↗
         </a>
       )}
     </figure>

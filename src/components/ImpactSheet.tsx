@@ -11,6 +11,7 @@ export function ImpactSheet({
   title,
   lines,
   why,
+  note,
   primaryLabel,
   secondaryLabel,
   onPrimary,
@@ -22,6 +23,8 @@ export function ImpactSheet({
   title: string;
   lines: string[];
   why?: string;
+  // Wat de weigerknop doet, in een zin boven de knoppen.
+  note?: string;
   primaryLabel: string;
   secondaryLabel: string;
   onPrimary: () => void;
@@ -60,6 +63,7 @@ export function ImpactSheet({
                 <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{why}</p>
               </div>
             )}
+            {note && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
             <div className="flex gap-3">
               <SecondaryButton onClick={onSecondary} disabled={busy}>{secondaryLabel}</SecondaryButton>
               <PrimaryButton fullWidth={false} onClick={onPrimary} disabled={busy}>{primaryLabel}</PrimaryButton>

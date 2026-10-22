@@ -126,7 +126,7 @@ export async function setMapping(workoutName: string, templateId: string | null,
   await setMappings([{ name: workoutName, templateId, loose }]);
 }
 
-// The suggestions the user confirmed with "Koppelingen klopt": one write for
+// The suggestions the user confirmed with "Koppelingen kloppen": one write for
 // all of them, so the card does not redraw in between.
 export async function setMappings(choices: { name: string; templateId: string | null; loose?: boolean }[]): Promise<void> {
   if (choices.length === 0) return;

@@ -22,6 +22,7 @@ import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession } from './macrofactorSets';
 import type { NameMapping } from './macrofactorLink';
 import { suggestByContent } from './macrofactorContent';
+import { findSameWorkoutLog } from './macrofactorSame';
 
 // --- the exercises ------------------------------------------------------------------
 
@@ -221,6 +222,8 @@ export function linkRows(
   const rows = new Map<string, LinkRow>();
   for (const w of [...workouts].sort((a, b) => a.start.localeCompare(b.start))) {
     if (done.has(w.externalId)) continue;
+    // Renamed, but the same sets on the same day as a log that is there: nothing to link.
+    if (findSameWorkoutLog(w, logs)) continue;
     const key = nameKey(w.name);
     const row = rows.get(key);
     if (row) {

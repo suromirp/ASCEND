@@ -31,8 +31,8 @@ const ACTIVITY_DIMENSIONS = new Set(['endurance_duration', 'mechanical_tolerance
 
 const WHEN_OPTIONS = [
   { label: 'Afgelopen 2 weken', daysAgo: 7 },
-  { label: '2 – 4 weken geleden', daysAgo: 21 },
-  { label: '4 – 8 weken geleden', daysAgo: 42 },
+  { label: '2 tot 4 weken geleden', daysAgo: 21 },
+  { label: '4 tot 8 weken geleden', daysAgo: 42 },
 ];
 
 type Answer = { key: CapabilityKey; text: string };

@@ -72,6 +72,17 @@ describe('MORNING-CHECK: how the planning reacts', () => {
     expect(morning({ checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'moe', sleep: 'goed' }] })).toEqual([]);
   });
 
+  it('a calm day with an easy run on the card says why the run stays', () => {
+    const today = [ps('easy', 'tpl_easy_run', '2026-11-03')];
+    const [a] = morning({ plannedSessions: today, checkIns: [{ date: '2026-11-03', legs: 'flink', energy: 'op', sleep: 'slecht' }] });
+    expect(a.title).toBe('Een rustige dag');
+    expect(a.effect).toContain('blijft op je kaart staan');
+    expect(a.effect).not.toMatch(/^Er staat vandaag niets zwaars\. Houd het zo/);
+    // Without a session today the plain advice stays.
+    const [b] = morning({ plannedSessions: [], checkIns: [{ date: '2026-11-03', legs: 'flink', energy: 'op', sleep: 'slecht' }] });
+    expect(b.effect).toContain('een wandeling of rustig fietsen is genoeg');
+  });
+
   it('a pain spot worse this morning: two to three days without running on it', () => {
     const logs = [log('2026-11-02', { painReports: [{ area: 'Achillespees', score: 2 }] })];
     const [a] = morning({ logs, checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'fit', sleep: 'goed', spot: { area: 'Achillespees', score: 4 } }] });

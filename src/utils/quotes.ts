@@ -35,3 +35,15 @@ export function dailyQuote(dateIso: string): Quote {
 export function authorWikipediaUrl(author: string): string | undefined {
   return AUTHOR_WIKIPEDIA[author];
 }
+
+// The source line under a quote in Dutch words: "Havamal stanza 77, Bellows
+// translation" reads "Hávamál, strofe 77, vertaling Bellows". Titles of works
+// (Meditations, Odes) stay as they are; the quote itself stays in its original
+// words on purpose (data/quoteTranslations.ts).
+export function quoteSourceLabel(label: string | undefined): string {
+  if (!label) return 'Bron';
+  return label
+    .replace(/^Havamal stanza (\d+)/, 'Hávamál, strofe $1')
+    .replace(/, public-domain translation$/, ', vertaling uit het publieke domein')
+    .replace(/, ([A-Z][\w. ]+?) translation$/, ', vertaling $1');
+}

@@ -897,7 +897,16 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
         out.push({ id: `morning:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title: `${reason}: houd ${t.name} rustig`, effect: t.type === 'strength' ? `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name}, met lichtere gewichten en ruim reserve (zeker 3 herhalingen over).` : `Er is geen goede latere plek deze week. Kies de korte versie van ${t.name} en houd het rustig (RPE 3 tot 4).`, why: rule });
       }
     } else if (sig.rest) {
-      out.push({ id: `morning:${today}:rest`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 2, title: 'Een rustige dag', effect: 'Er staat vandaag niets zwaars. Houd het zo: een wandeling of rustig fietsen is genoeg.', why: rule });
+      // The mission card keeps today's easy session. Say so, instead of
+      // advising a walk next to a card that still shows the run.
+      const kept = inputs.plannedSessions
+        .filter((s) => s.scheduledDate === today && s.status !== 'skipped' && !loggedIds.has(s.id))
+        .map((s) => templateById.get(s.templateId))
+        .filter((t): t is SessionTemplate => !!t && t.type !== 'recovery');
+      const effect = kept.length > 0
+        ? `Er staat vandaag niets zwaars. ${kept.map((t) => t.name).join(' en ')} blijft op je kaart staan, omdat hij rustig is. Doe hem kort en stop als het inlopen zwaar voelt. Liever wandelen of rustig fietsen? Sla hem dan over; dat is vandaag genoeg.`
+        : 'Er staat vandaag niets zwaars. Houd het zo: een wandeling of rustig fietsen is genoeg.';
+      out.push({ id: `morning:${today}:rest`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 2, title: 'Een rustige dag', effect, why: rule });
     }
   } else if (sig.negatives === 1) {
     const next = inputs.plannedSessions.find((s) => heavy(s, 0));

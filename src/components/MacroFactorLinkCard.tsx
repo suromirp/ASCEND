@@ -6,7 +6,7 @@
 // Every name comes with a suggestion and the reason in words
 // (engine/macrofactorNames.ts). "Alle voorstellen overnemen" fills every empty
 // choice with it in one tap; the user changes the few that are wrong and
-// confirms with "Koppelingen klopt". Nothing about the plan or the logs changes
+// confirms with "Koppelingen kloppen". Nothing about the plan or the logs changes
 // here.
 //
 // "Als losse krachttraining" is for trainings from before the plan: the log
@@ -75,7 +75,7 @@ export function MacroFactorLinkCard({ primary }: { primary: boolean }) {
   }
 
   // A row that is linked already changes at once, like before; an open row
-  // changes its draft until "Koppelingen klopt".
+  // changes its draft until "Koppelingen kloppen".
   function change(row: LinkRow, value: Choice) {
     if (row.linked === undefined) setDraft((d) => ({ ...d, [row.key]: value }));
     else void setMapping(row.name, decode(value).templateId, decode(value).loose);
@@ -120,9 +120,9 @@ export function MacroFactorLinkCard({ primary }: { primary: boolean }) {
 
       {open.length > 0 &&
         (primary && ready.length > 0 && takeable.length === 0 ? (
-          <PrimaryButton onClick={() => void confirm()} disabled={ready.length === 0}>Koppelingen klopt</PrimaryButton>
+          <PrimaryButton onClick={() => void confirm()} disabled={ready.length === 0}>Koppelingen kloppen</PrimaryButton>
         ) : (
-          <SecondaryButton onClick={() => void confirm()} disabled={ready.length === 0}>Koppelingen klopt</SecondaryButton>
+          <SecondaryButton onClick={() => void confirm()} disabled={ready.length === 0}>Koppelingen kloppen</SecondaryButton>
         ))}
       {open.length > 0 && ready.length === 0 && takeable.length === 0 && (
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Kies eerst een training bij een naam. Dan kun je bevestigen.</p>

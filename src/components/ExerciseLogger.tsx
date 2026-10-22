@@ -28,6 +28,8 @@ import { INTENSITY, type Intensity } from '../data/workoutStructure';
 import { PainReportFields } from './PainReportFields';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import type { PainReport } from '../models/checkIn';
+import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/inputLimits';
+import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../utils/loggerDraft';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -40,6 +42,18 @@ const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Bet
 // meaningful on a day whose whole point is optional/unstructured rest.
 const GUIDANCE_MODE_DAYS = new Set(['tpl_easy_run', 'tpl_bergconditie', 'tpl_hill_intervals', 'tpl_long_run']);
 
+
+// Wat het blad als concept bewaart (utils/loggerDraft.ts). Alles optioneel:
+// een concept van een oudere versie of met ontbrekende velden werkt gewoon.
+interface LoggerDraft {
+  variant: SessionVariant; duration: number | ''; rpe: number | ''; notes: string;
+  subjectiveFeel: 'better' | 'normal' | 'worse' | undefined; legsAtStart: LegsAtStart | undefined; painReports: PainReport[];
+  doneOn: string; workout: WorkoutDetails; setLogs: Record<string, SetLog[]>;
+  guidanceMode: GuidanceMode; modalityKey: string | undefined; garminSuggestedType: string; reachedForm: boolean;
+  distanceKm: number | ''; elevationGainM: number | ''; elevationLossM: number | ''; avgHeartRate: number | '';
+  backpackWeightKg: number | ''; poles: boolean; cadence: number | ''; power: number | ''; steps: number | '';
+  machineVerticalM: number | ''; terrain: string; inclinePercent: number | '';
+}
 
 const LEGS_OPTIONS: [LegsAtStart, string][] = [['fris', 'Fris'], ['normaal', 'Normaal'], ['zwaar', 'Zwaar']];
 export function ExerciseLogger({
@@ -61,8 +75,16 @@ export function ExerciseLogger({
   onClose: () => void;
 }) {
   const { logSession, settings, strengthExternal, templates } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
-  const [variant, setVariant] = useState<SessionVariant>(initialVariant);
+  const { closing, requestClose: closeSheet } = useSheetClose(onClose);
+  // Het concept van dit blad: terug als je het blad na een herlaad opnieuw opent.
+  const storageKey = draftKey(template.id, plannedSessionId, scheduledDate);
+  const [restored] = useState(() => loadDraft<LoggerDraft>(storageKey));
+  // Annuleren of terug gooit het concept weg; herladen niet.
+  const requestClose = () => {
+    clearDraft(storageKey);
+    closeSheet();
+  };
+  const [variant, setVariant] = useState<SessionVariant>(restored?.variant ?? initialVariant);
   const quickComplete = template.type === 'strength' && strengthExternal;
 
   function resolveDuration(v: SessionVariant): number {
@@ -70,29 +92,32 @@ export function ExerciseLogger({
     return resolveVariantDuration(template, v, scheduledDate, program);
   }
 
-  const [duration, setDuration] = useState(resolveDuration(initialVariant));
-  const [rpe, setRpe] = useState<number | ''>('');
-  const [notes, setNotes] = useState('');
-  const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(undefined);
-  const [legsAtStart, setLegsAtStart] = useState<LegsAtStart | undefined>(undefined);
-  const [painReports, setPainReports] = useState<PainReport[]>([]);
+  // Leeg mag: leeg of 0 is "geen duur" (utils: engine/inputLimits.ts).
+  const [duration, setDuration] = useState<number | ''>(() => draftNumber(restored?.duration, resolveDuration(variant)));
+  const [rpe, setRpe] = useState<number | ''>(draftNumber(restored?.rpe, ''));
+  const [notes, setNotes] = useState(typeof restored?.notes === 'string' ? restored.notes : '');
+  const [subjectiveFeel, setSubjectiveFeel] = useState<'better' | 'normal' | 'worse' | undefined>(restored?.subjectiveFeel);
+  const [legsAtStart, setLegsAtStart] = useState<LegsAtStart | undefined>(restored?.legsAtStart);
+  const [painReports, setPainReports] = useState<PainReport[]>(Array.isArray(restored?.painReports) ? restored.painReports : []);
+  // Boven de grens eerst "Klopt dit?" vragen, een keer.
+  const [confirmLong, setConfirmLong] = useState(false);
   const [saving, setSaving] = useState(false);
   // The day it was actually done. Ticking off a session from an earlier
   // day defaults to that day; a loose training can be logged for a past
   // day too (production bug: everything landed on today).
   const today = todayISO();
   const plannedInPast = !!plannedSessionId && !!scheduledDate && scheduledDate < today;
-  const [doneOn, setDoneOn] = useState<string>(plannedInPast ? scheduledDate! : today);
+  const [doneOn, setDoneOn] = useState<string>(typeof restored?.doneOn === 'string' ? restored.doneOn : plannedInPast ? scheduledDate! : today);
   // The exact same plan the guide shows for this day: steps, minutes,
   // repeats, RPE and heart-rate zone (production feedback: the training
   // screen said something different from the info screen).
   const plan = buildWorkoutPlan(template, scheduledDate ?? today, program);
   const conditioningSteps = plan?.timeline.filter((s) => s.kind !== 'strength') ?? [];
   const peak = conditioningSteps.length > 0 ? (Math.max(...conditioningSteps.map((s) => s.intensity)) as Intensity) : undefined;
-  const [workout, setWorkout] = useState<WorkoutDetails>(() => plannedDetails(template.id, plan));
+  const [workout, setWorkout] = useState<WorkoutDetails>(() => restored?.workout ?? plannedDetails(template.id, plan));
   const [restTimerFor, setRestTimerFor] = useState<string | null>(null);
   const [openExercise, setOpenExercise] = useState<string | null>(null);
-  const [reachedForm, setReachedForm] = useState(startAtForm);
+  const [reachedForm, setReachedForm] = useState(startAtForm || restored?.reachedForm === true);
   const [otherOpen, setOtherOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
@@ -105,17 +130,17 @@ export function ExerciseLogger({
   const exercises = exercisesForVariant(template, variant);
   const [setLogs, setSetLogs] = useState<Record<string, SetLog[]>>(() =>
     Object.fromEntries(
-      exercises.map((e) => [e.id, Array.from({ length: e.sets }, () => ({ reps: 0, weightKg: e.targetWeightKg }))]),
+      exercises.map((e) => [e.id, restored?.setLogs?.[e.id] ?? Array.from({ length: e.sets }, () => ({ reps: 0, weightKg: e.targetWeightKg }))]),
     ),
   );
 
   const hasModalities = !!getModalities(template.id);
   const supportsGuidanceMode = GUIDANCE_MODE_DAYS.has(template.id);
-  const [guidanceMode, setGuidanceMode] = useState<GuidanceMode>('ascend_guided');
+  const [guidanceMode, setGuidanceMode] = useState<GuidanceMode>(restored?.guidanceMode ?? 'ascend_guided');
   // On a rest day the screen only opens to log a walk.
   const [modalityKey, setModalityKey] = useState<string | undefined>(() =>
-    template.type === 'recovery' && getModality(template.id, 'recovery_walk') ? 'recovery_walk' : defaultModality(template.id));
-  const [garminSuggestedType, setGarminSuggestedType] = useState<string>('');
+    restored?.modalityKey ?? (template.type === 'recovery' && getModality(template.id, 'recovery_walk') ? 'recovery_walk' : defaultModality(template.id)));
+  const [garminSuggestedType, setGarminSuggestedType] = useState<string>(restored?.garminSuggestedType ?? '');
   const selectedModality = modalityKey ? getModality(template.id, modalityKey) : undefined;
   const compatibility = garminSuggestedType ? getCompatibility(template.id, garminSuggestedType) : undefined;
 
@@ -132,30 +157,40 @@ export function ExerciseLogger({
       ? selectedModality.environment
       : undefined;
 
-  const [distanceKm, setDistanceKm] = useState<number | ''>('');
-  const [elevationGainM, setElevationGainM] = useState<number | ''>('');
-  const [elevationLossM, setElevationLossM] = useState<number | ''>('');
-  const [avgHeartRate, setAvgHeartRate] = useState<number | ''>('');
-  const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>(() => progressionTarget(template, program, scheduledDate ?? todayISO())?.step.backpackKg ?? '');
-  const [poles, setPoles] = useState(false);
-  const [cadence, setCadence] = useState<number | ''>('');
-  const [power, setPower] = useState<number | ''>('');
-  const [steps, setSteps] = useState<number | ''>('');
-  const [machineVerticalM, setMachineVerticalM] = useState<number | ''>('');
-  const [terrain, setTerrain] = useState('');
+  const [distanceKm, setDistanceKm] = useState<number | ''>(draftNumber(restored?.distanceKm, ''));
+  const [elevationGainM, setElevationGainM] = useState<number | ''>(draftNumber(restored?.elevationGainM, ''));
+  const [elevationLossM, setElevationLossM] = useState<number | ''>(draftNumber(restored?.elevationLossM, ''));
+  const [avgHeartRate, setAvgHeartRate] = useState<number | ''>(draftNumber(restored?.avgHeartRate, ''));
+  const [backpackWeightKg, setBackpackWeightKg] = useState<number | ''>(() => draftNumber(restored?.backpackWeightKg, progressionTarget(template, program, scheduledDate ?? todayISO())?.step.backpackKg ?? ''));
+  const [poles, setPoles] = useState(restored?.poles === true);
+  const [cadence, setCadence] = useState<number | ''>(draftNumber(restored?.cadence, ''));
+  const [power, setPower] = useState<number | ''>(draftNumber(restored?.power, ''));
+  const [steps, setSteps] = useState<number | ''>(draftNumber(restored?.steps, ''));
+  const [machineVerticalM, setMachineVerticalM] = useState<number | ''>(draftNumber(restored?.machineVerticalM, ''));
+  const [terrain, setTerrain] = useState(typeof restored?.terrain === 'string' ? restored.terrain : '');
 
   // Incline-treadmill D+ estimate (distance × incline% ÷ 100) — a treadmill
   // doesn't actually change your altitude, so this is a training estimate,
   // not a GPS measurement. Derived at render time rather than mirrored into
   // state via an effect: elevationGainM only ever holds a manually-typed
   // override, and the incline estimate is used whenever there isn't one.
-  const [inclinePercent, setInclinePercent] = useState<number | ''>('');
+  const [inclinePercent, setInclinePercent] = useState<number | ''>(draftNumber(restored?.inclinePercent, ''));
   const inclineEstimate =
     fields.inclinePercent && distanceKm !== '' && inclinePercent !== ''
       ? Math.round((distanceKm * 1000 * inclinePercent) / 100)
       : undefined;
   const elevationEstimated = elevationGainM === '' && inclineEstimate !== undefined;
   const effectiveElevationGainM = elevationEstimated ? inclineEstimate : elevationGainM;
+
+  // Het concept bij elke verandering wegschrijven.
+  useEffect(() => {
+    const snapshot: LoggerDraft = {
+      variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey,
+      garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power,
+      steps, machineVerticalM, terrain, inclinePercent,
+    };
+    saveDraft(storageKey, snapshot);
+  }, [storageKey, variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey, garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power, steps, machineVerticalM, terrain, inclinePercent]);
 
   function selectVariant(v: SessionVariant) {
     setVariant(v);
@@ -175,11 +210,17 @@ export function ExerciseLogger({
     }));
   }
 
-  async function handleSave() {
-    setSaving(true);
+  async function handleSave(confirmed = false) {
     // A real rest day: logged as rest, no minutes of training that weren't there.
     const isRest = guidanceMode === 'ascend_guided' && selectedModality?.environment === 'rest';
-    const loggedMinutes = isRest ? 0 : duration;
+    // Leeg of 0 is "geen duur"; heel lang vraagt eerst "Klopt dit?".
+    const loggedMinutes = isRest ? 0 : entryMinutes(duration);
+    if (!confirmed && durationNeedsCheck(loggedMinutes)) {
+      setConfirmLong(true);
+      return;
+    }
+    setConfirmLong(false);
+    setSaving(true);
     // Only sets that were actually filled in: empty rows would read as
     // 0-rep sets and drag the strength progression down.
     const filled: ExerciseSetLog[] = template.type === 'strength' && !quickComplete
@@ -244,7 +285,10 @@ export function ExerciseLogger({
     setSaving(false);
     // On a failed write the form stays open with everything filled in; the
     // app-wide notice says what went wrong.
-    if (saved) onClose();
+    if (saved) {
+      clearDraft(storageKey);
+      onClose();
+    }
   }
 
   const brief = buildSessionBrief(template, scheduledDate ?? today, program, {
@@ -419,7 +463,10 @@ export function ExerciseLogger({
           </Card>
         ) : (
         <Card className="mt-4 flex flex-col gap-4">
-          <Field label="Duur" unit="min" value={duration} onChange={(v) => setDuration(typeof v === 'number' ? v : 0)} />
+          <Field label="Duur" unit="min" value={duration} onChange={(v) => { setDuration(v); setConfirmLong(false); }} />
+          {entryMinutes(duration) === 0 && (
+            <p className="-mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Leeg of 0 betekent: geen duur. De training wordt zonder minuten bewaard.</p>
+          )}
           {detailForm(template.id) && <WorkoutDetailsFields templateId={template.id} value={workout} onChange={setWorkout} />}
           <div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE), hoe zwaar voelde de hele training?</p>
@@ -614,6 +661,16 @@ export function ExerciseLogger({
         className="fixed inset-x-0 bottom-0 z-10 border-t"
         style={{ background: 'rgba(13,13,15,0.94)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
       >
+        {confirmLong ? (
+          <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }} role="alert">
+            <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Klopt dit?</p>
+            <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{longDurationText(entryMinutes(duration))}.</p>
+            <div className="mt-3 flex gap-3">
+              <SecondaryButton onClick={() => setConfirmLong(false)}>Aanpassen</SecondaryButton>
+              <PrimaryButton fullWidth={false} onClick={() => void handleSave(true)} disabled={saving}>Ja, opslaan</PrimaryButton>
+            </div>
+          </div>
+        ) : (
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
           {guide ? (
             <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[96px] flex-none px-4">Info</SecondaryButton>
@@ -621,11 +678,12 @@ export function ExerciseLogger({
             <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}
           {reachedForm || restChosen || quickComplete ? (
-            <PrimaryButton onClick={handleSave} disabled={saving}>{saveLabel}</PrimaryButton>
+            <PrimaryButton onClick={() => void handleSave()} disabled={saving}>{saveLabel}</PrimaryButton>
           ) : (
             <PrimaryButton onClick={goToForm}>Klaar, invullen</PrimaryButton>
           )}
         </div>
+        )}
       </div>
       </div>
 

@@ -12,6 +12,7 @@
 // Nothing in this file knows about ASCEND's plan or logs; that is
 // engine/macrofactorLink.ts. This file only answers "what is in the file".
 
+import { cleanExerciseName } from './exerciseMatch';
 import { cellText, excelSerialToText, SERIAL_MAX, SERIAL_MIN, type Cell } from './sheetTable';
 
 export interface MacroFactorSet {
@@ -320,7 +321,7 @@ export function readMacroFactorRows(rows: Cell[][]): MacroFactorReadResult {
     const cell = (id: ColumnId) => (index[id] === undefined ? undefined : cells[index[id]!]);
     const when = parseDateCell(cell('date'));
     const name = cellText(cell('workout')).trim();
-    const exercise = cellText(cell('exercise')).trim();
+    const exercise = cleanExerciseName(cellText(cell('exercise')).trim());
     if (!when || !name || !exercise) {
       skippedRows++;
       continue;

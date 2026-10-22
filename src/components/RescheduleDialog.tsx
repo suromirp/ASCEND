@@ -49,12 +49,12 @@ export function RescheduleDialog({
                 a conscious second choice. */}
             {proposal.resolved ? (
               <div className="mt-5 flex gap-3">
-                <SecondaryButton onClick={requestClose}>Origineel behouden</SecondaryButton>
-                <PrimaryButton onClick={onApply}>Toepassen</PrimaryButton>
+                <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
+                <PrimaryButton onClick={onApply}>Akkoord</PrimaryButton>
               </div>
             ) : (
               <div className="mt-5 flex flex-col gap-3">
-                <PrimaryButton onClick={requestClose}>Origineel behouden</PrimaryButton>
+                <PrimaryButton onClick={requestClose}>Liever niet</PrimaryButton>
                 <SecondaryButton onClick={onApply}>Toch verplaatsen</SecondaryButton>
               </div>
             )}
