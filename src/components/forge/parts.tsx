@@ -36,7 +36,7 @@ export function TickBox({ done, onClick, label }: { done: boolean; onClick: () =
       aria-checked={done}
       aria-label={label}
       onClick={onClick}
-      className="relative flex h-8 w-8 items-center justify-center rounded-lg border transition-colors before:absolute before:-inset-1.5 before:content-['']"
+      className="relative flex h-8 w-8 items-center justify-center rounded-lg border transition-colors before:absolute before:-inset-2 before:content-['']"
       style={{
         borderColor: done ? 'var(--color-success)' : 'var(--color-control-border)',
         background: done ? 'var(--color-success)' : 'transparent',

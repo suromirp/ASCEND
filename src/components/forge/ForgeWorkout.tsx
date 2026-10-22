@@ -838,7 +838,7 @@ function FinishSheet({
           </div>
           <div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE) van de hele training, als je wilt</p>
-            <div className="mt-2 grid grid-cols-10 gap-1" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
+            <div className="mt-2 grid grid-cols-5 gap-2" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                 <button key={n} type="button" role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[44px] rounded-lg border font-sans text-sm tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-ink)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-surface)' : 'transparent', color: rpe === n ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
                   {n}
