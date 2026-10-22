@@ -22,8 +22,6 @@ import { WatchActivityCard } from '../components/WatchActivityCard';
 import { WatchAlignCard } from '../components/WatchAlignCard';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { SessionActionSheet } from '../components/SessionActionSheet';
-import { StretchMenuButton } from '../components/StretchMenuButton';
-import { TimerButton } from '../components/TimerButton';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { StandSummaryCard } from '../components/StandSummaryCard';
 import { MorningCheckInCard } from '../components/MorningCheckInCard';
@@ -226,9 +224,8 @@ export function TodayPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-3">
-      {/* Het tandwiel staat in de rij erboven (App.tsx); de twee knoppen staan
-          rechts in deze regel, recht onder het tandwiel, zodat de weekregel op
-          één regel past. */}
+      {/* Timer, rekken en het tandwiel staan samen in de rij erboven, naast het
+          logo (App.tsx, TodayTopButtons); deze regel heeft de hele breedte. */}
       <header className="flex min-h-[44px] items-start justify-between gap-3">
         <div className="min-w-0 pt-0.5">
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
@@ -237,10 +234,6 @@ export function TodayPage() {
               Week {position.weekInProgram} · {position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <TimerButton />
-          <StretchMenuButton />
         </div>
       </header>
 
