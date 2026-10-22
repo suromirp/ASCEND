@@ -387,3 +387,7 @@ afspraken voor elke agent die in deze repo werkt.
   voor review en lastig onderzoek, effort gemiddeld als standaard.
 - De rollen staan in `.claude/agents/`, de vaste werkinstructies in
   `.claude/skills/`.
+- Helpers hebben in berichten aan de eigenaar een vaste naam in de stijl van
+  ASCEND: Scout (onderzoek), Sherpa (bouwen), Warden (review), Lookout
+  (UI-controle en testen) en Cartographer (ontwerp), met het onderwerp erbij,
+  bijvoorbeeld "Sherpa Forge".
