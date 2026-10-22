@@ -366,7 +366,7 @@ export function GarminLinkPage() {
                     disabled={workouts.busy}
                     onClick={() => void workouts.changePrefix(key, updateSettings)}
                     className="min-h-[44px] flex-1 rounded-xl border px-2 text-xs font-medium disabled:opacity-40"
-                    style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-control-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink)' }}
+                    style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-control-border)', color: on ? 'var(--color-ink)' : 'var(--color-ink-dim)', background: on ? 'var(--color-surface)' : 'transparent' }}
                   >
                     {label}
                   </button>
@@ -378,7 +378,7 @@ export function GarminLinkPage() {
         {connected && (
           <UseRow
             title="Gedane trainingen weghalen"
-            text="Een training die je hebt gedaan, overgeslagen of laat voorbijgaan haalt ASCEND weer uit je intervals.icu-agenda. Je activiteit zelf blijft staan."
+            text="Een training die je hebt gedaan of voorbij liet gaan haalt ASCEND weer uit je intervals.icu-agenda. Je activiteit zelf blijft staan."
             checked={settings.watchRemoveDone !== false}
             onChange={(on) => void updateSettings({ watchRemoveDone: on })}
           />
@@ -532,8 +532,8 @@ function useWatchWorkoutControls(): WatchWorkoutControls {
         setNotice({ tone: 'ok', text: switched.removed > 0 ? 'Uit. De komende trainingen zijn weer uit je intervals.icu-agenda gehaald.' : 'Uit. ASCEND stuurt geen trainingen meer.' });
       }
     } finally {
-      await reload();
       setBusy(false);
+      await reload();
     }
   }
 
@@ -551,8 +551,8 @@ function useWatchWorkoutControls(): WatchWorkoutControls {
     } catch (err) {
       setNotice({ tone: 'error', text: err instanceof TimeoutError ? 'Dat duurde te lang. De namen worden bij de volgende ronde bijgewerkt.' : 'Het opslaan is niet gelukt.' });
     } finally {
-      await reload();
       setBusy(false);
+      await reload();
     }
   }
 
@@ -580,8 +580,8 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
         setNotice({ tone: 'error', text: `Het is niet gelukt. ${result.message}` });
       }
     } finally {
-      await reload();
       setBusy(false);
+      await reload();
     }
   }
 
@@ -593,8 +593,8 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       if (result.status === 'error') setNotice({ tone: 'error', text: result.message });
       else if (result.status === 'ok') setNotice({ tone: 'ok', text: `Bijgewerkt: ${result.created} nieuw, ${result.updated} aangepast, ${result.removed} weggehaald.` });
     } finally {
-      await reload();
       setBusy(false);
+      await reload();
     }
   }
 
@@ -617,8 +617,8 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
       setNotice({ tone: 'error', text: err instanceof TimeoutError ? 'Dat duurde te lang. Er is niets stuk: probeer het zo nog eens.' : 'Weghalen is niet gelukt.' });
     } finally {
       setConfirmingRemove(false);
-      await reload();
       setBusy(false);
+      await reload();
     }
   }
 
@@ -638,8 +638,8 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
     } catch (err) {
       setNotice({ tone: 'error', text: err instanceof TimeoutError ? 'Dat duurde te lang. Er is niets stuk: probeer het zo nog eens.' : 'Opnieuw versturen is niet gelukt.' });
     } finally {
-      await reload();
       setBusy(false);
+      await reload();
     }
   }
 
@@ -694,7 +694,7 @@ function WatchInfo() {
   return (
     <div className="flex flex-col gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <InfoPoint title="Wat vanzelf gaat">
-        Staat de schakelaar aan, dan zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda en werkt ze bij na elke wijziging in je planning. Wat je hebt gedaan of hebt overgeslagen, haalt hij er zelf weer uit. Daarna stuurt intervals.icu ze door naar Garmin Connect.
+        Staat de schakelaar aan, dan zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda en werkt ze bij na elke wijziging in je planning. Wat je overslaat haalt hij er altijd uit, en wat je hebt gedaan ook als Gedane trainingen weghalen aan staat. Daarna stuurt intervals.icu ze door naar Garmin Connect.
       </InfoPoint>
       <InfoPoint title="Zo herken je ze">
         De naam begint met ASC (of ASCEND ·, of niets: dat kies je hierboven). In de beschrijving staat bovenaan voor welke dag ASCEND hem plande.

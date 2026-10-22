@@ -198,9 +198,10 @@ export async function sendNextWatchWorkout(options: WorkoutOptions = {}): Promis
   }
 }
 
-// Takes ASCEND's own events out of the agenda again (the ones that are still
-// to come; what is past stays next to its activity). Only what ASCEND has
-// written down is removed.
+// Takes ASCEND's own events that are still to come out of the agenda again.
+// What is done or past goes in the regular round when "Gedane trainingen
+// weghalen" is on (watchRemoveDone). Only what ASCEND has written down is
+// removed.
 export async function removeWatchWorkouts(options: WorkoutOptions = {}): Promise<{ status: 'ok'; removed: number } | { status: 'not-connected' } | { status: 'error'; message: string }> {
   const today = options.today ?? todayISO();
   try {
