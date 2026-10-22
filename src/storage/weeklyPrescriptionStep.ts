@@ -115,8 +115,15 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   );
   proposal.changes = delta.changes;
 
-  // 'keep' is geen wijziging.
-  const realChanges = proposal.changes.filter((c) => c.action !== 'keep');
+  // 'keep' is geen wijziging. Bij de eerste opbouw (nog geen enkel voorschrift
+  // opgeslagen: een verse installatie of net een back-up teruggezet, want
+  // voorschriften zijn afgeleide gegevens en zitten niet in de back-up) is het
+  // invullen van de inhoud van trainingen ook geen wijziging: het toestel had
+  // diezelfde inhoud al. Zonder dit meldde de eerste opening na een back-up
+  // "Weekplanning bijgewerkt (9 trainingen)" bij een planning die al klopte
+  // (Doorloop, punt 14).
+  const initialBuild = previousPrescriptions.length === 0 && storedTraining.length === 0;
+  const realChanges = proposal.changes.filter((c) => c.action !== 'keep' && !(initialBuild && (c.action === 'replace' || c.action === 'reduce')));
 
   // Fase 3 — "Wijzigingen toepassen: altijd eerst vragen": the forecast
   // changes become a coach item to accept or decline instead of being
