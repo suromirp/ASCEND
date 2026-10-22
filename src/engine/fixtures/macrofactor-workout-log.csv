@@ -1,0 +1,53 @@
+Date,Workout Duration,Workout,Exercise,Set Type,Weight (kg),Reps,RIR
+2026-10-12,3180,Upper A,Bench Press (Barbell),Warm-up,40,8,
+2026-10-12,3180,Upper A,Bench Press (Barbell),Working,70,8,3
+2026-10-12,3180,Upper A,Bench Press (Barbell),Working,70,7,2
+2026-10-12,3180,Upper A,Bench Press (Barbell),Working,70,6,1
+2026-10-12,3180,Upper A,Bench Press (Barbell),Working,70,6,1
+2026-10-12,3180,Upper A,"Row, Seated Cable",Working,55,10,3
+2026-10-12,3180,Upper A,"Row, Seated Cable",Working,55,10,2
+2026-10-12,3180,Upper A,"Row, Seated Cable",Working,55,9,2
+2026-10-12,3180,Upper A,Overhead Press (Barbell),Working,42.5,8,2
+2026-10-12,3180,Upper A,Overhead Press (Barbell),Working,42.5,7,1
+2026-10-12,3180,Upper A,Overhead Press (Barbell),Working,42.5,6,0
+2026-10-12,3180,Upper A,Lat Pulldown,Working,60,12,2
+2026-10-12,3180,Upper A,Lat Pulldown,Working,60,11,1
+2026-10-12,3180,Upper A,Lateral Raise (Dumbbell),Working,10,15,2
+2026-10-12,3180,Upper A,Lateral Raise (Dumbbell),Working,10,13,1
+2026-10-12,3180,Upper A,Lateral Raise (Dumbbell),Working,10,12,0
+2026-10-14,3720,Lower A,Back Squat (Barbell),Warm-up,60,8,
+2026-10-14,3720,Lower A,Back Squat (Barbell),Warm-up,80,5,
+2026-10-14,3720,Lower A,Back Squat (Barbell),Working,100,6,2
+2026-10-14,3720,Lower A,Back Squat (Barbell),Working,100,6,1
+2026-10-14,3720,Lower A,Back Squat (Barbell),Working,100,5,1
+2026-10-14,3720,Lower A,Back Squat (Barbell),Working,100,5,1
+2026-10-14,3720,Lower A,Romanian Deadlift (Barbell),Working,90,8,3
+2026-10-14,3720,Lower A,Romanian Deadlift (Barbell),Working,90,8,2
+2026-10-14,3720,Lower A,Romanian Deadlift (Barbell),Working,90,8,2
+2026-10-14,3720,Lower A,Leg Press,Working,160,12,2
+2026-10-14,3720,Lower A,Leg Press,Working,160,11,1
+2026-10-14,3720,Lower A,Leg Press,Working,160,10,1
+2026-10-14,3720,Lower A,Standing Calf Raise,Working,70,15,2
+2026-10-14,3720,Lower A,Standing Calf Raise,Working,70,14,1
+2026-10-14,3720,Lower A,Standing Calf Raise,Working,70,12,0
+2026-10-16,2940,Upper B,Incline Dumbbell Press,Working,26,10,2
+2026-10-16,2940,Upper B,Incline Dumbbell Press,Working,26,9,1
+2026-10-16,2940,Upper B,Incline Dumbbell Press,Working,26,8,1
+2026-10-16,2940,Upper B,Pull-Up,Working,0,8,2
+2026-10-16,2940,Upper B,Pull-Up,Working,0,7,1
+2026-10-16,2940,Upper B,Pull-Up,Working,0,6,0
+2026-10-16,2940,Upper B,Seated Dumbbell Shoulder Press,Working,20,10,2
+2026-10-16,2940,Upper B,Seated Dumbbell Shoulder Press,Working,20,9,1
+2026-10-16,2940,Upper B,Triceps Pushdown,Working,30,12,2
+2026-10-16,2940,Upper B,Triceps Pushdown,Working,30,12,1
+2026-10-16,2940,Upper B,Triceps Pushdown,Working,30,11,0
+2026-10-17,3300,Lower B,Trap Bar Deadlift,Warm-up,60,6,
+2026-10-17,3300,Lower B,Trap Bar Deadlift,Working,110,5,3
+2026-10-17,3300,Lower B,Trap Bar Deadlift,Working,110,5,2
+2026-10-17,3300,Lower B,Trap Bar Deadlift,Working,110,5,2
+2026-10-17,3300,Lower B,Bulgarian Split Squat,Working,20,10,2
+2026-10-17,3300,Lower B,Bulgarian Split Squat,Working,20,9,1
+2026-10-17,3300,Lower B,Bulgarian Split Squat,Working,20,8,1
+2026-10-17,3300,Lower B,Leg Curl (Machine),Working,45,12,2
+2026-10-17,3300,Lower B,Leg Curl (Machine),Working,45,11,1
+2026-10-17,3300,Lower B,Leg Curl (Machine),Working,45,10,0

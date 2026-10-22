@@ -363,9 +363,13 @@ export function SettingsPage() {
               note={garminLinked ? 'Verbonden: trainingen van je horloge komen als voorstel op Vandaag' : 'Trainingen van je horloge zonder overtypen'}
               onClick={() => navigate('/koppelen/garmin')}
             />
+            <NavRow
+              label="MacroFactor inlezen"
+              note="Krachttrainingen uit je export, met echte duur en herhalingen in reserve"
+              onClick={() => navigate('/koppelen/macrofactor')}
+            />
             <div className="flex flex-col gap-3 opacity-60">
               <IntegrationRow name="Health Connect" note="Binnenkort" />
-              <IntegrationRow name="MacroFactor" note="Binnenkort" />
             </div>
           </Card>
         </>

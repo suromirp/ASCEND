@@ -52,9 +52,33 @@ export default defineConfig({
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // "Delen, ASCEND" for a MacroFactor export on Android (Chrome, Edge,
+        // Samsung Internet). Android POSTs the file to `action`; the service
+        // worker script public/share-target-sw.js catches that, keeps the
+        // file in a cache, and redirects to the "MacroFactor inlezen" screen.
+        // Both the action and the field name must equal that script.
+        share_target: {
+          action: `${BASE_PATH}delen/macrofactor`,
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [
+              {
+                name: 'bestand',
+                accept: ['text/csv', 'text/comma-separated-values', 'application/csv', 'application/vnd.ms-excel', '.csv'],
+              },
+            ],
+          },
+        },
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // The generated service worker keeps everything it does (precache,
+        // offline fallback); this one small script is added to it and only
+        // answers the share POST. It is not precached: the browser stores
+        // imported scripts with the service worker itself.
+        importScripts: ['share-target-sw.js'],
+        globIgnores: ['share-target-sw.js'],
       },
     }),
   ],
