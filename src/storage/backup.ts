@@ -49,11 +49,13 @@ import { migrateExport, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
+import { sanitizeRoutePlan, sanitizeSoloPlan } from '../engine/routePlan';
+import { RoutePlanRepo, SoloPlanRepo, ROUTE_PLAN_KEY, SOLO_PLAN_KEY } from './routePlan';
 import {
   CURRENT_BACKUP_SCHEMA_VERSION,
   ALL_CATEGORIES,
   type AscendBackupEnvelope,
-  type AscendBackupPayloadV4,
+  type AscendBackupPayloadV5,
   type NormalizedBackupData,
   type BackupDataCategory,
   type CategoryAction,
@@ -98,7 +100,7 @@ function migrateLegacyObjectives(
 // --- export direction --------------------------------------------------------
 
 export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
-  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, goalEngineConfig, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, adviceResponses] = await Promise.all([
+  const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, goalEngineConfig, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, adviceResponses, routePlan, soloPlan] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
@@ -114,10 +116,12 @@ export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
     StrengthProgramRecommendationsRepo.getAll(),
     PlanChangeProposalsRepo.getAll(),
     MetaRepo.get<Record<string, unknown>>('adviceResponses'),
+    RoutePlanRepo.get(),
+    SoloPlanRepo.get(),
   ]);
 
-  const payload: AscendBackupPayloadV4 = {
-    version: 4,
+  const payload: AscendBackupPayloadV5 = {
+    version: 5,
     program: programs[0] ?? null,
     templates,
     plannedSessions,
@@ -133,6 +137,10 @@ export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
     strengthProgramRecommendations,
     planChangeProposals,
     adviceResponses: adviceResponses ?? null,
+    // Never filled in is stored as null, not as an empty plan, so a restore
+    // doesn't overwrite a plan on another device with nothing.
+    routePlan: routePlan.updatedAt ? routePlan : null,
+    soloPlan: soloPlan.updatedAt ? soloPlan : null,
   };
 
   return {
@@ -224,9 +232,10 @@ interface RawSource {
   legacyGoals: boolean;
   hasCapability: boolean;
   hasV4Extras: boolean;
+  hasV5Extras: boolean;
 }
 
-function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras }: RawSource): NormalizedBackupData {
+function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoals, hasCapability, hasV4Extras, hasV5Extras }: RawSource): NormalizedBackupData {
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped);
@@ -286,6 +295,16 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     if (isRecord(raw.adviceResponses)) normalized.adviceResponses = raw.adviceResponses;
   }
 
+  if (hasV5Extras) {
+    // A plan that can't be read is dropped, never half-restored.
+    const routePlan = sanitizeRoutePlan(raw.routePlan);
+    if (routePlan) normalized.routePlan = routePlan;
+    else if (raw.routePlan != null) skipped.n++;
+    const soloPlan = sanitizeSoloPlan(raw.soloPlan);
+    if (soloPlan) normalized.soloPlan = soloPlan;
+    else if (raw.soloPlan != null) skipped.n++;
+  }
+
   normalized.skippedInvalid = skipped.n;
   return normalized;
 }
@@ -306,7 +325,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     const payload = obj.payload;
     const createdAt = typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString();
     const version = payload.version;
-    if (version !== 1 && version !== 2 && version !== 3 && version !== 4) {
+    if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5) {
       throw new Error('Deze back-up heeft een onbekende gegevensversie en kan niet worden geïmporteerd.');
     }
     return buildNormalized({
@@ -318,6 +337,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
       // could exist yet, so it's a true absence, not data loss.
       hasCapability: version >= 3,
       hasV4Extras: version >= 4,
+      hasV5Extras: version >= 5,
     });
   }
 
@@ -331,6 +351,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
       legacyGoals: true,
       hasCapability: false,
       hasV4Extras: false,
+      hasV5Extras: false,
     });
   }
 
@@ -661,6 +682,8 @@ function computeDiff(
     }
     if (backup.goalEngineConfig) meta.goalEngineConfig = backup.goalEngineConfig;
     if (backup.adviceResponses) meta.adviceResponses = backup.adviceResponses;
+    if (backup.routePlan) meta[ROUTE_PLAN_KEY] = backup.routePlan;
+    if (backup.soloPlan) meta[SOLO_PLAN_KEY] = backup.soloPlan;
   }
   diffByCategory.push({
     category: 'app_settings',

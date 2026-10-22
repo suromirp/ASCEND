@@ -235,6 +235,26 @@ export function AscendPage() {
         <MetricBar label="RUGZAK" value={capacity.packCapability} />
       </Card>
 
+      {goal && (
+        <Card className="flex flex-col gap-1">
+          <Eyebrow>DE ROUTE</Eyebrow>
+          <button onClick={() => navigate('/etappes')} className="flex min-h-[56px] items-center justify-between gap-3 border-b py-2 text-left" style={{ borderColor: 'var(--color-card-border)' }}>
+            <span>
+              <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Etappeplan</span>
+              <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De 36 etappes, je zwaarste dagen en waar je slaapt. Ook zonder bereik.</span>
+            </span>
+            <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+          </button>
+          <button onClick={() => navigate('/onderweg')} className="flex min-h-[56px] items-center justify-between gap-3 py-2 text-left">
+            <span>
+              <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Alleen onderweg</span>
+              <span className="block text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alarmnummer, je afspraak met thuis en de vertrekbrief.</span>
+            </span>
+            <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+          </button>
+        </Card>
+      )}
+
       {otherGoals.length > 0 && (
         <Card className="flex flex-col gap-2">
           <Eyebrow>OOK ONDERWEG NAAR</Eyebrow>
@@ -386,6 +406,7 @@ function GR5GoalCard({
   onUpdate: (patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => void;
   onArchive: () => void;
 }) {
+  const navigate = useNavigate();
   const daysLeft = goal.targetDate ? daysBetween(todayISO(), goal.targetDate) : undefined;
   const targetDistanceKm = findRequirement(goal, 'distance')?.target?.amount;
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -397,6 +418,10 @@ function GR5GoalCard({
       <GoalStatusNote status={goal.status} goal={goal} />
       <RouteLine goal={goal} />
       <GoalTripNotes goal={goal} onPackChange={(kg) => onUpdate({ packWeightKg: kg })} />
+      <div className="flex gap-3">
+        <SecondaryButton onClick={() => navigate('/etappes')}>ETAPPEPLAN</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/onderweg')}>ALLEEN ONDERWEG</SecondaryButton>
+      </div>
       {daysLeft !== undefined && (
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
           {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}

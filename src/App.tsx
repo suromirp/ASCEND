@@ -31,6 +31,8 @@ const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ defaul
 const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ default: m.PackListPage })));
+const EtappesPage = lazy(() => import('./pages/Etappes').then((m) => ({ default: m.EtappesPage })));
+const AlleenOnderwegPage = lazy(() => import('./pages/AlleenOnderweg').then((m) => ({ default: m.AlleenOnderwegPage })));
 
 function NavIcon({ id }: { id: string }) {
   const icons: Record<string, string> = {
@@ -193,6 +195,8 @@ function AppShell() {
             <Route path="/blessures" element={<InjuriesPage />} />
             <Route path="/reis" element={<JourneyPage />} />
             <Route path="/reis/paklijst" element={<PackListPage />} />
+            <Route path="/etappes" element={<EtappesPage />} />
+            <Route path="/onderweg" element={<AlleenOnderwegPage />} />
           </Routes>
           </Suspense>
         </ErrorBoundary>

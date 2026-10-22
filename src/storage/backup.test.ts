@@ -147,7 +147,7 @@ describe('backup envelope round-trip', () => {
     await CapabilityEvidenceRepo.put({ id: 'ce1', key: { dimension: 'load_carriage' }, measured: { amount: 12, unit: 'kg' }, date: '2026-02-01', evidenceType: 'manual', source: 'manualEntry' });
 
     const envelope = await buildBackupEnvelope();
-    expect(envelope.payload).toEqual(expect.objectContaining({ version: 4 }));
+    expect(envelope.payload).toEqual(expect.objectContaining({ version: 5 }));
 
     await wipeAllData();
     await importEnvelope(envelope);

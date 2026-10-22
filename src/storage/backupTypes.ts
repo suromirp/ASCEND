@@ -28,11 +28,12 @@ import type { InjuryNote } from '../models/injury';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
+import type { RoutePlan, SoloPlan } from '../models/routePlan';
 import type { AppSettings } from './database';
 
 // --- Backup envelope & versioned payload -----------------------------------
 
-export const CURRENT_BACKUP_SCHEMA_VERSION = 4;
+export const CURRENT_BACKUP_SCHEMA_VERSION = 5;
 
 export interface AscendBackupPayloadV1 {
   version: 1;
@@ -86,7 +87,16 @@ export interface AscendBackupPayloadV4 extends Omit<AscendBackupPayloadV3, 'vers
   adviceResponses: Record<string, unknown> | null;
 }
 
-export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4;
+// V5 (etappeplan en solokaart) adds what the user chose per GR5 stage and
+// the agreement with home. Both are null when never filled in. A V1 to V4
+// file simply has neither, which means "unknown": the device keeps its own.
+export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'version'> {
+  version: 5;
+  routePlan: RoutePlan | null;
+  soloPlan: SoloPlan | null;
+}
+
+export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
 
 export interface AscendBackupEnvelope {
   backupSchemaVersion: number;
@@ -131,6 +141,9 @@ export interface NormalizedBackupData {
   strengthProgramRecommendations?: StrengthProgramRecommendation[];
   planChangeProposals?: PlanChangeProposal[];
   adviceResponses?: Record<string, unknown>;
+  // V5 extras, same rule.
+  routePlan?: RoutePlan;
+  soloPlan?: SoloPlan;
 }
 
 // --- Data categories ---------------------------------------------------------
