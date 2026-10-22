@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
@@ -11,6 +11,11 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
 import { AppMark } from './components/AppMark';
 import { useOverlayA11y } from './components/useOverlayA11y';
+import { useScrollRestoration } from './components/useScrollRestoration';
+import { resolveNavigation } from './engine/navigationSettings';
+import { localStorageOrNull, planLaunch, readLastRoute, writeLastRoute } from './utils/launchRoute';
+import { SCROLLER_ID, scrollMainToTop } from './utils/scrollMain';
+import { planTabNavigation, type TabState } from './utils/tabNav';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
@@ -48,6 +53,21 @@ const TABS: { to: string; icon: IconName; label: string }[] = [
   { to: '/history', icon: 'logboek', label: 'LOGBOEK' },
 ];
 const TAB_ROUTES = TABS.map((t) => t.to);
+
+// Wat er bij het starten van de pagina al vaststaat: hoe de app is geopend
+// (nieuw, herladen of terug) en waar je de vorige keer was. Eenmalig gelezen,
+// voordat de eerste tekening het laatste adres overschrijft (utils/launchRoute.ts).
+function navigationTypeAtLaunch(): string {
+  try {
+    const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    return entry?.type ?? 'navigate';
+  } catch {
+    return 'navigate';
+  }
+}
+const LAUNCH_NAVIGATION_TYPE = navigationTypeAtLaunch();
+const LAST_ROUTE_AT_LAUNCH = readLastRoute(localStorageOrNull());
+const routerIdx = () => (window.history.state as { idx?: number } | null)?.idx ?? 0;
 // Het merkteken links en het tandwiel rechts staan samen op een rij van 56 px
 // bovenaan. Elke pagina krijgt precies zoveel ruimte erboven dat haar eigen
 // inhoud (titel, pijltjes, datum) daaronder begint en niets overlapt.
@@ -64,6 +84,31 @@ const TOP_ROW_PAD: Record<string, string> = {
 // on-screen keyboard) it could visibly slide up/down with the content
 // instead of staying put. Fixed anchors it to the viewport itself.
 function BottomNav() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { settings } = useAppData();
+  const { tabBack } = resolveNavigation(settings);
+
+  // Een tik op een tab is een echte stap in de geschiedenis, of vervangt de
+  // vorige tab (utils/tabNav.ts, instelling "Terugknop op een tab").
+  function onTab(e: ReactMouseEvent<HTMLAnchorElement>, to: string) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    const plan = planTabNavigation({
+      mode: tabBack,
+      currentPath: location.pathname,
+      currentState: location.state as TabState | null,
+      target: to,
+      historyIdx: routerIdx(),
+      tabs: TAB_ROUTES,
+      home: '/',
+    });
+    if (plan.kind === 'top') scrollMainToTop();
+    else if (plan.kind === 'back') navigate(-1);
+    else if (plan.kind === 'push') navigate(to, { state: plan.state });
+    else navigate(to, { replace: true, state: plan.state });
+  }
+
   return (
     <nav
       aria-label="Hoofdmenu"
@@ -76,6 +121,7 @@ function BottomNav() {
             key={tab.to}
             to={tab.to}
             end={tab.to === '/'}
+            onClick={(e) => onTab(e, tab.to)}
             className="relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium tracking-[0.06em]"
             style={({ isActive }) => ({ color: isActive ? 'var(--color-gold)' : 'var(--color-ink-dim)' })}
           >
@@ -126,7 +172,57 @@ function AppShell() {
     return () => window.removeEventListener('unhandledrejection', onRejection);
   }, [reportStorageError]);
   const location = useLocation();
+  const navigate = useNavigate();
   useOverlayA11y();
+
+  // Terug brengt je op dezelfde hoogte, ook na een herlaad (components/useScrollRestoration.ts).
+  const mainRef = useRef<HTMLElement>(null);
+  const mainReady = !loading && !bootError;
+  useScrollRestoration(mainRef, mainReady);
+
+  // Na een herstart terug naar waar je was (instelling "Na een herstart"), en
+  // Vandaag onder een tab die als eerste opent. Eén keer, zodra de instellingen
+  // er zijn (utils/launchRoute.ts).
+  const launchHandled = useRef(false);
+  useEffect(() => {
+    if (!mainReady || launchHandled.current) return;
+    launchHandled.current = true;
+    const nav = resolveNavigation(settings);
+    const target = planLaunch({
+      pathname: location.pathname,
+      search: location.search,
+      historyIdx: routerIdx(),
+      navigationType: LAUNCH_NAVIGATION_TYPE,
+      now: Date.now(),
+      last: LAST_ROUTE_AT_LAUNCH,
+      resumeMinutes: nav.resumeMinutes,
+      mode: nav.tabBack,
+      tabs: TAB_ROUTES,
+      home: '/',
+    });
+    if (!target) return;
+    if (location.pathname !== '/') navigate('/', { replace: true });
+    navigate(target, { state: { fromToday: true } satisfies TabState });
+    // Only at the first moment the app is ready, never again.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainReady]);
+
+  // Waar je was, voor de volgende start: bij elke pagina, en nog eens als de
+  // app naar de achtergrond gaat (zodat de tijd klopt met je laatste gebruik).
+  useEffect(() => {
+    if (!mainReady) return;
+    const storage = localStorageOrNull();
+    writeLastRoute(storage, location.pathname, Date.now());
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') writeLastRoute(storage, location.pathname, Date.now());
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+    };
+  }, [mainReady, location.pathname]);
 
   // Links to the outside world (sources, maps, videos) offline used to open
   // a bare browser error page. Now they stay put and say why.
@@ -193,6 +289,8 @@ function AppShell() {
         </div>
       )}
       <main
+        id={SCROLLER_ID}
+        ref={mainRef}
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >

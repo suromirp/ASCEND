@@ -591,6 +591,13 @@ export interface AppSettings {
   // so older settings and backups need no migration step; travels with the
   // settings in a backup and is read defensively on import.
   clothingAdjust?: ClothingAdjust;
+  // What the back button does on a tab ('today': to Vandaag first, 'previous':
+  // to the tab before) and for how many minutes after a restart the app opens
+  // where you were (0 = never). Absent = the advice (engine/navigationSettings.ts).
+  // Optional and additive; travels in a backup, where only valid values are kept
+  // (storage/migrations.ts#cleanNavigationSettings).
+  tabBack?: 'today' | 'previous';
+  resumeMinutes?: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

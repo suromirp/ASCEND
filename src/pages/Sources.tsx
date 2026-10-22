@@ -2,19 +2,20 @@
 // place (engine/sourceLibrary.ts), searchable, grouped by kind, each with
 // where in the app it is used.
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
 import { Card, Eyebrow } from '../components/ui';
+import { usePageState } from '../components/usePageState';
 
 const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
 
 export function SourcesPage() {
   const { templateById } = useAppData();
   const library = useMemo(() => buildSourceLibrary((id) => templateById.get(id)?.name ?? id), [templateById]);
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<SourceCategory | undefined>(undefined);
+  const [query, setQuery] = usePageState('query', '');
+  const [category, setCategory] = usePageState<SourceCategory | undefined>('category', undefined);
   const shown = searchSources(library, query, category);
   const counts = new Map(CATEGORY_ORDER.map((c) => [c, library.filter((s) => s.category === c).length]));
 
@@ -70,7 +71,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 }
 
 function SourceCard({ source }: { source: LibrarySource }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = usePageState(`open-${source.key}`, false);
   return (
     <Card className="flex flex-col gap-1.5">
       <button onClick={() => setOpen((v) => !v)} className="text-left" aria-expanded={open}>

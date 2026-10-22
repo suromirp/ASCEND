@@ -123,8 +123,8 @@ export function GoalSetupWizard({
   onClose: () => void;
 }) {
   const { sessionLogs, capabilityEvidence, plannedSessions, templates, goalEngineConfig, activateGoal } = useAppData();
-  const { closing, requestClose } = useSheetClose(onClose);
   const [step, setStep] = useState<Step>(mode === 'create' ? { kind: 'type' } : { kind: 'interpret', draft: initialGoal });
+  const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying');
 
   const asOf = todayISO();
   const logEvidence = useMemo(() => extractEvidenceFromLogs(sessionLogs), [sessionLogs]);

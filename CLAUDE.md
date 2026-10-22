@@ -250,6 +250,21 @@ with `AppSettings.trekLegRest` soft (the default) the short version may stand 48
 hours after the tocht; only then it is let go, with the reason in plain words
 (`docs/beslissingen/2026-10-22-zware-beendag-na-tocht.md`).
 
+**The back button, scroll and resuming** (`utils/backLayers.ts`, decision
+`docs/beslissingen/2026-10-22-terugknop-en-hervatten.md`): every sheet, dialog and
+full-screen overlay goes through `useSheetClose` (or `useBackToClose` for a menu
+or view that is not a sheet), which gives it one history step with the same URL
+and a marker in the state. The back button closes the top layer first; closing it
+yourself takes the step away again. A new overlay must use the hook, a sheet that
+cannot close while busy passes `canClose`, and nothing may rewrite the address
+(`navigate(..., { replace: true })`, `setSearchParams`) while a layer is open on
+that page. The page scrolls in `<main id="app-scroll">`, not in the window:
+`useScrollRestoration` gives every history step its own height (forward starts at
+the top, back restores it), and state that must survive a visit to another page
+(chosen week, search term, an open section) uses `usePageState` instead of
+`useState`. The tab bar follows `AppSettings.tabBack` (`utils/tabNav.ts`) and the
+app reopens where you were after `AppSettings.resumeMinutes` (`utils/launchRoute.ts`).
+
 Readiness percentages (`engine/readiness.ts` — strength, cardio,
 climbing/D+, endurance, recovery, consistency, pack capability) are
 intentionally simple, isolated formulas over the last 28 days of logs, each

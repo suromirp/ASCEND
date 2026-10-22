@@ -33,6 +33,7 @@ import { formatRaceTime, predictRace, predictionRange, TEST_NOISE } from '../eng
 import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
 import { eventDaysRequirement, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
+import { usePageState } from '../components/usePageState';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -89,7 +90,7 @@ function RouteLine({ goal }: { goal: TrainingGoal }) {
 export function AscendPage() {
   const { sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, clearMilestoneManually, settings } = useAppData();
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
-  const [showLadder, setShowLadder] = useState(false);
+  const [showLadder, setShowLadder] = usePageState('showLadder', false);
   // Archiving (below) sets status:'archived' in place rather than removing
   // the row, so every "find the live goal" lookup here must exclude it —
   // otherwise the dedicated GR5/Marathon cards would keep showing an
@@ -692,7 +693,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
 // its targetDate), from where its own dedicated card (GR5/Marathon) or
 // the custom-goals list above picks it back up, ready for a new date.
 function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUnarchive: (goalId: string) => void }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = usePageState('archivedGoalsOpen', false);
   if (goals.length === 0) return null;
 
   return (

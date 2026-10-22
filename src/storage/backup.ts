@@ -47,7 +47,7 @@ import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigrat
 import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
 import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
-import { migrateExport, migrateLeavePeriods, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, migrateLeavePeriods, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
@@ -231,6 +231,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;
+  }
+  // Back button and resuming after a restart: known values stay, the rest goes.
+  if ('tabBack' in s || 'resumeMinutes' in s) {
+    const nav = cleanNavigationSettings({ tabBack: s.tabBack, resumeMinutes: s.resumeMinutes });
+    delete s.tabBack;
+    delete s.resumeMinutes;
+    Object.assign(s, nav.value);
+    skipped.n += nav.skipped;
   }
   // The switches of "Overzichten en vragen": a record or not there; the engine
   // reads every key defensively (engine/overviewSettings.ts#resolveOverviews).

@@ -29,7 +29,7 @@ export function ImpactSheet({
   onClose: () => void;
   busy?: boolean;
 }) {
-  const { closing, requestClose } = useSheetClose(onClose);
+  const { closing, requestClose } = useSheetClose(onClose, 200, () => !busy);
   const shown = lines.slice(0, 8);
   return (
     <Portal>

@@ -28,9 +28,11 @@ import { SETTINGS_GROUPS, SETTINGS_INDEX, settingsAnchor, type SettingsGroupId, 
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { searchSettings, settingAvailability, type SettingsVisibility } from '../engine/settingsSearch';
 import { ForgeSettings } from '../components/ForgeSettings';
+import { NavigationSettings } from '../components/NavigationSettings';
 import { resolveOverviews, type OverviewSettings, type ReviewDay } from '../engine/overviewSettings';
 import { clothingAdjustSummary, hasClothingAdjust } from '../engine/clothingFeedback';
 import type { ReactNode } from 'react';
+import { usePageState } from '../components/usePageState';
 
 const WEEKDAYS_NL = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag'];
 
@@ -120,7 +122,7 @@ export function SettingsPage() {
 
   // Zoeken en springen. Een resultaat zonder pagina scrolt naar het anker op
   // deze pagina; met een pagina navigeert het erheen.
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = usePageState('query', '');
   const searching = query.trim().length > 0;
 
   function flash(el: HTMLElement) {
@@ -628,6 +630,7 @@ export function SettingsPage() {
                 </div>
               </Card>
             </Anchor>
+            <NavigationSettings />
           </GroupSection>
 
           <GroupSection id="koppelingen">

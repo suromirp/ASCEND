@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import { usePageState } from '../components/usePageState';
+import { useBackToClose } from '../utils/useBackToClose';
+import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
 import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { WeekRidge } from '../components/WeekRidge';
@@ -29,8 +32,12 @@ const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 export function WeekPage() {
   const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
-  const [weekStart, setWeekStart] = useState(mondayOfWeek(todayISO()));
-  const [monthView, setMonthView] = useState(false);
+  // The chosen week and the year overview belong to this step in the history:
+  // to a training and back, the page is as you left it.
+  const [weekStart, setWeekStart] = usePageState('weekStart', mondayOfWeek(todayISO()));
+  const [monthView, setMonthView] = usePageState('monthView', false);
+  // The back button leaves the year overview first, then the page.
+  useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });
   const [selected, setSelected] = useState<PlannedSession | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
@@ -117,7 +124,7 @@ export function WeekPage() {
         <div className="flex flex-col items-center gap-1 text-center">
           <Eyebrow>{monthView ? 'Jaaroverzicht' : position ? `Week ${position.weekInProgram} · ${phaseName}` : 'Week'}</Eyebrow>
           {monthView && (
-            <button onClick={() => { setMonthView(false); window.scrollTo({ top: 0 }); }} className="min-h-[44px] text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={() => { setMonthView(false); scrollMainToTop(); }} className="min-h-[44px] text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
               Terug naar de week
             </button>
           )}
@@ -167,7 +174,7 @@ export function WeekPage() {
           onSelectWeek={(w) => {
             setWeekStart(mondayOfWeek(w));
             setMonthView(false);
-            window.scrollTo({ top: 0 });
+            scrollMainToTop();
           }}
         />
       ) : (
@@ -190,7 +197,7 @@ export function WeekPage() {
         <button
           onClick={() => {
             setMonthView((v) => !v);
-            window.scrollTo({ top: 0 });
+            scrollMainToTop();
           }}
           className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium"
           style={{ color: 'var(--color-ink-dim)' }}

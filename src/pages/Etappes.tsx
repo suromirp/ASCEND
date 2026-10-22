@@ -4,7 +4,7 @@
 // eigen plan (slaapplek, samenvoegen, rustdag). De cijfers zijn vaste data
 // (data/gr5Stages.ts), de regels staan in engine/routePlan.ts.
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { StageSheet } from '../components/StageSheet';
@@ -16,6 +16,7 @@ import { buildItinerary, compareWithBest, dayLabel, formatStageTime, hardestDays
 import { SLEEP_KINDS, SLEEP_LABEL } from '../models/routePlan';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { usePageState } from '../components/usePageState';
 
 // "Nachten: 2 tent, 1 gîte, 33 nog niet gekozen." Alleen wat er is.
 function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): string {
@@ -28,7 +29,7 @@ export function EtappesPage() {
   const navigate = useNavigate();
   const { trainingGoals, goalMilestones, sessionLogs } = useAppData();
   const { plan, loaded, choose } = useTripPlan();
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = usePageState<string | null>('openId', null);
   const today = todayISO();
 
   // Het hoofddoel (het doel met de ladder) bepaalt de startdatum.
