@@ -169,7 +169,7 @@ export function WeatherPage() {
         </div>
         {privacyOpen && (
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            Dit is dezelfde plaats als je woonplaats bij Trainingsplekken. Naar Open-Meteo gaan alleen de plaatsnaam die je zoekt en coördinaten die op ongeveer een kilometer zijn afgerond: geen naam van jou, geen account en geen gps.
+            Dit is dezelfde plaats als je woonplaats bij Trainingsplekken, en hij zit in je back-up. Naar Open-Meteo gaat alleen een plaatsnaam of een plek afgerond op ongeveer een kilometer, nooit je precieze plek, en geen naam of account.
           </p>
         )}
       </Card>
@@ -192,7 +192,7 @@ export function WeatherPage() {
             autoCorrect="off"
             spellCheck={false}
             aria-label="Plaatsnaam"
-            placeholder="Bijvoorbeeld Amersfoort"
+            placeholder="Een plaatsnaam"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="min-h-[44px] min-w-0 flex-1 rounded-lg border bg-transparent px-2.5 py-2 text-sm"

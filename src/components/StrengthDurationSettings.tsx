@@ -3,6 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { predictDuration, MIN_LOGS_TO_LEARN } from '../engine/durationLearning';
 import { todayISO } from '../utils/dates';
 import { NumberField } from './NumberField';
+import { Icon } from './icons';
 
 // Settings → Training → Krachttraining: how long each strength training
 // takes. ASCEND learns it from how long the full training really took (the
@@ -34,8 +35,9 @@ export function StrengthDurationSettings() {
           ASCEND leert dit vanzelf uit je trainingen: na {MIN_LOGS_TO_LEARN} keer met de echte duur rekent hij met wat je meestal nodig hebt. Een eigen schatting helpt alleen zolang er nog te weinig trainingen zijn.
         </p>
       </div>
-      <button onClick={() => setOpen((o) => !o)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
-        {open ? '− verberg de duur per training' : '+ geavanceerd: zelf een duur invullen'}
+      <button onClick={() => setOpen((o) => !o)} className="flex min-h-[44px] items-center gap-2 self-start text-left text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+        <Icon name={open ? 'min' : 'plus'} size={16} />
+        {open ? 'Duur per training verbergen' : 'Zelf een duur invullen'}
       </button>
       {open && strength.map((t) => {
         const prediction = predictDuration(t, sessionLogs, estimates[t.id]);

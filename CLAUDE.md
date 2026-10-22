@@ -213,7 +213,10 @@ demonstrably better, and announces it ("Planning bijgewerkt", with undo).
 A proposal's preview runs that same pass, so what it shows is what you get.
 The sync (`storage/database.ts#syncProgramHorizon`) runs whenever the
 stored plan changed (a fingerprint is part of its key), not once a day.
-Background jobs at boot run one after the other, never at once. Design and
+Background jobs at boot run one after the other, never at once. Opening never
+waits for the sync: the app shows the stored data first and syncs in the
+background; whatever changes the plan waits for the queued syncs and then reads
+the stored plan (`docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md`). Design and
 reasoning: `docs/onderzoek/Planning op een lijn.md`.
 
 **Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,

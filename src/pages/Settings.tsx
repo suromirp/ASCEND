@@ -1084,7 +1084,7 @@ function OverviewSettingsCard() {
         </div>
       )}
       <div id={settingsAnchor('weerplaats')} className="scroll-mt-40">
-        <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Alleen de plaatsnaam gaat naar de weerdienst.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
+        <NavRow label="Plaats voor het weer" note={place ? `${place.name}. Naar de weerdienst gaat alleen een plek afgerond op ongeveer een kilometer.` : 'Nog geen plaats gekozen'} onClick={() => navigate('/weer')} />
       </div>
       <SwitchRow
         id="weervolgt"

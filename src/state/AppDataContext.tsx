@@ -82,26 +82,35 @@ let backgroundPlanningStarted = false;
 const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ascend-data') : null;
 
 // Web Locks serialize the boot across windows too: a fresh install opened
-// in two tabs at once used to seed the whole program twice.
+// in two tabs at once used to seed the whole program twice, and the boot
+// migrations write planned sessions and templates on every opening. So a window
+// never runs them without the lock. When another window holds it for longer
+// than 10 s (a tab frozen in the background), this window says so, with
+// Opnieuw proberen, instead of a black screen or a second run at the same time
+// (docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md).
+class BootLockBusy extends Error {
+  constructor() {
+    super('boot lock busy');
+    this.name = 'BootLockBusy';
+  }
+}
 function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
   if (!locks) return fn();
-  // A window that holds the lock and never lets go (a tab frozen in the
-  // background, or one that hangs) may not keep this one black for ever: after
-  // 8 s of waiting, this window opens without the lock. Only a fresh install
-  // opened twice at the same moment needed it.
-  const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(8_000) : undefined;
+  const signal = typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(10_000) : undefined;
   return (locks.request('ascend-boot', signal ? { signal } : {}, fn) as Promise<T>).catch((err: unknown) => {
-    if (signal?.aborted && (err === signal.reason || (err instanceof DOMException && (err.name === 'AbortError' || err.name === 'TimeoutError')))) {
-      console.error('ASCEND: het openingsslot kwam niet vrij, verder zonder slot');
-      return fn();
-    }
+    // Only the wait for the lock itself; an error from fn goes through as it is.
+    if (signal?.aborted && err === signal.reason) throw new BootLockBusy();
     throw err;
   });
 }
 
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= withBootLock(runBootMigrations);
+  bootMigrations ??= withBootLock(runBootMigrations).catch((err: unknown) => {
+    // Opnieuw proberen in the same page asks for the lock again.
+    bootMigrations = null;
+    throw err;
+  });
   return bootMigrations;
 }
 
@@ -119,11 +128,17 @@ function planFingerprint(planned: PlannedSession[]): number {
   }
   return h;
 }
-// One sync at a time, and never one that blocks the rest for ever: a run that
-// takes longer than a minute is left to finish on its own and the next one goes
-// on (utils/serialQueue.ts). Such a run does not record its key, so the next
-// refresh tries again.
+// One sync at a time, always (utils/serialQueue.ts): the next one starts only
+// when the one before has really finished. A caller that waited longer than a
+// minute is let go, so no button or screen waits for ever on the planning.
 const horizonQueue = createSerialQueue({ timeoutMs: 60_000, name: 'Planningssync' });
+// Everything that changes the plan waits for the syncs already queued, so it
+// never works on the plan of before a sync that is still writing (the app opens
+// before its first sync has run, engine/bootWatch.ts). It reads the stored plan
+// afterwards, never the state on screen.
+function planSettled(): Promise<void> {
+  return horizonQueue.run(async () => undefined).then(() => undefined);
+}
 // Raised after every Akkoord and every move or skip of your own, so the sync
 // checks the week right away instead of the next day (docs/onderzoek/Planning op een
 // lijn.md, conflict 9).
@@ -243,6 +258,7 @@ import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/ov
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
   const name = err instanceof DOMException || err instanceof Error ? err.name : '';
+  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen.';
   if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
   if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';
   return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
@@ -631,6 +647,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const commitPlanChange = useCallback(async (proposal: PlanChangeProposal, title: string, restore?: UndoRestore): Promise<boolean> => {
     const real = proposal.changes.filter((c) => c.action !== 'keep');
     if (real.length === 0) return false;
+    await planSettled();
     const [planned, tpls] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll()]);
     // What you agreed to stays as you saw it: the moved, added and shown
     // sessions are locked against the automatic planning.
@@ -707,6 +724,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
+    await planSettled();
     // Numbers of the watch taken over by typed-in trainings: the hand-made ones
     // come back first. When that was all the change did, that is the undo.
     if (recentChange.alignedLogIds?.length) {
@@ -970,6 +988,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Returns false when there's nothing left to fix (e.g. the user already
   // resolved it another way) so the caller never reports a false success.
   const applyScheduleAnomalyFix = useCallback(async (): Promise<boolean> => {
+    await planSettled();
     const [planned, tpls, logs, engineConfig] = await Promise.all([
       PlannedSessionsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
@@ -1519,7 +1538,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       planRevision++;
       await refresh();
     },
-    [plannedSessions, refresh],
+    [refresh],
   );
 
   const proposeSkip = useCallback(
@@ -1828,10 +1847,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // skip rather than a move.
   const applyNoTimeToday = useCallback(
     async (proposals: ScheduleProposal[]) => {
+      await planSettled();
       const lock = { by: 'user' as const, at: new Date().toISOString() };
+      const stored = await PlannedSessionsRepo.getAll();
       for (const proposal of proposals) {
         for (const change of proposal.changes) {
-          const session = plannedSessions.find((s) => s.id === change.sessionId);
+          const session = stored.find((s) => s.id === change.sessionId);
           if (!session) continue;
           if (proposal.resolved && change.toDate !== change.fromDate) {
             await PlannedSessionsRepo.put({
@@ -1849,7 +1870,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       planRevision++;
       await refresh();
     },
-    [plannedSessions, refresh],
+    [refresh],
   );
 
   // The rest of the planning run over the week a proposal gives, exactly as
@@ -1905,6 +1926,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
 
   const applyLeave = useCallback(async (plan: LeavePlan) => {
+    await planSettled();
     const stored = await SettingsRepo.get();
     const current = stored.leavePeriods ?? [];
     const after = plan.mode === 'add' ? [...current.filter((p) => p.id !== plan.period.id), plan.period] : current.filter((p) => p.id !== plan.period.id);

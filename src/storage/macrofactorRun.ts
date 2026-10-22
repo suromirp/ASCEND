@@ -23,6 +23,7 @@ import { emptyCounts, runStoppedMessage, runSummary, type ReadyProposal, type Ru
 import type { SavedMoment } from '../engine/savedMoments';
 import { SessionLogsRepo } from './database';
 import { enrichLog, fillInLog } from './macrofactor';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import type { TakeoverRequest } from './macrofactorLead';
 
 export interface RunDeps {
@@ -82,18 +83,13 @@ export function clearRunMessage(): void {
 // For tests.
 export function resetRunForTests(): void {
   state = IDLE;
+  lingering = null;
   listeners.forEach((l) => l());
 }
 
-class StepTimeout extends Error {}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const limit = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new StepTimeout()), ms);
-  });
-  return Promise.race([promise, limit]).finally(() => clearTimeout(timer));
-}
+// A step that went over its time keeps running; until it has finished no new
+// run starts, so a new log is never saved twice.
+let lingering: Promise<unknown> | null = null;
 
 type Step = { ids: string[]; run: () => Promise<Partial<RunCounts> & { ok: number; direct?: boolean }> };
 
@@ -104,6 +100,10 @@ let current: Promise<RunState> | null = null;
 // while one runs gets the same run back.
 export function runMacroFactor(rows: ReadyProposal[], deps: RunDeps): Promise<RunState> {
   if (current) return current;
+  if (lingering) {
+    set({ status: 'stopped', message: 'De vorige stap is nog bezig met opslaan. Probeer het over een minuut nog eens.' });
+    return Promise.resolve(state);
+  }
   const todo = rows.filter((p) => !state.handled.includes(p.workout.externalId));
   current = execute(todo, deps).finally(() => {
     current = null;
@@ -132,7 +132,9 @@ async function execute(rows: ReadyProposal[], deps: RunDeps): Promise<RunState> 
         ids: group.map((g) => g.workout.externalId),
         run: async () => {
           const n = await deps.takeOver(group.map((g) => ({ logId: g.log.id, workout: g.workout, templateId: g.template.id })), batch);
-          return { changed: n, failed: group.length - n, ok: group.length };
+          // Only a group that fully went through leaves the card; a failed row
+          // stays, so it can be tried again.
+          return { changed: n, failed: group.length - n, ok: n === group.length ? group.length : 0 };
         },
       });
     } else if (p.kind === 'new') {
@@ -170,7 +172,19 @@ async function execute(rows: ReadyProposal[], deps: RunDeps): Promise<RunState> 
   for (const step of steps) {
     const slowTimer = setTimeout(() => set({ slow: true }), slowAfterMs);
     try {
-      const r = await withTimeout(step.run(), stepTimeoutMs);
+      const running = step.run();
+      let r: Awaited<typeof running>;
+      try {
+        r = await withTimeout(running, stepTimeoutMs);
+      } catch (err) {
+        if (err instanceof TimeoutError) {
+          const mark: Promise<unknown> = running.catch(() => undefined).finally(() => {
+            if (lingering === mark) lingering = null;
+          });
+          lingering = mark;
+        }
+        throw err;
+      }
       counts.created += r.created ?? 0;
       counts.changed += r.changed ?? 0;
       counts.enriched += r.enriched ?? 0;
@@ -181,8 +195,8 @@ async function execute(rows: ReadyProposal[], deps: RunDeps): Promise<RunState> 
       done += step.ids.length;
       set({ done, slow: false, handled: r.ok > 0 ? [...state.handled, ...step.ids] : state.handled });
     } catch (err) {
-      stopped = err instanceof StepTimeout ? 'timeout' : 'error';
-      if (!(err instanceof StepTimeout)) console.error('MacroFactor verwerken', err);
+      stopped = err instanceof TimeoutError ? 'timeout' : 'error';
+      if (!(err instanceof TimeoutError)) console.error('MacroFactor verwerken', err);
       break;
     } finally {
       clearTimeout(slowTimer);

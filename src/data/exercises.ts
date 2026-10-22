@@ -3,7 +3,8 @@
 // English, the way the gym and MacroFactor say them (the owner's wish: never
 // translate them). The aliases are only there so an imported name (another
 // English spelling, MacroFactor's variant, or an older Dutch name) finds its
-// exercise (engine/exerciseMatch.ts).
+// exercise (engine/exerciseMatch.ts). See
+// docs/beslissingen/2026-10-22-oefeningnamen-engels.md.
 //
 // Heavy on what the mountains ask for: calves with a straight and a bent knee,
 // the shin muscles, hip abductors, step-ups and step-downs (also with a pack),

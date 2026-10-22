@@ -132,6 +132,29 @@ describe('alles verwerken blijft nooit hangen', () => {
     expect(getRunState().status).toBe('stopped');
   });
 
+  it('zolang de stap die te lang duurde nog loopt, start er geen nieuwe ronde', async () => {
+    const rows = newRows();
+    let finish: (v: boolean) => void = () => undefined;
+    let calls = 0;
+    const slow = deps({
+      stepTimeoutMs: 30,
+      logSession: () => {
+        calls++;
+        return new Promise<boolean>((r) => {
+          finish = r;
+        });
+      },
+    });
+    expect((await runMacroFactor(rows, slow)).status).toBe('stopped');
+    const blocked = await runMacroFactor(rows, slow);
+    expect(blocked.message).toContain('De vorige stap is nog bezig');
+    expect(calls).toBe(1);
+    finish(true);
+    await new Promise((r) => setTimeout(r, 0));
+    await runMacroFactor(rows, deps());
+    expect(getRunState().status).not.toBe('running');
+  });
+
   it('een fout stopt de ronde ook, zonder dat de knop blijft staan', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const end = await runMacroFactor(newRows(), deps({ logSession: () => Promise.reject(new Error('kapot')) }));

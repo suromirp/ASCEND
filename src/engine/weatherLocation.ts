@@ -4,7 +4,7 @@
 // Staat de instelling aan, dan werkt ASCEND die plek bij als je de app opent,
 // zodat het weer klopt op vakantie of tijdens een tocht. Drie vangrails:
 //   1. Alleen een plaats die "Mijn locatie" heet. Een plaats die je zelf
-//      zocht (Amersfoort) blijft zoals je haar koos.
+//      zocht blijft zoals je haar koos.
 //   2. Alleen als de toestemming al gegeven is: er komt nooit ongevraagd een
 //      venster.
 //   3. Hoogstens eens per uur.

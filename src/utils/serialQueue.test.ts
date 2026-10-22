@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createSerialQueue, QueueTimeout } from './serialQueue';
+import { createSerialQueue } from './serialQueue';
+import { TimeoutError } from './withTimeout';
 
-describe('een wachtrij die nooit voor altijd blokkeert', () => {
+describe('een wachtrij die zijn aanroeper nooit voor altijd laat wachten', () => {
   it('doet de taken na elkaar', async () => {
     const q = createSerialQueue({ timeoutMs: 1_000, name: 'test' });
     const order: string[] = [];
@@ -18,15 +19,33 @@ describe('een wachtrij die nooit voor altijd blokkeert', () => {
     expect(order).toEqual(['a', 'b']);
   });
 
-  it('gaat door na een taak die nooit afloopt, en meldt dat', async () => {
+  it('laat de aanroeper na de grens los en meldt dat', async () => {
     const problems: unknown[] = [];
     const q = createSerialQueue({ timeoutMs: 30, name: 'planning', onProblem: (e) => problems.push(e) });
-    const stuck = q.run(() => new Promise<number>(() => undefined));
-    const after = q.run(async () => 'verder');
-    expect(await stuck).toBeUndefined();
-    expect(await after).toBe('verder');
+    expect(await q.run(() => new Promise<number>(() => undefined))).toBeUndefined();
     expect(problems).toHaveLength(1);
-    expect(problems[0]).toBeInstanceOf(QueueTimeout);
+    expect(problems[0]).toBeInstanceOf(TimeoutError);
+  });
+
+  it('een trage taak loopt nooit tegelijk met de volgende, ook niet na de grens', async () => {
+    const q = createSerialQueue({ timeoutMs: 20, name: 'planning', onProblem: () => undefined });
+    let running = 0;
+    let most = 0;
+    const job = (ms: number) => async () => {
+      running++;
+      most = Math.max(most, running);
+      await new Promise((r) => setTimeout(r, ms));
+      running--;
+      return ms;
+    };
+    const slow = q.run(job(80));
+    const next = q.run(job(5));
+    expect(await slow).toBeUndefined();
+    // The caller of the second job is let go too, but the job itself waits its turn.
+    await next;
+    await new Promise((r) => setTimeout(r, 120));
+    expect(most).toBe(1);
+    expect(await q.run(async () => 'verder')).toBe('verder');
   });
 
   it('gaat door na een fout', async () => {

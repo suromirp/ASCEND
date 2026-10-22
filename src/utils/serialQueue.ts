@@ -1,29 +1,19 @@
 // ASCEND: jobs one after the other, where a job that never finishes can not
-// block the ones after it for ever.
+// keep its caller waiting for ever.
 //
 // Used for the planning sync (state/AppDataContext.tsx): every refresh waits
-// for its turn in this queue. A job that takes longer than the limit is left
-// to finish on its own; the queue goes on with the next one and says so in the
-// console. The job itself decides what it records, so a run that timed out
-// does not count as done.
+// for its turn in this queue. The next job starts only when the one before has
+// really finished, so two syncs never run at once and can never add the same
+// weeks twice. Only the caller is let go after the limit: it gets undefined and
+// the console says so, while the slow job finishes in the queue. A job that
+// truly hangs then holds back later syncs until the app is reloaded, never the
+// screen.
 
-export class QueueTimeout extends Error {
-  constructor(name: string, ms: number) {
-    super(`${name} duurde langer dan ${Math.round(ms / 1000)} s`);
-    this.name = 'QueueTimeout';
-  }
-}
-
-export function withTimeout<T>(promise: Promise<T>, ms: number, name = 'Taak'): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const limit = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new QueueTimeout(name, ms)), ms);
-  });
-  return Promise.race([promise, limit]).finally(() => clearTimeout(timer));
-}
+import { withTimeout } from './withTimeout';
 
 export interface SerialQueue {
-  // Resolves with the job's result, or undefined when it failed or timed out.
+  // Resolves with the job's result, or undefined when it failed or its caller
+  // waited longer than the limit.
   run<T>(job: () => Promise<T>): Promise<T | undefined>;
 }
 
@@ -32,14 +22,12 @@ export function createSerialQueue(options: { timeoutMs: number; name: string; on
   const report = options.onProblem ?? ((err: unknown) => console.error(`${options.name}:`, err));
   return {
     run<T>(job: () => Promise<T>): Promise<T | undefined> {
-      const next = tail.then(() =>
-        withTimeout(Promise.resolve().then(job), options.timeoutMs, options.name).catch((err) => {
-          report(err);
-          return undefined;
-        }),
-      );
-      tail = next;
-      return next;
+      const started = tail.then(() => job());
+      tail = started.catch(() => undefined);
+      return withTimeout(started, options.timeoutMs, `${options.name} duurde langer dan ${Math.round(options.timeoutMs / 1000)} s`).catch((err) => {
+        report(err);
+        return undefined;
+      });
     },
   };
 }
