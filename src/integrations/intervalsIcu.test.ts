@@ -209,6 +209,51 @@ describe('cadence', () => {
   });
 });
 
+describe('running dynamics and the series of an activity', () => {
+  const base = { id: 7, start_date_local: '2026-10-18T08:12:03', type: 'Run', moving_time: 1800 };
+
+  it('reads the averages in ASCEND units and the series it knows', () => {
+    const run = mapIntervalsActivity({
+      ...base,
+      average_stance_time: 238.4,
+      average_stance_time_percent: 33.26,
+      average_stance_time_balance: 50.4,
+      average_vertical_oscillation: 82,
+      average_vertical_ratio: 7.84,
+      average_step_length: 1124,
+      average_vertical_speed: 0.02,
+      stream_types: ['time', 'heartrate', 'velocity_smooth', 'stance_time', 'stance_time_balance', 'fancy_unknown', 'altitude'],
+    });
+    expect(run?.dynamics).toEqual({
+      stanceTimeMs: 238,
+      stanceTimePercent: 33.3,
+      stanceBalanceLeftPct: 50.4,
+      verticalOscillationMm: 82,
+      verticalRatioPct: 7.8,
+      stepLengthM: 1.12,
+      verticalSpeedMs: 0.02,
+    });
+    expect(run?.streamsAvailable).toEqual(['time', 'heartRate', 'speed', 'stanceTime', 'stanceBalance', 'altitude']);
+  });
+
+  it('takes a step length in metres as well, and drops what no body can do', () => {
+    expect(mapIntervalsActivity({ ...base, average_step_length: 1.08 })?.dynamics?.stepLengthM).toBe(1.08);
+    const odd = mapIntervalsActivity({ ...base, average_stance_time: 9000, average_vertical_ratio: 70, average_step_length: 90000, average_stance_time_balance: 50 });
+    expect(odd?.dynamics).toEqual({ stanceBalanceLeftPct: 50 });
+  });
+
+  it('has no fields at all for an activity that reported nothing, and none for strength', () => {
+    const plain = mapIntervalsActivity(base);
+    expect(plain && 'dynamics' in plain).toBe(false);
+    expect(plain && 'streamsAvailable' in plain).toBe(false);
+    const gym = mapIntervalsActivity({ ...base, type: 'WeightTraining', average_stance_time: 240, stream_types: ['heartrate'] });
+    expect(gym?.dynamics).toBeUndefined();
+    expect(gym?.streamsAvailable).toBeUndefined();
+    expect(mapIntervalsActivity({ ...base, stream_types: [] })?.streamsAvailable).toEqual([]);
+    expect(mapIntervalsActivity({ ...base, stream_types: 'heartrate' as unknown as string[] })?.streamsAvailable).toBeUndefined();
+  });
+});
+
 describe('adapter', () => {
   it('reports whether it is connected and returns nothing without a connection', async () => {
     expect(createIntervalsIcuAdapter(null).isConnected()).toBe(false);

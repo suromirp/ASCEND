@@ -28,6 +28,7 @@ import type { ExternalActivity, ExternalActivityKind } from '../engine/activityI
 import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
+import type { RunDynamics, StreamKind } from '../models/activityDetail';
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu';
 export const INTERVALS_ADAPTER_ID = 'intervals.icu';
@@ -107,6 +108,19 @@ export interface IntervalsActivity {
   feel?: number;
   trainer?: boolean;
   deleted?: boolean;
+  // Running dynamics (averages) and the list of series the activity has.
+  // Units as the forum of the provider gives them (14 July to 31 August 2026),
+  // not as the OpenAPI description, which has none.
+  average_stance_time?: number;
+  average_stance_time_percent?: number;
+  average_stance_time_balance?: number;
+  average_vertical_oscillation?: number;
+  average_vertical_ratio?: number;
+  average_step_length?: number;
+  average_vertical_speed?: number;
+  average_leg_spring_stiffness?: number;
+  average_impact_loading_rate?: number;
+  stream_types?: string[];
 }
 
 const RUN_TYPES = new Set(['Run', 'TrailRun', 'VirtualRun']);
@@ -146,6 +160,71 @@ export function cadenceOf(kind: ExternalActivityKind, cadence: unknown): number 
 
 const positive = (n: unknown): number | undefined => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : undefined);
 
+// --- running dynamics and the series an activity has --------------------------------
+
+// The provider's name of a series, and what ASCEND calls it. The only place
+// that knows these names; the request for the series (further on) uses the same
+// table in the other direction.
+export const STREAM_NAMES: Record<StreamKind, string> = {
+  time: 'time',
+  distance: 'distance',
+  heartRate: 'heartrate',
+  speed: 'velocity_smooth',
+  altitude: 'altitude',
+  cadence: 'cadence',
+  position: 'latlng',
+  power: 'watts',
+  stanceTime: 'stance_time',
+  stanceBalance: 'stance_time_balance',
+  verticalOscillation: 'vertical_oscillation',
+  verticalRatio: 'vertical_ratio',
+  stepLength: 'step_length',
+};
+
+const KIND_OF_STREAM = new Map<string, StreamKind>((Object.entries(STREAM_NAMES) as [StreamKind, string][]).map(([kind, name]) => [name, kind]));
+
+// Only the series ASCEND knows; the rest of the list is not our business.
+export function streamKindsOf(raw: unknown): StreamKind[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const kinds = new Set<StreamKind>();
+  for (const name of raw) {
+    const kind = typeof name === 'string' ? KIND_OF_STREAM.get(name) : undefined;
+    if (kind) kinds.add(kind);
+  }
+  return [...kinds];
+}
+
+const inRange = (n: unknown, min: number, max: number): number | undefined => (typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max ? n : undefined);
+
+// A step length is millimetres in the provider's forum and could as well be
+// metres: nobody's step is below 30 cm or above 3 m, so the magnitude says
+// which it is.
+function stepLengthMetres(n: unknown): number | undefined {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return undefined;
+  if (n >= 0.3 && n <= 3) return n;
+  if (n >= 300 && n <= 3000) return n / 1000;
+  return undefined;
+}
+
+// The averages of the running dynamics. A value outside what a body can do is a
+// glitch of the source and is dropped on its own. Undefined when nothing is left.
+export function dynamicsOf(raw: IntervalsActivity): RunDynamics | undefined {
+  const out: RunDynamics = {};
+  const put = <K extends keyof RunDynamics>(key: K, value: number | undefined, decimals = 0) => {
+    if (value !== undefined) out[key] = (Math.round(value * 10 ** decimals) / 10 ** decimals) as RunDynamics[K];
+  };
+  put('stanceTimeMs', inRange(raw.average_stance_time, 80, 600));
+  put('stanceTimePercent', inRange(raw.average_stance_time_percent, 5, 80), 1);
+  put('stanceBalanceLeftPct', inRange(raw.average_stance_time_balance, 30, 70), 1);
+  put('verticalOscillationMm', inRange(raw.average_vertical_oscillation, 20, 200));
+  put('verticalRatioPct', inRange(raw.average_vertical_ratio, 2, 20), 1);
+  put('stepLengthM', stepLengthMetres(raw.average_step_length), 2);
+  put('verticalSpeedMs', inRange(raw.average_vertical_speed, -5, 5), 2);
+  put('legSpringStiffness', positive(raw.average_leg_spring_stiffness), 1);
+  put('impactLoadingRate', positive(raw.average_impact_loading_rate), 1);
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity | undefined {
   if (!raw || raw.deleted) return undefined;
   if (raw.id === undefined || raw.id === null || raw.id === '') return undefined;
@@ -156,6 +235,10 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
   const kind = kindOf(raw.type);
   const fromGarmin = raw.source === 'GARMIN_CONNECT' || /garmin|forerunner|fenix|enduro|venu|vivoactive/i.test(raw.device_name ?? '');
   const rpe = positive(raw.icu_rpe);
+  // Strength has no running form; a treadmill has contact times too, so only
+  // the kind decides.
+  const dynamics = kind === 'strength' ? undefined : dynamicsOf(raw);
+  const streams = kind === 'strength' ? undefined : streamKindsOf(raw.stream_types);
   return {
     externalId: `${INTERVALS_ADAPTER_ID}:${raw.id}`,
     source: fromGarmin ? 'garmin' : 'import',
@@ -173,6 +256,8 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
     rpe: rpe !== undefined && rpe <= 10 ? rpe : undefined,
     feel: feelOf(raw.feel),
     treadmill: kind !== 'strength' && (raw.trainer === true || raw.type === 'VirtualRun' || raw.type === 'VirtualRide'),
+    ...(dynamics ? { dynamics } : {}),
+    ...(streams ? { streamsAvailable: streams } : {}),
   };
 }
 
