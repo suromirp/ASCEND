@@ -37,6 +37,7 @@ import { FEASIBILITY_LABEL } from './GoalFocusCard';
 import { Portal } from './Portal';
 import { NumberField } from './NumberField';
 import { GoalRouteEditor } from './GoalRouteEditor';
+import { TENT_PACK_KG } from '../engine/gr5Profile';
 import { GoalCapacityStep } from './GoalCapacityStep';
 import { useSheetClose } from '../utils/useSheetClose';
 
@@ -98,7 +99,12 @@ function applyPreset(preset: Preset, base: TrainingGoal): TrainingGoal {
       ...base,
       name: base.name || 'Meerdaagse tocht',
       execution: 'stages',
-      requirements: [{ id: makeId('req'), kind: 'eventDays', scope: 'TOTAL_EVENT', discipline: 'hiking' }],
+      // De rugzak begint op 14 kg, de standaard voor een tocht met tent
+      // (engine/gr5Profile.ts); je ziet hem meteen en past hem aan.
+      requirements: [
+        { id: makeId('req'), kind: 'eventDays', scope: 'TOTAL_EVENT', discipline: 'hiking' },
+        { id: makeId('req'), kind: 'packWeight', scope: 'SINGLE_EVENT', target: { amount: TENT_PACK_KG, unit: 'kg' } },
+      ],
     };
   }
   if (preset === 'race') {

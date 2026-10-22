@@ -27,6 +27,8 @@ import { NumberField } from './NumberField';
 import { useAppData } from '../state/AppDataContext';
 import { packSharePct } from '../engine/bodyWeight';
 import { Eyebrow } from './ui';
+import { PackWeightPresets } from './PackWeightPresets';
+import { tripShapeNote } from '../engine/gr5Profile';
 
 const ROUTE_UNIT: Record<RouteKind, Unit> = { distance: 'km', elevationGain: 'm_elevation_gain', elevationLoss: 'm_elevation_loss' };
 const ROUTE_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D−' };
@@ -113,15 +115,19 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
   const packShare = packKg ? packSharePct(packKg, settings.weightEntries) : undefined;
 
   const packField = (
-    <NumberField
-      label="Rugzak"
-      unit="kg"
-      decimals={1}
-      value={amountOf(reqs, 'packWeight')}
-      onChange={(v) => commit(setRequirement(reqs, 'packWeight', false, v, 'kg', 'SINGLE_EVENT'))}
-      helper={`Wat je gemiddeld op je rug hebt, inclusief water en eten.${packShare !== undefined ? ` Dat is ${packShare}% van je lichaamsgewicht${packShare > 20 ? '; boven de 20% wordt het zwaar voor rug en voeten' : ''}.` : ''}`}
-    />
+    <div className="flex flex-col gap-2">
+      <NumberField
+        label="Rugzak"
+        unit="kg"
+        decimals={1}
+        value={amountOf(reqs, 'packWeight')}
+        onChange={(v) => commit(setRequirement(reqs, 'packWeight', false, v, 'kg', 'SINGLE_EVENT'))}
+        helper={`Wat je op je rug hebt als je vertrekt, inclusief water en eten.${packShare !== undefined ? ` Dat is ${packShare}% van je lichaamsgewicht${packShare > 20 ? '; boven de 20% wordt het zwaar voor rug en voeten' : ''}.` : ''}`}
+      />
+      <PackWeightPresets value={packKg} onPick={(kg) => commit(setRequirement(reqs, 'packWeight', false, kg, 'kg', 'SINGLE_EVENT'))} />
+    </div>
   );
+  const tripNote = tripShapeNote(days);
 
   return (
     <div className="flex flex-col gap-5">
@@ -165,8 +171,9 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           unit="dagen"
           value={days}
           onChange={(v) => commit(setRequirement(reqs, 'eventDays', false, v, 'days', 'TOTAL_EVENT', discipline))}
-          helper="Alleen de dagen dat je echt onderweg bent, rustdagen niet meegeteld."
+          helper="Alleen de dagen dat je echt onderweg bent, rustdagen niet meegeteld. Onderzoek adviseert een rustdag per 6 tot 8 loopdagen."
         />
+        {tripNote && <p className="-mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{tripNote}</p>}
         {execution === 'continuous' && carriesPack && packField}
       </section>
 

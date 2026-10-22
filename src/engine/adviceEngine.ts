@@ -34,6 +34,7 @@ import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdaySho
 import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
+import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -53,6 +54,9 @@ export interface Advice {
   // Rule REST-WEEK-SKIP: Akkoord trains through the rest week of this
   // Monday (engine/restWeek.ts). A program change, not a session change.
   restWeekSkip?: string;
+  // Rule GR5-PACK-TENT: Akkoord sets the rucksack target of a goal. A goal
+  // setting, not a session change (engine/gr5Profile.ts).
+  goalChange?: { goalId: string; packWeightKg: number };
 }
 
 export interface AdviceOption {
@@ -83,6 +87,9 @@ export interface AdviceInputs {
   checkIns?: MorningCheckIn[];
   // The extra training of the week (engine/extraRun.ts, rule EXTRA-SESSION).
   extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog'>;
+  // The main goal still carries the old hut default of 12 kg (rule
+  // GR5-PACK-TENT, engine/gr5Profile.ts#tentPackProposal).
+  tentPack?: TentPackProposal;
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
@@ -898,6 +905,21 @@ function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
   return [{ id: found.id, trigger: 'plan_update', ruleId: 'REST-WEEK-SKIP', title, effect, why, priority: 2, restWeekSkip: found.weekStart }];
 }
 
+function tentPackAdvice(inputs: AdviceInputs): Advice[] {
+  const p = inputs.tentPack;
+  if (!p) return [];
+  return [{
+    id: p.id,
+    trigger: 'plan_update',
+    ruleId: 'GR5-PACK-TENT',
+    title: 'Rugzakdoel voor de GR5 omhoog?',
+    effect: `Je rugzakdoel staat op ${p.fromKg} kg, het gewicht voor een tocht van hut naar hut. ${PACK_WEIGHT_EXPLANATION} Voorstel: je rugzakdoel op ${p.toKg} kg. Alleen dit getal verandert; je trainingen en je planning blijven zoals ze zijn. Slaap je vooral in hutten, dan kies je Liever niet.`,
+    why: 'Zo\'n 12 kg past bij hutten. Met tent, slaapzak, matje, kookspullen, water en eten voor twee tot vier dagen komt een goed gepakte rugzak op 12,5 tot 14,5 kg uit (basisgewicht rond 8 kg, plus 0,8 tot 1 kg eten per dag en 2 tot 3 liter water). Je rugzak-voortgang en de vergelijking met een GR5-dag rekenen tegen dit doelgewicht. Je kunt het altijd zelf aanpassen bij Doelen.',
+    priority: 1,
+    goalChange: { goalId: p.goalId, packWeightKg: p.toKg },
+  }];
+}
+
 export function computeAdvice(inputs: AdviceInputs): Advice[] {
   const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
   // A catch-up you declined leaves the rest day free for the swap.
@@ -919,6 +941,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...spacingAdvice(inputs, templateById),
     ...extraSessionAdvice(inputs, templateById),
     ...restWeekSkipAdvice(inputs),
+    ...tentPackAdvice(inputs),
     ...morningAdvice(inputs, templateById),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))

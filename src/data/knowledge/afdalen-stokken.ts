@@ -2,7 +2,7 @@ import type { KnowledgeContent } from '../knowledge';
 
 const content: KnowledgeContent = {
   intro:
-    'Op de GR5 daal je ongeveer net zoveel als je klimt, rond de 30.000 hoogtemeters, en dat met 12 kg op je rug. Bij elke stap naar beneden remmen je bovenbenen af terwijl ze langer worden, en juist die excentrische belasting geeft de meeste spierschade en zere knieën. Wie goed leert afdalen staat in week vier nog fris aan de start.',
+    'Op de GR5 daal je ongeveer net zoveel als je klimt, rond de 30.000 hoogtemeters, en dat met 12 tot 15 kg op je rug. Bij elke stap naar beneden remmen je bovenbenen af terwijl ze langer worden, en juist die excentrische belasting geeft de meeste spierschade en zere knieën. Wie goed leert afdalen staat in week vier nog fris aan de start.',
   weeklyTip: 'Maak je stokken voor een lange afdaling 5 tot 10 cm langer en zet ze voor je neer, niet naast je.',
   sections: [
     {
@@ -38,6 +38,28 @@ const content: KnowledgeContent = {
         'Bergaf zet je de stok voor je neer, ongeveer waar je volgende voet landt. Bij een grote trede zet je beide stokken tegelijk.',
         'Lussen: hand van onderen door de lus en dan de greep over de lus heen pakken. Je duwt dan via de lus en hoeft niet te knijpen. Bij rivieroversteken, blokken en plekken waar een val kan gebeuren haal je je handen uit de lussen, zodat een vastgeklemde stok je pols of schouder niet meetrekt.',
         'Sneeuw: grote schijfjes helpen in zachte sneeuw en houd de bovenste stok kort. Een stok stopt geen glijpartij op harde, steile sneeuw; daar hoort een pickel bij of een andere route.',
+      ],
+    },
+    {
+      heading: 'Stokken: voor en tegen',
+      body:
+        'Stokken zijn geen vanzelfsprekende winst, ze ruilen het ene voor het andere. Een review in Wilderness & Environmental Medicine (2020) zet het zo neer: stokken verlagen de belasting van de benen, maar verhogen de belasting van hart en longen. Met een zware rugzak weegt het eerste vaak zwaarder dan het tweede. Het onderzoek is klein en meestal gedaan in een lab of op één dag; naar een maand achter elkaar is geen studie.',
+      items: [
+        'Voordeel, knieën: bergaf 12 tot 25 procent minder kniebelasting op een helling van 25 graden (Schwameder e.a., 1999). Dat telt op als je een maand lang elke dag zo\'n 1.000 m daalt.',
+        'Voordeel, met rugzak: ook met een zware rugzak was de belasting op knieën en enkels bergaf lager met stokken (Bohne en Abendroth-Smith, 2007). Daar komt bij dat je minder spierpijn overhoudt aan een lange dag (Howatson e.a., 2011).',
+        'Voordeel, balans: op losse grond, puin, natte rots en bij het oversteken van beken helpt een derde en vierde steunpunt je op de been te blijven.',
+        'Nadeel, armen bezet: je hebt je handen minder vrij om te eten, te drinken, een kaart te pakken of een foto te maken, en op klauterstukken zitten ze in de weg. Dan gaan ze aan de rugzak.',
+        'Nadeel, meer inspanning: je armen en schouders werken mee, wat meer energie kost en je hartslag omhoog brengt, zeker als je ze verkeerd gebruikt of er voorover op leunt.',
+        'Nadeel, gewenning: de techniek (lengte, lussen, ritme) moet je leren. Wie ze voor het eerst op dag 1 van de tocht gebruikt, krijgt sneller zere polsen en schouders en loopt in een slechter ritme.',
+      ],
+    },
+    {
+      heading: 'Oefen ze, en kies per tocht',
+      items: [
+        'Neem je stokken mee bij elke rugzaktraining met daling, dus bij de bergtocht en de wandelingen met rugzak waar je flink naar beneden loopt. Begin ruim voor vertrek, uiterlijk acht weken ervoor, zodat techniek, polsen en schouders eraan gewend zijn.',
+        'Lange afdaling en zware rugzak: stokken mee en gebruiken. Daar is de winst voor je knieën het grootst.',
+        'Korte of vlakke dag, of veel klauteren en veel doen met je handen: laat ze op de rugzak zitten of thuis.',
+        'Twijfel je? Begin de afdaling met stokken. Voelen je knieën zich na een uur anders dan zonder, dan weet je het voor de volgende keer.',
       ],
     },
     {
@@ -91,6 +113,8 @@ const content: KnowledgeContent = {
   sources: [
     { label: 'Howatson e.a. (2011), Trekking poles reduce exercise-induced muscle injury during mountain walking', url: 'https://nrl.northumbria.ac.uk/id/eprint/4098' },
     { label: 'Schwameder e.a. (1999), Knee joint forces during downhill walking with hiking poles', url: 'https://pubmed.ncbi.nlm.nih.gov/10622357/' },
+    { label: 'Bohne en Abendroth-Smith (2007), Effects of hiking downhill using trekking poles while carrying external loads', url: 'https://pubmed.ncbi.nlm.nih.gov/17218900/' },
+    { label: 'Trekking poles: helping or hindering your hiking experience? A review (Wilderness & Environmental Medicine, 2020)', url: 'https://pubmed.ncbi.nlm.nih.gov/32980249/' },
     { label: 'Chalchat e.a. (2022), herhaalde afdaling en bescherming van de quadriceps (Frontiers in Physiology)', url: 'https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2022.877485/pdf' },
     { label: 'REI, How to choose and use trekking poles', url: 'https://www.rei.com/learn/expert-advice/trekking-poles-hiking-staffs.html' },
   ],

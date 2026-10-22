@@ -15,7 +15,7 @@ export const CATEGORY_LABEL: Record<KnowledgeCategory, string> = {
   slapen: 'Slapen en eten',
   lichaam: 'Lichaam en eerste hulp',
   uitrusting: 'Uitrusting',
-  mentaal: 'Hoofd en groep',
+  mentaal: 'Hoofd en alleen lopen',
 };
 
 export interface KnowledgeSection {
@@ -60,12 +60,12 @@ export interface KnowledgeTopic {
 
 export const KNOWLEDGE_TOPICS: KnowledgeTopic[] = [
   { id: 'route-gr5', title: 'De GR5 in etappes', category: 'route', summary: 'Hoe de Grande Traversée opgebouwd is, de etappes, de hoogste passen en waar de lastige stukken liggen.', window: [42, 0] },
-  { id: 'uitrusting-pakken', title: 'Je rugzak pakken', category: 'uitrusting', summary: 'Wat wel en niet mee, hoe je 12 kg verdeelt en afstelt, en waar je op gewicht bespaart.', window: [42, 18] },
+  { id: 'uitrusting-pakken', title: 'Je rugzak pakken', category: 'uitrusting', summary: 'Wat je rugzak met tent weegt (rond 14 kg), hoe je hem verdeelt en afstelt, en waar je op gewicht bespaart.', window: [42, 18] },
   { id: 'navigatie-kaart-kompas', title: 'Kaart en kompas', category: 'navigatie', summary: 'Een kaart lezen, hoogtelijnen begrijpen, een kompas gebruiken en je positie bepalen.', window: [40, 14] },
   { id: 'navigatie-gps-offline', title: 'Navigeren met GPS en offline kaarten', category: 'navigatie', summary: 'Je route op horloge en telefoon, offline kaarten en wat je doet als de batterij leeg raakt.', window: [34, 8] },
   { id: 'navigatie-slecht-zicht', title: 'Navigeren in mist en bij slecht zicht', category: 'navigatie', summary: 'Je weg vinden zonder zicht, een route terugvinden en wanneer je beter blijft staan.', window: [24, 4] },
   { id: 'voeding-water', title: 'Water en eten onderweg', category: 'slapen', summary: 'Hoeveel je drinkt en eet op een lange bergdag, water vinden en zuiveren, en voeding voor meerdere dagen.', window: [34, 6] },
-  { id: 'slapen-hutten-bivak', title: 'Slapen: hutten, bivak en tent', category: 'slapen', summary: 'Hutten reserveren, wat je in een hut verwacht, en de regels en praktijk van bivakkeren.', window: [30, 6] },
+  { id: 'slapen-hutten-bivak', title: 'Slapen: hutten, bivak en tent', category: 'slapen', summary: 'Bivakregels per gebied, slapen in je tent, en hutten reserveren en wat je daar verwacht.', window: [30, 6] },
   { id: 'voeten-blaren', title: 'Voeten, schoenen en blaren', category: 'lichaam', summary: 'Schoenen inlopen, sokken kiezen, blaren voorkomen en behandelen.', window: [32, 6] },
   { id: 'afdalen-stokken', title: 'Afdalen en wandelstokken', category: 'lichaam', summary: 'Techniek voor lange afdalingen, stokken goed afstellen en gebruiken, en je knieën sparen.', window: [28, 6] },
   { id: 'weer-lezen', title: 'Het bergweer lezen', category: 'weer', summary: 'Weersvoorspellingen in de bergen, wolken en wind lezen en een dag plannen rond het weer.', window: [30, 6] },
@@ -75,7 +75,7 @@ export const KNOWLEDGE_TOPICS: KnowledgeTopic[] = [
   { id: 'lichaam-eerste-hulp', title: 'Eerste hulp en hoogteziekte', category: 'lichaam', summary: 'De vaakste problemen onderweg, hoogteziekte herkennen, wat in je EHBO-set hoort en hoe je hulp haalt.', window: [22, 4] },
   { id: 'noodgevallen', title: 'Als het misgaat', category: 'lichaam', summary: 'Alarmnummers, hoe je een noodoproep doet, je positie doorgeeft en wanneer je een etappe afbreekt.', window: [18, 2] },
   { id: 'zomer-hitte', title: 'Zomerse hitte en droge etappes', category: 'weer', summary: 'Hitte, zon en uitdroging, vroeg vertrekken en je tempo aanpassen.', window: [14, 0] },
-  { id: 'mentaal-lange-dagen', title: 'Lange dagen, tegenslag en samen beslissen', category: 'mentaal', summary: 'Mentaal vol te houden, omgaan met tegenslag en samen een keuze maken als het onzeker is.', window: [40, 0] },
+  { id: 'mentaal-lange-dagen', title: 'Lange dagen, tegenslag en alleen beslissen', category: 'mentaal', summary: 'Een maand mentaal volhouden, vooral alleen: tegenslag opvangen, een omkeerregel en een vaste check-in met thuis.', window: [40, 0] },
 ];
 
 // The content of each topic, from data/knowledge/<id>.ts (default export).

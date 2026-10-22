@@ -49,6 +49,7 @@ const PUBMED_INTENSITY_DISTRIBUTION: MilestoneSource = { label: 'PubMed, trainin
 const PUBMED_INJURY_LOAD: MilestoneSource = { label: 'PubMed, trainingsbelasting en blessurerisico', url: 'https://pubmed.ncbi.nlm.nih.gov/25010379/' };
 const PUBMED_DOWNHILL: MilestoneSource = { label: 'PubMed, excentrische belasting bij afdalen', url: 'https://pubmed.ncbi.nlm.nih.gov/22130400/' };
 const PUBMED_LOAD_CARRYING: MilestoneSource = { label: 'PubMed, load-carriage/rugzaktraining', url: 'https://pubmed.ncbi.nlm.nih.gov/35060915/' };
+const ANDERSON_PACKWEIGHT: MilestoneSource = { label: 'Anderson e.a. 2009, rugzakgewicht en klachten bij langeafstandswandelaars', url: 'https://complete.bioone.org/journals/wilderness-and-environmental-medicine/volume-20/issue-3/08-WEME-OR-196R2.1/The-Impact-of-Footwear-and-Packweight-on-Injury-and-Illness/10.1580/08-WEME-OR-196R2.1.full' };
 const GARMIN_ZONES: MilestoneSource = { label: 'Garmin, sportspecifieke hartslagzones', url: 'https://www8.garmin.com/manuals-apac/webhelp/forerunner255series/EN-SG/GUID-21F7EFD8-1AE2-4E1A-959E-A98B6A297584-1763.html' };
 
 // Full GR5/Alpine kit list — separate from the per-milestone ladder content
@@ -222,20 +223,21 @@ export const GR5_MILESTONE_DETAILS: Record<number, MilestoneDetail> = {
     sources: [GR5_ALPES],
   },
   11: {
-    subtitle: '15 tot 20 km en 750 tot 1000 m D+ met volle GR5-rugzak',
+    subtitle: '15 tot 20 km en 750 tot 1000 m D+ met je volle bivakrugzak',
     type: 'Volledige rugzaktest, na de lichtere gewenningssessie eerder in de ladder',
-    goal: '15–20 km + 750–1000 D+ met het daadwerkelijk geplande GR5-rugzakgewicht (rond 12 kg), schoenen en uitrusting.',
-    why: 'Energiebehoefte stijgt met rugzakgewicht, loopsnelheid én helling. Onderzoek naar load-carriage-training vindt de grootste vooruitgang wanneer kracht- en aerobe training gecombineerd worden met daadwerkelijke, progressieve trainingen mét belasting, precies de combinatie van gym + cardio + trekking, en precies waarom de lichtere 8 kg-sessie eerder in de ladder eraan vooraf ging.',
-    note: 'De officiële GR5-organisatie waarschuwt expliciet tegen onnodig zwaar pakken, de etappes zijn al lang genoeg.',
+    goal: '15 tot 20 km en 750 tot 1000 m D+ met je echte GR5-uitrusting op je rug: tent, slaapzak, matje, kookspullen, water en eten voor een paar dagen, zoals je straks uit een dorp vertrekt (rond 14 kg, het rugzakdoel dat je bij je doel instelt). Dit kamp vraagt minstens 12 kg; de laatste kilo\'s naar je doelgewicht bouw je in de weekendsimulatie.',
+    why: 'Met tent en kookspullen weegt je rugzak bij vertrek uit een dorp ongeveer 12,5 tot 14,5 kg: een basisgewicht van zo\'n 8 kg, plus 0,8 tot 1 kg eten per dag en 2 tot 3 liter water. Dat is zwaarder dan een hutrugzak, en je knieën voelen dat bergaf als eerste. In een enquête onder langeafstandswandelaars gingen zwaardere rugzakken samen met meer klachten, zoals tintelingen. Onderzoek naar load-carriage-training vindt de grootste vooruitgang wanneer kracht- en aerobe training gecombineerd worden met daadwerkelijke, progressieve trainingen mét belasting. Precies daarom ging de lichtere 8 kg-sessie eerder in de ladder hieraan vooraf. Loop je vaak alleen, dan is dit ook de dag waarop je ziet of je zelf tent, kookspullen en navigatie in de hand hebt zonder dat iemand meekijkt.',
+    note: 'De officiële GR5-organisatie waarschuwt expliciet tegen onnodig zwaar pakken, de etappes zijn al lang genoeg. Weeg je uitrusting vooraf: 2 kg verschil tussen een comfortabele en een lichte opzet is meer dan een dag eten.',
     achievedWhen: [
-      'daadwerkelijke GR5-uitrusting, schoenen en rugzak',
+      'je echte GR5-uitrusting: tent, slaapzak, matje, kookspullen, schoenen en rugzak',
+      'eten en water voor een paar dagen erbij, zoals bij vertrek uit een dorp',
       'minimaal meerdere uren onderweg',
       'geen schuurplekken',
-      'geen ernstige schouder-/heupdruk',
+      'geen ernstige schouder- of heupdruk',
       'eten en drinken onderweg werken goed',
       'voeten blijven goed',
     ],
-    sources: [PUBMED_LOAD_CARRYING, GR5_ALPES],
+    sources: [PUBMED_LOAD_CARRYING, GR5_ALPES, ANDERSON_PACKWEIGHT],
   },
   12: {
     subtitle: '2–3 dagen + volledige uitrusting',

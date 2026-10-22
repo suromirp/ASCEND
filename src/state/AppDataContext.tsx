@@ -45,6 +45,7 @@ import {
 import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from '../storage/goalMigration';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
 import { withRestWeekSkipped } from '../engine/restWeek';
+import { tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { computeGoalProgress, requirementAutoSatisfied } from '../engine/progression';
@@ -282,7 +283,7 @@ interface AppData {
   // produces and calls the skip mutator instead of a move.
   proposeSkip: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
-  updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => Promise<void>;
+  updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => Promise<void>;
   // Tussendoel or only followed (engine/raceBlock.ts).
   setGoalPlanRole: (goalId: string, role: 'secondary' | 'track') => Promise<void>;
   // Soft-delete: sets status:'archived' rather than removing the row, so
@@ -606,6 +607,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (response === 'accepted' && item.restWeekSkip && program) {
       await ProgramsRepo.put(withRestWeekSkipped(program, item.restWeekSkip, true));
       await refresh();
+    }
+    // A goal setting (rule GR5-PACK-TENT): only ever on Akkoord.
+    if (response === 'accepted' && item.goalChange) {
+      const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === item.goalChange!.goalId);
+      if (goal) {
+        await TrainingGoalsRepo.put(withPackWeight(goal, item.goalChange.packWeightKg));
+        await refresh();
+      }
     }
     const current = (await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {};
     const next = { ...current, [item.id]: { response, at: new Date().toISOString(), ruleId: item.ruleId } };
@@ -1436,7 +1445,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const updateGoal = useCallback(
-    async (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number }) => {
+    async (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => {
       const goal = trainingGoals.find((g) => g.id === goalId);
       if (!goal) return;
       const now = new Date().toISOString();
@@ -1456,6 +1465,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           ? [...withoutDistance, { id: makeId('req'), kind: 'distance' as const, scope: 'TOTAL_EVENT' as const, target: { amount: patch.targetDistanceKm, unit: 'km' as const }, discipline: 'hiking' }]
           : withoutDistance;
       }
+      // The rucksack target of this goal (engine/gr5Profile.ts): each goal
+      // carries its own, so a different trip can have a different weight.
+      if ('packWeightKg' in patch) requirements = withPackWeight({ ...goal, requirements }, patch.packWeightKg, now).requirements;
       const targetDate = 'targetDate' in patch ? patch.targetDate : goal.targetDate;
       const next: TrainingGoal = targetDate
         ? { ...goal, requirements, updatedAt: now, status: 'active', targetDate }
@@ -1773,9 +1785,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         checkIns: settings.morningCheckIns,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
+        tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones],
   );
 
   const value: AppData = {

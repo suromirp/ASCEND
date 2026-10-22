@@ -24,6 +24,7 @@ import { OnCourseCard } from '../components/OnCourseCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { SeasonCard } from '../components/SeasonCard';
 import { GoalSetupWizard } from '../components/GoalSetupWizard';
+import { GoalTripNotes } from '../components/GoalTripNotes';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { makeId } from '../utils/id';
 import { goalPlanRole, isRaceGoal, RACE_BLOCK_WEEKS } from '../engine/raceBlock';
@@ -411,7 +412,7 @@ function GR5GoalCard({
   onArchive,
 }: {
   goal: TrainingGoal;
-  onUpdate: (patch: { targetDate?: string; targetDistanceKm?: number }) => void;
+  onUpdate: (patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => void;
   onArchive: () => void;
 }) {
   const daysLeft = goal.targetDate ? daysBetween(todayISO(), goal.targetDate) : undefined;
@@ -424,6 +425,7 @@ function GR5GoalCard({
       <Eyebrow>GR5-DOEL</Eyebrow>
       <GoalStatusNote status={goal.status} goal={goal} />
       <RouteLine goal={goal} />
+      <GoalTripNotes goal={goal} onPackChange={(kg) => onUpdate({ packWeightKg: kg })} />
       {daysLeft !== undefined && (
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
           {daysLeft > 0 ? `nog ${daysLeft} dagen` : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}

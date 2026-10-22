@@ -2,9 +2,9 @@ import type { KnowledgeContent } from '../knowledge';
 
 const content: KnowledgeContent = {
   intro:
-    'Hoe je slaapt bepaalt hoe je de volgende dag loopt, en op de GR5 bepaalt het ook hoeveel je draagt. Met refuges en gîtes laat je tent, matje en kookspul thuis, met een tent ben je vrij maar zit je in de Vanoise en Mercantour aan strakke regels. Begin augustus is hoogseizoen, dus slapen is iets dat je vooraf regelt, niet onderweg.',
+    'Hoe je slaapt bepaalt hoe je de volgende dag loopt, en op de GR5 bepaalt het ook hoeveel je draagt. Met refuges en gîtes laat je tent, matje en kookspul thuis, met een tent ben je vrij maar zit je in de Vanoise, de Haute-Savoie en de Mercantour aan strakke regels. Begin augustus is hoogseizoen, dus slapen is iets dat je vooraf regelt, niet onderweg, ook als je vooral met tent en alleen loopt.',
   weeklyTip:
-    'Reserveer je augustusnachten in refuges en gîtes ruim van tevoren, en neem cash mee: veel berghutten nemen geen kaart.',
+    'Zoek voor elke etappe vooraf op of je daar mag bivakkeren: de regels verschillen per gebied, en in de Vanoise kan het alleen bij bepaalde refuges op reservering.',
   sections: [
     {
       heading: 'Refuges en gîtes d’étape',
@@ -23,12 +23,13 @@ const content: KnowledgeContent = {
         'Oordopjes en een oogmasker zijn je beste 20 gram: er wordt gesnurkt en de eersten vertrekken om 5.30 uur.',
         'Diner is meestal rond 19.00 uur aan lange tafels; meld dieetwensen bij de reservering. Douches zijn er niet altijd en soms betaald met een jeton.',
         'Kun je niet komen, bel af. De gardien houdt anders een plek vrij en gaat je missen als je niet aankomt.',
+        'Slaap je in je tent, dan kun je in veel refuges toch een maaltijd, douche of soms een huurtent krijgen tegen betaling. Voor wie alleen loopt is slapen in je tent en eten in de hut vaak de beste combinatie: minder eten dragen, en je spreekt mensen. Vraag het bij de refuge, het hangt van de hut af.',
       ],
     },
     {
       heading: 'Bivak en kamperen: wat mag waar',
       body:
-        'In Frankrijk is een bivak (één nacht, kleine tent, op na de avond en weg in de ochtend) breed getolereerd, maar beschermde gebieden hebben eigen regels en daar loopt de GR5 doorheen. Vanoise: in het hart van het park mag je alleen bij bepaalde refuges bivakkeren, in de bemande periode, na reservering bij de hut, tegen betaling, tent op na 19.00 en weg voor 8.00 uur; bij Col de la Vanoise en Péclet-Polset helemaal niet. Daarbuiten pitchen kost een boete. Mercantour en Écrins: bivak van 19.00 tot 9.00 uur, op meer dan een uur lopen van de parkgrens of de laatste weg; in de zone van de Vallée des Merveilles alleen op de aangewezen plekken bij de refuges. Het natuurreservaat van Les Contamines-Montjoie heeft eigen bivakplekken (La Balme, Rollaz). In Zwitserland, waar de GR5 bij de Portes du Soleil kort doorheen gaat, is een nacht boven de boomgrens buiten beschermde gebieden meestal toegestaan, maar kanton en gemeente beslissen. Vuur is overal verboden. Regels veranderen, kijk dus voor vertrek op de sites van de parken en bij de FFRandonnée.',
+        'In Frankrijk is een bivak (één nacht, kleine tent, op na de avond en weg in de ochtend) breed getolereerd, maar beschermde gebieden hebben eigen regels en daar loopt de GR5 doorheen. Vanoise: in het hart van het park mag je alleen bij bepaalde bemande refuges bivakkeren, van 1 juni tot 30 september, van 19.00 tot 8.00 uur, op reservering bij de refuge en tegen een kleine vergoeding (zo\'n 5 tot 6 euro). Het park noemt ongeveer 20 plekken, en bij Col de la Vanoise en Péclet-Polset kan het niet. Wie een tent zonder reservering midden in het park zet, riskeert een boete. Plan de Vanoise dus per nacht vooraf. Haute-Savoie: sinds 2023 reserveer je bivakplekken in de natuurreservaten Aiguilles Rouges, Contamines-Montjoie en Sixt-Fer-à-Cheval/Passy via bivouac.nature-haute-savoie.fr; in de Contamines alleen op de plekken La Rollaz en La Balme, van 19.00 tot 9.00 uur. De periodes spreken elkaar in bronnen tegen, dus controleer ze in het voorjaar. Queyras: sinds 2023 geregeld per besluit van de tien gemeenten, getolereerd op meer dan een uur lopen van dorp en gehuchten en verboden in de Vallon de Bouchouse. Mercantour: bivak van 19.00 tot 9.00 uur, op meer dan een uur lopen van de parkgrens of de laatste weg, met een lage tent en één nacht per plek; de boete kan oplopen tot 1.500 euro. In de zone van de Vallée des Merveilles alleen op de plekken bij de refuges. Écrins: de hoofdroute gaat niet door het hart, maar wijk je uit, dan gelden dezelfde uren en een uur afstand van weg en grens. In Zwitserland, waar de GR5 bij de Portes du Soleil kort doorheen gaat, is één nacht van een kleine groep boven de boomgrens buiten beschermde gebieden meestal toegestaan, maar kanton en gemeente beslissen. Vuur is overal verboden. Regels veranderen, kijk dus voor vertrek op de sites van de parken en bij de FFRandonnée.',
     },
     {
       heading: 'Tent, tarp of bivakzak',
@@ -36,6 +37,8 @@ const content: KnowledgeContent = {
         'Een tent (1 tot 1,5 kg voor een lichte eenpersoons) beschermt tegen onweer met regen, wind en muggen. De Vanoise eist bovendien een kleine tent waar je niet in kunt staan.',
         'Een tarp is lichter en luchtiger, maar op een open alpenweide met wind en een nachtelijke bui heb je ervaring nodig om hem strak en laag te zetten.',
         'Kies een plek op vlakke, droge grond, niet in een geul of droge beekbedding, niet op een kam of top bij onweerskans, en weg van de kuddes en hun beschermhonden (patous).',
+        'Water: in het noorden is het ruim, maar in het zuiden liggen bronnen soms uren uit elkaar, en in een droge zomer staan er veel droog. Vul je flessen laat in de middag en draag water mee voor het laatste uur naar een droge kampplek.',
+        'Alleen in je tent: geef thuis door waar je slaapt en spreek een vaste check-in af. Op plekken zonder bereik is een satellietcommunicator het echte vangnet; het alarmnummer is 112. Meer daarover staat in de les over lange dagen en alleen beslissen.',
       ],
     },
     {
@@ -87,6 +90,18 @@ const content: KnowledgeContent = {
     {
       label: 'Grande Traversée des Alpes: bivouac et zones protégées',
       url: 'https://www.grande-traversee-alpes.com/en/?p=52',
+    },
+    {
+      label: 'FFRandonnée: bivakplekken reserveren in de natuurreservaten van Haute-Savoie',
+      url: 'https://www.ffrandonnee.fr/s-informer/actualites/reserver-sa-place-de-bivouac-c-est-dans-les-reserves-naturelles-de-haute-savoie',
+    },
+    {
+      label: 'FFRandonnée: Queyras, bivakregels per gemeente',
+      url: 'https://www.ffrandonnee.fr/s-informer/actualites/queyras-harmonisation-de-la-reglementation-des-espaces-naturels',
+    },
+    {
+      label: 'Chris Townsend: kamperen op de GR5 door de Franse Alpen',
+      url: 'https://www.christownsendoutdoors.com/2018/10/camping-on-gr5-trail-through-french-alps.html',
     },
   ],
 };
