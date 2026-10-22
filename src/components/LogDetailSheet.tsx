@@ -117,8 +117,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
             <div className="mt-4 flex flex-col gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
               <WorkoutDetailsFields templateId={log.templateId} value={editing} onChange={setEditing} />
               <div className="flex gap-3">
-                <button onClick={() => setEditing(null)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>ANNULEREN</button>
-                <button onClick={() => void setLogWorkout(log.id, cleanDetails(editing)).then(() => setEditing(null))} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-bg)' }}>OPSLAAN</button>
+                <button onClick={() => setEditing(null)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
+                <button onClick={() => void setLogWorkout(log.id, cleanDetails(editing)).then(() => setEditing(null))} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-bg)' }}>Opslaan</button>
               </div>
             </div>
           ) : (
@@ -140,8 +140,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
             <div className="mt-6 flex flex-col gap-2">
               <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je geschiedenis verwijderen?</p>
               <div className="flex gap-3">
-                <button onClick={() => setConfirmDelete(false)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>ANNULEREN</button>
-                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-snow)' }}>VERWIJDEREN</button>
+                <button onClick={() => setConfirmDelete(false)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
+                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-snow)' }}>Verwijderen</button>
               </div>
             </div>
           ) : (

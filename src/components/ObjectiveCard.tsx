@@ -71,10 +71,10 @@ export function ObjectiveCard({
         {canMarkManually && (
           <button
             onClick={onMarkCleared}
-            className="mt-2 rounded-lg border px-3 py-1.5 text-xs font-medium"
+            className="min-h-[44px] mt-2 rounded-lg border px-3 py-1.5 text-xs font-medium"
             style={{ borderColor: 'var(--color-gold)', color: 'var(--color-gold)' }}
           >
-            MARKEER ALS BEHAALD
+            Markeer als behaald
           </button>
         )}
       </div>

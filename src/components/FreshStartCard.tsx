@@ -33,8 +33,8 @@ export function FreshStartCard() {
         trainingen, doel en instellingen terug.
       </p>
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={() => void updateSettings({ freshStartDismissedAt: new Date().toISOString() })}>NIEUW BEGINNEN</SecondaryButton>
-        <PrimaryButton onClick={() => setImporting(true)} fullWidth={false}>ZET TERUG</PrimaryButton>
+        <SecondaryButton onClick={() => void updateSettings({ freshStartDismissedAt: new Date().toISOString() })}>Nieuw beginnen</SecondaryButton>
+        <PrimaryButton onClick={() => setImporting(true)} fullWidth={false}>Zet terug</PrimaryButton>
       </div>
       {importing && <ImportWizard onClose={() => setImporting(false)} />}
     </Card>

@@ -139,10 +139,10 @@ function AppShell() {
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{bootError}</p>
         <button
           onClick={() => window.location.reload()}
-          className="rounded-xl border px-5 py-2.5 text-xs font-semibold tracking-wide"
+          className="min-h-[44px] rounded-xl border px-5 py-2.5 text-xs font-semibold"
           style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
         >
-          OPNIEUW PROBEREN
+          Opnieuw proberen
         </button>
         <UpdatePrompt />
       </div>

@@ -141,8 +141,8 @@ export function GoalCapacityStep({
       )}
 
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton fullWidth={false} onClick={onNext}>VOLGENDE</PrimaryButton>
+        <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
+        <PrimaryButton fullWidth={false} onClick={onNext}>Volgende</PrimaryButton>
       </div>
     </div>
   );
@@ -203,9 +203,9 @@ function RecentActivityBlock({
         ))}
       </div>
       <div className="mt-3">
-        <PrimaryButton onClick={handleSave} disabled={saving || !filled || daysAgo === undefined}>OPSLAAN</PrimaryButton>
+        <PrimaryButton onClick={handleSave} disabled={saving || !filled || daysAgo === undefined}>Opslaan</PrimaryButton>
       </div>
-      <button onClick={onSkip} className="mt-2 w-full text-center text-[11px] underline" style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={onSkip} className="flex min-h-[44px] items-center justify-center mt-2 w-full text-center text-[11px] underline" style={{ color: 'var(--color-ink-dim)' }}>
         Liever per onderdeel antwoorden
       </button>
     </div>
@@ -253,12 +253,12 @@ function CapabilityQuestion({
           <div className="flex-1">
             <NumberField value={exact} onChange={setExact} unit={unitSuffix(meta.unit)} decimals={meta.unit === 'kg' ? 1 : 0} compact />
           </div>
-          <SecondaryButton onClick={() => exact && void onPick(exact, meta.unit, formatCapabilityValue({ amount: exact, unit: meta.unit }))} disabled={!exact}>OPSLAAN</SecondaryButton>
-          {!ranges && <SecondaryButton onClick={onUnknown}>WEET IK NIET</SecondaryButton>}
+          <SecondaryButton onClick={() => exact && void onPick(exact, meta.unit, formatCapabilityValue({ amount: exact, unit: meta.unit }))} disabled={!exact}>Opslaan</SecondaryButton>
+          {!ranges && <SecondaryButton onClick={onUnknown}>Weet ik niet</SecondaryButton>}
         </div>
       ) : (
         meta.unit !== 'min_per_km' && (
-          <button onClick={() => setShowExact(true)} className="self-start text-[11px] underline" style={{ color: 'var(--color-ink-dim)' }}>precies invullen</button>
+          <button onClick={() => setShowExact(true)} className="inline-flex min-h-[44px] items-center self-start text-[11px] underline" style={{ color: 'var(--color-ink-dim)' }}>precies invullen</button>
         )
       )}
     </div>
@@ -276,7 +276,7 @@ function Chip({ children, onClick, selected = false, muted = false }: { children
   return (
     <button
       onClick={onClick}
-      className="rounded-full border px-3 py-1 text-xs transition-all active:scale-[0.97]"
+      className="min-h-[44px] rounded-full border px-3 py-1 text-xs transition-all active:scale-[0.97]"
       style={{
         borderColor: selected ? 'var(--color-gold)' : 'var(--color-card-border)',
         color: selected ? 'var(--color-gold)' : muted ? 'var(--color-ink-dim)' : 'var(--color-ink)',

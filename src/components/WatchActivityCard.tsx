@@ -119,7 +119,7 @@ function ProposalCard({
         {match
           ? <>Hoort bij <span style={{ color: 'var(--color-gold)' }}>{match.template.name}</span>, gepland voor {dayLabel(match.session.scheduledDate)}.</>
           : template
-            ? <>Er stond niets passends gepland. OPSLAAN legt hem los vast als <span style={{ color: 'var(--color-gold)' }}>{template.name}</span>.</>
+            ? <>Er stond niets passends gepland. Opslaan legt hem los vast als <span style={{ color: 'var(--color-gold)' }}>{template.name}</span>.</>
             : 'Er stond niets passends gepland. Kies bij Andere training wat het was.'}
       </p>
       {similarLog && (
@@ -127,7 +127,7 @@ function ProposalCard({
           Je legde die dag al een training vast van {similarLog.durationMinutes} min. Sla dit alleen op als het een andere training was.
         </p>
       )}
-      <PrimaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'OPSLAAN…' : 'OPSLAAN'}</PrimaryButton>
+      <PrimaryButton onClick={onSave} disabled={saving || !template}>{saving ? 'Opslaan…' : 'Opslaan'}</PrimaryButton>
       <div className="flex gap-3">
         <SecondaryButton onClick={onChoose} disabled={saving}>Andere training</SecondaryButton>
         <SecondaryButton onClick={onDismiss} disabled={saving}>Niet opslaan</SecondaryButton>
@@ -178,7 +178,7 @@ function ChooseSheet({
                 ))}
               </div>
             )}
-            <SecondaryButton onClick={requestClose}>ANNULEREN</SecondaryButton>
+            <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
           </Card>
         </div>
       </div>

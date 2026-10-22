@@ -29,7 +29,7 @@ export function PrimaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${fullWidth ? 'w-full' : 'flex-1'} rounded-xl py-3 text-sm font-semibold tracking-wide transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
+      className={`${fullWidth ? 'w-full' : 'flex-1'} min-h-[44px] rounded-xl py-3 text-sm font-semibold transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
       style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: '#15130d' }}
     >
       {children}
@@ -52,7 +52,7 @@ export function SecondaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 rounded-xl border py-2.5 text-xs font-medium tracking-wide transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
+      className={`flex-1 min-h-[44px] rounded-xl border py-2.5 text-xs font-medium transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
       style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
     >
       {children}
@@ -90,7 +90,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
         haptics.tap();
         onChange(!checked);
       }}
-      className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+      className="relative h-6 w-11 shrink-0 rounded-full transition-colors before:absolute before:inset-x-0 before:-inset-y-2.5 before:content-['']"
       style={{ background: checked ? 'var(--color-gold)' : 'var(--color-card-border)', boxShadow: checked ? undefined : 'inset 0 0 0 1px var(--color-control-border)' }}
     >
       <span
@@ -124,7 +124,7 @@ export function InfoButton({ onClick, label = 'Meer informatie' }: { onClick: ()
 
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[11px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>
+    <div className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>
       {children}
     </div>
   );

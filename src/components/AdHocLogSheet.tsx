@@ -40,7 +40,7 @@ export function AdHocLogSheet({ templates, onPick, onClose }: { templates: Sessi
                 );
               })}
             </div>
-            <SecondaryButton onClick={requestClose}>ANNULEREN</SecondaryButton>
+            <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
           </Card>
         </div>
       </div>

@@ -64,7 +64,7 @@ export function BaselineEvidenceCard() {
                     {formatMeasuredValue(e.measured)} – {formatDateNL(e.date)}
                   </span>
                 </div>
-                <button onClick={() => deleteCapabilityEvidence(e.id)} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
+                <button onClick={() => deleteCapabilityEvidence(e.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-danger-text)' }}>
                   verwijderen
                 </button>
               </div>
@@ -74,7 +74,7 @@ export function BaselineEvidenceCard() {
       )}
 
       {!adding ? (
-        <SecondaryButton onClick={() => setAdding(true)}>METING TOEVOEGEN</SecondaryButton>
+        <SecondaryButton onClick={() => setAdding(true)}>Meting toevoegen</SecondaryButton>
       ) : (
         <div className="flex flex-col gap-3">
           <div>
@@ -143,8 +143,8 @@ export function BaselineEvidenceCard() {
             </div>
           </div>
           <div className="flex gap-3">
-            <SecondaryButton onClick={() => setAdding(false)}>ANNULEREN</SecondaryButton>
-            <PrimaryButton onClick={handleSave}>OPSLAAN</PrimaryButton>
+            <SecondaryButton onClick={() => setAdding(false)}>Annuleren</SecondaryButton>
+            <PrimaryButton onClick={handleSave}>Opslaan</PrimaryButton>
           </div>
         </div>
       )}

@@ -85,7 +85,7 @@ export function StrengthProgramCard() {
             de oefeningen zelf bepalen.
           </p>
           <PrimaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft(strengthExternal) })}>
-            KRACHTBLOK STARTEN
+            Krachtblok starten
           </PrimaryButton>
         </>
       ) : (
@@ -111,8 +111,8 @@ export function StrengthProgramCard() {
           )}
 
           <div className="flex gap-3">
-            <SecondaryButton onClick={() => setWizard({ mode: 'edit', draft: strategy })}>SCHEMA AANPASSEN</SecondaryButton>
-            <SecondaryButton onClick={() => void reportStrengthSchemaEnded()}>MIJN SCHEMA IS AFGELOPEN</SecondaryButton>
+            <SecondaryButton onClick={() => setWizard({ mode: 'edit', draft: strategy })}>Schema aanpassen</SecondaryButton>
+            <SecondaryButton onClick={() => void reportStrengthSchemaEnded()}>Mijn schema is afgelopen</SecondaryButton>
           </div>
         </>
       )}
@@ -123,12 +123,12 @@ export function StrengthProgramCard() {
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{strengthRecommendation.rationale}</p>
           <div className="flex flex-col gap-2">
             <div className="flex gap-3">
-              <SecondaryButton onClick={reviewNextBlock}>VOLGEND BLOK BEKIJKEN</SecondaryButton>
-              {strategy && <SecondaryButton onClick={() => void repeatCurrentBlock()}>HUIDIG BLOK HERHALEN</SecondaryButton>}
+              <SecondaryButton onClick={reviewNextBlock}>Volgend blok bekijken</SecondaryButton>
+              {strategy && <SecondaryButton onClick={() => void repeatCurrentBlock()}>Huidig blok herhalen</SecondaryButton>}
             </div>
             <div className="flex gap-3">
-              {strategy && <SecondaryButton onClick={() => setWizard({ mode: 'edit', draft: strategy })}>VOORKEUREN AANPASSEN</SecondaryButton>}
-              <SecondaryButton onClick={() => void resolveStrengthRecommendation(strengthRecommendation.id, 'dismissed')}>NIET NU</SecondaryButton>
+              {strategy && <SecondaryButton onClick={() => setWizard({ mode: 'edit', draft: strategy })}>Voorkeuren aanpassen</SecondaryButton>}
+              <SecondaryButton onClick={() => void resolveStrengthRecommendation(strengthRecommendation.id, 'dismissed')}>Niet nu</SecondaryButton>
             </div>
           </div>
         </div>

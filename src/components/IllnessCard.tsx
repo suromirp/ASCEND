@@ -36,12 +36,12 @@ export function IllnessStatusCard() {
           onClick={async () => { setBusy(true); await recoverFromIllness(); setBusy(false); }}
           disabled={busy}
         >
-          IK BEN WEER BETER
+          Ik ben weer beter
         </PrimaryButton>
         {active.kind === 'above_neck' && (
           <button
             onClick={async () => { setBusy(true); await reportIllness('below_neck'); setBusy(false); }}
-            className="self-start text-xs underline"
+            className="inline-flex min-h-[44px] items-center self-start text-xs underline"
             style={{ color: 'var(--color-ink-dim)' }}
           >
             Toch koorts of klachten onder de nek?
@@ -75,7 +75,7 @@ export function NotFitLink() {
   if (activeIllness(settings.illnessEpisodes)) return null;
   return (
     <>
-      <button onClick={() => setOpen(true)} className="self-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={() => setOpen(true)} className="inline-flex min-h-[44px] items-center self-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
         Niet fit?
       </button>
       {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await reportIllness(kind); }} onClose={() => setOpen(false)} />}
@@ -113,7 +113,7 @@ function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void
             <p className="mt-3 text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               Bij hoge koorts, pijn op de borst of als je je echt slecht voelt: neem contact op met je huisarts.
             </p>
-            <button onClick={requestClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={requestClose} className="min-h-[44px] mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Sluiten
             </button>
           </Card>

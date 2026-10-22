@@ -120,7 +120,7 @@ export function StandingPage() {
           <button
             key={s.id}
             onClick={() => refs.current[s.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="min-h-[36px] rounded-full border px-4 text-xs tracking-wide"
+            className="min-h-[44px] rounded-full border px-4 text-xs"
             style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
           >
             {s.label}

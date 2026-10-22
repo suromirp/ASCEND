@@ -22,7 +22,7 @@ export function TimerButton({ initialSeconds = 60 }: { initialSeconds?: number }
       <button
         onClick={() => setOpen(true)}
         aria-label="Timer"
-        className="flex h-9 w-9 items-center justify-center rounded-full border"
+        className="flex h-11 w-11 items-center justify-center rounded-full border"
         style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}
       >
         <ClockIcon />

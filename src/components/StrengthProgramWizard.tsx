@@ -125,7 +125,7 @@ export function StrengthProgramWizard({
             {step.kind === 'error' && (
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-danger-text)' }}>{step.message}</p>
-                <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
               </div>
             )}
           </Card>
@@ -178,7 +178,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
         <p className="text-sm" style={{ color: phase === 'applied' ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>
           {phase === 'applied' ? 'Toegepast op deze week en de volgende.' : 'Deze week en de volgende hoeven niet meer te veranderen.'}
         </p>
-        <PrimaryButton onClick={onClose}>SLUITEN</PrimaryButton>
+        <PrimaryButton onClick={onClose}>Sluiten</PrimaryButton>
       </>
     );
   }
@@ -204,8 +204,8 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
           ))}
         </div>
         <div className="flex gap-3">
-          <SecondaryButton onClick={() => setPhase('idle')}>TERUG</SecondaryButton>
-          <PrimaryButton onClick={() => void confirmApply()}>BEVESTIGEN</PrimaryButton>
+          <SecondaryButton onClick={() => setPhase('idle')}>Terug</SecondaryButton>
+          <PrimaryButton onClick={() => void confirmApply()}>Bevestigen</PrimaryButton>
         </div>
       </>
     );
@@ -227,9 +227,9 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
       )}
       <div className="flex gap-3">
         <SecondaryButton onClick={() => setPhase('preview')} disabled={nothingToApply}>
-          NU AL TOEPASSEN
+          Nu al toepassen
         </SecondaryButton>
-        <PrimaryButton onClick={onClose}>SLUITEN</PrimaryButton>
+        <PrimaryButton onClick={onClose}>Sluiten</PrimaryButton>
       </div>
     </>
   );
@@ -351,8 +351,8 @@ function SessionsStep({
       </div>
 
       <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onCancel}>ANNULEREN</SecondaryButton>
-        <PrimaryButton onClick={() => onNext(local)} disabled={!canProceed}>VOLGENDE</PrimaryButton>
+        <SecondaryButton onClick={onCancel}>Annuleren</SecondaryButton>
+        <PrimaryButton onClick={() => onNext(local)} disabled={!canProceed}>Volgende</PrimaryButton>
       </div>
     </div>
   );
@@ -431,8 +431,8 @@ function FocusStep({
       </div>
 
       <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton onClick={next}>VOLGENDE</PrimaryButton>
+        <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
+        <PrimaryButton onClick={next}>Volgende</PrimaryButton>
       </div>
     </div>
   );
@@ -470,7 +470,7 @@ function ChipMultiSelect({
               key={opt}
               type="button"
               onClick={() => onToggle(opt)}
-              className="rounded-full border px-3 py-1 text-xs"
+              className="min-h-[44px] rounded-full border px-3 py-1 text-xs"
               style={{ borderColor: checked ? 'var(--color-gold)' : 'var(--color-card-border)', color: checked ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
             >
               {opt}
@@ -488,8 +488,8 @@ function ChipMultiSelect({
           className="flex-1 rounded-lg border bg-transparent px-2 py-1.5 text-xs"
           style={inputStyle}
         />
-        <button type="button" onClick={addCustom} className="rounded-lg border px-3 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
-          TOEVOEGEN
+        <button type="button" onClick={addCustom} className="min-h-[44px] rounded-lg border px-3 text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>
+          Toevoegen
         </button>
       </div>
     </div>
@@ -569,8 +569,8 @@ function PreviewStep({
       )}
 
       <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton onClick={onConfirm}>BLOK ACTIVEREN</PrimaryButton>
+        <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
+        <PrimaryButton onClick={onConfirm}>Blok activeren</PrimaryButton>
       </div>
     </div>
   );

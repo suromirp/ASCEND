@@ -72,13 +72,13 @@ export function TodayMissionCard({
       {quickComplete ? (
         <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />
       ) : (
-        <PrimaryButton onClick={() => onStart('full')}>TRAINING STARTEN</PrimaryButton>
+        <PrimaryButton onClick={() => onStart('full')}>Training starten</PrimaryButton>
       )}
 
 
       <div className="flex gap-2">
-        {!quickComplete && shortVariant && <SecondaryButton onClick={() => onStart('short')}>KORTE VERSIE</SecondaryButton>}
-        <SecondaryButton onClick={() => setShowMove((v) => !v)}>VERPLAATSEN</SecondaryButton>
+        {!quickComplete && shortVariant && <SecondaryButton onClick={() => onStart('short')}>Korte versie</SecondaryButton>}
+        <SecondaryButton onClick={() => setShowMove((v) => !v)}>Verplaatsen</SecondaryButton>
       </div>
 
       {showMove && (

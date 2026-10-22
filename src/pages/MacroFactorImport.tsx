@@ -109,7 +109,7 @@ export function MacroFactorImportPage() {
           aria-label="Kies de MacroFactor-export"
           onChange={(e) => void onPick(e.target.files?.[0])}
         />
-        <PrimaryButton onClick={() => input.current?.click()} disabled={busy}>{busy ? 'BEZIG…' : 'KIES BESTAND'}</PrimaryButton>
+        <PrimaryButton onClick={() => input.current?.click()} disabled={busy}>{busy ? 'Bezig…' : 'Kies bestand'}</PrimaryButton>
         {notice && (
           <p className="text-sm leading-snug" role={notice.tone === 'error' ? 'alert' : 'status'} style={{ color: notice.tone === 'error' ? 'var(--color-danger-text)' : 'var(--color-success-text)' }}>
             {notice.text}

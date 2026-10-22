@@ -16,8 +16,8 @@ export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport,
           : `${logsSinceBackup} ${one ? 'training' : 'trainingen'} sinds je laatste back-up. Alles staat alleen op dit toestel.`}
       </p>
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={onDismiss}>NIET NU</SecondaryButton>
-        <PrimaryButton onClick={onExport} fullWidth={false}>EXPORTEER</PrimaryButton>
+        <SecondaryButton onClick={onDismiss}>Niet nu</SecondaryButton>
+        <PrimaryButton onClick={onExport} fullWidth={false}>Exporteer</PrimaryButton>
       </div>
     </Card>
   );

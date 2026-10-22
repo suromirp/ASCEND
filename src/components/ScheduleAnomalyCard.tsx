@@ -45,9 +45,9 @@ export function ScheduleAnomalyCard() {
         ))}
       </div>
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={() => setDismissed(true)} disabled={applying}>NEGEREN</SecondaryButton>
+        <SecondaryButton onClick={() => setDismissed(true)} disabled={applying}>Liever niet</SecondaryButton>
         <PrimaryButton onClick={() => void handleApply()} disabled={applying}>
-          {applying ? 'BEZIG…' : 'AANPASSEN'}
+          {applying ? 'Bezig…' : 'Aanpassen'}
         </PrimaryButton>
       </div>
     </Card>

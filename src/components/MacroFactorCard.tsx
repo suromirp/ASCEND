@@ -69,7 +69,7 @@ export function MacroFactorCard() {
       </div>
       {ready.length >= 2 && (
         <PrimaryButton onClick={() => void save(ready)} disabled={saving}>
-          {saving ? 'OPSLAAN…' : `ALLES OPSLAAN (${ready.length})`}
+          {saving ? 'Opslaan…' : `Alles opslaan (${ready.length})`}
         </PrimaryButton>
       )}
     </Card>
@@ -94,7 +94,7 @@ function Ready({ proposal, saving, single, onSave }: { proposal: Exclude<MacroFa
   const { workout, template } = proposal;
   const legs = isLegSession(template);
   const rirText = legs ? describeRir(strengthRirFor(workout, template)) : undefined;
-  const save = proposal.kind === 'new' ? 'OPSLAAN' : 'AANVULLEN';
+  const save = proposal.kind === 'new' ? 'Opslaan' : 'Aanvullen';
   return (
     <>
       {rirText && (
@@ -107,18 +107,18 @@ function Ready({ proposal, saving, single, onSave }: { proposal: Exclude<MacroFa
           proposal.planned ? (
             <>Hoort bij <span style={{ color: 'var(--color-gold)' }}>{template.name}</span>, gepland voor {dayLabel(proposal.planned.scheduledDate)}.</>
           ) : (
-            <>Er stond niets gepland in die week. OPSLAAN legt hem los vast als <span style={{ color: 'var(--color-gold)' }}>{template.name}</span>.</>
+            <>Er stond niets gepland in die week. Opslaan legt hem los vast als <span style={{ color: 'var(--color-gold)' }}>{template.name}</span>.</>
           )
         ) : (
           <>
-            Je legde <span style={{ color: 'var(--color-gold)' }}>{template.name}</span> van {dayLabel(proposal.log.completedDate)} al vast. AANVULLEN vult alleen in wat daar nog leeg is: {missingWords(proposal)}.
+            Je legde <span style={{ color: 'var(--color-gold)' }}>{template.name}</span> van {dayLabel(proposal.log.completedDate)} al vast. Aanvullen vult alleen in wat daar nog leeg is: {missingWords(proposal)}.
             {durationNote(proposal)}
           </>
         )}
       </p>
       <div className="flex gap-3">
         {single ? (
-          <PrimaryButton fullWidth={false} onClick={onSave} disabled={saving}>{saving ? 'BEZIG…' : save}</PrimaryButton>
+          <PrimaryButton fullWidth={false} onClick={onSave} disabled={saving}>{saving ? 'Bezig…' : save}</PrimaryButton>
         ) : (
           <SecondaryButton onClick={onSave} disabled={saving}>{save}</SecondaryButton>
         )}
@@ -156,7 +156,7 @@ function ChooseTemplate({ workoutName }: { workoutName: string }) {
           <button
             key={t.id}
             onClick={() => void setMapping(workoutName, t.id)}
-            className="rounded-lg border px-3 py-2.5 text-left text-sm transition-all active:scale-[0.98]"
+            className="min-h-[44px] rounded-lg border px-3 py-2.5 text-left text-sm transition-all active:scale-[0.98]"
             style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
           >
             {t.name}
@@ -164,7 +164,7 @@ function ChooseTemplate({ workoutName }: { workoutName: string }) {
         ))}
         <button
           onClick={() => void setMapping(workoutName, null)}
-          className="rounded-lg border px-3 py-2.5 text-left text-sm transition-all active:scale-[0.98]"
+          className="min-h-[44px] rounded-lg border px-3 py-2.5 text-left text-sm transition-all active:scale-[0.98]"
           style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}
         >
           Niet inlezen, dit hoort niet bij ASCEND

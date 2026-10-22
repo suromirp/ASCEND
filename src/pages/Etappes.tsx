@@ -161,7 +161,7 @@ export function EtappesPage() {
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
           Van dit plan maak je een vertrekbrief voor thuis, met de afspraak voor je dagelijkse bericht.
         </p>
-        <SecondaryButton onClick={() => navigate('/onderweg')}>NAAR ALLEEN ONDERWEG</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/onderweg')}>Naar alleen onderweg</SecondaryButton>
       </Card>
 
       {open && (

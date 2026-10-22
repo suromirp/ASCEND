@@ -27,7 +27,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
         {review.done} van {review.planned} trainingen · {formatHoursMinutesNL(review.minutes)}
       </p>
       {review.advice[0] && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{review.advice[0]}</p>}
-      <SecondaryButton onClick={() => setOpen(true)} className="mt-1">BEKIJK JE WEEK</SecondaryButton>
+      <SecondaryButton onClick={() => setOpen(true)} className="mt-1">Bekijk je week</SecondaryButton>
       {open && <WeekReviewSheet review={review} onClose={() => setOpen(false)} />}
     </Card>
   );
@@ -185,7 +185,7 @@ function WeeklyHealthQuestion({ weekStart }: { weekStart: string }) {
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Had je deze week klachten aan je benen, voeten of rug door het trainen?</p>
       <div className="flex flex-col gap-1.5">
         {TROUBLE.map(([k, text]) => (
-          <button key={k} onClick={() => save({ weekStart, trouble: k, area: k === 'geen' ? undefined : draft?.area, severity: k === 'geen' ? undefined : draft?.severity })} aria-pressed={draft?.trouble === k} className="min-h-[42px] rounded-xl border px-3 text-left text-xs" style={chip(draft?.trouble === k)}>
+          <button key={k} onClick={() => save({ weekStart, trouble: k, area: k === 'geen' ? undefined : draft?.area, severity: k === 'geen' ? undefined : draft?.severity })} aria-pressed={draft?.trouble === k} className="min-h-[44px] rounded-xl border px-3 text-left text-xs" style={chip(draft?.trouble === k)}>
             {text}
           </button>
         ))}
@@ -194,12 +194,12 @@ function WeeklyHealthQuestion({ weekStart }: { weekStart: string }) {
         <>
           <div className="flex flex-wrap gap-1.5">
             {[...PAIN_AREA_OPTIONS].map((a) => (
-              <button key={a} onClick={() => save({ ...draft, area: draft.area === a ? undefined : a })} aria-pressed={draft.area === a} className="min-h-[36px] rounded-lg border px-2.5 text-xs" style={chip(draft.area === a)}>{a}</button>
+              <button key={a} onClick={() => save({ ...draft, area: draft.area === a ? undefined : a })} aria-pressed={draft.area === a} className="min-h-[44px] rounded-lg border px-2.5 text-xs" style={chip(draft.area === a)}>{a}</button>
             ))}
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             {SEVERITY.map(([k, text]) => (
-              <button key={k} onClick={() => save({ ...draft, severity: draft.severity === k ? undefined : k })} aria-pressed={draft.severity === k} className="min-h-[38px] rounded-lg border text-xs" style={chip(draft.severity === k)}>{text}</button>
+              <button key={k} onClick={() => save({ ...draft, severity: draft.severity === k ? undefined : k })} aria-pressed={draft.severity === k} className="min-h-[44px] rounded-lg border text-xs" style={chip(draft.severity === k)}>{text}</button>
             ))}
           </div>
         </>

@@ -99,7 +99,7 @@ export function PackListPage() {
         <Card><p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je lijst is leeg. Voeg een onderdeel toe, of ga terug naar de voorbeeldlijst.</p></Card>
       )}
 
-      <SecondaryButton onClick={() => setEditing({ kind: 'add', group: 'overig' })}>+ ONDERDEEL TOEVOEGEN</SecondaryButton>
+      <SecondaryButton onClick={() => setEditing({ kind: 'add', group: 'overig' })}>+ Onderdeel toevoegen</SecondaryButton>
 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         De voorbeeldlijst is een solo bivakopzet voor augustus, licht maar comfortabel, met afgeronde gewichten van gangbare modellen. Pas de gewichten aan zodra je iets in huis hebt en weegt. Vink af wat je hebt.
@@ -108,15 +108,15 @@ export function PackListPage() {
       {customised && (
         <div className="flex flex-col items-start gap-1">
           {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)} className="min-h-[40px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={() => setConfirmReset(true)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
               Terug naar de voorbeeldlijst
             </button>
           ) : (
             <>
               <p className="text-xs" style={{ color: 'var(--color-warning)' }}>Al je aanpassingen en vinkjes op deze lijst gaan verloren.</p>
               <div className="flex gap-4">
-                <button onClick={() => { reset(); setConfirmReset(false); }} className="min-h-[40px] text-xs underline underline-offset-2" style={{ color: 'var(--color-danger-text)' }}>Ja, terug naar het voorbeeld</button>
-                <button onClick={() => setConfirmReset(false)} className="min-h-[40px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>Laat maar</button>
+                <button onClick={() => { reset(); setConfirmReset(false); }} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-danger-text)' }}>Ja, terug naar het voorbeeld</button>
+                <button onClick={() => setConfirmReset(false)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>Annuleren</button>
               </div>
             </>
           )}

@@ -89,7 +89,7 @@ export function LeavePeriodsCard() {
           </ul>
         )}
 
-        <SecondaryButton onClick={() => setAdding(true)} className="min-h-[46px] flex-none">PERIODE TOEVOEGEN</SecondaryButton>
+        <SecondaryButton onClick={() => setAdding(true)} className="min-h-[46px] flex-none">Periode toevoegen</SecondaryButton>
       </Card>
 
       {adding && (
@@ -224,14 +224,12 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
             </div>
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
-              <SecondaryButton onClick={requestClose} className="min-h-[46px]">ANNULEREN</SecondaryButton>
+              <SecondaryButton onClick={requestClose} className="min-h-[46px]">Annuleren</SecondaryButton>
               <PrimaryButton
                 disabled={!!problem}
                 fullWidth={false}
                 onClick={() => onSubmit({ id: makeId('leave'), kind, startDate, endDate, ...(note.trim() ? { note: note.trim() } : {}) })}
-              >
-                VOORSTEL BEKIJKEN
-              </PrimaryButton>
+              >Voorstel bekijken</PrimaryButton>
             </div>
           </Card>
         </div>

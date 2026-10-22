@@ -77,7 +77,7 @@ export function TrainingSpotsPage() {
           <button
             onClick={useMyLocation}
             disabled={locating}
-            className="shrink-0 rounded-xl border px-3 py-2 text-xs disabled:opacity-40"
+            className="min-h-[44px] shrink-0 rounded-xl border px-3 py-2 text-xs disabled:opacity-40"
             style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
           >
             {locating ? 'Zoeken…' : 'Mijn locatie'}
@@ -95,7 +95,7 @@ export function TrainingSpotsPage() {
             <button
               key={f?.label ?? 'alles'}
               onClick={() => setFilter(f)}
-              className="shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
+              className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
               style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
             >
               {f?.label ?? 'Alles'}
@@ -143,9 +143,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
     <Card className="flex flex-col gap-2" texture={spot.uses.includes('bergaf')}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>
-            {spot.kind.toUpperCase()} · {spot.place.toUpperCase()}
-          </p>
+          <Eyebrow>{spot.kind.toUpperCase()} · {spot.place.toUpperCase()}</Eyebrow>
           <p className="mt-0.5 font-display text-lg leading-tight" style={{ color: 'var(--color-ink)' }}>{spot.name}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end">
@@ -187,7 +185,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
         <p className="text-xs leading-snug" style={{ color: 'var(--color-sky)' }}>{travel.text}</p>
       )}
 
-      <button onClick={() => setOpen((v) => !v)} className="self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+      <button onClick={() => setOpen((v) => !v)} className="inline-flex min-h-[44px] items-center self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
         {open ? 'minder' : spot.sessions ? 'alle trainingen, toegang en bronnen' : 'tip, toegang en bronnen'}
       </button>
       {open && (
@@ -211,7 +209,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
         </div>
       )}
 
-      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
+      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
         Route ernaartoe ↗
       </a>
     </Card>

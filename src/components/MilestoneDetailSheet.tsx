@@ -76,7 +76,7 @@ export function MilestoneDetailSheet({
                       href={s.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs underline underline-offset-2"
+                      className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2"
                       style={{ color: 'var(--color-sky)' }}
                     >
                       {s.label} ↗
@@ -89,7 +89,7 @@ export function MilestoneDetailSheet({
             </div>
           )}
 
-          <button onClick={requestClose} className="mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <button onClick={requestClose} className="min-h-[44px] mt-6 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Sluiten
           </button>
         </Card>

@@ -198,12 +198,12 @@ export function AlleenOnderwegPage() {
           <p className="text-xs font-medium" style={{ color: 'var(--color-success-text)' }}>De brief is compleet.</p>
         )}
         <div className="flex gap-3">
-          <PrimaryButton fullWidth={false} onClick={() => void copy()}>KOPIËREN</PrimaryButton>
-          {canShareText() && <SecondaryButton onClick={() => void share()}>DELEN</SecondaryButton>}
+          <PrimaryButton fullWidth={false} onClick={() => void copy()}>Kopiëren</PrimaryButton>
+          {canShareText() && <SecondaryButton onClick={() => void share()}>Delen</SecondaryButton>}
         </div>
-        <SecondaryButton onClick={() => setLetterOpen(true)}>BRIEF LEZEN</SecondaryButton>
+        <SecondaryButton onClick={() => setLetterOpen(true)}>Brief lezen</SecondaryButton>
         {feedback && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{feedback}</p>}
-        <SecondaryButton onClick={() => navigate('/etappes')}>NAAR HET ETAPPEPLAN</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/etappes')}>Naar het etappeplan</SecondaryButton>
       </Card>
 
       {letterOpen && <LetterSheet letter={letter} onCopy={() => void copy()} onShare={canShareText() ? () => void share() : undefined} feedback={feedback} onClose={() => setLetterOpen(false)} />}
@@ -221,8 +221,8 @@ function LetterSheet({ letter, onCopy, onShare, feedback, onClose }: { letter: s
             <Eyebrow>VERTREKBRIEF</Eyebrow>
             <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{letter}</div>
             <div className="mt-5 flex gap-3">
-              <PrimaryButton fullWidth={false} onClick={onCopy}>KOPIËREN</PrimaryButton>
-              {onShare && <SecondaryButton onClick={onShare}>DELEN</SecondaryButton>}
+              <PrimaryButton fullWidth={false} onClick={onCopy}>Kopiëren</PrimaryButton>
+              {onShare && <SecondaryButton onClick={onShare}>Delen</SecondaryButton>}
             </div>
             {feedback && <p role="status" className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{feedback}</p>}
             <button onClick={requestClose} className="mt-4 min-h-11 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>

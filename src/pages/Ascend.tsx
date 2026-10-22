@@ -170,7 +170,7 @@ export function AscendPage() {
         <Card className="flex flex-col gap-3">
           <Eyebrow>HOOFDDOEL</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je hebt nog geen hoofddoel. Stel er een in, dan bouwt ASCEND je training ernaartoe op.</p>
-          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOEL INSTELLEN</PrimaryButton>
+          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doel instellen</PrimaryButton>
         </Card>
       )}
 
@@ -216,7 +216,7 @@ export function AscendPage() {
         <MetricBar label="SESSIE-RESPONS" value={readiness.subjectiveSignal} />
         {readinessTrend.length > 1 && (
           <details>
-            <summary className="cursor-pointer text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verloop van de laatste weken</summary>
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verloop van de laatste weken</summary>
             <div className="mt-3"><TrendLineChart points={readinessTrend} formatValue={(v) => `${v}%`} /></div>
           </details>
         )}
@@ -267,7 +267,7 @@ export function AscendPage() {
         </Card>
       )}
 
-      <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOELEN BEHEREN</PrimaryButton>
+      <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doelen beheren</PrimaryButton>
 
       <AerobicTrendCard />
 
@@ -275,7 +275,7 @@ export function AscendPage() {
 
       <Card className="flex flex-col gap-3">
         <details>
-          <summary className="cursor-pointer"><Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow></summary>
+          <summary className="flex min-h-[44px] cursor-pointer items-center"><Eyebrow>TRAININGSVERDELING RICHTING GR5</Eyebrow></summary>
           <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
             Hardlopen blijft in het schema: het is een goede aerobe aanvulling en gaat niet ten koste van kracht.
             De verhouding verschuift wel steeds meer richting echt bergwandelen naarmate de GR5 dichterbij komt.
@@ -288,7 +288,7 @@ export function AscendPage() {
           </ul>
           <div className="mt-3 flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
             {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
-              <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+              <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
                 {s.label} ↗
               </a>
             ))}
@@ -338,7 +338,7 @@ export function GoalsPage() {
 
       <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
 
-      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ NIEUW DOEL OF TUSSENDOEL</SecondaryButton>
+      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ Nieuw doel of tussendoel</SecondaryButton>
       {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
 
       <GoalFocusCard />
@@ -419,8 +419,8 @@ function GR5GoalCard({
       <RouteLine goal={goal} />
       <GoalTripNotes goal={goal} onPackChange={(kg) => onUpdate({ packWeightKg: kg })} />
       <div className="flex gap-3">
-        <SecondaryButton onClick={() => navigate('/etappes')}>ETAPPEPLAN</SecondaryButton>
-        <SecondaryButton onClick={() => navigate('/onderweg')}>ALLEEN ONDERWEG</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/etappes')}>Etappeplan</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/onderweg')}>Alleen onderweg</SecondaryButton>
       </div>
       {daysLeft !== undefined && (
         <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
@@ -434,9 +434,9 @@ function GR5GoalCard({
         </p>
       )}
 
-      <PrimaryButton onClick={() => setWizardOpen(true)}>DOEL AANPASSEN</PrimaryButton>
+      <PrimaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</PrimaryButton>
 
-      <button onClick={() => setAdvancedOpen((s) => !s)} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={() => setAdvancedOpen((s) => !s)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
       </button>
 
@@ -465,7 +465,7 @@ function GR5GoalCard({
       </div>
       )}
 
-      <button onClick={onArchive} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+      <button onClick={onArchive} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
 
       {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={goal} onClose={() => setWizardOpen(false)} />}
     </Card>
@@ -558,13 +558,13 @@ function MarathonGoalCard({
           <button
             key={type}
             onClick={() => onUpdate({ marathonRaceType: type })}
-            className="flex-1 rounded-xl border py-2 text-xs font-medium tracking-wide transition-all active:scale-[0.97]"
+            className="min-h-[44px] flex-1 rounded-xl border py-2 text-xs font-medium transition-all active:scale-[0.97]"
             style={{
               borderColor: raceType === type ? 'var(--color-gold)' : 'var(--color-card-border)',
               color: raceType === type ? 'var(--color-gold)' : 'var(--color-ink)',
             }}
           >
-            {type === 'half' ? 'HALVE (21,1 KM)' : 'HELE (42,2 KM)'}
+            {type === 'half' ? 'Halve (21,1 km)' : 'Hele (42,2 km)'}
           </button>
         ))}
       </div>
@@ -584,9 +584,9 @@ function MarathonGoalCard({
             </p>
           )}
 
-          <PrimaryButton onClick={() => setWizardOpen(true)}>DOEL AANPASSEN</PrimaryButton>
+          <PrimaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</PrimaryButton>
 
-          <button onClick={() => setAdvancedOpen((s) => !s)} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          <button onClick={() => setAdvancedOpen((s) => !s)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
           </button>
 
@@ -638,7 +638,7 @@ function MarathonGoalCard({
             </p>
           )}
           {onArchive && (
-            <button onClick={onArchive} className="text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+            <button onClick={onArchive} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
           )}
         </>
       )}
@@ -664,8 +664,8 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{g.name || 'Naamloos doel'}</p>
             <div className="flex shrink-0 gap-3">
-              <SecondaryButton onClick={() => setEditing(g)}>AANPASSEN</SecondaryButton>
-              <button onClick={() => onArchive(g.id)} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>archiveren</button>
+              <SecondaryButton onClick={() => setEditing(g)}>Aanpassen</SecondaryButton>
+              <button onClick={() => onArchive(g.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-danger-text)' }}>archiveren</button>
             </div>
           </div>
           <GoalStatusNote status={g.status} goal={g} />
@@ -699,7 +699,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
             role="radio"
             aria-checked={role === value}
             onClick={() => void setGoalPlanRole(goal.id, value)}
-            className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold"
+            className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
             style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
           >
             {label}
@@ -746,7 +746,7 @@ function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUn
           {goals.map((g) => (
             <div key={g.id} className="flex items-center justify-between gap-3 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
               <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{g.name || 'Naamloos doel'}</p>
-              <button onClick={() => onUnarchive(g.id)} className="shrink-0 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+              <button onClick={() => onUnarchive(g.id)} className="inline-flex min-h-[44px] items-center shrink-0 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
                 heractiveren
               </button>
             </div>

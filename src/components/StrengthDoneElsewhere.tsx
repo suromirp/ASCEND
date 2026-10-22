@@ -43,7 +43,7 @@ export function StrengthDoneElsewhere({ fullDuration, legs = false, onDone }: { 
       <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE), hoe zwaar was de hele training?</p>
       <div className="mb-3 grid grid-cols-10 gap-1" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-          <button key={n} role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[38px] rounded-lg border text-xs tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-gold)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-gold)' : 'transparent', color: rpe === n ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
+          <button key={n} role="radio" aria-checked={rpe === n} onClick={() => setRpe(rpe === n ? undefined : n)} className="min-h-[44px] rounded-lg border text-xs tabular-nums" style={{ borderColor: rpe === n ? 'var(--color-gold)' : 'var(--color-card-border)', background: rpe === n ? 'var(--color-gold)' : 'transparent', color: rpe === n ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
             {n}
           </button>
         ))}
@@ -54,7 +54,7 @@ export function StrengthDoneElsewhere({ fullDuration, legs = false, onDone }: { 
           <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoeveel herhalingen had je nog over in je zwaarste beensets?</p>
           <div className="mb-3 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label="Herhalingen in reserve">
             {RIR.map(([v, label]) => (
-              <button key={label} role="radio" aria-checked={rir === v} onClick={() => setRir(rir === v ? undefined : v)} className="min-h-[40px] rounded-lg border text-xs" style={chip(rir === v)}>{label}</button>
+              <button key={label} role="radio" aria-checked={rir === v} onClick={() => setRir(rir === v ? undefined : v)} className="min-h-[44px] rounded-lg border text-xs" style={chip(rir === v)}>{label}</button>
             ))}
           </div>
         </>
@@ -63,12 +63,12 @@ export function StrengthDoneElsewhere({ fullDuration, legs = false, onDone }: { 
       <p className="mb-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde het ten opzichte van normaal? (mag leeg blijven)</p>
       <div className="mb-3 flex gap-2" role="radiogroup" aria-label="Hoe voelde het">
         {(['better', 'normal', 'worse'] as const).map((f) => (
-          <button key={f} role="radio" aria-checked={feel === f} onClick={() => setFeel((cur) => (cur === f ? undefined : f))} className="min-h-[40px] flex-1 rounded-lg border text-xs" style={chip(feel === f)}>
+          <button key={f} role="radio" aria-checked={feel === f} onClick={() => setFeel((cur) => (cur === f ? undefined : f))} className="min-h-[44px] flex-1 rounded-lg border text-xs" style={chip(feel === f)}>
             {FEEL_LABEL[f]}
           </button>
         ))}
       </div>
-      <PrimaryButton onClick={() => onDone(feel, duration === '' ? fullDuration : duration, { rpe, rir })}>GEDAAN IN MACROFACTOR</PrimaryButton>
+      <PrimaryButton onClick={() => onDone(feel, duration === '' ? fullDuration : duration, { rpe, rir })}>Gedaan in MacroFactor</PrimaryButton>
     </div>
   );
 }

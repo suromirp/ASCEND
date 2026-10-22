@@ -10,7 +10,7 @@ export function ForecastAdjustmentBanner({ summary, onDismiss }: { summary: stri
     <Card className="flex flex-col gap-2">
       <Eyebrow>SCHEMA-AANPASSING, VERVOLGWEKEN</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{summary}</p>
-      <SecondaryButton onClick={onDismiss} className="mt-1">BEGREPEN</SecondaryButton>
+      <SecondaryButton onClick={onDismiss} className="mt-1">Begrepen</SecondaryButton>
     </Card>
   );
 }

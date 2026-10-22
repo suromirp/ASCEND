@@ -55,6 +55,12 @@ html {
   }
 }
 
+/* Tikdoelen: velden zijn minstens 44 px hoog (CLAUDE.md, knoppen en tikdoelen). */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not(.sr-only),
+select {
+  min-height: 44px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

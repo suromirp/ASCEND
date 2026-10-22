@@ -37,7 +37,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
               onClick={() => setSelected(i)}
               aria-label={`${dayShort(d.date)}: ${LEVEL_WORD[d.level]}${d.names.length ? `, ${d.names.join(', ')}` : ''}`}
               aria-pressed={i === selected}
-              className="relative aspect-square rounded-md"
+              className="relative aspect-square min-h-[44px] rounded-md"
               style={{
                 background: 'var(--color-charcoal)',
                 outline: i === selected ? '2px solid var(--color-gold)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,

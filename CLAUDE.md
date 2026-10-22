@@ -37,6 +37,23 @@ strings consistent with that unless told otherwise.
 - never make it look like a generic bodybuilding app
 - mobile-first
 
+### Knoppen, kopjes en tikdoelen
+
+- Knoppen staan in zinsletters ("Opslaan", "Gedaan in MacroFactor"), met
+  normale letterspatiëring (geen `uppercase`, geen `tracking-wide`).
+  Hoofdletters zijn alleen voor de kleine bronzen kopjes (`Eyebrow`, die
+  zelf hoofdletters toont); een kopje met de hand opmaken mag niet waar
+  `Eyebrow` past.
+- Tikdoelen zijn minstens 44 bij 44 px (`min-h-[44px]`; `PrimaryButton` en
+  `SecondaryButton` doen dit zelf). Een klein pictogram krijgt een
+  onzichtbare uitbreiding (zie `InfoButton` en `Toggle` in `ui.tsx`).
+- Dezelfde keuze heet overal hetzelfde: "Liever niet" (een voorstel
+  afwijzen), "Niet nu" (uitstellen), "Annuleren" (afbreken), "Begrepen"
+  (kennisnemen), "Beter / Normaal / Slechter".
+- De meldingsbalk (`ChangeNotice`) klapt na enkele seconden in tot een
+  ronde knop van 44 px en verdwijnt na tien minuten; hij blijft niet over
+  de inhoud hangen.
+
 ### Design tokens in code
 
 Theme tokens are defined once in `src/index.css` under `@theme` and

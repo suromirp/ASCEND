@@ -122,15 +122,15 @@ export function CountdownTimer({
             )}
 
             <div className="flex gap-3">
-              {!editable && <SecondaryButton onClick={reset}>OPNIEUW</SecondaryButton>}
+              {!editable && <SecondaryButton onClick={reset}>Opnieuw</SecondaryButton>}
               {totalSeconds > 0 && (
                 <PrimaryButton onClick={() => setRunning((r) => !r)} disabled={remaining === 0}>
-                  {running ? 'PAUZEREN' : remaining === totalSeconds ? 'START' : 'HERVATTEN'}
+                  {running ? 'Pauzeren' : remaining === totalSeconds ? 'Start' : 'Hervatten'}
                 </PrimaryButton>
               )}
             </div>
 
-            <button onClick={requestClose} className="text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={requestClose} className="min-h-[44px] text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Sluiten
             </button>
           </Card>

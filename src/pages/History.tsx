@@ -93,9 +93,9 @@ export function HistoryPage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => shiftMonth(-1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <Eyebrow>{formatMonthNL(anchor).toUpperCase()}</Eyebrow>
-        <button onClick={() => shiftMonth(1)} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>›</button>
+        <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>›</button>
       </div>
 
       <Card className="grid grid-cols-2 gap-4">

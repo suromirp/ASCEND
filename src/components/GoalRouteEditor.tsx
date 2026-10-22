@@ -215,9 +215,9 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11px] font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>TRAININGSDAG · zelf gekozen</span>
                 {editingDay ? (
-                  <button onClick={() => setEditingDay(false)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>klaar</button>
+                  <button onClick={() => setEditingDay(false)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>klaar</button>
                 ) : (
-                  <button onClick={() => setEditingDay(true)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>wijzigen</button>
+                  <button onClick={() => setEditingDay(true)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>wijzigen</button>
                 )}
               </div>
               {trainingParts.length > 0 && (
@@ -246,7 +246,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
                 ASCEND richt je training op deze dag. Wat je leeg laat, komt uit de gemiddelde {dayWord.singular}. Het gemiddelde zelf blijft gewoon berekend.
               </p>
               {trainingDaySet && (
-                <button onClick={resetOverrides} className="mt-2 text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>Trainingsdag verwijderen</button>
+                <button onClick={resetOverrides} className="inline-flex min-h-[44px] items-center mt-2 text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>Trainingsdag verwijderen</button>
               )}
             </>
           ) : (
@@ -254,7 +254,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
               <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 ASCEND traint nu richting de gemiddelde {dayWord.singular}. Wil je je voorbereiden op een zwaardere dag uit de tocht, stel die dan in als trainingsdag.
               </p>
-              <button onClick={() => setEditingDay(true)} className="mt-2 text-xs font-medium underline" style={{ color: 'var(--color-gold)' }}>Trainingsdag instellen</button>
+              <button onClick={() => setEditingDay(true)} className="inline-flex min-h-[44px] items-center mt-2 text-xs font-medium underline" style={{ color: 'var(--color-gold)' }}>Trainingsdag instellen</button>
             </>
           )}
         </div>
@@ -286,7 +286,7 @@ export function Segmented({
             <button
               key={o.value}
               onClick={() => onChange(o.value)}
-              className="flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all active:scale-[0.98]"
+              className="min-h-[44px] flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all active:scale-[0.98]"
               style={selected ? { background: 'var(--color-card)', color: 'var(--color-gold)', boxShadow: 'inset 0 0 0 1px var(--color-card-border)' } : { color: 'var(--color-ink-dim)' }}
             >
               {o.label}

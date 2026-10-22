@@ -90,9 +90,9 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
               </div>
               {adjustable ? (
                 <div className="flex shrink-0 items-center gap-1">
-                  <button onClick={() => change(adjustable, r.phase.weekCount, -1)} aria-label={`${r.phase.name} korter`} className="flex h-10 w-10 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>−</button>
+                  <button onClick={() => change(adjustable, r.phase.weekCount, -1)} aria-label={`${r.phase.name} korter`} className="flex h-11 w-11 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>−</button>
                   <span className="w-[72px] whitespace-nowrap text-center text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.phase.weekCount} {r.phase.weekCount === 1 ? 'week' : 'weken'}</span>
-                  <button onClick={() => change(adjustable, r.phase.weekCount, 1)} aria-label={`${r.phase.name} langer`} className="flex h-10 w-10 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>+</button>
+                  <button onClick={() => change(adjustable, r.phase.weekCount, 1)} aria-label={`${r.phase.name} langer`} className="flex h-11 w-11 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>+</button>
                 </div>
               ) : (
                 <span className="shrink-0 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.phase.weekCount} {r.phase.weekCount === 1 ? 'week' : 'weken'}</span>
@@ -108,7 +108,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
           : 'Geef je hoofddoel een datum om de fases zelf in te stellen.'}
       </p>
       {goalDate && Object.keys(overrides).length > 0 && (
-        <button onClick={() => void save(undefined)} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+        <button onClick={() => void save(undefined)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
           Terug naar automatisch
         </button>
       )}

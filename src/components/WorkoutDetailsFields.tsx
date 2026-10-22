@@ -45,7 +45,7 @@ export function WorkoutDetailsFields({ templateId, value, onChange }: { template
 }
 
 function Stepper({ label, text, onMinus, onPlus }: { label: string; text: string; onMinus: () => void; onPlus: () => void }) {
-  const button = 'flex h-10 w-10 items-center justify-center rounded-lg border text-lg';
+  const button = 'flex h-11 w-11 items-center justify-center rounded-lg border text-lg';
   const style = { borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
   return (
     <div className="flex items-center justify-between gap-3">

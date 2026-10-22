@@ -35,8 +35,8 @@ export function WeightReminder() {
       </p>
       <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={setKg} />
       <div className="flex items-center gap-4">
-        <PrimaryButton fullWidth={false} disabled={!kg} onClick={() => kg && void save(kg)}>OPSLAAN</PrimaryButton>
-        <button onClick={() => void updateSettings({ weightReminderSnoozedAt: today })} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+        <PrimaryButton fullWidth={false} disabled={!kg} onClick={() => kg && void save(kg)}>Opslaan</PrimaryButton>
+        <button onClick={() => void updateSettings({ weightReminderSnoozedAt: today })} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
           later
         </button>
       </div>
@@ -65,7 +65,7 @@ export function WeightSettingsCard() {
         {last ? ` Laatst ingevuld: ${formatNumberNL(last.kg, 1)} kg op ${formatDateNL(last.date)}.` : ''}
       </p>
       <NumberField label="Trendgewicht" unit="kg" decimals={1} compact value={kg} onChange={(v) => { setKg(v); setSaved(false); }} />
-      <PrimaryButton disabled={!kg} onClick={async () => { if (kg) { await save(kg); setSaved(true); } }}>OPSLAAN</PrimaryButton>
+      <PrimaryButton disabled={!kg} onClick={async () => { if (kg) { await save(kg); setSaved(true); } }}>Opslaan</PrimaryButton>
       {saved && <p className="text-xs" style={{ color: 'var(--color-success-text)' }}>Opgeslagen.</p>}
       <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Herinnering op Vandaag</p>
       <div className="flex flex-wrap gap-1.5">
@@ -75,7 +75,7 @@ export function WeightSettingsCard() {
             <button
               key={o.days}
               onClick={() => void updateSettings({ weightReminderDays: o.days })}
-              className="rounded-full border px-3 py-1 text-xs"
+              className="min-h-[44px] rounded-full border px-3 py-1 text-xs"
               style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
             >
               {o.label}

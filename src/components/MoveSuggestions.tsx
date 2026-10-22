@@ -48,7 +48,7 @@ export function MoveSuggestions({
       {canGoBack && (
         <button
           onClick={() => onPickDate(originalDate!)}
-          className="mt-2 flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
+          className="mt-2 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
           style={{ borderColor: 'var(--color-gold)', background: 'var(--color-charcoal)' }}
         >
           <span className="shrink-0 whitespace-nowrap text-sm" style={{ color: 'var(--color-ink)' }}>Terug naar {dayName(originalDate!).replace(/^Vandaag$/, 'vandaag')}</span>
@@ -61,7 +61,7 @@ export function MoveSuggestions({
             <button
               key={sug.date}
               onClick={() => onPick(sug)}
-              className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
+              className="flex min-h-[44px] items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
               style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
             >
               <span className="shrink-0 whitespace-nowrap text-sm" style={{ color: 'var(--color-ink)' }}>{dayName(sug.date)}</span>
@@ -75,10 +75,10 @@ export function MoveSuggestions({
         </p>
       )}
       <div className="mt-3 flex items-center justify-between">
-        <button onClick={() => setShowDatePicker((v) => !v)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={() => setShowDatePicker((v) => !v)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
           andere dag kiezen
         </button>
-        <button onClick={onSkip} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={onSkip} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
           overslaan
         </button>
       </div>

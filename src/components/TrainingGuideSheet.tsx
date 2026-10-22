@@ -211,7 +211,7 @@ export function TrainingGuideSheet({
                   <div className="mt-2 flex flex-col gap-1.5">
                     {guide.sources.map((src) =>
                       src.url ? (
-                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
+                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
                       ) : (
                         <span key={src.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{src.label}</span>
                       ),

@@ -72,7 +72,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
             <Section title="BRONNEN">
               <div className="flex flex-col gap-1.5">
                 {SOURCES.map((s) => (
-                  <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
+                  <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
                 ))}
               </div>
               <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>De getallen van de index zijn een afstemming op deze studies. De index als geheel is niet in een studie getest. Gebruik hem als kompas, niet als weegschaal.</p>
@@ -87,7 +87,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="mt-6">
-      <p className="text-[11px] font-semibold tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>{title}</p>
+      <Eyebrow>{title}</Eyebrow>
       <div className="mt-2 flex flex-col gap-2">{children}</div>
     </div>
   );

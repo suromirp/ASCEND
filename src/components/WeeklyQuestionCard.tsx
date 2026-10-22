@@ -86,7 +86,7 @@ export function WeeklyQuestionCard() {
         />
       </div>
       <div className="flex items-center gap-4">
-        <PrimaryButton fullWidth={false} disabled={!draft.trim()} onClick={save}>OPSLAAN</PrimaryButton>
+        <PrimaryButton fullWidth={false} disabled={!draft.trim()} onClick={save}>Opslaan</PrimaryButton>
         <button
           onClick={() => void updateSettings({ weeklyIntentions: postponeIntention(settings.weeklyIntentions, question, weekStart, today) })}
           className="min-h-[44px] px-1 text-xs underline"

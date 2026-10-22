@@ -55,7 +55,7 @@ const REQUIREMENT_KIND_META: Record<EditableRequirementKind, { label: string; un
   consecutiveDays: { label: 'Dagen achter elkaar', unit: 'days', scope: 'CONSECUTIVE_DAYS', decimals: 0 },
   eventDays: { label: 'Aantal dagen', unit: 'days', scope: 'TOTAL_EVENT', decimals: 0 },
 };
-// What "+ EIS TOEVOEGEN" offers on a single-day goal. Day counts are not in
+// What "+ Eis toevoegen" offers on a single-day goal. Day counts are not in
 // it: making a goal multi-day switches to the route editor instead.
 const ADDABLE_KINDS: EditableRequirementKind[] = ['distance', 'elevationGain', 'elevationLoss', 'duration', 'targetTime', 'packWeight'];
 const MAKE_MULTI_DAY = '__multi_day__';
@@ -172,7 +172,7 @@ export function GoalSetupWizard({
                     <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{PRESET_LABEL[preset].note}</p>
                   </button>
                 ))}
-                <SecondaryButton onClick={requestClose}>ANNULEREN</SecondaryButton>
+                <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
               </div>
             )}
 
@@ -218,14 +218,14 @@ export function GoalSetupWizard({
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Doel geactiveerd.</p>
-                <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
               </div>
             )}
 
             {step.kind === 'error' && (
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-danger-text)' }}>{step.message}</p>
-                <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
               </div>
             )}
           </Card>
@@ -355,7 +355,7 @@ function InterpretStep({
             className="self-start rounded-lg border bg-transparent px-2.5 py-1.5 text-xs"
             style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}
           >
-            <option value="" style={{ background: 'var(--color-charcoal)' }}>+ EIS TOEVOEGEN</option>
+            <option value="" style={{ background: 'var(--color-charcoal)' }}>+ Eis toevoegen</option>
             {availableKinds.map((k) => (
               <option key={k} value={k} style={{ background: 'var(--color-charcoal)' }}>{REQUIREMENT_KIND_META[k].label}</option>
             ))}
@@ -365,8 +365,8 @@ function InterpretStep({
       )}
 
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={allowBack ? onBack : onCancel}>{allowBack ? 'TERUG' : 'ANNULEREN'}</SecondaryButton>
-        <PrimaryButton fullWidth={false} onClick={() => onNext(local)} disabled={!canProceed}>VOLGENDE</PrimaryButton>
+        <SecondaryButton onClick={allowBack ? onBack : onCancel}>{allowBack ? 'Terug' : 'Annuleren'}</SecondaryButton>
+        <PrimaryButton fullWidth={false} onClick={() => onNext(local)} disabled={!canProceed}>Volgende</PrimaryButton>
       </div>
     </div>
   );
@@ -646,8 +646,8 @@ function PreviewStep({
       )}
 
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton fullWidth={false} onClick={() => onConfirm(plan)}>DOEL ACTIVEREN</PrimaryButton>
+        <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
+        <PrimaryButton fullWidth={false} onClick={() => onConfirm(plan)}>Doel activeren</PrimaryButton>
       </div>
     </div>
   );

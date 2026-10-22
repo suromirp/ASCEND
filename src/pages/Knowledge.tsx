@@ -32,7 +32,7 @@ export function KnowledgePage() {
       {lesson && (
         <Card className="flex flex-col gap-1" texture>
           <Eyebrow>DEZE WEEK</Eyebrow>
-          <button onClick={() => navigate(`/kennis/${lesson.id}`)} className="text-left font-display text-lg" style={{ color: 'var(--color-gold)' }}>{lesson.title}</button>
+          <button onClick={() => navigate(`/kennis/${lesson.id}`)} className="min-h-[44px] text-left font-display text-lg" style={{ color: 'var(--color-gold)' }}>{lesson.title}</button>
         </Card>
       )}
       {ORDER.map((cat) => {
@@ -129,17 +129,17 @@ export function KnowledgeTopicPage() {
         <Card className="flex flex-col gap-1">
           <Eyebrow>BRONNEN</Eyebrow>
           {content.sources.map((s) => (
-            <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[40px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label} ↗</a>
+            <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label} ↗</a>
           ))}
         </Card>
       )}
 
       <button
         onClick={() => void toggle()}
-        className="min-h-[48px] rounded-xl border text-sm font-semibold tracking-wide"
+        className="min-h-[48px] rounded-xl border text-sm font-semibold"
         style={{ borderColor: 'var(--color-bronze)', color: isRead ? 'var(--color-success)' : 'var(--color-gold)' }}
       >
-        {isRead ? 'GELEZEN, TERUGZETTEN' : 'MARKEER ALS GELEZEN'}
+        {isRead ? 'Gelezen, terugzetten' : 'Markeer als gelezen'}
       </button>
     </div>
   );

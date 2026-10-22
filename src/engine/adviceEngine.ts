@@ -427,7 +427,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       ...moves.map((m): PlanChangeItem => ({ plannedSessionId: m.session.id, action: 'move', fromDate: m.session.scheduledDate, toDate: m.to, reason: 'Na de test, zodat je benen fris zijn voor de testloop.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] })),
       moveItem(date),
     ];
-    const effect = `Doe hem ${shortDate(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel. ${why}`;
+    const effect = `Doe hem ${shortDate(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel.`;
     return [{ id: `testroom:${lost.id}`, trigger: around ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
   }
 
@@ -457,7 +457,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const legsNote = legsName ? ` ${legsName} die dag pas na de test, liefst 6 uur later (minstens 3): eerst lopen, dan kracht.` : '';
     // The leg day the option shows stays as shown: kept, so accepting fixes it.
     const keeps = sameDayLegs.map((l): PlanChangeItem => ({ plannedSessionId: l.id, action: 'keep', reason: `${legsName} blijft die dag, na de test.`, generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] }));
-    candidates.push({ cost: daysFrom(date), date, label: `${shortDate(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${shortDate(date)}.${legsNote} ${why}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${shortDate(date)}.`, why) });
+    candidates.push({ cost: daysFrom(date), date, label: `${shortDate(date)}${legsName ? `, ${legsName} erna` : ''}`, effect: `Doe hem ${shortDate(date)}.${legsNote}`, proposal: proposal(title, [moveItem(date), ...keeps], `De testloop komt op ${shortDate(date)}.`, why) });
   }
 
   // 2. Make room: the least important trainings that stand in the way, on
@@ -483,8 +483,8 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     const verb = remove.length === 1 ? 'vervalt' : 'vervallen';
     const sameDay = remove.every((s) => s.scheduledDate === date);
     const effect = sameDay
-      ? `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(date)} ${verb} en de testloop komt daar. ${why}`
-      : `Er is geen dag met frisse benen. Mijn voorstel: de testloop op ${shortDate(date)}, en ${remove.map((s) => `${templateById.get(s.templateId)?.name ?? 'training'} van ${shortDate(s.scheduledDate)}`).join(' en ')} ${verb}. In een testweek is de test je kwaliteitstraining. ${why}`;
+      ? `Er is geen vrije dag. Mijn voorstel: ${names.join(' en ')} van ${shortDate(date)} ${verb} en de testloop komt daar.`
+      : `Er is geen dag met frisse benen. Mijn voorstel: de testloop op ${shortDate(date)}, en ${remove.map((s) => `${templateById.get(s.templateId)?.name ?? 'training'} van ${shortDate(s.scheduledDate)}`).join(' en ')} ${verb}. In een testweek is de test je kwaliteitstraining.`;
     candidates.push({ cost: daysFrom(date) + 3 + (costs as number[]).reduce((a, b) => a + b, 0), date, label: `${shortDate(date)}, ${names.join(' en ')} ${verb}`, effect, proposal: proposal(title, items, `${names.join(' en ')} ${verb}; de testloop komt op ${shortDate(date)}.`, why) });
   }
 

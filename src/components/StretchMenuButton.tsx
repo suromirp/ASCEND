@@ -30,7 +30,7 @@ export function StretchMenuButton() {
         onClick={() => setOpen((o) => !o)}
         aria-label="Rekoefeningen"
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center rounded-full border"
+        className="flex h-11 w-11 items-center justify-center rounded-full border"
         style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}
       >
         <StretchIcon />
@@ -47,7 +47,7 @@ export function StretchMenuButton() {
               <button
                 key={area.id}
                 onClick={() => go(area.id)}
-                className="block w-full px-3 py-2 text-left text-sm active:opacity-70"
+                className="min-h-[44px] block w-full px-3 py-2 text-left text-sm active:opacity-70"
                 style={{ color: 'var(--color-ink)' }}
               >
                 {area.label}
@@ -56,7 +56,7 @@ export function StretchMenuButton() {
             <div className="mx-3 my-1 border-t" style={{ borderColor: 'var(--color-card-border)' }} />
             <button
               onClick={() => go()}
-              className="block w-full px-3 py-2 text-left text-sm font-medium active:opacity-70"
+              className="min-h-[44px] block w-full px-3 py-2 text-left text-sm font-medium active:opacity-70"
               style={{ color: 'var(--color-gold)' }}
             >
               Alle rekoefeningen →

@@ -53,7 +53,7 @@ export function JourneyPage() {
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             De taken staan op een tijdlijn tot je hoofddoel. Stel eerst een hoofddoel met een datum in, dan zie je hier wat wanneer aan de beurt is.
           </p>
-          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>DOEL INSTELLEN</PrimaryButton>
+          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doel instellen</PrimaryButton>
         </Card>
       ) : (
         <>

@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
-import { Card } from '../components/ui';
+import { Card, Eyebrow } from '../components/ui';
 
 const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
 
@@ -61,7 +61,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   return (
     <button
       onClick={onClick}
-      className="shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
+      className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
       style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
     >
       {children}
@@ -74,9 +74,7 @@ function SourceCard({ source }: { source: LibrarySource }) {
   return (
     <Card className="flex flex-col gap-1.5">
       <button onClick={() => setOpen((v) => !v)} className="text-left" aria-expanded={open}>
-        <p className="text-[10px] font-medium tracking-wide" style={{ color: 'var(--color-bronze)' }}>
-          {[CATEGORY_LABEL[source.category].toUpperCase(), source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher.toUpperCase() : undefined].filter(Boolean).join(' · ')}
-        </p>
+        <Eyebrow>{[CATEGORY_LABEL[source.category].toUpperCase(), source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher.toUpperCase() : undefined].filter(Boolean).join(' · ')}</Eyebrow>
         <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{source.title}</p>
         {source.meta && <p className="mt-0.5 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>{source.meta}</p>}
         <p className="mt-1 text-[11px]" style={{ color: 'var(--color-ink-dim)' }}>
@@ -94,7 +92,7 @@ function SourceCard({ source }: { source: LibrarySource }) {
         </div>
       )}
       {source.url && (
-        <a href={source.url} target="_blank" rel="noopener noreferrer" className="self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+        <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
           Open bron ↗
         </a>
       )}

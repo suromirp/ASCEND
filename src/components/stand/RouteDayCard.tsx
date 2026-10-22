@@ -49,7 +49,7 @@ export function RouteDayCard({ goalName, weeksToGo, rows, onOpen }: { goalName: 
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Je hoeft er nu nog niet te zijn. De lange tochten in het voorjaar en de zomer maken het verschil; de planning bouwt daar naartoe.
       </p>
-      <button onClick={onOpen} className="self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>Alles over je doel ›</button>
+      <button onClick={onOpen} className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>Alles over je doel ›</button>
     </Card>
   );
 }

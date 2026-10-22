@@ -42,7 +42,7 @@ export function ChangeLogCard({ weekStart }: { weekStart: string }) {
 function ChangeRow({ change }: { change: WeekChange }) {
   const [open, setOpen] = useState(false);
   return (
-    <button onClick={() => setOpen((v) => !v)} className="text-left text-xs">
+    <button onClick={() => setOpen((v) => !v)} className="min-h-[44px] text-left text-xs">
       <span className="block" style={{ color: 'var(--color-ink)' }}>{change.line}</span>
       {open && <span className="mt-0.5 block leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{change.reason}</span>}
     </button>

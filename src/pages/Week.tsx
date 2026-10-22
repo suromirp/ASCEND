@@ -89,7 +89,7 @@ export function WeekPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setWeekStart(addDays(weekStart, -7))}
-          className="text-lg"
+          className="min-h-[44px] min-w-[44px] text-lg"
           style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
           aria-label="Vorige week"
         >
@@ -114,7 +114,7 @@ export function WeekPage() {
         </button>
         <button
           onClick={() => setWeekStart(addDays(weekStart, 7))}
-          className="text-lg"
+          className="min-h-[44px] min-w-[44px] text-lg"
           style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
           aria-label="Volgende week"
         >
@@ -143,9 +143,9 @@ export function WeekPage() {
               : 'Deze week schakel je terug, zodat de opbouw van de vorige weken binnenkomt. Voel je je fris en ging alles goed? Dan kun je doortrainen: de week wordt een normale opbouwweek, geen tweede zwaarste week.'}
           </p>
           {restWeek.skipped ? (
-            <SecondaryButton onClick={() => void setRestWeekSkipped(weekStart, false)}>RUSTWEEK TERUGZETTEN</SecondaryButton>
+            <SecondaryButton onClick={() => void setRestWeekSkipped(weekStart, false)}>Rustweek terugzetten</SecondaryButton>
           ) : restWeek.canSkip ? (
-            <SecondaryButton onClick={() => void setRestWeekSkipped(weekStart, true)}>DOORTRAINEN</SecondaryButton>
+            <SecondaryButton onClick={() => void setRestWeekSkipped(weekStart, true)}>Doortrainen</SecondaryButton>
           ) : restWeek.reason ? (
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{restWeek.reason}</p>
           ) : null}
@@ -158,7 +158,7 @@ export function WeekPage() {
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
             Je minuten, hoogtemeters en rugzak blijven op het niveau van vorige week, in plaats van een stap omhoog. De rustweek en de weken daarna staan nog op de kalender. Gaat het toch goed? Dan kun je de herhaling terugzetten.
           </p>
-          <SecondaryButton onClick={() => void setWeekRepeated(weekStart, false)}>HERHALING TERUGZETTEN</SecondaryButton>
+          <SecondaryButton onClick={() => void setWeekRepeated(weekStart, false)}>Herhaling terugzetten</SecondaryButton>
         </Card>
       )}
 

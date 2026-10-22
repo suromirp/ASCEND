@@ -54,7 +54,7 @@ export function MorningCheckInCard() {
           const on = value === k;
           const tone = i >= 2 ? 'var(--color-warning)' : 'var(--color-gold)';
           return (
-            <button key={k} onClick={() => set(k)} aria-pressed={on} className="min-h-[40px] rounded-lg border px-1 text-[11px] leading-tight" style={{ borderColor: on ? tone : 'var(--color-card-border)', color: on ? tone : 'var(--color-ink)', background: on ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>
+            <button key={k} onClick={() => set(k)} aria-pressed={on} className="min-h-[44px] rounded-lg border px-1 text-[11px] leading-tight" style={{ borderColor: on ? tone : 'var(--color-card-border)', color: on ? tone : 'var(--color-ink)', background: on ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>
               {text}
             </button>
           );
@@ -71,7 +71,7 @@ export function MorningCheckInCard() {
           <Eyebrow>VANOCHTEND</Eyebrow>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>Hoe voel je je, vergeleken met normaal?</p>
         </div>
-        <button onClick={() => save({ date: today, allNormal: true })} className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-bg)' }}>
+        <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-bg)' }}>
           Alles normaal
         </button>
       </div>
@@ -85,7 +85,7 @@ export function MorningCheckInCard() {
             {Array.from({ length: 11 }, (_, n) => n).map((n) => {
               const on = draft.spot?.score === n;
               return (
-                <button key={n} onClick={() => setDraft({ ...draft, spot: { area: spot.area, score: n } })} aria-pressed={on} className="min-h-[34px] rounded-md border text-[11px] tabular-nums" style={{ borderColor: on ? 'var(--color-warning)' : 'var(--color-card-border)', background: on ? 'var(--color-warning)' : 'transparent', color: on ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
+                <button key={n} onClick={() => setDraft({ ...draft, spot: { area: spot.area, score: n } })} aria-pressed={on} className="min-h-[44px] rounded-md border text-[11px] tabular-nums" style={{ borderColor: on ? 'var(--color-warning)' : 'var(--color-card-border)', background: on ? 'var(--color-warning)' : 'transparent', color: on ? 'var(--color-bg)' : 'var(--color-ink-dim)' }}>
                   {n}
                 </button>
               );
@@ -95,8 +95,8 @@ export function MorningCheckInCard() {
       )}
       <div className="flex items-center justify-between gap-3">
         <NotFitLink />
-        <button disabled={!complete} onClick={() => save({ ...draft, date: today, allNormal: undefined })} className="min-h-[40px] rounded-xl border px-4 text-xs font-semibold tracking-wide disabled:opacity-40" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
-          OPSLAAN
+        <button disabled={!complete} onClick={() => save({ ...draft, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl border px-4 text-xs font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
+          Opslaan
         </button>
       </div>
     </Card>

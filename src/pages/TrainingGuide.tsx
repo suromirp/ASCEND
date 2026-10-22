@@ -57,7 +57,7 @@ export function TrainingGuidePage() {
             >
               <Card className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-medium tracking-wide" style={{ color: 'var(--color-bronze)' }}>{guideDayLabel(template)}</p>
+                  <Eyebrow>{guideDayLabel(template)}</Eyebrow>
                   <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template.name}</p>
                   <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.subtitle}</p>
                 </div>

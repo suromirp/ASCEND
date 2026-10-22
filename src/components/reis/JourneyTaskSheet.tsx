@@ -29,20 +29,20 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose }: { row: Time
             <p className="text-xs font-medium tracking-wide" style={{ color: 'var(--color-gold)' }}>{windowLine(row)}</p>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{task.why}</p>
             {task.link && (task.link.url ? (
-              <a href={task.link.url} target="_blank" rel="noopener noreferrer" className="min-h-[40px] self-start py-2 text-sm underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+              <a href={task.link.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] self-start py-2 text-sm underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
                 {task.link.label} ↗
               </a>
             ) : task.link.to ? (
-              <button onClick={() => navigate(task.link!.to!)} className="min-h-[40px] self-start text-sm underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+              <button onClick={() => navigate(task.link!.to!)} className="min-h-[44px] self-start text-sm underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
                 {task.link.label}
               </button>
             ) : null)}
             <div className="mt-2 flex gap-3">
-              <SecondaryButton onClick={requestClose}>SLUITEN</SecondaryButton>
+              <SecondaryButton onClick={requestClose}>Sluiten</SecondaryButton>
               {done ? (
-                <SecondaryButton onClick={() => { onUntick(); requestClose(); }}>HAAL VINKJE WEG</SecondaryButton>
+                <SecondaryButton onClick={() => { onUntick(); requestClose(); }}>Haal vinkje weg</SecondaryButton>
               ) : (
-                <PrimaryButton onClick={() => { onTick(); requestClose(); }} fullWidth={false}>GEDAAN</PrimaryButton>
+                <PrimaryButton onClick={() => { onTick(); requestClose(); }} fullWidth={false}>Gedaan</PrimaryButton>
               )}
             </div>
           </Card>

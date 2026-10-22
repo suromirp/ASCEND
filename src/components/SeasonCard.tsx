@@ -99,7 +99,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                         role="radio"
                         aria-checked={role === value}
                         onClick={() => void setGoalPlanRole(g.id, value)}
-                        className="min-h-[36px] flex-1 rounded-lg border text-xs font-semibold"
+                        className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                         style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
                       >
                         {label}
@@ -120,7 +120,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
       <p className="text-[11px] leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         De lengte van de fases rekent ASCEND zelf uit vanaf je hoofddoel; aanpassen hoeft niet. Wil je eerder opbouwen, maak dan de Opbouw langer: de basis krijgt wat overblijft.
       </p>
-      <button onClick={() => setEditPhases((v) => !v)} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={editPhases}>
+      <button onClick={() => setEditPhases((v) => !v)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={editPhases}>
         {editPhases ? 'Fases sluiten' : 'Fases aanpassen'}
       </button>
       {editPhases && <PhaseEditor goalDate={main?.targetDate} />}

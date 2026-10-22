@@ -15,7 +15,7 @@ export function StretchAreaPage() {
   if (!area) {
     return (
       <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
-        <button onClick={() => navigate('/stretches')} className="text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <button onClick={() => navigate('/stretches')} className="min-h-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
         <Card>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Onbekend probleemgebied.</p>
         </Card>

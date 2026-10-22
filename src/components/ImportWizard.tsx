@@ -208,8 +208,8 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
                   Klopt er iets niet? Je kunt de import ongedaan maken. Dat kan later ook via Meer, Gegevens.
                 </p>
                 <div className="flex gap-3">
-                  <SecondaryButton onClick={() => void undoImport(step.snapshotId)}>ONGEDAAN MAKEN</SecondaryButton>
-                  <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                  <SecondaryButton onClick={() => void undoImport(step.snapshotId)}>Ongedaan maken</SecondaryButton>
+                  <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
                 </div>
               </div>
             )}
@@ -223,14 +223,14 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
                   Je gegevens staan weer zoals voor de import. Trainingen die je in de tussentijd hebt gelogd, zijn bewaard.
                 </p>
-                <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
               </div>
             )}
 
             {step.kind === 'error' && (
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-danger-text)' }}>{step.message}</p>
-                <PrimaryButton onClick={requestClose}>SLUITEN</PrimaryButton>
+                <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
               </div>
             )}
           </Card>
@@ -292,8 +292,8 @@ function OptionsStep({
       )}
 
       <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton onClick={onNext}>VOLGENDE</PrimaryButton>
+        <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
+        <PrimaryButton onClick={onNext}>Volgende</PrimaryButton>
       </div>
     </div>
   );
@@ -363,8 +363,8 @@ function PreviewStep({ preview, onConfirm, onBack }: { preview: ImportPreview; o
         </p>
       )}
       <div className="mt-2 flex gap-3">
-        <SecondaryButton onClick={onBack}>TERUG</SecondaryButton>
-        <PrimaryButton onClick={onConfirm}>IMPORTEREN</PrimaryButton>
+        <SecondaryButton onClick={onBack}>Terug</SecondaryButton>
+        <PrimaryButton onClick={onConfirm}>Importeren</PrimaryButton>
       </div>
     </div>
   );

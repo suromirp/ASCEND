@@ -64,7 +64,7 @@ export function LegFatigueCard() {
             <span className="text-sm font-medium" style={{ color }}>{word}</span>
           </p>
         </div>
-        <button onClick={() => setOpen((v) => !v)} className="text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+        <button onClick={() => setOpen((v) => !v)} className="inline-flex min-h-[44px] items-center text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
           {open ? 'minder' : 'hoe werkt dit?'}
         </button>
       </div>
@@ -110,7 +110,7 @@ export function LegFatigueCard() {
       {open && (
         <p className="border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
           Elke training laat iets achter in je benen. Hard lopen is na een dag grotendeels weg, kracht en klappen halveren per dag, en spierschade van bergaf of zware beenkracht houdt 3 tot 5 dagen aan. Die drie tellen samen op. 8 of lager is fris genoeg voor een testloop, tot 12 voor een harde training. Het zwaarst telt je beentraining: hoe lang, hoe zwaar en of je eraan gewend bent. Grote verschillen kloppen bijna altijd; rond de grens is het getal onzeker, kijk dan naar je gevoel bij het inlopen.
-          <button onClick={() => setInfo(true)} className="mt-2 block font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
+          <button onClick={() => setInfo(true)} className="flex min-h-[44px] items-center mt-2 font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
         </p>
       )}
       {info && <LegFatigueInfoSheet onClose={() => setInfo(false)} />}

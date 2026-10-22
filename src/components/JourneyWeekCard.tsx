@@ -22,7 +22,7 @@ export function JourneyWeekCard({ suppress = false }: { suppress?: boolean }) {
         </div>
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{task.title}</p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Volgende week komt er een nieuwe taak.</p>
-        <button onClick={() => untick(task.id)} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={() => untick(task.id)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
           Toch nog niet gedaan
         </button>
       </Card>
@@ -33,7 +33,7 @@ export function JourneyWeekCard({ suppress = false }: { suppress?: boolean }) {
     <Card className="flex flex-col gap-2" texture>
       <div className="flex items-baseline justify-between">
         <Eyebrow>DEZE WEEK VOOR DE GR5</Eyebrow>
-        <button onClick={() => navigate('/reis')} className="min-h-[32px] text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={() => navigate('/reis')} className="min-h-[44px] text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
           Alle taken
         </button>
       </div>
@@ -42,8 +42,8 @@ export function JourneyWeekCard({ suppress = false }: { suppress?: boolean }) {
         <span className="line-clamp-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{task.why}</span>
       </button>
       <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={() => postpone(task.id)}>VOLGENDE WEEK</SecondaryButton>
-        <PrimaryButton onClick={() => tick(task.id, { keepForWeek: true })} fullWidth={false}>GEDAAN</PrimaryButton>
+        <SecondaryButton onClick={() => postpone(task.id)}>Volgende week</SecondaryButton>
+        <PrimaryButton onClick={() => tick(task.id, { keepForWeek: true })} fullWidth={false}>Gedaan</PrimaryButton>
       </div>
     </Card>
   );

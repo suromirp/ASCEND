@@ -20,7 +20,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           {translation.text}
         </button>
       ) : (
-        <button type="button" onClick={() => setShowTranslation(true)} className="mt-1 min-h-[32px] text-[11px] tracking-wide underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+        <button type="button" onClick={() => setShowTranslation(true)} className="mt-1 min-h-[44px] text-[11px] underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
           Vertaling
         </button>
       ))}
@@ -31,7 +31,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
             href={wikipediaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline underline-offset-2"
+            className="inline-flex min-h-[44px] items-center underline underline-offset-2"
             style={{ color: 'var(--color-bronze)' }}
           >
             {quote.author}
@@ -45,7 +45,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           href={quote.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 block text-[11px] underline underline-offset-2"
+          className="flex min-h-[44px] items-center mt-1 text-[11px] underline underline-offset-2"
           style={{ color: 'var(--color-sky)' }}
         >
           {quote.sourceLabel ?? 'Bron'} ↗

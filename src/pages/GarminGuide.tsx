@@ -54,7 +54,7 @@ function GuideCardView({ card }: { card: GuideCard }) {
                 href={s.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs underline underline-offset-2"
+                className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2"
                 style={{ color: 'var(--color-sky)' }}
               >
                 {s.label} ↗

@@ -19,8 +19,8 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Pijn op een plek? Een pees, gewricht of bot dat je kunt aanwijzen.</p>
       <div className="mt-2 flex gap-2">
         {([false, true] as const).map((yes) => (
-          <button key={String(yes)} onClick={() => { setAsked(yes); if (!yes) onChange([]); }} aria-pressed={asked === yes} className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold tracking-wide" style={chip(asked === yes, yes)}>
-            {yes ? 'JA' : 'NEE'}
+          <button key={String(yes)} onClick={() => { setAsked(yes); if (!yes) onChange([]); }} aria-pressed={asked === yes} className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold" style={chip(asked === yes, yes)}>
+            {yes ? 'Ja' : 'Nee'}
           </button>
         ))}
       </div>
@@ -36,7 +36,7 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
                   key={area}
                   aria-pressed={on}
                   onClick={() => onChange(on ? value.filter((p) => p.area !== area) : [...value, { area, score: 3 }])}
-                  className="min-h-[40px] rounded-lg border px-3 text-xs"
+                  className="min-h-[44px] rounded-lg border px-3 text-xs"
                   style={chip(on)}
                 >
                   {area}
@@ -51,7 +51,7 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
                 <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{p.area}</p>
                 <div className="flex gap-1">
                   {(['links', 'rechts', 'beide'] as const).map((side) => (
-                    <button key={side} onClick={() => update(p.area, { side: p.side === side ? undefined : side })} aria-pressed={p.side === side} className="min-h-[32px] rounded-md border px-2 text-[11px]" style={chip(p.side === side, false)}>
+                    <button key={side} onClick={() => update(p.area, { side: p.side === side ? undefined : side })} aria-pressed={p.side === side} className="min-h-[44px] rounded-md border px-2 text-[11px]" style={chip(p.side === side, false)}>
                       {side}
                     </button>
                   ))}
@@ -66,7 +66,7 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
                       role="radio"
                       aria-checked={p.score === n}
                       onClick={() => update(p.area, { score: n })}
-                      className="min-h-[36px] rounded-md border text-xs tabular-nums"
+                      className="min-h-[44px] rounded-md border text-xs tabular-nums"
                       style={{
                         borderColor: p.score === n ? 'var(--color-warning)' : 'var(--color-card-border)',
                         background: p.score === n ? 'var(--color-warning)' : 'transparent',
@@ -96,7 +96,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       <span className="text-xs" style={{ color: 'var(--color-ink)' }}>{label}</span>
       <div className="flex gap-1">
         {([false, true] as const).map((v) => (
-          <button key={String(v)} onClick={() => onChange(v)} aria-pressed={on === v} className="min-h-[32px] rounded-md border px-2.5 text-[11px]" style={{ borderColor: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-card-border)', color: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-ink-dim)' }}>
+          <button key={String(v)} onClick={() => onChange(v)} aria-pressed={on === v} className="min-h-[44px] rounded-md border px-2.5 text-[11px]" style={{ borderColor: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-card-border)', color: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-ink-dim)' }}>
             {v ? 'ja' : 'nee'}
           </button>
         ))}

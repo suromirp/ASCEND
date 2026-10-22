@@ -85,7 +85,7 @@ export function CoachCard() {
         ))}
       </div>
       {advice.length > 2 && (
-        <button onClick={() => setShowAll((v) => !v)} className="-mt-1 self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={() => setShowAll((v) => !v)} className="inline-flex min-h-[44px] items-center -mt-1 self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
           {showAll ? 'minder tonen' : `nog ${advice.length - 2} tonen`}
         </button>
       )}
@@ -114,7 +114,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
           <Pill onClick={() => void respond('declined')} disabled={busy}>Liever niet</Pill>
         </>
       ) : (
-        <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Oké</Pill>
+        <Pill primary onClick={() => void respond('accepted')} disabled={busy}>Begrepen</Pill>
       )}
       <WhyToggle open={open} onToggle={() => setOpen((v) => !v)} className="ml-auto" />
     </div>
@@ -125,7 +125,7 @@ export function AdviceItem({ advice, compact = false }: { advice: Advice; compac
   const weekToggle = advice.proposal && (
     <button
       onClick={() => setShowWeek(true)}
-      className="mt-3 flex min-h-[40px] w-full items-center gap-2.5 rounded-xl border px-3 text-left text-xs"
+      className="mt-3 flex min-h-[44px] w-full items-center gap-2.5 rounded-xl border px-3 text-left text-xs"
       style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
     >
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--color-bronze)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -175,7 +175,7 @@ function Pill({ children, onClick, disabled, primary = false }: { children: Reac
     <button
       onClick={onClick}
       disabled={disabled}
-      className="min-h-[36px] whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all active:scale-[0.97] disabled:opacity-40"
+      className="min-h-[44px] whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
       style={primary
         ? { background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-bg)' }
         : { boxShadow: 'inset 0 0 0 1px var(--color-control-border)', color: 'var(--color-ink-dim)' }}

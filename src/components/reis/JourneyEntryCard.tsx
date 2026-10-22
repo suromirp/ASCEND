@@ -28,8 +28,8 @@ export function JourneyEntryCard() {
         <p>Basisgewicht van je paklijst {formatKg(baseWeightGrams(items))}, {packs.have} van {packs.total} onderdelen in huis.</p>
       </div>
       <div className="flex gap-3">
-        <SecondaryButton onClick={() => navigate('/reis/paklijst')}>PAKLIJST</SecondaryButton>
-        <PrimaryButton onClick={() => navigate('/reis')} fullWidth={false}>REISPLANNER</PrimaryButton>
+        <SecondaryButton onClick={() => navigate('/reis/paklijst')}>Paklijst</SecondaryButton>
+        <PrimaryButton onClick={() => navigate('/reis')} fullWidth={false}>Reisplanner</PrimaryButton>
       </div>
     </Card>
   );

@@ -132,13 +132,13 @@ export function GarminLinkPage() {
             <div className="flex flex-col gap-2">
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je sleutel en de opgehaalde activiteiten worden van deze telefoon gewist. Wat je al hebt opgeslagen in je logboek blijft.</p>
               <div className="flex gap-3">
-                <SecondaryButton onClick={() => setConfirmingUnlink(false)} disabled={busy}>ANNULEREN</SecondaryButton>
-                <PrimaryButton fullWidth={false} onClick={() => void unlink()} disabled={busy}>ONTKOPPELEN</PrimaryButton>
+                <SecondaryButton onClick={() => setConfirmingUnlink(false)} disabled={busy}>Annuleren</SecondaryButton>
+                <PrimaryButton fullWidth={false} onClick={() => void unlink()} disabled={busy}>Ontkoppelen</PrimaryButton>
               </div>
             </div>
           ) : (
             <div className="flex gap-3">
-              <SecondaryButton onClick={() => void testStored()} disabled={busy}>{busy ? 'BEZIG…' : 'Verbinding testen'}</SecondaryButton>
+              <SecondaryButton onClick={() => void testStored()} disabled={busy}>{busy ? 'Bezig…' : 'Verbinding testen'}</SecondaryButton>
               <SecondaryButton onClick={() => setConfirmingUnlink(true)} disabled={busy}>Ontkoppelen</SecondaryButton>
             </div>
           )}
@@ -178,7 +178,7 @@ export function GarminLinkPage() {
           </div>
           {notice && <NoticeLine notice={notice} />}
           <PrimaryButton onClick={() => void connect()} disabled={busy || !athleteId.trim() || !apiKey.trim()}>
-            {busy ? 'BEZIG…' : 'Verbinding testen'}
+            {busy ? 'Bezig…' : 'Verbinding testen'}
           </PrimaryButton>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Werkt de verbinding, dan wordt ze bewaard. Zo niet, dan blijft er niets staan.</p>
         </Card>

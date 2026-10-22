@@ -249,7 +249,7 @@ export function SettingsPage() {
     const result = await checkForUpdate();
     setCheckingUpdate(false);
     note('update', result === 'update'
-      ? 'Er is een nieuwe versie. Zodra die binnen is verschijnt onderin BIJWERKEN.'
+      ? 'Er is een nieuwe versie. Zodra die binnen is verschijnt onderin Bijwerken.'
       : result === 'offline'
         ? 'Je bent offline. Zoeken naar een update kan zodra je verbinding hebt.'
       : result === 'latest'
@@ -300,7 +300,7 @@ export function SettingsPage() {
               role="tab"
               aria-selected={tab === t.value}
               onClick={() => selectTab(t.value)}
-              className="flex-1 rounded-lg px-1 py-1.5 text-xs font-medium transition-all active:scale-[0.98]"
+              className="min-h-[44px] flex-1 rounded-lg px-1 py-1.5 text-xs font-medium transition-all active:scale-[0.98]"
               style={tab === t.value ? { background: 'var(--color-card)', color: 'var(--color-gold)', boxShadow: 'inset 0 0 0 1px var(--color-card-border)' } : { color: 'var(--color-ink-dim)' }}
             >
               {t.label}
@@ -337,7 +337,7 @@ export function SettingsPage() {
               Versie {APP_VERSION} · {buildTimeLocal()}
             </p>
             <SecondaryButton onClick={() => void handleCheckUpdate()} disabled={checkingUpdate}>
-              {checkingUpdate ? 'ZOEKEN…' : 'ZOEKEN NAAR UPDATE'}
+              {checkingUpdate ? 'Zoeken…' : 'Zoeken naar update'}
             </SecondaryButton>
             <SectionNote text={notes.update} />
           </Card>
@@ -390,7 +390,7 @@ export function SettingsPage() {
                 : 'Er is geen datum voor je hoofddoel. Geef je doel een datum bij ASCEND, dan rekent ASCEND de fases terug tot die dag.'}
             </p>
             <PhaseEditor goalDate={goalDate} />
-            <button onClick={() => navigate('/ascend/doelen')} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+            <button onClick={() => navigate('/ascend/doelen')} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
               Doelen en tussendoelen beheren
             </button>
             {showLongSundayChoice && <div className="flex flex-col gap-2">
@@ -409,7 +409,7 @@ export function SettingsPage() {
               />
             </div>}
             {!confirmingRestart ? (
-              <SecondaryButton onClick={() => setConfirmingRestart(true)}>OPNIEUW BEGINNEN BIJ WEEK 1</SecondaryButton>
+              <SecondaryButton onClick={() => setConfirmingRestart(true)}>Opnieuw beginnen bij week 1</SecondaryButton>
             ) : (
               <div className="flex flex-col gap-3">
                 <OptionList
@@ -429,7 +429,7 @@ export function SettingsPage() {
                   onChange={setRestartFrom}
                 />
                 <div className="flex gap-3">
-                  <SecondaryButton onClick={() => setConfirmingRestart(false)} disabled={restarting}>ANNULEREN</SecondaryButton>
+                  <SecondaryButton onClick={() => setConfirmingRestart(false)} disabled={restarting}>Annuleren</SecondaryButton>
                   <PrimaryButton
                     fullWidth={false}
                     disabled={restarting}
@@ -441,7 +441,7 @@ export function SettingsPage() {
                       note('program', summary);
                     }}
                   >
-                    {restarting ? 'BEZIG…' : 'BEVESTIGEN'}
+                    {restarting ? 'Bezig…' : 'Bevestigen'}
                   </PrimaryButton>
                 </div>
               </div>
@@ -468,7 +468,7 @@ export function SettingsPage() {
                         <button
                           key={n ?? 'auto'}
                           onClick={() => void handleFrequency(sport, n)}
-                          className="flex-1 rounded-lg border py-1 text-xs"
+                          className="min-h-[44px] flex-1 rounded-lg border py-1 text-xs"
                           style={{ borderColor: selected ? 'var(--color-gold)' : 'var(--color-card-border)', color: selected ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
                         >
                           {n === undefined ? 'Auto' : `${n}×`}
@@ -520,7 +520,7 @@ export function SettingsPage() {
                     aria-checked={on}
                     aria-label={WEEKDAYS_NL[d - 1]}
                     onClick={() => void updateSettings({ restDay: d }).then(() => refresh())}
-                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold tracking-wide"
+                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                     style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
                   >
                     {WEEKDAYS_NL[d - 1].slice(0, 2).toUpperCase()}
@@ -590,8 +590,8 @@ export function SettingsPage() {
               Alle data staat lokaal op dit apparaat. Exporteer regelmatig een back-up.
             </p>
             <BackupStatusLine />
-            <PrimaryButton onClick={handleExport}>EXPORTEER DATA</PrimaryButton>
-            <SecondaryButton onClick={() => setShowImportWizard(true)}>IMPORTEER DATA</SecondaryButton>
+            <PrimaryButton onClick={handleExport}>Exporteer data</PrimaryButton>
+            <SecondaryButton onClick={() => setShowImportWizard(true)}>Importeer data</SecondaryButton>
             {status && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{status}</p>}
           </Card>
 
@@ -599,9 +599,9 @@ export function SettingsPage() {
             <Card className="flex flex-col gap-3">
               <Eyebrow>BACK-UPMAP</Eyebrow>
               <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                Kies een vaste map waar EXPORTEER DATA automatisch naartoe schrijft, zonder elke keer een opslaanvenster.
+                Kies een vaste map waar “Exporteer data” automatisch naartoe schrijft, zonder elke keer een opslaanvenster.
               </p>
-              <SecondaryButton onClick={handleChooseDirectory}>{hasPreferredDirectory ? 'MAP WIJZIGEN' : 'MAP KIEZEN'}</SecondaryButton>
+              <SecondaryButton onClick={handleChooseDirectory}>{hasPreferredDirectory ? 'Map wijzigen' : 'Map kiezen'}</SecondaryButton>
             </Card>
           )}
 
@@ -629,7 +629,7 @@ export function SettingsPage() {
             </Card>
           ) : (
             <div className="flex flex-col gap-2">
-              <button onClick={() => setShowBaselineEditor(false)} className="self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>− verbergen</button>
+              <button onClick={() => setShowBaselineEditor(false)} className="min-h-[44px] self-end text-xs" style={{ color: 'var(--color-ink-dim)' }}>− verbergen</button>
               <BaselineEvidenceCard />
             </div>
           )}
@@ -642,7 +642,7 @@ export function SettingsPage() {
                 Krachtblok-review en aanpassingen voor de komende weken worden normaal ververst als je de app opent. Dit
                 laat ASCEND nu meteen opnieuw kijken en verwijdert niets.
               </p>
-              <SecondaryButton onClick={handleRebuildRecommendations} disabled={rebuilding}>{rebuilding ? 'BEZIG…' : 'HERBOUW AANBEVELINGEN'}</SecondaryButton>
+              <SecondaryButton onClick={handleRebuildRecommendations} disabled={rebuilding}>{rebuilding ? 'Bezig…' : 'Herbouw aanbevelingen'}</SecondaryButton>
               {rebuildStatus && <p className="text-xs" style={{ color: 'var(--color-gold)' }}>{rebuildStatus}</p>}
             </div>
 
@@ -653,20 +653,20 @@ export function SettingsPage() {
                 ongedaan worden gemaakt. Exporteer eerst een back-up als je iets wilt bewaren.
               </p>
               {!confirmingFullReset ? (
-                <button onClick={() => setConfirmingFullReset(true)} className="text-left text-xs" style={{ color: 'var(--color-danger-text)' }}>Alles verwijderen…</button>
+                <button onClick={() => setConfirmingFullReset(true)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-danger-text)' }}>Alles verwijderen…</button>
               ) : (
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-semibold" style={{ color: 'var(--color-danger-text)' }}>Weet je het zeker? Al je gegevens gaan definitief verloren.</p>
-                  <button onClick={handleExport} className="text-left text-xs underline" style={{ color: 'var(--color-gold)' }}>Eerst een back-up exporteren</button>
+                  <button onClick={handleExport} className="inline-flex min-h-[44px] items-center text-left text-xs underline" style={{ color: 'var(--color-gold)' }}>Eerst een back-up exporteren</button>
                   <div className="flex gap-3">
-                    <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>ANNULEREN</SecondaryButton>
+                    <SecondaryButton onClick={() => setConfirmingFullReset(false)} disabled={fullResetting}>Annuleren</SecondaryButton>
                     <button
                       onClick={handleFullReset}
                       disabled={fullResetting}
-                      className="flex-1 rounded-xl py-2.5 text-xs font-semibold tracking-wide transition-all active:scale-[0.97] disabled:opacity-40"
+                      className="min-h-[44px] flex-1 rounded-xl py-2.5 text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
                       style={{ background: 'var(--color-danger)', color: '#fff' }}
                     >
-                      {fullResetting ? 'BEZIG…' : 'JA, ALLES VERWIJDEREN'}
+                      {fullResetting ? 'Bezig…' : 'Ja, alles verwijderen'}
                     </button>
                   </div>
                 </div>
@@ -682,8 +682,8 @@ export function SettingsPage() {
           title={pending.title}
           lines={pending.lines}
           why={pending.proposal.consequences}
-          primaryLabel="NU TOEPASSEN"
-          secondaryLabel="ALLEEN NIEUWE PLANNING"
+          primaryLabel="Nu toepassen"
+          secondaryLabel="Alleen nieuwe planning"
           onPrimary={() => void applyPending()}
           onSecondary={keepForNewPlanning}
           onClose={keepForNewPlanning}
@@ -821,10 +821,10 @@ function DailyBudgetEditor({
           </div>
         ))}
       </div>
-      <button onClick={() => setShowAdvanced((v) => !v)} className="self-start text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={() => setShowAdvanced((v) => !v)} className="min-h-[44px] self-start text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {showAdvanced ? '− verberg harde limiet' : '+ harde limiet per dag'}
       </button>
-      <PrimaryButton onClick={handleSave}>OPSLAAN</PrimaryButton>
+      <PrimaryButton onClick={handleSave}>Opslaan</PrimaryButton>
       <SectionNote text={note} />
     </Card>
   );

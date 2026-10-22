@@ -290,7 +290,7 @@ export function TodayPage() {
       <WeightReminder />
 
       <div className="-mt-2 flex items-center justify-center gap-5">
-        <button onClick={() => setAdHocOpen(true)} className="text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+        <button onClick={() => setAdHocOpen(true)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
           + losse training loggen
         </button>
         <NotFitLink />
@@ -407,8 +407,8 @@ function RestDayCard({ mode, onLogWalk, onDone }: { mode: RestDayMode; onLogWalk
       <h2 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{copy.title}</h2>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{copy.body}</p>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{copy.detail}</p>
-      {mode === 'active' && <PrimaryButton onClick={onDone}>GEDAAN</PrimaryButton>}
-      <button onClick={onLogWalk} className="min-h-[40px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+      {mode === 'active' && <PrimaryButton onClick={onDone}>Gedaan</PrimaryButton>}
+      <button onClick={onLogWalk} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
         {mode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'}
       </button>
     </Card>

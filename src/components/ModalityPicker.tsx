@@ -79,7 +79,7 @@ export function ModalityGuide({ templateId }: { templateId: string }) {
           {m.sources && m.sources.length > 0 && (
             <div className="mt-1 flex flex-col gap-1">
               {m.sources.map((s) => s.url
-                ? <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
+                ? <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
                 : <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>)}
             </div>
           )}

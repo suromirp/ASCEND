@@ -87,16 +87,16 @@ export function SessionActionSheet({
 
               <div className="mt-4">
                 {!confirmingUndo ? (
-                  <SecondaryButton onClick={() => setConfirmingUndo(true)} className="w-full">ONGEDAAN MAKEN</SecondaryButton>
+                  <SecondaryButton onClick={() => setConfirmingUndo(true)} className="w-full">Ongedaan maken</SecondaryButton>
                 ) : (
                   <div className="flex gap-3">
-                    <SecondaryButton onClick={() => setConfirmingUndo(false)}>ANNULEREN</SecondaryButton>
-                    <PrimaryButton onClick={onUndo}>BEVESTIGEN</PrimaryButton>
+                    <SecondaryButton onClick={() => setConfirmingUndo(false)}>Annuleren</SecondaryButton>
+                    <PrimaryButton onClick={onUndo}>Bevestigen</PrimaryButton>
                   </div>
                 )}
               </div>
 
-              <button onClick={requestClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              <button onClick={requestClose} className="min-h-[44px] mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 Sluiten
               </button>
             </Card>
@@ -122,8 +122,8 @@ export function SessionActionSheet({
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                 {REST_DAY_COPY[restMode].detail}
               </p>
-              {restMode === 'active' && onDoneAsPlanned && <SecondaryButton onClick={onDoneAsPlanned} className="mt-3">GEDAAN</SecondaryButton>}
-              <button onClick={() => onStart('full')} className="mt-3 min-h-[40px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+              {restMode === 'active' && onDoneAsPlanned && <SecondaryButton onClick={onDoneAsPlanned} className="mt-3">Gedaan</SecondaryButton>}
+              <button onClick={() => onStart('full')} className="mt-3 min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
                 {restMode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'}
               </button>
               <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
@@ -168,7 +168,7 @@ export function SessionActionSheet({
               ) : (
                 variants.map((v) => (
                   <PrimaryButton key={v} onClick={() => onStart(v)}>
-                    {v === 'full' ? 'TRAINING STARTEN' : v === 'short' ? 'KORTE VERSIE STARTEN' : 'MINIMUMVERSIE STARTEN'}
+                    {v === 'full' ? 'Training starten' : v === 'short' ? 'Korte versie starten' : 'Minimumversie starten'}
                   </PrimaryButton>
                 ))
               )}
@@ -185,7 +185,7 @@ export function SessionActionSheet({
               />
             </div>
 
-            <button onClick={requestClose} className="mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            <button onClick={requestClose} className="min-h-[44px] mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Sluiten
             </button>
           </Card>

@@ -31,8 +31,8 @@ import type { PainReport } from '../models/checkIn';
 
 const REST_TIMER_SECONDS = 90;
 
-const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'VOLLEDIG', short: 'KORT', minimum: 'MINIMUM', custom: 'AANGEPAST' };
-const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'BETER', normal: 'NORMAAL', worse: 'SLECHTER' };
+const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'Volledig', short: 'Kort', minimum: 'Minimum', custom: 'Aangepast' };
+const FEEL_LABEL: Record<'better' | 'normal' | 'worse', string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 
 // Only these days carry the ASCEND Guided / Garmin Suggested / Free
 // Training choice — Herstel just gets the modality picker directly, since
@@ -249,7 +249,7 @@ export function ExerciseLogger({
   const restChosen = selectedModality?.environment === 'rest';
   const planRpe = peak ? rpeRange(INTENSITY[peak].rpe) : undefined;
   const dateLabel = `${weekdayShortNL(scheduledDate ?? today)} ${formatDateNL(scheduledDate ?? today)}`.toUpperCase();
-  const saveLabel = saving ? 'OPSLAAN…' : quickComplete ? 'AFVINKEN' : restChosen ? 'RUSTDAG AFVINKEN' : 'OPSLAAN';
+  const saveLabel = saving ? 'Opslaan…' : quickComplete ? 'Afvinken' : restChosen ? 'Rustdag afvinken' : 'Opslaan';
 
   function goToForm() {
     setReachedForm(true);
@@ -276,7 +276,7 @@ export function ExerciseLogger({
               <button
                 key={v}
                 onClick={() => selectVariant(v)}
-                className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold tracking-wide"
+                className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                 style={{
                   borderColor: variant === v ? 'var(--color-gold)' : 'var(--color-card-border)',
                   color: variant === v ? 'var(--color-gold)' : 'var(--color-ink-dim)',
@@ -327,10 +327,10 @@ export function ExerciseLogger({
                       </div>
                       {!timed && (
                         <div className="mt-1 flex gap-4">
-                          <button onClick={() => setOpenExercise(open ? null : ex.id)} className="min-h-[36px] text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={open}>
+                          <button onClick={() => setOpenExercise(open ? null : ex.id)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={open}>
                             {open ? 'Sluiten' : 'Sets invullen'}
                           </button>
-                          <button onClick={() => setRestTimerFor(ex.exerciseName)} className="min-h-[36px] text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-label={`Rusttimer voor ${ex.exerciseName}`}>
+                          <button onClick={() => setRestTimerFor(ex.exerciseName)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-label={`Rusttimer voor ${ex.exerciseName}`}>
                             Rusttimer
                           </button>
                         </div>
@@ -387,7 +387,7 @@ export function ExerciseLogger({
                 <button
                   key={d}
                   onClick={() => setDoneOn(d)}
-                  className="min-h-[36px] rounded-full border px-3"
+                  className="min-h-[44px] rounded-full border px-3"
                   style={{ borderColor: doneOn === d ? 'var(--color-gold)' : 'var(--color-card-border)', color: doneOn === d ? 'var(--color-gold)' : 'var(--color-ink)' }}
                 >
                   {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
@@ -427,7 +427,7 @@ export function ExerciseLogger({
                     role="radio"
                     aria-checked={active}
                     onClick={() => setRpe(active ? '' : n)}
-                    className="min-h-[40px] rounded-lg border text-sm tabular-nums"
+                    className="min-h-[44px] rounded-lg border text-sm tabular-nums"
                     style={{
                       borderColor: active ? 'var(--color-gold)' : inPlan ? 'var(--color-bronze-dark)' : 'var(--color-card-border)',
                       background: active ? 'var(--color-gold)' : 'transparent',
@@ -459,7 +459,7 @@ export function ExerciseLogger({
                     key={v}
                     onClick={() => setLegsAtStart(legsAtStart === v ? undefined : v)}
                     aria-pressed={legsAtStart === v}
-                    className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold tracking-wide"
+                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                     style={{ borderColor: legsAtStart === v ? 'var(--color-gold)' : 'var(--color-card-border)', color: legsAtStart === v ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
                   >
                     {label}
@@ -477,7 +477,7 @@ export function ExerciseLogger({
                   <button
                     key={f}
                     onClick={() => setSubjectiveFeel(subjectiveFeel === f ? undefined : f)}
-                    className="min-h-[40px] flex-1 rounded-lg border text-xs font-semibold tracking-wide"
+                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                     style={{ borderColor: subjectiveFeel === f ? 'var(--color-gold)' : 'var(--color-card-border)', color: subjectiveFeel === f ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
                   >
                     {FEEL_LABEL[f]}
@@ -508,7 +508,7 @@ export function ExerciseLogger({
                   type="button"
                   onClick={() => setPoles((v) => !v)}
                   aria-pressed={poles}
-                  className="-mt-1 flex min-h-[40px] items-center justify-between rounded-lg border px-3 text-xs font-semibold tracking-wide"
+                  className="-mt-1 flex min-h-[44px] items-center justify-between rounded-lg border px-3 text-xs font-semibold"
                   style={{ borderColor: poles ? 'var(--color-gold)' : 'var(--color-card-border)', color: poles ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
                 >
                   <span>Met stokken</span>
@@ -544,7 +544,7 @@ export function ExerciseLogger({
 
           {supportsGuidanceMode && (
             <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-              <button onClick={() => setOtherOpen((o) => !o)} className="flex min-h-[40px] w-full items-center justify-between text-left text-sm" style={{ color: 'var(--color-ink)' }} aria-expanded={otherOpen}>
+              <button onClick={() => setOtherOpen((o) => !o)} className="flex min-h-[44px] w-full items-center justify-between text-left text-sm" style={{ color: 'var(--color-ink)' }} aria-expanded={otherOpen}>
                 <span>Iets anders gedaan?</span>
                 <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guidanceMode === 'ascend_guided' ? (otherOpen ? 'sluiten' : 'openen') : guidanceMode === 'garmin_suggested' ? 'voorstel van Garmin' : 'eigen training'}</span>
               </button>
@@ -568,7 +568,7 @@ export function ExerciseLogger({
                           <button
                             key={t}
                             onClick={() => setGarminSuggestedType(t)}
-                            className="min-h-[36px] rounded-lg border px-3 text-xs"
+                            className="min-h-[44px] rounded-lg border px-3 text-xs"
                             style={{ borderColor: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-card-border)', color: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-ink)' }}
                           >
                             {GARMIN_TYPE_LABEL[t] ?? t}
@@ -610,14 +610,14 @@ export function ExerciseLogger({
       >
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
           {guide ? (
-            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[96px] flex-none px-4">INFO</SecondaryButton>
+            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[96px] flex-none px-4">Info</SecondaryButton>
           ) : (
-            <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">ANNULEREN</SecondaryButton>
+            <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}
           {reachedForm || restChosen || quickComplete ? (
             <PrimaryButton onClick={handleSave} disabled={saving}>{saveLabel}</PrimaryButton>
           ) : (
-            <PrimaryButton onClick={goToForm}>KLAAR, INVULLEN</PrimaryButton>
+            <PrimaryButton onClick={goToForm}>Klaar, invullen</PrimaryButton>
           )}
         </div>
       </div>

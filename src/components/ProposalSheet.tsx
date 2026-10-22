@@ -208,8 +208,8 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
             </div>
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
-              <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">LIEVER NIET</SecondaryButton>
-              <PrimaryButton onClick={() => void respond('accepted')} disabled={busy} fullWidth={false}>AKKOORD</PrimaryButton>
+              <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">Liever niet</SecondaryButton>
+              <PrimaryButton onClick={() => void respond('accepted')} disabled={busy} fullWidth={false}>Akkoord</PrimaryButton>
             </div>
           </Card>
         </div>

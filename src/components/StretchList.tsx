@@ -28,7 +28,7 @@ export function StretchItems({ stretches, className = 'mt-3 flex flex-col gap-2'
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="shrink-0 text-xs underline underline-offset-2"
+                  className="inline-flex min-h-[44px] items-center shrink-0 text-xs underline underline-offset-2"
                   style={{ color: 'var(--color-sky)' }}
                 >
                   video ↗
@@ -74,7 +74,7 @@ export function StretchList({
     <Card className={className}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between text-left"
+        className="min-h-[44px] flex w-full items-center justify-between text-left"
         aria-expanded={open}
       >
         <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{title}</span>

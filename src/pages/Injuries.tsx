@@ -51,7 +51,7 @@ export function InjuriesPage() {
       </div>
 
       {!showForm ? (
-        <PrimaryButton onClick={() => setShowForm(true)}>BLESSURE TOEVOEGEN</PrimaryButton>
+        <PrimaryButton onClick={() => setShowForm(true)}>Blessure toevoegen</PrimaryButton>
       ) : (
         <Card className="flex flex-col gap-3">
           <Eyebrow>NIEUWE BLESSURE</Eyebrow>
@@ -113,8 +113,8 @@ export function InjuriesPage() {
             />
           </div>
           <div className="flex gap-3">
-            <SecondaryButton onClick={() => setShowForm(false)}>ANNULEREN</SecondaryButton>
-            <PrimaryButton onClick={handleAdd} disabled={!bodyPart.trim()}>OPSLAAN</PrimaryButton>
+            <SecondaryButton onClick={() => setShowForm(false)}>Annuleren</SecondaryButton>
+            <PrimaryButton onClick={handleAdd} disabled={!bodyPart.trim()}>Opslaan</PrimaryButton>
           </div>
         </Card>
       )}
@@ -134,8 +134,8 @@ export function InjuriesPage() {
             </div>
             {n.note && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{n.note}</p>}
             <div className="flex gap-3">
-              <SecondaryButton onClick={() => deleteInjury(n.id)}>VERWIJDEREN</SecondaryButton>
-              <PrimaryButton onClick={() => resolveInjury(n.id)}>MARKEER HERSTELD</PrimaryButton>
+              <SecondaryButton onClick={() => deleteInjury(n.id)}>Verwijderen</SecondaryButton>
+              <PrimaryButton onClick={() => resolveInjury(n.id)}>Markeer hersteld</PrimaryButton>
             </div>
           </Card>
         ))}
@@ -152,7 +152,7 @@ export function InjuriesPage() {
                   {formatDateNL(n.date)} → {n.resolvedDate ? formatDateNL(n.resolvedDate) : ''}
                 </p>
               </div>
-              <button onClick={() => deleteInjury(n.id)} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
+              <button onClick={() => deleteInjury(n.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
             </div>
           ))}
         </div>

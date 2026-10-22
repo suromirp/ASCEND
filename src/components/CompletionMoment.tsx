@@ -1,5 +1,6 @@
 import type { Quote } from '../data/quoteLibrary';
 import { useSheetClose } from '../utils/useSheetClose';
+import { Eyebrow } from './ui';
 
 export interface CelebrationEvent {
   id: string;
@@ -36,9 +37,7 @@ function CompletionCard({ event, onDismiss }: { event: CelebrationEvent; onDismi
         className="pointer-events-auto rounded-2xl border px-6 py-4 text-center shadow-lg"
         style={{ background: 'rgba(23,23,27,0.94)', borderColor: 'var(--color-bronze)', backdropFilter: 'blur(8px)' }}
       >
-        <p className="text-[10px] font-medium tracking-[0.2em]" style={{ color: 'var(--color-bronze)' }}>
-          {event.kind === 'milestone' ? 'MIJLPAAL BEHAALD' : event.kind === 'recovery' ? 'HERSTEL GEDAAN' : 'TRAINING VOLTOOID'}
-        </p>
+        <Eyebrow>{event.kind === 'milestone' ? 'MIJLPAAL BEHAALD' : event.kind === 'recovery' ? 'HERSTEL GEDAAN' : 'TRAINING VOLTOOID'}</Eyebrow>
         {event.coachNote && <p className="mt-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{event.coachNote}</p>}
         <p className="mt-1.5 font-display text-lg leading-snug" style={{ color: 'var(--color-gold)' }}>“{event.quote.quote}”</p>
         <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>– {event.quote.author}</p>

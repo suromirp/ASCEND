@@ -54,7 +54,7 @@ export function StorageProtectionCard() {
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             Zet ASCEND op je beginscherm (in Safari: Deel, Zet op beginscherm) en maak regelmatig een back-up.
           </p>
-          <SecondaryButton onClick={() => void requestPersistentStorage().then(setStatus)}>OPNIEUW VRAGEN</SecondaryButton>
+          <SecondaryButton onClick={() => void requestPersistentStorage().then(setStatus)}>Opnieuw vragen</SecondaryButton>
         </>
       )}
     </Card>
@@ -117,14 +117,14 @@ export function SnapshotsCard() {
                   Je planning, doelen en instellingen gaan terug naar dit moment. Trainingen blijven bewaard.
                 </p>
                 <div className="flex gap-3">
-                  <SecondaryButton onClick={() => setConfirmId(null)} disabled={busy}>ANNULEREN</SecondaryButton>
-                  <SecondaryButton onClick={() => void restore(s.id)} disabled={busy}>{busy ? 'BEZIG…' : 'JA, TERUGZETTEN'}</SecondaryButton>
+                  <SecondaryButton onClick={() => setConfirmId(null)} disabled={busy}>Annuleren</SecondaryButton>
+                  <SecondaryButton onClick={() => void restore(s.id)} disabled={busy}>{busy ? 'Bezig…' : 'Ja, terugzetten'}</SecondaryButton>
                 </div>
               </div>
             ) : (
               <div className="flex gap-3">
-                <SecondaryButton onClick={() => setConfirmId(s.id)}>TERUGZETTEN</SecondaryButton>
-                <SecondaryButton onClick={() => void download(s)}>DOWNLOADEN</SecondaryButton>
+                <SecondaryButton onClick={() => setConfirmId(s.id)}>Terugzetten</SecondaryButton>
+                <SecondaryButton onClick={() => void download(s)}>Downloaden</SecondaryButton>
               </div>
             )}
           </div>

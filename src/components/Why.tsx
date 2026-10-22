@@ -12,7 +12,7 @@ const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
 
 export function WhyToggle({ open, onToggle, className = '' }: { open: boolean; onToggle: () => void; className?: string }) {
   return (
-    <button onClick={onToggle} className={`flex min-h-[32px] items-center gap-1 text-[11px] ${className}`} style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+    <button onClick={onToggle} className={`flex min-h-[44px] items-center gap-1 text-[11px] ${className}`} style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
       waarom
       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden>
         <path d="M6 9l6 6 6-6" />

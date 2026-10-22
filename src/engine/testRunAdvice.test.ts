@@ -123,3 +123,18 @@ describe('TEST-MAKE-ROOM: a test your legs will not be fresh for', () => {
     expect(roomAdvice({ asOf: '2026-10-21', plannedSessions: planned.filter((s) => s.id !== '2026-10-26-2') })).toBeUndefined();
   });
 });
+
+describe('TEST-MAKE-ROOM: the "waarom" does not repeat the advice', () => {
+  it('keeps the explanation out of the advice text: it is only in the why', () => {
+    const scenarios = [
+      roomAdvice({ plannedSessions: skipTest(planned) }),
+      roomAdvice({ plannedSessions: skipTest(planned).filter((s) => s.id !== '2026-10-26-4' && s.id !== '2026-10-26-5') }),
+      roomAdvice({ asOf: '2026-10-21' }),
+    ];
+    for (const advice of scenarios) {
+      expect(advice).toBeDefined();
+      expect(advice!.why.length).toBeGreaterThan(40);
+      expect(advice!.effect).not.toContain(advice!.why);
+    }
+  });
+});
