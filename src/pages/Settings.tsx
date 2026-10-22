@@ -499,6 +499,16 @@ export function SettingsPage() {
               <NavRow label="Reisplanner" note="Wat je nog moet regelen voor de grote tocht" onClick={() => navigate('/reis')} />
               <NavRow label="Paklijst" note="Wat in je rugzak gaat en wat dat weegt" onClick={() => navigate('/reis/paklijst')} />
             </Card>
+            <Card className="flex flex-col gap-2">
+              <Eyebrow>Tochten</Eyebrow>
+              <SwitchRow
+                id="volgende-tocht"
+                title="Eerstvolgende tocht op Vandaag"
+                note="Een rustige regel met je volgende tocht, zolang die eerder is dan je hoofddoel."
+                checked={settings.showNextTrek !== false}
+                onChange={(on) => void updateSettings({ showNextTrek: on })}
+              />
+            </Card>
             <Anchor id="programma">
               <Card className="flex flex-col gap-3">
                 <Eyebrow>PROGRAMMA</Eyebrow>
