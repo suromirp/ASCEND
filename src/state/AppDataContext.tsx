@@ -251,7 +251,11 @@ interface AppData {
   sessionsForWeek: (weekStartDate: string) => PlannedSession[];
   // Resolves false when nothing was stored: the save failed (storageNotice
   // says why) or this planned session already has a log (a double tap).
-  logSession: (input: LogSessionInput) => Promise<boolean>;
+  // `quiet`: no moment after Gedaan for this one; the caller saves several
+  // and then calls announceSaved once, so they get one summary instead of one
+  // screen each (MacroFactor "Alles opslaan").
+  logSession: (input: LogSessionInput, opts?: { quiet?: boolean }) => Promise<boolean>;
+  announceSaved: () => void;
   // A write to local storage failed (storage full, blocked). Shown as a
   // banner so a failed save is never silent.
   storageNotice: string | null;
@@ -491,6 +495,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Planned sessions with a log being written right now: a second tap
   // before the first write lands must not create a second log.
   const loggingInFlight = useRef(new Set<string>());
+  // Logs saved quietly, waiting for announceSaved (components/CompletionMoment.tsx).
+  const savedQuietly = useRef<{ logId: string; recovery: boolean; clearedTitle?: string; coachNote?: string }[]>([]);
   const reportStorageError = useCallback((err: unknown) => {
     const name = err instanceof DOMException || err instanceof Error ? err.name : '';
     setStorageNotice(name === 'QuotaExceededError'
@@ -1109,8 +1115,36 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannedSessions],
   );
 
+  // One moment after Gedaan for everything saved since the last one: a single
+  // log gets its own, several (Alles opslaan) one summary. The debrief follows
+  // for a single log only. A cleared milestone gets the bigger quote and chime.
+  const announceSaved = useCallback(() => {
+    const saved = savedQuietly.current;
+    savedQuietly.current = [];
+    if (saved.length === 0) return;
+    const cleared = saved.filter((s) => s.clearedTitle).at(-1);
+    const last = saved[saved.length - 1];
+    haptics.success();
+    if (settings.introSoundEnabled) {
+      if (cleared) playMilestoneChime();
+      else playSessionCompleteChime();
+    }
+    setCelebration({
+      id: makeId('celebration'),
+      kind: cleared ? 'milestone' : saved.every((s) => s.recovery) ? 'recovery' : 'session',
+      title: cleared?.clearedTitle,
+      quote: cleared ? pickVictoryQuote() : pickCompletionQuote(),
+      // The coach's line only speaks for a single training: three of them
+      // would each say the same.
+      coachNote: saved.length === 1 ? last.coachNote : undefined,
+      logIds: saved.map((s) => s.logId),
+    });
+    // Fase 3 — the debrief (components/DebriefSheet.tsx) opens after the moment.
+    if (saved.length === 1) setDebriefLogId(last.logId);
+  }, [settings.introSoundEnabled]);
+
   const logSession = useCallback(
-    async (input: LogSessionInput): Promise<boolean> => {
+    async (input: LogSessionInput, opts?: { quiet?: boolean }): Promise<boolean> => {
       const plannedId = input.plannedSessionId;
       if (plannedId) {
         if (loggingInFlight.current.has(plannedId)) return false;
@@ -1168,12 +1202,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
 
         await refresh();
+        // Ticked off by itself from the watch (engine/autoTick.ts): no moment
+        // after Gedaan, unless it cleared a milestone.
         if (input.quiet && !clearedTitle) return true;
-        haptics.success();
-        if (settings.introSoundEnabled) {
-          if (clearedTitle) playMilestoneChime();
-          else playSessionCompleteChime();
-        }
         // Every completion gets a quote — a regular session a lighter one, a
         // milestone clear (if this same log happened to satisfy one) the
         // bigger victory-tier treatment with the milestone's title attached.
@@ -1192,14 +1223,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           coachNote = `${coachNote} ${progress}`;
           await MetaRepo.set('aerobicProgressCelebrated', { date: log.completedDate, changeSec: trend.changeSec });
         }
-        setCelebration(
-          clearedTitle
-            ? { id: makeId('celebration'), kind: 'milestone', title: clearedTitle, quote: pickVictoryQuote(), coachNote }
-            : { id: makeId('celebration'), kind: log.type === 'recovery' ? 'recovery' : 'session', quote: pickCompletionQuote(), coachNote },
-        );
-        // Fase 3 — the debrief (components/DebriefSheet.tsx) opens once the
-        // celebration has faded.
-        setDebriefLogId(log.id);
+        savedQuietly.current.push({ logId: log.id, recovery: log.type === 'recovery', clearedTitle, coachNote });
+        if (!opts?.quiet) announceSaved();
         return true;
       } catch (err) {
         reportStorageError(err);
@@ -1208,7 +1233,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (plannedId) loggingInFlight.current.delete(plannedId);
       }
     },
-    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.introSoundEnabled, settings.heartRate, reportStorageError],
+    [trainingGoals, goalMilestones, goalMilestoneProgress, sessionLogs, refresh, settings.heartRate, reportStorageError, announceSaved],
   );
 
   // Undoing a log also removes any milestone auto-cleared by it (matched
@@ -1819,6 +1844,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     refresh,
     sessionsForWeek,
     logSession,
+    announceSaved,
     undoLog,
     setLogFeedback,
     setLogWorkout,

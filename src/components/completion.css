@@ -1,0 +1,67 @@
+/* Het moment na Gedaan (components/CompletionMoment.tsx): één georkestreerde
+   beweging, geen confetti. De contourlijnen verschijnen, de ring en het vinkje
+   worden getekend, twee contourlijnen worden ingekleurd en daarna komen de
+   woorden omhoog, elk 60 tot 100 ms na de vorige. Korte, vertragende
+   bewegingen zonder vering. Alles valt onder de globale regel voor
+   prefers-reduced-motion in index.css: die zet elke animatie op het
+   eindbeeld, dus met verminderde beweging staat alles er meteen. */
+
+@keyframes completion-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes completion-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes completion-draw {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes completion-ink {
+  from { stroke-dasharray: 0 100; }
+  to { stroke-dasharray: var(--ink); }
+}
+
+@keyframes completion-flag {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.completion-in {
+  animation: completion-fade 0.24s ease-out both;
+}
+
+.completion-out {
+  animation: completion-fade 0.2s ease-in both reverse;
+}
+
+/* Elk element met een eigen wachttijd via --d. */
+.completion-appear {
+  animation: completion-fade 0.4s ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+
+.completion-rise {
+  animation: completion-rise 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.completion-draw {
+  stroke-dasharray: 100;
+  animation: completion-draw var(--t, 0.48s) cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.completion-ink {
+  animation: completion-ink 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.completion-flag {
+  animation: completion-flag 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}

@@ -28,7 +28,7 @@ function dayLabel(iso: string): string {
 const isReady = (p: MacroFactorProposal) => p.kind !== 'unmapped';
 
 export function MacroFactorCard() {
-  const { logSession, refresh } = useAppData();
+  const { logSession, announceSaved, refresh } = useAppData();
   const { plan } = useMacroFactor();
   const [saving, setSaving] = useState(false);
   const proposals = plan.proposals;
@@ -40,12 +40,14 @@ export function MacroFactorCard() {
     if (saving) return;
     setSaving(true);
     try {
+      // Quiet: several at once get one summary afterwards, not one screen each.
       for (const p of list) {
-        if (p.kind === 'new') await logSession(p.draft);
+        if (p.kind === 'new') await logSession(p.draft, { quiet: true });
         else if (p.kind === 'supplement') await fillInLog(p.log.id, p.workout, p.template);
       }
       await refresh();
     } finally {
+      announceSaved();
       setSaving(false);
     }
   }
