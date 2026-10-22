@@ -11,6 +11,12 @@ import './index.css'
 import App from './App.tsx'
 import { startServiceWorkerUpdates } from './utils/swUpdate'
 import { installBackLayers } from './utils/backLayers'
+import { installStorageLifecycle } from './storage/lifecycle'
+
+// Before anything touches IndexedDB: out of view or frozen, this window starts
+// no transactions and finishes the open ones, so it never holds the storage
+// for another ASCEND (storage/lifecycle.ts).
+installStorageLifecycle()
 
 // Looking for (and applying) a new version does not wait for the app to boot.
 startServiceWorkerUpdates()

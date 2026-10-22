@@ -33,6 +33,8 @@ import { strayTrekRows } from '../engine/leaveStrays';
 import { relayoutForRestDay } from '../engine/restDayProposal';
 import { TENT_PACK_KG, packMilestoneUpdate, packWeightOf, programPackGoal, programPackTarget } from '../engine/gr5Profile';
 import { makeId } from '../utils/id';
+import { whenStorageOpen } from './lifecycle';
+import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
 import type { JourneyState } from '../engine/journey';
 import type { PackListState } from '../engine/packList';
 
@@ -101,7 +103,15 @@ interface AscendDB extends DBSchema {
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
 
-export function getDB(): Promise<IDBPDatabase<AscendDB>> {
+// While the app is out of view (or frozen), no new transaction starts: a frozen
+// ASCEND with an open transaction would hold the storage for every other
+// ASCEND (storage/lifecycle.ts). The caller simply waits until it is back.
+export async function getDB(): Promise<IDBPDatabase<AscendDB>> {
+  await whenStorageOpen();
+  return openDatabase();
+}
+
+function openDatabase(): Promise<IDBPDatabase<AscendDB>> {
   if (!dbPromise) {
     dbPromise = openDB<AscendDB>(DB_NAME, DB_VERSION, {
       // Guarded with objectStoreNames.contains(...) on every store — this
@@ -1260,6 +1270,9 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
     // 'settings' collapses onto 'meta' — dedupe in case both were present.
     .filter((v, i, arr) => arr.indexOf(v) === i);
   if (storeNames.length === 0) return;
+  // Put-back data has not been through the opening steps yet: forget that they
+  // ran, so the next opening runs them over it (storage/bootMigrations.ts).
+  if (!storeNames.includes('meta')) storeNames.push('meta');
 
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
@@ -1282,6 +1295,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   for (const [key, value] of Object.entries(writes.meta ?? {})) {
     ops.push(tx.objectStore('meta').put(value, key));
   }
+  ops.push(tx.objectStore('meta').delete(BOOT_MIGRATIONS_KEY));
 
   await Promise.all([...ops, tx.done]);
 }
