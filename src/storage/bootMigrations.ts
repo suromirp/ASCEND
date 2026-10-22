@@ -3,25 +3,98 @@
 // de naspeeltest (bootReplay.test.ts) precies dezelfde volgorde draait als de
 // app. De aanroeper zorgt voor het slot (Web Lock) en dat dit één keer per
 // paginalading gebeurt.
+//
+// Welke stappen er zijn, welke onmisbaar zijn en hoe lang een herstelstap mag
+// duren staat in engine/bootWatch.ts (BOOT_MIGRATIONS). Een stap die voor deze
+// versie van de app al gelopen heeft, slaat over zonder iets te lezen of te
+// schrijven: één leesactie in meta zegt dat alles al gedaan is. Een backup
+// terugzetten wist dat geheugen (database.ts#applyBackupWrites), zodat de
+// stappen ook over geïmporteerde gegevens lopen.
 
-import { seedIfEmpty, syncTemplateAndScheduleDefinitions, ensureDefaultTemplates, restorePatternSessionsRemovedByPrescription, normalizePlannedSessionWeeks } from './database';
+import { seedIfEmpty, syncTemplateAndScheduleDefinitions, ensureDefaultTemplates, restorePatternSessionsRemovedByPrescription, normalizePlannedSessionWeeks, MetaRepo } from './database';
 import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from './goalMigration';
 import { syncGr5MilestoneDefinitions } from './goalMilestoneSync';
 import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
+import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
 
-export async function runBootMigrations(): Promise<void> {
-  await seedIfEmpty();
+const STEPS: Record<string, () => Promise<unknown>> = {
+  seedIfEmpty,
   // Replaces the retired syncObjectiveDefinitions() — one-time migration
   // to TrainingGoal/GoalMilestone (Technical Architecture v0.3.1 REVISED,
   // Phase 1), guarded so it only ever runs once.
-  await migrateToGoalEngine();
-  await migrateGoalRouteProfiles();
-  await syncGr5MilestoneDefinitions();
-  await migrateStrengthProgramDefault();
-  await syncTemplateAndScheduleDefinitions();
-  await ensureDefaultTemplates();
-  await restorePatternSessionsRemovedByPrescription();
-  await normalizePlannedSessionWeeks();
+  migrateToGoalEngine,
+  migrateGoalRouteProfiles,
+  syncGr5MilestoneDefinitions,
+  migrateStrengthProgramDefault,
+  syncTemplateAndScheduleDefinitions,
+  ensureDefaultTemplates,
+  restorePatternSessionsRemovedByPrescription,
+  normalizePlannedSessionWeeks,
   // Dubbele automatische regels uit de herschrijffout samenvoegen (idempotent).
-  await mergeDuplicateWeeklyPrescriptionLines();
+  mergeDuplicateWeeklyPrescriptionLines,
+};
+
+export function currentBuild(): string {
+  return typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev';
+}
+
+const TIMED_OUT = Symbol('timed out');
+
+export async function runBootMigrations(
+  options: {
+    onStep?: (id: string) => void;
+    build?: string;
+    stepLimitMs?: number;
+    // For the tests: a step replaced by another function.
+    overrides?: Record<string, () => Promise<unknown>>;
+  } = {},
+): Promise<{ skipped: string[] }> {
+  const build = options.build ?? currentBuild();
+  const limit = options.stepLimitMs ?? BOOT_STEP_LIMIT_MS;
+  // The first read of the opening: when the storage does not answer, it hangs
+  // here, and the screen names it.
+  options.onStep?.(BOOT_MIGRATIONS_KEY);
+  let record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
+  const skipped: string[] = [];
+  let repairsStopped = false;
+  for (const step of migrationsToRun(record, build)) {
+    const run = options.overrides?.[step.id] ?? STEPS[step.id];
+    if (!run) continue;
+    // Na een herstelstap die bleef hangen, komen de andere herstelstappen deze
+    // keer niet: ze schrijven deels dezelfde gegevens, en de hangende kan nog
+    // aan het werk zijn. Volgende keer lopen ze gewoon.
+    if (!step.essential && repairsStopped) {
+      skipped.push(step.id);
+      continue;
+    }
+    options.onStep?.(step.id);
+    if (step.essential) {
+      await run();
+    } else {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const outcome = await Promise.race([
+        run().catch((err: unknown) => {
+          // Een herstelstap die misgaat houdt het openen niet tegen.
+          console.error(`Opstartstap ${step.id} mislukt`, err);
+          return TIMED_OUT;
+        }),
+        new Promise<typeof TIMED_OUT>((resolve) => (timer = setTimeout(() => resolve(TIMED_OUT), limit))),
+      ]);
+      clearTimeout(timer);
+      if (outcome === TIMED_OUT) {
+        console.warn(`Opstartstap ${step.id} niet afgerond; ASCEND opent zonder, volgende keer opnieuw.`);
+        skipped.push(step.id);
+        repairsStopped = true;
+        continue;
+      }
+    }
+    record = recordAfter(record, build, step);
+    await MetaRepo.set(BOOT_MIGRATIONS_KEY, record);
+  }
+  return { skipped };
+}
+
+// Voor de test: elke stap uit engine/bootWatch.ts heeft hier zijn functie.
+export function missingBootSteps(): string[] {
+  return BOOT_MIGRATIONS.map((m) => m.id).filter((id) => !STEPS[id]);
 }

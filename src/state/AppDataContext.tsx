@@ -78,6 +78,14 @@ type AdviceResponse = StoredResponse;
 // promise makes the second caller wait for the first instead.
 let bootMigrations: Promise<void> | null = null;
 let backgroundPlanningStarted = false;
+// The part of the migrations that runs, for the watch on the opening screen
+// (engine/bootWatch.ts#bootStepName): never just "migraties".
+let currentBootMigration: string | null = null;
+const bootMigrationListeners = new Set<(id: string) => void>();
+function noteBootMigration(id: string) {
+  currentBootMigration = id;
+  bootMigrationListeners.forEach((fn) => fn(id));
+}
 
 const syncChannel: BroadcastChannel | null = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ascend-data') : null;
 
@@ -106,7 +114,10 @@ function withBootLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 function runBootMigrationsOnce(): Promise<void> {
-  bootMigrations ??= withBootLock(runBootMigrations).catch((err: unknown) => {
+  bootMigrations ??= withBootLock(async () => {
+    const { skipped } = await runBootMigrations({ onStep: noteBootMigration });
+    if (skipped.length > 0) console.warn('Opstartstappen overgeslagen tot de volgende keer', skipped);
+  }).catch((err: unknown) => {
     // Opnieuw proberen in the same page asks for the lock again.
     bootMigrations = null;
     throw err;
@@ -258,7 +269,7 @@ import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/ov
 // Turns a failed IndexedDB open/read into something the user can act on.
 function describeStorageError(err: unknown): string {
   const name = err instanceof DOMException || err instanceof Error ? err.name : '';
-  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen.';
+  if (name === 'BootLockBusy') return 'ASCEND is in een ander venster nog bezig met opstarten. Sluit andere ASCEND-vensters en tabbladen en tik op Opnieuw proberen. Helpt dat niet, kies dan in je telefooninstellingen Apps, Chrome, Geforceerd stoppen; je gegevens blijven staan.';
   if (name === 'QuotaExceededError') return 'De opslag op dit toestel is vol. Maak ruimte vrij en open ASCEND opnieuw.';
   if (name === 'VersionError') return 'Er draait hier een oudere versie van ASCEND dan je gegevens. ASCEND zoekt de nieuwste versie en werkt zichzelf bij. Tik anders op Bijwerken zodra die knop verschijnt.';
   return 'ASCEND kan op dit toestel geen gegevens opslaan. Gebruik je een privévenster of is opslag voor deze site geblokkeerd? Open de app dan in een normaal venster.';
@@ -272,6 +283,8 @@ interface AppData {
   bootError: string | null;
   // The step of opening that is running (engine/bootWatch.ts).
   bootStep: BootStep;
+  // The migration step that runs (engine/bootWatch.ts#BOOT_MIGRATIONS), or null.
+  bootMigration: string | null;
   program: Program | null;
   templates: SessionTemplate[];
   plannedSessions: PlannedSession[];
@@ -530,6 +543,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [bootError, setBootError] = useState<string | null>(null);
   // Which step of opening is running, for the watch on the opening screen (App.tsx).
   const [bootStep, setBootStep] = useState<BootStep>('migraties');
+  const [bootMigration, setBootMigration] = useState<string | null>(currentBootMigration);
+  useEffect(() => {
+    bootMigrationListeners.add(setBootMigration);
+    return () => void bootMigrationListeners.delete(setBootMigration);
+  }, []);
   const [program, setProgram] = useState<Program | null>(null);
   const [templates, setTemplates] = useState<SessionTemplate[]>([]);
   const [plannedSessions, setPlannedSessions] = useState<PlannedSession[]>([]);
@@ -1989,6 +2007,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     loading,
     bootError,
     bootStep,
+    bootMigration,
     storageNotice,
     reportStorageError,
     dismissStorageNotice: () => setStorageNotice(null),
