@@ -317,6 +317,7 @@ export function SettingsPage() {
             <NavRow label="Trainingsgids" note="Doel, uitvoering en waar op letten per trainingsdag" onClick={() => navigate('/gids')} />
             <NavRow label="Garmin" note="Zones, dataschermen en hoe je de metrics leest" onClick={() => navigate('/garmin')} />
             <NavRow label="Trainingsplekken" note="Waar je in Nederland bergop en bergaf traint" onClick={() => navigate('/plekken')} />
+            <NavRow label="Weer" note="Het weer bij je buitentraining, voor je plaats (Open-Meteo)" onClick={() => navigate('/weer')} />
             <NavRow label="Bronnen" note="Alle onderzoeken en bronnen achter de adviezen" onClick={() => navigate('/bronnen')} />
           </Card>
 

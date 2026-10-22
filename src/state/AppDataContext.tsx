@@ -59,6 +59,7 @@ import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
+import { useWeatherForecast, type WeatherView } from './useWeather';
 import { syncWatchActivities } from '../storage/externalActivities';
 import { syncWatchWorkouts } from '../storage/watchWorkouts';
 
@@ -240,6 +241,8 @@ interface AppData {
   // yet, so this always reflects DEFAULT_GOAL_ENGINE_CONFIG until one does.
   goalEngineConfig: GoalEngineConfig;
   settings: AppSettings;
+  // The forecast for your place (Weer, state/useWeather.ts).
+  weather: WeatherView;
   stretchCompletion: StretchCompletion;
   templateById: Map<string, SessionTemplate>;
   goalOverviews: GoalOverview[];
@@ -1744,6 +1747,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     };
   }, [trainingGoals, goalMilestones, goalOverviews, settings.ambition, settings.restDay, settings.leavePeriods, planChangeLog]);
 
+  const weather = useWeatherForecast(settings.homeLocation, !loading);
+
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).
     () => learnFromDeclines([
@@ -1765,9 +1770,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
         raceGoals: extraSessionContext.races,
+        weather: weather.forecast ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods],
   );
 
   const value: AppData = {
@@ -1787,6 +1793,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     capabilityEvidence,
     goalEngineConfig,
     settings,
+    weather,
     stretchCompletion,
     templateById,
     goalOverviews,

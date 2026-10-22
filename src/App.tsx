@@ -27,6 +27,7 @@ const GarminGuidePage = lazy(() => import('./pages/GarminGuide').then((m) => ({ 
 const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
 const MacroFactorImportPage = lazy(() => import('./pages/MacroFactorImport').then((m) => ({ default: m.MacroFactorImportPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
+const WeatherPage = lazy(() => import('./pages/Weather').then((m) => ({ default: m.WeatherPage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
 const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
@@ -208,6 +209,7 @@ function AppShell() {
             <Route path="/koppelen/macrofactor" element={<MacroFactorImportPage />} />
             <Route path="/bronnen" element={<SourcesPage />} />
             <Route path="/plekken" element={<TrainingSpotsPage />} />
+            <Route path="/weer" element={<WeatherPage />} />
             <Route path="/blessures" element={<InjuriesPage />} />
             <Route path="/reis" element={<JourneyPage />} />
             <Route path="/reis/paklijst" element={<PackListPage />} />

@@ -40,6 +40,9 @@ import { checkTargetTime, racePaces } from './racePaces';
 import { formatRaceTime, testResults } from './racePrediction';
 import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
+import type { WeatherForecast } from '../models/weather';
+import type { LeavePeriod } from '../models/leave';
+import { weatherAdvice } from './weatherSwap';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -105,6 +108,9 @@ export interface AdviceInputs {
   // The races that are a tussendoel (engine/raceBlock.ts), with their target
   // time: the goal time is held against the test (rule TARGET-TIME).
   raceGoals?: RaceBlock[];
+  // The forecast for your place and the moment it is read at (engine/weather.ts,
+  // rule WEATHER-SWAP). Absent without a place or before the first fetch.
+  weather?: { forecast: WeatherForecast; now: Date; leave?: LeavePeriod[] };
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
@@ -1025,6 +1031,7 @@ export function computeAdvice(inputs: AdviceInputs): Advice[] {
     ...repeatWeekAdvice(inputs),
     ...tentPackAdvice(inputs),
     ...targetTimeAdvice(inputs),
+    ...weatherAdvice(inputs, templateById),
     ...morningAdvice(inputs, templateById),
   ]
     .filter((a) => !inputs.respondedIds.has(a.id))

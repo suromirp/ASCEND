@@ -17,6 +17,7 @@ import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
 import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
+import { WeatherLine } from './WeatherLine';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { paceLine, racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
@@ -85,6 +86,8 @@ export function TrainingGuideSheet({
           ) : (
             <h2 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h2>
           )}
+
+          {template && dateIso && <WeatherLine template={template} date={dateIso} className="mt-2" />}
 
           {plan && plan.builds.length > 0 && (
             <>

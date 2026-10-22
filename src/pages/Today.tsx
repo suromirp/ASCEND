@@ -251,7 +251,6 @@ export function TodayPage() {
             yesterdayLogs: sessionLogs.filter((l) => l.completedDate === addDays(today, -1)),
             templateById,
           })}
-          /* weatherSlot={<WeatherLine />}: de weerregel komt tussen de coachregel en de knop. */
         />
       ) : restToday && !allTodayDone ? (
         <QuietDayCard
