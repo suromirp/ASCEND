@@ -104,11 +104,12 @@ describe('opstart twee keer naspelen', () => {
   });
 
   it('de tweede opstart schrijft niets en zet geen regel in het wijzigingslogboek', async () => {
-    // De eerste opstart zet de weekprescriptie voor het eerst; dat mag schrijven en loggen.
+    // De eerste opstart zet de weekprescriptie voor het eerst; dat mag schrijven,
+    // maar het is geen wijziging van een planning die je kende: geen melding.
     const first = await boot();
-    expect(first.weekly.kind).toBe('applied');
+    expect(first.weekly).toEqual({ kind: 'unchanged', wrote: true });
     expect((await TrainingPrescriptionsRepo.getAll()).length).toBeGreaterThan(0);
-    expect((await PlanChangeProposalsRepo.getAll()).length).toBe(1);
+    expect((await PlanChangeProposalsRepo.getAll()).length).toBe(0);
 
     const planningBefore = await PlannedSessionsRepo.getAll();
     const logbookBefore = await PlanChangeProposalsRepo.getAll();
@@ -127,10 +128,26 @@ describe('opstart twee keer naspelen', () => {
     expect(await TrainingPrescriptionsRepo.getAll()).toEqual(trainingBefore);
   });
 
-  it('vijf keer openen laat precies de regel van de eerste keer in het logboek staan', async () => {
+  it('vijf keer openen zet niets in het logboek', async () => {
     for (let i = 0; i < 5; i++) await boot();
     const logbook = await PlanChangeProposalsRepo.getAll();
-    expect(logbook.map((p) => p.issue)).toEqual(['Weekprescriptie bijgewerkt']);
+    expect(logbook.map((p) => p.issue)).toEqual([]);
+  });
+
+  it('na een teruggezette back-up (zonder voorschriften) meldt de eerste opening geen bijgewerkte weekplanning (Doorloop, punt 14)', async () => {
+    await boot();
+    await boot();
+    const trainingBefore = (await TrainingPrescriptionsRepo.getAll()).length;
+    const planningBefore = await PlannedSessionsRepo.getAll();
+    // Een back-up bevat de afgeleide voorschriften niet: na terugzetten zijn ze leeg.
+    for (const w of await WeeklyPrescriptionsRepo.getAll()) await WeeklyPrescriptionsRepo.delete(w.id);
+    for (const t of await TrainingPrescriptionsRepo.getAll()) await TrainingPrescriptionsRepo.delete(t.id);
+    const logbookBefore = await PlanChangeProposalsRepo.getAll();
+    const after = await boot();
+    expect(after.weekly).toEqual({ kind: 'unchanged', wrote: true });
+    expect(await PlanChangeProposalsRepo.getAll()).toEqual(logbookBefore);
+    expect(await PlannedSessionsRepo.getAll()).toEqual(planningBefore);
+    expect((await TrainingPrescriptionsRepo.getAll()).length).toBe(trainingBefore);
   });
 
   it('een echte verandering wordt wel gezien en vastgelegd', async () => {

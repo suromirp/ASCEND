@@ -21,7 +21,7 @@ import { restWeekState } from '../engine/restWeek';
 import { computeCurrentStreak } from '../engine/streak';
 import { computeGoalProgress } from '../engine/progression';
 import { deriveSessionStatus } from '../engine/sessionStatus';
-import { typicalDayValue } from '../engine/goalRoute';
+import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 
 // Je stand: where you are, apart from what to do today. Today stays the
@@ -77,6 +77,9 @@ export function StandingPage() {
     [today, program, plannedSessions, sessionLogs, templates, planChangeLog, settings.illnessEpisodes],
   );
   const streak = useMemo(() => computeCurrentStreak(plannedSessions, sessionLogs), [plannedSessions, sessionLogs]);
+  // The main goal is behind you: nothing planned any more (engine/programLayout.ts#planEndDay).
+  const mainState = primaryGoal?.status === 'active' ? goalTiming(primaryGoal, today).state : undefined;
+  const mainPast = mainState === 'past' && settings.afterMainGoal !== 'maintain';
   // Each number with what it means, in one plain sentence (production
   // feedback: "veel te vaag, wat betekenen deze categorieën").
   const phaseName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -94,14 +97,16 @@ export function StandingPage() {
       value: adherence.enough ? `${adherence.done} van ${adherence.planned}` : 'nog niet',
       text: adherence.enough
         ? `${adherenceSummary(adherence)}. Wat je oversloeg telt als niet gedaan; ziek en rustdagen tellen niet mee. De coach op Ascend telt hetzelfde.`
-        : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
+        : mainPast
+          ? 'Na je hoofddoel staat er niets meer gepland, dus er is niets om te tellen.'
+          : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
     },
     {
       label: 'Fase',
-      value: position ? `week ${position.weekInPhase} van ${position.phase.weekCount}` : 'nog niet',
+      value: position ? `week ${position.weekInPhase} van ${position.phase.weekCount}` : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
       text: position
         ? `${phaseName(position.phase.name)}.${restWeek?.isRestWeek && !restWeek.skipped ? ' Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? ` Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
-        : '',
+        : mainPast || mainState === 'underway' ? 'Het programma naar je hoofddoel is af.' : '',
     },
     {
       label: 'Op rij',

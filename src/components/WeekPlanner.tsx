@@ -123,7 +123,8 @@ export function WeekPlanner({
           const template = templateById.get(s.templateId);
           return template ? [{ s, template }] : [];
         });
-        const showEmpty = rows.length === 0 && (!leaveLabel || leaveLabel.kind === 'free' || leaveLabel.kind === 'light');
+        // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
+        const showEmpty = rows.length === 0 && !leaveLabel;
         return (
           <div key={date} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
             {leaveLabel && (

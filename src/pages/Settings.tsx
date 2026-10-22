@@ -15,7 +15,9 @@ import { classifyChangeImpact, describeChanges, needsConfirmation, CHANGE_APPLY_
 import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProposal } from '../engine/scheduleFit';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTemplates, type Sport } from '../engine/sports';
 import { computeSportFrequencyPlan } from '../engine/sportFrequency';
-import { todayISO, resolveProgramWeek, formatDateNL } from '../utils/dates';
+import { todayISO, resolveProgramWeek, formatDateNL, addDays, mondayOfWeek } from '../utils/dates';
+import { ProposalSheet } from '../components/ProposalSheet';
+import type { RestDayPlan } from '../engine/restDayProposal';
 import { programAnchorDate } from '../engine/programLayout';
 import { HeartRateSettings } from '../components/HeartRateSettings';
 import { AmbitionSettings } from '../components/AmbitionSettings';
@@ -75,7 +77,7 @@ export function SettingsPage() {
   const {
     loading, exportData, settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, injuryNotes,
     rebuildRecommendations, resetDemoData, plannedSessions, templates, sessionLogs, program, commitPlanChange, templateById, restartProgram,
-    refresh, trainingGoals, goalMilestones, strengthExternal, setStrengthExternal,
+    refresh, trainingGoals, goalMilestones, strengthExternal, setStrengthExternal, planRestDay, applyRestDay, planPreviewPass,
   } = useAppData();
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, todayISO());
   // The long-Sunday choice only matters when the main goal is not a
@@ -100,6 +102,7 @@ export function SettingsPage() {
   const [showBaselineEditor, setShowBaselineEditor] = useState(false);
   const [hasPreferredDirectory, setHasPreferredDirectory] = useState(false);
   const [pending, setPending] = useState<PendingImpact | null>(null);
+  const [restPlan, setRestPlan] = useState<RestDayPlan | null>(null);
   const [confirmingRestart, setConfirmingRestart] = useState(false);
   const [restartFrom, setRestartFrom] = useState<'this_week' | 'next_week'>('this_week');
   const [restartMode, setRestartMode] = useState<'clean' | 'count_only'>('clean');
@@ -259,6 +262,17 @@ export function SettingsPage() {
       return;
     }
     await route('sports', `${SPORT_LABEL[sport]}: ${perWeek}x per week`, frequencyPlan(sport, perWeek), restore);
+  }
+
+  // Another rest day is always a proposal with Akkoord (engine/restDayProposal.ts).
+  function chooseRestDay(day: number) {
+    if ((settings.restDay ?? 1) === day) return;
+    const plan = planRestDay(day);
+    if (plan.proposal.changes.length === 0) {
+      void applyRestDay(plan).then(() => note('restDay', 'Opgeslagen. Je planning hoefde niet te veranderen.'));
+      return;
+    }
+    setRestPlan(plan);
   }
 
   async function applyPending() {
@@ -435,7 +449,7 @@ export function SettingsPage() {
                         role="radio"
                         aria-checked={on}
                         aria-label={WEEKDAYS_NL[d - 1]}
-                        onClick={() => void updateSettings({ restDay: d }).then(() => refresh())}
+                        onClick={() => chooseRestDay(d)}
                         className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                         style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
                       >
@@ -445,8 +459,9 @@ export function SettingsPage() {
                   })}
                 </div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Geldt vanaf vandaag. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
+                  Je ziet eerst wat er verschuift, ook deze week, en het geldt pas na Akkoord. Trainingen die je zelf verplaatste of al afvinkte blijven staan.
                 </p>
+                <SectionNote text={notes.restDay} />
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat doe je op die dag?</p>
                 <OptionList
                   options={[
@@ -571,6 +586,21 @@ export function SettingsPage() {
                     }}
                   />
                 </div>}
+                <div id={settingsAnchor('na-hoofddoel')} className="flex flex-col gap-2">
+                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Na je hoofddoel</p>
+                  <OptionList
+                    options={[
+                      { value: 'stop' as const, label: 'Niets meer plannen', note: 'Advies. Tijdens de tocht en daarna staat er geen training, tot je een nieuw doel kiest of dit doel op behaald zet.' },
+                      { value: 'maintain' as const, label: 'Onderhoudsweken', note: 'Na de laatste dag van de tocht plant ASCEND gewone onderhoudsweken. Tijdens de tocht zelf nooit.' },
+                    ]}
+                    value={settings.afterMainGoal ?? 'stop'}
+                    onChange={async (v) => {
+                      await updateSettings({ afterMainGoal: v });
+                      await refresh();
+                      note('program', v === 'stop' ? 'Na je hoofddoel plant ASCEND niets meer.' : 'Na je hoofddoel plant ASCEND onderhoudsweken. Tot die dag verandert er niets.');
+                    }}
+                  />
+                </div>
                 {!confirmingRestart ? (
                   <SecondaryButton onClick={() => setConfirmingRestart(true)}>Opnieuw beginnen bij week 1</SecondaryButton>
                 ) : (
@@ -781,6 +811,33 @@ export function SettingsPage() {
             </Card>
           </GroupSection>
         </>
+      )}
+
+      {restPlan && (
+        <ProposalSheet
+          advice={{
+            id: `restday:${restPlan.restDay}`,
+            trigger: 'plan_update',
+            ruleId: 'REST-DAY',
+            title: 'Zo ziet je planning eruit',
+            effect: restPlan.proposal.consequences,
+            why: restPlan.proposal.explanation,
+            priority: 0,
+            proposal: restPlan.proposal,
+          }}
+          eyebrow={`Rustdag · ${WEEKDAYS_NL[restPlan.restDay - 1]}`}
+          previewPass={(sessions) => planPreviewPass(sessions, undefined, restPlan.restDay)}
+          leave={settings.leavePeriods}
+          notes={['Wat je zelf verplaatste of al afvinkte, je tochten en een test of wedstrijd die je vastzette.']}
+          listUntil={addDays(mondayOfWeek(todayISO()), 13)}
+          onRespond={async (response) => {
+            if (response === 'accepted') {
+              await applyRestDay(restPlan);
+              note('restDay', 'Opgeslagen en toegepast. Onderaan zie je wat er veranderde, met ongedaan maken.');
+            } else note('restDay', 'Je rustdag en je planning blijven zoals ze waren.');
+          }}
+          onClose={() => setRestPlan(null)}
+        />
       )}
 
       {pending && (

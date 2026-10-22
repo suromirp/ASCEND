@@ -39,7 +39,7 @@ import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngin
 import { diffWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionDiff';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
-import { programAnchorDate } from '../engine/programLayout';
+import { planEndDay } from '../engine/programLayout';
 import { isLeaveBlockedDay } from '../engine/leave';
 import { isTemplatePlannable, fixedFrequencySports, templateSport, type Sport } from '../engine/sports';
 
@@ -100,7 +100,7 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   // Never a session on or after the main goal's own day (the plan ends the
   // day before; production: "Lange duurloop toegevoegd op zo 1 augustus
   // 2027", the GR5 start), nor next to a tussendoel's race on its day.
-  const anchorDay = programAnchorDate(goals, await GoalMilestonesRepo.getAll(), asOf);
+  const anchorDay = planEndDay(goals, await GoalMilestonesRepo.getAll(), asOf, appSettings.afterMainGoal);
   const raceDays = new Set(planned.filter((s) => s.templateId === 'tpl_race').map((s) => s.scheduledDate));
   // Nor on a day of a holiday or a trek (engine/leave.ts).
   const blockedDay = (date: string | undefined) => !!date && ((!!anchorDay && date >= anchorDay) || raceDays.has(date) || isLeaveBlockedDay(appSettings.leavePeriods, date));
@@ -115,8 +115,15 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   );
   proposal.changes = delta.changes;
 
-  // 'keep' is geen wijziging.
-  const realChanges = proposal.changes.filter((c) => c.action !== 'keep');
+  // 'keep' is geen wijziging. Bij de eerste opbouw (nog geen enkel voorschrift
+  // opgeslagen: een verse installatie of net een back-up teruggezet, want
+  // voorschriften zijn afgeleide gegevens en zitten niet in de back-up) is het
+  // invullen van de inhoud van trainingen ook geen wijziging: het toestel had
+  // diezelfde inhoud al. Zonder dit meldde de eerste opening na een back-up
+  // "Weekplanning bijgewerkt (9 trainingen)" bij een planning die al klopte
+  // (Doorloop, punt 14).
+  const initialBuild = previousPrescriptions.length === 0 && storedTraining.length === 0;
+  const realChanges = proposal.changes.filter((c) => c.action !== 'keep' && !(initialBuild && (c.action === 'replace' || c.action === 'reduce')));
 
   // Fase 3 — "Wijzigingen toepassen: altijd eerst vragen": the forecast
   // changes become a coach item to accept or decline instead of being
