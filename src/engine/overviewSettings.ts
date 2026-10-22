@@ -93,8 +93,8 @@ export function showMorningCheckInCard(raw: OverviewSettings | undefined, today:
   return morningCheckInMode(raw, today, logs) !== 'none';
 }
 
-// Het weer hoeft alleen opgehaald te worden als iets het gebruikt: de weerregel
-// of de ruilvoorstellen. Staan beide uit, dan gaat er niets naar de weerdienst.
+// Het weer hoeft alleen opgehaald te worden als iets het gebruikt: de weerregel,
+// de ruilvoorstellen of het kledingadvies. Staan alle drie uit, dan gaat er niets naar de weerdienst.
 export const needsWeather = (raw: OverviewSettings | undefined): boolean => {
   const r = resolveOverviews(raw);
   return r.weatherLine || r.weatherSwap || r.clothingAdvice;

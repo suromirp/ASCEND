@@ -12,6 +12,7 @@
 
 import type { ExerciseSetLog, SessionLog, SetLog } from '../models/training';
 import { nameKey, type MacroFactorSet, type MacroFactorWorkout } from './macrofactorImport';
+import { isMissingHelp } from './macrofactorSets';
 import { isWorkSet } from './workSets';
 
 const sameWeight = (a: number | undefined, b: number | undefined) => (a === undefined || b === undefined ? a === b : Math.abs(a - b) < 1e-9);
@@ -20,10 +21,16 @@ function mergeEntry(entry: ExerciseSetLog, fileSets: MacroFactorSet[]): Exercise
   const fileWork = fileSets.filter((s) => s.kind !== 'warmup');
   const storedWork = entry.sets.filter(isWorkSet);
   if (fileWork.length !== storedWork.length || storedWork.length === 0) return undefined;
-  if (!storedWork.every((s, i) => s.reps === fileWork[i].reps && sameWeight(s.weightKg, fileWork[i].weightKg))) return undefined;
+  if (!storedWork.every((s, i) => s.reps === fileWork[i].reps && (sameWeight(s.weightKg, fileWork[i].weightKg) || isMissingHelp(s.weightKg, fileWork[i].weightKg)))) return undefined;
 
   const hasWarmups = entry.sets.some((s) => !isWorkSet(s));
-  const fillRir = (stored: SetLog, file: MacroFactorSet): SetLog => (stored.rir === undefined && file.rir !== undefined ? { ...stored, rir: file.rir } : stored);
+  const fillRir = (stored: SetLog, file: MacroFactorSet): SetLog => {
+    let next = stored;
+    // A stored set without a weight where the file has a negative one: the help on an assisted machine.
+    if (isMissingHelp(next.weightKg, file.weightKg)) next = { ...next, weightKg: file.weightKg };
+    if (next.rir === undefined && file.rir !== undefined) next = { ...next, rir: file.rir };
+    return next;
+  };
 
   let sets: SetLog[];
   if (hasWarmups) {
@@ -66,12 +73,19 @@ export function enrichStrengthData(log: SessionLog, workout: MacroFactorWorkout)
 export function describeEnrichment(log: SessionLog, data: ExerciseSetLog[]): string {
   let rir = false;
   let warmups = false;
+  let help = false;
   (log.strengthData ?? []).forEach((entry, i) => {
     const after = data[i];
     if (after === entry) return;
     if (after.sets.some((s) => !isWorkSet(s)) && !entry.sets.some((s) => !isWorkSet(s))) warmups = true;
+    const beforeWork = entry.sets.filter(isWorkSet);
+    if (after.sets.filter(isWorkSet).some((s, j) => s.weightKg !== undefined && beforeWork[j]?.weightKg === undefined)) help = true;
     if (after.sets.some((s) => s.rir !== undefined) && entry.sets.some((s) => isWorkSet(s) && s.rir === undefined)) rir = true;
   });
-  if (rir && warmups) return 'de herhalingen in reserve en de opwarmsets';
-  return warmups ? 'de opwarmsets' : 'de herhalingen in reserve';
+  const parts: string[] = [];
+  if (help) parts.push('de hulp bij optrekken');
+  if (rir) parts.push('de herhalingen in reserve');
+  if (warmups) parts.push('de opwarmsets');
+  if (parts.length === 0) return 'de herhalingen in reserve';
+  return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} en ${parts[parts.length - 1]}`;
 }

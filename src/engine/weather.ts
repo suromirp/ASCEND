@@ -244,15 +244,16 @@ function windPhrase(w: SessionWeather): string | undefined {
   return undefined;
 }
 
-export function daylightPhrase(d: Daylight): string {
-  if (d.endsAfterSunset) return `donker vanaf ${clockNL(d.sunset)}, neem een lampje mee`;
-  if (d.startsBeforeSunrise) return `donker tot ${clockNL(d.sunrise)}, neem een lampje mee`;
+// `short`: the clothing advice already says what to take along for the dark.
+export function daylightPhrase(d: Daylight, short = false): string {
+  if (d.endsAfterSunset) return `donker vanaf ${clockNL(d.sunset)}${short ? '' : ', neem een lampje mee'}`;
+  if (d.startsBeforeSunrise) return `donker tot ${clockNL(d.sunrise)}${short ? '' : ', neem een lampje mee'}`;
   return `licht tot ${clockNL(d.sunset)}`;
 }
 
 // "14 graden, droog, licht tot 18.12". Heat or cold you feel differently from
 // what the thermometer says comes with the felt temperature.
-export function weatherLine(w: SessionWeather): string {
+export function weatherLine(w: SessionWeather, opts: { darkInClothing?: boolean } = {}): string {
   const temp = Math.round(w.tempC);
   const feels = Math.round(w.feelsC);
   const parts = [Math.abs(feels - temp) >= 4 ? `${temp} graden, voelt als ${feels}` : `${temp} ${Math.abs(temp) === 1 ? 'graad' : 'graden'}`];
@@ -263,7 +264,7 @@ export function weatherLine(w: SessionWeather): string {
   if (w.watch.includes('koud')) parts.push('koud');
   if (w.bad.includes('extreme hitte')) parts.push('extreme hitte');
   if (w.bad.includes('strenge kou')) parts.push('strenge kou');
-  if (w.daylight) parts.push(daylightPhrase(w.daylight));
+  if (w.daylight) parts.push(daylightPhrase(w.daylight, opts.darkInClothing));
   return parts.join(', ');
 }
 

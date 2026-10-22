@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
-import { clothingAdvice, clothingForTraining, clothingKind, isHeatSession, type ClothingInput } from './clothing';
+import { clothingAdvice, clothingForTraining, weatherLineForTraining, clothingKind, isHeatSession, type ClothingInput } from './clothing';
 
 const base: ClothingInput = { kind: 'easy_run', minutes: 60, feelsC: 15, windKmh: 10, gustKmh: 15, precipMm: 0, dark: false };
 const advise = (over: Partial<ClothingInput>) => clothingAdvice({ ...base, ...over });
@@ -278,5 +278,59 @@ describe('clothingKind en clothingForTraining', () => {
   it('geeft een hittesessie geen luchtiger advies', () => {
     const a = clothingForTraining({ forecast: forecast({ feelsC: 28 }), template: template({ id: 'tpl_hitte', name: 'Hittegewenning' }), logs: [], date: '2026-11-03', durationMinutes: 40 });
     expect(a!.lines.join(' ').toLowerCase()).not.toContain('luchtig');
+  });
+});
+
+describe('een aangename dag', () => {
+  it('begint pas bij 15 graden: daaronder staan er nog lange mouwen', () => {
+    // hardlopen: T is voelt als plus 6
+    expect(advise({ kind: 'easy_run', feelsC: 14 }).lines).toEqual(['Shirt en korte broek, meer is niet nodig.']);
+    expect(text({ kind: 'easy_run', feelsC: 9 })).toContain('shirt met korte mouwen');
+    const cool = advise({ kind: 'bike', feelsC: 12 }); // T = 14
+    expect(cool.lines.join(' ')).not.toContain('meer is niet nodig');
+    expect(cool.lines.join(' ').toLowerCase()).toContain('dun shirt met lange mouwen');
+  });
+  it('zegt bij wandelen en bergtochten alleen het shirt', () => {
+    expect(advise({ kind: 'ruck_walk', feelsC: 12, minutes: 60 }).lines).toEqual(['Shirt, meer is niet nodig.']);
+    expect(advise({ kind: 'mountain', feelsC: 12, minutes: 60 }).lines).toEqual(['Shirt, meer is niet nodig.']);
+  });
+});
+
+describe('niets dubbel in de rugzak', () => {
+  it('noemt het windjack niet in de buitenlaag als de rugzakzin het al noemt', () => {
+    const a = advise({ kind: 'ruck_walk', feelsC: 20, minutes: 120, windKmh: 30 });
+    expect(a.packLine).toContain('windjack');
+    expect(a.lines.join(' ').toLowerCase()).not.toContain('windjack');
+  });
+  it('noemt de regenjas niet in de buitenlaag bij een bergtocht met een bui', () => {
+    const a = advise({ kind: 'mountain', feelsC: 12, minutes: 240, precipProb: 40 });
+    expect(a.packLine).toContain('regenjas');
+    expect(a.lines.join(' ').toLowerCase()).not.toContain('regenjas');
+  });
+  it('houdt de buitenlaagregel als er geen rugzakzin is', () => {
+    const a = advise({ kind: 'ruck_walk', feelsC: 20, minutes: 60, windKmh: 30 });
+    expect(a.packLine).toBeUndefined();
+    expect(a.lines.join(' ').toLowerCase()).toContain('windjack in de rugzak');
+  });
+});
+
+describe('het donker in de weerregel', () => {
+  const run = (clothingOn: boolean, id = 'tpl_easy_run') =>
+    weatherLineForTraining({ forecast: forecast(), template: template({ id }), logs: [], date: '2026-11-03', durationMinutes: 40, clothingOn });
+  it('zegt alleen "donker vanaf" als het kledingadvies aan staat en zelf iets over het donker zegt', () => {
+    const on = run(true)!;
+    expect(on).toContain('donker vanaf 16.50');
+    expect(on).not.toContain('lampje');
+  });
+  it('houdt "neem een lampje mee" als het kledingadvies uit staat', () => {
+    expect(run(false)).toContain('neem een lampje mee');
+  });
+  it('houdt "neem een lampje mee" voor een training zonder kledingadvies', () => {
+    const strength = weatherLineForTraining({ forecast: forecast(), template: template({ id: 'tpl_upper_a', type: 'strength' }), logs: [], date: '2026-11-03', durationMinutes: 40, clothingOn: true });
+    expect(strength === undefined || strength.includes('lampje')).toBe(true);
+  });
+  it('geeft bij fietsen maar één lichtzin', () => {
+    const line = run(true, 'tpl_bike')!;
+    expect(line).not.toContain('lampje');
   });
 });

@@ -24,7 +24,7 @@ const SPORT_WORD: Record<Sport, string> = { running: 'hardlopen', hiking: 'wande
 const snap = (n: number) => Math.round(Math.max(-MAX_ADJUST_C, Math.min(MAX_ADJUST_C, n)) / FEEDBACK_STEP_C) * FEEDBACK_STEP_C;
 
 // Reads what is stored, whatever it is: only finite numbers for a known sport
-// count, snapped to half degrees and limited to the range. Zero is not stored.
+// count, snapped to half degrees; a value outside the range is refused. Zero is not stored.
 // `skipped` is how many entries were rejected or had to be repaired.
 export function cleanClothingAdjust(raw: unknown): { value: ClothingAdjust; skipped: number } {
   const value: ClothingAdjust = {};
@@ -35,6 +35,8 @@ export function cleanClothingAdjust(raw: unknown): { value: ClothingAdjust; skip
     if (!(SPORTS as string[]).includes(key)) { skipped++; continue; }
     const v = r[key];
     if (typeof v !== 'number' || !Number.isFinite(v)) { skipped++; continue; }
+    // Out of range is refused, not cut off; only a stray half degree is set right.
+    if (Math.abs(v) > MAX_ADJUST_C) { skipped++; continue; }
     const fixed = snap(v);
     if (fixed !== v) skipped++;
     if (fixed !== 0) value[key as Sport] = fixed;

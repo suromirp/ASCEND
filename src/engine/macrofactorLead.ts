@@ -43,7 +43,7 @@ export function strengthChangeFor(log: SessionLog, workout: MacroFactorWorkout, 
     if (after !== log.durationMinutes) change.duration = { before: log.durationMinutes, after };
   }
   const data = strengthDataFor(workout, template);
-  if (JSON.stringify(legacySetShape(data)) !== JSON.stringify(legacySetShape(log.strengthData))) change.exercises = { before: setCount(log.strengthData), after: setCount(data)! };
+  if (JSON.stringify(legacySetShape(data, log.strengthData)) !== JSON.stringify(legacySetShape(log.strengthData))) change.exercises = { before: setCount(log.strengthData), after: setCount(data)! };
   const rir = strengthRirFor(workout, template);
   if (rir !== undefined && rir !== log.strengthRir) change.rir = { before: log.strengthRir, after: rir };
   return change.duration || change.exercises || change.rir ? change : undefined;

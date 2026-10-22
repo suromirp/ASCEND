@@ -550,6 +550,13 @@ describe('een gewicht dat het profiel niet kent', () => {
     expect(lastWeightMismatch(input)).toBe(false);
     expect(prescribe(input)).toBeDefined();
   });
+  it('een afrondingsverschil van ongeveer 0,1 kg (pounds uit een export) telt nog als hetzelfde gewicht', () => {
+    const db = ex('dumbbell-bench-press');
+    const near = { exercise: db, sessions: [s('2026-09-01', 22.55), s('2026-09-04', 22.55)], date: '2026-09-08', settings };
+    expect(lastWeightMismatch(near)).toBe(false);
+    const far = { exercise: db, sessions: [s('2026-09-01', 22.7), s('2026-09-04', 22.7)], date: '2026-09-08', settings };
+    expect(lastWeightMismatch(far)).toBe(true);
+  });
   it('een gewicht dat wel kan, geeft gewoon een voorstel', () => {
     const db = ex('dumbbell-bench-press');
     const input = { exercise: db, sessions: [s('2026-09-01', 22.5), s('2026-09-04', 22.5)], date: '2026-09-08', settings };

@@ -26,3 +26,7 @@ Niets.
 ## Terugdraaien
 
 Zet de schakelaar uit, of verwijder `<ClothingAdvice />` in `TodayMissionCard.tsx` en `TrainingGuideSheet.tsx` en `<ClothingFeedback />` in `CompletionMoment.tsx`. Het veld `clothingAdjust` in de instellingen blijft dan ongebruikt staan en is onschadelijk.
+
+## Aanvulling na review (22 oktober 2026)
+
+De regel voor een aangename dag in het onderzoeksrapport begint bij 14 graden. Dat botste met de rompregel, die onder 15 nog een dun shirt met lange mouwen zegt. De aangename dag begint nu pas bij 15 graden (de grens voor korte mouwen). Bij wandelen en bergtochten staat er alleen "Shirt, meer is niet nodig.", zonder korte broek: wat je daar aan de benen draagt volgt de gewone beenregel. Verder noemt de weerregel het donker alleen als tijdstip ("donker vanaf 18.12") zodra het kledingadvies aan staat en zelf een regel over het donker toont, en noemt de buitenlaagregel niets wat de rugzakzin al zegt.

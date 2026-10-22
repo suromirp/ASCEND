@@ -193,3 +193,21 @@ describe('the proposal with the switch on', () => {
     expect(Object.keys(p.patch).sort()).toEqual(['externalId', 'strengthData']);
   });
 });
+
+describe('hulp bij optrekken in een hand gemaakte log', () => {
+  it('geeft geen overnamevoorstel voor alleen een ontbrekend gewicht tegenover negatieve hulp', () => {
+    const tplU = tpl('tpl_upper_a');
+    const file: MacroFactorWorkout = {
+      externalId: 'macrofactor:2026-10-14:upper a', date: '2026-10-14', start: '2026-10-14T18:00:00', name: 'Upper A', durationSec: 3600, setCount: 2,
+      exercises: [{ name: 'Assisted Pull-Up', sets: [{ reps: 8, weightKg: -30 }, { reps: 6, weightKg: -30 }], top: { reps: 8, weightKg: -30 } }],
+    };
+    const data = strengthDataFor(file, tplU);
+    const log: SessionLog = {
+      id: 'l', templateId: tplU.id, type: 'strength', completedDate: '2026-10-14', completedAt: '2026-10-14T19:00:00.000Z', variant: 'custom',
+      durationMinutes: 60, source: 'manual', strengthData: data.map((e) => ({ ...e, sets: e.sets.map((s) => ({ reps: s.reps })) })),
+    };
+    expect(strengthChangeFor(log, file, tplU)).toBeUndefined();
+    const other = { ...log, strengthData: data.map((e) => ({ ...e, sets: e.sets.map((s) => ({ reps: s.reps + 1 })) })) };
+    expect(strengthChangeFor(other, file, tplU)?.exercises).toBeDefined();
+  });
+});

@@ -234,8 +234,8 @@ describe('your nudge of the clothing advice and the backup', () => {
 
   it('refuses junk instead of storing it', async () => {
     const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
-    envelope.payload.settings = { ...envelope.payload.settings, clothingAdjust: { running: 'heel warm', hiking: 99, skiing: 1 } };
-    expect(normalizeBackupToCurrentModel(envelope).settings?.clothingAdjust).toEqual({ hiking: 4 });
+    envelope.payload.settings = { ...envelope.payload.settings, clothingAdjust: { running: 'heel warm', hiking: 99, cycling: 1.3, skiing: 1 } };
+    expect(normalizeBackupToCurrentModel(envelope).settings?.clothingAdjust).toEqual({ cycling: 1.5 });
     envelope.payload.settings = { ...envelope.payload.settings, clothingAdjust: 'warm' };
     expect(normalizeBackupToCurrentModel(envelope).settings?.clothingAdjust).toBeUndefined();
   });

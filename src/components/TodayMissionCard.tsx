@@ -98,7 +98,7 @@ export function TodayMissionCard({
           </p>
         )}
         {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-3" />}
-        <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" />
+        <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
       </div>
 
       <WarmupRow template={template} />

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { ExerciseSetLog, SessionLog } from '../models/training';
-import { enrichStrengthData } from './macrofactorEnrich';
+import { describeEnrichment, enrichStrengthData } from './macrofactorEnrich';
 import { planMacroFactor } from './macrofactorLink';
 import type { MacroFactorExercise, MacroFactorSet, MacroFactorWorkout } from './macrofactorImport';
 
@@ -108,5 +108,24 @@ describe('op de importkaart', () => {
   it('een training die de gebruiker liet liggen wordt niet aangevuld', () => {
     const out = planMacroFactor([w], {}, [w.externalId], [], templates, [oldLog(oldData)]);
     expect(out.proposals).toEqual([]);
+  });
+});
+
+describe('de hulp bij optrekken van een oude log', () => {
+  const pull = workout([fileEx('Assisted Pull-Up', [{ reps: 8, weightKg: -30, rir: 2 }, { reps: 6, weightKg: -30, rir: 1 }])]);
+  const oldPull: ExerciseSetLog[] = [{ exerciseId: 'mf_assisted_pull_up', exerciseName: 'Assisted Pull-Up', sets: [{ reps: 8 }, { reps: 6 }] }];
+  it('ziet een ontbrekend gewicht tegenover een negatief gewicht als leeg veld en vult het aan', () => {
+    const data = enrichStrengthData(oldLog(oldPull), pull)!;
+    expect(data[0].sets).toEqual([{ reps: 8, weightKg: -30, rir: 2 }, { reps: 6, weightKg: -30, rir: 1 }]);
+    expect(describeEnrichment(oldLog(oldPull), data)).toBe('de hulp bij optrekken en de herhalingen in reserve');
+  });
+  it('overschrijft een gewicht dat er al staat niet', () => {
+    const own: ExerciseSetLog[] = [{ exerciseId: 'mf_assisted_pull_up', exerciseName: 'Assisted Pull-Up', sets: [{ reps: 8, weightKg: -20 }, { reps: 6, weightKg: -20 }] }];
+    expect(enrichStrengthData(oldLog(own), pull)).toBeUndefined();
+  });
+  it('noemt alleen de hulp als de rir er al staat', () => {
+    const withRir: ExerciseSetLog[] = [{ exerciseId: 'x', exerciseName: 'Assisted Pull-Up', sets: [{ reps: 8, rir: 2 }, { reps: 6, rir: 1 }] }];
+    const data = enrichStrengthData(oldLog(withRir), pull)!;
+    expect(describeEnrichment(oldLog(withRir), data)).toBe('de hulp bij optrekken');
   });
 });

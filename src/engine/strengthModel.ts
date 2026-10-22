@@ -399,6 +399,10 @@ function heaviestWith(candidates: Candidate[], strengthKg: number, rir: number, 
   return 0;
 }
 
+// About a tenth of a kilo: a weight written in pounds (135 lb is 61.23 kg) still
+// counts as the plate it was.
+const WEIGHT_MATCH_KG = 0.1;
+
 export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. Kijk bij je stangen en dumbbells in de instellingen.';
 
 // The weight of the last training is something the gym profile cannot make
@@ -419,7 +423,7 @@ export function lastWeightMismatch(input: PrescribeInput): boolean {
   if (!last?.top) return false;
   const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg });
   if (!candidates) return false;
-  return !candidates.some((c) => Math.abs(c.externalKg - last.top!.weightKg) < 1e-6);
+  return !candidates.some((c) => Math.abs(c.externalKg - last.top!.weightKg) < WEIGHT_MATCH_KG);
 }
 
 export function prescribe(input: PrescribeInput): Prescription | undefined {

@@ -1078,7 +1078,7 @@ function OverviewSettingsCard() {
           </p>
           {hasClothingAdjust(settings.clothingAdjust) && (
             <SecondaryButton className="self-start px-4" onClick={() => void updateSettings({ clothingAdjust: undefined })}>
-              Je voorkeur bijstellen terug naar standaard
+              Terug naar de standaard
             </SecondaryButton>
           )}
         </div>

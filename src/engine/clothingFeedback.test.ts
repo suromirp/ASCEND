@@ -39,8 +39,9 @@ describe('rommel wordt geweigerd', () => {
     expect(skipped).toBe(4);
   });
 
-  it('begrenst en rondt af op halve graden', () => {
-    expect(cleanClothingAdjust({ running: 99, hiking: -99, cycling: 1.3 }).value).toEqual({ running: 4, hiking: -4, cycling: 1.5 });
+  it('weigert waarden buiten plus of min 4 en rondt de rest af op halve graden', () => {
+    expect(cleanClothingAdjust({ running: 99, hiking: -99, cycling: 1.3 }).value).toEqual({ cycling: 1.5 });
+    expect(cleanClothingAdjust({ running: 4, hiking: -4 }).value).toEqual({ running: 4, hiking: -4 });
   });
 
   it('geeft bij geen object een lege bijstelling', () => {

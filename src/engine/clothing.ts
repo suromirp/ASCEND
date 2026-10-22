@@ -20,7 +20,7 @@
 import type { SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast } from '../models/weather';
 import { templateSport } from './sports';
-import { weatherForTraining, type SessionWeather } from './weather';
+import { weatherForTraining, weatherLine, type SessionWeather } from './weather';
 
 // --- what kind of training ------------------------------------------------------
 
@@ -129,8 +129,9 @@ export const CLOTHING_RULES = {
   sunMinutes: 45,
   hotT: 22,
   hotFeels: 25,
-  // A pleasant day: T from 14 up to 22 and dry.
-  pleasantFrom: 14,
+  // A pleasant day: T from the short sleeve band (15) up to 22 and dry. Lower
+  // it clashes with torso(), which still says long sleeves under 15.
+  pleasantFrom: 15,
   pleasantTo: 22,
   // The first ten minutes feel cool when T is more than this above the felt
   // temperature (report), and only when it is cool at all (own addition: not at
@@ -175,6 +176,9 @@ export interface ClothingAdvice {
   lines: string[];
   // On a hike: what goes in the rucksack, one sentence.
   packLine?: string;
+  // True when one of the lines is the one about darkness (it can be dropped on
+  // a crowded day). The weather line leaves the darkness to it then.
+  darkShown?: boolean;
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -207,13 +211,14 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
   const snow = !!input.snow;
 
   const lines: { slot: Slot; text: string; head?: string; hands?: string; skin?: string }[] = [];
-  const packLine = packSentence(input, minutes);
+  const packItemsList = packItems(input, minutes);
+  const packLine = packSentence(input, packItemsList);
 
   // A heat session: dress for the heat on purpose. No advice to go lighter.
   if (input.heatSession) {
     lines.push({ slot: 'body', text: 'Hittetraining: kleed je bewust warm, neem water mee en stop bij duizeligheid of misselijkheid.' });
     if (input.dark) lines.push({ slot: 'dark', text: darkText(kind) });
-    return { lines: lines.map((l) => l.text), packLine };
+    return { lines: lines.map((l) => l.text), packLine, darkShown: input.dark };
   }
 
   // Start sentence.
@@ -246,7 +251,8 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
   const feetText = feetSentence();
   const pleasant = T >= R.pleasantFrom && T < R.pleasantTo && !wet && !shower && !windy && !input.dark && sunParts.length === 0 && !feetText && !startText;
   if (pleasant) {
-    return { lines: ['Shirt en korte broek, meer is niet nodig.'], packLine };
+    // On a walk the trousers are a given (torso() only names legs from 22), so just the shirt.
+    return { lines: [walk ? 'Shirt, meer is niet nodig.' : 'Shirt en korte broek, meer is niet nodig.'], packLine };
   }
 
   // Romp en benen.
@@ -284,7 +290,7 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
   }
   if (lines.length > R.maxLines) drop('feet');
 
-  return { lines: lines.map((l) => l.text), packLine };
+  return { lines: lines.map((l) => l.text), packLine, darkShown: lines.some((l) => l.slot === 'dark') };
 
   // --- pieces, inside so they share T, Th and the flags -------------------------
 
@@ -322,14 +328,16 @@ export function clothingAdvice(input: ClothingInput): ClothingAdvice {
     }
     if (shower) {
       if (kind === 'rest_walk') out.push('Een regenjack mee.');
-      else if (walk) out.push('Regenjas in de rugzak.');
+      else if (walk) {
+        if (!packItemsList?.includes('regenjas')) out.push('Regenjas in de rugzak.');
+      }
       else if (minutes >= R.showerLongMinutes) out.push('Een licht jack mee, bijvoorbeeld om je heupen.');
     }
     if (windy && T >= R.torsoSecondLayer) {
       const skipForEffort = (kind === 'intervals' || kind === 'race') && T > R.windSkipIntervalsAbove;
       if (!skipForEffort) {
         if (T < R.windJacketBelow) out.push('Dun windjack aan.');
-        else if (walk) out.push('Windjack in de rugzak.');
+        else if (walk && !packItemsList?.includes('windjack')) out.push('Windjack in de rugzak.');
       }
     }
     return out;
@@ -348,8 +356,8 @@ function darkText(kind: ClothingKind): string {
   return 'Hoofdlamp of lampje, en iets reflecterends of fel gekleurds op je romp.';
 }
 
-// One sentence about the rucksack, for a hike (report, "Rugzakzin bij een tocht").
-function packSentence(input: ClothingInput, minutes: number): string | undefined {
+// What goes in the rucksack on a hike (report, "Rugzakzin bij een tocht").
+function packItems(input: ClothingInput, minutes: number): string[] | undefined {
   const R = CLOTHING_RULES;
   const { kind } = input;
   const mountain = kind === 'mountain';
@@ -363,9 +371,14 @@ function packSentence(input: ClothingInput, minutes: number): string | undefined
   if (mountain || windy) items.push('windjack');
   if (mountain) items.push('regenjas', 'zonnebril');
   if (input.snow) items.push('droge sokken', 'gamaschen');
-  if (items.length === 0) return undefined;
+  return items.length === 0 ? undefined : items;
+}
+
+// One sentence about the rucksack, for a hike.
+function packSentence(input: ClothingInput, items: string[] | undefined): string | undefined {
+  if (!items) return undefined;
   const list = joinNL(items);
-  return mountain ? `Boven is het kouder en waait het harder, dus in de rugzak: ${list}.` : `In de rugzak: ${list}.`;
+  return input.kind === 'mountain' ? `Boven is het kouder en waait het harder, dus in de rugzak: ${list}.` : `In de rugzak: ${list}.`;
 }
 
 // --- from a training to an advice -----------------------------------------------
@@ -405,4 +418,14 @@ export function clothingFromWeather(w: SessionWeather, kind: ClothingKind, minut
     heatSession: opts.heatSession,
     adjustC: opts.adjustC,
   });
+}
+
+// The weather line of a training, with the darkness left out when the clothing
+// advice (switch on) already has a line about it, so it is not said twice.
+export function weatherLineForTraining(input: Parameters<typeof clothingForTraining>[0] & { clothingOn: boolean }): string | undefined {
+  const w = weatherForTraining({ forecast: input.forecast, template: input.template, logs: input.logs, date: input.date, durationMinutes: input.durationMinutes, now: input.now });
+  if (!w) return undefined;
+  if (!input.clothingOn) return w.line;
+  const advice = clothingForTraining(input);
+  return advice?.darkShown ? weatherLine(w, { darkInClothing: true }) : w.line;
 }

@@ -98,6 +98,11 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
   const { settings } = useAppData();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   const exercise = history.exercise;
+  // Pull-ups with help: the help is negative, so a line of it goes up while the
+  // number goes down. With a body weight the line shows what you lift yourself.
+  const assisted = exercise?.resistance === 'assisted_bodyweight';
+  const liftedKg = assisted ? bodyKg : undefined;
+  const chartLine = liftedKg ? line.map((p) => ({ ...p, value: liftedKg + p.value })) : line;
   const count = history.sessions.length;
 
   let missing: string | undefined;
@@ -126,7 +131,12 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
       )}
       {line.length >= 2 && (
         <div className="font-sans tabular-nums">
-          <TrendLineChart points={line} color="var(--color-bronze)" height={90} formatValue={(v) => kg(Math.abs(v))} />
+          <TrendLineChart points={chartLine} color="var(--color-bronze)" height={90} formatValue={assisted && !liftedKg ? (v) => `hulp ${kg(Math.abs(v))}` : (v) => kg(Math.abs(v))} />
+          {assisted && (
+            <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              {liftedKg ? 'De lijn laat zien hoeveel je zelf optilt: je lichaamsgewicht min de hulp. Hoger is sterker.' : 'De lijn laat de hulp zien. Hoger op de lijn is minder hulp, dus sterker.'}
+            </p>
+          )}
         </div>
       )}
       {line.length === 1 && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>}

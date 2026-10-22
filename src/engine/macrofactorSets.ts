@@ -65,9 +65,21 @@ export function minutesLabel(minutes: number): string {
 // The sets as ASCEND kept them before reps in reserve and warm-ups were stored:
 // working sets with reps and weight only. Used to find out whether a log
 // already holds what the file holds.
-export function legacySetShape(data: SessionLog['strengthData']): unknown {
-  return data?.map((e) => ({
-    ...e,
-    sets: e.sets.filter(isWorkSet).map((s) => (s.weightKg !== undefined ? { reps: s.reps, weightKg: s.weightKg } : { reps: s.reps })),
-  }));
+// A weight the log lacks, against a negative weight in the file: the help on an
+// assisted machine that an older import did not keep. Counts as an empty field.
+export const isMissingHelp = (stored: number | undefined, file: number | undefined): boolean => stored === undefined && file !== undefined && file < 0;
+
+// `reference` is the data the shape is compared with: a negative weight in
+// this data that the reference lacks is left out, so it does not count as a difference.
+export function legacySetShape(data: SessionLog['strengthData'], reference?: SessionLog['strengthData']): unknown {
+  return data?.map((e, ei) => {
+    const refWork = reference?.[ei]?.sets.filter(isWorkSet);
+    return {
+      ...e,
+      sets: e.sets.filter(isWorkSet).map((s, si) => {
+        const keep = s.weightKg !== undefined && !(refWork && si < refWork.length && isMissingHelp(refWork[si].weightKg, s.weightKg));
+        return keep ? { reps: s.reps, weightKg: s.weightKg } : { reps: s.reps };
+      }),
+    };
+  });
 }
