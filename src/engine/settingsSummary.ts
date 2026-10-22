@@ -19,6 +19,7 @@ import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from './sports';
 import { readClothingAdjust } from './clothingFeedback';
 import { backupAge, backupAgoText } from './settingsAttention';
 import { shortGoalName } from './settingsStatus';
+import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { formatNumberNL } from '../utils/number';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
@@ -415,3 +416,11 @@ export function searchValue(rowId: string, f: SettingsFacts): { text: string; di
   return { text: r.value ?? '', dim: !!r.dim };
 }
 
+
+// De regel onder een training in het blad Trainingsduur: waar de duur vandaan komt.
+export function durationNote(source: 'learned' | 'estimate' | 'default', basedOn: number, usable: number): string {
+  if (source === 'learned') return `Uit ${plural(basedOn, 'training', 'trainingen')}`;
+  if (source === 'estimate') return 'Jouw schatting';
+  const missing = Math.max(1, MIN_LOGS_TO_LEARN - usable);
+  return `Standaard, nog ${plural(missing, 'training', 'trainingen')}`;
+}

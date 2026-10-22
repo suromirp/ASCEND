@@ -43,7 +43,7 @@ function Block({ title, helper, first = false, children }: { title: string; help
 }
 
 // Bars or plates: the usual weights as chips, your own below them.
-function WeightPicker({ kind, list, onChange }: { kind: WeightKind; list: number[]; onChange: (list: number[]) => void }) {
+export function WeightPicker({ kind, list, onChange }: { kind: WeightKind; list: number[]; onChange: (list: number[]) => void }) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<number | undefined>();
   const [refused, setRefused] = useState<string | undefined>();
@@ -118,7 +118,7 @@ function KgStepper({ label, value, step, min, max, onChange }: { label: string; 
   );
 }
 
-function Dumbbells({ rack, onChange }: { rack: GymProfile['dumbbells']; onChange: (rack: GymProfile['dumbbells']) => void }) {
+export function Dumbbells({ rack, onChange }: { rack: GymProfile['dumbbells']; onChange: (rack: GymProfile['dumbbells']) => void }) {
   const [customOpen, setCustomOpen] = useState(false);
   const preset = detectDumbbellPreset(rack);
   const custom = customOpen || preset === undefined;
@@ -132,9 +132,9 @@ function Dumbbells({ rack, onChange }: { rack: GymProfile['dumbbells']; onChange
         <KgStepper label="Lichtste" value={rack.startKg} step={1} min={RACK_LIMITS.startMin} max={Math.min(RACK_LIMITS.startMax, rack.maxKg)} onChange={(v) => onChange(setRackBound(rack, 'startKg', v))} />
         <KgStepper label="Zwaarste" value={rack.maxKg} step={2.5} min={rack.startKg} max={RACK_LIMITS.maxMax} onChange={(v) => onChange(setRackBound(rack, 'maxKg', v))} />
       </div>
-      <div>
-        <p className="text-xs" style={dim}>Stap tussen twee dumbbells</p>
-        <div className="mt-1 flex flex-wrap gap-2">
+      <div className="mt-3">
+        <p className="st-lab">Stap</p>
+        <div className="flex flex-wrap gap-2">
           {DUMBBELL_PRESETS.map((p) => (
             <Chip key={p.id} selected={!custom && preset === p.id} onClick={() => { setCustomOpen(false); onChange(applyDumbbellPreset(rack, p.id)); }}>
               <span className="font-sans tabular-nums">{p.label}</span>
@@ -151,19 +151,18 @@ function Dumbbells({ rack, onChange }: { rack: GymProfile['dumbbells']; onChange
         </div>
       )}
       <div className="rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }} aria-live="polite">
-        <p className="text-xs" style={dim}>Dit kun je pakken</p>
+        <p className="text-xs" style={dim}>Dit kun je pakken, <span className="font-sans tabular-nums">{series.total}</span> gewichten</p>
         <p className="mt-1 font-sans text-sm leading-relaxed tabular-nums" style={{ color: 'var(--color-ink)' }}>
           {series.head.map(kg).join(', ')}
           {series.gap && <span style={dim}> ... </span>}
           <span className="whitespace-nowrap">{series.tail.map(kg).join(', ')} kg</span>
         </p>
-        <p className="mt-1 text-xs" style={dim}><span className="font-sans tabular-nums">{series.total}</span> gewichten</p>
       </div>
     </div>
   );
 }
 
-function StackStep({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function StackStep({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [customOpen, setCustomOpen] = useState(false);
   const custom = customOpen || !isCommonStackStep(value);
   return (

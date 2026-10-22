@@ -6,10 +6,13 @@ import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { useFlashOnMount, useJumpState } from '../../components/settings/jump';
 import type { GroupProps } from '../../components/settings/groups/types';
 import { Soon } from '../../components/settings/groups/Soon';
+import { ForgeGroup } from '../../components/settings/groups/ForgeGroup';
 import { SETTINGS_ROOT, isSettingsPageId, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
 // Welke inhoud bij welke groep hoort. Een groep die er nog niet is, toont Soon.
-const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {};
+const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
+  forge: ForgeGroup,
+};
 
 // Eén groep: terug naar het overzicht, de titel en de rijen. Een sprong (zoeken, een
 // link vanaf een andere pagina) scrolt naar de rij en laat hem oplichten; hoort er een

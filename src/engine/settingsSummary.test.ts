@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, type SettingsFacts } from './settingsSummary';
+import { durationNote, groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, type SettingsFacts } from './settingsSummary';
 import { PAGE_ROWS, SETTINGS_PAGES, allRowIds } from '../data/settingsLayout';
 import { DEFAULT_WATCH_USE } from './watchUse';
 
@@ -270,5 +270,14 @@ describe('de regel onder een rij is kort genoeg', () => {
         for (const t of texts) expect(t).not.toMatch(/[–—]/);
       }
     }
+  });
+});
+
+describe('durationNote', () => {
+  it('zegt waar de duur vandaan komt', () => {
+    expect(durationNote('learned', 3, 3)).toBe('Uit 3 trainingen');
+    expect(durationNote('estimate', 0, 1)).toBe('Jouw schatting');
+    expect(durationNote('default', 0, 2)).toBe('Standaard, nog 1 training');
+    expect(durationNote('default', 0, 0)).toBe('Standaard, nog 3 trainingen');
   });
 });
