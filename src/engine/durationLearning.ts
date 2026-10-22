@@ -29,12 +29,19 @@ function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-export function predictDuration(template: SessionTemplate, logs: SessionLog[], estimate: number | undefined): DurationPrediction {
-  const recent = logs
+// The full trainings of this template with a duration that makes sense, newest first.
+function usableDurations(template: SessionTemplate, logs: SessionLog[]): number[] {
+  return logs
     .filter((l) => l.templateId === template.id && l.variant === 'full' && l.durationMinutes >= 10 && l.durationMinutes <= 240)
     .sort((a, b) => (a.completedDate < b.completedDate ? 1 : -1))
-    .slice(0, RECENT_LOGS)
     .map((l) => l.durationMinutes);
+}
+
+// How many trainings of this template count toward learning the duration.
+export const usableLogCount = (template: SessionTemplate, logs: SessionLog[]): number => usableDurations(template, logs).length;
+
+export function predictDuration(template: SessionTemplate, logs: SessionLog[], estimate: number | undefined): DurationPrediction {
+  const recent = usableDurations(template, logs).slice(0, RECENT_LOGS);
   if (recent.length >= MIN_LOGS_TO_LEARN) {
     return { minutes: Math.max(10, Math.round(median(recent) / 5) * 5), source: 'learned', basedOn: recent.length };
   }

@@ -149,6 +149,14 @@ const PATHS = {
   ),
   // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
   verder: <path d="M9.5 6l6 6-6 6" />,
+  // Terug naar het vorige scherm, en het teken in een InfoButton.
+  terug: <path d="M14.5 6l-6 6 6 6" />,
+  info: (
+    <>
+      <path d="M12 11v5.5" />
+      <path d="M12 7.6v.1" />
+    </>
+  ),
   // Een pijltje schuin omhoog uit een vak, voor een link die buiten ASCEND opent.
   buiten: <path d="M10 6H7a1.5 1.5 0 0 0-1.5 1.5v9.5A1.5 1.5 0 0 0 7 18.5h9.5A1.5 1.5 0 0 0 18 17v-3M13.5 5.5h5v5M18.5 5.5l-7 7" />,
   // Bij een stapper en een eigen waarde.

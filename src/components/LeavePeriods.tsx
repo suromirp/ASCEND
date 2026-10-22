@@ -17,6 +17,7 @@ import { makeId } from '../utils/id';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
+import { SettingsLinkRow } from './settings/SettingsLink';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
 
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
@@ -221,6 +222,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
               <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 Je ziet eerst wat er in je planning verandert. Pas na jouw akkoord wordt de periode bewaard.
               </p>
+              <SettingsLinkRow page="doel" row="rust-na-tocht" label="Rust na een bergtocht instellen" />
             </div>
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>

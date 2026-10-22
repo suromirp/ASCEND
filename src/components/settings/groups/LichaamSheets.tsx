@@ -1,0 +1,151 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppData } from '../../../state/AppDataContext';
+import { CHOICES } from '../../../data/settingsChoices';
+import { INTENSITY, type Intensity } from '../../../data/workoutStructure';
+import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
+import { zoneBpm } from '../../../engine/heartRateZones';
+import { shortDate } from '../../../engine/settingsSummary';
+import { formatNumberNL } from '../../../utils/number';
+import { todayISO } from '../../../utils/dates';
+import { NumberField } from '../../NumberField';
+import { AutoTag, InfoButton } from '../../ui';
+import { SettingsFieldRow, SettingsList, SettingsRow } from '../SettingsList';
+import { InfoSheet, Sheet } from '../Sheet';
+import { ChoiceFromDef } from './ChoiceFromDef';
+
+// Lichaamsgewicht: het getal groot, waar het vandaan komt, de schakelaar voor MacroFactor
+// en de herinnering. Een eigen gewicht invullen kan, maar is de uitzondering.
+export function WeightSheet({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const { settings, updateSettings } = useAppData();
+  const [reminder, setReminder] = useState(false);
+  const [self, setSelf] = useState(false);
+  const [help, setHelp] = useState(false);
+  const [kgDraft, setKgDraft] = useState<number | undefined>();
+  const today = todayISO();
+  const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor);
+  const last = latestWeight(entries);
+  const fresh = freshMacroFactorWeight(settings.weightEntries, settings.weightFromMacroFactor, today);
+  const fromMf = last?.source === 'macrofactor';
+  const days = settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS;
+
+  async function save() {
+    if (!kgDraft) return;
+    await updateSettings({ weightEntries: addWeightEntry(settings.weightEntries, { date: today, kg: kgDraft, source: 'manual' }) });
+    setSelf(false);
+  }
+
+  const basis = fresh?.basis ?? last?.basis;
+  return (
+    <>
+      <Sheet eyebrow="Lichaam" title="Lichaamsgewicht" onClose={onClose}>
+        {(close) => (
+          <>
+            {last ? (
+              <>
+                <div className="st-hero"><span className="n">{formatNumberNL(last.kg, 1)}</span><span className="u">kg</span></div>
+                <div className="st-src">
+                  {fromMf && <AutoTag />}
+                  <span className="st-num">
+                    {fromMf ? `${basis === 'scale' ? 'Gewicht' : 'Trendgewicht'} uit MacroFactor, ${shortDate(last.date)}` : `Zelf ingevuld, ${shortDate(last.date)}`}
+                  </span>
+                  <InfoButton compact label="Uitleg: lichaamsgewicht" onClick={() => setHelp(true)} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="st-hero"><span className="n dim">--,-</span><span className="u">kg</span></div>
+                <div className="st-src">Nog geen gewicht ingevuld.</div>
+              </>
+            )}
+
+            <SettingsList className="mt-4">
+              <SettingsRow
+                id="gewicht-macrofactor"
+                title="Uit MacroFactor"
+                kind="toggle"
+                checked={settings.weightFromMacroFactor !== false}
+                onChange={(on) => void updateSettings({ weightFromMacroFactor: on })}
+              />
+              <SettingsRow id="gewicht-herinnering" title="Herinnering" value={CHOICES.herinnering.options.find((o) => o.value === days)?.label ?? 'Nooit'} onClick={() => setReminder(true)} />
+            </SettingsList>
+
+            <div className="st-btns">
+              <button type="button" className="st-btn" onClick={() => { close(); navigate('/koppelen/macrofactor'); }}>Export inlezen</button>
+              <button type="button" className="st-btn" onClick={() => setSelf((s) => !s)}>Zelf invullen</button>
+            </div>
+
+            {self && (
+              <>
+                <SettingsList className="mt-4">
+                  <SettingsFieldRow id="gewicht-zelf" title="Trendgewicht">
+                    <span style={{ width: 120 }}>
+                      <NumberField tall unit="kg" decimals={1} value={kgDraft} placeholder={last ? formatNumberNL(last.kg, 1) : '85,6'} onChange={setKgDraft} />
+                    </span>
+                  </SettingsFieldRow>
+                </SettingsList>
+                <div className="st-btns">
+                  <button type="button" className="st-btn" disabled={!kgDraft} onClick={() => void save()}>Opslaan</button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </Sheet>
+      {reminder && (
+        <ChoiceFromDef
+          def={CHOICES.herinnering}
+          value={days as 0 | 7 | 14 | 28}
+          onPick={(v) => void updateSettings({ weightReminderDays: v })}
+          onClose={() => setReminder(false)}
+        />
+      )}
+      {help && <InfoSheet helpKey="gewicht" onClose={() => setHelp(false)} />}
+    </>
+  );
+}
+
+// Hartslag: je drempel en je maximum, en de zones in slagen per minuut. De hartslag in rust
+// staat niet meer op het scherm (nergens in ASCEND gebruikt); een opgeslagen waarde blijft staan.
+const ZONES: { level: Intensity; color: string }[] = [
+  { level: 1, color: 'var(--color-sky)' },
+  { level: 2, color: 'var(--color-alpine)' },
+  { level: 3, color: 'var(--color-bronze)' },
+  { level: 4, color: 'var(--color-danger-text)' },
+];
+
+export function HeartRateSheet({ onClose }: { onClose: () => void }) {
+  const { settings, updateSettings } = useAppData();
+  const hr = settings.heartRate ?? {};
+  const set = (patch: Partial<typeof hr>) => void updateSettings({ heartRate: { ...hr, ...patch } });
+  const zones = ZONES.map((z) => ({ ...z, bpm: zoneBpm(z.level, hr) })).filter((z) => z.bpm);
+  return (
+    <Sheet eyebrow="Lichaam" title="Hartslag" line="Uit Garmin Connect, bij je hartslagzones." onClose={onClose}>
+      <SettingsList>
+        <SettingsFieldRow id="hartslag-drempel" title="Drempel" info="drempel">
+          <span style={{ width: 120 }}><NumberField tall unit="bpm" value={hr.lthr} placeholder="--" onChange={(v) => set({ lthr: v })} /></span>
+        </SettingsFieldRow>
+        <SettingsFieldRow id="hartslag-max" title="Maximaal">
+          <span style={{ width: 120 }}><NumberField tall unit="bpm" value={hr.maxHr} placeholder="--" onChange={(v) => set({ maxHr: v })} /></span>
+        </SettingsFieldRow>
+      </SettingsList>
+      {zones.length > 0 ? (
+        <>
+          <p className="st-lab" style={{ marginTop: 24 }}>Je zones</p>
+          <div className="st-zones">
+            {zones.map((z) => (
+              <div key={z.level} className="st-zone">
+                <i style={{ background: z.color }} />
+                <span>{INTENSITY[z.level].label} <span style={{ color: 'var(--color-ink-dim)' }}>{INTENSITY[z.level].zone.replace('zone 4-5', 'zone 4 en 5')}</span></span>
+                <span className="r">{z.bpm![0]} tot {z.bpm![1]} <small>bpm</small></span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="st-hint">Vul je drempel in, dan staan de zones in slagen per minuut.</p>
+      )}
+    </Sheet>
+  );
+}

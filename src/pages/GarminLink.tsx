@@ -19,6 +19,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { BackButton } from '../components/BackButton';
+import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
 import {
   clearConnection,
@@ -217,6 +218,7 @@ export function GarminLinkPage() {
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>via intervals.icu, zonder overtypen</p>
         </div>
       </div>
+      <SettingsPageLink page="koppelingen" row="garmin" label="Instellingen van je horloge" />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>DRIE STAPPEN</Eyebrow>

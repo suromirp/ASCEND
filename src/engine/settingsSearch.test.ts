@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CONDITIONAL_SETTING_IDS, normalizeSearch, searchSettings, settingAvailability, type SearchableSetting, type SettingsVisibility } from './settingsSearch';
-import { SETTINGS_GROUPS, SETTINGS_INDEX } from '../data/settingsIndex';
+import { normalizeSearch, searchSettings, type SearchableSetting } from './settingsSearch';
+import { SETTINGS_INDEX } from '../data/settingsIndex';
+import { SETTINGS_PAGES, placementOf } from '../data/settingsLayout';
 
 const ids = (q: string) => searchSettings(q, SETTINGS_INDEX).map((r) => r.item.id);
 
@@ -63,8 +64,8 @@ describe('searchSettings', () => {
 
   it('zet gelijke scores in de volgorde van de index', () => {
     const items: SearchableSetting[] = [
-      { id: 'b', title: 'Beta', note: 'x', group: 'training', keywords: ['zoek'] },
-      { id: 'a', title: 'Alfa', note: 'x', group: 'training', keywords: ['zoek'] },
+      { id: 'b', title: 'Beta', note: 'x', group: 'planning', keywords: ['zoek'] },
+      { id: 'a', title: 'Alfa', note: 'x', group: 'planning', keywords: ['zoek'] },
     ];
     expect(searchSettings('zoek', items).map((r) => r.item.id)).toEqual(['b', 'a']);
   });
@@ -72,7 +73,7 @@ describe('searchSettings', () => {
 
 describe('de index zelf', () => {
   it('heeft unieke id\'s, bestaande groepen en een uitleg per instelling', () => {
-    const groupIds = new Set(SETTINGS_GROUPS.map((g) => g.id));
+    const groupIds = new Set(SETTINGS_PAGES.map((g) => g.id));
     expect(new Set(SETTINGS_INDEX.map((i) => i.id)).size).toBe(SETTINGS_INDEX.length);
     for (const item of SETTINGS_INDEX) {
       expect(groupIds.has(item.group)).toBe(true);
@@ -82,51 +83,17 @@ describe('de index zelf', () => {
   });
 
   it('heeft de groepen in de afgesproken volgorde', () => {
-    expect(SETTINGS_GROUPS.map((g) => g.title)).toEqual([
-      'Training', 'Doelen en tochten', 'Overzichten en vragen', 'Koppelingen', 'Gegevens en back-up', 'Gidsen en kennis',
+    expect(SETTINGS_PAGES.map((g) => g.title)).toEqual([
+      'Planning', 'Doel en tochten', 'Forge', 'Lichaam', 'Vandaag en meldingen', 'Koppelingen', 'Gegevens en back-up', 'Gidsen en kennis',
     ]);
   });
 
+  it('de groep van elke instelling is de pagina waar zijn rij staat', () => {
+    for (const item of SETTINGS_INDEX) expect(placementOf(item.id)?.page, item.id).toBe(item.group);
+  });
+
   it('bevat geen gedachtestreepjes', () => {
-    const all = JSON.stringify([SETTINGS_INDEX, SETTINGS_GROUPS]);
+    const all = JSON.stringify([SETTINGS_INDEX, SETTINGS_PAGES]);
     expect(all).not.toMatch(/[–—]/);
-  });
-});
-
-describe('instellingen die er nu niet staan', () => {
-  const all: SettingsVisibility = { longSundayChoice: true, backupFolder: true, weekReview: true, forgeOn: true };
-
-  it('staan ze er wel, dan is er niets aan de hand', () => {
-    for (const id of CONDITIONAL_SETTING_IDS) expect(settingAvailability(id, all)).toEqual({ available: true });
-    expect(settingAvailability('garmin', { longSundayChoice: false, backupFolder: false, weekReview: false, forgeOn: false })).toEqual({ available: true });
-  });
-
-  it('staan ze er niet, dan komt er een korte reden', () => {
-    const none: SettingsVisibility = { longSundayChoice: false, backupFolder: false, weekReview: false, forgeOn: false };
-    for (const id of CONDITIONAL_SETTING_IDS) {
-      const a = settingAvailability(id, none);
-      expect(a.available).toBe(false);
-      if (!a.available) {
-        expect(a.reason).toMatch(/^Deze keuze verschijnt/);
-        expect(a.reason).not.toMatch(/[–—]/);
-      }
-    }
-  });
-
-  it('elke voorwaardelijke instelling staat in de index, en alleen de voorwaarde telt', () => {
-    const known = new Set(SETTINGS_INDEX.map((i) => i.id));
-    for (const id of CONDITIONAL_SETTING_IDS) expect(known.has(id)).toBe(true);
-    expect(CONDITIONAL_SETTING_IDS.sort()).toEqual(['backupmap', 'forge-bereik', 'forge-opwarmen', 'forge-schatting', 'forge-sets', 'forge-volgorde', 'lange-zondag', 'sportschool', 'weekterugblik-dag']);
-    expect(settingAvailability('weekterugblik-dag', { ...all, weekReview: false }).available).toBe(false);
-    expect(settingAvailability('backupmap', { ...all, weekReview: false }).available).toBe(true);
-  });
-
-  it('de Forge-keuzes verschijnen pas als Kracht meerekenen aan staat', () => {
-    for (const id of ['forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-bereik', 'forge-schatting', 'sportschool']) {
-      expect(settingAvailability(id, { ...all, forgeOn: true }).available).toBe(true);
-      expect(settingAvailability(id, { ...all, forgeOn: false })).toEqual({ available: false, reason: 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.' });
-    }
-    // De schakelaar zelf staat er altijd.
-    expect(settingAvailability('forge', { ...all, forgeOn: false }).available).toBe(true);
   });
 });

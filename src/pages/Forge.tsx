@@ -11,7 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from '../components/ui';
-import { settingsAnchor } from '../data/settingsIndex';
+import { SettingsGearLink } from '../components/settings/SettingsLink';
+import { jumpRoute } from '../components/settings/jump';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow, type ExerciseView } from '../engine/strengthHistory';
 import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../engine/strengthModel';
@@ -26,6 +27,7 @@ const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
 
 export function ForgePage() {
   const navigate = useNavigate();
+  const forgeSettings = jumpRoute('forge', { jumpTo: 'forge' });
   const { sessionLogs, templates, program, settings, updateSettings } = useAppData();
   const today = todayISO();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
@@ -49,10 +51,11 @@ export function ForgePage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-4">
       <div className="flex items-start gap-2">
         <BackButton fallback="/stand" />
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="font-display text-3xl" style={{ color: 'var(--color-ink)' }}>Forge</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</p>
         </div>
+        <SettingsGearLink page="forge" label="Instellingen van Forge" />
       </div>
 
       {!model && (
@@ -62,7 +65,7 @@ export function ForgePage() {
             Zet je het aan, dan rekent ASCEND stil mee met de krachttrainingen die je uit MacroFactor inleest. Je planning verandert er niet door.
           </p>
           <PrimaryButton onClick={() => void updateSettings({ strengthModel: { ...settings.strengthModel, enabled: true } })}>Aanzetten</PrimaryButton>
-          <SecondaryButton onClick={() => navigate('/more', { state: { jumpTo: settingsAnchor('forge') } })}>Naar de instellingen</SecondaryButton>
+          <SecondaryButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })}>Naar de instellingen</SecondaryButton>
         </Card>
       )}
 
@@ -85,7 +88,7 @@ export function ForgePage() {
             <ExerciseCard key={v.history.key} view={v} />
           ))}
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
-          <button onClick={() => navigate('/more', { state: { jumpTo: settingsAnchor('forge') } })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+          <button onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
             Instellingen van Forge: sportschool, opwarmen en meer
           </button>
         </>

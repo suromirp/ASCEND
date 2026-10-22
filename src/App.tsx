@@ -25,7 +25,8 @@ import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
 import { AscendPage, GoalsPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
-import { SettingsPage } from './pages/Settings';
+import { SettingsOverview } from './pages/settings/SettingsOverview';
+import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
@@ -154,10 +155,11 @@ function BottomNav() {
 // en kennis). Op elke tab op precies dezelfde plek, rechtsboven, 44 bij 44 px.
 // Het staat in het scrollvlak, dus het schuift met de pagina mee en hangt
 // niet over de inhoud.
-function SettingsGear() {
+function SettingsGear({ from }: { from: string }) {
   return (
     <Link
       to="/more"
+      state={{ from }}
       aria-label="Meer: instellingen, gegevens, koppelingen en gidsen"
       className="absolute right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border"
       style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', borderColor: 'var(--color-card-border)', background: 'var(--color-bg)', color: 'var(--color-ink-dim)' }}
@@ -326,7 +328,7 @@ function AppShell() {
       >
         <div className={`relative ${TOP_ROW_PAD[location.pathname] ?? ''}`}>
         {TAB_ROUTES.includes(location.pathname) && <AppMark />}
-        {TAB_ROUTES.includes(location.pathname) && <SettingsGear />}
+        {TAB_ROUTES.includes(location.pathname) && <SettingsGear from={location.pathname} />}
         {location.pathname === '/' && <TodayTopButtons />}
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
@@ -337,7 +339,8 @@ function AppShell() {
             <Route path="/ascend" element={<AscendPage />} />
             <Route path="/ascend/doelen" element={<GoalsPage />} />
             <Route path="/history" element={<HistoryPage />} />
-            <Route path="/more" element={<SettingsPage />} />
+            <Route path="/more" element={<SettingsOverview />} />
+            <Route path="/more/:groep" element={<SettingsGroupPage />} />
             <Route path="/stretches" element={<StretchesPage />} />
             <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
             <Route path="/kennis" element={<KnowledgePage />} />

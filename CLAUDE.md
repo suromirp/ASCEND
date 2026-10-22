@@ -81,6 +81,20 @@ De app moet aanvoelen als een goede kaart en een goed horloge.
   `/more` (instellingen, gegevens en back-up, koppelingen, gidsen en kennis);
   oude links naar `/more` blijven werken. Een pagina die zelf iets rechtsboven
   nodig heeft (pijltjes, knoppen) laat daar ruimte voor het tandwiel vrij.
+- Instellingen (`/more`, `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`):
+  een overzicht met de stand en acht groepen (`/more/:groep`: Planning, Doel en
+  tochten, Forge, Lichaam, Vandaag en meldingen, Koppelingen, Gegevens en
+  back-up, Gidsen en kennis). Elke instelling is één `SettingsRow`
+  (`src/components/settings/SettingsList.tsx`): links de titel, rechts de waarde,
+  hoogstens één regel eronder (een feit of een bron, nooit uitleg), 52 of 68 px
+  hoog, de hele rij is het tikdoel. Uitleg staat achter de InfoButton
+  (`src/data/settingsHelp.ts`: één zin en korte punten), een keuze opent een
+  onderblad (`Sheet`, `ChoiceSheet`), aan of uit is een schakelaar in de rij, acties
+  staan in het blad en nooit op de pagina. Wat ASCEND zelf bijhoudt krijgt het label
+  "auto". Een schakelaar die aan staat is donker brons, niet goud: goud blijft het
+  ene accent van het scherm. De waarde en de regel van een rij komen uit
+  `engine/settingsSummary.ts` (pure functies met tests), zodat de rij, het
+  zoekresultaat en het overzicht hetzelfde zeggen.
 
 ### Design tokens in code
 
@@ -153,7 +167,7 @@ npm run preview    # preview the production build locally
 ```
 src/
   components/    Reusable UI components — no business logic
-  pages/         The five tabs: Today, Week, Stand, Ascend, History; Settings (Meer) sits behind the gear
+  pages/         The five tabs: Today, Week, Stand, Ascend, History; Settings (the overview and the eight groups, `pages/settings/`) sits behind the gear
   engine/        All business logic: scheduler, progression, readiness
   models/        TypeScript domain models — no React, no IndexedDB code
   storage/       IndexedDB layer, export/import, schema migrations
@@ -394,7 +408,10 @@ afspraken voor elke agent die in deze repo werkt.
 - Instellingen: elke keuze die de app voor de gebruiker maakt is instelbaar,
   met het advies als standaard en één zin uitleg. Een nieuwe functie zonder
   instelling is niet af; de instelling komt ook in `src/data/settingsIndex.ts`
-  (`docs/beslissingen/2026-10-22-alles-instelbaar.md`).
+  (zoeken), `src/data/settingsLayout.ts` (pagina en rij) en
+  `engine/settingsSummary.ts` (de waarde in de rij), en een groepspagina in
+  `src/components/settings/groups/` (`docs/beslissingen/2026-10-22-alles-instelbaar.md`,
+  `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`).
 - Besluiten: leg ze vast in `docs/beslissingen/`, één bestand per besluit
   (`JJJJ-MM-DD-onderwerp.md`, sjabloon `_sjabloon.md`), nooit herschrijven.
 - Geen identificerende persoonsgegevens: de repo is openbaar. Geen naam,
