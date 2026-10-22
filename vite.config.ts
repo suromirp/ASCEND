@@ -52,6 +52,15 @@ export default defineConfig({
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // Lang drukken op het app-icoon (Android). De adressen zijn
+        // HashRouter-adressen; "afvinken" opent Vandaag met het invullen van
+        // de training van vandaag (src/engine/shortcutAction.ts).
+        shortcuts: [
+          { name: 'Vandaag', url: BASE_PATH, icons: [{ src: 'shortcut-vandaag.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Week', url: `${BASE_PATH}#/week`, icons: [{ src: 'shortcut-week.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Logboek', url: `${BASE_PATH}#/history`, icons: [{ src: 'shortcut-logboek.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Training afvinken', url: `${BASE_PATH}#/?actie=afvinken`, icons: [{ src: 'shortcut-afvinken.png', sizes: '96x96', type: 'image/png' }] },
+        ],
         // "Delen, ASCEND" for a MacroFactor export on Android (Chrome, Edge,
         // Samsung Internet). Android POSTs the file to `action`; the service
         // worker script public/share-target-sw.js catches that, keeps the

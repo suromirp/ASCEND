@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
@@ -49,7 +49,8 @@ import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 
@@ -66,6 +67,7 @@ export function TodayPage() {
   // "Gedaan" opens the logger right at the how-did-it-go form.
   const [loggingAtForm, setLoggingAtForm] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [actionSheetSession, setActionSheetSession] = useState<PlannedSession | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
 
@@ -188,6 +190,23 @@ export function TodayPage() {
       setLoggingSession(session);
     }
   }
+
+  // Snelkoppeling "Training afvinken": één keer lezen, dan uit het adres halen.
+  // Is er vandaag geen training om af te vinken, dan blijft het gewoon Vandaag.
+  const [shortcutPending, setShortcutPending] = useState(() => wantsLogShortcut(location.search));
+  if (shortcutPending) {
+    setShortcutPending(false);
+    if (primary) {
+      setLoggingVariant('full');
+      setLoggingAtForm(true);
+      setLoggingSession(primary);
+    }
+  }
+  useEffect(() => {
+    if (wantsLogShortcut(location.search)) navigate({ pathname: location.pathname, search: withoutShortcut(location.search) }, { replace: true });
+    // Alleen bij het openen van de pagina.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const restHeader = !!restToday && !primary;
   const trainingRows = todaySessions.filter((s) => !(restToday && s.id === restToday.id));

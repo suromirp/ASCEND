@@ -9,6 +9,7 @@ import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
+import { AppMark } from './components/AppMark';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { TodayPage } from './pages/Today';
@@ -46,9 +47,16 @@ const TABS: { to: string; icon: IconName; label: string }[] = [
   { to: '/history', icon: 'logboek', label: 'LOGBOEK' },
 ];
 const TAB_ROUTES = TABS.map((t) => t.to);
-// Week en Logboek openen met pijltjes over de volle breedte; die krijgen een
-// eigen rij onder het tandwiel in plaats van eronder te schuiven.
-const GEAR_ROW_ROUTES = ['/week', '/history'];
+// Het merkteken links en het tandwiel rechts staan samen op een rij van 56 px
+// bovenaan. Elke pagina krijgt precies zoveel ruimte erboven dat haar eigen
+// inhoud (titel, pijltjes, datum) daaronder begint en niets overlapt.
+const TOP_ROW_PAD: Record<string, string> = {
+  '/': 'pt-11',
+  '/week': 'pt-8',
+  '/stand': 'pt-10',
+  '/ascend': 'pt-8',
+  '/history': 'pt-8',
+};
 
 // `fixed` rather than `sticky` — sticky is only pinned relative to its own
 // scroll container, so on mobile (address bar show/hide, momentum scroll,
@@ -187,7 +195,8 @@ function AppShell() {
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
-        <div className={`relative ${GEAR_ROW_ROUTES.includes(location.pathname) ? 'pt-8' : ''}`}>
+        <div className={`relative ${TOP_ROW_PAD[location.pathname] ?? ''}`}>
+        {TAB_ROUTES.includes(location.pathname) && <AppMark />}
         {TAB_ROUTES.includes(location.pathname) && <SettingsGear />}
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
