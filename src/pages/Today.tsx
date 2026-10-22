@@ -254,6 +254,7 @@ export function TodayPage() {
 
       {primary && primaryTemplate && mission ? (
         <TodayMissionCard
+          session={primary}
           template={primaryTemplate}
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}

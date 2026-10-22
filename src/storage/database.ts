@@ -543,6 +543,18 @@ export interface AppSettings {
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
+  // The line about the watch on a training ("Verstuurd naar je horloge om
+  // 19.04", or the offer to link) and the small watch mark in the Week list
+  // (only for sent or failed). Absent = on. Optional and additive.
+  showWatchStatus?: boolean;
+  showWatchStatusOnWeek?: boolean;
+  // What goes before the name of a training sent to the watch: "ASC " (short,
+  // absent = short), "ASCEND \u00b7 " (long) or nothing. Unless none, the
+  // description starts with a dated line. Optional and additive.
+  watchNamePrefix?: 'short' | 'long' | 'none';
+  // Take a done or past training out of the intervals.icu agenda at the next
+  // round. Absent = on. Optional and additive.
+  watchRemoveDone?: boolean;
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';

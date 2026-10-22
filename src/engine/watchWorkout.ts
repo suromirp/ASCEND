@@ -39,7 +39,7 @@
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { WORKOUTS, type StepKind } from '../data/workoutStructure';
-import { addDays } from '../utils/dates';
+import { addDays, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan, type PlanStep, type WorkoutPlan } from './workoutPlan';
 import { formatPace, type PaceRange, type RacePaces } from './racePaces';
 
@@ -47,6 +47,27 @@ export const WATCH_EXTERNAL_PREFIX = 'ascend:';
 // intervals.icu sends about the next 7 days to the watch, so that is as far
 // ahead as ASCEND fills the agenda too.
 export const WATCH_DAYS = 7;
+
+// In front of the name of every event, so the trainings ASCEND sends are easy
+// to tell apart from your own in intervals.icu and Garmin Connect.
+export type WatchNamePrefix = 'short' | 'long' | 'none';
+export const WATCH_NAME_PREFIXES: Record<WatchNamePrefix, string> = { short: 'ASC ', long: 'ASCEND \u00b7 ', none: '' };
+// The advice: short, so it stays short on the watch screen.
+export const DEFAULT_WATCH_NAME_PREFIX: WatchNamePrefix = 'short';
+
+export interface WatchBuildOptions {
+  // Which prefix goes before the name ("ASC ", "ASCEND \u00b7 " or none), and, unless
+  // none, a short dated line in the description. Absent = short
+  // (AppSettings.watchNamePrefix).
+  namePrefix?: WatchNamePrefix;
+}
+
+const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+// "za 24 okt", the same wherever it runs (no year, so a fingerprint does not change at New Year).
+export function shortDateNL(iso: string): string {
+  return `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+}
 
 export type WatchSport = 'Run' | 'Walk' | 'Hike' | 'Ride';
 export type WatchTarget = 'HR' | 'PACE';
@@ -175,15 +196,20 @@ export function buildWatchWorkout(
   template: SessionTemplate,
   program: Program | null | undefined,
   paces?: RacePaces,
+  options: WatchBuildOptions = {},
 ): WatchWorkout | undefined {
   if (NOT_SENT.has(template.id)) return undefined;
   const type = sportOf(template);
   if (!type) return undefined;
   const plan = buildWorkoutPlan(template, session.scheduledDate, program);
   if (!plan) return undefined;
-  const { text, target } = intervalsWorkoutText(plan, template, paces);
+  const built = intervalsWorkoutText(plan, template, paces);
+  const target = built.target;
+  const prefix = WATCH_NAME_PREFIXES[options.namePrefix ?? DEFAULT_WATCH_NAME_PREFIX];
+  const marked = options.namePrefix !== 'none';
+  const text = marked ? `Gepland door ASCEND voor ${shortDateNL(session.scheduledDate)}\n\n${built.text}` : built.text;
   const movingTimeSec = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
-  const base = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: template.name, type, description: text, movingTimeSec, target };
+  const base = { plannedId: session.id, externalId: externalIdFor(session.id), date: session.scheduledDate, name: `${prefix}${template.name}`, type, description: text, movingTimeSec, target };
   return { ...base, fingerprint: fingerprintOf(JSON.stringify([base.date, base.name, base.type, base.description, base.movingTimeSec, base.target])) };
 }
 
@@ -195,12 +221,13 @@ export interface SelectInput {
   paces?: RacePaces;
   today: string;
   days?: number;
+  options?: WatchBuildOptions;
 }
 
 // What should be on the watch: the planned trainings of today and the coming
 // days that are not done and not skipped. In the order they come.
 export function selectWatchWorkouts(input: SelectInput): WatchWorkout[] {
-  const { sessions, logs, templates, program, paces, today } = input;
+  const { sessions, logs, templates, program, paces, today, options } = input;
   const last = addDays(today, (input.days ?? WATCH_DAYS) - 1);
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const byId = new Map(templates.map((t) => [t.id, t]));
@@ -210,7 +237,7 @@ export function selectWatchWorkouts(input: SelectInput): WatchWorkout[] {
     if (s.status === 'skipped' || logged.has(s.id)) continue;
     const template = byId.get(s.templateId);
     if (!template) continue;
-    const w = buildWatchWorkout(s, template, program, paces);
+    const w = buildWatchWorkout(s, template, program, paces, options);
     if (w) out.push({ w, order: s.order });
   }
   return out.sort((a, b) => a.w.date.localeCompare(b.w.date) || a.order - b.order).map((x) => x.w);
@@ -224,21 +251,35 @@ export interface TrackedWorkout {
   date: string;
   fingerprint: string;
   eventId?: number;
+  // When ASCEND last wrote this event to the agenda (ISO timestamp); older
+  // records have none (engine/watchStatus.ts falls back to the last round).
+  sentAt?: string;
 }
 
 export interface SyncPlan {
   create: WatchWorkout[];
   update: { workout: WatchWorkout; tracked: TrackedWorkout }[];
   remove: { plannedId: string; tracked: TrackedWorkout }[];
-  // Done or past: nothing to send or delete, ASCEND just stops tracking it
-  // (a finished training stays in the agenda, next to the activity).
+  // Done or past, with removal of done trainings switched off: nothing to send
+  // or delete, ASCEND just stops tracking it (it stays in the agenda).
   forget: string[];
 }
 
 // Compares what should be on the watch with what ASCEND put there before.
 // Only things in `tracked` are ever updated or removed: an event the owner put
 // in intervals.icu himself is not in it, so it is never touched.
-export function planWatchSync(desired: WatchWorkout[], tracked: Record<string, TrackedWorkout>, today: string, loggedPlannedIds: Set<string>): SyncPlan {
+//
+// With `removeDone` (AppSettings.watchRemoveDone, absent = on) a training that
+// is done (it has a log) or whose day has passed is also taken out of the
+// agenda, instead of only being forgotten. Only events ASCEND tracked: the
+// activity itself is a separate thing in intervals.icu and is never touched.
+export function planWatchSync(
+  desired: WatchWorkout[],
+  tracked: Record<string, TrackedWorkout>,
+  today: string,
+  loggedPlannedIds: Set<string>,
+  options: { removeDone?: boolean } = {},
+): SyncPlan {
   const plan: SyncPlan = { create: [], update: [], remove: [], forget: [] };
   const wanted = new Set(desired.map((d) => d.plannedId));
   for (const w of desired) {
@@ -248,7 +289,8 @@ export function planWatchSync(desired: WatchWorkout[], tracked: Record<string, T
   }
   for (const [plannedId, t] of Object.entries(tracked)) {
     if (wanted.has(plannedId)) continue;
-    if (t.date < today || loggedPlannedIds.has(plannedId)) plan.forget.push(plannedId);
+    const done = t.date < today || loggedPlannedIds.has(plannedId);
+    if (done && options.removeDone === false) plan.forget.push(plannedId);
     else plan.remove.push({ plannedId, tracked: t });
   }
   return plan;
