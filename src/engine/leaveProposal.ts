@@ -103,11 +103,13 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   // new period relative to where it stood after putting back.
   const markOf = (s: PlannedSession, a: PlannedSession | undefined, role: 'moved' | 'dropped'): PlannedLeaveMark | null => {
     if (clear) return null;
-    if (!replaces) return { periodId: period.id, role, from: s.scheduledDate };
+    // The tocht shortened a leg day (rest after a tocht): the mark says so.
+    const shortened = role === 'moved' && a?.leave?.shortened ? { shortened: true as const } : {};
+    if (!replaces) return { periodId: period.id, role, from: s.scheduledDate, ...shortened };
     const b = base.get(s.id);
     if (!b) return null;
     if (s.leave?.periodId === replaces.id && a && a.status !== 'skipped' && a.scheduledDate === b.scheduledDate && a.plannedMinutes === b.plannedMinutes && b.status !== 'skipped') return null;
-    return { periodId: period.id, role, from: b.scheduledDate };
+    return { periodId: period.id, role, from: b.scheduledDate, ...shortened };
   };
   const isBack = (s: PlannedSession, a: PlannedSession | undefined) => !!replaces && s.leave?.periodId === replaces.id && markOf(s, a, 'moved') === null;
 
@@ -129,11 +131,17 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
       const own = ownReason(s.id, true);
       items.push({ plannedSessionId: s.id, action: 'remove', fromDate: s.scheduledDate, reason: own ?? reasonFor(s, s.scheduledDate, 'remove', !!replaces && !base.has(s.id)), generatedBy: SOURCE, leave: markOf(s, a, 'dropped') });
     } else if (a.scheduledDate !== s.scheduledDate || minutesChanged(s, a)) {
+      const mark = markOf(s, a, 'moved');
+      // One rule for putting back: a session of this tocht that is back where it
+      // stood by itself is not fixed in place and has no fixed length. Its length
+      // is left to the phase (an own length of the stored plan is kept).
+      const restore = mark === null && (s.leave?.periodId === period.id || s.leave?.periodId === replaces?.id);
       items.push({
         plannedSessionId: s.id, action: 'move', fromDate: s.scheduledDate, toDate: a.scheduledDate,
-        ...(a.plannedMinutes !== undefined && a.plannedMinutes !== s.plannedMinutes ? { plannedMinutes: a.plannedMinutes } : a.plannedMinutes === undefined && s.plannedMinutes !== undefined && minutesChanged(s, a) ? { plannedMinutes: byId.get(a.templateId)?.durationVariants.full } : {}),
+        ...(restore ? (a.plannedMinutes !== undefined ? { plannedMinutes: a.plannedMinutes } : {}) : a.plannedMinutes !== undefined && a.plannedMinutes !== s.plannedMinutes ? { plannedMinutes: a.plannedMinutes } : a.plannedMinutes === undefined && s.plannedMinutes !== undefined && minutesChanged(s, a) ? { plannedMinutes: byId.get(a.templateId)?.durationVariants.full } : {}),
+        ...(restore ? { restore: true } : {}),
         reason: ownReason(s.id) ?? reasonFor(s, s.scheduledDate, 'move', isBack(s, a)), generatedBy: SOURCE,
-        leave: markOf(s, a, 'moved'),
+        leave: mark,
       });
     }
   }
@@ -186,7 +194,7 @@ function notesFor(remaining: Finding[], inWindow: (date: string) => boolean, mod
   if (mode === 'remove') return [];
   const lines: string[] = [];
   for (const f of remaining) {
-    if ((f.rule !== 'LEAVE-OFF' && f.rule !== 'LEAVE-LIGHT') || !inWindow(f.date)) continue;
+    if ((f.rule !== 'LEAVE-OFF' && f.rule !== 'LEAVE-LIGHT' && f.rule !== 'LEG-SPACING') || !inWindow(f.date)) continue;
     if (f.level === 1) lines.push(`${f.message} Die heb je zelf vastgezet, dus die laat ik staan.`);
     else if (f.level === 2) lines.push(`${f.message} Een test of wedstrijd verplaats ik niet zomaar. Kies zelf een andere dag.`);
     else lines.push(f.message);
@@ -215,7 +223,8 @@ function putBack(sessions: PlannedSession[], periodId: string, today: string, lo
     delete back.movedFromDate;
     // A heavy leg day the tocht made short (rest after a tocht) is full again.
     const t = byId.get(s.templateId);
-    if (mark.role === 'moved' && t?.type === 'strength' && back.plannedMinutes !== undefined && back.plannedMinutes === t.durationVariants.short) delete back.plannedMinutes;
+    // Only when the mark says the tocht shortened it, not when it was short for another reason.
+    if (mark.role === 'moved' && mark.shortened && t?.type === 'strength' && back.plannedMinutes !== undefined && back.plannedMinutes === t.durationVariants.short) delete back.plannedMinutes;
     out.push(back);
   }
   return out;

@@ -259,9 +259,9 @@ describe('het terrein van een tocht kiest de wandeling', () => {
     const run = planPass(['2026-11-09', '2026-11-16'].flatMap(week), context([period]));
     return [on(run.sessions, '2026-11-14'), on(run.sessions, '2026-11-15'), run] as const;
   };
-  it('vlak en heuvels een rugzakwandeling, bergen en sneeuw de bergtocht', () => {
+  it('vlak een rugzakwandeling, heuvels, bergen en sneeuw de bergtocht', () => {
     expect(walks('flat_trail').slice(0, 2)).toEqual([['tpl_ruck_walk'], ['tpl_ruck_walk']]);
-    expect(walks('uneven_trail').slice(0, 2)).toEqual([['tpl_ruck_walk'], ['tpl_ruck_walk']]);
+    expect(walks('uneven_trail').slice(0, 2)).toEqual([['tpl_mountain_hike'], ['tpl_mountain_hike']]);
     expect(walks('mountain').slice(0, 2)).toEqual([['tpl_mountain_hike'], ['tpl_mountain_hike']]);
     expect(walks('snow').slice(0, 2)).toEqual([['tpl_mountain_hike'], ['tpl_mountain_hike']]);
   });
@@ -303,7 +303,9 @@ describe('een zware beendag vlak na een tocht', () => {
     // 24 hours after the tocht nothing is soft: the day goes, also on soft.
     const near = trekToPeriod(draft({ startDate: '2026-11-15', days: 2, importance: 'training' }), 'trek-n'); // Sun 15 and Mon 16
     const run = planPass(plan7, context([near]));
-    expect(run.repairs.find((r) => r.sessionId === legDay)?.plannedMinutes).not.toBe(45);
+    // The leg day goes (the day after a tocht stays light), it is not made short: no soft step here.
+    expect(run.repairs.find((r) => r.sessionId === legDay)).toMatchObject({ removed: true, rule: 'LEAVE-LIGHT' });
+    expect(run.sessions.find((s) => s.id === legDay)).toBeUndefined();
     // Without a tocht the same week is left alone.
     expect(planPass(plan7, context([])).repairs).toEqual([]);
   });

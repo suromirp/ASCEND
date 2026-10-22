@@ -73,12 +73,13 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
 
   // --- trek: a walk on every day -------------------------------------------------
   const mountainTemplate = byId.has(TREK_TEMPLATE_ID) ? TREK_TEMPLATE_ID : templates.find((t) => isHikingTemplate(t))?.id;
-  // The terrain of a tocht picks the kind of walk: flat and hills an easy
-  // backpack walk (little descent), mountains and snow the mountain hike. The
+  // The terrain of a tocht picks the kind of walk: flat an easy backpack walk
+  // (little descent), hills, mountains and snow the mountain hike (so the rest
+  // for the legs before and after counts). The
   // backpack weight of a tocht is information for now: sessions have no weight
   // of their own, the template and the pack ladder decide.
   const trekTemplateFor = (period: LeavePeriod) =>
-    (period.trek?.terrain === 'flat_trail' || period.trek?.terrain === 'uneven_trail') && byId.has(FREE_DAY_WALK_TEMPLATE_ID) && isHikingTemplate(byId.get(FREE_DAY_WALK_TEMPLATE_ID)) ? FREE_DAY_WALK_TEMPLATE_ID : mountainTemplate;
+    period.trek?.terrain === 'flat_trail' && byId.has(FREE_DAY_WALK_TEMPLATE_ID) && isHikingTemplate(byId.get(FREE_DAY_WALK_TEMPLATE_ID)) ? FREE_DAY_WALK_TEMPLATE_ID : mountainTemplate;
   for (const [date, day] of sorted) {
     const trekTemplate = trekTemplateFor(day.period);
     if (day.kind !== 'trek' || !trekTemplate || !usable(date) || blocked(date)) continue;

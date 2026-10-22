@@ -122,6 +122,14 @@ describe('a swap for a run that moved is swapped back', () => {
     expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_upper_a', scheduledDate: '2026-11-24' }));
   });
 
+  it('a leg day a holiday moved takes part in the cleanup, one a tocht shortened does not', () => {
+    const swapped = (leave: PlannedSession['leave']) => week('2026-11-23').map((s) => (s.templateId === 'tpl_lower_a' ? { ...s, scheduledDate: '2026-11-24', plannedMinutes: 45, leave } : s.templateId === 'tpl_upper_a' ? { ...s, scheduledDate: '2026-11-25' } : s));
+    const byHoliday = applyRaceBlocks(swapped({ periodId: 'vakantie', role: 'moved', from: '2026-11-24' }), blocks, templates, newId, program);
+    expect(byHoliday.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_lower_a', scheduledDate: '2026-11-25' }));
+    const byTrek = applyRaceBlocks(swapped({ periodId: 'tocht', role: 'moved', from: '2026-11-24', shortened: true }), blocks, templates, newId, program);
+    expect(byTrek.update.find((u) => u.templateId === 'tpl_lower_a')).toBeUndefined();
+  });
+
   it('a marked swap goes back when the test moves away, and stays while it is there', () => {
     const w = week('2026-10-26').map((s) => (s.templateId === 'tpl_easy_run' ? { ...s, templateId: 'tpl_test_run' } : s));
     const first = applyRaceBlocks(w, blocks, templates, newId, program);

@@ -163,6 +163,8 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<voi
       settings.restDay,
       // Free days, holidays and treks (engine/leave.ts).
       settings.leavePeriods,
+      // Soft or strict rest after a bergtocht: switching it plans again at once.
+      settings.trekLegRest,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack

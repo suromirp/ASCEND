@@ -446,7 +446,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
       // tocht can put it back and the old leg-swap cleanup leaves it alone.
       const periodId = leave.days.get(trekPartner.scheduledDate)?.period.id;
       const mark = (from: string) => {
-        if (periodId) sessions = sessions.map((x) => (x.id === subject.id && !x.leave ? { ...x, leave: { periodId, role: 'moved' as const, from } } : x));
+        if (periodId) sessions = sessions.map((x) => (x.id === subject.id && !x.leave ? { ...x, leave: { periodId, role: 'moved' as const, from, shortened: true } } : x));
       };
       if (strictShort) { mark(subject.scheduledDate); continue; }
       if (canShort && input.trekRest !== 'strict') {

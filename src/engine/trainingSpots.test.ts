@@ -41,7 +41,7 @@ describe('training spots', () => {
     for (const f of TRAINING_FILTERS) expect(spotsForTraining(TRAINING_SPOTS, amersfoort, f).length).toBeGreaterThan(0);
   });
 
-  it('hill intervals from Amersfoort: the Hugo de Grootlaan first, a spot that only fits limited comes after the good ones', () => {
+  it('hill intervals from Amersfoort: the Amersfoortse Berg first, a spot that only fits limited comes after the good ones', () => {
     const list = spotsForTraining(TRAINING_SPOTS, amersfoort, filterForTraining('tpl_hill_intervals'));
     expect(list[0].id).toBe('amersfoortse-berg');
     const firstLimited = list.findIndex((s) => s.sessions?.find((x) => x.templateId === 'tpl_hill_intervals')?.limited);
@@ -51,7 +51,7 @@ describe('training spots', () => {
 
   it('the test run goes to a track or a flat route, never the dunes', () => {
     const list = spotsForTraining(TRAINING_SPOTS, amersfoort, filterForTraining('tpl_test_run')).map((s) => s.id);
-    expect(list[0]).toBe('atletiekbaan-schothorst');
+    expect(list[0]).toBe('atletiekbaan-amersfoort');
     expect(list).not.toContain('soester-duinen');
   });
 

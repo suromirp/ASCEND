@@ -33,6 +33,9 @@ export interface PlannedLeaveMark {
   periodId: string;
   role: 'placed' | 'moved' | 'dropped';
   from?: string;
+  // Set on a heavy leg day the tocht made short (rest after a tocht, soft).
+  // Only such a day goes back to its full length when the tocht goes away.
+  shortened?: boolean;
 }
 
 // A tocht: a trek you set up yourself as a goal next to the GR5 (a snow hike,

@@ -201,8 +201,11 @@ silently.
 
 **Who may touch a planned session** (`engine/weekValidator.ts#lockLevel`):
 history (logged or past) never; yours (`PlannedSession.lock`, set by your
-own move/skip and by every accepted proposal, or legacy status `'moved'`)
-never by the automatic planning; a test or race only through a proposal;
+own move/skip and by every other accepted proposal item, or legacy status
+`'moved'`) never by the automatic planning; a restored row and a putting back
+(a tocht changed back or removed, `PlanChangeItem.restore`) get no lock and no
+fixed length, because they return to how the system had them
+(`docs/beslissingen/2026-10-22-terugzetten-zonder-slot.md`); a test or race only through a proposal;
 everything else the system planned is free. Every planning run ends with
 the same pass (`engine/planPass.ts`): the race block, then the week check,
 which repairs only the system's own sessions and only when the week is

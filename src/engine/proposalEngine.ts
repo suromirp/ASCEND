@@ -188,7 +188,14 @@ export function applyPlanChangeItems(
         // itself comes back on the plan (planned again, on the new day, mark
         // and old move gone), instead of a second row next to the skipped one.
         const draft = item.newSessionDraft;
-        const revived = item.plannedSessionId ? next.find((s) => s.id === item.plannedSessionId && s.status === 'skipped') : undefined;
+        const named = item.plannedSessionId ? next.find((s) => s.id === item.plannedSessionId) : undefined;
+        // The named row is not skipped any more (it came back some other way):
+        // a second row next to it would be a double, so this cannot be done.
+        if (item.plannedSessionId && (!named || named.status !== 'skipped')) {
+          unsupported.push(item);
+          break;
+        }
+        const revived = named;
         if (revived) {
           next = next.map((s) => {
             if (s !== revived) return s;
@@ -217,6 +224,20 @@ export function applyPlanChangeItems(
       case 'move': {
         if (!item.plannedSessionId || !item.toDate) {
           unsupported.push(item);
+          break;
+        }
+        // A restore (a tocht changed back or removed) puts the session back as the
+        // system had it: planned, not fixed in place, no fixed length.
+        if (item.restore) {
+          next = next.map((s) => {
+            if (s.id !== item.plannedSessionId) return s;
+            const back: PlannedSession = { ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'planned' };
+            delete back.lock;
+            delete back.movedFromDate;
+            delete back.plannedMinutes;
+            if (item.plannedMinutes) back.plannedMinutes = item.plannedMinutes;
+            return withLeave(back, item);
+          });
           break;
         }
         next = next.map((s) =>

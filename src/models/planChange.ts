@@ -36,6 +36,10 @@ export interface PlanChangeItem {
   pairedWithSessionId?: string;
   // 'move' only: the session gets this fixed length at its new date.
   plannedMinutes?: number;
+  // 'move' only: the session goes back to how it stood by itself (a tocht
+  // changed back or removed). It is not fixed in place and its length is not
+  // fixed either: the phase decides again, like the restore path does.
+  restore?: boolean;
   // Groep C, Fase 8 — puur informatief veld, nooit gelezen door
   // applyPlanChangeItems, alleen voor UI/audit: welke andere sessie(s) op
   // dezelfde datum staan als deze PAIR-plaatsing. Meervoud (niet
