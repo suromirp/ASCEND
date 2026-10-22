@@ -16,6 +16,22 @@ export type BootWatchStage = 'quiet' | 'slow' | 'stuck';
 export const BOOT_STEAL_FLAG = 'ascend-steal-boot-lock';
 export const BOOT_LOCK_BUSY_TEXT = 'Een ander ASCEND-venster houdt het opstarten vast, waarschijnlijk een tabblad in Chrome dat Android heeft gepauzeerd. Sluit ASCEND-tabbladen in Chrome, of tik op Toch openen: dan neemt deze app het over. Je gegevens blijven staan.';
 
+// Wait for the lock or take it over? The flag is read and cleared in one go, so
+// "Toch openen" counts for exactly one load. A flag that can not be cleared is
+// not used: every reload would steal again
+// (docs/beslissingen/2026-10-22-toch-openen.md).
+export type BootLockChoice = 'wait' | 'steal';
+export function bootLockChoice(storage: { getItem: (key: string) => string | null; removeItem: (key: string) => void } | null | undefined): BootLockChoice {
+  if (!storage) return 'wait';
+  try {
+    if (storage.getItem(BOOT_STEAL_FLAG) !== '1') return 'wait';
+    storage.removeItem(BOOT_STEAL_FLAG);
+    return 'steal';
+  } catch {
+    return 'wait';
+  }
+}
+
 export const BOOT_SLOW_MS = 6_000;
 export const BOOT_STUCK_MS = 20_000;
 

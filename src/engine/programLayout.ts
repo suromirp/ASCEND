@@ -13,7 +13,7 @@
 // applies the result to the stored program and planning.
 
 import { PHASE_TAPER, WAVE_LENGTH, type Phase, type Program, type ResolvedProgramPosition } from '../models/program';
-import type { SessionTemplate, WeeklyProgressionStep } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate, WeeklyProgressionStep } from '../models/training';
 import type { TrainingGoal, GoalMilestone } from '../models/goals';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { HIKE_DAY_ONE_LADDER, MOUNTAIN_HIKE_LADDER } from '../data/hikeLadder';
@@ -86,6 +86,37 @@ export function planEndDay(goals: TrainingGoal[], milestones: GoalMilestone[], t
   if (main?.status !== 'active') return undefined;
   if (after === 'maintain' && goalTiming(main, today).state === 'past') return undefined;
   return main.targetDate;
+}
+
+// Switching "Na je hoofddoel" (Instellingen, Programma). Before and during the
+// goal it changes nothing in the plan yet, so it is stored directly. Once the
+// goal is past, it does change the plan at once: maintenance weeks come on, or
+// the open sessions after the goal go off. Then it is a proposal with Akkoord,
+// with what it does in plain words
+// (docs/beslissingen/2026-10-22-na-het-hoofddoel-als-voorstel.md).
+export function afterMainGoalChange(
+  goals: TrainingGoal[],
+  milestones: GoalMilestone[],
+  today: string,
+  planned: PlannedSession[],
+  logs: SessionLog[],
+  from: 'stop' | 'maintain',
+  to: 'stop' | 'maintain',
+): { proposal: boolean; lines: string[] } {
+  if (from === to) return { proposal: false, lines: [] };
+  const withLadder = new Set(milestones.map((m) => m.goalId));
+  const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
+  if (!main || goalTiming(main, today).state !== 'past') return { proposal: false, lines: [] };
+  if (to === 'maintain') {
+    return { proposal: true, lines: ['Vanaf deze week plant ASCEND weer gewone onderhoudsweken, met je weekschema en je rustdag.', 'Je geschiedenis blijft zoals hij is.'] };
+  }
+  const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
+  const open = planned.filter((s) => s.scheduledDate >= today && s.status !== 'skipped' && !logged.has(s.id)).length;
+  if (open === 0) return { proposal: false, lines: [] };
+  return {
+    proposal: true,
+    lines: [`${open} geplande ${open === 1 ? 'training gaat' : 'trainingen gaan'} van de planning. ASCEND plant niets meer tot je een nieuw doel kiest.`, 'Wat je al deed blijft staan.'],
+  };
 }
 
 // Weeks from the program's first Monday up to (not including) the goal

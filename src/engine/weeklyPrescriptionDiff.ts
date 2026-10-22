@@ -18,6 +18,7 @@
 import type { TrainingPrescription } from '../models/prescription';
 import type { WeeklyPrescription } from '../models/weeklyPrescription';
 import type { PlanChangeItem } from '../models/planChange';
+import type { PlannedSession } from '../models/training';
 
 // JSON met gesorteerde sleutels: twee objecten met dezelfde inhoud geven
 // dezelfde tekst, ongeacht de volgorde waarin hun velden zijn aangemaakt of
@@ -73,4 +74,28 @@ export function diffWeeklyPrescriptionPlan(
 
   const changes = fresh.changes.filter((c) => !(c.newPrescriptionId && unchangedTraining.has(c.newPrescriptionId)));
   return { changes, trainingToWrite, weeklyToWrite };
+}
+
+export const samePlannedSession = (a: PlannedSession, b: PlannedSession) => JSON.stringify(a) === JSON.stringify(b);
+
+// De wijzigingen die als wijziging van de planning tellen (melding, vraag,
+// regel in het logboek). 'keep' nooit. Bij de eerste opbouw (nog geen enkel
+// voorschrift opgeslagen: een verse installatie of net een teruggezette
+// back-up) telt een 'replace' of 'reduce' alleen niet als de rij van die
+// training na toepassen precies gelijk is aan de opgeslagen rij: dan had het
+// toestel die inhoud al. Wordt de rij anders, dan is het een gewone wijziging,
+// met de vraag of melding die daarbij hoort; nooit stil.
+export function realPlanChanges(
+  changes: PlanChangeItem[],
+  opts: { initialBuild: boolean; before: PlannedSession[]; after: PlannedSession[] },
+): PlanChangeItem[] {
+  const beforeById = new Map(opts.before.map((s) => [s.id, s]));
+  const afterById = new Map(opts.after.map((s) => [s.id, s]));
+  return changes.filter((c) => {
+    if (c.action === 'keep') return false;
+    if (!opts.initialBuild || (c.action !== 'replace' && c.action !== 'reduce')) return true;
+    const before = c.plannedSessionId ? beforeById.get(c.plannedSessionId) : undefined;
+    const after = c.plannedSessionId ? afterById.get(c.plannedSessionId) : undefined;
+    return !(before && after && samePlannedSession(before, after));
+  });
 }

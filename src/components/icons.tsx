@@ -149,6 +149,8 @@ const PATHS = {
   ),
   // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
   verder: <path d="M9.5 6l6 6-6 6" />,
+  // Een pijltje schuin omhoog uit een vak, voor een link die buiten ASCEND opent.
+  buiten: <path d="M10 6H7a1.5 1.5 0 0 0-1.5 1.5v9.5A1.5 1.5 0 0 0 7 18.5h9.5A1.5 1.5 0 0 0 18 17v-3M13.5 5.5h5v5M18.5 5.5l-7 7" />,
   // Bij een stapper en een eigen waarde.
   plus: <path d="M12 5.5v13M5.5 12h13" />,
   min: <path d="M5.5 12h13" />,
