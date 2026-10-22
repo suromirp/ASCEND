@@ -13,6 +13,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { MacroFactorCard } from '../components/MacroFactorCard';
+import { MacroFactorLeadCard } from '../components/MacroFactorLeadCard';
+import { MacroFactorLinkCard } from '../components/MacroFactorLinkCard';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
@@ -37,7 +39,7 @@ function daysText(n: number): string {
 
 export function MacroFactorImportPage() {
   const { templates, settings, updateSettings, loading } = useAppData();
-  const { loaded, state, mapping, plan } = useMacroFactor();
+  const { loaded, state, mapping, plan, rows } = useMacroFactor();
   // Days where you filled in a weight yourself that differs from the file: yours stays, unless you choose otherwise.
   const [conflicts, setConflicts] = useState<WeightConflict[]>([]);
   // A shared file is read once, from an effect that must not see old settings.
@@ -123,7 +125,12 @@ export function MacroFactorImportPage() {
     if (input.current) input.current.value = '';
   }
 
-  const linked = Object.entries(mapping);
+  // Names of the link card are changed there; the rest (older files) can be forgotten here.
+  const shownAbove = new Set(rows.map((r) => r.key));
+  const linked = Object.entries(mapping).filter(([key]) => !shownAbove.has(key));
+  // One gold button per screen: the next step is the gold one.
+  const unlinked = rows.some((r) => r.linked === undefined);
+  const pickIsNext = rows.length === 0 && plan.proposals.length === 0;
   const nameOf = (key: string) => state.workouts.find((w) => nameKey(w.name) === key)?.name ?? key;
   const templateName = (id: string | null) => (id ? (templates.find((t) => t.id === id)?.name ?? 'een training die er niet meer is') : 'niet inlezen');
   const nothingToOffer = loaded && state.workouts.length > 0 && plan.proposals.length === 0;
@@ -144,7 +151,7 @@ export function MacroFactorImportPage() {
         <Step n={2}>Kies Granular Export. Vink Weight Trend en Scale Weight aan en tik op Export. Voor krachttrainingen tik je op Export Workout Log: de eerste keer 30 dagen, daarna wekelijks 7 dagen.</Step>
         <Step n={3}>Je krijgt een xlsx-bestand. Tik op Delen en kies ASCEND, voor elk bestand. Lukt dat niet, bewaar dan het bestand en tik hieronder op Kies bestand.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND leest het bestand alleen op deze telefoon; het gaat nergens heen. Bij krachttrainingen krijg je een voorstel, er wordt nooit iets stil opgeslagen.
+          ASCEND leest het bestand alleen op deze telefoon; het gaat nergens heen. Bij krachttrainingen koppel je eerst de namen en verwerk je ze daarna in één keer; er wordt nooit iets stil opgeslagen.
         </p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           ASCEND leest xlsx en csv en ziet aan de kolommen zelf wat erin zit: gewicht, krachttrainingen of allebei in één bestand.
@@ -161,7 +168,11 @@ export function MacroFactorImportPage() {
           aria-label="Kies de MacroFactor-export"
           onChange={(e) => void onPick(e.target.files?.[0])}
         />
-        <PrimaryButton onClick={() => input.current?.click()} disabled={busy}>{busy ? 'Bezig…' : 'Kies bestand'}</PrimaryButton>
+        {pickIsNext ? (
+          <PrimaryButton onClick={() => input.current?.click()} disabled={busy}>{busy ? 'Bezig…' : 'Kies bestand'}</PrimaryButton>
+        ) : (
+          <SecondaryButton onClick={() => input.current?.click()} disabled={busy}>{busy ? 'Bezig…' : 'Kies bestand'}</SecondaryButton>
+        )}
         {notice && (
           <p className="text-sm leading-snug" role={notice.tone === 'error' ? 'alert' : 'status'} style={{ color: notice.tone === 'error' ? 'var(--color-danger-text)' : 'var(--color-success-text)' }}>
             {notice.text}
@@ -174,7 +185,9 @@ export function MacroFactorImportPage() {
         )}
       </Card>
 
-      <MacroFactorCard />
+      <MacroFactorLinkCard primary={unlinked} />
+
+      <MacroFactorCard onImportPage primary={!unlinked} />
 
       {conflicts.length > 0 && (
         <Card className="flex flex-col gap-3">
@@ -204,6 +217,8 @@ export function MacroFactorImportPage() {
         />
       )}
 
+      {loaded && <MacroFactorLeadCard />}
+
       {nothingToOffer && (
         <Card className="flex flex-col gap-1">
           <Eyebrow>ALLES STAAT AL IN JE LOGBOEK</Eyebrow>
@@ -215,14 +230,14 @@ export function MacroFactorImportPage() {
 
       {linked.length > 0 && (
         <Card className="flex flex-col gap-3">
-          <Eyebrow>GEKOPPELDE NAMEN</Eyebrow>
+          <Eyebrow>Eerder gekoppelde namen</Eyebrow>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Welke training in MacroFactor welke training in ASCEND is. Je koos dat één keer. Dit staat alleen op deze telefoon en gaat niet mee in een back-up; na een nieuwe telefoon kies je het opnieuw.
+            Namen die niet in dit bestand staan. Je koos eerder welke training in MacroFactor welke training in ASCEND is. Dit staat alleen op deze telefoon en gaat niet mee in een back-up; na een nieuwe telefoon kies je het opnieuw.
           </p>
           {linked.map(([key, templateId]) => (
             <div key={key} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm" style={{ color: 'var(--color-ink)' }}>{nameOf(key)}</p>
+                <p className="text-sm" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{nameOf(key)}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{templateName(templateId)}</p>
               </div>
               <SecondaryButton className="!flex-none px-3" onClick={() => void forgetMapping(key)}>Vergeet</SecondaryButton>

@@ -6,7 +6,7 @@
 
 import { isLeavePeriod } from '../engine/leave';
 import type { LeavePeriod } from '../models/leave';
-import type { ManualMeasured, MeasuredField, SessionLog } from '../models/training';
+import type { ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -76,7 +76,11 @@ const MEASURED_KEYS: MeasuredField[] = ['durationMinutes', 'distanceKm', 'elevat
 export function migrateManualMeasured(raw: unknown): ManualMeasured | undefined {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
   const m = raw as Record<string, unknown>;
-  if (typeof m.at !== 'string' || (m.block !== 'cardioData' && m.block !== 'outdoorData')) return undefined;
+  const strength = migrateManualStrength(m.strength);
+  if (m.strength !== undefined && !strength) return undefined;
+  // A strength takeover has no block; every other replacement has one.
+  if (typeof m.at !== 'string' || (!strength && m.block !== 'cardioData' && m.block !== 'outdoorData')) return undefined;
+  if (m.block !== undefined && m.block !== 'cardioData' && m.block !== 'outdoorData') return undefined;
   if (typeof m.values !== 'object' || m.values === null || Array.isArray(m.values)) return undefined;
   const values: ManualMeasured['values'] = {};
   for (const [key, value] of Object.entries(m.values as Record<string, unknown>)) {
@@ -89,11 +93,42 @@ export function migrateManualMeasured(raw: unknown): ManualMeasured | undefined 
   return {
     at: m.at,
     values,
-    block: m.block,
+    ...(m.block === 'cardioData' || m.block === 'outdoorData' ? { block: m.block } : {}),
     ...(m.blockAdded === true ? { blockAdded: true as const } : {}),
     ...(typeof m.blockSource === 'string' ? { blockSource: m.blockSource as ManualMeasured['blockSource'] } : {}),
     ...(Array.isArray(ids) && ids.every((i) => typeof i === 'string') && ids.length > 0 ? { clearedProgressIds: ids as string[] } : {}),
+    ...(strength ? { strength } : {}),
   };
+}
+
+const isExerciseSets = (v: unknown): v is NonNullable<SessionLog['strengthData']> =>
+  Array.isArray(v) &&
+  v.every(
+    (e) =>
+      typeof e === 'object' && e !== null && typeof (e as { exerciseId?: unknown }).exerciseId === 'string' &&
+      typeof (e as { exerciseName?: unknown }).exerciseName === 'string' && Array.isArray((e as { sets?: unknown }).sets),
+  );
+
+// The strength part of a takeover by MacroFactor; undefined when damaged.
+export function migrateManualStrength(raw: unknown): ManualStrength | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const s = raw as Record<string, unknown>;
+  if (typeof s.workoutId !== 'string') return undefined;
+  const out: ManualStrength = { workoutId: s.workoutId };
+  if ('strengthData' in s) {
+    if (s.strengthData !== null && !isExerciseSets(s.strengthData)) return undefined;
+    out.strengthData = s.strengthData;
+  }
+  if ('strengthRir' in s) {
+    if (s.strengthRir !== null && !(typeof s.strengthRir === 'number' && Number.isFinite(s.strengthRir))) return undefined;
+    out.strengthRir = s.strengthRir;
+  }
+  if (s.tied !== undefined) {
+    const t = s.tied as { source?: unknown } | null;
+    if (typeof t !== 'object' || t === null || typeof t.source !== 'string') return undefined;
+    out.tied = { source: t.source as MetricSource };
+  }
+  return out;
 }
 
 // A log as it comes out of a file: the same log, with `manualMeasured` only when

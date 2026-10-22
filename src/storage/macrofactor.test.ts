@@ -27,7 +27,7 @@ describe('the file', () => {
   });
 
   it('is read and kept, so the card survives a restart', async () => {
-    expect(await getMacroFactorState()).toEqual({ readAt: undefined, fileName: undefined, workouts: [], dismissed: [] });
+    expect(await getMacroFactorState()).toEqual({ readAt: undefined, fileName: undefined, workouts: [], dismissed: [], leads: true });
     const result = await importMacroFactorText(csv, 'workout-log.csv', new Date('2026-10-19T08:00:00.000Z'));
     expect(result.count).toBe(4);
     const state = await getMacroFactorState();

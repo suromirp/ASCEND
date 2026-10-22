@@ -178,7 +178,12 @@ exists that references the `PlannedSession` (`engine/sessionStatus.ts`).
 One deliberate exception, at the owner's explicit request: a log made by hand
 takes over the measured numbers of the watch and keeps its own in
 `SessionLog.manualMeasured`, so it can be put back
-(`docs/beslissingen/2026-10-22-garmin-is-leidend.md`).
+(`docs/beslissingen/2026-10-22-garmin-is-leidend.md`). A second, of the same
+kind: an existing strength log takes over the duration, sets and reps in
+reserve of a MacroFactor workout, in the same field (its `strength` part) and
+put back with the same `restoreManual`
+(`docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md`, which
+refers to the first and leaves it as it was).
 The same append-only pattern applies to `MilestoneProgress` (the record of
 when an Ascent Ladder milestone was actually cleared, vs. the static
 `Objective` / `MilestoneDefinition` ladder).

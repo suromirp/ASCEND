@@ -34,7 +34,9 @@ export interface AlignOutcome {
 }
 
 let queue: Promise<unknown> = Promise.resolve();
-function inTurn<T>(work: () => Promise<T>): Promise<T> {
+// Shared with storage/macrofactorLead.ts: both replace numbers of a log and
+// write milestones, so they wait for each other too.
+export function inTurn<T>(work: () => Promise<T>): Promise<T> {
   const run = queue.then(work, work);
   queue = run.catch(() => undefined);
   return run;

@@ -29,8 +29,12 @@ export interface MacroFactorState {
   readAt?: string;
   fileName?: string;
   workouts: MacroFactorWorkout[];
-  // externalIds the user chose not to save: never asked again.
+  // externalIds the user chose not to save, or took back with Terugzetten:
+  // never asked again.
   dismissed: string[];
+  // "MacroFactor is leidend voor kracht" (engine/macrofactorLead.ts): on unless
+  // the user switched it off.
+  leads: boolean;
 }
 
 // --- the state --------------------------------------------------------------------
@@ -42,6 +46,7 @@ export async function getMacroFactorState(): Promise<MacroFactorState> {
     fileName: stored?.fileName,
     workouts: Array.isArray(stored?.workouts) ? stored.workouts : [],
     dismissed: Array.isArray(stored?.dismissed) ? stored.dismissed : [],
+    leads: stored?.leads !== false,
   };
 }
 
@@ -75,6 +80,20 @@ export async function dismissWorkout(externalId: string): Promise<void> {
   await putState({ ...state, dismissed: [...state.dismissed, externalId] });
 }
 
+// Several at once (Terugzetten of a list).
+export async function dismissWorkouts(externalIds: string[]): Promise<void> {
+  const state = await getMacroFactorState();
+  const fresh = externalIds.filter((id) => !state.dismissed.includes(id));
+  if (fresh.length === 0) return;
+  await putState({ ...state, dismissed: [...state.dismissed, ...fresh] });
+}
+
+export async function setMacroFactorLeads(on: boolean): Promise<void> {
+  const state = await getMacroFactorState();
+  if (state.leads === on) return;
+  await putState({ ...state, leads: on });
+}
+
 export async function clearMacroFactorWorkouts(): Promise<void> {
   const state = await getMacroFactorState();
   await putState({ ...state, workouts: [], readAt: undefined, fileName: undefined });
@@ -91,6 +110,16 @@ export async function getMapping(): Promise<NameMapping> {
 export async function setMapping(workoutName: string, templateId: string | null): Promise<void> {
   const mapping = await getMapping();
   await MetaRepo.set(MAPPING_KEY, { ...mapping, [nameKey(workoutName)]: templateId });
+  notify();
+}
+
+// The suggestions the user confirmed with "Koppelingen klopt": one write for
+// all of them, so the card does not redraw in between.
+export async function setMappings(choices: { name: string; templateId: string | null }[]): Promise<void> {
+  if (choices.length === 0) return;
+  const mapping = { ...(await getMapping()) };
+  for (const { name, templateId } of choices) mapping[nameKey(name)] = templateId;
+  await MetaRepo.set(MAPPING_KEY, mapping);
   notify();
 }
 

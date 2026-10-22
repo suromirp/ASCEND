@@ -15,53 +15,17 @@
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { daysBetween, mondayOfWeek } from '../utils/dates';
-import { resolveEffectiveStressProfile } from './stressProfile';
-import { lowestTopRir, nameKey, type MacroFactorWorkout } from './macrofactorImport';
+import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
+import { isLegSession, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
+import { strengthChangeFor, type StrengthChange } from './macrofactorLead';
+
+export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
 import type { SessionLogDraft } from './activityImport';
 import { formatNumberNL } from '../utils/number';
 
 // MacroFactor workout name (as nameKey) to the ASCEND template id. null: the
 // user said this workout is not part of ASCEND; never offered again.
 export type NameMapping = Record<string, string | null>;
-
-// --- legs and reps in reserve -------------------------------------------------
-
-// A leg session: the legs carry real load. Only for these does the reps-in-
-// reserve number mean something for the leg index (engine/legFatigue.ts reads
-// strengthRir as RPE = 10 - RIR: 0 left is about RPE 10, 2 left about RPE 8).
-export function isLegSession(template: SessionTemplate): boolean {
-  const load = resolveEffectiveStressProfile(template).lowerBodyLoad;
-  return load === 'moderate' || load === 'heavy';
-}
-
-// The scale the rest of the app uses: 0 to 4 (StrengthDoneElsewhere stores
-// 0, 1, 2.5, 4). More than 4 left is "4 of meer".
-export function strengthRirFor(workout: MacroFactorWorkout, template: SessionTemplate): number | undefined {
-  if (!isLegSession(template)) return undefined;
-  const rir = lowestTopRir(workout);
-  return rir === undefined ? undefined : Math.min(4, Math.max(0, rir));
-}
-
-// --- the sets as ASCEND keeps them ----------------------------------------------
-
-const slug = (s: string) => nameKey(s).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-
-// An exercise that has the same name in the template keeps that exercise id,
-// so the progression chart finds it; any other gets an id of its own.
-export function strengthDataFor(workout: MacroFactorWorkout, template: SessionTemplate): NonNullable<SessionLog['strengthData']> {
-  const byName = new Map((template.exercises ?? []).map((e) => [nameKey(e.exerciseName), e.id]));
-  const used = new Set<string>();
-  return workout.exercises.map((exercise) => {
-    const known = byName.get(nameKey(exercise.name));
-    const exerciseId = known && !used.has(known) ? known : `mf_${slug(exercise.name)}`;
-    used.add(exerciseId);
-    return {
-      exerciseId,
-      exerciseName: exercise.name,
-      sets: exercise.sets.map((s) => (s.weightKg !== undefined ? { reps: s.reps, weightKg: s.weightKg } : { reps: s.reps })),
-    };
-  });
-}
 
 // --- a new log ------------------------------------------------------------------
 
@@ -112,7 +76,12 @@ export function supplementPatch(log: SessionLog, workout: MacroFactorWorkout, te
 export type MacroFactorProposal =
   | { kind: 'new'; workout: MacroFactorWorkout; template: SessionTemplate; planned?: PlannedSession; draft: SessionLogDraft }
   | { kind: 'supplement'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; patch: LogPatch }
-  // The name has not been linked yet: the card asks which template it is.
+  // "MacroFactor is leidend voor kracht": the numbers of the file take over the
+  // log's own duration, sets and reps in reserve; the old ones are kept on the
+  // log (engine/macrofactorLead.ts).
+  | { kind: 'takeover'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; change: StrengthChange }
+  // The name has not been linked yet: the link card on the import page asks
+  // once per name (engine/macrofactorNames.ts).
   | { kind: 'unmapped'; workout: MacroFactorWorkout };
 
 export interface MacroFactorPlan {
@@ -124,7 +93,7 @@ export interface MacroFactorPlan {
 
 // A log that came from a MacroFactor file is that workout's own; one made by
 // hand or from the watch can still be filled in.
-const isMacroFactorLog = (l: SessionLog) => !!l.externalId?.startsWith('macrofactor:');
+const isMacroFactorLog = (l: SessionLog) => !!l.externalId?.startsWith('macrofactor:') || !!l.manualMeasured?.strength;
 
 const sameWeek = (a: string, b: string) => mondayOfWeek(a) === mondayOfWeek(b);
 
@@ -138,6 +107,9 @@ function nearest<T>(items: T[], dateOf: (item: T) => string, day: string): T | u
 //    than doubled;
 // 2. else a free planned session of that template in the same week;
 // 3. else it is saved on its own under that template.
+// With `leads` (the default, "MacroFactor is leidend voor kracht") the log of
+// 1. takes over the file's duration, sets and reps in reserve; without it, the
+// log is only filled in where a field is still empty.
 export function planMacroFactor(
   workouts: MacroFactorWorkout[],
   mapping: NameMapping,
@@ -145,10 +117,11 @@ export function planMacroFactor(
   planned: PlannedSession[],
   templates: SessionTemplate[],
   logs: SessionLog[],
+  leads = true,
 ): MacroFactorPlan {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const dismissedSet = new Set(dismissed);
-  const storedIds = new Set(logs.map((l) => l.externalId).filter((id): id is string => !!id));
+  const storedIds = new Set(logs.flatMap((l) => [l.externalId, l.manualMeasured?.strength?.workoutId]).filter((id): id is string => !!id));
   const loggedPlanned = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   const claimedLogs = new Set<string>();
   const claimedPlanned = new Set<string>();
@@ -184,6 +157,12 @@ export function planMacroFactor(
     );
     if (sameTemplateLog) {
       claimedLogs.add(sameTemplateLog.id);
+      if (leads && !sameTemplateLog.manualMeasured) {
+        const change = strengthChangeFor(sameTemplateLog, workout, template);
+        if (change) proposals.push({ kind: 'takeover', workout, template, log: sameTemplateLog, change });
+        else alreadyDone++;
+        continue;
+      }
       const patch = supplementPatch(sameTemplateLog, workout, template);
       if (Object.keys(patch).length === 0) alreadyDone++;
       else proposals.push({ kind: 'supplement', workout, template, log: sameTemplateLog, patch });
@@ -204,12 +183,6 @@ export function planMacroFactor(
 }
 
 // --- words ------------------------------------------------------------------------------
-
-export function minutesLabel(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  if (h === 0) return `${minutes} min`;
-  return minutes % 60 === 0 ? `${h} uur` : `${h} uur ${minutes % 60} min`;
-}
 
 // "62 min, 18 sets": each number with what it is.
 export function describeWorkout(workout: MacroFactorWorkout): string {

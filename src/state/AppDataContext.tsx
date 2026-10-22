@@ -65,6 +65,7 @@ import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 import { announcementFor, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
+import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 
 type AdviceResponse = StoredResponse;
 
@@ -273,6 +274,11 @@ interface AppData {
   // were changed. And the other way: the hand-made numbers back.
   alignWithWatch: (requests: AlignRequest[]) => Promise<number>;
   restoreFromWatch: (logIds: string[]) => Promise<number>;
+  // "MacroFactor is leidend voor kracht": existing strength logs take over the
+  // numbers of the file; the moments go into the caller's batch, which the
+  // caller announces once. restoreFromMacroFactor puts the old numbers back.
+  takeOverFromMacroFactor: (requests: TakeoverRequest[], batch: SavedMoment[]) => Promise<number>;
+  restoreFromMacroFactor: (logIds: string[]) => Promise<number>;
   // Fill in or correct what the hard part was, afterwards. Only this
   // field; what was logged otherwise stays as it was.
   setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
@@ -1329,6 +1335,35 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  // The leg index and the week load count with the new numbers: the plan is
+  // checked again, like after the watch's numbers took over.
+  const takeOverFromMacroFactor = useCallback(
+    async (requests: TakeoverRequest[], batch: SavedMoment[]): Promise<number> => {
+      const outcome = await applyStrengthTakeovers(requests);
+      if (outcome.moments.length === 0) return 0;
+      // Nothing the user just did: no debrief afterwards (auto).
+      for (const m of outcome.moments) batch.push({ logId: m.logId, recovery: false, clearedTitle: m.clearedTitle, auto: true });
+      planRevision++;
+      await refresh();
+      void syncWatchWorkoutsAfterPlanChange();
+      return outcome.moments.length;
+    },
+    [refresh],
+  );
+
+  const restoreFromMacroFactor = useCallback(
+    async (logIds: string[]): Promise<number> => {
+      const n = await restoreStrengthTakeovers(logIds);
+      if (n > 0) {
+        planRevision++;
+        await refresh();
+        void syncWatchWorkoutsAfterPlanChange();
+      }
+      return n;
+    },
+    [refresh],
+  );
+
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
       const log = sessionLogs.find((l) => l.id === logId);
@@ -1898,6 +1933,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setLogFeedback,
     alignWithWatch,
     restoreFromWatch,
+    takeOverFromMacroFactor,
+    restoreFromMacroFactor,
     setLogWorkout,
     setRestWeekSkipped,
     setWeekRepeated,

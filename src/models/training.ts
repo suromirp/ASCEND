@@ -277,13 +277,31 @@ export interface ManualMeasured {
   values: Partial<Record<MeasuredField, number | boolean | null>>;
   // The block of the log that holds the measured fields. `blockAdded`: the log
   // had no such block, the replacement made it (putting back removes it again).
-  block: 'cardioData' | 'outdoorData';
+  // Absent on a strength log that MacroFactor took over (see `strength`).
+  block?: 'cardioData' | 'outdoorData';
   blockAdded?: true;
   // The source the block had before ('manual' unless the log said otherwise).
   blockSource?: MetricSource;
   // The milestones this replacement cleared (GoalMilestoneProgress ids): putting
   // back takes exactly those away again, the way removing a log does.
   clearedProgressIds?: string[];
+  // "MacroFactor is leidend voor kracht" (engine/macrofactorLead.ts,
+  // docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md): a strength
+  // log made by hand that took over the numbers MacroFactor measured. The
+  // duration goes in `values.durationMinutes`; the rest is here. A key is
+  // present only for a field that was replaced or added; `null`: there was no
+  // value, so putting back takes the field away again.
+  strength?: ManualStrength;
+}
+
+export interface ManualStrength {
+  // The id of the MacroFactor workout that took over: it is never offered again.
+  workoutId: string;
+  strengthData?: ExerciseSetLog[] | null;
+  strengthRir?: number | null;
+  // The log had no id and source of its own: the workout's id and source
+  // 'macrofactor' were put on it, and this is the source it had.
+  tied?: { source: MetricSource };
 }
 
 // The record of what actually happened. Corrections are made by adding a new

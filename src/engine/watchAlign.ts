@@ -209,6 +209,8 @@ export function applyAlignment(log: SessionLog, activity: ExternalActivity, now:
 export function restoreManual(log: SessionLog): SessionLog {
   const m = log.manualMeasured;
   if (!m) return log;
+  if (m.strength) return restoreStrength(log, m);
+  if (!m.block) return log;
   const next: SessionLog = { ...log };
   const block = { ...((log[m.block] as Block | undefined) ?? {}) } as Record<string, unknown>;
   for (const [field, value] of Object.entries(m.values) as [MeasuredField, number | boolean | null][]) {
@@ -224,7 +226,33 @@ export function restoreManual(log: SessionLog): SessionLog {
   return next;
 }
 
-export const isAligned = (log: SessionLog): boolean => !!log.manualMeasured;
+// The same, for a strength log that MacroFactor took over
+// (engine/macrofactorLead.ts): the duration, the sets and the reps in reserve
+// come back, and the id and source the workout put on the log go away again.
+// Anything added to the log since stays.
+function restoreStrength(log: SessionLog, m: ManualMeasured): SessionLog {
+  const s = m.strength!;
+  const next: SessionLog = { ...log };
+  if (typeof m.values.durationMinutes === 'number') next.durationMinutes = m.values.durationMinutes;
+  if ('strengthData' in s) {
+    if (s.strengthData === null || s.strengthData === undefined) delete next.strengthData;
+    else next.strengthData = s.strengthData;
+  }
+  if ('strengthRir' in s) {
+    if (s.strengthRir === null || s.strengthRir === undefined) delete next.strengthRir;
+    else next.strengthRir = s.strengthRir;
+  }
+  if (s.tied && log.externalId === s.workoutId) {
+    delete next.externalId;
+    next.source = s.tied.source;
+  }
+  delete next.manualMeasured;
+  return next;
+}
+
+// Taken over by the watch. A strength log that MacroFactor took over has its
+// own list (components/MacroFactorLeadSheet.tsx).
+export const isAligned = (log: SessionLog): boolean => !!log.manualMeasured && !log.manualMeasured.strength;
 
 // --- words -----------------------------------------------------------------------------------------
 

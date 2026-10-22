@@ -119,12 +119,14 @@ describe('never twice', () => {
   });
 });
 
-describe('a session already ticked off in MacroFactor', () => {
+describe('a session already ticked off in MacroFactor, with the switch off', () => {
+  // Without "MacroFactor is leidend voor kracht" a log is only filled in where a field is empty.
+  const plan = (list: MacroFactorWorkout[], logs: SessionLog[], sessions = week) => planMacroFactor(list, MAPPING, [], sessions, templates, logs, false);
   const lower = workout('Lower A');
   const tickedOff = log({ strengthRir: undefined });
 
   it('is filled in, not doubled: the sets, the reps in reserve and the id come in', () => {
-    const { proposals } = planMacroFactor([lower], MAPPING, [], week, templates, [tickedOff]);
+    const { proposals } = plan([lower], [tickedOff]);
     expect(proposals).toHaveLength(1);
     const p = proposals[0];
     if (p.kind !== 'supplement') throw new Error('expected a supplement');
@@ -145,33 +147,33 @@ describe('a session already ticked off in MacroFactor', () => {
   it('has nothing to fill when the log is complete: nothing is offered', () => {
     const full = log({ strengthRir: 2, strengthData: strengthDataFor(lower, tpl('tpl_lower_a')) });
     expect(supplementPatch(full, lower, tpl('tpl_lower_a'))).toEqual({});
-    const { proposals, alreadyDone } = planMacroFactor([lower], MAPPING, [], week, templates, [full]);
+    const { proposals, alreadyDone } = plan([lower], [full]);
     expect(proposals).toEqual([]);
     expect(alreadyDone).toBe(1);
   });
 
   it('is found when it was ticked off on the planned day and the workout was a day later', () => {
-    const { proposals } = planMacroFactor([lower], MAPPING, [], week, templates, [log({ completedDate: '2026-10-13' })]);
+    const { proposals } = plan([lower], [log({ completedDate: '2026-10-13' })]);
     expect(proposals[0].kind).toBe('supplement');
   });
 
   it('is not touched once it has been filled in from a file: a second file leaves it alone', () => {
     const filled = log({ externalId: lower.externalId, source: 'manual' });
-    const { proposals } = planMacroFactor([lower], MAPPING, [], week, templates, [filled]);
+    const { proposals } = plan([lower], [filled]);
     expect(proposals).toEqual([]);
   });
 
   it('uses each log once: a second workout of the same template goes to a free session', () => {
     const second: MacroFactorWorkout = { ...lower, externalId: 'macrofactor:2026-10-17:lower a', date: '2026-10-17', start: '2026-10-17T12:00:00' };
-    const plan = [...week, planned('p_la2', 'tpl_lower_a', '2026-10-17')];
-    const { proposals } = planMacroFactor([lower, second], MAPPING, [], plan, templates, [tickedOff]);
+    const planWeek = [...week, planned('p_la2', 'tpl_lower_a', '2026-10-17')];
+    const { proposals } = plan([lower, second], [tickedOff], planWeek);
     expect(proposals.map((p) => p.kind)).toEqual(['supplement', 'new']);
     expect(proposals[1].kind === 'new' && proposals[1].planned?.id).toBe('p_la2');
   });
 
   it('can also fill in a strength entry that came from the watch', () => {
     const watch = log({ externalId: 'intervals.icu:i77', source: 'garmin' });
-    const { proposals } = planMacroFactor([lower], MAPPING, [], week, templates, [watch]);
+    const { proposals } = plan([lower], [watch]);
     const p = proposals[0];
     expect(p.kind).toBe('supplement');
     // The watch's own id stays; the workout's id is not added over it.
