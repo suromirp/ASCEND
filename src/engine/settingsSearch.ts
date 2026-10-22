@@ -95,6 +95,10 @@ export interface SettingsVisibility {
   weekReview: boolean;
   // Kracht meerekenen staat aan: dan pas staan de Forge-keuzes en je sportschool er.
   forgeOn: boolean;
+  // Het kledingadvies staat aan: dan pas staat "Je kleding" er (wat ASCEND leerde).
+  clothingAdvice?: boolean;
+  // Twee trainingen op een dag staat niet op Nee: dan pas staat "Benen en een zware loop" er.
+  pairingOn?: boolean;
 }
 
 const FORGE_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.';
@@ -112,6 +116,14 @@ const UNAVAILABLE_REASON: Record<string, { when: keyof SettingsVisibility; reaso
     when: 'weekReview',
     reason: 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
   },
+  'kleding-voorkeur': {
+    when: 'clothingAdvice',
+    reason: 'Deze keuze verschijnt pas als het kledingadvies aan staat.',
+  },
+  'zware-dingen': {
+    when: 'pairingOn',
+    reason: 'Deze keuze verschijnt pas als twee trainingen op een dag mag.',
+  },
   'forge-volgorde': { when: 'forgeOn', reason: FORGE_OFF },
   'forge-sets': { when: 'forgeOn', reason: FORGE_OFF },
   'forge-opwarmen': { when: 'forgeOn', reason: FORGE_OFF },
@@ -124,7 +136,8 @@ const UNAVAILABLE_REASON: Record<string, { when: keyof SettingsVisibility; reaso
 // pagina springt dan naar de groep in plaats van naar een anker dat er niet is.
 export function settingAvailability(id: string, visibility: SettingsVisibility): { available: true } | { available: false; reason: string } {
   const rule = UNAVAILABLE_REASON[id];
-  if (!rule || visibility[rule.when]) return { available: true };
+  // Een voorwaarde die een pagina niet doorgeeft, telt als vervuld.
+  if (!rule || visibility[rule.when] !== false) return { available: true };
   return { available: false, reason: rule.reason };
 }
 
