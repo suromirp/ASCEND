@@ -395,6 +395,21 @@ body {
   animation: ascend-sheet-out 0.2s ease-in both;
 }
 
+/* Every bottom sheet fits on the screen you see (production feedback: "ik zie
+   de bovenkant van het scherm niet"). A sheet taller than the screen used to
+   push its title and its cross above the top, out of reach. Now it stops 16 px
+   under the status bar and scrolls inside itself, opening at its top. dvh, not
+   vh: on Android vh counts the address bar as screen. Outside any layer, so it
+   wins over a sheet's own max-h-[85vh] and the like; a sheet with its own
+   scroll area (flex column) keeps scrolling there. */
+.animate-sheet-in,
+.animate-sheet-out {
+  max-height: min(92vh, calc(100vh - env(safe-area-inset-top, 0px) - 16px));
+  max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 16px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 /* Tactile press feedback on every button in the app — a slight scale-down
    on tap so buttons feel responsive instead of just snapping straight to
    their active/opacity state. Scoped off the switch role: a toggle already

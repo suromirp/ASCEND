@@ -19,7 +19,10 @@ const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
 export interface MoveSuggestion {
   date: string;
-  // "vrije dag" or "samen met Easy Run"
+  // Nothing else planned that day.
+  free: boolean;
+  // Why this day, in plain words: "Vrije dag", or "Met Rustige duurloop,
+  // samen 105 min" (what already stands there, and the day's minutes).
   note: string;
   proposal: ScheduleProposal;
 }
@@ -72,18 +75,24 @@ export function suggestMoveDates(
     if (findHeavyConflict(sessionId, template, date, others, templateById, recentLogs)) continue;
     const distance = Math.abs(daysBetween(session.scheduledDate, date));
     const sameWeek = mondayOfWeek(date) === ownWeek;
-    candidates.push({ date, score: (sameWeek ? 0 : 7) + distance + (date < session.scheduledDate ? 0.5 : 0) + (normal ? 0 : 3) });
+    // ASCEND_HEURISTIC(FREE-DAY-FIRST): production feedback, a sheet offered two
+    // days that already held a long training before the free day after them.
+    // Sharing a day costs two days of distance, so a free day close by wins.
+    const shared = others.some((s) => s.scheduledDate === date);
+    candidates.push({ date, score: (sameWeek ? 0 : 7) + distance + (date < session.scheduledDate ? 0.5 : 0) + (normal ? 0 : 3) + (shared ? 2 : 0) });
   }
 
   return candidates
     .sort((a, b) => a.score - b.score || a.date.localeCompare(b.date))
     .slice(0, max)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .map(({ date }) => {
-      const sameDay = others.filter((s) => s.scheduledDate === date).map((s) => templateById.get(s.templateId)?.name).filter(Boolean);
+    .map(({ date }) => ({ date, sameDay: others.filter((s) => s.scheduledDate === date).map((s) => templateById.get(s.templateId)?.name).filter((n): n is string => !!n) }))
+    // Free days first, then the days it can share; each by date.
+    .sort((a, b) => Number(a.sameDay.length > 0) - Number(b.sameDay.length > 0) || a.date.localeCompare(b.date))
+    .map(({ date, sameDay }) => {
       return {
         date,
-        note: sameDay.length === 0 ? 'vrije dag' : `samen met ${sameDay.join(' en ')}, ${minutesOn(date) + ownMinutes(date)} min`,
+        free: sameDay.length === 0,
+        note: sameDay.length === 0 ? 'Vrije dag' : `Met ${sameDay.join(' en ')}, samen ${minutesOn(date) + ownMinutes(date)} min`,
         proposal: proposeMove(sessions, templates, sessionId, date, recentLogs, program, dailyTimeBudget, sameDayPairingPreference, asOf),
       };
     });

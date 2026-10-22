@@ -52,7 +52,7 @@ export function RescheduleDialog({
             {proposal.resolved ? (
               <div className="mt-5 flex gap-3">
                 <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
-                <PrimaryButton onClick={onApply}>Akkoord</PrimaryButton>
+                <PrimaryButton onClick={onApply} fullWidth={false}>Akkoord</PrimaryButton>
               </div>
             ) : (
               <div className="mt-5 flex flex-col gap-3">

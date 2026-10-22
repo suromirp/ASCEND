@@ -39,7 +39,7 @@ export function WeekPage() {
   // The back button leaves the year overview first, then the page.
   useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });
   const [selected, setSelected] = useState<PlannedSession | null>(null);
-  const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant } | null>(null);
+  const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant; atForm?: boolean } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
 
@@ -275,6 +275,10 @@ export function WeekPage() {
             startSession(selected, templateById.get(selected.templateId)!, variant, feel, durationMinutes, extra);
             setSelected(null);
           }}
+          onLog={(variant) => {
+            setLogging({ session: selected, variant, atForm: true });
+            setSelected(null);
+          }}
           onMove={(date) => {
             // Clean move: apply at once (undo in the notice); a cascade asks first.
             const proposal = moveSession(selected.id, date);
@@ -313,6 +317,7 @@ export function WeekPage() {
           scheduledDate={logging.session.scheduledDate}
           program={program}
           initialVariant={logging.variant}
+          startAtForm={logging.atForm}
           onClose={() => setLogging(null)}
         />
       )}

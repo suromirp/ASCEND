@@ -4,7 +4,7 @@
 // (engine/watchAlign.ts).
 //
 // Pure: no React, no IndexedDB. For a strength log that already exists (made by
-// hand, "Gedaan in MacroFactor", or a strength entry from the watch) the numbers
+// hand, "Gedaan" for strength kept in MacroFactor, or a strength entry from the watch) the numbers
 // MacroFactor measured take over: the duration, the sets with their reps and
 // weights, and the reps in reserve. Where the file has no value, the log keeps
 // its own. What the user filled in himself is not even read here: feel, effort

@@ -8,8 +8,8 @@
 // History stays append-only (CLAUDE.md):
 // - A workout with no log yet makes a NEW log, tied to the planned session of
 //   that template in the same week when there is a free one.
-// - A workout whose session was already logged by hand ("Gedaan in
-//   MacroFactor") never rewrites that log. It only fills a field that is
+// - A workout whose session was already logged by hand ("Gedaan", strength
+//   kept in MacroFactor) never rewrites that log. It only fills a field that is
 //   still EMPTY (the sets, the reps left, the id of the workout). A field
 //   that has a value, the duration included, stays as it was.
 

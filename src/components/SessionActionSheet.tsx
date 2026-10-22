@@ -1,22 +1,106 @@
-import { useState } from 'react';
+// ASCEND: the sheet of one planned training (Week, and the other trainings
+// on Vandaag). Production feedback on the old one: "dit is niet top". Ticking
+// off and moving stood through each other in one long lap, with a form for
+// a training that had not happened yet and underlined links.
+//
+// Now the sheet opens with what it is (day, name, kind and minutes), one gold
+// button for the choice that fits the day and a short list of the others
+// (engine/sessionActions.ts). "Gedaan" and "Verplaatsen" each open their own
+// step; the arrow at the top goes back, the cross (and the back button of the
+// phone, useSheetClose) closes. Rows and steps follow the fixed rule for a
+// row and a sheet of the settings design: title left, at most one line under
+// it, a sheet title in Marcellus, the cross at the top right.
+
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import type { Program } from '../models/program';
-import { availableVariants, resolveEffectiveFullDuration, weeklyProgressionNote } from '../engine/substitutions';
+import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
+import { PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
+import { Icon } from './icons';
 import { useAppData } from '../state/AppDataContext';
 import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sports';
 import { getModalities, isCyclingModality } from '../data/modalities';
-import { weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
+import { addDays, weekdayLongNL, weekdayShortNL, formatDateNL, todayISO } from '../utils/dates';
 import { MoveSuggestions } from './MoveSuggestions';
 import { StrengthDoneElsewhere, type StrengthDoneExtra } from './StrengthDoneElsewhere';
 import { WarmupRow } from './WarmupRow';
+import { WatchStatusRow } from './WatchStatusRow';
+import { ChoiceStrip } from './ChoiceStrip';
+import { SheetRow, SheetRows } from './SheetRows';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
+import { macroFactorLine, pendingMacroFactorWorkout, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
+import { workoutToDraft } from '../engine/macrofactorLink';
+import { getMacroFactorState, getMapping } from '../storage/macrofactor';
+
+const SETS_FROM_MACROFACTOR = 'Je sets komen vanzelf uit MacroFactor';
+const VARIANT_LABEL: Record<SessionVariant, string> = { full: 'Volledig', short: 'Kort', minimum: 'Minimum', custom: 'Eigen' };
+
+function dayLabel(iso: string, today: string): string {
+  if (iso === today) return 'Vandaag';
+  if (iso === addDays(today, 1)) return `Morgen, ${weekdayLongNL(iso)}`;
+  if (iso === addDays(today, -1)) return `Gisteren, ${weekdayLongNL(iso)}`;
+  return `${weekdayShortNL(iso)} ${formatDateNL(iso)}`;
+}
+
+// The head (day, title, cross) stays in view; only what is under it scrolls.
+// The height limit itself is shared by every sheet (.animate-sheet-in in index.css).
+function SheetFrame({ closing, onClose, label, scrollKey, head, children }: { closing: boolean; onClose: () => void; label: string; scrollKey?: string; head: ReactNode; children: ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // A new step starts at its top.
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [scrollKey]);
+  return (
+    <Portal>
+      <div
+        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={onClose}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={label}
+          className={`flex w-full max-w-md flex-col rounded-t-[20px] border border-b-0 ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div aria-hidden className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full" style={{ background: 'var(--color-card-border)' }} />
+          <div className="shrink-0 px-4 pb-1">{head}</div>
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</div>
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
+// Eyebrow and cross on one line (an arrow back in front in a step), the
+// title under it with the info button next to it, then one line of facts.
+function SheetHead({ eyebrow, title, facts, info, onBack, onClose }: { eyebrow: string; title: string; facts?: ReactNode; info?: ReactNode; onBack?: () => void; onClose: () => void }) {
+  return (
+    <div>
+      <div className="flex h-11 items-center">
+        {onBack && (
+          <button type="button" onClick={onBack} aria-label="Terug" className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+            <Icon name="verder" size={20} className="rotate-180" />
+          </button>
+        )}
+        <div className="min-w-0 flex-1 truncate"><Eyebrow>{eyebrow}</Eyebrow></div>
+        <button type="button" onClick={onClose} aria-label="Sluiten" className="-mr-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+          <Icon name="sluiten" size={20} />
+        </button>
+      </div>
+      <div className="flex items-center gap-3">
+        <h2 className="min-w-0 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h2>
+        {info}
+      </div>
+      {facts && <p className="mt-1 font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{facts}</p>}
+    </div>
+  );
+}
 
 export function SessionActionSheet({
   session,
@@ -25,6 +109,7 @@ export function SessionActionSheet({
   quickComplete = false,
   completedLog,
   onStart,
+  onLog,
   onMove,
   onSkip,
   onUndo,
@@ -39,7 +124,11 @@ export function SessionActionSheet({
   program: Program | null;
   quickComplete?: boolean;
   completedLog?: SessionLog;
+  // The training screen; for strength kept in MacroFactor it saves the log at once.
   onStart: (variant: SessionVariant, feel?: SubjectiveFeel, durationMinutes?: number, extra?: StrengthDoneExtra) => void;
+  // "Gedaan" for anything but strength: the training screen opened at its form.
+  // Absent: the training screen from the start (onStart).
+  onLog?: (variant: SessionVariant) => void;
   onMove: (date: string) => void;
   onSkip: () => void;
   onUndo?: () => void;
@@ -47,67 +136,84 @@ export function SessionActionSheet({
   // One tap moves the session there (engine/moveSuggestions.ts).
   suggestions?: MoveSuggestion[];
   onPickSuggestion?: (suggestion: MoveSuggestion) => void;
-  // One tap with the plan's own minutes (engine/asPlanned.ts).
+  // One tap with the plan's own minutes (engine/asPlanned.ts): a light recovery day.
   onDoneAsPlanned?: () => void;
   // "Toch doen": a skipped training back on its own day (only from today on).
   onBackOnPlan?: () => void;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [step, setStep] = useState<'main' | 'done' | 'move'>('main');
+  // The "Gedaan" step for a training of a later day, done today.
+  const [doneToday, setDoneToday] = useState(false);
   const variants = availableVariants(template);
+  const [variant, setVariant] = useState<SessionVariant>('full');
   const fullDuration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
+  const minutes = variant === 'full' ? fullDuration : resolveVariantDuration(template, variant, session.scheduledDate, program);
   const note = weeklyProgressionNote(template, session.scheduledDate, program);
-  // Fase 4 — with cycling switched on, say so where a ride is a real
+  // Fase 4: with cycling switched on, say so where a ride is a real
   // alternative for this session (it lists a bike modality). Hill
   // intervals and long hikes deliberately don't: their point is time and
   // climbing on foot.
-  const { settings } = useAppData();
+  const { settings, sessionLogs, logSession } = useAppData();
   const restMode = settings.restDayMode ?? 'rest';
   const bikeOption = isSportEnabled('cycling', settings.enabledSports) && templateSport(template) !== 'cycling'
     && (getModalities(template.id) ?? []).some((m) => isCyclingModality(m.key));
   const guide = getTrainingGuide(template.id);
   const { closing, requestClose } = useSheetClose(onClose);
+  const today = todayISO();
   const skipped = session.status === 'skipped';
-  const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= todayISO();
+  const canComeBack = skipped && !!onBackOnPlan && session.scheduledDate >= today;
+  const kind: DoneKind = quickComplete ? 'quick' : template.type === 'strength' ? 'inApp' : 'log';
+
+  // Strength kept in MacroFactor: the workouts of the last file read. A workout
+  // of this training on its day that is not saved yet replaces "Gedaan" with
+  // saving it; otherwise its minutes are what the "Gedaan" step proposes.
+  const [macroFactor, setMacroFactor] = useState<MacroFactorSource>();
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    if (!quickComplete || completedLog) return;
+    let live = true;
+    void Promise.all([getMacroFactorState(), getMapping()])
+      .then(([state, mapping]) => { if (live) setMacroFactor({ workouts: state.workouts, mapping, dismissed: state.dismissed }); })
+      .catch(() => { /* without the file: the plan's minutes */ });
+    return () => { live = false; };
+  }, [quickComplete, completedLog]);
+  const waiting = quickComplete && !completedLog ? pendingMacroFactorWorkout(session.scheduledDate, template.id, macroFactor, sessionLogs) : undefined;
+  const actions = sessionSheetActions({ date: session.scheduledDate, today, skipped, canComeBack, kind, workoutWaiting: !!waiting });
+  const duration = strengthDoneDuration({ scheduledDate: doneToday ? today : session.scheduledDate }, template, fullDuration, macroFactor, sessionLogs);
+
+  const info = guide ? <InfoButton onClick={() => setShowGuide(true)} label="Meer over deze training" /> : undefined;
+  const guideSheet = showGuide && guide
+    ? <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />
+    : null;
+  const eyebrow = dayLabel(session.scheduledDate, today);
 
   if (completedLog) {
     return (
-      <Portal>
-        <div
-          className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-          onClick={requestClose}
-        >
-          <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
-            <Card className="rounded-b-none border-b-0 pb-6">
-              <div className="flex items-start justify-between gap-2">
-                <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
-                {guide && <InfoButton onClick={() => setShowGuide(true)} />}
-              </div>
-              <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
-              <p className="mt-1 text-xs" style={{ color: 'var(--color-success-text)' }}>
-                ✓ Voltooid • {completedLog.durationMinutes} min
-              </p>
-
-              {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />}
-
-              <div className="mt-4">
-                {!confirmingUndo ? (
-                  <SecondaryButton onClick={() => setConfirmingUndo(true)} className="w-full">Ongedaan maken</SecondaryButton>
-                ) : (
-                  <div className="flex gap-3">
-                    <SecondaryButton onClick={() => setConfirmingUndo(false)}>Annuleren</SecondaryButton>
-                    <PrimaryButton onClick={onUndo}>Bevestigen</PrimaryButton>
-                  </div>
-                )}
-              </div>
-
-              <button onClick={requestClose} className="min-h-[44px] mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Sluiten
-              </button>
-            </Card>
-          </div>
+      <SheetFrame closing={closing} onClose={requestClose} label={template.name} head={<SheetHead
+          eyebrow={eyebrow}
+          title={template.name}
+          info={info}
+          onClose={requestClose}
+          facts={(
+            <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--color-success-text)' }}>
+              <Icon name="gedaan" size={16} />{macroFactorLine(completedLog) ?? `Gedaan · ${completedLog.durationMinutes} min`}
+            </span>
+          )}
+        />}>
+        {guideSheet}
+        <div className="mt-6">
+          {!confirmingUndo ? (
+            <SecondaryButton onClick={() => setConfirmingUndo(true)} className="w-full">Ongedaan maken</SecondaryButton>
+          ) : (
+            <div className="flex gap-3">
+              <SecondaryButton onClick={() => setConfirmingUndo(false)}>Annuleren</SecondaryButton>
+              <PrimaryButton onClick={onUndo} fullWidth={false}>Bevestigen</PrimaryButton>
+            </div>
+          )}
         </div>
-      </Portal>
+      </SheetFrame>
     );
   }
 
@@ -115,97 +221,121 @@ export function SessionActionSheet({
   // Week sheet still offered "START VOLLEDIGE SESSIE" and moving it).
   if (template.type === 'recovery') {
     return (
-      <Portal>
-        <div
-          className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-          onClick={requestClose}
-        >
-          <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
-            <Card className="rounded-b-none border-b-0 pb-6">
-              <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
-              <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{REST_DAY_COPY[restMode].title}</h3>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                {REST_DAY_COPY[restMode].detail}
-              </p>
-              {restMode === 'active' && onDoneAsPlanned && <SecondaryButton onClick={onDoneAsPlanned} className="mt-3">Gedaan</SecondaryButton>}
-              <button onClick={() => onStart('full')} className="mt-3 min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-                {restMode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'}
-              </button>
-              <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Sluiten
-              </button>
-            </Card>
-          </div>
+      <SheetFrame closing={closing} onClose={requestClose} label={REST_DAY_COPY[restMode].title} head={<SheetHead eyebrow={eyebrow} title={REST_DAY_COPY[restMode].title} onClose={requestClose} />}>
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{REST_DAY_COPY[restMode].detail}</p>
+        <div className="mt-6 flex flex-col gap-4">
+          {restMode === 'active' && onDoneAsPlanned && <PrimaryButton onClick={onDoneAsPlanned}>Gedaan</PrimaryButton>}
+          <SheetRows>
+            <SheetRow title={restMode === 'active' ? 'Invullen wat je deed' : 'Toch een wandeling vastleggen'} onClick={() => onStart('full')} />
+          </SheetRows>
         </div>
-      </Portal>
+      </SheetFrame>
     );
   }
 
-  return (
-    <Portal>
-      <div
-        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
-        onClick={requestClose}
-      >
-        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
-          <Card className="rounded-b-none border-b-0 pb-6">
-            <div className="flex items-start justify-between gap-2">
-              <Eyebrow>{`${weekdayShortNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`}</Eyebrow>
-              {guide && <InfoButton onClick={() => setShowGuide(true)} />}
-            </div>
-            <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h3>
-            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              {sessionKindLabel(template)} • ±{fullDuration} min{note ? ` • ${note}` : ''}{template.focus ? ` • ${template.focus}` : ''}
-            </p>
-            {bikeOption && (
-              <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Kan ook op de fiets, buiten of binnen. Kies dat bij Waar train je?
-              </p>
-            )}
-
-            {showGuide && guide && <TrainingGuideSheet title={template.name} guide={guide} template={template} dateIso={session.scheduledDate} dayLabel={guideDayLabel(template, session.scheduledDate)} onClose={() => setShowGuide(false)} />}
-
-            {!completedLog && <div className="mt-4"><WarmupRow template={template} /></div>}
-
-            <div className="mt-4 flex flex-col gap-2">
-              {quickComplete ? (
-                <StrengthDoneElsewhere fullDuration={fullDuration} legs={isLegHeavyTemplate(template)} onDone={(feel, minutes, extra) => onStart('full', feel, minutes, extra)} />
-              ) : (
-                variants.map((v) => (
-                  <PrimaryButton key={v} onClick={() => onStart(v)}>
-                    {v === 'full' ? 'Training starten' : v === 'short' ? 'Korte versie starten' : 'Minimumversie starten'}
-                  </PrimaryButton>
-                ))
-              )}
-            </div>
-
-            {skipped && (
-              <div className="mt-5">
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                  {canComeBack ? 'Overgeslagen. Wil je hem toch doen, dan zet ASCEND hem terug op deze dag.' : 'Overgeslagen. Die dag is al voorbij; kies hieronder een dag die nog komt.'}
-                </p>
-                {canComeBack && <SecondaryButton onClick={onBackOnPlan} className="mt-2 w-full">Toch doen</SecondaryButton>}
-              </div>
-            )}
-
-            <div className="mt-5">
-              <MoveSuggestions
-                sessionDate={session.scheduledDate}
-                originalDate={session.movedFromDate}
-                suggestions={suggestions}
-                onPick={(sug) => onPickSuggestion?.(sug)}
-                onPickDate={onMove}
-                onSkip={skipped ? undefined : onSkip}
-                onSameDay={canComeBack ? onBackOnPlan : undefined}
-              />
-            </div>
-
-            <button onClick={requestClose} className="min-h-[44px] mt-4 w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Sluiten
-            </button>
-          </Card>
+  if (step === 'done') {
+    return (
+      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name}, gedaan`} scrollKey="done" head={<SheetHead eyebrow={doneToday ? 'Vandaag gedaan' : 'Gedaan'} title={template.name} onBack={() => { setStep('main'); setDoneToday(false); }} onClose={requestClose} />}>
+        <div className="mt-6">
+          <StrengthDoneElsewhere
+            key={duration.source}
+            fullDuration={duration.minutes}
+            durationSource={duration.source}
+            legs={isLegHeavyTemplate(template)}
+            submitLabel="Opslaan"
+            onDone={(feel, mins, extra) => onStart('full', feel, mins, extra)}
+          />
         </div>
+      </SheetFrame>
+    );
+  }
+
+  if (step === 'move') {
+    return (
+      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHead eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+        <div className="mt-6">
+          <MoveSuggestions
+            sessionDate={session.scheduledDate}
+            originalDate={session.movedFromDate}
+            suggestions={suggestions}
+            onPick={(sug) => onPickSuggestion?.(sug)}
+            onPickDate={onMove}
+            onSameDay={canComeBack ? onBackOnPlan : undefined}
+          />
+        </div>
+      </SheetFrame>
+    );
+  }
+
+  const run = (action: SheetAction) => () => {
+    switch (action) {
+      case 'done':
+        if (kind === 'quick') setStep('done');
+        else (onLog ?? onStart)(variant);
+        return;
+      case 'start': return onStart(variant);
+      case 'move': return setStep('move');
+      case 'skip': return onSkip();
+      case 'backOnPlan': return onBackOnPlan?.();
+      case 'doToday':
+        if (kind === 'quick') { setDoneToday(true); setStep('done'); } else onStart('full');
+        return;
+      case 'saveWorkout':
+        if (!waiting || saving) return;
+        setSaving(true);
+        void logSession(workoutToDraft(waiting, template, session)).then((ok) => (ok ? requestClose() : setSaving(false)));
+        return;
+    }
+  };
+  const label: Record<SheetAction, string> = {
+    done: skipped ? 'Toch gedaan' : 'Gedaan',
+    start: 'Training starten',
+    move: 'Verplaatsen',
+    skip: 'Overslaan',
+    backOnPlan: 'Toch doen',
+    doToday: 'Vandaag al doen',
+    saveWorkout: saving ? 'Bezig…' : 'Opslaan',
+  };
+  const due = session.scheduledDate <= today;
+  const facts = [skipped ? 'Overgeslagen' : null, sessionKindLabel(template), `${minutes} min`, note].filter(Boolean).join(' · ');
+  // Short and minimum versions (when switched on): one strip that the gold
+  // button and "Training starten" both follow.
+  const showVariants = due && !skipped && kind !== 'quick' && variants.length > 1;
+
+  return (
+    <SheetFrame closing={closing} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHead eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
+      {guideSheet}
+      {bikeOption && !skipped && (
+        <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Kan ook op de fiets, buiten of binnen.</p>
+      )}
+      <div className="mt-6 flex flex-col gap-4">
+        {!skipped && <WatchStatusRow session={session} template={template} offer={false} onLeave={requestClose} />}
+        {session.scheduledDate === today && !skipped && <WarmupRow template={template} />}
+        {showVariants && (
+          <ChoiceStrip
+            label="Versie"
+            options={variants.map((v) => ({ value: v, label: VARIANT_LABEL[v] }))}
+            value={variant}
+            onChange={(v) => setVariant(v ?? 'full')}
+          />
+        )}
+        {waiting && actions.main === 'saveWorkout' && (
+          <p className="flex items-center gap-2 font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>
+            <span style={{ color: 'var(--color-success-text)' }}><Icon name="kracht" size={20} /></span>{macroFactorLine(waiting)}
+          </p>
+        )}
+        <div>
+          <PrimaryButton onClick={run(actions.main)} disabled={saving}>{label[actions.main]}</PrimaryButton>
+          {kind === 'quick' && actions.main === 'done' && (
+            <p className="mt-2 text-center text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>{SETS_FROM_MACROFACTOR}</p>
+          )}
+        </div>
+        {actions.rows.length > 0 && (
+          <SheetRows label="Andere keuzes">
+            {actions.rows.map((a) => <SheetRow key={a} title={label[a]} onClick={run(a)} />)}
+          </SheetRows>
+        )}
       </div>
-    </Portal>
+    </SheetFrame>
   );
 }
