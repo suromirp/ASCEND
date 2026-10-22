@@ -111,13 +111,15 @@ export interface SettingsRowProps {
   group?: boolean;
   // Voor een rij die gedimd is als geheel (Health Connect, komt later).
   off?: boolean;
+  // Een tel lichten (het tandwiel op een tab wijst de groep van die tab aan).
+  highlight?: boolean;
 }
 
 // Eén instelling. Links de titel, rechts de waarde, daaronder hoogstens één regel.
 // De hele rij is het tikdoel: een knop over de rij heen, met de InfoButton ernaast
 // (niet erin). Hoogte 52 px, met een tweede regel 68 px, een groep 72 px.
 export function SettingsRow(props: SettingsRowProps) {
-  const { id, title, kind = 'nav', value, sub, auto, dim, dot, info, onClick, checked, onChange, noChevron, group, off } = props;
+  const { id, title, kind = 'nav', value, sub, auto, dim, dot, info, onClick, checked, onChange, noChevron, group, off, highlight } = props;
   const [help, setHelp] = useState(false);
   const toggle = kind === 'toggle';
   const hasValue = value !== undefined && value !== null && value !== '';
@@ -128,6 +130,7 @@ export function SettingsRow(props: SettingsRowProps) {
     group ? 'grp' : '',
     kind === 'danger' ? 'danger' : '',
     off ? 'off' : '',
+    highlight ? 'flash' : '',
   ].filter(Boolean).join(' ');
   const label = hasValue && typeof value === 'string' ? `${title}, ${value}` : title;
   return (

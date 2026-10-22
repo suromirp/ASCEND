@@ -1,0 +1,48 @@
+// ASCEND: staat een instelling er nu op de pagina? Een paar rijen verschijnen
+// alleen onder een voorwaarde (Garmin gekoppeld, Kracht meerekenen aan, het
+// kledingadvies aan). Een sprong naar zo'n rij zou nergens heen gaan; de pagina
+// zegt dan waarom, en springt naar de groep. Puur: de rij zegt zelf of hij er
+// is (`hidden` in settingsSummary.ts), dit bestand geeft de reden.
+
+import { placementOf } from '../data/settingsLayout';
+import { rowSummary, type SettingsFacts } from './settingsSummary';
+
+const FORGE_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.';
+const GARMIN_OFF = 'Deze keuze verschijnt pas als je Garmin hebt gekoppeld.';
+const MACROFACTOR_OFF = 'Deze keuze verschijnt pas als je een MacroFactor-export hebt ingelezen.';
+
+const REASON: Record<string, string> = {
+  'lange-zondag': 'Deze keuze verschijnt pas als je hoofddoel geen bergtocht is. Bij een bergdoel staat er op zondag altijd een bergtocht.',
+  backupmap: 'Deze keuze verschijnt alleen als je browser een vaste map kan onthouden. Deze nu niet.',
+  'weekterugblik-dag': 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
+  'kleding-voorkeur': 'Deze keuze verschijnt pas als het kledingadvies aan staat.',
+  'zware-dingen': 'Deze keuze verschijnt pas als twee trainingen op een dag mag.',
+  trainingsduur: 'Deze keuze verschijnt pas als er krachttrainingen in je planning staan.',
+  'forge-volgorde': FORGE_OFF,
+  'forge-sets': FORGE_OFF,
+  'forge-opwarmen': FORGE_OFF,
+  'forge-bereik': FORGE_OFF,
+  'forge-schatting': FORGE_OFF,
+  'garmin-trainingen': GARMIN_OFF,
+  'vanzelf-afvinken': GARMIN_OFF,
+  'garmin-leidend': GARMIN_OFF,
+  slaap: GARMIN_OFF,
+  rusthartslag: GARMIN_OFF,
+  hrv: GARMIN_OFF,
+  'naar-horloge': GARMIN_OFF,
+  'macrofactor-leidend': MACROFACTOR_OFF,
+  'macrofactor-gewicht': MACROFACTOR_OFF,
+};
+
+export function rowAvailability(rowId: string, facts: SettingsFacts): { available: true } | { available: false; reason: string } {
+  if (!rowSummary(rowId, facts).hidden) return { available: true };
+  return { available: false, reason: REASON[rowId] ?? 'Deze keuze staat er nu niet.' };
+}
+
+// Voor een instelling uit de index: de rij waar hij staat en of die er nu is.
+export function settingAvailabilityOnPage(settingId: string, facts: SettingsFacts): { available: true } | { available: false; reason: string } {
+  const placement = placementOf(settingId);
+  return placement ? rowAvailability(placement.row, facts) : { available: true };
+}
+
+export const CONDITIONAL_ROWS = Object.keys(REASON);

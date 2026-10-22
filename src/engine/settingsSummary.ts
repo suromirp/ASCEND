@@ -221,15 +221,15 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return d ? { value: d.value, auto: d.auto } : { hidden: true };
     }
     case 'forge-volgorde':
-      return { value: choiceShort('volgorde', forge.progression) };
+      return { value: choiceShort('volgorde', forge.progression), hidden: !forge.enabled };
     case 'forge-sets':
-      return { value: choiceShort('werksets', forge.workSets) };
+      return { value: choiceShort('werksets', forge.workSets), hidden: !forge.enabled };
     case 'forge-opwarmen':
-      return { value: choiceShort('opwarmen', forge.warmup) };
+      return { value: choiceShort('opwarmen', forge.warmup), hidden: !forge.enabled };
     case 'forge-bereik':
-      return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen' };
+      return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen', hidden: !forge.enabled };
     case 'forge-schatting':
-      return { value: choiceShort('schatting', forge.estimateUpTo) };
+      return { value: choiceShort('schatting', forge.estimateUpTo), hidden: !forge.enabled };
     case 'stangen':
       return { value: listWeights(forge.profile.barsKg) };
     case 'schijven':

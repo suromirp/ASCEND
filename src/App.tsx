@@ -18,6 +18,8 @@ import { WeekPage } from './pages/Week';
 import { AscendPage, GoalsPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsPage } from './pages/Settings';
+import { SettingsOverview } from './pages/settings/SettingsOverview';
+import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
@@ -209,6 +211,8 @@ function AppShell() {
             <Route path="/ascend/doelen" element={<GoalsPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/more" element={<SettingsPage />} />
+            <Route path="/instellingen" element={<SettingsOverview />} />
+            <Route path="/instellingen/:groep" element={<SettingsGroupPage />} />
             <Route path="/stretches" element={<StretchesPage />} />
             <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
             <Route path="/kennis" element={<KnowledgePage />} />
