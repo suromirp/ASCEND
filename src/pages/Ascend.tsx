@@ -19,6 +19,7 @@ import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION, GR5_TRAINING_SPLIT_SOURCES } from '../data/gr5Details';
 import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../components/ui';
+import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
@@ -134,6 +135,12 @@ export function AscendPage() {
   // (production feedback: "te slordig", "raar dat dit bij elkaar staat").
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
+      {/* The animated brand mark lives here, on the tab that carries its
+          name: the light climbs the trail once each time you open Ascend. */}
+      <div className="flex flex-col items-center gap-1" aria-hidden="true">
+        <AscendAnimatedLogo size={96} />
+        <p className="text-xs tracking-[0.12em]" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
+      </div>
       {goal ? (
         <div>
           <Eyebrow>HOOFDDOEL</Eyebrow>
