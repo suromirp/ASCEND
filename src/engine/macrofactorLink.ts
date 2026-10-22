@@ -18,6 +18,8 @@ import { daysBetween, mondayOfWeek } from '../utils/dates';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isLegSession, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
 import { strengthChangeFor, type StrengthChange } from './macrofactorLead';
+import { enrichStrengthData } from './macrofactorEnrich';
+import type { ExerciseSetLog } from '../models/training';
 
 export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
 import type { SessionLogDraft } from './activityImport';
@@ -80,6 +82,10 @@ export type MacroFactorProposal =
   // log's own duration, sets and reps in reserve; the old ones are kept on the
   // log (engine/macrofactorLead.ts).
   | { kind: 'takeover'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; change: StrengthChange }
+  // A log that came from this very workout earlier lacks the reps in reserve
+  // per set and the warm-up sets; the working sets are equal, so only those
+  // empty fields are added (engine/macrofactorEnrich.ts).
+  | { kind: 'enrich'; workout: MacroFactorWorkout; template: SessionTemplate; log: SessionLog; strengthData: ExerciseSetLog[] }
   // The name has not been linked yet: the link card on the import page asks
   // once per name (engine/macrofactorNames.ts).
   | { kind: 'unmapped'; workout: MacroFactorWorkout };
@@ -129,8 +135,16 @@ export function planMacroFactor(
   let alreadyDone = 0;
 
   for (const workout of [...workouts].sort((a, b) => a.start.localeCompare(b.start))) {
-    if (dismissedSet.has(workout.externalId) || storedIds.has(workout.externalId)) {
+    if (dismissedSet.has(workout.externalId)) {
       alreadyDone++;
+      continue;
+    }
+    if (storedIds.has(workout.externalId)) {
+      const stored = logs.find((l) => l.externalId === workout.externalId || l.manualMeasured?.strength?.workoutId === workout.externalId);
+      const storedTemplate = stored ? templateById.get(stored.templateId) : undefined;
+      const strengthData = stored ? enrichStrengthData(stored, workout) : undefined;
+      if (stored && storedTemplate && strengthData) proposals.push({ kind: 'enrich', workout, template: storedTemplate, log: stored, strengthData });
+      else alreadyDone++;
       continue;
     }
     const key = nameKey(workout.name);

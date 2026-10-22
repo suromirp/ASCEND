@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, NavLink, Link, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { AscendSplashLogo } from './components/AscendSplashLogo';
 import { CompletionMoment } from './components/CompletionMoment';
@@ -29,6 +29,7 @@ const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ de
 const MacroFactorImportPage = lazy(() => import('./pages/MacroFactorImport').then((m) => ({ default: m.MacroFactorImportPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
 const WeatherPage = lazy(() => import('./pages/Weather').then((m) => ({ default: m.WeatherPage })));
+const ForgePage = lazy(() => import('./pages/Forge').then((m) => ({ default: m.ForgePage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
 const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
@@ -219,6 +220,8 @@ function AppShell() {
             <Route path="/bronnen" element={<SourcesPage />} />
             <Route path="/plekken" element={<TrainingSpotsPage />} />
             <Route path="/weer" element={<WeatherPage />} />
+            <Route path="/forge" element={<ForgePage />} />
+            <Route path="/kracht" element={<Navigate to="/forge" replace />} />
             <Route path="/blessures" element={<InjuriesPage />} />
             <Route path="/reis" element={<JourneyPage />} />
             <Route path="/reis/paklijst" element={<PackListPage />} />

@@ -20,6 +20,7 @@ import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import type { OverviewSettings } from '../engine/overviewSettings';
+import type { StrengthSettings } from '../engine/strengthSettings';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
@@ -575,6 +576,11 @@ export interface AppSettings {
   // and what ASCEND proposes. Absent or missing keys = how the app always was.
   // Optional and additive; travels with the settings in a backup.
   overviews?: OverviewSettings;
+  // "Forge" / Kracht meerekenen (engine/strengthSettings.ts): the switch, the
+  // choices and the gym profile. Absent or missing keys = the advice. Optional
+  // and additive; travels with the settings in a backup, where only valid
+  // values are kept (storage/backup.ts).
+  strengthModel?: StrengthSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

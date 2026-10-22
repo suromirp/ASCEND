@@ -26,6 +26,7 @@ import { checkForUpdate, APP_VERSION, BUILD_TIME } from '../utils/appUpdate';
 import { getConnection } from '../storage/externalActivities';
 import { SETTINGS_GROUPS, SETTINGS_INDEX, settingsAnchor, type SettingsGroupId, type SettingsIndexItem } from '../data/settingsIndex';
 import { searchSettings, settingAvailability, type SettingsVisibility } from '../engine/settingsSearch';
+import { ForgeSettings } from '../components/ForgeSettings';
 import { resolveOverviews, type OverviewSettings, type ReviewDay } from '../engine/overviewSettings';
 import type { ReactNode } from 'react';
 
@@ -481,6 +482,7 @@ export function SettingsPage() {
                 <StrengthDurationSettings />
               </Card>
             </Anchor>
+            <ForgeSettings />
             <Anchor id="ambitie">
               <AmbitionSettings />
             </Anchor>

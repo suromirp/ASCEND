@@ -19,6 +19,7 @@
 import { MetaRepo, SessionLogsRepo } from './database';
 import { readMacroFactorCsv, nameKey, type MacroFactorReadResult, type MacroFactorWorkout } from '../engine/macrofactorImport';
 import { supplementPatch, type NameMapping } from '../engine/macrofactorLink';
+import { enrichStrengthData } from '../engine/macrofactorEnrich';
 import type { SessionTemplate } from '../models/training';
 
 const STATE_KEY = 'macrofactorWorkouts';
@@ -141,6 +142,18 @@ export async function fillInLog(logId: string, workout: MacroFactorWorkout, temp
   const patch = supplementPatch(log, workout, template);
   if (Object.keys(patch).length === 0) return false;
   await SessionLogsRepo.put({ ...log, ...patch });
+  return true;
+}
+
+// Adds the reps in reserve and the warm-up sets to a log that came from this
+// workout, where those are empty (engine/macrofactorEnrich.ts). Only on the tap
+// of the user. Read again here, so what is stored now decides.
+export async function enrichLog(logId: string, workout: MacroFactorWorkout): Promise<boolean> {
+  const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
+  if (!log) return false;
+  const strengthData = enrichStrengthData(log, workout);
+  if (!strengthData) return false;
+  await SessionLogsRepo.put({ ...log, strengthData });
   return true;
 }
 

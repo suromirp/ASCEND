@@ -12,6 +12,7 @@ import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
 import { IndexCheckCard } from '../components/stand/IndexCheckCard';
 import { indexChecks } from '../engine/learning';
 import { AdventureCard } from '../components/AdventureCard';
+import { strengthModelOn } from '../engine/strengthSettings';
 import { LessonCard } from '../components/LessonCard';
 import { freshnessCurve, intensityMix, legCalendar, weeklyDescent, weeklyLoad } from '../engine/standing';
 import { computeGr5Readiness } from '../engine/gr5Readiness';
@@ -161,6 +162,15 @@ export function StandingPage() {
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
+        {strengthModelOn(settings.strengthModel) && (
+          <button onClick={() => navigate('/forge')} className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
+            <span>
+              <span className="block font-display text-xl" style={{ color: 'var(--color-ink)' }}>Forge</span>
+              <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
+            </span>
+            <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}>›</span>
+          </button>
+        )}
       </section>
 
       <section ref={(el) => { refs.current.doel = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Doel">

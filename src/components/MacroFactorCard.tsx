@@ -17,7 +17,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
-import { fillInLog } from '../storage/macrofactor';
+import { enrichLog, fillInLog } from '../storage/macrofactor';
+import { describeEnrichment } from '../engine/macrofactorEnrich';
 import type { TakeoverRequest } from '../storage/macrofactorLead';
 import { describeStrengthChange } from '../engine/macrofactorLead';
 import { describeWorkout, minutesLabel, type MacroFactorProposal } from '../engine/macrofactorLink';
@@ -59,6 +60,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
     const batch: SavedMoment[] = [];
     let created = 0;
     let changed = 0;
+    let enriched = 0;
     let failed = 0;
     let pending: TakeoverRequest[] = [];
     const flush = async () => {
@@ -78,6 +80,9 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
         if (p.kind === 'new') {
           if (await logSession(p.draft, { batch })) created++;
           else failed++;
+        } else if (p.kind === 'enrich') {
+          if (await enrichLog(p.log.id, p.workout)) enriched++;
+          else failed++;
         } else if (await fillInLog(p.log.id, p.workout, p.template)) changed++;
         else failed++;
       }
@@ -88,7 +93,7 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
       setSaving(false);
     }
     setSkipped([]);
-    setResult(summary(created, changed, failed, ready.length - chosen.length, state.leads));
+    setResult(summary(created, changed, enriched, failed, ready.length - chosen.length, state.leads));
   }
 
   const takeovers = ready.filter((p) => p.kind === 'takeover').length;
@@ -144,10 +149,11 @@ export function MacroFactorCard({ onImportPage = false, primary = true }: { onIm
 }
 
 // "Verwerkt: 8 nieuw opgeslagen en 2 bijgewerkt met MacroFactor. 1 niet gelukt."
-function summary(created: number, changed: number, failed: number, left: number, leads: boolean): string {
+function summary(created: number, changed: number, enriched: number, failed: number, left: number, leads: boolean): string {
   const parts: string[] = [];
   if (created > 0) parts.push(`${created} nieuw opgeslagen`);
   if (changed > 0) parts.push(`${changed} ${leads ? 'bijgewerkt met MacroFactor' : 'aangevuld'}`);
+  if (enriched > 0) parts.push(`${enriched} aangevuld met herhalingen in reserve`);
   let text = parts.length > 0 ? `Verwerkt: ${parts.join(' en ')}.` : 'Er is niets verwerkt.';
   if (failed > 0) text += ` ${failed} lukte niet.`;
   if (left > 0) text += ` ${left} liet je liggen.`;
@@ -189,6 +195,7 @@ function what(p: ReadyProposal): string {
     if (!p.planned) return 'Nieuw in je logboek, er stond niets gepland in die week.';
     return p.planned.scheduledDate === p.workout.date ? 'Nieuw in je logboek, zoals gepland.' : `Nieuw in je logboek, gepland voor ${dayLabel(p.planned.scheduledDate)}.`;
   }
+  if (p.kind === 'enrich') return `Staat al in je logboek op ${dayLabel(p.log.completedDate)}, met dezelfde sets. Aanvullen: ${describeEnrichment(p.log, p.strengthData)}. Verder verandert er niets.`;
   if (p.kind === 'takeover') return `Je legde hem al vast op ${dayLabel(p.log.completedDate)}. Bijwerken: ${describeStrengthChange(p.change)}.`;
   const missing: string[] = [];
   if (p.patch.strengthData) missing.push('de sets en gewichten');

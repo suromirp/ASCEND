@@ -45,6 +45,7 @@ import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import { migrateGr5ObjectiveData, buildMarathonGoal } from '../engine/goalMigration';
 import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
+import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { migrateExport, migrateLeavePeriods, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -225,6 +226,17 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   if ('overviews' in s && !isRecord(s.overviews)) {
     delete s.overviews;
     skipped.n++;
+  }
+  // Forge (Kracht meerekenen): only valid values stay; rubbish is dropped.
+  if ('strengthModel' in s) {
+    const clean = normalizeStrengthSettings(s.strengthModel);
+    if (!clean) {
+      delete s.strengthModel;
+      skipped.n++;
+    } else {
+      if (JSON.stringify(clean) !== JSON.stringify(s.strengthModel)) skipped.n++;
+      s.strengthModel = clean;
+    }
   }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {
