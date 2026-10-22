@@ -17,6 +17,7 @@
 // that knows its field names.
 
 import type { WeatherDay, WeatherForecast, WeatherHour, WeatherPlace } from '../models/weather';
+import type { DetailConditions } from '../models/activityDetail';
 
 export const OPEN_METEO_FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 export const OPEN_METEO_GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
@@ -200,4 +201,79 @@ export async function searchPlaces(name: string, options: FetchOptions = {}): Pr
 
 export function openMeteoErrorMessage(err: unknown): string {
   return err instanceof OpenMeteoError ? err.message : MESSAGES.network;
+}
+
+// --- the weather of a training that is done ---------------------------------------------
+//
+// The same forecast endpoint, with `past_days` (up to 92 days back): the hours
+// of the day of the training at its rounded place. Used to compare runs fairly
+// (engine/runComparison.ts); the track is never sent, only a place rounded to
+// two decimals.
+
+export const MAX_PAST_DAYS = 92;
+
+export function pastConditionsUrl(place: WeatherPlace, daysBack: number): string {
+  const query = new URLSearchParams({
+    latitude: String(roundCoordinate(place.lat)),
+    longitude: String(roundCoordinate(place.lon)),
+    hourly: 'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m',
+    timezone: 'auto',
+    past_days: String(Math.min(MAX_PAST_DAYS, Math.max(0, Math.round(daysBack)))),
+    forecast_days: '1',
+    wind_speed_unit: 'kmh',
+  });
+  return `${OPEN_METEO_FORECAST_URL}?${query.toString().replace(/%2C/g, ',')}`;
+}
+
+// The hours a training touched, averaged: from the hour it started in to the
+// hour it ended in. Undefined when the answer has no usable hour for it.
+export function mapPastConditions(raw: unknown, startLocal: string, durationSec: number): DetailConditions | undefined {
+  const h = (raw as { hourly?: Record<string, unknown> } | null)?.hourly;
+  if (!h || !Array.isArray(h.time)) throw new OpenMeteoError('response', MESSAGES.response);
+  const startMs = Date.parse(`${startLocal.slice(0, 16)}:00Z`);
+  if (!Number.isFinite(startMs)) return undefined;
+  const firstHour = Math.floor(startMs / 3_600_000) * 3_600_000;
+  const lastHour = Math.floor((startMs + Math.max(0, durationSec) * 1000) / 3_600_000) * 3_600_000;
+  const col = (key: string): unknown[] => (Array.isArray(h[key]) ? (h[key] as unknown[]) : []);
+  const temp = col('temperature_2m');
+  const feels = col('apparent_temperature');
+  const humidity = col('relative_humidity_2m');
+  const rain = col('precipitation');
+  const wind = col('wind_speed_10m');
+  const gust = col('wind_gusts_10m');
+  const picked: number[] = [];
+  (h.time as unknown[]).forEach((time, i) => {
+    if (!isLocalTime(time)) return;
+    const ms = Date.parse(`${time}:00Z`);
+    if (ms >= firstHour && ms <= lastHour && num(temp[i]) !== undefined) picked.push(i);
+  });
+  if (picked.length === 0) return undefined;
+  const mean = (values: unknown[]): number | undefined => {
+    const xs = picked.map((i) => num(values[i])).filter((v): v is number => v !== undefined);
+    return xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined;
+  };
+  const gustMax = Math.max(...picked.map((i) => num(gust[i]) ?? -1));
+  const r1 = (v: number | undefined) => (v === undefined ? undefined : Math.round(v * 10) / 10);
+  const out: DetailConditions = { source: 'lookup' };
+  const entries: [keyof DetailConditions, number | undefined][] = [
+    ['tempC', r1(mean(temp))],
+    ['feelsC', r1(mean(feels))],
+    ['windKmh', r1(mean(wind))],
+    ['gustKmh', r1(gustMax >= 0 ? gustMax : undefined)],
+    ['humidityPct', r1(mean(humidity))],
+    ['rainMm', r1(picked.map((i) => Math.max(0, num(rain[i]) ?? 0)).reduce((a, b) => a + b, 0))],
+  ];
+  for (const [key, value] of entries) if (value !== undefined) (out as unknown as Record<string, number>)[key] = value;
+  return out;
+}
+
+export async function fetchPastConditions(
+  place: WeatherPlace,
+  startLocal: string,
+  durationSec: number,
+  daysBack: number,
+  options: FetchOptions = {},
+): Promise<DetailConditions | undefined> {
+  if (daysBack > MAX_PAST_DAYS) return undefined;
+  return mapPastConditions(await getJson(pastConditionsUrl(place, daysBack), options), startLocal, durationSec);
 }

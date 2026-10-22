@@ -19,7 +19,7 @@ import { MetaRepo, SessionLogsRepo } from './database';
 import type { ExternalActivity } from '../engine/activityImport';
 import { upsertAutoLogged, withAutoStatus, type AutoLogged, type AutoLoggedStatus } from '../engine/autoTick';
 import { clearWellness, pruneWellness, syncWellness } from './wellness';
-import { nothingWanted, normalizeWatchUse, wellnessWanted, type WatchUse } from '../engine/watchUse';
+import { filterActivityDetails, nothingWanted, normalizeWatchUse, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import { historyStart } from '../engine/watchAlign';
 import { addDays, todayISO } from '../utils/dates';
 import {
@@ -185,8 +185,8 @@ export async function setWatchUse(patch: Partial<WatchUse>): Promise<WatchUse> {
   await putWatchState({
     ...state,
     use,
-    activities: use.activities ? state.activities : [],
-    history: use.activities ? state.history : [],
+    activities: use.activities ? filterActivityDetails(state.activities, use) : [],
+    history: use.activities ? filterActivityDetails(state.history, use) : [],
     historyFetchedAt: use.activities ? state.historyFetchedAt : undefined,
     fetchedAt: use.activities && !state.use.activities ? undefined : state.fetchedAt,
   });
@@ -273,7 +273,7 @@ export async function syncWatchHistory(options: SyncOptions = {}): Promise<Histo
     const from = historyStart(await SessionLogsRepo.getAll(), today);
     if (!from) return { status: 'nothing' };
     const adapter = createIntervalsIcuAdapter(connection, { fetchImpl: options.fetchImpl });
-    const history = await adapter.fetchExternalActivities!({ from, to: addDays(today, 1) });
+    const history = filterActivityDetails(await adapter.fetchExternalActivities!({ from, to: addDays(today, 1) }), state.use);
     await putWatchState({ ...(await getWatchState()), history, historyFetchedAt: now.toISOString(), historyFrom: from });
     return { status: 'ok', count: history.length, from };
   } catch (err) {
@@ -306,7 +306,7 @@ export async function syncWatchActivities(options: SyncOptions = {}): Promise<Sy
     const adapter = createIntervalsIcuAdapter(connection, { fetchImpl: options.fetchImpl });
     let activities: ExternalActivity[] = [];
     if (use.activities) {
-      activities = await adapter.fetchExternalActivities!({ from: addDays(today, -FETCH_DAYS), to: addDays(today, 1) });
+      activities = filterActivityDetails(await adapter.fetchExternalActivities!({ from: addDays(today, -FETCH_DAYS), to: addDays(today, 1) }), use);
     } else if (options.force) {
       // Trainings are switched off: this only checks that the key works, and
       // what comes back is thrown away.

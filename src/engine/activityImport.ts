@@ -231,6 +231,7 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     avgHeartRate: activity.avgHeartRate,
     maxHeartRate: activity.maxHeartRate,
     cadence: activity.avgCadence !== undefined ? Math.round(activity.avgCadence) : undefined,
+    dynamics: activity.kind === 'run' || activity.kind === 'hike' ? activity.dynamics : undefined,
     source: activity.source,
   });
 

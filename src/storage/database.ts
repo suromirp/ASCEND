@@ -22,6 +22,7 @@ import { addDays, isoWeekday, mondayOfWeek, resolveProgramWeek, todayISO } from 
 import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
+import type { RunInsightSettings } from '../engine/runInsightSettings';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, programAnchorDate, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
@@ -597,6 +598,11 @@ export interface AppSettings {
   // so older settings and backups need no migration step; travels with the
   // settings in a backup and is read defensively on import.
   clothingAdjust?: ClothingAdjust;
+  // "Loopinzicht" (engine/runInsightSettings.ts): the two lines after a run or
+  // tocht, the weather lookup and the chest strap. Absent or missing keys = the
+  // advice. Optional and additive; travels with the settings in a backup, where
+  // only valid values are kept (storage/backup.ts).
+  runInsight?: RunInsightSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

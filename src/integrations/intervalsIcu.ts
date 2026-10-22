@@ -28,7 +28,7 @@ import type { ExternalActivity, ExternalActivityKind } from '../engine/activityI
 import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
-import type { RunDynamics, StreamKind } from '../models/activityDetail';
+import type { RunDynamics, StreamKind, StreamSet } from '../models/activityDetail';
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu';
 export const INTERVALS_ADAPTER_ID = 'intervals.icu';
@@ -274,6 +274,104 @@ export function mapIntervalsActivities(raw: unknown): ExternalActivity[] {
   return out;
 }
 
+// --- the series of one activity -------------------------------------------------------
+
+// "intervals.icu:i123" -> "i123"; undefined for an id of another provider.
+export function intervalsActivityId(externalId: string): string | undefined {
+  const prefix = `${INTERVALS_ADAPTER_ID}:`;
+  return externalId.startsWith(prefix) && externalId.length > prefix.length ? externalId.slice(prefix.length) : undefined;
+}
+
+// Always with `types`: without it the provider sends every series it has.
+export function streamsUrl(activityId: string, kinds: StreamKind[]): string {
+  const types = kinds.map((k) => STREAM_NAMES[k]).join(',');
+  return `${INTERVALS_BASE_URL}/api/v1/activity/${encodeURIComponent(activityId)}/streams.json?types=${types}`;
+}
+
+// What ASCEND asks for of an activity: everything the research found useful
+// (docs/onderzoek/Loopgegevens en vooruitgang.md) that the activity has. The
+// power series is left out on purpose: a watch of this kind gives no running
+// power, and nothing here reads it.
+export const WANTED_STREAMS: StreamKind[] = [
+  'time', 'distance', 'heartRate', 'speed', 'altitude', 'cadence', 'position',
+  'stanceTime', 'stanceBalance', 'verticalOscillation', 'verticalRatio', 'stepLength',
+];
+
+export function streamsToRequest(available: StreamKind[] | undefined): StreamKind[] {
+  if (!available) return [];
+  const have = new Set(available);
+  return WANTED_STREAMS.filter((k) => have.has(k));
+}
+
+const toSeries = (data: unknown, length: number, convert: (v: number) => number | null = (v) => v): (number | null)[] | undefined => {
+  if (!Array.isArray(data) || data.length === 0) return undefined;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < length; i++) {
+    const v = data[i];
+    out.push(typeof v === 'number' && Number.isFinite(v) ? convert(v) : null);
+  }
+  return out.some((v) => v !== null) ? out : undefined;
+};
+
+const median = (values: number[]): number => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+
+// The answer of the streams request -> the general StreamSet. Nothing else of
+// the answer is kept, and of the position only the first point, rounded to two
+// decimals (about a kilometre), for the weather lookup.
+export function mapIntervalsStreams(raw: unknown, kind: ExternalActivityKind = 'run'): StreamSet | undefined {
+  if (!Array.isArray(raw)) throw new IntervalsError('response', MESSAGES.response);
+  const byType = new Map<string, { data?: unknown; data2?: unknown }>();
+  for (const item of raw) {
+    const it = item as { type?: unknown; data?: unknown; data2?: unknown } | null;
+    if (it && typeof it.type === 'string' && Array.isArray(it.data)) byType.set(it.type, it);
+  }
+  const get = (kindName: StreamKind) => byType.get(STREAM_NAMES[kindName]);
+  const timeRaw = get('time')?.data as unknown[] | undefined;
+  const length = Math.max(0, ...[...byType.values()].map((s) => (s.data as unknown[]).length));
+  if (length === 0) return undefined;
+  const timeSec = Array.isArray(timeRaw) && timeRaw.length === length && timeRaw.every((v) => typeof v === 'number' && Number.isFinite(v))
+    ? (timeRaw as number[])
+    : Array.from({ length }, (_, i) => i);
+
+  const cadenceRaw = toSeries(get('cadence')?.data, length);
+  // Per foot on some sources, steps per minute on others (see cadenceOf).
+  const cadenceValues = cadenceRaw?.filter((v): v is number => v !== null && v > 0) ?? [];
+  const doubled = kind === 'run' && cadenceValues.length > 0 && median(cadenceValues) < 120;
+
+  const set: StreamSet = { timeSec };
+  const put = <K extends keyof StreamSet>(key: K, value: StreamSet[K]) => {
+    if (value !== undefined) set[key] = value;
+  };
+  put('distanceM', toSeries(get('distance')?.data, length));
+  put('heartRate', toSeries(get('heartRate')?.data, length, (v) => (v > 0 ? v : null)));
+  put('speedMs', toSeries(get('speed')?.data, length, (v) => (v >= 0 ? v : null)));
+  put('altitudeM', toSeries(get('altitude')?.data, length));
+  put('cadence', cadenceRaw?.map((v) => (v === null || v <= 0 ? null : doubled ? v * 2 : v)));
+  put('stanceTimeMs', toSeries(get('stanceTime')?.data, length, (v) => (v >= 80 && v <= 600 ? v : null)));
+  put('stanceBalanceLeftPct', toSeries(get('stanceBalance')?.data, length, (v) => (v >= 30 && v <= 70 ? v : null)));
+  put('verticalOscillationMm', toSeries(get('verticalOscillation')?.data, length, (v) => (v >= 20 && v <= 200 ? v : null)));
+  put('verticalRatioPct', toSeries(get('verticalRatio')?.data, length, (v) => (v >= 2 && v <= 20 ? v : null)));
+  // Millimetres at the provider, metres once through here (see stepLengthMetres).
+  put('stepLengthM', toSeries(get('stepLength')?.data, length, (v) => (v >= 300 && v <= 3000 ? v / 1000 : v >= 0.3 && v <= 3 ? v : null)));
+
+  const position = get('position');
+  if (position && Array.isArray(position.data) && Array.isArray(position.data2)) {
+    for (let i = 0; i < Math.min(position.data.length, position.data2.length); i++) {
+      const lat = position.data[i];
+      const lon = position.data2[i];
+      if (typeof lat === 'number' && typeof lon === 'number' && Number.isFinite(lat) && Number.isFinite(lon) && (lat !== 0 || lon !== 0) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+        set.start = { lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100 };
+        break;
+      }
+    }
+  }
+  return set;
+}
+
 // --- mapping: intervals.icu wellness -> RecoveryMetric -------------------------
 
 // The fields we read of an intervals.icu wellness record. `id` is the local
@@ -382,6 +480,19 @@ export async function fetchIntervalsWellness(
   return mapIntervalsWellness(await getJson(connection, (id) => wellnessUrl(id, range), options));
 }
 
+// The series of one stored activity, in one request. Undefined when the
+// activity has none of the series ASCEND uses.
+export async function fetchIntervalsStreams(
+  connection: IntervalsConnection,
+  activity: Pick<ExternalActivity, 'externalId' | 'kind' | 'streamsAvailable'>,
+  options: FetchOptions = {},
+): Promise<StreamSet | undefined> {
+  const id = intervalsActivityId(activity.externalId);
+  const kinds = streamsToRequest(activity.streamsAvailable);
+  if (!id || kinds.length === 0) return undefined;
+  return mapIntervalsStreams(await getJson(connection, () => streamsUrl(id, kinds), options), activity.kind);
+}
+
 // What to tell the user about any error from this file; anything that is not
 // ours reads as a connection problem rather than a crash.
 export function intervalsErrorMessage(err: unknown): string {
@@ -405,6 +516,11 @@ export function createIntervalsIcuAdapter(connection: IntervalsConnection | null
     fetchRecoveryMetrics: async (range) => {
       if (!connection) return [];
       return fetchIntervalsWellness(connection, range, options);
+    },
+    // The series of one activity, for the compact profile on its log.
+    fetchActivityStreams: async (activity) => {
+      if (!connection) return undefined;
+      return fetchIntervalsStreams(connection, activity, options);
     },
   };
 }

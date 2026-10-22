@@ -313,6 +313,13 @@ export function GarminLinkPage() {
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
         />
         <UseRow
+          title="Details van loopjes en tochten"
+          text="ASCEND vraagt per loop of tocht de reeks van hartslag, tempo, hoogte en loopvorm op en bewaart er alleen een korte samenvatting van. Daarmee vergelijkt hij je loopjes eerlijk. Uit betekent: niet ophalen, niet tonen en niet meetellen."
+          checked={watch?.use.details !== false && watch?.use.activities !== false}
+          onChange={(on) => void changeUse('details', on)}
+          note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
+        />
+        <UseRow
           title="Slaap"
           text="Hoe lang de nacht was, in de ochtendcheck."
           checked={watch?.use.sleep !== false}
