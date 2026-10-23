@@ -4,9 +4,9 @@ import { MOVEMENT_PATTERNS, MUSCLE_GROUPS, RESISTANCES } from '../models/exercis
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 
 describe('the exercise list itself', () => {
-  it('has 50 to 80 exercises with unique ids', () => {
+  it('has 50 to 150 exercises with unique ids', () => {
     expect(EXERCISES.length).toBeGreaterThanOrEqual(50);
-    expect(EXERCISES.length).toBeLessThanOrEqual(80);
+    expect(EXERCISES.length).toBeLessThanOrEqual(150);
     expect(new Set(EXERCISES.map((e) => e.id)).size).toBe(EXERCISES.length);
   });
 
@@ -42,7 +42,7 @@ describe('the exercise list itself', () => {
   });
 
   it('does not take a doubtful name for an exercise', () => {
-    for (const name of ['Barbell Split Squat', 'Barbell Reverse Lunge', 'Barbell Glute Bridge', 'Kettlebell Goblet Squat', 'Cable Lateral Raise', 'Cable Rope Hammer Curl', 'Dumbbell Overhead Triceps Extension', 'Barbell Shrug', 'Machine Chest Press (Plate Loaded)', 'Tempo Squat', 'French Press', 'Toe Raise', 'Calf Raise']) {
+    for (const name of ['Barbell Split Squat', 'Barbell Reverse Lunge', 'Kettlebell Goblet Squat', 'Cable Lateral Raise', 'Cable Rope Hammer Curl', 'Dumbbell Overhead Triceps Extension', 'Barbell Shrug', 'Machine Chest Press (Plate Loaded)', 'Tempo Squat', 'French Press', 'Toe Raise', 'Calf Raise']) {
       expect(matchExercise(name), name).toBeUndefined();
     }
   });
@@ -108,6 +108,17 @@ describe('the superset code of MacroFactor', () => {
     expect(cleanExerciseName('Hanging Straight Leg Raise ∈ SS1')).toBe('Hanging Straight Leg Raise');
     expect(cleanExerciseName('Barbell Back Squat')).toBe('Barbell Back Squat');
     expect(normalizeExerciseName('Barbell Back Squat ∈ SS2')).toBe(normalizeExerciseName('Barbell Back Squat'));
+  });
+
+  it('is left off in other writings of the sign too', () => {
+    expect(cleanExerciseName('Pec Deck Fly∈SS1')).toBe('Pec Deck Fly');
+    expect(cleanExerciseName('Pec Deck Fly ∈ SS 12')).toBe('Pec Deck Fly');
+    expect(cleanExerciseName('Pec Deck Fly \u220A SS3 (2 sets)')).toBe('Pec Deck Fly');
+    expect(matchExercise('Pec Deck Fly ∈ SS1')).toBe('pec-deck-fly');
+    expect(matchExercise('Back Squat (Barbell) ∈ SS1')).toBe('back-squat');
+    expect(matchExercise('Captain’s Chair Straight Leg Raise ∈ SS1')).toBe('hanging-leg-raise');
+    expect(matchExercise('45° Incline Barbell Press')).toBe('incline-bench-press');
+    expect(matchExercise('45º Incline Barbell Press')).toBe('incline-bench-press');
   });
 });
 
@@ -179,7 +190,7 @@ describe('matching a name from an import', () => {
     expect(matchExercise('Romanian Deadlift')).not.toBe(matchExercise('Conventional Deadlift'));
     expect(matchExercise('Barbell Back Squat Jump')).toBeUndefined();
     expect(matchExercise('Decline Barbell Bench Press')).toBeUndefined();
-    expect(matchExercise('Leg Press Calf Raise')).toBeUndefined();
-    expect(matchExercise('Close Grip Barbell Bench Press')).toBeUndefined();
+    expect(matchExercise('Leg Press Calf Raise')).toBe('leg-press-calf-raise');
+    expect(matchExercise('Close Grip Barbell Bench Press')).not.toBe(matchExercise('Barbell Bench Press'));
   });
 });

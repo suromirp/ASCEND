@@ -12,9 +12,10 @@ import { EXERCISES } from '../data/exercises';
 
 // MacroFactor writes a superset as "Hanging Leg Raise ∈ SS1": the code after
 // the sign says which superset the exercise belongs to, not what it is. It is
-// left off the name wherever a name is shown or compared.
+// left off the name wherever a name is shown or compared. Spaces around the
+// sign, "SS 1" and text after the code ("∈ SS1 (3 sets)") do not matter.
 export function cleanExerciseName(name: string): string {
-  return name.replace(/\s*[\u2208\u220A]\s*SS\d+\s*$/i, '').trim();
+  return name.replace(/\s*[\u2208\u220A]\s*SS\s*\d+\b.*$/i, '').trim();
 }
 
 // "Barbell Back Squat", "barbell back-squat" and "BARBELL  BACK SQUAT." all
@@ -24,7 +25,7 @@ export function normalizeExerciseName(name: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/['’`]/g, '')
+    .replace(/['’‘ʼ`´]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 }
@@ -54,7 +55,7 @@ function lookup(key: string): string | undefined {
 export function matchExercise(name: string): string | undefined {
   const direct = lookup(normalizeExerciseName(name));
   if (direct) return direct;
-  const bracket = name.trim().match(/^(.*?)\s*\(([^)]*)\)$/);
+  const bracket = cleanExerciseName(name).match(/^(.*?)\s*\(([^)]*)\)$/);
   if (!bracket) return undefined;
   return lookup(normalizeExerciseName(`${bracket[2]} ${bracket[1]}`));
 }

@@ -47,7 +47,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je ellebogen mogen binnen je knieën blijven.',
     'Vaak fout: voorover buigen in plaats van zakken.',
   ]),
-  ex('leg-press', 'Leg Press', ['Pin-Loaded Leg Press', 'Leg Press (Machine)', 'Machine Leg Press', 'Beenpers met gewichtstapel'], ['quadriceps', 'glutes'], ['hamstrings', 'hip_adductors'], 'machine_stack', 'squat', true, [
+  ex('leg-press', 'Pin-Loaded Leg Press', ['Leg Press (Machine)', 'Machine Leg Press', 'Beenpers met gewichtstapel', 'Leg Press'], ['quadriceps', 'glutes'], ['hamstrings', 'hip_adductors'], 'machine_stack', 'squat', true, [
     'Doen: voeten op schouderbreedte, zak gecontroleerd tot je knieën ruim gebogen zijn.',
     'Let op: je onderrug blijft tegen de leuning.',
     'Vaak fout: de knieën helemaal slot strekken onder zwaar gewicht.',
@@ -119,12 +119,12 @@ export const EXERCISES: Exercise[] = [
   ], 1),
 
   // --- heupscharnier en hamstrings ------------------------------------------
-  ex('deadlift', 'Deadlift', ['Conventional Deadlift', 'Barbell Deadlift', 'Deadlift (Barbell)'], ['glutes', 'hamstrings', 'lower_back'], ['quadriceps', 'traps', 'forearms', 'core', 'lats'], 'barbell', 'hinge', true, [
+  ex('deadlift', 'Conventional Deadlift', ['Barbell Deadlift', 'Deadlift (Barbell)', 'Deadlift'], ['glutes', 'hamstrings', 'lower_back'], ['quadriceps', 'traps', 'forearms', 'core', 'lats'], 'barbell', 'hinge', true, [
     'Doen: stang over het midden van je voet, rug strak, duw de vloer van je weg.',
     'Let op: de stang blijft dicht langs je benen.',
     'Vaak fout: de heupen eerst laten stijgen, zodat je met een ronde rug trekt.',
   ]),
-  ex('romanian-deadlift', 'Romanian Deadlift', ['Barbell Romanian Deadlift', 'RDL', 'Romanian Deadlift (Barbell)', 'Stiff Leg Deadlift', 'Roemeense deadlift'], ['hamstrings', 'glutes'], ['lower_back', 'forearms', 'traps'], 'barbell', 'hinge', true, [
+  ex('romanian-deadlift', 'Barbell Romanian Deadlift', ['RDL', 'Romanian Deadlift (Barbell)', 'Stiff Leg Deadlift', 'Roemeense deadlift', 'Romanian Deadlift'], ['hamstrings', 'glutes'], ['lower_back', 'forearms', 'traps'], 'barbell', 'hinge', true, [
     'Doen: knieën licht gebogen, schuif je heupen naar achteren en laat de stang langs je benen zakken.',
     'Let op: je voelt het in de achterkant van je bovenbenen, je rug blijft recht.',
     'Vaak fout: door de knieën zakken, waardoor het een squat wordt.',
@@ -169,7 +169,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je heupen blijven op het kussen.',
     'Vaak fout: je heupen omhoog laten komen om het gewicht te halen.',
   ]),
-  ex('seated-leg-curl', 'Seated Leg Curl', ['Seated Leg Curl (Machine)', 'Machine Seated Leg Curl', 'Hamstringcurl zittend'], ['hamstrings'], ['calves'], 'machine_stack', 'isolation_leg', true, [
+  ex('seated-leg-curl', 'Seated Hamstring Curl', ['Seated Leg Curl (Machine)', 'Machine Seated Leg Curl', 'Hamstringcurl zittend', 'Seated Leg Curl'], ['hamstrings'], ['calves'], 'machine_stack', 'isolation_leg', true, [
     'Doen: trek je hielen naar beneden en achter je en laat rustig terugkomen.',
     'Let op: het kussen op je bovenbenen zit stevig.',
     'Vaak fout: met je bovenlichaam meeschommelen.',
@@ -191,7 +191,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: een hand op de muur voor balans mag, niet voor kracht.',
     'Vaak fout: de knie licht laten buigen.',
   ], 1),
-  ex('seated-calf-raise', 'Seated Calf Raise', ['Seated Calf Raise (Machine)', 'Machine Seated Calf Raise', 'Bent Knee Calf Raise', 'Kuitheffen gebogen'], ['calves'], [], 'machine_stack', 'calf', true, [
+  ex('seated-calf-raise', 'Seated Pin-Loaded Machine Calf Raise', ['Seated Calf Raise (Machine)', 'Machine Seated Calf Raise', 'Bent Knee Calf Raise', 'Kuitheffen gebogen', 'Seated Calf Raise'], ['calves'], [], 'machine_stack', 'calf', true, [
     'Doen: zit met gebogen knieën, kom hoog op je tenen en zak diep.',
     'Let op: met gebogen knie werkt vooral de diepe kuitspier, belangrijk bij lange afdalingen.',
     'Vaak fout: kleine halve herhalingen.',
@@ -258,7 +258,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je onderrug blijft plat op de grond.',
     'Vaak fout: te snel gaan en dan de rug laten hol staan.',
   ]),
-  ex('hanging-leg-raise', 'Hanging Leg Raise', ['Hanging Knee Raise', 'Captain\'s Chair Leg Raise', 'Hanging Straight Leg Raise', 'Beenheffen hangend'], ['core'], ['forearms'], 'bodyweight', 'core', false, [
+  ex('hanging-leg-raise', 'Hanging Leg Raise', ['Hanging Knee Raise', 'Captain\'s Chair Leg Raise', 'Hanging Straight Leg Raise', 'Beenheffen hangend', 'Captain\'s Chair Straight Leg Raise'], ['core'], ['forearms'], 'bodyweight', 'core', false, [
     'Doen: hang aan een stang, til je benen of knieën op zonder te zwaaien.',
     'Let op: kantel je bekken aan het eind iets naar je toe.',
     'Vaak fout: zwaaien in plaats van de buik gebruiken.',
@@ -290,7 +290,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: voeten stevig op de grond, polsen recht boven je ellebogen.',
     'Vaak fout: de stang laten stuiteren op je borst.',
   ]),
-  ex('incline-bench-press', 'Incline Barbell Bench Press', ['45° Incline Barbell Bench Press', 'Incline Bench Press', 'Incline Bench Press (Barbell)', '30° Incline Barbell Bench Press', 'Schuin bankdrukken met stang'], ['chest', 'front_delts'], ['triceps'], 'barbell', 'push_horizontal', false, [
+  ex('incline-bench-press', '45° Incline Barbell Press', ['45° Incline Barbell Bench Press', 'Incline Bench Press', 'Incline Bench Press (Barbell)', 'Schuin bankdrukken met stang', 'Incline Barbell Bench Press'], ['chest', 'front_delts'], ['triceps'], 'barbell', 'push_horizontal', false, [
     'Doen: bank op een lichte helling, stang naar je bovenste borst en weer omhoog.',
     'Let op: een kleine helling is genoeg, te steil wordt een schouderpers.',
     'Vaak fout: de stang naar je nek laten zakken.',
@@ -300,7 +300,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: ellebogen schuin naar buiten, niet 90 graden.',
     'Vaak fout: de dumbbells te ver naar buiten laten zakken.',
   ]),
-  ex('incline-dumbbell-press', 'Incline Dumbbell Press', ['Incline Dumbbell Bench Press', '45° Incline Dumbbell Bench Press', 'Incline Dumbbell Press (Dumbbell)', 'Schuin bankdrukken met dumbbells'], ['chest', 'front_delts'], ['triceps'], 'dumbbell', 'push_horizontal', false, [
+  ex('incline-dumbbell-press', '45° Incline Dumbbell Press', ['Incline Dumbbell Bench Press', '45° Incline Dumbbell Bench Press', 'Incline Dumbbell Press (Dumbbell)', 'Schuin bankdrukken met dumbbells', 'Incline Dumbbell Press'], ['chest', 'front_delts'], ['triceps'], 'dumbbell', 'push_horizontal', false, [
     'Doen: bank op een lichte helling, duw de dumbbells recht omhoog.',
     'Let op: schouderbladen blijven op de bank.',
     'Vaak fout: de bank te steil zetten.',
@@ -310,12 +310,12 @@ export const EXERCISES: Exercise[] = [
     'Let op: ellebogen schuin naar achteren, niet wijd.',
     'Vaak fout: je heupen laten zakken.',
   ], 0.65),
-  ex('machine-chest-press', 'Machine Chest Press', ['Chest Press (Machine)', 'Seated Chest Press', 'Pin-Loaded Machine Chest Press', 'Borstpers op de machine'], ['chest'], ['front_delts', 'triceps'], 'machine_stack', 'push_horizontal', false, [
+  ex('machine-chest-press', 'Pin-Loaded Machine Chest Press', ['Chest Press (Machine)', 'Seated Chest Press', 'Borstpers op de machine', 'Machine Chest Press'], ['chest'], ['front_delts', 'triceps'], 'machine_stack', 'push_horizontal', false, [
     'Doen: duw de handgrepen naar voren en laat rustig terugkomen.',
     'Let op: stel de zitting zo in dat de handgrepen op borsthoogte zijn.',
     'Vaak fout: je schouders naar voren laten rollen.',
   ]),
-  ex('cable-fly', 'Cable Fly', ['Cable Chest Fly', 'Cable Crossover', 'Standing Cable Fly', 'Kabel fly'], ['chest'], ['front_delts'], 'cable', 'push_horizontal', false, [
+  ex('cable-fly', 'Horizontal Cable Fly', ['Cable Chest Fly', 'Cable Crossover', 'Standing Cable Fly', 'Kabel fly', 'Cable Fly'], ['chest'], ['front_delts'], 'cable', 'push_horizontal', false, [
     'Doen: met licht gebogen ellebogen breng je de handgrepen in een boog naar elkaar.',
     'Let op: voel de rek in je borst.',
     'Vaak fout: er een pers van maken door de ellebogen te strekken.',
@@ -330,12 +330,12 @@ export const EXERCISES: Exercise[] = [
     'Let op: bil en buik aanspannen, ribben naar beneden.',
     'Vaak fout: een hol kruis maken om het gewicht omhoog te krijgen.',
   ]),
-  ex('dumbbell-shoulder-press', 'Dumbbell Shoulder Press', ['Seated Dumbbell Shoulder Press', 'Dumbbell Overhead Press', 'Shoulder Press (Dumbbell)', 'Schouderpers met dumbbells'], ['front_delts'], ['side_delts', 'triceps'], 'dumbbell', 'push_vertical', false, [
+  ex('dumbbell-shoulder-press', 'Seated Dumbbell Overhead Press', ['Seated Dumbbell Shoulder Press', 'Dumbbell Overhead Press', 'Shoulder Press (Dumbbell)', 'Schouderpers met dumbbells', 'Dumbbell Shoulder Press', 'Standing Dumbbell Overhead Press'], ['front_delts'], ['side_delts', 'triceps'], 'dumbbell', 'push_vertical', false, [
     'Doen: duw de dumbbells van schouderhoogte recht omhoog.',
     'Let op: polsen boven je ellebogen.',
     'Vaak fout: de dumbbells naar elkaar laten botsen.',
   ]),
-  ex('lateral-raise', 'Dumbbell Lateral Raise', ['Lateral Raise', 'Side Raise', 'Lateral Raise (Dumbbell)', 'Zijwaartse schouderheffing'], ['side_delts'], [], 'dumbbell', 'isolation_shoulder', false, [
+  ex('lateral-raise', 'Standing Dumbbell Lateral Raise', ['Lateral Raise', 'Side Raise', 'Lateral Raise (Dumbbell)', 'Zijwaartse schouderheffing', 'Dumbbell Lateral Raise'], ['side_delts'], [], 'dumbbell', 'isolation_shoulder', false, [
     'Doen: til de gewichten zijwaarts tot schouderhoogte.',
     'Let op: licht gebogen ellebogen en een lichte gewichtskeuze.',
     'Vaak fout: zwaaien met je hele lichaam.',
@@ -345,7 +345,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je trekt met je achterste schouders, niet met je nek.',
     'Vaak fout: te zwaar en met je rug meezwaaien.',
   ]),
-  ex('face-pull', 'Face Pull', ['Cable Face Pull', 'Cable Rope Face Pull', 'Rope Face Pull'], ['rear_delts', 'upper_back'], ['traps'], 'cable', 'pull_horizontal', false, [
+  ex('face-pull', 'Cable Face Pull', ['Cable Rope Face Pull', 'Rope Face Pull', 'Face Pull', 'Low Pulley Cable Face Pull'], ['rear_delts', 'upper_back'], ['traps'], 'cable', 'pull_horizontal', false, [
     'Doen: trek het touw naar je gezicht en spreid je handen uit elkaar.',
     'Let op: ellebogen hoog, de beweging komt vanuit je schouderbladen.',
     'Vaak fout: te zwaar en met je rug naar achteren leunen.',
@@ -362,22 +362,22 @@ export const EXERCISES: Exercise[] = [
     'Let op: laat helemaal zakken tot je armen gestrekt zijn.',
     'Vaak fout: je hoofd naar voren steken.',
   ], 1),
-  ex('assisted-pull-up', 'Assisted Pull-Up', ['Neutral Grip Machine-Assisted Pull-Up', 'Machine-Assisted Pull-Up', 'Assisted Pull Up', 'Assisted Pull-Up (Machine)', 'Assisted Chin-Up', 'Machine Assisted Pull Up', 'Optrekken met hulp'], ['lats'], ['upper_back', 'forearms', 'biceps'], 'assisted_bodyweight', 'pull_vertical', false, [
+  ex('assisted-pull-up', 'Neutral Grip Machine-Assisted Pull-Up', ['Machine-Assisted Pull-Up', 'Assisted Pull Up', 'Assisted Pull-Up (Machine)', 'Assisted Chin-Up', 'Machine Assisted Pull Up', 'Optrekken met hulp', 'Assisted Pull-Up'], ['lats'], ['upper_back', 'forearms', 'biceps'], 'assisted_bodyweight', 'pull_vertical', false, [
     'Doen: knie op het kussen, het gewicht dat je kiest is de hulp, minder hulp is zwaarder.',
     'Let op: het opgegeven gewicht is hulp, je eigen gewicht minus de hulp is wat je tilt.',
     'Vaak fout: te veel hulp blijven gebruiken terwijl je al sterker bent.',
   ], 1),
-  ex('lat-pulldown', 'Lat Pulldown', ['Underhand Grip Cable Lat Pulldown', 'Cable Lat Pulldown', 'Lat Pulldown (Cable)', 'Wide Grip Lat Pulldown', 'Pulldown'], ['lats'], ['biceps', 'upper_back', 'forearms'], 'cable', 'pull_vertical', false, [
+  ex('lat-pulldown', 'Underhand Grip Cable Lat Pulldown', ['Cable Lat Pulldown', 'Lat Pulldown (Cable)', 'Wide Grip Lat Pulldown', 'Pulldown', 'Lat Pulldown', 'Overhand Grip Cable Lat Pulldown', 'Neutral Shoulder Width Grip Cable Lat Pulldown', 'Wide Grip Cable Lat Pulldown', 'Underhand Close Grip Cable Lat Pulldown'], ['lats'], ['biceps', 'upper_back', 'forearms'], 'cable', 'pull_vertical', false, [
     'Doen: trek de stang naar je bovenste borst en laat weer rustig omhoog komen.',
     'Let op: schouders omlaag, ellebogen naar je heupen.',
     'Vaak fout: achteroverleunen en de stang naar beneden zwaaien.',
   ]),
-  ex('straight-arm-pulldown', 'Straight Arm Pulldown', ['Cable Straight Arm Pulldown', 'Straight-Arm Pulldown', 'Pulldown met gestrekte armen'], ['lats'], ['core'], 'cable', 'pull_vertical', false, [
+  ex('straight-arm-pulldown', 'Cable Rope Straight Arm Lat Pulldown', ['Cable Straight Arm Pulldown', 'Straight-Arm Pulldown', 'Pulldown met gestrekte armen', 'Straight Arm Pulldown', 'Cable Bar Straight Arm Lat Pulldown'], ['lats'], ['core'], 'cable', 'pull_vertical', false, [
     'Doen: met bijna gestrekte armen trek je de stang van boven naar je bovenbenen.',
     'Let op: voel je brede rugspieren, niet je armen.',
     'Vaak fout: de ellebogen buigen en er een triceps-oefening van maken.',
   ]),
-  ex('barbell-row', 'Barbell Row', ['Bent-Over Underhand Grip Barbell Row', 'Bent-Over Barbell Row', 'Bent Over Row', 'Barbell Row (Overhand)', 'Underhand Barbell Row', 'Roeien met stang'], ['lats', 'upper_back'], ['biceps', 'rear_delts', 'lower_back', 'forearms', 'traps'], 'barbell', 'pull_horizontal', false, [
+  ex('barbell-row', 'Bent-Over Underhand Grip Barbell Row', ['Bent-Over Barbell Row', 'Bent Over Row', 'Barbell Row (Overhand)', 'Underhand Barbell Row', 'Roeien met stang', 'Barbell Row'], ['lats', 'upper_back'], ['biceps', 'rear_delts', 'lower_back', 'forearms', 'traps'], 'barbell', 'pull_horizontal', false, [
     'Doen: buig voorover met een rechte rug en trek de stang naar je onderbuik.',
     'Let op: je romp blijft stil, de ellebogen gaan langs je lichaam.',
     'Vaak fout: omhoog schokken met je romp om het gewicht te halen.',
@@ -392,7 +392,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: knijp bovenaan even je schouderbladen samen.',
     'Vaak fout: je borst van de bank tillen om te helpen.',
   ]),
-  ex('seated-cable-row', 'Seated Cable Row', ['Cable Row', 'Row, Seated Cable', 'Seated Row', 'Seated Row (Cable)', 'Neutral Grip Seated Cable Row', 'Roeien aan de kabel zittend'], ['lats', 'upper_back'], ['biceps', 'rear_delts', 'forearms'], 'cable', 'pull_horizontal', false, [
+  ex('seated-cable-row', 'Seated Cable Row', ['Cable Row', 'Row, Seated Cable', 'Seated Row', 'Seated Row (Cable)', 'Neutral Grip Seated Cable Row', 'Roeien aan de kabel zittend', 'Underhand Grip Cable Row'], ['lats', 'upper_back'], ['biceps', 'rear_delts', 'forearms'], 'cable', 'pull_horizontal', false, [
     'Doen: trek het handvat naar je buik, rug rechtop.',
     'Let op: schouders naar achteren en omlaag, ellebogen langs je lichaam.',
     'Vaak fout: voor- en achterover schommelen.',
@@ -429,7 +429,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: ellebogen stil naast je lichaam.',
     'Vaak fout: de gewichten laten zwaaien.',
   ]),
-  ex('triceps-pushdown', 'Triceps Pushdown', ['Tricep Pushdown', 'Cable Triceps Pushdown', 'Cable Rope Triceps Pushdown', 'Rope Pushdown', 'Triceps Pressdown'], ['triceps'], [], 'cable', 'isolation_arm', false, [
+  ex('triceps-pushdown', 'Cable V-Bar Triceps Pushdown', ['Tricep Pushdown', 'Cable Triceps Pushdown', 'Cable Rope Triceps Pushdown', 'Rope Pushdown', 'Triceps Pressdown', 'Triceps Pushdown'], ['triceps'], [], 'cable', 'isolation_arm', false, [
     'Doen: ellebogen aan je zij, duw het touw of de stang naar beneden tot je armen gestrekt zijn.',
     'Let op: alleen je onderarmen bewegen.',
     'Vaak fout: voorover leunen en met je lichaam duwen.',
@@ -438,6 +438,216 @@ export const EXERCISES: Exercise[] = [
     'Doen: ellebogen wijzen omhoog, strek je armen boven je hoofd.',
     'Let op: je ellebogen blijven dicht bij je hoofd.',
     'Vaak fout: de ellebogen wijd laten uitvallen.',
+  ]),
+
+  // --- varianten zoals MacroFactor ze noemt -------------------------------------
+  // Een eigen oefening waar het gewicht of de beweging echt anders is (helling,
+  // pauze, toestel, een arm); alleen een andere greep of houding is een alias op
+  // een oefening hierboven. Zie docs/beslissingen/2026-10-23-oefeningnamen-zoals-macrofactor.md.
+  ex('low-incline-barbell-press', 'Low Incline Barbell Press', ['Low Incline Barbell Bench Press', '30° Incline Barbell Bench Press', '30° Incline Barbell Press'], ['chest', 'front_delts'], ['triceps'], 'barbell', 'push_horizontal', false, [
+    'Doen: bank op een lage helling, laat de stang naar je bovenste borst zakken en duw omhoog.',
+    'Let op: schouderbladen blijven samen en de ellebogen schuin naar buiten.',
+    'Vaak fout: de bank te steil zetten, waardoor het een schouderpers wordt.',
+  ]),
+  ex('low-incline-dumbbell-press', 'Low Incline Dumbbell Press', ['Low Incline Dumbbell Bench Press', '30° Incline Dumbbell Press'], ['chest', 'front_delts'], ['triceps'], 'dumbbell', 'push_horizontal', false, [
+    'Doen: bank op een lage helling, duw de dumbbells recht omhoog.',
+    'Let op: laat ze zakken tot een diepe rek in je borst.',
+    'Vaak fout: de bank steiler zetten dan nodig is.',
+  ]),
+  ex('low-incline-dumbbell-fly', 'Low Incline Dumbbell Fly', ['Low Incline Dumbbell Chest Fly'], ['chest'], ['front_delts'], 'dumbbell', 'push_horizontal', false, [
+    'Doen: licht gebogen ellebogen, open je armen in een boog en breng ze weer samen.',
+    'Let op: stop als je de rek in je borst voelt.',
+    'Vaak fout: een pers van maken door de ellebogen te strekken.',
+  ]),
+  ex('pause-dumbbell-bench-press', 'Pause Dumbbell Bench Press', ['Paused Dumbbell Bench Press', 'Pause Dumbbell Press'], ['chest'], ['front_delts', 'triceps'], 'dumbbell', 'push_horizontal', false, [
+    'Doen: laat de dumbbells zakken, houd ze een seconde stil onderaan en duw dan omhoog.',
+    'Let op: de pauze is een stilstand, geen rustpunt op je borst.',
+    'Vaak fout: stuiteren uit de pauze in plaats van strak weer te duwen.',
+  ]),
+  ex('wide-grip-bench-press', 'Wide Grip Bench Press', ['Wide Grip Barbell Bench Press'], ['chest'], ['front_delts', 'triceps'], 'barbell', 'push_horizontal', false, [
+    'Doen: pak de stang breder dan je schouders en laat hem naar je borst zakken.',
+    'Let op: je onderarmen blijven bij de stang verticaal.',
+    'Vaak fout: zo breed pakken dat je schouders onder druk komen.',
+  ]),
+  ex('close-grip-bench-press', 'Close Grip Bench Press', ['Close Grip Barbell Bench Press', 'Narrow Grip Bench Press'], ['chest', 'triceps'], ['front_delts'], 'barbell', 'push_horizontal', false, [
+    'Doen: pak de stang op schouderbreedte of net smaller en houd je ellebogen dicht bij je lichaam.',
+    'Let op: je polsen blijven recht boven je ellebogen.',
+    'Vaak fout: zo smal pakken dat je polsen knikken.',
+  ]),
+  ex('pec-deck-fly', 'Pec Deck Fly', ['Overhand Grip Pec Deck Fly', 'Pec Deck', 'Machine Pec Deck Fly', 'Machine Chest Fly', 'Butterfly Machine'], ['chest'], ['front_delts'], 'machine_stack', 'push_horizontal', false, [
+    'Doen: breng de armen in een boog voor je borst naar elkaar en laat rustig terugkomen.',
+    'Let op: stel de zitting zo in dat je ellebogen op borsthoogte zijn.',
+    'Vaak fout: je schouders naar voren laten rollen onderaan de beweging.',
+  ]),
+  ex('low-to-high-cable-fly', 'Low-To-High Cable Fly', ['Low To High Cable Fly', 'Low Cable Fly', 'Low To High Cable Crossover'], ['chest'], ['front_delts'], 'cable', 'push_horizontal', false, [
+    'Doen: kabels laag, haal je handen in een boog omhoog naar ooghoogte voor je.',
+    'Let op: licht gebogen ellebogen en een rustige terugweg.',
+    'Vaak fout: met je romp meezwaaien om het gewicht omhoog te krijgen.',
+  ]),
+  ex('machine-shoulder-press', 'Pin-Loaded Machine Shoulder Press', ['Neutral Grip Pin-Loaded Machine Shoulder Press', 'Machine Shoulder Press', 'Shoulder Press (Machine)', 'Seated Machine Shoulder Press', 'Schouderpers op de machine'], ['front_delts'], ['side_delts', 'triceps'], 'machine_stack', 'push_vertical', false, [
+    'Doen: duw de handgrepen recht omhoog en laat rustig zakken tot schouderhoogte.',
+    'Let op: stel de zitting zo in dat de handgrepen vanaf je schouders vertrekken.',
+    'Vaak fout: je onderrug hol trekken om hoger te komen.',
+  ]),
+  ex('push-press', 'Barbell Push Press', ['Push Press', 'Push Press (Barbell)'], ['front_delts'], ['side_delts', 'triceps', 'quadriceps', 'core'], 'barbell', 'push_vertical', false, [
+    'Doen: stang op je sleutelbeen, zak een stukje door je knieën en duw met je benen de stang omhoog.',
+    'Let op: strek je armen pas als je benen de stang in beweging hebben gebracht.',
+    'Vaak fout: een diepe squat maken in plaats van een korte, snelle dip.',
+  ]),
+  ex('single-arm-cable-lateral-raise', 'Single Arm Cable Lateral Raise (With Cable In Front Of Body)', ['Single Arm Cable Lateral Raise', 'Single Arm High Cable Lateral Raise', 'Cable Lateral Raise (Single Arm)'], ['side_delts'], [], 'cable', 'isolation_shoulder', false, [
+    'Doen: kabel voor je lichaam langs, til je arm zijwaarts tot schouderhoogte.',
+    'Let op: licht gebogen elleboog en een lichte gewichtskeuze.',
+    'Vaak fout: met je romp wegleunen om het gewicht omhoog te krijgen.',
+  ]),
+  ex('chest-supported-dumbbell-y-raise', 'Chest-Supported Dumbbell Y-Raise', ['Chest Supported Dumbbell Y-Raise', 'Chest Supported Dumbbell Y Raise', 'Dumbbell Y-Raise'], ['rear_delts', 'traps'], ['upper_back'], 'dumbbell', 'isolation_shoulder', false, [
+    'Doen: leg je borst op een schuine bank en til de dumbbells in een Y-vorm schuin omhoog.',
+    'Let op: duimen omhoog en een licht gewicht.',
+    'Vaak fout: je borst van de bank tillen of de schouders optrekken.',
+  ]),
+  ex('chest-supported-dumbbell-high-row', 'Chest-Supported Dumbbell High Row', ['Chest Supported Dumbbell High Row', 'Incline Dumbbell High Row'], ['upper_back', 'rear_delts'], ['lats', 'biceps', 'traps'], 'dumbbell', 'pull_horizontal', false, [
+    'Doen: leg je borst op een schuine bank en trek de dumbbells met hoge ellebogen naar buiten en omhoog.',
+    'Let op: knijp bovenaan je schouderbladen samen.',
+    'Vaak fout: de ellebogen naar je heupen trekken, waardoor het een lage roei wordt.',
+  ]),
+  ex('bent-over-barbell-high-row', 'Bent-Over Barbell High Row', ['Barbell High Row', 'Bent Over Barbell High Row'], ['upper_back', 'rear_delts'], ['lats', 'biceps', 'traps', 'lower_back', 'forearms'], 'barbell', 'pull_horizontal', false, [
+    'Doen: buig voorover met een rechte rug en trek de stang met wijde ellebogen naar je bovenborst.',
+    'Let op: je romp blijft stil.',
+    'Vaak fout: omhoog schokken met je romp om het gewicht te halen.',
+  ], 0.08),
+  ex('machine-row', 'Overhand Grip Pin-Loaded Machine Row', ['Pin-Loaded Machine Row', 'Machine Row', 'Seated Machine Row', 'Neutral Grip Pin-Loaded Machine Row'], ['upper_back', 'lats'], ['rear_delts', 'biceps', 'forearms'], 'machine_stack', 'pull_horizontal', false, [
+    'Doen: borst tegen het kussen, trek de handgrepen naar je lichaam en laat rustig terugkomen.',
+    'Let op: schouders omlaag, knijp bovenaan je schouderbladen samen.',
+    'Vaak fout: met je romp meeschommelen in plaats van trekken.',
+  ]),
+  ex('machine-row-plates', 'Overhand Grip Plate-Loaded Machine Row', ['Neutral Grip Plate-Loaded Machine Row', 'Plate Loaded Machine Row', 'Plate-Loaded Machine Row'], ['upper_back', 'lats'], ['rear_delts', 'biceps', 'forearms'], 'machine_plates', 'pull_horizontal', false, [
+    'Doen: borst tegen het kussen, trek de handgrepen naar je lichaam en laat gecontroleerd terugkomen.',
+    'Let op: laad de schijven aan beide kanten gelijk.',
+    'Vaak fout: de schijven laten terugvallen in plaats van afremmen.',
+  ]),
+  ex('kelso-shrug', 'Pin-Loaded Row Machine Kelso Shrug', ['Kelso Shrug', 'Machine Kelso Shrug'], ['upper_back', 'traps'], ['rear_delts'], 'machine_stack', 'pull_horizontal', false, [
+    'Doen: borst tegen het kussen, haal je schouderbladen naar elkaar met gestrekte armen.',
+    'Let op: de beweging zit in je schouderbladen, je armen blijven recht.',
+    'Vaak fout: gaan roeien met je armen.',
+  ]),
+  ex('single-arm-cable-lat-pulldown', 'Single Arm Cable Lat Pulldown', ['Single Arm Lat Pulldown', 'One Arm Cable Lat Pulldown'], ['lats'], ['biceps', 'upper_back', 'forearms'], 'cable', 'pull_vertical', false, [
+    'Doen: trek met één hand het handvat naar de zijkant van je borst en laat rustig omhoog komen.',
+    'Let op: schouder omlaag, je romp blijft recht.',
+    'Vaak fout: meedraaien met je romp om het gewicht te halen.',
+  ]),
+  ex('dumbbell-pullover', 'Dumbbell Pullover', ['Pullover (Dumbbell)', 'Pullover', 'Dumbbell Pull-Over'], ['lats'], ['chest', 'triceps', 'core'], 'dumbbell', 'pull_vertical', false, [
+    'Doen: lig op een bank, laat één dumbbell met bijna gestrekte armen achter je hoofd zakken en trek hem terug.',
+    'Let op: voel de rek in je zij, je ribben blijven laag.',
+    'Vaak fout: je onderrug laten doorhangen onderaan.',
+  ]),
+  ex('negative-chin-up', 'Negative Chin-Up', ['Negative Chin Up', 'Eccentric Chin-Up', 'Negative Pull-Up'], ['lats'], ['biceps', 'upper_back', 'forearms'], 'bodyweight', 'pull_vertical', false, [
+    'Doen: spring of stap tot je kin boven de stang is en zak in 4 tot 5 seconden naar beneden.',
+    'Let op: zak helemaal tot je armen gestrekt zijn.',
+    'Vaak fout: laten vallen in de laatste helft.',
+  ], 1),
+  ex('dumbbell-preacher-curl', 'Dumbbell Preacher Curl', ['Preacher Curl (Dumbbell)', 'Single Arm Dumbbell Preacher Curl'], ['biceps'], ['forearms'], 'dumbbell', 'isolation_arm', false, [
+    'Doen: bovenarm op het schuine kussen, buig de elleboog en laat rustig helemaal zakken.',
+    'Let op: je bovenarm blijft op het kussen liggen.',
+    'Vaak fout: bovenaan je elleboog van het kussen tillen.',
+  ]),
+  ex('machine-preacher-curl', 'Pin-Loaded Machine Preacher Curl', ['Machine Preacher Curl', 'Preacher Curl (Machine)'], ['biceps'], ['forearms'], 'machine_stack', 'isolation_arm', false, [
+    'Doen: bovenarmen op het kussen, buig je ellebogen en laat rustig zakken.',
+    'Let op: stel de zitting zo in dat je oksels tegen het kussen zitten.',
+    'Vaak fout: je schouders optrekken om het gewicht omhoog te krijgen.',
+  ]),
+  ex('incline-hammer-curl', 'Incline Hammer Curl', ['Incline Dumbbell Hammer Curl'], ['biceps', 'forearms'], [], 'dumbbell', 'isolation_arm', false, [
+    'Doen: leun achterover op een schuine bank en buig met duimen omhoog.',
+    'Let op: je ellebogen blijven naast of iets achter je lichaam.',
+    'Vaak fout: de bank te recht zetten en je ellebogen naar voren laten komen.',
+  ]),
+  ex('sumo-deadlift', 'Sumo Deadlift', ['Barbell Sumo Deadlift', 'Sumo Deadlift (Barbell)'], ['glutes', 'hip_adductors', 'hamstrings'], ['quadriceps', 'lower_back', 'traps', 'forearms', 'core'], 'barbell', 'hinge', true, [
+    'Doen: voeten wijd met tenen naar buiten, pak de stang binnen je knieën, duw de vloer uit elkaar en kom omhoog.',
+    'Let op: knieën volgen de richting van je tenen, borst blijft hoog.',
+    'Vaak fout: je heupen eerst laten stijgen, zodat je met een ronde rug trekt.',
+  ]),
+  ex('pause-back-squat', 'Pause Back Squat', ['Paused Back Squat', 'Pause Squat', 'Pause Barbell Back Squat'], ['quadriceps', 'glutes'], ['hamstrings', 'lower_back', 'core', 'hip_adductors'], 'barbell', 'squat', true, [
+    'Doen: een back squat met een stilstand van een tot twee seconden in het diepste punt.',
+    'Let op: houd tijdens de pauze je romp strak en je borst hoog.',
+    'Vaak fout: in de pauze ontspannen en dan stuiteren uit het gat.',
+  ]),
+  ex('leg-press-quad-biased', 'Pin-Loaded Quad-Biased Leg Press', ['Quad-Biased Leg Press', 'Quad Biased Pin-Loaded Leg Press'], ['quadriceps'], ['glutes', 'hip_adductors'], 'machine_stack', 'squat', true, [
+    'Doen: voeten laag op het plateau, zak diep met de knieën ver naar voren en duw weer weg.',
+    'Let op: je hielen blijven op het plateau en je billen op de zitting.',
+    'Vaak fout: de knieën helemaal slot strekken onder zwaar gewicht.',
+  ]),
+  ex('leg-press-calf-raise', 'Pin-Loaded Leg Press Calf Raise', ['Leg Press Calf Raise', 'Calf Press', 'Leg Press Calf Press'], ['calves'], [], 'machine_stack', 'calf', true, [
+    'Doen: voorvoeten onderaan het plateau, duw door je tenen en laat de hielen diep zakken.',
+    'Let op: houd je knieën bijna gestrekt en pauzeer onderaan kort.',
+    'Vaak fout: stuiteren in plaats van gecontroleerd zakken.',
+  ]),
+  ex('seated-single-leg-curl', 'Seated Single Leg Hamstring Curl', ['Seated Single Leg Curl', 'Single Leg Seated Hamstring Curl'], ['hamstrings'], ['calves'], 'machine_stack', 'isolation_leg', true, [
+    'Doen: trek met één been je hiel naar beneden en achter je en laat rustig terugkomen.',
+    'Let op: het kussen op je bovenbeen zit stevig.',
+    'Vaak fout: met je bovenlichaam meeschommelen.',
+  ]),
+  ex('weighted-roman-chair-back-extension', 'Weighted Roman Chair Back Extension', ['Weighted Roman Chair Hip Hinge', 'Weighted Back Extension', 'Weighted Hyperextension'], ['lower_back', 'glutes'], ['hamstrings'], 'dumbbell', 'hinge', true, [
+    'Doen: heupen op het kussen, houd een gewicht tegen je borst, zak voorover en kom terug tot een rechte lijn.',
+    'Let op: stop bovenaan op een rechte lijn.',
+    'Vaak fout: bovenaan in een hol kruis doorbuigen.',
+  ], 0.4),
+  ex('weighted-ghd-hip-hinge', 'Weighted Glute Ham Developer Hip Hinge', ['Weighted GHD Hip Hinge', 'Glute Ham Developer Hip Hinge'], ['glutes', 'hamstrings'], ['lower_back'], 'dumbbell', 'hinge', true, [
+    'Doen: op de glute ham developer, houd een gewicht vast en scharnier vanuit je heupen.',
+    'Let op: je rug blijft recht en de beweging komt uit je heupen.',
+    'Vaak fout: je rug ronden om dieper te komen.',
+  ], 0.4),
+  ex('glute-ham-raise', 'Glute Ham Raise', ['GHR', 'Glute-Ham Raise', 'Glute Ham Developer Raise'], ['hamstrings', 'glutes'], ['calves', 'lower_back'], 'bodyweight', 'isolation_leg', true, [
+    'Doen: enkels vast, zak voorover met een rechte lijn en kom terug door je hamstrings te buigen.',
+    'Let op: je heupen blijven gestrekt.',
+    'Vaak fout: bovenaan met je rug de beweging afmaken.',
+  ], 0.7),
+  ex('reverse-nordic-curl', 'Reverse Nordic Curl', ['Reverse Nordic', 'Reverse Nordic Curls'], ['quadriceps'], ['core'], 'bodyweight', 'isolation_leg', true, [
+    'Doen: kniel met je enkels vast en zak met een rechte lijn achterover van knie tot hoofd.',
+    'Let op: kom zo ver als je rustig terug kunt komen.',
+    'Vaak fout: in je heupen knikken in plaats van met je bovenbenen remmen.',
+  ], 0.6),
+  ex('dumbbell-glute-bridge', 'Dumbbell Glute Bridge', ['Glute Bridge (Dumbbell)'], ['glutes'], ['hamstrings', 'core'], 'dumbbell', 'hinge', true, [
+    'Doen: lig op je rug met een dumbbell op je heupen en duw je heupen omhoog.',
+    'Let op: knijp bovenaan even je billen samen.',
+    'Vaak fout: een hol kruis maken in plaats van je heupen strekken.',
+  ]),
+  ex('dumbbell-frog-pump', 'Dumbbell Frog Pump', ['Frog Pump', 'Frog Pumps'], ['glutes'], ['hip_abductors', 'core'], 'dumbbell', 'hinge', true, [
+    'Doen: lig op je rug met de voetzolen tegen elkaar en de knieën open, duw je heupen omhoog.',
+    'Let op: maak veel herhalingen met een korte, strakke beweging.',
+    'Vaak fout: door je onderrug omhoog duwen in plaats van door je billen.',
+  ]),
+  ex('barbell-glute-bridge', 'Barbell Glute Bridge', ['Glute Bridge (Barbell)'], ['glutes'], ['hamstrings', 'core'], 'barbell', 'hinge', true, [
+    'Doen: lig op de grond met de stang op je heupen en duw je heupen omhoog.',
+    'Let op: gebruik een pad of handdoek om de stang prettig te laten liggen.',
+    'Vaak fout: een hol kruis maken in plaats van je heupen strekken.',
+  ]),
+  ex('superman', 'Superman', ['Superman Hold', 'Back Raise'], ['lower_back', 'glutes'], ['upper_back'], 'bodyweight', 'hinge', false, [
+    'Doen: lig op je buik en til tegelijk je armen en benen een stukje van de grond.',
+    'Let op: kijk naar de grond en houd je nek lang.',
+    'Vaak fout: je nek achterover trekken om hoger te komen.',
+  ], 0.3),
+  ex('snatch-grip-shrug', 'Snatch Grip Shrug', ['Barbell Snatch Grip Shrug', 'Snatch Grip Barbell Shrug'], ['traps'], ['upper_back', 'forearms'], 'barbell', 'isolation_shoulder', false, [
+    'Doen: pak de stang breed, sta rechtop en haal je schouders recht omhoog naar je oren.',
+    'Let op: pauzeer bovenaan kort en zak gecontroleerd.',
+    'Vaak fout: met je armen omhoog trekken.',
+  ]),
+  ex('decline-weighted-sit-up', 'Decline Weighted Sit-Up', ['Weighted Decline Sit-Up', 'Decline Sit-Up', 'Decline Weighted Sit Up'], ['core'], ['quadriceps'], 'dumbbell', 'core', false, [
+    'Doen: op een afgaande bank met een gewicht tegen je borst, rol omhoog tot je rechtop zit.',
+    'Let op: kom met je rug rustig omhoog, wervel voor wervel.',
+    'Vaak fout: met zwaaien omhoog komen in plaats van met je buik.',
+  ]),
+  ex('horizontal-cable-chop', 'Horizontal Cable Chop', ['Cable Chop', 'Horizontal Chop'], ['core'], ['hip_abductors'], 'cable', 'core', false, [
+    'Doen: kabel op borsthoogte, trek het handvat horizontaal over je lichaam en laat gecontroleerd terugkomen.',
+    'Let op: draai vanuit je romp en houd je armen vrij recht.',
+    'Vaak fout: te veel gewicht en je schouders laten draaien.',
+  ]),
+  ex('ab-wheel-rollout', 'Ab Wheel Rollout', ['Ab Wheel', 'Ab Roller Rollout', 'Wheel Rollout'], ['core'], ['lats'], 'bodyweight', 'core', false, [
+    'Doen: kniel met het wiel onder je schouders, rol naar voren en kom terug met je buik.',
+    'Let op: bil en buik aanspannen, ribben naar beneden.',
+    'Vaak fout: je onderrug laten doorzakken onderaan.',
+  ]),
+  ex('barbell-rollout', 'Barbell Rollout', [], ['core'], ['lats'], 'bodyweight', 'core', false, [
+    'Doen: kniel met een stang met schijven voor je en rol naar voren en terug.',
+    'Let op: bil en buik aanspannen, ribben naar beneden.',
+    'Vaak fout: je onderrug laten doorzakken onderaan.',
   ]),
 ];
 
