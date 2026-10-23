@@ -115,6 +115,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-rust', facts()).checked).toBe(true);
     expect(rowSummary('forge-signaal', facts()).value).toBe('Geluid en trillen');
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
+    expect(rowSummary('forge-doorgeven', facts()).checked).toBe(true);
+    expect(rowSummary('forge-schijven', facts()).checked).toBe(true);
+    expect(rowSummary('forge-doorgeven', facts({ settings: { ...facts().settings, strengthModel: { carryWeights: false } } })).checked).toBe(false);
     expect(rowSummary('forge-programma', facts())).toEqual({ value: 'Van ASCEND', dim: true });
     expect(groupSummary('forge', facts())).toEqual({ value: 'Aan', sub: 'Eerst gewicht, opwarmen slim' });
   });

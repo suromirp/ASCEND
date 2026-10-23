@@ -252,6 +252,10 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('restsignaal', forge.restAlert), hidden: !forge.restAuto };
     case 'forge-scherm':
       return { checked: forge.keepScreenOn };
+    case 'forge-doorgeven':
+      return { checked: forge.carryWeights };
+    case 'forge-schijven':
+      return { checked: forge.showPlates };
     case 'forge-programma':
       return s.strengthModel?.program ? { value: s.strengthModel.program.name } : { value: 'Van ASCEND', dim: true };
     case 'stangen':

@@ -53,6 +53,10 @@ export interface WorkoutRow {
   reps?: number;
   rir?: number;
   done: boolean;
+  // You changed kg or reps yourself, or took the prescription: a weight you
+  // change on an earlier set no longer carries over to this one. Lives in the
+  // draft only; it is never part of the log.
+  edited?: boolean;
 }
 
 export interface WorkoutExercise {

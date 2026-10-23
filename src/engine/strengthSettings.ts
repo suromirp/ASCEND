@@ -59,6 +59,10 @@ export interface StrengthSettings {
   restAlert?: RestAlert;
   // Keep the screen on while the workout screen is open.
   keepScreenOn?: boolean;
+  // A weight you change on one set goes on to the next sets you did not touch.
+  carryWeights?: boolean;
+  // A small line "per kant 15 + 2,5" under a working set of a barbell exercise.
+  showPlates?: boolean;
   // Your own rest per exercise (by exercise id), in seconds, over the estimate.
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
@@ -79,6 +83,8 @@ export interface ResolvedStrengthSettings {
   restAuto: boolean;
   restAlert: RestAlert;
   keepScreenOn: boolean;
+  carryWeights: boolean;
+  showPlates: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
 }
@@ -192,6 +198,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.activeProfileId === 'string' && raw.activeProfileId.length <= 40) out.activeProfileId = raw.activeProfileId;
   if (typeof raw.restAuto === 'boolean') out.restAuto = raw.restAuto;
   if (typeof raw.keepScreenOn === 'boolean') out.keepScreenOn = raw.keepScreenOn;
+  if (typeof raw.carryWeights === 'boolean') out.carryWeights = raw.carryWeights;
+  if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
   const rest = perExercise(raw.restSeconds, restValue);
@@ -217,6 +225,8 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     restAuto: s.restAuto ?? true,
     restAlert: s.restAlert ?? 'sound_vibrate',
     keepScreenOn: s.keepScreenOn ?? true,
+    carryWeights: s.carryWeights ?? true,
+    showPlates: s.showPlates ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
   };

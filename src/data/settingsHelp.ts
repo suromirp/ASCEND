@@ -47,6 +47,23 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je planning', text: 'verandert er niet door.' },
     ],
   },
+  forgeDoorgeven: {
+    title: 'Gewicht doorgeven',
+    lead: 'Pas je bij een set het gewicht aan, dan schuiven de sets erna mee.',
+    points: [
+      { head: 'Alleen sets die je niet aanraakte', text: 'een set die je zelf aanpaste of afvinkte blijft zoals hij is.' },
+      { head: 'Zelfde verschil', text: 'ga je 2,5 kg omhoog, dan gaan de volgende sets ook 2,5 kg omhoog.' },
+      { head: 'Herhalingen', text: 'blijven per set zoals ze waren.' },
+    ],
+  },
+  forgeSchijven: {
+    title: 'Schijven bij de set',
+    lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
+    points: [
+      { head: 'Tik erop', text: 'dan opent het invoerpaneel met de stang erbij getekend.' },
+      { head: 'Je sportschool', text: 'de schijven en stangen komen uit je sportschoolprofiel.' },
+    ],
+  },
   gewicht: {
     title: 'Lichaamsgewicht',
     lead: 'ASCEND rekent met je trendgewicht, want dat is rustiger dan één weging.',

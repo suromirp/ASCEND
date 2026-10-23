@@ -172,6 +172,28 @@ const PATHS = {
       <circle cx="18" cy="12" r="0.9" />
     </>
   ),
+  // Het invoerpaneel van Forge: toetsenbord verbergen, de stang, wissen, volgende veld, een schijf.
+  toetsenbordweg: (
+    <>
+      <rect x="3.5" y="4" width="17" height="9.5" rx="2" />
+      <path d="M7.5 7.8h.01M11 7.8h.01M14.5 7.8h.01M17 7.8h.01M8 10.8h8" />
+      <path d="M9.5 17l2.5 2.5 2.5-2.5" />
+    </>
+  ),
+  stang: <path d="M2.5 12h19M6 7.5v9M9 5.5v13M15 5.5v13M18 7.5v9" />,
+  wissen: (
+    <>
+      <path d="M9 6.5h9.5A1.5 1.5 0 0 1 20 8v8a1.5 1.5 0 0 1-1.5 1.5H9L3.5 12z" />
+      <path d="M12.5 9.5l4 5M16.5 9.5l-4 5" />
+    </>
+  ),
+  pijlrechts: <path d="M4.5 12h15M13.5 6.5l5.5 5.5-5.5 5.5" />,
+  schijf: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="2" />
+    </>
+  ),
   ruilen: <path d="M5 8.5h13M14.5 5l3.5 3.5L14.5 12M19 15.5H6M9.5 12L6 15.5 9.5 19" />,
   notitie: <path d="M9 3.5h6M10 3.5v5.5l-3 3.5h10l-3-3.5V3.5M12 12.5V20.5" />,
 } satisfies Record<string, ReactNode>;

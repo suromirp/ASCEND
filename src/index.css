@@ -42,6 +42,17 @@
   --color-rir-mid: #d08a3c;
   --color-rir-easy: #d2b44e;
   --color-rir-light: #8a8478;
+  /* The plates on the bar of the Forge input panel: one calm colour per weight. */
+  --color-plate-1: #8c8f93;
+  --color-plate-2: #7c93a0;
+  --color-plate-3: #6f9a79;
+  --color-plate-4: #b08d57;
+  --color-plate-5: #a9714f;
+  --color-plate-6: #6f7fa6;
+  --color-plate-7: #9a4f4a;
+  --color-plate-other: #8a8478;
+  /* A spring that overshoots a little: for panels and sheets that come up. */
+  --ease-spring: cubic-bezier(0.22, 1.12, 0.36, 1);
 
   --font-display: 'Marcellus', 'Iowan Old Style', serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -435,11 +446,146 @@ body {
    classes would otherwise win on specificity and drop transform from what
    actually animates. */
 button:not(:disabled):not([role='switch']) {
-  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 button:not(:disabled):not([role='switch']):active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+}
+
+/* The workout screen of Forge: panels that come up on a spring (about 250 ms),
+   a tick that fills and draws itself, plates that slide on and off, a rest bar
+   that comes up and pulses once at the end. A panel that overshoots shows a gap
+   under it for a moment; its own shadow fills that gap. */
+@keyframes forge-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes forge-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes forge-pop {
+  0% { transform: scale(0.9); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes forge-draw {
+  from { stroke-dashoffset: 22; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes forge-plate-in {
+  from { opacity: 0; transform: translateX(16px) scaleY(0.5); }
+  to { opacity: 1; transform: translateX(0) scaleY(1); }
+}
+
+@keyframes forge-plate-out {
+  from { opacity: 1; transform: translateX(0) scaleY(1); }
+  to { opacity: 0; transform: translateX(16px) scaleY(0.5); }
+}
+
+@keyframes forge-pulse {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes forge-glow {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 55%, transparent); }
+  100% { box-shadow: 0 0 0 14px transparent; }
+}
+
+.forge-up {
+  animation: forge-up 0.25s cubic-bezier(0.22, 1.12, 0.36, 1) both;
+  box-shadow: 0 32px 0 var(--forge-fill, var(--color-card));
+}
+
+.forge-down {
+  animation: forge-down 0.2s ease-in both;
+  box-shadow: 0 32px 0 var(--forge-fill, var(--color-card));
+}
+
+.forge-pop {
+  animation: forge-pop 0.28s cubic-bezier(0.22, 1.12, 0.36, 1) both;
+}
+
+.forge-check path {
+  stroke-dasharray: 22;
+  stroke-dashoffset: 0;
+}
+
+.forge-check-draw path {
+  animation: forge-draw 0.26s 0.04s ease-out both;
+}
+
+.forge-plate-in {
+  animation: forge-plate-in 0.22s cubic-bezier(0.22, 1.12, 0.36, 1) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.forge-plate-out {
+  animation: forge-plate-out 0.18s ease-in both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.forge-plate-slot {
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.forge-pulse {
+  animation: forge-pulse 0.5s ease-out both;
+}
+
+.forge-glow {
+  animation: forge-glow 0.9s ease-out both;
+}
+
+/* An exercise that folds in to one line: the height animates without measuring. */
+.forge-fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+}
+
+.forge-fold[data-folded='true'] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.forge-fold > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The set that is up next: a soft marker, not a frame. */
+.forge-row {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.forge-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-bronze);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.forge-row[data-active='true']::before {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

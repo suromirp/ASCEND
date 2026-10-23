@@ -9,10 +9,32 @@
 // dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
 // te kijken, en één knop om de training af te vinken.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { MUSCLE_LABEL } from '../../models/exercise';
 import { currentBodyKg } from '../../engine/bodyWeight';
+import {
+  activeRow,
+  applyReps,
+  applyWeight,
+  copyRow,
+  exerciseComplete,
+  exerciseSummary,
+  makeSnap,
+  plateShortText,
+  nextField,
+  plateSideText,
+  removeRow,
+  repsBounds,
+  stepNumber,
+  takeTarget,
+  weightBounds,
+  weightStepFor,
+  REPS_STEP,
+  type FieldName,
+  type FieldRef,
+  type RowRef,
+} from '../../engine/forgeInput';
 import {
   addRow,
   exerciseOf,
@@ -22,7 +44,6 @@ import {
   planExercise,
   planState,
   planWorkout,
-  plateList,
   plateSteps,
   previousFor,
   previousText,
@@ -40,6 +61,7 @@ import {
   type WorkoutExercise,
   type WorkoutRow,
 } from '../../engine/forgeWorkout';
+import type { GymProfile } from '../../engine/strengthSettings';
 import { programExercisesFor } from '../../engine/macrofactorProgram';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { templateSport } from '../../engine/sports';
@@ -52,6 +74,7 @@ import type { PainReport } from '../../models/checkIn';
 import { useAppData } from '../../state/AppDataContext';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../../utils/dates';
 import { haptics } from '../../utils/haptics';
+import { animateEl, reducedMotion } from '../../utils/motion';
 import { clearDraft, draftKey, loadDraft, saveDraft } from '../../utils/loggerDraft';
 import { formatNumberNL } from '../../utils/number';
 import { playTimerAlarm, primeAudio } from '../../utils/sound';
@@ -62,7 +85,8 @@ import { PainReportFields } from '../PainReportFields';
 import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { PrimaryButton, SecondaryButton } from '../ui';
-import { ForgeSheet, MenuRow, NumCell, RirBubble, TickBox } from './parts';
+import { InputDock } from './InputDock';
+import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
 import { useWakeLock } from './useWakeLock';
 
 const DRAFT_VERSION = 1;
@@ -111,7 +135,7 @@ export function ForgeWorkout({
   const today = todayISO();
   const date = scheduledDate ?? today;
   const readOnly = strengthExternal;
-  const strength = resolveStrengthSettings(settings.strengthModel);
+  const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training.
   const programSlots = programExercisesFor(settings.strengthModel?.program, template.id, date);
@@ -136,7 +160,6 @@ export function ForgeWorkout({
   const [startedAt] = useState(() => restored?.startedAt ?? Date.now());
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
-  const [now, setNow] = useState(() => Date.now());
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [noteFor, setNoteFor] = useState<string | null>(null);
@@ -145,68 +168,233 @@ export function ForgeWorkout({
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(startAtForm);
   const [showGuide, setShowGuide] = useState(false);
-  const [focused, setFocused] = useState<string | null>(null);
+  // Het invoerpaneel en wat er rond de tabel meebeweegt.
+  const [dock, setDock] = useState<FieldRef | null>(null);
+  const [selected, setSelected] = useState(true);
+  const [dockH, setDockH] = useState(0);
+  const [platesOn, setPlatesOn] = useState(true);
+  const [rowMenu, setRowMenu] = useState<RowRef | null>(null);
+  // De set die nu aan de beurt is, en de oefeningen die zijn ingeklapt.
+  const [activeRef, setActiveRef] = useState<RowRef | undefined>(() => activeRow(workout));
+  const [folded, setFolded] = useState<Record<string, boolean>>(() => Object.fromEntries(workout.filter(exerciseComplete).map((e) => [e.slot, true])));
+  const scrollEl = useRef<HTMLDivElement>(null);
+  const headerEl = useRef<HTMLElement>(null);
+  const timers = useRef<number[]>([]);
+  // De oefening zoals hij was toen je dit veld begon te bewerken (zie applyWeight).
+  const baseRef = useRef<{ key: string; ex: WorkoutExercise } | null>(null);
+  const layout = useRef({ dockH: 0, restH: 0 });
 
   useWakeLock(strength.keepScreenOn);
 
-  // De klok van het scherm: verstreken tijd en de rusttimer.
   useEffect(() => {
-    const id = window.setInterval(() => {
-      const t = clock();
-      setNow(t);
-      setRest((r) => (r && t > r.endsAt + REST_DONE_LINGER_MS ? undefined : r));
-    }, 500);
-    return () => window.clearInterval(id);
+    const list = timers.current;
+    return () => list.forEach((t) => window.clearTimeout(t));
   }, []);
+  const later = (fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  };
+  const onDockHeight = useCallback((h: number) => setDockH(h), []);
+  useEffect(() => {
+    layout.current = { dockH, restH: rest && !readOnly ? 70 : 0 };
+  });
 
-  // Het concept bij elke verandering wegschrijven, ook als je het scherm verlaat.
+  // Een set in beeld: net boven het paneel als dat openstaat, anders in het midden.
+  // Alleen als hij niet al helemaal te zien is, zodat het scherm niet onnodig beweegt.
+  function scrollToRow(rowId: string) {
+    const root = scrollEl.current;
+    const el = root?.querySelector(`[data-row-id="${CSS.escape(rowId)}"]`);
+    if (!root || !el) return;
+    const r = el.getBoundingClientRect();
+    const top = (headerEl.current?.offsetHeight ?? 90) + 8;
+    const bottom = window.innerHeight - layout.current.dockH - layout.current.restH - 8;
+    if (r.top >= top && r.bottom <= bottom) return;
+    const target = layout.current.dockH > 0 ? bottom - r.height : top + Math.max(0, (bottom - top - r.height) / 2);
+    root.scrollTo({ top: root.scrollTop + r.top - target, behavior: reducedMotion() ? 'auto' : 'smooth' });
+  }
+  const dockKey = dock ? `${dock.slot}:${dock.rowId}` : '';
+  const dockRowId = dock?.rowId;
+  useEffect(() => {
+    if (!dockRowId || dockH === 0) return;
+    scrollToRow(dockRowId);
+  }, [dockKey, dockH, dockRowId]);
+
+  // Het concept wegschrijven kort na een verandering (niet bij elke toets), en altijd
+  // als je het scherm verlaat of de app naar de achtergrond gaat.
+  const pendingDraft = useRef<WorkoutDraft | null>(null);
+  const draftTimer = useRef<number | undefined>(undefined);
+  const flushDraft = useCallback(() => {
+    window.clearTimeout(draftTimer.current);
+    draftTimer.current = undefined;
+    if (pendingDraft.current) saveDraft(key, pendingDraft.current, 'local');
+    pendingDraft.current = null;
+  }, [key]);
+  const dropDraft = useCallback(() => {
+    window.clearTimeout(draftTimer.current);
+    draftTimer.current = undefined;
+    pendingDraft.current = null;
+    clearDraft(key, 'local');
+  }, [key]);
   useEffect(() => {
     if (readOnly) return;
-    saveDraft(key, { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, ...(rest ? { rest } : {}), column } satisfies WorkoutDraft, 'local');
-  }, [key, readOnly, startedAt, workout, rest, column]);
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, ...(rest ? { rest } : {}), column };
+    if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
+  }, [readOnly, startedAt, workout, rest, column, flushDraft]);
+  useEffect(() => {
+    window.addEventListener('pagehide', flushDraft);
+    document.addEventListener('visibilitychange', flushDraft);
+    return () => {
+      window.removeEventListener('pagehide', flushDraft);
+      document.removeEventListener('visibilitychange', flushDraft);
+      flushDraft();
+    };
+  }, [flushDraft]);
 
-  // Het einde van de rust: één keer trillen en een geluid, zoals ingesteld.
+  // Het einde van de rust: één keer trillen en een geluid, zoals ingesteld; een
+  // tijdje daarna verdwijnt de balk. Eén timer per eindtijd, geen klok die het scherm ververst.
   const alerted = useRef<number | null>(null);
   useEffect(() => {
-    if (!rest || now < rest.endsAt || alerted.current === rest.endsAt) return;
-    alerted.current = rest.endsAt;
-    if (now - rest.endsAt < 3000) {
-      if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'vibrate') haptics.alarm();
-      if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'sound') playTimerAlarm();
-    }
-  }, [now, rest, strength.restAlert]);
+    if (!rest) return;
+    const end = rest.endsAt;
+    const fire = window.setTimeout(() => {
+      if (alerted.current === end) return;
+      alerted.current = end;
+      if (Date.now() - end < 3000) {
+        if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'vibrate') haptics.alarm();
+        if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'sound') playTimerAlarm();
+      }
+    }, Math.max(0, end - Date.now()));
+    const drop = window.setTimeout(() => setRest((r) => (r && r.endsAt === end ? undefined : r)), Math.max(0, end + REST_DONE_LINGER_MS - Date.now()));
+    return () => {
+      window.clearTimeout(fire);
+      window.clearTimeout(drop);
+    };
+  }, [rest, strength.restAlert]);
 
   // Terug laat de training staan (het concept blijft); weggooien gaat via het menu.
   useBackToClose(true, onClose);
 
-  // De schijven per rij, alleen opnieuw als de sets of je sportschool veranderen (niet bij elke tik van de klok).
-  const strengthModel = settings.strengthModel;
-  const platesBySlot = useMemo(() => {
-    const profile = resolveStrengthSettings(strengthModel).profile;
-    return new Map(workout.map((ex) => [ex.slot, usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined] as const));
-  }, [workout, strengthModel]);
+  // De schijven van de oefening bij het invoerpaneel (de tabel rekent de zijne zelf, per oefening).
+  const dockPlates = useMemo(() => {
+    const ex = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
+    return ex && usesPlates(exerciseOf(ex)) ? plateSteps(ex, strength.profile) : undefined;
+  }, [dock, workout, strength.profile]);
 
   const legDay = isLegHeavyTemplate(template);
   const legLine = useMemo(() => (legDay ? legDayLine(date, { logs: sessionLogs, templates, program, bodyKg }) : undefined), [legDay, date, sessionLogs, templates, program, bodyKg]);
   const { done, total } = progress(workout);
-  const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
   const guide = getTrainingGuide(template.id);
 
   function setExercise(slot: string, update: (ex: WorkoutExercise) => WorkoutExercise) {
+    baseRef.current = null;
     setWorkout((w) => w.map((e) => (e.slot === slot ? update(e) : e)));
   }
 
   function tick(slot: string, rowId: string) {
     haptics.tap();
     primeAudio();
+    baseRef.current = null;
     const result = tickRow(workout, slot, rowId);
     setWorkout(result.workout);
+    // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
+    // klapt hij zacht in en gaat het scherm naar de volgende oefening.
+    const ticked = result.workout.find((e) => e.slot === slot)?.rows.find((r) => r.id === rowId)?.done;
+    if (ticked) {
+      const next = activeRow(result.workout, { slot, rowId });
+      setActiveRef(next);
+      const after = result.workout.find((e) => e.slot === slot);
+      if (after && exerciseComplete(after)) {
+        if (dock?.slot === slot) setDock(null);
+        const calm = reducedMotion();
+        later(() => {
+          setFolded((f) => ({ ...f, [slot]: true }));
+          if (next) later(() => scrollToRow(next.rowId), calm ? 0 : 320);
+        }, calm ? 0 : 380);
+      } else if (next) {
+        later(() => scrollToRow(next.rowId), 140);
+      }
+    } else {
+      setActiveRef({ slot, rowId });
+    }
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
       alerted.current = null;
       setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: ex?.name ?? '' });
     }
   }
+
+  function openField(slot: string, rowId: string, field: FieldName) {
+    if (readOnly) return;
+    baseRef.current = null;
+    setDock({ slot, rowId, field });
+    setSelected(true);
+    setActiveRef({ slot, rowId });
+  }
+
+  function changeValue(v: number | undefined) {
+    const d = dock;
+    if (!d) return;
+    const key = `${d.slot}:${d.rowId}:${d.field}`;
+    setWorkout((w) =>
+      w.map((e) => {
+        if (e.slot !== d.slot) return e;
+        if (d.field === 'reps') return applyReps(e, d.rowId, v);
+        if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
+        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), strength.profile, bodyKg, v));
+      }),
+    );
+  }
+
+  function stepDock(direction: 1 | -1): number {
+    const d = dock;
+    const ex = d ? workout.find((e) => e.slot === d.slot) : undefined;
+    const row = ex?.rows.find((r) => r.id === d?.rowId);
+    if (!d || !ex || !row) return 0;
+    const isWeight = d.field === 'weightKg';
+    const current = isWeight ? (row.weightKg ?? row.target.weightKg) : (row.reps ?? 0);
+    const bounds = isWeight ? weightBounds(exerciseOf(ex)) : repsBounds;
+    const step = isWeight ? weightStepFor(exerciseOf(ex), strength.profile, current) : REPS_STEP;
+    const next = stepNumber(current, direction, step, bounds.min, bounds.max);
+    changeValue(next);
+    return next;
+  }
+
+  function goNext(close: () => void) {
+    const n = dock ? nextField(workout, dock) : undefined;
+    if (!n) {
+      close();
+      return;
+    }
+    baseRef.current = null;
+    setDock(n);
+    setSelected(true);
+    setActiveRef({ slot: n.slot, rowId: n.rowId });
+  }
+
+  function take(slot: string, rowId: string) {
+    haptics.tap();
+    setExercise(slot, (e) => takeTarget(e, rowId));
+    setActiveRef({ slot, rowId });
+  }
+
+  // Vaste handelingen voor de tabel (zie BlockActions), die altijd de nieuwste staat gebruiken.
+  const latest = useRef({ tick, openField, take, setExercise });
+  useEffect(() => {
+    latest.current = { tick, openField, take, setExercise };
+  });
+  const actions = useMemo<BlockActions>(
+    () => ({
+      column: () => setColumn((c) => (c === 'target' ? 'previous' : 'target')),
+      fold: (slot) => setFolded((f) => ({ ...f, [slot]: !f[slot] })),
+      menu: (slot) => setMenuFor(slot),
+      tick: (slot, rowId) => latest.current.tick(slot, rowId),
+      open: (slot, rowId, name) => latest.current.openField(slot, rowId, name),
+      take: (slot, rowId) => latest.current.take(slot, rowId),
+      rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
+      rir: (slot, rowId) => setRirFor({ slot, rowId }),
+      add: (slot) => latest.current.setExercise(slot, (e) => addRow(e, 'work')),
+    }),
+    [],
+  );
 
   function swap(slot: string, exerciseId: string | null) {
     const prescription = slots.find((s) => s.id === slot);
@@ -223,13 +411,18 @@ export function ForgeWorkout({
   const menuEx = workout.find((e) => e.slot === menuFor);
   const swapEx = workout.find((e) => e.slot === swapFor);
   const noteEx = workout.find((e) => e.slot === noteFor);
+  const dockEx = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
+  const dockIndex = dockEx && dock ? dockEx.rows.findIndex((r) => r.id === dock.rowId) : -1;
+  const dockRow = dockEx && dockIndex >= 0 ? dockEx.rows[dockIndex] : undefined;
+  const rowMenuEx = rowMenu ? workout.find((e) => e.slot === rowMenu.slot) : undefined;
+  const rowMenuRow = rowMenuEx?.rows.find((r) => r.id === rowMenu?.rowId);
   const rirRow = rirFor ? workout.find((e) => e.slot === rirFor.slot)?.rows.find((r) => r.id === rirFor.rowId) : undefined;
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-50 overflow-y-auto animate-fade-in" style={{ background: 'var(--color-bg)' }}>
-        <div className="mx-auto max-w-md" style={{ paddingBottom: rest ? 120 : 48 }}>
-          <header className="sticky top-0 z-20 border-b px-2" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-card-border)', paddingTop: 'env(safe-area-inset-top)' }}>
+      <div ref={scrollEl} id="forge-scroll" className="fixed inset-0 z-50 overflow-y-auto animate-fade-in" style={{ background: 'var(--color-bg)' }}>
+        <div className="mx-auto max-w-md" style={{ paddingBottom: dockH > 0 ? dockH + (rest && !readOnly ? 70 : 0) + 16 : rest ? 120 : 48 }}>
+          <header ref={headerEl} className="sticky top-0 z-20 border-b px-2" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-card-border)', paddingTop: 'env(safe-area-inset-top)' }}>
             <div className="flex items-center gap-1 pt-1">
               <button type="button" onClick={onClose} aria-label="Terug, de training blijft staan" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="terug" size={22} />
@@ -249,7 +442,7 @@ export function ForgeWorkout({
             </div>
             {!readOnly && (
               <div className="flex items-center gap-3 px-2 pb-2 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-                <span className="font-sans" aria-label="Verstreken tijd">{formatElapsed(elapsed)}</span>
+                <ElapsedClock startedAt={startedAt} />
                 <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--color-card-border)' }} aria-hidden="true">
                   <div className="h-1 rounded-full transition-[width] duration-300" style={{ width: `${total > 0 ? (done / total) * 100 : 0}%`, background: 'var(--color-bronze)' }} />
                 </div>
@@ -276,16 +469,14 @@ export function ForgeWorkout({
               first={i === 0}
               readOnly={readOnly}
               column={column}
-              onColumn={() => setColumn((c) => (c === 'target' ? 'previous' : 'target'))}
               note={strength.exerciseNotes[ex.exerciseId]}
-              focused={focused}
-              onFocus={setFocused}
-              plates={platesBySlot.get(ex.slot)}
-              onMenu={() => setMenuFor(ex.slot)}
-              onTick={(rowId) => tick(ex.slot, rowId)}
-              onChange={(rowId, patch) => setExercise(ex.slot, (e) => updateRow(e, rowId, patch))}
-              onRir={(rowId) => setRirFor({ slot: ex.slot, rowId })}
-              onAdd={() => setExercise(ex.slot, (e) => addRow(e, 'work'))}
+              active={activeRef?.slot === ex.slot ? activeRef.rowId : undefined}
+              field={dock?.slot === ex.slot ? dock : null}
+              selected={dock?.slot === ex.slot && selected}
+              folded={!!folded[ex.slot] && exerciseComplete(ex)}
+              profile={strength.profile}
+              showPlates={strength.showPlates}
+              act={actions}
             />
           ))}
         </div>
@@ -293,12 +484,42 @@ export function ForgeWorkout({
         {rest && !readOnly && (
           <RestBar
             rest={rest}
-            now={now}
+            lift={dockH}
             onAdd={(s) => setRest((r) => (r ? { ...r, endsAt: Math.max(Date.now(), r.endsAt) + s * 1000, total: r.total + s } : r))}
             onSkip={() => setRest(undefined)}
           />
         )}
       </div>
+
+      {dock && !readOnly && dockEx && dockRow && (
+        <InputDock
+          label={`${dock.field === 'weightKg' ? 'Gewicht' : 'Herhalingen'}, ${dockEx.name}`}
+          fieldKey={`${dock.slot}:${dock.rowId}:${dock.field}`}
+          value={dock.field === 'weightKg' ? dockRow.weightKg : dockRow.reps}
+          decimals={dock.field === 'weightKg' ? 2 : 0}
+          onChange={changeValue}
+          onStep={stepDock}
+          onSelected={setSelected}
+          onNext={goNext}
+          onClose={() => setDock(null)}
+          onHeight={onDockHeight}
+          plate={dockPlates?.[dockIndex]}
+          plateOn={platesOn}
+          onTogglePlates={() => setPlatesOn((v) => !v)}
+        />
+      )}
+
+      {rowMenu && rowMenuEx && rowMenuRow && (
+        <ForgeSheet title={rowMenuEx.name} sub={rowMenuRow.kind === 'warmup' ? 'Opwarmset' : `Werkset ${rowMenuEx.rows.filter((r) => r.kind === 'work').indexOf(rowMenuRow) + 1}`} onClose={() => setRowMenu(null)}>
+          {(close) => (
+            <div className="flex flex-col">
+              {!rowMenuRow.done && <MenuRow icon="vinkje" title="Voorschrift overnemen" sub="Kilo's en herhalingen zoals het voorschrift ze vraagt." onClick={() => { take(rowMenuEx.slot, rowMenuRow.id); close(); }} />}
+              <MenuRow icon="plus" title="Set kopiëren" sub="Een kopie van deze set eronder." onClick={() => { setExercise(rowMenuEx.slot, (e) => copyRow(e, rowMenuRow.id)); close(); }} />
+              {!rowMenuRow.done && rowMenuEx.rows.length > 1 && <MenuRow icon="min" title="Set weghalen" danger onClick={() => { setExercise(rowMenuEx.slot, (e) => removeRow(e, rowMenuRow.id)); close(); }} />}
+            </div>
+          )}
+        </ForgeSheet>
+      )}
 
       {menuEx && (
         <ForgeSheet title={menuEx.name} sub={menuEx.swappedFrom ? `In plaats van ${menuEx.swappedFrom}, alleen deze training` : undefined} onClose={() => setMenuFor(null)}>
@@ -422,7 +643,7 @@ export function ForgeWorkout({
                     <SecondaryButton onClick={() => setConfirmDiscard(false)}>Annuleren</SecondaryButton>
                     <button
                       type="button"
-                      onClick={() => { clearDraft(key, 'local'); close(); onClose(); }}
+                      onClick={() => { dropDraft(); close(); onClose(); }}
                       className="min-h-[44px] flex-1 rounded-xl border text-xs font-medium"
                       style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger-text)' }}
                     >
@@ -445,7 +666,7 @@ export function ForgeWorkout({
           template={template}
           readOnly={readOnly}
           workout={workout}
-          elapsedMinutes={Math.max(1, Math.round(elapsed / 60))}
+          elapsedMinutes={Math.max(1, Math.round((clock() - startedAt) / 60000))}
           defaultMinutes={scheduledDate ? resolveVariantDuration(template, initialVariant, scheduledDate, program) : durationForVariant(template, initialVariant)}
           plannedSessionId={plannedSessionId}
           scheduledDate={scheduledDate}
@@ -470,7 +691,7 @@ export function ForgeWorkout({
               ...(rir !== undefined ? { strengthRir: rir } : {}),
             });
             // Niet opgeslagen betekent: deze training staat al in je logboek. Het concept is dan klaar.
-            clearDraft(key, 'local');
+            dropDraft();
             if (saved) onClose();
             return saved;
           }}
@@ -483,6 +704,21 @@ export function ForgeWorkout({
 // Hoe lang Opslaan mag duren voordat het scherm zegt dat het langer duurt.
 const SAVE_LIMIT_MS = 15_000;
 
+// Een klok die zichzelf ververst: alleen dit stukje, nooit de hele tabel.
+function useNow(intervalMs: number): number {
+  const [now, setNow] = useState(clock);
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(clock()), intervalMs);
+    return () => window.clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+function ElapsedClock({ startedAt }: { startedAt: number }) {
+  const now = useNow(1000);
+  return <span className="font-sans" aria-label="Verstreken tijd">{formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))}</span>;
+}
+
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -492,213 +728,329 @@ function formatElapsed(seconds: number): string {
 
 // --- één oefening ------------------------------------------------------------------------
 
-function ExerciseBlock({
+// De handelingen van de tabel. Eén vaste set (nooit een nieuwe functie per render),
+// zodat een oefening alleen opnieuw tekent als hijzelf verandert.
+interface BlockActions {
+  column: () => void;
+  fold: (slot: string) => void;
+  menu: (slot: string) => void;
+  tick: (slot: string, rowId: string) => void;
+  open: (slot: string, rowId: string, name: FieldName) => void;
+  take: (slot: string, rowId: string) => void;
+  rowMenu: (slot: string, rowId: string) => void;
+  rir: (slot: string, rowId: string) => void;
+  add: (slot: string) => void;
+}
+
+const ExerciseBlock = memo(function ExerciseBlock({
   ex,
   first,
   readOnly,
   column,
-  onColumn,
   note,
-  focused,
-  onFocus,
-  plates,
-  onMenu,
-  onTick,
-  onChange,
-  onRir,
-  onAdd,
+  active,
+  field,
+  selected,
+  folded,
+  profile,
+  showPlates,
+  act,
 }: {
   ex: WorkoutExercise;
   first: boolean;
   readOnly: boolean;
   column: 'target' | 'previous';
-  onColumn: () => void;
   note?: string;
-  focused: string | null;
-  onFocus: (id: string | null) => void;
-  plates?: (PlateStep | undefined)[];
-  onMenu: () => void;
-  onTick: (rowId: string) => void;
-  onChange: (rowId: string, patch: Partial<Pick<WorkoutRow, 'weightKg' | 'reps' | 'rir'>>) => void;
-  onRir: (rowId: string) => void;
-  onAdd: () => void;
+  // De set die nu aan de beurt is, en het veld dat in het paneel open staat.
+  active?: string;
+  field: FieldRef | null;
+  selected: boolean;
+  folded: boolean;
+  profile: GymProfile;
+  showPlates: boolean;
+  act: BlockActions;
 }) {
+  const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
   const exercise = exerciseOf(ex);
   const assisted = exercise?.resistance === 'assisted_bodyweight';
   const workDone = ex.rows.filter((r) => r.kind === 'work' && r.done).length;
   const workTotal = ex.rows.filter((r) => r.kind === 'work').length;
+  const complete = !readOnly && exerciseComplete(ex);
   // Met MacroFactor als bron staan kg en herhalingen al in hun eigen kolom;
   // de tweede kolom zegt dan wat je vorige keer deed.
   const showPrevious = readOnly || column === 'previous';
   let workNo = 0;
+  const headText = (
+    <>
+      <span className="flex items-center gap-2">
+        {complete && (
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-success)', color: 'var(--color-ink)' }}>
+            <Icon name="vinkje" size={14} />
+          </span>
+        )}
+        <span className="min-w-0 text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{ex.name}</span>
+      </span>
+      <span className="mt-0.5 block font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+        {complete && folded ? exerciseSummary(ex) : readOnly ? `${workTotal} sets` : `${workDone} van ${workTotal} sets`}
+        {!(complete && folded) && <> · rust {formatClock(ex.restSec)}</>}
+        {ex.swappedFrom ? ` · voor ${ex.swappedFrom}` : ''}
+      </span>
+    </>
+  );
   return (
-    <section className={`px-4 pb-2 pt-4 ${first ? '' : 'mt-2 border-t'}`} style={{ borderColor: 'var(--color-card-border)' }} aria-label={ex.name}>
+    <section className={`px-4 pb-2 pt-4 ${first ? '' : 'mt-2 border-t'}`} style={{ borderColor: 'var(--color-card-border)' }} aria-label={ex.name} data-slot={ex.slot}>
       <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1 pt-1.5">
-          <h2 className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{ex.name}</h2>
-          <p className="mt-0.5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-            {readOnly ? `${workTotal} sets` : `${workDone} van ${workTotal} sets`} · rust {formatClock(ex.restSec)}
-            {ex.swappedFrom ? ` · voor ${ex.swappedFrom}` : ''}
-          </p>
-        </div>
-        <button type="button" onClick={onMenu} aria-label={`Menu van ${ex.name}`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+        {complete ? (
+          <button type="button" onClick={() => act.fold(ex.slot)} aria-expanded={!folded} aria-label={`${ex.name}, ${folded ? 'uitklappen' : 'inklappen'}`} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
+            {headText}
+          </button>
+        ) : (
+          <div className="min-w-0 flex-1 pt-1.5">
+            <h2 className="m-0 p-0 font-[inherit]">{headText}</h2>
+          </div>
+        )}
+        <button type="button" onClick={() => act.menu(ex.slot)} aria-label={`Menu van ${ex.name}`} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="meer" size={22} />
         </button>
       </div>
-      {note && (
-        <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
-          <span className="mt-px shrink-0" style={{ color: 'var(--color-bronze)' }}><Icon name="notitie" size={14} /></span>
-          <span>{note}</span>
-        </p>
-      )}
-      {ex.reason && (
-        <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-alpine)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
-      )}
+      <div className="forge-fold" data-folded={folded} inert={folded}>
+        <div>
+          {note && (
+            <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
+              <span className="mt-px shrink-0" style={{ color: 'var(--color-bronze)' }}><Icon name="notitie" size={14} /></span>
+              <span>{note}</span>
+            </p>
+          )}
+          {ex.reason && (
+            <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-alpine)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
+          )}
 
-      <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
-        <div role="row" className="forge-grid items-end pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          <span role="columnheader" className="text-center">Set</span>
-          {readOnly ? (
-            <span role="columnheader">Vorige</span>
-          ) : (
-            <button type="button" role="columnheader" onClick={onColumn} className="relative flex items-center gap-1 text-left before:absolute before:-inset-y-3 before:inset-x-0 before:content-['']" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
-              {showPrevious ? 'Vorige' : 'Voorschrift'}
-              <Icon name="ruilen" size={12} />
+          <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
+            <div role="row" className="forge-grid items-end pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              <span role="columnheader" className="text-center">Set</span>
+              {readOnly ? (
+                <span role="columnheader">Vorige</span>
+              ) : (
+                <button type="button" role="columnheader" onClick={act.column} className="relative flex items-center gap-1 text-left before:absolute before:-inset-y-3 before:inset-x-0 before:content-['']" aria-label={showPrevious ? 'Toon het voorschrift' : 'Toon vorige keer'}>
+                  {showPrevious ? 'Vorige' : 'Voorschrift'}
+                  <Icon name="ruilen" size={12} />
+                </button>
+              )}
+              <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
+              <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
+              <span role="columnheader" className="text-center">RIR</span>
+              <span role="columnheader" className="sr-only">Gedaan</span>
+            </div>
+            {ex.rows.map((row, i) => {
+              if (row.kind === 'work') workNo++;
+              const label = row.kind === 'warmup' ? 'W' : String(workNo);
+              const prev = previousText(previousFor(ex, row));
+              const step = plates?.[i];
+              const isActive = !readOnly && active === row.id;
+              const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
+              return (
+                <div key={row.id} data-row-id={row.id}>
+                  <LongPressRow
+                    onLong={() => act.rowMenu(ex.slot, row.id)}
+                    disabled={readOnly}
+                    data-active={isActive}
+                    className="forge-grid forge-row items-center rounded-xl py-0.5"
+                    style={{
+                      background: row.done ? 'color-mix(in srgb, var(--color-success) 18%, transparent)' : isActive ? 'color-mix(in srgb, var(--color-ink) 5%, transparent)' : 'transparent',
+                      opacity: row.kind === 'warmup' && !row.done ? 0.78 : 1,
+                      transition: 'background-color 0.3s ease, opacity 0.3s ease',
+                    }}
+                  >
+                    <span role="cell" className="flex justify-center">
+                      <span
+                        className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
+                        style={{ background: row.done ? 'var(--color-success)' : 'var(--color-surface)', color: row.kind === 'warmup' && !row.done ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
+                      >
+                        {label}
+                      </span>
+                    </span>
+                    <span role="cell" className="min-w-0 font-sans text-[13px] leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                      {showPrevious ? (
+                        <span>{prev ?? ''}</span>
+                      ) : readOnly ? (
+                        <PrescriptionText row={row} ex={ex} />
+                      ) : (
+                        <button type="button" onClick={() => act.take(ex.slot, row.id)} disabled={row.done} aria-label={`Voorschrift overnemen, set ${label}`} className="flex min-h-[44px] w-full flex-col justify-center text-left">
+                          <PrescriptionText row={row} ex={ex} />
+                        </button>
+                      )}
+                    </span>
+                    {readOnly || ex.timed ? (
+                      <>
+                        <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
+                        <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span role="cell">
+                          <ValueCell value={row.weightKg} decimals={2} label={`Gewicht, set ${label}`} done={row.done} active={fieldOn('weightKg')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
+                        </span>
+                        <span role="cell">
+                          <ValueCell value={row.reps} decimals={0} label={`Herhalingen, set ${label}`} done={row.done} active={fieldOn('reps')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'reps')} />
+                        </span>
+                      </>
+                    )}
+                    <span role="cell" className="flex justify-center">
+                      {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
+                        <RirBubble
+                          rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
+                          label={`${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`}
+                          onClick={readOnly ? undefined : () => act.rir(ex.slot, row.id)}
+                        />
+                      )}
+                    </span>
+                    <span role="cell" className="flex justify-center">
+                      {!readOnly && <TickBox done={row.done} onClick={() => act.tick(ex.slot, row.id)} label={`Set ${label} gedaan`} />}
+                    </span>
+                  </LongPressRow>
+                  {!readOnly && showPlates && row.kind === 'work' && plates && plates.some(Boolean) && (
+                    <PlateLine step={step} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {!readOnly && !ex.timed && (
+            <button type="button" onClick={() => act.add(ex.slot)} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+              <Icon name="plus" size={16} /> Set toevoegen
             </button>
           )}
-          <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
-          <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
-          <span role="columnheader" className="text-center">RIR</span>
-          <span role="columnheader" className="sr-only">Gedaan</span>
         </div>
-        {ex.rows.map((row, i) => {
-          if (row.kind === 'work') workNo++;
-          const label = row.kind === 'warmup' ? 'W' : String(workNo);
-          const prev = previousText(previousFor(ex, row));
-          const step = plates?.[i];
-          const showPlates = !readOnly && focused === row.id && !!step;
-          return (
-            <div key={row.id}>
-              <div
-                role="row"
-                className="forge-grid items-center rounded-xl py-1 transition-colors"
-                style={{ background: row.done ? 'color-mix(in srgb, var(--color-success) 18%, transparent)' : 'transparent', opacity: row.kind === 'warmup' && !row.done ? 0.78 : 1 }}
-              >
-                <span role="cell" className="flex justify-center">
-                  <span
-                    className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
-                    style={{ background: row.done ? 'var(--color-success)' : 'var(--color-surface)', color: row.kind === 'warmup' && !row.done ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}
-                  >
-                    {label}
-                  </span>
-                </span>
-                <span role="cell" className="min-w-0 font-sans text-[13px] leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-                  {showPrevious ? (
-                    <span>{prev ?? ''}</span>
-                  ) : (
-                    <>
-                      <span className="block">
-                        {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
-                        {targetText(row).split(' × ').map((part, k) => (
-                          <span key={k} className="whitespace-nowrap">{k > 0 ? ` × ${part}` : part}</span>
-                        ))}
-                      </span>
-                      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
-                    </>
-                  )}
-                </span>
-                {readOnly || ex.timed ? (
-                  <>
-                    <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
-                    <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
-                  </>
-                ) : (
-                  <>
-                    <span role="cell">
-                      <NumCell
-                        value={row.weightKg}
-                        onChange={(v) => onChange(row.id, { weightKg: v })}
-                        decimals={2}
-                        allowNegative={assisted}
-                        label={`Gewicht, set ${label}`}
-                        done={row.done}
-                        onFocus={() => onFocus(row.id)}
-                        onBlur={() => onFocus(null)}
-                      />
-                    </span>
-                    <span role="cell">
-                      <NumCell value={row.reps} onChange={(v) => onChange(row.id, { reps: v })} decimals={0} label={`Herhalingen, set ${label}`} done={row.done} />
-                    </span>
-                  </>
-                )}
-                <span role="cell" className="flex justify-center">
-                  {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
-                    <RirBubble
-                      rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
-                      label={`${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`}
-                      onClick={readOnly ? undefined : () => onRir(row.id)}
-                    />
-                  )}
-                </span>
-                <span role="cell" className="flex justify-center">
-                  {!readOnly && <TickBox done={row.done} onClick={() => onTick(row.id)} label={`Set ${label} gedaan`} />}
-                </span>
-              </div>
-              {showPlates && step && <PlateLine step={step} first={i === 0 || !plates?.slice(0, i).some(Boolean)} />}
-            </div>
-          );
-        })}
       </div>
-      {!readOnly && !ex.timed && (
-        <button type="button" onClick={onAdd} className="mt-1 flex min-h-[44px] items-center gap-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          <Icon name="plus" size={16} /> Set toevoegen
-        </button>
-      )}
     </section>
+  );
+});
+
+// Het voorschrift van een set: "47,5 kg × 11-13" met de RIR eronder.
+function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise }) {
+  return (
+    <>
+      <span className="block">
+        {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
+        {targetText(row).split(' × ').map((part, k) => (
+          <span key={k} className="whitespace-nowrap">{k > 0 ? ` × ${part}` : part}</span>
+        ))}
+      </span>
+      {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}
+    </>
   );
 }
 
-// De schijven bij een stang, onder de rij waarvan je het gewicht intikt.
-function PlateLine({ step, first }: { step: PlateStep; first: boolean }) {
-  const perSide = step.perSide.length > 0 ? step.perSide.map((p) => formatNumberNL(p, 2)).join(' + ') : 'geen schijven';
-  const change = first ? undefined : [step.add.length > 0 ? `erbij ${plateList(step.add)}` : '', step.remove.length > 0 ? `eraf ${plateList(step.remove)}` : ''].filter(Boolean).join(', ');
+// De schijven bij een stang, klein onder een werkset: een tik opent het invoerpaneel.
+function PlateLine({ step, onOpen }: { step?: PlateStep; onOpen: () => void }) {
   return (
-    <div className="mb-1 ml-9 mr-1 rounded-lg px-3 py-2 font-sans text-xs leading-snug tabular-nums" style={{ background: 'var(--color-surface)', color: 'var(--color-ink-dim)' }}>
-      <p>
-        {step.barKg > 0 ? <>Stang <span style={{ color: 'var(--color-ink)' }}>{formatNumberNL(step.barKg, 2)}</span>, per kant </> : 'Per kant '}
-        <span style={{ color: 'var(--color-ink)' }}>{perSide}</span>
-      </p>
-      {change !== undefined && <p className="mt-0.5">{change === '' ? 'Niets wisselen.' : `Per kant ${change}.`}</p>}
-      {step.shortKg > 0 && <p className="mt-0.5" style={{ color: 'var(--color-warning)' }}>Per kant {formatNumberNL(step.shortKg, 2)} kg te weinig met jouw schijven.</p>}
+    <div className="ml-9 h-5">
+      {step && (
+        <button type="button" onClick={onOpen} aria-label={`Schijven: per kant ${plateSideText(step)}. Tik voor de stang`} className="relative flex h-5 items-center gap-1.5 font-sans text-xs tabular-nums before:absolute before:-inset-x-2 before:-inset-y-3 before:content-['']" style={{ color: 'var(--color-ink-dim)' }}>
+          <Icon name="schijf" size={14} />
+          {step.shortKg > 0 ? plateShortText(step) : step.perSide.length > 0 ? `per kant ${plateSideText(step)}` : 'alleen de stang'}
+        </button>
+      )}
     </div>
   );
 }
 
 // --- de rusttimer ----------------------------------------------------------------------
 
-function RestBar({ rest, now, onAdd, onSkip }: { rest: Rest; now: number; onAdd: (seconds: number) => void; onSkip: () => void }) {
+// De balk komt omhoog, de voortgang loopt vloeiend af naar de eindtijd (de bron;
+// niet naar het aantal ticks), −15 en +30 laten het getal even schuiven, aan het
+// eind pulseert hij zacht, en naar beneden vegen sluit hem (Overslaan).
+function RestBar({ rest, lift, onAdd, onSkip }: { rest: Rest; lift: number; onAdd: (seconds: number) => void; onSkip: () => void }) {
+  const now = useNow(500);
   const left = Math.max(0, Math.ceil((rest.endsAt - now) / 1000));
   const over = left === 0;
-  const share = rest.total > 0 ? Math.min(1, 1 - left / rest.total) : 1;
+  const share = rest.total > 0 ? Math.min(1, 1 - Math.max(0, rest.endsAt - now) / (rest.total * 1000)) : 1;
+  const bar = useRef<HTMLDivElement>(null);
+  const slab = useRef<HTMLDivElement>(null);
+  const clockText = useRef<HTMLParagraphElement>(null);
+  const drag = useRef<{ y: number; dy: number } | null>(null);
+
+  // De voortgang loopt als één beweging tot de eindtijd, zonder ticks.
+  useEffect(() => {
+    const total = rest.total * 1000;
+    const remaining = Math.max(0, rest.endsAt - Date.now());
+    const from = total > 0 ? Math.min(1, Math.max(0, 1 - remaining / total)) : 1;
+    const a = animateEl(bar.current, [{ transform: `scaleX(${from})` }, { transform: 'scaleX(1)' }], { duration: remaining, easing: 'linear', fill: 'forwards' });
+    return () => a?.cancel();
+  }, [rest.endsAt, rest.total]);
+
+  function add(seconds: number) {
+    animateEl(clockText.current, [{ opacity: 0.3, transform: `translateY(${seconds > 0 ? 8 : -8}px)` }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+    onAdd(seconds);
+  }
+
+  function skip() {
+    const a = animateEl(slab.current, [{ transform: `translateY(${drag.current?.dy ?? 0}px)` }, { transform: 'translateY(110%)' }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
+    if (a) a.onfinish = onSkip;
+    else onSkip();
+  }
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', paddingBottom: 'env(safe-area-inset-bottom)' }} role="timer" aria-live="off">
-      <div className="h-0.5" style={{ background: 'var(--color-card-border)' }}>
-        <div className="h-0.5 transition-[width] duration-500" style={{ width: `${share * 100}%`, background: over ? 'var(--color-success)' : 'var(--color-bronze)' }} />
-      </div>
-      <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-1.5">
-        <div className="min-w-0 flex-1">
-          <p className="font-sans text-2xl leading-none tabular-nums" style={{ color: over ? 'var(--color-success-text)' : 'var(--color-ink)' }}>{over ? 'Tijd om' : formatClock(left)}</p>
-          <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rust · {rest.name}</p>
+    <div
+      className="forge-up fixed inset-x-0 z-30"
+      style={{ bottom: lift, transition: reducedMotion() ? undefined : 'bottom 0.25s cubic-bezier(0.22, 1, 0.36, 1)', ['--forge-fill' as string]: 'var(--color-surface)' }}
+      role="timer"
+      aria-live="off"
+    >
+      <div
+        ref={slab}
+        className="border-t"
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', paddingBottom: lift > 0 ? 0 : 'env(safe-area-inset-bottom)', touchAction: 'none' }}
+        onPointerDown={(e) => {
+          if ((e.target as HTMLElement).closest('button')) return;
+          drag.current = { y: e.clientY, dy: 0 };
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (!d) return;
+          d.dy = Math.max(0, e.clientY - d.y);
+          e.currentTarget.style.transform = `translateY(${d.dy}px)`;
+        }}
+        onPointerUp={(e) => {
+          const d = drag.current;
+          drag.current = null;
+          if (!d) return;
+          if (d.dy > 36) {
+            drag.current = { y: 0, dy: d.dy };
+            skip();
+            return;
+          }
+          const el = e.currentTarget;
+          if (d.dy > 0) {
+            const a = animateEl(el, [{ transform: `translateY(${d.dy}px)` }, { transform: 'translateY(0)' }], { duration: 220, easing: 'cubic-bezier(0.22, 1.12, 0.36, 1)' });
+            if (!a) el.style.transform = '';
+            else a.onfinish = () => (el.style.transform = '');
+          }
+        }}
+        onPointerCancel={(e) => {
+          drag.current = null;
+          e.currentTarget.style.transform = '';
+        }}
+      >
+        <div className="h-0.5 overflow-hidden" style={{ background: 'var(--color-card-border)' }}>
+          <div ref={bar} className={`h-0.5 origin-left ${over ? 'forge-glow' : ''}`} style={{ transform: `scaleX(${share})`, background: over ? 'var(--color-success)' : 'var(--color-bronze)', transition: 'background-color 0.3s ease' }} />
         </div>
-        {!over && (
-          <>
-            <button type="button" onClick={() => onAdd(-15)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden korter">−15</button>
-            <button type="button" onClick={() => onAdd(30)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="30 seconden langer">+30</button>
-          </>
-        )}
-        <button type="button" onClick={onSkip} className="min-h-[44px] rounded-xl border px-3 text-sm" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
-          {over ? 'Sluiten' : 'Overslaan'}
-        </button>
+        <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-1.5">
+          <div className="min-w-0 flex-1">
+            <p ref={clockText} key={over ? 'over' : 'run'} className={`origin-left font-sans text-2xl leading-none tabular-nums ${over ? 'forge-pulse' : ''}`} style={{ color: over ? 'var(--color-success-text)' : 'var(--color-ink)' }}>{over ? 'Tijd om' : formatClock(left)}</p>
+            <p className="mt-1 truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rust · {rest.name}</p>
+          </div>
+          {!over && (
+            <>
+              <button type="button" onClick={() => add(-15)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="15 seconden korter">−15</button>
+              <button type="button" onClick={() => add(30)} className="min-h-[44px] min-w-[44px] rounded-xl border px-2 font-sans text-sm tabular-nums" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }} aria-label="30 seconden langer">+30</button>
+            </>
+          )}
+          <button type="button" onClick={skip} className="min-h-[44px] rounded-xl border px-3 text-sm" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
+            {over ? 'Sluiten' : 'Overslaan'}
+          </button>
+        </div>
       </div>
     </div>
   );

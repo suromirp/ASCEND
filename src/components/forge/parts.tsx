@@ -1,8 +1,10 @@
 // ASCEND: de kleine onderdelen van het workoutscherm van Forge. Geen
 // rekenwerk; dat staat in engine/forgeWorkout.ts.
 
-import { useState, type ReactNode } from 'react';
-import { formatNumberNL, formatWhileTypingNL, parseNumberNL } from '../../utils/number';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { haptics } from '../../utils/haptics';
+import { animateEl } from '../../utils/motion';
+import { formatNumberNL } from '../../utils/number';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Icon } from '../icons';
 import { Portal } from '../Portal';
@@ -27,88 +29,144 @@ export function RirBubble({ rir, onClick, label }: { rir: number; onClick?: () =
   );
 }
 
-// Het afvinkvakje van een set.
+// Het afvinkvakje van een set: vult met een korte veer, het vinkje tekent zichzelf.
+// Alleen een tik speelt de beweging af; een training die terugkomt uit het concept staat meteen goed.
 export function TickBox({ done, onClick, label }: { done: boolean; onClick: () => void; label: string }) {
+  const [played, setPlayed] = useState(false);
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={done}
       aria-label={label}
-      onClick={onClick}
-      className="relative flex h-8 w-8 items-center justify-center rounded-lg border transition-colors before:absolute before:-inset-2 before:content-['']"
+      onClick={() => {
+        setPlayed(!done);
+        onClick();
+      }}
+      className={`relative flex h-8 w-8 items-center justify-center rounded-lg border before:absolute before:-inset-2 before:content-[''] ${done && played ? 'forge-pop' : ''}`}
       style={{
         borderColor: done ? 'var(--color-success)' : 'var(--color-control-border)',
         background: done ? 'var(--color-success)' : 'transparent',
         color: 'var(--color-ink)',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease',
       }}
     >
-      {done && <Icon name="vinkje" size={20} />}
+      {done && (
+        <span className={played ? 'forge-check-draw' : 'forge-check'} style={{ display: 'flex' }}>
+          <Icon name="vinkje" size={20} />
+        </span>
+      )}
     </button>
   );
 }
 
-// Een getal in de tabel: komma als decimaalteken, numeriek toetsenbord, bij
-// een tik meteen alles geselecteerd zodat je het overschrijft.
-export function NumCell({
+// Een getal in de tabel: een tikdoel dat het invoerpaneel opent (geen toetsenbord
+// van het systeem). Het veld dat nu bewerkt wordt heeft een lichte rand; zolang
+// het nog "geselecteerd" is, vervangt het eerste cijfer het getal.
+export function ValueCell({
   value,
-  onChange,
   decimals,
   label,
   done,
-  onFocus,
-  onBlur,
-  allowNegative = false,
+  active,
+  selected,
+  onOpen,
 }: {
   value: number | undefined;
-  onChange: (v: number | undefined) => void;
   decimals: number;
   label: string;
   done: boolean;
-  onFocus?: () => void;
-  onBlur?: () => void;
-  allowNegative?: boolean;
+  active: boolean;
+  selected: boolean;
+  onOpen: () => void;
 }) {
-  const toText = (v: number | undefined) => (v === undefined ? '' : formatNumberNL(v, decimals));
-  const read = (t: string): number | undefined => {
-    const negative = allowNegative && t.trim().startsWith('-');
-    const parsed = parseNumberNL(t.replace(/-/g, ''), decimals).value;
-    return parsed === undefined ? undefined : negative ? -parsed : parsed;
-  };
-  const [text, setText] = useState(() => toText(value));
-  const [synced, setSynced] = useState(value);
-  // Volg een verandering van buiten (een ruil, een nieuwe set) zonder half
-  // getypte tekst te overschrijven.
-  if (value !== synced) {
-    setSynced(value);
-    if (read(text) !== value) setText(toText(value));
-  }
-  function handle(raw: string) {
-    const negative = allowNegative && raw.trim().startsWith('-');
-    const next = `${negative ? '-' : ''}${formatWhileTypingNL(raw.replace(/-/g, ''), decimals)}`;
-    setText(next);
-    onChange(read(next));
-  }
+  const text = value === undefined ? '' : formatNumberNL(value, decimals);
+  const face = useRef<HTMLSpanElement>(null);
+  const last = useRef(value);
+  useEffect(() => {
+    if (last.current === value) return;
+    last.current = value;
+    animateEl(face.current, [{ opacity: 0.35, transform: 'translateY(3px)' }, { opacity: 1, transform: 'none' }], { duration: 160, easing: 'ease-out' });
+  }, [value]);
   return (
-    <input
-      type="text"
-      inputMode={decimals > 0 ? 'decimal' : 'numeric'}
-      autoComplete="off"
-      aria-label={label}
-      value={text}
-      onChange={(e) => handle(e.target.value)}
-      onFocus={(e) => {
-        e.currentTarget.select();
-        onFocus?.();
-      }}
-      onBlur={onBlur}
-      className="w-full min-w-0 rounded-lg border px-1 text-center font-sans text-[15px] tabular-nums"
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${label}: ${text === '' ? 'leeg' : text}`}
+      aria-pressed={active}
+      className="flex min-h-[44px] w-full min-w-0 items-center justify-center rounded-lg px-1 font-sans text-[15px] tabular-nums"
       style={{
         background: done ? 'transparent' : 'var(--color-surface)',
-        borderColor: done ? 'transparent' : 'var(--color-card-border)',
+        boxShadow: active ? 'inset 0 0 0 2px var(--color-ink)' : `inset 0 0 0 1px ${done ? 'transparent' : 'var(--color-card-border)'}`,
         color: 'var(--color-ink)',
+        transition: 'box-shadow 0.18s ease, background-color 0.2s ease',
       }}
-    />
+    >
+      <span ref={face} className="rounded px-1" style={{ background: active && selected && text !== '' ? 'color-mix(in srgb, var(--color-bronze) 38%, transparent)' : 'transparent', transition: 'background-color 0.15s ease' }}>
+        {text === '' ? '\u00a0' : text}
+      </span>
+    </button>
+  );
+}
+
+// Een rij van de tabel: lang drukken opent het menu van die set. Een tik erna
+// (het loslaten) telt niet als tik op een veld in de rij.
+export function LongPressRow({
+  onLong,
+  disabled,
+  className,
+  style,
+  children,
+  ...rest
+}: {
+  onLong: () => void;
+  disabled?: boolean;
+  className?: string;
+  style?: CSSProperties;
+  children: ReactNode;
+  'data-active'?: boolean;
+}) {
+  const timer = useRef<number | undefined>(undefined);
+  const origin = useRef<{ x: number; y: number } | null>(null);
+  const fired = useRef(false);
+  const cancel = () => window.clearTimeout(timer.current);
+  useEffect(() => cancel, []);
+  return (
+    <div
+      role="row"
+      className={className}
+      style={style}
+      {...rest}
+      onPointerDown={(e) => {
+        if (disabled || e.button > 0) return;
+        fired.current = false;
+        origin.current = { x: e.clientX, y: e.clientY };
+        cancel();
+        timer.current = window.setTimeout(() => {
+          fired.current = true;
+          haptics.tap();
+          onLong();
+        }, 450);
+      }}
+      onPointerMove={(e) => {
+        const o = origin.current;
+        if (o && Math.hypot(e.clientX - o.x, e.clientY - o.y) > 8) cancel();
+      }}
+      onPointerUp={cancel}
+      onPointerCancel={cancel}
+      onPointerLeave={cancel}
+      onClickCapture={(e) => {
+        if (!fired.current) return;
+        fired.current = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onContextMenu={(e) => {
+        if (!disabled) e.preventDefault();
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -119,7 +177,7 @@ export function ForgeSheet({ title, sub, onClose, children }: { title: string; s
     <Portal>
       <div className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
-          className={`flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-b-0 ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-b-0 ${closing ? 'forge-down' : 'forge-up'}`}
           style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
           onClick={(e) => e.stopPropagation()}
         >

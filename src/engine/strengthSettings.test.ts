@@ -105,6 +105,13 @@ describe('het workoutscherm', () => {
     expect(clean.restSeconds).toEqual({ 'back-squat': 240 });
     expect(clean.exerciseNotes).toEqual({ 'leg-press': 'stoel op 4' });
   });
+  it('gewicht doorgeven en schijven tonen staan standaard aan en vallen terug bij rommel', () => {
+    expect(resolveStrengthSettings(undefined)).toMatchObject({ carryWeights: true, showPlates: true });
+    expect(resolveStrengthSettings({ carryWeights: false, showPlates: false })).toMatchObject({ carryWeights: false, showPlates: false });
+    const clean = normalizeStrengthSettings({ carryWeights: 'nee', showPlates: 0 })!;
+    expect(clean.carryWeights).toBeUndefined();
+    expect(clean.showPlates).toBeUndefined();
+  });
   it('een waarde per oefening zetten en weer wissen', () => {
     const on = withExerciseValue({ warmup: 'off' }, 'exerciseNotes', 'leg-press', 'stoel op 4');
     expect(on).toEqual({ warmup: 'off', exerciseNotes: { 'leg-press': 'stoel op 4' } });

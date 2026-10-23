@@ -47,7 +47,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     advanced: [],
   },
   forge: {
-    rows: ['forge', 'forge-open', 'kracht', 'trainingsduur', 'forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-rust', 'forge-signaal', 'forge-scherm', 'forge-programma', 'stangen', 'schijven', 'dumbbells', 'kabels'],
+    rows: ['forge', 'forge-open', 'kracht', 'trainingsduur', 'forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-rust', 'forge-signaal', 'forge-scherm', 'forge-doorgeven', 'forge-schijven', 'forge-programma', 'stangen', 'schijven', 'dumbbells', 'kabels'],
     advanced: ['forge-bereik', 'forge-schatting'],
   },
   lichaam: { rows: ['lichaamsgewicht', 'hartslag', 'blessures'], advanced: [] },
