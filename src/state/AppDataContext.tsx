@@ -1820,10 +1820,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     };
     // Still running after the minute the queue waits: say so now, and show the
     // normal notice once it is done (Warden Planning punt 2).
+    // A late failure gets a visible outcome too (Warden Planning N2).
+    const lateFailed = () => {
+      setStorageNotice('Je planning bijwerken lukte niet. Alles staat weer zoals het was.');
+      void refresh();
+    };
     const outcome = await horizonQueue.runOrLate(job, (late) => {
-      if (late.status === 'stale' || late.status === 'failed') { void refresh(); return; }
+      if (late.status === 'stale') {
+        setStorageNotice('Je planning was intussen veranderd, dus er is niets aangepast. Probeer het opnieuw.');
+        void refresh();
+        return;
+      }
+      if (late.status === 'failed') { lateFailed(); return; }
       void showHorizonResult(plan, late);
-    });
+    }, lateFailed);
     if (outcome.status === 'late') return 'pending';
     if (outcome.status === 'failed') {
       await refresh();

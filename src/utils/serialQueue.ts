@@ -19,7 +19,7 @@ export interface SerialQueue {
   // or late (the caller was let go while the job goes on). A late job still
   // hands its result to `onLate` when it finishes, so the caller can say "nog
   // bezig" now and show the normal outcome later.
-  runOrLate<T>(job: () => Promise<T>, onLate: (value: T) => void): Promise<QueueOutcome<T>>;
+  runOrLate<T>(job: () => Promise<T>, onLate: (value: T) => void, onLateError?: (err: unknown) => void): Promise<QueueOutcome<T>>;
 }
 
 export type QueueOutcome<T> = { status: 'done'; value: T } | { status: 'failed' } | { status: 'late' };
@@ -35,7 +35,7 @@ export function createSerialQueue(options: { timeoutMs: number; name: string; on
       return undefined;
     });
   }
-  function runOrLate<T>(job: () => Promise<T>, onLate: (value: T) => void): Promise<QueueOutcome<T>> {
+  function runOrLate<T>(job: () => Promise<T>, onLate: (value: T) => void, onLateError?: (err: unknown) => void): Promise<QueueOutcome<T>> {
     let state: 'running' | 'done' | 'threw' = 'running';
     let late = false;
     let value: T;
@@ -46,6 +46,8 @@ export function createSerialQueue(options: { timeoutMs: number; name: string; on
         value = await job();
       } catch (err) {
         state = 'threw';
+        // The caller already heard "still busy": it still needs an outcome.
+        if (late) onLateError?.(err);
         throw err;
       }
       if (late) onLate(value);

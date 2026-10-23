@@ -67,4 +67,12 @@ describe('een wachtrij die zijn aanroeper nooit voor altijd laat wachten', () =>
     await new Promise((r) => setTimeout(r, 100));
     expect(late).toEqual([7]);
   });
+  it('runOrLate: een late fout krijgt alsnog een uitkomst', async () => {
+    const q = createSerialQueue({ timeoutMs: 20, name: 'test', onProblem: () => undefined });
+    const errors: unknown[] = [];
+    const outcome = await q.runOrLate(() => new Promise<number>((_, reject) => setTimeout(() => reject(new Error('kapot')), 60)), () => undefined, (e) => errors.push(e));
+    expect(outcome).toEqual({ status: 'late' });
+    await new Promise((r) => setTimeout(r, 80));
+    expect(errors).toHaveLength(1);
+  });
 });
