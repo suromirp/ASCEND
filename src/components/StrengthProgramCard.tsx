@@ -10,7 +10,7 @@ import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import { activeStrengthStrategy, daysUntilBlockEnd } from '../engine/strengthProgram';
 import { addDays, formatDateNL, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, NumText } from './ui';
 import { StrengthProgramWizard } from './StrengthProgramWizard';
 
 function blankStrategyDraft(external: boolean): StrengthProgramStrategy {
@@ -91,7 +91,7 @@ export function StrengthProgramCard() {
       ) : (
         <>
           <p className="font-display text-xl" style={{ color: 'var(--color-gold)' }}>
-            {strengthBlockLabel(strategy.sessionsPerWeek, strategy.splitType)}
+            <NumText>{strengthBlockLabel(strategy.sessionsPerWeek, strategy.splitType)}</NumText>
           </p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {strategy.sessionTemplateIds.map((id) => templateById.get(id)?.name ?? id).join(', ') || 'Geen sessietypes gekozen'}

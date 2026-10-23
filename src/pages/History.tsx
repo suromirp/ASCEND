@@ -1,6 +1,7 @@
 import { WeekReviewList } from '../components/WeekReview';
 import { formatNumberNL } from '../utils/number';
 import { logKindLabel, logSport } from '../engine/sports';
+import { logLineParts } from '../engine/logLine';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
@@ -12,6 +13,7 @@ import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
+import { Icon } from '../components/icons';
 
 
 function computeMonthSummary(logs: SessionLog[]) {
@@ -97,9 +99,9 @@ export function HistoryPage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
-        <Eyebrow>{formatMonthNL(anchor).toUpperCase()}</Eyebrow>
-        <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>›</button>
+        <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Vorige maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={22} /></button>
+        <Eyebrow>{formatMonthNL(anchor)}</Eyebrow>
+        <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Volgende maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={22} /></button>
       </div>
 
       <Card className="grid grid-cols-2 gap-4">
@@ -138,27 +140,25 @@ export function HistoryPage() {
               style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}
             >
               <div className="flex items-center gap-3 rounded-xl border px-3 py-3" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}>
-                <span className="text-xs" style={{ color: 'var(--color-ink-dim)', width: '48px' }}>{formatDateNL(log.completedDate)}</span>
+                <span className="w-[76px] shrink-0 whitespace-nowrap text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(log.completedDate)}</span>
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
-                  <p className="line-clamp-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                    {logKindLabel(log)} • {log.durationMinutes} min
-                    {modalityLabel ? ` • ${modalityLabel}` : environment === 'treadmill' ? ' • Loopband' : environment === 'outdoor' ? ' • Buiten' : ''}
-                    {garminType ? ` • Garmin: ${garminType}` : ''}
-                    {log.subjectiveFeel === 'better' ? ' • voelde beter' : ''}
-                    {log.subjectiveFeel === 'worse' ? ' • voelde slechter' : ''}
-                    {log.outdoorData?.elevationGainM
-                      ? ` • ${formatNumberNL(log.outdoorData.elevationGainM, 0)} m D+${log.outdoorData.estimatedElevation ? ' (geschat)' : ''}`
-                      : ''}
-                    {log.cardioData?.elevationGainM
-                      ? ` • ${formatNumberNL(log.cardioData.elevationGainM, 0)} m D+${log.cardioData.estimatedElevation ? ' (geschat)' : ''}`
-                      : ''}
-                    {log.outdoorData?.distanceKm ? ` • ${formatNumberNL(log.outdoorData.distanceKm, 1)} km` : ''}
-                    {log.cardioData?.distanceKm ? ` • ${formatNumberNL(log.cardioData.distanceKm, 1)} km` : ''}
-                    {log.outdoorData?.steps ? ` • ${log.outdoorData.steps} verdiepingen` : ''}
+                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                    {logLineParts({
+                      kind: logKindLabel(log),
+                      minutes: log.durationMinutes,
+                      modalityLabel,
+                      environment,
+                      garminType,
+                      feel: log.subjectiveFeel,
+                      elevationGainM: log.outdoorData?.elevationGainM ?? log.cardioData?.elevationGainM,
+                      elevationEstimated: log.outdoorData?.elevationGainM ? log.outdoorData.estimatedElevation : log.cardioData?.estimatedElevation,
+                      distanceKm: log.outdoorData?.distanceKm ?? log.cardioData?.distanceKm,
+                      steps: log.outdoorData?.steps,
+                    }).join(' · ')}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
               </div>
             </button>
           );

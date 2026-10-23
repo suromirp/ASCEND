@@ -107,7 +107,7 @@ export function LeavePeriodsCard() {
       {plan && advice && (
         <ProposalSheet
           advice={advice}
-          eyebrow={`${plan.mode === 'add' ? '' : 'VERWIJDEREN · '}${LEAVE_KIND_LABEL[plan.period.kind].toUpperCase()} · ${describePeriodDates(plan.period, true).toUpperCase()}`}
+          eyebrow={`${plan.mode === 'add' ? '' : 'Verwijderen · '}${LEAVE_KIND_LABEL[plan.period.kind]} · ${describePeriodDates(plan.period, true)}`}
           previewPass={previewPass}
           leave={plan.periodsAfter}
           notes={plan.notes}

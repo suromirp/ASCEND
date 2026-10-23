@@ -3,8 +3,7 @@
 // data/packList.ts). Opened from the reisplanner and from Ascend.
 
 import { useState } from 'react';
-import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, SecondaryButton, PageHeader } from '../components/ui';
 import { CheckCircle } from '../components/reis/CheckCircle';
 import { PackItemSheet } from '../components/reis/PackItemSheet';
 import { usePackList } from '../components/reis/usePackList';
@@ -30,13 +29,7 @@ export function PackListPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-4">
-      <div className="flex items-center gap-1">
-        <BackButton fallback="/reis" />
-        <div>
-          <Eyebrow>PAKLIJST</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Wat er in je rugzak gaat</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Reis" title="Paklijst" line="Wat er in je rugzak gaat" fallback="/reis" />
 
       <Card className="flex flex-col gap-1" texture>
         <Eyebrow>BASISGEWICHT</Eyebrow>
@@ -79,7 +72,7 @@ export function PackListPage() {
         return (
           <Card key={group} className="flex flex-col !p-3">
             <div className="flex items-baseline justify-between px-1 pb-1">
-              <Eyebrow>{PACK_GROUP_LABEL[group].toUpperCase()}</Eyebrow>
+              <Eyebrow>{PACK_GROUP_LABEL[group]}</Eyebrow>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatKg(groupWeightGrams(items, group))}</span>
             </div>
             {groupItems.map((it) => (
@@ -108,9 +101,7 @@ export function PackListPage() {
       {customised && (
         <div className="flex flex-col items-start gap-1">
           {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-              Terug naar de voorbeeldlijst
-            </button>
+            <SecondaryButton onClick={() => setConfirmReset(true)}>Terug naar de voorbeeldlijst</SecondaryButton>
           ) : (
             <>
               <p className="text-xs" style={{ color: 'var(--color-warning)' }}>Al je aanpassingen en vinkjes op deze lijst gaan verloren.</p>

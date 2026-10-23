@@ -5,9 +5,8 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { Portal } from '../components/Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useTripPlan } from '../state/useTripPlan';
 import { buildItinerary, itineraryTotals } from '../engine/routePlan';
@@ -17,6 +16,7 @@ import type { SatelliteAnswer } from '../models/routePlan';
 import { canShareText, copyText, shareText } from '../utils/shareText';
 import { useSheetClose } from '../utils/useSheetClose';
 import { formatDateNL } from '../utils/dates';
+import { Icon } from '../components/icons';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 const inputClass = 'mt-1 w-full rounded-xl border px-3 py-2.5 text-sm';
@@ -52,13 +52,7 @@ export function AlleenOnderwegPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>ALLEEN ONDERWEG</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Je kaart voor als het misgaat</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Alleen onderweg" line="Je kaart voor als het misgaat" fallback="/ascend" />
 
       <Card className="flex flex-col gap-3" texture>
         <Eyebrow>ALARM</Eyebrow>
@@ -111,7 +105,7 @@ export function AlleenOnderwegPage() {
           <div className="mt-1 flex flex-col">
             {ALARM_SOURCES.map((s) => (
               <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-                {s.label} ↗
+                {s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
               </a>
             ))}
           </div>

@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
+import { SheetHeader } from './SheetHeader';
 import { Card, Eyebrow } from './ui';
+import { Icon } from './icons';
 
 // The full explanation of the leg fatigue index: what it counts, how heavy
 // each input weighs, how reliable it is and what to do yourself. From
@@ -26,11 +28,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-8">
-            <div className="-mr-2 -mt-2 flex items-center justify-between">
-              <Eyebrow>BENEN</Eyebrow>
-              <button onClick={requestClose} aria-label="Sluiten" className="flex h-11 w-11 items-center justify-center text-lg" style={{ color: 'var(--color-ink-dim)' }}>×</button>
-            </div>
-            <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>Hoe fris zijn je benen?</h2>
+            <div className="-mt-2"><SheetHeader eyebrow="Benen" title="Hoe fris zijn je benen?" onClose={requestClose} /></div>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
               Het getal bij Benen is een schatting van wat er van je recente trainingen nog in je benen zit. ASCEND gebruikt het om je testloop en wedstrijd op een dag met frisse benen te zetten, en om te kiezen wat er schuift als dat niet zo is.
             </p>
@@ -72,7 +70,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
             <Section title="BRONNEN">
               <div className="flex flex-col gap-1.5">
                 {SOURCES.map((s) => (
-                  <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
+                  <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                 ))}
               </div>
               <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>De getallen van de index zijn een afstemming op deze studies. De index als geheel is niet in een studie getest. Gebruik hem als kompas, niet als weegschaal.</p>

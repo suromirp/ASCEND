@@ -3,11 +3,11 @@
 // where in the app it is used.
 
 import { useMemo } from 'react';
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { usePageState } from '../components/usePageState';
+import { Icon } from '../components/icons';
 
 const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
 
@@ -21,13 +21,7 @@ export function SourcesPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>BRONNEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar de adviezen in ASCEND op gebaseerd zijn</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Kennis" title="Bronnen" line="Waar de adviezen in ASCEND op gebaseerd zijn" />
 
       <input
         type="search"
@@ -75,7 +69,7 @@ function SourceCard({ source }: { source: LibrarySource }) {
   return (
     <Card className="flex flex-col gap-1.5">
       <button onClick={() => setOpen((v) => !v)} className="text-left" aria-expanded={open}>
-        <Eyebrow>{[CATEGORY_LABEL[source.category].toUpperCase(), source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher.toUpperCase() : undefined].filter(Boolean).join(' · ')}</Eyebrow>
+        <Eyebrow>{[CATEGORY_LABEL[source.category], source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher : undefined].filter(Boolean).join(' · ')}</Eyebrow>
         <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{source.title}</p>
         {source.meta && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{source.meta}</p>}
         <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
@@ -94,7 +88,7 @@ function SourceCard({ source }: { source: LibrarySource }) {
       )}
       {source.url && (
         <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-          Open bron ↗
+          Open bron<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       )}
     </Card>

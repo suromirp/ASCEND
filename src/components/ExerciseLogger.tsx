@@ -32,6 +32,7 @@ import type { PainReport } from '../models/checkIn';
 import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/inputLimits';
 import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../utils/loggerDraft';
 import { ForgeWorkout } from './forge/ForgeWorkout';
+import { Icon } from './icons';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -311,7 +312,7 @@ function GeneralLogger({
   const guide = getTrainingGuide(template.id);
   const restChosen = selectedModality?.environment === 'rest';
   const planRpe = peak ? rpeRange(INTENSITY[peak].rpe) : undefined;
-  const dateLabel = `${weekdayShortNL(scheduledDate ?? today)} ${formatDateNL(scheduledDate ?? today)}`.toUpperCase();
+  const dateLabel = `${weekdayShortNL(scheduledDate ?? today)} ${formatDateNL(scheduledDate ?? today)}`;
   const saveLabel = saving ? 'Opslaan…' : quickComplete ? 'Afvinken' : restChosen ? 'Rustdag afvinken' : 'Opslaan';
 
   function goToForm() {
@@ -327,8 +328,8 @@ function GeneralLogger({
       >
       <div className="mx-auto max-w-md px-4 pb-32 pt-4">
         <div className="mb-3 flex items-center justify-between">
-          <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>‹ Terug</button>
-          <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{dateLabel}</span>
+          <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={18} className="mr-1 inline align-[-3px]" />Terug</button>
+          <Eyebrow as="span">{dateLabel}</Eyebrow>
         </div>
 
         <SessionHeader brief={brief} title={template.name} />
@@ -707,7 +708,7 @@ function GeneralLogger({
       )}
 
       {restTimerFor && (
-        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`RUST, ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
+        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`Rust, ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
       )}
     </Portal>
   );

@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
-import { Eyebrow } from '../ui';
-import { CloseGlyph } from './glyphs';
+import { SheetHeader } from '../SheetHeader';
 
 // Eén sheet voor alles wat Vandaag achter een regel zet: de kop blijft staan
 // als je scrolt, de inhoud scrolt eronder. `children` mag een functie zijn
@@ -27,15 +26,7 @@ export function TodaySheet({
           style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-start justify-between gap-3 px-4 pt-4">
-            <div className="min-w-0 pt-1">
-              <Eyebrow>{eyebrow}</Eyebrow>
-              {title && <h2 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{title}</h2>}
-            </div>
-            <button onClick={requestClose} aria-label="Sluiten" className="-mr-2 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
-              <CloseGlyph size={20} />
-            </button>
-          </div>
+          <div className="shrink-0 px-4 pt-3"><SheetHeader eyebrow={eyebrow} title={title} onClose={requestClose} /></div>
           <div className="flex-1 overflow-y-auto px-4 pb-8 pt-3">{typeof children === 'function' ? children(requestClose) : children}</div>
         </div>
       </div>

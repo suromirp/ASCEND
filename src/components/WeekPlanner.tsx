@@ -57,28 +57,26 @@ function SessionRow({
     <button
       type="button"
       onClick={onTap}
-      className="flex min-h-[52px] w-full items-center gap-3 border-t px-3 py-1.5 text-left transition-colors active:opacity-75 first:border-t-0"
+      className="flex min-h-[52px] w-full items-center gap-2 border-t px-3 py-1.5 text-left transition-colors active:opacity-75 first:border-t-0"
       style={{ borderColor: 'var(--color-card-border)', opacity: dim ? 0.55 : 1, ...(isToday ? todayStyle : {}) }}
     >
       <WeekStatusIcon status={isToday && isRest && status === 'rest' ? 'today' : status} />
-      <span className="w-12 shrink-0 text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
+      <span className="w-11 shrink-0 whitespace-nowrap text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
         {first ? dayLabel(date) : ''}
       </span>
-      {isRest ? <span className="h-4 w-4 shrink-0" aria-hidden="true" /> : <WeekSportIcon template={template} />}
+      <span className="hidden min-[380px]:contents">{isRest ? <span className="h-4 w-4 shrink-0" aria-hidden="true" /> : <WeekSportIcon template={template} />}</span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="min-w-0 break-words text-[15px]" style={{ color: isRest ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
-            {isRest ? REST_DAY_COPY[restMode].title : template.name}
-          </span>
-          {!isRest && isLegHeavyTemplate(template) && <LegMark />}
+        <span className="block break-words text-[15px] leading-snug" style={{ color: isRest ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
+          {isRest ? REST_DAY_COPY[restMode].title : template.name}
         </span>
         {note && <span className="block text-xs" style={{ color: 'var(--color-sky)' }}>{note}</span>}
       </span>
-      <span className="relative shrink-0 text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+      {/* Eén rechterkolom van vaste breedte: ruit, horloge en duur naast elkaar. */}
+      <span className="flex w-[76px] shrink-0 items-center justify-end gap-1.5 whitespace-nowrap text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+        {!isRest && isLegHeavyTemplate(template) && <LegMark />}
+        {watch === 'sent' && <span className="flex" style={{ color: 'var(--color-success-text)' }}><Icon name="horloge" size={14} label="Verstuurd naar je horloge" /></span>}
+        {watch === 'failed' && <span className="flex" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={14} label="Versturen naar je horloge is niet gelukt" /></span>}
         <span>{isRest ? (status === 'completed' ? `${duration} min` : REST_DAY_COPY[restMode].badge.toLowerCase() === REST_DAY_COPY[restMode].title.toLowerCase() ? '' : REST_DAY_COPY[restMode].badge) : `${duration} min`}</span>
-        {/* Onder de duur, zonder de regel hoger te maken of de naam smaller. */}
-        {watch === 'sent' && <span className="absolute right-0 top-full -mt-0.5" style={{ color: 'var(--color-success-text)' }}><Icon name="horloge" size={14} label="Verstuurd naar je horloge" /></span>}
-        {watch === 'failed' && <span className="absolute right-0 top-full -mt-0.5" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={14} label="Versturen naar je horloge is niet gelukt" /></span>}
       </span>
     </button>
   );

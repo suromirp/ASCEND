@@ -4,8 +4,7 @@
 
 import { useLayoutEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow, PrimaryButton } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, PageHeader } from '../components/ui';
 import { CheckCircle } from '../components/reis/CheckCircle';
 import { JourneyTaskSheet } from '../components/reis/JourneyTaskSheet';
 import { useJourney } from '../components/reis/useJourney';
@@ -15,6 +14,7 @@ import { JOURNEY_TASKS } from '../data/journeyTasks';
 import { journeyTimeline, journeyWeeksLeft, type TimelineTask } from '../engine/journey';
 import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
 import { formatDateNL, formatMonthNL, todayISO } from '../utils/dates';
+import { Icon } from '../components/icons';
 
 function rowMeta(row: TimelineTask): string {
   if (row.status === 'done') return row.doneOn ? `gedaan op ${shortDateNL(row.doneOn)}` : 'gedaan';
@@ -51,15 +51,7 @@ export function JourneyPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-4">
-      <div className="flex items-center gap-1">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>REISPLANNER</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>
-            {goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'}
-          </p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Reisplanner" line={goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'} fallback="/ascend" />
 
       {!goalDate ? (
         <Card className="flex flex-col gap-3">
@@ -91,13 +83,13 @@ export function JourneyPage() {
                 <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>Basisgewicht {formatKg(baseWeightGrams(items))}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{packs.have} van {packs.total} onderdelen heb je al</p>
               </div>
-              <span className="text-xl" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true">›</span>
+              <span className="text-xl" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="verder" size={16} /></span>
             </Card>
           </button>
 
           {timeline.map((group) => (
             <section key={group.month} className="flex flex-col gap-1" aria-label={formatMonthNL(group.month)}>
-              <Eyebrow>{formatMonthNL(group.month).toUpperCase()}</Eyebrow>
+              <Eyebrow>{formatMonthNL(group.month)}</Eyebrow>
               <Card className="flex flex-col !p-2">
                 {group.tasks.map((row) => (
                   <div

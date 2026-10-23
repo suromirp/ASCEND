@@ -3,6 +3,7 @@ import type { MilestoneDetail } from '../data/gr5Details';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
+import { Icon } from './icons';
 
 export function MilestoneDetailSheet({
   title,
@@ -79,7 +80,7 @@ export function MilestoneDetailSheet({
                       className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2"
                       style={{ color: 'var(--color-sky)' }}
                     >
-                      {s.label} ↗
+                      {s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
                     </a>
                   ) : (
                     <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>

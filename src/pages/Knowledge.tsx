@@ -3,10 +3,11 @@
 
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { CATEGORY_LABEL, KNOWLEDGE_TOPICS, knowledgeContent, topicById, type KnowledgeCategory } from '../data/knowledge';
 import { useWeeklyLesson } from '../components/useWeeklyLesson';
+import { Icon } from '../components/icons';
 
 const ORDER: KnowledgeCategory[] = ['route', 'navigatie', 'weer', 'sneeuw', 'slapen', 'lichaam', 'uitrusting', 'mentaal'];
 
@@ -19,13 +20,7 @@ export function KnowledgePage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-2">
-        <BackButton />
-        <div>
-          <Eyebrow>KENNISBANK</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Alles voor onderweg</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Kennisbank" line="Alles voor onderweg" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {ready.length} van {KNOWLEDGE_TOPICS.length} onderwerpen staan klaar, {read.filter((id) => topicById(id)).length} gelezen. Elke week kiest ASCEND er een voor je uit, op Vandaag.
       </p>
@@ -40,7 +35,7 @@ export function KnowledgePage() {
         if (topics.length === 0) return null;
         return (
           <Card key={cat} className="flex flex-col gap-1">
-            <Eyebrow>{CATEGORY_LABEL[cat].toUpperCase()}</Eyebrow>
+            <Eyebrow>{CATEGORY_LABEL[cat]}</Eyebrow>
             {topics.map((t) => {
               const has = !!knowledgeContent(t.id);
               return (
@@ -55,7 +50,7 @@ export function KnowledgePage() {
                     <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{t.title}</span>
                     <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{has ? t.summary : 'Volgt nog'}</span>
                   </span>
-                  <span className="shrink-0 text-xs" style={{ color: read.includes(t.id) ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>{read.includes(t.id) ? 'gelezen' : has ? '›' : ''}</span>
+                  <span className="shrink-0 text-xs" style={{ color: read.includes(t.id) ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>{read.includes(t.id) ? 'gelezen' : has ? <Icon name="verder" size={14} /> : null}</span>
                 </button>
               );
             })}
@@ -87,11 +82,7 @@ export function KnowledgeTopicPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-2">
-        <BackButton fallback="/kennis" />
-        <Eyebrow>{CATEGORY_LABEL[topic.category].toUpperCase()}</Eyebrow>
-      </div>
-      <h1 className="font-display text-2xl leading-snug" style={{ color: 'var(--color-ink)' }}>{topic.title}</h1>
+      <PageHeader eyebrow={CATEGORY_LABEL[topic.category]} title={topic.title} fallback="/kennis" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{content.intro}</p>
 
       {content.videos.length > 0 && (
@@ -99,7 +90,7 @@ export function KnowledgeTopicPage() {
           <Eyebrow>KIJKEN</Eyebrow>
           {content.videos.map((v) => (
             <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] flex-col justify-center border-b py-2 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
-              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>{v.title} ↗</span>
+              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>{v.title}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></span>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 {v.channel}{v.minutes ? ` · ${v.minutes} min` : ''}{v.language && v.language !== 'nl' ? ` · ${v.language === 'en' ? 'Engels' : v.language === 'de' ? 'Duits' : 'Frans'}` : ''}{v.note ? ` · ${v.note}` : ''}
               </span>
@@ -110,7 +101,7 @@ export function KnowledgeTopicPage() {
 
       {content.sections.map((s) => (
         <section key={s.heading} className="flex flex-col gap-2">
-          <h2 className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>{s.heading.toUpperCase()}</h2>
+          <h2><Eyebrow>{s.heading}</Eyebrow></h2>
           {s.body && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{s.body}</p>}
           {s.items && (
             <ul className="flex flex-col gap-1.5">
@@ -129,7 +120,7 @@ export function KnowledgeTopicPage() {
         <Card className="flex flex-col gap-1">
           <Eyebrow>BRONNEN</Eyebrow>
           {content.sources.map((s) => (
-            <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label} ↗</a>
+            <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
           ))}
         </Card>
       )}

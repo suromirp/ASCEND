@@ -1,10 +1,10 @@
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { TRAINING_GUIDES, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { todayISO } from '../utils/dates';
 import { usePageState } from '../components/usePageState';
+import { Icon } from '../components/icons';
 
 // Fixed weekday order (Ma → Zo) rather than iterating TRAINING_GUIDES —
 // object key order isn't a contract worth relying on, and this reads in
@@ -25,13 +25,7 @@ export function TrainingGuidePage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSGIDS</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Maand 1, Basisfase, dag voor dag</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Trainingsgids" line="Maand 1, basisfase, dag voor dag" />
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>DOEL VAN DEZE FASE</Eyebrow>
@@ -52,7 +46,7 @@ export function TrainingGuidePage() {
             <button
               key={templateId}
               onClick={() => setOpenTemplateId(templateId)}
-              className="animate-rise-in text-left"
+              className="animate-rise-in block min-h-[44px] w-full text-left"
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <Card className="flex items-center justify-between gap-3">
@@ -61,7 +55,7 @@ export function TrainingGuidePage() {
                   <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template.name}</p>
                   <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.subtitle}</p>
                 </div>
-                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
               </Card>
             </button>
           );

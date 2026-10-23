@@ -10,7 +10,6 @@ import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { NextTrekLine } from '../components/NextTrekLine';
 import { TrekGoalsCard } from '../components/TrekGoals';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
@@ -20,7 +19,7 @@ import { TrainingSplitSheet } from '../components/TrainingSplitSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../data/gr5Details';
 import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../components/ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num, NumText, PageHeader } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
@@ -148,8 +147,8 @@ export function AscendPage() {
       {/* The animated brand mark lives here, on the tab that carries its
           name: the light climbs the trail once each time you open Ascend. */}
       <div className="flex flex-col items-center gap-1" aria-hidden="true">
-        <AscendAnimatedLogo size={96} />
-        <p className="text-xs tracking-[0.12em]" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
+        <AscendAnimatedLogo size={96} withWord={false} />
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
       </div>
       {goal ? (
         <div>
@@ -193,7 +192,7 @@ export function AscendPage() {
         <Card className="flex flex-col gap-2">
           <Eyebrow>VOLGEND KAMP</Eyebrow>
           <button onClick={() => setSelectedMilestoneId(progress.currentMilestone!.definition.id)} className="text-left">
-            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{progress.currentMilestone.definition.title}</p>
+            <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}><NumText>{progress.currentMilestone.definition.title}</NumText></p>
             {getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle && (
               <p className="mt-0.5 text-xs" style={{ color: 'var(--color-gold)' }}>{getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle}</p>
             )}
@@ -307,13 +306,7 @@ export function GoalsPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-4">
-      <div className="flex items-center gap-1">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>DOELEN</Eyebrow>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen.</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Doelen" line="Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen." fallback="/ascend" />
 
       {horizon.note && (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>
@@ -490,7 +483,7 @@ function GR5GoalCard({
       </div>
       )}
 
-      <button onClick={onArchive} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+      <SecondaryButton onClick={onArchive}>Doel archiveren</SecondaryButton>
 
       {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={goal} onClose={() => setWizardOpen(false)} />}
     </Card>
@@ -661,7 +654,7 @@ function MarathonGoalCard({
             </p>
           )}
           {onArchive && (
-            <button onClick={onArchive} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+            <SecondaryButton onClick={onArchive}>Doel archiveren</SecondaryButton>
           )}
         </>
       )}

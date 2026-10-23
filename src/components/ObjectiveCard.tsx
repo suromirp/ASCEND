@@ -1,7 +1,15 @@
+import type { ReactNode } from 'react';
 import type { MilestoneView } from '../engine/progression';
 import { formatDateNL } from '../utils/dates';
+import { Icon } from './icons';
+import { NumText } from './ui';
 
-const MARKER: Record<string, string> = { completed: '✓', current: '●', upcoming: '○', future: '○' };
+const MARKER: Record<string, ReactNode> = {
+  completed: <Icon name="vinkje" size={16} />,
+  current: <Icon name="vandaagStip" size={16} />,
+  upcoming: <Icon name="gepland" size={16} />,
+  future: <Icon name="gepland" size={16} />,
+};
 const COLOR: Record<string, string> = {
   completed: 'var(--color-bronze)',
   current: 'var(--color-gold)',
@@ -52,14 +60,14 @@ export function ObjectiveCard({
               className={status === 'current' ? 'block font-display text-lg' : 'block text-sm'}
               style={{ color: status === 'future' || status === 'upcoming' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}
             >
-              {definition.title}
+              <NumText>{definition.title}</NumText>
             </span>
             {subtitle && (
               <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-bronze)' }}>{subtitle}</span>
             )}
           </span>
           {onSelect && (
-            <span className="mt-0.5 shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>meer info →</span>
+            <span className="mt-0.5 shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>meer info<Icon name="verder" size={14} className="ml-0.5 inline align-[-2px]" /></span>
           )}
         </button>
         {status === 'completed' && clearedDate && (

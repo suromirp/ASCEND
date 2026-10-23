@@ -15,6 +15,7 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { formatNumberNL } from '../utils/number';
+import { Icon } from './icons';
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
 // top what changes, one line each; below the week in the same style as the
@@ -130,7 +131,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {advice.options && advice.options.length > 1 && (
                 <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Kies een optie">
-                  <p className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{advice.options.length} OPTIES · KIES ER EEN</p>
+                  <Eyebrow>{advice.options.length} opties · kies er een</Eyebrow>
                   {advice.options.map((o, i) => {
                     const on = i === choice;
                     return (
@@ -185,7 +186,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {notes && notes.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)' }}>
-                  <p className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>BLIJFT STAAN</p>
+                  <Eyebrow>Blijft staan</Eyebrow>
                   {notes.map((n) => <p key={n} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{n}</p>)}
                 </div>
               )}
@@ -261,7 +262,7 @@ function MoveLine({ move }: { move: PreviewMove }) {
           ) : (
             <>
               {move.from && <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from)}</span>}
-              {move.from && <span className="mx-1.5" style={{ color: 'var(--color-bronze)' }}>→</span>}
+              {move.from && <span className="mx-1.5 inline-block align-[-2px]" style={{ color: 'var(--color-bronze)' }}><Icon name="verder" size={14} /></span>}
               <span style={{ color: 'var(--color-gold)' }}>{short(move.to!)}</span>
               {!move.from && <span style={{ color: 'var(--color-ink-dim)' }}> · nieuw</span>}
             </>

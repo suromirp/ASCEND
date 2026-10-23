@@ -11,6 +11,7 @@ import type { Advice, AdviceTrigger } from '../engine/adviceEngine';
 import { Card, Eyebrow } from './ui';
 import { WhyPanel, WhyToggle } from './Why';
 import { TodaySheet } from './vandaag/TodaySheet';
+import { Icon } from './icons';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -158,7 +159,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
         <path d="M3.5 9.5h17M8 3v4M16 3v4" />
       </svg>
       <span className="flex-1">Zo ziet je week eruit{advice.options && advice.options.length > 1 ? <span style={{ color: 'var(--color-ink-dim)' }}> · {advice.options.length} opties</span> : null}</span>
-      <span style={{ color: 'var(--color-ink-dim)' }} aria-hidden>›</span>
+      <span style={{ color: 'var(--color-ink-dim)' }} aria-hidden><Icon name="verder" size={16} /></span>
     </button>
   );
   const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;

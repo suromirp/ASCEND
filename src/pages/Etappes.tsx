@@ -6,9 +6,8 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { StageSheet } from '../components/StageSheet';
-import { Card, Eyebrow, Num, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, Num, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useTripPlan } from '../state/useTripPlan';
 import { GR5_SECTIONS, GR5_STAGES, STAGES_SOURCE, STAGES_SOURCE_URL, STAGES_TAKEN_ON, stagesOfSection, type Gr5Stage } from '../data/gr5Stages';
@@ -17,6 +16,7 @@ import { SLEEP_KINDS, SLEEP_LABEL } from '../models/routePlan';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { usePageState } from '../components/usePageState';
+import { Icon } from '../components/icons';
 
 // "Nachten: 2 tent, 1 gîte, 33 nog niet gekozen." Alleen wat er is.
 function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): string {
@@ -44,13 +44,7 @@ export function EtappesPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>ETAPPEPLAN</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>De 36 etappes van de GR5</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Etappes" line="De 36 etappes van de GR5" fallback="/ascend" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Van het Meer van Genève naar Nice. Alles staat in de app, dus ook zonder bereik kun je het nalezen. Kies per etappe waar je slaapt, of je haar samenvoegt met de volgende of een rustdag neemt.
       </p>
@@ -83,7 +77,7 @@ export function EtappesPage() {
                       : 'Nog geen tocht om mee te vergelijken'}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
               </button>
             );
           })}
@@ -106,7 +100,7 @@ export function EtappesPage() {
           Cijfers van {STAGES_SOURCE}, overgenomen op {formatDateNL(STAGES_TAKEN_ON)}. De route verandert soms, bijvoorbeeld bij Peisey. Controleer de GPX voor vertrek.
         </p>
         <a href={STAGES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-          Officiële etappes ↗
+          Officiële etappes<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       </Card>
 
@@ -114,7 +108,7 @@ export function EtappesPage() {
 
       {GR5_SECTIONS.map((section) => (
         <Card key={section.id} className="flex flex-col gap-1">
-          <Eyebrow>{`STUK ${section.id} · ${section.name.toUpperCase()}`}</Eyebrow>
+          <Eyebrow>{`Stuk ${section.id} · ${section.name}`}</Eyebrow>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{section.count} etappes</p>
           {stagesOfSection(section.id).map((stage) => {
             const day = dayOfStage(stage);
@@ -150,7 +144,7 @@ export function EtappesPage() {
                     ].filter(Boolean).join(' · ')}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
               </button>
             );
           })}

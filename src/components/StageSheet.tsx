@@ -14,6 +14,7 @@ import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, Toggle } from './ui';
+import { Icon } from './icons';
 
 const SOURCE_LABEL: Record<StageFact['source'], string> = {
   gta: 'Bron: officiële site',
@@ -77,7 +78,7 @@ export function StageSheet({
           onClick={(e) => e.stopPropagation()}
         >
           <Card className="rounded-b-none border-b-0 pb-8">
-            <Eyebrow>{`ETAPPE ${stage.overall} VAN 36 · ${section?.name.toUpperCase() ?? ''}`}</Eyebrow>
+            <Eyebrow>{`Etappe ${stage.overall} van 36 · ${section?.name ?? ''}`}</Eyebrow>
             <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{stage.from} naar {stage.to}</h3>
             {day.date && (
               <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
@@ -260,7 +261,7 @@ export function StageSheet({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border px-1.5 py-2 text-center" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <Eyebrow>{label.toUpperCase()}</Eyebrow>
+      <Eyebrow>{label}</Eyebrow>
       <p className="mt-0.5 text-[13px] font-medium leading-tight" style={{ color: value === 'onbekend' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{value}</p>
     </div>
   );
@@ -290,7 +291,7 @@ function Links({ links }: { links: { label: string; url: string }[] }) {
     <div className="mt-2 flex flex-col gap-1">
       {links.map((l) => (
         <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-          {l.label} ↗
+          {l.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       ))}
     </div>

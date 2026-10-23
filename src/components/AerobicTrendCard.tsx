@@ -44,7 +44,7 @@ export function AerobicTrendCard() {
         Telt mee: vlakke rustige loopjes met afstand, tijd en gemiddelde hartslag ingevuld
         {hasZones ? ', met een hartslag in zone 2 of een beetje eronder' : ''}.
         {trend.outsideZone > 0 ? ` ${trend.outsideZone} ${trend.outsideZone === 1 ? 'loopje zat' : 'loopjes zaten'} te ver van zone 2 en ${trend.outsideZone === 1 ? 'telt' : 'tellen'} niet mee.` : ''}
-        {!hasZones ? ' Vul bij Meer, Training je hartslag in, dan telt alleen zone 2.' : ''}
+        {!hasZones ? ' Vul bij Instellingen, Lichaam je hartslag in, dan telt alleen zone 2.' : ''}
       </p>
     </Card>
   );

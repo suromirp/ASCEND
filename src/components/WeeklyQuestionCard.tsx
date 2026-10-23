@@ -13,7 +13,7 @@ import {
   weekQuestionContext,
 } from '../engine/weeklyQuestion';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
-import { PrimaryButton } from './ui';
+import { Eyebrow, PrimaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 
@@ -123,7 +123,7 @@ export function WeeklyPlanSection({ weekStart }: { weekStart: string }) {
   if (!entry?.answer) return null;
   return (
     <div className="mt-5">
-      <p className="text-xs font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>JE PLAN VAN DEZE WEEK</p>
+      <Eyebrow>Je plan van deze week</Eyebrow>
       <div className="mt-2 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{entry.question}</p>
         <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{entry.answer}</p>

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { Card } from '../components/ui';
+import { Card, Eyebrow } from '../components/ui';
 import { LegFatigueCard, useLegFatigueInputs } from '../components/LegFatigueCard';
 import { FreshnessChart } from '../components/stand/FreshnessChart';
 import { LegCalendar } from '../components/stand/LegCalendar';
@@ -25,6 +25,7 @@ import { computeGoalProgress } from '../engine/progression';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { Icon } from '../components/icons';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -124,7 +125,7 @@ export function StandingPage() {
       <div>
         <h1 className="font-display text-3xl" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          {position ? `Week ${position.weekInProgram}, ${position.phase.name}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
+          {position ? `Week ${position.weekInProgram}, ${position.phase.name.toLowerCase()}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
         </p>
       </div>
 
@@ -145,7 +146,7 @@ export function StandingPage() {
         {rows.map((r, i) => (
           <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-xs tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{r.label.toUpperCase()}</span>
+              <Eyebrow as="span">{r.label}</Eyebrow>
               <span className="font-sans text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
             </div>
             {'dots' in r && r.dots && r.dots.length > 0 && (
@@ -177,7 +178,7 @@ export function StandingPage() {
               <span className="block font-display text-xl" style={{ color: 'var(--color-ink)' }}>Forge</span>
               <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
             </span>
-            <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}>›</span>
+            <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}><Icon name="verder" size={16} /></span>
           </button>
         )}
       </section>

@@ -6,11 +6,11 @@
 import { formatNumberNL } from '../utils/number';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { FLAT_COUNTRY_TIPS, HOME_PLACES, TRAINING_SPOTS, type SpotUse, type TrainingSpot } from '../data/trainingSpots';
 import { filterForTraining, spotSession, spotTrainings, spotsForTraining, TRAINING_FILTERS, travelAdvice, type HomeLocation, type TrainingFilter } from '../engine/trainingSpots';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 const USE_LABEL: Record<SpotUse, string> = {
   bergop: 'bergop', bergaf: 'bergaf', trap: 'trap', rugzak: 'rugzak', heuvelintervallen: 'heuvelintervallen', 'lange tocht': 'lange tocht', vlak: 'vlak', duurloop: 'duurloop',
@@ -53,13 +53,7 @@ export function TrainingSpotsPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSPLEKKEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je welke training doet, met hoogtemeters en lengte</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Trainingsplekken" line="Waar je welke training doet, met hoogtemeters en lengte" />
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>VANAF</Eyebrow>
@@ -143,7 +137,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
     <Card className="flex flex-col gap-2" texture={spot.uses.includes('bergaf')}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Eyebrow>{spot.kind.toUpperCase()} · {spot.place.toUpperCase()}</Eyebrow>
+          <Eyebrow>{spot.kind} · {spot.place}</Eyebrow>
           <p className="mt-0.5 font-display text-lg leading-tight" style={{ color: 'var(--color-ink)' }}>{spot.name}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end">
@@ -203,14 +197,14 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
           {spot.caveat && <p style={{ color: 'var(--color-warning)' }}>Let op: {spot.caveat}</p>}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {spot.sources.map((src) => (
-              <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
+              <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
             ))}
           </div>
         </div>
       )}
 
       <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
-        Route ernaartoe ↗
+        Route ernaartoe<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
       </a>
     </Card>
   );

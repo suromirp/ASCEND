@@ -11,9 +11,8 @@
 // in a short message: no button stays on "Bezig" when an answer stalls.
 
 import { useState } from 'react';
-import { BackButton } from '../components/BackButton';
 import { Icon } from '../components/icons';
-import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { clearWeather } from '../storage/weather';
 import { OPEN_METEO_SITE, openMeteoErrorMessage, searchPlaces, type PlaceResult } from '../integrations/openMeteo';
@@ -118,13 +117,7 @@ export function WeatherPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>WEER</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Het weer bij je buitentraining, voor je plaats</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Buiten" title="Weer" line="Het weer bij je buitentraining, voor je plaats" />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>Je plaats</Eyebrow>
@@ -232,11 +225,17 @@ export function WeatherPage() {
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>Bron</Eyebrow>
-        <Para>
-          Weergegevens van{' '}
-          <a href={OPEN_METEO_SITE} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>Open-Meteo.com</a>
-          , CC BY 4.0. Zonder verbinding zie je de laatste stand.
-        </Para>
+        <Para>Weergegevens van Open-Meteo.com, CC BY 4.0. Zonder verbinding zie je de laatste stand.</Para>
+        <a
+          href={OPEN_METEO_SITE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl border px-3 text-sm"
+          style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+        >
+          <span>Open-Meteo.com</span>
+          <Icon name="buiten" size={16} />
+        </a>
       </Card>
     </div>
   );

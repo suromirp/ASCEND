@@ -4,6 +4,7 @@ import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../ui';
 import { shortDateNL } from './format';
+import { Icon } from '../icons';
 
 function windowLine(row: TimelineTask): string {
   if (row.status === 'done' && row.doneOn) return `Gedaan op ${shortDateNL(row.doneOn)}`;
@@ -30,7 +31,7 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose }: { row: Time
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{task.why}</p>
             {task.link && (task.link.url ? (
               <a href={task.link.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] self-start py-2 text-sm underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-                {task.link.label} ↗
+                {task.link.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
               </a>
             ) : task.link.to ? (
               <button onClick={() => navigate(task.link!.to!)} className="min-h-[44px] self-start text-sm underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>

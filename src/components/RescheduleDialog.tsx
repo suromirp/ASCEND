@@ -2,7 +2,9 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, PrimaryButton, SecondaryButton } from './ui';
+import { Icon } from './icons';
+import { SheetHeader } from './SheetHeader';
 
 export function RescheduleDialog({
   proposal,
@@ -23,7 +25,7 @@ export function RescheduleDialog({
       >
         <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
-            <Eyebrow>SCHEMA-AANPASSING</Eyebrow>
+            <div className="-mt-2"><SheetHeader eyebrow="Schema-aanpassing" onClose={requestClose} /></div>
             <div className="mt-3 flex flex-col gap-2">
               {proposal.changes.map((c) => (
                 <div key={c.sessionId} className="flex items-center justify-between text-sm">
@@ -34,7 +36,7 @@ export function RescheduleDialog({
                     <span style={{ color: 'var(--color-danger-text)' }}>wordt overgeslagen</span>
                   ) : (
                     <span style={{ color: 'var(--color-ink-dim)' }}>
-                      {formatDateNL(c.fromDate)} → <span style={{ color: 'var(--color-gold)' }}>{formatDateNL(c.toDate)}</span>
+                      {formatDateNL(c.fromDate)} <Icon name="verder" size={14} className="inline align-[-2px]" /> <span style={{ color: 'var(--color-gold)' }}>{formatDateNL(c.toDate)}</span>
                     </span>
                   )}
                 </div>

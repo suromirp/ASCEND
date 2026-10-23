@@ -35,9 +35,9 @@ export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous
 
   return (
     <Card className="flex flex-col gap-2" texture>
-      <div className="flex items-baseline justify-between gap-3">
-        <Eyebrow>BELASTING PER DAG</Eyebrow>
-        <p className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+      <div className="flex flex-col gap-1">
+        <Eyebrow>Belasting per dag</Eyebrow>
+        <p className="flex items-center gap-4 whitespace-nowrap text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-[7px] w-[7px] rotate-45" style={{ background: 'var(--color-bronze)' }} aria-hidden="true" />
             benen

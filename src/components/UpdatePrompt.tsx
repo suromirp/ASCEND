@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { JUST_UPDATED } from '../utils/updateFlag';
 import { subscribeToUpdate, updateIsWaiting, applyUpdateNow } from '../utils/swUpdate';
+import { Icon } from './icons';
 
 // The service worker is registered at page load (utils/swUpdate.ts, started
 // from main.tsx) and updates itself at a quiet moment (utils/updatePolicy.ts):
@@ -48,7 +49,7 @@ export function UpdatedNotice() {
   return (
     <Bar>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Bijgewerkt naar de nieuwste versie</p>
-      <button onClick={() => setVisible(false)} aria-label="Sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}>×</button>
+      <button onClick={() => setVisible(false)} aria-label="Sluiten" className="min-h-[44px] min-w-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="sluiten" size={20} /></button>
     </Bar>
   );
 }

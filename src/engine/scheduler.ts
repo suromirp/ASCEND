@@ -546,8 +546,8 @@ export function proposeMove(
   function unresolvedReason(conflicting: PlannedSession): string {
     return `Let op: ${templateName(templateMap, conflicting.templateId)} valt nu binnen de hersteltijd van een andere zware sessie voor ${musclesWith(conflicting)} (ongeveer 48 uur). ASCEND vindt deze week geen dag met genoeg trainingstijd over om hem heen te schuiven. ${
       Object.keys(dailyTimeBudget ?? {}).length === 0
-        ? 'Zonder ingestelde trainingstijd plant ASCEND maximaal één training per dag; stel bij Instellingen, Training, Trainingstijd per dag in hoeveel tijd je hebt, dan mogen er twee op een dag.'
-        : 'Geef een dag meer tijd bij Instellingen, Training, Trainingstijd per dag, of verplaats hem zelf.'
+        ? 'Zonder ingestelde trainingstijd plant ASCEND maximaal één training per dag; stel bij Instellingen, Planning, Trainingstijd per dag in hoeveel tijd je hebt, dan mogen er twee op een dag.'
+        : 'Geef een dag meer tijd bij Instellingen, Planning, Trainingstijd per dag, of verplaats hem zelf.'
     }`;
   }
 }

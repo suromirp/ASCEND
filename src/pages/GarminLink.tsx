@@ -18,9 +18,8 @@
 // (components/WatchAlignCard.tsx).
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { BackButton } from '../components/BackButton';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
-import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
+import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, Toggle, PageHeader } from '../components/ui';
 import {
   clearConnection,
   forgetDeclinedAlignments,
@@ -211,13 +210,7 @@ export function GarminLinkPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>GARMIN KOPPELEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>via intervals.icu, zonder overtypen</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Koppelingen" title="Garmin koppelen" line="Via intervals.icu, zonder overtypen" />
       <SettingsPageLink page="koppelingen" row="garmin" label="Instellingen van je horloge" />
 
       <Card className="flex flex-col gap-3">

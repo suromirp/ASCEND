@@ -469,7 +469,7 @@ export function ForgeWorkout({
               <button
                 type="button"
                 onClick={() => setFinishing(true)}
-                className="min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
+                className="mr-2 min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
                 style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}
               >
                 {readOnly ? 'Afvinken' : 'Afronden'}
@@ -887,7 +887,11 @@ const ExerciseBlock = memo(function ExerciseBlock({
               <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
               <span role="columnheader" className="text-center">RIR</span>
               <span role="columnheader" className="flex justify-center">
-                {readOnly ? <span className="sr-only">Gedaan</span> : <TickBox done={ex.rows.length > 0 && ex.rows.every((r) => r.done)} onClick={() => act.tickAll(ex.slot)} label={`Alle sets van ${ex.name} gedaan`} />}
+                {readOnly ? <span className="sr-only">Gedaan</span> : (
+                  <button type="button" onClick={() => act.tickAll(ex.slot)} className="relative before:absolute before:-inset-y-[14px] before:-inset-x-1 before:content-['']" aria-label={`Alle sets van ${ex.name} gedaan`}>
+                    Alles
+                  </button>
+                )}
               </span>
             </div>
             {ex.rows.map((row, i) => {

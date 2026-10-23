@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import type { InjurySeverity } from '../models/injury';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { formatDateNL, todayISO } from '../utils/dates';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from '../components/ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 const CUSTOM_BODY_PART = '__custom__';
 
@@ -42,13 +42,7 @@ export function InjuriesPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>BLESSURES</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Bijhouden zonder je trainingsgeschiedenis aan te passen</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Lichaam" title="Blessures" line="Bijhouden zonder je trainingsgeschiedenis aan te passen" />
 
       {!showForm ? (
         <PrimaryButton onClick={() => setShowForm(true)}>Blessure toevoegen</PrimaryButton>
@@ -128,7 +122,7 @@ export function InjuriesPage() {
               <div>
                 <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{n.bodyPart}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatDateNL(n.date)} • <span style={{ color: SEVERITY_COLOR[n.severity] }}>{SEVERITY_LABEL[n.severity]}</span>
+                  {formatDateNL(n.date)} · <span style={{ color: SEVERITY_COLOR[n.severity] }}>{SEVERITY_LABEL[n.severity]}</span>
                 </p>
               </div>
             </div>
@@ -149,10 +143,10 @@ export function InjuriesPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{n.bodyPart}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatDateNL(n.date)} → {n.resolvedDate ? formatDateNL(n.resolvedDate) : ''}
+                  {formatDateNL(n.date)}{n.resolvedDate ? ` tot ${formatDateNL(n.resolvedDate)}` : ''}
                 </p>
               </div>
-              <button onClick={() => deleteInjury(n.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
+              <button onClick={() => deleteInjury(n.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-label="Verwijderen"><Icon name="sluiten" size={18} /></button>
             </div>
           ))}
         </div>

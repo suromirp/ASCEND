@@ -11,7 +11,6 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { MacroFactorCard } from '../components/MacroFactorCard';
 import { MacroFactorLeadCard } from '../components/MacroFactorLeadCard';
@@ -21,7 +20,7 @@ import type { MacroFactorProgram } from '../engine/macrofactorProgram';
 import { Icon } from '../components/icons';
 import { Portal } from '../components/Portal';
 import { useSheetClose } from '../utils/useSheetClose';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
 import { MacroFactorFormatError, nameKey } from '../engine/macrofactorImport';
@@ -147,13 +146,7 @@ export function MacroFactorImportPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>MACROFACTOR INLEZEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>krachttrainingen en gewicht zonder overtypen</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Koppelingen" title="MacroFactor inlezen" line="Krachttrainingen en gewicht zonder overtypen" />
       <SettingsPageLink page="koppelingen" row="macrofactor" label="Instellingen van MacroFactor" />
 
       <Card className="flex flex-col gap-3">

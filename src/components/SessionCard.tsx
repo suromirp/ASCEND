@@ -54,7 +54,7 @@ export function SessionCard({
           )}
         </div>
         <div className="line-clamp-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          {isRest ? REST_DAY_COPY[restMode].line : <>{sessionKindLabel(template)}{template.focus ? ` • ${template.focus}` : ''}</>}
+          {isRest ? REST_DAY_COPY[restMode].line : <>{sessionKindLabel(template)}{template.focus ? ` · ${template.focus}` : ''}</>}
         </div>
       </div>
       <div className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>

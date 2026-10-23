@@ -5,7 +5,8 @@
 import type { SessionTemplate } from '../models/training';
 import { templateSport, SPORT_LABEL } from '../engine/sports';
 import { Portal } from './Portal';
-import { Card, Eyebrow, SecondaryButton } from './ui';
+import { SheetHeader } from './SheetHeader';
+import { Card, SecondaryButton } from './ui';
 import { useSheetClose } from '../utils/useSheetClose';
 
 const TYPE_ORDER: Record<string, number> = { cardio: 1, hiking: 2, strength: 3, adventure: 4, recovery: 5 };
@@ -22,7 +23,7 @@ export function AdHocLogSheet({ templates, onPick, onClose }: { templates: Sessi
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
-            <Eyebrow>LOSSE TRAINING LOGGEN</Eyebrow>
+            <SheetHeader eyebrow="Loggen" title="Losse training" onClose={requestClose} />
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Iets gedaan dat niet op de planning stond? Kies wat het was.</p>
             <div className="flex flex-col gap-2">
               {sorted.map((t) => {
@@ -31,7 +32,7 @@ export function AdHocLogSheet({ templates, onPick, onClose }: { templates: Sessi
                   <button
                     key={t.id}
                     onClick={() => onPick(t)}
-                    className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
+                    className="flex min-h-[44px] items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-all active:scale-[0.98]"
                     style={{ borderColor: 'var(--color-card-border)' }}
                   >
                     <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{t.name}</span>

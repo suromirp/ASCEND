@@ -4,6 +4,7 @@ import { PHASE_BASIS, PHASE_BERG, PHASE_OPBOUW, PHASE_LENGTH_LIMITS, type Adjust
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { raceBlocks } from '../engine/raceBlock';
 import { usePlanSettingChange } from './settings/usePlanSettingChange';
+import { Icon } from './icons';
 
 
 // Settings → Training → Programma: the phases toward the goal as one bar,
@@ -67,7 +68,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
       </div>
       {blocks.length > 0 && (
         <div className="relative -mt-2 h-4" aria-hidden="true">
-          {blocks.map((b) => <span key={b.goalId} className="absolute -translate-x-1/2 text-xs" style={{ left: `${pct(b.raceDate)}%`, color: 'var(--color-gold)' }}>⚑</span>)}
+          {blocks.map((b) => <span key={b.goalId} className="absolute -translate-x-1/2 text-xs" style={{ left: `${pct(b.raceDate)}%`, color: 'var(--color-gold)' }}><Icon name="vlag" size={14} /></span>)}
         </div>
       )}
 
@@ -85,7 +86,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
                   {isNow && <span className="text-xs" style={{ color: 'var(--color-gold)' }}>nu</span>}
                 </p>
                 {blocks.filter((b) => b.raceDate >= r.from && b.raceDate <= r.until).map((b) => (
-                  <p key={b.goalId} className="text-xs" style={{ color: 'var(--color-gold)' }}>⚑ {b.name}, {formatDateNL(b.raceDate)}</p>
+                  <p key={b.goalId} className="text-xs" style={{ color: 'var(--color-gold)' }}><Icon name="vlag" size={14} className="inline align-[-2px]" /> {b.name}, {formatDateNL(b.raceDate)}</p>
                 ))}
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {formatDateNL(r.from)} tot {formatDateNL(r.until)}{fills ? ' · vult aan' : ''}

@@ -1,7 +1,14 @@
+import type { ReactNode } from 'react';
 import type { GoalProgress } from '../engine/progression';
 import { Card, Eyebrow } from './ui';
+import { Icon } from './icons';
 
-const SYMBOL: Record<string, string> = { completed: '✓', current: '●', upcoming: '○', future: '○' };
+const SYMBOL: Record<string, ReactNode> = {
+  completed: <Icon name="vinkje" size={16} />,
+  current: <Icon name="vandaagStip" size={16} />,
+  upcoming: <Icon name="gepland" size={16} />,
+  future: <Icon name="gepland" size={16} />,
+};
 const SYMBOL_COLOR: Record<string, string> = {
   completed: 'var(--color-success)',
   current: 'var(--color-gold)',
@@ -33,7 +40,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
         <div className="mt-3 flex flex-col gap-1.5">
           {window.map((m) => (
             <div key={m.definition.id} className="flex items-center gap-2 text-sm">
-              <span style={{ color: SYMBOL_COLOR[m.status] }}>{SYMBOL[m.status]}</span>
+              <span className="flex" style={{ color: SYMBOL_COLOR[m.status] }}>{SYMBOL[m.status]}</span>
               <span style={{ color: m.status === 'current' ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{m.definition.title}</span>
             </div>
           ))}

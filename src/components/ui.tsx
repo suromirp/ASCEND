@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { haptics } from '../utils/haptics';
+import { BackButton } from './BackButton';
 import { Icon } from './icons';
 import './settings/settings.css';
 
@@ -63,14 +64,14 @@ export function SecondaryButton({
 }
 
 export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' }) {
-  const map: Record<string, { symbol: string; color: string; label: string }> = {
-    completed: { symbol: '✓', color: 'var(--color-success-text)', label: 'Gedaan' },
-    today: { symbol: '●', color: 'var(--color-gold)', label: 'Vandaag' },
-    planned: { symbol: '○', color: 'var(--color-ink-dim)', label: 'Gepland' },
-    moved: { symbol: '↷', color: 'var(--color-sky)', label: 'Verplaatst' },
-    skipped: { symbol: '×', color: 'var(--color-danger-text)', label: 'Overgeslagen' },
+  const map: Record<string, { symbol: ReactNode; color: string; label: string }> = {
+    completed: { symbol: <Icon name="vinkje" size={16} />, color: 'var(--color-success-text)', label: 'Gedaan' },
+    today: { symbol: <Icon name="vandaagStip" size={16} />, color: 'var(--color-gold)', label: 'Vandaag' },
+    planned: { symbol: <Icon name="gepland" size={16} />, color: 'var(--color-ink-dim)', label: 'Gepland' },
+    moved: { symbol: <Icon name="verplaatst" size={16} />, color: 'var(--color-sky)', label: 'Verplaatst' },
+    skipped: { symbol: <Icon name="sluiten" size={16} />, color: 'var(--color-danger-text)', label: 'Overgeslagen' },
     missed: { symbol: '!', color: 'var(--color-warning)', label: 'Gemist' },
-    rest: { symbol: '–', color: 'var(--color-stone)', label: 'Rustdag' },
+    rest: { symbol: <Icon name="rustdag" size={16} />, color: 'var(--color-stone)', label: 'Rustdag' },
   };
   const s = map[status];
   return (
@@ -143,6 +144,17 @@ export function Num({ children }: { children: ReactNode }) {
   return <span className="font-sans tabular-nums">{children}</span>;
 }
 
+// Een tekst in Marcellus waar getallen in staan ("15 km wandeling"): de woorden
+// blijven Marcellus, de getallen worden Inter met vaste cijferbreedte.
+export function NumText({ children }: { children: string }) {
+  const parts = children.split(/(\d+(?:[.,:]\d+)*)/);
+  return (
+    <>
+      {parts.map((part, i) => (i % 2 === 1 ? <Num key={i}>{part}</Num> : part))}
+    </>
+  );
+}
+
 // `as="span"` inside a button or a line of text, where a div is not allowed.
 export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'div' | 'span' }) {
   const Tag = as;
@@ -150,6 +162,35 @@ export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'd
     <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-medium uppercase tracking-[0.16em]`} style={{ color: 'var(--color-bronze)' }}>
       {children}
     </Tag>
+  );
+}
+
+// De kop van elke subpagina, in dezelfde stijl als de hoofdschermen: terugknop,
+// Eyebrow, grote titel in Marcellus en hoogstens één regel eronder. `right` is
+// voor wat rechtsboven staat (het tandwiel van de pagina, 44 bij 44 px).
+export function PageHeader({
+  eyebrow,
+  title,
+  line,
+  fallback,
+  right,
+}: {
+  eyebrow?: string;
+  title: string;
+  line?: string;
+  fallback?: string;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <BackButton fallback={fallback} />
+      <div className="min-w-0 flex-1 pt-1">
+        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+        <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h1>
+        {line && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+      </div>
+      {right}
+    </div>
   );
 }
 

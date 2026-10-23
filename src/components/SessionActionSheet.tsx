@@ -19,8 +19,9 @@ import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { PrimaryButton, SecondaryButton, Eyebrow, InfoButton } from './ui';
+import { PrimaryButton, SecondaryButton, InfoButton } from './ui';
 import { Icon } from './icons';
+import { SheetHeader } from './SheetHeader';
 import { useAppData } from '../state/AppDataContext';
 import { isSportEnabled, sessionKindLabel, templateSport } from '../engine/sports';
 import { getModalities, isCyclingModality } from '../data/modalities';
@@ -74,31 +75,6 @@ function SheetFrame({ closing, onClose, label, scrollKey, head, children }: { cl
         </div>
       </div>
     </Portal>
-  );
-}
-
-// Eyebrow and cross on one line (an arrow back in front in a step), the
-// title under it with the info button next to it, then one line of facts.
-function SheetHead({ eyebrow, title, facts, info, onBack, onClose }: { eyebrow: string; title: string; facts?: ReactNode; info?: ReactNode; onBack?: () => void; onClose: () => void }) {
-  return (
-    <div>
-      <div className="flex h-11 items-center">
-        {onBack && (
-          <button type="button" onClick={onBack} aria-label="Terug" className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
-            <Icon name="verder" size={20} className="rotate-180" />
-          </button>
-        )}
-        <div className="min-w-0 flex-1 truncate"><Eyebrow>{eyebrow}</Eyebrow></div>
-        <button type="button" onClick={onClose} aria-label="Sluiten" className="-mr-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
-          <Icon name="sluiten" size={20} />
-        </button>
-      </div>
-      <div className="flex items-center gap-3">
-        <h2 className="min-w-0 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h2>
-        {info}
-      </div>
-      {facts && <p className="mt-1 font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{facts}</p>}
-    </div>
   );
 }
 
@@ -191,7 +167,7 @@ export function SessionActionSheet({
 
   if (completedLog) {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={template.name} head={<SheetHead
+      <SheetFrame closing={closing} onClose={requestClose} label={template.name} head={<SheetHeader
           eyebrow={eyebrow}
           title={template.name}
           info={info}
@@ -221,7 +197,7 @@ export function SessionActionSheet({
   // Week sheet still offered "START VOLLEDIGE SESSIE" and moving it).
   if (template.type === 'recovery') {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={REST_DAY_COPY[restMode].title} head={<SheetHead eyebrow={eyebrow} title={REST_DAY_COPY[restMode].title} onClose={requestClose} />}>
+      <SheetFrame closing={closing} onClose={requestClose} label={REST_DAY_COPY[restMode].title} head={<SheetHeader eyebrow={eyebrow} title={REST_DAY_COPY[restMode].title} onClose={requestClose} />}>
         <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{REST_DAY_COPY[restMode].detail}</p>
         <div className="mt-6 flex flex-col gap-4">
           {restMode === 'active' && onDoneAsPlanned && <PrimaryButton onClick={onDoneAsPlanned}>Gedaan</PrimaryButton>}
@@ -235,7 +211,7 @@ export function SessionActionSheet({
 
   if (step === 'done') {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name}, gedaan`} scrollKey="done" head={<SheetHead eyebrow={doneToday ? 'Vandaag gedaan' : 'Gedaan'} title={template.name} onBack={() => { setStep('main'); setDoneToday(false); }} onClose={requestClose} />}>
+      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name}, gedaan`} scrollKey="done" head={<SheetHeader eyebrow={doneToday ? 'Vandaag gedaan' : 'Gedaan'} title={template.name} onBack={() => { setStep('main'); setDoneToday(false); }} onClose={requestClose} />}>
         <div className="mt-6">
           <StrengthDoneElsewhere
             key={duration.source}
@@ -252,7 +228,7 @@ export function SessionActionSheet({
 
   if (step === 'move') {
     return (
-      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHead eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
+      <SheetFrame closing={closing} onClose={requestClose} label={`${template.name} verplaatsen`} scrollKey="move" head={<SheetHeader eyebrow="Verplaatsen" title={template.name} facts={`Staat op ${weekdayLongNL(session.scheduledDate)} ${formatDateNL(session.scheduledDate)}`} onBack={() => setStep('main')} onClose={requestClose} />}>
         <div className="mt-6">
           <MoveSuggestions
             sessionDate={session.scheduledDate}
@@ -303,7 +279,7 @@ export function SessionActionSheet({
   const showVariants = due && !skipped && kind !== 'quick' && variants.length > 1;
 
   return (
-    <SheetFrame closing={closing} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHead eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
+    <SheetFrame closing={closing} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHeader eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
       {guideSheet}
       {bikeOption && !skipped && (
         <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Kan ook op de fiets, buiten of binnen.</p>

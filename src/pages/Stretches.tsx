@@ -1,20 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { PROBLEM_AREAS, STRETCH_GENERAL_ADVICE, STRETCH_SOURCE_NOTE } from '../data/stretches';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 export function StretchesPage() {
   const navigate = useNavigate();
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>REKOEFENINGEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar zit je vast?</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Rekken" title="Rekoefeningen" line="Waar zit je vast?" />
 
       <div className="flex flex-col gap-2">
         {PROBLEM_AREAS.map((area, i) => (
@@ -26,7 +20,7 @@ export function StretchesPage() {
           >
             <Card className="flex items-center justify-between">
               <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
-              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+              <span className="text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
             </Card>
           </button>
         ))}
