@@ -708,7 +708,7 @@ function GeneralLogger({
       )}
 
       {restTimerFor && (
-        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`RUST, ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
+        <CountdownTimer initialSeconds={REST_TIMER_SECONDS} label={`Rust, ${restTimerFor}`} onClose={() => setRestTimerFor(null)} />
       )}
     </Portal>
   );
