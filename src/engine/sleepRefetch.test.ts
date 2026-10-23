@@ -9,6 +9,11 @@ describe('shouldRefetchSleep', () => {
     expect(shouldRefetchSleep({ ...base, fetchedAt: undefined })).toBe(true);
   });
 
+  it('wacht ook 15 minuten na een mislukte ronde', () => {
+    expect(shouldRefetchSleep({ ...base, lastAttemptAt: new Date(2026, 9, 22, 8, 25).toISOString() })).toBe(false);
+    expect(shouldRefetchSleep({ ...base, lastAttemptAt: new Date(2026, 9, 22, 8, 10).toISOString() })).toBe(true);
+  });
+
   it('wacht binnen 15 minuten na de vorige ronde', () => {
     expect(shouldRefetchSleep({ ...base, fetchedAt: new Date(2026, 9, 22, 8, 20).toISOString() })).toBe(false);
   });

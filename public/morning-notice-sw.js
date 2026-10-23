@@ -68,7 +68,13 @@ function openDb() {
     request.onupgradeneeded = () => {
       request.transaction.abort();
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      // Opent de app een nieuwere versie terwijl dit script leest: meteen loslaten,
+      // zodat de app nooit op deze verbinding hoeft te wachten.
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
     request.onblocked = () => reject(new Error('blocked'));
   });

@@ -284,7 +284,24 @@ export async function syncWatchHistory(options: SyncOptions = {}): Promise<Histo
 // Reads the last 7 days from intervals.icu and keeps them for the Today card,
 // and the last four weeks of sleep and heart rate (storage/wellness.ts).
 // Never throws: a failure becomes a message and the app carries on.
-export async function syncWatchActivities(options: SyncOptions = {}): Promise<SyncResult> {
+// One round at a time: a second call while one is running (the boot step, the
+// morning refetch, a button) gets the same round instead of a parallel one.
+let inflight: Promise<SyncResult> | undefined;
+// When a round last started, also when it failed: a failed round does not move
+// `fetchedAt`, and the morning refetch must still wait 15 minutes after it.
+let lastAttemptAt: string | undefined;
+export const lastWatchAttemptAt = (): string | undefined => lastAttemptAt;
+
+export function syncWatchActivities(options: SyncOptions = {}): Promise<SyncResult> {
+  if (inflight) return inflight;
+  lastAttemptAt = (options.now ?? new Date()).toISOString();
+  inflight = runWatchSync(options).finally(() => {
+    inflight = undefined;
+  });
+  return inflight;
+}
+
+async function runWatchSync(options: SyncOptions = {}): Promise<SyncResult> {
   const now = options.now ?? new Date();
   let connection: IntervalsConnection | null;
   let use: WatchUse;

@@ -15,9 +15,11 @@ export function shouldRefetchSleep(p: {
   sleepOn: boolean;
   hasSleepToday: boolean;
   fetchedAt: string | undefined;
+  // When the last round started, also a failed one (that leaves fetchedAt as it was).
+  lastAttemptAt?: string;
   busy: boolean;
 }): boolean {
   if (!p.linked || !p.sleepOn || p.hasSleepToday || p.busy) return false;
   if (p.now.getHours() >= MORNING_CARD_UNTIL_HOUR) return false;
-  return isFetchDue(p.fetchedAt, p.now);
+  return isFetchDue(p.fetchedAt, p.now) && isFetchDue(p.lastAttemptAt, p.now);
 }

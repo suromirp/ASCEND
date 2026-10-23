@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { shouldRefetchSleep } from '../engine/sleepRefetch';
 import { filterRecovery } from '../engine/watchUse';
 import { todayWellness } from '../engine/wellnessCheck';
-import { getConnection, getWatchState, syncWatchActivities } from '../storage/externalActivities';
+import { getConnection, getWatchState, lastWatchAttemptAt, syncWatchActivities } from '../storage/externalActivities';
 import { getRecoveryMetrics } from '../storage/wellness';
 import { todayISO } from '../utils/dates';
 
@@ -26,6 +26,7 @@ export function useSleepRefetch(): void {
           sleepOn: state.use.sleep,
           hasSleepToday: !!reading?.lines.some((l) => l.key === 'sleep'),
           fetchedAt: state.fetchedAt,
+          lastAttemptAt: lastWatchAttemptAt(),
           busy: false,
         });
         if (due) await syncWatchActivities();

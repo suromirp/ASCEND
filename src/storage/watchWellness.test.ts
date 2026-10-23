@@ -48,6 +48,16 @@ describe('sleep, resting heart rate and HRV', () => {
     });
   });
 
+  it('two rounds asked at once are one round', async () => {
+    await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
+    const fetchImpl = intervalsFetch([tonight()]);
+    const a = syncWatchActivities({ fetchImpl: asFetch(fetchImpl), force: true });
+    const b = syncWatchActivities({ fetchImpl: asFetch(fetchImpl), force: true });
+    expect(b).toBe(a);
+    await a;
+    expect(fetchImpl.mock.calls.filter((c) => String(c[0]).includes('/wellness')).length).toBe(1);
+  });
+
   it('tell the Today card when they arrive', async () => {
     await saveConnection({ athleteId: ATHLETE, apiKey: KEY });
     const listener = vi.fn();
