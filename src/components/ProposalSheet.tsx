@@ -55,9 +55,14 @@ export interface ProposalSheetProps {
   // A change over many weeks (another rest day): only the lines up to this
   // date are listed, the rest is counted in one sentence.
   listUntil?: string;
+  // Changes that are not a row of the plan, one plain line each (a training
+  // that only gets another length, like with another ambition).
+  extraLines?: string[];
+  // One sentence under the title: what the proposal does as a whole.
+  summary?: string;
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, eyebrow = 'VOORSTEL', emptyText, listUntil }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, eyebrow = 'VOORSTEL', emptyText, listUntil, extraLines, summary }: ProposalSheetProps) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   const planPreviewPass = previewPass ?? contextPass;
   const { closing, requestClose } = useSheetClose(onClose);
@@ -121,6 +126,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-3">
               <Eyebrow>{eyebrow}</Eyebrow>
               <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</h3>
+              {summary && <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{summary}</p>}
 
               {advice.options && advice.options.length > 1 && (
                 <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Kies een optie">
@@ -165,7 +171,15 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                 </div>
               )}
 
-              {data.moves.length === 0 && emptyText && (
+              {extraLines && extraLines.length > 0 && (
+                <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+                  <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Andere lengte, de komende twee weken</p>
+                  {extraLines.slice(0, 8).map((l) => <p key={l} className="text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink)' }}>{l}</p>)}
+                  {extraLines.length > 8 && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>En nog <span className="tabular-nums">{extraLines.length - 8}</span> andere.</p>}
+                </div>
+              )}
+
+              {data.moves.length === 0 && (!extraLines || extraLines.length === 0) && emptyText && (
                 <p className="mt-4 rounded-xl border p-3.5 text-sm leading-relaxed" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink)' }}>{emptyText}</p>
               )}
 
@@ -239,6 +253,11 @@ function MoveLine({ move }: { move: PreviewMove }) {
         <span className="mt-0.5 block text-xs tabular-nums">
           {removed ? (
             <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from!)} · vervalt</span>
+          ) : move.action === 'change' ? (
+            <>
+              <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · wordt </span>
+              <span style={{ color: 'var(--color-gold)' }}>{move.newName}</span>
+            </>
           ) : (
             <>
               {move.from && <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from)}</span>}
@@ -253,12 +272,13 @@ function MoveLine({ move }: { move: PreviewMove }) {
   );
 }
 
-function Glyph({ kind }: { kind: 'move' | 'add' | 'remove' }) {
+function Glyph({ kind }: { kind: 'move' | 'add' | 'remove' | 'change' }) {
   const color = kind === 'remove' ? 'var(--color-ink-dim)' : 'var(--color-gold)';
   return (
     <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: tint(color, 14) }} aria-hidden>
       <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         {kind === 'move' && <path d="M3 8h9M9 4.5 12.5 8 9 11.5" />}
+        {kind === 'change' && <path d="M3.5 6h9M10 3.5 12.5 6 10 8.5M12.5 10h-9M6 7.5 3.5 10 6 12.5" />}
         {kind === 'add' && <path d="M8 3.5v9M3.5 8h9" />}
         {kind === 'remove' && <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" />}
       </svg>
@@ -271,8 +291,9 @@ function Glyph({ kind }: { kind: 'move' | 'add' | 'remove' }) {
 function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes?: number; afterTest?: boolean }) {
   const rest = entry.type === 'recovery';
   const struck = entry.change === 'weg' || entry.change === 'vervalt';
-  const highlighted = entry.change === 'hierheen' || entry.change === 'nieuw';
+  const highlighted = entry.change === 'hierheen' || entry.change === 'nieuw' || entry.change === 'anders';
   const note = entry.change === 'hierheen' && entry.otherDate ? `van ${short(entry.otherDate)}`
+    : entry.change === 'anders' && entry.otherName ? `was ${entry.otherName}`
     : entry.change === 'weg' && entry.otherDate ? `naar ${short(entry.otherDate)}`
     : entry.change === 'vervalt' ? 'vervalt'
     : entry.change === 'nieuw' ? 'nieuw'
@@ -294,7 +315,7 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
         </p>
         {note && <p className="mt-0.5 break-words text-xs" style={{ color: highlighted ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{note}</p>}
       </div>
-      {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-gold)' }}>{entry.change === 'nieuw' ? 'NIEUW' : 'HIERHEEN'}</span>}
+      {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-gold)' }}>{entry.change === 'nieuw' ? 'NIEUW' : entry.change === 'anders' ? 'ANDERS' : 'HIERHEEN'}</span>}
       {!highlighted && minutes !== undefined && !struck && <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutes} min</span>}
     </div>
   );

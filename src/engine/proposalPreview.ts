@@ -12,7 +12,8 @@ import { applyPlanChangeItems } from './proposalEngine';
 import { mondayOfWeek, weekDates } from '../utils/dates';
 import { leaveLabelOn, type LeaveLabel } from './leave';
 
-export type PreviewChange = 'nieuw' | 'hierheen' | 'weg' | 'vervalt';
+// 'anders': the same day, another training (a long run that becomes a mountain hike).
+export type PreviewChange = 'nieuw' | 'hierheen' | 'weg' | 'vervalt' | 'anders';
 
 export interface PreviewEntry {
   name: string;
@@ -22,6 +23,8 @@ export interface PreviewEntry {
   change?: PreviewChange;
   // For a move: the other end (where it came from, or where it goes).
   otherDate?: string;
+  // For 'anders': the training it was.
+  otherName?: string;
 }
 
 export interface PreviewDay {
@@ -39,9 +42,11 @@ export interface PreviewWeek {
 
 export interface PreviewMove {
   name: string;
-  action: 'move' | 'add' | 'remove';
+  action: 'move' | 'add' | 'remove' | 'change';
   from?: string;
   to?: string;
+  // For 'change': the training it becomes.
+  newName?: string;
 }
 
 export interface ProposalPreviewData {
@@ -73,6 +78,7 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
   const moves: PreviewMove[] = [];
   const added = new Set<string>();
   const moved = new Map<string, { from: string; to: string }>();
+  const changed = new Map<string, string>();
   const gone: PlannedSession[] = [];
   for (const s of sessions) {
     if (afterIds.has(s.id) || s.status === 'skipped') continue;
@@ -94,16 +100,20 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
     } else if (was.scheduledDate !== s.scheduledDate) {
       moved.set(s.id, { from: was.scheduledDate, to: s.scheduledDate });
       moves.push({ name: info(s).name, action: 'move', from: was.scheduledDate, to: s.scheduledDate });
+    } else if (was.templateId !== s.templateId) {
+      changed.set(s.id, info(was).name);
+      moves.push({ name: info(was).name, action: 'change', to: s.scheduledDate, newName: info(s).name });
     }
   }
-  // Moves first, then what goes, then what comes; each in date order.
-  const order = { move: 0, remove: 1, add: 2 };
+  // Moves first, then what changes, then what goes, then what comes; each in date order.
+  const order = { move: 0, change: 1, remove: 2, add: 3 };
   moves.sort((a, b) => order[a.action] - order[b.action] || (a.from ?? a.to ?? '').localeCompare(b.from ?? b.to ?? ''));
 
   const weeks = new Set<string>();
   for (const id of added) weeks.add(mondayOfWeek(after.find((s) => s.id === id)!.scheduledDate));
   for (const m of moved.values()) { weeks.add(mondayOfWeek(m.to)); weeks.add(mondayOfWeek(m.from)); }
   for (const s of gone) weeks.add(mondayOfWeek(s.scheduledDate));
+  for (const id of changed.keys()) weeks.add(mondayOfWeek(after.find((s) => s.id === id)!.scheduledDate));
 
   return {
     moves,
@@ -114,7 +124,8 @@ export function previewProposal(items: PlanChangeItem[], sessions: PlannedSessio
         for (const s of after) {
           if (s.scheduledDate !== date || s.status === 'skipped') continue;
           const m = moved.get(s.id);
-          entries.push({ ...info(s), change: added.has(s.id) ? 'nieuw' : m ? 'hierheen' : undefined, otherDate: m?.from });
+          const was = changed.get(s.id);
+          entries.push({ ...info(s), change: added.has(s.id) ? 'nieuw' : m ? 'hierheen' : was ? 'anders' : undefined, otherDate: m?.from, ...(was ? { otherName: was } : {}) });
         }
         for (const s of after) {
           const m = moved.get(s.id);

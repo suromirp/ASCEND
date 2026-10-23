@@ -42,6 +42,14 @@ describe('the week as a proposal would leave it', () => {
     expect(w.days.find((d) => d.date === '2026-10-30')!.entries).toEqual([{ name: 'Bovenlichaam B', type: 'strength', templateId: 'tpl_upper_b', plannedMinutes: undefined, change: 'vervalt' }]);
     expect(previewProposal([{ plannedSessionId: 'c', action: 'replace', reason: '', generatedBy: ['x'] }], week, templates).weeks).toEqual([]);
   });
+
+  it('shows a training that becomes another one on the same day (a long run that becomes a mountain hike)', () => {
+    const plan = [...week, s('l', 'tpl_long_run', '2026-11-01')];
+    const change: PlanChangeItem = { plannedSessionId: 'l', action: 'move', fromDate: '2026-11-01', toDate: '2026-11-01', templateId: 'tpl_mountain_hike', restore: true };
+    const { moves, weeks: [w] } = previewProposal([change], plan, templates);
+    expect(moves).toEqual([{ name: 'Lange duurloop', action: 'change', to: '2026-11-01', newName: 'Bergtocht' }]);
+    expect(w.days.find((d) => d.date === '2026-11-01')!.entries[0]).toMatchObject({ name: 'Bergtocht', change: 'anders', otherName: 'Lange duurloop' });
+  });
 });
 
 describe('the notice after the weekly prescription', () => {

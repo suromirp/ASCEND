@@ -24,6 +24,15 @@ describe('classifyChangeImpact', () => {
   });
 });
 
+describe('describeChanges: another training on its day', () => {
+  it('says what it becomes, or that only the length changes', () => {
+    const planned = [session('l', '2026-10-25', '2026-10-19', 'tpl_a')];
+    const templates = [tpl('tpl_a', 'Lange duurloop'), tpl('tpl_b', 'Bergtocht')];
+    expect(describeChanges([{ plannedSessionId: 'l', action: 'move', fromDate: '2026-10-25', toDate: '2026-10-25', templateId: 'tpl_b' }], planned, templates)).toEqual(['Lange duurloop op zo 25 oktober wordt Bergtocht']);
+    expect(describeChanges([{ plannedSessionId: 'l', action: 'move', fromDate: '2026-10-25', toDate: '2026-10-25', plannedMinutes: 30 }], planned, templates)).toEqual(['Lange duurloop op zo 25 oktober: andere lengte']);
+  });
+});
+
 describe('needsConfirmation', () => {
   it('follows the "Wijzigingen toepassen" setting', () => {
     expect(needsConfirmation('notice', 'always_ask')).toBe(true);

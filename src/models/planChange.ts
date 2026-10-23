@@ -174,6 +174,10 @@ export interface RecentPlanChange {
   // back too, so the planning and the setting never drift apart.
   settingsBefore?: Record<string, unknown>;
   configBefore?: Record<string, unknown>;
+  // Goals exactly as they were before a change of the goal (another date,
+  // archived), and goals the change added: undo puts them back or removes them.
+  goalsBefore?: TrainingGoal[];
+  goalsAdded?: string[];
   // The coach advice this change came from: undo brings the advice back.
   adviceId?: string;
   // Typed-in trainings that took over the watch's numbers (engine/watchAlign.ts):

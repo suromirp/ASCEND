@@ -67,7 +67,11 @@ export function describeChanges(items: PlanChangeItem[], sessions: PlannedSessio
       case 'move':
       case 'swap': {
         const from = item.fromDate ?? session?.scheduledDate;
-        if (from && item.toDate) lines.push(`${name}: ${shortDate(from)} → ${shortDate(item.toDate)}`);
+        if (!from || !item.toDate) break;
+        // Another training on its day (a long run that becomes a mountain hike), or only another length.
+        if (item.templateId && item.templateId !== session?.templateId) lines.push(`${name} op ${shortDate(from)} wordt ${nameOf(item.templateId)}${from !== item.toDate ? `, op ${shortDate(item.toDate)}` : ''}`);
+        else if (from === item.toDate) lines.push(`${name} op ${shortDate(from)}: andere lengte`);
+        else lines.push(`${name}: ${shortDate(from)} → ${shortDate(item.toDate)}`);
         break;
       }
       case 'add':

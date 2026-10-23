@@ -94,7 +94,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
         issue: 'Nog te weinig over jou bekend om verantwoord te plannen',
         changes: [],
         alternatives: [],
-        consequences: 'Er verandert nu niets aan je schema, zodra ASCEND genoeg over je weet, volgen concrete voorstellen.',
+        consequences: 'ASCEND weet nog te weinig over je om deze en volgende week op dit doel af te stemmen. Zodra het genoeg weet, volgen concrete voorstellen.',
         explanation: feasibility.explanation,
         createdAt: new Date().toISOString(),
       }
@@ -112,7 +112,7 @@ export function computeGoalActivationPlan(inputs: GoalActivationInputs): GoalAct
     // from now under conditions (evidence, readiness) that don't exist yet.
     changes: [],
     alternatives: [],
-    consequences: 'Geen wijzigingen vooraf, na activatie stemt ASCEND je schema doorlopend af op je herstel en vooruitgang, vanaf twee weken verder.',
+    consequences: 'Verandert het doel je fasen of weken, dan zie je na Doel activeren eerst het voorstel, met Akkoord of Liever niet. Daarna stemt ASCEND je schema doorlopend af op je herstel en vooruitgang, vanaf twee weken verder.',
     explanation: `Wordt pas na activatie zichtbaar: ASCEND beoordeelt dan doorlopend je herstel en vooruitgang voor de weken erna (huidige status: ${feasibility.status}).`,
     createdAt: new Date().toISOString(),
   };
@@ -160,9 +160,9 @@ function buildCommittedWeekChanges(
     changes,
     alternatives: [],
     consequences: changes.length > 0
-      ? `${changes.length} geplande ${changes.length === 1 ? 'training' : 'trainingen'} deze en volgende week ${changes.length === 1 ? 'draagt' : 'dragen'} al bij aan dit doel en ${changes.length === 1 ? 'blijft' : 'blijven'} zoals ze zijn.`
+      ? `${changes.length} geplande ${changes.length === 1 ? 'training' : 'trainingen'} deze en volgende week ${changes.length === 1 ? 'draagt' : 'dragen'} al bij aan dit doel.`
       : 'Geen van de geplande sessies deze en volgende week draagt op dit moment al bij aan dit doel.',
-    explanation: 'Gebaseerd op de trainingen die al gepland staan. Er wordt nu niets nieuws toegevoegd.',
+    explanation: 'Gebaseerd op de trainingen die al gepland staan.',
     createdAt: new Date().toISOString(),
   };
 }

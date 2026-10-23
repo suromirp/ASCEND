@@ -29,7 +29,9 @@ import { identifyBaselineNeeds } from '../engine/goalSetupAssist';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
 import { routeDayParts, routeDayWord, routeTotal, eventDaysRequirement, isMultiDayGoal, longestStageDays, routeGoalComplete, routeDiscipline, ROUTE_KINDS } from '../engine/goalRoute';
 import { capabilityKeyLabel } from '../data/baselineQuestions';
-import { todayISO, formatDateNL } from '../utils/dates';
+import { addDays, mondayOfWeek, todayISO, formatDateNL } from '../utils/dates';
+import type { HorizonPlan } from '../storage/horizonPlan';
+import { ProposalSheet } from './ProposalSheet';
 import { makeId } from '../utils/id';
 import { formatNumberNL } from '../utils/number';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
@@ -124,7 +126,7 @@ export function GoalSetupWizard({
   mode: 'create' | 'edit';
   onClose: () => void;
 }) {
-  const { sessionLogs, capabilityEvidence, plannedSessions, templates, goalEngineConfig, activateGoal } = useAppData();
+  const { sessionLogs, capabilityEvidence, plannedSessions, templates, goalEngineConfig, activateGoal, leavePeriods } = useAppData();
   const [step, setStep] = useState<Step>(mode === 'create' ? { kind: 'type' } : { kind: 'interpret', draft: initialGoal });
   const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying');
 
@@ -132,11 +134,24 @@ export function GoalSetupWizard({
   const logEvidence = useMemo(() => extractEvidenceFromLogs(sessionLogs), [sessionLogs]);
   const allEvidence = useMemo(() => [...logEvidence, ...capabilityEvidence], [logEvidence, capabilityEvidence]);
 
-  async function handleConfirm(plan: GoalActivationPlan) {
+  // What the goal changes in your planning is a proposal first (Warden Logica
+  // punt 1): with changes, the proposal sheet comes up; only Akkoord stores
+  // the goal and its planning together.
+  const [reviewNote, setReviewNote] = useState<string | null>(null);
+  const [review, setReview] = useState<{ plan: GoalActivationPlan; horizon: HorizonPlan; draft: TrainingGoal } | null>(null);
+  async function handleConfirm(plan: GoalActivationPlan, horizon?: HorizonPlan) {
+    const draft = plan.goalDraft;
     setStep({ kind: 'applying' });
-    const result = await activateGoal(plan);
+    const result = await activateGoal(plan, horizon);
+    if (result.reason === 'review' && result.horizon) {
+      setReview({ plan, horizon: result.horizon, draft });
+      setStep({ kind: 'preview', draft });
+      return;
+    }
     if (!result.applied) {
-      setStep({ kind: 'error', message: 'Er is intussen iets veranderd (nieuwe training of evidence). Open dit doel opnieuw om verder te gaan met de actuele situatie.' });
+      setStep({ kind: 'error', message: result.reason === 'failed'
+        ? 'Het lukte niet om je planning nu bij te werken. Er is niets veranderd; probeer het zo nog eens.'
+        : 'Er is intussen iets veranderd (een nieuwe training of je planning). Open dit doel opnieuw om verder te gaan met de actuele situatie.' });
       return;
     }
     setStep({ kind: 'done' });
@@ -199,6 +214,9 @@ export function GoalSetupWizard({
               />
             )}
 
+            {step.kind === 'preview' && reviewNote && (
+              <p className="mt-4 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{reviewNote}</p>
+            )}
             {step.kind === 'preview' && (
               <PreviewStep
                 draft={step.draft}
@@ -233,6 +251,36 @@ export function GoalSetupWizard({
           </Card>
         </div>
       </div>
+      {review && (
+        <ProposalSheet
+          advice={{
+            id: review.horizon.proposal.id,
+            trigger: 'plan_update',
+            ruleId: 'GOAL',
+            title: review.horizon.proposal.issue,
+            effect: review.horizon.proposal.consequences,
+            why: review.horizon.proposal.explanation,
+            priority: 0,
+            proposal: review.horizon.proposal,
+          }}
+          eyebrow={mode === 'create' ? 'Nieuw doel' : 'Doel aanpassen'}
+          summary={review.horizon.proposal.consequences}
+          previewPass={(sessions) => sessions}
+          leave={leavePeriods}
+          notes={review.horizon.notes}
+          extraLines={review.horizon.lengths}
+          listUntil={addDays(mondayOfWeek(todayISO()), 13)}
+          onRespond={async (response) => {
+            if (response === 'accepted') {
+              setReviewNote(null);
+              await handleConfirm(review.plan, review.horizon);
+            } else {
+              setReviewNote('Je doel is niet opgeslagen en je planning blijft zoals hij was. Pas het doel aan of kies Doel activeren om het voorstel opnieuw te zien.');
+            }
+          }}
+          onClose={() => setReview(null)}
+        />
+      )}
     </Portal>
   );
 }
