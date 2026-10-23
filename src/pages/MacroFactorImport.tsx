@@ -272,24 +272,49 @@ export function MacroFactorImportPage() {
         </Card>
       )}
 
-      {linked.length > 0 && (
-        <Card className="flex flex-col gap-3">
+      {linked.length > 0 && <LinkedNames linked={linked} nameOf={nameOf} templateName={templateName} />}
+    </div>
+  );
+}
+
+// Names of earlier files you already linked: one folded line, open to see them
+// per ASCEND training and forget one. Only on this phone, not in a back-up.
+function LinkedNames({ linked, nameOf, templateName }: { linked: [string, string | null][]; nameOf: (key: string) => string; templateName: (id: string | null) => string }) {
+  const [open, setOpen] = useState(false);
+  const groups = new Map<string | null, string[]>();
+  for (const [key, templateId] of linked) groups.set(templateId, [...(groups.get(templateId) ?? []), key]);
+  return (
+    <Card className="flex flex-col gap-2">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex min-h-[44px] items-center justify-between gap-3 text-left">
+        <span className="min-w-0">
           <Eyebrow>Eerder gekoppelde namen</Eyebrow>
-          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Namen die niet in dit bestand staan. Je koos eerder welke training in MacroFactor welke training in ASCEND is. Dit staat alleen op deze telefoon en gaat niet mee in een back-up; na een nieuwe telefoon kies je het opnieuw.
-          </p>
-          {linked.map(([key, templateId]) => (
-            <div key={key} className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{nameOf(key)}</p>
-                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{templateName(templateId)}</p>
-              </div>
-              <SecondaryButton className="!flex-none px-3" onClick={() => void forgetMapping(key)}>Vergeet</SecondaryButton>
+          <span className="mt-1 block text-sm" style={{ color: 'var(--color-ink)' }}>
+            <span className="font-sans tabular-nums">{linked.length}</span> {linked.length === 1 ? 'naam' : 'namen'} uit oudere bestanden
+          </span>
+        </span>
+        <span className="shrink-0 transition-transform" style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(90deg)' : undefined }}>
+          <Icon name="verder" size={18} />
+        </span>
+      </button>
+      {open && (
+        <>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Alleen op deze telefoon; na een nieuwe telefoon kies je ze opnieuw.</p>
+          {[...groups].map(([templateId, keys]) => (
+            <div key={templateId ?? 'geen'} className="border-t pt-2" style={{ borderColor: 'var(--color-card-border)' }}>
+              <p className="text-xs font-semibold" style={{ color: 'var(--color-ink-dim)' }}>{templateName(templateId)}</p>
+              {keys.map((key) => (
+                <div key={key} className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{nameOf(key)}</p>
+                  <button type="button" onClick={() => void forgetMapping(key)} className="min-h-[44px] shrink-0 px-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                    Vergeet
+                  </button>
+                </div>
+              ))}
             </div>
           ))}
-        </Card>
+        </>
       )}
-    </div>
+    </Card>
   );
 }
 
