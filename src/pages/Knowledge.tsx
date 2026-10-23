@@ -35,7 +35,7 @@ export function KnowledgePage() {
         if (topics.length === 0) return null;
         return (
           <Card key={cat} className="flex flex-col gap-1">
-            <Eyebrow>{CATEGORY_LABEL[cat].toUpperCase()}</Eyebrow>
+            <Eyebrow>{CATEGORY_LABEL[cat]}</Eyebrow>
             {topics.map((t) => {
               const has = !!knowledgeContent(t.id);
               return (
@@ -101,7 +101,7 @@ export function KnowledgeTopicPage() {
 
       {content.sections.map((s) => (
         <section key={s.heading} className="flex flex-col gap-2">
-          <h2 className="text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-bronze)' }}>{s.heading.toUpperCase()}</h2>
+          <h2><Eyebrow>{s.heading}</Eyebrow></h2>
           {s.body && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{s.body}</p>}
           {s.items && (
             <ul className="flex flex-col gap-1.5">

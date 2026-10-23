@@ -12,7 +12,7 @@ import { eventDaysRequirement } from '../engine/goalRoute';
 import { formatNumberNL } from '../utils/number';
 import { NumberField } from './NumberField';
 import { PackWeightPresets } from './PackWeightPresets';
-import { SecondaryButton } from './ui';
+import { Eyebrow, SecondaryButton } from './ui';
 
 export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPackChange: (kg: number | undefined) => void }) {
   const { settings } = useAppData();
@@ -25,7 +25,7 @@ export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPa
   return (
     <div className="flex flex-col gap-2 rounded-xl border px-3 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>RUGZAK OP DEZE TOCHT</span>
+        <Eyebrow as="span">Rugzak op deze tocht</Eyebrow>
         <button
           onClick={() => { setDraft(stored); setEditing((v) => !v); }}
           className="min-h-11 px-1 text-xs underline"

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { Card } from '../components/ui';
+import { Card, Eyebrow } from '../components/ui';
 import { LegFatigueCard, useLegFatigueInputs } from '../components/LegFatigueCard';
 import { FreshnessChart } from '../components/stand/FreshnessChart';
 import { LegCalendar } from '../components/stand/LegCalendar';
@@ -146,7 +146,7 @@ export function StandingPage() {
         {rows.map((r, i) => (
           <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-xs tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{r.label.toUpperCase()}</span>
+              <Eyebrow as="span">{r.label}</Eyebrow>
               <span className="font-sans text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
             </div>
             {'dots' in r && r.dots && r.dots.length > 0 && (

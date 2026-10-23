@@ -68,7 +68,7 @@ export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-5">
-      <p className="text-xs font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{title}</p>
+      <Eyebrow>{title}</Eyebrow>
       <div className="mt-2">{children}</div>
     </div>
   );

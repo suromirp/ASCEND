@@ -137,7 +137,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
     <Card className="flex flex-col gap-2" texture={spot.uses.includes('bergaf')}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Eyebrow>{spot.kind.toUpperCase()} · {spot.place.toUpperCase()}</Eyebrow>
+          <Eyebrow>{spot.kind} · {spot.place}</Eyebrow>
           <p className="mt-0.5 font-display text-lg leading-tight" style={{ color: 'var(--color-ink)' }}>{spot.name}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end">

@@ -312,7 +312,7 @@ function GeneralLogger({
   const guide = getTrainingGuide(template.id);
   const restChosen = selectedModality?.environment === 'rest';
   const planRpe = peak ? rpeRange(INTENSITY[peak].rpe) : undefined;
-  const dateLabel = `${weekdayShortNL(scheduledDate ?? today)} ${formatDateNL(scheduledDate ?? today)}`.toUpperCase();
+  const dateLabel = `${weekdayShortNL(scheduledDate ?? today)} ${formatDateNL(scheduledDate ?? today)}`;
   const saveLabel = saving ? 'Opslaan…' : quickComplete ? 'Afvinken' : restChosen ? 'Rustdag afvinken' : 'Opslaan';
 
   function goToForm() {
@@ -329,7 +329,7 @@ function GeneralLogger({
       <div className="mx-auto max-w-md px-4 pb-32 pt-4">
         <div className="mb-3 flex items-center justify-between">
           <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={18} className="mr-1 inline align-[-3px]" />Terug</button>
-          <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{dateLabel}</span>
+          <Eyebrow as="span">{dateLabel}</Eyebrow>
         </div>
 
         <SessionHeader brief={brief} title={template.name} />

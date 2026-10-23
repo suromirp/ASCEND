@@ -293,7 +293,7 @@ function BulletList({ items, className = '' }: { items: string[]; className?: st
 }
 
 function SectionTitle({ children }: { children: string }) {
-  return <p className="mt-6 text-xs font-semibold tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{children}</p>;
+  return <div className="mt-6"><Eyebrow>{children}</Eyebrow></div>;
 }
 
 function Dot({ intensity }: { intensity: Intensity }) {
@@ -381,7 +381,7 @@ export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: Wo
             <StepRow key={i} step={item.step} />
           ) : (
             <div key={i} className="rounded-xl border-l-2 py-1 pl-3" style={{ borderColor: 'var(--color-bronze)' }}>
-              <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{item.repeat}× HERHALEN</p>
+              <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{item.repeat}× herhalen</p>
               <div className="mt-2 flex flex-col gap-3">
                 {item.steps.map((step, j) => <StepRow key={j} step={step} />)}
               </div>

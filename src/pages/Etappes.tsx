@@ -108,7 +108,7 @@ export function EtappesPage() {
 
       {GR5_SECTIONS.map((section) => (
         <Card key={section.id} className="flex flex-col gap-1">
-          <Eyebrow>{`STUK ${section.id} · ${section.name.toUpperCase()}`}</Eyebrow>
+          <Eyebrow>{`Stuk ${section.id} · ${section.name}`}</Eyebrow>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{section.count} etappes</p>
           {stagesOfSection(section.id).map((stage) => {
             const day = dayOfStage(stage);

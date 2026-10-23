@@ -69,7 +69,7 @@ function SourceCard({ source }: { source: LibrarySource }) {
   return (
     <Card className="flex flex-col gap-1.5">
       <button onClick={() => setOpen((v) => !v)} className="text-left" aria-expanded={open}>
-        <Eyebrow>{[CATEGORY_LABEL[source.category].toUpperCase(), source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher.toUpperCase() : undefined].filter(Boolean).join(' · ')}</Eyebrow>
+        <Eyebrow>{[CATEGORY_LABEL[source.category], source.publisher && source.publisher !== CATEGORY_LABEL[source.category] ? source.publisher : undefined].filter(Boolean).join(' · ')}</Eyebrow>
         <p className="mt-0.5 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{source.title}</p>
         {source.meta && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{source.meta}</p>}
         <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>

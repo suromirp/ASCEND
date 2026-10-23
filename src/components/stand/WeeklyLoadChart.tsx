@@ -116,7 +116,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl px-3.5 py-3" style={{ background: 'var(--color-charcoal)' }} aria-live="polite">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'DEZE WEEK' : `WEEK VAN ${dayMonth(week.weekStart).toUpperCase()}`}{week.isRestWeek ? ' · RUSTWEEK' : ''}</p>
+        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{week.isCurrent ? 'Deze week' : `Week van ${dayMonth(week.weekStart)}`}{week.isRestWeek ? ' · rustweek' : ''}</p>
         <p className="tabular-nums">
           <span className="font-sans tabular-nums text-xl" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(week.doneTotal, 0)}</span>
           {week.plannedTotal > 0 && <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}> + {formatNumberNL(week.plannedTotal, 0)} gepland</span>}

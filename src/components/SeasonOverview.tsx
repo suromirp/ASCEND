@@ -116,7 +116,7 @@ function WeekRow({ week, onSelect }: { week: SeasonWeek; onSelect: () => void })
           {week.done ? `${week.done.done} van ${week.done.planned} gedaan` : week.totalMinutes > 0 ? formatHoursMinutesNL(week.totalMinutes) : ''}
         </span>
       </div>
-      <p className="text-xs" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel.toUpperCase()}</p>
+      <p className="text-xs" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel}</p>
       {week.items.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {week.items.map((i, n) => (

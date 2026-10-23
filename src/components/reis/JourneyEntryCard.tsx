@@ -17,7 +17,7 @@ export function JourneyEntryCard() {
   return (
     <Card className="flex flex-col gap-3" texture>
       <div>
-        <Eyebrow>OP WEG NAAR {formatDateNL(goalDate).toUpperCase()}</Eyebrow>
+        <Eyebrow>Op weg naar {formatDateNL(goalDate)}</Eyebrow>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>
           Wat je regelt naast het trainen: uitrusting, reserveringen, vervoer en veiligheid.
         </p>

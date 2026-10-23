@@ -78,7 +78,7 @@ export function StageSheet({
           onClick={(e) => e.stopPropagation()}
         >
           <Card className="rounded-b-none border-b-0 pb-8">
-            <Eyebrow>{`ETAPPE ${stage.overall} VAN 36 · ${section?.name.toUpperCase() ?? ''}`}</Eyebrow>
+            <Eyebrow>{`Etappe ${stage.overall} van 36 · ${section?.name ?? ''}`}</Eyebrow>
             <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{stage.from} naar {stage.to}</h3>
             {day.date && (
               <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
@@ -261,7 +261,7 @@ export function StageSheet({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border px-1.5 py-2 text-center" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-      <Eyebrow>{label.toUpperCase()}</Eyebrow>
+      <Eyebrow>{label}</Eyebrow>
       <p className="mt-0.5 text-[13px] font-medium leading-tight" style={{ color: value === 'onbekend' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{value}</p>
     </div>
   );

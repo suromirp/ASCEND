@@ -89,7 +89,7 @@ export function JourneyPage() {
 
           {timeline.map((group) => (
             <section key={group.month} className="flex flex-col gap-1" aria-label={formatMonthNL(group.month)}>
-              <Eyebrow>{formatMonthNL(group.month).toUpperCase()}</Eyebrow>
+              <Eyebrow>{formatMonthNL(group.month)}</Eyebrow>
               <Card className="flex flex-col !p-2">
                 {group.tasks.map((row) => (
                   <div

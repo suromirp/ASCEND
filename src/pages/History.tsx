@@ -100,7 +100,7 @@ export function HistoryPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center justify-between">
         <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Vorige maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={22} /></button>
-        <Eyebrow>{formatMonthNL(anchor).toUpperCase()}</Eyebrow>
+        <Eyebrow>{formatMonthNL(anchor)}</Eyebrow>
         <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Volgende maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={22} /></button>
       </div>
 

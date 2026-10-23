@@ -72,7 +72,7 @@ export function PackListPage() {
         return (
           <Card key={group} className="flex flex-col !p-3">
             <div className="flex items-baseline justify-between px-1 pb-1">
-              <Eyebrow>{PACK_GROUP_LABEL[group].toUpperCase()}</Eyebrow>
+              <Eyebrow>{PACK_GROUP_LABEL[group]}</Eyebrow>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatKg(groupWeightGrams(items, group))}</span>
             </div>
             {groupItems.map((it) => (

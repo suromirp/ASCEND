@@ -195,9 +195,9 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
       )}
 
       <section className="rounded-xl border px-3 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-        <span className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>
-          GEMIDDELDE {dayWord.singular.toUpperCase()} · berekend
-        </span>
+        <Eyebrow as="span">
+          Gemiddelde {dayWord.singular} · berekend
+        </Eyebrow>
         {averageParts.length > 0 ? (
           <>
             <p className="mt-1.5 text-sm font-medium" style={{ color: trainingDaySet ? 'var(--color-ink)' : 'var(--color-gold)' }}>{averageParts.join(' · ')}</p>
@@ -213,7 +213,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
           {trainingDaySet || editingDay ? (
             <>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>TRAININGSDAG · zelf gekozen</span>
+                <Eyebrow as="span">Trainingsdag · zelf gekozen</Eyebrow>
                 {editingDay ? (
                   <button onClick={() => setEditingDay(false)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>klaar</button>
                 ) : (

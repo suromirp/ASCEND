@@ -125,7 +125,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {advice.options && advice.options.length > 1 && (
                 <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Kies een optie">
-                  <p className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-ink-dim)' }}>{advice.options.length} OPTIES · KIES ER EEN</p>
+                  <Eyebrow>{advice.options.length} opties · kies er een</Eyebrow>
                   {advice.options.map((o, i) => {
                     const on = i === choice;
                     return (
@@ -172,7 +172,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {notes && notes.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)' }}>
-                  <p className="text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>BLIJFT STAAN</p>
+                  <Eyebrow>Blijft staan</Eyebrow>
                   {notes.map((n) => <p key={n} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{n}</p>)}
                 </div>
               )}
