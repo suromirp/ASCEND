@@ -501,8 +501,11 @@ export function patternForWeek(pattern: SessionTemplate[], allTemplates: Session
 // For an already planned session: which template it should be in the
 // phase its week now falls in. Used when the goal date (and with it the
 // phases) moves, so a planned long run becomes a hike or back.
-export function templateForPhase(templateId: string, swaps: PatternSwap[], phaseId: string | undefined): string {
-  if (!phaseId) return templateId;
+// `level`: who may touch the session (weekValidator.ts#lockLevel). Only the
+// system's own (3) follows the phase; yours, a test or race and history
+// stay what they are. Without it (a new pattern week), always the phase.
+export function templateForPhase(templateId: string, swaps: PatternSwap[], phaseId: string | undefined, level?: 0 | 1 | 2 | 3): string {
+  if (!phaseId || (level !== undefined && level < 3)) return templateId;
   const forward = swaps.find((s) => s.from === templateId && s.phases.includes(phaseId));
   if (forward) return forward.to;
   // A hike in a week that no longer asks for one (goal moved, or the user

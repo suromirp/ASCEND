@@ -87,6 +87,8 @@ export const BOOT_MIGRATIONS: readonly BootMigration[] = [
   { id: 'restorePatternSessionsRemovedByPrescription', essential: false, version: 1 },
   { id: 'normalizePlannedSessionWeeks', essential: false, version: 1 },
   { id: 'mergeDuplicateWeeklyPrescriptionLines', essential: false, version: 1 },
+  // Old moves by the system count as the system's again (engine/systemMoves.ts).
+  { id: 'releaseSystemMoves', essential: false, version: 1 },
 ];
 
 export const BOOT_STEP_LIMIT_MS = 8_000;

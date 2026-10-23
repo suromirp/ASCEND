@@ -18,7 +18,7 @@ import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { addDays, formatDateNL, mondayOfWeek, resolveProgramWeek, todayISO, weekdayShortNL } from '../utils/dates';
 import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
@@ -27,7 +27,7 @@ import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
-import { describeRepair, visibleRepair } from '../engine/weekValidator';
+import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
@@ -1031,8 +1031,14 @@ function withPackTarget(program: Program, kg: number | undefined): Program {
 
 // What a rebuilt week looks like for this user: their sports, the hike
 // swaps they allow, and the goal date nothing may be planned on or after.
-async function patternContext(templates: SessionTemplate[], selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[]): Promise<PatternContext> {
-  const [settings, goals, milestones] = await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
+// `given`: settings and goals as they would be (the preview of a change, before
+// anything is stored); without it, as stored.
+async function patternContext(
+  templates: SessionTemplate[],
+  selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[],
+  given?: { settings: AppSettings; goals: TrainingGoal[]; milestones: GoalMilestone[] },
+): Promise<PatternContext> {
+  const [settings, goals, milestones] = given ? [given.settings, given.goals, given.milestones] : await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
   const enabledSports = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports };
   const pattern = arrangeWeekForRestDay(selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports }), templates, settings.restDay);
   return {
@@ -1089,7 +1095,10 @@ export interface ProgramHorizonResult {
   added: number;
   swapped: number;
   removed: number;
-  // What the week check put right, for the notice "Planning bijgewerkt".
+  // What the week check put right, and what the sync itself changed in a
+  // session that was already stored (a long run that becomes a mountain hike,
+  // a session after the goal day that goes), for the notice "Planning
+  // bijgewerkt": nothing changes on the plan without being said.
   // before: those sessions just before the check (what undo of the check
   // alone puts back); stored: as they were stored before this run (what
   // undo of the action that caused the run puts back).
@@ -1097,6 +1106,33 @@ export interface ProgramHorizonResult {
   // undo takes those off again.
   repairs?: { lines: string[]; before: PlannedSession[]; stored: PlannedSession[]; addedIds?: string[] };
 }
+
+// A change that is not stored yet: the planning run as it would be with it
+// (the preview of a proposal with Akkoord, Warden Logica punten 1 en 2).
+export interface HorizonOverrides {
+  // Settings as they would be (merged over the stored ones).
+  settings?: Partial<AppSettings>;
+  // Goals as they would be: these rows replace the stored ones with the same id.
+  goals?: TrainingGoal[];
+  // The plan to start from instead of the stored one (a proposal of its own
+  // applied first, like a sport switched off).
+  sessions?: PlannedSession[];
+  // A proposal shows it: a test or race the system planned on or after the
+  // new goal day may go too. Without it (the sync on its own) it stays.
+  releaseAnchors?: boolean;
+}
+
+export interface HorizonRun {
+  result: ProgramHorizonResult;
+  // The plan the run started from, and the plan after it.
+  before: PlannedSession[];
+  after: PlannedSession[];
+  program: Program | null;
+  // The day the plan ends (the main goal's day), as the run used it.
+  anchor?: string;
+}
+
+const dayNL = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDateNL(iso)}`;
 
 // Keeps the stored program in line with the main goal's date, on every
 // boot and whenever a goal or the related settings change:
@@ -1107,23 +1143,47 @@ export interface ProgramHorizonResult {
 //   (long run becomes a mountain hike from Bergcapaciteit on, and back),
 // - nothing unlogged stays planned on or after the goal day.
 // History is never touched: logged sessions and past days stay as they are.
+// What you placed or moved yourself, or an accepted proposal fixed
+// (weekValidator.ts#lockLevel 1), is never changed or removed here; a test or
+// race only through a proposal. What it does change in a stored session is
+// said in the notice. Changing a goal or a setting that moves the plan is a
+// proposal first (previewProgramHorizon), so normally the run after it finds
+// nothing left to do.
 // Idempotent: a second run changes nothing.
-export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
-  const [programs, sessions, logs, templates] = await Promise.all([
+export async function syncProgramHorizon(overrides: Pick<HorizonOverrides, 'releaseAnchors'> = {}): Promise<ProgramHorizonResult> {
+  return (await runProgramHorizon(false, overrides)).result;
+}
+
+// The same run in memory: what the plan would look like with a change that is
+// not stored yet. Writes nothing.
+export async function previewProgramHorizon(overrides: HorizonOverrides = {}): Promise<HorizonRun> {
+  return runProgramHorizon(true, { releaseAnchors: true, ...overrides });
+}
+
+async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): Promise<HorizonRun> {
+  const [programs, storedSessions, logs, templates, storedSettings, storedGoals, milestones] = await Promise.all([
     ProgramsRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
+    SettingsRepo.get(),
+    TrainingGoalsRepo.getAll(),
+    GoalMilestonesRepo.getAll(),
   ]);
+  const sessions = [...(overrides.sessions ?? storedSessions)];
+  const startedFrom = [...sessions];
   const program = programs[0];
-  if (!program) return { phasesChanged: false, added: 0, swapped: 0, removed: 0 };
+  if (!program) return { result: { phasesChanged: false, added: 0, swapped: 0, removed: 0 }, before: startedFrom, after: startedFrom, program: null };
+  const settings: AppSettings = overrides.settings ? { ...storedSettings, ...overrides.settings } : storedSettings;
+  const replaced = new Map((overrides.goals ?? []).map((g) => [g.id, g]));
+  const goals = [...storedGoals.map((g) => replaced.get(g.id) ?? g), ...[...replaced.values()].filter((g) => !storedGoals.some((s) => s.id === g.id))];
   const today = todayISO();
-  const ctx = await patternContext(templates);
+  const ctx = await patternContext(templates, undefined, { settings, goals, milestones });
   const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides) }, ctx.packTarget);
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
   // The pack target of the goal travels with the phases (the ladder of the
   // hikes reads it from the program).
-  if (phasesChanged || program.packTargetKg !== next.packTargetKg) await ProgramsRepo.put(next);
+  if (!dryRun && (phasesChanged || program.packTargetKg !== next.packTargetKg)) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const proposals = await PlanChangeProposalsRepo.getAll();
@@ -1131,18 +1191,21 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   // changed or removed (engine/leaveStrays.ts): off the plan, never a logged one.
   const strays = new Set(strayTrekRows(sessions, proposals, logs));
   if (strays.size > 0) {
-    for (const id of strays) await PlannedSessionsRepo.delete(id);
+    if (!dryRun) for (const id of strays) await PlannedSessionsRepo.delete(id);
     sessions.splice(0, sessions.length, ...sessions.filter((s) => !strays.has(s.id)));
   }
   // Test runs the weekly prescription wrongly took out come back first.
   const revived = revivePrescriptionRemovedTests(sessions, proposals, logged, today);
   if (revived.length > 0) {
-    for (const r of revived) await PlannedSessionsRepo.put(r);
+    if (!dryRun) for (const r of revived) await PlannedSessionsRepo.put(r);
     const byId = new Map(revived.map((r) => [r.id, r]));
     sessions.splice(0, sessions.length, ...sessions.map((s) => byId.get(s.id) ?? s));
   }
   const open = (s: PlannedSession) => s.scheduledDate >= today && !logged.has(s.id);
-  const toRemove = ctx.anchor ? sessions.filter((s) => open(s) && s.scheduledDate >= ctx.anchor!) : [];
+  // Who may touch it (weekValidator.ts#lockLevel): yours never, a test or race
+  // only when a proposal shows it.
+  const mayGo = (s: PlannedSession) => { const level = lockLevel(s, logged, today); return level === 3 || (level === 2 && !!overrides.releaseAnchors); };
+  const toRemove = ctx.anchor ? sessions.filter((s) => open(s) && s.scheduledDate >= ctx.anchor! && (s.status === 'skipped' || mayGo(s))) : [];
   const removedIds = new Set(toRemove.map((s) => s.id));
 
   const swapped: PlannedSession[] = [];
@@ -1150,7 +1213,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   for (const s of sessions) {
     // A walk a period of yours put on the plan (engine/leaveBlock.ts) is not a pattern session.
     if (!open(s) || removedIds.has(s.id) || s.status === 'skipped' || s.leave) continue;
-    const target = templateForPhase(s.templateId, ctx.swaps, resolveProgramWeek(next, s.scheduledDate)?.phase.id);
+    const target = templateForPhase(s.templateId, ctx.swaps, resolveProgramWeek(next, s.scheduledDate)?.phase.id, lockLevel(s, logged, today));
     if (target !== s.templateId && templateIds.has(target)) swapped.push({ ...s, templateId: target });
   }
 
@@ -1162,7 +1225,6 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   // makes it again where it is still needed. What you moved or skipped
   // yourself, logged sessions and anything an accepted proposal fixed stay
   // where they are. Only at the change itself.
-  const settings = await SettingsRepo.get();
   const appliedRestDay = (await MetaRepo.get<number>('appliedRestDay')) ?? 1;
   const wantedRestDay = settings.restDay ?? 1;
   // Normally the rest day is laid out by its own proposal with Akkoord
@@ -1173,7 +1235,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     const current = sessions.filter((s) => !removedIds.has(s.id)).map((s) => swappedById.get(s.id) ?? s);
     for (const fresh of relayoutForRestDay(current, { today, anchor: ctx.anchor, logged, slotDays: patternDays(templates, settings, wantedRestDay) })) swappedById.set(fresh.id, fresh);
     swapped.splice(0, swapped.length, ...swappedById.values());
-    await MetaRepo.set('appliedRestDay', wantedRestDay);
+    if (!dryRun) await MetaRepo.set('appliedRestDay', wantedRestDay);
   }
 
   const weeksWithSessions = new Set(sessions.filter((s) => !removedIds.has(s.id)).map((s) => mondayOfWeek(s.scheduledDate)));
@@ -1184,8 +1246,7 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
   });
 
   // A running race before the main goal: its own block (engine/raceBlock.ts).
-  const [goals, milestones] = await Promise.all([TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
-  await syncPackMilestone(goals, milestones, logs);
+  if (!dryRun) await syncPackMilestone(goals, milestones, logs);
   const ladder = new Set(milestones.map((m) => m.goalId));
   const mainGoalId = goals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
   const blocks = raceBlocks(goals, mainGoalId, ctx.anchor, today);
@@ -1210,30 +1271,52 @@ export async function syncProgramHorizon(): Promise<ProgramHorizonResult> {
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
   });
-  if (pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
+  if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
   // Write only what differs from what is stored.
   const resultIds = new Set(pass.sessions.map((s) => s.id));
   const writes = pass.sessions.filter((s) => { const was = stored.get(s.id); return !was || JSON.stringify(was) !== JSON.stringify(s); });
   for (const s of sessions) if (!removedNow.has(s.id) && !resultIds.has(s.id)) toRemove.push(s);
 
-  if (toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
+  if (!dryRun && toRemove.length + writes.length > 0) await replacePlannedSessions(toRemove, writes);
   const byTemplate = new Map(templates.map((t) => [t.id, t.name]));
   // Only what you would notice: a session that was never stored and is let go
   // again in the same run (a pattern week inside a holiday) is not news.
   const shown = pass.repairs.filter(visibleRepair).filter((r) => !(r.removed && !stored.has(r.sessionId)));
   const nameOf = (id: string) => byTemplate.get((stored.get(id) ?? asWillBe.find((s) => s.id === id) ?? pass.sessions.find((s) => s.id === id))?.templateId ?? '') ?? 'Training';
   const addedIds = [...new Set(shown.filter((r) => r.added).map((r) => r.sessionId))].filter((id) => resultIds.has(id));
-  const repairedIds = [...new Set(shown.map((r) => r.sessionId))].filter((id) => !addedIds.includes(id));
+  // What the sync itself changed in a stored session: said too, never silent.
+  const ownLines: string[] = [];
+  const ownIds: string[] = [];
+  for (const s of swapped) {
+    const was = stored.get(s.id);
+    if (!was || was.templateId === s.templateId) continue;
+    ownLines.push(`${byTemplate.get(was.templateId) ?? 'Training'} op ${dayNL(was.scheduledDate)} wordt ${byTemplate.get(s.templateId) ?? 'een andere training'} (past bij de fase van die week)`);
+    ownIds.push(s.id);
+  }
+  for (const s of toRemove) {
+    if (!removedNow.has(s.id) || s.status === 'skipped') continue;
+    ownLines.push(`${byTemplate.get(s.templateId) ?? 'Training'} op ${dayNL(s.scheduledDate)} vervalt (na de dag van je hoofddoel plant ASCEND niets meer)`);
+    ownIds.push(s.id);
+  }
+  const repairedIds = [...new Set([...ownIds, ...shown.map((r) => r.sessionId)])].filter((id) => !addedIds.includes(id));
   const beforeCheck = new Map(pass.beforeCheck.map((s) => [s.id, s]));
-  const repairs = shown.length === 0 ? undefined : {
-    lines: shown.map((r) => describeRepair(r, nameOf(r.sessionId))),
-    before: repairedIds.map((id) => beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
+  const lines = [...ownLines, ...shown.map((r) => describeRepair(r, nameOf(r.sessionId)))];
+  const repairs = lines.length === 0 ? undefined : {
+    lines,
+    before: repairedIds.map((id) => beforeCheck.get(id) ?? stored.get(id)).filter((s): s is PlannedSession => !!s),
     stored: repairedIds.map((id) => stored.get(id) ?? beforeCheck.get(id)).filter((s): s is PlannedSession => !!s),
     ...(addedIds.length > 0 ? { addedIds } : {}),
   };
   const newCount = writes.filter((w) => !stored.has(w.id)).length;
-  return { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs };
+  const removedFinal = new Set(toRemove.map((s) => s.id));
+  return {
+    result: { phasesChanged, added: newCount, swapped: writes.length - newCount, removed: toRemove.length, repairs },
+    before: startedFrom,
+    after: pass.sessions.filter((s) => !removedFinal.has(s.id)),
+    program: next,
+    anchor: ctx.anchor,
+  };
 }
 
 

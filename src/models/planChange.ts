@@ -39,7 +39,12 @@ export interface PlanChangeItem {
   // 'move' only: the session goes back to how it stood by itself (a tocht
   // changed back or removed). It is not fixed in place and its length is not
   // fixed either: the phase decides again, like the restore path does.
+  // On an 'add' or 'remove': the system's own layout (a change of the goal
+  // date or a planning setting, engine/horizonChange.ts): no lock either.
   restore?: boolean;
+  // 'move' only: the session becomes this training on its (new) day, like a
+  // long run that becomes a mountain hike in Bergcapaciteit. Optional, additive.
+  templateId?: string;
   // 'remove' only: the row goes off the plan entirely instead of becoming a
   // skipped row. Only for a session a period placed itself (a tochtdag) and
   // that goes with the period: it never was a training of yours, so nothing
