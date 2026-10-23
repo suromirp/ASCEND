@@ -84,3 +84,69 @@ doel- of instellingsvoorstel geven geen slot.
 De instellingen weer via `updateSettings` laten lopen en `updateGoal` de datum
 laten zetten; `syncProgramHorizon` zonder het lockLevel-filter. Dat brengt de
 stille wijzigingen terug, dus alleen samen met een ander voorstelpad.
+
+## Aanvulling na de tweede review (23 oktober 2026)
+
+Warden Planning vond dat het voorstelpad nog kon vastlopen, half kon blijven
+staan en tijdens het voorbeeld waarden liet zien die je niet had aangenomen.
+Daarom geldt nu ook:
+
+- Akkoord is alles of niets. Vlak voor het schrijven legt ASCEND vast hoe de
+  planning, de instellingen, de doelen, het programma en de mijlpalen erbij
+  stonden. Gaat er onderweg iets mis, dan gaat alles daarnaar terug en pas dan
+  zegt de app "Er is niets aangepast". Lukt ook het terugzetten niet, dan zegt
+  de app dat het maar half lukte en toont de melding wat wel veranderde, met
+  ongedaan maken. Wat ongedaan maken terugzet, wordt bij Akkoord gelezen, niet
+  bij het voorbeeld.
+- Duurt Akkoord langer dan de minuut van de wachtrij, dan zegt de app dat je
+  planning nog wordt bijgewerkt. Zodra het klaar is, komt de gewone melding met
+  ongedaan maken.
+- De doelwizard heeft een grens van 75 seconden. Een fout of een planning die
+  niet antwoordt wordt een stap met uitleg en een knop Sluiten; de wizard blijft
+  nooit op "Bezig met activeren" staan.
+- Een voorbeeld zet nooit de gedeelde duren om (Ambitie, de opbouw na ziekte,
+  geleerde krachtduur). Het geeft ze mee aan die ene planningsronde
+  (`HorizonOverrides.registers`, `withDurationScope`), alleen voor de duur van
+  een synchrone aanroep. Vandaag, Week, de horlogesync en het laden van de app
+  zien dus altijd wat er is opgeslagen.
+- Ook de wedstrijddatum en het type van het marathondoel, de doeltijd en de
+  keuze Tussendoel of Alleen volgen gaan via hetzelfde voorstel met Akkoord.
+  Liever niet bewaart niets. De datum en de doeltijd worden pas bewaard met
+  Opslaan, niet bij elke toets.
+- Een rij die je zelf oversloeg blijft na de doeldag staan. Een overgeslagen
+  rij van het systeem gaat weg, maar zit in de melding, zodat ongedaan maken hem
+  terugzet.
+- "Verplaatst" staat alleen bij wat jij verplaatste of een voorstel dat je
+  aannam (status `moved` of een slot). Een verplaatsing door het systeem houdt
+  `movedFromDate` als spoor, zonder dat woord.
+
+Welke paden van het systeem zijn (geen slot, status `planned`, de weekcontrole
+mag ze rechtzetten):
+
+- de weekprescriptie als hij vanzelf wordt toegepast
+  (`storage/weeklyPrescriptionStep.ts`); neem je hem zelf aan als coachpunt,
+  dan gaat hij via `commitPlanChange` en is hij van jou;
+- de Adaptive Replanner voor de verre weken (`runForecastReplan`);
+- het neerleggen van een krachtblok (`activateStrengthProgram`,
+  `applyStrengthPlacementToCommittedRange`, ook bij Opnieuw beginnen). Je kiest
+  het blok zelf, maar het plaatsen raakt veel weken; met een slot op elke rij
+  kon de weekcontrole ze nooit meer rechtzetten, dezelfde reden als bij
+  bevriezen hierboven;
+- de planningsronde zelf: de sync, het raceblok, vrije dagen en tochten en de
+  weekcontrole (`engine/planPass.ts`), en de regels van een doel- of
+  instellingsvoorstel (`restore`);
+- de planning opnieuw opbouwen of vanaf week 1 beginnen.
+
+Van jou (slot, of status `moved`): je eigen verplaatsing of overslaan, elk
+aangenomen voorstel via `commitPlanChange` (ook ziekte, instellingen en
+coachpunten), het eigen voorstel van een sport aan of uit (`startItems`),
+Aanpassen op de kaart Opgevallen in je schema
+(`storage/scheduleAnomalyFix.ts`) en wat je na een weekcontrole terugzet.
+
+De opstartstap `releaseSystemMoves` geeft een oude rij alleen terug aan het
+systeem als vaststaat dat het vanzelf ging: het voorstel kwam van de
+weekprescriptie of een krachtblok, werd binnen tien seconden na het uitrekenen
+vastgelegd, en er is rond dat moment geen eigen Akkoord op een coachpunt van
+de weekprescriptie. Een verplaatsing na nieuwe trainingsgegevens telt niet
+mee: daar is niet uit op te maken wie het deed, dus blijft die rij van jou.
+Er komt geen veld bij in een opgeslagen vorm; een migratiestap is niet nodig.

@@ -57,3 +57,19 @@ Niets.
 In `storage/weeklyPrescriptionStep.ts` weer alleen naar `always_ask` kijken en
 de teksten in `engine/changeImpact.ts`, `src/data/settingsChoices.ts` en
 `src/data/settingsHelp.ts` terugzetten.
+
+## Aanvulling na de tweede review (23 oktober 2026)
+
+"Doet wat het zegt" geldt ook voor de uitkomst van Akkoord. De app zegt alleen
+"Er is niets aangepast" als dat waar is: gaat het toepassen van een doel- of
+instellingsvoorstel mis, dan zet ASCEND eerst alles terug. Lukt dat niet, dan
+staat in de melding wat wel veranderde, met ongedaan maken. Loopt het nog na
+de grens van een minuut, dan zegt de app dat het nog bezig is en komt de
+gewone melding zodra het klaar is.
+
+Een coachpunt van de weekprescriptie dat je bij Altijd eerst vragen zelf
+aannam, blijft van jou: ook een latere opstartstap maakt het niet weer van het
+systeem (zie de aanvulling bij `2026-10-23-planning-nooit-stil.md`).
+
+Terwijl Akkoord loopt, sluit het voorstelblad niet met de terugknop of een tik
+ernaast; het sluit zodra er een uitkomst is.
