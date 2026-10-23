@@ -185,6 +185,21 @@ export const CHOICES = {
       { value: 'previous', label: 'Naar de vorige tab', note: 'In de volgorde waarin je ze opende', short: 'Vorige tab' },
     ],
   }),
+  ochtendTijd: def({
+    group: 'Vandaag en meldingen',
+    title: 'Tijd van de ochtendmelding',
+    line: 'De melding komt na deze tijd, niet precies erop.',
+    advice: '07:30' as '06:30' | '07:00' | '07:30' | '08:00' | '08:30' | '09:00',
+    help: 'ochtendmelding',
+    options: [
+      { value: '06:30', label: '06:30', short: 'Rond 06:30' },
+      { value: '07:00', label: '07:00', short: 'Rond 07:00' },
+      { value: '07:30', label: '07:30', short: 'Rond 07:30' },
+      { value: '08:00', label: '08:00', short: 'Rond 08:00' },
+      { value: '08:30', label: '08:30', short: 'Rond 08:30' },
+      { value: '09:00', label: '09:00', short: 'Rond 09:00' },
+    ],
+  }),
   hervatten: def({
     group: 'Vandaag en meldingen',
     title: 'Na een herstart',

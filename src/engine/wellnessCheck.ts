@@ -14,7 +14,7 @@
 // Pure: no React, no IndexedDB.
 
 import type { RecoveryMetric } from '../models/metrics';
-import type { SleepFeeling } from '../models/checkIn';
+import type { EnergyFeeling, SleepFeeling } from '../models/checkIn';
 import { addDays } from '../utils/dates';
 
 // Your own average: the 28 days before today, and at least 7 of them with a value.
@@ -29,6 +29,9 @@ export interface WellnessLine {
   value: string;
   // A few words on what the number says, in plain language.
   note: string;
+  // The same in one short piece for the compact line on the morning card
+  // ("rusthartslag 52, 3 onder je gemiddelde").
+  short: string;
   // 'attention': different from normal in the direction that deserves a look.
   tone: 'normal' | 'attention';
 }
@@ -38,6 +41,9 @@ export interface WellnessReading {
   lines: WellnessLine[];
   // The sleep answer the numbers point to; the check-in offers it filled in.
   suggestedSleep?: SleepFeeling;
+  // A soft suggestion for energy, only when resting heart rate AND HRV both
+  // point the same clear way against your own average; otherwise left out.
+  suggestedEnergy?: EnergyFeeling;
 }
 
 export const WELLNESS_FOOTNOTE = 'Je horloge schat dit, het is een hint en geen oordeel. Hoe je benen voelen weet alleen jij.';
@@ -92,10 +98,11 @@ const NOT_ENOUGH = 'Nog te weinig dagen van jezelf om mee te vergelijken. Na ong
 // --- the lines -------------------------------------------------------------------------
 
 function restingLine(value: number, base: number[]): WellnessLine {
-  const line = { key: 'restingHeartRate' as const, label: 'Rusthartslag', value: `${value} slagen per minuut` };
+  const line = { key: 'restingHeartRate' as const, label: 'Rusthartslag', value: `${value} slagen per minuut`, short: `rusthartslag ${value}` };
   if (base.length < MIN_BASELINE_DAYS) return { ...line, note: NOT_ENOUGH, tone: 'normal' };
   const avg = Math.round(mean(base));
   const diff = value - avg;
+  line.short = diff >= 3 ? `rusthartslag ${value}, ${diff} boven je gemiddelde` : diff <= -3 ? `rusthartslag ${value}, ${-diff} onder je gemiddelde` : `rusthartslag ${value}, zoals je gemiddelde`;
   if (diff >= 5) {
     return { ...line, tone: 'attention', note: `${diff} hoger dan jouw gemiddelde van ${avg} (laatste 4 weken). Dat kan wijzen op vermoeidheid, een slechte nacht of een beginnende ziekte.` };
   }
@@ -105,13 +112,15 @@ function restingLine(value: number, base: number[]): WellnessLine {
 }
 
 function hrvLine(value: number, base: number[]): WellnessLine {
-  const line = { key: 'hrv' as const, label: 'HRV', value: `${Math.round(value)} ms` };
+  const line = { key: 'hrv' as const, label: 'HRV', value: `${Math.round(value)} ms`, short: `HRV ${Math.round(value)} ms` };
   if (base.length < MIN_BASELINE_DAYS) {
     return { ...line, note: `De variatie tussen je hartslagen in rust: hoger is meestal beter hersteld. ${NOT_ENOUGH}`, tone: 'normal' };
   }
   const avg = mean(base);
   const margin = Math.max(stdev(base), avg * 0.07);
   const rounded = Math.round(avg);
+  if (value < avg - margin) line.short = `${line.short}, lager dan gewoonlijk`;
+  else if (value > avg + margin) line.short = `${line.short}, hoger dan gewoonlijk`;
   if (value < avg - margin) {
     return { ...line, tone: 'attention', note: `Lager dan jouw gewone bereik (gemiddeld ${rounded}). Je lichaam is mogelijk nog niet hersteld. Eén ochtend zegt weinig, een paar achter elkaar wel.` };
   }
@@ -136,6 +145,7 @@ function sleepLine(record: RecoveryMetric, base: number[]): WellnessLine | undef
     key: 'sleep',
     label: 'Slaap',
     value: minutes !== undefined ? sleepLabel(minutes) : `score ${score} van 100`,
+    short: minutes !== undefined ? `slaap ${sleepLabel(minutes)}` : `slaapscore ${score}`,
     note: parts.join(' '),
     tone,
   };
@@ -166,5 +176,36 @@ export function todayWellness(today: string, metrics: RecoveryMetric[]): Wellnes
   if (record.restingHeartRate !== undefined) lines.push(restingLine(record.restingHeartRate, baselineValues(today, metrics, (m) => m.restingHeartRate)));
   if (record.hrv !== undefined) lines.push(hrvLine(record.hrv, baselineValues(today, metrics, (m) => m.hrv)));
   if (lines.length === 0) return undefined;
-  return { date: today, lines, suggestedSleep: suggestSleepFeeling(record) };
+  return { date: today, lines, suggestedSleep: suggestSleepFeeling(record), suggestedEnergy: suggestEnergyFeeling(record, today, metrics) };
+}
+
+// Energy from the body, only when it is clear: resting heart rate clearly up
+// and HRV clearly under your own range, or both clearly the good way. One
+// signal alone, or a week of days too few to compare with, says nothing: the
+// answer stays empty (and may stay empty).
+export function suggestEnergyFeeling(record: Pick<RecoveryMetric, 'restingHeartRate' | 'hrv'>, today: string, metrics: RecoveryMetric[]): EnergyFeeling | undefined {
+  if (record.restingHeartRate === undefined || record.hrv === undefined) return undefined;
+  const rhrBase = baselineValues(today, metrics, (m) => m.restingHeartRate);
+  const hrvBase = baselineValues(today, metrics, (m) => m.hrv);
+  if (rhrBase.length < MIN_BASELINE_DAYS || hrvBase.length < MIN_BASELINE_DAYS) return undefined;
+  const rhrDiff = record.restingHeartRate - Math.round(mean(rhrBase));
+  const hrvAvg = mean(hrvBase);
+  const margin = Math.max(stdev(hrvBase), hrvAvg * 0.07);
+  if (rhrDiff >= 5 && record.hrv < hrvAvg - margin) return 'moe';
+  if (rhrDiff <= -3 && record.hrv > hrvAvg + margin) return 'fit';
+  return undefined;
+}
+
+export const NO_SLEEP_TEXT = 'Geen slaap van je horloge vannacht';
+
+// The one compact line of the morning card: what the watch gave, in a few
+// pieces. Without sleep it says so honestly, in a few words, and still shows
+// what else the watch gave. Without any reading at all it is only that.
+export function watchSummaryLine(reading: WellnessReading | undefined, options: { sleepExpected?: boolean } = {}): string {
+  const sleepExpected = options.sleepExpected ?? true;
+  if (!reading) return sleepExpected ? NO_SLEEP_TEXT : '';
+  const text = reading.lines.map((l) => l.short).join(' · ');
+  const capital = text.charAt(0).toUpperCase() + text.slice(1);
+  const hasSleep = reading.lines.some((l) => l.key === 'sleep');
+  return hasSleep || !sleepExpected ? capital : `${NO_SLEEP_TEXT} · ${text}`;
 }

@@ -1,3 +1,5 @@
+import { resolveMorningNotice } from './engine/morningNotice';
+import { syncMorningNotice } from './utils/morningNotice';
 import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from './engine/bootWatch';
@@ -247,6 +249,14 @@ function AppShell() {
       window.removeEventListener('pagehide', onHide);
     };
   }, [mainReady, location.pathname]);
+
+  // De ochtendmelding: bij het openen de periodieke sync (opnieuw) aanmelden als hij aan
+  // staat en de toestemming er is, of afmelden als hij uit staat (utils/morningNotice.ts).
+  const noticeOn = resolveMorningNotice(settings.morningNotice).enabled;
+  useEffect(() => {
+    if (!mainReady) return;
+    void syncMorningNotice(noticeOn).catch(() => undefined);
+  }, [mainReady, noticeOn]);
 
   // Links to the outside world (sources, maps, videos) offline used to open
   // a bare browser error page. Now they stay put and say why.

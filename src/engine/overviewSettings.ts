@@ -23,6 +23,9 @@ export interface OverviewSettings {
   weeklyQuestion?: boolean;
   // De ochtendcheck in "Je dag".
   morningCheckIn?: boolean;
+  // De ochtendkaart bovenaan Vandaag met de vraag "Hoe voel je je?" (engine/morningCard.ts).
+  // Alleen zinvol als de ochtendcheck aan staat; uit laat de regel in "Je dag".
+  morningCard?: boolean;
   // De weerregel bij een training.
   weatherLine?: boolean;
   // Ruilvoorstellen bij slecht weer (regel WEATHER-SWAP).
@@ -44,6 +47,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weekReviewDay: 'both',
   weeklyQuestion: true,
   morningCheckIn: true,
+  morningCard: true,
   weatherLine: true,
   weatherSwap: true,
   clothingAdvice: true,
@@ -63,6 +67,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     weekReviewDay: day,
     weeklyQuestion: flag('weeklyQuestion'),
     morningCheckIn: flag('morningCheckIn'),
+    morningCard: flag('morningCard'),
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
     clothingAdvice: flag('clothingAdvice'),
@@ -82,6 +87,7 @@ export function reviewWeekToShow(today: string, isoWeekday: number, raw: Overvie
 }
 
 export const showWeeklyQuestion = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weeklyQuestion;
+export const showMorningCardSetting = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn && resolveOverviews(raw).morningCard;
 export const showMorningCheckIn = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn;
 // De ochtendcheck is ook de plek waar een pijnplek van de laatste 14 dagen
 // wordt opgevolgd (recentPainSpot, spotWorse). Dat blijft dus gebeuren, ook als

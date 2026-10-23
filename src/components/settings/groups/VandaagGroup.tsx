@@ -6,12 +6,14 @@ import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engin
 import { SettingsSection } from '../SettingsList';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
-import { ClothingSheet, PlaceSheet } from './VandaagSheets';
+import { resolveMorningNotice } from '../../../engine/morningNotice';
+import { disableMorningNotice, enableMorningNotice } from '../../../utils/morningNotice';
+import { ClothingSheet, NoticeInfoSheet, PlaceSheet } from './VandaagSheets';
 import type { GroupProps } from './types';
 
 // Vandaag en meldingen: wat ASCEND je op Vandaag laat zien en vraagt, het weer, en wat er na een
 // training komt. Alles mag uit (docs/beslissingen/2026-10-22-alles-instelbaar.md).
-export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
+export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const { settings, updateSettings } = useAppData();
   const o = resolveOverviews(settings.overviews);
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte blijft ontbreken en betekent dus de standaard.
@@ -21,14 +23,37 @@ export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
   const setInsight = (patch: Partial<RunInsightSettings>) => void updateSettings({ runInsight: { ...settings.runInsight, ...patch } });
   const setTopic = (topic: InsightTopicSwitch, on: boolean) => setInsight({ topics: { ...settings.runInsight?.topics, [topic]: on } });
   const close = () => setSheet(null);
+  const notice = resolveMorningNotice(settings.morningNotice);
+
+  // Aanzetten is een tik van jou: eerst vraagt de telefoon om toestemming, dan meldt ASCEND
+  // zich aan voor de periodieke sync. Lukt een van de twee niet, dan blijft de schakelaar uit
+  // en zegt het blad waarom. Uitzetten meldt de sync weer af.
+  async function setNotice(on: boolean) {
+    if (!on) {
+      await updateSettings({ morningNotice: { ...settings.morningNotice, enabled: false } });
+      await disableMorningNotice();
+      reload();
+      return;
+    }
+    const result = await enableMorningNotice();
+    if (result === 'ok') await updateSettings({ morningNotice: { ...settings.morningNotice, enabled: true, time: notice.time } });
+    else setSheet('ochtendmelding-info');
+    reload();
+  }
 
   return (
     <>
       <SettingsSection title="Op Vandaag">
         <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
+        <SummaryRow id="ochtendkaart" title="Ochtendkaart" facts={facts} info="ochtendkaart" onChange={(on) => set({ morningCard: on })} />
         <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
         <SummaryRow id="weekterugblik-dag" title="Dag van de terugblik" facts={facts} onClick={() => setSheet('weekterugblik-dag')} />
         <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
+      </SettingsSection>
+
+      <SettingsSection title="Meldingen">
+        <SummaryRow id="ochtendmelding" title="Ochtendmelding" facts={facts} info="ochtendmelding" onChange={(on) => void setNotice(on)} onClick={() => setSheet('ochtendmelding-info')} />
+        <SummaryRow id="ochtendmelding-tijd" title="Tijd van de melding" facts={facts} onClick={() => setSheet('ochtendmelding-tijd')} />
       </SettingsSection>
 
       <SettingsSection title="Weer">
@@ -70,6 +95,8 @@ export function VandaagGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'terugknop' && <ChoiceFromDef def={CHOICES.terugknop} value={nav.tabBack} onPick={(v) => void updateSettings({ tabBack: v })} onClose={close} />}
       {sheet === 'hervatten' && <ChoiceFromDef def={CHOICES.hervatten} value={nav.resumeMinutes as 0 | 60 | 120 | 240 | 480} onPick={(v) => void updateSettings({ resumeMinutes: v })} onClose={close} />}
       {sheet === 'weekterugblik-dag' && <ChoiceFromDef def={CHOICES.terugblikDag} value={o.weekReviewDay} onPick={(v) => set({ weekReviewDay: v })} onClose={close} />}
+      {sheet === 'ochtendmelding-tijd' && <ChoiceFromDef def={CHOICES.ochtendTijd} value={notice.time as typeof CHOICES.ochtendTijd.advice} onPick={(v) => void updateSettings({ morningNotice: { ...settings.morningNotice, time: v } })} onClose={close} />}
+      {sheet === 'ochtendmelding-info' && <NoticeInfoSheet support={facts.notice?.support} onClose={close} />}
       {sheet === 'weerplaats' && <PlaceSheet onClose={close} />}
       {sheet === 'kleding-voorkeur' && <ClothingSheet onClose={close} />}
     </>

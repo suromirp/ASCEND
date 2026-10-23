@@ -91,11 +91,12 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // The generated service worker keeps everything it does (precache,
-        // offline fallback); this one small script is added to it and only
-        // answers the share POST. It is not precached: the browser stores
-        // imported scripts with the service worker itself.
-        importScripts: ['share-target-sw.js'],
-        globIgnores: ['share-target-sw.js'],
+        // offline fallback); two small scripts are added to it: one answers
+        // the share POST, the other shows the morning notice on a periodic
+        // sync (public/morning-notice-sw.js). They are not precached: the
+        // browser stores imported scripts with the service worker itself.
+        importScripts: ['share-target-sw.js', 'morning-notice-sw.js'],
+        globIgnores: ['share-target-sw.js', 'morning-notice-sw.js'],
       },
     }),
   ],

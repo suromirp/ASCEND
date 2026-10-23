@@ -1,0 +1,123 @@
+import { useEffect, useState } from 'react';
+import { syncWatchActivities } from '../storage/externalActivities';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAppData } from '../state/AppDataContext';
+import type { LegFeeling } from '../models/checkIn';
+import { checkInFor } from '../engine/wellbeing';
+import { LEGS, SOURCE_TEXT } from '../engine/morningCard';
+import { watchSummaryLine } from '../engine/wellnessCheck';
+import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
+import { todayISO } from '../utils/dates';
+import { Card, Eyebrow } from './ui';
+import { MorningCheckInSheet } from './MorningCheckInSheet';
+import { useMorningPrefill } from './useMorningPrefill';
+
+// De ochtendvraag bovenaan Vandaag, boven de missiekaart (docs/beslissingen/2026-10-23-
+// ochtendkaart-en-melding.md): "Goedemorgen. Hoe voel je je?" met één regel van wat het
+// horloge gaf en de vier keuzes voor je benen. Steen, geen goud: de missiekaart houdt de
+// gouden knop. Een tik op een keuze opent het blad met die keuze al gekozen en de rest
+// alvast ingevuld. De kaart blijft tot je hebt ingevuld, tot de middag of tot de eerste
+// training van vandaag is gelogd.
+
+export function MorningCard() {
+  const today = todayISO();
+  const { settings, updateSettings } = useAppData();
+  const { prefill, reading, linked, sleepOn } = useMorningPrefill(today);
+  const [sheet, setSheet] = useState<{ legs?: LegFeeling } | null>(null);
+  const line = reading || linked ? watchSummaryLine(reading, { sleepExpected: sleepOn }) : '';
+  const suggested = prefill.legs;
+  // Eén tik als alles zoals altijd is; het blad voor het uitgebreide antwoord.
+  const allNormal = () => {
+    const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
+    void updateSettings({ morningCheckIns: [...others, { date: today, allNormal: true }].sort((a, b) => a.date.localeCompare(b.date)).slice(-60) });
+  };
+  // Wel iets van het horloge, geen slaap: die komt via Garmin Connect soms later bij intervals.icu.
+  const missingSleep = !!reading && sleepOn && !reading.lines.some((l) => l.key === 'sleep');
+  const [fetching, setFetching] = useState<'busy' | 'tried' | 'failed' | 'slow' | null>(null);
+  async function fetchAgain() {
+    setFetching('busy');
+    const limit = new Promise<'slow'>((r) => setTimeout(() => r('slow'), 15000));
+    try {
+      const result = await Promise.race([syncWatchActivities({ force: true }), limit]);
+      setFetching(result === 'slow' ? 'slow' : result.status === 'error' ? 'failed' : 'tried');
+    } catch {
+      setFetching('failed');
+    }
+  }
+  const fetchNote = fetching === 'busy' ? 'Even kijken bij intervals.icu...' : fetching === 'tried' ? 'Nog geen slaap bij intervals.icu' : fetching === 'failed' ? 'Ophalen lukte niet. Probeer het straks nog eens.' : fetching === 'slow' ? 'Dit duurt te lang. Probeer het straks nog eens.' : '';
+  const suggestedText = suggested ? LEGS.find(([k]) => k === suggested.value)?.[1] : undefined;
+
+  return (
+    <>
+      <Card className="flex flex-col gap-3">
+        <div>
+          <Eyebrow>Vanochtend</Eyebrow>
+          <h2 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Goedemorgen. Hoe voel je je?</h2>
+          {line && <p className="mt-1.5 text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+          {missingSleep && (
+            <div className="mt-1 flex items-center gap-3">
+              <button onClick={() => void fetchAgain()} disabled={fetching === 'busy'} className="min-h-[44px] rounded-lg border px-3 text-xs font-medium disabled:opacity-40" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
+                Opnieuw ophalen
+              </button>
+              {fetchNote && <span className="text-xs leading-snug" role="status" style={{ color: 'var(--color-ink-dim)' }}>{fetchNote}</span>}
+            </div>
+          )}
+        </div>
+        <div>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Benen</p>
+          <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+            {LEGS.map(([k, text]) => {
+              const isSuggestion = suggested?.value === k;
+              return (
+                <button
+                  key={k}
+                  onClick={() => setSheet({ legs: k })}
+                  className="min-h-[44px] rounded-lg border px-1 text-xs leading-tight"
+                  style={{ borderColor: isSuggestion ? 'var(--color-bronze)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}
+                >
+                  {text}
+                </button>
+              );
+            })}
+          </div>
+          {suggested && suggestedText && (
+            <p className="mt-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              Voorstel {SOURCE_TEXT[suggested.from]}: {suggestedText.toLowerCase()}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={allNormal}
+          className="min-h-[44px] w-full rounded-xl border px-3.5 text-sm font-semibold"
+          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+        >
+          Alles normaal
+        </button>
+      </Card>
+      {sheet && <MorningCheckInSheet initialLegs={sheet.legs} onClose={() => setSheet(null)} />}
+    </>
+  );
+}
+
+// De melding "Goedemorgen. Hoe voel je je?" opent Vandaag op `#/?actie=ochtend`
+// (public/morning-notice-sw.js). Het adres wordt één keer gelezen en weggehaald, en
+// het blad gaat open, ook als de kaart er niet (meer) staat. Is de ochtend al
+// ingevuld, dan gebeurt er niets behalve het opruimen van het adres.
+export function MorningDeepLink() {
+  const { settings } = useAppData();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const today = todayISO();
+  const filled = !!checkInFor(today, settings.morningCheckIns);
+
+  useEffect(() => {
+    if (!wantsMorningLink(location.search)) return;
+    navigate({ pathname: location.pathname, search: withoutShortcut(location.search) }, { replace: true });
+    if (!filled) setOpen(true);
+    // Alleen als het adres de actie bevat.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  return open ? <MorningCheckInSheet onClose={() => setOpen(false)} /> : null;
+}

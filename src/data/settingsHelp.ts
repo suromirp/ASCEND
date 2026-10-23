@@ -109,6 +109,26 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Horloge', text: 'slaap en hartslag kun je erin laten meetellen bij Koppelingen.' },
     ],
   },
+  ochtendkaart: {
+    title: 'Ochtendkaart',
+    lead: 'Bovenaan Vandaag staat in de ochtend de vraag hoe je je voelt, zodat je hem niet hoeft te zoeken.',
+    points: [
+      { head: 'Alvast ingevuld', text: 'je slaap uit je horloge, en je benen volgens je beenindex. Bij elke keuze staat waar hij vandaan komt.' },
+      { head: 'Slaap', text: 'gaat via Garmin Connect naar intervals.icu en komt soms later binnen dan je rusthartslag. Staat hij er nog niet, tik dan op Opnieuw ophalen.' },
+      { head: 'Weg', text: 'zodra je hebt ingevuld, na twaalven of als je training van vandaag gelogd is.' },
+      { head: 'Uit', text: 'de vraag blijft staan als regel bij Je dag.' },
+    ],
+  },
+  ochtendmelding: {
+    title: 'Ochtendmelding',
+    lead: 'Een melding in de ochtend met de vraag hoe je je voelt. Tik erop en het blad staat open.',
+    points: [
+      { head: 'Tijdstip', text: 'bij benadering. Chrome bepaalt zelf wanneer ASCEND op de achtergrond wakker mag worden, meestal een paar keer per dag. De melding komt dus ergens na de tijd die jij kiest, en niet na elven.' },
+      { head: 'Alleen geïnstalleerd', text: 'het werkt op Chrome voor Android, met ASCEND op je beginscherm. Chrome wekt een app vaker als je hem vaker gebruikt.' },
+      { head: 'Toestemming', text: 'bij het aanzetten vraagt je telefoon om meldingen te mogen sturen. Er gaat niets naar een server: de melding wordt op je telefoon bedacht.' },
+      { head: 'Kan het niet', text: 'dan krijg je de vraag als je de app opent.' },
+    ],
+  },
   loopinzicht: {
     title: 'Inzicht na een training',
     lead: 'Na een loop of tocht zie je hoogstens twee regels over wat beter ging en waar je op moet letten.',

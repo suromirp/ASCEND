@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays } from '../utils/dates';
-import { baselineValues, sleepLabel, suggestSleepFeeling, todayWellness } from './wellnessCheck';
+import { baselineValues, NO_SLEEP_TEXT, sleepLabel, suggestEnergyFeeling, suggestSleepFeeling, todayWellness, watchSummaryLine } from './wellnessCheck';
 
 // Made-up nights only.
 const TODAY = '2026-10-22';
@@ -131,5 +131,50 @@ describe('suggestSleepFeeling', () => {
     expect(suggestSleepFeeling({ sleepScore: 85 })).toBe('goed');
     expect(suggestSleepFeeling({ sleepScore: 45 })).toBe('slecht');
     expect(suggestSleepFeeling({})).toBeUndefined();
+  });
+});
+
+describe('suggestedEnergy', () => {
+  it('says moe only when resting heart rate is clearly up and HRV clearly down', () => {
+    const r = todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 60, hrv: 30 })])!;
+    expect(r.suggestedEnergy).toBe('moe');
+  });
+
+  it('says fit only when both point the good way', () => {
+    const r = todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 47, hrv: 70 })])!;
+    expect(r.suggestedEnergy).toBe('fit');
+  });
+
+  it('stays empty with one signal, mixed signals or an ordinary morning', () => {
+    expect(todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 60, hrv: 50 })])!.suggestedEnergy).toBeUndefined();
+    expect(todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 60, hrv: 70 })])!.suggestedEnergy).toBeUndefined();
+    expect(todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 52, hrv: 50 })])!.suggestedEnergy).toBeUndefined();
+    expect(todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 60 })])!.suggestedEnergy).toBeUndefined();
+  });
+
+  it('stays empty without about a week of your own days', () => {
+    expect(suggestEnergyFeeling({ restingHeartRate: 60, hrv: 30 }, TODAY, history().slice(0, 3))).toBeUndefined();
+  });
+});
+
+describe('watchSummaryLine', () => {
+  it('puts sleep, resting heart rate against your average and HRV in one line', () => {
+    const line = watchSummaryLine(todayWellness(TODAY, [...history(), day(0, { sleepMinutes: 400, restingHeartRate: 49, hrv: 50 })]));
+    expect(line).toBe('Slaap 6 uur 40 · rusthartslag 49, 3 onder je gemiddelde · HRV 50 ms');
+  });
+
+  it('says honestly that there is no sleep, and keeps what else there is', () => {
+    expect(watchSummaryLine(undefined)).toBe(NO_SLEEP_TEXT);
+    const line = watchSummaryLine(todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 52 })]));
+    expect(line).toBe(`${NO_SLEEP_TEXT} · rusthartslag 52, zoals je gemiddelde`);
+  });
+
+  it('stays quiet about sleep when sleep is switched off for the watch', () => {
+    expect(watchSummaryLine(undefined, { sleepExpected: false })).toBe('');
+    expect(watchSummaryLine(todayWellness(TODAY, [...history(), day(0, { restingHeartRate: 52 })]), { sleepExpected: false })).toBe('Rusthartslag 52, zoals je gemiddelde');
+  });
+
+  it('marks an HRV outside your range', () => {
+    expect(watchSummaryLine(todayWellness(TODAY, [...history(), day(0, { sleepMinutes: 420, hrv: 30 })]))).toContain('HRV 30 ms, lager dan gewoonlijk');
   });
 });

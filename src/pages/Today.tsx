@@ -25,6 +25,9 @@ import { SessionActionSheet } from '../components/SessionActionSheet';
 import { DailyStretchCard } from '../components/DailyStretchCard';
 import { StandSummaryCard } from '../components/StandSummaryCard';
 import { MorningCheckInCard } from '../components/MorningCheckInCard';
+import { MorningCard, MorningDeepLink } from '../components/MorningCard';
+import { useSleepRefetch } from '../components/useSleepRefetch';
+import { useMorningCardVisible } from '../components/useMorningCardVisible';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
 import { asPlannedLog } from '../engine/asPlanned';
@@ -61,6 +64,8 @@ export function TodayPage() {
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
   // ever shown, matched to the current time of day.
   const isMorning = new Date().getHours() < 12;
+  const morningCardVisible = useMorningCardVisible();
+  useSleepRefetch();
   const [loggingSession, setLoggingSession] = useState<PlannedSession | null>(null);
   const [adHocOpen, setAdHocOpen] = useState(false);
   const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
@@ -251,6 +256,10 @@ export function TodayPage() {
         />
       )}
 
+      {/* De ochtendvraag staat boven de missie: wat je antwoordt kan de dag veranderen. */}
+      {morningCardVisible && <MorningCard />}
+      <MorningDeepLink />
+
       {primary && primaryTemplate && mission ? (
         <TodayMissionCard
           session={primary}
@@ -351,7 +360,7 @@ export function TodayPage() {
 
       <YourDay>
         {isMorning && stretchRow}
-        {morningCheckInMode(settings.overviews, today, sessionLogs) !== 'none' && <MorningCheckInCard painOnly={morningCheckInMode(settings.overviews, today, sessionLogs) === 'pain_only'} />}
+        {morningCheckInMode(settings.overviews, today, sessionLogs) !== 'none' && <MorningCheckInCard painOnly={morningCheckInMode(settings.overviews, today, sessionLogs) === 'pain_only'} hideTodo={morningCardVisible} />}
         {trainingRows.map((s) => {
           const t = templateById.get(s.templateId);
           if (!t) return null;

@@ -23,6 +23,7 @@ import type { OverviewSettings } from '../engine/overviewSettings';
 import type { StrengthSettings } from '../engine/strengthSettings';
 import type { ClothingAdjust } from '../engine/clothingFeedback';
 import type { RunInsightSettings } from '../engine/runInsightSettings';
+import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
 import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
@@ -639,6 +640,12 @@ export interface AppSettings {
   // advice. Optional and additive; travels with the settings in a backup, where
   // only valid values are kept (storage/backup.ts).
   runInsight?: RunInsightSettings;
+  // "Ochtendmelding" (engine/morningNotice.ts): a notice in the morning with the
+  // question how you feel, shown by the service worker on a periodic sync. Absent
+  // = off, at 07:30. The service worker reads this record from IndexedDB, so keep
+  // the name and the shape. Optional and additive; travels with the settings in a
+  // backup (the permission of the phone does not), where it is read defensively.
+  morningNotice?: MorningNoticeSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

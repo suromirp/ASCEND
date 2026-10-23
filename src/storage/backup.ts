@@ -48,6 +48,7 @@ import { isWeeklyIntention, mergeIntentions } from '../engine/weeklyQuestion';
 import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
+import { cleanMorningNotice } from '../engine/morningNotice';
 import { cleanNavigationSettings, migrateExport, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -282,6 +283,13 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     skipped.n += cleaned.dropped;
     if (cleaned.value) s.runInsight = cleaned.value;
     else delete s.runInsight;
+  }
+  // Ochtendmelding: a valid switch and time stay, the rest is dropped and counted.
+  if ('morningNotice' in s) {
+    const cleaned = cleanMorningNotice(s.morningNotice);
+    skipped.n += cleaned.dropped;
+    if (cleaned.value) s.morningNotice = cleaned.value;
+    else delete s.morningNotice;
   }
   // Reisplanner and paklijst: kept readable or dropped, never stored half.
   if ('journey' in s) {

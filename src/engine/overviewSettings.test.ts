@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
-import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
+import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showMorningCardSetting, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
 import { reviewWeekFor } from './weekReview';
 
 describe('resolveOverviews', () => {
@@ -109,5 +109,14 @@ describe('het weer ophalen', () => {
     expect(needsWeather({ weatherLine: false, weatherSwap: false })).toBe(true);
     expect(needsWeather({ weatherLine: false, weatherSwap: false, clothingAdvice: false })).toBe(false);
     expect(needsWeather({ clothingAdvice: false })).toBe(true);
+  });
+});
+
+describe('de ochtendkaart', () => {
+  it('staat standaard aan en hoort bij de ochtendcheck', () => {
+    expect(DEFAULT_OVERVIEWS.morningCard).toBe(true);
+    expect(showMorningCardSetting(undefined)).toBe(true);
+    expect(showMorningCardSetting({ morningCard: false })).toBe(false);
+    expect(showMorningCardSetting({ morningCheckIn: false })).toBe(false);
   });
 });

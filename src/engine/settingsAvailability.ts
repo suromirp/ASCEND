@@ -16,6 +16,8 @@ const REASON: Record<string, string> = {
   'lange-zondag': 'Deze keuze verschijnt pas als je hoofddoel geen bergtocht is. Bij een bergdoel staat er op zondag altijd een bergtocht.',
   backupmap: 'Deze keuze verschijnt alleen als je browser een vaste map kan onthouden. Deze nu niet.',
   'weekterugblik-dag': 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
+  ochtendkaart: 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
+  'ochtendmelding-tijd': 'Deze keuze verschijnt pas als je telefoon de ochtendmelding kan sturen.',
   'kleding-voorkeur': 'Deze keuze verschijnt pas als het kledingadvies aan staat.',
   'zware-dingen': 'Deze keuze verschijnt pas als twee trainingen op een dag mag.',
   trainingsduur: 'Deze keuze verschijnt pas als er krachttrainingen in je planning staan.',

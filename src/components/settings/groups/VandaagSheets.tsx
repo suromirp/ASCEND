@@ -5,7 +5,10 @@ import { hasClothingAdjust, readClothingAdjust } from '../../../engine/clothingF
 import { resolveOverviews } from '../../../engine/overviewSettings';
 import { isMyLocation } from '../../../engine/weatherLocation';
 import { AutoTag } from '../../ui';
-import { ChoiceSheet, Sheet } from '../Sheet';
+import { useEffect, useState } from 'react';
+import { NOTICE_NOT_DONE_TEXT, NOTICE_SUPPORT_TEXT, type NoticeSupport } from '../../../engine/morningNotice';
+import { readNoticeSupport } from '../../../utils/morningNotice';
+import { ChoiceSheet, Sheet, SheetButtons } from '../Sheet';
 import { SettingsList } from '../SettingsList';
 
 type PlaceChoice = 'follow' | 'fixed';
@@ -89,6 +92,33 @@ export function ClothingSheet({ onClose }: { onClose: () => void }) {
           Terug naar de standaard
         </button>
       </div>
+    </Sheet>
+  );
+}
+
+// Waarom de ochtendmelding niet werkt, in gewone woorden. De rij zelf past maar één korte regel
+// toe; hier staat de hele zin. Zonder achtergrondwerk krijg je de vraag als je de app opent.
+export function NoticeInfoSheet({ support, onClose }: { support: NoticeSupport | undefined; onClose: () => void }) {
+  // De toestemming kan net veranderd zijn: de telefoon zelf is de bron.
+  const [live, setLive] = useState(support);
+  useEffect(() => {
+    let alive = true;
+    void readNoticeSupport().then((v) => alive && setLive(v)).catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const text = live === undefined ? NOTICE_SUPPORT_TEXT.unavailable : live === 'ready' ? NOTICE_NOT_DONE_TEXT : NOTICE_SUPPORT_TEXT[live];
+  return (
+    <Sheet eyebrow="Vandaag en meldingen" title="Ochtendmelding" onClose={onClose}>
+      {(close) => (
+        <>
+          <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{text}</p>
+          <SheetButtons>
+            <button type="button" className="st-btn" onClick={close}>Begrepen</button>
+          </SheetButtons>
+        </>
+      )}
     </Sheet>
   );
 }

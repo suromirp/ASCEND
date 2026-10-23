@@ -341,3 +341,47 @@ describe('rowSummary: loopinzicht en details van loopjes', () => {
     expect(rowSummary('horloge-details', unlinked).hidden).toBe(true);
   });
 });
+
+describe('rowSummary: de ochtendkaart en de ochtendmelding', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('de ochtendkaart staat standaard aan, en is er niet zonder ochtendcheck', () => {
+    expect(rowSummary('ochtendkaart', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('ochtendkaart', withSettings({ overviews: { morningCard: false } })).checked).toBe(false);
+    expect(rowSummary('ochtendkaart', withSettings({ overviews: { morningCheckIn: false } })).hidden).toBe(true);
+  });
+
+  it('de ochtendmelding staat standaard uit en laat de tijd gedimd zien zolang hij uit staat', () => {
+    expect(rowSummary('ochtendmelding', facts())).toEqual({ checked: false, sub: undefined });
+    expect(rowSummary('ochtendmelding-tijd', facts())).toEqual({ value: 'Rond 07:30', dim: true, hidden: false });
+    const on = withSettings({ morningNotice: { enabled: true, time: '08:00' } });
+    expect(rowSummary('ochtendmelding', on).checked).toBe(true);
+    expect(rowSummary('ochtendmelding-tijd', on)).toEqual({ value: 'Rond 08:00', dim: false, hidden: false });
+    expect(rowSummary('ochtendmelding-tijd', withSettings({ morningNotice: { enabled: true } })).value).toBe('Rond 07:30');
+  });
+
+  it('zegt eerlijk wat de telefoon niet kan, in een regel die past', () => {
+    const on = { morningNotice: { enabled: true } };
+    const nothing = rowSummary('ochtendmelding', facts({ settings: { ...facts().settings, ...on }, notice: { support: 'unavailable', granted: false } }));
+    expect(nothing).toEqual({ value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' });
+    const browser = rowSummary('ochtendmelding', facts({ settings: { ...facts().settings, ...on }, notice: { support: 'not_installed', granted: false } }));
+    expect(browser.sub).toBe('Zet ASCEND eerst op je beginscherm');
+    expect(browser.checked).toBeUndefined();
+    for (const r of [nothing, browser]) expect((r.sub ?? '').length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
+  });
+
+  it('staat uit zolang de toestemming ontbreekt of is geweigerd, ook als de instelling aan staat', () => {
+    const settings = { ...facts().settings, morningNotice: { enabled: true } };
+    expect(rowSummary('ochtendmelding', facts({ settings, notice: { support: 'ready', granted: false } })).checked).toBe(false);
+    const blocked = rowSummary('ochtendmelding', facts({ settings, notice: { support: 'blocked', granted: false } }));
+    expect(blocked).toEqual({ checked: false, sub: 'Geblokkeerd in je telefoon' });
+    expect(rowSummary('ochtendmelding-tijd', facts({ settings, notice: { support: 'blocked', granted: false } })).dim).toBe(true);
+    expect(rowSummary('ochtendmelding-tijd', facts({ settings, notice: { support: 'unavailable', granted: false } })).hidden).toBe(true);
+    expect(rowSummary('ochtendmelding', facts({ settings, notice: { support: 'ready', granted: true } })).checked).toBe(true);
+  });
+
+  it('het zoekresultaat zegt hetzelfde als de rij', () => {
+    expect(searchValue('ochtendmelding', facts())).toEqual({ text: 'Uit', dim: true });
+    expect(searchValue('ochtendmelding', facts({ notice: { support: 'unavailable', granted: false } }))).toEqual({ text: 'Niet mogelijk', dim: true });
+  });
+});

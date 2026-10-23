@@ -52,7 +52,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
   },
   lichaam: { rows: ['lichaamsgewicht', 'hartslag', 'blessures'], advanced: [] },
   vandaag: {
-    rows: ['ochtendcheck', 'weekterugblik', 'weekterugblik-dag', 'weekvraag', 'weerplaats', 'weerregel', 'weerruil', 'kledingadvies', 'kleding-voorkeur', 'citaten', 'geluid', 'loopinzicht', 'terugknop', 'hervatten'],
+    rows: ['ochtendcheck', 'ochtendkaart', 'weekterugblik', 'weekterugblik-dag', 'weekvraag', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'weerregel', 'weerruil', 'kledingadvies', 'kleding-voorkeur', 'citaten', 'geluid', 'loopinzicht', 'terugknop', 'hervatten'],
     advanced: ['loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'],
   },
   koppelingen: {

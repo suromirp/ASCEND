@@ -13,6 +13,7 @@ import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
 import type { SettingsPageId } from '../data/settingsLayout';
 import { resolveOverviews } from './overviewSettings';
+import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from './sports';
@@ -77,6 +78,16 @@ export interface SettingsFacts {
   buildLabel: string;
   // Of de keuze voor de lange zondag er staat (niet bij een bergdoel).
   longSundayVisible: boolean;
+  // Wat deze telefoon kan voor de ochtendmelding en of meldingen mogen; weglaten als dat
+  // nog niet bekend is (dan telt alleen de schakelaar).
+  notice?: { support: NoticeSupport; granted: boolean };
+}
+
+// De ochtendmelding: staat hij aan en kan hij ook werken (toestemming en een telefoon die het kan)?
+function noticeState(f: SettingsFacts): { on: boolean; support: NoticeSupport } {
+  const n = resolveMorningNotice(f.settings.morningNotice);
+  const support = f.notice?.support ?? 'ready';
+  return { on: n.enabled && support === 'ready' && (f.notice?.granted ?? true), support };
 }
 
 // ---- hulpjes -----------------------------------------------------------------
@@ -269,6 +280,19 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     // Vandaag en meldingen
     case 'ochtendcheck':
       return { checked: o.morningCheckIn };
+    case 'ochtendkaart':
+      return { checked: o.morningCard, hidden: !o.morningCheckIn };
+    case 'ochtendmelding': {
+      const n = noticeState(f);
+      if (n.support === 'unavailable') return { value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' };
+      if (n.support === 'not_installed') return { value: 'Niet mogelijk', dim: true, sub: 'Zet ASCEND eerst op je beginscherm' };
+      return { checked: n.on, sub: n.support === 'blocked' ? 'Geblokkeerd in je telefoon' : undefined };
+    }
+    case 'ochtendmelding-tijd': {
+      // Er voor als de telefoon het kan; gedimd zolang de melding uit staat.
+      const n = noticeState(f);
+      return { value: choiceShort('ochtendTijd', resolveMorningNotice(s.morningNotice).time), dim: !n.on, hidden: n.support === 'unavailable' || n.support === 'not_installed' };
+    }
     case 'weekterugblik':
       return { checked: o.weekReview };
     case 'weekterugblik-dag':

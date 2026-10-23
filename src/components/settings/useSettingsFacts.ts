@@ -16,6 +16,8 @@ import { getPersistenceStatus, type PersistenceStatus } from '../../storage/pers
 import { listSnapshots } from '../../storage/backup';
 import { webBackupFileAdapter } from '../../storage/backupFileAdapter';
 import { buildLabel } from '../../utils/buildLabel';
+import { noticeSupport } from '../../engine/morningNotice';
+import { readNoticeEnvironment } from '../../utils/morningNotice';
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 
 // Alles wat de instellingen over je weten, als de feiten die engine/settingsSummary.ts
@@ -29,9 +31,10 @@ interface Loaded {
   storage: PersistenceStatus | undefined;
   snapshots: number;
   folderChosen: boolean;
+  notice: SettingsFacts['notice'];
 }
 
-const EMPTY: Loaded = { linked: false, watch: null, sendEnabled: false, macroFactor: null, storage: undefined, snapshots: 0, folderChosen: false };
+const EMPTY: Loaded = { linked: false, watch: null, sendEnabled: false, macroFactor: null, storage: undefined, snapshots: 0, folderChosen: false, notice: undefined };
 
 export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void } {
   const app = useAppData();
@@ -42,7 +45,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [connection, watch, workouts, macroFactor, storage, snapshots, folder] = await Promise.all([
+      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv] = await Promise.all([
         getConnection().catch(() => null),
         getWatchState().catch(() => null),
         getWatchWorkoutState().catch(() => null),
@@ -50,9 +53,10 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         getPersistenceStatus().catch(() => undefined),
         listSnapshots().catch(() => []),
         webBackupFileAdapter.supportsPreferredDirectory() ? (webBackupFileAdapter.hasPreferredDirectory?.() ?? Promise.resolve(false)).catch(() => false) : Promise.resolve(false),
+        readNoticeEnvironment().catch(() => undefined),
       ]);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder });
+      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
     };
     void load();
     const offWatch = onWatchChange(() => void load());
@@ -110,6 +114,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
+      notice: loaded.notice,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded]);
 
