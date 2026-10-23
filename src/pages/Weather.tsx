@@ -225,11 +225,17 @@ export function WeatherPage() {
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>Bron</Eyebrow>
-        <Para>
-          Weergegevens van{' '}
-          <a href={OPEN_METEO_SITE} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>Open-Meteo.com</a>
-          , CC BY 4.0. Zonder verbinding zie je de laatste stand.
-        </Para>
+        <Para>Weergegevens van Open-Meteo.com, CC BY 4.0. Zonder verbinding zie je de laatste stand.</Para>
+        <a
+          href={OPEN_METEO_SITE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl border px-3 text-sm"
+          style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
+        >
+          <span>Open-Meteo.com</span>
+          <Icon name="buiten" size={16} />
+        </a>
       </Card>
     </div>
   );

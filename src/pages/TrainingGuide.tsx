@@ -46,7 +46,7 @@ export function TrainingGuidePage() {
             <button
               key={templateId}
               onClick={() => setOpenTemplateId(templateId)}
-              className="animate-rise-in text-left"
+              className="animate-rise-in block min-h-[44px] w-full text-left"
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <Card className="flex items-center justify-between gap-3">

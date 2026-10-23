@@ -429,7 +429,7 @@ function GR5GoalCard({
       </div>
       )}
 
-      <button onClick={onArchive} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+      <SecondaryButton onClick={onArchive}>Doel archiveren</SecondaryButton>
 
       {wizardOpen && <GoalSetupWizard mode="edit" initialGoal={goal} onClose={() => setWizardOpen(false)} />}
     </Card>
@@ -600,7 +600,7 @@ function MarathonGoalCard({
             </p>
           )}
           {onArchive && (
-            <button onClick={onArchive} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Doel archiveren</button>
+            <SecondaryButton onClick={onArchive}>Doel archiveren</SecondaryButton>
           )}
         </>
       )}

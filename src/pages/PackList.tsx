@@ -101,9 +101,7 @@ export function PackListPage() {
       {customised && (
         <div className="flex flex-col items-start gap-1">
           {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
-              Terug naar de voorbeeldlijst
-            </button>
+            <SecondaryButton onClick={() => setConfirmReset(true)}>Terug naar de voorbeeldlijst</SecondaryButton>
           ) : (
             <>
               <p className="text-xs" style={{ color: 'var(--color-warning)' }}>Al je aanpassingen en vinkjes op deze lijst gaan verloren.</p>

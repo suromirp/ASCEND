@@ -7,7 +7,7 @@ import { buildWeekReview } from '../engine/weekReview';
 import { dayLoads, weekMinutes, weekProgress } from '../engine/weekProfile';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
-import { ChevronIcon, MapIcon } from '../components/WeekIcons';
+import { ChevronIcon } from '../components/WeekIcons';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, formatHoursMinutesNL, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
@@ -188,34 +188,22 @@ export function WeekPage() {
         </>
       )}
 
-      <div className="-mt-1 flex items-center justify-between">
-        <button
+      <div className="flex gap-2">
+        <SecondaryButton
           onClick={() => {
             setMonthView((v) => !v);
             scrollMainToTop();
           }}
-          className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium"
-          style={{ color: 'var(--color-ink-dim)' }}
         >
-          <MapIcon />
           {monthView ? 'Terug naar de week' : 'Jaaroverzicht'}
-        </button>
+        </SecondaryButton>
         {!monthView && review && review.planned > 0 && (
-          <button onClick={() => setReviewOpen(true)} className="flex min-h-[44px] items-center gap-0.5 text-sm font-medium" style={{ color: 'var(--color-ink-dim)' }}>
-            Weekterugblik
-            <ChevronIcon dir="right" />
-          </button>
+          <SecondaryButton onClick={() => setReviewOpen(true)}>Weekterugblik</SecondaryButton>
+        )}
+        {!monthView && weekStart !== mondayOfWeek(today) && (
+          <SecondaryButton onClick={() => setWeekStart(mondayOfWeek(today))}>Naar deze week</SecondaryButton>
         )}
       </div>
-      {!monthView && weekStart !== mondayOfWeek(today) && (
-        <button
-          onClick={() => setWeekStart(mondayOfWeek(today))}
-          className="-mt-2 flex min-h-[44px] items-center self-start text-sm font-medium"
-          style={{ color: 'var(--color-ink-dim)' }}
-        >
-          Naar deze week
-        </button>
-      )}
 
       {!monthView && restWeek?.isRestWeek && (
         <Card className="flex flex-col gap-2">
