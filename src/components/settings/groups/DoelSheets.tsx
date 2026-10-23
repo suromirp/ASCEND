@@ -8,6 +8,7 @@ import { Icon } from '../../icons';
 import { ChoiceList, Sheet } from '../Sheet';
 import { SettingsList } from '../SettingsList';
 import { haptics } from '../../../utils/haptics';
+import { usePlanSettingChange } from '../usePlanSettingChange';
 
 // De kleur van elke fase in de balk, zonder goud: goud is het ene accent van het scherm.
 const PHASE_COLOR_SOFT: Record<string, string> = {
@@ -25,7 +26,9 @@ const weeks = (n: number) => `${n} ${n === 1 ? 'week' : 'weken'}`;
 // met min en plus. De basis vult aan wat overblijft; wat je zelf zet staat vast
 // (storage/database.ts#syncProgramHorizon legt het programma opnieuw neer).
 export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRestart: () => void }) {
-  const { program, settings, updateSettings, refresh, trainingGoals, goalMilestones } = useAppData();
+  const { program, settings, trainingGoals, goalMilestones } = useAppData();
+  // Other phase lengths change the plan: a proposal first (usePlanSettingChange).
+  const plan = usePlanSettingChange();
   const today = todayISO();
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, today);
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
@@ -45,8 +48,8 @@ export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRe
     : `Week ${weekNow + 1} van ${total}. Zonder doel staan de fases vast.`;
 
   async function save(next: PhaseLengthOverrides | undefined) {
-    await updateSettings({ programPhaseOverrides: next });
-    await refresh();
+    if (plan.busy) return;
+    await plan.changeSetting('Fases van je programma', { programPhaseOverrides: next }, 'Volgt de nieuwe lengte van je fases.');
   }
 
   function change(id: AdjustablePhaseId, current: number, direction: 1 | -1) {
@@ -66,6 +69,8 @@ export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRe
 
   return (
     <Sheet eyebrow="Doel en tochten" title="Programma" line={line} onClose={onClose}>
+      {plan.note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
+      {plan.impact}
       <div className="st-phases" role="img" aria-label="Je fases tot aan het doel">
         {rows.map((r) => <span key={r.phase.id} style={{ flex: r.phase.weekCount, background: PHASE_COLOR_SOFT[r.phase.id] ?? 'var(--color-stone)' }} />)}
       </div>

@@ -8,6 +8,8 @@ import { computeScheduleFit, computeSportDisableProposal, computeSportEnableProp
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, templateSport, weeklyPatternTemplates, type Sport } from '../../engine/sports';
 import { computeSportFrequencyPlan } from '../../engine/sportFrequency';
 import { todayISO } from '../../utils/dates';
+import { useHorizonChange } from '../useHorizonChange';
+import type { AppSettings } from '../../storage/database';
 
 type PendingImpact = { title: string; proposal: PlanChangeProposal; lines: string[]; restore?: UndoRestore };
 
@@ -16,6 +18,12 @@ type PendingImpact = { title: string; proposal: PlanChangeProposal; lines: strin
 // ongedaan maken; anders vraagt het eerst Akkoord of Liever niet. De zinnen die vroeger
 // onder de kaarten stonden, komen nu als `note` bovenaan de pagina (en in het blad).
 // De engine-functies zijn dezelfde als altijd (changeImpact, scheduleFit, sportFrequency).
+//
+// Een instelling die de planningsronde zelf anders laat lopen (een sport aan of uit,
+// De lange zondag, de lengte van de fases, Ambitie, Rust na een bergtocht) wordt pas
+// bewaard na Akkoord: anders zette de volgende ronde je planning alsnog stil om
+// (Warden Logica punt 2). Het voorstel toont de hele ronde (components/useHorizonChange.tsx);
+// Liever niet laat de instelling en je planning zoals ze waren.
 export function usePlanSettingChange(): {
   applyMode: ChangeApplyMode;
   note: string | null;
@@ -25,11 +33,15 @@ export function usePlanSettingChange(): {
   setFrequency: (sport: Sport, perWeek: number | undefined) => Promise<void>;
   setPairing: (value: TrainingStrategyProfile['sameDayPairingPreference']) => Promise<void>;
   saveBudget: (next: Partial<Record<Weekday, DailyTimeBudget>>) => Promise<void>;
+  // A setting the planning run reads: a proposal first, stored only with Akkoord.
+  changeSetting: (title: string, patch: Partial<AppSettings>, why: string) => Promise<void>;
+  busy: boolean;
 } {
   const {
     settings, updateSettings, goalEngineConfig, updateGoalEngineConfig, plannedSessions, templates, sessionLogs, program,
-    commitPlanChange, templateById,
+    commitPlanChange, templateById, planHorizonChange,
   } = useAppData();
+  const horizon = useHorizonChange();
   const [note, setNote] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingImpact | null>(null);
   const [applying, setApplying] = useState(false);
@@ -85,30 +97,52 @@ export function usePlanSettingChange(): {
     }).proposal;
   }
 
+  function changeSetting(title: string, patch: Partial<AppSettings>, why: string) {
+    setNote(null);
+    return horizon.propose(
+      () => planHorizonChange({
+        title, why, trigger: 'availability_changed', settings: patch,
+        explanation: 'Deze instelling bepaalt hoe ASCEND je weken plant. Ze verandert je planning nooit ongemerkt: je ziet eerst wat er verschuift, omgaat of vervalt. Wat je al deed en wat je zelf vastzette blijft staan.',
+      }),
+      { eyebrow: 'Planning aanpassen', ask: 'setting', declined: 'Je instelling en je planning blijven zoals ze waren.' },
+    );
+  }
+
+  // A sport on or off: its own proposal (the sessions of that sport), and on top
+  // what the planning run then does (a long run that becomes a mountain hike and
+  // back). Both together, stored only with Akkoord.
   async function toggleSport(sport: Sport, on: boolean) {
     const nextEnabled = { ...enabledSports, [sport]: on };
-    const restore: UndoRestore = { settings: { enabledSports } };
-    await updateSettings({ enabledSports: nextEnabled });
+    let start: PlanChangeProposal | null = null;
+    let onStored: (() => void) | undefined;
     if (on) {
       const fixed = frequency[sport];
-      if (fixed) {
-        await route(`${SPORT_LABEL[sport]} weer aangezet`, frequencyPlan(sport, fixed), restore);
-        return;
-      }
       const sportPattern = weeklyPatternTemplates(templates, { enabledSports: nextEnabled }).filter((t) => templateSport(t) === sport);
-      if (sportPattern.length === 0) {
-        setNote(`${SPORT_LABEL[sport]} staat aan op Automatisch. Er komt niets vast bij. Wil je het vast inplannen, kies dan hoe vaak per week.`);
-        return;
+      if (fixed) start = frequencyPlan(sport, fixed);
+      else if (sportPattern.length > 0) {
+        start = computeSportEnableProposal(
+          sportPattern, SPORT_LABEL[sport], plannedSessions, templates, program,
+          goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+        ).proposal;
+      } else {
+        onStored = () => setNote(`${SPORT_LABEL[sport]} staat aan op Automatisch. Er komt niets vast bij. Wil je het vast inplannen, kies dan hoe vaak per week.`);
       }
-      const { proposal } = computeSportEnableProposal(
-        sportPattern, SPORT_LABEL[sport], plannedSessions, templates, program,
-        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
-      );
-      await route(`${SPORT_LABEL[sport]} weer aangezet`, proposal, restore);
-      return;
+    } else {
+      start = computeSportDisableProposal(isSportSession(sport), SPORT_LABEL[sport], plannedSessions, sessionLogs, todayISO());
     }
-    const proposal = computeSportDisableProposal(isSportSession(sport), SPORT_LABEL[sport], plannedSessions, sessionLogs, todayISO());
-    await route(`${SPORT_LABEL[sport]} uitgezet`, proposal, restore);
+    setNote(null);
+    const title = `${SPORT_LABEL[sport]} ${on ? 'weer aangezet' : 'uitgezet'}`;
+    await horizon.propose(
+      () => planHorizonChange({
+        title,
+        why: start?.consequences ?? 'Volgt je sporten.',
+        explanation: start?.explanation ?? 'Je sporten bepalen wat ASCEND plant. Een sport aan of uit verandert je planning nooit ongemerkt: je ziet eerst wat er verandert.',
+        trigger: 'availability_changed',
+        settings: { enabledSports: nextEnabled },
+        ...(start && start.changes.length > 0 ? { startItems: start.changes } : {}),
+      }),
+      { eyebrow: 'Planning aanpassen', ask: 'setting', declined: `${SPORT_LABEL[sport]} blijft ${on ? 'uit' : 'aan'} en je planning blijft zoals hij was.`, onStored },
+    );
   }
 
   async function setFrequency(sport: Sport, perWeek: number | undefined) {
@@ -152,5 +186,11 @@ export function usePlanSettingChange(): {
     />
   ) : null;
 
-  return { applyMode, note, clearNote: () => setNote(null), impact, toggleSport, setFrequency, setPairing, saveBudget };
+  return {
+    applyMode,
+    note: note ?? horizon.note,
+    clearNote: () => { setNote(null); horizon.clearNote(); },
+    impact: <>{impact}{horizon.sheet}</>,
+    toggleSport, setFrequency, setPairing, saveBudget, changeSetting, busy: horizon.busy,
+  };
 }

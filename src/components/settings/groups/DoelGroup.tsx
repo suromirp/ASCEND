@@ -7,6 +7,8 @@ import { afterMainGoalChange } from '../../../engine/programLayout';
 import { todayISO } from '../../../utils/dates';
 import { SettingsSection } from '../SettingsList';
 import { ChoiceFromDef } from './ChoiceFromDef';
+import { usePlanSettingChange } from '../usePlanSettingChange';
+import { choiceShort } from '../../../data/settingsChoices';
 import { ProgramSheet, RestartSheet } from './DoelSheets';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
@@ -21,6 +23,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
   const [afterGoalPlan, setAfterGoalPlan] = useState<{ value: 'stop' | 'maintain'; lines: string[] } | null>(null);
   const [afterGoalBusy, setAfterGoalBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // De lange zondag en Rust na een bergtocht laten de planningsronde anders lopen: eerst het voorstel.
+  const plan = usePlanSettingChange();
 
   function chooseAfterGoal(v: 'stop' | 'maintain') {
     const change = afterMainGoalChange(trainingGoals, goalMilestones, todayISO(), plannedSessions, sessionLogs, settings.afterMainGoal ?? 'stop', v);
@@ -34,7 +38,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
 
   return (
     <>
-      {note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note}</p>}
+      {(note || plan.note) && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{note ?? plan.note}</p>}
       <SettingsSection title="Doel">
         <SummaryRow id="doelen" title="Hoofddoel" facts={facts} onClick={() => navigate('/ascend/doelen')} />
         <SummaryRow id="programma" title="Programma" facts={facts} onClick={() => setSheet('programma')} />
@@ -56,7 +60,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
       {sheet === 'lange-zondag' && (
-        <ChoiceFromDef def={CHOICES.langeZondag} value={settings.longSundaySession ?? 'hike'} onPick={(v) => void updateSettings({ longSundaySession: v }).then(() => refresh())} onClose={close} />
+        <ChoiceFromDef def={CHOICES.langeZondag} value={settings.longSundaySession ?? 'hike'} onPick={(v) => { if (v !== (settings.longSundaySession ?? 'hike')) { setNote(null); void plan.changeSetting(`De lange zondag: ${choiceShort('langeZondag', v)}`, { longSundaySession: v }, 'Volgt je keuze voor de lange zondag.'); } }} onClose={close} />
       )}
       {sheet === 'na-hoofddoel' && (
         <ChoiceFromDef def={CHOICES.naHoofddoel} value={settings.afterMainGoal ?? 'stop'} onPick={chooseAfterGoal} onClose={close} />
@@ -93,8 +97,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         />
       )}
       {sheet === 'rust-na-tocht' && (
-        <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => void updateSettings({ trekLegRest: v })} onClose={close} />
+        <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={close} />
       )}
+      {plan.impact}
     </>
   );
 }
