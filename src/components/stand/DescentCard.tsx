@@ -34,7 +34,9 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
             <g key={w.weekStart}>
               {w.metres > 0 && <path d={roundedTop(x, 14 + plotH - h, barW, h, 4)} fill="var(--color-bronze)" />}
               {w.metres > 0 && h > 16 && <text x={x + barW / 2} y={14 + plotH - h - 3} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{formatNumberNL(w.metres, 0)}</text>}
-              <text x={i * slot + slot / 2} y={H - 5} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{i === weeks.length - 1 ? 'nu' : dayMonth(w.weekStart)}</text>
+              {(slot >= 44 || (weeks.length - 1 - i) % 2 === 0) && (
+                <text x={i * slot + slot / 2} y={H - 5} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">{i === weeks.length - 1 ? 'nu' : dayMonth(w.weekStart)}</text>
+              )}
             </g>
           );
         })}

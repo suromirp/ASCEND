@@ -23,6 +23,14 @@ export function RunTrendsCard() {
     [sessionLogs, templates, program, settings.heartRate, settings.runInsight, detailsOn],
   );
   if (trends.rows.length === 0) return null;
+  // Zonder één rij met gegevens is er niets te laten zien: één regel is genoeg.
+  if (trends.rows.every((r) => r.word === 'Te weinig gegevens')) {
+    return (
+      <Card className="flex min-h-[44px] items-center">
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Lopen: nog te weinig gegevens voor een trend. Na een paar loopjes verschijnt hij hier.</p>
+      </Card>
+    );
+  }
   return (
     <>
       <Card className="flex flex-col !py-2">
@@ -31,13 +39,13 @@ export function RunTrendsCard() {
             key={r.key}
             type="button"
             onClick={() => setOpen(r)}
-            className="flex min-h-[56px] w-full items-center gap-4 py-3 text-left"
+            className="flex min-h-[44px] w-full items-center gap-4 py-3 text-left"
             style={{ borderTop: i === 0 ? undefined : '1px solid var(--color-card-border)' }}
             aria-label={`${r.title}: ${r.word}. Toon waarom`}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Eyebrow as="span">{r.title}</Eyebrow>
-              <Sparkline points={r.points} />
+              {r.word !== 'Te weinig gegevens' && <Sparkline points={r.points} />}
             </span>
             {r.word === 'Te weinig gegevens' ? (
               <span className="w-24 shrink-0 text-right text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{r.word}</span>

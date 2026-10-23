@@ -73,9 +73,11 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
               </g>
               {total === 0 && <rect x={x} y={TOP + plotH - 1} width={barW} height={1} fill="var(--color-card-border)" />}
               {i === selected && <rect x={x - 3} y={TOP + plotH + 3} width={barW + 6} height={2} rx={1} fill="var(--color-gold)" />}
-              <text x={i * slot + slot / 2} y={H - 18} textAnchor="middle" fontSize={12} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
-                {w.isCurrent ? 'nu' : dayMonth(w.weekStart)}
-              </text>
+              {(slot >= 44 || (weeks.length - 1 - i) % 2 === 0) && (
+                <text x={i * slot + slot / 2} y={H - 18} textAnchor="middle" fontSize={12} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
+                  {w.isCurrent ? 'nu' : dayMonth(w.weekStart)}
+                </text>
+              )}
               {w.isRestWeek && <text x={i * slot + slot / 2} y={H - 4} textAnchor="middle" fontSize={12} fill="var(--color-ink-dim)">rust</text>}
             </g>
           );
