@@ -134,6 +134,13 @@ const PATHS = {
     </>
   ),
   // Een zandloper, zodat de timer niet meer op het Logboek lijkt.
+  // Een video bekijken: een afspeelknop in een rond vlak.
+  video: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M10.4 8.9l4.6 3.1-4.6 3.1z" />
+    </>
+  ),
   timer: (
     <>
       <path d="M7 3h10M7 21h10" />

@@ -561,8 +561,13 @@ export function plateSteps(ex: WorkoutExercise, profile: GymProfile): (PlateStep
   let previous: PlateLoad | undefined = { barKg: bar, perSide: [], shortKg: 0 };
   return ex.rows.map((r) => {
     if (r.weightKg === undefined || r.weightKg <= 0) return undefined;
-    const step = nextLoad(previous, r.weightKg, exercise, profile);
-    if (step) previous = step;
+    // As you would load a bar: the fewest plates, heaviest inside. Fewer moves only
+    // when that gives as few plates (47,5 to 45 is one 1,25 off, not a new stack).
+    const fresh = plateLoad(r.weightKg, exercise, profile, previous?.barKg);
+    const moved = nextLoad(previous, r.weightKg, exercise, profile);
+    if (!fresh) return moved;
+    const step: PlateStep = moved && moved.perSide.length <= fresh.perSide.length ? moved : { ...fresh, ...diff(previous?.perSide ?? [], fresh.perSide) };
+    previous = step;
     return step;
   });
 }

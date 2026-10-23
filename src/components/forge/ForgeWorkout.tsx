@@ -917,7 +917,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                         {label}
                       </span>
                     </span>
-                    <span role="cell" className="min-w-0 font-sans text-[13px] leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                    <span role="cell" className="min-w-0 font-sans text-xs leading-tight tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
                       {showPrevious ? (
                         <span>{prev ?? ''}</span>
                       ) : readOnly ? (
@@ -930,8 +930,8 @@ const ExerciseBlock = memo(function ExerciseBlock({
                     </span>
                     {readOnly || ex.timed ? (
                       <>
-                        <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
-                        <span role="cell" className="text-center font-sans text-[15px] tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
+                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? '' : row.target.weightKg !== undefined ? formatNumberNL(row.target.weightKg, 2) : ''}</span>
+                        <span role="cell" className="text-center font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{ex.timed ? row.target.timedSec : readOnly ? repsText(row.target) : row.reps}</span>
                       </>
                     ) : (
                       <>

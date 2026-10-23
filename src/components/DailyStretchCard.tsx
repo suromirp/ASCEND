@@ -57,7 +57,7 @@ export function DailyStretchCard({
         <TodaySheet eyebrow={label} title={title} onClose={() => setOpen(false)}>
           {(close) => (
             <>
-              <StretchItems stretches={stretches} className="flex flex-col gap-2" />
+              <StretchItems stretches={stretches} className="flex flex-col" />
               <div className="mt-5">
                 <PrimaryButton onClick={() => { if (!completed) onToggleComplete(); close(); }}>{completed ? 'Klaar' : 'Gedaan'}</PrimaryButton>
               </div>

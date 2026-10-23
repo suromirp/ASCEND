@@ -239,6 +239,14 @@ describe('vorige keer', () => {
 });
 
 describe('schijven', () => {
+  it('na opwarmsets laad je de stang gewoon op: zwaarste schijven, geen stapel kleintjes', () => {
+    const row = exerciseById('bench-press');
+    const ex = { slot: 'b', exerciseId: 'bench-press', name: 'Barbell Bench Press', known: true, restSec: 180, timed: false,
+      rows: [22.5, 32.5, 45, 62.5].map((kg, i) => ({ id: `r${i}`, kind: (i < 3 ? 'warmup' : 'work') as 'warmup' | 'work', target: { weightKg: kg, repsLow: 8, repsHigh: 8 }, weightKg: kg, reps: 8, done: false })) };
+    const steps = plateSteps(ex, profile);
+    expect(steps[3]!.perSide).toEqual(plateLoad(62.5, row, profile)!.perSide);
+  });
+
   it('stang 20 en 13,75 per kant is 10, 2,5 en 1,25', () => {
     const load = plateLoad(47.5, exerciseById('barbell-row'), profile)!;
     expect(load.barKg).toBe(20);

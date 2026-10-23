@@ -121,7 +121,7 @@ body {
    kg, herhalingen, RIR en het afvinkvakje. Past op 360 px breed. */
 .forge-grid {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 60px 48px 38px 44px;
+  grid-template-columns: 30px minmax(0, 1fr) 54px 44px 38px 44px;
   column-gap: 4px;
 }
 

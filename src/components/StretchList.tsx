@@ -3,51 +3,38 @@ import type { Stretch } from '../models/training';
 import { Card } from './ui';
 import { CountdownTimer } from './CountdownTimer';
 
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.5 2" />
-    </svg>
-  );
+import { Icon } from './icons';
+
+// "45 sec · per kant": de tijd en de aanwijzing in één korte regel.
+function metaOf(s: Stretch): string {
+  return [s.durationSec ? `${s.durationSec} sec` : '', s.note ?? ''].filter(Boolean).join(' · ');
 }
 
-export function StretchItems({ stretches, className = 'mt-3 flex flex-col gap-2' }: { stretches: Stretch[]; className?: string }) {
+// Eén rekoefening per rij: de naam met eronder de tijd, rechts een video en een timer
+// als ronde knoppen van 44 px, zoals de rest van de app.
+export function StretchItems({ stretches, className = 'mt-3 flex flex-col' }: { stretches: Stretch[]; className?: string }) {
   const [timerFor, setTimerFor] = useState<Stretch | null>(null);
+  const roundButton = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border';
 
   return (
     <>
       <ul className={className}>
-        {stretches.map((s) => (
-          <li key={s.name} className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="flex items-baseline gap-1.5" style={{ color: 'var(--color-ink)' }}>
-              {s.name}
-              {s.videoUrl && (
-                <a
-                  href={s.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex min-h-[44px] items-center shrink-0 text-xs underline underline-offset-2"
-                  style={{ color: 'var(--color-sky)' }}
-                >
-                  video ↗
-                </a>
-              )}
-            </span>
-            <span className="flex shrink-0 items-baseline gap-1.5 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              {s.durationSec ? `${s.durationSec} sec` : ''}{s.note ? (s.durationSec ? ` • ${s.note}` : s.note) : ''}
-              {s.durationSec !== undefined && (
-                <button
-                  onClick={() => setTimerFor(s)}
-                  aria-label={`Timer voor ${s.name}`}
-                  className="relative inline-flex shrink-0 before:absolute before:-inset-[15px] before:content-['']"
-                  style={{ color: 'var(--color-bronze)' }}
-                >
-                  <ClockIcon />
-                </button>
-              )}
-            </span>
+        {stretches.map((s, i) => (
+          <li key={s.name} className={`flex min-h-[60px] items-center gap-3 py-2 ${i > 0 ? 'border-t' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] leading-snug" style={{ color: 'var(--color-ink)' }}>{s.name}</p>
+              {metaOf(s) && <p className="mt-0.5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{metaOf(s)}</p>}
+            </div>
+            {s.videoUrl && (
+              <a href={s.videoUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} aria-label={`Video van ${s.name}`} className={roundButton} style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
+                <Icon name="video" size={20} />
+              </a>
+            )}
+            {s.durationSec !== undefined && (
+              <button type="button" onClick={() => setTimerFor(s)} aria-label={`Timer voor ${s.name}`} className={roundButton} style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}>
+                <Icon name="timer" size={20} />
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -78,7 +65,10 @@ export function StretchList({
         aria-expanded={open}
       >
         <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{title}</span>
-        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? '−' : `${stretches.length} tonen`}</span>
+        <span className="flex items-center gap-1 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+          {stretches.length} oefeningen
+          <span className="transition-transform" style={{ transform: open ? 'rotate(90deg)' : undefined }}><Icon name="verder" size={16} /></span>
+        </span>
       </button>
       {open && <StretchItems stretches={stretches} />}
     </Card>

@@ -93,7 +93,7 @@ export interface ProblemAreaGroup {
 export const PROBLEM_AREAS: ProblemAreaGroup[] = [
   {
     id: 'nek',
-    label: 'Nek stijf',
+    label: 'Nek',
     stretches: [
       { name: 'Zij-buiging (oor naar schouder)', durationSec: 25, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=UUXUVFQS5u0' },
       { name: 'Kin intrekken (chin tuck)', durationSec: 20, videoUrl: 'https://www.youtube.com/watch?v=lvXZQHSMiLk' },
@@ -103,7 +103,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
   },
   {
     id: 'schouders',
-    label: 'Schouders / bovenrug',
+    label: 'Schouders en bovenrug',
     stretches: [
       { name: 'Cross-body schouderstretch', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=KrBCD8Hv-fk' },
       { name: 'Schouderrollen', durationSec: 30, videoUrl: 'https://www.youtube.com/watch?v=Bv8QPOs7xks' },
@@ -124,7 +124,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
   },
   {
     id: 'kuiten',
-    label: 'Kuiten / Achillespees',
+    label: 'Kuiten en achillespees',
     stretches: [
       { name: 'Staande kuitstretch tegen muur (knie gestrekt)', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=y01ri_43G50' },
       { name: 'Staande kuitstretch tegen muur (knie gebogen)', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=kNm6qFnOiIw' },
@@ -135,7 +135,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
   },
   {
     id: 'heup',
-    label: 'Heup / IT-band',
+    label: 'Heup en IT-band',
     stretches: [
       { name: '90/90 heuprotatie', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=f_7qIPxw6nE' },
       { name: 'Figure-four liggend', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=WmRfU23f-fM' },
@@ -146,7 +146,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
   },
   {
     id: 'bilspieren',
-    label: 'Bilspieren / piriformis',
+    label: 'Billen en piriformis',
     stretches: [
       { name: 'Figure-four zittend (op stoel)', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=2E8WWX4cOc4' },
       { name: 'Figure-four liggend', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=WmRfU23f-fM' },
@@ -170,7 +170,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
   },
   {
     id: 'polsen',
-    label: 'Polsen / onderarmen',
+    label: 'Polsen en onderarmen',
     stretches: [
       { name: 'Polsflexie-stretch', durationSec: 20, note: 'per kant', videoUrl: 'https://youtu.be/_jeQIFYzJks' },
       { name: 'Polsextensie-stretch', durationSec: 20, note: 'per kant', videoUrl: 'https://youtu.be/uApyGT1Rpjo' },

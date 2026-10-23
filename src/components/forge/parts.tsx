@@ -94,7 +94,7 @@ export function ValueCell({
       onClick={onOpen}
       aria-label={`${label}: ${text === '' ? 'leeg' : text}`}
       aria-pressed={active}
-      className="flex min-h-[44px] w-full min-w-0 items-center justify-center rounded-lg px-1 font-sans text-[15px] tabular-nums"
+      className="flex min-h-[44px] w-full min-w-0 items-center justify-center rounded-lg px-1 font-sans text-sm tabular-nums"
       style={{
         background: done ? 'transparent' : 'var(--color-surface)',
         boxShadow: active ? 'inset 0 0 0 2px var(--color-ink)' : `inset 0 0 0 1px ${done ? 'transparent' : 'var(--color-card-border)'}`,
