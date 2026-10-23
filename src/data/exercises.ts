@@ -619,7 +619,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: gebruik een pad of handdoek om de stang prettig te laten liggen.',
     'Vaak fout: een hol kruis maken in plaats van je heupen strekken.',
   ]),
-  ex('superman', 'Superman', ['Superman Hold', 'Back Raise'], ['lower_back', 'glutes'], ['upper_back'], 'bodyweight', 'hinge', false, [
+  ex('superman', 'Superman', ['Superman Hold'], ['lower_back', 'glutes'], ['upper_back'], 'bodyweight', 'hinge', false, [
     'Doen: lig op je buik en til tegelijk je armen en benen een stukje van de grond.',
     'Let op: kijk naar de grond en houd je nek lang.',
     'Vaak fout: je nek achterover trekken om hoger te komen.',
@@ -629,7 +629,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: pauzeer bovenaan kort en zak gecontroleerd.',
     'Vaak fout: met je armen omhoog trekken.',
   ]),
-  ex('decline-weighted-sit-up', 'Decline Weighted Sit-Up', ['Weighted Decline Sit-Up', 'Decline Sit-Up', 'Decline Weighted Sit Up'], ['core'], ['quadriceps'], 'dumbbell', 'core', false, [
+  ex('decline-weighted-sit-up', 'Decline Weighted Sit-Up', ['Weighted Decline Sit-Up', 'Decline Weighted Sit Up'], ['core'], ['quadriceps'], 'dumbbell', 'core', false, [
     'Doen: op een afgaande bank met een gewicht tegen je borst, rol omhoog tot je rechtop zit.',
     'Let op: kom met je rug rustig omhoog, wervel voor wervel.',
     'Vaak fout: met zwaaien omhoog komen in plaats van met je buik.',

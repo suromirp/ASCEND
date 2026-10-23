@@ -153,3 +153,10 @@ describe('the default program', () => {
     expect(JSON.stringify(legacySetShape(a))).toBe(JSON.stringify(legacySetShape(b)));
   });
 });
+
+describe('een verhuisde naam', () => {
+  it('"30° Incline Barbell Bench Press" hoort bij de lage incline (besluit 2026-10-23-oefeningen-bij-de-start)', () => {
+    expect(matchExercise('30° Incline Barbell Bench Press')).toBe('low-incline-barbell-press');
+    expect(matchExercise('45° Incline Barbell Press')).toBe('incline-bench-press');
+  });
+});

@@ -300,11 +300,11 @@ export const hasPlates = (ex: WorkoutExercise): boolean => {
 // (weights, plates, swaps). An exercise you swapped yourself stays as well.
 export function mergeDraft(draft: WorkoutExercise[], fresh: WorkoutExercise[]): WorkoutExercise[] {
   const bySlot = new Map(draft.map((e) => [e.slot, e]));
-  const touched = (e: WorkoutExercise) => !!e.swappedFrom || e.rows.some((r) => r.done || r.edited);
+  const touched = (e: WorkoutExercise, f: WorkoutExercise) => !!e.swappedFrom || e.rows.length !== f.rows.length || e.rows.some((r) => r.done || r.edited);
   const merged = fresh.map((f) => {
     const d = bySlot.get(f.slot);
-    return d && (d.name === f.name || touched(d)) ? d : f;
+    return d && (d.name === f.name || touched(d, f)) ? d : f;
   });
-  const gone = draft.filter((d) => !fresh.some((f) => f.slot === d.slot) && d.rows.some((r) => r.done));
+  const gone = draft.filter((d) => !fresh.some((f) => f.slot === d.slot) && d.rows.some((r) => r.done || r.edited));
   return [...merged, ...gone];
 }

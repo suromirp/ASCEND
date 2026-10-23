@@ -317,6 +317,10 @@ describe('een training van voor een naamswijziging', () => {
   it('een onaangeraakte oefening krijgt het plan van nu, wat je deed of ruilde blijft', () => {
     expect(mergeDraft(old, fresh).map((e) => e.name)).toEqual(['Machine Chest Press', 'Row', 'Pulldown']);
   });
+  it('een set die je toevoegde telt ook als aangeraakt', () => {
+    const added = [ex('ex14', [row('o1'), row('o1b')], { name: 'Chest press / bench' })];
+    expect(mergeDraft(added, [fresh[0]])[0].name).toBe('Chest press / bench');
+  });
   it('een afgevinkte oefening die niet meer in de training staat blijft achteraan', () => {
     expect(mergeDraft([...old, ex('ex99', [row('x', { done: true })], { name: 'Oud' })], fresh).map((e) => e.name)).toContain('Oud');
   });
