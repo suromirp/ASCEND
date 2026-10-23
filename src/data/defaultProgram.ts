@@ -139,7 +139,7 @@ function buildTemplates(): SessionTemplate[] {
         { id: 'ex22b', exerciseName: 'Step-Down', sets: 3, reps: '8-10 per been', priority: 'accessory', notes: 'Gecontroleerd excentrisch: langzaam neer.' },
         { id: 'ex23', exerciseName: 'Lying Leg Curl', sets: 3, reps: '10-12', priority: 'accessory' },
         { id: 'ex24', exerciseName: 'Seated Calf Raise', sets: 3, reps: '12-15', priority: 'accessory' },
-        { id: 'ex25', exerciseName: 'Side Plank', sets: 3, reps: '45s', priority: 'optional' },
+        { id: 'ex25', exerciseName: 'Side Plank', sets: 3, reps: '45s', priority: 'optional', notes: 'Per kant.' },
       ],
     },
     {

@@ -53,6 +53,17 @@ describe('what would change', () => {
     expect(onlyDuration).toEqual({ duration: { before: 70, after: 62 } });
   });
 
+  it('an other exercise id alone is no change; an other order or an other exercise is', () => {
+    const data = strengthDataFor(lower, tpl('tpl_lower_a'));
+    const same = mine({ durationMinutes: 62, strengthRir: 1 });
+    const otherIds = data.map((e, i) => ({ ...e, exerciseId: `ander_${i}` }));
+    expect(strengthChangeFor({ ...same, strengthData: otherIds }, lower, tpl('tpl_lower_a'))).toBeUndefined();
+    const swapped = [data[1], data[0], ...data.slice(2)];
+    expect(strengthChangeFor({ ...same, strengthData: swapped }, lower, tpl('tpl_lower_a'))?.exercises).toBeDefined();
+    const renamed = data.map((e, i) => (i === 0 ? { ...e, exerciseName: 'Leg Press' } : e));
+    expect(strengthChangeFor({ ...same, strengthData: renamed }, lower, tpl('tpl_lower_a'))?.exercises).toBeDefined();
+  });
+
   it('counts the sets on both sides when the log had sets of its own', () => {
     const own = mine({ strengthData: [{ exerciseId: 'ex1', exerciseName: 'Squat', sets: [{ reps: 5, weightKg: 90 }, { reps: 5, weightKg: 90 }] }] });
     const change = strengthChangeFor(own, lower, tpl('tpl_lower_a'))!;
