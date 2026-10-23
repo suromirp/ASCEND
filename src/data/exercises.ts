@@ -315,7 +315,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: stel de zitting zo in dat de handgrepen op borsthoogte zijn.',
     'Vaak fout: je schouders naar voren laten rollen.',
   ]),
-  ex('cable-fly', 'Horizontal Cable Fly', ['Cable Chest Fly', 'Cable Crossover', 'Standing Cable Fly', 'Kabel fly', 'Cable Fly'], ['chest'], ['front_delts'], 'cable', 'push_horizontal', false, [
+  ex('cable-fly', 'Horizontal Cable Fly', ['Cable Chest Fly', 'Cable Crossover', 'Standing Cable Fly', 'Kabel fly', 'Cable Fly'], ['chest'], ['front_delts'], 'cable', 'isolation_upper', false, [
     'Doen: met licht gebogen ellebogen breng je de handgrepen in een boog naar elkaar.',
     'Let op: voel de rek in je borst.',
     'Vaak fout: er een pers van maken door de ellebogen te strekken.',
@@ -345,7 +345,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: je trekt met je achterste schouders, niet met je nek.',
     'Vaak fout: te zwaar en met je rug meezwaaien.',
   ]),
-  ex('face-pull', 'Cable Face Pull', ['Cable Rope Face Pull', 'Rope Face Pull', 'Face Pull', 'Low Pulley Cable Face Pull'], ['rear_delts', 'upper_back'], ['traps'], 'cable', 'pull_horizontal', false, [
+  ex('face-pull', 'Cable Face Pull', ['Cable Rope Face Pull', 'Rope Face Pull', 'Face Pull', 'Low Pulley Cable Face Pull'], ['rear_delts', 'upper_back'], ['traps'], 'cable', 'isolation_shoulder', false, [
     'Doen: trek het touw naar je gezicht en spreid je handen uit elkaar.',
     'Let op: ellebogen hoog, de beweging komt vanuit je schouderbladen.',
     'Vaak fout: te zwaar en met je rug naar achteren leunen.',
@@ -372,7 +372,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: schouders omlaag, ellebogen naar je heupen.',
     'Vaak fout: achteroverleunen en de stang naar beneden zwaaien.',
   ]),
-  ex('straight-arm-pulldown', 'Cable Rope Straight Arm Lat Pulldown', ['Cable Straight Arm Pulldown', 'Straight-Arm Pulldown', 'Pulldown met gestrekte armen', 'Straight Arm Pulldown', 'Cable Bar Straight Arm Lat Pulldown'], ['lats'], ['core'], 'cable', 'pull_vertical', false, [
+  ex('straight-arm-pulldown', 'Cable Rope Straight Arm Lat Pulldown', ['Cable Straight Arm Pulldown', 'Straight-Arm Pulldown', 'Pulldown met gestrekte armen', 'Straight Arm Pulldown', 'Cable Bar Straight Arm Lat Pulldown'], ['lats'], ['core'], 'cable', 'isolation_upper', false, [
     'Doen: met bijna gestrekte armen trek je de stang van boven naar je bovenbenen.',
     'Let op: voel je brede rugspieren, niet je armen.',
     'Vaak fout: de ellebogen buigen en er een triceps-oefening van maken.',
@@ -454,7 +454,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: laat ze zakken tot een diepe rek in je borst.',
     'Vaak fout: de bank steiler zetten dan nodig is.',
   ]),
-  ex('low-incline-dumbbell-fly', 'Low Incline Dumbbell Fly', ['Low Incline Dumbbell Chest Fly'], ['chest'], ['front_delts'], 'dumbbell', 'push_horizontal', false, [
+  ex('low-incline-dumbbell-fly', 'Low Incline Dumbbell Fly', ['Low Incline Dumbbell Chest Fly'], ['chest'], ['front_delts'], 'dumbbell', 'isolation_upper', false, [
     'Doen: licht gebogen ellebogen, open je armen in een boog en breng ze weer samen.',
     'Let op: stop als je de rek in je borst voelt.',
     'Vaak fout: een pers van maken door de ellebogen te strekken.',
@@ -474,12 +474,12 @@ export const EXERCISES: Exercise[] = [
     'Let op: je polsen blijven recht boven je ellebogen.',
     'Vaak fout: zo smal pakken dat je polsen knikken.',
   ]),
-  ex('pec-deck-fly', 'Pec Deck Fly', ['Overhand Grip Pec Deck Fly', 'Pec Deck', 'Machine Pec Deck Fly', 'Machine Chest Fly', 'Butterfly Machine'], ['chest'], ['front_delts'], 'machine_stack', 'push_horizontal', false, [
+  ex('pec-deck-fly', 'Pec Deck Fly', ['Overhand Grip Pec Deck Fly', 'Pec Deck', 'Machine Pec Deck Fly', 'Machine Chest Fly', 'Butterfly Machine'], ['chest'], ['front_delts'], 'machine_stack', 'isolation_upper', false, [
     'Doen: breng de armen in een boog voor je borst naar elkaar en laat rustig terugkomen.',
     'Let op: stel de zitting zo in dat je ellebogen op borsthoogte zijn.',
     'Vaak fout: je schouders naar voren laten rollen onderaan de beweging.',
   ]),
-  ex('low-to-high-cable-fly', 'Low-To-High Cable Fly', ['Low To High Cable Fly', 'Low Cable Fly', 'Low To High Cable Crossover'], ['chest'], ['front_delts'], 'cable', 'push_horizontal', false, [
+  ex('low-to-high-cable-fly', 'Low-To-High Cable Fly', ['Low To High Cable Fly', 'Low Cable Fly', 'Low To High Cable Crossover'], ['chest'], ['front_delts'], 'cable', 'isolation_upper', false, [
     'Doen: kabels laag, haal je handen in een boog omhoog naar ooghoogte voor je.',
     'Let op: licht gebogen ellebogen en een rustige terugweg.',
     'Vaak fout: met je romp meezwaaien om het gewicht omhoog te krijgen.',
@@ -524,7 +524,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: laad de schijven aan beide kanten gelijk.',
     'Vaak fout: de schijven laten terugvallen in plaats van afremmen.',
   ]),
-  ex('kelso-shrug', 'Pin-Loaded Row Machine Kelso Shrug', ['Kelso Shrug', 'Machine Kelso Shrug'], ['upper_back', 'traps'], ['rear_delts'], 'machine_stack', 'pull_horizontal', false, [
+  ex('kelso-shrug', 'Pin-Loaded Row Machine Kelso Shrug', ['Kelso Shrug', 'Machine Kelso Shrug'], ['upper_back', 'traps'], ['rear_delts'], 'machine_stack', 'isolation_upper', false, [
     'Doen: borst tegen het kussen, haal je schouderbladen naar elkaar met gestrekte armen.',
     'Let op: de beweging zit in je schouderbladen, je armen blijven recht.',
     'Vaak fout: gaan roeien met je armen.',
@@ -534,7 +534,7 @@ export const EXERCISES: Exercise[] = [
     'Let op: schouder omlaag, je romp blijft recht.',
     'Vaak fout: meedraaien met je romp om het gewicht te halen.',
   ]),
-  ex('dumbbell-pullover', 'Dumbbell Pullover', ['Pullover (Dumbbell)', 'Pullover', 'Dumbbell Pull-Over'], ['lats'], ['chest', 'triceps', 'core'], 'dumbbell', 'pull_vertical', false, [
+  ex('dumbbell-pullover', 'Dumbbell Pullover', ['Pullover (Dumbbell)', 'Pullover', 'Dumbbell Pull-Over'], ['lats'], ['chest', 'triceps', 'core'], 'dumbbell', 'isolation_upper', false, [
     'Doen: lig op een bank, laat één dumbbell met bijna gestrekte armen achter je hoofd zakken en trek hem terug.',
     'Let op: voel de rek in je zij, je ribben blijven laag.',
     'Vaak fout: je onderrug laten doorhangen onderaan.',

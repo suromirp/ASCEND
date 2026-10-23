@@ -428,7 +428,7 @@ describe('KR-7 opwarmsets', () => {
     expect(new Set(w.map((x) => x.weightKg)).size).toBe(w.length);
   });
   it('bij een tweede oefening van hetzelfde patroon blijft het bij één voelset', () => {
-    const w = warmupSets(settings, squat, candidates, 100, 133, true);
+    const w = warmupSets(settings, squat, candidates, 100, 133, 'feel');
     expect(w).toEqual([{ weightKg: 65, reps: 5 }]);
   });
 });

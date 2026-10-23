@@ -25,10 +25,11 @@ import { formatNumberNL } from '../utils/number';
 import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, expectedReps, FATIGUE_PER_SET, prescribe, warmupSets, type Prescription, type WarmupSet } from './strengthModel';
+import { DEFAULT_RIR, expectedReps, FATIGUE_PER_SET, formatWeight, prescribe, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
+import { COMPOUND_PATTERNS, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { setsText } from './macrofactorProgram';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
-import { barFor, candidatesFor } from './strengthWeights';
+import { barFor, candidatesFor, loadFromExternal } from './strengthWeights';
 import { isWorkSet } from './workSets';
 
 // --- the shapes ---------------------------------------------------------------------------
@@ -57,6 +58,10 @@ export interface WorkoutRow {
   // change on an earlier set no longer carries over to this one. Lives in the
   // draft only; it is never part of the log.
   edited?: boolean;
+  // A warm-up row: its weight as a share of the first working weight. While you
+  // do not touch the row, it follows that weight (and an empty row fills in as
+  // soon as set 1 gets a weight). Lives in the draft only.
+  share?: number;
 }
 
 export interface WorkoutExercise {
@@ -101,7 +106,7 @@ const midReps = (t: RowTarget) => Math.round((t.repsLow + t.repsHigh) / 2);
 
 // --- rest ------------------------------------------------------------------------------------
 
-const COMPOUND: Set<MovementPattern> = new Set(['squat', 'hinge', 'lunge_step', 'push_horizontal', 'push_vertical', 'pull_horizontal', 'pull_vertical']);
+const COMPOUND = COMPOUND_PATTERNS;
 const SMALL: Set<MovementPattern> = new Set(['calf', 'shin', 'core', 'hip']);
 
 // The rest after a set, in seconds. Heavier and compound longer: a barbell
@@ -122,6 +127,12 @@ export function estimatedRest(exercise: Exercise | undefined, repsHigh?: number)
   if (exercise.resistance === 'barbell') return REST_BARBELL_COMPOUND;
   return repsHigh !== undefined && repsHigh <= 6 ? REST_COMPOUND_LOW_REPS : REST_COMPOUND;
 }
+
+// After the last warm-up set the rest is short, not the full rest of a working
+// set: 60 seconds after a single ramp or feel set, 90 after a build-up (the
+// research: 60 to 90 seconds after the set at 80%).
+export const REST_AFTER_WARMUP = 90;
+export const REST_AFTER_RAMP = 60;
 
 export function restFor(exerciseId: string, exercise: Exercise | undefined, repsHigh: number | undefined, own: Record<string, number>): number {
   return own[exerciseId] ?? estimatedRest(exercise, repsHigh);
@@ -150,14 +161,26 @@ export interface PlanContext {
 export interface PlanState {
   histories: Map<string, ExerciseHistory>;
   tiredNow?: LegsTired;
-  patternsSeen: Set<MovementPattern>;
+  // What is warm in this training so far (engine/warmup.ts).
+  warm: WarmState;
 }
 
 export function planState(ctx: PlanContext): PlanState {
   const strengthLogs = ctx.logs.filter((l) => l.strengthData && l.strengthData.length > 0);
   const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg };
   const histories = new Map(exerciseHistories(strengthLogs, ctx.templates, deps).map((h) => [h.key, h]));
-  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), patternsSeen: new Set() };
+  return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState() };
+}
+
+// The state for one exercise that is swapped: what is warm is what the exercises
+// before its place in the training have worked.
+export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], slot: string): PlanState {
+  const state = planState(ctx);
+  for (const ex of workout) {
+    if (ex.slot === slot) break;
+    if (!ex.timed) noteWorked(state.warm, exerciseOf(ex));
+  }
+  return state;
 }
 
 function lastSession(history: ExerciseHistory | undefined, date: string) {
@@ -170,7 +193,8 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   const exercise = found.exercise;
   const exerciseId = exercise?.id ?? slot.id;
   const name = exercise?.name ?? cleanExerciseName(slot.exerciseName);
-  const base = parseReps(slot.reps) ?? { repsLow: 8, repsHigh: 10 };
+  const parsed = parseReps(slot.reps);
+  const base = parsed ?? { repsLow: 8, repsHigh: 10 };
   // A program from MacroFactor gives every set its own range and RIR.
   const targets = slot.setTargets && slot.setTargets.length > 0 ? slot.setTargets.slice(0, 10) : undefined;
   const setCount = targets ? targets.length : Math.max(1, Math.min(10, slot.sets || 1));
@@ -183,8 +207,14 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
     return { slot: slot.id, exerciseId, name, known: !!exercise, rows, restSec: restFor(exerciseId, exercise, undefined, ctx.settings.restSeconds), timed: true, ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}) };
   }
 
-  const patternSeen = !!exercise && state.patternsSeen.has(exercise.pattern);
-  if (exercise && COMPOUND.has(exercise.pattern)) state.patternsSeen.add(exercise.pattern);
+  // What warm-up this exercise needs, from what the exercises before it warmed.
+  const warmKind: WarmKind = warmupKind(exercise, state.warm);
+  noteWorked(state.warm, exercise);
+  const tired = !!(exercise?.loadsLegs && state.tiredNow);
+  // The plan (template or program) gives the range and the reps in reserve; the
+  // history is only the fallback (decision 2026-10-23-bereik-uit-het-plan.md).
+  const firstTarget = targets?.find((t) => !t.failure);
+  const plan = targets ? (firstTarget ? { low: firstTarget.repsLow, high: firstTarget.repsHigh, rir: firstTarget.rir } : undefined) : parsed ? { low: parsed.repsLow, high: parsed.repsHigh, ...(slot.rpe !== undefined ? { rir: baseRir } : {}) } : undefined;
   let rx: Prescription | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {
     rx = prescribe({
@@ -193,37 +223,71 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
       date: ctx.date,
       bodyKg: ctx.bodyKg,
       settings: ctx.settings,
-      ...(exercise?.loadsLegs && state.tiredNow ? { tired: state.tiredNow } : {}),
-      patternSeen,
+      ...(tired && state.tiredNow ? { tired: state.tiredNow } : {}),
+      warm: warmKind,
+      ...(plan ? { plan } : {}),
+      nearestOnMismatch: true,
     });
   }
 
   const lastTop = last?.sets.filter(isWorkSet).filter((s) => s.reps > 0).sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
-  const fromProgram = rx && targets ? programWeights(rx, targets, exercise, ctx, lastTop?.weightKg, !!(exercise?.loadsLegs && state.tiredNow), patternSeen) : undefined;
-  const warmups = fromProgram?.warmups ?? rx?.warmups ?? [];
+  const fromProgram = rx && targets ? programWeights(rx, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind) : undefined;
+  const workWeights: (number | undefined)[] = [];
+  for (let i = 0; i < setCount; i++) {
+    const t = targets?.[i];
+    workWeights.push(t ? (fromProgram?.weights[i] ?? (rx ? rx.sets[Math.min(i, rx.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg))) : rx ? rx.sets[Math.min(i, rx.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg));
+  }
+  // Warm-up: from the prescription; with no prescription (no history, or none
+  // with reps in reserve) from the working weight there is, else empty rows that
+  // fill in when set 1 gets a weight.
+  let warmups: WarmupSet[] = fromProgram?.warmups ?? rx?.warmups ?? [];
+  let emptyWarmups: { share: number; reps: number }[] = [];
+  if (!rx && ctx.modelOn && exercise) {
+    const w0 = workWeights[0];
+    if (w0 !== undefined) {
+      const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: w0 });
+      if (candidates) warmups = warmupSets(ctx.settings, exercise, candidates, w0, undefined, warmKind, ctx.bodyKg);
+    } else {
+      emptyWarmups = warmupShapes(ctx.settings, exercise, warmKind);
+    }
+  }
   const rows: WorkoutRow[] = [];
+  const firstWeight = workWeights[0];
   for (const [i, w] of warmups.entries()) {
     const target: RowTarget = { weightKg: w.weightKg, repsLow: w.reps, repsHigh: w.reps };
-    rows.push({ id: `${slot.id}:w${i}`, kind: 'warmup', target, weightKg: w.weightKg, reps: w.reps, done: false });
+    rows.push({ id: `${slot.id}:w${i}`, kind: 'warmup', target, weightKg: w.weightKg, reps: w.reps, done: false, ...(firstWeight ? { share: w.weightKg / firstWeight } : {}) });
+  }
+  for (const [i, w] of emptyWarmups.entries()) {
+    rows.push({ id: `${slot.id}:w${i}`, kind: 'warmup', target: { repsLow: w.reps, repsHigh: w.reps }, reps: w.reps, done: false, share: w.share });
   }
   for (let i = 0; i < setCount; i++) {
     let target: RowTarget;
     const t = targets?.[i];
+    const weightKg = workWeights[i];
     if (t) {
-      const weightKg = fromProgram?.weights[i] ?? (rx ? rx.sets[Math.min(i, rx.sets.length - 1)].weightKg : (slot.targetWeightKg ?? lastTop?.weightKg));
       target = { ...(weightKg !== undefined ? { weightKg } : {}), repsLow: t.repsLow, repsHigh: t.repsHigh, rir: t.rir, ...(t.failure ? { failure: true } : {}) };
     } else if (rx) {
       const s = rx.sets[Math.min(i, rx.sets.length - 1)];
       target = { weightKg: s.weightKg, repsLow: s.repsLow, repsHigh: s.repsHigh, rir: s.rir };
     } else {
-      target = { weightKg: slot.targetWeightKg ?? lastTop?.weightKg, repsLow: base.repsLow, repsHigh: base.repsHigh, rir: baseRir };
+      target = { weightKg, repsLow: base.repsLow, repsHigh: base.repsHigh, rir: baseRir };
     }
-    const reps = target.failure ? target.repsLow : i === 0 && rx && !targets ? rx.targetReps : midReps(target);
+    let reps = target.failure ? target.repsLow : i === 0 && rx && !targets ? rx.targetReps : midReps(target);
+    // With a program the row starts at what the model expects at this weight, never
+    // above it (and not outside the range): ticking is then honest.
+    if (t && rx && !t.failure && target.weightKg !== undefined) {
+      const load = loadFromExternal(exercise, target.weightKg, ctx.bodyKg);
+      if (load !== undefined) {
+        const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - FATIGUE_PER_SET) ** i;
+        reps = Math.min(reps, Math.max(t.repsLow, expectedReps(strength, load, t.rir)));
+      }
+    }
     rows.push({ id: `${slot.id}:s${i}`, kind: 'work', target, ...(target.weightKg !== undefined ? { weightKg: target.weightKg } : {}), reps, ...(target.rir !== undefined ? { rir: target.rir } : {}), done: false });
   }
   const repsHigh = rows.find((r) => r.kind === 'work')?.target.repsHigh;
   const programRest = targets?.find((x) => x.restSec !== undefined)?.restSec;
-  const reason = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${setsText(targets!)}; het gewicht volgt uit je geschatte kracht.` : rx.reason) : undefined;
+  const why = rx ? (fromProgram?.differs ? `Je programma vraagt nu ${setsText(targets!)}; het gewicht volgt uit je geschatte kracht.` : rx.reason) : undefined;
+  const reason = why && rx?.notice ? `${rx.notice} ${why}` : why;
   return {
     slot: slot.id,
     exerciseId,
@@ -243,7 +307,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
 // earlier set, unless the sets are equal) still gives the bottom of the
 // range with the asked reps left. A set whose range and RIR are Forge's own
 // keeps Forge's weight, with its limits per training (KR-5).
-function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, patternSeen: boolean): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
+function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, warm: WarmKind): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
   const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg });
   if (!candidates) return undefined;
   let differs = false;
@@ -261,7 +325,7 @@ function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exerci
     }
     return candidates[idx].externalKg;
   });
-  const warmups = differs ? warmupSets(ctx.settings, exercise, candidates, weights[0], rx.strengthKg, patternSeen) : rx.warmups;
+  const warmups = differs ? warmupSets(ctx.settings, exercise, candidates, weights[0], rx.strengthKg, warm, ctx.bodyKg) : rx.warmups;
   return { weights, warmups, differs };
 }
 
@@ -297,11 +361,13 @@ export interface TickResult {
 // exercise, not after the other warm-up sets, and not after the very last set
 // of the training.
 // A ticked row with what is still empty filled in from its target.
-function fillTicked(row: WorkoutRow): WorkoutRow {
+// A working set ticked with no weight takes the weight of the set before it
+// (`carryKg`): a set of 7 reps with no weight would count for nothing.
+function fillTicked(row: WorkoutRow, carryKg?: number): WorkoutRow {
   return {
     ...row,
     done: true,
-    ...(row.weightKg === undefined && row.target.weightKg !== undefined ? { weightKg: row.target.weightKg } : {}),
+    ...(row.weightKg === undefined && row.target.weightKg !== undefined ? { weightKg: row.target.weightKg } : row.weightKg === undefined && row.kind === 'work' && carryKg !== undefined ? { weightKg: carryKg } : {}),
     ...(row.reps === undefined ? { reps: row.target.timedSec ?? midReps(row.target) } : {}),
     ...(row.rir === undefined && row.kind === 'work' && row.target.rir !== undefined ? { rir: row.target.rir } : {}),
   };
@@ -313,7 +379,19 @@ export function tickAllRows(workout: WorkoutExercise[], slot: string): TickResul
   const ex = workout.find((e) => e.slot === slot);
   if (!ex || ex.rows.length === 0) return { workout };
   const untick = ex.rows.every((r) => r.done);
-  const next = workout.map((e) => (e.slot === slot ? { ...e, rows: e.rows.map((r) => (untick ? { ...r, done: false } : r.done ? r : fillTicked(r))) } : e));
+  let carry: number | undefined;
+  const next = workout.map((e) =>
+    e.slot === slot
+      ? {
+          ...e,
+          rows: e.rows.map((r) => {
+            const out = untick ? { ...r, done: false } : r.done ? r : fillTicked(r, carry);
+            if (r.kind === 'work' && out.weightKg !== undefined) carry = out.weightKg;
+            return out;
+          }),
+        }
+      : e,
+  );
   if (untick) return { workout: next };
   const allDone = next.every((e) => e.rows.every((r) => r.done));
   return allDone ? { workout: next } : { workout: next, restSec: ex.restSec };
@@ -324,14 +402,18 @@ export function tickRow(workout: WorkoutExercise[], slot: string, rowId: string)
   const row = ex?.rows.find((r) => r.id === rowId);
   if (!ex || !row) return { workout };
   const done = !row.done;
-  const filled: WorkoutRow = done ? fillTicked(row) : { ...row, done };
+  const index = ex.rows.indexOf(row);
+  const before = ex.rows.slice(0, index).reverse().find((r) => r.kind === 'work' && r.weightKg !== undefined)?.weightKg;
+  const filled: WorkoutRow = done ? fillTicked(row, before) : { ...row, done };
   const next = workout.map((e) => (e.slot === slot ? { ...e, rows: e.rows.map((r) => (r.id === rowId ? filled : r)) } : e));
   if (!done) return { workout: next };
-  const index = ex.rows.indexOf(row);
   const lastWarmup = row.kind === 'warmup' && !ex.rows.slice(index + 1).some((r) => r.kind === 'warmup');
   const allDone = next.every((e) => e.rows.every((r) => r.done));
   const rest = (row.kind === 'work' || lastWarmup) && !allDone;
-  return rest ? { workout: next, restSec: ex.restSec } : { workout: next };
+  if (!rest) return { workout: next };
+  if (row.kind === 'work') return { workout: next, restSec: ex.restSec };
+  const single = ex.rows.filter((r) => r.kind === 'warmup').length === 1;
+  return { workout: next, restSec: Math.min(ex.restSec, single ? REST_AFTER_RAMP : REST_AFTER_WARMUP) };
 }
 
 // One more working set (a copy of the last one, not ticked) or warm-up set (in
@@ -403,12 +485,15 @@ export function repsText(t: RowTarget): string {
 }
 
 // "47,5 kg x 11-13" in the prescription column. A hold: "45 sec".
-export function targetText(row: WorkoutRow): string {
+// With help on an assisted machine: "hulp 30 kg × 9-11", not "-30 kg".
+export function targetText(row: WorkoutRow, exercise?: Exercise): string {
   const t = row.target;
   if (t.timedSec !== undefined) return `${t.timedSec} sec`;
   const reps = repsText(t);
-  return t.weightKg !== undefined ? `${kgText(t.weightKg)} kg × ${reps}` : `${reps} herh.`;
+  return t.weightKg !== undefined ? `${weightText(t.weightKg, exercise)} × ${reps}` : `${reps} herh.`;
 }
+
+const weightText = (kg: number, exercise?: Exercise): string => (exercise?.resistance === 'assisted_bodyweight' ? formatWeight(exercise, kg) : `${kgText(kg)} kg`);
 
 // The set of last time at the same place: the n-th warm-up for a warm-up row,
 // the n-th working set for a working row.
@@ -420,9 +505,9 @@ export function previousFor(ex: WorkoutExercise, row: WorkoutRow): SetLog | unde
   return prev[n];
 }
 
-export function previousText(set: SetLog | undefined): string | undefined {
+export function previousText(set: SetLog | undefined, exercise?: Exercise): string | undefined {
   if (!set) return undefined;
-  return set.weightKg !== undefined ? `${kgText(set.weightKg)} kg × ${set.reps}` : `${set.reps} herh.`;
+  return set.weightKg !== undefined ? `${weightText(set.weightKg, exercise)} × ${set.reps}` : `${set.reps} herh.`;
 }
 
 // --- plates ----------------------------------------------------------------------------------

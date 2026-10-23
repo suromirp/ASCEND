@@ -101,7 +101,7 @@ export const CHOICES = {
   opwarmen: def({
     group: 'Forge',
     title: 'Opwarmen',
-    line: 'Nooit bij lichte gewichten en isolatie.',
+    line: 'Volledig bij de eerste zware oefening, daarna één set of niets.',
     advice: 'smart' as 'smart' | 'scheme' | 'off',
     options: [
       { value: 'smart', label: 'Slim', note: 'Uit je geschatte kracht en je schijven' },

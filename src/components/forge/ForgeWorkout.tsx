@@ -21,6 +21,7 @@ import {
   copyRow,
   exerciseComplete,
   exerciseSummary,
+  makeLight,
   makeSnap,
   plateShortText,
   nextField,
@@ -43,7 +44,7 @@ import {
   hardestLegRir,
   legDayLine,
   planExercise,
-  planState,
+  planStateBefore,
   planWorkout,
   plateSteps,
   previousFor,
@@ -366,7 +367,7 @@ export function ForgeWorkout({
         if (e.slot !== d.slot) return e;
         if (d.field === 'reps') return applyReps(e, d.rowId, v);
         if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
-        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), strength.profile, bodyKg, v), weightBounds(exerciseOf(e)).min);
+        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), strength.profile, bodyKg, v), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), strength.profile));
       }),
     );
   }
@@ -433,7 +434,7 @@ export function ForgeWorkout({
   function swap(slot: string, exerciseId: string | null) {
     const prescription = slots.find((s) => s.id === slot);
     if (!prescription) return;
-    const state = planState(ctx);
+    const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
     setExercise(slot, () => planExercise(prescription, ctx, state, to));
   }
@@ -892,7 +893,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
             {ex.rows.map((row, i) => {
               if (row.kind === 'work') workNo++;
               const label = row.kind === 'warmup' ? 'W' : String(workNo);
-              const prev = previousText(previousFor(ex, row));
+              const prev = previousText(previousFor(ex, row), exerciseOf(ex));
               const step = plates?.[i];
               const isActive = !readOnly && active === row.id;
               const fieldOn = (name: FieldName) => field?.slot === ex.slot && field.rowId === row.id && field.field === name;
@@ -980,7 +981,7 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
     <>
       <span className="block">
         {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
-        {targetText(row).split(' × ').map((part, k) => (
+        {targetText(row, exerciseOf(ex)).split(' × ').map((part, k) => (
           <Fragment key={k}>
             {k > 0 && ' '}
             <span className="whitespace-nowrap">{k > 0 ? `× ${part}` : part}</span>

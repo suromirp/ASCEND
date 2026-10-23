@@ -44,7 +44,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         >
           <SummaryRow id="forge-volgorde" title="Eerst ophogen" facts={facts} onClick={() => setSheet('forge-volgorde')} />
           <SummaryRow id="forge-sets" title="Werksets" facts={facts} onClick={() => setSheet('forge-sets')} />
-          <SummaryRow id="forge-opwarmen" title="Opwarmen" facts={facts} onClick={() => setSheet('forge-opwarmen')} />
+          <SummaryRow id="forge-opwarmen" title="Opwarmen" facts={facts} info="forgeOpwarmen" onClick={() => setSheet('forge-opwarmen')} />
         </SettingsSection>
       ) : (
         <SettingsSection title="Voorstellen">
