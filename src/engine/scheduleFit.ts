@@ -186,7 +186,7 @@ export function computeSportDisableProposal(
     .map((s) => ({
       plannedSessionId: s.id,
       action: 'remove' as const,
-      reason: `${sportLabel} staat uit in Instellingen → Training.`,
+      reason: `${sportLabel} staat uit in Instellingen, Planning.`,
       generatedBy: ['engine/scheduleFit.ts#computeSportDisableProposal'],
     }));
   return {
@@ -196,7 +196,7 @@ export function computeSportDisableProposal(
     changes: items,
     alternatives: [],
     consequences: items.length > 0 ? `${items.length} geplande ${items.length === 1 ? 'training vervalt' : 'trainingen vervallen'} (${sportLabel.toLowerCase()}). Loggen kan altijd.` : `Er stond niets meer gepland (${sportLabel.toLowerCase()}).`,
-    explanation: `${sportLabel} uitgezet in Instellingen → Training.`,
+    explanation: `${sportLabel} uitgezet in Instellingen, Planning.`,
     createdAt: new Date().toISOString(),
   };
 }
@@ -236,7 +236,7 @@ export function computeSportEnableProposal(
       items.push({
         action: 'add',
         newSessionDraft: { templateId: t.id, scheduledDate: date, weekStartDate: weekStart },
-        reason: `${sportLabel} staat weer aan in Instellingen → Training.`,
+        reason: `${sportLabel} staat weer aan in Instellingen, Planning.`,
         generatedBy: ['engine/scheduleFit.ts#computeSportEnableProposal'],
       });
     }
@@ -255,7 +255,7 @@ export function computeSportEnableProposal(
         : noRoom > 0
           ? `Er is niets toegevoegd: op die dag staat al een andere sessie en er is geen ruimte voor een tweede. Kies een andere dag, of geef die dag meer tijd bij Trainingstijd per dag.`
           : `Er hoeft niets bij: ${sportLabel.toLowerCase()} staat al op de planning.`,
-      explanation: `${sportLabel} aangezet in Instellingen → Training.`,
+      explanation: `${sportLabel} aangezet in Instellingen, Planning.`,
       createdAt: new Date().toISOString(),
     },
   };

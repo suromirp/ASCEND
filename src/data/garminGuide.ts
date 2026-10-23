@@ -38,7 +38,7 @@ const PUBMED_CALORIES: GuideSource = { label: 'PubMed, wetenschappelijke literat
 export const GARMIN_ZONE_SETUP: GuideCard = {
   heading: 'HARTSLAGZONES INSTELLEN',
   body: `Sport Heart Rate → Running → Based on %LTHR, met je eigen drempelhartslag (LTHR). Voor hardlopen geven sportspecifieke zones op basis van %LTHR een preciezer beeld dan alleen generieke %Max HR-zones. Laat Max HR- en LTHR automatic detection aan staan zodat Garmin nieuwe betrouwbare waarden kan voorstellen na voldoende activiteiten, de lactaatdrempelmeting vereist wel een compatibele borstband.`,
-  note: `Vul je eigen waarden in bij Meer, Training, Mijn hartslag: dan staan de zones in bpm bij elke training. Gebruik hartslag niet als enige waarheid, een percentagezone is niet hetzelfde als een laboratoriummeting van je aerobe drempel. Talk test + RPE + HR samen blijven de beste praktische combinatie.`,
+  note: `Vul je eigen waarden in bij Instellingen, Lichaam, Mijn hartslag: dan staan de zones in bpm bij elke training. Gebruik hartslag niet als enige waarheid, een percentagezone is niet hetzelfde als een laboratoriummeting van je aerobe drempel. Talk test + RPE + HR samen blijven de beste praktische combinatie.`,
   sources: [GARMIN_ZONES, GARMIN_AUTO_DETECT],
 };
 

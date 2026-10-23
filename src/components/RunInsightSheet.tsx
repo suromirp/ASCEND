@@ -69,7 +69,7 @@ export function RunInsightSheet({ model, notCompared = [], onClose }: { model: S
                   <div key={part.heading} className="flex flex-col gap-1">
                     <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{part.heading}</p>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{part.text}</p>
-                    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{part.evidence}. Bronnen: {part.sources.join(', ')}. Alle bronnen staan bij Meer, Kennis.</p>
+                    <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{part.evidence}. Bronnen: {part.sources.join(', ')}. Alle bronnen staan bij Instellingen, Gidsen en kennis, Bronnen.</p>
                   </div>
                 ))}
               </div>

@@ -144,7 +144,7 @@ export function computeSportFrequencyPlan(inputs: SportFrequencyInputs): SportFr
           : shortWeeks === 0 ? `Je planning heeft al ${perWeek}x ${label.toLowerCase()} per week.` : '',
         ...warnings,
       ].filter(Boolean).join(' '),
-      explanation: `${label} op ${perWeek}x per week gezet in Instellingen → Training.`,
+      explanation: `${label} op ${perWeek}x per week gezet in Instellingen, Planning.`,
       createdAt: new Date().toISOString(),
     },
   };
