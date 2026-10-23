@@ -11,6 +11,7 @@ import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
 import { useMorningPrefill } from './useMorningPrefill';
+import { markMorningAnswered } from './useMorningCardVisible';
 
 // De ochtendvraag bovenaan Vandaag, boven de missiekaart (docs/beslissingen/2026-10-23-
 // ochtendkaart-en-melding.md): "Goedemorgen. Hoe voel je je?" met één regel van wat het
@@ -34,6 +35,7 @@ export function MorningCard() {
     if (spot) { setSheet({ legs }); return; }
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
     const entry = { date: today, legs, energy: prefill.energy?.value, sleep: prefill.sleep?.value };
+    markMorningAnswered(today);
     void updateSettings({ morningCheckIns: [...others, entry].sort((a, b) => a.date.localeCompare(b.date)).slice(-60) });
   };
   // Wel iets van het horloge, geen slaap: die komt via Garmin Connect soms later bij intervals.icu.
@@ -51,6 +53,29 @@ export function MorningCard() {
   }
   const fetchNote = fetching === 'busy' ? 'Even kijken bij intervals.icu...' : fetching === 'tried' ? 'Nog geen slaap bij intervals.icu' : fetching === 'failed' ? 'Ophalen lukte niet. Probeer het straks nog eens.' : fetching === 'slow' ? 'Dit duurt te lang. Probeer het straks nog eens.' : '';
   const suggestedText = suggested ? LEGS.find(([k]) => k === suggested.value)?.[1] : undefined;
+  const answered = checkInFor(today, settings.morningCheckIns);
+  const undo = () => {
+    void updateSettings({ morningCheckIns: (settings.morningCheckIns ?? []).filter((c) => c.date !== today) });
+  };
+
+  // Net beantwoord: de kaart blijft klein staan, zodat je ziet wat je koos en het
+  // kunt wijzigen of ongedaan maken. Later op de dag kan dat via Gevoel in Je dag.
+  if (answered) {
+    const legsText = answered.allNormal ? 'Gaat goed' : `Benen ${(LEGS.find(([k]) => k === answered.legs)?.[1] ?? 'ingevuld').toLowerCase()}`;
+    return (
+      <>
+        <Card className="flex flex-col gap-2">
+          <Eyebrow>Vanochtend</Eyebrow>
+          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{legsText}. Opgeslagen.</p>
+          <div className="flex gap-2">
+            <button onClick={() => setSheet({})} className="min-h-[44px] flex-1 rounded-xl border px-3 text-sm font-medium" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>Wijzigen</button>
+            <button onClick={undo} className="min-h-[44px] flex-1 rounded-xl border px-3 text-sm font-medium" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>Ongedaan maken</button>
+          </div>
+        </Card>
+        {sheet && <MorningCheckInSheet onClose={() => setSheet(null)} />}
+      </>
+    );
+  }
 
   return (
     <>

@@ -4,10 +4,19 @@ import { morningFromHour, showMorningCardSetting } from '../engine/overviewSetti
 import { showMorningCard } from '../engine/morningCard';
 import { todayISO } from '../utils/dates';
 
+// De dag waarop je de ochtendkaart in dit bezoek beantwoordde: dan blijft de kaart
+// staan, klein, met Wijzigen en Ongedaan maken, zodat je ziet wat je koos.
+let answeredOn: string | null = null;
+export function markMorningAnswered(day: string) {
+  answeredOn = day;
+}
+
 // Staat de ochtendkaart er nu? (engine/morningCard.ts#showMorningCard)
 export function useMorningCardVisible(): boolean {
   const { settings, sessionLogs } = useAppData();
   const today = todayISO();
+  const checkIn = checkInFor(today, settings.morningCheckIns);
+  if (checkIn && answeredOn === today && showMorningCardSetting(settings.overviews)) return true;
   return showMorningCard({
     enabled: showMorningCardSetting(settings.overviews),
     hour: new Date().getHours(),

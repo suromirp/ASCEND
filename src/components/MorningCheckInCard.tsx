@@ -29,8 +29,8 @@ export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { pai
   if (!ask && !existing) return null;
   // Voor het begin van de ochtend (instelbaar, standaard 5 uur) vraagt ASCEND nog niets.
   if (!existing && new Date().getHours() < morningFromHour(settings.overviews)) return null;
-  // De ochtendkaart staat er nog: die stelt de vraag, deze regel wacht tot er een antwoord is.
-  if (hideTodo && !existing) return null;
+  // De ochtendkaart staat er nog: die stelt de vraag of toont het antwoord, dus deze regel niet.
+  if (hideTodo) return null;
 
   function allNormal() {
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);

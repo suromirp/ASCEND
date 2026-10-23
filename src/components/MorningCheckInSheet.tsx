@@ -121,6 +121,15 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose }: 
             Opslaan
           </button>
         </div>
+        {existing && !painOnly && (
+          <button
+            onClick={() => { void updateSettings({ morningCheckIns: (settings.morningCheckIns ?? []).filter((c) => c.date !== today) }); onClose(); }}
+            className="min-h-[44px] rounded-xl border px-3.5 text-sm font-medium"
+            style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          >
+            Antwoord van vanochtend wissen
+          </button>
+        )}
         <SettingsLinkRow page="vandaag" row="ochtendcheck" />
       </div>
     </TodaySheet>
