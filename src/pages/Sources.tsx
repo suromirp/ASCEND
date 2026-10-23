@@ -3,10 +3,9 @@
 // where in the app it is used.
 
 import { useMemo } from 'react';
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { usePageState } from '../components/usePageState';
 
 const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
@@ -21,13 +20,7 @@ export function SourcesPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>BRONNEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar de adviezen in ASCEND op gebaseerd zijn</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Kennis" title="Bronnen" line="Waar de adviezen in ASCEND op gebaseerd zijn" />
 
       <input
         type="search"

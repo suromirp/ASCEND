@@ -10,7 +10,6 @@ import { findRequirement } from '../engine/goals';
 import { computeExerciseProgression, listLoggedExercises } from '../engine/strengthProgression';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { NextTrekLine } from '../components/NextTrekLine';
 import { TrekGoalsCard } from '../components/TrekGoals';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
@@ -20,7 +19,7 @@ import { TrainingSplitSheet } from '../components/TrainingSplitSheet';
 import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../data/gr5Details';
 import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num } from '../components/ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num, PageHeader } from '../components/ui';
 import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
@@ -292,13 +291,7 @@ export function GoalsPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-4">
-      <div className="flex items-center gap-1">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>DOELEN</Eyebrow>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen.</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Doelen" line="Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen." fallback="/ascend" />
 
       <SeasonCard />
 

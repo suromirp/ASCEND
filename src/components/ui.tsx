@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { haptics } from '../utils/haptics';
+import { BackButton } from './BackButton';
 import { Icon } from './icons';
 import './settings/settings.css';
 
@@ -150,6 +151,35 @@ export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'd
     <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-medium uppercase tracking-[0.16em]`} style={{ color: 'var(--color-bronze)' }}>
       {children}
     </Tag>
+  );
+}
+
+// De kop van elke subpagina, in dezelfde stijl als de hoofdschermen: terugknop,
+// Eyebrow, grote titel in Marcellus en hoogstens één regel eronder. `right` is
+// voor wat rechtsboven staat (het tandwiel van de pagina, 44 bij 44 px).
+export function PageHeader({
+  eyebrow,
+  title,
+  line,
+  fallback,
+  right,
+}: {
+  eyebrow?: string;
+  title: string;
+  line?: string;
+  fallback?: string;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <BackButton fallback={fallback} />
+      <div className="min-w-0 flex-1 pt-1">
+        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+        <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h1>
+        {line && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+      </div>
+      {right}
+    </div>
   );
 }
 

@@ -1,18 +1,11 @@
-import { BackButton } from '../components/BackButton';
 import { GARMIN_DATA_SCREENS, GARMIN_METRICS, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 
 export function GarminGuidePage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>GARMIN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zones, dataschermen en hoe je de meetwaarden leest</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Garmin" line="Zones, dataschermen en hoe je de meetwaarden leest" />
 
       <GuideCardView card={GARMIN_ZONE_SETUP} />
       <GuideCardView card={GARMIN_STRAP_USAGE} />

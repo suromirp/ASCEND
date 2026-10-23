@@ -3,8 +3,7 @@
 // data/packList.ts). Opened from the reisplanner and from Ascend.
 
 import { useState } from 'react';
-import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, SecondaryButton, PageHeader } from '../components/ui';
 import { CheckCircle } from '../components/reis/CheckCircle';
 import { PackItemSheet } from '../components/reis/PackItemSheet';
 import { usePackList } from '../components/reis/usePackList';
@@ -30,13 +29,7 @@ export function PackListPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-4">
-      <div className="flex items-center gap-1">
-        <BackButton fallback="/reis" />
-        <div>
-          <Eyebrow>PAKLIJST</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Wat er in je rugzak gaat</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Reis" title="Paklijst" line="Wat er in je rugzak gaat" fallback="/reis" />
 
       <Card className="flex flex-col gap-1" texture>
         <Eyebrow>BASISGEWICHT</Eyebrow>

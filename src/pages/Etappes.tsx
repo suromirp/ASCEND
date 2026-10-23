@@ -6,9 +6,8 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { StageSheet } from '../components/StageSheet';
-import { Card, Eyebrow, Num, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, Num, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useTripPlan } from '../state/useTripPlan';
 import { GR5_SECTIONS, GR5_STAGES, STAGES_SOURCE, STAGES_SOURCE_URL, STAGES_TAKEN_ON, stagesOfSection, type Gr5Stage } from '../data/gr5Stages';
@@ -44,13 +43,7 @@ export function EtappesPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>ETAPPEPLAN</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>De 36 etappes van de GR5</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Etappes" line="De 36 etappes van de GR5" fallback="/ascend" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Van het Meer van Genève naar Nice. Alles staat in de app, dus ook zonder bereik kun je het nalezen. Kies per etappe waar je slaapt, of je haar samenvoegt met de volgende of een rustdag neemt.
       </p>

@@ -4,8 +4,7 @@
 
 import { useLayoutEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow, PrimaryButton } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, PageHeader } from '../components/ui';
 import { CheckCircle } from '../components/reis/CheckCircle';
 import { JourneyTaskSheet } from '../components/reis/JourneyTaskSheet';
 import { useJourney } from '../components/reis/useJourney';
@@ -51,15 +50,7 @@ export function JourneyPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-4">
-      <div className="flex items-center gap-1">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>REISPLANNER</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>
-            {goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'}
-          </p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Reisplanner" line={goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'} fallback="/ascend" />
 
       {!goalDate ? (
         <Card className="flex flex-col gap-3">

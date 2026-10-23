@@ -5,9 +5,8 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { Portal } from '../components/Portal';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useTripPlan } from '../state/useTripPlan';
 import { buildItinerary, itineraryTotals } from '../engine/routePlan';
@@ -52,13 +51,7 @@ export function AlleenOnderwegPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton fallback="/ascend" />
-        <div>
-          <Eyebrow>ALLEEN ONDERWEG</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Je kaart voor als het misgaat</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Ascend" title="Alleen onderweg" line="Je kaart voor als het misgaat" fallback="/ascend" />
 
       <Card className="flex flex-col gap-3" texture>
         <Eyebrow>ALARM</Eyebrow>

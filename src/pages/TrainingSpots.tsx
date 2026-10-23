@@ -6,11 +6,10 @@
 import { formatNumberNL } from '../utils/number';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { FLAT_COUNTRY_TIPS, HOME_PLACES, TRAINING_SPOTS, type SpotUse, type TrainingSpot } from '../data/trainingSpots';
 import { filterForTraining, spotSession, spotTrainings, spotsForTraining, TRAINING_FILTERS, travelAdvice, type HomeLocation, type TrainingFilter } from '../engine/trainingSpots';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 
 const USE_LABEL: Record<SpotUse, string> = {
   bergop: 'bergop', bergaf: 'bergaf', trap: 'trap', rugzak: 'rugzak', heuvelintervallen: 'heuvelintervallen', 'lange tocht': 'lange tocht', vlak: 'vlak', duurloop: 'duurloop',
@@ -53,13 +52,7 @@ export function TrainingSpotsPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSPLEKKEN</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar je welke training doet, met hoogtemeters en lengte</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Trainingsplekken" line="Waar je welke training doet, met hoogtemeters en lengte" />
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>VANAF</Eyebrow>

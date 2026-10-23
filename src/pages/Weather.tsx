@@ -11,9 +11,8 @@
 // in a short message: no button stays on "Bezig" when an answer stalls.
 
 import { useState } from 'react';
-import { BackButton } from '../components/BackButton';
 import { Icon } from '../components/icons';
-import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { clearWeather } from '../storage/weather';
 import { OPEN_METEO_SITE, openMeteoErrorMessage, searchPlaces, type PlaceResult } from '../integrations/openMeteo';
@@ -118,13 +117,7 @@ export function WeatherPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>WEER</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Het weer bij je buitentraining, voor je plaats</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Buiten" title="Weer" line="Het weer bij je buitentraining, voor je plaats" />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>Je plaats</Eyebrow>

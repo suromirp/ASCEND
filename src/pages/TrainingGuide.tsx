@@ -1,8 +1,7 @@
-import { BackButton } from '../components/BackButton';
 import { useAppData } from '../state/AppDataContext';
 import { TRAINING_GUIDES, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { todayISO } from '../utils/dates';
 import { usePageState } from '../components/usePageState';
 
@@ -25,13 +24,7 @@ export function TrainingGuidePage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <p className="font-display text-lg" style={{ color: 'var(--color-bronze)' }}>TRAININGSGIDS</p>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Maand 1, Basisfase, dag voor dag</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Trainingsgids" line="Maand 1, basisfase, dag voor dag" />
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>DOEL VAN DEZE FASE</Eyebrow>

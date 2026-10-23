@@ -1,7 +1,6 @@
-import { BackButton } from '../components/BackButton';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS } from '../data/stretches';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, PageHeader } from '../components/ui';
 import { StretchItems } from '../components/StretchList';
 
 // One page per problem area (not a shared list with a section expanded) so
@@ -25,13 +24,7 @@ export function StretchAreaPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center gap-3">
-        <BackButton />
-        <div>
-          <Eyebrow>Rekken</Eyebrow>
-          <h1 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{area.label}</h1>
-        </div>
-      </div>
+      <PageHeader eyebrow="Rekken" title={area.label} />
 
       <Card>
         <StretchItems stretches={area.stretches} className="flex flex-col" />

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Icon } from './icons';
 
 // Back to where you came from, or to Meer when the page was opened directly
 // (a link, a bookmark): navigate(-1) would then leave the app.
@@ -9,10 +10,10 @@ export function BackButton({ fallback = '/more' }: { fallback?: string }) {
     <button
       onClick={() => (canGoBack ? navigate(-1) : navigate(fallback))}
       aria-label="Terug"
-      className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center text-2xl"
+      className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center"
       style={{ color: 'var(--color-ink-dim)' }}
     >
-      ‹
+      <Icon name="terug" size={24} />
     </button>
   );
 }

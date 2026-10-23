@@ -3,7 +3,7 @@
 
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
-import { Card, Eyebrow } from '../components/ui';
+import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { CATEGORY_LABEL, KNOWLEDGE_TOPICS, knowledgeContent, topicById, type KnowledgeCategory } from '../data/knowledge';
 import { useWeeklyLesson } from '../components/useWeeklyLesson';
@@ -19,13 +19,7 @@ export function KnowledgePage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-2">
-        <BackButton />
-        <div>
-          <Eyebrow>KENNISBANK</Eyebrow>
-          <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Alles voor onderweg</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Gidsen" title="Kennisbank" line="Alles voor onderweg" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {ready.length} van {KNOWLEDGE_TOPICS.length} onderwerpen staan klaar, {read.filter((id) => topicById(id)).length} gelezen. Elke week kiest ASCEND er een voor je uit, op Vandaag.
       </p>
@@ -87,11 +81,7 @@ export function KnowledgeTopicPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <div className="flex items-center gap-2">
-        <BackButton fallback="/kennis" />
-        <Eyebrow>{CATEGORY_LABEL[topic.category].toUpperCase()}</Eyebrow>
-      </div>
-      <h1 className="font-display text-2xl leading-snug" style={{ color: 'var(--color-ink)' }}>{topic.title}</h1>
+      <PageHeader eyebrow={CATEGORY_LABEL[topic.category]} title={topic.title} fallback="/kennis" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{content.intro}</p>
 
       {content.videos.length > 0 && (
