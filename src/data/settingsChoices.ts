@@ -109,6 +109,16 @@ export const CHOICES = {
       { value: 'off', label: 'Uit', note: 'Geen opwarmsets' },
     ],
   }),
+  opwarmbereik: def({
+    group: 'Forge',
+    title: 'Opwarmen per',
+    line: 'Wie de volle opbouw krijgt.',
+    advice: 'group' as 'group' | 'exercise',
+    options: [
+      { value: 'group', label: 'Per spiergroep', note: 'Volle opbouw bij de eerste zware oefening van benen of bovenlichaam, daarna één set', short: 'Per spiergroep' },
+      { value: 'exercise', label: 'Per oefening', note: 'Elke samengestelde oefening de volle opbouw', short: 'Per oefening' },
+    ],
+  }),
   schatting: def({
     group: 'Forge',
     title: 'Sets die meetellen',

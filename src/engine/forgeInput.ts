@@ -167,7 +167,8 @@ export const exerciseComplete = (ex: WorkoutExercise): boolean => {
 // nothing sticks at zero on the way.
 // Changing the first working set also moves the warm-up rows you did not touch
 // (they keep their share of it), and fills the empty ones; with `isLight` an
-// empty row goes away when the weight turns out to be too light to warm up for.
+// untouched row goes away when the weight turns out to be too light to warm up
+// for, and so does one that rounds to 92% or more of the working weight.
 export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: number | undefined, carry: boolean, snap?: (kg: number) => number, min = 0, isLight?: (kg: number) => boolean): WorkoutExercise {
   const index = base.rows.findIndex((r) => r.id === rowId);
   if (index < 0) return base;
@@ -187,8 +188,11 @@ export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: numb
     const light = isLight?.(weightKg) ?? false;
     rows = rows.flatMap((r) => {
       if (r.kind !== 'warmup' || r.done || r.edited || r.share === undefined) return [r];
-      if (r.weightKg === undefined && light) return [];
+      // Too light to warm up for: the rows you did not touch go away.
+      if (light) return [];
       const w = round(r.share * weightKg);
+      // A row that rounds up to (nearly) the working weight is no warm-up any more.
+      if (w >= weightKg * 0.92) return [];
       return [{ ...r, weightKg: w, target: { ...r.target, weightKg: w } }];
     });
   }

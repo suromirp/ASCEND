@@ -61,10 +61,14 @@ export function warmupKind(exercise: Exercise | undefined, state: WarmState): Wa
 }
 
 // The exercise is planned or done: its muscles are warm for the next one.
-export function noteWorked(state: WarmState, exercise: Exercise | undefined): void {
+// `warmed` says the exercise itself could get warm-up sets (not mostly body
+// weight, not a light weight). A compound exercise that could not does not make
+// the body part count as warm: a heavy squat after a glute bridge still gets
+// its build-up.
+export function noteWorked(state: WarmState, exercise: Exercise | undefined, warmed = true): void {
   if (!exercise) return;
   for (const m of exercise.primary) state.muscles.set(m, 1);
-  if (isCompound(exercise)) {
+  if (isCompound(exercise) && warmed) {
     for (const m of exercise.secondary) state.muscles.set(m, Math.max(state.muscles.get(m) ?? 0, 0.5));
     state.regions.add(regionOf(exercise));
     state.patterns.add(exercise.pattern);

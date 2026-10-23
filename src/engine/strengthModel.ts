@@ -332,7 +332,8 @@ export interface PrescribeInput {
   // The rep range and the reps in reserve of the plan (the template or the
   // program). They win over what is derived from the history, which is only the
   // fallback (decision 2026-10-23-bereik-uit-het-plan.md).
-  plan?: { low: number; high: number; rir?: number };
+  // After a swap only `rir` is given: the range of the other exercise is not its own.
+  plan?: { low?: number; high?: number; rir?: number };
   // A last weight the gym profile cannot make: do not refuse, take the nearest
   // weight it can make and say so (`notice`).
   nearestOnMismatch?: boolean;
@@ -431,6 +432,8 @@ export function warmupSets(
   for (const p of plan) {
     const load = p.pct * (p.of === 'strength' ? (strengthKg ?? firstLoad) : firstLoad);
     const external = externalFromLoad(exercise, load, bodyKg) ?? load;
+    // A share of the body that is already more than the load: nothing to put on the bar.
+    if (external <= 0) continue;
     const rounded = candidates[nearestIndex(candidates, external)].externalKg;
     if (rounded >= firstWeightKg * 0.92) continue;
     if (out.length > 0 && rounded <= out[out.length - 1].weightKg) continue;
@@ -500,12 +503,17 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const strengthDropped = before !== undefined && strengthKg < before - 1e-9;
 
   const derived = deriveRange(points);
-  const planned = input.plan && input.plan.low > 0 && input.plan.high >= input.plan.low ? input.plan : undefined;
-  const range: RepRange = planned ? { low: planned.low, high: planned.high, rir: planned.rir ?? derived.rir } : derived;
+  const planLow = input.plan?.low;
+  const planHigh = input.plan?.high;
+  const planned = planLow !== undefined && planHigh !== undefined && planLow > 0 && planHigh >= planLow ? { low: planLow, high: planHigh } : undefined;
+  const range: RepRange = planned ? { low: planned.low, high: planned.high, rir: input.plan?.rir ?? derived.rir } : { ...derived, rir: input.plan?.rir ?? derived.rir };
   const { low, high, rir } = range;
   const legsTired = !!input.tired && !!exercise?.loadsLegs;
   const lastIdx = nearestIndex(candidates, last.top.weightKg);
-  const lastLoad = last.top.loadKg;
+  // With a last weight the gym cannot make, everything is compared with the
+  // nearest weight it can make, so rounding to it never counts as a step.
+  const lastLoad = mismatch ? candidates[lastIdx].loadKg : last.top.loadKg;
+  const lastExternal = mismatch ? candidates[lastIdx].externalKg : last.top.weightKg;
 
   // KR-5: how far the weight may move in one training and in one week.
   const nextUp = candidates[lastIdx + 1];
@@ -577,10 +585,11 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       shownRir = rir + (expectedFirst - hi);
     }
   }
-  const sameWeight = Math.abs(first.externalKg - last.top.weightKg) < 1e-6;
+  const sameWeight = Math.abs(first.externalKg - lastExternal) < 1e-6;
   // Same weight: one more than last time if the model expects it, never fewer than
   // last time (the smoothing lags half a step behind a good day).
-  const targetReps = Math.min(hi, Math.max(lo, sameWeight ? Math.max(last.top.reps, Math.min(last.top.reps + 1, expectedFirst)) : expectedFirst));
+  // Not on tired legs: then one rep fewer than last time is the aim, as the reason says.
+  const targetReps = Math.min(hi, Math.max(lo, sameWeight ? (legsTired ? Math.min(last.top.reps, expectedFirst) - 1 : Math.max(last.top.reps, Math.min(last.top.reps + 1, expectedFirst))) : expectedFirst));
 
   // The sets: each earlier working set costs the next a share of the strength.
   // A later set goes down to the heaviest weight that still gives the bottom of

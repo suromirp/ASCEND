@@ -5,6 +5,8 @@ import type { ExercisePrescription } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import { applyWeight, makeLight, makeSnap } from './forgeInput';
 import {
+  planExercise,
+  planState,
   planStateBefore,
   planWorkout,
   previousText,
@@ -163,5 +165,48 @@ describe('teksten bij hulp', () => {
     expect(targetText(row, pull)).toBe('hulp 30 kg × 9-11');
     expect(previousText({ reps: 9, weightKg: -30 }, pull)).toBe('hulp 30 kg × 9');
     expect(targetText({ ...row, target: { weightKg: 47.5, repsLow: 8, repsHigh: 10 } }, exerciseById('bench-press'))).toBe('47,5 kg × 8-10');
+  });
+});
+
+describe('opwarmen: aanvullingen uit de controle', () => {
+  it('een lichter werkgewicht haalt ook ingevulde opwarmrijen weg die je niet aanraakte', () => {
+    const [squat] = planWorkout([slot('a', 'Barbell Back Squat', 3, '5-8', { targetWeightKg: 100 })], ctx({ logs: [] }));
+    expect(warmRows(squat).length).toBeGreaterThan(0);
+    const e = exerciseById('back-squat');
+    const first = squat.rows.find((r) => r.kind === 'work')!;
+    const light = applyWeight(squat, first.id, 25, false, makeSnap(e, settings.profile, BODY, 25), 0, makeLight(e, settings.profile));
+    expect(warmRows(light)).toHaveLength(0);
+  });
+
+  it('een opwarmrij die op 92% of meer van het werkgewicht uitkomt, valt weg', () => {
+    const [squat] = planWorkout([slot('a', 'Barbell Back Squat', 3, '5-8', { targetWeightKg: 100 })], ctx({ logs: [] }));
+    const first = squat.rows.find((r) => r.kind === 'work')!;
+    const rows = squat.rows.map((r) => (r.kind === 'warmup' && r.id.endsWith('w1') ? { ...r, share: 0.99 } : r));
+    const out = applyWeight({ ...squat, rows }, first.id, 100, false, (kg) => kg);
+    expect(warmRows(out)).toHaveLength(1);
+  });
+
+  it('een geruilde oefening neemt het bereik van het sjabloon niet over', () => {
+    const c = ctx();
+    const s = slot('a', 'Barbell Back Squat', 3, '5-8');
+    const swapped = planExercise(s, c, planState(c), exerciseById('leg-press'));
+    const work = swapped.rows.filter((r) => r.kind === 'work');
+    expect(work.some((r) => r.target.repsLow === 5 && r.target.repsHigh === 8)).toBe(false);
+    const own = planExercise(s, c, planState(c));
+    expect(own.rows.filter((r) => r.kind === 'work')[0].target.repsLow).toBeGreaterThanOrEqual(5);
+  });
+
+  it('een zware squat na een bilbrug met eigen gewicht krijgt nog de volle opbouw', () => {
+    const [bridge, squat] = planWorkout([slot('a', 'Glute Bridge', 3, '12-15'), slot('b', 'Barbell Back Squat', 3, '5-8', { targetWeightKg: 100 })], ctx({ logs: [] }));
+    expect(warmRows(bridge)).toHaveLength(0);
+    expect(warmRows(squat).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('Per spiergroep is de standaard; Per oefening geeft elke samengestelde oefening de volle opbouw', () => {
+    const slots = [slot('a', 'Barbell Back Squat', 3, '5-8', { targetWeightKg: 100 }), slot('b', 'Barbell Romanian Deadlift', 3, '8-10', { targetWeightKg: 100 })];
+    const group = planWorkout(slots, ctx({ logs: [] }));
+    expect(warmRows(group[1])).toHaveLength(1);
+    const each = planWorkout(slots, ctx({ logs: [], settings: resolveStrengthSettings({ warmupScope: 'exercise' }) }));
+    expect(warmRows(each[1]).length).toBeGreaterThanOrEqual(2);
   });
 });

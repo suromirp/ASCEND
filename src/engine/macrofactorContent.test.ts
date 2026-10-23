@@ -3,7 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import { mondayOfWeek } from '../utils/dates';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
-import { contentReason, suggestByContent, workoutProfile } from './macrofactorContent';
+import { contentReason, patternOf, suggestByContent, workoutProfile } from './macrofactorContent';
 import { planMacroFactor } from './macrofactorLink';
 import { describeSuggestion, groupRows, linkRows, suggestAll } from './macrofactorNames';
 
@@ -125,5 +125,17 @@ describe('linked as a loose strength training', () => {
     const proposal = plan.proposals[0];
     expect(proposal).toMatchObject({ kind: 'new', draft: { templateId: 'tpl_lower_a', type: 'strength' } });
     expect(proposal.kind === 'new' && proposal.draft.plannedSessionId).toBeFalsy();
+  });
+});
+
+describe('patternOf: woorden die isolatie van borst of rug zijn', () => {
+  it('fly, pullover, straight arm en shrug zijn geen duwbeweging of optrekbeweging', () => {
+    for (const name of ['Tempo Chest Fly Variatie', 'Banded Flye', 'Rope Pullover Variatie', 'Straight Arm Pulldown Variatie', 'Heavy Shrug Variatie']) {
+      expect(patternOf(name)).toBe('isolation_upper');
+    }
+  });
+  it('een gewone duw of trek blijft wat hij was', () => {
+    expect(patternOf('Tempo Incline Press Variatie')).toBe('push_horizontal');
+    expect(patternOf('Wide Pulldown Variatie')).toBe('pull_vertical');
   });
 });

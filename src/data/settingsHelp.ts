@@ -53,7 +53,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Alleen sets die je niet aanraakte', text: 'een set die je zelf aanpaste of afvinkte blijft zoals hij is.' },
       { head: 'Zelfde verschil', text: 'ga je 2,5 kg omhoog, dan gaan de volgende sets ook 2,5 kg omhoog.' },
-      { head: 'Lege sets', text: 'een set zonder gewicht krijgt het nieuwe gewicht, en de opwarmsets die je niet aanraakte schuiven mee met de eerste werkset.' },
+      { head: 'Lege sets', text: 'een set zonder gewicht krijgt het nieuwe gewicht.' },
       { head: 'Herhalingen', text: 'blijven per set zoals ze waren.' },
     ],
   },
@@ -62,8 +62,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Opwarmsets komen vooral voor je eerste zware oefening van een lichaamsdeel, daarna zijn de spieren warm.',
     points: [
       { head: 'Eerste oefening', text: 'de volle opbouw, ongeveer 50% voor 8 en 80% voor 3 tot 4 van je werkgewicht. Slim rekent het uit je geschatte kracht, Schema vaste percentages.' },
-      { head: 'Daarna', text: 'één aanloopset van 65 tot 70% voor 4 of 5 als de spieren al warm zijn, bijvoorbeeld een leg press na squats. Een oefening met één gewricht krijgt niets.' },
+      { head: 'Daarna', text: 'één aanloopset van 65 tot 70% voor 4 of 5 als de spieren al warm zijn, bijvoorbeeld een leg press na squats. Een oefening met één gewricht op warme spieren krijgt niets.' },
       { head: 'Nooit', text: 'bij lichte gewichten, curls, schouderheffingen, beencurls, kuiten, romp en oefeningen met vooral je eigen gewicht.' },
+      { head: 'Per spiergroep of per oefening', text: 'standaard krijgt alleen de eerste zware oefening van benen of bovenlichaam de volle opbouw. Kies je Per oefening, dan krijgt elke samengestelde oefening de volle opbouw. De rust na de opwarming staat vast op 90 of 60 seconden.' },
       { head: 'Geen gewicht bekend', text: 'dan staan er lege opwarmrijen die zich vullen zodra je bij de eerste set een gewicht invult.' },
     ],
   },

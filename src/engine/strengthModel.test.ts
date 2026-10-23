@@ -569,3 +569,46 @@ describe('een gewicht dat het profiel niet kent', () => {
     expect(prescribe(input)).toBeDefined();
   });
 });
+
+describe('afronden naar het dichtstbijzijnde gewicht is geen stap', () => {
+  const db = ex('incline-dumbbell-press');
+  const s = (date: string, w: number): SessionInput => ({ date, sets: [work(10, w, 2), work(10, w, 2)] });
+  const run = (w: number) => prescribe({ exercise: db, sessions: [s('2026-09-01', w), s('2026-09-04', w)], date: '2026-09-08', settings, plan: { low: 8, high: 12, rir: 2 }, nearestOnMismatch: true })!;
+  it('24 kg wordt 25 kg en dat heet niet een stap zwaarder', () => {
+    const p = run(24);
+    expect(p.sets[0].weightKg).toBe(25);
+    expect(p.kind).toBe('same');
+    expect(p.reason).not.toContain('stap zwaarder');
+    expect(p.notice).toBeDefined();
+  });
+  it('23 kg wordt 22,5 kg en dat heet niet een stap lichter', () => {
+    const p = run(23);
+    expect(p.sets[0].weightKg).toBe(22.5);
+    expect(p.kind).toBe('same');
+    expect(p.reason).not.toContain('lichter');
+  });
+});
+
+describe('vermoeide benen en het doel in herhalingen', () => {
+  it('een squat van 100 x 6 met bereik 6 tot 8 mag op moe benen 5 als doel krijgen', () => {
+    const squat = ex('back-squat');
+    const sessions: SessionInput[] = [
+      { date: '2026-09-01', sets: [work(6, 100, 2), work(6, 100, 2)] },
+      { date: '2026-09-08', sets: [work(6, 100, 2), work(6, 100, 2)] },
+    ];
+    const p = prescribe({ exercise: squat, sessions, date: '2026-09-15', settings, plan: { low: 6, high: 8, rir: 2 }, tired: { because: 'een bergtocht gisteren' } })!;
+    expect(p.kind).toBe('tired');
+    expect(p.sets[0].repsLow).toBe(5);
+    expect(p.targetReps).toBeLessThan(6);
+  });
+});
+
+describe('opwarmset met een negatief extern gewicht', () => {
+  it('wordt weggelaten in plaats van de lichtste dumbbell', () => {
+    const row = ex('barbell-row');
+    const cands = candidatesFor(row, settings.profile, { lastExternalKg: 20, bodyKg: 200 })!;
+    const w = warmupSets(settings, row, cands, 40, 20, 'full', 200);
+    // 40% van een kracht van 20 kg is 8 kg, minder dan de 16 kg lichaam in deze rij
+    expect(w).toEqual([]);
+  });
+});

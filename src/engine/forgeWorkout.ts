@@ -26,7 +26,7 @@ import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
 import { DEFAULT_RIR, expectedReps, FATIGUE_PER_SET, formatWeight, prescribe, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
-import { COMPOUND_PATTERNS, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
+import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { setsText } from './macrofactorProgram';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
 import { barFor, candidatesFor, loadFromExternal } from './strengthWeights';
@@ -178,7 +178,7 @@ export function planStateBefore(ctx: PlanContext, workout: WorkoutExercise[], sl
   const state = planState(ctx);
   for (const ex of workout) {
     if (ex.slot === slot) break;
-    if (!ex.timed) noteWorked(state.warm, exerciseOf(ex));
+    if (!ex.timed) noteWorked(state.warm, exerciseOf(ex), ex.rows.some((r) => r.kind === 'warmup'));
   }
   return state;
 }
@@ -208,13 +208,16 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   }
 
   // What warm-up this exercise needs, from what the exercises before it warmed.
-  const warmKind: WarmKind = warmupKind(exercise, state.warm);
-  noteWorked(state.warm, exercise);
+  // "Per oefening" (setting): every compound exercise gets the full build-up.
+  const warmKind: WarmKind = ctx.settings.warmupScope === 'exercise' && exercise && isCompound(exercise) ? 'full' : warmupKind(exercise, state.warm);
   const tired = !!(exercise?.loadsLegs && state.tiredNow);
   // The plan (template or program) gives the range and the reps in reserve; the
   // history is only the fallback (decision 2026-10-23-bereik-uit-het-plan.md).
   const firstTarget = targets?.find((t) => !t.failure);
-  const plan = targets ? (firstTarget ? { low: firstTarget.repsLow, high: firstTarget.repsHigh, rir: firstTarget.rir } : undefined) : parsed ? { low: parsed.repsLow, high: parsed.repsHigh, ...(slot.rpe !== undefined ? { rir: baseRir } : {}) } : undefined;
+  const fromSlot = targets ? (firstTarget ? { low: firstTarget.repsLow, high: firstTarget.repsHigh, rir: firstTarget.rir } : undefined) : parsed ? { low: parsed.repsLow, high: parsed.repsHigh, ...(slot.rpe !== undefined ? { rir: baseRir } : {}) } : undefined;
+  // A swapped exercise is another exercise: the range of the template is not its
+  // own (squat 5 to 8 is not leg extension 5 to 8). The reps in reserve stay.
+  const plan = swapTo ? (fromSlot?.rir !== undefined ? { rir: fromSlot.rir } : undefined) : fromSlot;
   let rx: Prescription | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {
     rx = prescribe({
@@ -260,6 +263,8 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   for (const [i, w] of emptyWarmups.entries()) {
     rows.push({ id: `${slot.id}:w${i}`, kind: 'warmup', target: { repsLow: w.reps, repsHigh: w.reps }, reps: w.reps, done: false, share: w.share });
   }
+  // The body part counts as warm only after an exercise that got warm-up sets.
+  noteWorked(state.warm, exercise, rows.length > 0 && rows.some((r) => r.kind === 'warmup'));
   for (let i = 0; i < setCount; i++) {
     let target: RowTarget;
     const t = targets?.[i];

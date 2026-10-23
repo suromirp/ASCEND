@@ -63,3 +63,15 @@ Niets. Het besluit `2026-10-22-forge-opwarmen.md` (aflopende herhalingen en de l
 ## Terugdraaien
 
 In de instellingen onder Forge opwarmen op Uit zetten. Of in `warmupKind` (`src/engine/warmup.ts`) altijd `full` teruggeven om weer elke eerste oefening van een beweging de volle opbouw te geven.
+
+## Aanvulling (ronde 2, na de review van Warden)
+
+Instelling: Opwarmen per spiergroep (standaard) of per oefening. Bij Per oefening krijgt elke samengestelde oefening de volle opbouw, zoals vóór dit besluit; het staat in Forge onder Opwarmen (`warmupScope` in de krachtinstellingen). Zo is ook deze keuze instelbaar.
+
+De rust na de opwarming (90 seconden na een opbouw, 60 na een aanloopset) blijft bewust vast. De rust per oefening is al instelbaar en geldt als bovengrens: de rust na een opwarmset is nooit langer dan de eigen rust van die oefening. Je kunt hem dus korter maken, niet langer dan 90 of 60 seconden.
+
+Een samengestelde oefening die zelf geen opwarmsets kon krijgen (vooral eigen gewicht, of een heel licht gewicht) maakt het lichaamsdeel niet warm. Een zware squat na een bilbrug krijgt dus nog de volle opbouw.
+
+Punt 4 van de review: de nieuwe bewegingspatronen geven cable fly, pec deck, pullover, straight-arm pulldown, Kelso shrug en face pull een standaardrust van 90 seconden in plaats van 120 of 150, en veranderen daardoor ook de ruilscores van die oefeningen. Dat is bedoeld: het zijn oefeningen met één gewricht.
+
+Punt 7 van de review: het aandeel van een opwarmrij wordt bewaard als aandeel van het stanggewicht, niet van de last. Bij oefeningen met een deel lichaamsgewicht (een roeibeweging met 8%) klopt dat niet exact, maar het verschil is klein en de rij wordt toch op het rek afgerond.

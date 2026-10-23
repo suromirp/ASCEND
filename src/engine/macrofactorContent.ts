@@ -34,6 +34,7 @@ const WORD_PATTERNS: [RegExp, MovementPattern][] = [
   [/leg curl|leg extension|hamstring|nordic/, 'isolation_leg'],
   [/lunge|step ?up|step ?down|split squat|uitvalspas/, 'lunge_step'],
   [/squat|leg press|beenpers|hack|sled/, 'squat'],
+  [/fly|flye|pullover|pull over|straight arm|shrug/, 'isolation_upper'],
   [/overhead|shoulder press|military|\bohp\b|arnold/, 'push_vertical'],
   [/lateral raise|side raise|rear delt|face pull|reverse fly|schouder/, 'isolation_shoulder'],
   [/pulldown|pull down|pull up|pullup|chin|\blat\b|optrek/, 'pull_vertical'],

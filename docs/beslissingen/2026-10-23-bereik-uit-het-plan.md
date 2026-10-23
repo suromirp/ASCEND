@@ -26,3 +26,7 @@ Niets. Het afleiden uit de historie (`deriveRange`) blijft bestaan als terugval.
 ## Terugdraaien
 
 In `planExercise` (`src/engine/forgeWorkout.ts`) geen `plan` aan `prescribe` meegeven.
+
+## Aanvulling (ronde 2)
+
+Bij het ruilen van een oefening neemt de nieuwe oefening het bereik van het sjabloon niet over, want squat 5 tot 8 zegt niets over beenstrekken. Er gaat dan alleen de RIR van het plan mee; het bereik komt uit de eigen historie van de geruilde oefening.

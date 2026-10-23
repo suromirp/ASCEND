@@ -15,6 +15,8 @@ import { normalizeStrengthProgram, type StoredStrengthProgram } from './strength
 export type ProgressionFirst = 'weight_first' | 'reps_first';
 export type WorkSetsMode = 'descending' | 'equal';
 export type WarmupMode = 'smart' | 'scheme' | 'off';
+// Who gets the full build-up: the first heavy exercise of a body part, or every compound exercise.
+export type WarmupScope = 'group' | 'exercise';
 // What happens when the rest timer of the workout screen runs out.
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
 // The sound at the end of the rest: three soft bells, one deep bell, or the old beep.
@@ -49,6 +51,7 @@ export interface StrengthSettings {
   progression?: ProgressionFirst;
   workSets?: WorkSetsMode;
   warmup?: WarmupMode;
+  warmupScope?: WarmupScope;
   // Widen the rep range for a while when the step of the machine is too coarse.
   widenRange?: boolean;
   // Up to how many reps to failure a set counts for the estimate (12, 15 or 20).
@@ -80,6 +83,7 @@ export interface ResolvedStrengthSettings {
   progression: ProgressionFirst;
   workSets: WorkSetsMode;
   warmup: WarmupMode;
+  warmupScope: WarmupScope;
   widenRange: boolean;
   estimateUpTo: number;
   profile: GymProfile;
@@ -152,6 +156,7 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
 const PROGRESSIONS: ProgressionFirst[] = ['weight_first', 'reps_first'];
 const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
+const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
 export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
 export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep'];
 export const REST_LIMITS = { min: 15, max: 600 };
@@ -190,6 +195,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (workSets) out.workSets = workSets;
   const warmup = WARMUPS.find((p) => p === raw.warmup);
   if (warmup) out.warmup = warmup;
+  const warmupScope = WARMUP_SCOPES.find((p) => p === raw.warmupScope);
+  if (warmupScope) out.warmupScope = warmupScope;
   const upTo = ESTIMATE_UP_TO_OPTIONS.find((n) => n === raw.estimateUpTo);
   if (upTo) out.estimateUpTo = upTo;
   if (Array.isArray(raw.profiles)) {
@@ -226,6 +233,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     progression: s.progression ?? 'weight_first',
     workSets: s.workSets ?? 'descending',
     warmup: s.warmup ?? 'smart',
+    warmupScope: s.warmupScope ?? 'group',
     widenRange: s.widenRange ?? true,
     estimateUpTo: s.estimateUpTo ?? 20,
     profile,

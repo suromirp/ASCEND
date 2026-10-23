@@ -51,6 +51,15 @@ describe('warmupKind: wat is er warm in deze training', () => {
   });
 });
 
+describe('noteWorked met warmed uit', () => {
+  it('een samengestelde oefening zonder opwarmsets maakt het lichaamsdeel niet warm', () => {
+    const s = newWarmState();
+    noteWorked(s, ex('glute-bridge'), false);
+    expect(s.regions.size).toBe(0);
+    expect(warmupKind(ex('back-squat'), s)).toBe('full');
+  });
+});
+
 describe('de oefenlijst', () => {
   it('flyes, pullover, straight-arm pulldown en Kelso shrug zijn isolatie, face pull een schouderisolatie', () => {
     for (const id of ['cable-fly', 'pec-deck-fly', 'low-to-high-cable-fly', 'low-incline-dumbbell-fly', 'straight-arm-pulldown', 'dumbbell-pullover', 'kelso-shrug']) {

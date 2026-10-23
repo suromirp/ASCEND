@@ -24,6 +24,7 @@ const REASON: Record<string, string> = {
   'forge-volgorde': FORGE_OFF,
   'forge-sets': FORGE_OFF,
   'forge-opwarmen': FORGE_OFF,
+  'forge-opwarmbereik': FORGE_OFF,
   'forge-bereik': FORGE_OFF,
   'forge-schatting': FORGE_OFF,
   'garmin-trainingen': GARMIN_OFF,

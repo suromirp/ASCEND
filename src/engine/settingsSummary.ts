@@ -242,6 +242,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('werksets', forge.workSets), hidden: !forge.enabled };
     case 'forge-opwarmen':
       return { value: choiceShort('opwarmen', forge.warmup), hidden: !forge.enabled };
+    case 'forge-opwarmbereik':
+      return { value: choiceShort('opwarmbereik', forge.warmupScope), hidden: !forge.enabled };
     case 'forge-bereik':
       return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen', hidden: !forge.enabled };
     case 'forge-schatting':
