@@ -3,6 +3,7 @@ import { PHASE_COLOR } from '../data/phaseColors';
 import { PHASE_BASIS, PHASE_BERG, PHASE_OPBOUW, PHASE_LENGTH_LIMITS, type AdjustablePhaseId, type PhaseLengthOverrides } from '../engine/programLayout';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { raceBlocks } from '../engine/raceBlock';
+import { usePlanSettingChange } from './settings/usePlanSettingChange';
 
 
 // Settings → Training → Programma: the phases toward the goal as one bar,
@@ -10,7 +11,9 @@ import { raceBlocks } from '../engine/raceBlock';
 // Saving goes through the settings; storage/database.ts#syncProgramHorizon
 // lays the program out again on the next refresh.
 export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
-  const { program, settings, updateSettings, refresh, trainingGoals, goalMilestones } = useAppData();
+  const { program, settings, trainingGoals, goalMilestones } = useAppData();
+  // Other phase lengths change the plan: a proposal first (usePlanSettingChange).
+  const plan = usePlanSettingChange();
   if (!program) return null;
   const overrides = settings.programPhaseOverrides ?? {};
   const total = program.phases.reduce((n, p) => n + p.weekCount, 0);
@@ -24,8 +27,8 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
   });
 
   async function save(next: PhaseLengthOverrides | undefined) {
-    await updateSettings({ programPhaseOverrides: next });
-    await refresh();
+    if (plan.busy) return;
+    await plan.changeSetting('Fases van je programma', { programPhaseOverrides: next }, 'Volgt de nieuwe lengte van je fases.');
   }
 
   function change(id: AdjustablePhaseId, current: number, direction: 1 | -1) {
@@ -112,6 +115,8 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
           Terug naar automatisch
         </button>
       )}
+      {plan.note && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
+      {plan.impact}
     </div>
   );
 }

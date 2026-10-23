@@ -35,6 +35,9 @@ import { NumberField } from '../components/NumberField';
 import { formatNumberNL } from '../utils/number';
 import { eventDaysRequirement, goalTiming, routeTotal, routeDayParts, routeDayWord, routeDiscipline, formatRouteDayValue, ROUTE_KINDS } from '../engine/goalRoute';
 import { usePageState } from '../components/usePageState';
+import { useHorizonChange } from '../components/useHorizonChange';
+import { ImpactSheet } from '../components/ImpactSheet';
+import { goalDateProblem } from '../engine/goalDate';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -283,8 +286,20 @@ export function AscendPage() {
 // the strength block, how goals weigh against each other). Reached from
 // the Ascend overview.
 export function GoalsPage() {
-  const { trainingGoals, goalMilestones, sessionLogs, updateGoal, archiveGoal, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
+  const { trainingGoals, goalMilestones, sessionLogs, updateGoal, planGoalChange, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
   const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
+  // Another date or archiving changes the planning: first the proposal, stored
+  // only with Akkoord (components/useHorizonChange.tsx). Archiving asks first.
+  const horizon = useHorizonChange();
+  const [archiving, setArchiving] = useState<TrainingGoal | null>(null);
+  const keep = 'Je doel en je planning blijven zoals ze waren.';
+  const changeDate = (goalId: string, date: string | null) =>
+    horizon.propose(() => planGoalChange(goalId, { targetDate: date }), { eyebrow: 'Doeldatum', ask: 'always', declined: keep });
+  const archive = (g: TrainingGoal) => {
+    setArchiving(null);
+    void horizon.propose(() => planGoalChange(g.id, { archive: true }), { eyebrow: 'Doel archiveren', ask: 'always', declined: keep });
+  };
+  const askArchive = (goalId: string) => setArchiving(trainingGoals.find((g) => g.id === goalId) ?? null);
   const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
   const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
   const customGoals = trainingGoals.filter((g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id));
@@ -300,13 +315,17 @@ export function GoalsPage() {
         </div>
       </div>
 
+      {horizon.note && (
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>
+      )}
+
       <SeasonCard />
 
-      {goal && <GR5GoalCard goal={goal} onUpdate={(patch) => updateGoal(goal.id, patch)} onArchive={() => archiveGoal(goal.id)} />}
+      {goal && <GR5GoalCard key={goal.targetDate ?? 'geen-datum'} goal={goal} busy={horizon.busy} onUpdate={(patch) => updateGoal(goal.id, patch)} onDate={(date) => void changeDate(goal.id, date)} onArchive={() => askArchive(goal.id)} />}
 
-      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => archiveGoal(marathonGoal.id) : undefined} />
+      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
 
-      <CustomGoalsList goals={customGoals} onArchive={archiveGoal} />
+      <CustomGoalsList goals={customGoals} onArchive={askArchive} />
 
       <TrekGoalsCard />
 
@@ -318,6 +337,22 @@ export function GoalsPage() {
       <StrengthProgramCard />
 
       <ArchivedGoalsCard goals={archivedGoals} onUnarchive={unarchiveGoal} />
+
+      {archiving && (
+        <ImpactSheet
+          eyebrow="DOEL ARCHIVEREN"
+          title={`${archiving.name} archiveren?`}
+          lines={[]}
+          why="Een gearchiveerd doel telt niet meer mee voor je planning. Heeft dat gevolgen voor je trainingen, dan zie je eerst wat er verandert en beslis je daarna. Je kunt het doel later terughalen."
+          primaryLabel="Archiveren"
+          secondaryLabel="Annuleren"
+          onPrimary={() => archive(archiving)}
+          onSecondary={() => setArchiving(null)}
+          onClose={() => setArchiving(null)}
+          busy={horizon.busy}
+        />
+      )}
+      {horizon.sheet}
     </div>
   );
 }
@@ -370,11 +405,16 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
 
 function GR5GoalCard({
   goal,
+  busy,
   onUpdate,
+  onDate,
   onArchive,
 }: {
   goal: TrainingGoal;
-  onUpdate: (patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => void;
+  busy: boolean;
+  onUpdate: (patch: { targetDistanceKm?: number; packWeightKg?: number }) => void;
+  // Another date (or none): a proposal first, never stored while you type.
+  onDate: (date: string | null) => void;
   onArchive: () => void;
 }) {
   const navigate = useNavigate();
@@ -382,6 +422,11 @@ function GR5GoalCard({
   const targetDistanceKm = findRequirement(goal, 'distance')?.target?.amount;
   const [wizardOpen, setWizardOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // The date as you type it: stored only with "Datum opslaan" and then Akkoord.
+  const [dateDraft, setDateDraft] = useState(goal.targetDate ?? '');
+  const today = todayISO();
+  const dateProblem = goalDateProblem(dateDraft || undefined, today, goal.targetDate);
+  const dateChanged = dateDraft !== (goal.targetDate ?? '');
 
   return (
     <Card className="flex flex-col gap-3">
@@ -414,14 +459,23 @@ function GR5GoalCard({
       {advancedOpen && (
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Startdatum</label>
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }} htmlFor="gr5-start">Startdatum</label>
           <input
+            id="gr5-start"
             type="date"
-            value={goal.targetDate ?? ''}
-            onChange={(e) => onUpdate({ targetDate: e.target.value || undefined })}
-            className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+            value={dateDraft}
+            min={today}
+            onChange={(e) => setDateDraft(e.target.value)}
+            className="mt-1 min-h-[44px] w-full rounded-lg border px-2 py-1.5 text-sm"
             style={dateInputStyle}
           />
+          {dateChanged && dateProblem && <p className="mt-1 text-xs" style={{ color: 'var(--color-warning)' }} role="alert">{dateProblem}</p>}
+          {dateChanged && !dateProblem && (
+            <div className="mt-2 flex flex-col gap-2">
+              <SecondaryButton onClick={() => onDate(dateDraft || null)} disabled={busy}>{busy ? 'Even rekenen…' : 'Datum opslaan'}</SecondaryButton>
+              <button onClick={() => setDateDraft(goal.targetDate ?? '')} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Annuleren</button>
+            </div>
+          )}
         </div>
         <div className="flex-1">
           <NumberField

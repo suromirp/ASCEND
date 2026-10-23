@@ -61,6 +61,7 @@ import { runWeeklyPrescriptionStep } from '../storage/weeklyPrescriptionStep';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { prescriptionSummary } from '../engine/changeImpact';
 import { describeChanges } from '../engine/changeImpact';
+import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 import { useWeatherForecast, type WeatherView } from './useWeather';
@@ -190,19 +191,19 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setAmbition(effectiveAmbition(loadedSettings.ambition, logs, new Map(tpls.map((t) => [t.id, t])), program, todayISO()).effective);
 }
 
-async function primePlanningRegisters() {
+// `override`: settings as they would be (the preview of a proposal); without
+// it, as stored.
+async function primePlanningRegisters(override?: Partial<AppSettings>) {
   const [programs, tpls, planned, logs, loadedSettings] = await Promise.all([ProgramsRepo.getAll(), SessionTemplatesRepo.getAll(), PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), SettingsRepo.get()]);
-  setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings);
+  setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, override ? { ...loadedSettings, ...override } : loadedSettings);
 }
 
 // What the week check put right in the last sync, until refresh() shows it.
 let pendingRepairs: ProgramHorizonResult['repairs'];
 
-// True when the sync ran (something it depends on had changed).
-function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boolean> {
-  // The stored phases are part of the key, so a reset or an import that
-  // rewrites the program also triggers a sync.
-  const currentKey = async () => {
+// The stored phases are part of the key, so a reset or an import that
+// rewrites the program also triggers a sync.
+async function horizonKey(): Promise<string> {
     const [programs, goals, milestones, settings, planned] = await Promise.all([
       ProgramsRepo.getAll(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll(), SettingsRepo.get(), PlannedSessionsRepo.getAll(),
     ]);
@@ -234,7 +235,11 @@ function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boo
       // target of the main goal sets the pack ladder (engine/packLadder.ts).
       goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length, packWeightOf(g.requirements)]),
     ]);
-  };
+}
+
+// True when the sync ran (something it depends on had changed).
+function syncProgramHorizonWhenChanged(prime?: () => Promise<void>): Promise<boolean> {
+  const currentKey = horizonKey;
   return horizonQueue
     .run(async () => {
       // A repair from the opening that went over its time may still write the
@@ -366,7 +371,17 @@ interface AppData {
   // "Toch doen": a skipped training back on its own day (engine/scheduler.ts#proposeBackOnPlan).
   proposeBackOnPlan: (sessionId: string) => ScheduleProposal;
   clearMilestoneManually: (goalId: string, milestoneId: string) => Promise<void>;
-  updateGoal: (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => Promise<void>;
+  // Afstand en rugzak van het doel. Een andere datum gaat via planGoalChange (een voorstel).
+  updateGoal: (goalId: string, patch: { targetDistanceKm?: number; packWeightKg?: number }) => Promise<void>;
+  // Een andere doeldatum of het doel archiveren: eerst het voorstel met wat er
+  // in je planning verandert (storage/horizonPlan.ts); opgeslagen pas met
+  // applyHorizonPlan, na Akkoord. `targetDate: null` zet het doel op pauze.
+  planGoalChange: (goalId: string, change: { targetDate?: string | null; archive?: boolean }) => Promise<HorizonPlan | null>;
+  // Elke verandering van een doel of planningsinstelling die de planningsronde
+  // anders laat lopen: het voorstel, en het toepassen na Akkoord (met ongedaan
+  // maken). 'stale': de planning veranderde intussen, er is niets gebeurd.
+  planHorizonChange: (input: HorizonChangeInput) => Promise<HorizonPlan>;
+  applyHorizonPlan: (plan: HorizonPlan) => Promise<'applied' | 'unchanged' | 'stale' | 'failed'>;
   // Tussendoel or only followed (engine/raceBlock.ts).
   setGoalPlanRole: (goalId: string, role: 'secondary' | 'track') => Promise<void>;
   // Soft-delete: sets status:'archived' rather than removing the row, so
@@ -393,7 +408,9 @@ interface AppData {
   // committed-range changes, and records the append-only audit row — never
   // a silent re-analysis against whatever the plan was actually shown
   // against (inputStateHash re-checked here, live, right before persisting).
-  activateGoal: (plan: GoalActivationPlan) => Promise<{ applied: boolean; reason?: 'stale' }>;
+  // Changes the planning: without `horizon` it first returns the proposal
+  // (reason 'review'), and only with the horizon plan you agreed to it stores.
+  activateGoal: (plan: GoalActivationPlan, horizon?: HorizonPlan) => Promise<{ applied: boolean; reason?: 'stale' | 'review' | 'failed'; horizon?: HorizonPlan }>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<AppSettings>;
   // Time-budget scheduling redesign (Fase 4) — the Settings UI's only write
   // path onto TrainingAvailability/TrainingStrategyProfile. A top-level
@@ -791,6 +808,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // A rest day put back goes with the layout that undo puts back.
     if (recentChange.settingsBefore && 'restDay' in recentChange.settingsBefore) await MetaRepo.set('appliedRestDay', (recentChange.settingsBefore as Partial<AppSettings>).restDay ?? 1);
     if (recentChange.configBefore) setGoalEngineConfig(await GoalEngineConfigRepo.set(recentChange.configBefore as Partial<GoalEngineConfig>));
+    // A goal changed with its planning (another date, archived, a new goal): back as it was.
+    for (const goal of recentChange.goalsBefore ?? []) await TrainingGoalsRepo.put(goal);
+    for (const id of recentChange.goalsAdded ?? []) await TrainingGoalsRepo.delete(id);
     if (recentChange.adviceId) {
       const responses = { ...((await MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses')) ?? {}) };
       delete responses[recentChange.adviceId];
@@ -1528,12 +1548,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (!session) return [];
       const monday = mondayOfWeek(session.scheduledDate);
       const nearby = [-7, 0, 7, 14].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
+      const today = todayISO();
+      // Never a day the planning keeps free (Warden Logica punt 6).
       return suggestMoveDates(
         nearby, templates, sessionId, sessionLogs, program,
-        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, today, undefined,
+        { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes },
       );
     },
-    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig],
+    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
   );
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine
@@ -1657,7 +1680,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const updateGoal = useCallback(
-    async (goalId: string, patch: { targetDate?: string; targetDistanceKm?: number; packWeightKg?: number }) => {
+    async (goalId: string, patch: { targetDistanceKm?: number; packWeightKg?: number }) => {
       const goal = trainingGoals.find((g) => g.id === goalId);
       if (!goal) return;
       const now = new Date().toISOString();
@@ -1680,11 +1703,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // The rucksack target of this goal (engine/gr5Profile.ts): each goal
       // carries its own, so a different trip can have a different weight.
       if ('packWeightKg' in patch) requirements = withPackWeight({ ...goal, requirements }, patch.packWeightKg, now).requirements;
-      const targetDate = 'targetDate' in patch ? patch.targetDate : goal.targetDate;
-      const next: TrainingGoal = targetDate
-        ? { ...goal, requirements, updatedAt: now, status: 'active', targetDate }
-        : { ...goal, requirements, updatedAt: now, status: 'paused', targetDate: undefined };
-      await TrainingGoalsRepo.put(next);
+      // The date stays: another date is a proposal (planGoalChange).
+      await TrainingGoalsRepo.put({ ...goal, requirements, updatedAt: now });
       await refresh();
     },
     [trainingGoals, refresh],
@@ -1817,6 +1837,74 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [trainingGoals, refresh, updateSettings, settings.marathonTargetDate],
   );
 
+  // Een doel of planningsinstelling als voorstel (storage/horizonPlan.ts), in de
+  // wachtrij van de planningssync, zodat er nooit twee rondes tegelijk lopen.
+  const planHorizonChangeImpl = useCallback(async (input: HorizonChangeInput): Promise<HorizonPlan> => {
+    const plan = await horizonQueue.run(async () => {
+      await bootSettled;
+      return computeHorizonPlan(input, primePlanningRegisters);
+    });
+    if (!plan) throw new Error('De planning reageert nu niet. Probeer het zo nog eens.');
+    return plan;
+  }, []);
+
+  const applyHorizonPlanImpl = useCallback(async (plan: HorizonPlan): Promise<'applied' | 'unchanged' | 'stale' | 'failed'> => {
+    const result = await horizonQueue.run(async () => {
+      await bootSettled;
+      const done = await applyHorizonPlanNow(plan, primePlanningRegisters);
+      lastHorizonKey = await horizonKey();
+      return done;
+    });
+    if (!result) return 'failed';
+    if (result.status === 'stale') return 'stale';
+    const now = new Date().toISOString();
+    if (result.status === 'applied') await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
+    const tpls = await SessionTemplatesRepo.getAll();
+    const lines = [...describeChanges(plan.proposal.changes, result.before, tpls), ...plan.lengths];
+    setRecentChange({
+      id: plan.proposal.id,
+      trigger: plan.proposal.trigger,
+      title: plan.proposal.issue,
+      lines: lines.length > 0 ? lines : ['Je planning hoefde niet te veranderen.'],
+      ...(lines.length > 3 ? { summary: plan.proposal.consequences } : {}),
+      why: plan.proposal.explanation,
+      before: result.before,
+      addedIds: result.addedIds,
+      settingsBefore: plan.restore.settings,
+      goalsBefore: plan.restore.goals,
+      goalsAdded: plan.restore.newGoalIds,
+      createdAt: now,
+    });
+    planRevision++;
+    await refresh();
+    void syncWatchWorkoutsAfterPlanChange();
+    return result.status;
+  }, [refresh]);
+
+  const planGoalChange = useCallback(async (goalId: string, change: { targetDate?: string | null; archive?: boolean }): Promise<HorizonPlan | null> => {
+    const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goalId);
+    if (!goal) return null;
+    const now = new Date().toISOString();
+    const explanation = 'Je doel bepaalt de fasen van je planning en de dag waarop hij eindigt. Een andere datum of een gearchiveerd doel verandert je planning nooit ongemerkt: ASCEND laat eerst zien wat er verschuift, omgaat of vervalt, en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.';
+    if (change.archive) {
+      const archived: TrainingGoal = { ...goal, status: 'archived', targetDate: undefined, updatedAt: now };
+      // The Marathon card reads its own settings: those go with it (see archiveGoal).
+      const settingsPatch = goal.name === 'Marathon' ? { marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined } : undefined;
+      return planHorizonChangeImpl({ title: `${goal.name} archiveren`, why: 'Je doel is gearchiveerd.', explanation, trigger: 'goal_removed', goals: [archived], ...(settingsPatch ? { settings: settingsPatch } : {}) });
+    }
+    const date = change.targetDate || undefined;
+    const next: TrainingGoal = date
+      ? { ...goal, status: 'active', targetDate: date, updatedAt: now }
+      : { ...goal, status: 'paused', targetDate: undefined, updatedAt: now };
+    return planHorizonChangeImpl({
+      title: date ? `Doeldatum naar ${formatDateNL(date)}` : `${goal.name} zonder datum`,
+      why: date ? 'Volgt je nieuwe doeldatum.' : 'Je doel heeft geen datum meer.',
+      explanation,
+      trigger: date ? 'goal_changed' : 'goal_paused',
+      goals: [next],
+    });
+  }, [planHorizonChangeImpl]);
+
   // Phase 7 — mirrors runForecastReplan's own persistence pattern (reads
   // repos directly for the freshest possible inputStateHash check, rather
   // than trusting React state that may lag one render behind an in-flight
@@ -1825,7 +1913,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // there is nothing to persist on PlannedSession itself here, only the
   // goal draft and the append-only audit record.
   const activateGoal = useCallback(
-    async (plan: GoalActivationPlan): Promise<{ applied: boolean; reason?: 'stale' }> => {
+    async (plan: GoalActivationPlan, horizon?: HorizonPlan): Promise<{ applied: boolean; reason?: 'stale' | 'review' | 'failed'; horizon?: HorizonPlan }> => {
       const [logs, manualEvidence, planned] = await Promise.all([
         SessionLogsRepo.getAll(),
         CapabilityEvidenceRepo.getAll(),
@@ -1836,12 +1924,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const result = applyGoalActivationPlan(plan, currentHash, planned);
       if (!result.applied) return { applied: false, reason: result.reason };
 
-      await TrainingGoalsRepo.put(plan.goalDraft);
+      // What the new goal does to your planning is a proposal first (Warden
+      // Logica punt 1): the wizard shows it, and only with Akkoord it is stored.
+      if (!horizon) {
+        const proposal = await planHorizonChangeImpl({
+          title: `${plan.goalDraft.name || 'Je doel'}: zo verandert je planning`,
+          why: 'Volgt je doel.',
+          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop hij eindigt. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+          trigger: plan.goalDraft.createdAt === plan.goalDraft.updatedAt ? 'goal_created' : 'goal_changed',
+          goals: [plan.goalDraft],
+        });
+        if (proposal.proposal.changes.length > 0 || proposal.lengths.length > 0) return { applied: false, reason: 'review', horizon: proposal };
+        horizon = proposal;
+      }
+      const status = await applyHorizonPlanImpl(horizon);
+      if (status === 'stale') return { applied: false, reason: 'stale' };
+      if (status === 'failed') return { applied: false, reason: 'failed' };
       await PlanChangeProposalsRepo.put({ ...plan.committedWeekChanges, resolvedAt: new Date().toISOString(), resolution: 'accepted' });
-      await refresh();
       return { applied: true };
     },
-    [refresh],
+    [planHorizonChangeImpl, applyHorizonPlanImpl],
   );
 
   // Stores the date last checked off, not a boolean — so the box reads as
@@ -2224,6 +2326,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     applyLeave,
     planRestDay,
     applyRestDay,
+    planGoalChange,
+    planHorizonChange: planHorizonChangeImpl,
+    applyHorizonPlan: applyHorizonPlanImpl,
     respondToAdvice,
     debriefLogId,
     dismissDebrief: () => setDebriefLogId(null),

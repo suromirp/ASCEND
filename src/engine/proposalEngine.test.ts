@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { wrapAsPlanChangeProposal, applyPlanChangeItems } from './proposalEngine';
+import { lockLevel } from './weekValidator';
 import type { ScheduleProposal } from './scheduler';
 import type { PlannedSession } from '../models/training';
 import type { PlanChangeItem } from '../models/planChange';
@@ -85,10 +86,12 @@ describe('applyPlanChangeItems', () => {
     expect(result.sessions.find((s) => s.id === 's1')?.plannedMinutes).toBe(45);
   });
 
-  it('move updates scheduledDate/status/movedFromDate on the matched session only', () => {
+  it('move updates scheduledDate/movedFromDate on the matched session only; the system moving it keeps it the system\'s (Warden Logica punt 4)', () => {
     const items: PlanChangeItem[] = [{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-11' }];
     const result = applyPlanChangeItems(items, sessions);
-    expect(result.sessions.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-11', status: 'moved', movedFromDate: '2026-09-09' });
+    expect(result.sessions.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-11', status: 'planned', movedFromDate: '2026-09-09' });
+    // Not "yours": the week check may still put it right.
+    expect(lockLevel(result.sessions.find((s) => s.id === 's1')!, new Set(), ASOF)).toBe(3);
     expect(result.sessions.find((s) => s.id === 's2')).toEqual(sessions[1]);
     expect(result.unsupported).toEqual([]);
   });
@@ -165,8 +168,32 @@ describe('applyPlanChangeItems', () => {
     ];
     const result = applyPlanChangeItems(items, sessions);
     expect(result.unsupported).toEqual([]);
-    expect(result.sessions.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-10', status: 'moved', movedFromDate: '2026-09-09' });
-    expect(result.sessions.find((s) => s.id === 's2')).toEqual({ ...sessions[1], scheduledDate: '2026-09-09', status: 'moved', movedFromDate: '2026-09-10' });
+    expect(result.sessions.find((s) => s.id === 's1')).toEqual({ ...sessions[0], scheduledDate: '2026-09-10', status: 'planned', movedFromDate: '2026-09-09' });
+    expect(result.sessions.find((s) => s.id === 's2')).toEqual({ ...sessions[1], scheduledDate: '2026-09-09', status: 'planned', movedFromDate: '2026-09-10' });
+  });
+
+  it('an accepted proposal (a lock) makes a move yours: status moved, level 1', () => {
+    const lock = { by: 'proposal' as const, at: '2026-09-09T08:00:00.000Z' };
+    const result = applyPlanChangeItems([{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-11' }], sessions, undefined, lock);
+    const moved = result.sessions.find((s) => s.id === 's1')!;
+    expect(moved).toMatchObject({ status: 'moved', lock });
+    expect(lockLevel(moved, new Set(), ASOF)).toBe(1);
+  });
+
+  it('a move with another template changes the training on that day (a long run that becomes a mountain hike)', () => {
+    const result = applyPlanChangeItems([{ plannedSessionId: 's1', action: 'move', fromDate: '2026-09-09', toDate: '2026-09-09', templateId: 'tpl_y', restore: true }], sessions);
+    expect(result.sessions.find((s) => s.id === 's1')).toMatchObject({ templateId: 'tpl_y', scheduledDate: '2026-09-09', status: 'planned' });
+  });
+
+  it('a restore add or remove (the system\'s own layout) sets no lock', () => {
+    const lock = { by: 'proposal' as const, at: '2026-09-09T08:00:00.000Z' };
+    const result = applyPlanChangeItems([
+      { action: 'add', restore: true, newSessionDraft: { templateId: 'tpl_z', scheduledDate: '2026-09-12', weekStartDate: '2026-09-07' } },
+      { plannedSessionId: 's2', action: 'remove', restore: true, fromDate: '2026-09-10' },
+    ], sessions, () => 'new1', lock);
+    expect(result.sessions.find((s) => s.id === 'new1')?.lock).toBeUndefined();
+    expect(result.sessions.find((s) => s.id === 's2')).toMatchObject({ status: 'skipped' });
+    expect(result.sessions.find((s) => s.id === 's2')?.lock).toBeUndefined();
   });
 
   it('reports a malformed move/remove/add item (missing required fields) as unsupported rather than silently ignoring it', () => {

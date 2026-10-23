@@ -270,7 +270,8 @@ export function reconcileWeekComposition(
           generatedBy: [target.source],
           coPlacedWithSessionIds: coPlacedWithSessionIds.length > 0 ? coPlacedWithSessionIds : undefined,
         });
-        finalWeekSessions.push({ ...existing, scheduledDate: placement.date, status: 'moved', movedFromDate: existing.movedFromDate ?? existing.scheduledDate });
+        // The system's own move: it stays the system's (engine/proposalEngine.ts#movedStatus).
+        finalWeekSessions.push({ ...existing, scheduledDate: placement.date, status: existing.lock || existing.status === 'moved' ? 'moved' : 'planned', movedFromDate: existing.movedFromDate ?? existing.scheduledDate });
         continue;
       } else {
         items.push({

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { suggestMoveDates } from './moveSuggestions';
+import { suggestMoveDates, type MoveContext } from './moveSuggestions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
 import type { DailyTimeBudget, Weekday } from '../models/goalEngineConfig';
@@ -88,5 +88,41 @@ describe('suggestMoveDates', () => {
     expect(dates).toContain('2026-10-02');
     expect(dates).not.toContain('2026-10-04');
     expect(dates).not.toContain('2026-10-05');
+  });
+
+  // Warden Logica punt 6: the one-tap days knew no holiday, rest day, goal day or illness.
+  describe('the days the planning keeps free', () => {
+    const now = [
+      s('herstel', 'tpl_herstel', MON),
+      s('easy', 'tpl_easy_run', '2026-10-01'),
+      s('upperB', 'tpl_upper_b', '2026-10-02'),
+      s('long', 'tpl_long_run', '2026-10-04'),
+    ];
+    const dates = (context?: MoveContext) => suggestMoveDates(now, templates, 'upperB', [], program, budget, 'automatic', '2026-09-29', 7, context).map((x) => x.date);
+    const free = dates();
+
+    it('never a day of a holiday or a trek', () => {
+      const day = free[0];
+      const holiday = { id: 'v', kind: 'no_training' as const, startDate: day, endDate: day };
+      expect(dates({ leave: [holiday] })).not.toContain(day);
+      const trek = { id: 't', kind: 'trek' as const, startDate: free[1], endDate: free[1] };
+      expect(dates({ leave: [trek] })).not.toContain(free[1]);
+    });
+
+    it('never the rest day', () => {
+      const restDay = new Date(`${free[0]}T12:00:00Z`).getUTCDay() || 7;
+      expect(dates({ restDay }).every((d) => (new Date(`${d}T12:00:00Z`).getUTCDay() || 7) !== restDay)).toBe(true);
+    });
+
+    it('never on or after the day of the main goal', () => {
+      const goalDay = free[1];
+      expect(dates({ goalDay }).every((d) => d < goalDay)).toBe(true);
+    });
+
+    it('not today or tomorrow while you are ill', () => {
+      const ill = dates({ illness: [{ id: 'i', kind: 'below_neck' as const, startDate: '2026-09-28' }] });
+      expect(ill).not.toContain('2026-09-29');
+      expect(ill).not.toContain('2026-09-30');
+    });
   });
 });

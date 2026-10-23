@@ -153,6 +153,14 @@ describe('weekly pattern per phase', () => {
     // A hike already planned goes back to the long run.
     expect(templateForPhase('tpl_mountain_hike', [], PHASE_BERG)).toBe('tpl_long_run');
   });
+
+  it('zet nooit iets om wat je zelf vastzette, of wat historie is (lockLevel onder 3)', () => {
+    const swaps = activeSwaps(templates, {}, () => true);
+    expect(templateForPhase('tpl_mountain_hike', [], PHASE_BERG, 1)).toBe('tpl_mountain_hike');
+    expect(templateForPhase('tpl_mountain_hike', [], PHASE_BERG, 0)).toBe('tpl_mountain_hike');
+    expect(templateForPhase('tpl_long_run', swaps, PHASE_BERG, 1)).toBe('tpl_long_run');
+    expect(templateForPhase('tpl_long_run', swaps, PHASE_BERG, 3)).toBe('tpl_mountain_hike');
+  });
 });
 
 describe('programAnchorDate', () => {

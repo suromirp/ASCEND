@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyChangeImpact, needsConfirmation, describeChanges } from './changeImpact';
+import { classifyChangeImpact, needsConfirmation, describeChanges, askBeforeApplying, CHANGE_APPLY_MODE_LABEL } from './changeImpact';
 import { computeScheduleFit } from './scheduleFit';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 
@@ -21,6 +21,33 @@ describe('classifyChangeImpact', () => {
   it('anything in this or next week, or any removal, is a decision', () => {
     expect(classifyChangeImpact([{ plannedSessionId: 'near', action: 'move', fromDate: '2026-10-01', toDate: '2026-10-02' }], sessions, asOf)).toBe('decision');
     expect(classifyChangeImpact([{ plannedSessionId: 'far', action: 'remove' }], sessions, asOf)).toBe('decision');
+  });
+});
+
+describe('describeChanges: another training on its day', () => {
+  it('says what it becomes, or that only the length changes', () => {
+    const planned = [session('l', '2026-10-25', '2026-10-19', 'tpl_a')];
+    const templates = [tpl('tpl_a', 'Lange duurloop'), tpl('tpl_b', 'Bergtocht')];
+    expect(describeChanges([{ plannedSessionId: 'l', action: 'move', fromDate: '2026-10-25', toDate: '2026-10-25', templateId: 'tpl_b' }], planned, templates)).toEqual(['Lange duurloop op zo 25 oktober wordt Bergtocht']);
+    expect(describeChanges([{ plannedSessionId: 'l', action: 'move', fromDate: '2026-10-25', toDate: '2026-10-25', plannedMinutes: 30 }], planned, templates)).toEqual(['Lange duurloop op zo 25 oktober: andere lengte']);
+  });
+});
+
+describe('askBeforeApplying: one rule for every automatic change (Warden Logica punt 3)', () => {
+  const sessions = [session('near', '2026-10-01', '2026-09-28'), session('far', '2026-10-21', '2026-10-19')];
+  it('Kleine wijzigingen automatisch: schrappen vraagt altijd eerst, ook ver weg', () => {
+    expect(askBeforeApplying([{ plannedSessionId: 'far', action: 'remove' }], sessions, asOf, 'auto_small')).toBe(true);
+    expect(askBeforeApplying([{ plannedSessionId: 'far', action: 'move', fromDate: '2026-10-21', toDate: '2026-10-22' }], sessions, asOf, 'auto_small')).toBe(false);
+    // Without a stored choice: the advice, Kleine wijzigingen automatisch.
+    expect(askBeforeApplying([{ plannedSessionId: 'far', action: 'remove' }], sessions, asOf, undefined)).toBe(true);
+  });
+  it('Altijd eerst vragen: alles wacht, Alles automatisch: niets wacht', () => {
+    expect(askBeforeApplying([{ plannedSessionId: 'far', action: 'move', fromDate: '2026-10-21', toDate: '2026-10-22' }], sessions, asOf, 'always_ask')).toBe(true);
+    expect(askBeforeApplying([{ plannedSessionId: 'near', action: 'remove' }], sessions, asOf, 'auto_all')).toBe(false);
+    expect(askBeforeApplying([], sessions, asOf, 'always_ask')).toBe(false);
+  });
+  it('de tekst van Altijd eerst vragen zegt eerlijk wat de weekcontrole zelf nog rechtzet', () => {
+    expect(CHANGE_APPLY_MODE_LABEL.always_ask.note).toContain('Planning bijgewerkt');
   });
 });
 

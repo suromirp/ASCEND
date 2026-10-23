@@ -77,12 +77,12 @@ describe('opstartstappen', () => {
     const hangs = () => new Promise<never>(() => undefined);
     const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 50, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: async () => undefined, normalizePlannedSessionWeeks: async () => undefined, mergeDuplicateWeeklyPrescriptionLines: hangs } });
     warn.mockRestore();
-    expect(skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines']);
+    expect(skipped).toEqual(['mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves']);
     const record = await MetaRepo.get<BootMigrationRecord>(BOOT_MIGRATIONS_KEY);
     expect(record?.done.some((k) => k.startsWith('mergeDuplicateWeeklyPrescriptionLines@'))).toBe(false);
     const seen: string[] = [];
     await runBootMigrations({ build: 'v1', onStep: (id) => seen.push(id) });
-    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines']);
+    expect(seen).toEqual([BOOT_MIGRATIONS_KEY, 'mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves']);
   });
 });
 
@@ -139,7 +139,7 @@ describe('een onmisbare stap', () => {
     const hangs = () => new Promise<never>(() => undefined);
     const { skipped } = await runBootMigrations({ build: 'v1', stepLimitMs: 20, overrides: { ...quickRepairs, restorePatternSessionsRemovedByPrescription: hangs } });
     warn.mockRestore();
-    expect(skipped).toEqual(['restorePatternSessionsRemovedByPrescription', 'normalizePlannedSessionWeeks', 'mergeDuplicateWeeklyPrescriptionLines']);
+    expect(skipped).toEqual(['restorePatternSessionsRemovedByPrescription', 'normalizePlannedSessionWeeks', 'mergeDuplicateWeeklyPrescriptionLines', 'releaseSystemMoves']);
   });
 });
 

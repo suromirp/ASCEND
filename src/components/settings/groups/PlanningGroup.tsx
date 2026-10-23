@@ -3,7 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { ProposalSheet } from '../../ProposalSheet';
 import type { RestDayPlan } from '../../../engine/restDayProposal';
 import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
-import { CHOICES } from '../../../data/settingsChoices';
+import { CHOICES, choiceShort } from '../../../data/settingsChoices';
 import { SPORT_LABEL, type Sport } from '../../../engine/sports';
 import { SettingsSection } from '../SettingsList';
 import { usePlanSettingChange } from '../usePlanSettingChange';
@@ -98,7 +98,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef
           def={CHOICES.ambitie}
           value={facts.ambition.chosen}
-          onPick={(v) => void updateSettings({ ambition: v }).then(() => refresh())}
+          onPick={(v) => { if (v !== facts.ambition.chosen) void plan.changeSetting(`Ambitie: ${choiceShort('ambitie', v)}`, { ambition: v }, 'Volgt je nieuwe ambitie.'); }}
           onClose={close}
           footer={facts.ambition.chosen !== facts.ambition.effective && facts.ambition.reason
             ? <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-warning)' }}>{`Nu tijdelijk Standaard. ${facts.ambition.reason} Gaat het weer goed, dan staat Stevig vanzelf weer aan.`}</p>

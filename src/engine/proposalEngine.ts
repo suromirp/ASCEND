@@ -140,6 +140,13 @@ export function applyPlanChangeItems(
   lock?: PlanLock,
 ): ApplyPlanChangeResult {
   const locked = lock ? { lock } : {};
+  // 'moved' means: you moved it, or a proposal you accepted did (it then
+  // carries the lock). A move by the system itself (no lock: the weekly
+  // prescription, a strength block) keeps the session the system's, so the
+  // week check may still put it right and no screen calls it "verplaatst"
+  // as if you did it (Warden Logica punt 4). Where it came from stays in
+  // movedFromDate.
+  const movedStatus = (s: PlannedSession): PlannedSession['status'] => (lock || s.lock || s.status === 'moved' ? 'moved' : 'planned');
   let next = sessions;
   const prescriptionChanges: PlanChangeItem[] = [];
   const unsupported: PlanChangeItem[] = [];
@@ -174,7 +181,7 @@ export function applyPlanChangeItems(
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? withLeave({ ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }, item)
+            ? withLeave({ ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: movedStatus(s), movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }, item)
             : s,
         );
         break;
@@ -215,7 +222,8 @@ export function applyPlanChangeItems(
           weekStartDate: item.newSessionDraft.weekStartDate,
           status: 'planned',
           order: next.length,
-          ...locked,
+          // The system's own layout (restore): no lock, a later run may move it.
+          ...(item.restore ? {} : locked),
           ...(item.leave ? { leave: item.leave } : {}),
         };
         next = [...next, created];
@@ -236,13 +244,14 @@ export function applyPlanChangeItems(
             delete back.movedFromDate;
             delete back.plannedMinutes;
             if (item.plannedMinutes) back.plannedMinutes = item.plannedMinutes;
+            if (item.templateId) back.templateId = item.templateId;
             return withLeave(back, item);
           });
           break;
         }
         next = next.map((s) =>
           s.id === item.plannedSessionId
-            ? withLeave({ ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: 'moved', movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...locked }, item)
+            ? withLeave({ ...s, scheduledDate: item.toDate as string, weekStartDate: mondayOfWeek(item.toDate as string), status: movedStatus(s), movedFromDate: s.movedFromDate ?? item.fromDate, ...(item.plannedMinutes ? { plannedMinutes: item.plannedMinutes } : {}), ...(item.templateId ? { templateId: item.templateId } : {}), ...locked }, item)
             : s,
         );
         break;
@@ -257,7 +266,7 @@ export function applyPlanChangeItems(
           next = next.filter((s) => s.id !== item.plannedSessionId);
           break;
         }
-        next = next.map((s) => (s.id === item.plannedSessionId ? withLeave({ ...s, status: 'skipped', ...locked }, item) : s));
+        next = next.map((s) => (s.id === item.plannedSessionId ? withLeave({ ...s, status: 'skipped', ...(item.restore ? {} : locked) }, item) : s));
         break;
       }
     }
