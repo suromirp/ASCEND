@@ -122,7 +122,7 @@ export function InjuriesPage() {
               <div>
                 <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{n.bodyPart}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatDateNL(n.date)} • <span style={{ color: SEVERITY_COLOR[n.severity] }}>{SEVERITY_LABEL[n.severity]}</span>
+                  {formatDateNL(n.date)} · <span style={{ color: SEVERITY_COLOR[n.severity] }}>{SEVERITY_LABEL[n.severity]}</span>
                 </p>
               </div>
             </div>

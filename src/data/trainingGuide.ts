@@ -107,7 +107,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_intervals: {
-    subtitle: 'Hardlopen • Lange intervallen',
+    subtitle: 'Hardlopen · Lange intervallen',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
@@ -130,7 +130,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_hills_descent: {
-    subtitle: 'Hardlopen en wandelen • Op en af',
+    subtitle: 'Hardlopen en wandelen · Op en af',
     registration: 'ASCEND: duur, D+ en D− als je die hebt, en hoe zwaar het voelde.',
     sections: [
       {
@@ -153,7 +153,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_fartlek: {
-    subtitle: 'Hardlopen • Speelse snelheid',
+    subtitle: 'Hardlopen · Speelse snelheid',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
@@ -176,7 +176,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_progression_run: {
-    subtitle: 'Hardlopen • Progressief',
+    subtitle: 'Hardlopen · Progressief',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
@@ -198,7 +198,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_recovery_run: {
-    subtitle: 'Hardlopen • Herstel',
+    subtitle: 'Hardlopen · Herstel',
     registration: 'ASCEND: duur en hoe het voelde. Meer hoeft niet.',
     sections: [
       {
@@ -216,7 +216,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_ruck_walk: {
-    subtitle: 'Wandelen • Rugzak',
+    subtitle: 'Wandelen · Rugzak',
     registration: 'ASCEND: duur, afstand, hoogtemeters en het gewicht van je rugzak.',
     sections: [
       {
@@ -239,7 +239,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_strides_run: {
-    subtitle: 'Hardlopen • Extra loop',
+    subtitle: 'Hardlopen · Extra loop',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
@@ -262,7 +262,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_tempo_run: {
-    subtitle: 'Hardlopen • Drempeltempo',
+    subtitle: 'Hardlopen · Drempeltempo',
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
@@ -285,7 +285,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_test_run: {
-    subtitle: 'Hardlopen • Meetpunt',
+    subtitle: 'Hardlopen · Meetpunt',
     registration: 'ASCEND: alleen de 5 km zelf. Afstand 5, de tijd van de test, en de zwaarte die je voelde (meestal 8 of 9).',
     sections: [
       {
@@ -308,7 +308,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_race: {
-    subtitle: 'Hardlopen • Wedstrijd',
+    subtitle: 'Hardlopen · Wedstrijd',
     registration: 'ASCEND: je tijd, afstand en gemiddelde hartslag. Dit is je nieuwe meetpunt.',
     sections: [
       {
@@ -330,7 +330,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_easy_run: {
-    subtitle: 'Cardio • Aerobe basis',
+    subtitle: 'Cardio · Aerobe basis',
     registration: 'ASCEND: duur, afstand, D+, gemiddelde hartslag, via Garmin Forerunner 255 + borstband.',
     sections: [
       {
@@ -491,7 +491,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_hill_intervals: {
-    subtitle: 'Snelheid × D+ • Bergop intervaltraining',
+    subtitle: 'Snelheid × D+ · Bergop intervaltraining',
     registration: 'ASCEND: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
     sections: [
       {
@@ -522,7 +522,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
   },
 
   tpl_long_run: {
-    subtitle: 'Uithouding × D+ • Richting marathon en GR5',
+    subtitle: 'Uithouding × D+ · Richting marathon en GR5',
     registration: 'ASCEND: duur, afstand, D+, D−, gemiddelde hartslag, RPE.',
     sections: [
       {

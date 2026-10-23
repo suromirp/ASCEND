@@ -40,7 +40,7 @@ export function DayRow({
     <li className="day-row" data-state={state}>
       <button onClick={onClick} className="flex min-h-[44px] min-w-0 flex-1 items-center gap-3 py-1 text-left">
         <span className="w-[72px] shrink-0 text-xs font-medium" style={{ color: state === 'now' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{label}</span>
-        <span className="line-clamp-2 min-w-0 flex-1 text-[15px] leading-snug" style={{ color: state === 'done' || state === 'skipped' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{children}</span>
+        <span className="min-w-0 flex-1 text-[15px] leading-snug" style={{ color: state === 'done' || state === 'skipped' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>{children}</span>
         {trailing && <span className="shrink-0 text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{trailing}</span>}
         {!action && chevron && <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>}
       </button>

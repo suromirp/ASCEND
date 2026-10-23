@@ -125,7 +125,7 @@ export function StandingPage() {
       <div>
         <h1 className="font-display text-3xl" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          {position ? `Week ${position.weekInProgram}, ${position.phase.name}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
+          {position ? `Week ${position.weekInProgram}, ${position.phase.name.toLowerCase()}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
         </p>
       </div>
 
