@@ -93,6 +93,7 @@ export const MOVEMENT_PATTERNS = [
   'isolation_arm',
   'isolation_shoulder',
   'isolation_leg', // kniestrekken en kniebuigen op de machine
+  'isolation_upper', // flyes, pullovers, straight-arm pulldown en shrugs: één gewricht, borst of rug
 ] as const;
 
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
@@ -112,6 +113,7 @@ export const PATTERN_LABEL: Record<MovementPattern, string> = {
   isolation_arm: 'Isolatie arm',
   isolation_shoulder: 'Isolatie schouder',
   isolation_leg: 'Isolatie been',
+  isolation_upper: 'Isolatie borst of rug',
 };
 
 export interface Exercise {

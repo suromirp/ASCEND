@@ -18,6 +18,7 @@
 // Where this file made its own choice, it says so.
 
 import type { Exercise } from '../models/exercise';
+import type { WarmKind } from './warmup';
 import type { SetLog } from '../models/training';
 import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
@@ -62,6 +63,9 @@ export const UNDER_EXPECTATION_DROP = 0.05;
 // reps with 2 in reserve, the series the owner's other app showed. That is one
 // example, so the 3% is uncertain; it can be changed here and nowhere else.
 export const FATIGUE_PER_SET = 0.03;
+// A step down of more than this share of the weight is too coarse for a later set:
+// the weight stays and the bottom of the range goes down a little.
+export const COARSE_STEP = 0.1;
 
 // The rep ranges, as three reps wide bands around these centres (the owner's
 // other app uses 7 to 9, 9 to 11, 11 to 13, 14 to 16). The range is not stored
@@ -309,6 +313,8 @@ export interface Prescription {
   stepKg: number;
   // The weight of the last training that this one was compared to.
   lastWeightKg: number;
+  // A sentence to show before the reason, when the last weight was not one the gym can make.
+  notice?: string;
 }
 
 export interface PrescribeInput {
@@ -320,9 +326,16 @@ export interface PrescribeInput {
   settings: ResolvedStrengthSettings;
   // The legs are tired right now; the sentence says from what ("een bergtocht gisteren").
   tired?: { because: string };
-  // An earlier exercise of the same movement pattern is in the same training:
-  // then one feel set is enough (KR-7).
-  patternSeen?: boolean;
+  // How much warm-up this exercise needs, given what was done before it in the
+  // same training (engine/warmup.ts). Alone it is the full build-up.
+  warm?: WarmKind;
+  // The rep range and the reps in reserve of the plan (the template or the
+  // program). They win over what is derived from the history, which is only the
+  // fallback (decision 2026-10-23-bereik-uit-het-plan.md).
+  plan?: { low: number; high: number; rir?: number };
+  // A last weight the gym profile cannot make: do not refuse, take the nearest
+  // weight it can make and say so (`notice`).
+  nearestOnMismatch?: boolean;
 }
 
 const nl = (n: number) => formatNumberNL(n, 2);
@@ -338,45 +351,87 @@ export function describePlannedSet(exercise: Exercise | undefined, set: PlannedS
   return `${formatWeight(exercise, set.weightKg)} x ${reps}, ${set.rir === 0 ? 'tot het uiterste' : `${set.rir} over`}`;
 }
 
-const NO_WARMUP_PATTERNS = new Set(['isolation_arm', 'isolation_shoulder', 'calf', 'shin', 'core', 'hip']);
+const NO_WARMUP_PATTERNS = new Set(['isolation_arm', 'isolation_shoulder', 'isolation_leg', 'calf', 'shin', 'core', 'hip']);
 
-// KR-7. Nothing for a light weight (the empty bar plus 10 kg, or 10 kg without
-// a bar) or an isolation exercise, and nothing for a load made of body weight.
+// A weight that needs no warm-up: the empty bar plus 10 kg, or 10 kg without a bar.
+export function isLightWeight(exercise: Exercise | undefined, weightKg: number, barKg: number): boolean {
+  return exercise?.resistance === 'barbell' ? weightKg <= barKg + 10 : weightKg <= 10;
+}
+
+// Does this exercise get warm-up sets of this kind at all? Not when it is
+// mostly your own body (pull-ups, dips; a row or a hinge with a small share of
+// the body, 8 to 40%, is a loaded lift and does), nor for the patterns that never
+// warm up (arms, shoulders, legs on a machine, calves, shins, core, hips).
+export function canWarmUp(settings: ResolvedStrengthSettings, exercise: Exercise | undefined, kind: WarmKind = 'full'): exercise is Exercise {
+  if (settings.warmup === 'off' || !exercise || kind === 'none') return false;
+  if (exercise.resistance === 'bodyweight' || exercise.resistance === 'assisted_bodyweight') return false;
+  if (NO_WARMUP_PATTERNS.has(exercise.pattern)) return false;
+  // One light set before an isolation exercise is not about body weight; for the rest it is.
+  return kind === 'light' || (exercise.bodyweightFraction ?? 0) < 0.5;
+}
+
+interface WarmStep {
+  // A share of the first working load, or of the estimated strength.
+  pct: number;
+  reps: number;
+  of: 'work' | 'strength';
+}
+
+// The sets of a kind of warm-up, as shares. With no estimate (no history) the
+// build-up is 50% x 8 and 80% x 3 of the working weight.
+function warmupPlan(kind: WarmKind, settings: ResolvedStrengthSettings, hasStrength: boolean, heavy: boolean): WarmStep[] {
+  if (kind === 'none') return [];
+  if (kind === 'feel') return [{ pct: 0.65, reps: 5, of: 'work' }];
+  if (kind === 'ramp') return [{ pct: 0.7, reps: 4, of: 'work' }];
+  if (kind === 'light') return [{ pct: 0.5, reps: 8, of: 'work' }];
+  if (settings.warmup === 'scheme') {
+    // Percentages of the first working weight: 40, 60 and 80% for 5, 5 and 3.
+    return [{ pct: 0.4, reps: 5, of: 'work' }, { pct: 0.6, reps: 5, of: 'work' }, { pct: 0.8, reps: 3, of: 'work' }];
+  }
+  if (!hasStrength) return [{ pct: 0.5, reps: 8, of: 'work' }, { pct: 0.8, reps: 3, of: 'work' }];
+  // Smart: percentages of the estimated strength, so a heavier day (more
+  // strength) gets heavier warm-up sets; only what lies under the working weight stays.
+  // The reps only go down as the weight goes up: 40% x 8 and 58% x 4, and for a
+  // heavy weight a light 27% x 10 in front (decision 2026-10-22-forge-opwarmen.md).
+  const plan: WarmStep[] = [{ pct: 0.4, reps: 8, of: 'strength' }, { pct: 0.58, reps: 4, of: 'strength' }];
+  if (heavy) plan.unshift({ pct: 0.27, reps: 10, of: 'strength' });
+  return plan;
+}
+
+// The rows to show when the working weight is not known yet: they fill in as
+// soon as set 1 gets a weight (share of that weight, and the reps).
+export function warmupShapes(settings: ResolvedStrengthSettings, exercise: Exercise | undefined, kind: WarmKind): { share: number; reps: number }[] {
+  if (!canWarmUp(settings, exercise, kind)) return [];
+  return warmupPlan(kind, settings, false, false).map((p) => ({ share: p.pct, reps: p.reps }));
+}
+
+// KR-7. Nothing for a light weight or an isolation exercise, and nothing for a
+// load made of body weight. `kind` says how much: the whole build-up for the
+// first heavy exercise of a body part, one set after that (engine/warmup.ts).
+// Everything is counted in LOAD and turned into the weight on the bar or the
+// stack at the end, so a row with a small share of the body (8%) is not
+// rounded as if it were all on the bar.
 export function warmupSets(
   settings: ResolvedStrengthSettings,
   exercise: Exercise | undefined,
   candidates: Candidate[],
   firstWeightKg: number,
-  strengthKg: number,
-  patternSeen = false,
+  strengthKg: number | undefined,
+  kind: WarmKind = 'full',
+  bodyKg?: number,
 ): WarmupSet[] {
-  if (settings.warmup === 'off' || !exercise) return [];
-  // Mostly your own body (pull-ups, dips): no warm-up sets. A row or a hinge with a
-  // small share of the body (8 to 40%) is a loaded lift and gets them.
-  if ((exercise.bodyweightFraction ?? 0) >= 0.5 || NO_WARMUP_PATTERNS.has(exercise.pattern)) return [];
-  if (exercise.resistance === 'bodyweight' || exercise.resistance === 'assisted_bodyweight') return [];
+  if (!canWarmUp(settings, exercise, kind)) return [];
   const bars = settings.profile.barsKg;
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
-  const light = exercise.resistance === 'barbell' ? firstWeightKg <= bar + 10 : firstWeightKg <= 10;
-  if (light) return [];
+  if (isLightWeight(exercise, firstWeightKg, bar)) return [];
   const heavy = exercise.resistance === 'barbell' && firstWeightKg > 3 * Math.max(...bars);
-  let plan: { weight: number; reps: number }[];
-  if (patternSeen) {
-    plan = [{ weight: firstWeightKg * 0.65, reps: 5 }];
-  } else if (settings.warmup === 'scheme') {
-    // Percentages of the first working weight: 40, 60 and 80% for 5, 5 and 3.
-    plan = [{ weight: firstWeightKg * 0.4, reps: 5 }, { weight: firstWeightKg * 0.6, reps: 5 }, { weight: firstWeightKg * 0.8, reps: 3 }];
-  } else {
-    // Smart: percentages of the estimated strength, so a heavier day (more
-    // strength) gets heavier warm-up sets; only what lies under the working weight stays.
-    // The reps only go down as the weight goes up: 40% x 8 and 58% x 4, and for a
-    // heavy weight a light 27% x 10 in front (decision 2026-10-22-forge-opwarmen.md).
-    plan = [{ weight: strengthKg * 0.4, reps: 8 }, { weight: strengthKg * 0.58, reps: 4 }];
-    if (heavy) plan.unshift({ weight: strengthKg * 0.27, reps: 10 });
-  }
+  const firstLoad = loadFromExternal(exercise, firstWeightKg, bodyKg) ?? firstWeightKg;
+  const plan = warmupPlan(kind, settings, strengthKg !== undefined, heavy);
   const out: WarmupSet[] = [];
   for (const p of plan) {
-    const rounded = candidates[nearestIndex(candidates, p.weight)].externalKg;
+    const load = p.pct * (p.of === 'strength' ? (strengthKg ?? firstLoad) : firstLoad);
+    const external = externalFromLoad(exercise, load, bodyKg) ?? load;
+    const rounded = candidates[nearestIndex(candidates, external)].externalKg;
     if (rounded >= firstWeightKg * 0.92) continue;
     if (out.length > 0 && rounded <= out[out.length - 1].weightKg) continue;
     // Never more reps than the set before it, whatever the plan above says.
@@ -437,13 +492,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   if (!last?.top || strengthKg === undefined) return undefined;
   const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg });
   if (!candidates) return undefined;
-  if (lastWeightMismatch(input)) return undefined;
+  const mismatch = lastWeightMismatch(input);
+  if (mismatch && !input.nearestOnMismatch) return undefined;
   // Did the smoothed strength really go down with the last training? Only then
   // may a lighter weight be put down to a lower strength.
   const before = points.slice(0, points.indexOf(last)).reverse().find((p) => p.smoothed !== undefined)?.smoothed;
   const strengthDropped = before !== undefined && strengthKg < before - 1e-9;
 
-  const range = deriveRange(points);
+  const derived = deriveRange(points);
+  const planned = input.plan && input.plan.low > 0 && input.plan.high >= input.plan.low ? input.plan : undefined;
+  const range: RepRange = planned ? { low: planned.low, high: planned.high, rir: planned.rir ?? derived.rir } : derived;
   const { low, high, rir } = range;
   const legsTired = !!input.tired && !!exercise?.loadsLegs;
   const lastIdx = nearestIndex(candidates, last.top.weightKg);
@@ -520,9 +578,15 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     }
   }
   const sameWeight = Math.abs(first.externalKg - last.top.weightKg) < 1e-6;
-  const targetReps = Math.min(hi, Math.max(lo, sameWeight ? Math.min(last.top.reps + 1, expectedFirst) : expectedFirst));
+  // Same weight: one more than last time if the model expects it, never fewer than
+  // last time (the smoothing lags half a step behind a good day).
+  const targetReps = Math.min(hi, Math.max(lo, sameWeight ? Math.max(last.top.reps, Math.min(last.top.reps + 1, expectedFirst)) : expectedFirst));
 
   // The sets: each earlier working set costs the next a share of the strength.
+  // A later set goes down to the heaviest weight that still gives the bottom of
+  // the range. With coarse steps (a drop of more than a tenth) it keeps the
+  // weight instead, with a lower bottom (down to two fewer): 8 kg for 10 reps
+  // is better than 6 kg for 17. The range of a later set is never stretched.
   const setCount = Math.min(6, Math.max(1, last.workSets.length || 3));
   const sets: PlannedSet[] = [{ weightKg: first.externalKg, repsLow: lo, repsHigh: hi, rir: shownRir }];
   let prevIdx = idx;
@@ -532,10 +596,18 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       continue;
     }
     const tiredStrength = strengthKg * (1 - FATIGUE_PER_SET) ** n;
-    const j = heaviestWith(candidates, tiredStrength, rir, lo, prevIdx);
-    const e = expectedReps(tiredStrength, candidates[j].loadKg, rir);
-    const wide = settings.widenRange && !cappedUp && e > hi ? e : hi;
-    sets.push({ weightKg: candidates[j].externalKg, repsLow: lo, repsHigh: wide, rir: shownRir });
+    let j = prevIdx;
+    for (let k = prevIdx; k >= 0; k--) {
+      if (expectedReps(tiredStrength, candidates[k].loadKg, rir) >= lo) {
+        j = k;
+        break;
+      }
+    }
+    const here = candidates[prevIdx].loadKg;
+    const stay = expectedReps(tiredStrength, here, rir);
+    if (j < prevIdx && (here - candidates[j].loadKg) / here > COARSE_STEP && stay >= lo - 2) j = prevIdx;
+    const bottom = j === prevIdx ? Math.max(1, Math.min(lo, stay)) : lo;
+    sets.push({ weightKg: candidates[j].externalKg, repsLow: bottom, repsHigh: Math.max(bottom, hi), rir: shownRir });
     prevIdx = j;
   }
 
@@ -548,6 +620,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     return `Een stap lichter past beter bij ${low} tot ${high} herhalingen met ${rir} over.`;
   };
 
+  const assisted = exercise?.resistance === 'assisted_bodyweight';
   const pauseDays = daysBetween(last.date, input.date);
   let kind: PrescriptionKind;
   let reason: string;
@@ -556,7 +629,12 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason = `Je benen zijn nog moe van ${input.tired!.because}, dus het gewicht blijft gelijk en één herhaling minder is normaal.`;
   } else if (twoUnder) {
     kind = 'two_under';
-    reason = 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu 5% lichter om weer op dreef te komen.';
+    const dropped = 1 - first.loadKg / lastLoad;
+    reason = assisted
+      ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu meer hulp om weer op dreef te komen.'
+      : dropped > 0.07
+        ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu een stap lichter om weer op dreef te komen.'
+        : 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu 5% lichter om weer op dreef te komen.';
   } else if (widened) {
     kind = 'widened';
     const step = stepAt(candidates, idx);
@@ -572,18 +650,26 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason = 'Je deed dit een tijd niet, dus we beginnen op je laatste niveau en kijken na deze training opnieuw.';
   } else if (first.loadKg > lastLoad + 1e-6) {
     kind = 'up';
-    reason = 'Je geschatte kracht is gestegen, dus een stap zwaarder.';
+    reason = before === undefined
+      ? assisted ? 'Vorige keer had je ruimte over, dus een stap minder hulp.' : 'Vorige keer had je ruimte over, dus een stap zwaarder.'
+      : assisted ? 'Je geschatte kracht is gestegen, dus een stap minder hulp.' : 'Je geschatte kracht is gestegen, dus een stap zwaarder.';
   } else if (first.loadKg < lastLoad - 1e-6) {
     kind = 'down';
-    reason = strengthDropped ? 'Je geschatte kracht is wat lager dan eerder, dus iets lichter.' : whyLighter();
+    reason = strengthDropped ? (assisted ? 'Je geschatte kracht is wat lager dan eerder, dus iets meer hulp.' : 'Je geschatte kracht is wat lager dan eerder, dus iets lichter.') : whyLighter();
   } else {
     kind = 'same';
-    reason = settings.progression === 'reps_first' ? `Eerst herhalingen: zelfde gewicht, tot je ${high} haalt.` : 'Zelfde gewicht als vorige keer, probeer er één herhaling meer te halen.';
+    const same = assisted ? 'Zelfde hulp' : 'Zelfde gewicht';
+    reason =
+      settings.progression === 'reps_first'
+        ? `Eerst herhalingen: ${same.toLowerCase()}, tot je ${high} haalt.`
+        : targetReps > last.top.reps
+          ? `${same} als vorige keer, probeer er één herhaling meer te halen.`
+          : `${same} als vorige keer, probeer weer ${targetReps} te halen.`;
   }
 
   return {
     sets,
-    warmups: warmupSets(settings, exercise, candidates, first.externalKg, strengthKg, input.patternSeen),
+    warmups: warmupSets(settings, exercise, candidates, first.externalKg, strengthKg, input.warm ?? 'full', input.bodyKg),
     kind,
     reason,
     widened,
@@ -592,5 +678,6 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     targetReps,
     stepKg: stepAt(candidates, idx),
     lastWeightKg: last.top.weightKg,
+    ...(mismatch ? { notice: `Je vorige gewicht (${formatWeight(exercise, last.top.weightKg)}) past niet bij je sportschool, daarom is dit het dichtstbijzijnde gewicht dat je wel hebt (${formatWeight(exercise, candidates[lastIdx].externalKg)}). Kijk bij je stangen en dumbbells in de instellingen.` } : {}),
   };
 }

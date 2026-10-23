@@ -23,7 +23,8 @@ import {
   type WorkoutRow,
 } from './forgeWorkout';
 import type { GymProfile } from './strengthSettings';
-import { candidatesFor, nearestIndex, stepFor } from './strengthWeights';
+import { isLightWeight } from './strengthModel';
+import { barFor, candidatesFor, nearestIndex, stepFor } from './strengthWeights';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -52,6 +53,12 @@ export function weightStepFor(exercise: Exercise | undefined, profile: GymProfil
 }
 
 export const REPS_STEP = 1;
+
+// Is this first working weight too light for warm-up sets (the empty bar plus 10 kg,
+// or 10 kg without a bar)? The same rule as warmupSets.
+export function makeLight(exercise: Exercise | undefined, profile: GymProfile): (kg: number) => boolean {
+  return (kg) => isLightWeight(exercise, kg, exercise?.resistance === 'barbell' ? barFor(profile, kg) : 0);
+}
 
 // A weight rounded to what your gym can make: the nearest bar plus plates, the
 // nearest dumbbell, the nearest step of the stack. What you type yourself is
@@ -154,21 +161,38 @@ export const exerciseComplete = (ex: WorkoutExercise): boolean => {
 
 // A new weight for one set. With `carry` the sets after it that are still
 // untouched (not ticked, not changed by you) and of the same kind move by the
-// same difference. The sets are read from `base`, the exercise as it was
-// before you started changing this field, so typing 4 and then 45 gives the
-// same as typing 45 at once and nothing sticks at zero on the way.
-export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: number | undefined, carry: boolean, snap?: (kg: number) => number, min = 0): WorkoutExercise {
+// same difference; a set after it with no weight yet gets this weight. The sets
+// are read from `base`, the exercise as it was before you started changing this
+// field, so typing 4 and then 45 gives the same as typing 45 at once and
+// nothing sticks at zero on the way.
+// Changing the first working set also moves the warm-up rows you did not touch
+// (they keep their share of it), and fills the empty ones; with `isLight` an
+// empty row goes away when the weight turns out to be too light to warm up for.
+export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: number | undefined, carry: boolean, snap?: (kg: number) => number, min = 0, isLight?: (kg: number) => boolean): WorkoutExercise {
   const index = base.rows.findIndex((r) => r.id === rowId);
   if (index < 0) return base;
   const row = base.rows[index];
   const changed = updateRow(base, rowId, { weightKg: weightKg === undefined ? undefined : Math.max(min, weightKg) });
-  const rows = changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r));
+  const round = (kg: number) => Math.min(MAX_ROW_KG, Math.max(min, snap ? snap(r2(kg)) : r2(kg)));
+  let rows = changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r));
   const delta = weightKg !== undefined && row.weightKg !== undefined ? r2(weightKg - row.weightKg) : 0;
-  if (!carry || delta === 0 || row.kind !== 'work') return { ...changed, rows };
-  return {
-    ...changed,
-    rows: rows.map((r, i) => (i > index && r.kind === 'work' && !r.done && !r.edited && r.weightKg !== undefined ? { ...r, weightKg: Math.min(MAX_ROW_KG, Math.max(min, snap ? snap(r2(r.weightKg + delta)) : r2(r.weightKg + delta))) } : r)),
-  };
+  if (carry && row.kind === 'work' && weightKg !== undefined) {
+    rows = rows.map((r, i) => {
+      if (i <= index || r.kind !== 'work' || r.done || r.edited) return r;
+      if (r.weightKg === undefined) return { ...r, weightKg: round(weightKg) };
+      return delta === 0 ? r : { ...r, weightKg: round(r.weightKg + delta) };
+    });
+  }
+  if (row.kind === 'work' && weightKg !== undefined && base.rows.findIndex((r) => r.kind === 'work') === index) {
+    const light = isLight?.(weightKg) ?? false;
+    rows = rows.flatMap((r) => {
+      if (r.kind !== 'warmup' || r.done || r.edited || r.share === undefined) return [r];
+      if (r.weightKg === undefined && light) return [];
+      const w = round(r.share * weightKg);
+      return [{ ...r, weightKg: w, target: { ...r.target, weightKg: w } }];
+    });
+  }
+  return { ...changed, rows };
 }
 
 export function applyReps(ex: WorkoutExercise, rowId: string, reps: number | undefined): WorkoutExercise {

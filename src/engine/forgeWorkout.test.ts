@@ -133,7 +133,7 @@ describe('afvinken en de rusttimer', () => {
     const first = tickRow(w, 'ex8', warm[0].id);
     expect(first.restSec).toBeUndefined();
     const last = tickRow(first.workout, 'ex8', warm[warm.length - 1].id);
-    expect(last.restSec).toBe(180);
+    expect(last.restSec).toBe(90);
   });
 
   it('na een werkset rust, uitvinken start niets', () => {
