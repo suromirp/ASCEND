@@ -14,7 +14,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
 import { AppMark } from './components/AppMark';
 import { StretchMenuButton } from './components/StretchMenuButton';
-import { TimerButton } from './components/TimerButton';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { useScrollRestoration } from './components/useScrollRestoration';
 import { resolveNavigation } from './engine/navigationSettings';
@@ -176,7 +175,6 @@ function SettingsGear({ from }: { from: string }) {
 function TodayTopButtons() {
   return (
     <div className="absolute z-10 flex items-center gap-2" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', right: 'calc(1rem + 44px + 8px)' }}>
-      <TimerButton />
       <StretchMenuButton />
     </div>
   );
