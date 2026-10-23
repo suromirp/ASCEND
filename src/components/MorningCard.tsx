@@ -3,7 +3,7 @@ import { syncWatchActivities } from '../storage/externalActivities';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { LegFeeling } from '../models/checkIn';
-import { checkInFor } from '../engine/wellbeing';
+import { checkInFor, recentPainSpot } from '../engine/wellbeing';
 import { LEGS, SOURCE_TEXT } from '../engine/morningCard';
 import { watchSummaryLine } from '../engine/wellnessCheck';
 import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
@@ -15,21 +15,26 @@ import { useMorningPrefill } from './useMorningPrefill';
 // De ochtendvraag bovenaan Vandaag, boven de missiekaart (docs/beslissingen/2026-10-23-
 // ochtendkaart-en-melding.md): "Goedemorgen. Hoe voel je je?" met één regel van wat het
 // horloge gaf en de vier keuzes voor je benen. Steen, geen goud: de missiekaart houdt de
-// gouden knop. Een tik op een keuze opent het blad met die keuze al gekozen en de rest
-// alvast ingevuld. De kaart blijft tot je hebt ingevuld, tot de middag of tot de eerste
-// training van vandaag is gelogd.
+// gouden knop. Eén tik op hoe je benen voelen is het antwoord: energie en slaap komen
+// van het horloge of gelden als gewoon. Met een pijnplek van de laatste 14 dagen opent
+// de tik het blad, want die plek wil een cijfer. "Meer invullen" opent het blad ook.
+// De kaart blijft tot je hebt ingevuld, tot de middag of tot de eerste training van
+// vandaag is gelogd.
 
 export function MorningCard() {
   const today = todayISO();
-  const { settings, updateSettings } = useAppData();
+  const { settings, updateSettings, sessionLogs } = useAppData();
   const { prefill, reading, linked, sleepOn } = useMorningPrefill(today);
   const [sheet, setSheet] = useState<{ legs?: LegFeeling } | null>(null);
   const line = reading || linked ? watchSummaryLine(reading, { sleepExpected: sleepOn }) : '';
   const suggested = prefill.legs;
-  // Eén tik als alles zoals altijd is; het blad voor het uitgebreide antwoord.
-  const allNormal = () => {
+  const spot = recentPainSpot(today, sessionLogs);
+  // Eén tik: je benen, met energie en slaap van het horloge als die er zijn.
+  const answer = (legs: LegFeeling) => {
+    if (spot) { setSheet({ legs }); return; }
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
-    void updateSettings({ morningCheckIns: [...others, { date: today, allNormal: true }].sort((a, b) => a.date.localeCompare(b.date)).slice(-60) });
+    const entry = { date: today, legs, energy: prefill.energy?.value, sleep: prefill.sleep?.value };
+    void updateSettings({ morningCheckIns: [...others, entry].sort((a, b) => a.date.localeCompare(b.date)).slice(-60) });
   };
   // Wel iets van het horloge, geen slaap: die komt via Garmin Connect soms later bij intervals.icu.
   const missingSleep = !!reading && sleepOn && !reading.lines.some((l) => l.key === 'sleep');
@@ -64,14 +69,14 @@ export function MorningCard() {
           )}
         </div>
         <div>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Benen</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je benen, één tik is genoeg</p>
           <div className="mt-1.5 grid grid-cols-4 gap-1.5">
             {LEGS.map(([k, text]) => {
               const isSuggestion = suggested?.value === k;
               return (
                 <button
                   key={k}
-                  onClick={() => setSheet({ legs: k })}
+                  onClick={() => answer(k)}
                   className="min-h-[44px] rounded-lg border px-1 text-xs leading-tight"
                   style={{ borderColor: isSuggestion ? 'var(--color-bronze)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}
                 >
@@ -87,11 +92,11 @@ export function MorningCard() {
           )}
         </div>
         <button
-          onClick={allNormal}
-          className="min-h-[44px] w-full rounded-xl border px-3.5 text-sm font-semibold"
-          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+          onClick={() => setSheet({})}
+          className="-my-1 min-h-[44px] self-start text-xs font-medium"
+          style={{ color: 'var(--color-ink-dim)' }}
         >
-          Alles normaal
+          Energie, slaap of pijn invullen
         </button>
       </Card>
       {sheet && <MorningCheckInSheet initialLegs={sheet.legs} onClose={() => setSheet(null)} />}

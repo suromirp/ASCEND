@@ -32,7 +32,7 @@ export function DayRow({
   children: ReactNode;
   // Kleine tekst rechts, bijvoorbeeld de duur.
   trailing?: ReactNode;
-  // Een eigen knop rechts naast de regel (een vinkje, "Alles normaal").
+  // Een eigen knop rechts naast de regel (een vinkje, "Gaat goed").
   action?: ReactNode;
   chevron?: boolean;
 }) {

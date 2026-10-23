@@ -7,7 +7,7 @@ import { ENERGY, LEGS, SLEEP } from '../engine/morningCard';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
 
 // Vandaag → "Gevoel" as one line in "Je dag" (the form opens in a sheet,
-// components/MorningCheckInSheet.tsx; "Alles normaal" is one tap on the line): the
+// components/MorningCheckInSheet.tsx; "Gaat goed" is one tap on the line): the
 // morning check-in (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md). In
 // the morning the question first stands as its own card above the mission
 // (components/MorningCard.tsx); this line then waits (`hideTodo`) and, once the
@@ -35,7 +35,7 @@ export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { pai
   }
 
   const summary = existing
-    ? (existing.allNormal ? ['alles normaal'] : [
+    ? (existing.allNormal ? ['gaat goed'] : [
         LEGS.find(([k]) => k === existing.legs)?.[1], ENERGY.find(([k]) => k === existing.energy)?.[1], SLEEP.find(([k]) => k === existing.sleep)?.[1] && `slaap ${SLEEP.find(([k]) => k === existing.sleep)![1].toLowerCase()}`,
         existing.spot && `${existing.spot.area.toLowerCase()} ${existing.spot.score}`,
       ].filter(Boolean).map((s) => String(s).toLowerCase())).join(', ')
@@ -50,7 +50,7 @@ export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { pai
         chevron={!!existing}
         action={existing || painOnly ? undefined : (
           <button onClick={allNormal} className="ml-2 min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold" style={{ boxShadow: 'inset 0 0 0 1px var(--color-control-border)', color: 'var(--color-ink)' }}>
-            Alles normaal
+            Gaat goed
           </button>
         )}
       >

@@ -87,9 +87,9 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose }: 
   return (
     <TodaySheet eyebrow="Vanochtend" title={painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()} vanochtend?` : 'Hoe voel je je vanochtend?'} onClose={onClose}>
       <div className="flex flex-col gap-3">
-        {!painOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Vergeleken met een gewone ochtend. Is alles zoals altijd, dan is één tik genoeg.</p>}
+        {!painOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Vergeleken met een gewone ochtend. Gaat alles zoals altijd, dan is één tik genoeg.</p>}
         {!painOnly && <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl border px-3.5 py-2 text-sm font-semibold" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
-          Alles normaal
+          Gaat goed
         </button>}
         {wellness && <WellnessLines reading={wellness} />}
         {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v })} />}
