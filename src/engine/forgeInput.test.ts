@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import {
+  mergeDraft,
   activeRow,
   applyReps,
   applyWeight,
@@ -307,5 +308,16 @@ describe('schijven vertellen', () => {
     expect(plateChange({ add: [2.5], remove: [] })).toBe('Erbij 1 × 2,5.');
     expect(plateChange({ add: [2.5, 2.5], remove: [1.25] })).toBe('Erbij 2 × 2,5, eraf 1 × 1,25.');
     expect(plateChange({ add: [], remove: [] })).toBeUndefined();
+  });
+});
+
+describe('een training van voor een naamswijziging', () => {
+  const old = [ex('ex14', [row('o1')], { name: 'Chest press / bench' }), ex('ex16', [row('o2', { done: true })], { name: 'Row' }), ex('ex17', [row('o3')], { name: 'Pulldown', swappedFrom: 'Pull-up' })];
+  const fresh = [ex('ex14', [row('n1')], { name: 'Machine Chest Press' }), ex('ex16', [row('n2')], { name: 'Chest-Supported Dumbbell Row' }), ex('ex17', [row('n3')], { name: 'Assisted Pull-Up' })];
+  it('een onaangeraakte oefening krijgt het plan van nu, wat je deed of ruilde blijft', () => {
+    expect(mergeDraft(old, fresh).map((e) => e.name)).toEqual(['Machine Chest Press', 'Row', 'Pulldown']);
+  });
+  it('een afgevinkte oefening die niet meer in de training staat blijft achteraan', () => {
+    expect(mergeDraft([...old, ex('ex99', [row('x', { done: true })], { name: 'Oud' })], fresh).map((e) => e.name)).toContain('Oud');
   });
 });

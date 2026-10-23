@@ -17,6 +17,7 @@ import {
   activeRow,
   applyReps,
   applyWeight,
+  mergeDraft,
   copyRow,
   exerciseComplete,
   exerciseSummary,
@@ -156,7 +157,7 @@ export function ForgeWorkout({
 
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
   const [ctx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled }));
-  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => restored?.exercises ?? planWorkout(slots, ctx));
+  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? mergeDraft(restored.exercises, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
   const [startedAt] = useState(() => restored?.startedAt ?? Date.now());
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
