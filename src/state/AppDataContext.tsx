@@ -1545,12 +1545,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (!session) return [];
       const monday = mondayOfWeek(session.scheduledDate);
       const nearby = [-7, 0, 7, 14].flatMap((offset) => sessionsForWeek(addDays(monday, offset)));
+      const today = todayISO();
+      // Never a day the planning keeps free (Warden Logica punt 6).
       return suggestMoveDates(
         nearby, templates, sessionId, sessionLogs, program,
-        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, todayISO(),
+        goalEngineConfig.availability.dailyTimeBudget, goalEngineConfig.strategy.sameDayPairingPreference, today, undefined,
+        { leave: settings.leavePeriods, restDay: settings.restDay ?? 1, goalDay: planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal), illness: settings.illnessEpisodes },
       );
     },
-    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig],
+    [plannedSessions, sessionsForWeek, templates, sessionLogs, program, goalEngineConfig, settings.leavePeriods, settings.restDay, settings.afterMainGoal, settings.illnessEpisodes, trainingGoals, goalMilestones],
   );
 
   // A same-date change (toDate === fromDate) is how proposeSkipEngine

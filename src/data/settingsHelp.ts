@@ -16,7 +16,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Wijzigingen',
     lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',
     points: [
-      { head: 'Vraag eerst', text: 'je ziet alles vooraf en geeft akkoord.' },
+      { head: 'Vraag eerst', text: 'je ziet alles vooraf en geeft akkoord. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht (rustdag vrij, ruimte tussen zware dagen), met de melding Planning bijgewerkt en ongedaan maken.' },
       { head: 'Deels zelf', text: 'weken verder weg past ASCEND zelf aan, met een melding. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
       { head: 'Alles zelf', text: 'alles meteen, met een melding en ongedaan maken.' },
     ],

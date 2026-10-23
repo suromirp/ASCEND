@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
 import type { HorizonPlan } from '../storage/horizonPlan';
-import { classifyChangeImpact, needsConfirmation } from '../engine/changeImpact';
+import { askBeforeApplying, needsConfirmation } from '../engine/changeImpact';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 
 // Een doel of planningsinstelling die de planningsronde anders laat lopen
@@ -62,8 +62,8 @@ export function useHorizonChange(): {
       }
       let ask = true;
       if (options.ask === 'setting') {
-        const level = items.length > 0 ? classifyChangeImpact(items, plannedSessions, todayISO()) : 'notice';
-        ask = needsConfirmation(level, settings.changeApplyMode ?? 'auto_small');
+        // Only another length (Ambitie): a change in the weeks ahead, like a notice.
+        ask = items.length > 0 ? askBeforeApplying(items, plannedSessions, todayISO(), settings.changeApplyMode) : needsConfirmation('notice', settings.changeApplyMode ?? 'auto_small');
       }
       if (!ask) {
         await apply(plan, options);

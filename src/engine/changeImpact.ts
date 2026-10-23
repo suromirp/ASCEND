@@ -21,7 +21,7 @@ export type ChangeImpactLevel = 'hint' | 'notice' | 'decision';
 export type ChangeApplyMode = 'always_ask' | 'auto_small' | 'auto_all';
 
 export const CHANGE_APPLY_MODE_LABEL: Record<ChangeApplyMode, { label: string; note: string }> = {
-  always_ask: { label: 'Altijd eerst vragen', note: 'ASCEND laat elke wijziging eerst zien en wacht op jouw akkoord.' },
+  always_ask: { label: 'Altijd eerst vragen', note: 'ASCEND laat elke wijziging eerst zien en wacht op jouw akkoord. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht, met de melding Planning bijgewerkt die je ongedaan kunt maken.' },
   auto_small: { label: 'Kleine wijzigingen automatisch', note: 'Weken verder weg past ASCEND zelf aan, met een melding die je ongedaan kunt maken. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
   auto_all: { label: 'Alles automatisch, met melding', note: 'ASCEND past alles direct aan en laat achteraf zien wat er veranderde, met ongedaan maken.' },
 };
@@ -46,6 +46,14 @@ export function needsConfirmation(level: ChangeImpactLevel, mode: ChangeApplyMod
   if (mode === 'always_ask') return true;
   if (mode === 'auto_small') return level === 'decision';
   return false;
+}
+
+// The one rule every change the app wants to make by itself goes through (a
+// setting, the weekly prescription): ask first, or apply with a notice and
+// undo. Without a stored choice: the advice, Kleine wijzigingen automatisch
+// (docs/beslissingen/2026-10-23-wijzigingen-doet-wat-het-zegt.md).
+export function askBeforeApplying(items: PlanChangeItem[], sessions: PlannedSession[], asOf: string, mode: ChangeApplyMode | undefined): boolean {
+  return needsConfirmation(classifyChangeImpact(items, sessions, asOf), mode ?? 'auto_small');
 }
 
 function shortDate(iso: string): string {

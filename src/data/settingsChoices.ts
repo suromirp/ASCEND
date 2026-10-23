@@ -28,7 +28,7 @@ export const CHOICES = {
     advice: 'auto_small' as 'always_ask' | 'auto_small' | 'auto_all',
     help: 'wijzigingen',
     options: [
-      { value: 'always_ask', label: 'Vraag eerst', note: 'Elke wijziging wacht op je akkoord' },
+      { value: 'always_ask', label: 'Vraag eerst', note: 'Wacht op je akkoord, de weekcontrole meldt wat ze rechtzet' },
       { value: 'auto_small', label: 'Deels zelf', note: 'Weken verder weg zelf, met een melding' },
       { value: 'auto_all', label: 'Alles zelf', note: 'Meteen, met een melding achteraf' },
     ],

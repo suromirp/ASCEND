@@ -39,6 +39,7 @@ import { computeWeeklyPrescriptionPlan } from '../engine/weeklyPrescriptionEngin
 import { diffWeeklyPrescriptionPlan, realPlanChanges, samePlannedSession as sameSession } from '../engine/weeklyPrescriptionDiff';
 import { activeStrengthStrategy } from '../engine/strengthProgram';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
+import { askBeforeApplying } from '../engine/changeImpact';
 import { planEndDay } from '../engine/programLayout';
 import { isLeaveBlockedDay } from '../engine/leave';
 import { isTemplatePlannable, fixedFrequencySports, templateSport, type Sport } from '../engine/sports';
@@ -129,11 +130,13 @@ export async function runWeeklyPrescriptionStep(asOf: string = todayISO()): Prom
   const initialBuild = previousPrescriptions.length === 0 && storedTraining.length === 0;
   const realChanges = realPlanChanges(proposal.changes, { initialBuild, before: planned, after: updatedSessions });
 
-  // Fase 3 — "Wijzigingen toepassen: altijd eerst vragen": the forecast
-  // changes become a coach item to accept or decline instead of being
-  // applied in the background. A declined set isn't asked again (the id
-  // is derived from the changes themselves).
-  if (appSettings.changeApplyMode === 'always_ask' && realChanges.length > 0) {
+  // Wijzigingen: the same rule as every setting (engine/changeImpact.ts
+  // #askBeforeApplying). With "Altijd eerst vragen", and with "Kleine
+  // wijzigingen automatisch" as soon as something is let go or this or next
+  // week is touched, the changes become a coach item to accept or decline
+  // instead of being applied in the background (Warden Logica punt 3). A
+  // declined set isn't asked again (the id is derived from the changes themselves).
+  if (realChanges.length > 0 && askBeforeApplying(realChanges, planned, asOf, appSettings.changeApplyMode)) {
     return { kind: 'ask', wrote: false, proposal, realChanges, planned, templates: tpls };
   }
 

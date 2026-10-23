@@ -6,14 +6,20 @@
 // manual move uses (time per day / pairing via dayHasRoomFor, 48 hours
 // between heavy work for the same muscles via findHeavyConflict, never a
 // day in the past). Deterministic, no guessing: nearest good day first,
-// the session's own week before the next one.
+// the session's own week before the next one. Never a day the planning keeps
+// free: a holiday or trek day, the rest day, the main goal's day or later, or
+// the days you are ill (MoveContext).
 
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import { dayHasRoomFor, findHeavyConflict, proposeMove, type ScheduleProposal } from './scheduler';
 import { resolveEffectiveFullDuration } from './substitutions';
-import { addDays, daysBetween, mondayOfWeek, weekdayOf } from '../utils/dates';
+import { addDays, daysBetween, isoWeekday, mondayOfWeek, weekdayOf } from '../utils/dates';
+import type { LeavePeriod } from '../models/leave';
+import type { IllnessEpisode } from '../models/illness';
+import { leaveDays, lightDays } from './leave';
+import { activeIllness, isHeavySession } from './illness';
 
 const UNSET_DAY_PAIRING_CAP_MINUTES = 120;
 
@@ -27,6 +33,22 @@ export interface MoveSuggestion {
   proposal: ScheduleProposal;
 }
 
+// The days the planning keeps free, which a one-tap suggestion must keep free
+// too (Warden Logica punt 6): the suggestion gets your lock, so the week check
+// could never put it right afterwards.
+export interface MoveContext {
+  // Free days, holidays and treks (engine/leave.ts): never a day of a holiday
+  // or a trek, and nothing heavy on the light day before or after a trek.
+  leave?: LeavePeriod[];
+  // Weekday 1 to 7 of the rest day: kept free.
+  restDay?: number;
+  // The main goal's day: nothing on or after it.
+  goalDay?: string;
+  // While ill (an episode without an end): not today or tomorrow, the days
+  // reporting ill cleared (engine/illness.ts).
+  illness?: IllnessEpisode[];
+}
+
 export function suggestMoveDates(
   sessions: PlannedSession[], // the session's week and the weeks around it
   templates: SessionTemplate[],
@@ -37,6 +59,7 @@ export function suggestMoveDates(
   sameDayPairingPreference: TrainingStrategyProfile['sameDayPairingPreference'],
   asOf: string,
   max = 3,
+  context: MoveContext = {},
 ): MoveSuggestion[] {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const session = sessions.find((s) => s.id === sessionId);
@@ -65,9 +88,23 @@ export function suggestMoveDates(
     && !dailyTimeBudget?.[weekdayOf(date)]
     && minutesOn(date) + ownMinutes(date) <= UNSET_DAY_PAIRING_CAP_MINUTES;
 
+  const offDays = leaveDays(context.leave);
+  const light = lightDays(context.leave, offDays);
+  const heavy = isHeavySession(template);
+  const ill = activeIllness(context.illness);
+  const kept = (date: string) => {
+    const leave = offDays.get(date)?.kind;
+    if (leave === 'off' || leave === 'trek') return true;
+    if (heavy && light.has(date)) return true;
+    if (context.restDay && isoWeekday(date) === context.restDay) return true;
+    if (context.goalDay && date >= context.goalDay) return true;
+    if (ill && date <= addDays(asOf, 1)) return true;
+    return false;
+  };
+
   const candidates: { date: string; score: number }[] = [];
   for (let date = firstDay; date <= lastDay; date = addDays(date, 1)) {
-    if (date === session.scheduledDate) continue;
+    if (date === session.scheduledDate || kept(date)) continue;
     // Never a third session on one day, whatever the time allows.
     if (others.filter((s) => s.scheduledDate === date).length >= 2) continue;
     const normal = fitsNormally(date);
