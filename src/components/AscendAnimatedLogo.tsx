@@ -11,7 +11,7 @@ import { useId } from 'react';
 // The gold gradient stops (#fbead0 → #8f611c) are calibrated brand art, not
 // arbitrary colors — kept as exact hex per the approved reference, the same
 // documented exception as .topo-texture's hardcoded rgba in index.css.
-export function AscendAnimatedLogo({ size = 200 }: { size?: number }) {
+export function AscendAnimatedLogo({ size = 200, withWord = true }: { size?: number; withWord?: boolean }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const softGlow = `ag-soft-${uid}`;
   const softGlowBig = `ag-softbig-${uid}`;
@@ -22,7 +22,7 @@ export function AscendAnimatedLogo({ size = 200 }: { size?: number }) {
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   return (
-    <svg viewBox="0 0 240 300" width={size} height={size * 1.25} style={{ overflow: 'visible' }}>
+    <svg viewBox={withWord ? '0 0 240 300' : '0 0 240 235'} width={size} height={size * (withWord ? 1.25 : 0.98)} style={{ overflow: 'visible' }}>
       <defs>
         <filter id={softGlow} x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="5.5" result="blur" />
@@ -100,6 +100,7 @@ export function AscendAnimatedLogo({ size = 200 }: { size?: number }) {
 
       <circle className="ascend-logo-lightpoint" r="5" fill={`url(#${dotGlow})`} filter={`url(#${softGlow})`} />
 
+      {withWord && (
       <text
         x="120"
         y="258"
@@ -112,6 +113,7 @@ export function AscendAnimatedLogo({ size = 200 }: { size?: number }) {
       >
         ASCEND
       </text>
+      )}
     </svg>
   );
 }

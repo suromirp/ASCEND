@@ -1,6 +1,7 @@
 import type { GoalProgress } from '../engine/progression';
 import { ObjectiveCard } from './ObjectiveCard';
 import { Eyebrow } from './ui';
+import { Icon } from './icons';
 import { getGR5MilestoneDetail } from '../data/gr5Details';
 
 export function AscentLadder({
@@ -16,7 +17,7 @@ export function AscentLadder({
 }) {
   return (
     <div>
-      <Eyebrow>DE BEKLIMMING</Eyebrow>
+      <Eyebrow>De beklimming</Eyebrow>
       <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{progress.goalName}</h2>
       {description && (
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{description}</p>
@@ -37,8 +38,8 @@ export function AscentLadder({
       </div>
 
       <div className="mt-2 flex flex-col items-center gap-1 py-4">
-        <span className="text-2xl" style={{ color: 'var(--color-gold)' }}>△</span>
-        <span className="font-display text-sm tracking-widest" style={{ color: 'var(--color-ink-dim)' }}>TOP</span>
+        <span style={{ color: 'var(--color-gold)' }}><Icon name="ascend" size={28} /></span>
+        <Eyebrow as="span">Top</Eyebrow>
       </div>
     </div>
   );

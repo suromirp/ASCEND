@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { MilestoneView } from '../engine/progression';
 import { formatDateNL } from '../utils/dates';
 import { Icon } from './icons';
+import { NumText } from './ui';
 
 const MARKER: Record<string, ReactNode> = {
   completed: <Icon name="vinkje" size={16} />,
@@ -59,7 +60,7 @@ export function ObjectiveCard({
               className={status === 'current' ? 'block font-display text-lg' : 'block text-sm'}
               style={{ color: status === 'future' || status === 'upcoming' ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}
             >
-              {definition.title}
+              <NumText>{definition.title}</NumText>
             </span>
             {subtitle && (
               <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-bronze)' }}>{subtitle}</span>

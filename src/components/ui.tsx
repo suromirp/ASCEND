@@ -144,6 +144,17 @@ export function Num({ children }: { children: ReactNode }) {
   return <span className="font-sans tabular-nums">{children}</span>;
 }
 
+// Een tekst in Marcellus waar getallen in staan ("15 km wandeling"): de woorden
+// blijven Marcellus, de getallen worden Inter met vaste cijferbreedte.
+export function NumText({ children }: { children: string }) {
+  const parts = children.split(/(\d+(?:[.,:]\d+)*)/);
+  return (
+    <>
+      {parts.map((part, i) => (i % 2 === 1 ? <Num key={i}>{part}</Num> : part))}
+    </>
+  );
+}
+
 // `as="span"` inside a button or a line of text, where a div is not allowed.
 export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'div' | 'span' }) {
   const Tag = as;
