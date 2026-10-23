@@ -65,16 +65,16 @@ export function capabilityKeyLabel(key: Pick<CapabilityKey, 'dimension' | 'disci
 // say nothing.
 const DURATION_RANGES = [
   { label: '< 1 uur', value: 30 },
-  { label: '1 – 2 uur', value: 60 },
-  { label: '2 – 3 uur', value: 120 },
-  { label: '3 – 5 uur', value: 180 },
+  { label: '1-2 uur', value: 60 },
+  { label: '2-3 uur', value: 120 },
+  { label: '3-5 uur', value: 180 },
   { label: '5+ uur', value: 300 },
 ];
 const ELEVATION_RANGES = [
   { label: '< 300 m', value: 150 },
-  { label: '300 – 600 m', value: 300 },
-  { label: '600 – 1.000 m', value: 600 },
-  { label: '1.000 – 1.500 m', value: 1000 },
+  { label: '300-600 m', value: 300 },
+  { label: '600-1.000 m', value: 600 },
+  { label: '1.000-1.500 m', value: 1000 },
   { label: '1.500+ m', value: 1500 },
 ];
 
@@ -86,21 +86,21 @@ export const RANGE_OPTIONS: Partial<Record<BaselineDimension, { label: string; v
   descent_tolerance: ELEVATION_RANGES,
   load_carriage: [
     { label: 'Dagrugzak (< 5 kg)', value: 3 },
-    { label: '5 – 8 kg', value: 5 },
-    { label: '8 – 12 kg', value: 8 },
+    { label: '5-8 kg', value: 5 },
+    { label: '8-12 kg', value: 8 },
     { label: '12+ kg', value: 12 },
   ],
   multi_day_durability: [
     { label: '1 dag', value: 1 },
     { label: '2 dagen', value: 2 },
-    { label: '3 – 4 dagen', value: 3 },
+    { label: '3-4 dagen', value: 3 },
     { label: '5+ dagen', value: 5 },
   ],
   sustainable_output: [
     { label: 'Trager dan 7:00', value: 7.5 },
-    { label: '6:00 – 7:00', value: 7 },
-    { label: '5:30 – 6:00', value: 6 },
-    { label: '5:00 – 5:30', value: 5.5 },
+    { label: '6:00-7:00', value: 7 },
+    { label: '5:30-6:00', value: 6 },
+    { label: '5:00-5:30', value: 5.5 },
     { label: 'Sneller dan 5:00', value: 5 },
   ],
 };
@@ -111,9 +111,9 @@ export const RANGE_OPTIONS: Partial<Record<BaselineDimension, { label: string; v
 // walking/running one. Everything else is the dimension's own entry.
 const CYCLING_DISTANCE_RANGES = [
   { label: '< 30 km', value: 15 },
-  { label: '30 – 60 km', value: 30 },
-  { label: '60 – 100 km', value: 60 },
-  { label: '100 – 150 km', value: 100 },
+  { label: '30-60 km', value: 30 },
+  { label: '60-100 km', value: 60 },
+  { label: '100-150 km', value: 100 },
   { label: '150+ km', value: 150 },
 ];
 

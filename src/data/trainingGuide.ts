@@ -346,7 +346,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         items: [
           'volledige zinnen spreken wordt moeilijk',
           'ademhaling wordt duidelijk zwaar',
-          'RPE blijft boven de 4–5/10',
+          'RPE blijft boven de 4-5/10',
           'je zit langdurig boven je bedoelde rustige Garmin-zone',
           'je moet bewust "pushen" om tempo vast te houden',
           'het laatste deel voelt als een tempo-/wedstrijdtraining',
@@ -422,7 +422,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       },
       {
         heading: 'OPTIE A, LOOPBAND OP HELLING',
-        body: 'Helling ongeveer 8–15%, snelheid meestal 4–5,5 km/u, RPE 4–5/10, een werkgebied, geen verplichte combinatie. Kies snelheid en helling waarmee je de volledige geplande tijd gecontroleerd kunt volhouden, niet automatisch de zwaarste combinatie. Niet structureel aan de handgrepen hangen, dat vermindert bovendien de nauwkeurigheid van Garmins afstandsmeting.',
+        body: 'Helling ongeveer 8-15%, snelheid meestal 4-5,5 km/u, RPE 4-5/10, een werkgebied, geen verplichte combinatie. Kies snelheid en helling waarmee je de volledige geplande tijd gecontroleerd kunt volhouden, niet automatisch de zwaarste combinatie. Niet structureel aan de handgrepen hangen, dat vermindert bovendien de nauwkeurigheid van Garmins afstandsmeting.',
       },
       {
         heading: 'GESCHATTE D+, GEEN GPS-METING',
@@ -435,7 +435,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
       {
         heading: 'WANNEER TE ZWAAR?',
         items: [
-          'RPE loopt langdurig naar 6–7+',
+          'RPE loopt langdurig naar 6-7+',
           'praten wordt lastig',
           'je hartslag zit op het niveau van een tempoloop',
           'benen zijn zaterdag nog zwaar',
@@ -479,7 +479,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         heading: 'DOEL',
         body: 'Vermoeidheid van het zware weekend (heuvelintervallen + lange duurloop) laten dalen voordat de nieuwe week begint. Een herstelwandeling hoeft niet als prestatie behandeld te worden, geen tempo- of hartslagdoel nodig.',
       },
-      { heading: 'OPTIES', items: ['volledige rust', '30–60 min rustige wandeling'] },
+      { heading: 'OPTIES', items: ['volledige rust', '30-60 min rustige wandeling'] },
       { heading: 'GEEN', items: ['intervallen', 'zware incline', 'lange run', 'zware beentraining'] },
       {
         heading: 'GARMIN RECOVERY TIME',
