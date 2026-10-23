@@ -463,6 +463,8 @@ interface AppData {
   // Fase 3: advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];
+  // Advice you already answered (Akkoord or Liever niet): not shown again.
+  answeredAdviceIds: Set<string>;
   // The rest of the planning run over a proposed week, for its preview. With
   // `leave`: as if those were your periods (a period you have not agreed to yet).
   planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[], restDay?: number) => PlannedSession[];
@@ -2063,6 +2065,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const weather = useWeatherForecast(settings.homeLocation, !loading && needsWeather(settings.overviews));
   useFollowLocation(settings, updateSettings, !loading);
 
+  const answeredAdviceIds = useMemo(() => new Set(Object.keys(adviceResponses)), [adviceResponses]);
   const advice = useMemo(
     // Proposals you kept turning down come last (engine/learning.ts).
     () => learnFromDeclines([
@@ -2211,6 +2214,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     dismissForecastSummary: () => setForecastSummary(null),
     planChangeLog,
     advice,
+    answeredAdviceIds,
     planPreviewPass,
     leavePeriods,
     planLeave,

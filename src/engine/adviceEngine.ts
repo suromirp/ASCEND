@@ -931,7 +931,7 @@ export function previewMorningAdvice(inputs: AdviceInputs): Advice[] {
 // That preview in one line under the check-in.
 export function describeMorningPreview(advice: Advice[]): string {
   if (advice.length === 0) return 'Je planning blijft zoals hij is.';
-  return `Dan zegt ASCEND op Vandaag: ${advice.map((a) => a.title).join('. ')}. Niets verandert zonder jouw akkoord.`;
+  return `Op Vandaag verschijnt dan: ${advice.map((a) => `"${a.title}"`).join(' en ')}. Niets verandert zonder jouw akkoord.`;
 }
 
 function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {

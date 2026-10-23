@@ -29,7 +29,7 @@ const KEEP = 60;
 // painOnly: de ochtendcheck staat uit, maar er is een pijnplek van de laatste 14
 // dagen. Dan alleen die vraag, niet benen, energie en slaap.
 export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } = {}) {
-  const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig } = useAppData();
+  const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds } = useAppData();
   const today = todayISO();
   const existing = checkInFor(today, settings.morningCheckIns);
   const [open, setOpen] = useState(false);
@@ -83,9 +83,9 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
       logs: sessionLogs, plannedSessions, templates, injuries: [], program,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
       sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
-      respondedIds: new Set(), asOf: today,
+      respondedIds: answeredAdviceIds, asOf: today,
       checkIns: [...(settings.morningCheckIns ?? []).filter((c) => c.date !== today), entry],
-    }));
+    }).filter((a) => !answeredAdviceIds.has(a.id)));
   };
 
   const complete = painOnly ? draft.spot !== undefined : !!(draft.legs && sleep && (draft.energy || wellness));
