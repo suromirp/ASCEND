@@ -36,6 +36,7 @@ import {
 } from '../storage/database';
 import { migrateToGoalEngine, migrateStrengthProgramDefault } from '../storage/goalMigration';
 import { runBootMigrations } from '../storage/bootMigrations';
+import { withPlausibleDurations } from '../engine/logDuration';
 import { runBootUnderLock } from '../storage/bootLock';
 import { describeStorageError, describeWriteError } from '../storage/storageError';
 import { storageIsOpen, whenStorageOpen } from '../storage/lifecycle';
@@ -605,7 +606,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // over a change made elsewhere.
   // Reads everything from storage and shows it. No planning sync here.
   const loadState = useCallback(async () => {
-    const [programs, tpls, planned, logs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
+    const [programs, tpls, planned, storedLogs, goals, milestones, progress, injuries, manualEvidence, engineConfig, loadedSettings, loadedStretchCompletion, strengthStrategies, strengthRecs, proposals, responses] = await Promise.all([
       ProgramsRepo.getAll(),
       SessionTemplatesRepo.getAll(),
       PlannedSessionsRepo.getAll(),
@@ -623,6 +624,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       PlanChangeProposalsRepo.getAll(),
       MetaRepo.get<Record<string, AdviceResponse>>('adviceResponses'),
     ]);
+    // A strength workout that stayed open for days reads as its estimate (engine/logDuration.ts).
+    const logs = withPlausibleDurations(storedLogs, tpls);
     setProgram(programs[0] ?? null);
     setPlanChangeLog(proposals);
     setAdviceResponses(responses ?? {});

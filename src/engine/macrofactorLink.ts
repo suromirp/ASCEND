@@ -25,6 +25,7 @@ import type { ExerciseSetLog } from '../models/training';
 export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
 import type { SessionLogDraft } from './activityImport';
 import { formatNumberNL } from '../utils/number';
+import { plausibleStrengthMinutes } from './logDuration';
 
 // MacroFactor workout name (as nameKey) to the ASCEND template id. null: the
 // user said this workout is not part of ASCEND; never offered again.
@@ -33,7 +34,9 @@ export type NameMapping = Record<string, string | null>;
 // --- a new log ------------------------------------------------------------------
 
 export function workoutMinutes(workout: MacroFactorWorkout, template: SessionTemplate, planned?: PlannedSession): number {
-  if (workout.durationSec) return Math.max(1, Math.round(workout.durationSec / 60));
+  // A workout left open for days in MacroFactor has no usable duration.
+  const minutes = plausibleStrengthMinutes(workout.durationSec ? Math.max(1, Math.round(workout.durationSec / 60)) : undefined);
+  if (minutes) return minutes;
   return planned?.plannedMinutes ?? template.durationVariants.full;
 }
 

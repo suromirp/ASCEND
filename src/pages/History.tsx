@@ -49,13 +49,15 @@ function countMissed(plannedSessions: PlannedSession[], sessionLogs: SessionLog[
 // bad for Gemist (invert). Silent when both months are zero, so a stat that
 // simply doesn't apply this program (e.g. no Afdaling yet) doesn't clutter
 // the card with a "±0" delta forever.
-function formatDelta(current: number, previous: number, opts?: { unit?: string; decimals?: number; invert?: boolean }): { text: string; color: string } | undefined {
-  if (current === 0 && previous === 0) return undefined;
+// Also silent when last month had nothing: "+15,5 km" then only repeats the value.
+function formatDelta(current: number, previous: number, opts?: { unit?: string; decimals?: number; invert?: boolean; format?: (n: number) => string }): { text: string; color: string } | undefined {
+  if (previous === 0) return undefined;
   const diff = current - previous;
   const decimals = opts?.decimals ?? 0;
   const unit = opts?.unit ?? '';
   const sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
-  const text = `${sign}${formatNumberNL(Math.abs(diff), decimals)}${unit} t.o.v. vorige maand`;
+  const amount = opts?.format ? opts.format(Math.abs(diff)) : `${formatNumberNL(Math.abs(diff), decimals)}${unit}`;
+  const text = `${sign}${amount} t.o.v. vorige maand`;
   const goodDirection = opts?.invert ? diff <= 0 : diff >= 0;
   const color = diff === 0 ? 'var(--color-ink-dim)' : goodDirection ? 'var(--color-success-text)' : 'var(--color-danger-text)';
   return { text, color };
@@ -108,7 +110,7 @@ export function HistoryPage() {
         {(summary.cyclingKm > 0 || prevSummary.cyclingKm > 0) && (
           <Stat label="Fietsen" value={`${formatNumberNL(summary.cyclingKm, 1)} km`} delta={formatDelta(summary.cyclingKm, prevSummary.cyclingKm, { unit: ' km', decimals: 1 })} />
         )}
-        <Stat label="Trainingstijd" value={formatHoursMinutesNL(summary.totalMinutes)} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { unit: ' min' })} />
+        <Stat label="Trainingstijd" value={formatHoursMinutesNL(summary.totalMinutes)} delta={formatDelta(summary.totalMinutes, prevSummary.totalMinutes, { format: formatHoursMinutesNL })} />
         <Stat label="Gemist" value={`${missedCount}`} delta={formatDelta(missedCount, prevMissedCount, { invert: true })} />
         {summary.elevationLoss > 0 && <Stat label="Afdaling" value={`${formatNumberNL(summary.elevationLoss, 0)} m D−`} />}
         {summary.machineVertical > 0 && <Stat label="Hoogtemeters op toestel" value={`${Math.round(summary.machineVertical)} m`} />}

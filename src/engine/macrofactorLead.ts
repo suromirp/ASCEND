@@ -16,6 +16,7 @@
 
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, SessionLog, SessionTemplate } from '../models/training';
 import { formatNumberNL } from '../utils/number';
+import { plausibleStrengthMinutes } from './logDuration';
 import type { MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
 import { legacySetShape, minutesLabel, strengthDataFor, strengthRirFor } from './macrofactorSets';
@@ -38,8 +39,8 @@ export interface StrengthChange {
 
 export function strengthChangeFor(log: SessionLog, workout: MacroFactorWorkout, template: SessionTemplate): StrengthChange | undefined {
   const change: StrengthChange = {};
-  if (workout.durationSec) {
-    const after = Math.max(1, Math.round(workout.durationSec / 60));
+  const after = plausibleStrengthMinutes(workout.durationSec ? Math.max(1, Math.round(workout.durationSec / 60)) : undefined);
+  if (after) {
     if (after !== log.durationMinutes) change.duration = { before: log.durationMinutes, after };
   }
   const data = strengthDataFor(workout, template);
