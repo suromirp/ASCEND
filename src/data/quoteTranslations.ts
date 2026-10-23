@@ -1,7 +1,7 @@
 // Dutch translations of the quote library (data/quoteLibrary.ts), own
 // translations from the English or Latin source. The quotes themselves are
 // always shown in their original words, on purpose; the translation only
-// appears when you tap "Vertaling" (components/QuoteCard.tsx).
+// is shown first when there is one (components/QuoteCard.tsx).
 
 export interface QuoteNl {
   text: string;
@@ -10,7 +10,7 @@ export interface QuoteNl {
   latin?: boolean;
 }
 
-// Quotes without one get no "Vertaling" button.
+// Quotes without one are shown in their original words.
 
 export const QUOTE_NL: Record<string, QuoteNl> = {
   Q002: { text: 'De beste wraak is niet te worden zoals wie je onrecht deed.', author: 'Marcus Aurelius', source: 'Overpeinzingen 6.6' },
