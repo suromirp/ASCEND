@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Icon } from './icons';
 
 // One way to ask "waarom" across the app: the same word, the same arrow, and
 // the same panel with the reason, how strong the evidence is and where it
@@ -27,7 +28,7 @@ export function WhyPanel({ children, evidence, sources, accent = 'var(--color-br
       <div>{children}</div>
       {evidence && <p style={{ color: 'var(--color-ink)' }}>{EVIDENCE_LABEL[evidence]}</p>}
       {sources?.map((src) => (
-        <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
+        <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
       ))}
     </div>
   );

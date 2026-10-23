@@ -14,6 +14,7 @@ import { JOURNEY_TASKS } from '../data/journeyTasks';
 import { journeyTimeline, journeyWeeksLeft, type TimelineTask } from '../engine/journey';
 import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
 import { formatDateNL, formatMonthNL, todayISO } from '../utils/dates';
+import { Icon } from '../components/icons';
 
 function rowMeta(row: TimelineTask): string {
   if (row.status === 'done') return row.doneOn ? `gedaan op ${shortDateNL(row.doneOn)}` : 'gedaan';
@@ -82,7 +83,7 @@ export function JourneyPage() {
                 <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>Basisgewicht {formatKg(baseWeightGrams(items))}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{packs.have} van {packs.total} onderdelen heb je al</p>
               </div>
-              <span className="text-xl" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true">›</span>
+              <span className="text-xl" style={{ color: 'var(--color-ink-dim)' }} aria-hidden="true"><Icon name="verder" size={16} /></span>
             </Card>
           </button>
 

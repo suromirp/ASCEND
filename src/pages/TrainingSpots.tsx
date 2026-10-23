@@ -10,6 +10,7 @@ import { useAppData } from '../state/AppDataContext';
 import { FLAT_COUNTRY_TIPS, HOME_PLACES, TRAINING_SPOTS, type SpotUse, type TrainingSpot } from '../data/trainingSpots';
 import { filterForTraining, spotSession, spotTrainings, spotsForTraining, TRAINING_FILTERS, travelAdvice, type HomeLocation, type TrainingFilter } from '../engine/trainingSpots';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 const USE_LABEL: Record<SpotUse, string> = {
   bergop: 'bergop', bergaf: 'bergaf', trap: 'trap', rugzak: 'rugzak', heuvelintervallen: 'heuvelintervallen', 'lange tocht': 'lange tocht', vlak: 'vlak', duurloop: 'duurloop',
@@ -196,14 +197,14 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
           {spot.caveat && <p style={{ color: 'var(--color-warning)' }}>Let op: {spot.caveat}</p>}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {spot.sources.map((src) => (
-              <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
+              <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
             ))}
           </div>
         </div>
       )}
 
       <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
-        Route ernaartoe ↗
+        Route ernaartoe<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
       </a>
     </Card>
   );

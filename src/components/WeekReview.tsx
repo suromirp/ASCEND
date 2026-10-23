@@ -5,10 +5,12 @@ import { addDays, formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/
 import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
+import { SheetHeader } from './SheetHeader';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../models/checkIn';
 import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
 import { WeeklyPlanSection } from './WeeklyQuestionCard';
+import { Icon } from './icons';
 
 function useWeekReview(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
@@ -54,7 +56,7 @@ export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
               <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Week van {formatDateNL(r.weekStart)}</span>
               <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{r.title}</span>
             </span>
-            <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.done} / {r.planned} ›</span>
+            <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.done} / {r.planned}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" /></span>
           </button>
         ))}
       </div>
@@ -79,11 +81,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-8">
-            <div className="-mr-2 -mt-2 flex items-center justify-between">
-              <Eyebrow>{`WEEK VAN ${formatDateNL(review.weekStart).toUpperCase()}`}</Eyebrow>
-              <button onClick={requestClose} aria-label="Sluiten" className="flex h-11 w-11 items-center justify-center text-lg" style={{ color: 'var(--color-ink-dim)' }}>×</button>
-            </div>
-            <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>Je week</h2>
+            <div className="-mt-2"><SheetHeader eyebrow={`Week van ${formatDateNL(review.weekStart)}`} title="Je week" onClose={requestClose} /></div>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{review.title}</p>
 
             <div className="mt-4 grid grid-cols-3 gap-2">

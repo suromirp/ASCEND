@@ -4,6 +4,7 @@ import { TrainingGuideSheet } from '../components/TrainingGuideSheet';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { todayISO } from '../utils/dates';
 import { usePageState } from '../components/usePageState';
+import { Icon } from '../components/icons';
 
 // Fixed weekday order (Ma → Zo) rather than iterating TRAINING_GUIDES —
 // object key order isn't a contract worth relying on, and this reads in
@@ -54,7 +55,7 @@ export function TrainingGuidePage() {
                   <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template.name}</p>
                   <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.subtitle}</p>
                 </div>
-                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
               </Card>
             </button>
           );

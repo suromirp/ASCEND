@@ -1,5 +1,6 @@
 import { GARMIN_DATA_SCREENS, GARMIN_METRICS, GARMIN_STRAP_USAGE, GARMIN_ZONE_SETUP, type GuideCard } from '../data/garminGuide';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 export function GarminGuidePage() {
 
@@ -50,7 +51,7 @@ function GuideCardView({ card }: { card: GuideCard }) {
                 className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2"
                 style={{ color: 'var(--color-sky)' }}
               >
-                {s.label} ↗
+                {s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
               </a>
             ) : (
               <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>

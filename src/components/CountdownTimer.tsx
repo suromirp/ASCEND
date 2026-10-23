@@ -4,7 +4,8 @@ import { haptics } from '../utils/haptics';
 import { playTimerAlarm } from '../utils/sound';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { SheetHeader } from './SheetHeader';
+import { Card, PrimaryButton, SecondaryButton } from './ui';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -75,7 +76,7 @@ export function CountdownTimer({
       >
         <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-6">
-            <Eyebrow>{label ?? 'TIMER'}</Eyebrow>
+            <SheetHeader eyebrow="Timer" title={label} onClose={requestClose} />
 
             <div className="flex flex-col items-center gap-3 py-2">
               <p
@@ -129,10 +130,6 @@ export function CountdownTimer({
                 </PrimaryButton>
               )}
             </div>
-
-            <button onClick={requestClose} className="min-h-[44px] text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              Sluiten
-            </button>
           </Card>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS, STRETCH_GENERAL_ADVICE, STRETCH_SOURCE_NOTE } from '../data/stretches';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 export function StretchesPage() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export function StretchesPage() {
           >
             <Card className="flex items-center justify-between">
               <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
-              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+              <span className="text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
             </Card>
           </button>
         ))}

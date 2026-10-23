@@ -7,6 +7,7 @@ import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { CATEGORY_LABEL, KNOWLEDGE_TOPICS, knowledgeContent, topicById, type KnowledgeCategory } from '../data/knowledge';
 import { useWeeklyLesson } from '../components/useWeeklyLesson';
+import { Icon } from '../components/icons';
 
 const ORDER: KnowledgeCategory[] = ['route', 'navigatie', 'weer', 'sneeuw', 'slapen', 'lichaam', 'uitrusting', 'mentaal'];
 
@@ -89,7 +90,7 @@ export function KnowledgeTopicPage() {
           <Eyebrow>KIJKEN</Eyebrow>
           {content.videos.map((v) => (
             <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] flex-col justify-center border-b py-2 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
-              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>{v.title} ↗</span>
+              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>{v.title}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></span>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 {v.channel}{v.minutes ? ` · ${v.minutes} min` : ''}{v.language && v.language !== 'nl' ? ` · ${v.language === 'en' ? 'Engels' : v.language === 'de' ? 'Duits' : 'Frans'}` : ''}{v.note ? ` · ${v.note}` : ''}
               </span>
@@ -119,7 +120,7 @@ export function KnowledgeTopicPage() {
         <Card className="flex flex-col gap-1">
           <Eyebrow>BRONNEN</Eyebrow>
           {content.sources.map((s) => (
-            <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label} ↗</a>
+            <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
           ))}
         </Card>
       )}

@@ -25,6 +25,7 @@ import { computeGoalProgress } from '../engine/progression';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
+import { Icon } from '../components/icons';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -177,7 +178,7 @@ export function StandingPage() {
               <span className="block font-display text-xl" style={{ color: 'var(--color-ink)' }}>Forge</span>
               <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
             </span>
-            <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}>›</span>
+            <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}><Icon name="verder" size={16} /></span>
           </button>
         )}
       </section>

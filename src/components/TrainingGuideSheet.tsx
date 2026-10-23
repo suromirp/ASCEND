@@ -14,6 +14,7 @@ import { useAppData } from '../state/AppDataContext';
 import { zoneText } from '../engine/heartRateZones';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
+import { SheetHeader } from './SheetHeader';
 import { Card, Eyebrow } from './ui';
 import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
@@ -24,6 +25,7 @@ import { paceLine, racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
 import { getModalities } from '../data/modalities';
 import { filterForTraining } from '../engine/trainingSpots';
+import { Icon } from './icons';
 
 const INTENSITY_COLOR: Record<Intensity, string> = {
   1: 'var(--color-stone)',
@@ -77,10 +79,7 @@ export function TrainingGuideSheet({
           onClick={(e) => e.stopPropagation()}
         >
         <Card className="rounded-b-none border-b-0 pb-8">
-          <div className="-mr-2 -mt-2 flex items-center justify-between">
-            <Eyebrow>{dayLabel}</Eyebrow>
-            <button onClick={requestClose} aria-label="Sluiten" className="flex h-11 w-11 items-center justify-center text-lg" style={{ color: 'var(--color-ink-dim)' }}>×</button>
-          </div>
+          <div className="-mt-2"><SheetHeader eyebrow={dayLabel} onClose={requestClose} /></div>
 
           {brief ? (
             <div className="mt-1"><SessionHeader brief={brief} title={title} as="h2" /></div>
@@ -190,7 +189,7 @@ export function TrainingGuideSheet({
                 style={{ borderColor: 'var(--color-card-border)' }}
               >
                 <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
-                <span style={{ color: 'var(--color-gold)' }}>›</span>
+                <span style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
               </button>
             )}
             <Fold title="Achtergrond en bronnen">
@@ -216,7 +215,7 @@ export function TrainingGuideSheet({
                   <div className="mt-2 flex flex-col gap-1.5">
                     {guide.sources.map((src) =>
                       src.url ? (
-                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label} ↗</a>
+                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                       ) : (
                         <span key={src.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{src.label}</span>
                       ),
@@ -244,7 +243,7 @@ function Fold({ title, children }: { title: string; children: ReactNode }) {
     <div className="border-b" style={{ borderColor: 'var(--color-card-border)' }}>
       <button onClick={() => setOpen((o) => !o)} className="flex min-h-[48px] w-full items-center justify-between py-3 text-left" aria-expanded={open}>
         <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{title}</span>
-        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? 'sluiten' : 'openen ›'}</span>
+        <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{open ? 'sluiten' : 'openen'}</span>
       </button>
       {open && <div className="pb-4">{children}</div>}
     </div>

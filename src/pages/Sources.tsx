@@ -7,6 +7,7 @@ import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { usePageState } from '../components/usePageState';
+import { Icon } from '../components/icons';
 
 const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
 
@@ -87,7 +88,7 @@ function SourceCard({ source }: { source: LibrarySource }) {
       )}
       {source.url && (
         <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-          Open bron ↗
+          Open bron<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       )}
     </Card>

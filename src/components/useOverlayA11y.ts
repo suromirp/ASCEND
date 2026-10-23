@@ -10,8 +10,6 @@ import { noteOverlayClosed } from '../utils/overlayGuard';
 // - focus moves into the sheet when it opens and back to where it was when
 //   it closes,
 // - Escape closes the topmost sheet the same way a tap on the backdrop does.
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 function overlays(): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>(OVERLAY_SELECTOR));
 }
@@ -26,8 +24,13 @@ export function useOverlayA11y(): void {
         returnFocus.set(el, document.activeElement);
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-modal', 'true');
-        const first = el.querySelector<HTMLElement>(FOCUSABLE);
-        (first ?? el).focus({ preventScroll: true });
+        // Focus goes to the sheet itself, never to its first button: that is
+        // often a destructive one ("Verwijderen") and it would show a focus
+        // ring right after opening. A field that asked for focus keeps it.
+        if (el.contains(document.activeElement) && document.activeElement !== el) continue;
+        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+        el.style.outline = 'none';
+        el.focus({ preventScroll: true });
       }
       for (const [el, previous] of returnFocus) {
         if (open.includes(el)) continue;

@@ -12,6 +12,7 @@ import { LogDetailSheet } from '../components/LogDetailSheet';
 import { Card, Eyebrow } from '../components/ui';
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
+import { Icon } from '../components/icons';
 
 
 function computeMonthSummary(logs: SessionLog[]) {
@@ -97,9 +98,9 @@ export function HistoryPage() {
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
       <div className="flex items-center justify-between">
-        <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Vorige maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={22} /></button>
         <Eyebrow>{formatMonthNL(anchor).toUpperCase()}</Eyebrow>
-        <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>›</button>
+        <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Volgende maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={22} /></button>
       </div>
 
       <Card className="grid grid-cols-2 gap-4">
@@ -158,7 +159,7 @@ export function HistoryPage() {
                     {log.outdoorData?.steps ? ` • ${log.outdoorData.steps} verdiepingen` : ''}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>›</span>
+                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
               </div>
             </button>
           );

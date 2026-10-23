@@ -16,6 +16,7 @@ import { SLEEP_KINDS, SLEEP_LABEL } from '../models/routePlan';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { usePageState } from '../components/usePageState';
+import { Icon } from '../components/icons';
 
 // "Nachten: 2 tent, 1 gîte, 33 nog niet gekozen." Alleen wat er is.
 function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): string {
@@ -76,7 +77,7 @@ export function EtappesPage() {
                       : 'Nog geen tocht om mee te vergelijken'}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
               </button>
             );
           })}
@@ -99,7 +100,7 @@ export function EtappesPage() {
           Cijfers van {STAGES_SOURCE}, overgenomen op {formatDateNL(STAGES_TAKEN_ON)}. De route verandert soms, bijvoorbeeld bij Peisey. Controleer de GPX voor vertrek.
         </p>
         <a href={STAGES_SOURCE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-          Officiële etappes ↗
+          Officiële etappes<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       </Card>
 
@@ -143,7 +144,7 @@ export function EtappesPage() {
                     ].filter(Boolean).join(' · ')}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>›</span>
+                <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
               </button>
             );
           })}

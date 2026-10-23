@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { PROBLEM_AREAS } from '../data/stretches';
 import { Card, PageHeader } from '../components/ui';
 import { StretchItems } from '../components/StretchList';
+import { Icon } from '../components/icons';
 
 // One page per problem area (not a shared list with a section expanded) so
 // each area has its own URL to build on later — e.g. an animation/demo per
@@ -14,7 +15,7 @@ export function StretchAreaPage() {
   if (!area) {
     return (
       <div className="flex flex-col gap-5 px-4 pb-10 pt-6">
-        <button onClick={() => navigate('/stretches')} className="min-h-[44px] text-lg" style={{ color: 'var(--color-ink-dim)' }}>‹</button>
+        <button onClick={() => navigate('/stretches')} aria-label="Terug" className="flex h-11 w-11 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={22} /></button>
         <Card>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Onbekend probleemgebied.</p>
         </Card>

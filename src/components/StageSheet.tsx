@@ -14,6 +14,7 @@ import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, Toggle } from './ui';
+import { Icon } from './icons';
 
 const SOURCE_LABEL: Record<StageFact['source'], string> = {
   gta: 'Bron: officiële site',
@@ -290,7 +291,7 @@ function Links({ links }: { links: { label: string; url: string }[] }) {
     <div className="mt-2 flex flex-col gap-1">
       {links.map((l) => (
         <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-          {l.label} ↗
+          {l.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       ))}
     </div>

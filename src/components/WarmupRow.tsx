@@ -3,6 +3,7 @@ import type { SessionTemplate } from '../models/training';
 import { WARMUP_LOWER, WARMUP_UPPER, warmupTotalMinutes } from '../data/strengthWarmup';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { WarmupSheet } from './WarmupSheet';
+import { Icon } from './icons';
 
 // One quiet row on a strength day: the warm-up that fits it, a tap away.
 export function WarmupRow({ template }: { template: SessionTemplate }) {
@@ -24,7 +25,7 @@ export function WarmupRow({ template }: { template: SessionTemplate }) {
           <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Warming-up · {warmupTotalMinutes(warmup)} min</span>
           <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{legs ? 'Enkels en heupen los, dan opwarmsets' : 'Schouders klaar, dan opwarmsets'}</span>
         </span>
-        <span style={{ color: 'var(--color-ink-dim)' }} aria-hidden>›</span>
+        <span style={{ color: 'var(--color-ink-dim)' }} aria-hidden><Icon name="verder" size={16} /></span>
       </button>
       {open && <WarmupSheet title={template.name} warmup={warmup} onClose={() => setOpen(false)} />}
     </>

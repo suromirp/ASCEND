@@ -1,5 +1,6 @@
 import { getModalities, modalitySport, ROLE_LABEL, type ModalityDefinition } from '../data/modalities';
 import { isSportEnabled, type EnabledSports } from '../engine/sports';
+import { Icon } from './icons';
 
 const ROLE_COLOR: Record<ModalityDefinition['role'], string> = {
   PRIMARY: 'var(--color-gold)',
@@ -79,7 +80,7 @@ export function ModalityGuide({ templateId }: { templateId: string }) {
           {m.sources && m.sources.length > 0 && (
             <div className="mt-1 flex flex-col gap-1">
               {m.sources.map((s) => s.url
-                ? <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label} ↗</a>
+                ? <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                 : <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>)}
             </div>
           )}

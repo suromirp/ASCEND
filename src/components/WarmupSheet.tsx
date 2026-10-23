@@ -3,8 +3,10 @@ import type { StrengthWarmup } from '../data/strengthWarmup';
 import { warmupTotalMinutes } from '../data/strengthWarmup';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow } from './ui';
+import { SheetHeader } from './SheetHeader';
+import { Card } from './ui';
 import { WhyPanel, WhyToggle } from './Why';
+import { Icon } from './icons';
 
 // The warm-up of a strength day as its own sheet: three short blocks, the
 // warm-up sets as the part that counts most, what to do later in the
@@ -18,13 +20,7 @@ export function WarmupSheet({ title, warmup, onClose }: { title: string; warmup:
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-8">
-            <div>
-              <div className="-mr-2 -mt-2 flex items-center justify-between">
-                <Eyebrow>WARMING-UP · {warmupTotalMinutes(warmup)} MIN</Eyebrow>
-                <button onClick={requestClose} aria-label="Sluiten" className="flex h-11 w-11 items-center justify-center text-lg" style={{ color: 'var(--color-ink-dim)' }}>×</button>
-              </div>
-              <h2 className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{title}</h2>
-            </div>
+            <div className="-mt-2"><SheetHeader eyebrow={`Warming-up · ${warmupTotalMinutes(warmup)} min`} title={title} onClose={requestClose} /></div>
 
             <ol className="flex flex-col gap-5">
               {warmup.blocks.map((block, bi) => (
@@ -40,7 +36,7 @@ export function WarmupSheet({ title, warmup, onClose }: { title: string; warmup:
                             <span className="text-sm" style={{ color: 'var(--color-ink)' }}>
                               {step.name}
                               {step.videoUrl && (
-                                <a href={step.videoUrl} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>video ↗</a>
+                                <a href={step.videoUrl} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>video<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                               )}
                             </span>
                             <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-gold)' }}>{step.amount}</span>

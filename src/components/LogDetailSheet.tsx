@@ -6,7 +6,8 @@ import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow } from './ui';
+import { Card, Eyebrow, SecondaryButton } from './ui';
+import { SheetHeader } from './SheetHeader';
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { logKindLabel } from '../engine/sports';
@@ -77,10 +78,9 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
           onClick={(e) => e.stopPropagation()}
         >
         <Card className="rounded-b-none border-b-0 pb-8">
-          <Eyebrow>{formatDateNL(log.completedDate)}</Eyebrow>
-          <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{templateName}</h3>
+          <div className="-mt-2"><SheetHeader eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={requestClose} /></div>
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            {logKindLabel(log)} • {log.durationMinutes} min
+            {logKindLabel(log)} · {log.durationMinutes} min
           </p>
 
           {log.subjectiveFeel && (
@@ -122,9 +122,9 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
               </div>
             </div>
           ) : (
-            <button onClick={startEditing} className="mt-3 min-h-11 text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
-              {log.workout ? 'Herhalingen en hartslag aanpassen' : form(log.templateId)}
-            </button>
+            <div className="mt-3 flex">
+              <SecondaryButton onClick={startEditing}>{log.workout ? 'Herhalingen en hartslag aanpassen' : form(log.templateId)}</SecondaryButton>
+            </div>
           ))}
 
           {log.notes && (
@@ -145,9 +145,8 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
               </div>
             </div>
           ) : (
-            <div className="mt-6 flex items-center justify-between">
-              <button onClick={() => setConfirmDelete(true)} className="min-h-11 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Verwijderen</button>
-              <button onClick={requestClose} className="min-h-11 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
+            <div className="mt-6 flex">
+              <SecondaryButton onClick={() => setConfirmDelete(true)}>Verwijderen</SecondaryButton>
             </div>
           )}
         </Card>
