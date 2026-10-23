@@ -179,6 +179,19 @@ describe('applyWeight: doorgeven aan volgende sets', () => {
   });
 });
 
+describe('hulp van een toestel blijft hulp', () => {
+  const help = (id: string, kg: number) => row(id, { weightKg: kg, target: { weightKg: kg, repsLow: 6, repsHigh: 8, rir: 1 } });
+  const base = ex('p', [help('p1', -25), help('p2', -25), help('p3', -25)]);
+  it('meer hulp bij set 1 gaat mee naar de volgende sets, nooit naar 0', () => {
+    expect(applyWeight(base, 'p1', -30, true, undefined, -500).rows.map((x) => x.weightKg)).toEqual([-30, -30, -30]);
+    expect(applyWeight(base, 'p1', -20, true, undefined, -500).rows.map((x) => x.weightKg)).toEqual([-20, -20, -20]);
+  });
+  it('een gewone oefening zakt nooit onder 0', () => {
+    const plain = ex('q', [row('q1', { weightKg: 5 }), row('q2', { weightKg: 2.5 })]);
+    expect(applyWeight(plain, 'q1', 0, true).rows.map((x) => x.weightKg)).toEqual([0, 0]);
+  });
+});
+
 describe('doorgegeven gewicht rondt af op wat je sportschool kan maken', () => {
   const bar = exerciseById('barbell-row')!;
   const p = DEFAULT_PROFILE;

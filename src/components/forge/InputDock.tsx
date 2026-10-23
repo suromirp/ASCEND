@@ -120,6 +120,28 @@ export function InputDock(props: DockProps) {
     onSelected(true);
   }
 
+  // Een fysiek toetsenbord (of een schermlezer met toetsen) werkt ook zolang het blok open is.
+  const keyRef = useRef<(e: KeyboardEvent) => void>(() => undefined);
+  const onKey = (e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    if (/^[0-9]$/.test(k)) press(k as PadKey);
+    else if (k === ',' || k === '.') press(',');
+    else if (k === 'Backspace') press('back');
+    else if (k === 'Enter') onNext(requestClose);
+    else if (k === 'Escape') requestClose();
+    else return;
+    e.preventDefault();
+  };
+  useEffect(() => {
+    keyRef.current = onKey;
+  });
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => keyRef.current(e);
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, []);
+
   const showPlates = plateShown;
   const change = plate ? plateChange(plate) : undefined;
   const sideKey = 'bg-[var(--color-surface)] active:bg-[var(--color-card-border)]';
@@ -132,6 +154,7 @@ export function InputDock(props: DockProps) {
         className={`fixed inset-x-0 bottom-0 z-[55] ${closing ? 'forge-down' : 'forge-up'}`}
         style={{ ['--forge-fill' as string]: 'var(--color-card)' }}
       >
+ <p className="sr-only" aria-live="polite">{`${label}: ${text === '' ? 'leeg' : text}`}</p>
         <div className="mx-auto max-w-md rounded-t-2xl border border-b-0" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 10px)' }}>
           {showPlates && plate && (
             <div className="border-b px-4 pb-2 pt-3" style={{ borderColor: 'var(--color-card-border)' }}>

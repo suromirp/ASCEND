@@ -339,7 +339,7 @@ export function ForgeWorkout({
         if (e.slot !== d.slot) return e;
         if (d.field === 'reps') return applyReps(e, d.rowId, v);
         if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
-        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), strength.profile, bodyKg, v));
+        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), strength.profile, bodyKg, v), weightBounds(exerciseOf(e)).min);
       }),
     );
   }
@@ -351,8 +351,14 @@ export function ForgeWorkout({
     if (!d || !ex || !row) return 0;
     const isWeight = d.field === 'weightKg';
     const current = isWeight ? (row.weightKg ?? row.target.weightKg) : (row.reps ?? 0);
-    const bounds = isWeight ? weightBounds(exerciseOf(ex)) : repsBounds;
     const step = isWeight ? weightStepFor(exerciseOf(ex), strength.profile, current) : REPS_STEP;
+    // Hulp van een toestel: het blok werkt met de hoeveelheid hulp (+ is meer hulp), opgeslagen als negatief.
+    if (isWeight && isAssisted(ex)) {
+      const help = stepNumber(Math.abs(current ?? 0), direction, step, 0, weightBounds(undefined).max);
+      changeValue(-help);
+      return help;
+    }
+    const bounds = isWeight ? weightBounds(exerciseOf(ex)) : repsBounds;
     const next = stepNumber(current, direction, step, bounds.min, bounds.max);
     changeValue(next);
     return next;
@@ -493,11 +499,12 @@ export function ForgeWorkout({
 
       {dock && !readOnly && dockEx && dockRow && (
         <InputDock
-          label={`${dock.field === 'weightKg' ? 'Gewicht' : 'Herhalingen'}, ${dockEx.name}`}
+          key={`${dock.slot}:${dock.rowId}:${dock.field}`}
+          label={`${dock.field === 'weightKg' ? (isAssisted(dockEx) ? 'Hulp' : 'Gewicht') : 'Herhalingen'}, set ${dockRowLabel(dockEx, dockIndex)}, ${dockEx.name}`}
           fieldKey={`${dock.slot}:${dock.rowId}:${dock.field}`}
-          value={dock.field === 'weightKg' ? dockRow.weightKg : dockRow.reps}
+          value={dock.field === 'weightKg' ? (isAssisted(dockEx) && dockRow.weightKg !== undefined ? Math.abs(dockRow.weightKg) : dockRow.weightKg) : dockRow.reps}
           decimals={dock.field === 'weightKg' ? 2 : 0}
-          onChange={changeValue}
+          onChange={(v) => changeValue(dock.field === 'weightKg' && isAssisted(dockEx) && v !== undefined ? -v : v)}
           onStep={stepDock}
           onSelected={setSelected}
           onNext={goNext}
@@ -719,6 +726,16 @@ function ElapsedClock({ startedAt }: { startedAt: number }) {
   return <span className="font-sans" aria-label="Verstreken tijd">{formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))}</span>;
 }
 
+const isAssisted = (ex: WorkoutExercise) => exerciseOf(ex)?.resistance === 'assisted_bodyweight';
+
+// "W" voor een opwarmset, anders het nummer van de werkset.
+function dockRowLabel(ex: WorkoutExercise, index: number): string {
+  const row = ex.rows[index];
+  if (!row) return '';
+  if (row.kind === 'warmup') return 'W';
+  return String(ex.rows.slice(0, index + 1).filter((r) => r.kind === 'work').length);
+}
+
 function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -888,7 +905,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                     ) : (
                       <>
                         <span role="cell">
-                          <ValueCell value={row.weightKg} decimals={2} label={`Gewicht, set ${label}`} done={row.done} active={fieldOn('weightKg')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
+                          <ValueCell value={assisted && row.weightKg !== undefined ? Math.abs(row.weightKg) : row.weightKg} decimals={2} label={`${assisted ? 'Hulp' : 'Gewicht'}, set ${label}`} done={row.done} active={fieldOn('weightKg')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'weightKg')} />
                         </span>
                         <span role="cell">
                           <ValueCell value={row.reps} decimals={0} label={`Herhalingen, set ${label}`} done={row.done} active={fieldOn('reps')} selected={selected} onOpen={() => act.open(ex.slot, row.id, 'reps')} />

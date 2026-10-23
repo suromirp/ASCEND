@@ -280,7 +280,8 @@ export const MAX_ROW_REPS = 100;
 
 export function updateRow(ex: WorkoutExercise, rowId: string, patch: Partial<Pick<WorkoutRow, 'weightKg' | 'reps' | 'rir'>>): WorkoutExercise {
   const clean = { ...patch };
-  if (clean.weightKg !== undefined) clean.weightKg = Math.min(MAX_ROW_KG, Math.max(0, clean.weightKg));
+  // Negative is the help of an assisted machine; the screen keeps other exercises at 0 or more.
+  if (clean.weightKg !== undefined) clean.weightKg = Math.min(MAX_ROW_KG, Math.max(-MAX_ROW_KG, clean.weightKg));
   if (clean.reps !== undefined) clean.reps = Math.min(MAX_ROW_REPS, Math.max(0, Math.round(clean.reps)));
   return { ...ex, rows: ex.rows.map((r) => (r.id === rowId ? { ...r, ...clean } : r)) };
 }

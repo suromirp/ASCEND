@@ -151,17 +151,17 @@ export const exerciseComplete = (ex: WorkoutExercise): boolean => ex.rows.length
 // same difference. The sets are read from `base`, the exercise as it was
 // before you started changing this field, so typing 4 and then 45 gives the
 // same as typing 45 at once and nothing sticks at zero on the way.
-export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: number | undefined, carry: boolean, snap?: (kg: number) => number): WorkoutExercise {
+export function applyWeight(base: WorkoutExercise, rowId: string, weightKg: number | undefined, carry: boolean, snap?: (kg: number) => number, min = 0): WorkoutExercise {
   const index = base.rows.findIndex((r) => r.id === rowId);
   if (index < 0) return base;
   const row = base.rows[index];
-  const changed = updateRow(base, rowId, { weightKg });
+  const changed = updateRow(base, rowId, { weightKg: weightKg === undefined ? undefined : Math.max(min, weightKg) });
   const rows = changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r));
   const delta = weightKg !== undefined && row.weightKg !== undefined ? r2(weightKg - row.weightKg) : 0;
   if (!carry || delta === 0 || row.kind !== 'work') return { ...changed, rows };
   return {
     ...changed,
-    rows: rows.map((r, i) => (i > index && r.kind === 'work' && !r.done && !r.edited && r.weightKg !== undefined ? { ...r, weightKg: Math.min(MAX_ROW_KG, Math.max(0, snap ? snap(r2(r.weightKg + delta)) : r2(r.weightKg + delta))) } : r)),
+    rows: rows.map((r, i) => (i > index && r.kind === 'work' && !r.done && !r.edited && r.weightKg !== undefined ? { ...r, weightKg: Math.min(MAX_ROW_KG, Math.max(min, snap ? snap(r2(r.weightKg + delta)) : r2(r.weightKg + delta))) } : r)),
   };
 }
 
