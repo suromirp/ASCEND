@@ -191,7 +191,7 @@ describe('the sets as ASCEND keeps them', () => {
     const upper: MacroFactorWorkout = {
       ...workout('Upper A'),
       exercises: [
-        { name: 'Bench press', sets: [{ reps: 8, weightKg: 70 }], top: { reps: 8, weightKg: 70 } },
+        { name: 'Barbell Bench Press', sets: [{ reps: 8, weightKg: 70 }], top: { reps: 8, weightKg: 70 } },
         { name: 'Row, Seated Cable', sets: [{ reps: 10, weightKg: 55 }], top: { reps: 10, weightKg: 55 } },
       ],
     };

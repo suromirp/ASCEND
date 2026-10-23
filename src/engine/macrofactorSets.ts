@@ -71,8 +71,10 @@ export const isMissingHelp = (stored: number | undefined, file: number | undefin
 
 // `reference` is the data the shape is compared with: a negative weight in
 // this data that the reference lacks is left out, so it does not count as a difference.
+// The exercise id is left out too: it is ASCEND's own link to a template slot and
+// changes when a template exercise gets another name, while what you did stays the same.
 export function legacySetShape(data: SessionLog['strengthData'], reference?: SessionLog['strengthData']): unknown {
-  return data?.map((e, ei) => {
+  return data?.map(({ exerciseId: _id, ...e }, ei) => {
     const refWork = reference?.[ei]?.sets.filter(isWorkSet);
     return {
       ...e,
