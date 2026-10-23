@@ -351,7 +351,9 @@ export function warmupSets(
   patternSeen = false,
 ): WarmupSet[] {
   if (settings.warmup === 'off' || !exercise) return [];
-  if (exercise.bodyweightFraction !== undefined || NO_WARMUP_PATTERNS.has(exercise.pattern)) return [];
+  // Mostly your own body (pull-ups, dips): no warm-up sets. A row or a hinge with a
+  // small share of the body (8 to 40%) is a loaded lift and gets them.
+  if ((exercise.bodyweightFraction ?? 0) >= 0.5 || NO_WARMUP_PATTERNS.has(exercise.pattern)) return [];
   if (exercise.resistance === 'bodyweight' || exercise.resistance === 'assisted_bodyweight') return [];
   const bars = settings.profile.barsKg;
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;

@@ -9,7 +9,7 @@
 // dezelfde tabel zonder invulvelden: het voorschrift om in de sportschool mee
 // te kijken, en één knop om de training af te vinken.
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
 import { MUSCLE_LABEL } from '../../models/exercise';
 import { currentBodyKg } from '../../engine/bodyWeight';
@@ -159,7 +159,8 @@ export function ForgeWorkout({
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
   const [ctx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled }));
   const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? mergeDraft(restored.exercises, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
-  const [startedAt] = useState(() => restored?.startedAt ?? Date.now());
+  // De klok loopt vanaf je eerste afgevinkte set; een training die je opende maar nog niet begon, start opnieuw.
+  const [startedAt] = useState(() => (restored && restored.exercises.some((e) => e.rows.some((r) => r.done)) ? restored.startedAt : Date.now()));
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
   const [column, setColumn] = useState<'target' | 'previous'>(restored?.column ?? 'target');
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -980,7 +981,10 @@ function PrescriptionText({ row, ex }: { row: WorkoutRow; ex: WorkoutExercise })
       <span className="block">
         {/* Alleen breken tussen gewicht en herhalingen, nooit midden in "8-10". */}
         {targetText(row).split(' × ').map((part, k) => (
-          <span key={k} className="whitespace-nowrap">{k > 0 ? ` × ${part}` : part}</span>
+          <Fragment key={k}>
+            {k > 0 && ' '}
+            <span className="whitespace-nowrap">{k > 0 ? `× ${part}` : part}</span>
+          </Fragment>
         ))}
       </span>
       {row.kind === 'work' && row.target.rir !== undefined && !ex.timed && <span className="block text-xs">{row.target.rir} RIR</span>}

@@ -407,6 +407,11 @@ describe('KR-7 opwarmsets', () => {
     const w = warmupSets(resolveStrengthSettings({ warmup: 'scheme' }), squat, candidates, 100, 133);
     expect(w).toEqual([{ weightKg: 40, reps: 5 }, { weightKg: 60, reps: 5 }, { weightKg: 80, reps: 3 }]);
   });
+  it('een stangoefening met een klein deel lichaamsgewicht (barbell row) krijgt ze wel', () => {
+    const row = ex('barbell-row');
+    const rowCandidates = candidatesFor(row, profile, { lastExternalKg: 45, bodyKg: 85 })!;
+    expect(warmupSets(settings, row, rowCandidates, 45, 70).length).toBeGreaterThan(0);
+  });
   it('uit: geen opwarmsets', () => {
     expect(warmupSets(resolveStrengthSettings({ warmup: 'off' }), squat, candidates, 100, 133)).toEqual([]);
   });
