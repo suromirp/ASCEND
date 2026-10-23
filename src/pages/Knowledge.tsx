@@ -50,7 +50,7 @@ export function KnowledgePage() {
                     <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{t.title}</span>
                     <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{has ? t.summary : 'Volgt nog'}</span>
                   </span>
-                  <span className="shrink-0 text-xs" style={{ color: read.includes(t.id) ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>{read.includes(t.id) ? 'gelezen' : has ? '›' : ''}</span>
+                  <span className="shrink-0 text-xs" style={{ color: read.includes(t.id) ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>{read.includes(t.id) ? 'gelezen' : has ? <Icon name="verder" size={14} /> : null}</span>
                 </button>
               );
             })}

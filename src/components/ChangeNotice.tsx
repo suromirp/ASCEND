@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from './ui';
+import { Icon } from './icons';
 
 const SHOW_MS = 6_000;
 const CHIP_MS = 10 * 60_000;
@@ -97,7 +98,7 @@ export function ChangeNotice() {
             className="flex h-11 w-11 shrink-0 items-center justify-center text-lg"
             style={{ color: 'var(--color-ink-dim)' }}
           >
-            <span aria-hidden>×</span>
+            <Icon name="sluiten" size={20} />
           </button>
         </div>
         {open && (

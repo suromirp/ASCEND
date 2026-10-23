@@ -7,6 +7,7 @@ import { Card, Eyebrow } from './ui';
 import { PhaseEditor } from './PhaseEditor';
 import { PHASE_COLOR } from '../data/phaseColors';
 import type { TrainingGoal } from '../models/goals';
+import { Icon } from './icons';
 
 // Doelen: the whole season on one card (production feedback: "het moet
 // voelen dat je naar een groter doel toewerkt en ondertussen kleinere
@@ -56,7 +57,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
           {at(today) > 0 && at(today) < 100 && <span className="absolute inset-y-0 w-0.5" style={{ left: `${at(today)}%`, background: 'var(--color-ink)' }} aria-hidden="true" />}
         </div>
         {blocks.map((b) => (
-          <span key={b.goalId} className="absolute top-0 -translate-x-1/2 text-xs" style={{ left: `${at(b.raceDate)}%`, color: 'var(--color-gold)' }} aria-hidden="true">⚑</span>
+          <span key={b.goalId} className="absolute top-0 -translate-x-1/2 text-xs" style={{ left: `${at(b.raceDate)}%`, color: 'var(--color-gold)' }} aria-hidden="true"><Icon name="vlag" size={14} /></span>
         ))}
         <div className="mt-1.5 flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <span>{formatDateNL(start)}</span>
@@ -77,7 +78,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
               <div key={g.id} className="flex flex-col gap-1.5 border-t py-3" style={{ borderColor: 'var(--color-card-border)' }}>
                 <button onClick={() => onOpenGoal?.(g)} className="flex items-baseline justify-between gap-3 text-left">
                   <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
-                    {role === 'secondary' && <span style={{ color: 'var(--color-gold)' }}>⚑ </span>}{g.name}
+                    {role === 'secondary' && <span style={{ color: 'var(--color-gold)' }}><Icon name="vlag" size={14} className="inline align-[-2px]" /> </span>}{g.name}
                   </span>
                   <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(g.targetDate!)}</span>
                 </button>

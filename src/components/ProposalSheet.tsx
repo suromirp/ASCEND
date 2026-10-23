@@ -15,6 +15,7 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { formatNumberNL } from '../utils/number';
+import { Icon } from './icons';
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
 // top what changes, one line each; below the week in the same style as the
@@ -242,7 +243,7 @@ function MoveLine({ move }: { move: PreviewMove }) {
           ) : (
             <>
               {move.from && <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from)}</span>}
-              {move.from && <span className="mx-1.5" style={{ color: 'var(--color-bronze)' }}>→</span>}
+              {move.from && <span className="mx-1.5 inline-block align-[-2px]" style={{ color: 'var(--color-bronze)' }}><Icon name="verder" size={14} /></span>}
               <span style={{ color: 'var(--color-gold)' }}>{short(move.to!)}</span>
               {!move.from && <span style={{ color: 'var(--color-ink-dim)' }}> · nieuw</span>}
             </>

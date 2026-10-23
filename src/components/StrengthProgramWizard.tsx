@@ -19,6 +19,7 @@ import { addDays, formatDateNL, mondayOfWeek, todayISO } from '../utils/dates';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
+import { Icon } from './icons';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -195,7 +196,7 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-danger-text)' }}>− {dayNL(c.fromDate)}: {c.reason}</div>
           ))}
           {moved.map((c) => (
-            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>→ {dayNL(c.fromDate)} naar {dayNL(c.toDate)}: {c.reason}</div>
+            <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{dayNL(c.fromDate)} naar {dayNL(c.toDate)}: {c.reason}</div>
           ))}
           {added.map((c, i) => (
             <div key={i} className="text-xs" style={{ color: 'var(--color-success-text)' }}>
@@ -344,7 +345,7 @@ function SessionsStep({
               style={{ borderColor: checked ? 'var(--color-gold)' : 'var(--color-card-border)', color: checked ? 'var(--color-gold)' : 'var(--color-ink)' }}
             >
               <span>{t.name}</span>
-              <span>{checked ? '✓' : ''}</span>
+              <span>{checked ? <Icon name="vinkje" size={16} /> : null}</span>
             </button>
           );
         })}
@@ -557,7 +558,7 @@ function PreviewStep({
           ))}
           {moved.map((c) => (
             <div key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-              → {dayNL(c.fromDate)} naar {dayNL(c.toDate)}: {c.reason}
+              {dayNL(c.fromDate)} naar {dayNL(c.toDate)}: {c.reason}
             </div>
           ))}
           {added.map((c, i) => (

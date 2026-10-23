@@ -5,6 +5,7 @@ import { programAnchorDate } from '../engine/programLayout';
 import { PHASE_COLOR } from '../data/phaseColors';
 import { daysBetween, formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
+import { Icon } from './icons';
 
 // Week → Jaaroverzicht: the whole road to the main goal. Phases as cards
 // (the current one open), and inside each phase its weeks with the
@@ -72,7 +73,7 @@ function PhaseCard({ phase, open, onToggle, onSelectWeek }: { phase: SeasonPhase
             {formatDateNL(phase.from)} tot {formatDateNL(phase.until)} · {phase.weeks.length} {phase.weeks.length === 1 ? 'week' : 'weken'}
           </p>
         </div>
-        <span className="text-xs" style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden="true">▾</span>
+        <span className="text-xs" style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }} aria-hidden="true"><Icon name="omlaag" size={16} /></span>
       </button>
 
       {(open || phase.current) && phase.description && (
@@ -81,9 +82,9 @@ function PhaseCard({ phase, open, onToggle, onSelectWeek }: { phase: SeasonPhase
       {phase.changes.length > 0 && (
         <ul className="flex flex-col gap-1">
           {phase.changes.map((c) => (
-            <li key={c} className="flex gap-2 text-xs leading-snug" style={{ color: c.startsWith('⚑') ? 'var(--color-gold)' : 'var(--color-ink)' }}>
-              <span aria-hidden="true" style={{ color }}>•</span>
-              <span>{c.replace(/^⚑ /, '⚑ ')}</span>
+            <li key={c} className="flex gap-2 text-xs leading-snug" style={{ color: c.startsWith('Wedstrijd') ? 'var(--color-gold)' : 'var(--color-ink)' }}>
+              <span aria-hidden="true" style={{ color }}>{c.startsWith('Wedstrijd') ? <Icon name="vlag" size={14} /> : '·'}</span>
+              <span>{c}</span>
             </li>
           ))}
         </ul>
@@ -128,7 +129,7 @@ function WeekRow({ week, onSelect }: { week: SeasonWeek; onSelect: () => void })
                 background: 'var(--color-charcoal)',
               }}
             >
-              {i.label}
+              {i.kind === 'race' && <Icon name="vlag" size={14} className="inline align-[-2px]" />}{i.kind === 'race' ? ' ' : ''}{i.label}
             </span>
           ))}
         </div>

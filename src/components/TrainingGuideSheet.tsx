@@ -206,7 +206,7 @@ export function TrainingGuideSheet({
                   className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
                   style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-sky)' }}
                 >
-                  {guide.garminNote} →
+                  {guide.garminNote}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" />
                 </button>
               )}
               {guide.sources.length > 0 && (

@@ -1,3 +1,4 @@
+import { Icon } from '../icons';
 // A round tick box with a 44 px tap area, for the reisplanner and the
 // packing list.
 export function CheckCircle({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
@@ -18,7 +19,7 @@ export function CheckCircle({ checked, onToggle, label }: { checked: boolean; on
           color: 'var(--color-bg)',
         }}
       >
-        {checked ? <span aria-hidden="true">✓</span> : null}
+        {checked ? <Icon name="vinkje" size={16} /> : null}
       </span>
     </button>
   );

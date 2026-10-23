@@ -4,6 +4,7 @@ import type { InjurySeverity } from '../models/injury';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, PageHeader } from '../components/ui';
+import { Icon } from '../components/icons';
 
 const CUSTOM_BODY_PART = '__custom__';
 
@@ -142,10 +143,10 @@ export function InjuriesPage() {
               <div>
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{n.bodyPart}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {formatDateNL(n.date)} → {n.resolvedDate ? formatDateNL(n.resolvedDate) : ''}
+                  {formatDateNL(n.date)}{n.resolvedDate ? ` tot ${formatDateNL(n.resolvedDate)}` : ''}
                 </p>
               </div>
-              <button onClick={() => deleteInjury(n.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-ink-dim)' }}>✕</button>
+              <button onClick={() => deleteInjury(n.id)} className="min-h-[44px] text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-label="Verwijderen"><Icon name="sluiten" size={18} /></button>
             </div>
           ))}
         </div>

@@ -101,7 +101,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
         if (!restWeek && s.plannedMinutes === undefined) minutes.set(t.id, [...(minutes.get(t.id) ?? []), min]);
 
         if (t.id === 'tpl_race') {
-          items.push({ label: `⚑ ${t.name} op ${shortDate(s.scheduledDate)}`, kind: 'race' });
+          items.push({ label: `${t.name} op ${shortDate(s.scheduledDate)}`, kind: 'race' });
           races.push(shortDate(s.scheduledDate));
         } else if (t.id === 'tpl_test_run') {
           items.push({ label: `Testloop 5 km, ${shortDate(s.scheduledDate)}`, kind: 'test' });
@@ -151,7 +151,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
     if (saturdayNames.size > 0) changes.push(`Zaterdag: ${[...saturdayNames.keys()].join(', ').toLowerCase()}`);
     if (blockFrom) changes.push(`Wedstrijdblok vanaf ${blockFrom}: tempoloop en intervallen (met drie loopjes per week één van de twee)`);
     if (tests.length) changes.push(`Testloop 5 km: ${tests.join(' en ')}`);
-    if (races.length) changes.push(`⚑ Wedstrijd: ${races.join(', ')}`);
+    if (races.length) changes.push(`Wedstrijd: ${races.join(', ')}`);
 
     const until = addDays(from, phase.weekCount * 7 - 1);
     return {

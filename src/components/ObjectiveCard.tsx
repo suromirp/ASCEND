@@ -1,7 +1,14 @@
+import type { ReactNode } from 'react';
 import type { MilestoneView } from '../engine/progression';
 import { formatDateNL } from '../utils/dates';
+import { Icon } from './icons';
 
-const MARKER: Record<string, string> = { completed: '✓', current: '●', upcoming: '○', future: '○' };
+const MARKER: Record<string, ReactNode> = {
+  completed: <Icon name="vinkje" size={16} />,
+  current: <Icon name="vandaagStip" size={16} />,
+  upcoming: <Icon name="gepland" size={16} />,
+  future: <Icon name="gepland" size={16} />,
+};
 const COLOR: Record<string, string> = {
   completed: 'var(--color-bronze)',
   current: 'var(--color-gold)',
@@ -59,7 +66,7 @@ export function ObjectiveCard({
             )}
           </span>
           {onSelect && (
-            <span className="mt-0.5 shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>meer info →</span>
+            <span className="mt-0.5 shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>meer info<Icon name="verder" size={14} className="ml-0.5 inline align-[-2px]" /></span>
           )}
         </button>
         {status === 'completed' && clearedDate && (

@@ -32,6 +32,7 @@ import type { PainReport } from '../models/checkIn';
 import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/inputLimits';
 import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../utils/loggerDraft';
 import { ForgeWorkout } from './forge/ForgeWorkout';
+import { Icon } from './icons';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -327,7 +328,7 @@ function GeneralLogger({
       >
       <div className="mx-auto max-w-md px-4 pb-32 pt-4">
         <div className="mb-3 flex items-center justify-between">
-          <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>‹ Terug</button>
+          <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={18} className="mr-1 inline align-[-3px]" />Terug</button>
           <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: 'var(--color-bronze)' }}>{dateLabel}</span>
         </div>
 
