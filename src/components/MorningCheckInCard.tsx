@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '../models/checkIn';
-import { checkInEffect, checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbeing';
+import { checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbeing';
+import { describeMorningPreview, previewMorningAdvice } from '../engine/adviceEngine';
 import { todayISO } from '../utils/dates';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
@@ -28,7 +29,7 @@ const KEEP = 60;
 // painOnly: de ochtendcheck staat uit, maar er is een pijnplek van de laatste 14
 // dagen. Dan alleen die vraag, niet benen, energie en slaap.
 export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } = {}) {
-  const { settings, updateSettings, sessionLogs, plannedSessions, templates } = useAppData();
+  const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig } = useAppData();
   const today = todayISO();
   const existing = checkInFor(today, settings.morningCheckIns);
   const [open, setOpen] = useState(false);
@@ -75,6 +76,18 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
     </div>
   );
 
+  // Wat Vandaag na opslaan zegt: hetzelfde advies, op je echte planning.
+  const preview = () => {
+    const entry: MorningCheckIn = { ...draft, sleep, date: today, allNormal: undefined };
+    return describeMorningPreview(previewMorningAdvice({
+      logs: sessionLogs, plannedSessions, templates, injuries: [], program,
+      dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
+      sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+      respondedIds: new Set(), asOf: today,
+      checkIns: [...(settings.morningCheckIns ?? []).filter((c) => c.date !== today), entry],
+    }));
+  };
+
   const complete = painOnly ? draft.spot !== undefined : !!(draft.legs && sleep && (draft.energy || wellness));
   return (
     <>
@@ -119,7 +132,7 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
             )}
             {!painOnly && (
               <p className="text-xs leading-snug" role="status" style={{ color: complete ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
-                {!draft.legs ? 'Kies eerst hoe je benen voelen.' : !sleep ? 'Kies nog hoe je sliep.' : !complete ? 'Kies nog je energie.' : checkInEffect({ legs: draft.legs, energy: draft.energy, sleep })}
+                {!draft.legs ? 'Kies eerst hoe je benen voelen.' : !sleep ? 'Kies nog hoe je sliep.' : !complete ? 'Kies nog je energie.' : preview()}
               </p>
             )}
             <div className="flex items-center justify-between gap-3">

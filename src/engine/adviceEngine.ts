@@ -922,6 +922,18 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   return out;
 }
 
+// What Vandaag will say about a check-in you have not saved yet: the same rule,
+// run on your real plan, so the sheet never promises more than the advice does.
+export function previewMorningAdvice(inputs: AdviceInputs): Advice[] {
+  return morningAdvice(inputs, new Map(inputs.templates.map((t) => [t.id, t])));
+}
+
+// That preview in one line under the check-in.
+export function describeMorningPreview(advice: Advice[]): string {
+  if (advice.length === 0) return 'Je planning blijft zoals hij is.';
+  return `Dan zegt ASCEND op Vandaag: ${advice.map((a) => a.title).join('. ')}. Niets verandert zonder jouw akkoord.`;
+}
+
 function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {
   if (!inputs.program) return [];
   const found = proposeRestWeekSkip({

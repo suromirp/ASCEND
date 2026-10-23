@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { checkInEffect, morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
+import { morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
 import { hasSignificantPain, isStopPain, painReports } from './pain';
-import { computeAdvice, type AdviceInputs } from './adviceEngine';
+import { computeAdvice, describeMorningPreview, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -91,12 +91,28 @@ describe('MORNING-CHECK: how the planning reacts', () => {
   });
 });
 
-describe('wat je antwoord doet', () => {
-  it('zegt vooraf wat ASCEND ermee doet, in dezelfde regels als het advies', () => {
-    expect(checkInEffect({ legs: 'fris', energy: 'gewoon', sleep: 'goed' })).toBe('Je planning blijft zoals hij is.');
-    expect(checkInEffect({ legs: 'fris', energy: 'moe', sleep: 'goed' })).toContain('blijft zoals hij is');
-    expect(checkInEffect({ legs: 'spierpijn', energy: 'gewoon', sleep: 'goed' })).toContain('beendag een dag op te schuiven');
-    expect(checkInEffect({ legs: 'fris', energy: 'op', sleep: 'goed' })).toContain('rustige dag');
-    expect(checkInEffect({ legs: 'fris', energy: 'moe', sleep: 'slecht' })).toContain('rustige dag');
+describe('wat je antwoord doet, voor je opslaat', () => {
+  const planned = [ps('legs', 'tpl_lower_a', '2026-11-04'), ps('easy', 'tpl_easy_run', '2026-11-05'), ps('upper', 'tpl_upper_b', '2026-11-06')];
+  const inputs = (over: Partial<AdviceInputs>): AdviceInputs => ({ logs: [], plannedSessions: planned, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-11-03', ...over });
+  const same = (over: Partial<AdviceInputs>) => {
+    const preview = previewMorningAdvice(inputs(over));
+    expect(preview.map((a) => a.id)).toEqual(computeAdvice(inputs(over)).filter((a) => a.ruleId === 'MORNING-CHECK').map((a) => a.id));
+    return describeMorningPreview(preview);
+  };
+  const tired = (date: string) => ({ date, legs: 'fris' as const, energy: 'moe' as const, sleep: 'goed' as const });
+
+  it('is precies het advies dat Vandaag daarna toont', () => {
+    expect(same({ checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'gewoon', sleep: 'goed' }] })).toBe('Je planning blijft zoals hij is.');
+    expect(same({ checkIns: [{ date: '2026-11-03', legs: 'spierpijn', energy: 'gewoon', sleep: 'goed' }] })).toContain('Benen A');
+    // Niets zwaars vandaag of morgen: spierpijn verschuift dan niets.
+    expect(same({ plannedSessions: [ps('upper', 'tpl_upper_b', '2026-11-06')], checkIns: [{ date: '2026-11-03', legs: 'spierpijn', energy: 'gewoon', sleep: 'goed' }] })).toBe('Je planning blijft zoals hij is.');
+    // Eén signaal zonder zware training vandaag: niets.
+    expect(same({ checkIns: [tired('2026-11-03')] })).toBe('Je planning blijft zoals hij is.');
+    // De derde moeie ochtend wel.
+    expect(same({ checkIns: [tired('2026-11-01'), tired('2026-11-02'), tired('2026-11-03')] })).toContain('Drie ochtenden op rij moe');
+  });
+  it('neemt een pijnplek mee die erger is dan na de training', () => {
+    const logs = [log('2026-11-02', { painReports: [{ area: 'Knie', score: 3 }] })];
+    expect(same({ logs, checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'gewoon', sleep: 'goed', spot: { area: 'Knie', score: 6 } }] })).toContain('Knie vanochtend 6 van 10');
   });
 });
