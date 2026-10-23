@@ -62,4 +62,14 @@ describe('deriveSessionStatus', () => {
     const s = session({ scheduledDate: addDays(today, 3) });
     expect(deriveSessionStatus(s, []).status).toBe('planned');
   });
+
+  // Warden Planning punt 8: een verplaatsing door het systeem heet nergens
+  // "verplaatst" alsof jij het deed; die van jou of van een aangenomen voorstel wel.
+  it('only calls a session moved when you or a proposal you accepted moved it', () => {
+    const yesterday = addDays(today, -1);
+    expect(deriveSessionStatus(session({ movedFromDate: yesterday }), []).wasMoved).toBe(false);
+    expect(deriveSessionStatus(session({ movedFromDate: yesterday }), [log('s1')]).wasMoved).toBe(false);
+    expect(deriveSessionStatus(session({ movedFromDate: yesterday, status: 'moved' }), []).wasMoved).toBe(true);
+    expect(deriveSessionStatus(session({ movedFromDate: yesterday, lock: { by: 'proposal', proposalId: 'p', at: '' } }), []).wasMoved).toBe(true);
+  });
 });

@@ -56,4 +56,21 @@ describe('systemMovedRows', () => {
     const undo = { ...proposal('weekly_prescription_computed', 'x', '2026-10-22'), id: 'undo', changes: [], revertsProposalId: p.id };
     expect(systemMovedRows([row('a', '2026-10-22')], [p, undo], [], TODAY)).toEqual([]);
   });
+
+  // Warden Planning punt 5: met Altijd eerst vragen nam je de weekprescriptie
+  // zelf aan als coachpunt. Die rij is van jou en blijft van jou.
+  it('laat staan wat je zelf aannam in Vraag eerst, en wat na nieuwe trainingsgegevens verplaatste', () => {
+    const rows = [row('later-akkoord', '2026-10-22'), row('snel-akkoord', '2026-10-23'), row('data', '2026-10-24'), row('vanzelf', '2026-10-25')];
+    const proposals = [
+      // Worked out at the opening, accepted by you a few minutes later.
+      proposal('weekly_prescription_computed', 'later-akkoord', '2026-10-22', { createdAt: '2026-10-20T08:00:00.000Z', resolvedAt: '2026-10-20T08:04:00.000Z' }),
+      // Accepted by you within seconds: the coach item's answer says so.
+      proposal('weekly_prescription_computed', 'snel-akkoord', '2026-10-23', { createdAt: '2026-10-20T09:00:00.000Z', resolvedAt: '2026-10-20T09:00:03.000Z' }),
+      proposal('new_training_data', 'data', '2026-10-24'),
+      // Applied by itself, stored at once, no answer of yours near it.
+      proposal('weekly_prescription_computed', 'vanzelf', '2026-10-25', { createdAt: '2026-10-19T07:00:00.000Z', resolvedAt: '2026-10-19T07:00:00.500Z' }),
+    ];
+    const responses = { 'planner:abc': { response: 'accepted' as const, at: '2026-10-20T09:00:03.200Z', ruleId: 'WEEKLY-PRESCRIPTION' } };
+    expect(systemMovedRows(rows, proposals, [], TODAY, responses).map((s) => s.id)).toEqual(['vanzelf']);
+  });
 });

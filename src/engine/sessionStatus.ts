@@ -22,13 +22,23 @@ export interface DisplaySessionState {
 // A rest day (isRest) is not a training: nothing to tick off, so it is
 // never "missed" and never waits for a log. Logging a walk on it still
 // shows as done.
+//
+// "Verplaatst" (wasMoved) is only what you moved, or a proposal you accepted
+// did: status 'moved' or a lock. A move by the system itself keeps
+// movedFromDate as a trace, but no screen calls it "verplaatst" as if you did
+// it (Warden Planning punt 8, docs/beslissingen/2026-10-23-planning-nooit-stil.md).
+function movedByYou(session: PlannedSession): boolean {
+  return !!session.movedFromDate && (session.status === 'moved' || !!session.lock);
+}
+
 export function deriveSessionStatus(session: PlannedSession, logs: SessionLog[], isRest = false): DisplaySessionState {
   const log = logs.find((l) => l.plannedSessionId === session.id);
-  if (log) return { status: 'completed', wasMoved: !!session.movedFromDate, log };
-  if (isRest) return { status: 'rest', wasMoved: !!session.movedFromDate };
-  if (session.status === 'skipped') return { status: 'skipped', wasMoved: !!session.movedFromDate };
-  if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved: !!session.movedFromDate };
-  if (session.scheduledDate < todayISO()) return { status: 'missed', wasMoved: !!session.movedFromDate };
+  const wasMoved = movedByYou(session);
+  if (log) return { status: 'completed', wasMoved, log };
+  if (isRest) return { status: 'rest', wasMoved };
+  if (session.status === 'skipped') return { status: 'skipped', wasMoved };
+  if (session.scheduledDate === todayISO()) return { status: 'today', wasMoved };
+  if (session.scheduledDate < todayISO()) return { status: 'missed', wasMoved };
   if (session.status === 'moved') return { status: 'moved', wasMoved: true };
   return { status: 'planned', wasMoved: false };
 }
