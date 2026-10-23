@@ -6,7 +6,7 @@ const TODAY = '2026-10-22';
 const fresh = { index: 2, painRecent: false, contributions: [{ id: 'a' }] } as Parameters<typeof suggestLegs>[0] & object;
 
 describe('showMorningCard', () => {
-  const base = { enabled: true, hour: 8, checkIn: undefined as MorningCheckIn | undefined, trainedToday: false };
+  const base = { enabled: true, hour: 8, fromHour: 5, checkIn: undefined as MorningCheckIn | undefined, trainedToday: false };
 
   it('shows in the morning while today is not filled in', () => {
     expect(showMorningCard(base)).toBe(true);
@@ -18,6 +18,13 @@ describe('showMorningCard', () => {
     expect(showMorningCard({ ...base, trainedToday: true })).toBe(false);
     expect(showMorningCard({ ...base, checkIn: { date: TODAY, allNormal: true } })).toBe(false);
     expect(showMorningCard({ ...base, enabled: false })).toBe(false);
+  });
+
+  it('is not there yet after midnight, only from the chosen hour', () => {
+    expect(showMorningCard({ ...base, hour: 0 })).toBe(false);
+    expect(showMorningCard({ ...base, hour: 4 })).toBe(false);
+    expect(showMorningCard({ ...base, hour: 5 })).toBe(true);
+    expect(showMorningCard({ ...base, hour: 4, fromHour: 4 })).toBe(true);
   });
 });
 

@@ -9,11 +9,12 @@ import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '..
 import { fatigueWord, type LegFatigueResult } from './legFatigue';
 import type { WellnessReading } from './wellnessCheck';
 
-// De kaart staat er tot de middag.
+// De kaart staat er vanaf het begin van de ochtend (instelbaar, standaard 5 uur)
+// tot de middag. Na middernacht is het nog geen ochtend.
 export const MORNING_CARD_UNTIL_HOUR = 12;
 
-export function showMorningCard(p: { enabled: boolean; hour: number; checkIn: MorningCheckIn | undefined; trainedToday: boolean }): boolean {
-  return p.enabled && !p.checkIn && p.hour < MORNING_CARD_UNTIL_HOUR && !p.trainedToday;
+export function showMorningCard(p: { enabled: boolean; hour: number; fromHour: number; checkIn: MorningCheckIn | undefined; trainedToday: boolean }): boolean {
+  return p.enabled && !p.checkIn && p.hour >= p.fromHour && p.hour < MORNING_CARD_UNTIL_HOUR && !p.trainedToday;
 }
 
 type LegIndex = Pick<LegFatigueResult, 'index' | 'painRecent' | 'contributions'>;

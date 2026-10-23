@@ -290,6 +290,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
       return { checked: o.morningCard, hidden: !o.morningCheckIn };
+    case 'ochtend-vanaf':
+      return { value: choiceShort('ochtendVanaf', o.morningCardFrom), hidden: !o.morningCheckIn };
     case 'ochtendmelding': {
       const n = noticeState(f);
       if (n.support === 'unavailable') return { value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' };

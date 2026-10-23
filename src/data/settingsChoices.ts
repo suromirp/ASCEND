@@ -245,6 +245,17 @@ export const CHOICES = {
       { value: 'none', label: 'Geen', note: 'De naam zoals die is', short: 'Geen' },
     ],
   }),
+  ochtendVanaf: def({
+    group: 'Vandaag en meldingen',
+    title: 'Ochtend begint om',
+    advice: '5' as '4' | '5' | '6' | '7',
+    options: [
+      { value: '4', label: '4 uur', note: 'Voor wie heel vroeg opstaat', short: '04:00' },
+      { value: '5', label: '5 uur', note: 'Na een late avond nog geen ochtendvraag', short: '05:00' },
+      { value: '6', label: '6 uur', note: 'Iets later', short: '06:00' },
+      { value: '7', label: '7 uur', note: 'Voor wie later opstaat', short: '07:00' },
+    ],
+  }),
   terugblikDag: def({
     group: 'Vandaag en meldingen',
     title: 'Dag van de terugblik',

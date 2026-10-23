@@ -7,7 +7,10 @@ describe('resolveOverviews', () => {
   it('zonder opgeslagen waarden geldt het gedrag van altijd', () => {
     expect(resolveOverviews(undefined)).toEqual(DEFAULT_OVERVIEWS);
     expect(resolveOverviews({})).toEqual(DEFAULT_OVERVIEWS);
-    expect(Object.values(DEFAULT_OVERVIEWS).every((v) => v === true || v === 'both')).toBe(true);
+    const { morningCardFrom, ...rest } = DEFAULT_OVERVIEWS;
+    expect(Object.values(rest).every((v) => v === true || v === 'both')).toBe(true);
+    // De ochtend begint standaard om 5 uur, niet meteen na middernacht.
+    expect(morningCardFrom).toBe('5');
   });
 
   it('een deels ingevulde instelling vult de rest met de standaard aan', () => {
@@ -18,7 +21,7 @@ describe('resolveOverviews', () => {
   });
 
   it('onzin uit een oude of beschadigde back-up valt terug op de standaard', () => {
-    const r = resolveOverviews({ weekReview: 'nee', weekReviewDay: 'woensdag', weatherLine: 0 } as never);
+    const r = resolveOverviews({ weekReview: 'nee', weekReviewDay: 'woensdag', weatherLine: 0, morningCardFrom: '3' } as never);
     expect(r).toEqual(DEFAULT_OVERVIEWS);
   });
 });

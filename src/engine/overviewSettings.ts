@@ -15,6 +15,8 @@ import { reviewWeekFor } from './weekReview';
 
 export type ReviewDay = 'both' | 'sunday' | 'monday';
 
+export type MorningFrom = '4' | '5' | '6' | '7';
+
 export interface OverviewSettings {
   // Weekterugblik op Vandaag, en op welke dag(en) hij verschijnt.
   weekReview?: boolean;
@@ -26,6 +28,9 @@ export interface OverviewSettings {
   // De ochtendkaart bovenaan Vandaag met de vraag "Hoe voel je je?" (engine/morningCard.ts).
   // Alleen zinvol als de ochtendcheck aan staat; uit laat de regel in "Je dag".
   morningCard?: boolean;
+  // Vanaf welk uur de ochtend begint: de ochtendkaart en de vraag in "Je dag"
+  // verschijnen niet midden in de nacht (engine/morningCard.ts).
+  morningCardFrom?: MorningFrom;
   // De weerregel bij een training.
   weatherLine?: boolean;
   // Ruilvoorstellen bij slecht weer (regel WEATHER-SWAP).
@@ -48,6 +53,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   weeklyQuestion: true,
   morningCheckIn: true,
   morningCard: true,
+  morningCardFrom: '5',
   weatherLine: true,
   weatherSwap: true,
   clothingAdvice: true,
@@ -56,6 +62,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
 };
 
 const REVIEW_DAYS: ReviewDay[] = ['both', 'sunday', 'monday'];
+export const MORNING_FROM: MorningFrom[] = ['4', '5', '6', '7'];
 
 // Leest defensief: een back-up kan van een oudere of beschadigde versie zijn.
 export function resolveOverviews(raw: OverviewSettings | undefined | null): ResolvedOverviews {
@@ -68,6 +75,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     weeklyQuestion: flag('weeklyQuestion'),
     morningCheckIn: flag('morningCheckIn'),
     morningCard: flag('morningCard'),
+    morningCardFrom: MORNING_FROM.find((h) => h === r.morningCardFrom) ?? DEFAULT_OVERVIEWS.morningCardFrom,
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
     clothingAdvice: flag('clothingAdvice'),
@@ -89,6 +97,8 @@ export function reviewWeekToShow(today: string, isoWeekday: number, raw: Overvie
 export const showWeeklyQuestion = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weeklyQuestion;
 export const showMorningCardSetting = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn && resolveOverviews(raw).morningCard;
 export const showMorningCheckIn = (raw: OverviewSettings | undefined) => resolveOverviews(raw).morningCheckIn;
+// Het uur vanaf wanneer de ochtend begint (de kaart en de vraag in "Je dag").
+export const morningFromHour = (raw: OverviewSettings | undefined) => Number(resolveOverviews(raw).morningCardFrom);
 // De ochtendcheck is ook de plek waar een pijnplek van de laatste 14 dagen
 // wordt opgevolgd (recentPainSpot, spotWorse). Dat blijft dus gebeuren, ook als
 // je de check zelf uitzet: veiligheid gaat voor een opgeruimd scherm. Maar dan

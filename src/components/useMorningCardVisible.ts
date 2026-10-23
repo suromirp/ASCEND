@@ -1,6 +1,6 @@
 import { useAppData } from '../state/AppDataContext';
 import { checkInFor } from '../engine/wellbeing';
-import { showMorningCardSetting } from '../engine/overviewSettings';
+import { morningFromHour, showMorningCardSetting } from '../engine/overviewSettings';
 import { showMorningCard } from '../engine/morningCard';
 import { todayISO } from '../utils/dates';
 
@@ -11,6 +11,7 @@ export function useMorningCardVisible(): boolean {
   return showMorningCard({
     enabled: showMorningCardSetting(settings.overviews),
     hour: new Date().getHours(),
+    fromHour: morningFromHour(settings.overviews),
     checkIn: checkInFor(today, settings.morningCheckIns),
     trainedToday: sessionLogs.some((l) => l.completedDate === today),
   });

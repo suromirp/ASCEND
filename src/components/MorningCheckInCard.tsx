@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbeing';
 import { todayISO } from '../utils/dates';
+import { morningFromHour } from '../engine/overviewSettings';
 import { DayRow } from './vandaag/DayRow';
 import { ENERGY, LEGS, SLEEP } from '../engine/morningCard';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
@@ -26,6 +27,8 @@ export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { pai
   const ask = shouldAskCheckIn(today, settings.morningCheckIns, sessionLogs, plannedSessions, templates);
 
   if (!ask && !existing) return null;
+  // Voor het begin van de ochtend (instelbaar, standaard 5 uur) vraagt ASCEND nog niets.
+  if (!existing && new Date().getHours() < morningFromHour(settings.overviews)) return null;
   // De ochtendkaart staat er nog: die stelt de vraag, deze regel wacht tot er een antwoord is.
   if (hideTodo && !existing) return null;
 

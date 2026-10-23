@@ -46,6 +46,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Op Vandaag">
         <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
         <SummaryRow id="ochtendkaart" title="Ochtendkaart" facts={facts} info="ochtendkaart" onChange={(on) => set({ morningCard: on })} />
+        <SummaryRow id="ochtend-vanaf" title="Ochtend begint om" facts={facts} onClick={() => setSheet('ochtend-vanaf')} />
         <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
         <SummaryRow id="weekterugblik-dag" title="Dag van de terugblik" facts={facts} onClick={() => setSheet('weekterugblik-dag')} />
         <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
@@ -94,6 +95,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
 
       {sheet === 'terugknop' && <ChoiceFromDef def={CHOICES.terugknop} value={nav.tabBack} onPick={(v) => void updateSettings({ tabBack: v })} onClose={close} />}
       {sheet === 'hervatten' && <ChoiceFromDef def={CHOICES.hervatten} value={nav.resumeMinutes as 0 | 60 | 120 | 240 | 480} onPick={(v) => void updateSettings({ resumeMinutes: v })} onClose={close} />}
+      {sheet === 'ochtend-vanaf' && <ChoiceFromDef def={CHOICES.ochtendVanaf} value={o.morningCardFrom} onPick={(v) => set({ morningCardFrom: v })} onClose={close} />}
       {sheet === 'weekterugblik-dag' && <ChoiceFromDef def={CHOICES.terugblikDag} value={o.weekReviewDay} onPick={(v) => set({ weekReviewDay: v })} onClose={close} />}
       {sheet === 'ochtendmelding-tijd' && <ChoiceFromDef def={CHOICES.ochtendTijd} value={notice.time as typeof CHOICES.ochtendTijd.advice} onPick={(v) => void updateSettings({ morningNotice: { ...settings.morningNotice, time: v } })} onClose={close} />}
       {sheet === 'ochtendmelding-info' && <NoticeInfoSheet support={facts.notice?.support} onClose={close} />}

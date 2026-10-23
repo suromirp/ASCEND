@@ -178,6 +178,7 @@ describe('rowSummary: vandaag en meldingen', () => {
 
   it('de dag van de terugblik hoort bij de terugblik', () => {
     expect(rowSummary('weekterugblik-dag', facts()).value).toBe('Zo en ma');
+    expect(rowSummary('ochtend-vanaf', facts()).value).toBe('05:00');
     const settings = { ...facts().settings, overviews: { weekReview: false } };
     expect(rowSummary('weekterugblik-dag', facts({ settings })).hidden).toBe(true);
   });

@@ -144,6 +144,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Alvast ingevuld', text: 'je slaap uit je horloge, en je benen volgens je beenindex. Bij elke keuze staat waar hij vandaan komt.' },
       { head: 'Slaap', text: 'gaat via Garmin Connect naar intervals.icu en komt soms later binnen dan je rusthartslag. Staat hij er nog niet, tik dan op Opnieuw ophalen.' },
+      { head: 'Wanneer', text: 'vanaf het uur bij Ochtend begint om (standaard 5 uur), dus niet meteen na middernacht.' },
       { head: 'Weg', text: 'zodra je hebt ingevuld, na twaalven of als je training van vandaag gelogd is.' },
       { head: 'Uit', text: 'de vraag blijft staan als regel bij Je dag.' },
     ],
