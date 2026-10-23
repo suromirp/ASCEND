@@ -141,6 +141,10 @@ describe('activeRow en exerciseComplete', () => {
     expect(exerciseComplete(ex('a', [row('a1', { done: true })]))).toBe(true);
     expect(exerciseComplete(ex('a', []))).toBe(false);
   });
+  it('een opwarmset die je niet afvinkte houdt de oefening niet open', () => {
+    expect(exerciseComplete(ex('a', [row('w1', { kind: 'warmup' }), row('a1', { done: true })]))).toBe(true);
+    expect(exerciseComplete(ex('a', [row('w1', { kind: 'warmup', done: true }), row('a1')]))).toBe(false);
+  });
 });
 
 describe('applyWeight: doorgeven aan volgende sets', () => {

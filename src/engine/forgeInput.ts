@@ -142,7 +142,13 @@ export function activeRow(workout: WorkoutExercise[], after?: RowRef): RowRef | 
   return next ? { slot: next.slot, rowId: next.rowId } : undefined;
 }
 
-export const exerciseComplete = (ex: WorkoutExercise): boolean => ex.rows.length > 0 && ex.rows.every((r) => r.done);
+// Done when every working set is ticked: a warm-up you skipped or did not tick
+// does not keep the exercise open.
+export const exerciseComplete = (ex: WorkoutExercise): boolean => {
+  const work = ex.rows.filter((r) => r.kind === 'work');
+  const rows = work.length > 0 ? work : ex.rows;
+  return rows.length > 0 && rows.every((r) => r.done);
+};
 
 // --- what you change ----------------------------------------------------------------------
 

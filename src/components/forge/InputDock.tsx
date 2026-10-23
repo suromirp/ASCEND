@@ -176,7 +176,7 @@ export function InputDock(props: DockProps) {
               </p>
             </div>
           )}
-          <div className="grid grid-cols-[1fr_1fr_1fr_1.25fr] gap-1.5 px-3 pt-2">
+          <div className="grid grid-cols-[1fr_1fr_1fr_1.45fr] gap-1.5 px-3 pt-2">
             {DIGITS.map((k) => (
               <Key key={k} label={k} onPress={() => press(k)} className="text-xl active:bg-[var(--color-surface)]" style={{ color: 'var(--color-ink)' }}>{k}</Key>
             ))}
