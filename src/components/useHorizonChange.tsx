@@ -34,6 +34,8 @@ export interface HorizonProposeOptions {
   declined?: string;
   // Called once the change is stored (also when nothing in the plan changed).
   onStored?: () => void;
+  // Called on Liever niet: a field that holds what you typed goes back to what is stored.
+  onDeclined?: () => void;
 }
 
 export function useHorizonChange(): {
@@ -105,7 +107,10 @@ export function useHorizonChange(): {
       listUntil={addDays(mondayOfWeek(todayISO()), 13)}
       onRespond={async (response) => {
         if (response === 'accepted') await apply(pending.plan, pending.options);
-        else setNote(pending.options.declined ?? 'Je keuze en je planning blijven zoals ze waren.');
+        else {
+          pending.options.onDeclined?.();
+          setNote(pending.options.declined ?? 'Je keuze en je planning blijven zoals ze waren.');
+        }
       }}
       onClose={() => setPending(null)}
     />

@@ -69,7 +69,7 @@ export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRe
 
   return (
     <Sheet eyebrow="Doel en tochten" title="Programma" line={line} onClose={onClose}>
-      {plan.note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
+      {plan.note && <p className="st-hint st-hint-note" role="status">{plan.note}</p>}
       {plan.impact}
       <div className="st-phases" role="img" aria-label="Je fases tot aan het doel">
         {rows.map((r) => <span key={r.phase.id} style={{ flex: r.phase.weekCount, background: PHASE_COLOR_SOFT[r.phase.id] ?? 'var(--color-stone)' }} />)}

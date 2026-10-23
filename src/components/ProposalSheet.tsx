@@ -6,7 +6,7 @@ import type { Advice } from '../engine/adviceEngine';
 import type { PlannedSession, SessionType } from '../models/training';
 import type { LeavePeriod } from '../models/leave';
 import { LeaveBand } from './LeaveBand';
-import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
+import { formatDateNL, formatShortDayNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
@@ -23,8 +23,8 @@ import { Icon } from './icons';
 // niet, so you see the proposal and decide in one place. Nothing is applied
 // by looking at it.
 
-const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-const short = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+// The year only when it is not this year, as everywhere (utils/dates.ts).
+const short = formatShortDayNL;
 
 const TYPE_COLOR: Record<SessionType, string> = {
   strength: 'var(--color-stone)',
@@ -207,9 +207,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {data.weeks.map((w) => (
                 <section key={w.weekStart} className="mt-6">
-                  <p className="mb-3 text-xs font-medium tracking-[0.18em]" style={{ color: 'var(--color-bronze)' }}>
-                    WEEK VAN {formatDateNL(w.weekStart).toUpperCase()}
-                  </p>
+                  <div className="mb-3"><Eyebrow>Week van {formatDateNL(w.weekStart)}</Eyebrow></div>
                   <div className="flex flex-col gap-4">
                     {w.days.map((d) => {
                       const isToday = d.date === today;

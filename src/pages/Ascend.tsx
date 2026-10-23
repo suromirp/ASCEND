@@ -292,8 +292,11 @@ export function GoalsPage() {
   const horizon = useHorizonChange();
   const [archiving, setArchiving] = useState<TrainingGoal | null>(null);
   const keep = 'Je doel en je planning blijven zoals ze waren.';
+  // Liever niet puts the typed date or time back to what is stored (Lookout punt 1).
+  const [draftReset, setDraftReset] = useState(0);
+  const resetDrafts = () => setDraftReset((n) => n + 1);
   const changeDate = (goalId: string, date: string | null) =>
-    horizon.propose(() => planGoalChange(goalId, { targetDate: date }), { eyebrow: 'Doeldatum', ask: 'always', declined: keep });
+    horizon.propose(() => planGoalChange(goalId, { targetDate: date }), { eyebrow: 'Doeldatum', ask: 'always', declined: keep, onDeclined: resetDrafts });
   const archive = (g: TrainingGoal) => {
     setArchiving(null);
     void horizon.propose(() => planGoalChange(g.id, { archive: true }), { eyebrow: 'Doel archiveren', ask: 'always', declined: keep });
@@ -302,7 +305,7 @@ export function GoalsPage() {
   // The Marathon card: another date, type or time is a proposal too; when the
   // planning does not change, it is simply stored.
   const changeMarathon = (patch: MarathonGoalPatch) =>
-    void horizon.propose(() => planMarathonGoal(patch), { eyebrow: 'Marathondoel', ask: 'always', declined: keep });
+    void horizon.propose(() => planMarathonGoal(patch), { eyebrow: 'Marathondoel', ask: 'always', declined: keep, onDeclined: resetDrafts });
   const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
   const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
   const customGoals = trainingGoals.filter((g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id));
@@ -318,9 +321,9 @@ export function GoalsPage() {
 
       <SeasonCard />
 
-      {goal && <GR5GoalCard key={goal.targetDate ?? 'geen-datum'} goal={goal} busy={horizon.busy} onUpdate={(patch) => updateGoal(goal.id, patch)} onDate={(date) => void changeDate(goal.id, date)} onArchive={() => askArchive(goal.id)} />}
+      {goal && <GR5GoalCard key={goal.targetDate ?? 'geen-datum'} goal={goal} busy={horizon.busy} resetKey={draftReset} onUpdate={(patch) => updateGoal(goal.id, patch)} onDate={(date) => void changeDate(goal.id, date)} onArchive={() => askArchive(goal.id)} />}
 
-      <MarathonGoalCard key={`${marathonGoal?.targetDate ?? settings.marathonTargetDate ?? ''}|${settings.marathonTargetTimeMinutes ?? ''}`} settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} busy={horizon.busy} onUpdate={changeMarathon} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
+      <MarathonGoalCard key={`${marathonGoal?.targetDate ?? settings.marathonTargetDate ?? ''}|${settings.marathonTargetTimeMinutes ?? ''}`} settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} busy={horizon.busy} resetKey={draftReset} onUpdate={changeMarathon} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
 
       <CustomGoalsList goals={customGoals} onArchive={askArchive} />
 
@@ -403,12 +406,15 @@ function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
 function GR5GoalCard({
   goal,
   busy,
+  resetKey,
   onUpdate,
   onDate,
   onArchive,
 }: {
   goal: TrainingGoal;
   busy: boolean;
+  // Raised on Liever niet: the typed date goes back to the stored one.
+  resetKey: number;
   onUpdate: (patch: { targetDistanceKm?: number; packWeightKg?: number }) => void;
   // Another date (or none): a proposal first, never stored while you type.
   onDate: (date: string | null) => void;
@@ -421,6 +427,11 @@ function GR5GoalCard({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   // The date as you type it: stored only with "Datum opslaan" and then Akkoord.
   const [dateDraft, setDateDraft] = useState(goal.targetDate ?? '');
+  const [seenReset, setSeenReset] = useState(resetKey);
+  if (seenReset !== resetKey) {
+    setSeenReset(resetKey);
+    setDateDraft(goal.targetDate ?? '');
+  }
   const today = todayISO();
   const dateProblem = goalDateProblem(dateDraft || undefined, today, goal.targetDate);
   const dateChanged = dateDraft !== (goal.targetDate ?? '');
@@ -456,7 +467,7 @@ function GR5GoalCard({
       {advancedOpen && (
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }} htmlFor="gr5-start">Startdatum</label>
+          <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }} htmlFor="gr5-start">Doeldatum</label>
           <input
             id="gr5-start"
             type="date"
@@ -509,6 +520,7 @@ function MarathonGoalCard({
   sessionLogs,
   marathonGoal,
   busy,
+  resetKey,
   onUpdate,
   onArchive,
 }: {
@@ -516,6 +528,7 @@ function MarathonGoalCard({
   sessionLogs: SessionLog[];
   marathonGoal: TrainingGoal | undefined;
   busy: boolean;
+  resetKey: number;
   // Every change is a proposal first (GoalsPage#changeMarathon), never stored while you type.
   onUpdate: (patch: MarathonGoalPatch) => void;
   onArchive?: () => void;
@@ -572,6 +585,12 @@ function MarathonGoalCard({
     setHoursDraft(totalMinutes !== undefined ? String(Math.floor(totalMinutes / 60)) : '');
     setMinutesDraft(totalMinutes !== undefined ? String(totalMinutes % 60) : '');
   };
+  const [seenReset, setSeenReset] = useState(resetKey);
+  if (seenReset !== resetKey) {
+    setSeenReset(resetKey);
+    setDateDraft(targetDate ?? '');
+    resetTime();
+  }
 
   return (
     <Card className="flex flex-col gap-3">
