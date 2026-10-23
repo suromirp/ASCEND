@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '../models/checkIn';
-import { checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbeing';
+import { checkInEffect, checkInFor, recentPainSpot, shouldAskCheckIn } from '../engine/wellbeing';
 import { todayISO } from '../utils/dates';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
@@ -89,18 +89,19 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
           </button>
         )}
       >
-        {existing ? `Vanochtend: ${summary}` : painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()}?` : 'Hoe voel je je?'}
+        {existing ? `Vanochtend: ${summary}` : painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()}?` : 'Benen, energie en slaap'}
       </DayRow>
       {open && (
-        <TodaySheet eyebrow="VANOCHTEND" title={painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()} vanochtend?` : 'Hoe voel je je, vergeleken met normaal?'} onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow="VANOCHTEND" title={painOnly && spot ? `Hoe is je ${spot.area.toLowerCase()} vanochtend?` : 'Hoe voel je je vanochtend?'} onClose={() => setOpen(false)}>
           <div className="flex flex-col gap-3">
+            {!painOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Vergeleken met een gewone ochtend. Is alles zoals altijd, dan is één tik genoeg.</p>}
             {!painOnly && <button onClick={() => save({ date: today, allNormal: true })} className="min-h-[44px] rounded-xl px-3.5 py-2 text-sm font-semibold" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
               Alles normaal
             </button>}
             {wellness && <WellnessLines reading={wellness} />}
             {!painOnly && row('Benen', LEGS, draft.legs, (legs) => setDraft({ ...draft, legs }))}
             {!painOnly && row(wellness ? 'Energie (mag leeg blijven)' : 'Energie', ENERGY, draft.energy, (energy) => setDraft({ ...draft, energy }))}
-            {!painOnly && row(wellness && sleep === suggestedSleep ? 'Slaap, ingevuld uit je horloge' : 'Slaap', SLEEP, sleep, (sleep) => setDraft({ ...draft, sleep }))}
+            {!painOnly && row(suggestedSleep !== undefined && sleep === suggestedSleep ? 'Slaap, ingevuld uit je horloge' : 'Slaap', SLEEP, sleep, (sleep) => setDraft({ ...draft, sleep }))}
             {spot && (
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe is je {spot.area.toLowerCase()} vanochtend? 0 is niets. Na de training was het {spot.lastScore}.</p>
@@ -115,6 +116,11 @@ export function MorningCheckInCard({ painOnly = false }: { painOnly?: boolean } 
                   })}
                 </div>
               </div>
+            )}
+            {!painOnly && (
+              <p className="text-xs leading-snug" role="status" style={{ color: complete ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
+                {!draft.legs ? 'Kies eerst hoe je benen voelen.' : !sleep ? 'Kies nog hoe je sliep.' : !complete ? 'Kies nog je energie.' : checkInEffect({ legs: draft.legs, energy: draft.energy, sleep })}
+              </p>
             )}
             <div className="flex items-center justify-between gap-3">
               {painOnly ? <span /> : <NotFitLink />}

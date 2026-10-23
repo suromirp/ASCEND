@@ -65,6 +65,16 @@ export function morningSignals(checkIn: MorningCheckIn | undefined, logs: Sessio
   return { sore, negatives, rest: checkIn.energy === 'op' || negatives >= 2, spotWorse };
 }
 
+// What your answers do, in one sentence, before you save: the same signals the
+// advice reads (adviceEngine.ts#morningAdvice). Nothing moves without your Akkoord.
+export function checkInEffect(answers: Pick<MorningCheckIn, 'legs' | 'energy' | 'sleep'>): string {
+  const sig = morningSignals({ date: '', ...answers }, []);
+  if (sig.rest) return 'Dan wordt vandaag een rustige dag: ASCEND stelt voor je zware training op te schuiven. Jij beslist.';
+  if (sig.sore !== 'none') return 'Dan stelt ASCEND voor je eerstvolgende zware training of beendag een dag op te schuiven. Jij beslist.';
+  if (sig.negatives === 1) return 'ASCEND noemt het bij je training; je planning blijft zoals hij is.';
+  return 'Je planning blijft zoals hij is.';
+}
+
 // Three tired mornings in a row: a block of a few lighter days (Nuuttila e.a.
 // 2022: recreational runners did better when the plan followed this).
 export function tiredStreak(today: string, checkIns: MorningCheckIn[] | undefined): number {

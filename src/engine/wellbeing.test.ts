@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
+import { checkInEffect, morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
 import { hasSignificantPain, isStopPain, painReports } from './pain';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -88,5 +88,15 @@ describe('MORNING-CHECK: how the planning reacts', () => {
     const [a] = morning({ logs, checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'fit', sleep: 'goed', spot: { area: 'Achillespees', score: 4 } }] });
     expect(a.title).toContain('Achillespees vanochtend 4');
     expect(a.effect).toContain('2 tot 3 dagen');
+  });
+});
+
+describe('wat je antwoord doet', () => {
+  it('zegt vooraf wat ASCEND ermee doet, in dezelfde regels als het advies', () => {
+    expect(checkInEffect({ legs: 'fris', energy: 'gewoon', sleep: 'goed' })).toBe('Je planning blijft zoals hij is.');
+    expect(checkInEffect({ legs: 'fris', energy: 'moe', sleep: 'goed' })).toContain('blijft zoals hij is');
+    expect(checkInEffect({ legs: 'spierpijn', energy: 'gewoon', sleep: 'goed' })).toContain('beendag een dag op te schuiven');
+    expect(checkInEffect({ legs: 'fris', energy: 'op', sleep: 'goed' })).toContain('rustige dag');
+    expect(checkInEffect({ legs: 'fris', energy: 'moe', sleep: 'slecht' })).toContain('rustige dag');
   });
 });
