@@ -296,20 +296,35 @@ export interface TickResult {
 // rest timer starts after a working set and after the last warm-up set of an
 // exercise, not after the other warm-up sets, and not after the very last set
 // of the training.
+// A ticked row with what is still empty filled in from its target.
+function fillTicked(row: WorkoutRow): WorkoutRow {
+  return {
+    ...row,
+    done: true,
+    ...(row.weightKg === undefined && row.target.weightKg !== undefined ? { weightKg: row.target.weightKg } : {}),
+    ...(row.reps === undefined ? { reps: row.target.timedSec ?? midReps(row.target) } : {}),
+    ...(row.rir === undefined && row.kind === 'work' && row.target.rir !== undefined ? { rir: row.target.rir } : {}),
+  };
+}
+
+// The box above the column: every set of the exercise ticked at once, or all
+// unticked again when every set already was. Rest follows as after one set.
+export function tickAllRows(workout: WorkoutExercise[], slot: string): TickResult {
+  const ex = workout.find((e) => e.slot === slot);
+  if (!ex || ex.rows.length === 0) return { workout };
+  const untick = ex.rows.every((r) => r.done);
+  const next = workout.map((e) => (e.slot === slot ? { ...e, rows: e.rows.map((r) => (untick ? { ...r, done: false } : r.done ? r : fillTicked(r))) } : e));
+  if (untick) return { workout: next };
+  const allDone = next.every((e) => e.rows.every((r) => r.done));
+  return allDone ? { workout: next } : { workout: next, restSec: ex.restSec };
+}
+
 export function tickRow(workout: WorkoutExercise[], slot: string, rowId: string): TickResult {
   const ex = workout.find((e) => e.slot === slot);
   const row = ex?.rows.find((r) => r.id === rowId);
   if (!ex || !row) return { workout };
   const done = !row.done;
-  const filled: WorkoutRow = done
-    ? {
-        ...row,
-        done,
-        ...(row.weightKg === undefined && row.target.weightKg !== undefined ? { weightKg: row.target.weightKg } : {}),
-        ...(row.reps === undefined ? { reps: row.target.timedSec ?? midReps(row.target) } : {}),
-        ...(row.rir === undefined && row.kind === 'work' && row.target.rir !== undefined ? { rir: row.target.rir } : {}),
-      }
-    : { ...row, done };
+  const filled: WorkoutRow = done ? fillTicked(row) : { ...row, done };
   const next = workout.map((e) => (e.slot === slot ? { ...e, rows: e.rows.map((r) => (r.id === rowId ? filled : r)) } : e));
   if (!done) return { workout: next };
   const index = ex.rows.indexOf(row);

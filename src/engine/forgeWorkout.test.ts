@@ -22,6 +22,7 @@ import {
   restFor,
   swapOptions,
   targetText,
+  tickAllRows,
   tickRow,
   toStrengthData,
   updateRow,
@@ -142,6 +143,16 @@ describe('afvinken en de rusttimer', () => {
     expect(on.restSec).toBe(180);
     expect(on.workout[0].rows.find((r) => r.id === row.id)!.done).toBe(true);
     const off = tickRow(on.workout, 'ex8', row.id);
+    expect(off.restSec).toBeUndefined();
+  });
+
+  it('het vakje boven de kolom vinkt alle sets in één keer af, en weer uit', () => {
+    const w = plan();
+    const all = tickAllRows(w, 'ex8');
+    expect(all.workout[0].rows.every((r) => r.done && r.reps !== undefined)).toBe(true);
+    expect(all.restSec).toBe(180);
+    const off = tickAllRows(all.workout, 'ex8');
+    expect(off.workout[0].rows.every((r) => !r.done)).toBe(true);
     expect(off.restSec).toBeUndefined();
   });
 

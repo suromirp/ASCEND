@@ -114,6 +114,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-schatting', facts()).value).toBe('Tot 20');
     expect(rowSummary('forge-rust', facts()).checked).toBe(true);
     expect(rowSummary('forge-signaal', facts()).value).toBe('Geluid en trillen');
+    expect(rowSummary('forge-geluid', facts()).value).toBe('Klokjes');
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
     expect(rowSummary('forge-doorgeven', facts()).checked).toBe(true);
     expect(rowSummary('forge-schijven', facts()).checked).toBe(true);

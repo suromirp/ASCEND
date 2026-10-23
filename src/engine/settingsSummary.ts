@@ -250,6 +250,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.restAuto };
     case 'forge-signaal':
       return { value: choiceShort('restsignaal', forge.restAlert), hidden: !forge.restAuto };
+    case 'forge-geluid':
+      return { value: choiceShort('rustgeluid', forge.restSound), hidden: !forge.restAuto || forge.restAlert === 'vibrate' || forge.restAlert === 'off' };
     case 'forge-scherm':
       return { checked: forge.keepScreenOn };
     case 'forge-doorgeven':

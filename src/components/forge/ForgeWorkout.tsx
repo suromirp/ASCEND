@@ -53,6 +53,7 @@ import {
   repsText,
   swapOptions,
   targetText,
+  tickAllRows,
   tickRow,
   toStrengthData,
   updateRow,
@@ -78,7 +79,7 @@ import { haptics } from '../../utils/haptics';
 import { animateEl, reducedMotion } from '../../utils/motion';
 import { clearDraft, draftKey, loadDraft, saveDraft } from '../../utils/loggerDraft';
 import { formatNumberNL } from '../../utils/number';
-import { playTimerAlarm, primeAudio } from '../../utils/sound';
+import { playRestSound, primeAudio } from '../../utils/sound';
 import { useBackToClose } from '../../utils/useBackToClose';
 import { Icon } from '../icons';
 import { NumberField } from '../NumberField';
@@ -261,7 +262,7 @@ export function ForgeWorkout({
       alerted.current = end;
       if (Date.now() - end < 3000) {
         if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'vibrate') haptics.alarm();
-        if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'sound') playTimerAlarm();
+        if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'sound') playRestSound(strength.restSound);
       }
     }, Math.max(0, end - Date.now()));
     const drop = window.setTimeout(() => setRest((r) => (r && r.endsAt === end ? undefined : r)), Math.max(0, end + REST_DONE_LINGER_MS - Date.now()));
@@ -269,7 +270,7 @@ export function ForgeWorkout({
       window.clearTimeout(fire);
       window.clearTimeout(drop);
     };
-  }, [rest, strength.restAlert]);
+  }, [rest, strength.restAlert, strength.restSound]);
 
   // Terug laat de training staan (het concept blijft); weggooien gaat via het menu.
   useBackToClose(true, onClose);
@@ -315,6 +316,30 @@ export function ForgeWorkout({
       }
     } else {
       setActiveRef({ slot, rowId });
+    }
+    if (result.restSec && strength.restAuto) {
+      const ex = workout.find((e) => e.slot === slot);
+      alerted.current = null;
+      setRest({ endsAt: clock() + result.restSec * 1000, total: result.restSec, name: ex?.name ?? '' });
+    }
+  }
+
+  function tickAll(slot: string) {
+    haptics.tap();
+    primeAudio();
+    baseRef.current = null;
+    const result = tickAllRows(workout, slot);
+    setWorkout(result.workout);
+    const after = result.workout.find((e) => e.slot === slot);
+    if (after && exerciseComplete(after)) {
+      if (dock?.slot === slot) setDock(null);
+      const next = activeRow(result.workout);
+      setActiveRef(next);
+      const calm = reducedMotion();
+      later(() => {
+        setFolded((f) => ({ ...f, [slot]: true }));
+        if (next) later(() => scrollToRow(next.rowId), calm ? 0 : 320);
+      }, calm ? 0 : 380);
     }
     if (result.restSec && strength.restAuto) {
       const ex = workout.find((e) => e.slot === slot);
@@ -384,9 +409,9 @@ export function ForgeWorkout({
   }
 
   // Vaste handelingen voor de tabel (zie BlockActions), die altijd de nieuwste staat gebruiken.
-  const latest = useRef({ tick, openField, take, setExercise });
+  const latest = useRef({ tick, tickAll, openField, take, setExercise });
   useEffect(() => {
-    latest.current = { tick, openField, take, setExercise };
+    latest.current = { tick, tickAll, openField, take, setExercise };
   });
   const actions = useMemo<BlockActions>(
     () => ({
@@ -394,6 +419,7 @@ export function ForgeWorkout({
       fold: (slot) => setFolded((f) => ({ ...f, [slot]: !f[slot] })),
       menu: (slot) => setMenuFor(slot),
       tick: (slot, rowId) => latest.current.tick(slot, rowId),
+      tickAll: (slot) => latest.current.tickAll(slot),
       open: (slot, rowId, name) => latest.current.openField(slot, rowId, name),
       take: (slot, rowId) => latest.current.take(slot, rowId),
       rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
@@ -753,6 +779,7 @@ interface BlockActions {
   fold: (slot: string) => void;
   menu: (slot: string) => void;
   tick: (slot: string, rowId: string) => void;
+  tickAll: (slot: string) => void;
   open: (slot: string, rowId: string, name: FieldName) => void;
   take: (slot: string, rowId: string) => void;
   rowMenu: (slot: string, rowId: string) => void;
@@ -857,7 +884,9 @@ const ExerciseBlock = memo(function ExerciseBlock({
               <span role="columnheader" className="text-center">{assisted ? 'hulp kg' : 'kg'}</span>
               <span role="columnheader" className="text-center">{ex.timed ? 'sec' : 'Herh.'}</span>
               <span role="columnheader" className="text-center">RIR</span>
-              <span role="columnheader" className="sr-only">Gedaan</span>
+              <span role="columnheader" className="flex justify-center">
+                {readOnly ? <span className="sr-only">Gedaan</span> : <TickBox done={ex.rows.length > 0 && ex.rows.every((r) => r.done)} onClick={() => act.tickAll(ex.slot)} label={`Alle sets van ${ex.name} gedaan`} />}
+              </span>
             </div>
             {ex.rows.map((row, i) => {
               if (row.kind === 'work') workNo++;

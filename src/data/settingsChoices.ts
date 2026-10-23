@@ -132,6 +132,17 @@ export const CHOICES = {
       { value: 'off', label: 'Niets', note: 'Je kijkt zelf op de balk onderaan', short: 'Niets' },
     ],
   }),
+  rustgeluid: def({
+    group: 'Forge',
+    title: 'Geluid na de rust',
+    line: 'Tik een keuze om hem te horen.',
+    advice: 'chime' as 'chime' | 'bell' | 'beep',
+    options: [
+      { value: 'chime', label: 'Klokjes', note: 'Drie zachte tonen omhoog', short: 'Klokjes' },
+      { value: 'bell', label: 'Bel', note: 'Eén diepe, ronde toon', short: 'Bel' },
+      { value: 'beep', label: 'Piep', note: 'De korte piepjes van eerst', short: 'Piep' },
+    ],
+  }),
   herinnering: def({
     group: 'Lichaam',
     title: 'Herinnering',

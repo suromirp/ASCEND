@@ -317,3 +317,37 @@ export function playTimerAlarm(volume = 0.55) {
     playAlarmPulse(ctx, master, now + offset, freq, i === offsets.length - 1 ? 0.6 : 0.5);
   });
 }
+
+// --- The end of the rest (Forge) ---------------------------------------
+// A bell: a sine with one soft inharmonic partial and a long, natural decay.
+function playBell(ctx: AudioContext, destination: AudioNode, time: number, freqHz: number, gain: number, decaySec: number) {
+  for (const [ratio, part] of [[1, 1], [2.76, 0.18], [5.4, 0.05]] as const) {
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freqHz * ratio, time);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(gain * part, time + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0008, time + decaySec / ratio ** 0.5);
+    osc.connect(g);
+    g.connect(destination);
+    osc.start(time);
+    osc.stop(time + decaySec + 0.05);
+  }
+}
+
+// What plays when the rest is over: "chime" (three soft bells going up, D-F#-A),
+// "bell" (one deep round tone) or "beep" (the old short beeps).
+export function playRestSound(kind: 'chime' | 'bell' | 'beep' = 'chime', volume = 0.55) {
+  if (kind === 'beep') return playTimerAlarm(volume);
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  ensureRunning(ctx);
+  const master = createMasterBus(ctx, volume, 0.18, 1.6, 2.2);
+  const now = ctx.currentTime;
+  if (kind === 'bell') {
+    playBell(ctx, master, now, 196, 0.7, 2.6);
+    return;
+  }
+  [587.33, 739.99, 880].forEach((f, i) => playBell(ctx, master, now + i * 0.16, f, i === 2 ? 0.55 : 0.45, i === 2 ? 1.8 : 1.1));
+}

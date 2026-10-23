@@ -1,3 +1,4 @@
+import { playRestSound } from '../../../utils/sound';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -54,6 +55,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection title="In de sportschool">
         <SummaryRow id="forge-rust" title="Rusttimer vanzelf" facts={facts} onChange={(on) => save({ restAuto: on })} />
         <SummaryRow id="forge-signaal" title="Signaal als de rust om is" facts={facts} onClick={() => setSheet('forge-signaal')} />
+        <SummaryRow id="forge-geluid" title="Geluid na de rust" facts={facts} onClick={() => setSheet('forge-geluid')} />
         <SummaryRow id="forge-scherm" title="Scherm aan tijdens je training" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
         <SummaryRow id="forge-doorgeven" title="Gewicht doorgeven aan volgende sets" facts={facts} info="forgeDoorgeven" onChange={(on) => save({ carryWeights: on })} />
         <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
@@ -75,6 +77,9 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={close} />}
       {sheet === 'forge-opwarmen' && <ChoiceFromDef def={CHOICES.opwarmen} value={s.warmup} onPick={(v) => save({ warmup: v })} onClose={close} />}
       {sheet === 'forge-schatting' && <ChoiceFromDef def={CHOICES.schatting} value={s.estimateUpTo as 12 | 15 | 20} onPick={(v) => save({ estimateUpTo: v })} onClose={close} />}
+      {sheet === 'forge-geluid' && (
+        <ChoiceFromDef def={CHOICES.rustgeluid} value={s.restSound} onPick={(v) => { playRestSound(v); save({ restSound: v }); }} onClose={close} />
+      )}
       {sheet === 'forge-signaal' && <ChoiceFromDef def={CHOICES.restsignaal} value={s.restAlert} onPick={(v) => save({ restAlert: v })} onClose={close} />}
       {sheet === 'forge-programma' && <ProgramSheet onClose={close} />}
       {sheet === 'stangen' && <BarsSheet onClose={close} />}

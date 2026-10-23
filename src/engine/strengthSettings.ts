@@ -17,6 +17,8 @@ export type WorkSetsMode = 'descending' | 'equal';
 export type WarmupMode = 'smart' | 'scheme' | 'off';
 // What happens when the rest timer of the workout screen runs out.
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
+// The sound at the end of the rest: three soft bells, one deep bell, or the old beep.
+export type RestSound = 'chime' | 'bell' | 'beep';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -57,6 +59,7 @@ export interface StrengthSettings {
   // starts by itself after a working set and after the last warm-up set.
   restAuto?: boolean;
   restAlert?: RestAlert;
+  restSound?: RestSound;
   // Keep the screen on while the workout screen is open.
   keepScreenOn?: boolean;
   // A weight you change on one set goes on to the next sets you did not touch.
@@ -82,6 +85,7 @@ export interface ResolvedStrengthSettings {
   profile: GymProfile;
   restAuto: boolean;
   restAlert: RestAlert;
+  restSound: RestSound;
   keepScreenOn: boolean;
   carryWeights: boolean;
   showPlates: boolean;
@@ -149,6 +153,7 @@ const PROGRESSIONS: ProgressionFirst[] = ['weight_first', 'reps_first'];
 const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
 export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
+export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep'];
 export const REST_LIMITS = { min: 15, max: 600 };
 export const EXERCISE_NOTE_MAX = 200;
 const MAX_PER_EXERCISE_ENTRIES = 300;
@@ -202,6 +207,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
+  const sound = REST_SOUNDS.find((a) => a === raw.restSound);
+  if (sound) out.restSound = sound;
   const rest = perExercise(raw.restSeconds, restValue);
   if (rest) out.restSeconds = rest;
   const notes = perExercise(raw.exerciseNotes, noteValue);
@@ -224,6 +231,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     profile,
     restAuto: s.restAuto ?? true,
     restAlert: s.restAlert ?? 'sound_vibrate',
+    restSound: s.restSound ?? 'chime',
     keepScreenOn: s.keepScreenOn ?? true,
     carryWeights: s.carryWeights ?? true,
     showPlates: s.showPlates ?? true,
