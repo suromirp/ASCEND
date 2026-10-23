@@ -8,6 +8,7 @@ import { PhaseEditor } from './PhaseEditor';
 import { PHASE_COLOR } from '../data/phaseColors';
 import type { TrainingGoal } from '../models/goals';
 import { Icon } from './icons';
+import { useHorizonChange } from './useHorizonChange';
 
 // Doelen: the whole season on one card (production feedback: "het moet
 // voelen dat je naar een groter doel toewerkt en ondertussen kleinere
@@ -15,9 +16,14 @@ import { Icon } from './icons';
 // tussendoel as a flag on it with its tempo block shaded, what each goal
 // does to the plan in one line, and the phases adjustable right here.
 export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) => void }) {
-  const { program, trainingGoals, goalMilestones, setGoalPlanRole } = useAppData();
+  const { program, trainingGoals, goalMilestones, planGoalRole } = useAppData();
   const [editPhases, setEditPhases] = useState(false);
+  // Tussendoel or Alleen volgen changes the planning: first the proposal,
+  // stored only with Akkoord (components/useHorizonChange.tsx).
+  const horizon = useHorizonChange();
   if (!program) return null;
+  const pickRole = (goal: TrainingGoal, role: 'secondary' | 'track') =>
+    void horizon.propose(() => planGoalRole(goal.id, role), { eyebrow: 'Rol in je plan', ask: 'always', declined: 'Je doel en je planning blijven zoals ze waren.' });
   const today = todayISO();
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
   const main = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id));
@@ -99,7 +105,8 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                         key={value}
                         role="radio"
                         aria-checked={role === value}
-                        onClick={() => void setGoalPlanRole(g.id, value)}
+                        onClick={() => { if (role !== value) pickRole(g, value); }}
+                        disabled={horizon.busy}
                         className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
                         style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
                       >
@@ -125,6 +132,8 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
         {editPhases ? 'Fases sluiten' : 'Fases aanpassen'}
       </button>
       {editPhases && <PhaseEditor goalDate={main?.targetDate} />}
+      {horizon.note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
+      {horizon.sheet}
     </Card>
   );
 }

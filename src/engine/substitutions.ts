@@ -92,6 +92,36 @@ export function setAmbition(ambition: Ambition): void {
   currentAmbition = ambition;
 }
 
+// The duration registers as they would be with a change that is not stored
+// yet (the preview of a proposal, storage/horizonPlan.ts). Never set on the
+// module for longer than one synchronous call: `withDurationScope` swaps them
+// in, runs `fn`, and puts them back before anything else can run. So no other
+// reader (Vandaag, Week, the watch sync, loadState) ever sees a value you did
+// not accept (Warden Planning punt 3).
+export interface DurationScope {
+  ambition?: Ambition;
+  durationAdjustments?: DurationAdjustment[];
+  learnedDurations?: Record<string, number>;
+}
+
+export function withDurationScope<T>(scope: DurationScope | undefined, fn: () => T): T {
+  if (!scope) return fn();
+  const saved = { ambition: currentAmbition, adjustments: durationAdjustments, learned: learnedDurations };
+  if (scope.ambition !== undefined) currentAmbition = scope.ambition;
+  if (scope.durationAdjustments !== undefined) durationAdjustments = scope.durationAdjustments;
+  if (scope.learnedDurations !== undefined) learnedDurations = scope.learnedDurations;
+  try {
+    const out = fn();
+    // An async callback would read the registers after they are put back.
+    if (out && typeof (out as { then?: unknown }).then === 'function') throw new Error('withDurationScope: alleen een synchrone functie');
+    return out;
+  } finally {
+    currentAmbition = saved.ambition;
+    durationAdjustments = saved.adjustments;
+    learnedDurations = saved.learned;
+  }
+}
+
 // Sessions with a fixed length of their own (PlannedSession.plannedMinutes),
 // by template and date. Set from the planned sessions on every refresh,
 // like the registries above, so every screen shows the same minutes.

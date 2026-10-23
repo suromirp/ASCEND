@@ -44,6 +44,7 @@ import { TENT_PACK_KG } from '../engine/gr5Profile';
 import { GoalCapacityStep } from './GoalCapacityStep';
 import { goalDateProblem } from '../engine/goalDate';
 import { useSheetClose } from '../utils/useSheetClose';
+import { settleActivation } from '../engine/goalActivationOutcome';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -86,7 +87,8 @@ type Step =
   | { kind: 'baseline'; draft: TrainingGoal }
   | { kind: 'preview'; draft: TrainingGoal }
   | { kind: 'applying' }
-  | { kind: 'done' }
+  | { kind: 'done'; message?: string }
+  | { kind: 'pending'; message: string }
   | { kind: 'error'; message: string };
 
 type Preset = 'trek' | 'race' | 'custom';
@@ -139,22 +141,18 @@ export function GoalSetupWizard({
   // the goal and its planning together.
   const [reviewNote, setReviewNote] = useState<string | null>(null);
   const [review, setReview] = useState<{ plan: GoalActivationPlan; horizon: HorizonPlan; draft: TrainingGoal } | null>(null);
+  // Every outcome is a step you can close, also an error or a planning that
+  // does not answer in time (engine/goalActivationOutcome.ts, Warden Planning punt 1).
   async function handleConfirm(plan: GoalActivationPlan, horizon?: HorizonPlan) {
     const draft = plan.goalDraft;
     setStep({ kind: 'applying' });
-    const result = await activateGoal(plan, horizon);
-    if (result.reason === 'review' && result.horizon) {
-      setReview({ plan, horizon: result.horizon, draft });
+    const outcome = await settleActivation(() => activateGoal(plan, horizon));
+    if (outcome.kind === 'review') {
+      setReview({ plan, horizon: outcome.horizon, draft });
       setStep({ kind: 'preview', draft });
       return;
     }
-    if (!result.applied) {
-      setStep({ kind: 'error', message: result.reason === 'failed'
-        ? 'Het lukte niet om je planning nu bij te werken. Er is niets veranderd; probeer het zo nog eens.'
-        : 'Er is intussen iets veranderd (een nieuwe training of je planning). Open dit doel opnieuw om verder te gaan met de actuele situatie.' });
-      return;
-    }
-    setStep({ kind: 'done' });
+    setStep(outcome);
   }
 
   function goToNextAfterInterpret(draft: TrainingGoal) {
@@ -238,6 +236,14 @@ export function GoalSetupWizard({
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
                 <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Doel geactiveerd.</p>
+                {step.message && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{step.message}</p>}
+                <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
+              </div>
+            )}
+
+            {step.kind === 'pending' && (
+              <div className="mt-4 flex flex-col gap-4">
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{step.message}</p>
                 <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
               </div>
             )}

@@ -29,7 +29,7 @@ import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatt
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
-import { resolveVariantDuration } from '../engine/substitutions';
+import { resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
 import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
 import { strayTrekRows } from '../engine/leaveStrays';
 import { relayoutForRestDay } from '../engine/restDayProposal';
@@ -1120,6 +1120,10 @@ export interface HorizonOverrides {
   // A proposal shows it: a test or race the system planned on or after the
   // new goal day may go too. Without it (the sync on its own) it stays.
   releaseAnchors?: boolean;
+  // The duration registers as they would be with these settings (another
+  // ambition): only for the one synchronous planning pass, never on the
+  // module (engine/substitutions.ts#withDurationScope).
+  registers?: DurationScope;
 }
 
 export interface HorizonRun {
@@ -1205,7 +1209,9 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   // Who may touch it (weekValidator.ts#lockLevel): yours never, a test or race
   // only when a proposal shows it.
   const mayGo = (s: PlannedSession) => { const level = lockLevel(s, logged, today); return level === 3 || (level === 2 && !!overrides.releaseAnchors); };
-  const toRemove = ctx.anchor ? sessions.filter((s) => open(s) && s.scheduledDate >= ctx.anchor! && (s.status === 'skipped' || mayGo(s))) : [];
+  // A row you skipped yourself is yours too (lockLevel 1): it stays, like
+  // everything else you set (Warden Planning punt 10).
+  const toRemove = ctx.anchor ? sessions.filter((s) => open(s) && s.scheduledDate >= ctx.anchor! && (s.status === 'skipped' ? lockLevel(s, logged, today) !== 1 : mayGo(s))) : [];
   const removedIds = new Set(toRemove.map((s) => s.id));
 
   const swapped: PlannedSession[] = [];
@@ -1263,14 +1269,14 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   ];
   const engineConfig = await GoalEngineConfigRepo.get();
   const restDay = settings.restDay ?? 1;
-  const pass = planPass(asWillBe, {
+  const pass = withDurationScope(overrides.registers, () => planPass(asWillBe, {
     today, logs, templates, program: next, blocks, restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
-  });
+  }));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
   // Write only what differs from what is stored.
@@ -1299,6 +1305,9 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     ownLines.push(`${byTemplate.get(s.templateId) ?? 'Training'} op ${dayNL(s.scheduledDate)} vervalt (na de dag van je hoofddoel plant ASCEND niets meer)`);
     ownIds.push(s.id);
   }
+  // A skipped row of the system that goes is not news on its own, but undo of
+  // the notice puts it back with the rest.
+  for (const s of toRemove) if (removedNow.has(s.id) && s.status === 'skipped' && stored.has(s.id)) ownIds.push(s.id);
   const repairedIds = [...new Set([...ownIds, ...shown.map((r) => r.sessionId)])].filter((id) => !addedIds.includes(id));
   const beforeCheck = new Map(pass.beforeCheck.map((s) => [s.id, s]));
   const lines = [...ownLines, ...shown.map((r) => describeRepair(r, nameOf(r.sessionId)))];

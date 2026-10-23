@@ -46,7 +46,6 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
     expect(plan.proposal.consequences).toContain('vervallen');
     expect(JSON.stringify(await PlannedSessionsRepo.getAll())).toBe(before);
     expect((await TrainingGoalsRepo.getAll()).find((x) => x.id === g.id)?.targetDate).toBe('2027-08-01');
-    expect(plan.restore.goals[0].targetDate).toBe('2027-08-01');
 
     // The preview shows the same as the run after Akkoord.
     const templates = await SessionTemplatesRepo.getAll();
@@ -60,7 +59,10 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
     // A second run finds nothing left to do.
     const again = await syncProgramHorizon();
     expect([again.added, again.swapped, again.removed]).toEqual([0, 0, 0]);
-    if (result.status !== 'stale') expect(result.before.length).toBeGreaterThan(20);
+    if (!('before' in result)) throw new Error('niet toegepast');
+    expect(result.before.length).toBeGreaterThan(20);
+    // What undo puts back, read just before Akkoord wrote it.
+    expect(result.restore.goals[0].targetDate).toBe('2027-08-01');
   });
 
   it('De lange zondag op Duurloop: bergtochten worden lange duurlopen, behalve de vastgezette, en pas na Akkoord', async () => {
@@ -72,8 +74,8 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
     expect(plan.counts.changed).toBeGreaterThanOrEqual(hikes.length - 1);
     expect(plan.proposal.changes.some((i) => i.plannedSessionId === hikes[0].id)).toBe(false);
     expect((await SettingsRepo.get()).longSundaySession).toBeUndefined();
-    expect(plan.restore.settings).toEqual({ longSundaySession: undefined });
-    await applyHorizonPlanNow(plan);
+    const result = await applyHorizonPlanNow(plan);
+    expect('restore' in result && result.restore.settings).toEqual({ longSundaySession: undefined });
     expect((await SettingsRepo.get()).longSundaySession).toBe('run');
     const all = await PlannedSessionsRepo.getAll();
     expect(all.find((s) => s.id === hikes[0].id)?.templateId).toBe('tpl_mountain_hike');

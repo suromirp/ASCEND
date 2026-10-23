@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
-import type { HorizonPlan } from '../storage/horizonPlan';
+import type { HorizonApplyStatus, HorizonPlan } from '../storage/horizonPlan';
 import { askBeforeApplying, needsConfirmation } from '../engine/changeImpact';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 
@@ -17,9 +17,15 @@ import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 // Verandert er niets, dan wordt de keuze bewaard en zegt het dat.
 
 export const STALE_NOTE = 'Je planning veranderde net nog. Er is niets aangepast; kies het opnieuw om het voorstel met de planning van nu te zien.';
+// Only said when everything is back as it was (storage/horizonPlan.ts puts it back first).
 const FAILED_NOTE = 'Het lukte niet om je planning nu bij te werken. Er is niets aangepast; probeer het zo nog eens.';
+const PENDING_NOTE = 'Je planning wordt nog bijgewerkt. Zodra het klaar is, zie je onderin wat er veranderde, met ongedaan maken.';
+const PARTIAL_NOTE = 'Dit lukte maar half. Onderin zie je wat er wel veranderde; met ongedaan maken zet je het terug.';
 const APPLIED_NOTE = 'Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.';
 const UNCHANGED_NOTE = 'Opgeslagen. Je planning hoefde niet te veranderen.';
+const NOTE_FOR: Record<HorizonApplyStatus, string> = {
+  applied: APPLIED_NOTE, unchanged: UNCHANGED_NOTE, stale: STALE_NOTE, failed: FAILED_NOTE, pending: PENDING_NOTE, partial: PARTIAL_NOTE,
+};
 
 export interface HorizonProposeOptions {
   eyebrow: string;
@@ -43,9 +49,9 @@ export function useHorizonChange(): {
   const [pending, setPending] = useState<{ plan: HorizonPlan; options: HorizonProposeOptions } | null>(null);
 
   async function apply(plan: HorizonPlan, options: HorizonProposeOptions) {
-    const status = await applyHorizonPlan(plan);
-    if (status === 'applied' || status === 'unchanged') options.onStored?.();
-    setNote(status === 'applied' ? APPLIED_NOTE : status === 'unchanged' ? UNCHANGED_NOTE : status === 'stale' ? STALE_NOTE : FAILED_NOTE);
+    const status = await applyHorizonPlan(plan).catch((): HorizonApplyStatus => 'failed');
+    if (status === 'applied' || status === 'unchanged' || status === 'partial') options.onStored?.();
+    setNote(NOTE_FOR[status]);
   }
 
   async function propose(make: () => Promise<HorizonPlan | null>, options: HorizonProposeOptions) {

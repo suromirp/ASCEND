@@ -53,4 +53,18 @@ describe('een wachtrij die zijn aanroeper nooit voor altijd laat wachten', () =>
     expect(await q.run(() => Promise.reject(new Error('kapot')))).toBeUndefined();
     expect(await q.run(async () => 3)).toBe(3);
   });
+
+  // Warden Planning punt 2: bij een timeout terwijl de taak doorloopt een
+  // eerlijke "nog bezig", en de normale uitkomst zodra hij klaar is.
+  it('runOrLate: zegt klaar, mislukt of nog bezig, en geeft een late uitkomst alsnog door', async () => {
+    const q = createSerialQueue({ timeoutMs: 30, name: 'planning', onProblem: () => undefined });
+    expect(await q.runOrLate(async () => 1, () => undefined)).toEqual({ status: 'done', value: 1 });
+    expect(await q.runOrLate(() => Promise.reject(new Error('kapot')), () => undefined)).toEqual({ status: 'failed' });
+    const late: number[] = [];
+    const outcome = await q.runOrLate(() => new Promise<number>((r) => setTimeout(() => r(7), 80)), (v) => late.push(v));
+    expect(outcome).toEqual({ status: 'late' });
+    expect(late).toEqual([]);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(late).toEqual([7]);
+  });
 });

@@ -3,7 +3,7 @@ import { Icon } from '../components/icons';
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 import type { AppSettings } from '../storage/database';
-import { useAppData } from '../state/AppDataContext';
+import { useAppData, type MarathonGoalPatch } from '../state/AppDataContext';
 import { computeGr5Readiness } from '../engine/gr5Readiness';
 import { computeGoalProgress } from '../engine/progression';
 import { findRequirement } from '../engine/goals';
@@ -285,7 +285,7 @@ export function AscendPage() {
 // the strength block, how goals weigh against each other). Reached from
 // the Ascend overview.
 export function GoalsPage() {
-  const { trainingGoals, goalMilestones, sessionLogs, updateGoal, planGoalChange, unarchiveGoal, updateMarathonGoal, settings } = useAppData();
+  const { trainingGoals, goalMilestones, sessionLogs, updateGoal, planGoalChange, unarchiveGoal, planMarathonGoal, settings } = useAppData();
   const [creatingGoal, setCreatingGoal] = useState<TrainingGoal | null>(null);
   // Another date or archiving changes the planning: first the proposal, stored
   // only with Akkoord (components/useHorizonChange.tsx). Archiving asks first.
@@ -299,6 +299,10 @@ export function GoalsPage() {
     void horizon.propose(() => planGoalChange(g.id, { archive: true }), { eyebrow: 'Doel archiveren', ask: 'always', declined: keep });
   };
   const askArchive = (goalId: string) => setArchiving(trainingGoals.find((g) => g.id === goalId) ?? null);
+  // The Marathon card: another date, type or time is a proposal too; when the
+  // planning does not change, it is simply stored.
+  const changeMarathon = (patch: MarathonGoalPatch) =>
+    void horizon.propose(() => planMarathonGoal(patch), { eyebrow: 'Marathondoel', ask: 'always', declined: keep });
   const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
   const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
   const customGoals = trainingGoals.filter((g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id));
@@ -316,7 +320,7 @@ export function GoalsPage() {
 
       {goal && <GR5GoalCard key={goal.targetDate ?? 'geen-datum'} goal={goal} busy={horizon.busy} onUpdate={(patch) => updateGoal(goal.id, patch)} onDate={(date) => void changeDate(goal.id, date)} onArchive={() => askArchive(goal.id)} />}
 
-      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} onUpdate={updateMarathonGoal} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
+      <MarathonGoalCard key={`${marathonGoal?.targetDate ?? settings.marathonTargetDate ?? ''}|${settings.marathonTargetTimeMinutes ?? ''}`} settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} busy={horizon.busy} onUpdate={changeMarathon} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
 
       <CustomGoalsList goals={customGoals} onArchive={askArchive} />
 
@@ -492,7 +496,6 @@ function GR5GoalCard({
 
 const RACE_DISTANCE_KM: Record<'half' | 'full', number> = { half: 21.1, full: 42.2 };
 
-type MarathonGoalPatch = Partial<Pick<AppSettings, 'marathonRaceType' | 'marathonTargetDate' | 'marathonTargetTimeMinutes'>>;
 
 // Standalone goal, not a second GoalAchievementTrack/GoalMilestone ladder —
 // the Ascent Ladder only ever renders the one goal that actually has
@@ -505,12 +508,15 @@ function MarathonGoalCard({
   settings,
   sessionLogs,
   marathonGoal,
+  busy,
   onUpdate,
   onArchive,
 }: {
   settings: AppSettings;
   sessionLogs: SessionLog[];
   marathonGoal: TrainingGoal | undefined;
+  busy: boolean;
+  // Every change is a proposal first (GoalsPage#changeMarathon), never stored while you type.
   onUpdate: (patch: MarathonGoalPatch) => void;
   onArchive?: () => void;
 }) {
@@ -552,20 +558,20 @@ function MarathonGoalCard({
   }, [sessionLogs]);
 
   const totalMinutes = settings.marathonTargetTimeMinutes;
-  const hours = totalMinutes !== undefined ? Math.floor(totalMinutes / 60) : undefined;
-  const minutes = totalMinutes !== undefined ? totalMinutes % 60 : undefined;
-
-  function updateHours(value: string) {
-    const h = value === '' ? 0 : Number(value);
-    const m = minutes ?? 0;
-    onUpdate({ marathonTargetTimeMinutes: value === '' && m === 0 ? undefined : h * 60 + m });
-  }
-
-  function updateMinutes(value: string) {
-    const h = hours ?? 0;
-    const m = value === '' ? 0 : Number(value);
-    onUpdate({ marathonTargetTimeMinutes: h === 0 && value === '' ? undefined : h * 60 + m });
-  }
+  // The date and time as you type them: stored only with Opslaan, and then
+  // the proposal (Warden Planning punt 6).
+  const today = todayISO();
+  const [dateDraft, setDateDraft] = useState(targetDate ?? '');
+  const dateProblem = goalDateProblem(dateDraft || undefined, today, targetDate);
+  const dateChanged = dateDraft !== (targetDate ?? '');
+  const [hoursDraft, setHoursDraft] = useState(totalMinutes !== undefined ? String(Math.floor(totalMinutes / 60)) : '');
+  const [minutesDraft, setMinutesDraft] = useState(totalMinutes !== undefined ? String(totalMinutes % 60) : '');
+  const typedMinutes = hoursDraft === '' && minutesDraft === '' ? undefined : (Number(hoursDraft) || 0) * 60 + (Number(minutesDraft) || 0);
+  const timeChanged = typedMinutes !== totalMinutes;
+  const resetTime = () => {
+    setHoursDraft(totalMinutes !== undefined ? String(Math.floor(totalMinutes / 60)) : '');
+    setMinutesDraft(totalMinutes !== undefined ? String(totalMinutes % 60) : '');
+  };
 
   return (
     <Card className="flex flex-col gap-3">
@@ -574,7 +580,8 @@ function MarathonGoalCard({
         {(['half', 'full'] as const).map((type) => (
           <button
             key={type}
-            onClick={() => onUpdate({ marathonRaceType: type })}
+            onClick={() => { if (raceType !== type) onUpdate({ marathonRaceType: type }); }}
+            disabled={busy}
             className="min-h-[44px] flex-1 rounded-xl border py-2 text-xs font-medium transition-all active:scale-[0.97]"
             style={{
               borderColor: raceType === type ? 'var(--color-gold)' : 'var(--color-card-border)',
@@ -611,14 +618,23 @@ function MarathonGoalCard({
             <>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wedstrijddatum</label>
+                  <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }} htmlFor="marathon-date">Wedstrijddatum</label>
                   <input
+                    id="marathon-date"
                     type="date"
-                    value={targetDate ?? ''}
-                    onChange={(e) => onUpdate({ marathonTargetDate: e.target.value || undefined })}
-                    className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                    value={dateDraft}
+                    min={today}
+                    onChange={(e) => setDateDraft(e.target.value)}
+                    className="mt-1 min-h-[44px] w-full rounded-lg border px-2 py-1.5 text-sm"
                     style={dateInputStyle}
                   />
+                  {dateChanged && dateProblem && <p className="mt-1 text-xs" style={{ color: 'var(--color-warning)' }} role="alert">{dateProblem}</p>}
+                  {dateChanged && !dateProblem && (
+                    <div className="mt-2 flex flex-col gap-2">
+                      <SecondaryButton onClick={() => onUpdate({ marathonTargetDate: dateDraft || undefined })} disabled={busy}>{busy ? 'Even rekenen…' : 'Datum opslaan'}</SecondaryButton>
+                      <button onClick={() => setDateDraft(targetDate ?? '')} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Annuleren</button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -627,9 +643,9 @@ function MarathonGoalCard({
                   <input
                     type="number"
                     min={0}
-                    value={hours ?? ''}
-                    onChange={(e) => updateHours(e.target.value)}
-                    className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                    value={hoursDraft}
+                    onChange={(e) => setHoursDraft(e.target.value)}
+                    className="mt-1 min-h-[44px] w-full rounded-lg border px-2 py-1.5 text-sm"
                     style={dateInputStyle}
                   />
                 </div>
@@ -639,13 +655,19 @@ function MarathonGoalCard({
                     type="number"
                     min={0}
                     max={59}
-                    value={minutes ?? ''}
-                    onChange={(e) => updateMinutes(e.target.value)}
-                    className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm"
+                    value={minutesDraft}
+                    onChange={(e) => setMinutesDraft(e.target.value)}
+                    className="mt-1 min-h-[44px] w-full rounded-lg border px-2 py-1.5 text-sm"
                     style={dateInputStyle}
                   />
                 </div>
               </div>
+              {timeChanged && (
+                <div className="flex flex-col gap-2">
+                  <SecondaryButton onClick={() => onUpdate({ marathonTargetTimeMinutes: typedMinutes })} disabled={busy}>{busy ? 'Even rekenen…' : 'Doeltijd opslaan'}</SecondaryButton>
+                  <button onClick={resetTime} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Annuleren</button>
+                </div>
+              )}
             </>
           )}
           {longestRunKm > 0 && (
@@ -697,7 +719,9 @@ function CustomGoalsList({ goals, onArchive }: { goals: TrainingGoal[]; onArchiv
 // A race before the main goal: tussendoel (its own 8-week block in the
 // plan, engine/raceBlock.ts) or only followed. Other goals are followed.
 function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
-  const { setGoalPlanRole, trainingGoals, goalMilestones, sessionLogs } = useAppData();
+  const { planGoalRole, trainingGoals, goalMilestones, sessionLogs } = useAppData();
+  // Tussendoel or Alleen volgen changes the planning: first the proposal.
+  const horizon = useHorizonChange();
   if (!isRaceGoal(goal)) return null;
   const raceKm = goal.requirements.find((r) => r.kind === 'distance' && r.target?.unit === 'km')?.target?.amount;
   const targetMin = goal.requirements.find((r) => r.kind === 'targetTime' && r.target?.unit === 'min')?.target?.amount;
@@ -714,7 +738,8 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
             key={value}
             role="radio"
             aria-checked={role === value}
-            onClick={() => void setGoalPlanRole(goal.id, value)}
+            onClick={() => { if (role !== value) void horizon.propose(() => planGoalRole(goal.id, value), { eyebrow: 'Rol in je plan', ask: 'always', declined: 'Je doel en je planning blijven zoals ze waren.' }); }}
+            disabled={horizon.busy}
             className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
             style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
           >
@@ -738,6 +763,8 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
               : ` ${Math.round(prediction.change * 100)}% langzamer dan je vorige test.`)}
         </p>
       )}
+      {horizon.note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
+      {horizon.sheet}
     </div>
   );
 }

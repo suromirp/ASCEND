@@ -71,4 +71,23 @@ describe('de planningssync en het voorbeeld vooraf', () => {
     expect(JSON.stringify(await PlannedSessionsRepo.getAll())).toBe(before);
     expect(JSON.stringify(await SettingsRepo.get())).toBe(settingsBefore);
   });
+
+  // Warden Planning punt 10: een overgeslagen rij na de doeldag ging stil weg,
+  // buiten de melding om. Wat je zelf oversloeg blijft; een overgeslagen rij van
+  // het systeem gaat, maar ongedaan maken zet hem terug.
+  it('laat een rij die je zelf oversloeg staan, en zet een overgeslagen rij van het systeem in de melding voor ongedaan maken', async () => {
+    const goal = await withGoal('2027-08-01');
+    await syncProgramHorizon();
+    const late = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate > '2027-03-01' && s.status !== 'skipped');
+    const mine = { ...late[0], status: 'skipped' as const, lock };
+    const systems = { ...late[1], status: 'skipped' as const };
+    await PlannedSessionsRepo.put(mine);
+    await PlannedSessionsRepo.put(systems);
+    await TrainingGoalsRepo.put({ ...goal, targetDate: '2027-01-15' });
+    const result = await syncProgramHorizon();
+    const after = await PlannedSessionsRepo.getAll();
+    expect(after.find((s) => s.id === mine.id)).toEqual(mine);
+    expect(after.find((s) => s.id === systems.id)).toBeUndefined();
+    expect(result.repairs?.stored.find((s) => s.id === systems.id)).toEqual(systems);
+  });
 });
