@@ -76,11 +76,11 @@ export function MonthCalendar({
               onClick={() => onSelectDate(date)}
               className="flex flex-col items-center gap-1 rounded-lg py-2"
               style={{
-                background: isToday ? 'rgba(198,161,91,0.12)' : 'var(--color-surface)',
-                border: isToday ? '1px solid var(--color-gold)' : '1px solid transparent',
+                background: isToday ? 'color-mix(in srgb, var(--color-status) 14%, var(--color-surface))' : 'var(--color-surface)',
+                border: isToday ? '1px solid var(--color-status)' : '1px solid transparent',
               }}
             >
-              <span className="text-xs" style={{ color: isToday ? 'var(--color-gold)' : 'var(--color-ink)' }}>
+              <span className="text-xs" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink)' }}>
                 {parseISODate(date).getDate()}
               </span>
               <div className="flex h-1.5 items-center gap-0.5">

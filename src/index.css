@@ -1,56 +1,133 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-bg: #0d0d0f;
-  --color-charcoal: #121216;
-  --color-surface: #17171b;
-  --color-card: #1d1d22;
-  --color-card-border: #29292f;
-  --color-ink: #f2eee6;
-  --color-ink-dim: #96928b;
-  --color-bronze: #b08d57;
-  --color-gold: #c6a15b;
-  --color-bronze-dark: #6f5635;
-  --color-alpine: #3a5644;
-  --color-stone: #8a8478;
-  --color-sky: #7c93a0;
-  --color-snow: #efebe3;
-  --color-success: #5c7a63;
-  --color-warning: #b8863b;
-  --color-danger: #8c3f3f;
-  /* Text tints of the status colours: the base tones are for fills and
-     borders, too dark to read as small text on a card (WCAG AA 4.5:1). */
-  --color-danger-text: #c87272;
-  --color-success-text: #7d9a83;
-  /* Borders of inputs, toggles and secondary buttons: card-border is for
-     cards and barely visible around a control (3:1 for UI parts). */
-  --color-control-border: #6e6a62;
-  /* Text and knob on a gold button or switch: the dark of the page, kept as
-     its own token so a component never carries a loose hex. */
-  --color-on-gold: #15130d;
-  /* Charts on Je stand: one colour per sport, always in this order (run,
-     strength, walk, other). Validated on the card colour for colour
-     blindness and contrast; never used for status or text. */
-  --color-chart-run: #b38236;
-  --color-chart-strength: #4494c8;
-  --color-chart-walk: #5f9e61;
-  --color-chart-other: #b273ac;
+  /* Zee en berg (docs/beslissingen/2026-10-24-thema-zee-en-berg.md): marine als
+     basis, mint als de ene actie, ijs voor status, een lichte lucht met groene
+     bergen bovenaan elke tab. Contrast nagerekend op de kaart en op de lucht
+     (WCAG AA). */
+
+  /* Vlakken, van diep naar hoog. */
+  --color-bg: #0b1733;
+  --color-charcoal: #0e1c3c;
+  --color-surface: #112245;
+  --color-card: #172b54;
+  --color-raised: #1d3664;
+  --color-card-border: #27416f;
+  /* Randen van knoppen, velden en schakelaars (3:1 op de kaart). */
+  --color-control-border: #6a86b8;
+
+  /* Tekst op marine. */
+  --color-ink: #f1f6ff;
+  --color-ink-dim: #abbbdb;
+
+  /* De ene actie: mint, met donkere tekst erop. `action-fill` is de vulling
+     van de hoofdknop en blijft ook op de lichte lucht mint; `action` is de
+     lijn- en tekstkleur en wordt op licht donkere mint. */
+  --color-action: #5eead4;
+  --color-action-fill: #5eead4;
+  --color-on-action: #04161a;
+  /* Mint gedempt: een schakelaar die aan staat, een gekozen chip, een rand. */
+  --color-action-muted: #1f5f63;
+  /* Status: waar je bent (vandaag in de week, de dag van vandaag). */
+  --color-status: #93ccff;
+  --color-on-status: #06152a;
+  /* Voortgang en gedaan: mint (ring, vinkjes, meters). */
+  --color-progress: #5eead4;
+  /* De lege baan van een ring of een balk. */
+  --color-track: #1d3260;
+
+  --color-success: #5eead4;
+  --color-success-text: #5eead4;
+  --color-warning: #dba660;
+  /* Danger is de vulling (een rode knop met lichte tekst), danger-text de tekst. */
+  --color-danger: #c23b4e;
+  --color-danger-text: #ff9696;
+
+  /* Inspanning, van rustig naar zwaar (Z1 tot Z5). Als vlak minstens 3:1 op de
+     kaart; er staat altijd Z1 tot Z5 bij, kleur is nooit het enige signaal. */
+  --color-effort-1: #cfe1ff;
+  --color-effort-2: #5fd6a6;
+  --color-effort-3: #f2d86a;
+  --color-effort-4: #e0753a;
+  --color-effort-5: #ee5577;
+
+  /* De lichte lucht bovenaan een tab (SkyBand) en wat erop staat. Geen licht
+     thema: één vlak, de app blijft donker. */
+  --color-sky-top: #dcebf8;
+  --color-sky-bottom: #d9efe6;
+  --color-light-card: #f5fbf8;
+  --color-light-border: #b7d4cc;
+  --color-light-control: #5f7aa6;
+  --color-light-track: #bcd6d2;
+  --color-on-light: #13294f;
+  --color-on-light-dim: #33496e;
+  --color-action-on-light: #0a6e5c;
+  --color-status-on-light: #1b5aa6;
+  --color-warning-on-light: #8a5512;
+  --color-danger-on-light: #b3263c;
+  /* De twee bergrijen: achter saliegroen, voor donker groenblauw dat overloopt
+     in het marine. */
+  --color-mountain-back: #a7d1bd;
+  --color-mountain-front: #1d5a5c;
+
+  /* Elke tab een eigen kleur, voor de actieve tab en het kopje (Eyebrow). De
+     -light-variant is dezelfde kleur, donker genoeg voor de lichte lucht. */
+  --color-tab-vandaag: #5eead4;
+  --color-tab-vandaag-light: #08675a;
+  --color-tab-week: #93ccff;
+  --color-tab-week-light: #1b5aa6;
+  --color-tab-stand: #c4b5fd;
+  --color-tab-stand-light: #5a3fb0;
+  --color-tab-ascend: #f9b4c8;
+  --color-tab-ascend-light: #9c3560;
+  --color-tab-logboek: #bdf08f;
+  --color-tab-logboek-light: #2f6b12;
+  /* De kleur van de pagina waar je bent; App.tsx zet hem per tab (data-tab). */
+  --color-page: #5eead4;
+  --color-page-light: #08675a;
+
+  /* Oude namen, toegewezen aan het nieuwe palet zodat elke plek die ze leest
+     meeverandert. Nieuw werk gebruikt de namen hierboven. Goud en brons zijn
+     mint (elke "gouden" knop is nu een mint knop), on-gold is de donkere tekst
+     op mint, bronze-dark is mint gedempt (randen en een schakelaar die aan staat). */
+  --color-gold: #5eead4;
+  --color-bronze: #5eead4;
+  --color-bronze-dark: #1f5f63;
+  --color-on-gold: #04161a;
+  --color-alpine: #a7d1bd;
+  --color-stone: #94a6c8;
+  --color-sky: #93ccff;
+  --color-snow: #f1f6ff;
+
+  /* Sporten: een warme of paarse kleur die afsteekt tegen het blauw. Ook de
+     grafieken op Je stand (altijd in deze volgorde: lopen, kracht, wandelen,
+     overig). Nooit voor status. */
+  --color-sport-run: #ffb26b;
+  --color-sport-strength: #b4a6ff;
+  --color-sport-walk: #8fdb8a;
+  --color-sport-stretch: #f4a3c8;
+  --color-chart-run: #ffb26b;
+  --color-chart-strength: #b4a6ff;
+  --color-chart-walk: #8fdb8a;
+  --color-chart-other: #f4a3c8;
   /* De bolletjes met herhalingen in reserve (RIR) in het workoutscherm van
      Forge, de kleuren die de eigenaar kent: 0 en 1 rood, 2 oranje, 3 geel,
-     4 en meer steen. Gedempt naar het palet, met donkere tekst erop. */
-  --color-rir-hard: #c45a4f;
-  --color-rir-mid: #d08a3c;
-  --color-rir-easy: #d2b44e;
-  --color-rir-light: #8a8478;
-  /* The plates on the bar of the Forge input panel: one calm colour per weight. */
-  --color-plate-1: #8c8f93;
-  --color-plate-2: #7c93a0;
-  --color-plate-3: #6f9a79;
-  --color-plate-4: #b08d57;
-  --color-plate-5: #a9714f;
-  --color-plate-6: #6f7fa6;
-  --color-plate-7: #9a4f4a;
-  --color-plate-other: #8a8478;
+     4 en meer steen. Met donkere tekst erop. */
+  --color-rir-hard: #ee5577;
+  --color-rir-mid: #e0753a;
+  --color-rir-easy: #f2d86a;
+  --color-rir-light: #94a6c8;
+  /* De schijven op de stang in het invoerpaneel van Forge: één rustige kleur per gewicht. */
+  --color-plate-1: #8c97a8;
+  --color-plate-2: #7fa6c4;
+  --color-plate-3: #6fae8c;
+  --color-plate-4: #c9a86a;
+  --color-plate-5: #c07f5c;
+  --color-plate-6: #8190c8;
+  --color-plate-7: #c45a66;
+  --color-plate-other: #8396bb;
+  /* Schaduw onder een lichte kaart en onder een blad, en de waas achter een blad. */
+  --color-shadow: #020812;
   /* A spring that overshoots a little: for panels and sheets that come up. */
   --ease-spring: cubic-bezier(0.22, 1.12, 0.36, 1);
 
@@ -62,9 +139,10 @@ html {
   color-scheme: dark;
 }
 
-/* One visible focus ring everywhere, also on the gold button. */
+/* One visible focus ring everywhere, also on the mint button: ice, the colour
+   of "where you are" (dark blue on the light sky). */
 :focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--color-status);
   outline-offset: 2px;
 }
 
@@ -113,8 +191,8 @@ body {
 }
 
 ::selection {
-  background: var(--color-bronze);
-  color: var(--color-bg);
+  background: var(--color-status);
+  color: var(--color-on-status);
 }
 
 /* De tabel per oefening in het workoutscherm van Forge: set, voorschrift,
@@ -132,20 +210,20 @@ body {
     circle at 30% 20%,
     transparent 0,
     transparent 18px,
-    rgba(178, 141, 87, 0.05) 19px,
-    rgba(178, 141, 87, 0.05) 20px
+    color-mix(in srgb, var(--color-action) 4%, transparent) 19px,
+    color-mix(in srgb, var(--color-action) 4%, transparent) 20px
   );
 }
 
 /* De missiekaart op Vandaag is de enige kaart met hoogtelijnen en een zachte
-   gouden gloed in de hoek (docs/visie/Visuele upgrade en nieuwe ideeën.md,
+   mint gloed in de hoek (docs/visie/Visuele upgrade en nieuwe ideeën.md,
    Kaarten). Alleen een achtergrondafbeelding: de kleur van de kaart zet het
    onderdeel zelf, want een `background` in een style-attribuut zou deze
    afbeelding weer wissen. */
 .topo-mission {
   background-image:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--color-gold) 7%, transparent), transparent 60%),
-    repeating-radial-gradient(ellipse at 88% 8%, transparent 0 17px, color-mix(in srgb, var(--color-bronze) 7%, transparent) 18px 19px);
+    radial-gradient(120% 70% at 100% 0%, color-mix(in srgb, var(--color-action) 14%, transparent), transparent 62%),
+    repeating-radial-gradient(ellipse at 88% 8%, transparent 0 17px, color-mix(in srgb, var(--color-action) 4%, transparent) 18px 19px);
 }
 
 /* Je dag: een dunne lijn met een stip per regel (components/vandaag/DayRow.tsx). */
@@ -181,9 +259,9 @@ body {
   border: 1.5px solid var(--color-stone);
 }
 .day-row[data-state='now']::before {
-  background: var(--color-gold);
-  border-color: var(--color-gold);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-gold) 18%, transparent);
+  background: var(--color-status);
+  border-color: var(--color-status);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-status) 18%, transparent);
 }
 .day-row[data-state='skipped'] {
   opacity: 0.6;
@@ -195,6 +273,87 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+}
+
+/* De kleur van de tab waar je bent (App.tsx zet data-tab op de pagina). Het
+   kopje (Eyebrow) en de tabbalk lezen --color-page; op de lichte lucht wordt
+   dat vanzelf de donkere variant. Buiten de vijf tabs blijft het mint. */
+[data-tab='vandaag'] { --color-page: var(--color-tab-vandaag); --color-page-light: var(--color-tab-vandaag-light); }
+[data-tab='week'] { --color-page: var(--color-tab-week); --color-page-light: var(--color-tab-week-light); }
+[data-tab='stand'] { --color-page: var(--color-tab-stand); --color-page-light: var(--color-tab-stand-light); }
+[data-tab='ascend'] { --color-page: var(--color-tab-ascend); --color-page-light: var(--color-tab-ascend-light); }
+[data-tab='logboek'] { --color-page: var(--color-tab-logboek); --color-page-light: var(--color-tab-logboek-light); }
+
+/* Een licht vlak (de lucht van SkyBand, een LightCard): dezelfde tokens, maar
+   donker op licht. Alles wat erin staat leest gewoon --color-ink, --color-card
+   of --color-gold en wordt vanzelf leesbaar (AA). De vulling van de hoofdknop
+   (--color-action-fill) blijft mint. */
+.on-light {
+  --color-ink: var(--color-on-light);
+  --color-ink-dim: var(--color-on-light-dim);
+  --color-card: var(--color-light-card);
+  --color-surface: var(--color-light-card);
+  --color-raised: var(--color-light-card);
+  --color-charcoal: var(--color-light-card);
+  --color-card-border: var(--color-light-border);
+  --color-control-border: var(--color-light-control);
+  --color-track: var(--color-light-track);
+  --color-action: var(--color-action-on-light);
+  --color-action-muted: var(--color-light-border);
+  --color-progress: var(--color-action-on-light);
+  --color-gold: var(--color-action-on-light);
+  --color-bronze: var(--color-action-on-light);
+  --color-bronze-dark: var(--color-light-border);
+  --color-success: var(--color-action-on-light);
+  --color-success-text: var(--color-action-on-light);
+  --color-status: var(--color-status-on-light);
+  --color-on-status: var(--color-light-card);
+  --color-sky: var(--color-status-on-light);
+  --color-alpine: var(--color-action-on-light);
+  --color-stone: var(--color-on-light-dim);
+  --color-warning: var(--color-warning-on-light);
+  --color-danger-text: var(--color-danger-on-light);
+  --color-page: var(--color-page-light);
+  color: var(--color-on-light);
+}
+
+/* De lichte lucht bovenaan een tab (components/SkyBand.tsx). De bergrand onderin
+   is een SVG; de band zelf heeft geen animatie. */
+.sky-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 -16px;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 66px;
+  background: linear-gradient(180deg, var(--color-sky-top) 0%, var(--color-sky-bottom) 100%);
+}
+.sky-band[data-variant='low'] {
+  gap: 4px;
+  padding-bottom: 50px;
+}
+.sky-band > .sky-ridge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 64px;
+  display: block;
+  pointer-events: none;
+}
+.sky-band[data-variant='low'] > .sky-ridge {
+  height: 48px;
+}
+/* Een kaart op de lucht: bijna wit, zonder rand, met een zachte schaduw. */
+.sky-band .ui-card,
+.light-card {
+  border-color: transparent !important;
+  box-shadow: 0 8px 20px -14px color-mix(in srgb, var(--color-shadow) 70%, transparent);
+}
+.sky-band > :not(.sky-ridge) {
+  position: relative;
+  z-index: 1;
 }
 
 /* Splash/loading-screen brand mark (components/AscendAnimatedLogo.tsx):
@@ -579,7 +738,7 @@ button:not(:disabled):not([role='switch']):active {
   bottom: 8px;
   width: 2px;
   border-radius: 2px;
-  background: var(--color-bronze);
+  background: var(--color-action);
   opacity: 0;
   transition: opacity 0.25s ease;
 }

@@ -470,7 +470,7 @@ export function ForgeWorkout({
                 type="button"
                 onClick={() => setFinishing(true)}
                 className="mr-2 min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
-                style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}
+                style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-gold)' }}
               >
                 {readOnly ? 'Afvinken' : 'Afronden'}
               </button>

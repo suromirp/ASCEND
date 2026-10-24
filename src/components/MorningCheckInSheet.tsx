@@ -117,7 +117,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose }: 
         )}
         <div className="flex items-center justify-between gap-3">
           {painOnly ? <span /> : <NotFitLink />}
-          <button disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl px-5 text-sm font-semibold disabled:opacity-40" style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}>
+          <button disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl px-5 text-sm font-semibold disabled:opacity-40" style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-gold)' }}>
             Opslaan
           </button>
         </div>

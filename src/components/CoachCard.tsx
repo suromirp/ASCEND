@@ -203,7 +203,7 @@ function Pill({ children, onClick, disabled, primary = false }: { children: Reac
       disabled={disabled}
       className="min-h-[44px] whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
       style={primary
-        ? { background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-bg)' }
+        ? { background: 'var(--color-action-fill)', color: 'var(--color-bg)' }
         : { boxShadow: 'inset 0 0 0 1px var(--color-control-border)', color: 'var(--color-ink-dim)' }}
     >
       {children}

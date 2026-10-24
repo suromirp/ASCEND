@@ -41,7 +41,7 @@ export function ObjectiveCard({
           style={{
             borderColor: COLOR[status],
             color: COLOR[status],
-            background: status === 'completed' ? 'rgba(176,141,87,0.12)' : 'transparent',
+            background: status === 'completed' ? 'color-mix(in srgb, var(--color-progress) 12%, transparent)' : 'transparent',
           }}
         >
           {MARKER[status]}

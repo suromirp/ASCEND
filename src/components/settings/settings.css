@@ -8,7 +8,7 @@
   --row: 52px;
   --row2: 68px;
   --radius: 16px;
-  --chip-on: color-mix(in srgb, var(--color-bronze) 16%, transparent);
+  --chip-on: color-mix(in srgb, var(--color-action) 16%, transparent);
 }
 .st-page { padding: 0 var(--s4) var(--s6); }
 .st-page svg, .st-sheet-root svg { display: block; flex: none; }
@@ -30,7 +30,7 @@
 .st-cell .k { font-size: 12px; line-height: 16px; color: var(--color-ink-dim); }
 .st-cell .v { font-size: 17px; line-height: 24px; font-weight: 500; color: var(--color-ink); white-space: nowrap; }
 .st-cell .d { font-size: 12px; line-height: 16px; color: var(--color-ink-dim); white-space: nowrap; }
-.st-cell.attn .v, .st-cell.attn .d { color: var(--color-gold); }
+.st-cell.attn .v, .st-cell.attn .d { color: var(--color-warning); }
 .st-cell.attn .d { display: flex; align-items: center; gap: var(--s1); }
 .st-cell.dim .v { color: var(--color-ink-dim); }
 
@@ -76,7 +76,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-row.danger .t { color: var(--color-danger-text); }
 .st-row.off .t, .st-row.off .v { color: var(--color-ink-dim); }
 .st-row.flash { animation: st-flash 1.6s ease-out; }
-@keyframes st-flash { 0% { background: color-mix(in srgb, var(--color-bronze) 14%, transparent); } 100% { background: transparent; } }
+@keyframes st-flash { 0% { background: color-mix(in srgb, var(--color-action) 14%, transparent); } 100% { background: transparent; } }
 
 /* Zoekresultaat: de titel over de volle breedte, daaronder de groep links en de waarde rechts */
 .st-row.result .t { grid-column: 1 / 3; }
@@ -92,11 +92,11 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-auto { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--color-card-border); color: var(--color-ink-dim); font-size: 12px; line-height: 1; font-weight: 500; letter-spacing: .02em; }
 .st-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
 .st-dot.ok { background: var(--color-success-text); }
-.st-dot.gold { background: var(--color-gold); }
+.st-dot.gold { background: var(--color-action); }
 .st-dot.no { background: transparent; box-shadow: inset 0 0 0 1.5px var(--color-ink-dim); }
 
 /* InfoButton in een rij: klein rondje met onzichtbare rand tot 44 px */
-.st-info { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-card-border); color: var(--color-bronze); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.st-info { position: relative; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--color-control-border); color: var(--color-ink-dim); display: inline-flex; align-items: center; justify-content: center; flex: none; }
 /* Het tikdoel is 44 bij 44 px rond het rondje van 20 px; het valt hooguit over
    het eind van de titel, niet over het midden van de rij. */
 .st-info::before { content: ''; position: absolute; inset: -12px; }
@@ -107,10 +107,10 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-more[aria-expanded="true"] svg { transform: rotate(90deg); }
 .st-more.plain { padding: 0; }
 
-/* Schakelaar: aan in donker brons, zodat goud het ene accent blijft */
+/* Schakelaar: aan in mint gedempt, zodat de gevulde mint knop het ene accent blijft */
 .st-switch { position: relative; display: block; width: 44px; height: 24px; border-radius: 12px; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-control-border); transition: background .15s, box-shadow .15s; }
 .st-switch::after { content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--color-ink-dim); transition: transform .15s, background .15s; }
-.st-switch[data-on="true"] { background: var(--color-bronze-dark); box-shadow: inset 0 0 0 1px var(--color-bronze); }
+.st-switch[data-on="true"] { background: var(--color-action-muted); box-shadow: inset 0 0 0 1px var(--color-action); }
 .st-switch[data-on="true"]::after { transform: translateX(20px); background: var(--color-ink); }
 
 /* Lege toestand en een uitgezette groep in een kaart */
@@ -120,8 +120,8 @@ button.st-hit:not(:disabled):active { transform: none; }
 /* Mijn week: zeven staafjes */
 .st-strip { position: relative; display: block; width: 100%; padding: var(--s3) var(--s4) var(--s4); text-align: left; }
 .st-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2); align-items: end; height: 44px; }
-.st-bars span { display: block; width: 20px; justify-self: center; border-radius: 3px 3px 1px 1px; background: var(--color-bronze-dark); }
-.st-bars span.l3 { background: var(--color-bronze); }
+.st-bars span { display: block; width: 20px; justify-self: center; border-radius: 3px 3px 1px 1px; background: var(--color-action-muted); }
+.st-bars span.l3 { background: var(--color-action); }
 .st-bars span.rest { width: 12px; height: 2px !important; background: var(--color-stone); opacity: .6; }
 .st-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2); margin-top: var(--s2); }
 .st-days span { text-align: center; font-size: 12px; line-height: 16px; color: var(--color-ink-dim); }
@@ -130,7 +130,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-foot { margin: var(--s8) 0 0; text-align: center; font-size: 12px; line-height: 20px; color: var(--color-ink-dim); }
 
 /* ---------- onderblad ---------- */
-.st-sheet { width: 100%; max-width: 448px; max-height: 90vh; display: flex; flex-direction: column; background: var(--color-card); border: 1px solid var(--color-card-border); border-bottom: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px rgba(0,0,0,.4); }
+.st-sheet { width: 100%; max-width: 448px; max-height: 90vh; display: flex; flex-direction: column; background: var(--color-card); border: 1px solid var(--color-card-border); border-bottom: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px color-mix(in srgb, var(--color-shadow) 50%, transparent); }
 .st-grip { width: 36px; height: 4px; border-radius: 2px; background: var(--color-control-border); margin: var(--s2) auto 0; flex: none; }
 .st-sh { display: grid; grid-template-columns: minmax(0, 1fr) 44px; column-gap: var(--s2); padding: var(--s3) var(--s2) 0 var(--s4); flex: none; }
 .st-sh .st-eyebrow { margin: var(--s2) 0 0; }
@@ -147,9 +147,9 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-opt + .st-opt::before { content: ''; position: absolute; top: 0; left: var(--s4); right: 0; height: 1px; background: var(--color-card-border); }
 .st-opt .l { display: flex; align-items: center; gap: var(--s2); font-size: 15px; line-height: 20px; color: var(--color-ink); }
 .st-opt .n { display: block; margin-top: var(--s1); font-size: 13px; line-height: 16px; color: var(--color-ink-dim); }
-.st-opt .ck { color: var(--color-gold); }
+.st-opt .ck { color: var(--color-action); }
 .st-opt[aria-checked="true"] .l { font-weight: 500; }
-.st-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 var(--s2); border-radius: 10px; color: var(--color-bronze); background: color-mix(in srgb, var(--color-bronze) 12%, transparent); font-size: 12px; font-weight: 500; line-height: 1; }
+.st-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 var(--s2); border-radius: 10px; color: var(--color-action); background: color-mix(in srgb, var(--color-action) 12%, transparent); font-size: 12px; font-weight: 500; line-height: 1; }
 
 /* Knoppen in een blad */
 .st-btns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s3); margin-top: var(--s4); }
@@ -157,18 +157,18 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-btns.first { margin-top: 0; }
 .st-btn { min-height: 48px; border-radius: 12px; border: 1px solid var(--color-control-border); font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: var(--s2); text-align: center; padding: 0 var(--s3); color: var(--color-ink); }
 .st-btn:disabled { opacity: .4; }
-.st-btn.gold { border: 0; background: linear-gradient(135deg, var(--color-gold), var(--color-bronze)); color: var(--color-on-gold); font-weight: 600; }
+.st-btn.gold { border: 0; background: var(--color-action-fill); color: var(--color-on-action); font-weight: 600; }
 .st-btn.red { border: 0; background: var(--color-danger); color: var(--color-ink); font-weight: 600; }
 
 /* Chips (bij de sportschool) en segmenten (per dag, per week) */
 .st-chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .st-chip { min-height: 44px; min-width: 44px; padding: 0 var(--s4); border-radius: 22px; border: 1px solid var(--color-card-border); color: var(--color-ink-dim); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-variant-numeric: tabular-nums; }
-.st-chip[aria-pressed="true"] { border-color: var(--color-bronze); background: var(--chip-on); color: var(--color-ink); font-weight: 600; }
+.st-chip[aria-pressed="true"] { border-color: var(--color-action); background: var(--chip-on); color: var(--color-ink); font-weight: 600; }
 .st-chip.dashed { border-style: dashed; border-color: var(--color-control-border); }
 .st-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s1); padding: var(--s1); border-radius: 12px; background: var(--color-charcoal); border: 1px solid var(--color-card-border); }
 .st-seg button { min-height: 36px; border-radius: 8px; text-align: center; font-size: 13px; line-height: 16px; color: var(--color-ink-dim); font-variant-numeric: tabular-nums; position: relative; }
 .st-seg.tall button { min-height: 44px; }
-.st-seg button[aria-pressed="true"] { background: var(--chip-on); color: var(--color-ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--color-bronze); }
+.st-seg button[aria-pressed="true"] { background: var(--chip-on); color: var(--color-ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--color-action); }
 .st-seg button:disabled { opacity: .35; }
 .st-segrow { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; column-gap: var(--s3); }
 .st-segrow + .st-segrow { margin-top: var(--s2); }
@@ -224,7 +224,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-lead { margin: 0; font-size: 16px; line-height: 24px; color: var(--color-ink); }
 .st-points { margin: var(--s4) 0 0; padding: 0; list-style: none; display: grid; gap: var(--s3); }
 .st-points li { display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: var(--s3); font-size: 14px; line-height: 20px; color: var(--color-ink-dim); }
-.st-points li::before { content: ''; width: 6px; height: 6px; margin: 7px 0 0 5px; border-radius: 50%; background: var(--color-bronze); }
+.st-points li::before { content: ''; width: 6px; height: 6px; margin: 7px 0 0 5px; border-radius: 50%; background: var(--color-ink-dim); }
 .st-points b { font-weight: 500; color: var(--color-ink); }
 
 @media (prefers-reduced-motion: reduce) { .st-row.flash { animation: none; } }

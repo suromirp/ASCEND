@@ -26,10 +26,10 @@ const dayLabel = (date: string) => {
   return `${short.charAt(0).toUpperCase()}${short.slice(1)} ${Number(date.slice(8, 10))}`;
 };
 
-// Een dag zonder verplichting is licht verlaagd; vandaag heeft een gouden streepje en lichte gloed.
+// Een dag zonder verplichting is licht verlaagd; vandaag heeft een streepje in ijs en lichte gloed.
 const todayStyle = {
-  background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-gold) 10%, transparent), transparent 70%)',
-  boxShadow: 'inset 2px 0 0 var(--color-gold)',
+  background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-status) 10%, transparent), transparent 70%)',
+  boxShadow: 'inset 2px 0 0 var(--color-status)',
 };
 
 function SessionRow({

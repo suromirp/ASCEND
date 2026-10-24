@@ -675,7 +675,7 @@ function GeneralLogger({
 
       <div
         className="fixed inset-x-0 bottom-0 z-10 border-t"
-        style={{ background: 'rgba(13,13,15,0.94)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
       >
         {confirmLong ? (
           <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }} role="alert">

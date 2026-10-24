@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 import { haptics } from '../utils/haptics';
 import { BackButton } from './BackButton';
-import { Icon } from './icons';
+import { Icon, type IconName } from './icons';
 import './settings/settings.css';
 
+// Een kaart: marine vlak, haarlijn, 16 px afronding en 16 px binnenruimte. Op de
+// lichte lucht (SkyBand) wordt dezelfde kaart vanzelf de bijna witte kaart.
 export function Card({ children, className = '', texture = false }: { children: ReactNode; className?: string; texture?: boolean }) {
   return (
     <div
-      className={`rounded-2xl border p-4 ${texture ? 'topo-texture' : ''} ${className}`}
+      className={`ui-card rounded-2xl border p-4 ${texture ? 'topo-texture' : ''} ${className}`}
       style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
     >
       {children}
@@ -15,6 +17,19 @@ export function Card({ children, className = '', texture = false }: { children: 
   );
 }
 
+// De bijna witte kaart met donkere tekst, op de lucht van SkyBand of als het ene
+// lichte vlak van een scherm. Alles erin leest de gewone tokens en wordt vanzelf
+// donker op licht (`.on-light` in index.css).
+export function LightCard({ children, className = '', as = 'div' }: { children: ReactNode; className?: string; as?: 'div' | 'section' }) {
+  const Tag = as;
+  return (
+    <Tag className={`on-light light-card rounded-2xl p-4 ${className}`} style={{ background: 'var(--color-light-card)' }}>
+      {children}
+    </Tag>
+  );
+}
+
+// De hoofdknop: gevuld mint met donkere tekst, 52 px hoog. Eén per scherm.
 export function PrimaryButton({
   children,
   onClick,
@@ -32,14 +47,15 @@ export function PrimaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${fullWidth ? 'w-full' : 'flex-1'} min-h-[44px] rounded-xl py-3 text-sm font-semibold transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
-      style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze))', color: 'var(--color-on-gold)' }}
+      className={`${fullWidth ? 'w-full' : 'flex-1'} min-h-[52px] rounded-xl px-4 py-3 text-base font-semibold transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
+      style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
     >
       {children}
     </button>
   );
 }
 
+// Een gewone knop naast de hoofdknop: mint omlijnd met mint tekst, 44 px hoog.
 export function SecondaryButton({
   children,
   onClick,
@@ -55,8 +71,8 @@ export function SecondaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 min-h-[44px] rounded-xl border py-2.5 text-xs font-medium transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
-      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
+      className={`flex-1 min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
+      style={{ border: '1.5px solid color-mix(in srgb, var(--color-action) 75%, transparent)', color: 'var(--color-action)' }}
     >
       {children}
     </button>
@@ -65,10 +81,10 @@ export function SecondaryButton({
 
 export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned' | 'moved' | 'skipped' | 'missed' | 'rest' }) {
   const map: Record<string, { symbol: ReactNode; color: string; label: string }> = {
-    completed: { symbol: <Icon name="vinkje" size={16} />, color: 'var(--color-success-text)', label: 'Gedaan' },
-    today: { symbol: <Icon name="vandaagStip" size={16} />, color: 'var(--color-gold)', label: 'Vandaag' },
+    completed: { symbol: <Icon name="vinkje" size={16} />, color: 'var(--color-progress)', label: 'Gedaan' },
+    today: { symbol: <Icon name="vandaagStip" size={16} />, color: 'var(--color-status)', label: 'Vandaag' },
     planned: { symbol: <Icon name="gepland" size={16} />, color: 'var(--color-ink-dim)', label: 'Gepland' },
-    moved: { symbol: <Icon name="verplaatst" size={16} />, color: 'var(--color-sky)', label: 'Verplaatst' },
+    moved: { symbol: <Icon name="verplaatst" size={16} />, color: 'var(--color-status)', label: 'Verplaatst' },
     skipped: { symbol: <Icon name="sluiten" size={16} />, color: 'var(--color-danger-text)', label: 'Overgeslagen' },
     missed: { symbol: '!', color: 'var(--color-warning)', label: 'Gemist' },
     rest: { symbol: <Icon name="rustdag" size={16} />, color: 'var(--color-stone)', label: 'Rustdag' },
@@ -82,9 +98,9 @@ export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned
   );
 }
 
-// De baan en de bol van een schakelaar, zonder knop eromheen. Aan is donker brons
-// met een bronzen rand, zodat goud het ene accent van het scherm blijft
-// (docs/beslissingen/2026-10-22-instellingen-in-groepen.md). Een rij in de
+// De baan en de bol van een schakelaar, zonder knop eromheen. Aan is mint gedempt
+// met een mint rand, zodat de gevulde mint knop het ene accent van het scherm
+// blijft (docs/beslissingen/2026-10-24-thema-zee-en-berg.md). Een rij in de
 // instellingen is zelf de knop en tekent alleen deze baan.
 export function ToggleVisual({ checked, className = '' }: { checked: boolean; className?: string }) {
   return <span aria-hidden="true" className={`st-switch ${className}`} data-on={checked} />;
@@ -113,7 +129,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
 // TrainingGuideSheet. Kept here (not in TrainingGuideSheet.tsx) since two
 // unrelated components (TodayMissionCard, SessionActionSheet) both need it.
 export function InfoButton({ onClick, label = 'Meer informatie', compact = false }: { onClick: () => void; label?: string; compact?: boolean }) {
-  // `compact`: het kleine rondje van de instellingen, in brons, 20 px met een
+  // `compact`: het kleine rondje van de instellingen, gedimd, 20 px met een
   // onzichtbare rand tot 44 px.
   if (compact) {
     return (
@@ -130,9 +146,9 @@ export function InfoButton({ onClick, label = 'Meer informatie', compact = false
       // A real box of 44 by 44 around the 24 px circle (Lookout); the negative
       // margin keeps the title line as it was.
       className="-m-2.5 flex h-11 w-11 shrink-0 items-center justify-center"
-      style={{ color: 'var(--color-gold)' }}
+      style={{ color: 'var(--color-ink-dim)' }}
     >
-      <span className="flex h-6 w-6 items-center justify-center rounded-full border" style={{ borderColor: 'var(--color-card-border)' }}>
+      <span className="flex h-6 w-6 items-center justify-center rounded-full border" style={{ borderColor: 'var(--color-control-border)' }}>
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <circle cx="12" cy="12" r="9" />
           <line x1="12" y1="11" x2="12" y2="16.5" />
@@ -160,11 +176,14 @@ export function NumText({ children }: { children: string }) {
   );
 }
 
-// `as="span"` inside a button or a line of text, where a div is not allowed.
+// Het kleine kopje in hoofdletters: 12 px, halfvet, smalle letterafstand, in de
+// kleur van de tab waar je bent (--color-page; mint buiten de tabs, donker op de
+// lichte lucht). Hooguit één per kaart. `as="span"` inside a button or a line of
+// text, where a div is not allowed.
 export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'div' | 'span' }) {
   const Tag = as;
   return (
-    <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-medium uppercase tracking-[0.16em]`} style={{ color: 'var(--color-bronze)' }}>
+    <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-semibold uppercase leading-4 tracking-[0.08em]`} style={{ color: 'var(--color-page)' }}>
       {children}
     </Tag>
   );
@@ -292,6 +311,143 @@ export function Stepper({
         <button type="button" disabled={incDisabled} aria-label={incLabel} onClick={() => { haptics.tap(); onInc(); }}>
           <Icon name="plus" size={18} />
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Een getal met een kleine eenheid erachter, en het label erboven (links
+// uitgelijnd, nooit ernaast). Inter halfvet met vaste cijferbreedte, in de vier
+// maten van de typeschaal: s 20 (rij of tegel), m 28 (naast een held), l 40
+// (held van een kaart) en xl 56 (de ene held van het scherm).
+const STAT_SIZE = { s: 'text-xl', m: 'text-[28px]', l: 'text-[40px] tracking-[-0.03em]', xl: 'text-[56px] tracking-[-0.04em]' } as const;
+export function Stat({
+  label,
+  value,
+  unit,
+  size = 's',
+  className = '',
+}: {
+  label?: ReactNode;
+  value: ReactNode;
+  unit?: ReactNode;
+  size?: keyof typeof STAT_SIZE;
+  className?: string;
+}) {
+  return (
+    <div className={`flex min-w-0 flex-col gap-1 ${className}`}>
+      {label && <span className="text-xs font-medium leading-4" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>}
+      <span className={`whitespace-nowrap font-sans font-semibold leading-none tabular-nums tracking-[-0.02em] ${STAT_SIZE[size]}`} style={{ color: 'var(--color-ink)' }}>
+        {value}
+        {unit && <span className="ml-[3px] text-sm font-medium tracking-normal" style={{ color: 'var(--color-ink-dim)' }}>{unit}</span>}
+      </span>
+    </div>
+  );
+}
+
+// Een pil van 24 px hoog: een korte staat rechts in een rij ("Vandaag", "Herstel",
+// "+6 in oktober"). `action` is gevuld mint, de rest een zachte tint met de kleur
+// als tekst. Rechts in een rij staat hooguit één ding.
+const PILL_TONE = {
+  action: { bg: 'var(--color-action-fill)', fg: 'var(--color-on-action)' },
+  progress: { bg: 'color-mix(in srgb, var(--color-progress) 16%, transparent)', fg: 'var(--color-progress)' },
+  status: { bg: 'color-mix(in srgb, var(--color-status) 14%, transparent)', fg: 'var(--color-status)' },
+  warning: { bg: 'color-mix(in srgb, var(--color-warning) 16%, transparent)', fg: 'var(--color-warning)' },
+  danger: { bg: 'color-mix(in srgb, var(--color-danger-text) 14%, transparent)', fg: 'var(--color-danger-text)' },
+  neutral: { bg: 'transparent', fg: 'var(--color-ink-dim)' },
+} as const;
+export function StatusPill({ children, tone = 'status', icon }: { children: ReactNode; tone?: keyof typeof PILL_TONE; icon?: IconName }) {
+  const t = PILL_TONE[tone];
+  return (
+    <span
+      className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold"
+      style={{ background: t.bg, color: t.fg, boxShadow: tone === 'neutral' ? 'inset 0 0 0 1px var(--color-card-border)' : undefined }}
+    >
+      {icon && <Icon name={icon} size={13} />}
+      {children}
+    </span>
+  );
+}
+
+// Een voortgangsring in mint (donkere mint op licht), met in het midden wat je
+// meegeeft ("3/5" en "gedaan"). `value` is een deel van 0 tot 1.
+export function Ring({
+  value,
+  label,
+  size = 68,
+  stroke = 7,
+  children,
+}: {
+  value: number;
+  label: string;
+  size?: number;
+  stroke?: number;
+  children?: ReactNode;
+}) {
+  const r = (size - stroke) / 2;
+  const pct = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)) * 100;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }} role="img" aria-label={label}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-track)" strokeWidth={stroke} />
+        {pct > 0 && (
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-progress)" strokeWidth={stroke} strokeLinecap="round" pathLength={100} strokeDasharray={`${pct} 100`} />
+        )}
+      </svg>
+      {children && <div aria-hidden="true" className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>}
+    </div>
+  );
+}
+
+// Een balk van 6 px in mint op de lege baan (donkere mint op licht). `value` is
+// een deel van 0 tot 1; boven 1 blijft de balk vol.
+export function Meter({ value, label, tone = 'progress' }: { value: number; label: string; tone?: 'progress' | 'status' | 'warning' }) {
+  const pct = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)) * 100;
+  return (
+    <div
+      role="meter"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(pct)}
+      className="h-1.5 w-full overflow-hidden rounded-full"
+      style={{ background: 'var(--color-track)' }}
+    >
+      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `var(--color-${tone})` }} />
+    </div>
+  );
+}
+
+// De vijf inspanningszones naast elkaar: de actieve breder en hoger in haar eigen
+// kleur, de rest gedempt op de baan. Eronder Z1 tot Z5, want kleur is nooit het
+// enige signaal. `active` is 1 tot 5, of leeg als er geen zone geldt.
+export function ZoneBar({ active, label }: { active?: 1 | 2 | 3 | 4 | 5; label?: string }) {
+  const zones = [1, 2, 3, 4, 5] as const;
+  return (
+    <div className="flex flex-col gap-2" role="img" aria-label={label ?? (active ? `Zone ${active}` : 'Zone 1 tot 5')}>
+      <div aria-hidden="true" className="flex items-center gap-1">
+        {zones.map((z) => (
+          <span
+            key={z}
+            className="rounded"
+            style={{
+              flex: z === active ? 2 : 1,
+              height: z === active ? 12 : 8,
+              background: z === active ? `var(--color-effort-${z})` : `color-mix(in srgb, var(--color-effort-${z}) 28%, var(--color-track))`,
+            }}
+          />
+        ))}
+      </div>
+      <div aria-hidden="true" className="flex gap-1">
+        {zones.map((z) => (
+          <span
+            key={z}
+            className="text-center text-xs leading-4 tabular-nums"
+            style={{ flex: z === active ? 2 : 1, fontWeight: z === active ? 700 : 500, color: z === active ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}
+          >
+            Z{z}
+          </span>
+        ))}
       </div>
     </div>
   );

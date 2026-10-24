@@ -69,7 +69,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <button
           onClick={() => this.setState({ error: null })}
           className="w-full rounded-xl py-3 text-sm font-semibold"
-          style={{ background: 'linear-gradient(135deg, var(--color-gold), var(--color-bronze-dark))', color: 'var(--color-on-gold)' }}
+          style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-gold)' }}
         >
           Opnieuw proberen
         </button>
