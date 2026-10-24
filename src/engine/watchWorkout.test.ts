@@ -57,14 +57,14 @@ describe('trainings that run on pace from the test', () => {
     expect(w.description).toBe(
       [
         'Warming-up',
-        '- Inlopen 15m 7:15/km-8:20/km Pace',
+        '- Inlopen 15m',
         '',
         'Herhalingen 2x',
         '- Drempeltempo 7m 6:05/km-6:20/km Pace',
         '- Rustig 1m30s 7:15/km-8:20/km Pace',
         '',
         'Cooling-down',
-        '- Uitlopen 13m 7:15/km-8:20/km Pace',
+        '- Uitlopen 13m',
       ].join('\n'),
     );
   });
@@ -105,11 +105,12 @@ describe('trainings that run on heart rate zones', () => {
   it('hills: hard climbs of a minute have no heart rate target (it lags), the way down none either', () => {
     const w = build('tpl_hill_intervals')!;
     expect(w.description).toMatch(/Herhalingen \d+x\n- Hard bergop 1m\n- Terug naar beneden 2m\n/);
-    expect(w.description).toContain('Warming-up\n- Opwarmen 11m Z2 HR');
+    expect(w.description).toContain('Warming-up\n- Opwarmen 11m\n');
   });
 
   it('hills with a controlled descent keep a zone for the descent', () => {
-    expect(build('tpl_hills_descent')!.description).toContain('- Afdalen herhalen 18m Z2 HR');
+    expect(build('tpl_hills_descent')!.description).toContain('- Afdalen herhalen 18m');
+    expect(build('tpl_hills_descent')!.description).not.toMatch(/Afdalen herhalen 18m .*HR/);
   });
 
   it('strides: only the easy run has a zone, the 20 second strides have none', () => {
@@ -122,17 +123,17 @@ describe('trainings that run on heart rate zones', () => {
     expect(build('tpl_progression_run')!.description).toMatch(/Herhalingen \d+x\n- Iets steviger 5m Z3 HR/);
   });
 
-  it('a mountain hike is a Hike with a warm-up and cool-down in zone 1; a rucksack walk is a Walk', () => {
+  it('a mountain hike is a Hike, walked by feel without a target; a rucksack walk is a Walk', () => {
     const hike = build('tpl_mountain_hike')!;
     expect(hike.type).toBe('Hike');
-    expect(hike.description).toMatch(/^Warming-up\n- Rustig inlopen 10m Z1 HR\n\n- Bergtocht \d+h(\d+m)? Z2 HR\n\nCooling-down\n- Uitlopen 5m Z1 HR$/);
+    expect(hike.description).toMatch(/^Warming-up\n- Rustig inlopen 10m\n\n- Bergtocht \d+h(\d+m)?\n\nCooling-down\n- Uitlopen 5m$/);
     expect(build('tpl_ruck_walk')!.type).toBe('Walk');
     expect(build('tpl_bike')!.type).toBe('Ride');
   });
 
   it('the 5 km test is a distance without a target, between a warm-up and a cool-down', () => {
     const w = build('tpl_test_run')!;
-    expect(w.description).toBe(['Warming-up', '- Inlopen 10m Z2 HR', '', '- Test 5km', '', 'Cooling-down', '- Uitlopen 8m Z2 HR'].join('\n'));
+    expect(w.description).toBe(['Warming-up', '- Inlopen 10m', '', '- Test 5km', '', 'Cooling-down', '- Uitlopen 8m'].join('\n'));
   });
 });
 

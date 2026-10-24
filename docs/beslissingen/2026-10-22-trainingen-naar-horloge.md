@@ -36,3 +36,12 @@ Niets.
 ## Terugdraaien
 
 Zet de schakelaar uit: ASCEND haalt de komende trainingen weer uit de agenda. Wil je alles weg, dan kan "Weghalen uit intervals.icu" dat ook zonder de schakelaar.
+
+## Aanvulling 24 oktober 2026: geen doel bij opwarmen, uitlopen en wandelen
+
+Opwarmen, uitlopen en wandelen (zoals rustig een heuvel op en beheerst af, of
+een bergtocht) krijgen op het horloge geen doel meer, geen hartslag en geen
+tempo. Die doe je op gevoel; een getal om vast te houden leidde de eigenaar
+alleen af. De harde delen en een rustige duurloop houden hun zone. Trainingen
+die al op het horloge staan, worden bij de volgende synchronisatie vanzelf
+bijgewerkt, omdat de vingerafdruk van de tekst verandert.

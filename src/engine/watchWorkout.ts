@@ -9,7 +9,7 @@
 // the forum's Workout Builder Syntax Quick Guide, October 2026):
 //
 //   Warming-up
-//   - Inlopen 10m Z2 HR
+//   - Inlopen 10m
 //
 //   Herhalingen 2x
 //   - Drempeltempo 7m 6:05/km-6:20/km Pace
@@ -29,6 +29,9 @@
 //   lags, the watch would beep for nothing), and a recovery step never gets
 //   one (a beep telling you your heart rate is too high is the opposite of
 //   recovery). Pace targets hold from one minute on.
+// - Warming up, cooling down and walking (up and down a hill) get no target at
+//   all, heart rate or pace: you do them by feel, and a number to hold there
+//   only distracts.
 // - Strength is NOT sent. The content lives in MacroFactor; a note on the
 //   watch would only be clutter and a strength workout without exercises
 //   starts nothing useful. A rest day, the race (nothing to prescribe, you
@@ -130,8 +133,11 @@ function stepRange(step: PlanStep, template: SessionTemplate, paces: RacePaces):
   return paces.easy;
 }
 
+// Steps done by feel: no target on the watch.
+const OPEN_KINDS = new Set<StepKind>(['warmup', 'cooldown', 'walk']);
+
 function hrTarget(step: PlanStep): string | undefined {
-  if (step.noTarget || step.kind === 'recover' || step.seconds < HR_MIN_SECONDS) return undefined;
+  if (step.noTarget || step.kind === 'recover' || OPEN_KINDS.has(step.kind) || step.seconds < HR_MIN_SECONDS) return undefined;
   if (step.intensity === 4) return 'Z4-Z5 HR';
   return `Z${step.intensity} HR`;
 }
@@ -155,6 +161,7 @@ export function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplat
     const amount = distance && step.kind === 'work' ? distance : formatStepDuration(step.seconds);
     let goal: string | undefined;
     if (distance && step.kind === 'work') goal = undefined;
+    else if (OPEN_KINDS.has(step.kind)) goal = undefined;
     else if (target === 'PACE') goal = step.seconds >= PACE_MIN_SECONDS && paces ? paceTarget(stepRange(step, template, paces)) : undefined;
     else goal = hrTarget(step);
     return ['-', label, amount, goal].filter(Boolean).join(' ');
