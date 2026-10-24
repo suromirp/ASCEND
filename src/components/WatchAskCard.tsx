@@ -15,6 +15,7 @@ import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { PainReportFields } from './PainReportFields';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
 import { TextButton } from './TextButton';
+import { StravaTextButton } from './StravaTextButton';
 
 const FEELS: [SubjectiveFeel, string][] = [['better', 'Beter'], ['normal', 'Normaal'], ['worse', 'Slechter']];
 
@@ -129,6 +130,7 @@ export function WatchAskCard({
       {onTrim && (
         <TextButton onClick={onTrim} disabled={busy}>Horloge te lang aan laten staan? Inkorten</TextButton>
       )}
+      <StravaTextButton log={log} template={template} />
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Klopt niet haalt de afvinking weer weg. Dan kun je zelf kiezen bij welke training dit hoort.
       </p>

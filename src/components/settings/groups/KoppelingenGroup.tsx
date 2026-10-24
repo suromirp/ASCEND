@@ -89,6 +89,10 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
         </>
       </SettingsSection>
 
+      <SettingsSection title="Strava">
+        <SummaryRow id="strava-tekst" title="Tekst voor Strava" facts={facts} info="stravaTekst" onChange={(on) => void updateSettings({ stravaText: on })} />
+      </SettingsSection>
+
       {sheet === 'horloge-voorvoegsel' && (
         <ChoiceFromDef def={CHOICES.voorvoegsel} value={settings.watchNamePrefix ?? DEFAULT_WATCH_NAME_PREFIX} onPick={(v) => void changePrefix(v)} onClose={() => setSheet(null)} />
       )}

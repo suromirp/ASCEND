@@ -35,7 +35,7 @@
 //   in the week, and in a test week it is also the short version.
 //
 // Outside a block the Saturday alternates too: every second week of the
-// four-week wave "Heuvels op en af" (hills, then controlled descending) in
+// four-week wave "Heuvelsprints en afdalen" (hills, then controlled descending) in
 // the basis and Opbouw, so the legs never go long without a descent
 // stimulus (docs/onderzoek/Trainingsvormen en varianten.md). From
 // Bergcapaciteit the Sunday mountain hike does the descending.

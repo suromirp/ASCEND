@@ -327,7 +327,7 @@ function hardSameDayAllowed(a: SessionTemplate, b: SessionTemplate): boolean {
 function isIntendedOrder(a: SessionTemplate, aDate: string, b: SessionTemplate, bDate: string, templateMap?: Map<string, SessionTemplate>): boolean {
   const gap = daysBetween(aDate, bDate); // > 0: b comes after a
   if (Math.abs(gap) !== 1) return Math.abs(gap) > 1;
-  // A training without a weekday of its own (Heuvels op en af, a mountain
+  // A training without a weekday of its own (Heuvelsprints en afdalen, a mountain
   // hike) takes the day of the slot it fills: the hill slot on Saturday, the
   // long slot on Sunday. Without that, either order counted as intended and a
   // move could swap the two into the wrong order, still 24 hours apart

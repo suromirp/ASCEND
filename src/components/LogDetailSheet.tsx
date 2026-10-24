@@ -18,6 +18,7 @@ import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrimSheet } from './TrimSheet';
+import { StravaTextButton } from './StravaTextButton';
 import { isTrimmable, trimOriginalLine, trimRangeLine } from '../engine/trimLog';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
@@ -221,6 +222,10 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{log.notes}</p>
             </div>
           )}
+
+          <div className="mt-2">
+            <StravaTextButton log={log} template={templates.find((t) => t.id === log.templateId)} />
+          </div>
 
           {/* A wrongly chosen or double log must be removable (it used to
               stay forever). Always behind a confirmation. */}
