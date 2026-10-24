@@ -249,7 +249,7 @@ function WeekRow({ week, onSelect }: { week: SeasonWeek; onSelect: () => void })
             Week {week.number} · {formatDateNL(week.weekStart)}
             {week.current && <StatusPill tone="status">Nu</StatusPill>}
           </p>
-          <p className="text-xs" style={{ color: rest ? 'var(--color-alpine)' : 'var(--color-ink-dim)' }}>{week.waveLabel}</p>
+          <p className="text-xs" style={{ color: rest ? 'var(--color-sage)' : 'var(--color-ink-dim)' }}>{week.waveLabel}</p>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 text-xs tabular-nums" style={{ color: allDone ? 'var(--color-success-text)' : 'var(--color-ink-dim)' }}>
           {allDone && <Icon name="vinkje" size={14} />}

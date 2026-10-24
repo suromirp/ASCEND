@@ -281,7 +281,7 @@ function AppShell() {
               window.location.reload();
             }}
             className="min-h-[44px] rounded-xl border px-5 py-2.5 text-xs font-semibold"
-            style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-ink)' }}
+            style={{ borderColor: 'var(--color-action)', color: 'var(--color-ink)' }}
           >
             Toch openen
           </button>
