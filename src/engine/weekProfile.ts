@@ -100,28 +100,8 @@ export function weekProgress(sessions: PlannedSession[], logs: SessionLog[], tem
   return { done, total };
 }
 
-// The time a week asks, at the top of Week: what is open at its planned
-// length, what is done at the length it actually took. A skipped training and
-// a rest day are no training time (Doorloop, punt 3). The same counting as
-// weekProgress: a skipped training is neither in the count nor in the minutes.
-export function weekMinutes(
-  sessions: PlannedSession[],
-  logs: SessionLog[],
-  templateById: Map<string, SessionTemplate>,
-  minutesOf: (s: PlannedSession, t: SessionTemplate) => number,
-): number {
-  const logged = new Map<string, number>();
-  for (const l of logs) if (l.plannedSessionId) logged.set(l.plannedSessionId, (logged.get(l.plannedSessionId) ?? 0) + l.durationMinutes);
-  let total = 0;
-  for (const s of sessions) {
-    const t = templateById.get(s.templateId);
-    if (!t || t.type === 'recovery') continue;
-    const done = logged.get(s.id);
-    if (done !== undefined) total += done;
-    else if (s.status !== 'skipped') total += minutesOf(s, t);
-  }
-  return total;
-}
+// The time at the top of Week (done of total) lives in engine/weekLogs.ts#weekTime: the
+// same sum as the weekly review, loose trainings included.
 
 // --- de zin onder de kam ---------------------------------------------------------
 

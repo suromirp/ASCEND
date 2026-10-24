@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dayLoads, ridgeSentence, weekMinutes, weekProgress } from './weekProfile';
+import { dayLoads, ridgeSentence, weekProgress } from './weekProfile';
 import { plannedEffort, weeklyLoad } from './standing';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -132,18 +132,5 @@ describe('ridgeSentence', () => {
   it('een enkele beendag en een week zonder beendag', () => {
     expect(ridgeSentence(days([], [planned('tpl_long_run', '2026-10-25', { plannedMinutes: 60 })]), TODAY)).toContain('Eén zware beendag');
     expect(ridgeSentence(days([], [planned('tpl_easy_run', '2026-10-24')]), TODAY)).toMatch(/Geen zware beendag\.$/);
-  });
-});
-
-describe('weekMinutes: het weektotaal bovenaan Week', () => {
-  const minutesOf = (_s: PlannedSession, t: { durationVariants: { full: number } }) => t.durationVariants.full;
-  it('telt een overgeslagen training niet mee, en een gedane met de echte duur', () => {
-    const run = planned('tpl_easy_run', '2026-10-19');
-    const skipped = planned('tpl_upper_b', '2026-10-23', { status: 'skipped' });
-    const open = planned('tpl_long_run', '2026-10-25');
-    const rest = planned('tpl_herstel', '2026-10-22');
-    const done = log('tpl_easy_run', '2026-10-19', 33, { plannedSessionId: run.id });
-    const total = weekMinutes([run, skipped, open, rest], [done], byId, minutesOf);
-    expect(total).toBe(33 + tpl('tpl_long_run').durationVariants.full);
   });
 });

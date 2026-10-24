@@ -78,6 +78,7 @@ function GeneralLogger({
   program,
   initialVariant = 'full',
   startAtForm = false,
+  preview = false,
   onClose,
 }: {
   template: SessionTemplate;
@@ -87,16 +88,20 @@ function GeneralLogger({
   initialVariant?: SessionVariant;
   // Vanuit "Gedaan" op Vandaag: meteen bij het formulier "hoe ging het".
   startAtForm?: boolean;
+  // "Hoe je het doet" voor een training van een latere dag: alleen lezen. Het
+  // formulier en Opslaan ontbreken, er komt geen concept, onderaan staat Sluiten.
+  preview?: boolean;
   onClose: () => void;
 }) {
   const { logSession, settings, strengthExternal, templates, plannedSessions } = useAppData();
   const { closing, requestClose: closeSheet } = useSheetClose(onClose);
   // Het concept van dit blad: terug als je het blad na een herlaad opnieuw opent.
   const storageKey = draftKey(template.id, plannedSessionId, scheduledDate);
-  const [restored] = useState(() => loadDraft<LoggerDraft>(storageKey));
+  // Alleen lezen raakt het concept niet aan: dat is van de dag zelf.
+  const [restored] = useState(() => (preview ? undefined : loadDraft<LoggerDraft>(storageKey)));
   // Annuleren of terug gooit het concept weg; herladen niet.
   const requestClose = () => {
-    clearDraft(storageKey);
+    if (!preview) clearDraft(storageKey);
     closeSheet();
   };
   const [variant, setVariant] = useState<SessionVariant>(restored?.variant ?? initialVariant);
@@ -201,13 +206,14 @@ function GeneralLogger({
 
   // Het concept bij elke verandering wegschrijven.
   useEffect(() => {
+    if (preview) return;
     const snapshot: LoggerDraft = {
       variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey,
       garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power,
       steps, machineVerticalM, terrain, inclinePercent,
     };
     saveDraft(storageKey, snapshot);
-  }, [storageKey, variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey, garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power, steps, machineVerticalM, terrain, inclinePercent]);
+  }, [preview, storageKey, variant, duration, rpe, notes, subjectiveFeel, legsAtStart, painReports, doneOn, workout, setLogs, guidanceMode, modalityKey, garminSuggestedType, reachedForm, distanceKm, elevationGainM, elevationLossM, avgHeartRate, backpackWeightKg, poles, cadence, power, steps, machineVerticalM, terrain, inclinePercent]);
 
   function selectVariant(v: SessionVariant) {
     setVariant(v);
@@ -228,6 +234,7 @@ function GeneralLogger({
   }
 
   async function handleSave(confirmed = false) {
+    if (preview) return;
     // A real rest day: logged as rest, no minutes of training that weren't there.
     const isRest = guidanceMode === 'ascend_guided' && selectedModality?.environment === 'rest';
     // Leeg of 0 is "geen duur"; heel lang vraagt eerst "Klopt dit?".
@@ -343,6 +350,7 @@ function GeneralLogger({
               <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
               {brief.purpose && <MoreText text={brief.purpose} className="mt-1" color="var(--color-ink)" />}
               <p className="mt-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{[dateLabel, brief.weekLabel].filter(Boolean).join(' · ')}</p>
+              {preview && <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>}
             </div>
           </div>
         </SkyBand>
@@ -368,7 +376,7 @@ function GeneralLogger({
           )}
         </Card>
 
-        {availableVariants(template).length > 1 && !restChosen && (
+        {!preview && availableVariants(template).length > 1 && !restChosen && (
           <div className="mt-4">
             <Segmented
               tall
@@ -380,7 +388,7 @@ function GeneralLogger({
           </div>
         )}
 
-        {quickComplete && (
+        {!preview && quickComplete && (
           <Card className="mt-4">
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Kracht bijgehouden in MacroFactor</p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
@@ -413,13 +421,13 @@ function GeneralLogger({
             {template.cooldown && template.cooldown.length > 0 && (
               <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
             )}
-            {plannedSession && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="py-2" plain />}
+            {plannedSession && !preview && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="py-2" plain />}
           </div>
-        ) : plannedSession ? (
+        ) : plannedSession && !preview ? (
           <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="mt-4" />
         ) : null}
 
-        {template.type === 'strength' && !restChosen && !quickComplete && (
+        {template.type === 'strength' && !restChosen && !quickComplete && !preview && (
           <Card className="mt-4">
             <div className="flex flex-col gap-2">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte volgens MacroFactor. Vul alleen in wat je wilt bijhouden.</p>
@@ -479,6 +487,8 @@ function GeneralLogger({
           </Card>
         )}
 
+        {!preview && (
+        <>
         <div ref={formRef} className="scroll-mt-4" />
         <h2 className="mt-8 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>Hoe ging het?</h2>
 
@@ -676,13 +686,20 @@ function GeneralLogger({
           </div>
         </Card>
         )}
+        </>
+        )}
       </div>
 
       <div
         className="fixed inset-x-0 bottom-0 z-10 border-t"
         style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
       >
-        {confirmLong ? (
+        {preview ? (
+          <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
+            {guide && <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Info</SecondaryButton>}
+            <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
+          </div>
+        ) : confirmLong ? (
           <div className="mx-auto max-w-md px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }} role="alert">
             <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>Klopt dit?</p>
             <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-warning)' }}>{longDurationText(entryMinutes(duration))}.</p>

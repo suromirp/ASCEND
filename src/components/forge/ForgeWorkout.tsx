@@ -11,6 +11,8 @@
 
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
+import { previewDayLine } from '../../engine/sessionActions';
+import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
 import { MUSCLE_LABEL } from '../../models/exercise';
 import { currentBodyKg } from '../../engine/bodyWeight';
 import {
@@ -124,6 +126,7 @@ export function ForgeWorkout({
   program,
   initialVariant = 'full',
   startAtForm = false,
+  preview = false,
   onClose,
 }: {
   template: SessionTemplate;
@@ -132,12 +135,17 @@ export function ForgeWorkout({
   program?: Program | null;
   initialVariant?: SessionVariant;
   startAtForm?: boolean;
+  // "Hoe je het doet" voor een training van een latere dag: hetzelfde voorschrift
+  // als de tabel zonder invulvelden, maar zonder afvinken of afronden, zonder
+  // concept en zonder het scherm aan te houden. Bovenaan staat Sluiten.
+  preview?: boolean;
   onClose: () => void;
 }) {
   const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
-  const readOnly = strengthExternal;
+  // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
+  const readOnly = strengthExternal || preview;
   const strength = useMemo(() => resolveStrengthSettings(settings.strengthModel), [settings.strengthModel]);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   // A program from MacroFactor gives the exercises of the week of this training.
@@ -146,6 +154,8 @@ export function ForgeWorkout({
 
   const key = `${draftKey(template.id, plannedSessionId, scheduledDate)}:forge`;
   const [restored] = useState(() => {
+    // Alleen kijken raakt het concept van de dag zelf niet aan.
+    if (preview) return undefined;
     const d = loadDraft<WorkoutDraft>(key, 'local');
     if (!d || d.v !== DRAFT_VERSION || !Array.isArray(d.exercises) || typeof d.startedAt !== 'number') return undefined;
     const expired = typeof d.savedAt === 'number' && Date.now() - d.savedAt > DRAFT_MAX_AGE_MS;
@@ -170,7 +180,7 @@ export function ForgeWorkout({
   const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
   const [workoutMenu, setWorkoutMenu] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [finishing, setFinishing] = useState(startAtForm);
+  const [finishing, setFinishing] = useState(startAtForm && !preview);
   const [showGuide, setShowGuide] = useState(false);
   // Het invoerpaneel en wat er rond de tabel meebeweegt.
   const [dock, setDock] = useState<FieldRef | null>(null);
@@ -188,7 +198,7 @@ export function ForgeWorkout({
   const baseRef = useRef<{ key: string; ex: WorkoutExercise } | null>(null);
   const layout = useRef({ dockH: 0, restH: 0 });
 
-  useWakeLock(strength.keepScreenOn);
+  useWakeLock(strength.keepScreenOn && !preview);
 
   useEffect(() => {
     const list = timers.current;
@@ -263,8 +273,10 @@ export function ForgeWorkout({
       if (alerted.current === end) return;
       alerted.current = end;
       if (Date.now() - end < 3000) {
-        if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'vibrate') haptics.alarm();
-        if (strength.restAlert === 'sound_vibrate' || strength.restAlert === 'sound') playRestSound(strength.restSound);
+        // What you feel has the rhythm of the chosen sound, with or without the sound itself.
+        const { sound, vibrate } = restAlertChannels(strength.restAlert);
+        if (vibrate) haptics.pattern(restVibrationPattern(strength.restSound));
+        if (sound) playRestSound(strength.restSound);
       }
     }, Math.max(0, end - Date.now()));
     const drop = window.setTimeout(() => setRest((r) => (r && r.endsAt === end ? undefined : r)), Math.max(0, end + REST_DONE_LINGER_MS - Date.now()));
@@ -468,11 +480,11 @@ export function ForgeWorkout({
               </button>
               <button
                 type="button"
-                onClick={() => setFinishing(true)}
+                onClick={preview ? onClose : () => setFinishing(true)}
                 className="mr-2 min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
                 style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
               >
-                {readOnly ? 'Afvinken' : 'Afronden'}
+                {preview ? 'Sluiten' : readOnly ? 'Afvinken' : 'Afronden'}
               </button>
             </div>
             {!readOnly && (
@@ -488,7 +500,10 @@ export function ForgeWorkout({
 
           {(legLine || readOnly) && (
             <div className="flex flex-col gap-1 px-4 pt-3">
-              {readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
+              {preview && <p className="text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>{previewDayLine(date, program)}</p>}
+              {preview ? (
+                <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
+              ) : readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
               {legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>}
             </div>
           )}

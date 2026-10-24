@@ -105,6 +105,28 @@ describe('rowSummary: doel en tochten', () => {
   });
 });
 
+describe('rowSummary: het geluid na de rust en het trillen', () => {
+  const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+
+  it('bij geluid en trillen, of alleen geluid, staat de rij er gewoon', () => {
+    expect(rowSummary('forge-geluid', facts()).hidden).toBeFalsy();
+    expect(rowSummary('forge-geluid', withForge({ restAlert: 'sound' })).hidden).toBeFalsy();
+    expect(rowSummary('forge-geluid', withForge({ restAlert: 'sound' })).sub).toBeUndefined();
+  });
+
+  it('bij alleen trillen kies je met het geluid het ritme: de rij blijft, met een feit eronder', () => {
+    const r = rowSummary('forge-geluid', withForge({ restAlert: 'vibrate', restSound: 'boxing' }));
+    expect(r.hidden).toBeFalsy();
+    expect(r.value).toBe('Boksbel');
+    expect(r.sub).toBe('Je voelt alleen het ritme');
+  });
+
+  it('zonder signaal, of zonder rusttimer vanzelf, is er niets te kiezen', () => {
+    expect(rowSummary('forge-geluid', withForge({ restAlert: 'off' })).hidden).toBe(true);
+    expect(rowSummary('forge-geluid', withForge({ restAuto: false })).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: forge', () => {
   it('Forge staat standaard aan, met het advies als keuze', () => {
     expect(rowSummary('forge', facts()).checked).toBe(true);

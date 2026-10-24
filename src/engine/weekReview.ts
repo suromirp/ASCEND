@@ -22,6 +22,7 @@ import { progressionTarget } from './programLayout';
 import { logSport, SPORT_LABEL, type Sport } from './sports';
 import { weekChanges } from './changeLog';
 import { durationLabel } from './sessionBrief';
+import { weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { isIllnessDay } from './illness';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
@@ -101,10 +102,12 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     return !trigger || trigger === 'session_skipped' || trigger === 'session_missed';
   };
   const trainings = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd && countsAsTraining(s));
-  const weekLogs = logs.filter((l) => l.completedDate >= weekStart && l.completedDate <= weekEnd && byId.get(l.templateId)?.type !== 'recovery');
+  // What was done that week, by the day it was done, with or without a plan: the same
+  // logs and the same minutes as the top of Week (engine/weekLogs.ts).
+  const weekLogs = weekLogsOf(logs, byId, weekStart);
   const done = trainings.filter((s) => loggedIds.has(s.id)).length;
   const missedSessions = trainings.filter((s) => !loggedIds.has(s.id) && (s.scheduledDate < asOf || s.status === 'skipped')).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
-  const minutes = weekLogs.reduce((n, l) => n + (l.durationMinutes || 0), 0);
+  const minutes = weekDoneMinutes(logs, byId, weekStart);
 
   // Per sport: kilometers and climbing, from what was logged.
   const sportTotals = new Map<Sport, { km: number; dplus: number }>();
