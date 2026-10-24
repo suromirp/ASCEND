@@ -18,6 +18,7 @@ import { ChangeLogCard } from '../components/ChangeLogCard';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
 import { adjustedSessionReasons } from '../engine/changeLog';
 import { SeasonOverview } from '../components/SeasonOverview';
+import { useSeasonHeader } from '../components/useSeasonHeader';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
@@ -30,6 +31,7 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { SkyBand } from '../components/SkyBand';
+import { Icon } from '../components/icons';
 
 // Minuten als 3:15.
 const hm = (minutes: number) => `${Math.floor(minutes / 60)}:${String(Math.round(minutes) % 60).padStart(2, '0')}`;
@@ -43,6 +45,7 @@ export function WeekPage() {
   // to a training and back, the page is as you left it.
   const [weekStart, setWeekStart] = usePageState('weekStart', mondayOfWeek(todayISO()), (v) => validWeekStart(v, todayISO()));
   const [monthView, setMonthView] = usePageState('monthView', false);
+  const seasonHeader = useSeasonHeader();
   // The back button leaves the year overview first, then the page.
   useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });
   const [selected, setSelected] = useState<PlannedSession | null>(null);
@@ -126,12 +129,16 @@ export function WeekPage() {
         <header className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             {monthView ? (
-              <>
-                <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>Jaaroverzicht</h1>
-                <button onClick={() => { setMonthView(false); scrollMainToTop(); }} className="-mt-1 min-h-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                  Terug naar de week
+              <div className="flex items-start gap-2">
+                <button onClick={() => { setMonthView(false); scrollMainToTop(); }} aria-label="Terug naar de week" className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+                  <Icon name="terug" size={24} />
                 </button>
-              </>
+                <div className="min-w-0 flex-1 pt-1">
+                  <Eyebrow>Jaaroverzicht</Eyebrow>
+                  <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{seasonHeader.title}</h1>
+                  {seasonHeader.line && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{seasonHeader.line}</p>}
+                </div>
+              </div>
             ) : (
               <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
                 {position ? <>Week <Num>{position.weekInProgram}</Num></> : 'Week'}
@@ -239,22 +246,24 @@ export function WeekPage() {
         </>
       )}
 
-      <div className="flex gap-2">
-        <SecondaryButton
-          onClick={() => {
-            setMonthView((v) => !v);
-            scrollMainToTop();
-          }}
-        >
-          {monthView ? 'Terug naar de week' : 'Jaaroverzicht'}
-        </SecondaryButton>
-        {!monthView && review && review.planned > 0 && (
-          <SecondaryButton onClick={() => setReviewOpen(true)}>Weekterugblik</SecondaryButton>
-        )}
-        {!monthView && weekStart !== mondayOfWeek(today) && (
-          <SecondaryButton onClick={() => setWeekStart(mondayOfWeek(today))}>Naar deze week</SecondaryButton>
-        )}
-      </div>
+      {!monthView && (
+        <div className="flex gap-2">
+          <SecondaryButton
+            onClick={() => {
+              setMonthView(true);
+              scrollMainToTop();
+            }}
+          >
+            Jaaroverzicht
+          </SecondaryButton>
+          {review && review.planned > 0 && (
+            <SecondaryButton onClick={() => setReviewOpen(true)}>Weekterugblik</SecondaryButton>
+          )}
+          {weekStart !== mondayOfWeek(today) && (
+            <SecondaryButton onClick={() => setWeekStart(mondayOfWeek(today))}>Naar deze week</SecondaryButton>
+          )}
+        </div>
+      )}
 
       {!monthView && restWeek?.isRestWeek && (
         <Card className="flex flex-col gap-2">
