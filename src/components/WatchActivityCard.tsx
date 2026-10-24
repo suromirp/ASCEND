@@ -12,6 +12,7 @@ import {
   dismissActivity,
   getWatchState,
   onWatchChange,
+  syncWatchActivities,
   recordAutoTicked,
   setAutoLoggedStatus,
   type WatchActivityState,
@@ -57,9 +58,16 @@ export function WatchActivityCard() {
     const load = () => void getWatchState().then((s) => alive && setState(s)).catch(() => undefined);
     load();
     const stop = onWatchChange(load);
+    // Back in the app (after a training, with the app still open): look again
+    // at intervals.icu. The sync itself keeps to once per 15 minutes.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void syncWatchActivities().catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       alive = false;
       stop();
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
