@@ -91,7 +91,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Per oefening staat op Forge je geschatte 1RM, met een kleine trend door de tijd.',
     points: [
       { head: 'Een schatting', text: 'uit je laatste sets, geen test. Het is hetzelfde getal waar ASCEND mee rekent.' },
-      { head: 'Uit', text: 'dan verdwijnt het blok. Je voorstel voor de volgende keer blijft staan.' },
+      { head: 'Uit', text: 'dan laat Forge alleen het werkgewicht zien, zonder schakelaar. Je voorstel voor de volgende keer blijft staan.' },
+    ],
+  },
+  forgeWeergave: {
+    title: 'Forge toont',
+    lead: 'Elke oefening op Forge heeft twee kanten: je geschatte 1RM en het werkgewicht.',
+    points: [
+      { head: '1RM', text: 'het getal van nu, de verandering over vier weken en een lijn door de tijd. Staat er een 1RM uit MacroFactor, dan staat die ernaast.' },
+      { head: 'Werkgewicht', text: 'het gewicht dat je volgens de schatting aankunt bij het aantal herhalingen van die oefening, met de lijn van eerder.' },
+      { head: 'Eén keuze', text: 'voor alle kaarten. Tik je op een kaart op de andere kant, dan verandert dit ook.' },
+    ],
+  },
+  forge1rmMacrofactor: {
+    title: 'MacroFactor-1RM erbij',
+    lead: 'MacroFactor schat ook een 1RM. ASCEND zet die naast die van jezelf, zonder ze te mengen.',
+    points: [
+      { head: 'Waar het vandaan komt', text: 'uit het blad "Exercises - 1-RM" van de volledige export. Lees de export opnieuw in voor nieuwe dagen.' },
+      { head: 'Twee getallen', text: 'ze kunnen verschillen: MacroFactor en ASCEND rekenen niet hetzelfde. Gebruik ze om de richting te zien, niet als maximum dat je moet halen.' },
+      { head: 'Uit', text: 'dan staat er alleen de schatting van ASCEND. Wat je ingelezen hebt blijft bewaard.' },
     ],
   },
   forgeSchijven: {

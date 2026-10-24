@@ -32,6 +32,7 @@ import {
 } from './macrofactorWeight';
 import { cellText, isXlsx, type Cell, type SheetTable } from './sheetTable';
 import { isProgramTable, readProgramRows, type MacroFactorProgram } from './macrofactorProgram';
+import { isOneRmSheetName, mergeOneRmResults, readOneRmRows, type MacroFactorOneRmResult } from './macrofactorOneRm';
 
 export interface MacroFactorContent {
   workouts?: MacroFactorReadResult;
@@ -39,6 +40,9 @@ export interface MacroFactorContent {
   // The training program (sheet "Training Programs"), offered as a proposal
   // for the strength templates (engine/macrofactorProgram.ts).
   program?: MacroFactorProgram;
+  // The 1RM per exercise (sheet "Exercises - 1-RM"), kept next to ASCEND's own
+  // estimate on Forge (engine/macrofactorOneRm.ts).
+  oneRm?: MacroFactorOneRmResult;
   // How many sheets were left alone (food, notes, settings, program templates
   // and the like). Said in one line, never one error per sheet.
   ignoredSheets: number;
@@ -144,6 +148,15 @@ export function readMacroFactorTables(input: SheetTable[]): MacroFactorContent {
         continue;
       }
     }
+    // The 1RM per exercise: told apart from the 3-RM and 10-RM sheets (the same
+    // shape) by the name of the sheet, as "Weight Trend" is.
+    if (isOneRmSheetName(table.name)) {
+      const oneRm = readOneRmRows(table.rows);
+      if (oneRm) {
+        content.oneRm = mergeOneRmResults(content.oneRm, oneRm);
+        continue;
+      }
+    }
     const located = locate(table);
     const at = located.at;
     // A file with one table that is not recognised gets the Workout Log
@@ -163,7 +176,7 @@ export function readMacroFactorTables(input: SheetTable[]): MacroFactorContent {
     }
   }
 
-  if (content.workouts || content.weight || content.program) {
+  if (content.workouts || content.weight || content.program || content.oneRm) {
     // A sheet that could not be read while another could is left alone, like
     // the ones that are not recognised: nothing is said per sheet.
     content.ignoredSheets = problems.length + unknown.length + (input.length - usable.length);
@@ -201,6 +214,8 @@ export interface ImportSummaryInput {
   // The last weight in the file, with what happened to it.
   weight?: { kg: number; date: string; basis: 'trend' | 'scale'; added: number; offInSettings: boolean };
   workoutCount?: number;
+  // The 1RM per exercise: for how many exercises how many new days were stored.
+  oneRm?: { exercises: number; added: number };
   ignoredSheets: number;
 }
 
@@ -228,6 +243,14 @@ export function importSummary(input: ImportSummaryInput, formatDate: (iso: strin
   if (input.program) {
     const p = input.program;
     lines.push(`Programma: ${p.name}, ${p.days === 1 ? '1 training' : `${p.days} trainingen`} per week, ${p.weeks === 1 ? '1 week' : `${p.weeks} weken`}. Hieronder zie je het voorstel.`);
+  }
+  if (input.oneRm) {
+    const { exercises, added } = input.oneRm;
+    lines.push(
+      added > 0
+        ? `1RM van MacroFactor: ${added === 1 ? '1 meting' : `${added} metingen`} bij ${exercises === 1 ? '1 oefening' : `${exercises} oefeningen`} opgeslagen. Je ziet ze naast je eigen schatting op Forge.`
+        : '1RM van MacroFactor: stond al in ASCEND.',
+    );
   }
   if (input.ignoredSheets > 0) lines.push('Voeding en andere gegevens laat ASCEND liggen.');
   return lines;

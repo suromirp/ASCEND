@@ -115,6 +115,14 @@ describe('het workoutscherm', () => {
     expect(resolveStrengthSettings({ showOneRm: false }).showOneRm).toBe(false);
     expect(normalizeStrengthSettings({ showOneRm: 'nee' })!.showOneRm).toBeUndefined();
   });
+  it('de keuze tussen 1RM en werkgewicht en de MacroFactor-1RM: advies 1RM en aan, rommel valt weg', () => {
+    expect(resolveStrengthSettings(undefined)).toMatchObject({ oneRmView: 'one_rm', showMacroFactorOneRm: true });
+    expect(resolveStrengthSettings({ oneRmView: 'work_weight', showMacroFactorOneRm: false })).toMatchObject({ oneRmView: 'work_weight', showMacroFactorOneRm: false });
+    const clean = normalizeStrengthSettings({ oneRmView: 'beide', showMacroFactorOneRm: 'ja' })!;
+    expect(clean.oneRmView).toBeUndefined();
+    expect(clean.showMacroFactorOneRm).toBeUndefined();
+    expect(normalizeStrengthSettings({ oneRmView: 'work_weight' })!.oneRmView).toBe('work_weight');
+  });
   it('de nieuwe rustgeluiden blijven staan en onbekende vallen weg', () => {
     for (const k of ['boxing', 'whistle', 'gong', 'chime']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);
     expect(normalizeStrengthSettings({ restSound: 'trompet' })!.restSound).toBeUndefined();

@@ -8,6 +8,7 @@ import { placementOf } from '../data/settingsLayout';
 import { rowSummary, type SettingsFacts } from './settingsSummary';
 
 const FORGE_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.';
+const ONE_RM_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen en Geschatte 1RM tonen aan staan.';
 const GARMIN_OFF = 'Deze keuze verschijnt pas als je Garmin hebt gekoppeld.';
 const INSIGHT_OFF = 'Deze keuze verschijnt pas als Inzicht na een training aan staat.';
 const MACROFACTOR_OFF = 'Deze keuze verschijnt pas als je een MacroFactor-export hebt ingelezen.';
@@ -28,6 +29,8 @@ const REASON: Record<string, string> = {
   'forge-opwarmbereik': FORGE_OFF,
   'forge-bereik': FORGE_OFF,
   'forge-schatting': FORGE_OFF,
+  'forge-weergave': ONE_RM_OFF,
+  'forge-1rm-macrofactor': ONE_RM_OFF,
   'garmin-trainingen': GARMIN_OFF,
   'vanzelf-afvinken': GARMIN_OFF,
   'garmin-leidend': GARMIN_OFF,

@@ -7,6 +7,7 @@
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
+import type { ExternalOneRm, OneRmReading } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
 
@@ -335,4 +336,51 @@ export function migrateLogDetail(log: SessionLog): SessionLog {
   const { detail: _damaged, ...rest } = log;
   void _damaged;
   return valid ? { ...rest, detail: valid } : rest;
+}
+
+// --- 1RM uit MacroFactor: settings.externalOneRm -------------------------------
+// The 1RM per exercise as another source reports it (models/metrics.ts#ExternalOneRm,
+// engine/macrofactorOneRm.ts). It lives in the settings, optional and additive, so
+// the backup schema number does not move (docs/beslissingen/2026-10-24-1rm-uit-macrofactor.md).
+// A backup from before it has no key: that is "unknown", never "empty", so importing
+// one leaves the readings on the device alone. A file that has it is read series by
+// series and reading by reading: a reading without a real date or a weight between
+// 0 and 1000 kg is dropped and counted, a series without name, source or any
+// reading is dropped and counted, and what stays is sorted with one reading per day.
+// Nothing is repaired or guessed, because a comparison on invented numbers is worse
+// than no comparison.
+const ONE_RM_SOURCES: MetricSource[] = ['manual', 'garmin', 'health-connect', 'macrofactor', 'import'];
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_ONE_RM_SERIES = 300;
+const MAX_ONE_RM_POINTS = 3000;
+const MAX_ONE_RM_KG = 1000;
+
+export function migrateExternalOneRm(raw: unknown): { series: ExternalOneRm[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { series: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { series: undefined, skipped: 1 };
+  const series: ExternalOneRm[] = [];
+  let skipped = 0;
+  for (const item of raw) {
+    if (series.length >= MAX_ONE_RM_SERIES) {
+      skipped++;
+      continue;
+    }
+    if (!isObj(item) || typeof item.exerciseName !== 'string' || item.exerciseName.trim() === '' || item.exerciseName.length > 120 || !ONE_RM_SOURCES.includes(item.source as MetricSource) || !Array.isArray(item.points)) {
+      skipped++;
+      continue;
+    }
+    const days = new Map<string, number>();
+    for (const p of item.points.slice(0, MAX_ONE_RM_POINTS)) {
+      if (isObj(p) && typeof p.date === 'string' && ISO_DAY.test(p.date) && fin(p.kg) && p.kg > 0 && p.kg <= MAX_ONE_RM_KG) days.set(p.date, p.kg);
+      else skipped++;
+    }
+    skipped += Math.max(0, item.points.length - MAX_ONE_RM_POINTS);
+    if (days.size === 0) {
+      skipped++;
+      continue;
+    }
+    const points: OneRmReading[] = [...days].map(([date, kg]) => ({ date, kg })).sort((a, b) => a.date.localeCompare(b.date));
+    series.push({ exerciseName: item.exerciseName.trim(), source: item.source as MetricSource, points });
+  }
+  return { series: series.length > 0 ? series : undefined, skipped };
 }

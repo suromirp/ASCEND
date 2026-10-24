@@ -44,6 +44,14 @@ describe('rowAvailability', () => {
     expect(settingAvailabilityOnPage('forge', off)).toEqual({ available: true });
   });
 
+  it('Geschatte 1RM tonen uit: de keuze tussen 1RM en werkgewicht en de MacroFactor-1RM staan er niet', () => {
+    const noOneRm = facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true, strengthModel: { showOneRm: false } } });
+    const expected = { available: false, reason: 'Deze keuze verschijnt pas als Kracht meerekenen en Geschatte 1RM tonen aan staan.' };
+    expect(rowAvailability('forge-weergave', noOneRm)).toEqual(expected);
+    expect(settingAvailabilityOnPage('forge-1rm-macrofactor', noOneRm)).toEqual(expected);
+    expect(rowAvailability('forge-weergave', facts())).toEqual({ available: true });
+  });
+
   it('niet gekoppeld: de horlogeschakelaars en de MacroFactor-keuzes staan er niet', () => {
     const none = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false }, macroFactor: { leads: true } });
     expect(rowAvailability('slaap', none).available).toBe(false);

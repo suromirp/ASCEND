@@ -280,3 +280,62 @@ describe('the summary of a whole export', () => {
     expect(importSummary({ workoutCount: 1, ignoredSheets: 0 }, () => '')[0]).toBe('Gewicht: niet in dit bestand.');
   });
 });
+
+describe('an export with the sheet Exercises - 1-RM', () => {
+  const oneRmSheet = (name = 'Exercises - 1-RM'): KitSheet => ({
+    name,
+    rows: [
+      ['Date', 'Back Squat (kg)', 'Hanging Leg Raise (kg)'],
+      [day('2026-10-05'), 100, null],
+      [day('2026-10-12'), 102.5, 40],
+    ],
+  });
+
+  it('reads the 1RM per exercise and says nothing about that sheet being left alone', async () => {
+    const content = await readMacroFactorBytes(makeXlsx([oneRmSheet(), { name: 'Voeding', rows: [['Date', 'Calories', 'Protein'], [day('2026-10-14'), 2400, 180]] }]));
+    expect(content.oneRm?.exercises).toEqual([
+      { name: 'Back Squat', points: [{ date: '2026-10-05', kg: 100 }, { date: '2026-10-12', kg: 102.5 }] },
+      { name: 'Hanging Leg Raise', points: [{ date: '2026-10-12', kg: 40 }] },
+    ]);
+    expect(content.weight).toBeUndefined();
+    expect(content.workouts).toBeUndefined();
+    expect(content.ignoredSheets).toBe(1);
+  });
+
+  it('reads the 1RM next to weight and workouts in one export, and leaves the 3-RM and 10-RM sheets alone', async () => {
+    const content = await readMacroFactorBytes(
+      makeXlsx([
+        { name: 'Weight Trend', rows: [['Date', 'Weight Trend (kg)'], [day('2026-10-13'), 85.7]] },
+        oneRmSheet(),
+        oneRmSheet('Exercises - 3-RM'),
+        oneRmSheet('Exercises - 10-RM'),
+        sheetFromCsv('Workout Log', workoutCsv),
+      ]),
+    );
+    expect(content.oneRm?.exercises).toHaveLength(2);
+    expect(content.oneRm?.exercises[0].points).toHaveLength(2);
+    expect(content.weight?.days).toHaveLength(1);
+    expect(content.workouts?.workouts).toHaveLength(4);
+    expect(content.ignoredSheets).toBe(2);
+  });
+
+  it('is enough for a file on its own, and a 3-RM sheet alone is still refused', async () => {
+    expect((await readMacroFactorBytes(makeXlsx([oneRmSheet()]))).oneRm?.exercises).toHaveLength(2);
+    const e = await refused(makeXlsx([oneRmSheet('Exercises - 3-RM')]));
+    expect(e.message).toContain('geen gewicht en geen krachttrainingen');
+  });
+
+  it('reads the sheet when MacroFactor wrote every line as one cell', () => {
+    const lines = ['Date,"Back Squat (kg)","Hanging Leg Raise (kg)"', '2026-10-05,100,', '2026-10-12,102.5,40'];
+    const content = readMacroFactorTables([{ name: 'Exercises - 1-RM', rows: lines.map((l) => [l]) }]);
+    expect(content.oneRm?.exercises.map((e) => e.name)).toEqual(['Back Squat', 'Hanging Leg Raise']);
+  });
+
+  it('tells in the summary how many readings were stored', () => {
+    const base = { ignoredSheets: 0 };
+    expect(importSummary({ ...base, oneRm: { exercises: 2, added: 3 } }, () => '')).toContain('1RM van MacroFactor: 3 metingen bij 2 oefeningen opgeslagen. Je ziet ze naast je eigen schatting op Forge.');
+    expect(importSummary({ ...base, oneRm: { exercises: 1, added: 1 } }, () => '')).toContain('1RM van MacroFactor: 1 meting bij 1 oefening opgeslagen. Je ziet ze naast je eigen schatting op Forge.');
+    expect(importSummary({ ...base, oneRm: { exercises: 0, added: 0 } }, () => '')).toContain('1RM van MacroFactor: stond al in ASCEND.');
+    expect(importSummary(base, () => '').join(' ')).not.toContain('1RM');
+  });
+});

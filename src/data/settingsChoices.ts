@@ -130,6 +130,16 @@ export const CHOICES = {
       { value: 20, label: 'Tot 20', note: 'Ook hoge bereiken tellen mee', short: 'Tot 20' },
     ],
   }),
+  forgeWeergave: def({
+    group: 'Forge',
+    title: 'Forge toont',
+    line: 'Wat de kaart van een oefening laat zien. Op de kaart zelf kun je ook wisselen.',
+    advice: 'one_rm' as 'one_rm' | 'work_weight',
+    options: [
+      { value: 'one_rm', label: '1RM', note: 'Je geschatte 1RM, met die van MacroFactor ernaast', short: '1RM' },
+      { value: 'work_weight', label: 'Werkgewicht', note: 'Wat je bij je herhalingen aankunt', short: 'Werkgewicht' },
+    ],
+  }),
   restsignaal: def({
     group: 'Forge',
     title: 'Signaal als de rust om is',

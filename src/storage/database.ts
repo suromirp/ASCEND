@@ -6,7 +6,7 @@ import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metr
 import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
-import type { WeightEntry } from '../models/metrics';
+import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { MorningCheckIn, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
@@ -585,6 +585,13 @@ export interface AppSettings {
   // export without a backup schema change; carries a source like every
   // other metric, so a Health Connect/MacroFactor adapter can fill it.
   weightEntries?: WeightEntry[];
+  // The 1RM per exercise as MacroFactor reports it (models/metrics.ts#ExternalOneRm,
+  // engine/macrofactorOneRm.ts), shown next to ASCEND's own estimate on Forge.
+  // History, like the weight: kept with the settings so it travels in a backup
+  // without a schema change, and a restore adds to it and never drops a day the
+  // device has. Optional and additive: absent on an older device or backup, and
+  // read defensively on import (storage/migrations.ts#migrateExternalOneRm).
+  externalOneRm?: ExternalOneRm[];
   // The short morning check-in: legs, energy, sleep (models/checkIn.ts).
   // Optional and additive, travels with the settings in an export.
   morningCheckIns?: MorningCheckIn[];

@@ -21,6 +21,9 @@ export type WarmupScope = 'group' | 'exercise';
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
 // The sound at the end of the rest: three soft bells, one deep bell, or the old beep.
 export type RestSound = 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong';
+// What the cards on Forge show per exercise: the estimated 1RM (with the
+// MacroFactor one next to it) or the weight you can handle at your rep range.
+export type OneRmView = 'one_rm' | 'work_weight';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -71,6 +74,11 @@ export interface StrengthSettings {
   showPlates?: boolean;
   // The block "Geschatte 1RM" with a trend on the Forge page.
   showOneRm?: boolean;
+  // The choice between the 1RM and the working weight on the cards of Forge, one
+  // for all cards (the switch on a card sets it). Only matters while showOneRm is on.
+  oneRmView?: OneRmView;
+  // The 1RM from the MacroFactor export, as a line next to ASCEND's own estimate.
+  showMacroFactorOneRm?: boolean;
   // Your own rest per exercise (by exercise id), in seconds, over the estimate.
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
@@ -96,6 +104,8 @@ export interface ResolvedStrengthSettings {
   carryWeights: boolean;
   showPlates: boolean;
   showOneRm: boolean;
+  oneRmView: OneRmView;
+  showMacroFactorOneRm: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
 }
@@ -160,6 +170,7 @@ const PROGRESSIONS: ProgressionFirst[] = ['weight_first', 'reps_first'];
 const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
 const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
+export const ONE_RM_VIEWS: OneRmView[] = ['one_rm', 'work_weight'];
 export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
 export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
 export const REST_LIMITS = { min: 15, max: 600 };
@@ -216,6 +227,9 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.carryWeights === 'boolean') out.carryWeights = raw.carryWeights;
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
+  const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
+  if (oneRmView) out.oneRmView = oneRmView;
+  if (typeof raw.showMacroFactorOneRm === 'boolean') out.showMacroFactorOneRm = raw.showMacroFactorOneRm;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
   const sound = REST_SOUNDS.find((a) => a === raw.restSound);
@@ -248,6 +262,8 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     carryWeights: s.carryWeights ?? true,
     showPlates: s.showPlates ?? true,
     showOneRm: s.showOneRm ?? true,
+    oneRmView: s.oneRmView ?? 'one_rm',
+    showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
   };
