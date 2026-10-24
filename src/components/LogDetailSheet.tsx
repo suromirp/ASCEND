@@ -7,6 +7,8 @@ import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton } from './ui';
+import { Icon } from './icons';
+import { keptNumbersLine, logSource } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
@@ -18,13 +20,16 @@ import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
-export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
+export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
+  const { undoLog, setLogWorkout, restoreFromWatch, sessionLogs, templates, program } = useAppData();
+  // Read the log fresh, so the sheet follows a change (the own numbers put back).
+  const log = sessionLogs.find((l) => l.id === shown.id) ?? shown;
   const activity = log.outdoorData ?? log.cardioData;
   const modality = activity?.modality ? getModality(log.templateId, activity.modality) : undefined;
   const garminType = activity?.garminSuggestedType;
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
 
-  const rows: { label: string; value: string }[] = [];
+  const rows: { label: string; value: string; icon?: 'horloge' | 'notitie' }[] = [];
   const done = workoutLine(log);
   if (done) rows.push({ label: 'Gedaan', value: done });
   if (modality) rows.push({ label: 'Modaliteit', value: modality.label });
@@ -52,13 +57,27 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
   if (log.rpe !== undefined) rows.push({ label: 'Zwaarte', value: `${log.rpe} van 10` });
   if (log.legsAtStart) rows.push({ label: 'Benen bij het inlopen', value: log.legsAtStart });
   if (log.strengthRir !== undefined) rows.push({ label: 'Over in zwaarste sets', value: log.strengthRir >= 4 ? '4 of meer' : log.strengthRir === 2.5 ? '2 tot 3' : String(log.strengthRir) });
+  const source = logSource(log);
+  rows.push({ label: 'Bron', value: source.label, icon: source.icon });
   const pains = painReports(log);
   if (pains.length > 0) {
     rows.push({ label: 'Pijn', value: pains.map((p) => `${p.area}${p.side ? ` ${p.side}` : ''}${log.painReports ? ` ${p.score}/10` : ''}${p.worseDuring ? ', erger' : ''}${p.onBone ? ', op het bot' : ''}`).join('; ') });
   }
 
   const { closing, requestClose } = useSheetClose(onClose);
-  const { undoLog, setLogWorkout, templates, program } = useAppData();
+  const [confirmRestore, setConfirmRestore] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const keptLine = keptNumbersLine(log);
+  async function putBack() {
+    if (restoring) return;
+    setRestoring(true);
+    try {
+      await restoreFromWatch([log.id]);
+      setConfirmRestore(false);
+    } finally {
+      setRestoring(false);
+    }
+  }
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Fill in the hard part afterwards: from what was saved, or the plan of that day.
   const [editing, setEditing] = useState<WorkoutDetails | null>(null);
@@ -94,9 +113,29 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
               {rows.map((r) => (
                 <div key={r.label} className="flex items-center justify-between border-b py-1.5 text-sm" style={{ borderColor: 'var(--color-card-border)' }}>
                   <span style={{ color: 'var(--color-ink-dim)' }}>{r.label}</span>
-                  <span style={{ color: 'var(--color-ink)' }}>{r.value}</span>
+                  <span className="flex items-center gap-1.5" style={{ color: 'var(--color-ink)' }}>
+                    {r.icon && <Icon name={r.icon} size={16} />}
+                    {r.value}
+                  </span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {keptLine && (
+            <div className="mt-3 flex flex-col gap-2">
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{keptLine}</p>
+              {confirmRestore ? (
+                <>
+                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? Garmin wordt dan niet meer gebruikt voor deze training.</p>
+                  <div className="flex gap-3">
+                    <button onClick={() => setConfirmRestore(false)} disabled={restoring} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
+                    <button onClick={() => void putBack()} disabled={restoring} className="min-h-11 flex-1 rounded-xl border text-xs font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>{restoring ? 'Bezig…' : 'Terugzetten'}</button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex"><SecondaryButton onClick={() => setConfirmRestore(true)}>Mijn getallen terugzetten</SecondaryButton></div>
+              )}
             </div>
           )}
 

@@ -54,3 +54,9 @@ Niets. Vult `2026-10-22-lege-velden-aanvullen.md` en `2026-10-22-vanzelf-afvinke
 ## Terugdraaien
 
 Zet "Garmin is leidend" uit: er gebeurt niets meer vanzelf. Zet alles terug via Bekijken en terugzetten op het koppelscherm; daarna zijn alle logs weer zoals je ze invulde.
+
+## Aanvulling 24 oktober 2026: bron en terugzetten in het logblad
+
+Het blad van een training in het Logboek toont nu een rij "Bron" met een horlogepictogram bij Garmin (ook bij een activiteit van intervals.icu), MacroFactor en Health Connect, en "Zelf ingevuld" of "Geïmporteerd" waar dat past (`src/engine/logSource.ts`). De bron van het blok met de getallen gaat voor.
+
+Heeft de training `manualMeasured`, dan staat eronder één regel met je eigen getallen, bijvoorbeeld "Je eigen getallen staan bewaard: 55 min, 41 m D+", en een knop "Mijn getallen terugzetten". Na een bevestiging gebruikt de knop dezelfde route als Terugzetten bij het koppelscherm (`restoreAlignments`): de eigen getallen komen terug, de activiteit wordt onthouden als afgewezen en wordt dus bij een volgende sync niet opnieuw overgenomen. Dit is dezelfde bewuste uitzondering op "een log wordt nooit herschreven", op uitdrukkelijk verzoek van de eigenaar. Een kracht-log die MacroFactor overnam krijgt deze knop niet; die heeft zijn eigen lijst.

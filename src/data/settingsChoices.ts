@@ -146,11 +146,14 @@ export const CHOICES = {
     group: 'Forge',
     title: 'Geluid na de rust',
     line: 'Tik een keuze om hem te horen.',
-    advice: 'chime' as 'chime' | 'bell' | 'beep',
+    advice: 'chime' as 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong',
     options: [
       { value: 'chime', label: 'Klokjes', note: 'Drie zachte tonen omhoog', short: 'Klokjes' },
       { value: 'bell', label: 'Bel', note: 'Eén diepe, ronde toon', short: 'Bel' },
       { value: 'beep', label: 'Piep', note: 'De korte piepjes van eerst', short: 'Piep' },
+      { value: 'boxing', label: 'Boksbel', note: 'Een korte ringbel, zoals bij een ronde', short: 'Boksbel' },
+      { value: 'whistle', label: 'Fluitje', note: 'Een kort sportfluitje met triller', short: 'Fluitje' },
+      { value: 'gong', label: 'Gong', note: 'Eén lage, rustige gong met lange uitklank', short: 'Gong' },
     ],
   }),
   herinnering: def({

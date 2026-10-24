@@ -112,6 +112,11 @@ describe('het workoutscherm', () => {
     expect(clean.carryWeights).toBeUndefined();
     expect(clean.showPlates).toBeUndefined();
   });
+  it('de nieuwe rustgeluiden blijven staan en onbekende vallen weg', () => {
+    for (const k of ['boxing', 'whistle', 'gong', 'chime']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);
+    expect(normalizeStrengthSettings({ restSound: 'trompet' })!.restSound).toBeUndefined();
+    expect(resolveStrengthSettings({ restSound: 'gong' }).restSound).toBe('gong');
+  });
   it('een waarde per oefening zetten en weer wissen', () => {
     const on = withExerciseValue({ warmup: 'off' }, 'exerciseNotes', 'leg-press', 'stoel op 4');
     expect(on).toEqual({ warmup: 'off', exerciseNotes: { 'leg-press': 'stoel op 4' } });
