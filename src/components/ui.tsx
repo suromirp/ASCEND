@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { haptics } from '../utils/haptics';
 import { BackButton } from './BackButton';
 import { Icon, type IconName } from './icons';
+import { EFFORT_COLOR } from './effortColor';
 import './settings/settings.css';
 
 // Een kaart: marine vlak, haarlijn, 16 px afronding en 16 px binnenruimte. Op de
@@ -433,7 +434,7 @@ export function ZoneBar({ active, label }: { active?: 1 | 2 | 3 | 4 | 5; label?:
             style={{
               flex: z === active ? 2 : 1,
               height: z === active ? 12 : 8,
-              background: z === active ? `var(--color-effort-${z})` : `color-mix(in srgb, var(--color-effort-${z}) 28%, var(--color-track))`,
+              background: z === active ? EFFORT_COLOR[z] : `color-mix(in srgb, ${EFFORT_COLOR[z]} 28%, var(--color-track))`,
             }}
           />
         ))}

@@ -18,7 +18,8 @@ const H = 96;
 const TOP = 20;
 const BASE = 88;
 
-export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous: DayLoad[]; today: string }) {
+// `bare`: zonder eigen kaart, om in de samenvattingskaart van Week te staan.
+export function WeekRidge({ days, previous, today, bare = false }: { days: DayLoad[]; previous: DayLoad[]; today: string; bare?: boolean }) {
   const gradientId = useId();
   const max = Math.max(1, ...days.map((d) => d.load), ...previous.map((d) => d.load));
   const x = (i: number) => ((i + 0.5) / 7) * W;
@@ -33,14 +34,14 @@ export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous
   const dashed = pts.slice(Math.max(0, lastSolid));
   const hasPrevious = previous.some((d) => d.load > 0);
 
-  return (
-    <Card className="flex flex-col gap-2" texture>
+  const body = (
+    <>
       <div className="flex flex-col gap-1">
         <Eyebrow>Belasting per dag</Eyebrow>
         <p className="flex items-center gap-4 whitespace-nowrap text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-[7px] w-[7px] rotate-45" style={{ background: 'var(--color-bronze)' }} aria-hidden="true" />
-            benen
+            <svg viewBox="0 0 12 12" width="10" height="10" fill="var(--color-warning)" aria-hidden="true"><path d="M6 1.5l5 9H1z" /></svg>
+            zware beendag
           </span>
           {hasPrevious && (
             <span className="flex items-center gap-1.5">
@@ -54,8 +55,8 @@ export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous
       <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="Belasting per dag, van maandag tot en met zondag">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--color-bronze)" stopOpacity=".28" />
-            <stop offset="1" stopColor="var(--color-bronze)" stopOpacity="0" />
+            <stop offset="0" stopColor="var(--color-progress)" stopOpacity=".22" />
+            <stop offset="1" stopColor="var(--color-progress)" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={`M0 ${(TOP + BASE) / 2}H${W}`} stroke="var(--color-card-border)" strokeDasharray="2 4" />
@@ -66,24 +67,24 @@ export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous
           </>
         )}
         <path d={area(pts)} fill={`url(#${gradientId})`} />
-        {solid.length > 1 && <path d={line(solid)} stroke="var(--color-gold)" strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" />}
-        {dashed.length > 1 && <path d={line(dashed)} stroke="var(--color-gold)" strokeWidth="2" strokeDasharray="4 4" fill="none" strokeLinejoin="round" strokeLinecap="round" />}
+        {solid.length > 1 && <path d={line(solid)} stroke="var(--color-progress)" strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" />}
+        {dashed.length > 1 && <path d={line(dashed)} stroke="var(--color-progress)" strokeWidth="2" strokeDasharray="4 4" fill="none" strokeLinejoin="round" strokeLinecap="round" />}
         <path d={`M0 ${BASE}H${W}`} stroke="var(--color-card-border)" />
         {pts.map(({ x: px, y: py, d }) => {
           const isToday = d.date === today;
           const done = d.date <= today;
           return (
             <g key={d.date}>
-              {d.legTemplate && d.load > 0 && <path d={`M${px - 5.5} ${py - 5} L${px} ${py - 13.5} L${px + 5.5} ${py - 5}Z`} fill="var(--color-bronze)" stroke="var(--color-card)" strokeWidth="1" />}
-              {isToday && <circle cx={px} cy={py} r="8" fill="var(--color-gold)" fillOpacity=".18" />}
+              {d.legTemplate && d.load > 0 && <path d={`M${px - 5.5} ${py - 5} L${px} ${py - 13.5} L${px + 5.5} ${py - 5}Z`} fill="var(--color-warning)" stroke="var(--color-card)" strokeWidth="1" />}
+              {isToday && <circle cx={px} cy={py} r="8" fill="var(--color-status)" fillOpacity=".22" />}
               {isToday ? (
-                <circle cx={px} cy={py} r="4.2" fill="var(--color-gold)" />
+                <circle cx={px} cy={py} r="4.2" fill="var(--color-status)" />
               ) : d.load === 0 ? (
                 <circle cx={px} cy={py} r="2.6" fill="var(--color-bg)" stroke="var(--color-stone)" strokeWidth="1.4" />
               ) : done ? (
-                <circle cx={px} cy={py} r="3.2" fill="var(--color-gold)" stroke="var(--color-gold)" strokeWidth="1.4" />
+                <circle cx={px} cy={py} r="3.2" fill="var(--color-progress)" stroke="var(--color-progress)" strokeWidth="1.4" />
               ) : (
-                <circle cx={px} cy={py} r="3.2" fill="var(--color-card)" stroke="var(--color-gold)" strokeWidth="1.4" />
+                <circle cx={px} cy={py} r="3.2" fill="var(--color-card)" stroke="var(--color-progress)" strokeWidth="1.4" />
               )}
             </g>
           );
@@ -92,7 +93,7 @@ export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous
 
       <div className="grid grid-cols-7 text-center text-xs tabular-nums" aria-hidden="true">
         {days.map((d) => (
-          <span key={d.date} className={d.date === today ? 'font-bold' : 'font-medium'} style={{ color: d.date === today ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
+          <span key={d.date} className={d.date === today ? 'font-bold' : 'font-medium'} style={{ color: d.date === today ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>
             {weekdayLongNL(d.date).charAt(0).toUpperCase()}
           </span>
         ))}
@@ -100,6 +101,7 @@ export function WeekRidge({ days, previous, today }: { days: DayLoad[]; previous
 
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{ridgeSentence(days, today)}</p>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De hoogte is minuten maal hoe zwaar het was.</p>
-    </Card>
+    </>
   );
+  return bare ? <div className="flex flex-col gap-2">{body}</div> : <Card className="flex flex-col gap-2">{body}</Card>;
 }

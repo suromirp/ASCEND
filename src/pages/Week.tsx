@@ -10,7 +10,7 @@ import { WeekReviewSheet } from '../components/WeekReview';
 import { ChevronIcon } from '../components/WeekIcons';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
-import { addDays, formatHoursMinutesNL, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
+import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
@@ -21,13 +21,18 @@ import { SeasonOverview } from '../components/SeasonOverview';
 import { SessionActionSheet } from '../components/SessionActionSheet';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
-import { Card, Eyebrow, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, Num, Ring, SecondaryButton, Stat } from '../components/ui';
+import { AdHocLogSheet } from '../components/AdHocLogSheet';
+import { formatNumberNL } from '../utils/number';
 import { restWeekState } from '../engine/restWeek';
 import { repeatState } from '../engine/repeatWeek';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { SkyBand } from '../components/SkyBand';
+
+// Minuten als 3:15.
+const hm = (minutes: number) => `${Math.floor(minutes / 60)}:${String(Math.round(minutes) % 60).padStart(2, '0')}`;
 
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
@@ -44,6 +49,9 @@ export function WeekPage() {
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant; atForm?: boolean } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
+  // De plus op een vrije dag van vandaag: dezelfde "Losse training" als op Vandaag.
+  const [adHocOpen, setAdHocOpen] = useState(false);
+  const [adHocTemplate, setAdHocTemplate] = useState<SessionTemplate | null>(null);
 
   // A rest day ASCEND gave up for a catch-up is simply gone, not "skipped".
   // Rest-day proposals show up right where you just moved a training.
@@ -71,6 +79,12 @@ export function WeekPage() {
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
   const progress = weekProgress(sessions, sessionLogs, templateById);
+  // Wat er deze week al gedaan is: tijd, kilometers en stijgen uit de logs.
+  const sessionIds = new Set(sessions.map((s) => s.id));
+  const doneMinutes = sessionLogs.filter((l) => l.plannedSessionId && sessionIds.has(l.plannedSessionId) && templateById.get(l.templateId)?.type !== 'recovery').reduce((n, l) => n + l.durationMinutes, 0);
+  const weekLogs = sessionLogs.filter((l) => l.completedDate >= weekStart && l.completedDate <= addDays(weekStart, 6) && l.type !== 'recovery');
+  const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
+  const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
   const review = weekStart <= today ? buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks }) : null;
   const phaseName = position ? position.phase.name.replace(/fase$/i, '') || position.phase.name : '';
 
@@ -109,39 +123,73 @@ export function WeekPage() {
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6">
       <SkyBand variant="low">
-      <header className="flex items-center justify-between">
-        <button
-          onClick={() => setWeekStart(addDays(weekStart, -7))}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center"
-          style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
-          aria-label="Vorige week"
-        >
-          <ChevronIcon dir="left" />
-        </button>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <Eyebrow>{monthView ? 'Jaaroverzicht' : position ? `Week ${position.weekInProgram} · ${phaseName}` : 'Week'}</Eyebrow>
-          {monthView && (
-            <button onClick={() => { setMonthView(false); scrollMainToTop(); }} className="min-h-[44px] text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
-              Terug naar de week
+        <header className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            {monthView ? (
+              <>
+                <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>Jaaroverzicht</h1>
+                <button onClick={() => { setMonthView(false); scrollMainToTop(); }} className="-mt-1 min-h-[44px] text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                  Terug naar de week
+                </button>
+              </>
+            ) : (
+              <h1 className="font-display text-[32px] leading-tight" style={{ color: 'var(--color-ink)' }}>
+                {position ? <>Week <Num>{position.weekInProgram}</Num></> : 'Week'}
+                {phaseName && <span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{phaseName.trim().toLowerCase()}</span>}
+              </h1>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center" style={{ visibility: monthView ? 'hidden' : undefined }}>
+            <button
+              onClick={() => setWeekStart(addDays(weekStart, -7))}
+              className="flex h-11 w-11 items-center justify-center"
+              style={{ color: 'var(--color-ink-dim)' }}
+              aria-label="Vorige week"
+              tabIndex={monthView ? -1 : undefined}
+            >
+              <ChevronIcon dir="left" />
             </button>
-          )}
-          {!monthView && (
-            <p className="text-[13px] tabular-nums" style={{ color: 'var(--color-ink)' }}>
-              {totalWeekMinutes > 0 ? `${formatHoursMinutesNL(totalWeekMinutes)} gepland` : 'Niets gepland'}
-              {progress.total > 0 && <span style={{ color: 'var(--color-ink-dim)' }}> · {progress.done} van {progress.total} gedaan</span>}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={() => setWeekStart(addDays(weekStart, 7))}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center"
-          style={{ color: 'var(--color-ink-dim)', visibility: monthView ? 'hidden' : undefined }}
-          aria-label="Volgende week"
-        >
-          <ChevronIcon dir="right" />
-        </button>
-      </header>
+            <button
+              onClick={() => setWeekStart(addDays(weekStart, 7))}
+              className="flex h-11 w-11 items-center justify-center"
+              style={{ color: 'var(--color-ink-dim)' }}
+              aria-label="Volgende week"
+              tabIndex={monthView ? -1 : undefined}
+            >
+              <ChevronIcon dir="right" />
+            </button>
+          </div>
+        </header>
       </SkyBand>
+
+      {!monthView && (
+        <Card className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <Ring value={progress.total > 0 ? progress.done / progress.total : 0} label={`${progress.done} van ${progress.total} gedaan`} size={76}>
+              <span className="font-sans text-lg font-semibold leading-none tabular-nums" style={{ color: 'var(--color-ink)' }}>
+                {progress.done}<span className="text-sm font-medium" style={{ color: 'var(--color-ink-dim)' }}>/{progress.total}</span>
+              </span>
+              <span className="mt-0.5 text-xs leading-4" style={{ color: 'var(--color-ink-dim)' }}>gedaan</span>
+            </Ring>
+            <div className="min-w-0 flex-1">
+              {totalWeekMinutes > 0 ? (
+                <Stat label="Tijd" value={hm(doneMinutes)} unit={`van ${hm(totalWeekMinutes)} uur`} size="m" />
+              ) : (
+                <Stat label="Tijd" value="Niets gepland" size="s" />
+              )}
+              {(weekKm > 0 || weekGain > 0) && (
+                <p className="mt-2 flex flex-wrap gap-x-4 font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>
+                  {weekKm > 0 && <span><span className="font-semibold">{formatNumberNL(Math.round(weekKm * 10) / 10)}</span> <span style={{ color: 'var(--color-ink-dim)' }}>km</span></span>}
+                  {weekGain > 0 && <span><span className="font-semibold">{Math.round(weekGain)}</span> <span style={{ color: 'var(--color-ink-dim)' }}>m stijgen</span></span>}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+            <WeekRidge days={profile.days} previous={profile.previous} today={today} bare />
+          </div>
+        </Card>
+      )}
 
       {!monthView && restAdvice.length > 0 && (
         <Card className="flex flex-col gap-3" texture>
@@ -186,8 +234,8 @@ export function WeekPage() {
             onSelectSession={selectSession}
             adjustedIds={adjustedIds}
             leave={leavePeriods}
+            onAddFree={() => setAdHocOpen(true)}
           />
-          <WeekRidge days={profile.days} previous={profile.previous} today={today} />
         </>
       )}
 
@@ -244,6 +292,11 @@ export function WeekPage() {
           </p>
         </Card>
       )}
+
+      {adHocOpen && (
+        <AdHocLogSheet templates={templates} onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }} onClose={() => setAdHocOpen(false)} />
+      )}
+      {adHocTemplate && <ExerciseLogger template={adHocTemplate} scheduledDate={todayISO()} program={program} onClose={() => setAdHocTemplate(null)} />}
 
       {reviewOpen && review && <WeekReviewSheet review={review} onClose={() => setReviewOpen(false)} />}
 

@@ -70,13 +70,14 @@ export function IllnessStatusCard() {
 
 // "Niet fit?" link + the three-choice sheet. Hidden while already ill.
 // `plain`: zonder onderstreping, als gewone tekstknop naast Verplaatsen op de missiekaart.
-export function NotFitLink({ plain = false }: { plain?: boolean }) {
+// `outlined`: de mint omlijnde knop naast Verplaatsen op de missiekaart.
+export function NotFitLink({ plain = false, outlined = false }: { plain?: boolean; outlined?: boolean }) {
   const { settings, reportIllness } = useAppData();
   const [open, setOpen] = useState(false);
   if (activeIllness(settings.illnessEpisodes)) return null;
   return (
     <>
-      <button onClick={() => setOpen(true)} className={plain ? 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-sm font-medium' : 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center self-center text-xs font-medium'} style={{ color: 'var(--color-ink-dim)' }}>
+      <button onClick={() => setOpen(true)} className={outlined ? 'flex-1 min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium transition-all active:scale-[0.97] active:opacity-70' : plain ? 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-sm font-medium' : 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center self-center text-xs font-medium'} style={outlined ? { border: '1.5px solid color-mix(in srgb, var(--color-action) 75%, transparent)', color: 'var(--color-action)' } : { color: 'var(--color-ink-dim)' }}>
         Niet fit?
       </button>
       {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await reportIllness(kind); }} onClose={() => setOpen(false)} />}

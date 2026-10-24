@@ -9,12 +9,15 @@ import { isLegHeavyTemplate } from '../engine/scheduler';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
-import { LegMark, WeekSportIcon, WeekStatusIcon } from './WeekIcons';
+import { LegMark, WeekStatusIcon } from './WeekIcons';
+import { SportDisc } from './SportDisc';
+import { zoneOfTemplate } from './vandaag/zone';
 import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
 import type { WatchStatusKind } from '../engine/watchStatus';
 import { addDays, weekDates, weekdayShortNL, todayISO } from '../utils/dates';
-import { Eyebrow } from './ui';
+import { Eyebrow, StatusPill } from './ui';
+import { EFFORT_COLOR } from './effortColor';
 
 // De week als compacte lijst op één scherm: per dag een regel met status,
 // dag, sport, naam en duur. Een tik opent de actiesheet van die training
@@ -26,21 +29,22 @@ const dayLabel = (date: string) => {
   return `${short.charAt(0).toUpperCase()}${short.slice(1)} ${Number(date.slice(8, 10))}`;
 };
 
-// Een dag zonder verplichting is licht verlaagd; vandaag heeft een streepje in ijs en lichte gloed.
+// Vandaag heeft een streepje in ijs en een lichte gloed; een rustdag een lichte tint.
 const todayStyle = {
-  background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-status) 10%, transparent), transparent 70%)',
-  boxShadow: 'inset 2px 0 0 var(--color-status)',
+  background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-status) 12%, transparent), transparent 80%)',
+  boxShadow: 'inset 3px 0 0 var(--color-status)',
 };
+const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, first, logs, program, onTap, adjusted, isToday, watch,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
   date: string;
-  first: boolean;
   logs: SessionLog[];
   program?: Program | null;
+  templates: SessionTemplate[];
   onTap: () => void;
   adjusted: boolean;
   isToday: boolean;
@@ -53,30 +57,64 @@ function SessionRow({
   const duration = resolveEffectiveFullDuration(template, session.scheduledDate, program);
   const dim = status === 'skipped' || status === 'missed';
   const note = status === 'completed' ? undefined : adjusted ? 'aangepast' : wasMoved ? 'verplaatst' : undefined;
+  const zone = isRest ? undefined : zoneOfTemplate(template, session.scheduledDate, program, templates);
+  const legs = !isRest && isLegHeavyTemplate(template);
+  const doneNow = status === 'completed';
+  const showToday = isToday && !doneNow && status !== 'skipped';
   return (
     <button
       type="button"
       onClick={onTap}
-      className="flex min-h-[52px] w-full items-center gap-2 border-t px-3 py-1.5 text-left transition-colors active:opacity-75 first:border-t-0"
-      style={{ borderColor: 'var(--color-card-border)', opacity: dim ? 0.55 : 1, ...(isToday ? todayStyle : {}) }}
+      className="flex min-h-[64px] w-full items-center gap-3 border-t px-3 py-2 text-left transition-colors active:opacity-75 first:border-t-0"
+      style={{ borderColor: 'var(--color-card-border)', opacity: dim ? 0.55 : 1, ...(isToday ? todayStyle : isRest ? restStyle : {}) }}
     >
-      <WeekStatusIcon status={isToday && isRest && status === 'rest' ? 'today' : status} />
-      <span className="w-11 shrink-0 whitespace-nowrap text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
-        {first ? dayLabel(date) : ''}
-      </span>
-      <span className="hidden min-[380px]:contents">{isRest ? <span className="h-4 w-4 shrink-0" aria-hidden="true" /> : <WeekSportIcon template={template} />}</span>
+      <SportDisc template={template} size={44} />
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-[15px] leading-snug" style={{ color: isRest ? 'var(--color-ink-dim)' : 'var(--color-ink)' }}>
-          {isRest ? REST_DAY_COPY[restMode].title : template.name}
+        <span className="flex items-center gap-1.5">
+          <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>
+            {isRest ? REST_DAY_COPY[restMode].title : template.name}
+          </span>
+          {legs && <LegMark />}
         </span>
-        {note && <span className="block text-xs" style={{ color: 'var(--color-sky)' }}>{note}</span>}
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+          <span>{dayLabel(date)}</span>
+          {isRest ? (
+            <span>· bewust herstel</span>
+          ) : (
+            <>
+              <span aria-hidden="true">·</span>
+              {zone && (
+                <>
+                  <span className="inline-block h-[3px] w-4 rounded-full" style={{ background: EFFORT_COLOR[zone] }} aria-hidden="true" />
+                  <span className="sr-only">Zone {zone}</span>
+                </>
+              )}
+              <span>{duration} min</span>
+            </>
+          )}
+          {note && <span style={{ color: 'var(--color-sky)' }}>· {note}</span>}
+        </span>
       </span>
-      {/* Eén rechterkolom van vaste breedte: ruit, horloge en duur naast elkaar. */}
-      <span className="flex w-[76px] shrink-0 items-center justify-end gap-1.5 whitespace-nowrap text-[13px] tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-        {!isRest && isLegHeavyTemplate(template) && <LegMark />}
+      {/* Rechts: wat er te zien is van het horloge en de stand van de training. */}
+      <span className="flex shrink-0 items-center gap-2">
         {watch === 'sent' && <span className="flex" style={{ color: 'var(--color-success-text)' }}><Icon name="horloge" size={14} label="Verstuurd naar je horloge" /></span>}
         {watch === 'failed' && <span className="flex" style={{ color: 'var(--color-warning)' }}><Icon name="horloge" size={14} label="Versturen naar je horloge is niet gelukt" /></span>}
-        <span>{isRest ? (status === 'completed' ? `${duration} min` : REST_DAY_COPY[restMode].badge.toLowerCase() === REST_DAY_COPY[restMode].title.toLowerCase() ? '' : REST_DAY_COPY[restMode].badge) : `${duration} min`}</span>
+        {doneNow ? (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-progress)', color: 'var(--color-progress)' }}>
+            <Icon name="vinkje" size={14} />
+            <span className="sr-only">Gedaan</span>
+          </span>
+        ) : showToday ? (
+          <StatusPill tone="action">Vandaag</StatusPill>
+        ) : isRest ? (
+          <StatusPill tone="status">{status === 'skipped' ? 'Overgeslagen' : 'Herstel'}</StatusPill>
+        ) : status === 'planned' || status === 'moved' ? (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }}>
+            <span className="sr-only">Gepland</span>
+          </span>
+        ) : (
+          <WeekStatusIcon status={status} />
+        )}
       </span>
     </button>
   );
@@ -91,6 +129,7 @@ export function WeekPlanner({
   onSelectSession,
   adjustedIds,
   leave,
+  onAddFree,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -101,12 +140,15 @@ export function WeekPlanner({
   adjustedIds?: Set<string>;
   // Free days, holidays and treks: shown as a quiet band on their days.
   leave?: LeavePeriod[];
+  // De plus op een vrije dag van vandaag: de bestaande "Losse training".
+  onAddFree?: () => void;
 }) {
   const days = weekDates(weekStartDate);
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
   const { statusOf } = useWatchStatuses();
   const showWatch = useAppData().settings.showWatchStatusOnWeek !== false;
+  const templates = Array.from(templateById.values());
 
   if (days.length === 0) return <Eyebrow>GEEN DATA</Eyebrow>;
 
@@ -126,19 +168,19 @@ export function WeekPlanner({
         return (
           <div key={date} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
             {leaveLabel && (
-              <div className="flex items-center gap-3 px-3 py-2">
+              <div className="flex items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
                 <WeekStatusIcon status="rest" />
-                <span className="w-12 shrink-0 text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{dayLabel(date)}</span>
+                <span className="w-12 shrink-0 text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{dayLabel(date)}</span>
                 <div className="min-w-0 flex-1"><LeaveBand label={leaveLabel} /></div>
               </div>
             )}
-            {rows.map(({ s, template }, i) => (
+            {rows.map(({ s, template }) => (
               <SessionRow
                 key={s.id}
                 session={s}
                 template={template}
                 date={date}
-                first={i === 0 && !leaveLabel}
+                templates={templates}
                 logs={logs}
                 program={program}
                 onTap={() => onSelectSession(s)}
@@ -148,15 +190,22 @@ export function WeekPlanner({
               />
             ))}
             {showEmpty && (
-              <div className="flex min-h-[52px] items-center gap-3 px-3" style={isToday ? todayStyle : undefined}>
-                <WeekStatusIcon status={isToday ? 'today' : 'rest'} />
-                <span className="w-12 shrink-0 text-[13px] font-semibold tabular-nums" style={{ color: isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{dayLabel(date)}</span>
-                <span className="text-[15px]" style={{ color: 'var(--color-ink-dim)' }}>Geen training gepland</span>
+              <div className="flex min-h-[64px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
+                <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 rounded-full" style={{ border: '1.5px dashed var(--color-control-border)' }} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Vrij</span>
+                  <span className="block text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{dayLabel(date)} · niets gepland</span>
+                </span>
+                {isToday && onAddFree && (
+                  <button type="button" onClick={onAddFree} aria-label="Losse training toevoegen" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--color-action)' }}>
+                    <Icon name="plus" size={20} />
+                  </button>
+                )}
               </div>
             )}
             {advice && (
-              <p className="flex flex-wrap items-center gap-x-1.5 px-3 pb-2 pl-[52px] text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)' }}>{advice.avoid ? 'Liever niet op één dag' : advice.headline}</span>
+              <p className="flex flex-wrap items-center gap-x-1.5 px-3 pb-2 pl-[68px] text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-progress)' }}>{advice.avoid ? 'Liever niet op één dag' : advice.headline}</span>
                 {advice.gapHours && <span>· liefst {advice.gapHours} uur ertussen</span>}
               </p>
             )}

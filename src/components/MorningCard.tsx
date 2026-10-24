@@ -5,10 +5,11 @@ import { useAppData } from '../state/AppDataContext';
 import type { LegFeeling } from '../models/checkIn';
 import { checkInFor, recentPainSpot } from '../engine/wellbeing';
 import { LEGS, SOURCE_TEXT } from '../engine/morningCard';
-import { watchSummaryLine } from '../engine/wellnessCheck';
+import { NO_SLEEP_TEXT, watchSummaryLine, type WellnessLine } from '../engine/wellnessCheck';
 import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
 import { todayISO } from '../utils/dates';
-import { Card, Eyebrow } from './ui';
+import { Card, SecondaryButton, Stat } from './ui';
+import { Icon } from './icons';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
 import { useMorningPrefill } from './useMorningPrefill';
 import { markMorningAnswered } from './useMorningCardVisible';
@@ -64,12 +65,14 @@ export function MorningCard() {
     const legsText = answered.allNormal ? 'Gaat goed' : `Benen ${(LEGS.find(([k]) => k === answered.legs)?.[1] ?? 'ingevuld').toLowerCase()}`;
     return (
       <>
-        <Card className="flex flex-col gap-2">
-          <Eyebrow>Vanochtend</Eyebrow>
-          <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{legsText}. Opgeslagen.</p>
+        <Card className="flex flex-col gap-3">
+          <div>
+            <Title />
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{legsText}. Opgeslagen.</p>
+          </div>
           <div className="flex gap-2">
-            <button onClick={() => setSheet({})} className="min-h-[44px] flex-1 rounded-xl border px-3 text-sm font-medium" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>Wijzigen</button>
-            <button onClick={undo} className="min-h-[44px] flex-1 rounded-xl border px-3 text-sm font-medium" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>Ongedaan maken</button>
+            <SecondaryButton onClick={() => setSheet({})}>Wijzigen</SecondaryButton>
+            <SecondaryButton onClick={undo}>Ongedaan maken</SecondaryButton>
           </div>
         </Card>
         {sheet && <MorningCheckInSheet onClose={() => setSheet(null)} />}
@@ -77,15 +80,38 @@ export function MorningCard() {
     );
   }
 
+  const stats = (reading?.lines ?? []).flatMap((l) => {
+    const stat = statOf(l);
+    return stat ? [stat] : [];
+  });
+
   return (
     <>
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-4">
         <div>
-          <Eyebrow>Vanochtend</Eyebrow>
-          <h2 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Goedemorgen. Hoe voel je je?</h2>
-          {line && <p className="mt-1.5 text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+          <div className="flex items-center justify-between gap-2">
+            <Title />
+            {stats.length > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+                <Icon name="horloge" size={14} />
+                van je horloge
+              </span>
+            )}
+          </div>
+          {stats.length > 0 ? (
+            <div className="mt-3 grid divide-x" style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, borderColor: 'var(--color-card-border)' }}>
+              {stats.map((st, i) => (
+                <div key={st.label} className={`min-w-0 ${i > 0 ? 'pl-4' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
+                  <Stat label={st.label} value={st.value} unit={st.unit} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            line && <p className="mt-1.5 text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>
+          )}
           {missingSleep && (
-            <div className="mt-1 flex items-center gap-3">
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {stats.length > 0 && <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{NO_SLEEP_TEXT}</span>}
               <button onClick={() => void fetchAgain()} disabled={fetching === 'busy'} className="min-h-[44px] rounded-lg border px-3 text-xs font-medium disabled:opacity-40" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
                 Opnieuw ophalen
               </button>
@@ -94,16 +120,20 @@ export function MorningCard() {
           )}
         </div>
         <div>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je benen, één tik is genoeg</p>
-          <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelen je benen? Eén tik is genoeg</p>
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
             {LEGS.map(([k, text]) => {
               const isSuggestion = suggested?.value === k;
               return (
                 <button
                   key={k}
                   onClick={() => answer(k)}
-                  className="min-h-[44px] rounded-lg border px-1 text-xs leading-tight"
-                  style={{ borderColor: isSuggestion ? 'var(--color-bronze)' : 'var(--color-card-border)', color: 'var(--color-ink)' }}
+                  className="min-h-[44px] rounded-xl px-1 text-sm leading-tight transition-all active:scale-[0.97]"
+                  style={{
+                    boxShadow: isSuggestion ? 'inset 0 0 0 1.5px var(--color-action)' : 'inset 0 0 0 1px var(--color-control-border)',
+                    background: isSuggestion ? 'color-mix(in srgb, var(--color-action) 10%, transparent)' : 'transparent',
+                    color: 'var(--color-ink)',
+                  }}
                 >
                   {text}
                 </button>
@@ -118,7 +148,7 @@ export function MorningCard() {
         </div>
         <button
           onClick={() => setSheet({})}
-          className="-my-1 min-h-[44px] self-start text-xs font-medium"
+          className="-my-2 min-h-[44px] self-start text-xs font-medium"
           style={{ color: 'var(--color-ink-dim)' }}
         >
           Energie, slaap of pijn invullen
@@ -127,6 +157,27 @@ export function MorningCard() {
       {sheet && <MorningCheckInSheet initialLegs={sheet.legs} onClose={() => setSheet(null)} />}
     </>
   );
+}
+
+function Title() {
+  return <h2 className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>Vanochtend</h2>;
+}
+
+// De drie getallen van het horloge als Stat: waarde en eenheid apart.
+function statOf(l: WellnessLine): { label: string; value: string; unit?: string } | undefined {
+  if (l.key === 'restingHeartRate') {
+    const n = /^(\d+)/.exec(l.value)?.[1];
+    return n ? { label: 'Rusthart', value: n, unit: 'bpm' } : undefined;
+  }
+  if (l.key === 'hrv') {
+    const n = /^(\d+)/.exec(l.value)?.[1];
+    return n ? { label: 'HRV', value: n, unit: 'ms' } : undefined;
+  }
+  const hm = /^(\d+) uur(?: (\d+))?$/.exec(l.value);
+  if (hm) return { label: 'Slaap', value: `${hm[1]}:${(hm[2] ?? '0').padStart(2, '0')}`, unit: 'u' };
+  const min = /^(\d+) min$/.exec(l.value);
+  if (min) return { label: 'Slaap', value: min[1], unit: 'min' };
+  return { label: 'Slaap', value: l.value };
 }
 
 // De melding "Goedemorgen. Hoe voel je je?" opent Vandaag op `#/?actie=ochtend`

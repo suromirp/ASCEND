@@ -13,7 +13,9 @@ function Glyph({ size = 18, children }: { size?: number; children: ReactNode }) 
 }
 
 export const CheckGlyph = ({ size }: { size?: number }) => <Glyph size={size}><path d="M5 12.5l4.2 4L19 7" /></Glyph>;
-export const ChevronGlyph = ({ size }: { size?: number }) => <Glyph size={size}><path d="M9 6l6 6-6 6" /></Glyph>;
+// Het maantje van een rustdag.
+export const MoonGlyph = ({ size }: { size?: number }) => <Glyph size={size}><path d="M19.5 14.2A8 8 0 1 1 9.8 4.5a6.4 6.4 0 0 0 9.7 9.7z" /></Glyph>;
+export const ChevronGlyph =({ size }: { size?: number }) => <Glyph size={size}><path d="M9 6l6 6-6 6" /></Glyph>;
 
 // Een rustdag is een dal: groene hoogtelijnen met een gouden stip onderin.
 export function ValleyLines() {

@@ -59,6 +59,9 @@ import type { ScheduleProposal } from '../engine/scheduler';
 import { goalTiming } from '../engine/goalRoute';
 import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
+import { WeekStrip } from '../components/vandaag/WeekStrip';
+import { zoneOfTemplate } from '../components/vandaag/zone';
+import { templateIcon } from '../components/sportKind';
 
 export function TodayPage() {
   const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -238,10 +241,11 @@ export function TodayPage() {
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
             <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Week {position.weekInProgram} · {position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
+              Week {position.weekInProgram} van de {position.phase.name.replace(/fase$/i, '').trim().toLowerCase() || position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
         </header>
+        <WeekStrip weekStart={weekStart} sessions={weekSessions} logs={sessionLogs} templateById={templateById} program={program} today={today} />
       </SkyBand>
 
       {/* Boven de missie alleen wat echt eerst moet: ziek, nieuw begonnen, back-up. */}
@@ -269,6 +273,7 @@ export function TodayPage() {
           fullDuration={resolveEffectiveFullDuration(primaryTemplate, primary.scheduledDate, program)}
           weekNote={weeklyProgressionNote(primaryTemplate, primary.scheduledDate, program)}
           chips={mission.chips}
+          zone={zoneOfTemplate(primaryTemplate, primary.scheduledDate, program, templates)}
           paceNote={mission.paceNote}
           quickComplete={isQuickComplete(primaryTemplate)}
           onStart={(variant, feel, durationMinutes, extra) => startSession(primary, primaryTemplate, variant, feel, durationMinutes, extra)}
@@ -374,6 +379,7 @@ export function TodayPage() {
             <DayRow
               key={s.id}
               label={done ? 'Gedaan' : 'Training'}
+              icon={templateIcon(t)}
               state={trainingRowState(status, s.id === primary?.id)}
               onClick={() => setActionSheetSession(s)}
               trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
