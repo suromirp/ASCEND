@@ -125,11 +125,11 @@ export function StandingPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
       <SkyBand>
         <div>
+          {position && <Eyebrow>Week {position.weekInProgram} van de {position.phase.name.toLowerCase()}</Eyebrow>}
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            {position ? `Week ${position.weekInProgram}, ${position.phase.name.toLowerCase()}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
-          </p>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
         </div>
+        {gr5 && <Gr5ReadinessCard readiness={gr5} light />}
       </SkyBand>
 
       <nav className="sticky top-0 z-10 -mx-4 flex gap-2 px-4 py-2" style={{ background: 'var(--color-bg)' }} aria-label="Onderdelen">
@@ -144,25 +144,6 @@ export function StandingPage() {
           </button>
         ))}
       </nav>
-
-      <Card className="flex flex-col">
-        {rows.map((r, i) => (
-          <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
-            <div className="flex items-baseline justify-between gap-3">
-              <Eyebrow as="span">{r.label}</Eyebrow>
-              <span className="font-sans text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
-            </div>
-            {'dots' in r && r.dots && r.dots.length > 0 && (
-              <div className="flex gap-1.5" aria-hidden>
-                {r.dots.map((done, j) => (
-                  <span key={j} className="h-1.5 flex-1 rounded-full" style={{ background: done ? 'var(--color-bronze)' : 'var(--color-charcoal)' }} />
-                ))}
-              </div>
-            )}
-            {r.text && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{r.text}</p>}
-          </div>
-        ))}
-      </Card>
 
       <section ref={(el) => { refs.current.benen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Benen">
         <LegFatigueCard />
@@ -181,10 +162,29 @@ export function StandingPage() {
               <span className="block font-display text-xl" style={{ color: 'var(--color-ink)' }}>Forge</span>
               <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
             </span>
-            <span className="shrink-0 text-sm" style={{ color: 'var(--color-bronze)' }}><Icon name="verder" size={16} /></span>
+            <span className="shrink-0 text-sm" style={{ color: 'var(--color-progress)' }}><Icon name="verder" size={16} /></span>
           </button>
         )}
       </section>
+
+      <Card className="flex flex-col">
+        {rows.map((r, i) => (
+          <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
+            <div className="flex items-baseline justify-between gap-3">
+              <Eyebrow as="span">{r.label}</Eyebrow>
+              <span className="font-sans text-lg tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.value}</span>
+            </div>
+            {'dots' in r && r.dots && r.dots.length > 0 && (
+              <div className="flex gap-1.5" aria-hidden>
+                {r.dots.map((done, j) => (
+                  <span key={j} className="h-1.5 flex-1 rounded-full" style={{ background: done ? 'var(--color-progress)' : 'var(--color-charcoal)' }} />
+                ))}
+              </div>
+            )}
+            {r.text && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{r.text}</p>}
+          </div>
+        ))}
+      </Card>
 
       <section ref={(el) => { refs.current.lopen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Lopen">
         <RunTrendsCard />
@@ -192,7 +192,6 @@ export function StandingPage() {
       </section>
 
       <section ref={(el) => { refs.current.doel = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Doel">
-        {gr5 && <Gr5ReadinessCard readiness={gr5} compact />}
         {progress && <AdventureCard progress={progress} onOpenLadder={() => navigate('/ascend')} />}
         <LessonCard />
       </section>

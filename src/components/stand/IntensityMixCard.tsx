@@ -28,7 +28,7 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
       <div className="relative">
         <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" role="img" aria-label={PARTS.map((p) => `${p.label} ${pct(mix.sessions[p.key])}%`).join(', ')}>
           {PARTS.filter((p) => mix.sessions[p.key] > 0).map((p) => (
-            <span key={p.key} style={{ width: `${pct(mix.sessions[p.key])}%`, background: 'var(--color-bronze)', opacity: p.opacity }} />
+            <span key={p.key} style={{ width: `${pct(mix.sessions[p.key])}%`, background: 'var(--color-progress)', opacity: p.opacity }} />
           ))}
         </div>
         <span className="absolute -top-1 h-5 w-0.5 rounded" style={{ left: `${EASY_TARGET * 100}%`, background: 'var(--color-ink)' }} aria-hidden />

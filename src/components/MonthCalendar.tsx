@@ -1,101 +1,101 @@
 import { useMemo } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
-import { deriveSessionStatus, type DisplayStatus } from '../engine/sessionStatus';
 import { isoWeekday, monthBounds, parseISODate, todayISO, toISODate } from '../utils/dates';
+import { SPORT_LOOK, sportKeyOfLog, type SportKey } from './logbook/sportLook';
 
-const WEEKDAY_LABELS = ['MA', 'DI', 'WO', 'DO', 'VR', 'ZA', 'ZO'];
+// De maand in bolletjes: per dag een bolletje in de kleur van de sport die je
+// deed (lopen, kracht, wandelen), een ring voor een rustdag, vandaag met een
+// ijsblauwe rand. Het leest de echte logs; de legenda toont alleen wat deze
+// maand voorkomt.
 
-// Same status→colour mapping as StatusDot (components/ui.tsx), just dots
-// instead of symbol+label — StatusDot's fixed size/symbol don't fit a
-// compact calendar cell that can hold several sessions in one day.
-const STATUS_COLOR: Record<DisplayStatus, string> = {
-  completed: 'var(--color-success)',
-  today: 'var(--color-gold)',
-  planned: 'var(--color-ink-dim)',
-  moved: 'var(--color-sky)',
-  skipped: 'var(--color-danger)',
-  missed: 'var(--color-warning)',
-  rest: 'var(--color-stone)',
-};
+const WEEKDAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
 export function MonthCalendar({
   anchor,
   plannedSessions,
   sessionLogs,
-  onSelectDate,
   isRest = () => false,
 }: {
   anchor: string;
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
-  onSelectDate: (date: string) => void;
   isRest?: (session: PlannedSession) => boolean;
 }) {
   const { start, end } = monthBounds(anchor);
   const today = todayISO();
 
-  const byDate = useMemo(() => {
-    const map = new Map<string, PlannedSession[]>();
-    for (const s of plannedSessions) {
-      if (s.scheduledDate < start || s.scheduledDate > end) continue;
-      // A rest day given up for a training is gone, not a red "skipped".
-      if (s.status === 'skipped' && isRest(s)) continue;
-      const list = map.get(s.scheduledDate);
-      if (list) list.push(s);
-      else map.set(s.scheduledDate, [s]);
+  const sportsByDate = useMemo(() => {
+    const map = new Map<string, SportKey[]>();
+    for (const l of sessionLogs) {
+      if (l.completedDate < start || l.completedDate > end || l.type === 'recovery') continue;
+      const list = map.get(l.completedDate) ?? [];
+      list.push(sportKeyOfLog(l));
+      map.set(l.completedDate, list);
     }
     return map;
+  }, [sessionLogs, start, end]);
+
+  const restDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of plannedSessions) {
+      if (s.scheduledDate < start || s.scheduledDate > end || s.status === 'skipped') continue;
+      if (isRest(s)) set.add(s.scheduledDate);
+    }
+    return set;
   }, [plannedSessions, start, end, isRest]);
 
   const cells = useMemo(() => {
-    const firstWeekday = isoWeekday(start); // 1 (Mon) .. 7 (Sun)
+    const firstWeekday = isoWeekday(start);
     const daysInMonth = parseISODate(end).getDate();
-    const monthStartDate = parseISODate(start);
+    const monthStart = parseISODate(start);
     const list: (string | null)[] = Array.from({ length: firstWeekday - 1 }, () => null);
-    for (let day = 1; day <= daysInMonth; day++) {
-      list.push(toISODate(new Date(monthStartDate.getFullYear(), monthStartDate.getMonth(), day)));
-    }
+    for (let day = 1; day <= daysInMonth; day++) list.push(toISODate(new Date(monthStart.getFullYear(), monthStart.getMonth(), day)));
     return list;
   }, [start, end]);
+
+  const present = (Object.keys(SPORT_LOOK) as SportKey[]).filter((k) => [...sportsByDate.values()].some((v) => v.includes(k)));
+  const hasRest = [...restDates].some((d) => !sportsByDate.has(d));
 
   return (
     <div>
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>
-        {WEEKDAY_LABELS.map((label) => (
-          <span key={label}>{label}</span>
-        ))}
+        {WEEKDAY_LABELS.map((label) => <span key={label}>{label}</span>)}
       </div>
-      <div className="mt-1.5 grid grid-cols-7 gap-1">
+      <div className="mt-2 grid grid-cols-7 gap-y-1.5">
         {cells.map((date, i) => {
           if (!date) return <div key={`blank-${i}`} />;
-          const daySessions = byDate.get(date) ?? [];
+          const sports = sportsByDate.get(date);
+          const sport = sports?.[0];
+          const rest = !sport && restDates.has(date);
           const isToday = date === today;
+          const day = parseISODate(date).getDate();
+          const label = sports ? `${day}: ${sports.map((k) => SPORT_LOOK[k].label.toLowerCase()).join(', ')}` : rest ? `${day}: rustdag` : `${day}`;
           return (
-            <button
-              key={date}
-              onClick={() => onSelectDate(date)}
-              className="flex flex-col items-center gap-1 rounded-lg py-2"
-              style={{
-                background: isToday ? 'color-mix(in srgb, var(--color-status) 14%, var(--color-surface))' : 'var(--color-surface)',
-                border: isToday ? '1px solid var(--color-status)' : '1px solid transparent',
-              }}
-            >
-              <span className="text-xs" style={{ color: isToday ? 'var(--color-status)' : 'var(--color-ink)' }}>
-                {parseISODate(date).getDate()}
+            <div key={date} className="flex items-center justify-center" role="img" aria-label={isToday ? `${label}, vandaag` : label}>
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
+                style={{
+                  background: sport ? SPORT_LOOK[sport].color : 'transparent',
+                  color: sport ? 'var(--color-on-action)' : 'var(--color-ink-dim)',
+                  boxShadow: rest ? 'inset 0 0 0 1.5px var(--color-control-border)' : undefined,
+                  outline: isToday ? '2px solid var(--color-status)' : undefined,
+                  outlineOffset: 2,
+                }}
+              >
+                {day}
               </span>
-              <div className="flex h-1.5 items-center gap-0.5">
-                {daySessions.slice(0, 3).map((s) => (
-                  <span
-                    key={s.id}
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: STATUS_COLOR[deriveSessionStatus(s, sessionLogs, isRest(s)).status] }}
-                  />
-                ))}
-              </div>
-            </button>
+            </div>
           );
         })}
       </div>
+      {(present.length > 0 || hasRest) && (
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+          {present.map((k) => (
+            <span key={k} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: SPORT_LOOK[k].color }} aria-hidden />{SPORT_LOOK[k].label}</span>
+          ))}
+          {hasRest && <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-control-border)' }} aria-hidden />Rust</span>}
+        </div>
+      )}
     </div>
   );
 }

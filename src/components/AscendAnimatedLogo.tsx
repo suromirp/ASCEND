@@ -8,9 +8,10 @@ import { useId } from 'react';
 // separate image asset. IDs are namespaced via useId() so multiple
 // instances on one page never collide.
 //
-// The gold gradient stops (#fbead0 → #8f611c) are calibrated brand art, not
-// arbitrary colors — kept as exact hex per the approved reference, the same
-// documented exception as .topo-texture's hardcoded rgba in index.css.
+// Kleuren: het teken zelf is ongewijzigd, alleen de verf. De streek loopt van
+// marine (--color-ink) boven naar mint (--color-action) onder, het licht en de
+// vonk zijn mint. Op de lichte lucht van Ascend (.on-light) worden dat vanzelf
+// donker marine en donkere mint; geen losse hexkleuren.
 export function AscendAnimatedLogo({ size = 200, withWord = true }: { size?: number; withWord?: boolean }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const softGlow = `ag-soft-${uid}`;
@@ -31,26 +32,25 @@ export function AscendAnimatedLogo({ size = 200, withWord = true }: { size?: num
           <feGaussianBlur stdDeviation="12" result="blur" />
         </filter>
         <linearGradient id={goldStroke} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#fbead0" />
-          <stop offset="30%" stopColor="#eec066" />
-          <stop offset="60%" stopColor="#c9932e" />
-          <stop offset="100%" stopColor="#8f611c" />
+          <stop offset="0%" style={{ stopColor: 'var(--color-ink)' }} />
+          <stop offset="45%" style={{ stopColor: 'var(--color-ink)' }} />
+          <stop offset="100%" style={{ stopColor: 'var(--color-action)' }} />
         </linearGradient>
         <radialGradient id={peakGlow} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff3cf" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#fff3cf" stopOpacity="0" />
+          <stop offset="0%" stopOpacity="0.95" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="100%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
         </radialGradient>
         <radialGradient id={dotGlow} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff8e2" stopOpacity="1" />
-          <stop offset="55%" stopColor="#ffdf8a" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#ffdf8a" stopOpacity="0" />
+          <stop offset="0%" stopOpacity="1" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="55%" stopOpacity="0.8" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="100%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
         </radialGradient>
         <linearGradient id={ringGlint} gradientUnits="userSpaceOnUse" x1="120" y1="20" x2="120" y2="220">
-          <stop offset="0%" stopColor="#fff8e2" stopOpacity="0" />
-          <stop offset="48%" stopColor="#fff8e2" stopOpacity="0" />
-          <stop offset="50%" stopColor="#fff8e2" stopOpacity="0.9" />
-          <stop offset="52%" stopColor="#fff8e2" stopOpacity="0" />
-          <stop offset="100%" stopColor="#fff8e2" stopOpacity="0" />
+          <stop offset="0%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="48%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="50%" stopOpacity="0.9" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="52%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="100%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
           {/* SMIL is not reached by the CSS reduced-motion rule. */}
           {!reducedMotion && <animateTransform attributeName="gradientTransform" type="rotate" from="0 120 120" to="360 120 120" dur="11s" repeatCount="indefinite" />}
         </linearGradient>
@@ -69,7 +69,7 @@ export function AscendAnimatedLogo({ size = 200, withWord = true }: { size?: num
         <path
           d="M120,58 C108,82 133,100 116,122 C102,142 130,158 112,182 C102,196 122,204 112,206"
           fill="none"
-          stroke="#ffe9a8"
+          stroke="var(--color-action)"
           strokeWidth="4"
           strokeLinecap="round"
         />
@@ -94,8 +94,8 @@ export function AscendAnimatedLogo({ size = 200, withWord = true }: { size?: num
           strokeWidth="2.5"
           strokeLinecap="round"
         />
-        <circle cx="120" cy="59" r="3" fill="#fff8e2" className="ascend-logo-sparkflash" />
-        <path d="M96,71 L96,85 M89,78 L103,78" stroke="#fff8e2" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" filter={`url(#${softGlow})`} />
+        <circle cx="120" cy="59" r="3" fill="var(--color-action)" className="ascend-logo-sparkflash" />
+        <path d="M96,71 L96,85 M89,78 L103,78" stroke="var(--color-action)" strokeWidth="1.2" strokeLinecap="round" opacity="0.85" filter={`url(#${softGlow})`} />
       </g>
 
       <circle className="ascend-logo-lightpoint" r="5" fill={`url(#${dotGlow})`} filter={`url(#${softGlow})`} />

@@ -6,7 +6,7 @@ import { resolveVariantDuration } from '../engine/substitutions';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { daysBetween, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
-import { Card, Eyebrow } from './ui';
+import { Card } from './ui';
 
 // Vandaag → "Benen": the leg fatigue index (engine/legFatigue.ts) for you to
 // see, not only for the planning: how fresh your legs are today, what still
@@ -15,7 +15,7 @@ import { Card, Eyebrow } from './ui';
 const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const short = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
 const SCALE = 20;
-const LEVEL_COLOR = ['var(--color-alpine)', 'var(--color-gold)', 'var(--color-warning)'];
+const LEVEL_COLOR = ['var(--color-progress)', 'var(--color-warning)', 'var(--color-warning)'];
 
 export function useLegFatigueInputs(): LegFatigueInputs {
   const { sessionLogs, plannedSessions, templates, program, settings } = useAppData();
@@ -58,29 +58,23 @@ export function LegFatigueCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <Eyebrow>BENEN</Eyebrow>
-          <p className="mt-1 flex items-baseline gap-2">
-            <span className="font-sans text-2xl tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
-            <span className="text-sm font-medium" style={{ color }}>{word}</span>
-          </p>
-        </div>
-        <button onClick={() => setOpen((v) => !v)} className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
+        <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Beenindex</span>
+        <button onClick={() => setOpen((v) => !v)} className="-my-2.5 inline-flex min-h-[44px] items-center text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
           {open ? 'minder' : 'hoe werkt dit?'}
         </button>
       </div>
-
-      <div className="relative h-2 rounded-full" style={{ background: 'var(--color-charcoal)' }} role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
-        <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(now.index), background: color, transition: 'width 400ms' }} />
-        {[FATIGUE_THRESHOLDS.test.fresh, FATIGUE_THRESHOLDS.hard.fresh].map((m) => (
-          <span key={m} className="absolute -top-0.5 h-3 w-px" style={{ left: pct(m), background: 'var(--color-ink-dim)', opacity: 0.6 }} aria-hidden />
-        ))}
+      <div className="flex items-baseline gap-3">
+        <span className="font-sans text-[40px] font-semibold leading-none tracking-[-0.03em] tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
+        <span className="text-base font-semibold" style={{ color }}>{word}</span>
       </div>
-      <div className="relative -mt-1.5 h-3 text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
-        <span className="absolute left-0">fris</span>
-        <span className="absolute -translate-x-1/2" style={{ left: pct(FATIGUE_THRESHOLDS.test.fresh) }}>test</span>
-        <span className="absolute -translate-x-1/2" style={{ left: pct(FATIGUE_THRESHOLDS.hard.fresh) }}>hard</span>
-        <span className="absolute right-0">vermoeid</span>
+
+      <div className="relative h-2 rounded-full" style={{ background: 'linear-gradient(90deg, var(--color-progress), var(--color-warning))' }} role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
+        <span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2" style={{ left: pct(now.index), background: 'var(--color-snow)', borderColor: color, transition: 'left 400ms' }} aria-hidden />
+      </div>
+      <div className="flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
+        <span>fris</span>
+        <span>wat moe</span>
+        <span>vermoeid</span>
       </div>
 
       {now.contributions.length > 0 && (
@@ -99,7 +93,7 @@ export function LegFatigueCard() {
         <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
           {next.templateId === 'tpl_race' ? 'Wedstrijd' : 'Testloop'} {short(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
           {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
-          <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-alpine)' : 'var(--color-gold)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
+          <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-progress)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
           {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.</span>}
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
             <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {short(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (next.templateId === 'tpl_race' ? 'wedstrijd' : 'test')}.</span>
@@ -111,7 +105,7 @@ export function LegFatigueCard() {
       {open && (
         <p className="border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
           Elke training laat iets achter in je benen. Hard lopen is na een dag grotendeels weg, kracht en klappen halveren per dag, en spierschade van bergaf of zware beenkracht houdt 3 tot 5 dagen aan. Die drie tellen samen op. 8 of lager is fris genoeg voor een testloop, tot 12 voor een harde training. Het zwaarst telt je beentraining: hoe lang, hoe zwaar en of je eraan gewend bent. Grote verschillen kloppen bijna altijd; rond de grens is het getal onzeker, kijk dan naar je gevoel bij het inlopen.
-          <button onClick={() => setInfo(true)} className="flex min-h-[44px] items-center mt-2 font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
+          <button onClick={() => setInfo(true)} className="flex min-h-[44px] items-center mt-2 font-medium underline underline-offset-2" style={{ color: 'var(--color-action)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
         </p>
       )}
       {info && <LegFatigueInfoSheet onClose={() => setInfo(false)} />}

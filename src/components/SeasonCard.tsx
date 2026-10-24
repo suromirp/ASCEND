@@ -43,7 +43,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
         <Eyebrow>JOUW SEIZOEN</Eyebrow>
         {main ? (
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>
-            Naar <span style={{ color: 'var(--color-gold)' }}>{main.name}</span> op {formatDateNL(main.targetDate!)}.
+            Naar <span style={{ color: 'var(--color-action)' }}>{main.name}</span> op {formatDateNL(main.targetDate!)}.
             {nowPos ? ` Je zit nu in week ${nowPos.week} van ${totalWeeks}, ${nowPos.phase}.` : ''}
           </p>
         ) : (
@@ -63,7 +63,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
           {at(today) > 0 && at(today) < 100 && <span className="absolute inset-y-0 w-0.5" style={{ left: `${at(today)}%`, background: 'var(--color-ink)' }} aria-hidden="true" />}
         </div>
         {blocks.map((b) => (
-          <span key={b.goalId} className="absolute top-0 -translate-x-1/2 text-xs" style={{ left: `${at(b.raceDate)}%`, color: 'var(--color-gold)' }} aria-hidden="true"><Icon name="vlag" size={14} /></span>
+          <span key={b.goalId} className="absolute top-0 -translate-x-1/2 text-xs" style={{ left: `${at(b.raceDate)}%`, color: 'var(--color-action)' }} aria-hidden="true"><Icon name="vlag" size={14} /></span>
         ))}
         <div className="mt-1.5 flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <span>{formatDateNL(start)}</span>
@@ -84,7 +84,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
               <div key={g.id} className="flex flex-col gap-1.5 border-t py-3" style={{ borderColor: 'var(--color-card-border)' }}>
                 <button onClick={() => onOpenGoal?.(g)} className="flex items-baseline justify-between gap-3 text-left">
                   <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
-                    {role === 'secondary' && <span style={{ color: 'var(--color-gold)' }}><Icon name="vlag" size={14} className="inline align-[-2px]" /> </span>}{g.name}
+                    {role === 'secondary' && <span style={{ color: 'var(--color-action)' }}><Icon name="vlag" size={14} className="inline align-[-2px]" /> </span>}{g.name}
                   </span>
                   <span className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(g.targetDate!)}</span>
                 </button>
@@ -108,7 +108,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                         onClick={() => { if (role !== value) pickRole(g, value); }}
                         disabled={horizon.busy}
                         className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
-                        style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
+                        style={{ borderColor: role === value ? 'var(--color-progress)' : 'var(--color-card-border)', color: role === value ? 'var(--color-action)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
                       >
                         {label}
                       </button>
@@ -128,7 +128,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         De lengte van de fases rekent ASCEND zelf uit vanaf je hoofddoel; aanpassen hoeft niet. Wil je eerder opbouwen, maak dan de Opbouw langer: de basis krijgt wat overblijft.
       </p>
-      <button onClick={() => setEditPhases((v) => !v)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={editPhases}>
+      <button onClick={() => setEditPhases((v) => !v)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-progress)' }} aria-expanded={editPhases}>
         {editPhases ? 'Fases sluiten' : 'Fases aanpassen'}
       </button>
       {editPhases && <PhaseEditor goalDate={main?.targetDate} />}

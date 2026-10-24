@@ -11,7 +11,7 @@ const SYMBOL: Record<string, ReactNode> = {
 };
 const SYMBOL_COLOR: Record<string, string> = {
   completed: 'var(--color-success)',
-  current: 'var(--color-gold)',
+  current: 'var(--color-action)',
   upcoming: 'var(--color-ink-dim)',
   future: 'var(--color-ink-dim)',
 };
@@ -21,7 +21,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
     return (
       <Card texture>
         <Eyebrow>VOLGEND KAMP</Eyebrow>
-        <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-gold)' }}>Alle kampen gehaald</p>
+        <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-action)' }}>Alle kampen gehaald</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName} , klaar voor de expeditie.</p>
       </Card>
     );
