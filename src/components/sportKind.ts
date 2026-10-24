@@ -1,33 +1,44 @@
 import type { SessionTemplate } from '../models/training';
 import { templateSport } from '../engine/sports';
-import type { IconName } from './icons';
+import type { PictogramName } from './pictograms';
 
 // De sport van een training in één van de sportkleuren: hardlopen oranje,
-// kracht paars, wandelen groen, een rustdag het maantje in ijs.
-export type SportKind = 'run' | 'strength' | 'walk' | 'rest';
+// kracht paars, wandelen groen, een bergtocht bergzon-geel, een rustdag het
+// poppetje in ijs.
+export type SportKind = 'run' | 'strength' | 'walk' | 'mountain' | 'rest';
+
+// Een bergtocht is de template "Bergtocht" of een training van het soort tocht
+// (avontuur). Alleen weergave: de planning kijkt hier niet naar. Werkt voor een
+// template en voor een log (die dezelfde templateId en hetzelfde soort draagt).
+export function isMountainTrip(item: { templateId?: string; id?: string; type: SessionTemplate['type'] }): boolean {
+  return item.type === 'adventure' || (item.templateId ?? item.id) === 'tpl_mountain_hike';
+}
 
 export function sportKind(template: SessionTemplate): SportKind {
   if (template.type === 'recovery') return 'rest';
   if (template.type === 'strength') return 'strength';
+  if (isMountainTrip(template)) return 'mountain';
   const sport = templateSport(template);
-  return sport === 'hiking' || template.type === 'adventure' ? 'walk' : 'run';
+  return sport === 'hiking' ? 'walk' : 'run';
 }
 
 export const SPORT_COLOR: Record<SportKind, string> = {
   run: 'var(--color-sport-run)',
   strength: 'var(--color-sport-strength)',
   walk: 'var(--color-sport-walk)',
+  mountain: 'var(--color-sport-mountain)',
   rest: 'var(--color-status)',
 };
 
-// Het pictogram bij een training (het maantje voor een rustdag).
-export function templateIcon(template: SessionTemplate): IconName | 'maan' {
-  return sportKind(template) === 'rest' ? 'maan' : sportIcon(template);
-}
+// Het pictogram bij een training (het rustende poppetje voor een rustdag).
+export const SPORT_PICTOGRAM: Record<SportKind, PictogramName> = {
+  run: 'lopen',
+  strength: 'kracht',
+  walk: 'wandelen',
+  mountain: 'bergtocht',
+  rest: 'rust',
+};
 
-export function sportIcon(template: SessionTemplate): IconName {
-  if (template.type === 'strength') return 'kracht';
-  if (template.type === 'adventure') return 'rugzak';
-  return sportKind(template) === 'walk' ? 'wandelen' : 'lopen';
+export function sportPictogram(template: SessionTemplate): PictogramName {
+  return SPORT_PICTOGRAM[sportKind(template)];
 }
-

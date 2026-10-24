@@ -17,6 +17,7 @@ import { SPORT_LOOK, sportKeyOfLog, type SportKey } from '../components/logbook/
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
 import { Icon } from '../components/icons';
+import { Pictogram } from '../components/pictograms';
 import { SkyBand } from '../components/SkyBand';
 
 
@@ -65,7 +66,7 @@ function groupBySport(logs: SessionLog[]): SportRow[] {
     row.elevation += l.outdoorData?.elevationGainM ?? l.cardioData?.elevationGainM ?? 0;
     rows.set(key, row);
   }
-  const order: SportKey[] = ['run', 'strength', 'walk', 'bike', 'other'];
+  const order: SportKey[] = ['run', 'strength', 'walk', 'mountain', 'bike', 'other'];
   return order.flatMap((k) => (rows.has(k) ? [rows.get(k)!] : []));
 }
 
@@ -76,7 +77,7 @@ function sportLine(r: SportRow): { line: string; value: string; unit: string } {
   const times = `${r.count} keer`;
   if (r.key === 'run') return { line: times, value: kmText(r.km), unit: 'km' };
   if (r.key === 'strength') return { line: formatHoursMinutesNL(r.minutes), value: `${r.count}`, unit: r.count === 1 ? 'sessie' : 'sessies' };
-  if (r.key === 'walk') return { line: `${r.count} ${r.count === 1 ? 'tocht' : 'tochten'}${r.elevation > 0 ? ` · ${formatNumberNL(r.elevation, 0)} m stijgen` : ''}`, value: kmText(r.km), unit: 'km' };
+  if (r.key === 'walk' || r.key === 'mountain') return { line: `${r.count} ${r.count === 1 ? 'tocht' : 'tochten'}${r.elevation > 0 ? ` · ${formatNumberNL(r.elevation, 0)} m stijgen` : ''}`, value: kmText(r.km), unit: 'km' };
   if (r.key === 'bike') return { line: times, value: kmText(r.km), unit: 'km' };
   return { line: times, value: formatHoursMinutesNL(r.minutes), unit: '' };
 }
@@ -191,7 +192,7 @@ export function HistoryPage() {
             return (
               <div key={r.key} className={`flex min-h-[68px] items-center gap-3 py-2 ${i === 0 ? '' : 'border-t'}`} style={{ borderColor: 'var(--color-card-border)' }}>
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: `color-mix(in srgb, ${look.color} 18%, transparent)`, color: look.color }}>
-                  <Icon name={look.icon} size={20} />
+                  <Pictogram name={look.icon} size={24} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-medium" style={{ color: 'var(--color-ink)' }}>{look.label}</p>

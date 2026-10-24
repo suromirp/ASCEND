@@ -2,9 +2,10 @@ import type { Program } from '../../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../../models/training';
 import { resolveEffectiveFullDuration } from '../../engine/substitutions';
 import { weekDates, weekdayLongNL } from '../../utils/dates';
-import { Icon, type IconName } from '../icons';
+import { Icon } from '../icons';
+import { Pictogram, type PictogramName } from '../pictograms';
 import { LightCard } from '../ui';
-import { SPORT_COLOR, sportIcon, sportKind } from '../sportKind';
+import { SPORT_COLOR, sportKind, sportPictogram } from '../sportKind';
 
 // De week in één strook op de lucht van Vandaag: per dag het pictogram van de
 // sport in de kleur van die sport. Gepland is alleen het pictogram, gedaan is
@@ -17,12 +18,12 @@ import { SPORT_COLOR, sportIcon, sportKind } from '../sportKind';
 
 const MAX_PER_DAY = 2;
 
-function DayGlyph({ icon, done, small }: { icon: IconName; done: boolean; small: boolean }) {
+function DayGlyph({ icon, done, small }: { icon: PictogramName; done: boolean; small: boolean }) {
   const size = small ? 18 : 24;
   const badge = small ? 10 : 12;
   return (
     <span className="relative flex">
-      <Icon name={icon} size={size} />
+      <Pictogram name={icon} size={size} />
       {done && (
         <span
           className="absolute flex items-center justify-center rounded-full"
@@ -88,11 +89,11 @@ export function WeekStrip({
                 {shown.length > 0 ? (
                   shown.map((t) => (
                     <span key={t.s.id} className="flex" style={{ color: SPORT_COLOR[sportKind(t.template)] }}>
-                      <DayGlyph icon={sportIcon(t.template)} done={t.done} small={shown.length > 1} />
+                      <DayGlyph icon={sportPictogram(t.template)} done={t.done} small={shown.length > 1} />
                     </span>
                   ))
                 ) : rest ? (
-                  <span className="flex" style={{ color: 'var(--color-ink-dim)' }}><Icon name="ontspannen" size={24} /></span>
+                  <span className="flex" style={{ color: 'var(--color-ink-dim)' }}><Pictogram name="rust" size={24} /></span>
                 ) : (
                   <span className="block h-0.5 w-2.5 rounded-full" style={{ background: 'var(--color-control-border)' }} />
                 )}
