@@ -1,6 +1,7 @@
 import { useState, type ComponentType } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../../components/icons';
+import { SkyBand } from '../../components/SkyBand';
 import { SettingsJumpContext } from '../../components/settings/jumpContext';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { useFlashOnMount, useJumpState } from '../../components/settings/jump';
@@ -49,13 +50,13 @@ function GroupPageInner({ id }: { id: SettingsPageId }) {
   return (
     <SettingsJumpContext.Provider value={{ target: jump.jumpTo }}>
       <div className="st-page animate-page-in">
-        <div className="st-topbar">
+        <SkyBand variant="low" gear={false}>
           <button type="button" className="st-back" onClick={() => navigate(SETTINGS_ROOT)}>
             <Icon name="terug" size={20} />
             Instellingen
           </button>
-        </div>
-        <h1 className="st-title">{settingsPageTitle(id)}</h1>
+          <h1 className="st-title">{settingsPageTitle(id)}</h1>
+        </SkyBand>
         {jump.reason && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }} role="status">{jump.reason}</p>}
         <Content facts={facts} reload={reload} sheet={sheet} setSheet={setSheet} />
       </div>

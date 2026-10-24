@@ -25,7 +25,7 @@ export function WarmupSheet({ title, warmup, onClose }: { title: string; warmup:
             <ol className="flex flex-col gap-5">
               {warmup.blocks.map((block, bi) => (
                 <li key={block.title} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums" style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-bronze)' }}>{bi + 1}</span>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs tabular-nums" style={{ borderColor: 'var(--color-action)', color: 'var(--color-action)' }}>{bi + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{block.title}{block.optional && <span className="font-normal" style={{ color: 'var(--color-ink-dim)' }}> · als je koud bent</span>}</p>
                     {block.hint && <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{block.hint}</p>}
@@ -39,7 +39,7 @@ export function WarmupSheet({ title, warmup, onClose }: { title: string; warmup:
                                 <a href={step.videoUrl} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>video<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                               )}
                             </span>
-                            <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-gold)' }}>{step.amount}</span>
+                            <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-action)' }}>{step.amount}</span>
                           </div>
                           {step.note && <p className="mt-0.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{step.note}</p>}
                         </li>

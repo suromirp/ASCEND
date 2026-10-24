@@ -27,14 +27,14 @@ export function FreshStartCard() {
 
   return (
     <Card className="flex flex-col gap-2">
-      <Eyebrow>NIEUW BEGONNEN</Eyebrow>
+      <Eyebrow>Nieuw begonnen</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
         ASCEND is op dit toestel leeg begonnen. Gebruikte je de app al eerder? Zet dan je back-up terug, dan komen je
         trainingen, doel en instellingen terug.
       </p>
-      <div className="mt-1 flex gap-3">
-        <SecondaryButton onClick={() => void updateSettings({ freshStartDismissedAt: new Date().toISOString() })}>Nieuw beginnen</SecondaryButton>
-        <PrimaryButton onClick={() => setImporting(true)} fullWidth={false}>Zet terug</PrimaryButton>
+      <div className="mt-1 flex flex-wrap gap-3">
+        <SecondaryButton onClick={() => void updateSettings({ freshStartDismissedAt: new Date().toISOString() })} className="min-w-[148px] whitespace-nowrap">Nieuw beginnen</SecondaryButton>
+        <PrimaryButton onClick={() => setImporting(true)} fullWidth={false} className="min-w-[120px]">Zet terug</PrimaryButton>
       </div>
       {importing && <ImportWizard onClose={() => setImporting(false)} />}
     </Card>

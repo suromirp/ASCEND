@@ -470,7 +470,7 @@ export function ForgeWorkout({
                 type="button"
                 onClick={() => setFinishing(true)}
                 className="mr-2 min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
-                style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-gold)' }}
+                style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
               >
                 {readOnly ? 'Afvinken' : 'Afronden'}
               </button>
@@ -479,7 +479,7 @@ export function ForgeWorkout({
               <div className="flex items-center gap-3 px-2 pb-2 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
                 <ElapsedClock startedAt={startedAt} />
                 <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--color-card-border)' }} aria-hidden="true">
-                  <div className="h-1 rounded-full transition-[width] duration-300" style={{ width: `${total > 0 ? (done / total) * 100 : 0}%`, background: 'var(--color-bronze)' }} />
+                  <div className="h-1 rounded-full transition-[width] duration-300" style={{ width: `${total > 0 ? (done / total) * 100 : 0}%`, background: 'var(--color-progress)' }} />
                 </div>
                 <span className="font-sans">{done} van {total} sets</span>
               </div>
@@ -831,7 +831,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
     <>
       <span className="flex items-center gap-2">
         {complete && (
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-success)', color: 'var(--color-ink)' }}>
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-progress)', color: 'var(--color-on-action)' }}>
             <Icon name="vinkje" size={14} />
           </span>
         )}
@@ -845,7 +845,12 @@ const ExerciseBlock = memo(function ExerciseBlock({
     </>
   );
   return (
-    <section className={`px-4 pb-2 pt-4 ${first ? '' : 'mt-2 border-t'}`} style={{ borderColor: 'var(--color-card-border)' }} aria-label={ex.name} data-slot={ex.slot}>
+    <section
+      className={`pb-2 pt-4 ${active !== undefined ? 'mx-2 mt-2 rounded-2xl border px-3' : `px-4 ${first ? '' : 'mt-2 border-t'}`}`}
+      style={{ borderColor: 'var(--color-card-border)', background: active !== undefined ? 'var(--color-raised)' : undefined }}
+      aria-label={ex.name}
+      data-slot={ex.slot}
+    >
       <div className="flex items-start gap-2">
         {complete ? (
           <button type="button" onClick={() => act.fold(ex.slot)} aria-expanded={!folded} aria-label={`${ex.name}, ${folded ? 'uitklappen' : 'inklappen'}`} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
@@ -864,7 +869,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
         <div>
           {note && (
             <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>
-              <span className="mt-px shrink-0" style={{ color: 'var(--color-bronze)' }}><Icon name="notitie" size={14} /></span>
+              <span className="mt-px shrink-0" style={{ color: 'var(--color-action)' }}><Icon name="notitie" size={14} /></span>
               <span>{note}</span>
             </p>
           )}
@@ -909,7 +914,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                     data-active={isActive}
                     className="forge-grid forge-row items-center rounded-xl py-0.5"
                     style={{
-                      background: row.done ? 'color-mix(in srgb, var(--color-success) 18%, transparent)' : isActive ? 'color-mix(in srgb, var(--color-ink) 5%, transparent)' : 'transparent',
+                      background: row.done ? 'color-mix(in srgb, var(--color-progress) 16%, transparent)' : isActive ? 'color-mix(in srgb, var(--color-ink) 5%, transparent)' : 'transparent',
                       opacity: row.kind === 'warmup' && !row.done ? 0.78 : 1,
                       transition: 'background-color 0.3s ease, opacity 0.3s ease',
                     }}
@@ -917,7 +922,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
                     <span role="cell" className="flex justify-center">
                       <span
                         className="flex h-7 w-7 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums"
-                        style={{ background: row.done ? 'var(--color-success)' : 'var(--color-surface)', color: row.kind === 'warmup' && !row.done ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
+                        style={{ background: row.done ? 'var(--color-progress)' : 'var(--color-surface)', color: row.done ? 'var(--color-on-action)' : row.kind === 'warmup' ? 'var(--color-ink-dim)' : 'var(--color-ink)', transition: 'background-color 0.3s ease' }}
                       >
                         {label}
                       </span>
@@ -1090,7 +1095,7 @@ function RestBar({ rest, lift, onAdd, onSkip }: { rest: Rest; lift: number; onAd
         }}
       >
         <div className="h-0.5 overflow-hidden" style={{ background: 'var(--color-card-border)' }}>
-          <div ref={bar} className={`h-0.5 origin-left ${over ? 'forge-glow' : ''}`} style={{ transform: `scaleX(${share})`, background: over ? 'var(--color-success)' : 'var(--color-bronze)', transition: 'background-color 0.3s ease' }} />
+          <div ref={bar} className={`h-0.5 origin-left ${over ? 'forge-glow' : ''}`} style={{ transform: `scaleX(${share})`, background: over ? 'var(--color-success)' : 'var(--color-action)', transition: 'background-color 0.3s ease' }} />
         </div>
         <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-1.5">
           <div className="min-w-0 flex-1">

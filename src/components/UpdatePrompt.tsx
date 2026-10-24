@@ -28,8 +28,8 @@ export function UpdatePrompt() {
           applyUpdateNow();
         }}
         disabled={updating}
-        className="min-h-[44px] shrink-0 rounded-lg px-4 text-xs font-semibold disabled:opacity-60"
-        style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-gold)' }}
+        className="min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-semibold disabled:opacity-60"
+        style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
       >
         {updating ? 'Bezig…' : 'Bijwerken'}
       </button>
@@ -62,7 +62,7 @@ function Bar({ children }: { children: ReactNode }) {
     >
       <div role="status"
         className="flex w-full max-w-md items-center justify-between gap-3 rounded-xl border px-4 py-3 shadow-lg"
-        style={{ background: 'var(--color-card)', borderColor: 'var(--color-bronze)' }}
+        style={{ background: 'var(--color-raised)', borderColor: 'var(--color-card-border)' }}
       >
         {children}
       </div>

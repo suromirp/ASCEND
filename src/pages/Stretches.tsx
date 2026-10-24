@@ -20,7 +20,7 @@ export function StretchesPage() {
           >
             <Card className="flex items-center justify-between">
               <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
-              <span className="text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
+              <span className="text-sm" style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
             </Card>
           </button>
         ))}

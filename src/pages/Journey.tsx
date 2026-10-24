@@ -50,7 +50,7 @@ export function JourneyPage() {
   const packs = packProgress(items);
 
   return (
-    <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-4">
+    <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
       <PageHeader eyebrow="Ascend" title="Reisplanner" line={goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'} fallback="/ascend" />
 
       {!goalDate ? (
@@ -65,11 +65,11 @@ export function JourneyPage() {
           <Card className="flex flex-col gap-2" texture>
             <div className="flex items-baseline justify-between">
               <Eyebrow>JE VOORBEREIDING</Eyebrow>
-              <span className="text-xs" style={{ color: 'var(--color-gold)' }}>nog {journeyWeeksLeft(today, goalDate)} weken</span>
+              <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>nog {journeyWeeksLeft(today, goalDate)} weken</span>
             </div>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{progress.done} van {progress.total} taken gedaan</p>
             <div className="h-1.5 w-full rounded-full" style={{ background: 'var(--color-card-border)' }} role="progressbar" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done} aria-label="Taken gedaan">
-              <div className="h-full rounded-full" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%`, background: 'var(--color-gold)' }} />
+              <div className="h-full rounded-full" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%`, background: 'var(--color-progress)' }} />
             </div>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
               Elke week komt er één taak naar voren op Vandaag. De rest staat hier op volgorde van wanneer het uiterlijk moet. Wat je niet haalt, blijft gewoon open.
@@ -108,7 +108,7 @@ export function JourneyPage() {
                       >
                         {row.task.title}
                       </span>
-                      <span className="text-xs" style={{ color: row.isThisWeek && row.status !== 'done' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
+                      <span className="text-xs" style={{ color: row.isThisWeek && row.status !== 'done' ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>
                         {row.isThisWeek && row.status !== 'done' ? `deze week, ${rowMeta(row)}` : rowMeta(row)}
                       </span>
                     </button>

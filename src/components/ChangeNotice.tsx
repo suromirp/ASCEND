@@ -60,7 +60,7 @@ export function ChangeNotice() {
           onClick={() => setState({ key: changeKey, view: 'full' })}
           aria-label={`Planning aangepast: ${recentChange.title}. Open om te lezen of ongedaan te maken.`}
           className="animate-fade-in pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border shadow-lg"
-          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', color: 'var(--color-gold)' }}
+          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', color: 'var(--color-action)' }}
         >
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M9 14L4 9l5-5" />

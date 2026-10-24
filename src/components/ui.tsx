@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { haptics } from '../utils/haptics';
 import { BackButton } from './BackButton';
+import { SkyBand } from './SkyBand';
 import { Icon, type IconName } from './icons';
 import './settings/settings.css';
+import './sheets.css';
 
 // Een kaart: marine vlak, haarlijn, 16 px afronding en 16 px binnenruimte. Op de
 // lichte lucht (SkyBand) wordt dezelfde kaart vanzelf de bijna witte kaart.
@@ -189,9 +191,11 @@ export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'd
   );
 }
 
-// De kop van elke subpagina, in dezelfde stijl als de hoofdschermen: terugknop,
-// Eyebrow, grote titel in Marcellus en hoogstens één regel eronder. `right` is
-// voor wat rechtsboven staat (het tandwiel van de pagina, 44 bij 44 px).
+// De kop van elke subpagina, in dezelfde stijl als de hoofdschermen: een lage
+// lichte lucht met bergen (SkyBand), daarop terugknop, Eyebrow in de kleur van de
+// pagina, de titel in Marcellus en hoogstens één regel eronder. `right` is voor
+// wat rechtsboven naast de titel staat. De band loopt tot de bovenrand: de
+// pagina eronder heeft `pt-6` en de band trekt dat zelf weer recht.
 export function PageHeader({
   eyebrow,
   title,
@@ -206,14 +210,18 @@ export function PageHeader({
   right?: ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-2">
-      <BackButton fallback={fallback} />
-      <div className="min-w-0 flex-1 pt-1">
-        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-        <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h1>
-        {line && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
-      </div>
-      {right}
+    <div className="-mt-6 -mb-2">
+      <SkyBand variant="low">
+        <div className="flex items-start gap-2">
+          <BackButton fallback={fallback} />
+          <div className="min-w-0 flex-1 pt-1">
+            {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+            <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h1>
+            {line && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+          </div>
+          {right}
+        </div>
+      </SkyBand>
     </div>
   );
 }

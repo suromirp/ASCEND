@@ -2,6 +2,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { Eyebrow } from '../../components/ui';
 import { usePageState } from '../../components/usePageState';
 import { Icon } from '../../components/icons';
+import { SkyBand } from '../../components/SkyBand';
 import { SettingsList, SettingsRow } from '../../components/settings/SettingsList';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { jumpRoute, normalizeJumpTarget, useJumpState } from '../../components/settings/jump';
@@ -46,7 +47,10 @@ export function SettingsOverview() {
 
   return (
     <div className="st-page st-home animate-page-in">
-      <h1 className="st-title">Instellingen</h1>
+      <SkyBand variant="low">
+        <Eyebrow>Meer</Eyebrow>
+        <h1 className="st-title">Instellingen</h1>
+      </SkyBand>
 
       <div className="st-status">
         {[fase, doel, backup].map((c) => (

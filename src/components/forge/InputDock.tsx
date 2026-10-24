@@ -198,7 +198,7 @@ export function InputDock(props: DockProps) {
               <Key label="Meer" onPress={() => step(1)} className={sideKey} style={{ color: 'var(--color-ink)' }}><Icon name="plus" size={22} /></Key>
             </div>
             <div className="col-start-4 row-start-4 flex">
-              <Key label="Volgende" onPress={() => { haptics.tap(); onNext(requestClose); }} className="w-full" style={{ background: 'var(--color-snow)', color: 'var(--color-on-gold)' }}><Icon name="pijlrechts" size={26} /></Key>
+              <Key label="Volgende" onPress={() => { haptics.tap(); onNext(requestClose); }} className="w-full" style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}><Icon name="pijlrechts" size={26} /></Key>
             </div>
           </div>
         </div>

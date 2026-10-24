@@ -109,7 +109,7 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
             {event.coachNote && (
               <p
                 className="completion-rise mt-5 border-l-2 pl-3 text-[14.5px] leading-snug"
-                style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-ink)', ...delay(440) }}
+                style={{ borderColor: 'var(--color-action)', color: 'var(--color-ink)', ...delay(440) }}
               >
                 {event.coachNote}
               </p>
@@ -161,27 +161,27 @@ function Contours({ flag }: { flag: boolean }) {
     >
       <defs>
         <radialGradient id="completion-glow" cx="50%" cy="31%" r="55%">
-          <stop offset="0%" stopColor="var(--color-gold)" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="var(--color-gold)" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--color-action)" stopOpacity="0.1" />
+          <stop offset="100%" stopColor="var(--color-action)" stopOpacity="0" />
         </radialGradient>
       </defs>
       <rect width="390" height="360" fill="url(#completion-glow)" className="completion-appear" style={delay(0)} />
       <g className="completion-appear" style={delay(0)}>
         {rings.map((r) => (
-          <ellipse key={r.rx} cx={CX} cy={CY} rx={r.rx} ry={r.ry} fill="none" stroke="var(--color-bronze)" strokeOpacity={r.opacity} strokeWidth="1" />
+          <ellipse key={r.rx} cx={CX} cy={CY} rx={r.rx} ry={r.ry} fill="none" stroke="var(--color-action)" strokeOpacity={r.opacity} strokeWidth="1" />
         ))}
       </g>
-      <ellipse cx={CX} cy={CY} rx="138" ry="108" fill="none" stroke="var(--color-gold)" strokeWidth="1.8" strokeLinecap="round" pathLength={100} strokeDashoffset={-52} opacity="0.9" className="completion-ink" style={{ '--ink': '38 62', '--d': '560ms' } as CSSProperties} />
-      <ellipse cx={CX} cy={CY} rx="104" ry="81" fill="none" stroke="var(--color-gold)" strokeWidth="1.4" strokeLinecap="round" pathLength={100} strokeDashoffset={-58} opacity="0.6" className="completion-ink" style={{ '--ink': '22 78', '--d': '700ms' } as CSSProperties} />
+      <ellipse cx={CX} cy={CY} rx="138" ry="108" fill="none" stroke="var(--color-action)" strokeWidth="1.8" strokeLinecap="round" pathLength={100} strokeDashoffset={-52} opacity="0.9" className="completion-ink" style={{ '--ink': '38 62', '--d': '560ms' } as CSSProperties} />
+      <ellipse cx={CX} cy={CY} rx="104" ry="81" fill="none" stroke="var(--color-action)" strokeWidth="1.4" strokeLinecap="round" pathLength={100} strokeDashoffset={-58} opacity="0.6" className="completion-ink" style={{ '--ink': '22 78', '--d': '700ms' } as CSSProperties} />
       <circle cx={CX} cy={CY} r="40" fill="var(--color-bg)" fillOpacity="0.7" className="completion-appear" style={delay(0)} />
-      <circle cx={CX} cy={CY} r="39" fill="none" stroke="var(--color-gold)" strokeWidth="1.5" pathLength={100} className="completion-draw" style={{ ...delay(100), transformOrigin: `${CX}px ${CY}px`, transform: 'rotate(-90deg)' }} />
+      <circle cx={CX} cy={CY} r="39" fill="none" stroke="var(--color-action)" strokeWidth="1.5" pathLength={100} className="completion-draw" style={{ ...delay(100), transformOrigin: `${CX}px ${CY}px`, transform: 'rotate(-90deg)' }} />
       {flag ? (
-        <g transform={`translate(${CX - 20} ${CY - 20}) scale(1.667)`} fill="none" stroke="var(--color-gold)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+        <g transform={`translate(${CX - 20} ${CY - 20}) scale(1.667)`} fill="none" stroke="var(--color-action)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 19l6-10 3.5 5.5 2.5-3.5L21 19z" pathLength={100} className="completion-draw" style={{ ...delay(420), '--t': '0.5s' } as CSSProperties} />
           <path d="M15 11V5.5l3 1-3 1" className="completion-flag" style={delay(820)} />
         </g>
       ) : (
-        <path d={`M${CX - 15} ${CY + 1} l9 9 l21 -21`} fill="none" stroke="var(--color-gold)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" pathLength={100} className="completion-draw" style={{ ...delay(420), '--t': '0.28s' } as CSSProperties} />
+        <path d={`M${CX - 15} ${CY + 1} l9 9 l21 -21`} fill="none" stroke="var(--color-action)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" pathLength={100} className="completion-draw" style={{ ...delay(420), '--t': '0.28s' } as CSSProperties} />
       )}
     </svg>
   );
@@ -219,7 +219,7 @@ function LineRow({ line, first, at }: { line: CompletionLine; first: boolean; at
       className="completion-rise flex min-h-[52px] items-center gap-3 py-2.5 text-[14.5px] leading-snug"
       style={{ borderTop: first ? undefined : '1px solid var(--color-card-border)', color: 'var(--color-ink)', ...delay(at) }}
     >
-      <span className="shrink-0" style={{ color: line.id === 'goal' ? 'var(--color-bronze)' : line.id === 'week' ? 'var(--color-success-text)' : 'var(--color-ink-dim)' }}>
+      <span className="shrink-0" style={{ color: line.id === 'goal' ? 'var(--color-action)' : line.id === 'week' ? 'var(--color-success-text)' : 'var(--color-ink-dim)' }}>
         <LineIcon id={line.id} />
       </span>
       <span>

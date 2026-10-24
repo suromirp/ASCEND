@@ -112,7 +112,7 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
 const ZONES: { level: Intensity; color: string }[] = [
   { level: 1, color: 'var(--color-sky)' },
   { level: 2, color: 'var(--color-alpine)' },
-  { level: 3, color: 'var(--color-bronze)' },
+  { level: 3, color: 'var(--color-action)' },
   { level: 4, color: 'var(--color-danger-text)' },
 ];
 
