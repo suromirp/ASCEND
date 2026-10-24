@@ -4,11 +4,11 @@
 import { describe, it, expect } from 'vitest';
 import { restWeekChange, withRestWeekSkipped } from './restWeek';
 import { repeatWeekChange, withWeekRepeated } from './repeatWeek';
-import { PHASE_BASIS, layoutPhasesForGoal } from './programLayout';
+import { PHASE_BASIS, PHASE_BERG, layoutPhasesForGoal } from './programLayout';
 import { resolveVariantDuration } from './substitutions';
 import { changeStart, doneSentence, type WeekLoadContext } from './weekLoadChange';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { addDays } from '../utils/dates';
+import { addDays, resolveProgramWeek } from '../utils/dates';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 
@@ -83,6 +83,21 @@ describe('doortrainen of de rustweek terugzetten', () => {
     expect(c.open.map((s) => s.id)).not.toContain(sunday);
     expect(c.kept).toEqual([{ session: mine.find((s) => s.id === sunday), minutes: minutesAt(program, sunday) }]);
     expect(c.keptLines[0]).toContain('zette je zelf vast');
+  });
+
+  it('wat je zelf vastzette noemt ook de hoogtemeters en de rugzak die meegaan', () => {
+    // The second week of the mountain phase again: the week after it gets the
+    // load of this one, also a mountain hike of yours on its Sunday.
+    const second = Array.from({ length: 60 }, (_, k) => addDays(START, 7 * k))
+      .find((m) => resolveProgramWeek(program, m)?.phase.id === PHASE_BERG && resolveProgramWeek(program, m)?.weekInPhase === 2)!;
+    const next = addDays(second, 7);
+    const hike: PlannedSession = {
+      id: 'hike', templateId: 'tpl_mountain_hike', scheduledDate: addDays(next, 6), weekStartDate: next, status: 'planned', order: 0,
+      plannedMinutes: 165, lock: { by: 'user', at: `${second}T08:00:00Z` },
+    };
+    const c = repeatWeekChange(program, second, true, ctx({ sessions: [hike], today: second }));
+    expect(c.kept).toEqual([]);
+    expect(c.keptLines).toEqual([expect.stringMatching(/^Bergtocht op zo .+ zette je zelf vast; die houdt zijn lengte, maar gaat van 9 naar 7 kg rugzak\.$/)]);
   });
 
   it('zaterdagavond na de laatste training: niets meer open, dus geen knop maar een zin', () => {

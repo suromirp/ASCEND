@@ -76,3 +76,21 @@ Niets. Vult `2026-10-23-planning-nooit-stil.md` aan.
 `withRestWeekSkipped` of `withWeekRepeated`, en `heldWeekDays` laten liggen
 (zonder het veld leest elke week zoals voorheen). Dat brengt de stille
 wijziging terug, dus alleen samen met een ander voorstelpad.
+
+## Aanvulling 24 oktober 2026: hoogtemeters en rugzak van wat je vastzette
+
+Een training die je zelf vastzette houdt zijn lengte, maar de hoogtemeters en
+de rugzak volgen de week, net als bij elke andere training van die week. Ze
+staan niet op de training zelf maar komen uit de plek van de week in het
+programma. Herhaal je een week, dan krijgt een vastgezette bergtocht in de
+week erna dus ook de lichtere rugzak.
+
+Het voorstel zei dat eerst niet: een vastgezette training kwam alleen in het
+blad als de lengte veranderde. Nu staat er altijd een regel bij, bijvoorbeeld
+"Bergtocht op zo 16 mei zette je zelf vast; die houdt zijn lengte, maar gaat
+van 9 naar 7 kg rugzak." Zo verandert er niets zonder dat het blad het noemt.
+
+Afgewezen: ook de hoogtemeters en de rugzak vastzetten. Daarvoor zou een
+training een eigen stap moeten krijgen, een nieuw veld in de opslag met een
+migratie, terwijl de week dan voor die ene training anders zou lezen dan voor
+de rest.

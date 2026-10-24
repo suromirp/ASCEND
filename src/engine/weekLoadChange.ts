@@ -8,7 +8,8 @@
 // Daarom houdt het programma de dagen voor de wijziging vast zoals ze stonden
 // (Program.heldWeekDays): een gedane of voorbije training verandert nooit.
 // Wat je zelf vastzette (een slot) houdt zijn lengte: die krijgt een vaste
-// lengte in het voorstel. Wat overblijft zijn de open trainingen; is er niets
+// lengte in het voorstel. Hoogtemeters en rugzak volgen de week wel, en het
+// voorstel zegt dat er per training bij. Wat overblijft zijn de open trainingen; is er niets
 // meer open dat zou veranderen, dan is er niets te kiezen.
 //
 // Pure: no React, no IndexedDB.
@@ -122,12 +123,27 @@ function changeSentence(n: number, heavier: boolean, laterWeeks: boolean): strin
 
 const kg = (n: number) => String(n).replace('.', ',');
 
-function loadDiff(was: number, now: number, a?: { elevationGainM?: number; backpackKg?: number }, b?: { elevationGainM?: number; backpackKg?: number }): string {
+type Step = { elevationGainM?: number; backpackKg?: number };
+
+function stepParts(a?: Step, b?: Step): string[] {
   const parts: string[] = [];
-  if (was !== now) parts.push(`${Math.round(was)} naar ${Math.round(now)} minuten`);
   if ((a?.elevationGainM ?? 0) !== (b?.elevationGainM ?? 0)) parts.push(`${Math.round(a?.elevationGainM ?? 0)} naar ${Math.round(b?.elevationGainM ?? 0)} m omhoog`);
   if ((a?.backpackKg ?? 0) !== (b?.backpackKg ?? 0)) parts.push(`${kg(a?.backpackKg ?? 0)} naar ${kg(b?.backpackKg ?? 0)} kg rugzak`);
-  return parts.join(', ');
+  return parts;
+}
+
+function loadDiff(was: number, now: number, a?: Step, b?: Step): string {
+  const parts: string[] = [];
+  if (was !== now) parts.push(`${Math.round(was)} naar ${Math.round(now)} minuten`);
+  return [...parts, ...stepParts(a, b)].join(', ');
+}
+
+// Yours keeps its length, but the D+ and the rucksack follow the week like
+// any other training of it: the line says so, so the sheet hides nothing.
+function keptLine(on: string, was: number, lengthHeld: boolean, a?: Step, b?: Step): string {
+  const step = stepParts(a, b);
+  const keeps = lengthHeld ? `houdt zijn ${was} minuten` : 'houdt zijn lengte';
+  return step.length ? `${on} zette je zelf vast; die ${keeps}, maar gaat van ${step.join(' en van ')}.` : `${on} zette je zelf vast; die ${keeps}.`;
 }
 
 const sameStep = (a: ReturnType<typeof progressionTarget>, b: ReturnType<typeof progressionTarget>) =>
@@ -163,10 +179,8 @@ export function loadChange(program: Program, weekStart: string, until: string, c
     if (was === now && sameStep(stepWas, stepNow)) continue;
     const on = `${t.name} op ${weekdayShortNL(s.scheduledDate).toLowerCase()} ${formatDateNL(s.scheduledDate)}`;
     if (level === 1) {
-      if (was !== now) {
-        kept.push({ session: s, minutes: was });
-        keptLines.push(`${on} zette je zelf vast; die houdt zijn ${was} minuten.`);
-      }
+      if (was !== now) kept.push({ session: s, minutes: was });
+      keptLines.push(keptLine(on, was, was !== now, stepWas?.step, stepNow?.step));
       continue;
     }
     open.push(s);
