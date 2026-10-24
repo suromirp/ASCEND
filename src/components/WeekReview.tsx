@@ -11,6 +11,8 @@ import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../model
 import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
 import { WeeklyPlanSection } from './WeeklyQuestionCard';
 import { Icon } from './icons';
+import { DisclosureRow } from './DisclosureRow';
+import { usePageState } from './usePageState';
 
 function useWeekReview(weekStart: string): WeekReview | null {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
@@ -40,6 +42,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
 export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
   const { plannedSessions, sessionLogs, templates, program, planChangeLog, settings } = useAppData();
   const [openReview, setOpenReview] = useState<WeekReview | null>(null);
+  const [open, setOpen] = usePageState('reviewsOpen', false);
   const today = todayISO();
   const thisMonday = addDays(today, -((new Date(today).getDay() + 6) % 7));
   const reviews = Array.from({ length: weeks }, (_, i) => addDays(thisMonday, -7 * (i + 1)))
@@ -47,19 +50,20 @@ export function WeekReviewList({ weeks = 6 }: { weeks?: number }) {
     .filter((r): r is WeekReview => !!r && r.planned > 0);
   if (reviews.length === 0) return null;
   return (
-    <Card className="flex flex-col">
-      <Eyebrow>WEEKTERUGBLIKKEN</Eyebrow>
-      <div className="mt-2 flex flex-col">
-        {reviews.map((r) => (
-          <button key={r.weekStart} onClick={() => setOpenReview(r)} className="flex min-h-[48px] items-center justify-between gap-3 border-b py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
-            <span>
-              <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Week van {formatDateNL(r.weekStart)}</span>
-              <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{r.title}</span>
-            </span>
-            <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.done} / {r.planned}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" /></span>
-          </button>
-        ))}
-      </div>
+    <Card className="flex flex-col py-1">
+      <DisclosureRow title="Weekterugblikken" value={reviews.length} open={open} onToggle={() => setOpen(!open)}>
+        <div className="flex flex-col">
+          {reviews.map((r) => (
+            <button key={r.weekStart} onClick={() => setOpenReview(r)} className="flex min-h-[52px] items-center justify-between gap-3 border-t py-2 text-left" style={{ borderColor: 'var(--color-card-border)' }}>
+              <span>
+                <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>Week van {formatDateNL(r.weekStart)}</span>
+                <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{r.title}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.done} van {r.planned}<Icon name="verder" size={16} /></span>
+            </button>
+          ))}
+        </div>
+      </DisclosureRow>
       {openReview && <WeekReviewSheet review={openReview} onClose={() => setOpenReview(null)} />}
     </Card>
   );
@@ -147,7 +151,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
               <Section title="VOLGENDE WEEK">
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{review.next.title}{review.next.note ? ` · ${review.next.note.toLowerCase()}` : ''}</p>
                 <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatHoursMinutesNL(review.next.minutes)} gepland</p>
-                {review.next.key && <p className="mt-1 text-xs" style={{ color: 'var(--color-gold)' }}>{review.next.key}</p>}
+                {review.next.key && <p className="mt-1 text-xs" style={{ color: 'var(--color-action)' }}>{review.next.key}</p>}
               </Section>
             )}
 
@@ -179,7 +183,7 @@ function WeeklyHealthQuestion({ weekStart }: { weekStart: string }) {
     const others = (settings.weeklyHealthChecks ?? []).filter((c) => c.weekStart !== weekStart);
     void updateSettings({ weeklyHealthChecks: [...others, next].sort((a, b) => a.weekStart.localeCompare(b.weekStart)).slice(-26) });
   };
-  const chip = (on: boolean) => ({ borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)', color: on ? 'var(--color-gold)' : 'var(--color-ink)' });
+  const chip = (on: boolean) => ({ borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)', color: on ? 'var(--color-action)' : 'var(--color-ink)' });
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Had je deze week klachten aan je benen, voeten of rug door het trainen?</p>

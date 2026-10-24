@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LOAD_SPORTS, LOAD_JUMP, loadVersusBefore, type LoadSport, type WeekLoad } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
-import { Card, Eyebrow } from '../ui';
+import { Card } from '../ui';
 import { dayMonth, dayShort as dayShortNL, roundedTop } from './chartParts';
 
 // Je stand → weekly load: minutes × effort per week, per sport. Solid is
@@ -37,7 +37,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
   return (
     <Card className="flex flex-col gap-3">
       <div>
-        <Eyebrow>WEEKBELASTING</Eyebrow>
+        <p className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Belasting per week</p>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.
         </p>
@@ -72,7 +72,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
                 })}
               </g>
               {total === 0 && <rect x={x} y={TOP + plotH - 1} width={barW} height={1} fill="var(--color-card-border)" />}
-              {i === selected && <rect x={x - 3} y={TOP + plotH + 3} width={barW + 6} height={2} rx={1} fill="var(--color-gold)" />}
+              {i === selected && <rect x={x - 3} y={TOP + plotH + 3} width={barW + 6} height={2} rx={1} fill="var(--color-action)" />}
               {(slot >= 44 || (weeks.length - 1 - i) % 2 === 0) && (
                 <text x={i * slot + slot / 2} y={H - 18} textAnchor="middle" fontSize={12} fill={w.isCurrent ? 'var(--color-ink)' : 'var(--color-ink-dim)'} fontWeight={w.isCurrent ? 600 : 400}>
                   {w.isCurrent ? 'nu' : dayMonth(w.weekStart)}
@@ -126,8 +126,8 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
       {total > 0 && (
         <div>
           <div className="relative h-2 rounded-full" style={{ background: 'var(--color-card)' }} role="img" aria-label={`${formatNumberNL(week.doneTotal, 0)} gedaan, ${formatNumberNL(week.plannedTotal, 0)} gepland${average ? `, gemiddeld ${formatNumberNL(average, 0)}` : ''}`}>
-            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(total), background: 'var(--color-bronze)', opacity: 0.35 }} />
-            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(week.doneTotal), background: 'var(--color-bronze)' }} />
+            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(total), background: 'var(--color-progress)', opacity: 0.35 }} />
+            <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: pct(week.doneTotal), background: 'var(--color-progress)' }} />
             {average !== undefined && <span className="absolute -inset-y-1 w-0.5 rounded" style={{ left: pct(average), background: 'var(--color-ink)' }} />}
           </div>
           {average !== undefined && (

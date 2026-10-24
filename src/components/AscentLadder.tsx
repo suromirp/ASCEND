@@ -18,12 +18,12 @@ export function AscentLadder({
   return (
     <div>
       <Eyebrow>De beklimming</Eyebrow>
-      <h2 className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{progress.goalName}</h2>
+      <h2 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{progress.goalName}</h2>
       {description && (
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{description}</p>
       )}
 
-      <div className="mt-6">
+      <div className="mt-4">
         {progress.milestones.map((m, i) => (
           <div key={m.definition.id} className="animate-rise-in" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
             <ObjectiveCard
@@ -38,7 +38,7 @@ export function AscentLadder({
       </div>
 
       <div className="mt-2 flex flex-col items-center gap-1 py-4">
-        <span style={{ color: 'var(--color-gold)' }}><Icon name="ascend" size={28} /></span>
+        <span style={{ color: 'var(--color-action)' }}><Icon name="ascend" size={28} /></span>
         <Eyebrow as="span">Top</Eyebrow>
       </div>
     </div>

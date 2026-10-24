@@ -33,7 +33,7 @@ export function AerobicTrendCard() {
         Je rustige en lange duurlopen, omgerekend naar {trend.referenceHr > 0 ? `${trend.referenceHr} bpm` : 'dezelfde hartslag'}. Word je fitter, dan loop je bij dezelfde hartslag sneller.
       </p>
       {trend.points.length >= 2 ? (
-        <TrendLineChart points={trend.points} color="var(--color-bronze)" formatValue={(v) => formatPace(-v)} />
+        <TrendLineChart points={trend.points} color="var(--color-progress)" formatValue={(v) => formatPace(-v)} />
       ) : (
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
           {trend.runs === 0 ? 'Nog geen loopjes om te vergelijken.' : `${trend.runs === 1 ? 'Eén loopje' : `${trend.runs} loopjes`}, nog maar één week.`} Na twee weken met loopjes zie je hier je lijn.

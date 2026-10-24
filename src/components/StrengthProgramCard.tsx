@@ -10,7 +10,7 @@ import type { StrengthProgramStrategy } from '../models/strengthProgram';
 import { activeStrengthStrategy, daysUntilBlockEnd } from '../engine/strengthProgram';
 import { addDays, formatDateNL, todayISO } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow, NumText } from './ui';
+import { Card, SecondaryButton, Eyebrow, NumText } from './ui';
 import { StrengthProgramWizard } from './StrengthProgramWizard';
 
 function blankStrategyDraft(external: boolean): StrengthProgramStrategy {
@@ -84,9 +84,9 @@ export function StrengthProgramCard() {
             Nog geen krachtblok ingesteld. ASCEND bepaalt frequentie, split en planning, MacroFactor Workouts blijft
             de oefeningen zelf bepalen.
           </p>
-          <PrimaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft(strengthExternal) })}>
+          <SecondaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft(strengthExternal) })}>
             Krachtblok starten
-          </PrimaryButton>
+          </SecondaryButton>
         </>
       ) : (
         <>

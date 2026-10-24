@@ -34,7 +34,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
             {checks.slice(0, 5).map((c) => (
               <div key={c.date + c.name} className="flex items-baseline justify-between gap-3 text-xs">
                 <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {dayShort(c.date)}</span></span>
-                <span className="shrink-0 tabular-nums" style={{ color: c.agrees ? 'var(--color-ink-dim)' : 'var(--color-gold)' }}>
+                <span className="shrink-0 tabular-nums" style={{ color: c.agrees ? 'var(--color-ink-dim)' : 'var(--color-action)' }}>
                   index {formatNumberNL(c.index, 1)}, benen {LEGS_WORD[c.legs]}{c.agrees ? '' : ' ≠'}
                 </span>
               </div>

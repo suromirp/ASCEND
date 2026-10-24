@@ -84,7 +84,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
           </p>
 
           {log.subjectiveFeel && (
-            <p className="mt-2 text-xs font-medium" style={{ color: log.subjectiveFeel === 'worse' ? 'var(--color-warning)' : 'var(--color-gold)' }}>
+            <p className="mt-2 text-xs font-medium" style={{ color: log.subjectiveFeel === 'worse' ? 'var(--color-warning)' : 'var(--color-action)' }}>
               {FEEL_LABEL[log.subjectiveFeel]}
             </p>
           )}
@@ -118,7 +118,7 @@ export function LogDetailSheet({ log, templateName, onClose }: { log: SessionLog
               <WorkoutDetailsFields templateId={log.templateId} value={editing} onChange={setEditing} />
               <div className="flex gap-3">
                 <button onClick={() => setEditing(null)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
-                <button onClick={() => void setLogWorkout(log.id, cleanDetails(editing)).then(() => setEditing(null))} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-bg)' }}>Opslaan</button>
+                <button onClick={() => void setLogWorkout(log.id, cleanDetails(editing)).then(() => setEditing(null))} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-action)', color: 'var(--color-bg)' }}>Opslaan</button>
               </div>
             </div>
           ) : (

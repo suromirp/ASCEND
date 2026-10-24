@@ -18,9 +18,9 @@ const RIGHT = 36;
 
 const MARK_LABEL: Record<DayMark, string> = { test: 'test', race: 'wedstrijd', hard: 'hard', legs: 'benen', easy: 'rustig' };
 const MARK_COLOR: Record<DayMark, string> = {
-  test: 'var(--color-gold)',
-  race: 'var(--color-gold)',
-  hard: 'var(--color-bronze)',
+  test: 'var(--color-action)',
+  race: 'var(--color-action)',
+  hard: 'var(--color-progress)',
   legs: 'var(--color-chart-strength)',
   easy: 'var(--color-ink-dim)',
 };
@@ -60,11 +60,11 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
           </g>
         ))}
         <line x1={LEFT} x2={LEFT + plotW} y1={TOP + plotH} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
-        {band && <path d={band} fill="var(--color-bronze)" opacity={0.12} />}
+        {band && <path d={band} fill="var(--color-progress)" opacity={0.12} />}
         <line x1={x(todayIdx)} x2={x(todayIdx)} y1={TOP} y2={TOP + plotH} stroke="var(--color-card-border)" strokeWidth={1} />
         <text x={x(todayIdx)} y={TOP + plotH + 30} textAnchor="middle" fontSize={12} fontWeight={600} fill="var(--color-ink)">vandaag</text>
-        <path d={line(past, 0)} fill="none" stroke="var(--color-bronze)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-        <path d={line(ahead, todayIdx)} fill="none" stroke="var(--color-bronze)" strokeWidth={2} strokeDasharray="4 3" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={line(past, 0)} fill="none" stroke="var(--color-progress)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        <path d={line(ahead, todayIdx)} fill="none" stroke="var(--color-progress)" strokeWidth={2} strokeDasharray="4 3" strokeLinejoin="round" strokeLinecap="round" />
 
         {points.map((p, i) => {
           const main = p.sessions.find((s) => s.mark === 'test' || s.mark === 'race') ?? p.sessions.find((s) => s.mark === 'hard') ?? p.sessions.find((s) => s.mark === 'legs') ?? p.sessions[0];
@@ -73,7 +73,7 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
           return (
             <g key={p.date} onClick={() => setSelected(i)} style={{ cursor: 'pointer' }}>
               <rect x={cx - step / 2} y={0} width={step} height={H} fill="transparent" />
-              {i === selected && <circle cx={cx} cy={y(p.index)} r={4.5} fill="var(--color-card)" stroke="var(--color-gold)" strokeWidth={2} />}
+              {i === selected && <circle cx={cx} cy={y(p.index)} r={4.5} fill="var(--color-card)" stroke="var(--color-action)" strokeWidth={2} />}
               {main && (main.mark === 'test' || main.mark === 'race'
                 ? <rect x={cx - 4} y={cy - 4} width={8} height={8} transform={`rotate(45 ${cx} ${cy})`} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.85} />
                 : <circle cx={cx} cy={cy} r={main.mark === 'easy' ? 2 : 3} fill={MARK_COLOR[main.mark]} opacity={main.logged ? 1 : 0.6} />)}

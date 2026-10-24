@@ -148,24 +148,26 @@ export function AscendPage() {
       {/* The animated brand mark lives here, on the tab that carries its
           name: the light climbs the trail once each time you open Ascend. */}
       <SkyBand>
-        <div className="flex flex-col items-center gap-1" aria-hidden="true">
-          <AscendAnimatedLogo size={96} withWord={false} />
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
-        </div>
-      </SkyBand>
-      {goal ? (
-        <div>
-          <Eyebrow>HOOFDDOEL</Eyebrow>
-          <p className="mt-1 font-display text-3xl" style={{ color: 'var(--color-ink)' }}>{goal.name}</p>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
-            {timing?.state === 'ahead' && <span style={{ color: 'var(--color-gold)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
-            {timing?.state === 'underway' && <span style={{ color: 'var(--color-gold)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
-            {timing?.state === 'past' && <span style={{ color: 'var(--color-ink-dim)' }}>voorbij</span>}
+        <div className="flex items-center gap-4">
+          <div className="shrink-0" aria-hidden="true"><AscendAnimatedLogo size={84} withWord={false} /></div>
+          <div className="min-w-0 flex-1">
+            <Eyebrow>{goal ? 'Hoofddoel' : 'Ascend'}</Eyebrow>
+            <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>{goal ? goal.name : 'Ascend'}</h1>
+            {goal ? (
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+                {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
+                {timing?.state === 'ahead' && <span className="font-medium" style={{ color: 'var(--color-action)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
+                {timing?.state === 'underway' && <span className="font-medium" style={{ color: 'var(--color-action)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
+                {timing?.state === 'past' && <span>voorbij</span>}
+              </div>
+            ) : (
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
+            )}
           </div>
-          <div className="mt-2"><RouteLine goal={goal} /></div>
         </div>
-      ) : (
+        {goal && <RouteLine goal={goal} />}
+      </SkyBand>
+      {!goal && (
         <Card className="flex flex-col gap-3">
           <Eyebrow>HOOFDDOEL</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je hebt nog geen hoofddoel. Stel er een in, dan bouwt ASCEND je training ernaartoe op.</p>
@@ -197,15 +199,15 @@ export function AscendPage() {
           <button onClick={() => setSelectedMilestoneId(progress.currentMilestone!.definition.id)} className="text-left">
             <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}><NumText>{progress.currentMilestone.definition.title}</NumText></p>
             {getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle && (
-              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-gold)' }}>{getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle}</p>
+              <p className="mt-0.5 text-xs" style={{ color: 'var(--color-action)' }}>{getGR5MilestoneDetail(progress.currentMilestone.definition.order)?.subtitle}</p>
             )}
           </button>
           <div className="mt-1 flex gap-1">
             {progress.milestones.map((m) => (
-              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-gold)' : m.status === 'current' ? 'var(--color-bronze-dark)' : 'var(--color-card-border)' }} />
+              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-action)' : m.status === 'current' ? 'var(--color-bronze-dark)' : 'var(--color-card-border)' }} />
             ))}
           </div>
-          <button onClick={() => setShowLadder(true)} className="min-h-11 text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Alle {progress.milestones.length} kampen bekijken</button>
+          <button onClick={() => setShowLadder(true)} className="flex min-h-11 items-center justify-between text-sm" style={{ color: 'var(--color-ink-dim)' }}>Alle {progress.milestones.length} kampen bekijken<Icon name="omlaag" size={18} /></button>
         </Card>
       )}
 
@@ -217,7 +219,7 @@ export function AscendPage() {
             onMarkCleared={(milestoneId) => clearMilestoneManually(goal.id, milestoneId)}
             onSelectMilestone={setSelectedMilestoneId}
           />
-          <button onClick={() => setShowLadder(false)} className="-mt-3 min-h-11 text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>Inklappen</button>
+          <button onClick={() => setShowLadder(false)} className="-mt-3 flex min-h-11 items-center gap-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Inklappen<span style={{ transform: 'rotate(180deg)' }} className="flex"><Icon name="omlaag" size={18} /></span></button>
         </>
       )}
 
@@ -255,7 +257,7 @@ export function AscendPage() {
         </Card>
       )}
 
-      <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doelen beheren</PrimaryButton>
+      {goal ? <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doelen beheren</PrimaryButton> : <SecondaryButton onClick={() => navigate('/ascend/doelen')}>Doelen beheren</SecondaryButton>}
 
       <StrengthProgressionCard logs={sessionLogs} />
 
@@ -315,8 +317,10 @@ export function GoalsPage() {
   const archivedGoals = trainingGoals.filter((g) => g.status === 'archived');
 
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-4">
-      <PageHeader eyebrow="Ascend" title="Doelen" line="Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen." fallback="/ascend" />
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
+      <SkyBand variant="low">
+        <PageHeader eyebrow="Ascend" title="Doelen" line="Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen." fallback="/ascend" />
+      </SkyBand>
 
       {horizon.note && (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>
@@ -332,7 +336,7 @@ export function GoalsPage() {
 
       <TrekGoalsCard />
 
-      <SecondaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>+ Nieuw doel of tussendoel</SecondaryButton>
+      <PrimaryButton onClick={() => setCreatingGoal(blankGoalDraft())}>Nieuw doel of tussendoel</PrimaryButton>
       {creatingGoal && <GoalSetupWizard mode="create" initialGoal={creatingGoal} onClose={() => setCreatingGoal(null)} />}
 
       <GoalFocusCard />
@@ -450,7 +454,7 @@ function GR5GoalCard({
         <SecondaryButton onClick={() => navigate('/onderweg')}>Alleen onderweg</SecondaryButton>
       </div>
       {daysLeft !== undefined && (
-        <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
+        <p className="font-display text-2xl" style={{ color: 'var(--color-action)' }}>
           {daysLeft > 0 ? <>nog <Num>{daysLeft}</Num> dagen</> : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
         </p>
       )}
@@ -461,7 +465,7 @@ function GR5GoalCard({
         </p>
       )}
 
-      <PrimaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</PrimaryButton>
+      <SecondaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</SecondaryButton>
 
       <button onClick={() => setAdvancedOpen((s) => !s)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
@@ -606,8 +610,8 @@ function MarathonGoalCard({
             disabled={busy}
             className="min-h-[44px] flex-1 rounded-xl border py-2 text-xs font-medium transition-all active:scale-[0.97]"
             style={{
-              borderColor: raceType === type ? 'var(--color-gold)' : 'var(--color-card-border)',
-              color: raceType === type ? 'var(--color-gold)' : 'var(--color-ink)',
+              borderColor: raceType === type ? 'var(--color-action)' : 'var(--color-card-border)',
+              color: raceType === type ? 'var(--color-action)' : 'var(--color-ink)',
             }}
           >
             {type === 'half' ? 'Halve (21,1 km)' : 'Hele (42,2 km)'}
@@ -619,7 +623,7 @@ function MarathonGoalCard({
         <>
           <GoalStatusNote status={marathonGoal?.status ?? 'paused'} />
           {daysLeft !== undefined && (
-            <p className="font-display text-2xl" style={{ color: 'var(--color-gold)' }}>
+            <p className="font-display text-2xl" style={{ color: 'var(--color-action)' }}>
               {daysLeft > 0 ? <>nog <Num>{daysLeft}</Num> dagen</> : daysLeft === 0 ? 'Vandaag is de dag' : 'Datum verstreken'}
             </p>
           )}
@@ -630,7 +634,7 @@ function MarathonGoalCard({
             </p>
           )}
 
-          <PrimaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</PrimaryButton>
+          <SecondaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</SecondaryButton>
 
           <button onClick={() => setAdvancedOpen((s) => !s)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
@@ -763,7 +767,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
             onClick={() => { if (role !== value) void horizon.propose(() => planGoalRole(goal.id, value), { eyebrow: 'Rol in je plan', ask: 'always', declined: 'Je doel en je planning blijven zoals ze waren.' }); }}
             disabled={horizon.busy}
             className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
-            style={{ borderColor: role === value ? 'var(--color-bronze)' : 'var(--color-card-border)', color: role === value ? 'var(--color-gold)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
+            style={{ borderColor: role === value ? 'var(--color-progress)' : 'var(--color-card-border)', color: role === value ? 'var(--color-action)' : 'var(--color-ink-dim)', background: 'var(--color-charcoal)' }}
           >
             {label}
           </button>
@@ -776,7 +780,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
       </p>
       {prediction?.predictedMinutes !== undefined && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-          Laatste testloop: {formatNumberNL(prediction.latest.km, 1)} km in {formatRaceTime(prediction.latest.minutes)}. Voorspelde {formatNumberNL(raceKm!, 1)} km: <span style={{ color: 'var(--color-gold)' }}>tussen {formatRaceTime(predictionRange(prediction.predictedMinutes)[0])} en {formatRaceTime(predictionRange(prediction.predictedMinutes)[1])}</span>
+          Laatste testloop: {formatNumberNL(prediction.latest.km, 1)} km in {formatRaceTime(prediction.latest.minutes)}. Voorspelde {formatNumberNL(raceKm!, 1)} km: <span style={{ color: 'var(--color-action)' }}>tussen {formatRaceTime(predictionRange(prediction.predictedMinutes)[0])} en {formatRaceTime(predictionRange(prediction.predictedMinutes)[1])}</span>
           {targetMin ? `, je doel is ${formatRaceTime(targetMin)}` : ''}.
           {prediction.change !== undefined && (Math.abs(prediction.change) < TEST_NOISE
             ? ' Gelijk aan je vorige test: verschillen tot 3 à 4% zijn normale schommeling.'
@@ -804,7 +808,7 @@ function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUn
     <Card className="flex flex-col gap-3">
       <button onClick={() => setOpen((s) => !s)} className="flex min-h-[44px] items-center justify-between gap-3 text-left">
         <Eyebrow>GEARCHIVEERDE DOELEN ({goals.length})</Eyebrow>
-        <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}>{open ? '−' : '+'}</span>
+        <span className="shrink-0 text-sm" style={{ color: 'var(--color-action)' }}>{open ? '−' : '+'}</span>
       </button>
       {open && (
         <div className="flex flex-col gap-3">

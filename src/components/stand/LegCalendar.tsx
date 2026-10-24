@@ -40,7 +40,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
               className="relative aspect-square min-h-[44px] rounded-md"
               style={{
                 background: 'var(--color-charcoal)',
-                outline: i === selected ? '2px solid var(--color-gold)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,
+                outline: i === selected ? '2px solid var(--color-action)' : isToday ? '1px solid var(--color-ink-dim)' : undefined,
                 outlineOffset: 1,
               }}
             >
@@ -48,7 +48,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
                 <span
                   className="absolute inset-0 rounded-md"
                   style={{
-                    background: 'var(--color-bronze)',
+                    background: 'var(--color-progress)',
                     opacity: LEVEL_OPACITY[d.level] * (d.planned ? 0.7 : 1),
                     border: d.planned ? '1px dashed var(--color-ink)' : undefined,
                   }}
@@ -63,7 +63,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
 
       <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
         <span>licht</span>
-        {LEVEL_OPACITY.slice(1).map((o) => <span key={o} className="h-2.5 w-4 rounded-sm" style={{ background: 'var(--color-bronze)', opacity: o }} />)}
+        {LEVEL_OPACITY.slice(1).map((o) => <span key={o} className="h-2.5 w-4 rounded-sm" style={{ background: 'var(--color-progress)', opacity: o }} />)}
         <span>zwaar</span>
       </div>
 
