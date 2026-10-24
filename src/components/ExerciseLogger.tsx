@@ -7,19 +7,22 @@ import { exercisesForVariant, durationForVariant, availableVariants, resolveVari
 import { useAppData, type LogSessionInput } from '../state/AppDataContext';
 import { getModalities, getModality, defaultModality, modalitySport } from '../data/modalities';
 import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL, getCompatibility } from '../data/garminSuggested';
-import { ModalityPicker } from './ModalityPicker';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Chip, Eyebrow, PrimaryButton, SecondaryButton, Segmented, Toggle } from './ui';
-import { StretchList } from './StretchList';
+import { Card, Chip, Eyebrow, PrimaryButton, SecondaryButton, Segmented, Toggle, ZoneBar } from './ui';
 import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { cleanDetails, detailForm, plannedDetails } from '../engine/workoutDetails';
 import { ASK_LEGS_FOR, type LegsAtStart } from '../engine/learning';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
-import { TrainingGuideSheet, WorkoutSteps } from './TrainingGuideSheet';
-import { SessionHeader, StopSignals } from './SessionHeader';
+import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { StopSignals } from './SessionHeader';
+import { SkyBand } from './SkyBand';
+import { CheckGlyph } from './vandaag/glyphs';
+import { ZONE_SENTENCE } from './vandaag/zone';
+import { IntervalProfile, KeyNumbers, ModalityChoice, StepList, StretchRow } from './duur/DuurParts';
+import { firstSentence } from './duur/text';
 import { WatchStatusRow } from './WatchStatusRow';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { progressionTarget } from '../engine/programLayout';
@@ -312,7 +315,10 @@ function GeneralLogger({
   const guide = getTrainingGuide(template.id);
   const restChosen = selectedModality?.environment === 'rest';
   const planRpe = peak ? rpeRange(INTENSITY[peak].rpe) : undefined;
-  const dateLabel = `${weekdayShortNL(scheduledDate ?? today)} ${formatDateNL(scheduledDate ?? today)}`;
+  const weekday = weekdayShortNL(scheduledDate ?? today);
+  const dateLabel = `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()} ${formatDateNL(scheduledDate ?? today)}`;
+  // Eén doorlopend blok: geen profiel, wel de zone (zoals de missiekaart).
+  const singleZone = conditioningSteps.length === 1 && !conditioningSteps[0].noTarget ? conditioningSteps[0].intensity : undefined;
   const saveLabel = saving ? 'Opslaan…' : quickComplete ? 'Afvinken' : restChosen ? 'Rustdag afvinken' : 'Opslaan';
 
   function goToForm() {
@@ -326,15 +332,41 @@ function GeneralLogger({
         className={`fixed inset-0 z-50 overflow-y-auto ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
         style={{ background: 'var(--color-bg)' }}
       >
-      <div className="mx-auto max-w-md px-4 pb-32 pt-4">
-        <div className="mb-3 flex items-center justify-between">
-          <button onClick={requestClose} className="-ml-2 min-h-[44px] px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={18} className="mr-1 inline align-[-3px]" />Terug</button>
-          <Eyebrow as="span">{dateLabel}</Eyebrow>
-        </div>
+      <div className="mx-auto max-w-md px-4 pb-32">
+        <SkyBand variant="low" gear={false}>
+          <div className="flex items-start gap-2">
+            <button type="button" onClick={requestClose} aria-label="Terug" className="-ml-3 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
+              <Icon name="terug" size={24} />
+            </button>
+            <div className="min-w-0 flex-1 pt-1">
+              <Eyebrow>{brief.headline}</Eyebrow>
+              <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+              {brief.purpose && <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{firstSentence(brief.purpose)}</p>}
+              <p className="mt-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{[dateLabel, brief.weekLabel].filter(Boolean).join(' · ')}</p>
+            </div>
+          </div>
+        </SkyBand>
 
-        <SessionHeader brief={brief} title={template.name} />
-
-        {plannedSession && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="mt-3" />}
+        <Card className="mt-1 flex flex-col gap-5">
+          {/* Bij één doorlopend blok zeggen de zonebalk en zijn zin het al: zone en praattest niet nog eens als pil. */}
+          <KeyNumbers facts={singleZone && !restChosen ? brief.facts.filter((f) => !/^(zone \d|praten kan)/i.test(f.value)) : brief.facts} />
+          {!restChosen && plan && conditioningSteps.length > 1 ? (
+            <IntervalProfile plan={plan} />
+          ) : !restChosen && singleZone ? (
+            <div className="flex flex-col gap-3">
+              <ZoneBar active={singleZone} label={`Zone ${singleZone}`} />
+              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+                <span className="font-semibold" style={{ color: 'var(--color-progress)' }}>Zone {singleZone}.</span> {ZONE_SENTENCE[singleZone]}
+              </p>
+            </div>
+          ) : null}
+          {(brief.sportSwitch || brief.tomorrow) && (
+            <div className="-mt-2 flex flex-col gap-1">
+              {brief.sportSwitch && <p className="text-xs" style={{ color: 'var(--color-status)' }}>{brief.sportSwitch}</p>}
+              {brief.tomorrow && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{brief.tomorrow}</p>}
+            </div>
+          )}
+        </Card>
 
         {availableVariants(template).length > 1 && !restChosen && (
           <div className="mt-4">
@@ -348,17 +380,8 @@ function GeneralLogger({
           </div>
         )}
 
-        {hasModalities && guidanceMode === 'ascend_guided' && (getModalities(template.id)?.length ?? 0) > 1 && (
-          <Card className="mt-5">
-            <Eyebrow>{template.type === 'recovery' ? 'WAT DOE JE VANDAAG?' : 'WAAR TRAIN JE?'}</Eyebrow>
-            <div className="mt-3">
-              <ModalityPicker templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} enabledSports={settings.enabledSports} />
-            </div>
-          </Card>
-        )}
-
         {quickComplete && (
-          <Card className="mt-5">
+          <Card className="mt-4">
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Kracht bijgehouden in MacroFactor</p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
               Oefeningen, sets en gewicht staan in MacroFactor. Hier vink je de training alleen af.
@@ -366,15 +389,39 @@ function GeneralLogger({
           </Card>
         )}
 
-        {!restChosen && !quickComplete && (
-          <Card className="mt-5">
-            <Eyebrow>ZO DOE JE HET</Eyebrow>
+        {!restChosen && !quickComplete && plan && conditioningSteps.length > 0 && (
+          <Card className="mt-4">
+            <Eyebrow>Zo doe je het</Eyebrow>
+            <div className="mt-1"><StepList plan={plan} /></div>
+          </Card>
+        )}
+
+        {hasModalities && guidanceMode === 'ascend_guided' && (getModalities(template.id)?.length ?? 0) > 1 && (
+          <Card className="mt-4">
+            <Eyebrow>{template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'}</Eyebrow>
+            <div className="mt-3">
+              <ModalityChoice templateId={template.id} selectedKey={modalityKey} onSelect={setModalityKey} enabledSports={settings.enabledSports} label={template.type === 'recovery' ? 'Wat doe je vandaag?' : 'Waar train je?'} />
+            </div>
+          </Card>
+        )}
+
+        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || plannedSession) ? (
+          <div className="mt-4 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             {template.warmup && template.warmup.length > 0 && (
-              <StretchList title={`Eerst: ${template.warmup.length} opwarmoefeningen`} stretches={template.warmup} className="mt-3" />
+              <StretchRow icon="rekken" title="Eerst opwarmen" line={`${template.warmup.length} oefeningen`} stretches={template.warmup} />
             )}
-            {plan && conditioningSteps.length > 0 && <WorkoutSteps plan={plan} compact intro={false} />}
-            {template.type === 'strength' && (
-              <div className="mt-3 flex flex-col gap-2">
+            {template.cooldown && template.cooldown.length > 0 && (
+              <StretchRow icon="rekken" title="Daarna rekken" line={`${template.cooldown.length} oefeningen`} stretches={template.cooldown} />
+            )}
+            {plannedSession && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="py-2" plain />}
+          </div>
+        ) : plannedSession ? (
+          <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="mt-4" />
+        ) : null}
+
+        {template.type === 'strength' && !restChosen && !quickComplete && (
+          <Card className="mt-4">
+            <div className="flex flex-col gap-2">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte volgens MacroFactor. Vul alleen in wat je wilt bijhouden.</p>
                 {exercises.map((ex) => {
                   const timed = /\d\s*(s|sec)\b/i.test(ex.reps);
@@ -421,17 +468,13 @@ function GeneralLogger({
                     </div>
                   );
                 })}
-              </div>
-            )}
-            {template.cooldown && template.cooldown.length > 0 && (
-              <StretchList title={`Daarna: ${template.cooldown.length} rekoefeningen`} stretches={template.cooldown} className="mt-3" />
-            )}
+            </div>
           </Card>
         )}
 
         {brief.stopSignals.length > 0 && !restChosen && (
-          <Card className="mt-5">
-            <Eyebrow>STOP OF SCHAKEL TERUG ALS</Eyebrow>
+          <Card className="mt-4">
+            <Eyebrow tone="var(--color-warning)">Stop of schakel terug als</Eyebrow>
             <StopSignals signals={brief.stopSignals} />
           </Card>
         )}
@@ -652,14 +695,16 @@ function GeneralLogger({
         ) : (
         <div className="mx-auto flex max-w-md gap-3 px-4 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
           {guide ? (
-            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[96px] flex-none px-4">Info</SecondaryButton>
+            <SecondaryButton onClick={() => setShowInfo(true)} className="min-w-[88px] flex-none px-4">Info</SecondaryButton>
           ) : (
             <SecondaryButton onClick={requestClose} className="min-w-[112px] flex-none px-4">Annuleren</SecondaryButton>
           )}
           {reachedForm || restChosen || quickComplete ? (
             <PrimaryButton onClick={() => void handleSave()} disabled={saving}>{saveLabel}</PrimaryButton>
           ) : (
-            <PrimaryButton onClick={goToForm}>Klaar, invullen</PrimaryButton>
+            <PrimaryButton onClick={goToForm}>
+              <span className="inline-flex items-center justify-center gap-2"><CheckGlyph size={18} />Gedaan, invullen</span>
+            </PrimaryButton>
           )}
         </div>
         )}

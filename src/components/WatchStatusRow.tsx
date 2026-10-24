@@ -38,6 +38,7 @@ export function WatchStatusRow({
   template,
   onLeave,
   offer = true,
+  plain = false,
   className = '',
 }: {
   session: PlannedSession;
@@ -47,6 +48,8 @@ export function WatchStatusRow({
   // False on Vandaag: there the row only reports on a training that is linked,
   // and does not ask to link (the training screen does).
   offer?: boolean;
+  // True in a list of rows (the training screen): no box of its own.
+  plain?: boolean;
   className?: string;
 }) {
   const navigate = useNavigate();
@@ -82,12 +85,14 @@ export function WatchStatusRow({
   const color = status.kind === 'sent' ? COLOR.sent : status.kind === 'failed' ? COLOR.failed : COLOR.other;
   const body = (
     <>
-      <span className="shrink-0" style={{ color }}><Icon name="horloge" size={20} /></span>
+      {plain
+        ? <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-charcoal)', color }}><Icon name="horloge" size={18} /></span>
+        : <span className="shrink-0" style={{ color }}><Icon name="horloge" size={20} /></span>}
       <span className="min-w-0 flex-1 text-balance text-sm leading-snug" style={{ color: status.kind === 'sent' || status.kind === 'failed' ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{line.text}</span>
     </>
   );
-  const box = 'flex min-h-[44px] w-full items-center gap-3 rounded-xl border px-3 py-1.5 text-left';
-  const boxStyle = { borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' };
+  const box = plain ? 'flex min-h-[52px] w-full items-center gap-3 text-left' : 'flex min-h-[44px] w-full items-center gap-3 rounded-xl border px-3 py-1.5 text-left';
+  const boxStyle = plain ? undefined : { borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' };
 
   return (
     <div className={className} aria-live="polite">
