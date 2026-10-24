@@ -38,12 +38,28 @@ export interface Program {
   // and every later wave stay on the calendar. Optional, additive: older
   // programs and backups simply don't have it.
   repeatedWeeks?: string[];
+  // A rest week skipped or put back, or a repeat set or taken back, in the
+  // middle of a week: the days of that week before `until` keep how the week
+  // stood then, so a training that is done or past never changes
+  // (engine/weekLoadChange.ts, docs/beslissingen/2026-10-24-rustweek-via-voorstel.md).
+  // Optional, additive: older programs and backups simply don't have it.
+  heldWeekDays?: HeldWeekDays[];
   // The rucksack target (kg) of the main goal, copied here by
   // storage/database.ts#syncProgramHorizon like the phases are laid out from
   // its date: the pack ladder of the hikes and rucksack walks climbs toward
   // it (engine/packLadder.ts). Absent = the default with a tent. Optional,
   // additive: older programs and backups simply don't have it.
   packTargetKg?: number;
+}
+
+// For the days of `week` (a Monday) before `until`: whether the rest week was
+// trained through and whether the week repeated the one before, as it stood
+// before a change in the middle of that week.
+export interface HeldWeekDays {
+  week: string;
+  until: string;
+  restSkipped?: true;
+  repeated?: true;
 }
 
 export interface ResolvedProgramPosition {

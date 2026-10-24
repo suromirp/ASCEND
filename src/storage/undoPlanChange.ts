@@ -1,5 +1,5 @@
 // ASCEND: ongedaan maken van de laatste wijziging, los van React, zodat het te
-// testen is (Warden Planning punt 9). Zet de instelling, de config, de doelen en
+// testen is (Warden Planning punt 9). Zet de instelling, de config, de doelen, het programma en
 // de rijen terug zoals ze waren, haalt wat de wijziging toevoegde weg en legt
 // het ongedaan maken vast in het wijzigingslog. De aanroeper (AppDataContext)
 // zet daarna het scherm bij.
@@ -7,7 +7,7 @@
 import type { RecentPlanChange } from '../models/planChange';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import type { StoredResponse } from '../engine/learning';
-import { GoalEngineConfigRepo, MetaRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, SettingsRepo, TrainingGoalsRepo, type AppSettings } from './database';
+import { GoalEngineConfigRepo, MetaRepo, PlanChangeProposalsRepo, PlannedSessionsRepo, ProgramsRepo, SettingsRepo, TrainingGoalsRepo, type AppSettings } from './database';
 import { makeId } from '../utils/id';
 
 export interface UndoOutcome {
@@ -28,6 +28,8 @@ export async function undoPlanChangeNow(change: RecentPlanChange): Promise<UndoO
   // A goal changed with its planning (another date, archived, a new goal): back as it was.
   for (const goal of change.goalsBefore ?? []) await TrainingGoalsRepo.put(goal);
   for (const id of change.goalsAdded ?? []) await TrainingGoalsRepo.delete(id);
+  // A rest week or a repeated week changed: the program goes back as it was.
+  if (change.programBefore) await ProgramsRepo.put(change.programBefore);
   if (change.adviceId) {
     const responses = { ...((await MetaRepo.get<Record<string, StoredResponse>>('adviceResponses')) ?? {}) };
     delete responses[change.adviceId];

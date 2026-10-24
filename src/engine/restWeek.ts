@@ -17,6 +17,7 @@ import { addDays, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_BASIS, PHASE_TAPER, WAVE_LENGTH } from './programLayout';
 import { logSport, templateSport } from './sports';
 import { resolveEffectiveFullDuration } from './substitutions';
+import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
 
 export interface RestWeekState {
   isRestWeek: boolean; // a rest week in the plan (skipped or not)
@@ -27,7 +28,8 @@ export interface RestWeekState {
 
 export function restWeekState(program: Program, weekStart: string, logs: SessionLog[], today: string): RestWeekState {
   const monday = mondayOfWeek(weekStart);
-  const position = resolveProgramWeek(program, monday);
+  // The week as you chose it now, not the days held from before a change.
+  const position = resolveProgramWeek(currentChoices(program), monday);
   const isRestWeek = !!position && position.phase.id !== PHASE_TAPER && ((position.weekInPhase - 1) % WAVE_LENGTH) + 1 === WAVE_LENGTH;
   const skipped = isRestWeek && !!position?.restSkipped;
   if (!isRestWeek) return { isRestWeek, skipped, canSkip: false };
@@ -48,6 +50,14 @@ export function withRestWeekSkipped(program: Program, weekStart: string, skip: b
   const others = (program.skippedRestWeeks ?? []).filter((w) => w !== monday);
   const next = skip ? [...others, monday].sort() : others;
   return { ...program, skippedRestWeeks: next.length ? next : undefined };
+}
+
+// What training through, or putting the rest week back, does to the week:
+// only the trainings that are still open change (engine/weekLoadChange.ts).
+// A change in the middle of the week holds the days before it.
+export function restWeekChange(program: Program, weekStart: string, skip: boolean, ctx: WeekLoadContext): LoadChange {
+  const monday = mondayOfWeek(weekStart);
+  return loadChange(program, monday, addDays(monday, 6), (p) => withRestWeekSkipped(p, monday, skip), ctx);
 }
 
 // --- ASCEND proposes it itself (rule REST-WEEK-SKIP) -------------------------

@@ -51,6 +51,17 @@ export interface HorizonChangeInput {
   // A proposal of its own that goes first (a sport switched off): applied as
   // an accepted proposal, with its lock, before the planning run.
   startItems?: PlanChangeItem[];
+  // The program as it would be: a rest week trained through or put back, a
+  // week repeated or the repeat taken back (engine/weekLoadChange.ts).
+  program?: Program;
+  // Trainings of yours (a lock) that keep their length: they get it as a fixed
+  // length, so the new load of the week passes them by.
+  pinMinutes?: { id: string; minutes: number }[];
+  // Lines for the proposal of its own, before the ones of the planning run.
+  notes?: string[];
+  // The trainings that get another length, as the change itself names them
+  // (all of them, not only the next two weeks). Without it: worked out here.
+  lengths?: string[];
 }
 
 export interface HorizonPlan {
@@ -60,6 +71,9 @@ export interface HorizonPlan {
   // Trainingen in de komende twee weken die alleen een andere lengte krijgen.
   lengths: string[];
   counts: HorizonDiff['counts'];
+  // The stored program the proposal was made against, when it changes the
+  // program: another one at Akkoord means the plan changed in between.
+  programWas?: string;
 }
 
 // What undo puts back: the settings and goals as they were just before
@@ -68,6 +82,8 @@ export interface HorizonRestore {
   settings?: Partial<AppSettings>;
   goals: TrainingGoal[];
   newGoalIds: string[];
+  // The program as it was, when the change wrote another one.
+  program?: Program;
 }
 
 // Some steps of the planning run only settle in a second round (the race
@@ -86,14 +102,24 @@ async function settledPreview(overrides: HorizonOverrides) {
   return run;
 }
 
+// The plan with the fixed lengths of the trainings that keep theirs.
+function withPins(sessions: PlannedSession[], pins: HorizonChangeInput['pinMinutes']): PlannedSession[] {
+  if (!pins?.length) return sessions;
+  const byId = new Map(pins.map((p) => [p.id, p.minutes]));
+  return sessions.map((s) => (byId.has(s.id) && s.plannedMinutes === undefined ? { ...s, plannedMinutes: byId.get(s.id) } : s));
+}
+
 async function diffFor(input: HorizonChangeInput, registers?: DurationScope) {
   const [stored, logs, templates] = await Promise.all([PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), SessionTemplatesRepo.getAll()]);
   let drafts = 0;
+  // A fixed length that only keeps what a training already had is not a
+  // change to show: the diff starts from the plan with it.
+  const base = withPins(stored, input.pinMinutes);
   const start = input.startItems?.length
-    ? applyPlanChangeItems(input.startItems, stored, () => `horizon-draft-${++drafts}`, { by: 'proposal', at: 'preview' }).sessions
-    : undefined;
-  const run = await settledPreview({ settings: input.settings, goals: input.goals, sessions: start, registers });
-  const diff = diffHorizon({ before: stored, after: run.after, logs, templates, today: todayISO(), goalDay: run.anchor, reason: input.why });
+    ? applyPlanChangeItems(input.startItems, base, () => `horizon-draft-${++drafts}`, { by: 'proposal', at: 'preview' }).sessions
+    : (base !== stored ? base : undefined);
+  const run = await settledPreview({ settings: input.settings, goals: input.goals, sessions: start, registers, program: input.program });
+  const diff = diffHorizon({ before: base, after: run.after, logs, templates, today: todayISO(), goalDay: run.anchor, reason: input.why });
   // The proposal's own items keep their own reason.
   const own = new Map((input.startItems ?? []).filter((i) => i.plannedSessionId).map((i) => [i.plannedSessionId!, i]));
   const items = diff.items.map((i) => (i.plannedSessionId && own.get(i.plannedSessionId)?.reason ? { ...i, reason: own.get(i.plannedSessionId)!.reason } : i));
@@ -162,7 +188,10 @@ export async function computeHorizonPlan(input: HorizonChangeInput, deps: Horizo
     explanation: input.explanation,
     createdAt: new Date().toISOString(),
   };
-  return { input, proposal, notes: diff.notes, lengths, counts: diff.counts };
+  return {
+    input, proposal, notes: [...(input.notes ?? []), ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
+    ...(input.program ? { programWas: JSON.stringify(programs[0] ?? null) } : {}),
+  };
 }
 
 export type HorizonApplyResult =
@@ -201,6 +230,7 @@ async function takeSnapshot(input: HorizonChangeInput, sessions: PlannedSession[
     ...(input.settings ? { settings: Object.fromEntries(Object.keys(input.settings).map((k) => [k, settings[k as keyof AppSettings]])) as Partial<AppSettings> } : {}),
     goals: (input.goals ?? []).map((g) => storedGoals.get(g.id)).filter((g): g is TrainingGoal => !!g),
     newGoalIds: (input.goals ?? []).filter((g) => !storedGoals.has(g.id)).map((g) => g.id),
+    ...(input.program && programs[0] ? { program: programs[0] } : {}),
   };
   return { sessions, settingsRaw, restore, programs, milestones, appliedRestDay };
 }
@@ -234,6 +264,7 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
   const sync = deps.sync ?? syncProgramHorizon;
   if (deps.prime) await deps.prime();
   // The plan may have changed since the proposal was shown: then not this.
+  if (input.program && JSON.stringify((await ProgramsRepo.getAll())[0] ?? null) !== plan.programWas) return { status: 'stale' };
   const { diff, stored } = await diffFor(input, await scopeFor(input));
   if (comparable(diff.items) !== comparable(plan.proposal.changes)) return { status: 'stale' };
 
@@ -247,11 +278,18 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
       const kept = new Set(sessions.map((s) => s.id));
       for (const s of stored) if (!kept.has(s.id)) await PlannedSessionsRepo.delete(s.id);
     }
+    if (input.pinMinutes?.length) {
+      const was = new Map(stored.map((s) => [s.id, s]));
+      for (const s of withPins(await PlannedSessionsRepo.getAll(), input.pinMinutes)) {
+        if (JSON.stringify(was.get(s.id)) !== JSON.stringify(s)) await PlannedSessionsRepo.put(s);
+      }
+    }
+    if (input.program) await ProgramsRepo.put(input.program);
     if (input.settings) await SettingsRepo.set(input.settings);
     for (const g of input.goals ?? []) await TrainingGoalsRepo.put(g);
     // The registers follow the stored settings again, now with the change.
     if (deps.prime) await deps.prime();
-    if (diff.items.length > 0 || input.startItems?.length) {
+    if (diff.items.length > 0 || input.startItems?.length || input.program) {
       for (let i = 0; i < ROUNDS; i++) {
         const r = await sync({ releaseAnchors: true });
         if (r.added + r.swapped + r.removed === 0) break;

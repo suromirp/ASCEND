@@ -47,6 +47,7 @@ import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils
 import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
 import { activeIllness, recoveryRamp } from './illness';
 import { KEY_TEMPLATES, buildWeekReview } from './weekReview';
+import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
 
 // Below this share of the planned trainings (rest sessions not counted) a
 // week fell short. A round, explainable line, not a number from a study.
@@ -88,7 +89,8 @@ export interface RepeatState {
 }
 
 export function repeatState(program: Program, weekStart: string): RepeatState {
-  const position = resolveProgramWeek(program, weekStart);
+  // The week as you chose it now, not the days held from before a change.
+  const position = resolveProgramWeek(currentChoices(program), weekStart);
   return { repeated: !!position?.repeated, shifted: !!position?.loadShift };
 }
 
@@ -106,12 +108,24 @@ const waveOf = (weekInPhase: number) => ((weekInPhase - 1) % WAVE_LENGTH) + 1;
 // 3 of the wave, no repeat in this wave yet.
 export function canRepeatWeek(program: Program, weekStart: string): boolean {
   const monday = mondayOfWeek(weekStart);
-  const here = resolveProgramWeek(program, monday);
-  const before = resolveProgramWeek(program, addDays(monday, -7));
+  const current = currentChoices(program);
+  const here = resolveProgramWeek(current, monday);
+  const before = resolveProgramWeek(current, addDays(monday, -7));
   if (!here || !before || here.phase.id !== before.phase.id || here.phase.id === PHASE_TAPER) return false;
   if (here.loadShift || before.loadShift) return false;
   const wave = waveOf(here.weekInPhase);
   return wave >= 2 && wave <= WAVE_LENGTH - 1 && waveOf(before.weekInPhase) === wave - 1;
+}
+
+// What repeating this week, or taking the repeat back, does: only the
+// trainings that are still open change, in this week and in the weeks after it
+// in the same wave, up to the rest week (engine/weekLoadChange.ts).
+export function repeatWeekChange(program: Program, weekStart: string, repeat: boolean, ctx: WeekLoadContext): LoadChange {
+  const monday = mondayOfWeek(weekStart);
+  const position = resolveProgramWeek(currentChoices(program), monday);
+  const wave = position ? waveOf(position.weekInPhase) : WAVE_LENGTH - 1;
+  const until = addDays(monday, 7 * Math.max(1, WAVE_LENGTH - wave) - 1);
+  return loadChange(program, monday, until, (p) => withWeekRepeated(p, monday, repeat), ctx);
 }
 
 // --- 3. what it costs -------------------------------------------------------

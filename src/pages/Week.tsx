@@ -24,8 +24,7 @@ import { RescheduleDialog } from '../components/RescheduleDialog';
 import { Card, Eyebrow, Num, Ring, SecondaryButton, Stat } from '../components/ui';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { formatNumberNL } from '../utils/number';
-import { restWeekState } from '../engine/restWeek';
-import { repeatState } from '../engine/repeatWeek';
+import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
@@ -37,7 +36,7 @@ const hm = (minutes: number) => `${Math.floor(minutes / 60)}:${String(Math.round
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
 export function WeekPage() {
-  const { setRestWeekSkipped, setWeekRepeated, suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
+  const { suggestMoves, program, plannedSessions, templates, sessionLogs, settings, strengthExternal, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, planChangeLog, advice, leavePeriods } = useAppData();
   const adjustedIds = useMemo(() => new Set(adjustedSessionReasons(planChangeLog, todayISO()).keys()), [planChangeLog]);
   // The chosen week and the year overview belong to this step in the history:
   // to a training and back, the page is as you left it.
@@ -60,8 +59,6 @@ export function WeekPage() {
   // What a holiday or a trek let go of is explained by the band on those days: not listed, not counted.
   const sessions = sessionsForWeek(weekStart).filter((s) => !(s.status === 'skipped' && (templateById.get(s.templateId)?.type === 'recovery' || s.leave?.role === 'dropped')));
   const position = program ? resolveProgramWeek(program, weekStart) : null;
-  const restWeek = program && weekStart >= mondayOfWeek(todayISO()) ? restWeekState(program, weekStart, sessionLogs, todayISO()) : undefined;
-  const repeat = program && weekStart >= mondayOfWeek(todayISO()) ? repeatState(program, weekStart) : undefined;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
   // The time this week asks: open trainings at their planned length, done ones
@@ -256,42 +253,7 @@ export function WeekPage() {
         )}
       </div>
 
-      {!monthView && restWeek?.isRestWeek && (
-        <Card className="flex flex-col gap-2">
-          <Eyebrow>{restWeek.skipped ? 'RUSTWEEK OVERGESLAGEN' : 'RUSTWEEK'}</Eyebrow>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-            {restWeek.skipped
-              ? 'Je traint deze week door, als een normale opbouwweek. Voelen je benen zwaar, slaap je slecht of gaat het tempo bij dezelfde hartslag omlaag? Zet de rustweek dan terug.'
-              : 'Deze week schakel je terug, zodat de opbouw van de vorige weken binnenkomt. Voel je je fris en ging alles goed? Dan kun je doortrainen: de week wordt een normale opbouwweek, geen tweede zwaarste week.'}
-          </p>
-          {restWeek.skipped ? (
-            <SecondaryButton onClick={() => void setRestWeekSkipped(weekStart, false)}>Rustweek terugzetten</SecondaryButton>
-          ) : restWeek.canSkip ? (
-            <SecondaryButton onClick={() => void setRestWeekSkipped(weekStart, true)}>Doortrainen</SecondaryButton>
-          ) : restWeek.reason ? (
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{restWeek.reason}</p>
-          ) : null}
-        </Card>
-      )}
-
-      {!monthView && repeat?.repeated && (
-        <Card className="flex flex-col gap-2">
-          <Eyebrow>DEZE WEEK NOG EEN KEER</Eyebrow>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-            Je minuten, hoogtemeters en rugzak blijven op het niveau van vorige week, in plaats van een stap omhoog. De rustweek en de weken daarna staan nog op de kalender. Gaat het toch goed? Dan kun je de herhaling terugzetten.
-          </p>
-          <SecondaryButton onClick={() => void setWeekRepeated(weekStart, false)}>Herhaling terugzetten</SecondaryButton>
-        </Card>
-      )}
-
-      {!monthView && repeat?.shifted && !repeat.repeated && (
-        <Card className="flex flex-col gap-2">
-          <Eyebrow>EEN STAP ACHTER</Eyebrow>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-            Eerder in deze golf herhaalde je een week. Deze week bouwt daarom een stap achter op de kalender; de rustweek en de volgende golf lopen weer gewoon door.
-          </p>
-        </Card>
-      )}
+      {!monthView && <WeekLoadCards weekStart={weekStart} />}
 
       {adHocOpen && (
         <AdHocLogSheet templates={templates} onPick={(t) => { setAdHocOpen(false); setAdHocTemplate(t); }} onClose={() => setAdHocOpen(false)} />
