@@ -4,6 +4,7 @@ import { useSheetClose } from '../../utils/useSheetClose';
 import { NumberField } from '../NumberField';
 import { Portal } from '../Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from '../ui';
+import { TextButton } from '../TextButton';
 
 const fieldStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -60,8 +61,8 @@ export function PackItemSheet({
                     onClick={() => setGroup(g)}
                     className="min-h-[44px] rounded-full border px-3 text-xs"
                     style={{
-                      borderColor: group === g ? 'var(--color-gold)' : 'var(--color-control-border)',
-                      color: group === g ? 'var(--color-gold)' : 'var(--color-ink)',
+                      borderColor: group === g ? 'var(--color-action)' : 'var(--color-control-border)',
+                      color: group === g ? 'var(--color-action)' : 'var(--color-ink)',
                     }}
                   >
                     {PACK_GROUP_LABEL[g]}
@@ -84,18 +85,17 @@ export function PackItemSheet({
               </PrimaryButton>
             </div>
             {onDelete && (
-              <button
-                type="button"
+              <TextButton
                 onClick={() => {
                   if (!confirmDelete) { setConfirmDelete(true); return; }
                   onDelete();
                   requestClose();
                 }}
-                className="min-h-[44px] self-start text-xs underline underline-offset-2"
-                style={{ color: confirmDelete ? 'var(--color-danger-text)' : 'var(--color-ink-dim)' }}
+                tone={confirmDelete ? 'danger' : 'dim'}
+                className="self-start text-left"
               >
                 {confirmDelete ? 'Zeker weten? Tik nog een keer om te verwijderen' : 'Verwijderen van de lijst'}
-              </button>
+              </TextButton>
             )}
           </Card>
         </div>

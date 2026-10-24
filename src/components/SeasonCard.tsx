@@ -9,6 +9,7 @@ import { PHASE_COLOR } from '../data/phaseColors';
 import type { TrainingGoal } from '../models/goals';
 import { Icon } from './icons';
 import { useHorizonChange } from './useHorizonChange';
+import { TextButton } from './TextButton';
 
 // Doelen: the whole season on one card (production feedback: "het moet
 // voelen dat je naar een groter doel toewerkt en ondertussen kleinere
@@ -55,7 +56,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
       <div className="relative pt-5">
         <div className="relative flex h-3 overflow-hidden rounded-full" role="img" aria-label="Je fases tot aan je hoofddoel, met je tussendoelen">
           {program.phases.map((p) => (
-            <span key={p.id} style={{ flexGrow: p.weekCount, flexBasis: 0, background: PHASE_COLOR[p.id] ?? 'var(--color-stone)', opacity: 0.85 }} />
+            <span key={p.id} style={{ flexGrow: p.weekCount, flexBasis: 0, background: PHASE_COLOR[p.id] ?? 'var(--color-ink-dim)', opacity: 0.85 }} />
           ))}
           {blocks.map((b) => (
             <span key={b.goalId} className="absolute inset-y-0" style={{ left: `${at(b.blockStart)}%`, width: `${at(b.raceDate) - at(b.blockStart)}%`, background: 'var(--color-ink)', opacity: 0.25 }} />
@@ -128,9 +129,9 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         De lengte van de fases rekent ASCEND zelf uit vanaf je hoofddoel; aanpassen hoeft niet. Wil je eerder opbouwen, maak dan de Opbouw langer: de basis krijgt wat overblijft.
       </p>
-      <button onClick={() => setEditPhases((v) => !v)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-progress)' }} aria-expanded={editPhases}>
+      <TextButton onClick={() => setEditPhases((v) => !v)} className="self-start" aria-expanded={editPhases} icon="omlaag" flipped={editPhases}>
         {editPhases ? 'Fases sluiten' : 'Fases aanpassen'}
-      </button>
+      </TextButton>
       {editPhases && <PhaseEditor goalDate={main?.targetDate} />}
       {horizon.note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
       {horizon.sheet}

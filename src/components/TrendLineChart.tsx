@@ -11,7 +11,7 @@ const WIDTH = 320;
 // points in between.
 export function TrendLineChart({
   points,
-  color = 'var(--color-gold)',
+  color = 'var(--color-action)',
   height = 110,
   formatValue = (v: number) => `${Math.round(v)}`,
 }: {

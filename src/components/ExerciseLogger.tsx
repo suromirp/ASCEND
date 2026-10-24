@@ -36,6 +36,7 @@ import { durationNeedsCheck, entryMinutes, longDurationText } from '../engine/in
 import { clearDraft, draftKey, draftNumber, loadDraft, saveDraft } from '../utils/loggerDraft';
 import { ForgeWorkout } from './forge/ForgeWorkout';
 import { Icon } from './icons';
+import { TextButton } from './TextButton';
 
 const REST_TIMER_SECONDS = 90;
 
@@ -434,12 +435,12 @@ function GeneralLogger({
                       </div>
                       {!timed && (
                         <div className="mt-1 flex gap-4">
-                          <button onClick={() => setOpenExercise(open ? null : ex.id)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-expanded={open}>
+                          <TextButton onClick={() => setOpenExercise(open ? null : ex.id)} aria-expanded={open} icon="omlaag" flipped={open}>
                             {open ? 'Sluiten' : 'Sets invullen'}
-                          </button>
-                          <button onClick={() => setRestTimerFor(ex.exerciseName)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }} aria-label={`Rusttimer voor ${ex.exerciseName}`}>
+                          </TextButton>
+                          <TextButton onClick={() => setRestTimerFor(ex.exerciseName)} aria-label={`Rusttimer voor ${ex.exerciseName}`} icon="timer">
                             Rusttimer
-                          </button>
+                          </TextButton>
                         </div>
                       )}
                       {open && !timed && (

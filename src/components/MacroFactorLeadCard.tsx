@@ -18,6 +18,7 @@ import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, Num, SecondaryButton, Toggle } from './ui';
+import { TextButton } from './TextButton';
 
 function countLabel(n: number): ReactNode {
   return n === 1 ? <><Num>1</Num> training</> : <><Num>{n}</Num> trainingen</>;
@@ -89,14 +90,9 @@ function TakenSheet({ taken, templates, onClose }: { taken: SessionLog[]; templa
                         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{templateName(templates, log)} {formatDateNL(log.completedDate)}</p>
                         <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{describeStrengthManualLine(log)}</p>
                       </div>
-                      <button
-                        onClick={() => void restore([log.id])}
-                        disabled={busy}
-                        className="min-h-[44px] shrink-0 px-2 text-xs underline underline-offset-2 disabled:opacity-40"
-                        style={{ color: 'var(--color-ink)' }}
-                      >
+                      <TextButton onClick={() => void restore([log.id])} disabled={busy} className="shrink-0 px-2">
                         Terugzetten
-                      </button>
+                      </TextButton>
                     </li>
                   ))}
                 </ul>

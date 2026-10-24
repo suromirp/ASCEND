@@ -43,8 +43,8 @@ export function ChoiceStrip<T extends string | number>({
             <span
               className={`flex h-9 w-full items-center justify-center rounded-lg border text-sm ${numeric ? 'font-sans tabular-nums' : ''} ${on ? 'font-semibold' : ''}`}
               style={{
-                borderColor: on ? 'var(--color-bronze)' : 'transparent',
-                background: on ? 'color-mix(in srgb, var(--color-bronze) 22%, transparent)' : 'transparent',
+                borderColor: on ? 'var(--color-action)' : 'transparent',
+                background: on ? 'color-mix(in srgb, var(--color-action) 22%, transparent)' : 'transparent',
                 color: on ? 'var(--color-ink)' : 'var(--color-ink-dim)',
               }}
             >

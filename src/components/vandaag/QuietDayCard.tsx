@@ -60,7 +60,7 @@ export function DoneTodayCard({ title, line, tomorrow, children }: { title: stri
     <Card className="flex items-start gap-3">
       <span
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border"
-        style={{ borderColor: 'var(--color-gold)', color: 'var(--color-gold)' }}
+        style={{ borderColor: 'var(--color-action)', color: 'var(--color-action)' }}
         aria-hidden="true"
       >
         <CheckGlyph size={22} draw />

@@ -27,11 +27,14 @@ import { getModalities } from '../data/modalities';
 import { filterForTraining } from '../engine/trainingSpots';
 import { Icon } from './icons';
 
+// De vier niveaus lopen van rustig naar hard, dus op de inspanningsschaal van de
+// app (Z1 tot Z5, ook in de ZoneBar): bleekblauw, groen, geel, oranje. Bij elk
+// niveau staat altijd de naam, de RPE en de zone; kleur is nooit het enige signaal.
 const INTENSITY_COLOR: Record<Intensity, string> = {
-  1: 'var(--color-stone)',
-  2: 'var(--color-sky)',
-  3: 'var(--color-bronze)',
-  4: 'var(--color-gold)',
+  1: 'var(--color-effort-1)',
+  2: 'var(--color-effort-2)',
+  3: 'var(--color-effort-3)',
+  4: 'var(--color-effort-4)',
 };
 const INTENSITY_HEIGHT: Record<Intensity, number> = { 1: 30, 2: 50, 3: 72, 4: 100 };
 const LOAD_WORD = ['geen', 'licht', 'gemiddeld', 'zwaar'];
@@ -127,7 +130,7 @@ export function TrainingGuideSheet({
                     <span className="w-24 shrink-0 text-xs" style={{ color: 'var(--color-ink)' }}>{l.label}</span>
                     <div className="flex flex-1 gap-1">
                       {[1, 2, 3].map((n) => (
-                        <span key={n} className="h-1.5 flex-1 rounded-full" style={{ background: n <= l.level ? 'var(--color-gold)' : 'var(--color-card-border)' }} />
+                        <span key={n} className="h-1.5 flex-1 rounded-full" style={{ background: n <= l.level ? 'var(--color-action)' : 'var(--color-card-border)' }} />
                       ))}
                     </div>
                     <span className="w-16 shrink-0 text-right text-xs" style={{ color: 'var(--color-ink-dim)' }}>{LOAD_WORD[l.level]}</span>
@@ -150,7 +153,7 @@ export function TrainingGuideSheet({
                 </p>
                 <div className="mt-2.5 flex flex-col gap-1">
                   {plan.garmin.lines.map((line, i) => (
-                    <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-bronze)' : 'var(--color-ink)' }}>{line}</p>
+                    <p key={i} className="whitespace-pre text-xs tabular-nums" style={{ color: line.startsWith('Herhaal') ? 'var(--color-action)' : 'var(--color-ink)' }}>{line}</p>
                   ))}
                 </div>
               </Fold>
@@ -162,9 +165,9 @@ export function TrainingGuideSheet({
                     <div
                       key={w.week}
                       className="rounded-lg border px-1.5 py-2 text-center"
-                      style={{ borderColor: w.current ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+                      style={{ borderColor: w.current ? 'var(--color-action)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
                     >
-                      <p className="text-xs" style={{ color: w.current ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
+                      <p className="text-xs" style={{ color: w.current ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>WEEK {w.week}</p>
                       <p className="mt-0.5 text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{w.minutes}′</p>
                       <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{w.note.split(/, | \(/)[0]}</p>
                     </div>
@@ -189,7 +192,7 @@ export function TrainingGuideSheet({
                 style={{ borderColor: 'var(--color-card-border)' }}
               >
                 <span className="text-sm" style={{ color: 'var(--color-ink)' }}>Waar kun je dit doen?</span>
-                <span style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
+                <span style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
               </button>
             )}
             <Fold title="Achtergrond en bronnen">
@@ -204,7 +207,7 @@ export function TrainingGuideSheet({
                 <button
                   onClick={() => { onClose(); navigate('/garmin'); }}
                   className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
-                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-sky)' }}
+                  style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-status)' }}
                 >
                   {guide.garminNote}<Icon name="verder" size={14} className="ml-1 inline align-[-2px]" />
                 </button>
@@ -215,7 +218,7 @@ export function TrainingGuideSheet({
                   <div className="mt-2 flex flex-col gap-1.5">
                     {guide.sources.map((src) =>
                       src.url ? (
-                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+                        <a key={src.label} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                       ) : (
                         <span key={src.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{src.label}</span>
                       ),
@@ -262,7 +265,7 @@ function Sections({ sections }: { sections: TrainingDayGuide['sections'] }) {
             <div className="mt-2 flex flex-col gap-3">
               {section.subsections.map((sub) => (
                 <div key={sub.heading}>
-                  <p className="text-xs font-medium" style={{ color: 'var(--color-bronze)' }}>{sub.heading}</p>
+                  <p className="text-xs font-medium" style={{ color: 'var(--color-action)' }}>{sub.heading}</p>
                   <BulletList items={sub.items} />
                 </div>
               ))}
@@ -284,7 +287,7 @@ function BulletList({ items, className = '' }: { items: string[]; className?: st
     <ul className={`flex flex-col gap-1.5 ${className}`}>
       {items.map((item, i) => (
         <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--color-ink)' }}>
-          <span style={{ color: 'var(--color-gold)' }}>·</span>
+          <span style={{ color: 'var(--color-action)' }}>·</span>
           <span>{item}</span>
         </li>
       ))}
@@ -380,8 +383,8 @@ export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: Wo
           'step' in item ? (
             <StepRow key={i} step={item.step} />
           ) : (
-            <div key={i} className="rounded-xl border-l-2 py-1 pl-3" style={{ borderColor: 'var(--color-bronze)' }}>
-              <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{item.repeat}× herhalen</p>
+            <div key={i} className="rounded-xl border-l-2 py-1 pl-3" style={{ borderColor: 'var(--color-action)' }}>
+              <p className="text-xs font-semibold" style={{ color: 'var(--color-action)' }}>{item.repeat}× herhalen</p>
               <div className="mt-2 flex flex-col gap-3">
                 {item.steps.map((step, j) => <StepRow key={j} step={step} />)}
               </div>

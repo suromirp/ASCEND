@@ -16,6 +16,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
 import { Card, Eyebrow } from './ui';
+import { TextButton } from './TextButton';
 
 // `compact`: on the mission card only the first line shows, so the button
 // "Gedaan" stays in view; the rest opens in a sheet.
@@ -38,9 +39,9 @@ export function ClothingAdvice({ template, date, minutes, className = '', compac
     return (
       <div className={`flex flex-col text-[13px] leading-snug ${className}`} style={{ color: 'var(--color-ink-dim)' }} aria-label="Kledingadvies">
         <p>{lines[0]}</p>
-        <button onClick={() => setOpen(true)} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+        <TextButton onClick={() => setOpen(true)} className="self-start text-left" icon="verder">
           Alles over je kleding
-        </button>
+        </TextButton>
         {open && <ClothingSheet lines={lines} onClose={() => setOpen(false)} />}
       </div>
     );

@@ -92,7 +92,7 @@ function SessionRow({
               <span>{duration} min</span>
             </>
           )}
-          {note && <span style={{ color: 'var(--color-sky)' }}>· {note}</span>}
+          {note && <span style={{ color: 'var(--color-status)' }}>· {note}</span>}
         </span>
       </span>
       {/* Rechts: wat er te zien is van het horloge en de stand van de training. */}

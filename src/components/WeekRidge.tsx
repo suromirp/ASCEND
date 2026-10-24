@@ -45,7 +45,7 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
           </span>
           {hasPrevious && (
             <span className="flex items-center gap-1.5">
-              <span className="inline-block w-3 border-t" style={{ borderColor: 'var(--color-stone)' }} aria-hidden="true" />
+              <span className="inline-block w-3 border-t" style={{ borderColor: 'var(--color-ink-dim)' }} aria-hidden="true" />
               vorige week
             </span>
           )}
@@ -62,8 +62,8 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
         <path d={`M0 ${(TOP + BASE) / 2}H${W}`} stroke="var(--color-card-border)" strokeDasharray="2 4" />
         {hasPrevious && (
           <>
-            <path d={area(prev)} fill="var(--color-stone)" fillOpacity=".07" />
-            <path d={line(prev)} stroke="var(--color-stone)" strokeOpacity=".5" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+            <path d={area(prev)} fill="var(--color-ink-dim)" fillOpacity=".07" />
+            <path d={line(prev)} stroke="var(--color-ink-dim)" strokeOpacity=".5" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
           </>
         )}
         <path d={area(pts)} fill={`url(#${gradientId})`} />
@@ -80,7 +80,7 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
               {isToday ? (
                 <circle cx={px} cy={py} r="4.2" fill="var(--color-status)" />
               ) : d.load === 0 ? (
-                <circle cx={px} cy={py} r="2.6" fill="var(--color-bg)" stroke="var(--color-stone)" strokeWidth="1.4" />
+                <circle cx={px} cy={py} r="2.6" fill="var(--color-bg)" stroke="var(--color-ink-dim)" strokeWidth="1.4" />
               ) : done ? (
                 <circle cx={px} cy={py} r="3.2" fill="var(--color-progress)" stroke="var(--color-progress)" strokeWidth="1.4" />
               ) : (

@@ -218,9 +218,9 @@ function ProposalCard({
       )}
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
         {match
-          ? <>Hoort bij <span style={{ color: 'var(--color-gold)' }}>{match.template.name}</span>, gepland voor {dayLabel(match.session.scheduledDate)}.</>
+          ? <>Hoort bij <span style={{ color: 'var(--color-action)' }}>{match.template.name}</span>, gepland voor {dayLabel(match.session.scheduledDate)}.</>
           : template
-            ? <>Er stond niets passends gepland. Opslaan legt hem los vast als <span style={{ color: 'var(--color-gold)' }}>{template.name}</span>.</>
+            ? <>Er stond niets passends gepland. Opslaan legt hem los vast als <span style={{ color: 'var(--color-action)' }}>{template.name}</span>.</>
             : 'Er stond niets passends gepland. Kies bij Andere training wat het was.'}
       </p>
       {similarLog && (

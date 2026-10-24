@@ -385,7 +385,7 @@ export function TodayPage() {
               trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}
             >
               {rest ? REST_DAY_COPY[restMode].title : t.name}
-              {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span style={{ color: 'var(--color-sky)' }}> · verplaatst</span> : null}
+              {skipped ? <span> · overgeslagen</span> : wasMoved && !done ? <span style={{ color: 'var(--color-status)' }}> · verplaatst</span> : null}
             </DayRow>
           );
         })}

@@ -180,7 +180,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je geschiedenis verwijderen?</p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmDelete(false)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
-                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-snow)' }}>Verwijderen</button>
+                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}>Verwijderen</button>
               </div>
             </div>
           ) : (

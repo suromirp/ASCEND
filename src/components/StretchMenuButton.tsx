@@ -23,7 +23,7 @@ export function StretchMenuButton() {
         aria-label="Rekoefeningen"
         aria-haspopup="dialog"
         className="flex h-11 w-11 items-center justify-center rounded-full border"
-        style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}
+        style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-action)' }}
       >
         <Icon name="rekken" size={20} />
       </button>

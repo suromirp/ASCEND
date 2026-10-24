@@ -91,7 +91,7 @@ export function StatusDot({ status }: { status: 'completed' | 'today' | 'planned
     moved: { symbol: <Icon name="verplaatst" size={16} />, color: 'var(--color-status)', label: 'Verplaatst' },
     skipped: { symbol: <Icon name="sluiten" size={16} />, color: 'var(--color-danger-text)', label: 'Overgeslagen' },
     missed: { symbol: '!', color: 'var(--color-warning)', label: 'Gemist' },
-    rest: { symbol: <Icon name="rustdag" size={16} />, color: 'var(--color-stone)', label: 'Rustdag' },
+    rest: { symbol: <Icon name="rustdag" size={16} />, color: 'var(--color-ink-dim)', label: 'Rustdag' },
   };
   const s = map[status];
   return (

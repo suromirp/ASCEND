@@ -36,7 +36,7 @@ export function WarmupSheet({ title, warmup, onClose }: { title: string; warmup:
                             <span className="text-sm" style={{ color: 'var(--color-ink)' }}>
                               {step.name}
                               {step.videoUrl && (
-                                <a href={step.videoUrl} target="_blank" rel="noopener noreferrer" className="ml-1.5 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>video<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+                                <a href={step.videoUrl} target="_blank" rel="noopener noreferrer" className="-my-3 ml-1.5 inline-flex min-h-[44px] items-center align-middle text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>video<Icon name="buiten" size={14} className="ml-1" /></a>
                               )}
                             </span>
                             <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-action)' }}>{step.amount}</span>

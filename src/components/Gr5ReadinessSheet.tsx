@@ -26,10 +26,10 @@ export function Gr5ReadinessSheet({ readiness, onClose }: { readiness: Gr5Readin
                 <div key={m.key} className={`flex flex-col gap-1.5 py-4 ${i === 0 ? 'pt-0' : 'border-t'}`} style={{ borderColor: 'var(--color-card-border)' }}>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{m.label}</span>
-                    <span className="text-sm tabular-nums" style={{ color: m.share >= 1 ? 'var(--color-gold)' : 'var(--color-ink)' }}>{m.text}</span>
+                    <span className="text-sm tabular-nums" style={{ color: m.share >= 1 ? 'var(--color-action)' : 'var(--color-ink)' }}>{m.text}</span>
                   </div>
                   <div className="h-1.5 rounded-full" style={{ background: 'var(--color-charcoal)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${Math.max(m.share * 100, m.share > 0 ? 3 : 0)}%`, background: m.share >= 1 ? 'var(--color-gold)' : 'var(--color-bronze)' }} />
+                    <div className="h-full rounded-full" style={{ width: `${Math.max(m.share * 100, m.share > 0 ? 3 : 0)}%`, background: m.share >= 1 ? 'var(--color-action)' : 'var(--color-action)' }} />
                   </div>
                   {m.parts.length > 1 && (
                     <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>

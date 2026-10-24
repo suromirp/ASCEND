@@ -17,6 +17,7 @@ import { canShareText, copyText, shareText } from '../utils/shareText';
 import { useSheetClose } from '../utils/useSheetClose';
 import { formatDateNL } from '../utils/dates';
 import { Icon } from '../components/icons';
+import { TextButton } from '../components/TextButton';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 const inputClass = 'mt-1 w-full rounded-xl border px-3 py-2.5 text-sm';
@@ -96,15 +97,15 @@ export function AlleenOnderwegPage() {
         </ol>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{NO_COVERAGE_NOTE}</p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_COST_NOTE}</p>
-        <button onClick={() => navigate('/kennis/noodgevallen')} className="min-h-11 text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
+        <TextButton onClick={() => navigate('/kennis/noodgevallen')} className="self-start text-left" icon="verder">
           Meer in de Kennisbank: Als het misgaat
-        </button>
+        </TextButton>
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
           <Eyebrow>BRONNEN</Eyebrow>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_REPORT}</p>
           <div className="mt-1 flex flex-col">
             {ALARM_SOURCES.map((s) => (
-              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
                 {s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
               </a>
             ))}

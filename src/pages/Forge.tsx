@@ -21,6 +21,7 @@ import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { usePageState } from '../components/usePageState';
+import { TextButton } from '../components/TextButton';
 
 const SHOWN_AT_FIRST = 12;
 const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
@@ -89,9 +90,9 @@ export function ForgePage() {
             <ExerciseCard key={v.history.key} view={v} showOneRm={showOneRm} />
           ))}
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
-          <button onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
+          <TextButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="self-start text-left" icon="verder">
             Instellingen van Forge: sportschool, opwarmen en meer
-          </button>
+          </TextButton>
         </>
       )}
     </div>
@@ -208,9 +209,9 @@ function ExerciseCard({ view, showOneRm }: { view: ExerciseView; showOneRm: bool
       )}
       {missing && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{missing}</p>}
       {refill && (
-        <button type="button" onClick={() => navigate('/koppelen/macrofactor')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
+        <TextButton onClick={() => navigate('/koppelen/macrofactor')} className="self-start text-left" icon="verder">
           MacroFactor opnieuw inlezen
-        </button>
+        </TextButton>
       )}
     </Card>
   );

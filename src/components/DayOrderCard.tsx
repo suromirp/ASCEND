@@ -7,12 +7,12 @@ import { WhyPanel, WhyToggle } from './Why';
 // Two trainings on one day: the order as a small climb, 1 then 2, with the
 // time between them on the line (engine/dayOrder.ts). A tip, never a block.
 
-const TYPE_COLOR: Record<string, string> = { strength: 'var(--color-stone)', cardio: 'var(--color-alpine)', hiking: 'var(--color-sky)', adventure: 'var(--color-sky)', recovery: 'var(--color-ink-dim)' };
+const TYPE_COLOR: Record<string, string> = { strength: 'var(--color-ink-dim)', cardio: 'var(--color-sage)', hiking: 'var(--color-status)', adventure: 'var(--color-status)', recovery: 'var(--color-ink-dim)' };
 
 export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE VANDAAG' }: { advice: DayOrderAdvice; sessions: PlannedSession[]; templateById: Map<string, SessionTemplate>; title?: string }) {
   const [open, setOpen] = useState(false);
   const ordered = advice.order.map((id) => sessions.find((s) => s.id === id)).filter((s): s is PlannedSession => !!s);
-  const accent = advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)';
+  const accent = advice.avoid ? 'var(--color-warning)' : 'var(--color-action)';
   return (
     <Card className="flex flex-col gap-3">
       <Eyebrow tone={advice.avoid ? 'var(--color-warning)' : undefined}>{advice.avoid ? 'Liever niet op één dag' : title}</Eyebrow>

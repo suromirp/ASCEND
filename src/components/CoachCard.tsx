@@ -17,7 +17,7 @@ import { useHorizonChange } from './useHorizonChange';
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
     label: 'Gemist',
-    color: 'var(--color-bronze)',
+    color: 'var(--color-warning)',
     icon: <path d="M4 7h16M4 7v12h16V7M8 3v4M16 3v4M9 14l2 2 4-4" />,
   },
   session_too_hard: {
@@ -27,7 +27,7 @@ const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNod
   },
   session_too_light: {
     label: 'Kan meer',
-    color: 'var(--color-sky)',
+    color: 'var(--color-status)',
     icon: <path d="M3 18l6-6 4 4 8-8M15 8h6v6" />,
   },
   injury_active: {
@@ -37,17 +37,17 @@ const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNod
   },
   same_muscles_back_to_back: {
     label: 'Herstel',
-    color: 'var(--color-sky)',
+    color: 'var(--color-status)',
     icon: <path d="M6 5v14M18 5v14M6 12h12" />,
   },
   strength_irregular: {
     label: 'Kracht',
-    color: 'var(--color-gold)',
+    color: 'var(--color-action)',
     icon: <path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12" />,
   },
   plan_update: {
     label: 'Planning',
-    color: 'var(--color-gold)',
+    color: 'var(--color-action)',
     icon: <path d="M4 6h16M4 12h10M4 18h6M17 15l3 3-3 3" />,
   },
 };
@@ -170,7 +170,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
       className="mt-3 flex min-h-[44px] w-full items-center gap-2.5 rounded-xl border px-3 text-left text-xs"
       style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}
     >
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--color-bronze)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--color-action)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
         <path d="M3.5 9.5h17M8 3v4M16 3v4" />
       </svg>

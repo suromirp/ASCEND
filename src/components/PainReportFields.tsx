@@ -9,8 +9,8 @@ import { BONE_RISK_AREAS, PAIN_HOLDS_BACK } from '../engine/pain';
 export function PainReportFields({ value, onChange }: { value: PainReport[]; onChange: (next: PainReport[]) => void }) {
   const [asked, setAsked] = useState<boolean | undefined>(value.length > 0 ? true : undefined);
   const chip = (on: boolean, warn = true) => ({
-    borderColor: on ? (warn ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-card-border)',
-    color: on ? (warn ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-ink-dim)',
+    borderColor: on ? (warn ? 'var(--color-warning)' : 'var(--color-action)') : 'var(--color-card-border)',
+    color: on ? (warn ? 'var(--color-warning)' : 'var(--color-action)') : 'var(--color-ink-dim)',
   });
   const update = (area: string, patch: Partial<PainReport>) => onChange(value.map((p) => (p.area === area ? { ...p, ...patch } : p)));
 
@@ -96,7 +96,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       <span className="text-xs" style={{ color: 'var(--color-ink)' }}>{label}</span>
       <div className="flex gap-1">
         {([false, true] as const).map((v) => (
-          <button key={String(v)} onClick={() => onChange(v)} aria-pressed={on === v} className="min-h-[44px] rounded-md border px-2.5 text-xs" style={{ borderColor: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-card-border)', color: on === v ? (v ? 'var(--color-warning)' : 'var(--color-gold)') : 'var(--color-ink-dim)' }}>
+          <button key={String(v)} onClick={() => onChange(v)} aria-pressed={on === v} className="min-h-[44px] rounded-md border px-2.5 text-xs" style={{ borderColor: on === v ? (v ? 'var(--color-warning)' : 'var(--color-action)') : 'var(--color-card-border)', color: on === v ? (v ? 'var(--color-warning)' : 'var(--color-action)') : 'var(--color-ink-dim)' }}>
             {v ? 'ja' : 'nee'}
           </button>
         ))}

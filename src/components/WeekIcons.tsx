@@ -17,12 +17,12 @@ function Svg({ size, children }: { size: number; children: ReactNode }) {
 // Status van een training of rustdag, gekleurd met de tokens.
 const STATUS: Record<DisplayStatus, { color: string; label: string }> = {
   completed: { color: 'var(--color-success-text)', label: 'Gedaan' },
-  today: { color: 'var(--color-gold)', label: 'Vandaag' },
-  planned: { color: 'var(--color-stone)', label: 'Gepland' },
-  moved: { color: 'var(--color-sky)', label: 'Verplaatst' },
+  today: { color: 'var(--color-action)', label: 'Vandaag' },
+  planned: { color: 'var(--color-ink-dim)', label: 'Gepland' },
+  moved: { color: 'var(--color-status)', label: 'Verplaatst' },
   skipped: { color: 'var(--color-danger-text)', label: 'Overgeslagen' },
   missed: { color: 'var(--color-warning)', label: 'Gemist' },
-  rest: { color: 'var(--color-stone)', label: 'Rustdag' },
+  rest: { color: 'var(--color-ink-dim)', label: 'Rustdag' },
 };
 
 export function WeekStatusIcon({ status }: { status: DisplayStatus }) {

@@ -31,7 +31,7 @@ function ChoiceRow<K extends string>({ label, from, options, value, set }: { lab
       <div className="mt-1.5 grid grid-cols-4 gap-1.5">
         {options.map(([k, text], i) => {
           const on = value === k;
-          const tone = i >= 2 ? 'var(--color-warning)' : 'var(--color-gold)';
+          const tone = i >= 2 ? 'var(--color-warning)' : 'var(--color-action)';
           return (
             <button key={k} onClick={() => set(k)} aria-pressed={on} className="min-h-[44px] rounded-lg border px-1 text-xs leading-tight" style={{ borderColor: on ? tone : 'var(--color-card-border)', color: on ? tone : 'var(--color-ink)', background: on ? 'color-mix(in srgb, currentColor 8%, transparent)' : 'transparent' }}>
               {text}
@@ -117,7 +117,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose }: 
         )}
         <div className="flex items-center justify-between gap-3">
           {painOnly ? <span /> : <NotFitLink />}
-          <button disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl px-5 text-sm font-semibold disabled:opacity-40" style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-gold)' }}>
+          <button disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl px-5 text-sm font-semibold disabled:opacity-40" style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}>
             Opslaan
           </button>
         </div>

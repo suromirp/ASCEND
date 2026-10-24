@@ -90,7 +90,7 @@ export function StrengthProgramCard() {
         </>
       ) : (
         <>
-          <p className="font-display text-xl" style={{ color: 'var(--color-gold)' }}>
+          <p className="font-display text-xl" style={{ color: 'var(--color-action)' }}>
             <NumText>{strengthBlockLabel(strategy.sessionsPerWeek, strategy.splitType)}</NumText>
           </p>
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>

@@ -68,7 +68,7 @@ export function PlateBar({ perSide }: { perSide: number[] }) {
 
   return (
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width={WIDTH} height={HEIGHT} role="img" aria-label={perSide.length > 0 ? `Stang met ${perSide.length} schijven per kant` : 'Stang zonder schijven'} className="block shrink-0">
-      <rect x={0} y={HEIGHT / 2 - 2} width={WIDTH} height={4} rx={2} fill="var(--color-stone)" opacity={0.55} />
+      <rect x={0} y={HEIGHT / 2 - 2} width={WIDTH} height={4} rx={2} fill="var(--color-ink-dim)" opacity={0.55} />
       <rect x={FIRST_X - 8} y={HEIGHT / 2 - 9} width={5} height={18} rx={1.5} fill="var(--color-ink-dim)" />
       {ghosts.map((g) => plate(g, true))}
       {items.map((i) => plate(i, false))}

@@ -172,7 +172,7 @@ function NameRow({
           <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{row.name}</p>
           <p className="shrink-0 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{countText(row.count)}</p>
         </div>
-        <p className="mt-0.5 text-sm" style={{ color: hasChoice ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{line}</p>
+        <p className="mt-0.5 text-sm" style={{ color: hasChoice ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>{line}</p>
         {reason && <p className="line-clamp-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{reason}</p>}
       </div>
       <SecondaryButton className="!flex-none px-3" onClick={onEdit}>{hasChoice || row.suggestion ? 'Wijzigen' : 'Kiezen'}</SecondaryButton>

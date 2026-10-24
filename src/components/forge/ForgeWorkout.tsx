@@ -874,7 +874,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
             </p>
           )}
           {ex.reason && (
-            <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-alpine)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
+            <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-sage)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
           )}
 
           <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>

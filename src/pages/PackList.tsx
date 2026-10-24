@@ -14,6 +14,7 @@ import {
 } from '../engine/packList';
 import { formatNumberNL } from '../utils/number';
 import { makeId } from '../utils/id';
+import { TextButton } from '../components/TextButton';
 
 type Editing = { kind: 'edit'; id: string } | { kind: 'add'; group: PackGroup } | null;
 
@@ -106,8 +107,8 @@ export function PackListPage() {
             <>
               <p className="text-xs" style={{ color: 'var(--color-warning)' }}>Al je aanpassingen en vinkjes op deze lijst gaan verloren.</p>
               <div className="flex gap-4">
-                <button onClick={() => { reset(); setConfirmReset(false); }} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-danger-text)' }}>Ja, terug naar het voorbeeld</button>
-                <button onClick={() => setConfirmReset(false)} className="min-h-[44px] text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>Annuleren</button>
+                <TextButton tone="danger" onClick={() => { reset(); setConfirmReset(false); }}>Ja, terug naar het voorbeeld</TextButton>
+                <TextButton tone="dim" onClick={() => setConfirmReset(false)}>Annuleren</TextButton>
               </div>
             </>
           )}

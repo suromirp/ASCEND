@@ -3,11 +3,12 @@ import type { Stretch } from '../models/training';
 import { StretchItems } from './StretchList';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
-import { CheckGlyph } from './vandaag/glyphs';
+import { Icon } from './icons';
 import { PrimaryButton } from './ui';
 
 // Rekken als regel in "Je dag": de regel opent de oefeningen in een sheet,
-// het vinkje rechts vinkt de routine af zonder iets te openen.
+// de ronde knop rechts (leeg, mint met vinkje als het gedaan is) vinkt de
+// routine af zonder iets te openen.
 export function DailyStretchCard({
   label,
   title,
@@ -38,15 +39,8 @@ export function DailyStretchCard({
             aria-label={completed ? `${title} afgevinkt, tik om ongedaan te maken` : `${title} afvinken`}
             className="flex h-11 w-11 shrink-0 items-center justify-center"
           >
-            <span
-              className="flex h-6 w-6 items-center justify-center rounded-md border"
-              style={{
-                borderColor: completed ? 'var(--color-success)' : 'var(--color-control-border)',
-                background: completed ? 'var(--color-success)' : 'transparent',
-                color: completed ? 'var(--color-bg)' : 'transparent',
-              }}
-            >
-              <CheckGlyph key={completed ? 'on' : 'off'} size={16} draw={completed} />
+            <span style={{ color: completed ? 'var(--color-progress)' : 'var(--color-control-border)' }}>
+              <Icon key={completed ? 'on' : 'off'} name={completed ? 'gedaan' : 'gepland'} size={26} className={completed ? 'mx-check mx-check-draw' : 'mx-check'} />
             </span>
           </button>
         }

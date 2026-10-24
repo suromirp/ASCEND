@@ -11,6 +11,7 @@ import { FLAT_COUNTRY_TIPS, HOME_PLACES, TRAINING_SPOTS, type SpotUse, type Trai
 import { filterForTraining, spotSession, spotTrainings, spotsForTraining, TRAINING_FILTERS, travelAdvice, type HomeLocation, type TrainingFilter } from '../engine/trainingSpots';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
 import { Icon } from '../components/icons';
+import { TextButton, TextLink } from '../components/TextButton';
 
 const USE_LABEL: Record<SpotUse, string> = {
   bergop: 'bergop', bergaf: 'bergaf', trap: 'trap', rugzak: 'rugzak', heuvelintervallen: 'heuvelintervallen', 'lange tocht': 'lange tocht', vlak: 'vlak', duurloop: 'duurloop',
@@ -176,12 +177,12 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
       </div>
 
       {travel && (
-        <p className="text-xs leading-snug" style={{ color: 'var(--color-sky)' }}>{travel.text}</p>
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-status)' }}>{travel.text}</p>
       )}
 
-      <button onClick={() => setOpen((v) => !v)} className="inline-flex min-h-[44px] items-center self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
-        {open ? 'minder' : spot.sessions ? 'alle trainingen, toegang en bronnen' : 'tip, toegang en bronnen'}
-      </button>
+      <TextButton onClick={() => setOpen((v) => !v)} className="self-start" aria-expanded={open} icon="omlaag" flipped={open}>
+        {open ? 'Minder' : spot.sessions ? 'Alle trainingen, toegang en bronnen' : 'Tip, toegang en bronnen'}
+      </TextButton>
       {open && (
         <div className="flex flex-col gap-1.5 border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
           {spot.sessions && spot.sessions.filter((x) => x !== focus).map((x) => (
@@ -197,15 +198,13 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
           {spot.caveat && <p style={{ color: 'var(--color-warning)' }}>Let op: {spot.caveat}</p>}
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {spot.sources.map((src) => (
-              <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+              <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
             ))}
           </div>
         </div>
       )}
 
-      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
-        Route ernaartoe<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
-      </a>
+      <TextLink href={mapsUrl} className="self-start">Route ernaartoe</TextLink>
     </Card>
   );
 }

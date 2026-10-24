@@ -60,7 +60,7 @@ function Sheet({ name, counted, logAdvice, strengthExternal, meaning, onClose }:
                     <li key={r.label}>
                       <p className="flex items-baseline justify-between gap-3 text-sm">
                         <span style={{ color: 'var(--color-ink)' }}>{r.label}</span>
-                        <span className="tabular-nums" style={{ color: 'var(--color-gold)' }}>{r.value}</span>
+                        <span className="tabular-nums" style={{ color: 'var(--color-action)' }}>{r.value}</span>
                       </p>
                       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{r.hint}</p>
                     </li>

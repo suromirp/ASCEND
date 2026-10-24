@@ -1,6 +1,7 @@
 import type { WorkoutDetails } from '../models/training';
 import { detailForm, formatRep, stepRepSeconds } from '../engine/workoutDetails';
 import { NumberField } from './NumberField';
+import { Icon } from './icons';
 
 // The hard part of an interval, hill or tempo session in a few taps
 // (engine/workoutDetails.ts). Starts at what the plan asked for; only
@@ -51,9 +52,9 @@ function Stepper({ label, text, onMinus, onPlus }: { label: string; text: string
     <div className="flex items-center justify-between gap-3">
       <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onMinus} className={button} style={style} aria-label={`${label} minder`}>−</button>
+        <button type="button" onClick={onMinus} className={button} style={style} aria-label={`${label} minder`}><Icon name="min" size={18} /></button>
         <span className="w-20 text-center text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{text}</span>
-        <button type="button" onClick={onPlus} className={button} style={style} aria-label={`${label} meer`}>+</button>
+        <button type="button" onClick={onPlus} className={button} style={style} aria-label={`${label} meer`}><Icon name="plus" size={18} /></button>
       </div>
     </div>
   );

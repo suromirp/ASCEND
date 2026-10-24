@@ -42,6 +42,10 @@
   /* Danger is de vulling (een rode knop met lichte tekst), danger-text de tekst. */
   --color-danger: #c23b4e;
   --color-danger-text: #ff9696;
+  /* Salie: een rustige tint voor "fris" en voor een soort of fase naast mint en
+     ijs. Geen status en geen actie. De nieuwe naam voor het oude --color-alpine;
+     op de lichte lucht wordt het donker mint (.on-light). */
+  --color-sage: #a7d1bd;
 
   /* Inspanning, van rustig naar zwaar (Z1 tot Z5). Als vlak minstens 3:1 op de
      kaart; er staat altijd Z1 tot Z5 bij, kleur is nooit het enige signaal. */
@@ -361,6 +365,7 @@ html[data-sky='night'] .sky-band::before {
   --color-on-status: var(--color-light-card);
   --color-sky: var(--color-status-on-light);
   --color-alpine: var(--color-action-on-light);
+  --color-sage: var(--color-action-on-light);
   --color-stone: var(--color-on-light-dim);
   --color-warning: var(--color-warning-on-light);
   --color-danger-text: var(--color-danger-on-light);

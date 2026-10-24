@@ -7,6 +7,7 @@ import { currentBodyKg } from '../engine/bodyWeight';
 import { daysBetween, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { Card } from './ui';
+import { TextButton } from './TextButton';
 
 // Vandaag → "Benen": the leg fatigue index (engine/legFatigue.ts) for you to
 // see, not only for the planning: how fresh your legs are today, what still
@@ -15,7 +16,11 @@ import { Card } from './ui';
 const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
 const short = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
 const SCALE = 20;
-const LEVEL_COLOR = ['var(--color-progress)', 'var(--color-warning)', 'var(--color-warning)'];
+// Drie zones op de balk, met dezelfde grenzen als het woord erboven (engine/legFatigue.ts#fatigueWord):
+// fris is mint, wat vermoeid amber (de kleur van de benen), vermoeid oranje op de inspanningsschaal.
+// Geen verloop: een verloop van mint naar amber leest tussen de twee als bruin.
+const LEVEL_COLOR = ['var(--color-progress)', 'var(--color-warning)', 'var(--color-effort-4)'];
+const ZONE_EDGES = [0, FATIGUE_THRESHOLDS.test.fresh, FATIGUE_THRESHOLDS.hard.fresh, SCALE];
 
 export function useLegFatigueInputs(): LegFatigueInputs {
   const { sessionLogs, plannedSessions, templates, program, settings } = useAppData();
@@ -59,17 +64,22 @@ export function LegFatigueCard() {
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Beenindex</span>
-        <button onClick={() => setOpen((v) => !v)} className="-my-2.5 inline-flex min-h-[44px] items-center text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-expanded={open}>
-          {open ? 'minder' : 'hoe werkt dit?'}
-        </button>
+        <TextButton tone="dim" size="xs" onClick={() => setOpen((v) => !v)} className="-my-2.5" aria-expanded={open}>
+          {open ? 'Minder' : 'Hoe werkt dit?'}
+        </TextButton>
       </div>
       <div className="flex items-baseline gap-3">
         <span className="font-sans text-[40px] font-semibold leading-none tracking-[-0.03em] tabular-nums" style={{ color: 'var(--color-ink)' }}>{formatNumberNL(now.index, 1)}</span>
         <span className="text-base font-semibold" style={{ color }}>{word}</span>
       </div>
 
-      <div className="relative h-2 rounded-full" style={{ background: 'linear-gradient(90deg, var(--color-progress), var(--color-warning))' }} role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
-        <span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2" style={{ left: pct(now.index), background: 'var(--color-snow)', borderColor: color, transition: 'left 400ms' }} aria-hidden />
+      <div className="relative h-2" role="img" aria-label={`Beenvermoeidheid ${formatNumberNL(now.index, 1)}: ${word.toLowerCase()}`}>
+        <div className="flex h-full gap-[2px] overflow-hidden rounded-full" aria-hidden>
+          {LEVEL_COLOR.map((zone, i) => (
+            <span key={i} style={{ flexGrow: ZONE_EDGES[i + 1]! - ZONE_EDGES[i]!, flexBasis: 0, background: zone }} />
+          ))}
+        </div>
+        <span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2" style={{ left: pct(now.index), background: 'var(--color-ink)', borderColor: color, transition: 'left 400ms' }} aria-hidden />
       </div>
       <div className="flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
         <span>fris</span>
@@ -105,7 +115,9 @@ export function LegFatigueCard() {
       {open && (
         <p className="border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
           Elke training laat iets achter in je benen. Hard lopen is na een dag grotendeels weg, kracht en klappen halveren per dag, en spierschade van bergaf of zware beenkracht houdt 3 tot 5 dagen aan. Die drie tellen samen op. 8 of lager is fris genoeg voor een testloop, tot 12 voor een harde training. Het zwaarst telt je beentraining: hoe lang, hoe zwaar en of je eraan gewend bent. Grote verschillen kloppen bijna altijd; rond de grens is het getal onzeker, kijk dan naar je gevoel bij het inlopen.
-          <button onClick={() => setInfo(true)} className="flex min-h-[44px] items-center mt-2 font-medium underline underline-offset-2" style={{ color: 'var(--color-status)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
+          <span className="mt-2 flex">
+            <TextButton onClick={() => setInfo(true)} className="text-left" icon="verder">Alles over dit getal, en hoe betrouwbaar het is</TextButton>
+          </span>
         </p>
       )}
       {info && <LegFatigueInfoSheet onClose={() => setInfo(false)} />}

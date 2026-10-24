@@ -31,7 +31,7 @@ export function StretchItems({ stretches, className = 'mt-3 flex flex-col' }: { 
               </a>
             )}
             {s.durationSec !== undefined && (
-              <button type="button" onClick={() => setTimerFor(s)} aria-label={`Timer voor ${s.name}`} className={roundButton} style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-bronze)' }}>
+              <button type="button" onClick={() => setTimerFor(s)} aria-label={`Timer voor ${s.name}`} className={roundButton} style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-action)' }}>
                 <Icon name="timer" size={20} />
               </button>
             )}

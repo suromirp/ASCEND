@@ -30,12 +30,12 @@ export function TrainingSplitSheet({ onClose }: { onClose: () => void }) {
             </p>
             <ul className="mt-3 flex flex-col gap-1.5 text-sm" style={{ color: 'var(--color-ink)' }}>
               {PARTS.map((p) => (
-                <li key={p} className="flex gap-2"><span style={{ color: 'var(--color-gold)' }}>·</span>{p}</li>
+                <li key={p} className="flex gap-2"><span style={{ color: 'var(--color-action)' }}>·</span>{p}</li>
               ))}
             </ul>
             <div className="mt-3 flex flex-col gap-1 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
               {GR5_TRAINING_SPLIT_SOURCES.map((s) => (
-                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-1 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+                <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center gap-1 text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
                   {s.label}
                   <Icon name="buiten" size={14} />
                 </a>
