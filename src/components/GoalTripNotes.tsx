@@ -13,6 +13,7 @@ import { formatNumberNL } from '../utils/number';
 import { NumberField } from './NumberField';
 import { PackWeightPresets } from './PackWeightPresets';
 import { Eyebrow, SecondaryButton } from './ui';
+import { TextButton } from './TextButton';
 
 export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPackChange: (kg: number | undefined) => void }) {
   const { settings } = useAppData();
@@ -26,15 +27,11 @@ export function GoalTripNotes({ goal, onPackChange }: { goal: TrainingGoal; onPa
     <div className="flex flex-col gap-2 rounded-xl border px-3 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <div className="flex items-center justify-between gap-3">
         <Eyebrow as="span">Rugzak op deze tocht</Eyebrow>
-        <button
-          onClick={() => { setDraft(stored); setEditing((v) => !v); }}
-          className="min-h-11 px-1 text-xs underline"
-          style={{ color: 'var(--color-ink-dim)' }}
-        >
-          {editing ? 'klaar' : 'aanpassen'}
-        </button>
+        <TextButton onClick={() => { setDraft(stored); setEditing((v) => !v); }} aria-expanded={editing}>
+          {editing ? 'Klaar' : 'Aanpassen'}
+        </TextButton>
       </div>
-      <p className="-mt-2 text-sm font-medium" style={{ color: stored ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>
+      <p className="-mt-2 text-sm font-medium" style={{ color: stored ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>
         {stored ? `${formatNumberNL(stored, 1)} kg` : 'Nog niet ingesteld'}
         {share !== undefined && <span className="font-normal" style={{ color: 'var(--color-ink-dim)' }}> · {share}% van je lichaamsgewicht</span>}
       </p>

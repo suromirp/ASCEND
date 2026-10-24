@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { knowledgeContent, CATEGORY_LABEL } from '../data/knowledge';
 import { useWeeklyLesson } from './useWeeklyLesson';
 import { Card, Eyebrow } from './ui';
+import { TextButton } from './TextButton';
 
 // Today: the lesson of the week, one tap to the text and videos.
 export function LessonCard() {
@@ -17,9 +18,9 @@ export function LessonCard() {
       </div>
       <p className="font-display text-lg leading-snug" style={{ color: 'var(--color-ink)' }}>{topic.title}</p>
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{content?.weeklyTip ?? topic.summary}</p>
-      <button onClick={() => navigate(`/kennis/${topic.id}`)} className="min-h-[44px] self-start text-sm underline underline-offset-2" style={{ color: 'var(--color-progress)' }}>
+      <TextButton onClick={() => navigate(`/kennis/${topic.id}`)} className="self-start" icon="verder">
         {read ? 'Nog eens lezen' : 'Lees en kijk'}
-      </button>
+      </TextButton>
     </Card>
   );
 }

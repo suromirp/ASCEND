@@ -29,6 +29,7 @@ import { packSharePct, weightsInUse } from '../engine/bodyWeight';
 import { Eyebrow } from './ui';
 import { PackWeightPresets } from './PackWeightPresets';
 import { tripShapeNote } from '../engine/gr5Profile';
+import { TextButton } from './TextButton';
 
 const ROUTE_UNIT: Record<RouteKind, Unit> = { distance: 'km', elevationGain: 'm_elevation_gain', elevationLoss: 'm_elevation_loss' };
 const ROUTE_SUFFIX: Record<RouteKind, string> = { distance: 'km', elevationGain: 'm D+', elevationLoss: 'm D−' };
@@ -200,7 +201,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
         </Eyebrow>
         {averageParts.length > 0 ? (
           <>
-            <p className="mt-1.5 text-sm font-medium" style={{ color: trainingDaySet ? 'var(--color-ink)' : 'var(--color-gold)' }}>{averageParts.join(' · ')}</p>
+            <p className="mt-1.5 text-sm font-medium" style={{ color: trainingDaySet ? 'var(--color-ink)' : 'var(--color-action)' }}>{averageParts.join(' · ')}</p>
             {days !== undefined && days > 1 && (
               <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Gebaseerd op {formatNumberNL(days, 0)} {dayWord.plural}.</p>
             )}
@@ -215,13 +216,13 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
               <div className="flex items-center justify-between gap-3">
                 <Eyebrow as="span">Trainingsdag · zelf gekozen</Eyebrow>
                 {editingDay ? (
-                  <button onClick={() => setEditingDay(false)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>klaar</button>
+                  <TextButton onClick={() => setEditingDay(false)}>Klaar</TextButton>
                 ) : (
-                  <button onClick={() => setEditingDay(true)} className="inline-flex min-h-[44px] items-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>wijzigen</button>
+                  <TextButton onClick={() => setEditingDay(true)}>Wijzigen</TextButton>
                 )}
               </div>
               {trainingParts.length > 0 && (
-                <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--color-gold)' }}>{trainingParts.join(' · ')}</p>
+                <p className="mt-1.5 text-sm font-medium" style={{ color: 'var(--color-action)' }}>{trainingParts.join(' · ')}</p>
               )}
               {editingDay && (
                 <div className="mt-3 flex flex-col gap-2">
@@ -246,7 +247,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
                 ASCEND richt je training op deze dag. Wat je leeg laat, komt uit de gemiddelde {dayWord.singular}. Het gemiddelde zelf blijft gewoon berekend.
               </p>
               {trainingDaySet && (
-                <button onClick={resetOverrides} className="inline-flex min-h-[44px] items-center mt-2 text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>Trainingsdag verwijderen</button>
+                <TextButton tone="dim" onClick={resetOverrides} className="mt-2">Trainingsdag verwijderen</TextButton>
               )}
             </>
           ) : (
@@ -254,7 +255,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
               <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                 ASCEND traint nu richting de gemiddelde {dayWord.singular}. Wil je je voorbereiden op een zwaardere dag uit de tocht, stel die dan in als trainingsdag.
               </p>
-              <button onClick={() => setEditingDay(true)} className="inline-flex min-h-[44px] items-center mt-2 text-xs font-medium underline" style={{ color: 'var(--color-gold)' }}>Trainingsdag instellen</button>
+              <TextButton onClick={() => setEditingDay(true)} className="mt-2">Trainingsdag instellen</TextButton>
             </>
           )}
         </div>
@@ -287,7 +288,7 @@ export function Segmented({
               key={o.value}
               onClick={() => onChange(o.value)}
               className="min-h-[44px] flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all active:scale-[0.98]"
-              style={selected ? { background: 'var(--color-card)', color: 'var(--color-gold)', boxShadow: 'inset 0 0 0 1px var(--color-card-border)' } : { color: 'var(--color-ink-dim)' }}
+              style={selected ? { background: 'var(--color-card)', color: 'var(--color-action)', boxShadow: 'inset 0 0 0 1px var(--color-card-border)' } : { color: 'var(--color-ink-dim)' }}
             >
               {o.label}
             </button>

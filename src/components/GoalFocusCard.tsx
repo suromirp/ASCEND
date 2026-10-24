@@ -50,7 +50,7 @@ export function GoalFocusCard() {
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Krijgt {Math.round(focus.normalizedPct)}% van de aandacht in je planning. Je voortgang staat bovenaan Ascend.</p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{feasibility.explanation}</p>
             {feasibility.bestPossiblePreparation && (
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-sky)' }}>{feasibility.bestPossiblePreparation}</p>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--color-status)' }}>{feasibility.bestPossiblePreparation}</p>
             )}
           </div>
         );

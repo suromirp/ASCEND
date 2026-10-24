@@ -100,7 +100,7 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
                 </p>
               )}
               {facts.fromWatch && (
-                <p className="completion-rise mt-1 text-xs" style={{ color: 'var(--color-stone)', ...delay(400) }}>
+                <p className="completion-rise mt-1 text-xs" style={{ color: 'var(--color-ink-dim)', ...delay(400) }}>
                   Cijfers van je horloge
                 </p>
               )}

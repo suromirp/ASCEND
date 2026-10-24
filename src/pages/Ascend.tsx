@@ -38,6 +38,7 @@ import { useHorizonChange } from '../components/useHorizonChange';
 import { ImpactSheet } from '../components/ImpactSheet';
 import { goalDateProblem } from '../engine/goalDate';
 import { SkyBand } from '../components/SkyBand';
+import { TextButton } from '../components/TextButton';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -204,7 +205,7 @@ export function AscendPage() {
           </button>
           <div className="mt-1 flex gap-1">
             {progress.milestones.map((m) => (
-              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-action)' : m.status === 'current' ? 'var(--color-bronze-dark)' : 'var(--color-card-border)' }} />
+              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-action)' : m.status === 'current' ? 'var(--color-action-muted)' : 'var(--color-card-border)' }} />
             ))}
           </div>
           <button onClick={() => setShowLadder(true)} className="flex min-h-11 items-center justify-between text-sm" style={{ color: 'var(--color-ink-dim)' }}>Alle {progress.milestones.length} kampen bekijken<Icon name="omlaag" size={18} /></button>
@@ -457,7 +458,7 @@ function GR5GoalCard({
         </p>
       )}
       {isTaperWindow(daysLeft) && (
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-alpine)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-sage)' }}>
           Taper: bouw dagelijkse afstand en D+ de komende twee weken rustig af, houd de benen fris en zorg voor
           extra slaap en herstel richting de tocht.
         </p>
@@ -465,9 +466,9 @@ function GR5GoalCard({
 
       <SecondaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</SecondaryButton>
 
-      <button onClick={() => setAdvancedOpen((s) => !s)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
-      </button>
+      <TextButton tone="dim" onClick={() => setAdvancedOpen((s) => !s)} className="self-start" aria-expanded={advancedOpen} icon="omlaag" flipped={advancedOpen}>
+        Geavanceerd: velden direct aanpassen
+      </TextButton>
 
       {advancedOpen && (
       <div className="flex gap-3">
@@ -635,7 +636,7 @@ function MarathonGoalCard({
             </p>
           )}
           {isTaperWindow(daysLeft) && (
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-alpine)' }}>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--color-sage)' }}>
               Taper: bouw het volume de komende twee weken af, houd de intensiteit kort maar scherp, en focus op
               slaap en voeding richting de start.
             </p>
@@ -643,9 +644,9 @@ function MarathonGoalCard({
 
           <SecondaryButton onClick={() => setWizardOpen(true)}>Doel aanpassen</SecondaryButton>
 
-          <button onClick={() => setAdvancedOpen((s) => !s)} className="min-h-[44px] text-left text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            {advancedOpen ? '− geavanceerd: velden direct aanpassen' : '+ geavanceerd: velden direct aanpassen'}
-          </button>
+          <TextButton tone="dim" onClick={() => setAdvancedOpen((s) => !s)} className="self-start" aria-expanded={advancedOpen} icon="omlaag" flipped={advancedOpen}>
+            Geavanceerd: velden direct aanpassen
+          </TextButton>
 
           {advancedOpen && (
             <>
@@ -815,16 +816,16 @@ function ArchivedGoalsCard({ goals, onUnarchive }: { goals: TrainingGoal[]; onUn
     <Card className="flex flex-col gap-3">
       <button onClick={() => setOpen((s) => !s)} className="flex min-h-[44px] items-center justify-between gap-3 text-left">
         <Eyebrow>GEARCHIVEERDE DOELEN ({goals.length})</Eyebrow>
-        <span className="shrink-0 text-sm" style={{ color: 'var(--color-action)' }}>{open ? '−' : '+'}</span>
+        <span className="shrink-0 transition-transform" style={{ color: 'var(--color-action)', transform: open ? 'rotate(180deg)' : undefined }}><Icon name="omlaag" size={18} /></span>
       </button>
       {open && (
         <div className="flex flex-col gap-3">
           {goals.map((g) => (
             <div key={g.id} className="flex items-center justify-between gap-3 border-t pt-3 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--color-card-border)' }}>
               <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{g.name || 'Naamloos doel'}</p>
-              <button onClick={() => onUnarchive(g.id)} className="inline-flex min-h-[44px] items-center shrink-0 text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
-                heractiveren
-              </button>
+              <TextButton onClick={() => onUnarchive(g.id)} className="shrink-0">
+                Heractiveren
+              </TextButton>
             </div>
           ))}
         </div>

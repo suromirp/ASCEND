@@ -25,7 +25,7 @@ export function PackWeightPresets({ value, onPick }: { value: number | undefined
               aria-pressed={selected}
               className="min-h-11 flex-1 rounded-xl border px-2 text-xs font-medium transition-all active:scale-[0.98]"
               style={selected
-                ? { borderColor: 'var(--color-gold)', background: 'var(--color-card)', color: 'var(--color-gold)' }
+                ? { borderColor: 'var(--color-action)', background: 'var(--color-card)', color: 'var(--color-action)' }
                 : { borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}
             >
               {o.label} · {formatNumberNL(o.kg, 0)} kg

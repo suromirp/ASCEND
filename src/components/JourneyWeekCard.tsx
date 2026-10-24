@@ -4,6 +4,7 @@ import { useJourney } from './reis/useJourney';
 import { PrimaryButton, SecondaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
+import { TextButton } from './TextButton';
 
 // Vandaag: the one task of the week on the way to the GR5 that is not
 // training, as one line in "Je dag". The line opens the task in a sheet: tick
@@ -30,9 +31,9 @@ export function JourneyWeekCard() {
               {done ? (
                 <>
                   <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Gedaan. Volgende week komt er een nieuwe taak.</p>
-                  <button onClick={() => { untick(task.id); close(); }} className="min-h-[44px] self-start text-sm underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                  <TextButton tone="dim" onClick={() => { untick(task.id); close(); }} className="self-start">
                     Toch nog niet gedaan
-                  </button>
+                  </TextButton>
                 </>
               ) : (
                 <div className="flex gap-3">
@@ -41,12 +42,12 @@ export function JourneyWeekCard() {
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <button onClick={() => navigate(`/reis?taak=${task.id}`)} className="min-h-[44px] text-sm underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                <TextButton onClick={() => navigate(`/reis?taak=${task.id}`)} icon="verder">
                   Meer over deze taak
-                </button>
-                <button onClick={() => navigate('/reis')} className="min-h-[44px] text-sm underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                </TextButton>
+                <TextButton onClick={() => navigate('/reis')} icon="verder">
                   Alle taken
-                </button>
+                </TextButton>
               </div>
             </div>
           )}

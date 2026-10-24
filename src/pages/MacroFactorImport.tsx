@@ -31,6 +31,7 @@ import type { WeightEntry } from '../models/metrics';
 import { formatNumberNL } from '../utils/number';
 import { forgetMapping, importMacroFactorWorkouts, takeSharedFile } from '../storage/macrofactor';
 import { daysBetween, formatDateNL, todayISO } from '../utils/dates';
+import { TextButton } from '../components/TextButton';
 
 // 'ok' with lines is the calm summary of a file; the other forms are one line.
 type Notice = { tone: 'ok' | 'error'; text?: string; lines?: string[]; details?: string };
@@ -298,9 +299,9 @@ function LinkedNames({ linked, nameOf, templateName }: { linked: [string, string
               {keys.map((key) => (
                 <div key={key} className="flex items-center justify-between gap-3">
                   <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)', overflowWrap: 'anywhere' }}>{nameOf(key)}</p>
-                  <button type="button" onClick={() => void forgetMapping(key)} className="min-h-[44px] shrink-0 px-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>
+                  <TextButton tone="dim" onClick={() => void forgetMapping(key)} className="shrink-0 px-2">
                     Vergeet
-                  </button>
+                  </TextButton>
                 </div>
               ))}
             </div>

@@ -70,7 +70,7 @@ export function LegFatigueInfoSheet({ onClose }: { onClose: () => void }) {
             <Section title="BRONNEN">
               <div className="flex flex-col gap-1.5">
                 {SOURCES.map((s) => (
-                  <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+                  <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                 ))}
               </div>
               <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>De getallen van de index zijn een afstemming op deze studies. De index als geheel is niet in een studie getest. Gebruik hem als kompas, niet als weegschaal.</p>

@@ -110,8 +110,8 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
 // Hartslag: je drempel en je maximum, en de zones in slagen per minuut. De hartslag in rust
 // staat niet meer op het scherm (nergens in ASCEND gebruikt); een opgeslagen waarde blijft staan.
 const ZONES: { level: Intensity; color: string }[] = [
-  { level: 1, color: 'var(--color-sky)' },
-  { level: 2, color: 'var(--color-alpine)' },
+  { level: 1, color: 'var(--color-status)' },
+  { level: 2, color: 'var(--color-sage)' },
   { level: 3, color: 'var(--color-action)' },
   { level: 4, color: 'var(--color-danger-text)' },
 ];

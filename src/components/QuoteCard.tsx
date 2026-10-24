@@ -21,7 +21,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
 
   return (
     <figure className="flex flex-col items-center px-3 pt-4 text-center">
-      <div className="mb-3 h-px w-10" style={{ background: 'var(--color-bronze)', opacity: 0.6 }} aria-hidden="true" />
+      <div className="mb-3 h-px w-10" style={{ background: 'var(--color-action)', opacity: 0.6 }} aria-hidden="true" />
       {translation ? (
         <button
           type="button"

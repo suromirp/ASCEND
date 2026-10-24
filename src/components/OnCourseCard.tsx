@@ -6,8 +6,10 @@ import { Card, Eyebrow } from './ui';
 
 const STATUS_COLOR: Record<CourseStatus, string> = {
   early: 'var(--color-ink)',
-  on: 'var(--color-gold)',
-  nearly: 'var(--color-bronze)',
+  // Op koers is mint (de voortgangskleur), bijna op koers ijs (waar je staat),
+  // achter amber (let op), nog te vroeg gewoon inkt.
+  on: 'var(--color-action)',
+  nearly: 'var(--color-status)',
   behind: 'var(--color-warning)',
 };
 

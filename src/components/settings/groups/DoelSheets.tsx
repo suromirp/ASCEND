@@ -12,12 +12,12 @@ import { usePlanSettingChange } from '../usePlanSettingChange';
 
 // De kleur van elke fase in de balk, zonder goud: goud is het ene accent van het scherm.
 const PHASE_COLOR_SOFT: Record<string, string> = {
-  phase_1: 'var(--color-stone)',
-  phase_2: 'var(--color-sky)',
-  phase_3: 'var(--color-alpine)',
+  phase_1: 'var(--color-ink-dim)',
+  phase_2: 'var(--color-status)',
+  phase_3: 'var(--color-sage)',
   phase_4: 'var(--color-action)',
   phase_taper: 'var(--color-ink)',
-  phase_onderhoud: 'var(--color-stone)',
+  phase_onderhoud: 'var(--color-ink-dim)',
 };
 
 const weeks = (n: number) => `${n} ${n === 1 ? 'week' : 'weken'}`;
@@ -72,7 +72,7 @@ export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRe
       {plan.note && <p className="st-hint st-hint-note" role="status">{plan.note}</p>}
       {plan.impact}
       <div className="st-phases" role="img" aria-label="Je fases tot aan het doel">
-        {rows.map((r) => <span key={r.phase.id} style={{ flex: r.phase.weekCount, background: PHASE_COLOR_SOFT[r.phase.id] ?? 'var(--color-stone)' }} />)}
+        {rows.map((r) => <span key={r.phase.id} style={{ flex: r.phase.weekCount, background: PHASE_COLOR_SOFT[r.phase.id] ?? 'var(--color-ink-dim)' }} />)}
       </div>
       {weekNow >= 0 && weekNow < total && (
         <div className="st-now" aria-hidden="true"><b style={{ left: `${((weekNow + 0.5) / total) * 100}%` }} /></div>

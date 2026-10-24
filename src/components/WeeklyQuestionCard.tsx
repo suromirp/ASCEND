@@ -13,7 +13,7 @@ import {
   weekQuestionContext,
 } from '../engine/weeklyQuestion';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
-import { PrimaryButton } from './ui';
+import { PrimaryButton, SecondaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 
@@ -76,7 +76,7 @@ export function WeeklyQuestionCard() {
             <div className="flex flex-col gap-3">
               <div>
                 <p className="text-sm italic leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>“{question.bron.tekst}”</p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-bronze)' }}>
+                <p className="mt-1 text-xs" style={{ color: 'var(--color-action)' }}>
                   {question.bron.auteur}, {question.bron.werk}
                   {question.bron.noot ? <span style={{ color: 'var(--color-ink-dim)' }}>. {question.bron.noot}</span> : null}
                 </p>
@@ -97,15 +97,13 @@ export function WeeklyQuestionCard() {
                   style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', background: 'var(--color-charcoal)' }}
                 />
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex gap-3">
                 <PrimaryButton fullWidth={false} disabled={!draft.trim()} onClick={save}>Opslaan</PrimaryButton>
-                <button
+                <SecondaryButton
                   onClick={() => { void updateSettings({ weeklyIntentions: postponeIntention(settings.weeklyIntentions, question, weekStart, today) }); close(); }}
-                  className="min-h-[44px] px-1 text-sm underline"
-                  style={{ color: 'var(--color-ink-dim)' }}
                 >
                   Niet nu
-                </button>
+                </SecondaryButton>
               </div>
             </div>
           )}

@@ -52,8 +52,8 @@ export function WatchAskCard({
   const asksPain = !!template && (template.type === 'cardio' || template.type === 'hiking' || (template.type === 'strength' && isLegHeavyTemplate(template)));
   const answered = feel !== undefined || rpe !== undefined || pain.length > 0;
   const chip = (on: boolean) => ({
-    borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)',
-    color: on ? 'var(--color-gold)' : 'var(--color-ink-dim)',
+    borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)',
+    color: on ? 'var(--color-action)' : 'var(--color-ink-dim)',
   });
 
   return (
@@ -102,8 +102,8 @@ export function WatchAskCard({
               onClick={() => setRpe(rpe === n ? undefined : n)}
               className="min-h-[44px] rounded-lg border text-sm tabular-nums"
               style={{
-                borderColor: rpe === n ? 'var(--color-gold)' : 'var(--color-card-border)',
-                background: rpe === n ? 'var(--color-gold)' : 'transparent',
+                borderColor: rpe === n ? 'var(--color-action)' : 'var(--color-card-border)',
+                background: rpe === n ? 'var(--color-action)' : 'transparent',
                 color: rpe === n ? 'var(--color-bg)' : 'var(--color-ink-dim)',
               }}
             >

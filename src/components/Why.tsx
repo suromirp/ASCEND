@@ -22,13 +22,13 @@ export function WhyToggle({ open, onToggle, className = '' }: { open: boolean; o
   );
 }
 
-export function WhyPanel({ children, evidence, sources, accent = 'var(--color-bronze)', className = '' }: { children: ReactNode; evidence?: EvidenceLevel; sources?: { label: string; url: string }[]; accent?: string; className?: string }) {
+export function WhyPanel({ children, evidence, sources, accent = 'var(--color-action)', className = '' }: { children: ReactNode; evidence?: EvidenceLevel; sources?: { label: string; url: string }[]; accent?: string; className?: string }) {
   return (
     <div className={`flex flex-col gap-1.5 rounded-lg border-l-2 py-2 pl-3 pr-2 text-xs leading-relaxed ${className}`} style={{ borderColor: accent, background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}>
       <div>{children}</div>
       {evidence && <p style={{ color: 'var(--color-ink)' }}>{EVIDENCE_LABEL[evidence]}</p>}
       {sources?.map((src) => (
-        <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+        <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{src.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
       ))}
     </div>
   );

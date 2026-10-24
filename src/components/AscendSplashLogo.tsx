@@ -8,9 +8,9 @@ import { useId } from 'react';
 // animation that only makes sense the first time something appears, not on
 // every re-render of a header icon. IDs are namespaced via useId().
 //
-// Gold gradient stops are calibrated brand art, kept as exact hex per the
-// approved reference — same documented exception as .topo-texture's
-// hardcoded rgba in index.css.
+// Kleuren: dezelfde verf als AscendAnimatedLogo: de streek loopt van wit
+// (--color-ink) boven naar mint (--color-action) onder, het licht en de vonk
+// zijn mint. Geen losse hexkleuren.
 export function AscendSplashLogo({ size = 200 }: { size?: number }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const softGlow = `asl-soft-${uid}`;
@@ -29,19 +29,18 @@ export function AscendSplashLogo({ size = 200 }: { size?: number }) {
           <feGaussianBlur stdDeviation="12" result="blur" />
         </filter>
         <linearGradient id={goldStroke} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#fbead0" />
-          <stop offset="30%" stopColor="#eec066" />
-          <stop offset="60%" stopColor="#c9932e" />
-          <stop offset="100%" stopColor="#8f611c" />
+          <stop offset="0%" style={{ stopColor: 'var(--color-ink)' }} />
+          <stop offset="45%" style={{ stopColor: 'var(--color-ink)' }} />
+          <stop offset="100%" style={{ stopColor: 'var(--color-action)' }} />
         </linearGradient>
         <radialGradient id={peakGlow} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff3cf" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#fff3cf" stopOpacity="0" />
+          <stop offset="0%" stopOpacity="0.95" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="100%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
         </radialGradient>
         <radialGradient id={dotGlow} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff8e2" stopOpacity="1" />
-          <stop offset="55%" stopColor="#ffdf8a" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#ffdf8a" stopOpacity="0" />
+          <stop offset="0%" stopOpacity="1" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="55%" stopOpacity="0.8" style={{ stopColor: 'var(--color-action)' }} />
+          <stop offset="100%" stopOpacity="0" style={{ stopColor: 'var(--color-action)' }} />
         </radialGradient>
       </defs>
 
@@ -58,7 +57,7 @@ export function AscendSplashLogo({ size = 200 }: { size?: number }) {
         <path
           d="M120,58 C108,82 133,100 116,122 C102,142 130,158 112,182 C102,196 122,204 112,206"
           fill="none"
-          stroke="#ffe9a8"
+          stroke="var(--color-action)"
           strokeWidth="4"
           strokeLinecap="round"
         />
@@ -99,8 +98,8 @@ export function AscendSplashLogo({ size = 200 }: { size?: number }) {
           strokeDasharray={1}
           className="ascend-splash-trail-draw"
         />
-        <circle cx="120" cy="59" r="3" fill="#fff8e2" className="ascend-splash-spark" />
-        <path d="M96,71 L96,85 M89,78 L103,78" stroke="#fff8e2" strokeWidth="1.2" strokeLinecap="round" filter={`url(#${softGlow})`} className="ascend-splash-spark" />
+        <circle cx="120" cy="59" r="3" fill="var(--color-action)" className="ascend-splash-spark" />
+        <path d="M96,71 L96,85 M89,78 L103,78" stroke="var(--color-action)" strokeWidth="1.2" strokeLinecap="round" filter={`url(#${softGlow})`} className="ascend-splash-spark" />
       </g>
 
       <circle className="ascend-splash-light-point" r="5" fill={`url(#${dotGlow})`} filter={`url(#${softGlow})`} />

@@ -14,7 +14,7 @@ export function WellnessLines({ reading }: { reading: WellnessReading }) {
           <li key={line.key}>
             <p className="flex items-baseline justify-between gap-3 text-sm">
               <span style={{ color: 'var(--color-ink)' }}>{line.label}</span>
-              <span className="tabular-nums" style={{ color: line.tone === 'attention' ? 'var(--color-warning)' : 'var(--color-gold)' }}>{line.value}</span>
+              <span className="tabular-nums" style={{ color: line.tone === 'attention' ? 'var(--color-warning)' : 'var(--color-action)' }}>{line.value}</span>
             </p>
             <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.note}</p>
           </li>

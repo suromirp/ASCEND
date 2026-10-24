@@ -22,6 +22,7 @@ import { addDays, formatDateNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, Num, SecondaryButton } from './ui';
+import { TextButton } from './TextButton';
 
 // Waits for the plan to settle at boot, like the tick-off does.
 const AUTO_DELAY_MS = 1500;
@@ -64,9 +65,9 @@ export function AlignProposalCard({
         </p>
         <AlignList items={shown} templates={templates} />
         {items.length > shown.length && (
-          <button onClick={() => setAll(true)} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-ink)' }}>
+          <TextButton onClick={() => setAll(true)} className="self-start text-left">
             Bekijk alle {items.length}
-          </button>
+          </TextButton>
         )}
         <SecondaryButton onClick={onApprove} disabled={busy}>{busy ? 'Bezig…' : 'Akkoord'}</SecondaryButton>
         <SecondaryButton onClick={onDecline} disabled={busy}>Liever niet</SecondaryButton>
@@ -143,14 +144,9 @@ export function AlignedSheet({ aligned, templates, onClose }: { aligned: Session
                   <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{templateName(templates, log)} {formatDateNL(log.completedDate)}</p>
                   <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{describeManualLine(log)}</p>
                 </div>
-                <button
-                  onClick={() => void restore([log.id])}
-                  disabled={busy}
-                  className="min-h-[44px] shrink-0 px-2 text-xs underline underline-offset-2 disabled:opacity-40"
-                  style={{ color: 'var(--color-ink)' }}
-                >
+                <TextButton onClick={() => void restore([log.id])} disabled={busy} className="shrink-0 px-2">
                   Terugzetten
-                </button>
+                </TextButton>
               </li>
             ))}
           </ul>

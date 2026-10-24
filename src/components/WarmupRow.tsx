@@ -18,7 +18,7 @@ export function WarmupRow({ template }: { template: SessionTemplate }) {
         className="flex min-h-[44px] w-full items-center gap-3 rounded-xl border px-3 text-left"
         style={{ borderColor: 'var(--color-card-border)' }}
       >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--color-bronze)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--color-action)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.5 2 3 0-3 0-5 1-7.5z" />
         </svg>
         <span className="flex-1">

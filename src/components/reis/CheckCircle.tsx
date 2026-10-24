@@ -14,8 +14,8 @@ export function CheckCircle({ checked, onToggle, label }: { checked: boolean; on
       <span
         className="flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold"
         style={{
-          borderColor: checked ? 'var(--color-gold)' : 'var(--color-control-border)',
-          background: checked ? 'var(--color-gold)' : 'transparent',
+          borderColor: checked ? 'var(--color-action)' : 'var(--color-control-border)',
+          background: checked ? 'var(--color-action)' : 'transparent',
           color: 'var(--color-bg)',
         }}
       >

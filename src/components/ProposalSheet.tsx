@@ -27,10 +27,10 @@ import { Icon } from './icons';
 const short = formatShortDayNL;
 
 const TYPE_COLOR: Record<SessionType, string> = {
-  strength: 'var(--color-stone)',
-  cardio: 'var(--color-alpine)',
-  hiking: 'var(--color-sky)',
-  adventure: 'var(--color-sky)',
+  strength: 'var(--color-ink-dim)',
+  cardio: 'var(--color-sage)',
+  hiking: 'var(--color-status)',
+  adventure: 'var(--color-status)',
   recovery: 'var(--color-ink-dim)',
 };
 
@@ -158,7 +158,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                           {i === 0 && <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>de kleinste verandering</span>}
                         </span>
                         {optionFreshness[i] && (
-                          <span className="shrink-0 text-right text-xs leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-warning)' }}>
+                          <span className="shrink-0 text-right text-xs leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-sage)' : 'var(--color-warning)' }}>
                             benen {formatNumberNL(optionFreshness[i]!.index, 1)}<br />{optionFreshness[i]!.status}
                           </span>
                         )}
@@ -201,7 +201,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
               {freshness && (
                 <p className="mt-3 flex items-baseline justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-xs" style={{ borderColor: 'var(--color-card-border)' }}>
                   <span style={{ color: 'var(--color-ink-dim)' }}>Benen op de {freshness.kind === 'race' ? 'wedstrijd' : 'testdag'}, {short(freshness.date)}</span>
-                  <span className="shrink-0 tabular-nums" style={{ color: freshness.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-warning)' }}>{formatNumberNL(freshness.index, 1)} · {freshness.status}</span>
+                  <span className="shrink-0 tabular-nums" style={{ color: freshness.status === 'fris' ? 'var(--color-sage)' : 'var(--color-warning)' }}>{formatNumberNL(freshness.index, 1)} · {freshness.status}</span>
                 </p>
               )}
 

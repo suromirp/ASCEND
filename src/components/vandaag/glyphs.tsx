@@ -21,10 +21,10 @@ export const ChevronGlyph =({ size }: { size?: number }) => <Glyph size={size}><
 export function ValleyLines() {
   return (
     <svg viewBox="0 0 322 80" width="100%" height="80" className="block" aria-hidden="true">
-      <path d="M0 16 C60 16 80 56 161 56 S262 16 322 16" fill="none" stroke="var(--color-alpine)" strokeOpacity=".35" />
-      <path d="M0 30 C60 30 90 66 161 66 S262 30 322 30" fill="none" stroke="var(--color-alpine)" strokeWidth="1.6" />
-      <path d="M0 46 C60 46 100 74 161 74 S262 46 322 46" fill="none" stroke="var(--color-alpine)" strokeOpacity=".5" />
-      <circle cx="161" cy="66" r="4" fill="var(--color-gold)" />
+      <path d="M0 16 C60 16 80 56 161 56 S262 16 322 16" fill="none" stroke="var(--color-sage)" strokeOpacity=".35" />
+      <path d="M0 30 C60 30 90 66 161 66 S262 30 322 30" fill="none" stroke="var(--color-sage)" strokeWidth="1.6" />
+      <path d="M0 46 C60 46 100 74 161 74 S262 46 322 46" fill="none" stroke="var(--color-sage)" strokeOpacity=".5" />
+      <circle cx="161" cy="66" r="4" fill="var(--color-action)" />
     </svg>
   );
 }

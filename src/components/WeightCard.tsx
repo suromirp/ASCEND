@@ -54,11 +54,11 @@ export function WeightReminder() {
               {last?.source === 'macrofactor' && (
                 <SecondaryButton onClick={() => { close(); navigate('/koppelen/macrofactor'); }}>Export van MacroFactor inlezen</SecondaryButton>
               )}
-              <div className="flex items-center gap-4">
+              <div className="flex gap-3">
                 <PrimaryButton fullWidth={false} disabled={!kg} onClick={() => { if (kg) { void save(kg); close(); } }}>Opslaan</PrimaryButton>
-                <button onClick={() => { void updateSettings({ weightReminderSnoozedAt: today }); close(); }} className="inline-flex min-h-[44px] items-center text-sm underline" style={{ color: 'var(--color-ink-dim)' }}>
+                <SecondaryButton onClick={() => { void updateSettings({ weightReminderSnoozedAt: today }); close(); }}>
                   Niet nu
-                </button>
+                </SecondaryButton>
               </div>
             </div>
           )}

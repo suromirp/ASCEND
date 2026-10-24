@@ -39,7 +39,7 @@ export function SessionCard({
       className="flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all active:scale-[0.98] active:opacity-75"
       style={{
         background: 'var(--color-surface)',
-        borderColor: status === 'today' || (isRest && isToday) ? 'var(--color-gold)' : 'var(--color-card-border)',
+        borderColor: status === 'today' || (isRest && isToday) ? 'var(--color-action)' : 'var(--color-card-border)',
         opacity: dim ? 0.5 : 1,
       }}
     >
@@ -48,9 +48,9 @@ export function SessionCard({
         <div className="break-words text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
           {isRest ? REST_DAY_COPY[restMode].title : template.name}
           {adjusted && status !== 'completed' ? (
-            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-sky)' }}>aangepast</span>
+            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-status)' }}>aangepast</span>
           ) : wasMoved && status !== 'completed' && (
-            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-sky)' }}>verplaatst</span>
+            <span className="ml-2 text-xs font-normal" style={{ color: 'var(--color-status)' }}>verplaatst</span>
           )}
         </div>
         <div className="line-clamp-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>

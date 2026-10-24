@@ -39,7 +39,7 @@ export function ScheduleAnomalyCard() {
       </p>
       <div className="flex flex-col gap-1">
         {proposal.changes.map((c) => (
-          <p key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-sky)' }}>
+          <p key={c.plannedSessionId} className="text-xs" style={{ color: 'var(--color-status)' }}>
             {c.fromDate ? formatDateNL(c.fromDate) : ''}{c.fromDate && c.toDate ? ' naar ' : ''}{c.toDate ? formatDateNL(c.toDate) : ''}
           </p>
         ))}

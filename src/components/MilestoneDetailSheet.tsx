@@ -29,7 +29,7 @@ export function MilestoneDetailSheet({
         <Card className="rounded-b-none border-b-0 pb-8">
           <Eyebrow>{detail.type}</Eyebrow>
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
-          <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-gold)' }}>{detail.subtitle}</p>
+          <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-action)' }}>{detail.subtitle}</p>
 
           <Section heading="DOEL">{detail.goal}</Section>
           <Section heading="WAAROM">{detail.why}</Section>
@@ -55,7 +55,7 @@ export function MilestoneDetailSheet({
               <Eyebrow>BEHAALD WANNEER</Eyebrow>
               {detail.achievedWhenGroups.map((g) => (
                 <div key={g.heading}>
-                  <p className="text-xs font-medium" style={{ color: 'var(--color-bronze)' }}>{g.heading}</p>
+                  <p className="text-xs font-medium" style={{ color: 'var(--color-action)' }}>{g.heading}</p>
                   <BulletList items={g.items} />
                 </div>
               ))}
@@ -78,7 +78,7 @@ export function MilestoneDetailSheet({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2"
-                      style={{ color: 'var(--color-sky)' }}
+                      style={{ color: 'var(--color-action)' }}
                     >
                       {s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
                     </a>
@@ -114,7 +114,7 @@ function BulletList({ items }: { items: string[] }) {
     <ul className="mt-1.5 flex flex-col gap-1.5">
       {items.map((item, i) => (
         <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--color-ink)' }}>
-          <span style={{ color: 'var(--color-gold)' }}>·</span>
+          <span style={{ color: 'var(--color-action)' }}>·</span>
           <span>{item}</span>
         </li>
       ))}

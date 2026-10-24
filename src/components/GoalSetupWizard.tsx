@@ -45,6 +45,7 @@ import { GoalCapacityStep } from './GoalCapacityStep';
 import { goalDateProblem } from '../engine/goalDate';
 import { useSheetClose } from '../utils/useSheetClose';
 import { settleActivation } from '../engine/goalActivationOutcome';
+import { TextButton } from './TextButton';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -461,7 +462,7 @@ function PaceHint({ requirements }: { requirements: GoalRequirement[] }) {
   if (!pace) return null;
   return (
     <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-      Dat is een tempo van <span className="font-semibold" style={{ color: 'var(--color-gold)' }}>{pace}</span>.
+      Dat is een tempo van <span className="font-semibold" style={{ color: 'var(--color-action)' }}>{pace}</span>.
     </p>
   );
 }
@@ -536,19 +537,22 @@ function RequirementRow({
           type="button"
           onClick={onRemove}
           aria-label={`${meta.label} verwijderen`}
-          className="relative mb-1 flex h-6 w-6 shrink-0 items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
+          // Een echt vlak van 44 bij 44 rond het icoon van 24; de negatieve marges laten de rij zoals hij was.
+          className="-mx-2.5 -mb-1.5 flex h-11 w-11 shrink-0 items-center justify-center"
           style={{ color: 'var(--color-ink-dim)' }}
         >
           <Icon name="sluiten" size={16} />
         </button>
       </div>
       {customDiscipline && (
-        <p className="text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
-          Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.{' '}
-          <button onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="underline" style={{ color: 'var(--color-ink-dim)' }}>
+        <>
+          <p className="text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>
+            Nog niet gekoppeld aan automatische voortgangsmeting uit je trainingsgeschiedenis.
+          </p>
+          <TextButton onClick={() => { setCustomDiscipline(false); onChange({ discipline: '' }); }} className="self-start">
             Terug naar de lijst
-          </button>
-        </p>
+          </TextButton>
+        </>
       )}
     </div>
   );
@@ -689,7 +693,7 @@ function PreviewStep({
         </div>
         <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{plan.feasibility.explanation}</p>
         {plan.feasibility.bestPossiblePreparation && (
-          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sky)' }}>{plan.feasibility.bestPossiblePreparation}</p>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-status)' }}>{plan.feasibility.bestPossiblePreparation}</p>
         )}
       </section>
 

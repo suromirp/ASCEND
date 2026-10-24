@@ -3,9 +3,9 @@ import { isSportEnabled, type EnabledSports } from '../engine/sports';
 import { Icon } from './icons';
 
 const ROLE_COLOR: Record<ModalityDefinition['role'], string> = {
-  PRIMARY: 'var(--color-gold)',
-  EQUIVALENT: 'var(--color-success-text)',
-  CROSS_TRAINING: 'var(--color-sky)',
+  PRIMARY: 'var(--color-action)',
+  EQUIVALENT: 'var(--color-sage)',
+  CROSS_TRAINING: 'var(--color-status)',
   FALLBACK: 'var(--color-warning)',
   LATER_PHASE: 'var(--color-ink-dim)',
 };
@@ -47,7 +47,7 @@ export function ModalityPicker({
             onClick={() => !m.locked && onSelect(m.key)}
             disabled={m.locked}
             className="flex min-h-[48px] items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left disabled:opacity-40"
-            style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
+            style={{ borderColor: active ? 'var(--color-action)' : 'var(--color-card-border)', background: 'var(--color-charcoal)' }}
           >
             <span className="text-sm" style={{ color: 'var(--color-ink)' }}>{m.label}</span>
             <span className="shrink-0 text-xs" style={{ color: ROLE_COLOR[m.role] }}>{ROLE_LABEL[m.role]}</span>
@@ -80,7 +80,7 @@ export function ModalityGuide({ templateId }: { templateId: string }) {
           {m.sources && m.sources.length > 0 && (
             <div className="mt-1 flex flex-col gap-1">
               {m.sources.map((s) => s.url
-                ? <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
+                ? <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
                 : <span key={s.label} className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{s.label}</span>)}
             </div>
           )}

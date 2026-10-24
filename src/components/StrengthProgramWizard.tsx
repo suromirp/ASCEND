@@ -341,8 +341,8 @@ function SessionsStep({
             <button
               key={t.id}
               onClick={() => toggleTemplate(t.id)}
-              className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm"
-              style={{ borderColor: checked ? 'var(--color-gold)' : 'var(--color-card-border)', color: checked ? 'var(--color-gold)' : 'var(--color-ink)' }}
+              className="flex min-h-[44px] items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm"
+              style={{ borderColor: checked ? 'var(--color-action)' : 'var(--color-card-border)', color: checked ? 'var(--color-action)' : 'var(--color-ink)' }}
             >
               <span>{t.name}</span>
               <span>{checked ? <Icon name="vinkje" size={16} /> : null}</span>
@@ -472,7 +472,7 @@ function ChipMultiSelect({
               type="button"
               onClick={() => onToggle(opt)}
               className="min-h-[44px] rounded-full border px-3 py-1 text-xs"
-              style={{ borderColor: checked ? 'var(--color-gold)' : 'var(--color-card-border)', color: checked ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+              style={{ borderColor: checked ? 'var(--color-action)' : 'var(--color-card-border)', color: checked ? 'var(--color-action)' : 'var(--color-ink-dim)' }}
             >
               {opt}
             </button>

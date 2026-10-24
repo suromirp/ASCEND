@@ -22,8 +22,8 @@ export function SessionHeader({ brief, title, as = 'h1' }: { brief: SessionBrief
         ))}
       </div>
 
-      {brief.sportSwitch && <p className="mt-3 text-xs" style={{ color: 'var(--color-sky)' }}>{brief.sportSwitch}</p>}
-      {brief.tomorrow && <p className="mt-3 text-xs" style={{ color: 'var(--color-gold)' }}>{brief.tomorrow}</p>}
+      {brief.sportSwitch && <p className="mt-3 text-xs" style={{ color: 'var(--color-status)' }}>{brief.sportSwitch}</p>}
+      {brief.tomorrow && <p className="mt-3 text-xs" style={{ color: 'var(--color-action)' }}>{brief.tomorrow}</p>}
     </div>
   );
 }

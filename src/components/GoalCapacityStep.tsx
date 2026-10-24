@@ -26,6 +26,7 @@ import { questionMetaFor, capabilityKeyLabel } from '../data/baselineQuestions';
 import { addDays, formatDateNL } from '../utils/dates';
 import { PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { NumberField } from './NumberField';
+import { TextButton } from './TextButton';
 
 const ACTIVITY_DIMENSIONS = new Set(['endurance_duration', 'mechanical_tolerance', 'aerobic_engine', 'ascent_capacity', 'descent_tolerance', 'load_carriage', 'sustainable_output']);
 
@@ -205,9 +206,9 @@ function RecentActivityBlock({
       <div className="mt-3">
         <PrimaryButton onClick={handleSave} disabled={saving || !filled || daysAgo === undefined}>Opslaan</PrimaryButton>
       </div>
-      <button onClick={onSkip} className="flex min-h-[44px] items-center justify-center mt-2 w-full text-center text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>
+      <TextButton tone="dim" onClick={onSkip} className="mt-2 w-full justify-center text-center">
         Liever per onderdeel antwoorden
-      </button>
+      </TextButton>
     </div>
   );
 }
@@ -258,7 +259,7 @@ function CapabilityQuestion({
         </div>
       ) : (
         meta.unit !== 'min_per_km' && (
-          <button onClick={() => setShowExact(true)} className="inline-flex min-h-[44px] items-center self-start text-xs underline" style={{ color: 'var(--color-ink-dim)' }}>precies invullen</button>
+          <TextButton onClick={() => setShowExact(true)} className="self-start">Precies invullen</TextButton>
         )
       )}
     </div>
@@ -278,8 +279,8 @@ function Chip({ children, onClick, selected = false, muted = false }: { children
       onClick={onClick}
       className="min-h-[44px] rounded-full border px-3 py-1 text-xs transition-all active:scale-[0.97]"
       style={{
-        borderColor: selected ? 'var(--color-gold)' : 'var(--color-card-border)',
-        color: selected ? 'var(--color-gold)' : muted ? 'var(--color-ink-dim)' : 'var(--color-ink)',
+        borderColor: selected ? 'var(--color-action)' : 'var(--color-card-border)',
+        color: selected ? 'var(--color-action)' : muted ? 'var(--color-ink-dim)' : 'var(--color-ink)',
       }}
     >
       {children}

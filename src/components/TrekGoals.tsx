@@ -23,6 +23,7 @@ import { NumberField } from './NumberField';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from './ui';
+import { TextButton } from './TextButton';
 
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' };
@@ -75,8 +76,8 @@ export function TrekGoalsCard() {
                 <p className="pr-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{trekFacts(p)}</p>
                 <p className="pr-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{TREK_IMPORTANCE_LABEL[p.trek!.importance]}</p>
                 <div className="mt-1 flex">
-                  <button onClick={() => setEditing(p)} className="min-h-[44px] px-3 text-xs underline" style={{ color: 'var(--color-ink)' }} aria-label={`${p.trek!.name} wijzigen`}>Wijzigen</button>
-                  <button onClick={() => setPlan(planLeave('remove', p))} className="min-h-[44px] px-3 text-xs underline" style={{ color: 'var(--color-ink-dim)' }} aria-label={`${p.trek!.name} verwijderen`}>Verwijderen</button>
+                  <TextButton onClick={() => setEditing(p)} className="px-3" aria-label={`${p.trek!.name} wijzigen`}>Wijzigen</TextButton>
+                  <TextButton tone="dim" onClick={() => setPlan(planLeave('remove', p))} className="px-3" aria-label={`${p.trek!.name} verwijderen`}>Verwijderen</TextButton>
                 </div>
               </li>
             ))}
@@ -133,10 +134,10 @@ function Choice({ on, onClick, title, hint }: { on: boolean; onClick: () => void
       aria-checked={on}
       onClick={onClick}
       className="flex min-h-[44px] items-start gap-3 rounded-xl border px-3.5 py-2.5 text-left"
-      style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)', background: on ? tint('var(--color-gold)', 8) : 'transparent' }}
+      style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)', background: on ? tint('var(--color-action)', 8) : 'transparent' }}
     >
-      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-ink-dim)' }} aria-hidden>
-        {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-gold)' }} />}
+      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-ink-dim)' }} aria-hidden>
+        {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-action)' }} />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{title}</span>

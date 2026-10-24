@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from './ui';
 import { Icon } from './icons';
+import { TextButton } from './TextButton';
 
 const SHOW_MS = 6_000;
 const CHIP_MS = 10 * 60_000;
@@ -84,14 +85,9 @@ export function ChangeNotice() {
             <p className="mt-0.5 line-clamp-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{recentChange.title}</p>
             {!open && <p className="truncate text-xs" style={{ color: 'var(--color-ink-dim)' }}>{summary}{recentChange.why ? ' · waarom' : ''}</p>}
           </button>
-          <button
-            onClick={handleUndo}
-            disabled={undoing}
-            className="min-h-[44px] shrink-0 px-2 text-xs font-medium underline underline-offset-2 disabled:opacity-40"
-            style={{ color: 'var(--color-ink)' }}
-          >
+          <TextButton onClick={handleUndo} disabled={undoing} className="shrink-0 px-2">
             {undoing ? 'Bezig…' : 'Ongedaan maken'}
-          </button>
+          </TextButton>
           <button
             onClick={dismissRecentChange}
             aria-label="Melding sluiten"

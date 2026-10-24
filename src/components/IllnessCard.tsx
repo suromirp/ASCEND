@@ -11,6 +11,7 @@ import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, PrimaryButton } from './ui';
+import { TextButton } from './TextButton';
 
 const KINDS: IllnessKind[] = ['above_neck', 'below_neck', 'stomach'];
 
@@ -39,13 +40,12 @@ export function IllnessStatusCard() {
           Ik ben weer beter
         </PrimaryButton>
         {active.kind === 'above_neck' && (
-          <button
+          <TextButton
             onClick={async () => { setBusy(true); await reportIllness('below_neck'); setBusy(false); }}
-            className="inline-flex min-h-[44px] items-center self-start text-xs underline"
-            style={{ color: 'var(--color-ink-dim)' }}
+            className="self-start text-left"
           >
             Toch koorts of klachten onder de nek?
-          </button>
+          </TextButton>
         )}
       </Card>
     );

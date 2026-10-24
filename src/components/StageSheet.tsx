@@ -81,7 +81,7 @@ export function StageSheet({
             <Eyebrow>{`Etappe ${stage.overall} van 36 · ${section?.name ?? ''}`}</Eyebrow>
             <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{stage.from} naar {stage.to}</h3>
             {day.date && (
-              <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
+              <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-action)' }}>
                 {weekdayLongNL(day.date)} {formatDateNL(day.date)} · dag {day.dayNumber} van je tocht
               </p>
             )}
@@ -140,7 +140,7 @@ export function StageSheet({
                           onClick={() => onChoose(stage.id, { sleep: selected ? undefined : kind })}
                           className="min-h-11 rounded-xl border px-2 text-xs font-medium transition-all active:scale-[0.98]"
                           style={selected
-                            ? { borderColor: 'var(--color-gold)', background: 'var(--color-card)', color: 'var(--color-gold)' }
+                            ? { borderColor: 'var(--color-action)', background: 'var(--color-card)', color: 'var(--color-action)' }
                             : { borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}
                         >
                           {SLEEP_LABEL[kind]}
@@ -195,11 +195,11 @@ export function StageSheet({
                 <div className="flex flex-col gap-4">
                   {regimes.map((r) => (
                     <div key={r.id}>
-                      <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{r.area}</p>
+                      <p className="text-xs font-semibold" style={{ color: 'var(--color-action)' }}>{r.area}</p>
                       <ul className="mt-1 flex flex-col gap-1.5">
                         {r.lines.map((line) => (
                           <li key={line} className="flex gap-2 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-                            <span style={{ color: 'var(--color-gold)' }}>·</span>
+                            <span style={{ color: 'var(--color-action)' }}>·</span>
                             <span>{line}</span>
                           </li>
                         ))}
@@ -279,7 +279,7 @@ function Block({ heading, children }: { heading: string; children: ReactNode }) 
 function Fact({ heading, fact }: { heading: string; fact: StageFact }) {
   return (
     <div>
-      <p className="text-xs font-semibold" style={{ color: 'var(--color-bronze)' }}>{heading}</p>
+      <p className="text-xs font-semibold" style={{ color: 'var(--color-action)' }}>{heading}</p>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{fact.text}</p>
       <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{SOURCE_LABEL[fact.source]}</p>
     </div>
@@ -290,7 +290,7 @@ function Links({ links }: { links: { label: string; url: string }[] }) {
   return (
     <div className="mt-2 flex flex-col gap-1">
       {links.map((l) => (
-        <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-sky)' }}>
+        <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
           {l.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
         </a>
       ))}

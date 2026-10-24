@@ -19,12 +19,13 @@ import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { TextButton } from './TextButton';
 
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 const KIND_COLOR: Record<LeaveKind, string> = {
   no_training: 'var(--color-success-text)',
-  trek: 'var(--color-sky)',
-  free_days: 'var(--color-stone)',
+  trek: 'var(--color-status)',
+  free_days: 'var(--color-ink-dim)',
 };
 
 export function LeavePeriodsCard() {
@@ -72,14 +73,14 @@ export function LeavePeriodsCard() {
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: KIND_COLOR[p.kind] }} aria-hidden />
                     <span className="break-words">{p.trek?.name ?? LEAVE_KIND_LABEL[p.kind]}</span>
                   </p>
-                  <button
+                  <TextButton
+                    tone="dim"
                     onClick={() => setPlan(planLeave('remove', p))}
-                    className="min-h-[44px] shrink-0 px-3 text-xs underline"
-                    style={{ color: 'var(--color-ink-dim)' }}
+                    className="shrink-0 px-3"
                     aria-label={`${LEAVE_KIND_LABEL[p.kind]} ${describePeriodDates(p)} verwijderen`}
                   >
                     Verwijderen
-                  </button>
+                  </TextButton>
                 </div>
                 <div className="-mt-1.5 pb-2 pl-4 pr-3">
                   <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{describePeriodDates(p, true)} · {describeDayCount(p)}</p>
@@ -158,10 +159,10 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
                       aria-checked={on}
                       onClick={() => setKind(k)}
                       className="flex items-start gap-3 rounded-xl border px-3.5 py-3 text-left"
-                      style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)', background: on ? tint('var(--color-gold)', 8) : 'transparent' }}
+                      style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)', background: on ? tint('var(--color-action)', 8) : 'transparent' }}
                     >
-                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-ink-dim)' }} aria-hidden>
-                        {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-gold)' }} />}
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-ink-dim)' }} aria-hidden>
+                        {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-action)' }} />}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{LEAVE_KIND_LABEL[k]}</span>

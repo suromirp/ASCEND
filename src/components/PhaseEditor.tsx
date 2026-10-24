@@ -5,6 +5,7 @@ import { addDays, daysBetween, formatDateNL, mondayOfWeek, todayISO } from '../u
 import { raceBlocks } from '../engine/raceBlock';
 import { usePlanSettingChange } from './settings/usePlanSettingChange';
 import { Icon } from './icons';
+import { TextButton } from './TextButton';
 
 
 // Settings → Training → Programma: the phases toward the goal as one bar,
@@ -57,7 +58,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
     <div className="flex flex-col gap-3">
       <div className="relative flex h-3 overflow-hidden rounded-full" role="img" aria-label="Je fases tot aan het doel">
         {rows.map((r) => (
-          <span key={r.phase.id} style={{ flexGrow: r.phase.weekCount, flexBasis: 0, background: PHASE_COLOR[r.phase.id] ?? 'var(--color-stone)', opacity: 0.85 }} />
+          <span key={r.phase.id} style={{ flexGrow: r.phase.weekCount, flexBasis: 0, background: PHASE_COLOR[r.phase.id] ?? 'var(--color-ink-dim)', opacity: 0.85 }} />
         ))}
         {blocks.map((b) => (
           <span key={b.goalId} className="absolute inset-y-0" style={{ left: `${pct(b.blockStart)}%`, width: `${pct(b.raceDate) - pct(b.blockStart)}%`, background: 'var(--color-ink)', opacity: 0.25 }} aria-hidden="true" />
@@ -68,7 +69,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
       </div>
       {blocks.length > 0 && (
         <div className="relative -mt-2 h-4" aria-hidden="true">
-          {blocks.map((b) => <span key={b.goalId} className="absolute -translate-x-1/2 text-xs" style={{ left: `${pct(b.raceDate)}%`, color: 'var(--color-gold)' }}><Icon name="vlag" size={14} /></span>)}
+          {blocks.map((b) => <span key={b.goalId} className="absolute -translate-x-1/2 text-xs" style={{ left: `${pct(b.raceDate)}%`, color: 'var(--color-action)' }}><Icon name="vlag" size={14} /></span>)}
         </div>
       )}
 
@@ -83,10 +84,10 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
                 <p className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-ink)' }}>
                   <span className="inline-block h-2 w-2 rounded-full" style={{ background: PHASE_COLOR[r.phase.id] }} aria-hidden="true" />
                   {r.phase.name.charAt(0) + r.phase.name.slice(1).toLowerCase()}
-                  {isNow && <span className="text-xs" style={{ color: 'var(--color-gold)' }}>nu</span>}
+                  {isNow && <span className="text-xs" style={{ color: 'var(--color-action)' }}>nu</span>}
                 </p>
                 {blocks.filter((b) => b.raceDate >= r.from && b.raceDate <= r.until).map((b) => (
-                  <p key={b.goalId} className="text-xs" style={{ color: 'var(--color-gold)' }}><Icon name="vlag" size={14} className="inline align-[-2px]" /> {b.name}, {formatDateNL(b.raceDate)}</p>
+                  <p key={b.goalId} className="text-xs" style={{ color: 'var(--color-action)' }}><Icon name="vlag" size={14} className="inline align-[-2px]" /> {b.name}, {formatDateNL(b.raceDate)}</p>
                 ))}
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   {formatDateNL(r.from)} tot {formatDateNL(r.until)}{fills ? ' · vult aan' : ''}
@@ -94,9 +95,9 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
               </div>
               {adjustable ? (
                 <div className="flex shrink-0 items-center gap-1">
-                  <button onClick={() => change(adjustable, r.phase.weekCount, -1)} aria-label={`${r.phase.name} korter`} className="flex h-11 w-11 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>−</button>
+                  <button onClick={() => change(adjustable, r.phase.weekCount, -1)} aria-label={`${r.phase.name} korter`} className="flex h-11 w-11 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}><Icon name="min" size={18} /></button>
                   <span className="w-[72px] whitespace-nowrap text-center text-sm tabular-nums" style={{ color: 'var(--color-ink)' }}>{r.phase.weekCount} {r.phase.weekCount === 1 ? 'week' : 'weken'}</span>
-                  <button onClick={() => change(adjustable, r.phase.weekCount, 1)} aria-label={`${r.phase.name} langer`} className="flex h-11 w-11 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>+</button>
+                  <button onClick={() => change(adjustable, r.phase.weekCount, 1)} aria-label={`${r.phase.name} langer`} className="flex h-11 w-11 items-center justify-center rounded-lg border text-base" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}><Icon name="plus" size={18} /></button>
                 </div>
               ) : (
                 <span className="shrink-0 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{r.phase.weekCount} {r.phase.weekCount === 1 ? 'week' : 'weken'}</span>
@@ -112,9 +113,9 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
           : 'Geef je hoofddoel een datum om de fases zelf in te stellen.'}
       </p>
       {goalDate && Object.keys(overrides).length > 0 && (
-        <button onClick={() => void save(undefined)} className="min-h-[44px] self-start text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+        <TextButton onClick={() => void save(undefined)} className="self-start">
           Terug naar automatisch
-        </button>
+        </TextButton>
       )}
       {plan.note && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }} role="status">{plan.note}</p>}
       {plan.impact}

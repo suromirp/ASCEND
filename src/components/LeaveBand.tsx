@@ -8,10 +8,10 @@ import type { LeaveLabel, LeaveLabelKind } from '../engine/leave';
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 const TONE: Record<LeaveLabelKind, { color: string; text: string }> = {
-  off: { color: 'var(--color-alpine)', text: 'var(--color-success-text)' },
-  trek: { color: 'var(--color-sky)', text: 'var(--color-sky)' },
-  free: { color: 'var(--color-stone)', text: 'var(--color-stone)' },
-  light: { color: 'var(--color-stone)', text: 'var(--color-ink-dim)' },
+  off: { color: 'var(--color-sage)', text: 'var(--color-success-text)' },
+  trek: { color: 'var(--color-status)', text: 'var(--color-status)' },
+  free: { color: 'var(--color-ink-dim)', text: 'var(--color-ink-dim)' },
+  light: { color: 'var(--color-ink-dim)', text: 'var(--color-ink-dim)' },
 };
 
 export function LeaveBand({ label }: { label: LeaveLabel }) {
