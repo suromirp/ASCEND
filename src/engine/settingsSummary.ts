@@ -260,6 +260,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.keepScreenOn };
     case 'forge-doorgeven':
       return { checked: forge.carryWeights };
+    case 'forge-1rm':
+      return { checked: forge.showOneRm };
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':

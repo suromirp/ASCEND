@@ -111,6 +111,9 @@ describe('het workoutscherm', () => {
     const clean = normalizeStrengthSettings({ carryWeights: 'nee', showPlates: 0 })!;
     expect(clean.carryWeights).toBeUndefined();
     expect(clean.showPlates).toBeUndefined();
+    expect(resolveStrengthSettings(undefined).showOneRm).toBe(true);
+    expect(resolveStrengthSettings({ showOneRm: false }).showOneRm).toBe(false);
+    expect(normalizeStrengthSettings({ showOneRm: 'nee' })!.showOneRm).toBeUndefined();
   });
   it('de nieuwe rustgeluiden blijven staan en onbekende vallen weg', () => {
     for (const k of ['boxing', 'whistle', 'gong', 'chime']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);

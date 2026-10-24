@@ -6,15 +6,16 @@
 // is called "geschatte kracht" and the line shows the weight you can handle at
 // your rep range.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendLineChart } from '../components/TrendLineChart';
-import { Card, Eyebrow, Num, PageHeader, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Eyebrow, InfoButton, Num, PageHeader, PrimaryButton, SecondaryButton, Stat, StatusPill } from '../components/ui';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, type ComparisonRow, type ExerciseView, type MissingData } from '../engine/strengthHistory';
 import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../engine/strengthModel';
+import { oneRmChange, oneRmSeries } from '../engine/strengthOneRm';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, todayISO } from '../utils/dates';
@@ -33,6 +34,7 @@ export function ForgePage() {
   const [showAll, setShowAll] = usePageState('showAll', false);
 
   const strengthKey = JSON.stringify(settings.strengthModel ?? null);
+  const showOneRm = resolveStrengthSettings(settings.strengthModel).showOneRm;
   const model = useMemo(() => {
     const s = resolveStrengthSettings(JSON.parse(strengthKey) as typeof settings.strengthModel);
     if (!s.enabled) return undefined;
@@ -84,7 +86,7 @@ export function ForgePage() {
             ASCEND telt stil mee. De lijn is het gewicht dat je volgens de schatting aankunt bij het aantal herhalingen van die oefening. Het is een rekengetal om je eigen trainingen met elkaar te vergelijken, geen maximum dat je moet halen.
           </p>
           {model.views.map((v) => (
-            <ExerciseCard key={v.history.key} view={v} />
+            <ExerciseCard key={v.history.key} view={v} showOneRm={showOneRm} />
           ))}
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
           <button onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
@@ -103,7 +105,7 @@ const REFILL_TEXT: Record<MissingData, string> = {
   rir_and_help: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR) en zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
 };
 
-function ExerciseCard({ view }: { view: ExerciseView }) {
+function ExerciseCard({ view, showOneRm }: { view: ExerciseView; showOneRm: boolean }) {
   const { history, now, next, line, strengthKg, weightMismatch } = view;
   const { settings } = useAppData();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
@@ -114,6 +116,11 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
   const liftedKg = assisted ? bodyKg : undefined;
   const chartLine = liftedKg ? line.map((p) => ({ ...p, value: liftedKg + p.value })) : line;
   const count = history.sessions.length;
+  const [oneRmInfo, setOneRmInfo] = useState(false);
+  const oneRm = useMemo(() => oneRmSeries(view.points), [view.points]);
+  const oneRmDelta = oneRmChange(oneRm);
+  // With your own body weight in it the number is the total load, not the plates.
+  const totalLoad = exercise?.bodyweightFraction !== undefined || (exercise !== undefined && ['bodyweight', 'assisted_bodyweight', 'pack_or_vest'].includes(exercise.resistance));
 
   const navigate = useNavigate();
   let missing: string | undefined;
@@ -155,10 +162,31 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
         </div>
       )}
       {line.length === 1 && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>}
-      {strengthKg !== undefined && (
-        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Geschatte kracht: <Num>{kg(strengthKg)}</Num> totale last. Dat is geen maximum, alleen het getal waar ASCEND mee rekent.
-        </p>
+      {showOneRm && strengthKg !== undefined && (
+        <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
+          <div className="flex items-center justify-between gap-2">
+            <Eyebrow>Geschatte 1RM</Eyebrow>
+            <InfoButton onClick={() => setOneRmInfo((v) => !v)} label={oneRmInfo ? 'Uitleg over de geschatte 1RM sluiten' : 'Uitleg over de geschatte 1RM'} />
+          </div>
+          {oneRmInfo && (
+            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+              Een schatting uit je laatste sets, geen test. Gebruik hem om je trainingen te vergelijken.
+            </p>
+          )}
+          <div className="flex items-end justify-between gap-3">
+            <Stat value={formatNumberNL(strengthKg, 1)} unit={totalLoad ? 'kg totale last' : 'kg'} size="m" />
+            {oneRmDelta && (
+              <StatusPill tone={oneRmDelta.deltaKg > 0 ? 'progress' : 'neutral'}>
+                {oneRmDelta.deltaKg > 0 ? '+' : ''}{formatNumberNL(oneRmDelta.deltaKg, 1)} kg in 4 weken
+              </StatusPill>
+            )}
+          </div>
+          {oneRm.length >= 2 && (
+            <div className="font-sans tabular-nums">
+              <TrendLineChart points={oneRm.map((p) => ({ label: formatDateNL(p.date), value: p.kg }))} color="var(--color-progress)" height={90} formatValue={(v) => kg(v)} />
+            </div>
+          )}
+        </div>
       )}
 
       {next && (

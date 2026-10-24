@@ -86,6 +86,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen gewicht bekend', text: 'dan staan er lege opwarmrijen die zich vullen zodra je bij de eerste set een gewicht invult.' },
     ],
   },
+  forge1rm: {
+    title: 'Geschatte 1RM',
+    lead: 'Per oefening staat op Forge je geschatte 1RM, met een kleine trend door de tijd.',
+    points: [
+      { head: 'Een schatting', text: 'uit je laatste sets, geen test. Het is hetzelfde getal waar ASCEND mee rekent.' },
+      { head: 'Uit', text: 'dan verdwijnt het blok. Je voorstel voor de volgende keer blijft staan.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',
