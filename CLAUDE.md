@@ -28,9 +28,11 @@ strings consistent with that unless told otherwise.
 ## Design
 
 - dark premium UI
-- charcoal / stone backgrounds
-- bronze and muted gold accents
-- muted Alpine green allowed
+- deep navy backgrounds (`#0b1733`), with a light sky band and green
+  mountains at the top of every tab (no light theme)
+- mint as the one action colour, ice blue for status, a colour per tab;
+  no bronze or gold accents
+- muted Alpine green allowed (the mountains)
 - Roman/Stoic influence should remain subtle
 - adventure/mountain/topographic influences
 - never make the UI look like an RPG
@@ -41,8 +43,8 @@ strings consistent with that unless told otherwise.
 
 - Knoppen staan in zinsletters ("Opslaan", "Gedaan in MacroFactor"), met
   normale letterspatiëring (geen `uppercase`, geen `tracking-wide`).
-  Hoofdletters zijn alleen voor de kleine bronzen kopjes (`Eyebrow`, die
-  zelf hoofdletters toont); een kopje met de hand opmaken mag niet waar
+  Hoofdletters zijn alleen voor de kleine kopjes in de tabkleur (`Eyebrow`,
+  die zelf hoofdletters toont); een kopje met de hand opmaken mag niet waar
   `Eyebrow` past.
 - Tikdoelen zijn minstens 44 bij 44 px (`min-h-[44px]`; `PrimaryButton` en
   `SecondaryButton` doen dit zelf). Een klein pictogram krijgt een
@@ -54,16 +56,34 @@ strings consistent with that unless told otherwise.
   ronde knop van 44 px en verdwijnt na tien minuten; hij blijft niet over
   de inhoud hangen.
 
-### Steen en contour
+### Zee en berg (was: steen en contour)
 
-De vaste stijl, uitgewerkt in `docs/visie/Visuele upgrade en nieuwe ideeën.md`
-(deel 2 en 4) en vastgelegd in `docs/beslissingen/2026-10-22-steen-en-contour.md`.
-De app moet aanvoelen als een goede kaart en een goed horloge.
+De vaste stijl, vastgelegd in `docs/beslissingen/2026-10-22-steen-en-contour.md`
+(tabbalk, letters, iconen) en voor de kleuren in
+`docs/beslissingen/2026-10-24-thema-zee-en-berg.md`, dat het kleurdeel van het
+eerste vervangt. De app moet aanvoelen als een goede kaart en een goed horloge,
+fris en sportief op donker marine.
 
-- Eén gouden accent per scherm: de enige gouden knop of de ene kaart met de
-  gouden gloed. Al het andere is steen: charcoal, haarlijnen, gedempte inkt.
-- Contourlijnen (`topo-texture`) zijn versiering met betekenis en komen
-  alleen op de missiekaart, één per scherm.
+- Eén mint accent per scherm: de enige gevulde mint knop (`PrimaryButton`) of
+  de ene kaart met de mint gloed. Gewone knoppen zijn mint omlijnd
+  (`SecondaryButton`), een gekozen keuze en voortgang (ring, vinkjes, meters)
+  zijn ook mint. IJsblauw (`--color-status`) is alleen status: waar je bent,
+  vandaag in de week. Amber (`--color-warning`) is let op en beendagen. Al het
+  andere is marine: kaarten, haarlijnen, gedempte inkt. Geen brons of goud.
+- De lichte lucht (`SkyBand`, `src/components/SkyBand.tsx`) staat bovenaan
+  elke tab: van `--color-sky-top` naar `--color-sky-bottom`, met twee rijen
+  bergen (saliegroen achter, groenblauw voor) die overgaan in het marine. Op de
+  lucht staan de kop (`AppMark` links, `SettingsGear` rechts, allebei in
+  `--color-on-light`), het kopje, de titel en de eerste kaart. Alles op de lucht
+  is donker op licht via de klasse `.on-light`, die de gewone tokens omzet;
+  een `Card` erop wordt vanzelf de lichte kaart. `variant="low"` is de lagere
+  band van Week. De lucht is een vlak, geen licht thema.
+- Elke tab heeft een eigen kleur (`--color-tab-*`): Vandaag mint, Week ijs,
+  Stand lila, Ascend alpengloed, Logboek lichtgroen. `App.tsx` zet `data-tab`
+  op de pagina; `Eyebrow` en de tabbalk lezen `--color-page`, op de lucht de
+  donkere variant. Buiten de tabs is het mint.
+- Contourlijnen (`topo-texture`) zijn versiering met betekenis, in mint met
+  heel lage dekking, en komen alleen op de missiekaart, één per scherm.
 - Marcellus (`font-display`) is alleen voor woorden: paginatitels, namen van
   trainingen, een oordeel als "Fris". Alle getallen staan in Inter met vaste
   cijferbreedte (`font-sans tabular-nums`); een getal midden in een zin in
@@ -75,9 +95,11 @@ De app moet aanvoelen als een goede kaart en een goed horloge.
   van 1,6 px, ronde uiteinden, de kleur van de omringende tekst. Geen
   bibliotheek, geen losse tekens als ✓ of ↷ voor iets wat een icoon kan zijn.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
-  `src/App.tsx`), met de actieve tab in goud en een streepje erboven. Meer is
-  geen tab maar het tandwiel rechtsboven (`SettingsGear`): 44 bij 44 px, op
-  elke tab op precies dezelfde plek, schuift met de pagina mee. Het opent
+  `src/App.tsx`), volledig dekkend marine, labels in zinsletters, met de
+  actieve tab en het streepje erboven in de kleur van die tab. Meer is geen
+  tab maar het tandwiel rechtsboven (`SettingsGear`): 44 bij 44 px in een
+  ronde knop op de lucht van `SkyBand`, op elke tab op precies dezelfde plek,
+  schuift met de pagina mee. Het opent
   `/more` (instellingen, gegevens en back-up, koppelingen, gidsen en kennis);
   oude links naar `/more` blijven werken. Een pagina die zelf iets rechtsboven
   nodig heeft (pijltjes, knoppen) laat daar ruimte voor het tandwiel vrij.
@@ -91,34 +113,59 @@ De app moet aanvoelen als een goede kaart en een goed horloge.
   (`src/data/settingsHelp.ts`: één zin en korte punten), een keuze opent een
   onderblad (`Sheet`, `ChoiceSheet`), aan of uit is een schakelaar in de rij, acties
   staan in het blad en nooit op de pagina. Wat ASCEND zelf bijhoudt krijgt het label
-  "auto". Een schakelaar die aan staat is donker brons, niet goud: goud blijft het
-  ene accent van het scherm. De waarde en de regel van een rij komen uit
+  "auto". Een schakelaar die aan staat is mint gedempt, niet gevuld mint: de
+  gevulde mint knop blijft het ene accent van het scherm. De waarde en de regel van een rij komen uit
   `engine/settingsSummary.ts` (pure functies met tests), zodat de rij, het
   zoekresultaat en het overzicht hetzelfde zeggen.
 
 ### Design tokens in code
 
 Theme tokens are defined once in `src/index.css` under `@theme` and
-consumed via Tailwind (`bg-[var(--color-card)]`) or inline `style` objects
-— never hardcode hex values in a component.
+consumed via Tailwind (`bg-[var(--color-card)]`) or inline `style` objects.
+Never hardcode hex or rgba values in a component.
 
-- Backgrounds: `--color-bg` `--color-charcoal` `--color-surface`
-  `--color-card` (with `--color-card-border`)
+- Backgrounds (navy): `--color-bg` `--color-charcoal` `--color-surface`
+  `--color-card` `--color-raised` (with `--color-card-border`), and
+  `--color-control-border` for buttons, fields and switches
 - Text: `--color-ink` (primary), `--color-ink-dim` (secondary)
-- Accents: `--color-bronze` `--color-gold` `--color-bronze-dark` (primary
-  actions, emphasis), `--color-alpine` `--color-stone` `--color-sky`
-  `--color-snow` (secondary/status)
-- Status: `--color-success` `--color-warning` `--color-danger`
+- Action: `--color-action` (mint, line and text), `--color-action-fill` (the
+  fill of the main button, mint everywhere), `--color-on-action` (dark text on
+  mint), `--color-action-muted` (a switch that is on, a chosen chip)
+- Status and progress: `--color-status` (ice, where you are),
+  `--color-on-status`, `--color-progress` (mint), `--color-track` (the empty
+  track of a ring or bar)
+- Signal: `--color-success` `--color-success-text` `--color-warning` (amber,
+  let op) `--color-danger` (fill) `--color-danger-text`
+- Effort zones: `--color-effort-1` to `--color-effort-5`; sports:
+  `--color-sport-run` `--color-sport-strength` `--color-sport-walk`
+  `--color-sport-stretch` (also the `--color-chart-*` order)
+- The light sky: `--color-sky-top` `--color-sky-bottom` `--color-light-card`
+  `--color-light-border` `--color-on-light` `--color-on-light-dim`
+  `--color-action-on-light` `--color-status-on-light`; the mountains
+  `--color-mountain-back` `--color-mountain-front`
+- Tabs: `--color-tab-vandaag` `-week` `-stand` `-ascend` `-logboek`, each with a
+  `-light` variant for the sky; `--color-page` is the colour of the tab you are on
+- Old names (`--color-gold` `--color-bronze` `--color-bronze-dark`
+  `--color-on-gold` `--color-alpine` `--color-stone` `--color-sky`
+  `--color-snow`) still work and point at the new palette (gold and bronze are
+  mint); new work uses the new names
 - Typography: `--font-display` (Marcellus, via `.font-display`) for
-  headings/wordmarks, `--font-sans` (Inter) for everything else
-- `html { color-scheme: dark }` — the app is dark-only, there is no light
-  theme to preserve
-- Shared primitives live in `src/components/ui.tsx` (`Card`,
-  `PrimaryButton`, `SecondaryButton`, `StatusDot`, `Eyebrow`) — reuse these
-  rather than re-implementing card/button chrome in a page or feature
-  component
+  headings/wordmarks, `--font-sans` (Inter) for everything else. Scale: 12
+  (labels, eyebrows, tab bar), 14 (second line), 16 (body), 20 (card title),
+  28 (page title in Marcellus); numbers in Inter semibold tabular at 20, 28,
+  40 or 56 with the unit in 14 dimmed (`Stat`)
+- Spacing on a 4 px grid: page edge 16, between cards 12, inside a card 16,
+  cards rounded 16, buttons 12, pills round; the main button is 52 high,
+  other buttons 44
+- `html { color-scheme: dark }`: the app is dark-only, there is no light
+  theme to preserve; the sky band is one light surface, not a theme
+- Shared primitives live in `src/components/ui.tsx` (`Card`, `LightCard`,
+  `PrimaryButton`, `SecondaryButton`, `StatusDot`, `StatusPill`, `Eyebrow`,
+  `Stat`, `Ring`, `Meter`, `ZoneBar`, `Toggle`, `InfoButton`), and the sky in
+  `SkyBand.tsx`. Reuse these rather than re-implementing card/button chrome in
+  a page or feature component
 - Cards are `rounded-2xl` with a subtle border; the optional `topo-texture`
-  class adds a very low-opacity topographic contour pattern — use it
+  class adds a very low-opacity topographic contour pattern in mint. Use it
   sparingly on specific cards, never as a global background
 - Single-column, `max-w-md`, bottom tab navigation (`BottomNav` in
   `src/App.tsx`) with a safe-area-aware sticky bar.
