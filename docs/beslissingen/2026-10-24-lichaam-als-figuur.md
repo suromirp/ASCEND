@@ -93,3 +93,33 @@ Waar ik afweek of wat ik besliste:
 - Het verschil tussen man en vrouw zit in het silhouet (schouders, taille, heupen) en in
   de borstlijn, zonder geslachtsdelen.
 
+
+## Tweede aanvulling
+
+Na de review van Warden veranderde dit:
+
+- Tikvakken: het figuur wordt getekend op schaal 1,2 (`FIGURE_SCALE`) en elke plek krijgt
+  een eigen vak van minstens 44 bij 44 px (`engine/bodyMap.ts#hitBoxes`). Bij een paar
+  loopt het vak vanaf de middenlijn naar buiten, en vakken die elkaar nog raken worden
+  bijgesneden, zodat het midden van de plek altijd in het eigen vak blijft. De pols en
+  onderarm staan iets hoger op de arm (cy 174) zodat ze niet over de heup liggen. Een test
+  controleert per kant dat geen twee vakken overlappen en dat elk vak minstens 44 bij 44 px is.
+- Rode vlaggen: duizeligheid of dubbelzien bij nekpijn, een klap of knap in de achillespees
+  of niet meer op je tenen kunnen staan, en buikpijn met koorts of misselijkheid staan nu
+  onder "direct" (dezelfde dag naar de huisarts, bij uitval 112). Bij de algemene redenen
+  staat een rode, warme plek met koorts erbij.
+- De kop "Melden voor je planning" is "Melden". Of melden de planning gaat aanpassen is
+  nog niet beslist en dus niet veranderd.
+- Iets anders melden: onder "Open klachten" opent een blad met een naam uit de lijst die
+  niet op het figuur staat (zoals Elleboog) of een eigen naam, de ernst en een datum
+  (standaard vandaag, niet in de toekomst). Het formulier bij een plek heeft nu ook een datum.
+  Beide gaan via `addInjury` met een tijdsgrens van tien seconden en tonen anders de foutregel.
+- Rekken en losmaken heeft een InfoButton met het algemene advies en de bron, inclusief de
+  twee correcties over de IT-band en de nekrollen.
+- Een klacht verwijderen vraagt nu eerst bevestiging in een klein blad (Verwijderen of
+  Annuleren). Gekozen boven Ongedaan maken, omdat de meldingsbalk alleen planningswijzigingen
+  terugdraait en een verwijderde klacht dan een eigen terugweg nodig had.
+- De gloed om de gekozen plek is weg; mintlijn, lichte vulling en schaal blijven.
+- Ascend toont in de kop een amber regel als het aantal loopdagen ontbreekt, en verbergt
+  "Details van het doel" als er in dat blad niets te zien is. De zoekterm voor Lichaam heet
+  "Lichaam: rekken en klachten" en kent rekken, stretchen, lichaam, klacht en pijn.

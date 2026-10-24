@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { BODY_VIEWS, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
@@ -7,6 +7,7 @@ import { Card, Eyebrow, PageHeader, PrimaryButton, Segmented } from '../componen
 import { TextButton } from '../components/TextButton';
 import { BodyFigure } from '../components/lichaam/BodyFigure';
 import { OpenComplaint, ResolvedComplaint } from '../components/lichaam/Complaints';
+import { ReportSheet } from '../components/lichaam/ReportSheet';
 import { usePageState } from '../components/usePageState';
 
 // Lichaam als figuur (docs/beslissingen/2026-10-24-lichaam-als-figuur.md): je tikt op een
@@ -19,6 +20,7 @@ export function BodyPage() {
   const [view, setView] = usePageState<BodyView>('kant', 'front', (v) => v === 'front' || v === 'back');
   const [selectedId, setSelectedId] = usePageState<string | null>('plek', null, (v) => v === null || typeof v === 'string');
   const [showResolved, setShowResolved] = usePageState('opgelost', false, (v) => typeof v === 'boolean');
+  const [reporting, setReporting] = useState(false);
 
   const { figure } = resolveFigure(settings);
   const bySpot = useMemo(() => openComplaintsBySpot(injuryNotes), [injuryNotes]);
@@ -66,7 +68,7 @@ export function BodyPage() {
           <div ref={barRef} className="sticky bottom-3 z-10 mt-3">
             <Card className="flex items-center gap-3 !p-3">
               <div className="min-w-0 flex-1" aria-live="polite">
-                <p className="font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{shown.name}</p>
+                <p className="break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{shown.name}</p>
                 <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{shown.muscle}</p>
                 {flagged.has(shown.id) && (
                   <p className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-warning)' }}>
@@ -91,7 +93,11 @@ export function BodyPage() {
         {open.map((n) => (
           <OpenComplaint key={n.id} note={n} onResolve={(id) => void resolveInjury(id)} onDelete={(id) => void deleteInjury(id)} />
         ))}
+        <div>
+          <TextButton onClick={() => setReporting(true)}>Iets anders melden</TextButton>
+        </div>
       </section>
+      {reporting && <ReportSheet onClose={() => setReporting(false)} />}
 
       {resolved.length > 0 && (
         <section className="flex flex-col" aria-label="Opgeloste klachten">

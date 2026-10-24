@@ -68,7 +68,7 @@ const FRONT: BodySpot[] = [
   },
   ...pair('pols', 'front', 'pols en onderarm', 47, {
     view: 'front', muscle: 'Onderarmbuigers en -strekkers', where: 'Voorkant, de onderarm tot de pols',
-    cy: 186, rx: 6, ry: 18, injuryParts: ['Pols', 'Onderarm'], stretchAreaIds: ['polsen'], care: 'onderarm',
+    cy: 174, rx: 6, ry: 18, injuryParts: ['Pols', 'Onderarm'], stretchAreaIds: ['polsen'], care: 'onderarm',
   }),
   ...pair('heup', 'front', 'heup en lies', 80, {
     view: 'front', muscle: 'Heupbuigers en liezen', where: 'Voorkant, de heup en de lies',

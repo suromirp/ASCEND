@@ -6,6 +6,7 @@
 import type { InjuryNote } from '../models/injury';
 import type { Stretch } from '../models/training';
 import { BODY_CARE, GENERAL_RED_FLAGS, type BodyCare } from '../data/bodyCare';
+import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { BODY_SPOTS, STRETCH_AREA_SPOT, type BodySide, type BodySpot, type BodyView } from '../data/bodySpots';
 import {
   COOLDOWN_LOWER, COOLDOWN_RECOVERY, COOLDOWN_RUN, COOLDOWN_UPPER, DYNAMIC_WARMUP, EVENING_ROUTINE, MORNING_ROUTINE, PROBLEM_AREAS,
@@ -34,6 +35,85 @@ export function spotById(id: string | undefined): BodySpot | undefined {
 // Een oude link naar een groep rekoefeningen (/stretches/:areaId) wijst nu naar deze plek.
 export function spotForStretchArea(areaId: string | undefined): BodySpot | undefined {
   return areaId ? spotById(STRETCH_AREA_SPOT[areaId]) : undefined;
+}
+
+// ---- tikvakken ----------------------------------------------------------------------
+
+// Een tikvak op het figuur, in pixels vanaf de linkerbovenhoek van het figuur.
+export interface HitBox {
+  id: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export const MIN_TAP = 44;
+const HIT_PAD = 10;
+// Het middelpunt van de plek blijft minstens zoveel pixels binnen het vak, zodat een tik
+// midden op de plek die plek kiest.
+const CENTER_MARGIN = 2;
+const MIRROR_X = 100;
+
+interface Box { left: number; top: number; right: number; bottom: number }
+
+// Elke plek krijgt een vak van minstens 44 bij 44 px en geen twee vakken van dezelfde kant
+// overlappen. Eerst een vak om het middelpunt, bij een paar niet over de middenlijn heen
+// (het vak loopt dan vanaf de middenlijn naar buiten), daarna worden vakken die elkaar
+// nog raken bijgesneden langs de as met de kleinste overlap. Past het niet, dan blijft de
+// overlap staan en vangt de test dat op: dan moet het figuur groter of de plek verschoven.
+export function hitBoxes(view: BodyView, scale: number): HitBox[] {
+  const spots = spotsForView(view);
+  const mid = MIRROR_X * scale;
+  const boxes: Box[] = spots.map((s) => {
+    const w = Math.max(MIN_TAP, s.rx * 2 * scale + HIT_PAD);
+    const h = Math.max(MIN_TAP, s.ry * 2 * scale + HIT_PAD);
+    let left = s.cx * scale - w / 2;
+    if (s.side) {
+      if (s.cx < MIRROR_X && left + w > mid) left = mid - w;
+      if (s.cx > MIRROR_X && left < mid) left = mid;
+    }
+    const top = s.cy * scale - h / 2;
+    return { left, top, right: left + w, bottom: top + h };
+  });
+  const centers = spots.map((s) => ({ x: s.cx * scale, y: s.cy * scale }));
+
+  // Snijdt `cut` px van de kant van a die naar b wijst en van b die naar a wijst.
+  const separate = (i: number, j: number, axis: 'x' | 'y', overlap: number): void => {
+    const lo = axis === 'x' ? 'left' : 'top';
+    const hi = axis === 'x' ? 'right' : 'bottom';
+    const c = axis === 'x' ? 'x' : 'y';
+    // a ligt voor b langs de as.
+    const [a, b] = centers[i][c] <= centers[j][c] ? [i, j] : [j, i];
+    const slackA = boxes[a][hi] - Math.max(boxes[a][lo] + MIN_TAP, centers[a][c] + CENTER_MARGIN);
+    const slackB = Math.min(boxes[b][hi] - MIN_TAP, centers[b][c] - CENTER_MARGIN) - boxes[b][lo];
+    const cutA = Math.min(Math.max(slackA, 0), Math.max(overlap / 2, overlap - Math.max(slackB, 0)));
+    const cutB = Math.min(Math.max(slackB, 0), overlap - cutA);
+    boxes[a][hi] -= cutA;
+    boxes[b][lo] += cutB;
+  };
+
+  for (let pass = 0; pass < 40; pass++) {
+    let changed = false;
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const ox = Math.min(boxes[i].right, boxes[j].right) - Math.max(boxes[i].left, boxes[j].left);
+        const oy = Math.min(boxes[i].bottom, boxes[j].bottom) - Math.max(boxes[i].top, boxes[j].top);
+        if (ox <= 0.001 || oy <= 0.001) continue;
+        const before = JSON.stringify([boxes[i], boxes[j]]);
+        separate(i, j, ox <= oy ? 'x' : 'y', ox <= oy ? ox : oy);
+        if (JSON.stringify([boxes[i], boxes[j]]) !== before) changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  return spots.map((s, i) => ({
+    id: s.id,
+    left: boxes[i].left,
+    top: boxes[i].top,
+    width: boxes[i].right - boxes[i].left,
+    height: boxes[i].bottom - boxes[i].top,
+  }));
 }
 
 // ---- rekken en losmaken -------------------------------------------------------------
@@ -142,4 +222,16 @@ export function resolvedComplaints(notes: InjuryNote[]): InjuryNote[] {
 export function spotForComplaint(note: Pick<InjuryNote, 'bodyPart'>): BodySpot | undefined {
   const spots = spotsForInjury(note);
   return spots.find((s) => s.view === 'front') ?? spots[0];
+}
+
+// De namen uit BODY_PART_OPTIONS die niet op het figuur staan (Elleboog): die meld je via
+// "Iets anders melden". Dezelfde lijst als bij het figuur zelf, dus er verdwijnt niets.
+export function offFigureParts(): string[] {
+  const onFigure = new Set(BODY_SPOTS.flatMap((s) => s.injuryParts));
+  return BODY_PART_OPTIONS.filter((p) => !onFigure.has(p));
+}
+
+// Een melding mag een datum in het verleden of vandaag hebben, nooit in de toekomst.
+export function isValidReportDate(date: string, today: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today;
 }

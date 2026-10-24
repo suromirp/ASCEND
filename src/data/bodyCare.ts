@@ -35,6 +35,7 @@ export const GENERAL_RED_FLAGS = [
   'de plek niet kunnen belasten',
   'pijn die je ’s nachts wakker houdt of ook in rust blijft',
   'klachten die na een tot twee weken niet minder worden',
+  'een plek die rood en warm is met koorts erbij (dan naar je huisarts)',
 ];
 
 // Hoe erg is het nu: dezelfde drie niveaus als de opgeslagen klacht (models/injury.ts).
@@ -54,7 +55,8 @@ export const BODY_CARE: Record<string, BodyCare> = {
       'Een stijve nek komt vaak van een zware rugzak, een slechte slaaphouding of lang naar beneden kijken. Beweeg rustig, draai en buig binnen wat zonder pijn gaat.',
       'Vermijd grote, snelle nekrollen. Warmte en lichte beweging helpen vaak meer dan stilhouden.',
     ],
-    fysio: ['pijn met tintelen of minder kracht in de arm', 'duizeligheid of dubbelzien erbij'],
+    fysio: ['pijn met tintelen of minder kracht in de arm'],
+    direct: 'Duizeligheid of dubbelzien bij nekpijn: ga dezelfde dag naar je huisarts, en bel 112 als er uitval bij komt, zoals een scheve mond of een arm die niet meer meewerkt.',
     voorkomen: {
       intro: 'Een sterke bovenrug en schouderbladen nemen werk over van de nek. Twee keer per week is genoeg.',
       oefeningen: [
@@ -101,7 +103,8 @@ export const BODY_CARE: Record<string, BodyCare> = {
     bijLast: [
       'Een strakke of pijnlijke buik- of zijspier na draaien of dragen is meestal overbelasting. Beweeg rustig en vermijd een paar dagen zwaar draaien.',
     ],
-    fysio: ['pijn in de buik die niets met bewegen te maken heeft, vooral met koorts of misselijkheid'],
+    fysio: [],
+    direct: 'Buikpijn met koorts of misselijkheid hoort niet bij een spier: laat het dezelfde dag door je huisarts bekijken, geen fysio.',
     voorkomen: {
       intro: 'Een stevige romp helpt je rug en heupen bij een zware rugzak. Twee tot drie keer per week.',
       oefeningen: [
@@ -295,7 +298,8 @@ export const BODY_CARE: Record<string, BodyCare> = {
       'Stijfheid of pijn in de pees, vooral bij de eerste stappen ’s ochtends, wijst op een overbelaste pees. Het kan wegwarmen en toch te veel zijn geweest.',
       'Houd de pijn tijdens het bewegen op 2 van 10 of lager en kijk de ochtend erna. Is het dan erger dan normaal, dan was het te veel.',
     ],
-    fysio: ['een klap of knap achter in de enkel', 'niet meer op je tenen kunnen staan'],
+    fysio: [],
+    direct: 'Een klap of knap achter in de enkel, of niet meer op je tenen kunnen staan: laat het dezelfde dag door je huisarts bekijken.',
     voorkomen: {
       intro: 'Een pees went aan belasting als je langzaam opbouwt. Twee tot drie keer per week.',
       oefeningen: [

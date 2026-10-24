@@ -972,7 +972,8 @@ html[data-sky='night'] .on-light .pictogram {
 
 /* Lichaam (docs/beslissingen/2026-10-24-lichaam-als-figuur.md): een plek op het figuur die
    oplicht in mint, in 200 ms. De plek staat als stippellijn klaar; de gekozen plek krijgt
-   een mintlijn, een heel zachte vulling en een zachte gloed. */
+   een mintlijn, een heel zachte vulling en een kleine schaal, zonder gloed: de gevulde
+   knop blijft het ene accent van het scherm. */
 .mx-body-mark {
   fill: color-mix(in srgb, var(--color-ink-dim) 7%, transparent);
   stroke: color-mix(in srgb, var(--color-ink-dim) 32%, transparent);
@@ -980,7 +981,7 @@ html[data-sky='night'] .on-light .pictogram {
   stroke-dasharray: 3 3;
   transform-box: fill-box;
   transform-origin: center;
-  transition: fill 0.2s ease-out, stroke 0.2s ease-out, transform 0.2s ease-out, filter 0.2s ease-out;
+  transition: fill 0.2s ease-out, stroke 0.2s ease-out, transform 0.2s ease-out;
 }
 
 .mx-body-mark[data-on='true'] {
@@ -989,7 +990,6 @@ html[data-sky='night'] .on-light .pictogram {
   stroke-width: 1.5px;
   stroke-dasharray: none;
   transform: scale(1.12);
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-action) 45%, transparent));
 }
 
 html[data-motion='calm'] .mx-body-mark {
