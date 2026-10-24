@@ -134,7 +134,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'Bij een toestel of kabel met een gewichtstapel stelt ASCEND alleen gewichten voor die er echt zijn.',
     points: [
       { head: 'Zo leert het', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen, en rondt af op het dichtstbijzijnde.' },
-      { head: 'Buiten je bereik', text: 'voor een gewicht boven of onder wat je gebruikte geldt de kleinste stap die je op het toestel zag.' },
+      { head: 'Buiten je bereik', text: 'boven en onder wat je gebruikte telt de stap die je op het toestel twee keer zag, anders de stap uit je sportschool. Een grote kloof ertussen wordt opgevuld.' },
       { head: 'Uit', text: 'dan rondt ASCEND af op de stap die je bij Kabels en toestellen instelde.' },
     ],
   },
@@ -142,9 +142,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'ASCEND naast MacroFactor',
     lead: 'Onderaan Forge staat hoe vaak een voorstel raak was: binnen het herhalingenbereik, met de herhalingen in reserve die de training vraagt.',
     points: [
-      { head: 'Dezelfde toets', text: 'MacroFactor en ASCEND worden aan dezelfde dag gehouden, niet aan elkaar. Of ze hetzelfde gewicht kiezen zegt niets.' },
-      { head: 'Een schatting', text: 'voor ASCEND is raak achteraf een schatting uit de sets van die dag. Voor trainingen in Forge zelf is het gewoon wat er gebeurde.' },
+      { head: 'Dezelfde toets', text: 'wat je deed en wat ASCEND voorstelde worden voor dezelfde set aan dezelfde dag gehouden, met dezelfde maat. Of de gewichten gelijk zijn zegt niets.' },
+      { head: 'Een schatting', text: 'voor ASCEND is raak achteraf een schatting uit de beste set van die dag. Pakte je in Forge het voorgestelde gewicht, dan is het gewoon wat er gebeurde.' },
       { head: 'Uit', text: 'het blok staat dan niet op Forge. De stand zie je hier, onder de schakelaar.' },
+    ],
+  },
+  forgeSinds: {
+    title: 'Stil meten sinds',
+    lead: 'De dag waarop ASCEND begon om stil mee te rekenen. Wat daarna kwam, staat apart naast alles.',
+    points: [
+      { head: 'Standaard', text: '24 oktober 2026, de dag dat het MacroFactor-programma half af was.' },
+      { head: 'Waarom', text: 'trainingen van voor het inlezen van je programma zijn met de huidige template en instellingen achteraf herberekend, en zeggen minder.' },
     ],
   },
   forgeLijntjes: {

@@ -7,16 +7,20 @@
 // proposal is a good one for THAT day. Each exercise of each training has a
 // target from the template: a rep range and the reps in reserve (RIR).
 //
-// - What you did (the proposal of MacroFactor that you followed): the top work
-//   set is a hit when its reps are inside the range and the logged RIR is within
-//   1 of the target.
-// - The proposal of ASCEND, afterwards: the strength of that day itself (the work
-//   sets of that training, reps plus RIR, the estimate ASCEND already uses) says
-//   how many reps to failure ASCEND's weight would have given that day. A hit
-//   when (reps to failure minus the RIR target) is inside the range, with 1 rep
-//   of room. That is an estimate. Both proposals are held against the same day.
-// - A training made in Forge itself, with a proposal of ASCEND: then what
-//   happened is the measurement. No estimate, the same test as "what you did".
+// One test for both sides, with one estimator: the strength of that day (the
+// best work set of that training, reps plus RIR, the estimate ASCEND already
+// uses) says how many reps to failure a load would have given that day. A load
+// is a hit when (reps to failure minus the RIR target) is inside the range, with
+// 1 rep of room (`checkProposal`).
+//
+// - What you did: `checkProposal(strength of the day, load of the set you did)`.
+// - The proposal of ASCEND: `checkProposal(strength of the day, load of the
+//   proposal for the SAME set)`. The same weight gets the same verdict on both
+//   sides. For ASCEND that is an estimate afterwards.
+// - A training made in Forge itself whose weight stayed within one step of the
+//   proposal: then what happened is the measurement, `checkDone` (reps plus RIR
+//   of the set itself, the same room), no estimate. A hand-made log with another
+//   weight did not follow a proposal and counts as an estimate.
 //
 // The deviation is in reps: positive is too light (more was possible), negative
 // too heavy, counted from the middle of the range.
@@ -31,16 +35,23 @@ export interface RepTarget {
   rir: number;
 }
 
-// How much room a hit has: the logged RIR within this many of the target; the
-// estimated reps for ASCEND's weight within this many of the range.
-export const RIR_ROOM = 1;
-export const ASCEND_REPS_ROOM = 1;
+// How much room a hit has: the reps at the target RIR may lie this far outside
+// the range, on both sides and for every kind of check.
+export const REPS_ROOM = 1;
 
-// Where a strength log came from: MacroFactor (read in, or a hand-made log that
-// took its numbers over) or made in Forge itself (a log by hand in the app, with
-// sets). Anything else (the watch) has no reps in reserve and does not count.
+// Where a strength log came from, by who made its sets: MacroFactor (read in, or
+// a log whose sets MacroFactor replaced) or Forge itself (a log by hand in the
+// app, sets still its own, also after MacroFactor took over only the duration).
+// Anything else (the watch) has no reps in reserve and does not count. After
+// `restoreManual` the log is as it was, so the origin is again the first one.
 export function logOrigin(log: Pick<SessionLog, 'source' | 'manualMeasured'>): CheckOrigin | undefined {
-  if (log.source === 'macrofactor' || log.manualMeasured?.strength) return 'macrofactor';
+  const s = log.manualMeasured?.strength;
+  if (s) {
+    if ('strengthData' in s) return 'macrofactor';
+    const was = s.tied?.source ?? log.source;
+    return was === 'manual' ? 'forge' : was === 'macrofactor' ? 'macrofactor' : undefined;
+  }
+  if (log.source === 'macrofactor') return 'macrofactor';
   if (log.source === 'manual') return 'forge';
   return undefined;
 }
@@ -64,6 +75,16 @@ export function targetOfSlot(slot: Pick<ExercisePrescription, 'reps' | 'rpe' | '
   return { low: Math.min(...bounds), high: Math.max(...bounds), ...(rir !== undefined ? { rir } : {}) };
 }
 
+// Which work set of the training the target belongs to: the first set of the slot
+// that is not to failure (the sets to failure and the back-off sets with another
+// target are not measured). Without per-set targets it is the first work set.
+export function targetIndexOf(slot: Pick<ExercisePrescription, 'setTargets'> | undefined): number {
+  const targets = slot?.setTargets;
+  if (!targets || targets.length === 0) return 0;
+  const i = targets.findIndex((t) => !t.failure);
+  return i < 0 ? 0 : i;
+}
+
 const middle = (t: RepTarget) => (t.low + t.high) / 2;
 
 export interface SideCheck {
@@ -72,26 +93,26 @@ export interface SideCheck {
   deviation: number;
 }
 
-// What was done: the top work set.
-export function checkDone(set: { reps: number; rir?: number }, target: RepTarget): SideCheck | undefined {
-  if (set.rir === undefined || set.reps <= 0) return undefined;
-  const repsAtTarget = set.reps + set.rir - target.rir;
+function judge(repsAtTarget: number, target: RepTarget): SideCheck {
   return {
-    hit: set.reps >= target.low && set.reps <= target.high && Math.abs(set.rir - target.rir) <= RIR_ROOM,
+    hit: repsAtTarget >= target.low - REPS_ROOM - 1e-9 && repsAtTarget <= target.high + REPS_ROOM + 1e-9,
     deviation: repsAtTarget - middle(target),
   };
 }
 
-// The proposal of ASCEND against the strength of that day: the load it proposed
-// and the strength (kg) the sets of that day showed. Reps to failure at that
-// load are 30 times (strength over load minus 1), the Epley the model uses.
+// A load against the strength of that day (kg): the reps to failure at that load
+// are 30 times (strength over load minus 1), the Epley the model uses. The one
+// test for what you did and for what ASCEND proposed.
 export function checkProposal(strengthKg: number, loadKg: number, target: RepTarget, epleyDivisor = 30): SideCheck | undefined {
   if (!(strengthKg > 0) || !(loadKg > 0)) return undefined;
-  const repsAtTarget = epleyDivisor * (strengthKg / loadKg - 1) - target.rir;
-  return {
-    hit: repsAtTarget >= target.low - ASCEND_REPS_ROOM - 1e-9 && repsAtTarget <= target.high + ASCEND_REPS_ROOM + 1e-9,
-    deviation: repsAtTarget - middle(target),
-  };
+  return judge(epleyDivisor * (strengthKg / loadKg - 1) - target.rir, target);
+}
+
+// A set that was really made in Forge to a proposal, measured: its own reps plus
+// RIR, the same as `checkProposal` with the strength of that set itself.
+export function checkDone(set: { reps: number; rir?: number }, target: RepTarget): SideCheck | undefined {
+  if (set.rir === undefined || set.reps <= 0) return undefined;
+  return judge(set.reps + set.rir - target.rir, target);
 }
 
 export interface RowCheck {
@@ -103,9 +124,11 @@ export interface RowCheck {
   ascend: SideCheck & { measured: boolean };
 }
 
-export function checkRow(origin: CheckOrigin, target: RepTarget, done: SideCheck | undefined, proposal: SideCheck | undefined): RowCheck | undefined {
+// `measured`: a training made in Forge that followed the proposal, `done` is the
+// measurement itself. Otherwise the proposal is an estimate and needs its own side.
+export function checkRow(origin: CheckOrigin, target: RepTarget, done: SideCheck | undefined, proposal: SideCheck | undefined, measured = false): RowCheck | undefined {
   if (!done) return undefined;
-  if (origin === 'forge') return { origin, target, did: done, ascend: { ...done, measured: true } };
+  if (measured) return { origin, target, did: done, ascend: { ...done, measured: true } };
   if (!proposal) return undefined;
   return { origin, target, did: done, ascend: { ...proposal, measured: false } };
 }
@@ -122,8 +145,9 @@ export interface Tally {
 export interface CheckTotals {
   // MacroFactor: what you did, and ASCEND afterwards for the same rows.
   macrofactor: { did: Tally; ascend: Tally };
-  // Forge: the proposals of ASCEND, measured.
-  forge: { ascend: Tally };
+  // Forge: the proposals of ASCEND, measured; and the trainings made in Forge with
+  // another weight than proposed, where both sides are estimates.
+  forge: { ascend: Tally; other: { did: Tally; ascend: Tally } };
 }
 
 function tally(sides: SideCheck[]): Tally {
@@ -135,10 +159,11 @@ function tally(sides: SideCheck[]): Tally {
 export function totalsOf(rows: { date: string; check?: RowCheck }[], from?: string): CheckTotals {
   const checks = rows.filter((r) => r.check && (!from || r.date >= from)).map((r) => r.check!);
   const mf = checks.filter((c) => c.origin === 'macrofactor');
-  const fg = checks.filter((c) => c.origin === 'forge');
+  const fg = checks.filter((c) => c.origin === 'forge' && c.ascend.measured);
+  const other = checks.filter((c) => c.origin === 'forge' && !c.ascend.measured);
   return {
     macrofactor: { did: tally(mf.map((c) => c.did)), ascend: tally(mf.map((c) => c.ascend)) },
-    forge: { ascend: tally(fg.map((c) => c.ascend)) },
+    forge: { ascend: tally(fg.map((c) => c.ascend)), other: { did: tally(other.map((c) => c.did)), ascend: tally(other.map((c) => c.ascend)) } },
   };
 }
 

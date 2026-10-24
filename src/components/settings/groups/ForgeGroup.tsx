@@ -6,7 +6,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveStrengthSettings, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsRow, SettingsSection } from '../SettingsList';
-import { BarsSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
+import { BarsSheet, CheckFromSheet, DurationSheet, PlatesSheet, ProgramSheet, RackSheet, StackSheet } from './ForgeSheets';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
@@ -77,6 +77,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="forge-lijntjes" title="Lijntjes in de lijst" facts={facts} info="forgeLijntjes" onChange={(on) => save({ showTrendLines: on })} />
         <SummaryRow id="forge-leren" title="Gewichten van toestellen leren" facts={facts} info="forgeLeren" onChange={(on) => save({ learnStacks: on })} />
         <SummaryRow id="forge-naast" title="ASCEND naast MacroFactor" facts={facts} info="forgeNaast" onChange={(on) => save({ showComparison: on })} />
+        <SummaryRow id="forge-sinds" title="Stil meten sinds" facts={facts} info="forgeSinds" onClick={() => setSheet('forge-sinds')} />
         <SummaryRow id="forge-volgorde-lijst" title="Volgorde van de oefeningen" facts={facts} onClick={() => setSheet('forge-volgorde-lijst')} />
         <SummaryRow id="forge-programma" title="Programma uit MacroFactor" facts={facts} onClick={() => setSheet('forge-programma')} />
       </SettingsSection>
@@ -104,6 +105,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.rustgeluid} value={s.restSound} onPick={(v) => { tryRestSound(v); save({ restSound: v }); }} onClose={close} />
       )}
       {sheet === 'forge-signaal' && <ChoiceFromDef def={CHOICES.restsignaal} value={s.restAlert} onPick={(v) => save({ restAlert: v })} onClose={close} />}
+      {sheet === 'forge-sinds' && <CheckFromSheet onClose={close} />}
       {sheet === 'forge-programma' && <ProgramSheet onClose={close} />}
       {sheet === 'stangen' && <BarsSheet onClose={close} />}
       {sheet === 'schijven' && <PlatesSheet onClose={close} />}

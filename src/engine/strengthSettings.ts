@@ -360,3 +360,28 @@ export function parseWeightList(text: string): number[] {
     .map(Number)
     .filter((n) => Number.isFinite(n) && n > 0);
 }
+
+// What the model on this page is made from: the choices of the list (which side,
+// the moments, the order, the small lines) do not change a number, so a tap on the
+// switch does not recalculate every exercise.
+export function strengthModelKey(raw: StrengthSettings | undefined): string {
+  const copy: StrengthSettings = { ...raw };
+  delete copy.oneRmView;
+  delete copy.showOneRm;
+  delete copy.showMacroFactorOneRm;
+  delete copy.compareWeeks;
+  delete copy.listSort;
+  delete copy.showExtras;
+  delete copy.showComparison;
+  delete copy.checkFrom;
+  return JSON.stringify(copy);
+}
+
+// What "raak" is made from: only the choices that change a proposal or the start
+// date. The switches of the screen and the rest timer are not in it, so changing
+// them on a settings page does not recount the whole strength history.
+export function checkModelKey(raw: StrengthSettings | undefined): string {
+  const r = raw ?? {};
+  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, learnStacks: r.learnStacks, program: r.program, checkFrom: r.checkFrom };
+  return JSON.stringify(keep);
+}

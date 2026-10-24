@@ -82,6 +82,13 @@ export function formatDateNL(iso: string): string {
 // Kort, met de dag ervoor: "ma 8 feb", en het jaartal alleen als het niet dit
 // jaar is ("ma 8 feb 2027"), dezelfde regel als formatDateNL.
 const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+// "24 okt", en het jaartal alleen als het niet dit jaar is.
+export function formatShortDateNL(iso: string): string {
+  const d = parseISODate(iso);
+  const sameYear = d.getFullYear() === parseISODate(todayISO()).getFullYear();
+  return `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}${sameYear ? '' : ` ${d.getFullYear()}`}`;
+}
+
 export function formatShortDayNL(iso: string): string {
   const d = parseISODate(iso);
   const sameYear = d.getFullYear() === parseISODate(todayISO()).getFullYear();

@@ -4,7 +4,7 @@ import { programCycle } from '../../../engine/macrofactorProgram';
 import { useAppData } from '../../../state/AppDataContext';
 import { MIN_LOGS_TO_LEARN, predictDuration, usableLogCount } from '../../../engine/durationLearning';
 import { smallestBarJump } from '../../../engine/gymProfileEdit';
-import { normalizeStrengthSettings, resolveStrengthSettings, withProfile, type GymProfile } from '../../../engine/strengthSettings';
+import { DEFAULT_CHECK_FROM, normalizeStrengthSettings, resolveStrengthSettings, withProfile, type GymProfile } from '../../../engine/strengthSettings';
 import { durationNote } from '../../../engine/settingsSummary';
 import { todayISO } from '../../../utils/dates';
 import { formatNumberNL } from '../../../utils/number';
@@ -117,6 +117,38 @@ export function DurationSheet({ onClose }: { onClose: () => void }) {
             </span>
           </div>
         ))}
+      </div>
+    </Sheet>
+  );
+}
+
+// Stil meten sinds: de dag vanaf wanneer "raak" apart wordt geteld (engine/prescriptionCheck.ts).
+export function CheckFromSheet({ onClose }: { onClose: () => void }) {
+  const { settings, updateSettings } = useAppData();
+  const from = resolveStrengthSettings(settings.strengthModel).checkFrom;
+  const save = (checkFrom: string | undefined) => {
+    const next = { ...settings.strengthModel };
+    if (checkFrom) next.checkFrom = checkFrom;
+    else delete next.checkFrom;
+    void updateSettings({ strengthModel: next });
+  };
+  return (
+    <Sheet eyebrow="Forge" title="Stil meten sinds" line="Vanaf deze dag staat raak apart naast alles." onClose={onClose}>
+      <div className="flex flex-col gap-3 pb-4">
+        <label htmlFor="forge-sinds-datum" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Vanaf</label>
+        <input
+          id="forge-sinds-datum"
+          type="date"
+          value={from}
+          onChange={(e) => /^\d{4}-\d{2}-\d{2}$/.test(e.target.value) && save(e.target.value)}
+          className="min-h-[44px] w-full rounded-lg border bg-transparent px-3 text-base"
+          style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)', colorScheme: 'dark' }}
+        />
+        {from !== DEFAULT_CHECK_FROM && (
+          <div className="st-btns col">
+            <button type="button" className="st-btn" onClick={() => save(undefined)}>Terug naar de standaard</button>
+          </div>
+        )}
       </div>
     </Sheet>
   );

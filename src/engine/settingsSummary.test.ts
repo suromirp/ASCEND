@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { formatDateNL } from '../utils/dates';
 import { durationNote, groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, type SettingsFacts } from './settingsSummary';
 import { PAGE_ROWS, SETTINGS_PAGES, allRowIds } from '../data/settingsLayout';
 import { DEFAULT_WATCH_USE } from './watchUse';
@@ -185,11 +186,18 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-naast', withForge({ showComparison: true })).checked).toBe(true);
     expect(rowSummary('forge-naast', withForge({ enabled: false })).hidden).toBe(true);
     const tally = (hit: number, total: number) => ({ hit, total });
-    const none = { macrofactor: { did: tally(0, 0), ascend: tally(0, 0) }, forge: { ascend: tally(0, 0) } };
+    const none = { macrofactor: { did: tally(0, 0), ascend: tally(0, 0) }, forge: { ascend: tally(0, 0), other: { did: tally(0, 0), ascend: tally(0, 0) } } };
     const totals = { ...none, macrofactor: { did: tally(18, 25), ascend: tally(17, 25) } };
     const r = rowSummary('forge-naast', facts({ strengthCheck: { all: totals, since: none, from: '2026-10-24' } }));
     expect(r.sub).toBe('Raak: MacroFactor 72%, ASCEND 68%');
     expect(r.sub!.length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
+  });
+
+  it('Stil meten sinds toont de startdatum en staat uit als Forge uit staat', () => {
+    expect(rowSummary('forge-sinds', facts()).value).toBe(formatDateNL('2026-10-24'));
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-sinds', withForge({ checkFrom: '2031-03-05' })).value).toBe('5 maart 2031');
+    expect(rowSummary('forge-sinds', withForge({ enabled: false })).hidden).toBe(true);
   });
 
   it('uit: de groep noemt de sportschool', () => {

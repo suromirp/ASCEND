@@ -33,10 +33,10 @@ import { isRepsBased, splitByRecency, trainingFilters, visibleViews } from '../e
 import { checkSummary, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
 import { biasWord, checkLines, type CheckSummary, type Tally } from '../engine/prescriptionCheck';
 import { externalOneRmByKey } from '../engine/externalOneRm';
-import { compareMoments, resolveStrengthSettings, type OneRmView, type StrengthSettings } from '../engine/strengthSettings';
+import { compareMoments, resolveStrengthSettings, strengthModelKey, type OneRmView } from '../engine/strengthSettings';
 import type { OneRmReading } from '../models/metrics';
 import { useAppData } from '../state/AppDataContext';
-import { formatDateNL, todayISO } from '../utils/dates';
+import { formatDateNL, formatShortDateNL, todayISO } from '../utils/dates';
 import { usePageState } from '../components/usePageState';
 import { TextButton } from '../components/TextButton';
 import { Sheet } from '../components/settings/Sheet';
@@ -44,22 +44,6 @@ import { Icon } from '../components/icons';
 import { formatNumberNL } from '../utils/number';
 
 const SHOWN_AT_FIRST = 12;
-
-// What the model on this page is made from: the choices of the list (which side,
-// the moments, the order, the small lines) do not change a number, so a tap on the
-// switch does not recalculate every exercise.
-function modelKey(raw: StrengthSettings | undefined): string {
-  const copy: StrengthSettings = { ...raw };
-  delete copy.oneRmView;
-  delete copy.showOneRm;
-  delete copy.showMacroFactorOneRm;
-  delete copy.compareWeeks;
-  delete copy.listSort;
-  delete copy.showExtras;
-  delete copy.showComparison;
-  delete copy.checkFrom;
-  return JSON.stringify(copy);
-}
 
 const NO_READINGS = new Map<string, OneRmReading[]>();
 
@@ -75,7 +59,7 @@ export function ForgePage() {
   const [historyKey, setHistoryKey] = useState<string | null>(null);
   const [listInfo, setListInfo] = useState(false);
 
-  const strengthKey = modelKey(settings.strengthModel);
+  const strengthKey = strengthModelKey(settings.strengthModel);
   const choices = resolveStrengthSettings(settings.strengthModel);
   const showOneRm = choices.showOneRm;
   const weeks = useMemo(() => compareMoments(choices.compareWeeks), [choices.compareWeeks]);
@@ -254,7 +238,9 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
   const summary = useMemo(() => checkSummary(rows, from), [rows, from]);
   const all = checkLines(summary.all);
   const since = checkLines(summary.since);
-  const sinceLine = since.macrofactor ? `Sinds ${shortDate(from)}: ${since.macrofactor.replace('Raak: ', '')}` : undefined;
+  const sinceText = `Sinds ${formatShortDateNL(from)}`;
+  const sinceMacroFactor = since.macrofactor ? `${sinceText}: ${since.macrofactor.replace('Raak: ', '')}` : undefined;
+  const sinceForge = since.forge ? `${sinceText}: ${since.forge.replace('Raak in Forge: ', 'Forge, ')}` : undefined;
   const empty = !all.macrofactor && !all.forge;
   return (
     <Card className="flex flex-col gap-2">
@@ -263,19 +249,17 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen met herhalingen in reserve nodig, waarvoor ASCEND vooraf iets kon voorstellen.</p>
       )}
       {all.macrofactor && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.macrofactor}</p>}
-      {sinceLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceLine}</p>}
+      {sinceMacroFactor && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceMacroFactor}</p>}
       {all.forge && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.forge}</p>}
+      {sinceForge && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceForge}</p>}
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het bij trainingen uit MacroFactor een schatting achteraf, uit de sets van die dag.
+        Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het een schatting achteraf, uit de beste set van die dag, behalve in Forge als je het voorgestelde gewicht pakte.
       </p>
       {rows.some((r) => r.check) && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per training bekijken</TextButton>}
       {open && <ComparisonSheet rows={rows} summary={summary} onClose={() => setOpen(false)} />}
     </Card>
   );
 }
-
-const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
-const shortDate = (iso: string) => `${Number(iso.slice(8, 10))} ${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]}`;
 
 // "18 van 25 raak, eerder te zwaar".
 function tallyText(t: Tally): string {
@@ -295,7 +279,7 @@ function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; su
     g.rows.push(r);
   }
   const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
-  const parts: { title: string; totals: CheckSummary['all'] }[] = [{ title: 'Alles', totals: summary.all }, { title: `Sinds ${shortDate(summary.from)}`, totals: summary.since }];
+  const parts: { title: string; totals: CheckSummary['all'] }[] = [{ title: 'Alles', totals: summary.all }, { title: `Sinds ${formatShortDateNL(summary.from)}`, totals: summary.since }];
   return (
     <Sheet eyebrow="Forge" title="Voorstel en wat je deed" line="Per oefening: was het voorstel raak voor die dag?" onClose={onClose}>
       <div className="flex flex-col gap-4 pb-4">
@@ -303,7 +287,8 @@ function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; su
           {parts.map((p) => {
             const mf = p.totals.macrofactor;
             const fg = p.totals.forge.ascend;
-            if (mf.did.total === 0 && fg.total === 0) return null;
+            const other = p.totals.forge.other;
+            if (mf.did.total === 0 && fg.total === 0 && other.did.total === 0) return null;
             return (
               <div key={p.title} className="flex flex-col">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{p.title}</p>
@@ -313,11 +298,16 @@ function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; su
                   </p>
                 )}
                 {fg.total > 0 && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Forge, ASCEND: {tallyText(fg)}.</p>}
+                {other.did.total > 0 && (
+                  <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+                    Forge met een ander gewicht dan voorgesteld: jij {tallyText(other.did)}. ASCEND: {tallyText(other.ascend)}.
+                  </p>
+                )}
               </div>
             );
           })}
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Een vinkje zegt dat het voorstel raak was voor die dag. Bij ASCEND is dat voor trainingen uit MacroFactor een schatting achteraf.
+            Een vinkje zegt dat het gewicht raak was voor die dag, bij jou en bij ASCEND voor dezelfde set. Bij ASCEND is dat een schatting achteraf, behalve in Forge als je het voorgestelde gewicht pakte.
           </p>
         </div>
         {groups.map((g) => (

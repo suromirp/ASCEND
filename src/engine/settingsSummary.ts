@@ -28,6 +28,7 @@ import { resolveSky } from './skySettings';
 import { resolveFigure, type Figure } from './figureSettings';
 import { resolveRunInsight } from './runInsightSettings';
 import { formatNumberNL } from '../utils/number';
+import { formatDateNL } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -291,6 +292,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       const line = lines.macrofactor ?? lines.forge;
       return { checked: forge.showComparison, hidden: !forge.enabled, ...(line ? { sub: line } : {}) };
     }
+    case 'forge-sinds':
+      return { value: formatDateNL(forge.checkFrom), hidden: !forge.enabled };
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':

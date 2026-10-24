@@ -8,20 +8,21 @@
 import { exerciseById } from '../data/exercises';
 import type { Exercise } from '../models/exercise';
 import type { Program } from '../models/program';
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { ExercisePrescription, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween, formatDateNL } from '../utils/dates';
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
-import { checkDone, checkProposal, checkRow, logOrigin, summariseChecks, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
+import { checkDone, checkProposal, checkRow, logOrigin, summariseChecks, targetIndexOf, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
 import {
   analyseSessions,
   deriveRange,
   describePlannedSet,
   lastWeightMismatch,
+  estimateSet,
   prescribe,
   referenceWeight,
-  sessionStrength,
+  setLoad,
   topSetOf,
   type Prescription,
   type RepRange,
@@ -225,12 +226,10 @@ export interface ComparisonRow {
   check?: RowCheck;
 }
 
-// The range and RIR the template of this training asks of this exercise; the
-// proposal's own (derived) range where the template says nothing.
-function planFor(templates: SessionTemplate[] | undefined, templateId: string | undefined, key: string): Partial<RepTarget> | undefined {
+// The slot of the template of this training for this exercise.
+function slotFor(templates: SessionTemplate[] | undefined, templateId: string | undefined, key: string): ExercisePrescription | undefined {
   const template = templates?.find((t) => t.id === templateId);
-  const slot = template?.exercises?.find((e) => exerciseKey(e.id, e.exerciseName).key === key);
-  return targetOfSlot(slot);
+  return template?.exercises?.find((e) => exerciseKey(e.id, e.exerciseName).key === key);
 }
 
 export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined, templates?: SessionTemplate[]): ComparisonRow[] {
@@ -239,23 +238,41 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
     const ctx = { exercise: h.exercise, bodyKg, maxToFailure: settings.estimateUpTo };
     for (let i = 1; i < h.sessions.length; i++) {
       const s = h.sessions[i];
-      const plan = planFor(templates, s.templateId, h.key);
+      const slot = slotFor(templates, s.templateId, h.key);
+      const plan = targetOfSlot(slot);
       const planned = plan && plan.low !== undefined && plan.high !== undefined ? { plan } : {};
       const rx = prescribe({ exercise: h.exercise, sessions: h.sessions.slice(0, i), date: s.date, bodyKg, settings, tired: s.tired, ...planned });
       const top = topSetOf(s.sets, ctx);
       if (!rx || !top) continue;
-      const first = rx.sets[0];
-      if (first.weightKg === 0 && top.weightKg === 0) continue;
-      const actualSet = { weightKg: top.weightKg, repsLow: top.reps, repsHigh: top.reps, rir: top.rir ?? 0 };
-      const actual = top.rir === undefined ? describeActual(h.exercise, top.weightKg, top.reps) : describePlannedSet(h.exercise, actualSet);
+      // The same set on both sides: the work set the target belongs to (the first
+      // that is not to failure; back-off sets with another target are skipped),
+      // against the proposal for that same set. Without it, the heaviest set.
+      const workSets = s.sets.filter((x) => isWorkSet(x) && x.reps > 0 && setLoad(x, ctx) !== undefined);
+      const index = targetIndexOf(slot);
+      const measuredSet = workSets[index];
+      const proposed = rx.sets[index] ?? rx.sets[0];
+      const done = measuredSet ?? { weightKg: top.weightKg, reps: top.reps, rir: top.rir };
+      const doneKg = done.weightKg ?? 0;
+      if (proposed.weightKg === 0 && doneKg === 0) continue;
+      const actualSet = { weightKg: doneKg, repsLow: done.reps, repsHigh: done.reps, rir: done.rir ?? 0 };
+      const actual = done.rir === undefined ? describeActual(h.exercise, doneKg, done.reps) : describePlannedSet(h.exercise, actualSet);
+      const withinOneStep = Math.abs(doneKg - proposed.weightKg) <= rx.stepKg + 1e-6;
       let check: RowCheck | undefined;
-      if (s.origin) {
+      if (s.origin && measuredSet && done.rir !== undefined) {
         const target: RepTarget = { low: rx.range.low, high: rx.range.high, rir: rx.range.rir };
-        const done = checkDone(top, target);
-        const strengthKg = sessionStrength(s.sets, ctx);
-        const load = loadFromExternal(h.exercise, first.weightKg, bodyKg);
-        const proposal = strengthKg !== undefined && load !== undefined ? checkProposal(strengthKg, load, target) : undefined;
-        check = checkRow(s.origin, target, done, proposal);
+        // The strength of the day: the best work set (a pyramid or a top set with
+        // back-offs: the heaviest effort, not one lucky or tired set between).
+        const strengths = s.sets.map((x) => estimateSet(x, ctx)?.strengthKg).filter((v): v is number => v !== undefined);
+        const strengthKg = strengths.length > 0 ? Math.max(...strengths) : undefined;
+        const doneLoad = setLoad(done, ctx);
+        const proposedLoad = loadFromExternal(h.exercise, proposed.weightKg, bodyKg);
+        if (strengthKg !== undefined && doneLoad !== undefined) {
+          // A hand-made log counts as measured only when it followed the proposal.
+          const measured = s.origin === 'forge' && withinOneStep;
+          const doneSide = measured ? checkDone(done, target) : checkProposal(strengthKg, doneLoad, target);
+          const proposalSide = proposedLoad !== undefined ? checkProposal(strengthKg, proposedLoad, target) : undefined;
+          check = checkRow(s.origin, target, doneSide, proposalSide, measured);
+        }
       }
       rows.push({
         logId: s.logId,
@@ -263,11 +280,11 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
         trainingName: s.trainingName,
         exerciseKey: h.key,
         exerciseName: h.name,
-        prescribed: describePlannedSet(h.exercise, first),
+        prescribedKg: proposed.weightKg,
+        prescribed: describePlannedSet(h.exercise, proposed),
+        actualKg: doneKg,
         actual,
-        prescribedKg: first.weightKg,
-        actualKg: top.weightKg,
-        withinOneStep: Math.abs(top.weightKg - first.weightKg) <= rx.stepKg + 1e-6,
+        withinOneStep,
         reason: rx.reason,
         kind: rx.kind,
         ...(check ? { check } : {}),
@@ -326,4 +343,19 @@ export function missingData(history: ExerciseHistory): MissingData | undefined {
   if (noHelp) return 'help';
   if (noRir) return 'rir';
   return undefined;
+}
+
+// A cheap fingerprint of what "raak" is made from in the stored data: the logs
+// (which, when, from where, how long, how many sets), the templates and the program. It
+// does not change when the app only reloads the same data into new arrays, so a
+// screen can keep the result of `quietCheck` while a setting is switched.
+export function checkDataKey(logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, bodyKg: number | undefined): string {
+  const parts: string[] = [];
+  for (const l of logs) {
+    // Every log counts a little (tired legs come from hikes and runs), a strength log with its sets.
+    const sets = l.strengthData ? l.strengthData.reduce((n, e) => n + e.sets.length, 0) : 0;
+    parts.push(`${l.id}|${l.completedDate}|${l.type}|${l.source}|${l.templateId}|${l.durationMinutes}|${l.rpe ?? ''}|${l.manualMeasured?.strength ? 'm' : ''}|${sets}`);
+  }
+  const tpl = templates.filter((t) => t.type === 'strength').map((t) => JSON.stringify([t.id, t.exercises]));
+  return JSON.stringify([parts, tpl, program ? [program.startDate, program.phases] : null, bodyKg]);
 }

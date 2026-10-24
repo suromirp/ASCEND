@@ -80,31 +80,62 @@ export function barFor(profile: GymProfile, lastExternalKg?: number): number {
   return bars.find((b) => b <= lastExternalKg + 1e-9) ?? bars[bars.length - 1];
 }
 
-// How many steps beyond the used range a learned stack keeps offering.
-const LEARNED_EXTRA_STEPS = 20;
+// A learned stack offers weights up to the same ceiling as the plain steps.
+const LEARNED_CEILING_KG = 400;
+const KG_PER_POUND = 0.45359237;
 
-// The weights of a stack as learned from what was used on it: exactly those
-// weights inside the used range, and beyond it steps of the smallest gap seen
-// (the profile step when only one weight is known, or when the gap is more than
-// twice the profile step, which means a gap that says nothing about the stack).
-// Undefined when nothing usable was used.
+const r1 = (n: number) => Math.round(n * 10) / 10;
+const hasOneDecimalAtMost = (n: number) => Math.abs(n * 10 - Math.round(n * 10)) < 1e-6;
+
+// A weight that looks like pounds converted to kilos (90 lb is 40,82 kg): it is
+// not on a kilo grid (a multiple of a quarter kilo is) and sits on a whole pound.
+// Such a weight is a trace of another app, not a weight of the machine, so it is
+// never learned: no own weight and no step.
+export function looksLikePounds(kg: number): boolean {
+  if (Math.abs(kg * 4 - Math.round(kg * 4)) < 1e-6) return false;
+  const pounds = kg / KG_PER_POUND;
+  return Math.abs(Math.round(pounds) * KG_PER_POUND - kg) <= 0.03 && Math.round(pounds) > 0;
+}
+
+// The weights of a stack as learned from what was used on it. Inside the used
+// range exactly those weights, and a gap of more than twice the profile step
+// filled with steps (a proposal of 70 between 40 and 80 is 70, not 80). Beyond
+// the range steps up to the ceiling. The step is the smallest gap between used
+// weights that occurs at least twice and is not under half the profile step;
+// otherwise the profile step. Weights that look like converted pounds and weights
+// with more than one decimal are left out. Undefined when nothing usable was used.
 export function learnedStack(usedKg: number[], profileStepKg: number): number[] | undefined {
-  const used = [...new Set(usedKg.filter((w) => Number.isFinite(w) && w > 0).map(r2))].sort((a, b) => a - b);
+  const used = [...new Set(usedKg.filter((w) => Number.isFinite(w) && w > 0).map(r2))]
+    .filter((w) => hasOneDecimalAtMost(w) && !looksLikePounds(w))
+    .sort((a, b) => a - b);
   if (used.length === 0) return undefined;
-  let step = profileStepKg;
+  const gaps = new Map<number, number>();
   for (let i = 1; i < used.length; i++) {
     const gap = r2(used[i] - used[i - 1]);
-    if (gap > 0 && gap <= 2 * profileStepKg && (step === profileStepKg || gap < step)) step = gap;
+    if (gap >= profileStepKg / 2 - 1e-9 && gap <= 2 * profileStepKg + 1e-9) gaps.set(gap, (gaps.get(gap) ?? 0) + 1);
+  }
+  const repeated = [...gaps].filter(([, n]) => n >= 2).map(([g]) => g);
+  const step = repeated.length > 0 ? Math.min(...repeated) : profileStepKg;
+  const inside: number[] = [];
+  for (let i = 0; i < used.length; i++) {
+    inside.push(used[i]);
+    if (i + 1 < used.length && used[i + 1] - used[i] > 2 * profileStepKg + 1e-9) {
+      for (let w = r1(used[i] + step); w < used[i + 1] - 1e-9; w = r1(w + step)) inside.push(w);
+    }
   }
   const below: number[] = [];
-  for (let k = 1; k <= LEARNED_EXTRA_STEPS; k++) {
-    const w = r2(used[0] - k * step);
+  for (let k = 1; ; k++) {
+    const w = r1(used[0] - k * step);
     if (w < step - 1e-9) break;
     below.unshift(w);
   }
   const above: number[] = [];
-  for (let k = 1; k <= LEARNED_EXTRA_STEPS; k++) above.push(r2(used[used.length - 1] + k * step));
-  return [...below, ...used, ...above];
+  for (let k = 1; ; k++) {
+    const w = r1(used[used.length - 1] + k * step);
+    if (w > LEARNED_CEILING_KG + 1e-9) break;
+    above.push(w);
+  }
+  return [...below, ...inside, ...above];
 }
 
 // The weights a set list really used, for `usedKg`.

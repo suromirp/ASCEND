@@ -54,3 +54,31 @@ Niets. De vergelijking "Voorstel en wat je deed" uit het besluit over Forge blij
 ## Terugdraaien
 
 Zet "Gewichten van toestellen leren" uit voor de oude afronding. "ASCEND naast MacroFactor" uit (de standaard) verbergt het blok. Er is niets in planning of logs veranderd.
+
+## Aanvulling na review (24 oktober 2026)
+
+Dit vult het besluit hierboven aan waar de review iets scherper wilde. Wat hierboven staat blijft staan als het niet strijdig is; waar het strijdig is, geldt deze aanvulling.
+
+### Eén toets, dezelfde set
+
+Wat je deed en het voorstel van ASCEND krijgen dezelfde functie en dezelfde schatter: `checkProposal(kracht van die dag, last, doel)`. Voor wat je deed is de last die van de gemeten set, voor ASCEND die van het voorstel voor diezelfde set. Hetzelfde gewicht krijgt dus aan beide kanten hetzelfde oordeel (getest). De speling is voor alles 1 herhaling aan beide kanten van het bereik; de oude toets "RIR binnen 1" voor wat je deed is vervallen.
+
+De set is de eerste werkset die bij het doel hoort: bij een programma met doelen per set de eerste set die niet tot falen is (`targetOfSlot`), zonder doelen per set de eerste werkset. Sets tot falen en back-offs met een ander doel worden niet gemeten, opwarmsets nooit. ASCEND wordt gemeten tegen het voorstel voor dezelfde plek (`rx.sets[index]`). Bij een piramide is dat dus de lichtste set, niet de zwaarste.
+
+De kracht van die dag is de hoogste schatting van een enkele werkset (herhalingen plus RIR, Epley). Gekozen boven het gemiddelde van de twee beste sets omdat een piramide of topset met back-offs zo zijn zwaarste echte inspanning als maat krijgt, en een vermoeide of toevallige set er niet doorheen telt. Het is een schatting en blijft zo genoemd.
+
+### Gemeten of geschat
+
+Een training die in Forge is gelogd telt alleen als gemeten waar het gewicht van de gemeten set binnen één stap van het voorstel lag (`withinOneStep`). Dan is wat er gebeurde de meting (`checkDone`, herhalingen plus RIR van de set zelf, dezelfde speling). Een handgemaakte krachtlog met een heel ander gewicht volgde geen voorstel en telt als schatting, apart onder "Forge met een ander gewicht dan voorgesteld". Daarvoor is geen nieuw opgeslagen veld nodig.
+
+### De bron volgt wie de sets maakte
+
+Neemt MacroFactor een Forge-log over, dan blijft de bron Forge zolang de sets niet zijn vervangen (geen `strengthData` in `manualMeasured.strength`) en de log met de hand was. Zijn de sets vervangen, dan is de bron MacroFactor. Na `restoreManual` is het weer de eerste bron.
+
+### Toestelgewichten leren, scherper
+
+Een kloof groter dan twee keer de profielstap binnen het gebruikte bereik wordt opgevuld met de stap, zodat 70 tussen 40 en 80 bestaat. Een kloof telt pas als stap als hij minstens twee keer voorkomt en niet onder de helft van de profielstap ligt. Gewichten die op omgerekende ponden lijken (zoals 40,82) en gewichten met meer dan één decimaal worden niet geleerd. Erboven loopt het bereik tot 400 kg, net als bij de gewone stappen. Een voorstel heeft nooit meer dan één decimaal.
+
+### Alles wordt achteraf herberekend
+
+De vergelijking rekent elke training uit het verleden opnieuw uit met de template en de instellingen van nu, niet met wat er op die dag gold. De getallen vóór het inlezen van het MacroFactor-programma zijn daarom ruw en zeggen weinig; ze zeggen pas iets vanaf die dag. Daarom staat "alles" naast "sinds", en is de startdatum instelbaar: "Stil meten sinds" in de Forge-groep, standaard 24 oktober 2026. Er wordt niet automatisch afgekapt op de importdatum, omdat die niet voor elke training bekend is.
