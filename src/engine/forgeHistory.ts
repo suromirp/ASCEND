@@ -176,6 +176,10 @@ export interface Moment {
   weeks: number;
   // De dag waarop gekeken wordt: vandaag min dit aantal weken.
   asOf: string;
+  // 'ok': een training binnen het venster van dit moment; 'none': er was niets binnen
+  // het venster ("Niet gedaan"); 'same': dezelfde training als nu of als een eerder
+  // moment, dus niet nog eens tonen.
+  status: 'ok' | 'none' | 'same';
   point?: ForgePoint;
   // Het verschil in getal met nu, en wat er verder veranderd is.
   change?: number;
@@ -196,11 +200,17 @@ export interface Comparison {
 export function compareExercise(points: ForgePoint[], today: string, weeks: number[]): Comparison {
   const now = points[points.length - 1];
   const best = bestEver(points);
+  const seen = new Set<string>();
   const moments: Moment[] = weeks.map((w) => {
     const asOf = addDays(today, -7 * w);
-    const point = snapshotAt(points, asOf);
-    const change = now && point ? valueChange(now, point) : undefined;
-    return { weeks: w, asOf, ...(point ? { point } : {}), ...(change !== undefined ? { change } : {}), extras: extraChanges(now, point) };
+    const found = snapshotAt(points, asOf);
+    // Het venster is even lang als de afstand terug: 4 weken geleden is hoogstens 28 dagen ernaast.
+    const inWindow = found !== undefined && daysBetween(found.date, asOf) <= 7 * w;
+    if (!found || !inWindow) return { weeks: w, asOf, status: 'none', extras: [] };
+    if (found.date === now?.date || seen.has(found.date)) return { weeks: w, asOf, status: 'same', extras: [] };
+    seen.add(found.date);
+    const change = now ? valueChange(now, found) : undefined;
+    return { weeks: w, asOf, status: 'ok', point: found, ...(change !== undefined ? { change } : {}), extras: extraChanges(now, found) };
   });
   return { now, moments, best, atBest: !!now && !!best && now.value >= best.value };
 }

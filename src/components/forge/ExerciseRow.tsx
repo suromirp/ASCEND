@@ -75,7 +75,7 @@ export function ExerciseRow({
             <>
               <span className="block text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{text(cmp.now.value)}</span>
               <span className="block text-xs" style={{ color: first?.change !== undefined ? TONE[deltaTone(first.change)] : 'var(--color-ink-dim)' }}>
-                {first?.change !== undefined ? `${diff(first.change)} sinds ${first.weeks} wk` : 'Nog geen vergelijking'}
+                {first?.change !== undefined ? `${diff(first.change)} sinds ${first.weeks} wk` : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
               </span>
             </>
           ) : (
@@ -91,7 +91,7 @@ export function ExerciseRow({
   );
 }
 
-function Cell({ label, point, today, kind, view, bodyKg, showExtras, note }: { label: string; point?: ForgePoint; today: string; kind: ValueKind; view: ExerciseView; bodyKg: number | undefined; showExtras: boolean; note?: { text: string; tone: DeltaTone } }) {
+function Cell({ label, point, status = 'ok', today, kind, view, bodyKg, showExtras, note }: { label: string; point?: ForgePoint; status?: 'ok' | 'none' | 'same'; today: string; kind: ValueKind; view: ExerciseView; bodyKg: number | undefined; showExtras: boolean; note?: { text: string; tone: DeltaTone } }) {
   const exercise = view.history.exercise;
   // Bij herhalingen: het totaal en, als er gewicht bij is, het gewicht naast de herhalingen.
   const top = !point
@@ -109,7 +109,7 @@ function Cell({ label, point, today, kind, view, bodyKg, showExtras, note }: { l
           {showExtras && top && <span className="break-words font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{top}</span>}
         </>
       ) : (
-        <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Nog niet</span>
+        <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{status === 'same' ? 'Zelfde training' : status === 'none' ? 'Niet gedaan' : 'Nog niet'}</span>
       )}
       {note && <span className="break-words font-sans text-xs font-medium tabular-nums leading-snug" style={{ color: TONE[note.tone] }}>{note.text}</span>}
     </div>
@@ -148,20 +148,19 @@ function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory 
         <Cell
           label={`${m1.weeks} wk geleden`}
           point={m1.point}
+          status={m1.status}
           {...common}
           note={m1.change !== undefined ? { text: diff(m1.change), tone: deltaTone(m1.change) } : undefined}
         />
         <Cell
           label={`${m2.weeks} wk geleden`}
           point={m2.point}
+          status={m2.status}
           {...common}
           note={m2.change !== undefined ? { text: diff(m2.change), tone: deltaTone(m2.change) } : undefined}
         />
         <Cell label="Beste ooit" point={cmp.best} {...common} note={bestNote} />
       </div>
-      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        De kleine regels onder een getal zijn het verschil met nu: {kind === 'reps' ? 'de herhalingen van je beste set' : kind === 'one_rm' ? 'de geschatte 1RM' : 'het werkgewicht'} van toen tegenover nu.
-      </p>
 
       {withExtras.length > 0 && (
         <div className="flex flex-col gap-2">

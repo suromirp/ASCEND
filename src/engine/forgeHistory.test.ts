@@ -105,14 +105,38 @@ describe('compareExercise', () => {
     expect(c.moments[0]).toMatchObject({ weeks: 4, asOf: '2026-09-16', change: 2 });
     expect(c.moments[0].point?.date).toBe('2026-09-14');
     expect(c.moments[1]).toMatchObject({ weeks: 8, asOf: '2026-08-19' });
+    expect(c.moments[1].status).toBe('none');
     expect(c.moments[1].point).toBeUndefined();
     expect(c.moments[1].change).toBeUndefined();
     expect(c.atBest).toBe(true);
   });
-  it('een oefening die je een tijd niet deed staat gelijk aan zichzelf', () => {
+  it('een training telt alleen binnen het venster van het moment', () => {
+    // 4 weken geleden is 22 nov: de laatste training (12 okt) is 41 dagen eerder, dus buiten 28 dagen.
     const c = compareExercise(pts, '2026-12-20', [4, 8]);
-    expect(c.moments[0].point?.date).toBe('2026-10-12');
-    expect(c.moments[0].change).toBe(0);
+    // 8 weken geleden is 25 okt: de training van 12 okt is dan de training van nu zelf.
+    expect(c.moments.map((m) => m.status)).toEqual(['none', 'same']);
+    expect(c.moments.every((m) => m.point === undefined && m.change === undefined && m.extras.length === 0)).toBe(true);
+  });
+  it('precies op de rand van het venster telt nog mee', () => {
+    const c = compareExercise([point('2026-08-01', 70), point('2026-10-12', 86)], '2026-10-14', [4]);
+    // asOf 16 sep, 1 aug is 46 dagen eerder: buiten
+    expect(c.moments[0].status).toBe('none');
+    const edge = compareExercise([point('2026-08-19', 70), point('2026-10-12', 86)], '2026-10-14', [4]);
+    expect(edge.moments[0].status).toBe('ok');
+    expect(edge.moments[0].change).toBe(16);
+  });
+  it('twee momenten met dezelfde training: de latere is "same"', () => {
+    const c = compareExercise([point('2026-08-19', 70), point('2026-10-12', 86)], '2026-10-14', [4, 8]);
+    expect(c.moments[0].status).toBe('ok');
+    expect(c.moments[1].status).toBe('same');
+    expect(c.moments[1].extras).toEqual([]);
+  });
+  it('is het moment de training van nu zelf, dan is er geen vergelijking', () => {
+    const c = compareExercise([point('2026-10-12', 86)], '2026-10-14', [4, 8]);
+    expect(c.moments.map((m) => m.status)).toEqual(['none', 'none']);
+    const near = compareExercise([point('2026-09-14', 86)], '2026-10-14', [4]);
+    expect(near.moments[0].status).toBe('same');
+    expect(near.moments[0].change).toBeUndefined();
   });
   it('lager dan het beste ooit is niet atBest', () => {
     const c = compareExercise([point('2026-08-20', 90), point('2026-10-12', 86)], '2026-10-14', [4]);

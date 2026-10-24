@@ -22,7 +22,7 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Eyebrow, PageHeader, PrimaryButton, SecondaryButton, Segmented } from '../components/ui';
+import { Card, Eyebrow, InfoButton, PageHeader, PrimaryButton, SecondaryButton, Segmented } from '../components/ui';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
 import { ExerciseRow } from '../components/forge/ExerciseRow';
@@ -68,6 +68,7 @@ export function ForgePage() {
   const [trainingChoice, setTrainingChoice] = usePageState<string | null>('training', null);
   const [openKey, setOpenKey] = usePageState<string | null>('open', null);
   const [historyKey, setHistoryKey] = useState<string | null>(null);
+  const [listInfo, setListInfo] = useState(false);
 
   const strengthKey = modelKey(settings.strengthModel);
   const choices = resolveStrengthSettings(settings.strengthModel);
@@ -161,9 +162,17 @@ export function ForgePage() {
           <ForgeFilters query={query} onQuery={setQuery} trainings={trainings} training={training} onTraining={setTrainingChoice} />
 
           <Card className="flex flex-col py-2">
-            <p role="status" className="pb-1 pt-2 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-              {filtering ? `${shown.length} van ${model.views.length} oefeningen` : `${model.views.length} oefeningen`}
-            </p>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <p role="status" className="font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                {filtering ? `${shown.length} van ${model.views.length} oefeningen` : `${model.views.length} oefeningen`}
+              </p>
+              <InfoButton onClick={() => setListInfo((v) => !v)} label={listInfo ? 'Uitleg over de getallen sluiten' : 'Uitleg over de getallen'} />
+            </div>
+            {listInfo && (
+              <p className="pb-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                Het getal rechts is de stand na je laatste training. De kleine regel eronder is het verschil met {weeks[0]} weken geleden. Open je een oefening, dan staat het verschil met nu onder elk getal. Een moment telt alleen als je toen binnen een even lange periode getraind hebt; anders staat er Niet gedaan.
+              </p>
+            )}
             {shown.length === 0 && (
               <div className="flex flex-col items-start gap-1 py-3">
                 <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Geen oefening gevonden.</p>
