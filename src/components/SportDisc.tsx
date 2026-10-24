@@ -2,7 +2,6 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import { Icon, type IconName } from './icons';
 import { SPORT_COLOR, sportIcon, sportKind } from './sportKind';
 import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
-import { MoonGlyph } from './vandaag/glyphs';
 
 // Het pictogram van de sport in een getinte schijf.
 export function SportDisc({ template, size = 44, className = '' }: { template: SessionTemplate; size?: number; className?: string }) {
@@ -14,7 +13,7 @@ export function SportDisc({ template, size = 44, className = '' }: { template: S
       className={`inline-flex shrink-0 items-center justify-center rounded-full ${className}`}
       style={{ width: size, height: size, background: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
     >
-      {kind === 'rest' ? <MoonGlyph size={Math.round(size * 0.46)} /> : <Icon name={sportIcon(template)} size={Math.round(size * 0.46)} />}
+      {kind === 'rest' ? <Icon name="ontspannen" size={Math.round(size * 0.46)} /> : <Icon name={sportIcon(template)} size={Math.round(size * 0.46)} />}
     </span>
   );
 }
@@ -44,7 +43,7 @@ export function IconDisc({ icon, size = 40, tone = 'neutral' }: { icon: IconName
       className="inline-flex shrink-0 items-center justify-center rounded-full"
       style={{ width: size, height: size, background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
     >
-      {icon === 'maan' ? <MoonGlyph size={Math.round(size * 0.46)} /> : <Icon name={icon} size={Math.round(size * 0.46)} />}
+      {icon === 'maan' ? <Icon name="ontspannen" size={Math.round(size * 0.46)} /> : <Icon name={icon} size={Math.round(size * 0.46)} />}
     </span>
   );
 }
