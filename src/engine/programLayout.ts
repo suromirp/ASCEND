@@ -414,8 +414,9 @@ export function packLadderOf(program: Program): number[] {
   // Built on the calendar without repeated weeks: packKgOn alone shifts a
   // repeated week to the pack of the week before. With them in here the
   // shift would count twice, and the cache (keyed without them) would hand
-  // out whichever variant filled it first.
-  const ladder = packLadder(ladderWeeks({ ...program, repeatedWeeks: undefined }), target);
+  // out whichever variant filled it first. A week changed halfway
+  // (heldWeekDays) can bring a repeat back for its first days, so it goes too.
+  const ladder = packLadder(ladderWeeks({ ...program, repeatedWeeks: undefined, heldWeekDays: undefined }), target);
   if (ladderCache.size >= LADDER_CACHE_SIZE) ladderCache.delete(ladderCache.keys().next().value!);
   ladderCache.set(key, ladder);
   return ladder;

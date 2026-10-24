@@ -199,4 +199,19 @@ describe('a repeated week and the cached ladder', () => {
     // The repeated week carries the pack of the week before it.
     expect(a[1]).toBe(a[0]);
   });
+
+  it('a week changed halfway does not bring a repeat into the cached ladder', async () => {
+    const { vi } = await import('vitest');
+    const plain = programFor();
+    const firstBerg = weeksOf(plain).find((w) => w.phaseId === PHASE_BERG)!.monday;
+    const heldMonday = addDays(firstBerg, 7);
+    // The first days of that week stay as they stood: repeated.
+    const held: Program = { ...plain, heldWeekDays: [{ week: heldMonday, until: addDays(heldMonday, 3), repeated: true }] };
+    vi.resetModules();
+    const heldFirst = await import('./programLayout');
+    const ladder = heldFirst.packLadderOf(held);
+    vi.resetModules();
+    const plainFirst = await import('./programLayout');
+    expect(ladder).toEqual(plainFirst.packLadderOf(plain));
+  });
 });
