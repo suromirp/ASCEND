@@ -64,7 +64,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     advanced: [],
   },
   gegevens: { rows: ['backup', 'backupmap', 'opslag', 'momentopnamen', 'versie', 'startniveau', 'herbouwen', 'wissen'], advanced: [] },
-  gidsen: { rows: ['kennisbank', 'trainingsgids', 'garmin-gids', 'plekken', 'weer-gids', 'bronnen'], advanced: [] },
+  gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
 };
 
 export const allRowIds = (page: SettingsPageId): string[] => [...PAGE_ROWS[page].rows, ...PAGE_ROWS[page].advanced];
@@ -86,6 +86,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   'sport-per-week': { row: 'sport-running' },
   sportschool: { row: 'stangen' },
   'horloge-gebruik': { row: 'garmin-trainingen' },
+  'garmin-gids': { row: 'garmin' },
   rugzak: { row: 'doelen' },
   weervolgt: { row: 'weerplaats', sheet: true },
   'herinnering-gewicht': { row: 'lichaamsgewicht', sheet: true },

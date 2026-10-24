@@ -1,9 +1,9 @@
 import type { SessionTemplate } from '../models/training';
 import { isoWeekday } from '../utils/dates';
 // Rich per-training-day content for the Month 1 (BASISFASE) schedule —
-// shown in TrainingGuideSheet, reachable both via an info button on the
-// session itself (TodayMissionCard/SessionActionSheet) and via the
-// standalone Trainingsgids index page. Keyed by SessionTemplate.id from
+// shown in TrainingGuideSheet, reachable via an info button on the session
+// itself (TodayMissionCard/SessionActionSheet). The standalone Trainingsgids
+// page is gone; /gids now goes to Week. Keyed by SessionTemplate.id from
 // data/defaultProgram.ts, so nothing here needs its own id scheme.
 //
 // Sources link to the exact articles/pages the user supplied
@@ -363,7 +363,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         body: 'Hartslagzones op basis van je drempelhartslag zijn preciezer dan zones op basis van je maximale hartslag. Hoofdscherm: timer, hartslag, hartslagzone, tempo. De borstband heeft de voorkeur boven de polssensor voor trainingssturing.',
       },
     ],
-    garminNote: 'Volledige Garmin-instellingen (zones, databeelden, borstband) staan in de Garmin-gids.',
+    garminNote: 'Volledige Garmin-instellingen (zones, databeelden, borstband) staan bij Je horloge instellen, onderaan Garmin koppelen.',
     gear: ['Forerunner 255', 'Garmin borstband', 'hardloopschoenen', 'kleding passend bij het weer'],
     sources: [PUBMED_INJURY_LOAD_1, PUBMED_INJURY_LOAD_2, PUBMED_INTENSITY_DISTRIBUTION, PUBMED_TALK_TEST, GARMIN_ZONES, GARMIN_STRAP_PRIORITY],
   },
@@ -445,7 +445,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         note: 'Dan eerst snelheid of helling omlaag, niet meteen de hele training overslaan.',
       },
     ],
-    garminNote: 'Zie de Garmin-gids voor custom-activity- en databeeld-tips bij indoor klimmen.',
+    garminNote: 'Zie Je horloge instellen, onderaan Garmin koppelen, voor tips over een eigen activiteit en databeelden bij indoor klimmen.',
     gear: ['Forerunner 255', 'Garmin borstband', 'trainingsschoenen', 'water', 'loopband (of buitenroute)'],
     sources: [GARMIN_HANDRAIL, GARMIN_CUSTOM_ACTIVITY, GARMIN_INDOOR_ACCELEROMETER, GARMIN_CALIBRATION, GARMIN_ELEVATION_FIELDS, PUBMED_DOWNHILL, PUBMED_LOAD_CARRYING],
   },
@@ -516,7 +516,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         note: 'Dan eerst het aantal herhalingen of de helling omlaag, niet meteen de hele sessie schrappen.',
       },
     ],
-    garminNote: 'Zie de Garmin-gids voor custom-activity- en databeeld-tips bij indoor intervallen.',
+    garminNote: 'Zie Je horloge instellen, onderaan Garmin koppelen, voor tips over een eigen activiteit en databeelden bij indoor intervallen.',
     gear: ['Forerunner 255', 'Garmin borstband', 'hardloopschoenen', 'loopband (of buiten een heuvel of trap)'],
     sources: [PELOTON_HILL_REPEATS, OUTSIDE_INCLINE_TREADMILL, TRAINIINGPEAKS_TREADMILL_INTERVAL, RUNBIKECALC_POLARIZED],
   },
@@ -547,7 +547,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         note: 'Loop dan een paar weken de korte versie of houd de minuten van vorige week aan, in plaats van de training over te slaan.',
       },
     ],
-    garminNote: 'Zie de Garmin-gids voor zones en databeelden bij lange duurlopen.',
+    garminNote: 'Zie Je horloge instellen, onderaan Garmin koppelen, voor zones en databeelden bij lange duurlopen.',
     gear: ['Forerunner 255', 'Garmin borstband', 'hardloop-/hikingschoenen', 'water/voeding voor langere duur'],
     sources: [TRAILRUNNER_MOUNTAIN_TRAINING, RUNINFINITE_VERTICAL_GAIN, MARATHONHANDBOOK_TEN_PERCENT],
   },

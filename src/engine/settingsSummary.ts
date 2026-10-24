@@ -491,7 +491,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       };
     }
     case 'gidsen':
-      return { sub: 'Kennisbank, gidsen en bronnen' };
+      return { sub: 'Weer en kleding, kennisbank en bronnen' };
   }
 }
 

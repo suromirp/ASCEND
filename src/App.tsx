@@ -34,8 +34,6 @@ import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
 // they still work offline.
 const StretchesPage = lazy(() => import('./pages/Stretches').then((m) => ({ default: m.StretchesPage })));
 const StretchAreaPage = lazy(() => import('./pages/StretchArea').then((m) => ({ default: m.StretchAreaPage })));
-const TrainingGuidePage = lazy(() => import('./pages/TrainingGuide').then((m) => ({ default: m.TrainingGuidePage })));
-const GarminGuidePage = lazy(() => import('./pages/GarminGuide').then((m) => ({ default: m.GarminGuidePage })));
 const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
 const MacroFactorImportPage = lazy(() => import('./pages/MacroFactorImport').then((m) => ({ default: m.MacroFactorImportPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
@@ -328,8 +326,10 @@ function AppShell() {
             <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
             <Route path="/kennis" element={<KnowledgePage />} />
             <Route path="/kennis/:topicId" element={<KnowledgeTopicPage />} />
-            <Route path="/gids" element={<TrainingGuidePage />} />
-            <Route path="/garmin" element={<GarminGuidePage />} />
+            {/* Oude links: de trainingsgids is het blad "Hoe je het doet" bij elke
+                training, de Garmin-gids staat onderaan de koppeling met Garmin. */}
+            <Route path="/gids" element={<Navigate to="/week" replace />} />
+            <Route path="/garmin" element={<Navigate to="/koppelen/garmin" replace />} />
             <Route path="/koppelen/garmin" element={<GarminLinkPage />} />
             <Route path="/koppelen/macrofactor" element={<MacroFactorImportPage />} />
             <Route path="/bronnen" element={<SourcesPage />} />
@@ -342,6 +342,8 @@ function AppShell() {
             <Route path="/reis/paklijst" element={<PackListPage />} />
             <Route path="/etappes" element={<EtappesPage />} />
             <Route path="/onderweg" element={<AlleenOnderwegPage />} />
+            {/* Een adres dat niet bestaat (meer) opent Vandaag, niet een leeg scherm. */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </Suspense>
         </ErrorBoundary>

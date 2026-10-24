@@ -1,4 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { availableVariants } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
@@ -83,6 +84,7 @@ export function TodayMissionCard({
   // De geplande training zelf: voor de regel over het horloge.
   session?: PlannedSession;
 }) {
+  const navigate = useNavigate();
   const [showMove, setShowMove] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -180,7 +182,7 @@ export function TodayMissionCard({
               {coachLine}
             </p>
           )}
-          {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-3" />}
+          {weatherSlot ?? <WeatherLine template={template} date={todayISO()} minutes={fullDuration} className="mt-0.5" onOpen={() => navigate('/weer')} />}
           <ClothingAdvice template={template} date={todayISO()} minutes={fullDuration} className="mt-1.5" compact />
           {session && <WatchStatusRow session={session} template={template} offer={false} className="mt-3" />}
         </div>
