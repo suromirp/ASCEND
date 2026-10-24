@@ -90,10 +90,10 @@ export function LegFatigueCard() {
       )}
 
       {next && nextResult && nextStatus && (
-        <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
+        <p className="rounded-xl border px-3 py-2 text-xs leading-relaxed" style={{ borderColor: nextStatus === 'fris' ? 'var(--color-card-border)' : 'color-mix(in srgb, var(--color-warning) 55%, var(--color-card-border))', color: 'var(--color-ink)' }}>
           {next.templateId === 'tpl_race' ? 'Wedstrijd' : 'Testloop'} {short(next.scheduledDate)}: <span className="tabular-nums">{formatNumberNL(nextResult.index, 1)}</span>
           {band && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> (ongeveer {formatNumberNL(band.low, 0)} tot {formatNumberNL(band.high, 0)})</span>},{' '}
-          <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-progress)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
+          <span style={{ color: nextStatus === 'fris' && !band?.nearLine ? 'var(--color-status)' : 'var(--color-warning)' }}>{band?.nearLine ? 'op de grens' : nextStatus}</span>
           {band?.nearLine && <span style={{ color: 'var(--color-ink-dim)' }}>. Beslis bij het inlopen: voelen je benen zwaarder dan normaal, dan een dag later.</span>}
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
             <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {short(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (next.templateId === 'tpl_race' ? 'wedstrijd' : 'test')}.</span>
@@ -105,7 +105,7 @@ export function LegFatigueCard() {
       {open && (
         <p className="border-t pt-2 text-xs leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>
           Elke training laat iets achter in je benen. Hard lopen is na een dag grotendeels weg, kracht en klappen halveren per dag, en spierschade van bergaf of zware beenkracht houdt 3 tot 5 dagen aan. Die drie tellen samen op. 8 of lager is fris genoeg voor een testloop, tot 12 voor een harde training. Het zwaarst telt je beentraining: hoe lang, hoe zwaar en of je eraan gewend bent. Grote verschillen kloppen bijna altijd; rond de grens is het getal onzeker, kijk dan naar je gevoel bij het inlopen.
-          <button onClick={() => setInfo(true)} className="flex min-h-[44px] items-center mt-2 font-medium underline underline-offset-2" style={{ color: 'var(--color-action)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
+          <button onClick={() => setInfo(true)} className="flex min-h-[44px] items-center mt-2 font-medium underline underline-offset-2" style={{ color: 'var(--color-status)' }}>Alles over dit getal, en hoe betrouwbaar het is ›</button>
         </p>
       )}
       {info && <LegFatigueInfoSheet onClose={() => setInfo(false)} />}

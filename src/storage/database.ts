@@ -635,6 +635,9 @@ export interface AppSettings {
   // (storage/migrations.ts#cleanNavigationSettings).
   tabBack?: 'today' | 'previous';
   resumeMinutes?: number;
+  // "Beweging" (engine/motionSettings.ts): how much the app moves. Absent = 'full'.
+  // Optional and additive; read defensively, so no migration step is needed.
+  motion?: 'full' | 'calm' | 'off';
   // "Loopinzicht" (engine/runInsightSettings.ts): the two lines after a run or
   // tocht, the weather lookup and the chest strap. Absent or missing keys = the
   // advice. Optional and additive; travels with the settings in a backup, where

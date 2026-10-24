@@ -2,6 +2,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
 import { resolveNavigation } from '../../../engine/navigationSettings';
+import { resolveMotion } from '../../../engine/motionSettings';
 import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
 import { SettingsSection } from '../SettingsList';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -88,11 +89,16 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="loopinzicht" title="Inzicht na een training" facts={facts} info="loopinzicht" onChange={(on) => setInsight({ enabled: on })} />
       </SettingsSection>
 
+      <SettingsSection title="Beweging">
+        <SummaryRow id="beweging" title="Beweging" facts={facts} info="beweging" onClick={() => setSheet('beweging')} />
+      </SettingsSection>
+
       <SettingsSection title="Terugknop">
         <SummaryRow id="terugknop" title="Terugknop op een tab" facts={facts} onClick={() => setSheet('terugknop')} />
         <SummaryRow id="hervatten" title="Na een herstart" facts={facts} onClick={() => setSheet('hervatten')} />
       </SettingsSection>
 
+      {sheet === 'beweging' && <ChoiceFromDef def={CHOICES.beweging} value={resolveMotion(settings)} onPick={(v) => void updateSettings({ motion: v })} onClose={close} />}
       {sheet === 'terugknop' && <ChoiceFromDef def={CHOICES.terugknop} value={nav.tabBack} onPick={(v) => void updateSettings({ tabBack: v })} onClose={close} />}
       {sheet === 'hervatten' && <ChoiceFromDef def={CHOICES.hervatten} value={nav.resumeMinutes as 0 | 60 | 120 | 240 | 480} onPick={(v) => void updateSettings({ resumeMinutes: v })} onClose={close} />}
       {sheet === 'ochtend-vanaf' && <ChoiceFromDef def={CHOICES.ochtendVanaf} value={o.morningCardFrom} onPick={(v) => set({ morningCardFrom: v })} onClose={close} />}

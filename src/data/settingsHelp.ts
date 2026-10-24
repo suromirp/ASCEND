@@ -12,6 +12,15 @@ export interface SettingsHelp {
 }
 
 export const SETTINGS_HELP: Record<string, SettingsHelp> = {
+  beweging: {
+    title: 'Beweging',
+    lead: 'Hoeveel de app beweegt: een zachte indruk bij een tik, ringen die vollopen, getallen die optellen.',
+    points: [
+      { head: 'Normaal', text: 'alles, kort en rustig. De missiekaart ademt zacht en nieuwe voorstellen knipperen een of twee keer.' },
+      { head: 'Rustig', text: 'alleen feedback op je tik en overgangen van bladen. Geen adem, puls of optellen.' },
+      { head: 'Uit', text: 'alles staat meteen op zijn plek. Heeft je telefoon beperkte beweging aan, dan geldt dit altijd.' },
+    ],
+  },
   wijzigingen: {
     title: 'Wijzigingen',
     lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',

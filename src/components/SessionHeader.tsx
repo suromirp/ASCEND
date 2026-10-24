@@ -1,4 +1,5 @@
 import type { SessionBrief } from '../engine/sessionBrief';
+import { Eyebrow } from './ui';
 
 // The head of a training, identical on the training screen and the info
 // screen (engine/sessionBrief.ts): the sport and kind of training, the
@@ -7,16 +8,8 @@ export function SessionHeader({ brief, title, as = 'h1' }: { brief: SessionBrief
   const Heading = as;
   return (
     <div>
-      <span
-        className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.14em]"
-        style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-gold)' }}
-      >
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
-          <path d="M3 18l6-11 4 7 3-5 5 9H3z" />
-        </svg>
-        {brief.headline}
-      </span>
-      <Heading className="mt-3 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</Heading>
+      <Eyebrow>{brief.headline}</Eyebrow>
+      <Heading className="mt-1 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</Heading>
       {brief.purpose && <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{brief.purpose}</p>}
       {brief.weekLabel && <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{brief.weekLabel}</p>}
 

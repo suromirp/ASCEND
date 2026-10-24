@@ -17,7 +17,7 @@ export function UpdatePrompt() {
   if (!needRefresh) return null;
 
   return (
-    <Bar>
+    <Bar attention>
       <div className="min-w-0">
         <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Nieuwe versie van ASCEND</p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Bijwerken duurt een tel, je gegevens blijven staan.</p>
@@ -54,14 +54,14 @@ export function UpdatedNotice() {
   );
 }
 
-function Bar({ children }: { children: ReactNode }) {
+function Bar({ children, attention = false }: { children: ReactNode; attention?: boolean }) {
   return (
     <div
       className="animate-rise-in fixed inset-x-0 z-50 flex justify-center px-4"
       style={{ bottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px) + 0.75rem)' }}
     >
       <div role="status"
-        className="flex w-full max-w-md items-center justify-between gap-3 rounded-xl border px-4 py-3 shadow-lg"
+        className={`${attention ? 'mx-attention ' : ''}flex w-full max-w-md items-center justify-between gap-3 rounded-xl border px-4 py-3 shadow-lg`}
         style={{ background: 'var(--color-raised)', borderColor: 'var(--color-card-border)' }}
       >
         {children}

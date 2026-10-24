@@ -206,6 +206,18 @@ export const CHOICES = {
       { value: 'previous', label: 'Naar de vorige tab', note: 'In de volgorde waarin je ze opende', short: 'Vorige tab' },
     ],
   }),
+  beweging: def({
+    group: 'Vandaag en meldingen',
+    title: 'Beweging',
+    line: 'Hoeveel de app beweegt. Beperkte beweging van je telefoon gaat voor.',
+    advice: 'full' as 'full' | 'calm' | 'off',
+    help: 'beweging',
+    options: [
+      { value: 'full', label: 'Normaal', note: 'Tikfeedback, overgangen, vullen en optellen', short: 'Normaal' },
+      { value: 'calm', label: 'Rustig', note: 'Alleen tikfeedback en overgangen', short: 'Rustig' },
+      { value: 'off', label: 'Uit', note: 'Alles staat meteen op zijn plek', short: 'Uit' },
+    ],
+  }),
   ochtendTijd: def({
     group: 'Vandaag en meldingen',
     title: 'Tijd van de ochtendmelding',

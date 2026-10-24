@@ -183,7 +183,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
       <div className="flex gap-3">
         <KindIcon trigger={advice.trigger} />
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium tracking-[0.16em]" style={{ color: kind.color }}>{kind.label.toUpperCase()}</p>
+          <Eyebrow tone={kind.color}>{kind.label}</Eyebrow>
           <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{advice.title}</p>
           <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{advice.effect}</p>
           {actions}

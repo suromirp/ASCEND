@@ -300,6 +300,13 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
     expect(rowSummary('na-hoofddoel', withSettings({ afterMainGoal: 'maintain' })).value).toBe('Onderhoud');
   });
 
+  it('beweging is Normaal tot je iets anders kiest', () => {
+    expect(rowSummary('beweging', facts()).value).toBe('Normaal');
+    expect(rowSummary('beweging', withSettings({ motion: 'calm' })).value).toBe('Rustig');
+    expect(rowSummary('beweging', withSettings({ motion: 'off' })).value).toBe('Uit');
+    expect(rowSummary('beweging', withSettings({ motion: 'rommel' })).value).toBe('Normaal');
+  });
+
   it('de terugknop en het hervatten kennen hun advies', () => {
     expect(rowSummary('terugknop', facts()).value).toBe('Naar Vandaag');
     expect(rowSummary('terugknop', withSettings({ tabBack: 'previous' })).value).toBe('Vorige tab');

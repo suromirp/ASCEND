@@ -321,7 +321,7 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
         </p>
         {note && <p className="mt-0.5 break-words text-xs" style={{ color: highlighted ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>{note}</p>}
       </div>
-      {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-action)' }}>{entry.change === 'nieuw' ? 'NIEUW' : entry.change === 'anders' ? 'ANDERS' : 'HIERHEEN'}</span>}
+      {highlighted && <span className="shrink-0"><Eyebrow as="span" tone="var(--color-action)">{entry.change === 'nieuw' ? 'Nieuw' : entry.change === 'anders' ? 'Anders' : 'Hierheen'}</Eyebrow></span>}
       {!highlighted && minutes !== undefined && !struck && <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutes} min</span>}
     </div>
   );

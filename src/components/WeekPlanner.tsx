@@ -153,7 +153,7 @@ export function WeekPlanner({
   if (days.length === 0) return <Eyebrow>GEEN DATA</Eyebrow>;
 
   return (
-    <div className="overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
+    <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>
       {days.map((date) => {
         const advice = dayOrder(sessions.filter((s) => s.scheduledDate === date && !loggedIds.has(s.id)), sessions.filter((s) => s.scheduledDate === addDays(date, 1)), templateById);
         const daySessions = orderDay(sessions.filter((s) => s.scheduledDate === date), advice);

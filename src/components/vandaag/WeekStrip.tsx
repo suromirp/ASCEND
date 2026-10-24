@@ -62,7 +62,7 @@ export function WeekStrip({
               </div>
               <span
                 aria-hidden="true"
-                className={`flex items-center justify-center text-xs tabular-nums ${isToday ? 'h-7 w-7 rounded-full font-bold' : 'h-7 w-7 font-medium'}`}
+                className={`flex items-center justify-center text-xs tabular-nums ${isToday ? 'mx-pulse-once h-7 w-7 rounded-full font-bold' : 'h-7 w-7 font-medium'}`}
                 style={isToday ? { background: 'var(--color-status)', color: 'var(--color-on-status)' } : { color: 'var(--color-ink-dim)' }}
               >
                 {letter}
