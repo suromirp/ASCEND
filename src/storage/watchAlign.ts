@@ -17,6 +17,7 @@ import { GoalMilestoneProgressRepo, SessionLogsRepo, SessionTemplatesRepo } from
 import { recordClearedMilestonesDetailed } from './milestoneClearing';
 import { declineAlignment } from './externalActivities';
 import { alignItemFor, applyAlignment, describeAlignLine, restoreManual } from '../engine/watchAlign';
+import { undoTrim } from '../engine/trimLog';
 import type { ExternalActivity } from '../engine/activityImport';
 import { formatDateNL } from '../utils/dates';
 
@@ -81,7 +82,9 @@ export function restoreAlignments(logIds: string[]): Promise<number> {
       if (!log?.manualMeasured) continue;
       for (const progressId of log.manualMeasured.clearedProgressIds ?? []) await GoalMilestoneProgressRepo.delete(progressId);
       if (log.externalId) externalIds.push(log.externalId);
-      await SessionLogsRepo.put(restoreManual(log));
+      // A cut made after the watch took over is taken back first: the hand-made
+      // numbers come back on top of the watch's, as they were before it.
+      await SessionLogsRepo.put(restoreManual(undoTrim(log)));
       restored++;
     }
     if (externalIds.length > 0) await declineAlignment(externalIds);

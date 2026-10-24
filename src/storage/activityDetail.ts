@@ -51,7 +51,8 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
   const state = await getWatchState();
   if (!detailsWanted(state.use)) return 'skipped';
   const log = (await SessionLogsRepo.getAll()).find((l) => l.externalId === activity.externalId);
-  if (!log || log.detail) return 'skipped';
+  // A log that was cut has the profile of what is kept (or none): never of the whole.
+  if (!log || log.detail || log.trim) return 'skipped';
   const connection = await getConnection();
   if (!connection) return 'skipped';
 
@@ -96,7 +97,7 @@ export async function attachDetailToStoredLog(logId: string, detail: ActivityDet
   const db = await getDB();
   const tx = db.transaction('sessionLogs', 'readwrite');
   const current = await tx.store.get(logId);
-  if (!current || current.detail) {
+  if (!current || current.detail || current.trim) {
     await tx.done;
     return false;
   }

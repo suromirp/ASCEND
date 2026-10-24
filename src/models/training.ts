@@ -7,7 +7,9 @@
 // append-only and are never mutated once created. One exception, at the
 // owner's explicit request: a log made by hand takes over the measured numbers
 // of the watch (`manualMeasured` keeps the hand-made ones, so it can be undone;
-// docs/beslissingen/2026-10-22-garmin-is-leidend.md).
+// docs/beslissingen/2026-10-22-garmin-is-leidend.md). A second, of the same kind:
+// a watch activity cut at the end or the beginning (`trim` keeps the numbers it
+// replaced; docs/beslissingen/2026-10-24-activiteit-inkorten.md).
 
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
@@ -330,6 +332,35 @@ export interface ManualStrength {
   tied?: { source: MetricSource };
 }
 
+// The numbers a trim replaced (engine/trimLog.ts,
+// docs/beslissingen/2026-10-24-activiteit-inkorten.md): a watch activity cut at
+// the end and/or the beginning, for example because the watch stayed on during a
+// drive home. `original` holds exactly the fields the trim overwrote, as they
+// were, so "Inkorten ongedaan maken" gives the log back exactly. A field the log
+// did not have is never added by a trim, so there is no "was empty" marker.
+export type TrimField = 'distanceKm' | 'elevationGainM' | 'elevationLossM' | 'avgHeartRate' | 'maxHeartRate';
+
+export interface SessionTrim {
+  // When it was trimmed (ISO date-time).
+  at: string;
+  // What was kept, in seconds on the clock of the activity (pauses included),
+  // and how long that clock ran in all.
+  startSec: number;
+  endSec: number;
+  totalSec: number;
+  // The block of the log that holds the measured fields.
+  block: 'cardioData' | 'outdoorData';
+  original: {
+    // SessionLog.durationMinutes before the trim.
+    durationMinutes: number;
+    // The duration of the block, only when it was not the same number.
+    blockDurationMinutes?: number;
+    // The profile that was replaced or dropped; absent: the log had none and a
+    // trim does not make one.
+    detail?: ActivityDetail;
+  } & Partial<Record<TrimField, number>>;
+}
+
 // The record of what actually happened. Corrections are made by adding a new
 // log, not mutating this one (exception: `manualMeasured`, see above).
 export interface SessionLog {
@@ -378,6 +409,9 @@ export interface SessionLog {
   // A log made by hand that took over the watch's numbers: the hand-made ones
   // as they were. Optional, additive; present only on such a log.
   manualMeasured?: ManualMeasured;
+  // A watch activity cut at the end and/or the beginning: the numbers it
+  // replaced, as they were. Optional, additive; present only on such a log.
+  trim?: SessionTrim;
   // The compact profile of a run or tocht: 48 pieces, the climbs and descents,
   // the conditions (models/activityDetail.ts). Derived from the watch's series
   // and fetched again from there if lost, so it is not part of the "never

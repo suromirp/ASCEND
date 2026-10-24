@@ -73,6 +73,8 @@ import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 import { announcementFor, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
+import { trimStoredLog, undoTrimStoredLog } from '../storage/trim';
+import type { StreamSet } from '../models/activityDetail';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { createSerialQueue } from '../utils/serialQueue';
 import { bootLockChoice, runBoot, type BootStep } from '../engine/bootWatch';
@@ -355,6 +357,12 @@ interface AppData {
   // were changed. And the other way: the hand-made numbers back.
   alignWithWatch: (requests: AlignRequest[]) => Promise<number>;
   restoreFromWatch: (logIds: string[]) => Promise<number>;
+  // "Inkorten": a watch activity cut at the end and/or the beginning (the series
+  // come from the sheet, in memory), and "Inkorten ongedaan maken". Both
+  // resolve to whether anything was written; the week check and the counters
+  // read the new numbers through the usual refresh (engine/trimLog.ts).
+  trimWatchActivity: (logId: string, streams: StreamSet, startSec: number, endSec: number) => Promise<boolean>;
+  undoTrimWatchActivity: (logId: string) => Promise<boolean>;
   // "MacroFactor is leidend voor kracht": existing strength logs take over the
   // numbers of the file; the moments go into the caller's batch, which the
   // caller announces once. restoreFromMacroFactor puts the old numbers back.
@@ -1426,6 +1434,35 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  // A cut changes the length, the distance and the climb of a training: the leg
+  // index, the week load and the Ascent meters count with the new numbers, so the
+  // plan is checked again, like after a putting back.
+  const trimWatchActivity = useCallback(
+    async (logId: string, streams: StreamSet, startSec: number, endSec: number): Promise<boolean> => {
+      const written = await trimStoredLog(logId, streams, startSec, endSec);
+      if (written) {
+        planRevision++;
+        await refresh();
+        void syncWatchWorkoutsAfterPlanChange();
+      }
+      return written;
+    },
+    [refresh],
+  );
+
+  const undoTrimWatchActivity = useCallback(
+    async (logId: string): Promise<boolean> => {
+      const written = await undoTrimStoredLog(logId);
+      if (written) {
+        planRevision++;
+        await refresh();
+        void syncWatchWorkoutsAfterPlanChange();
+      }
+      return written;
+    },
+    [refresh],
+  );
+
   // The leg index and the week load count with the new numbers: the plan is
   // checked again, like after the watch's numbers took over.
   const takeOverFromMacroFactor = useCallback(
@@ -2241,6 +2278,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setLogFeedback,
     alignWithWatch,
     restoreFromWatch,
+    trimWatchActivity,
+    undoTrimWatchActivity,
     takeOverFromMacroFactor,
     restoreFromMacroFactor,
     setLogWorkout,

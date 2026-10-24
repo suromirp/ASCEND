@@ -273,7 +273,11 @@ kind: an existing strength log takes over the duration, sets and reps in
 reserve of a MacroFactor workout, in the same field (its `strength` part) and
 put back with the same `restoreManual`
 (`docs/beslissingen/2026-10-22-macrofactor-leidend-voor-kracht.md`, which
-refers to the first and leaves it as it was).
+refers to the first and leaves it as it was). A third: a log from the watch
+can be cut at the beginning and the end (a drive home with the watch still on),
+which replaces its duration, distance, climb and heart rate and keeps the old
+ones in `SessionLog.trim`, put back by `engine/trimLog.ts#undoTrim`
+(`docs/beslissingen/2026-10-24-activiteit-inkorten.md`).
 The same append-only pattern applies to `MilestoneProgress` (the record of
 when an Ascent Ladder milestone was actually cleared, vs. the static
 `Objective` / `MilestoneDefinition` ladder).
