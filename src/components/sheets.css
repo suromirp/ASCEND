@@ -1,0 +1,7 @@
+/* Het onderblad (C3): het blad zelf is het vlak "surface", de kaarten erin staan
+   daar als "card" op. Elk blad is een Card zonder onderrand (`rounded-b-none`),
+   dus één regel is genoeg voor allemaal; inline stijl vraagt om !important. */
+.ui-card.rounded-b-none {
+  background: var(--color-surface) !important;
+  box-shadow: 0 -12px 40px color-mix(in srgb, var(--color-shadow) 50%, transparent);
+}

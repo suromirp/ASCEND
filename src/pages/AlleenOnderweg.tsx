@@ -58,13 +58,13 @@ export function AlleenOnderwegPage() {
         <Eyebrow>ALARM</Eyebrow>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="font-sans tabular-nums text-5xl leading-none" style={{ color: 'var(--color-gold)' }}>{EMERGENCY_NUMBER}</p>
+            <p className="font-sans tabular-nums text-5xl leading-none" style={{ color: 'var(--color-ink)' }}>{EMERGENCY_NUMBER}</p>
             <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Alarmnummer in Frankrijk, ook in de bergen</p>
           </div>
           <a
             href={`tel:${EMERGENCY_NUMBER}`}
             className="flex min-h-11 items-center whitespace-nowrap rounded-xl border px-4 text-xs font-semibold"
-            style={{ borderColor: 'var(--color-gold)', color: 'var(--color-gold)' }}
+            style={{ borderColor: 'var(--color-action)', color: 'var(--color-action)' }}
           >
             BEL {EMERGENCY_NUMBER}
           </a>
@@ -89,14 +89,14 @@ export function AlleenOnderwegPage() {
         <ol className="flex flex-col gap-3">
           {ALARM_STEPS.map((step, i) => (
             <li key={step} className="flex gap-3 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-              <span className="font-sans tabular-nums" style={{ color: 'var(--color-gold)' }}>{i + 1}</span>
+              <span className="font-sans tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{i + 1}</span>
               <span>{step}</span>
             </li>
           ))}
         </ol>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{NO_COVERAGE_NOTE}</p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_COST_NOTE}</p>
-        <button onClick={() => navigate('/kennis/noodgevallen')} className="min-h-11 text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
+        <button onClick={() => navigate('/kennis/noodgevallen')} className="min-h-11 text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
           Meer in de Kennisbank: Als het misgaat
         </button>
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -152,7 +152,7 @@ export function AlleenOnderwegPage() {
                       onClick={() => updateSolo({ satellite: selected ? '' : c.value })}
                       className="min-h-11 rounded-xl border px-1 text-xs font-medium transition-all active:scale-[0.98]"
                       style={selected
-                        ? { borderColor: 'var(--color-gold)', background: 'var(--color-card)', color: 'var(--color-gold)' }
+                        ? { borderColor: 'var(--color-action)', background: 'var(--color-card)', color: 'var(--color-action)' }
                         : { borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)', color: 'var(--color-ink-dim)' }}
                     >
                       {c.label}

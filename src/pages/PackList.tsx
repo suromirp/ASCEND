@@ -28,12 +28,12 @@ export function PackListPage() {
   const editingItem = editing?.kind === 'edit' ? items.find((i) => i.id === editing.id) : undefined;
 
   return (
-    <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-4">
+    <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
       <PageHeader eyebrow="Reis" title="Paklijst" line="Wat er in je rugzak gaat" fallback="/reis" />
 
       <Card className="flex flex-col gap-1" texture>
         <Eyebrow>BASISGEWICHT</Eyebrow>
-        <p className="font-sans tabular-nums text-4xl" style={{ color: 'var(--color-gold)' }}>{formatKg(baseGrams)}</p>
+        <p className="font-sans tabular-nums text-4xl" style={{ color: 'var(--color-ink)' }}>{formatKg(baseGrams)}</p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Alles wat in je rugzak zit, zonder eten en water. Het is de knop waar je zelf het meest aan kunt draaien.
         </p>
@@ -63,7 +63,7 @@ export function PackListPage() {
             </div>
           ))}
         </div>
-        {goalLine && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-gold)' }}>{goalLine}</p>}
+        {goalLine && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{goalLine}</p>}
       </Card>
 
       {PACK_GROUPS.map((group) => {

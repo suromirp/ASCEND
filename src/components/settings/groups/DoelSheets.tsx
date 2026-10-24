@@ -15,8 +15,8 @@ const PHASE_COLOR_SOFT: Record<string, string> = {
   phase_1: 'var(--color-stone)',
   phase_2: 'var(--color-sky)',
   phase_3: 'var(--color-alpine)',
-  phase_4: 'var(--color-bronze)',
-  phase_taper: 'var(--color-snow)',
+  phase_4: 'var(--color-action)',
+  phase_taper: 'var(--color-ink)',
   phase_onderhoud: 'var(--color-stone)',
 };
 

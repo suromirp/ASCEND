@@ -55,7 +55,7 @@ export function TrainingGuidePage() {
                   <p className="mt-0.5 text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template.name}</p>
                   <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{guide.subtitle}</p>
                 </div>
-                <span className="shrink-0 text-sm" style={{ color: 'var(--color-gold)' }}><Icon name="verder" size={16} /></span>
+                <span className="shrink-0 text-sm" style={{ color: 'var(--color-action)' }}><Icon name="verder" size={16} /></span>
               </Card>
             </button>
           );

@@ -27,7 +27,7 @@ export function KnowledgePage() {
       {lesson && (
         <Card className="flex flex-col gap-1" texture>
           <Eyebrow>DEZE WEEK</Eyebrow>
-          <button onClick={() => navigate(`/kennis/${lesson.id}`)} className="min-h-[44px] text-left font-display text-lg" style={{ color: 'var(--color-gold)' }}>{lesson.title}</button>
+          <button onClick={() => navigate(`/kennis/${lesson.id}`)} className="min-h-[44px] text-left font-display text-lg" style={{ color: 'var(--color-action)' }}>{lesson.title}</button>
         </Card>
       )}
       {ORDER.map((cat) => {
@@ -90,7 +90,7 @@ export function KnowledgeTopicPage() {
           <Eyebrow>KIJKEN</Eyebrow>
           {content.videos.map((v) => (
             <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] flex-col justify-center border-b py-2 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
-              <span className="text-sm" style={{ color: 'var(--color-gold)' }}>{v.title}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></span>
+              <span className="text-sm" style={{ color: 'var(--color-action)' }}>{v.title}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></span>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 {v.channel}{v.minutes ? ` · ${v.minutes} min` : ''}{v.language && v.language !== 'nl' ? ` · ${v.language === 'en' ? 'Engels' : v.language === 'de' ? 'Duits' : 'Frans'}` : ''}{v.note ? ` · ${v.note}` : ''}
               </span>
@@ -107,7 +107,7 @@ export function KnowledgeTopicPage() {
             <ul className="flex flex-col gap-1.5">
               {s.items.map((i) => (
                 <li key={i} className="flex gap-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-                  <span aria-hidden="true" style={{ color: 'var(--color-bronze)' }}>•</span>
+                  <span aria-hidden="true" style={{ color: 'var(--color-ink-dim)' }}>•</span>
                   <span>{i}</span>
                 </li>
               ))}
@@ -128,7 +128,7 @@ export function KnowledgeTopicPage() {
       <button
         onClick={() => void toggle()}
         className="min-h-[48px] rounded-xl border text-sm font-semibold"
-        style={{ borderColor: 'var(--color-bronze)', color: isRead ? 'var(--color-success)' : 'var(--color-gold)' }}
+        style={{ borderColor: 'var(--color-action)', color: isRead ? 'var(--color-progress)' : 'var(--color-action)' }}
       >
         {isRead ? 'Gelezen, terugzetten' : 'Markeer als gelezen'}
       </button>

@@ -57,7 +57,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
-      style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+      style={{ borderColor: active ? 'var(--color-action)' : 'var(--color-card-border)', color: active ? 'var(--color-action)' : 'var(--color-ink-dim)' }}
     >
       {children}
     </button>

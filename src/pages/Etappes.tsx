@@ -86,7 +86,7 @@ export function EtappesPage() {
 
       <Card className="flex flex-col gap-2">
         <Eyebrow>JE PLAN IN CIJFERS</Eyebrow>
-        <p className="font-display text-lg" style={{ color: 'var(--color-gold)' }}>
+        <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>
           <Num>{totals.walkDays}</Num> loopdagen{totals.restDays > 0 ? <> en <Num>{totals.restDays}</Num> {totals.restDays === 1 ? 'rustdag' : 'rustdagen'}</> : ''}
         </p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
@@ -126,7 +126,7 @@ export function EtappesPage() {
               >
                 <span className="min-w-0">
                   <span className="block text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-                    <span style={{ color: 'var(--color-gold)' }}>{stage.overall}</span> {stage.from} naar {stage.to}
+                    <span style={{ color: 'var(--color-ink-dim)' }}>{stage.overall}</span> {stage.from} naar {stage.to}
                   </span>
                   <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                     {stage.km === null ? 'afstand onbekend' : `${formatNumberNL(stage.km, 1)} km`}
@@ -134,7 +134,7 @@ export function EtappesPage() {
                     {' · '}{stage.down === null ? 'omlaag onbekend' : `${formatNumberNL(stage.down, 0)} m omlaag`}
                     {stage.minutes !== null && ` · ${formatStageTime(stage.minutes)}`}
                   </span>
-                  <span className="block text-xs leading-snug" style={{ color: 'var(--color-bronze)' }}>
+                  <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
                     {[
                       !second && day.date ? `${weekdayShortNL(day.date).toLowerCase()} ${formatDateNL(day.date).replace(/ \d{4}$/, '')}` : second ? 'zelfde dag als de vorige' : '',
                       first ? 'met de volgende op één dag' : '',

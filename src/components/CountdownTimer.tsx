@@ -81,17 +81,17 @@ export function CountdownTimer({
             <div className="flex flex-col items-center gap-3 py-2">
               <p
                 className="font-sans text-6xl"
-                style={{ color: done ? 'var(--color-gold)' : 'var(--color-ink)', fontVariantNumeric: 'tabular-nums' }}
+                style={{ color: done ? 'var(--color-progress)' : 'var(--color-ink)', fontVariantNumeric: 'tabular-nums' }}
               >
                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
               </p>
               <div className="h-1.5 w-full rounded-full" style={{ background: 'var(--color-charcoal)' }}>
                 <div
                   className="h-1.5 rounded-full transition-[width] duration-500"
-                  style={{ width: `${progress}%`, background: done ? 'var(--color-gold)' : 'var(--color-bronze)' }}
+                  style={{ width: `${progress}%`, background: 'var(--color-progress)' }}
                 />
               </div>
-              {done && <p className="text-sm" style={{ color: 'var(--color-gold)' }}>Tijd om.</p>}
+              {done && <p className="text-sm" style={{ color: 'var(--color-progress)' }}>Tijd om.</p>}
             </div>
 
             {editable && (

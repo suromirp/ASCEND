@@ -90,7 +90,7 @@ export function TrainingSpotsPage() {
               key={f?.label ?? 'alles'}
               onClick={() => setFilter(f)}
               className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs"
-              style={{ borderColor: active ? 'var(--color-gold)' : 'var(--color-card-border)', color: active ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
+              style={{ borderColor: active ? 'var(--color-action)' : 'var(--color-card-border)', color: active ? 'var(--color-action)' : 'var(--color-ink-dim)' }}
             >
               {f?.label ?? 'Alles'}
             </button>
@@ -106,7 +106,7 @@ export function TrainingSpotsPage() {
         <Eyebrow>GEEN HEUVEL IN DE BUURT?</Eyebrow>
         {FLAT_COUNTRY_TIPS.map((t) => (
           <p key={t} className="flex gap-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            <span style={{ color: 'var(--color-gold)' }}>·</span>
+            <span style={{ color: 'var(--color-ink-dim)' }}>·</span>
             <span>{t}</span>
           </p>
         ))}
@@ -121,8 +121,8 @@ function ClimbGlyph({ climbM }: { climbM?: number }) {
   const top = 34 - 30 * h;
   return (
     <svg viewBox="0 0 64 36" width="64" height="36" aria-hidden>
-      <path d={`M0 34 L22 ${top + 4} L30 ${top} L40 ${top + 6} L64 34 Z`} fill="var(--color-bronze-dark)" opacity="0.55" />
-      <path d={`M0 34 L22 ${top + 4} L30 ${top} L40 ${top + 6} L64 34`} fill="none" stroke="var(--color-gold)" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d={`M0 34 L22 ${top + 4} L30 ${top} L40 ${top + 6} L64 34 Z`} fill="var(--color-action-muted)" opacity="0.55" />
+      <path d={`M0 34 L22 ${top + 4} L30 ${top} L40 ${top + 6} L64 34`} fill="none" stroke="var(--color-action)" strokeWidth="1.5" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -151,8 +151,8 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{spot.example}</p>
 
       {focus && (
-        <p className="rounded-xl border px-3 py-2 text-sm leading-relaxed" style={{ borderColor: focus.limited ? 'var(--color-card-border)' : 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>
-          <span className="block text-xs font-medium tracking-[0.16em]" style={{ color: focus.limited ? 'var(--color-ink-dim)' : 'var(--color-gold)' }}>
+        <p className="rounded-xl border px-3 py-2 text-sm leading-relaxed" style={{ borderColor: focus.limited ? 'var(--color-card-border)' : 'var(--color-action-muted)', color: 'var(--color-ink)' }}>
+          <span className="block text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>
             {(templateName(focus.templateId) ?? '').toUpperCase()} HIER{focus.limited ? ' · BEPERKT' : ''}
           </span>
           {focus.how}
@@ -171,7 +171,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
 
       <div className="flex flex-wrap gap-1.5">
         {spot.uses.map((u) => (
-          <span key={u} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: 'var(--color-charcoal)', color: u === 'bergaf' ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{USE_LABEL[u]}</span>
+          <span key={u} className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: 'var(--color-charcoal)', color: u === 'bergaf' ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{USE_LABEL[u]}</span>
         ))}
       </div>
 
@@ -203,7 +203,7 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
         </div>
       )}
 
-      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-gold)' }}>
+      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center self-start text-xs font-medium underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
         Route ernaartoe<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" />
       </a>
     </Card>

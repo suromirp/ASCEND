@@ -26,10 +26,13 @@ export function SkyBand({
   children,
   variant = 'tall',
   actions,
+  gear = true,
 }: {
   children?: ReactNode;
   variant?: 'tall' | 'low';
   actions?: ReactNode;
+  // Het tandwiel is er op elke tab; op Instellingen zelf en de groepen ervan niet.
+  gear?: boolean;
 }) {
   const { pathname } = useLocation();
   const gradientId = useId();
@@ -39,7 +42,7 @@ export function SkyBand({
         <AppMark />
         <div className="flex items-center gap-2">
           {actions}
-          <SettingsGear from={pathname} />
+          {gear && <SettingsGear from={pathname} />}
         </div>
       </div>
       {children}

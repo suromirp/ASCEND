@@ -215,7 +215,7 @@ export function GarminLinkPage() {
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>DRIE STAPPEN</Eyebrow>
-        <Step n={1}>Maak een gratis account op <span style={{ color: 'var(--color-gold)' }}>intervals.icu</span>.</Step>
+        <Step n={1}>Maak een gratis account op <span style={{ color: 'var(--color-action)' }}>intervals.icu</span>.</Step>
         <Step n={2}>Koppel daar je Garmin. Vanaf dan komt elke training na het synchroniseren vanzelf op intervals.icu te staan.</Step>
         <Step n={3}>Open de instellingen van intervals.icu, onder Developer Settings. Kopieer je athlete-id en je API-sleutel en plak ze hieronder.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
@@ -368,7 +368,7 @@ export function GarminLinkPage() {
                     disabled={workouts.busy}
                     onClick={() => void workouts.changePrefix(key, updateSettings)}
                     className="min-h-[44px] flex-1 rounded-xl border px-2 text-xs font-medium disabled:opacity-40"
-                    style={{ borderColor: on ? 'var(--color-bronze)' : 'var(--color-control-border)', color: on ? 'var(--color-ink)' : 'var(--color-ink-dim)', background: on ? 'var(--color-surface)' : 'transparent' }}
+                    style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-control-border)', color: on ? 'var(--color-ink)' : 'var(--color-ink-dim)', background: on ? 'var(--color-surface)' : 'transparent' }}
                   >
                     {label}
                   </button>
@@ -470,7 +470,7 @@ function UseRow({ title, text, checked, onChange, note }: { title: string; text:
 function Step({ n, children }: { n: number; children: ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs" style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-gold)' }}>{n}</span>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs" style={{ borderColor: 'var(--color-action)', color: 'var(--color-action)' }}>{n}</span>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{children}</p>
     </div>
   );

@@ -8,10 +8,9 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '../components/BackButton';
 import { TrendLineChart } from '../components/TrendLineChart';
-import { Card, Eyebrow, Num, PrimaryButton, SecondaryButton } from '../components/ui';
-import { SettingsGearLink } from '../components/settings/SettingsLink';
+import { Card, Eyebrow, Num, PageHeader, PrimaryButton, SecondaryButton } from '../components/ui';
+import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, type ComparisonRow, type ExerciseView, type MissingData } from '../engine/strengthHistory';
@@ -48,15 +47,13 @@ export function ForgePage() {
   }, [strengthKey, sessionLogs, templates, program, bodyKg, today]);
 
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-4">
-      <div className="flex items-start gap-2">
-        <BackButton fallback="/stand" />
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-3xl" style={{ color: 'var(--color-ink)' }}>Forge</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</p>
-        </div>
-        <SettingsGearLink page="forge" label="Instellingen van Forge" />
-      </div>
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
+      <PageHeader
+        eyebrow="Stand"
+        title="Forge"
+        line="Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt."
+        fallback="/stand"
+      />
 
       {!model && (
         <Card className="flex flex-col gap-3">
@@ -79,6 +76,8 @@ export function ForgePage() {
         </Card>
       )}
 
+      {model && model.views.length === 0 && <SettingsPageLink page="forge" label="Instellingen van Forge" />}
+
       {model && model.views.length > 0 && (
         <>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
@@ -88,7 +87,7 @@ export function ForgePage() {
             <ExerciseCard key={v.history.key} view={v} />
           ))}
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
-          <button onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+          <button onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
             Instellingen van Forge: sportschool, opwarmen en meer
           </button>
         </>
@@ -147,7 +146,7 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
       )}
       {line.length >= 2 && (
         <div className="font-sans tabular-nums">
-          <TrendLineChart points={chartLine} color="var(--color-bronze)" height={90} formatValue={assisted && !liftedKg ? (v) => `hulp ${kg(Math.abs(v))}` : (v) => kg(Math.abs(v))} />
+          <TrendLineChart points={chartLine} color="var(--color-action)" height={90} formatValue={assisted && !liftedKg ? (v) => `hulp ${kg(Math.abs(v))}` : (v) => kg(Math.abs(v))} />
           {assisted && (
             <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               {liftedKg ? 'De lijn laat zien hoeveel je zelf optilt: je lichaamsgewicht min de hulp. Hoger is sterker.' : 'De lijn laat de hulp zien. Hoger op de lijn is minder hulp, dus sterker.'}
@@ -181,7 +180,7 @@ function ExerciseCard({ view }: { view: ExerciseView }) {
       )}
       {missing && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{missing}</p>}
       {refill && (
-        <button type="button" onClick={() => navigate('/koppelen/macrofactor')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-bronze)' }}>
+        <button type="button" onClick={() => navigate('/koppelen/macrofactor')} className="min-h-[44px] self-start text-left text-xs underline underline-offset-2" style={{ color: 'var(--color-action)' }}>
           MacroFactor opnieuw inlezen
         </button>
       )}

@@ -33,7 +33,7 @@ export function SettingsGearLink({ page, row, label }: { page: SettingsPageId; r
       state={r.state}
       aria-label={label}
       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border"
-      style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-bg)', color: 'var(--color-ink-dim)' }}
+      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink-dim)' }}
     >
       <Icon name="tandwiel" />
     </Link>

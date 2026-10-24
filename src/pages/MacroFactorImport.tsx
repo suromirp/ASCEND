@@ -344,7 +344,7 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
     <div className="flex gap-3">
       <span
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs"
-        style={{ borderColor: 'var(--color-bronze)', color: 'var(--color-gold)' }}
+        style={{ borderColor: 'var(--color-action)', color: 'var(--color-action)' }}
       >
         {n}
       </span>

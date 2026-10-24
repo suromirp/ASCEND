@@ -148,17 +148,17 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                         aria-checked={on}
                         onClick={() => setChoice(i)}
                         className="flex min-h-[48px] items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left"
-                        style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-card-border)', background: on ? tint('var(--color-gold)', 8) : 'transparent' }}
+                        style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)', background: on ? tint('var(--color-action)', 8) : 'transparent' }}
                       >
-                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-gold)' : 'var(--color-ink-dim)' }} aria-hidden>
-                          {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-gold)' }} />}
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: on ? 'var(--color-action)' : 'var(--color-ink-dim)' }} aria-hidden>
+                          {on && <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-action)' }} />}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm" style={{ color: 'var(--color-ink)' }}>{o.label}</span>
-                          {i === 0 && <span className="block text-xs" style={{ color: 'var(--color-gold)' }}>de kleinste verandering</span>}
+                          {i === 0 && <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>de kleinste verandering</span>}
                         </span>
                         {optionFreshness[i] && (
-                          <span className="shrink-0 text-right text-xs leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-gold)' }}>
+                          <span className="shrink-0 text-right text-xs leading-tight tabular-nums" style={{ color: optionFreshness[i]!.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-warning)' }}>
                             benen {formatNumberNL(optionFreshness[i]!.index, 1)}<br />{optionFreshness[i]!.status}
                           </span>
                         )}
@@ -201,7 +201,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
               {freshness && (
                 <p className="mt-3 flex items-baseline justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-xs" style={{ borderColor: 'var(--color-card-border)' }}>
                   <span style={{ color: 'var(--color-ink-dim)' }}>Benen op de {freshness.kind === 'race' ? 'wedstrijd' : 'testdag'}, {short(freshness.date)}</span>
-                  <span className="shrink-0 tabular-nums" style={{ color: freshness.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-gold)' }}>{formatNumberNL(freshness.index, 1)} · {freshness.status}</span>
+                  <span className="shrink-0 tabular-nums" style={{ color: freshness.status === 'fris' ? 'var(--color-alpine)' : 'var(--color-warning)' }}>{formatNumberNL(freshness.index, 1)} · {freshness.status}</span>
                 </p>
               )}
 
@@ -214,9 +214,9 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                       return (
                         <div key={d.date}>
                           <div className="mb-2 flex items-baseline gap-2">
-                            <span className="text-xs font-semibold" style={{ color: d.changed || isToday ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{weekdayShortNL(d.date)}</span>
+                            <span className="text-xs font-semibold" style={{ color: isToday ? 'var(--color-status)' : d.changed ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>{weekdayShortNL(d.date)}</span>
                             <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(d.date)}</span>
-                            {isToday && <span className="text-xs" style={{ color: 'var(--color-gold)' }}>vandaag</span>}
+                            {isToday && <span className="text-xs" style={{ color: 'var(--color-status)' }}>vandaag</span>}
                           </div>
                           {d.leave && <div className="mb-2"><LeaveBand label={d.leave} /></div>}
                           {d.entries.length === 0 ? (
@@ -262,13 +262,13 @@ function MoveLine({ move }: { move: PreviewMove }) {
           ) : move.action === 'change' ? (
             <>
               <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.to!)} · wordt </span>
-              <span style={{ color: 'var(--color-gold)' }}>{move.newName}</span>
+              <span style={{ color: 'var(--color-ink)' }}>{move.newName}</span>
             </>
           ) : (
             <>
               {move.from && <span style={{ color: 'var(--color-ink-dim)' }}>{short(move.from)}</span>}
-              {move.from && <span className="mx-1.5 inline-block align-[-2px]" style={{ color: 'var(--color-bronze)' }}><Icon name="verder" size={14} /></span>}
-              <span style={{ color: 'var(--color-gold)' }}>{short(move.to!)}</span>
+              {move.from && <span className="mx-1.5 inline-block align-[-2px]" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={14} /></span>}
+              <span style={{ color: 'var(--color-ink)' }}>{short(move.to!)}</span>
               {!move.from && <span style={{ color: 'var(--color-ink-dim)' }}> · nieuw</span>}
             </>
           )}
@@ -279,7 +279,7 @@ function MoveLine({ move }: { move: PreviewMove }) {
 }
 
 function Glyph({ kind }: { kind: 'move' | 'add' | 'remove' | 'change' }) {
-  const color = kind === 'remove' ? 'var(--color-ink-dim)' : 'var(--color-gold)';
+  const color = kind === 'remove' ? 'var(--color-ink-dim)' : 'var(--color-action)';
   return (
     <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: tint(color, 14) }} aria-hidden>
       <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -309,8 +309,8 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
     <div
       className="flex items-center gap-3 rounded-2xl border px-4 py-3"
       style={{
-        borderColor: highlighted ? 'var(--color-gold)' : 'var(--color-card-border)',
-        background: highlighted ? tint('var(--color-gold)', 9) : struck ? 'transparent' : 'var(--color-card)',
+        borderColor: highlighted ? 'var(--color-action)' : 'var(--color-card-border)',
+        background: highlighted ? tint('var(--color-action)', 9) : struck ? 'transparent' : 'var(--color-card)',
         opacity: struck ? 0.6 : 1,
       }}
     >
@@ -319,9 +319,9 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
         <p className="break-words text-sm font-medium" style={{ color: struck ? 'var(--color-ink-dim)' : 'var(--color-ink)', textDecoration: struck ? 'line-through' : undefined }}>
           {rest ? 'Rustdag' : entry.name}
         </p>
-        {note && <p className="mt-0.5 break-words text-xs" style={{ color: highlighted ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}>{note}</p>}
+        {note && <p className="mt-0.5 break-words text-xs" style={{ color: highlighted ? 'var(--color-action)' : 'var(--color-ink-dim)' }}>{note}</p>}
       </div>
-      {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-gold)' }}>{entry.change === 'nieuw' ? 'NIEUW' : entry.change === 'anders' ? 'ANDERS' : 'HIERHEEN'}</span>}
+      {highlighted && <span className="shrink-0 text-xs font-semibold tracking-[0.12em]" style={{ color: 'var(--color-action)' }}>{entry.change === 'nieuw' ? 'NIEUW' : entry.change === 'anders' ? 'ANDERS' : 'HIERHEEN'}</span>}
       {!highlighted && minutes !== undefined && !struck && <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutes} min</span>}
     </div>
   );

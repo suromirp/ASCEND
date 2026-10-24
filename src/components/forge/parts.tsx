@@ -8,18 +8,22 @@ import { formatNumberNL } from '../../utils/number';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Icon } from '../icons';
 import { Portal } from '../Portal';
+import { Eyebrow } from '../ui';
 
-// De kleuren die de eigenaar kent: 0 en 1 rood, 2 oranje, 3 geel, meer steen.
+// De inspanningskleuren van het thema, van zwaar naar rustig: 0 en 1 over is
+// Z5 (roze rood), 2 oranje, 3 geel, 4 groen en 5 of meer het lichte blauw. Het
+// getal staat er altijd in, kleur is nooit het enige signaal.
 function rirColor(rir: number): string {
-  if (rir <= 1) return 'var(--color-rir-hard)';
-  if (rir === 2) return 'var(--color-rir-mid)';
-  if (rir === 3) return 'var(--color-rir-easy)';
-  return 'var(--color-rir-light)';
+  if (rir <= 1) return 'var(--color-effort-5)';
+  if (rir === 2) return 'var(--color-effort-4)';
+  if (rir === 3) return 'var(--color-effort-3)';
+  if (rir === 4) return 'var(--color-effort-2)';
+  return 'var(--color-effort-1)';
 }
 
 // Het bolletje met de herhalingen in reserve. Klein te zien, 44 px te tikken.
 export function RirBubble({ rir, onClick, label }: { rir: number; onClick?: () => void; label: string }) {
-  const style = { background: rirColor(rir), color: 'var(--color-on-gold)' };
+  const style = { background: rirColor(rir), color: 'var(--color-on-action)' };
   const face = <span className="flex h-6 w-6 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums" style={style}>{rir >= 5 ? '5+' : rir}</span>;
   if (!onClick) return <span aria-label={label} className="flex h-6 w-6 items-center justify-center">{face}</span>;
   return (
@@ -45,9 +49,9 @@ export function TickBox({ done, onClick, label }: { done: boolean; onClick: () =
       }}
       className={`relative flex h-8 w-8 items-center justify-center rounded-lg border before:absolute before:-inset-2 before:content-[''] ${done && played ? 'forge-pop' : ''}`}
       style={{
-        borderColor: done ? 'var(--color-success)' : 'var(--color-control-border)',
-        background: done ? 'var(--color-success)' : 'transparent',
-        color: 'var(--color-ink)',
+        borderColor: done ? 'var(--color-progress)' : 'var(--color-control-border)',
+        background: done ? 'var(--color-progress)' : 'transparent',
+        color: done ? 'var(--color-on-action)' : 'var(--color-ink)',
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
       }}
     >
@@ -102,7 +106,7 @@ export function ValueCell({
         transition: 'box-shadow 0.18s ease, background-color 0.2s ease',
       }}
     >
-      <span ref={face} className="rounded px-1" style={{ background: active && selected && text !== '' ? 'color-mix(in srgb, var(--color-bronze) 38%, transparent)' : 'transparent', transition: 'background-color 0.15s ease' }}>
+      <span ref={face} className="rounded px-1" style={{ background: active && selected && text !== '' ? 'color-mix(in srgb, var(--color-action) 32%, transparent)' : 'transparent', transition: 'background-color 0.15s ease' }}>
         {text === '' ? '\u00a0' : text}
       </span>
     </button>
@@ -178,12 +182,13 @@ export function ForgeSheet({ title, sub, onClose, children }: { title: string; s
       <div className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div
           className={`flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-b-0 ${closing ? 'forge-down' : 'forge-up'}`}
-          style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
+          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)', ['--forge-fill' as string]: 'var(--color-surface)' }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-start gap-2 px-4 pb-2 pt-3">
             <div className="min-w-0 flex-1 pt-2">
-              <p className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{title}</p>
+              <Eyebrow>Forge</Eyebrow>
+              <h2 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{title}</h2>
               {sub && <p className="mt-0.5 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sub}</p>}
             </div>
             <button type="button" onClick={requestClose} aria-label="Sluiten" className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
