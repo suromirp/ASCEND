@@ -20,7 +20,7 @@ export type WarmupScope = 'group' | 'exercise';
 // What happens when the rest timer of the workout screen runs out.
 export type RestAlert = 'sound_vibrate' | 'vibrate' | 'sound' | 'off';
 // The sound at the end of the rest: three soft bells, one deep bell, or the old beep.
-export type RestSound = 'chime' | 'bell' | 'beep';
+export type RestSound = 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -158,7 +158,7 @@ const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
 const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
 export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
-export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep'];
+export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
 export const REST_LIMITS = { min: 15, max: 600 };
 export const EXERCISE_NOTE_MAX = 200;
 const MAX_PER_EXERCISE_ENTRIES = 300;

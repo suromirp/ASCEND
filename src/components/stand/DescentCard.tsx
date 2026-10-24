@@ -18,6 +18,15 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
   const plotH = H - BOTTOM - 14;
   const biggest = Math.max(0, ...weeks.map((w) => w.biggestDay));
   const last4 = weeks.slice(-4).reduce((n, w) => n + w.metres, 0);
+  // Nothing measured at all: one line instead of an empty chart with axes.
+  if (weeks.every((w) => w.metres <= 0)) {
+    return (
+      <Card className="flex flex-col gap-1">
+        <Eyebrow>DALEN</Eyebrow>
+        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen dalingen gemeten</p>
+      </Card>
+    );
+  }
   return (
     <Card className="flex flex-col gap-3">
       <div>

@@ -328,7 +328,7 @@ export function GoalsPage() {
 
       {goal && <GR5GoalCard key={goal.targetDate ?? 'geen-datum'} goal={goal} busy={horizon.busy} resetKey={draftReset} onUpdate={(patch) => updateGoal(goal.id, patch)} onDate={(date) => void changeDate(goal.id, date)} onArchive={() => askArchive(goal.id)} />}
 
-      <MarathonGoalCard key={`${marathonGoal?.targetDate ?? settings.marathonTargetDate ?? ''}|${settings.marathonTargetTimeMinutes ?? ''}`} settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} busy={horizon.busy} resetKey={draftReset} onUpdate={changeMarathon} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
+      <MarathonGoalCard settings={settings} sessionLogs={sessionLogs} marathonGoal={marathonGoal} busy={horizon.busy} resetKey={draftReset} onUpdate={changeMarathon} onArchive={marathonGoal ? () => askArchive(marathonGoal.id) : undefined} />
 
       <CustomGoalsList goals={customGoals} onArchive={askArchive} />
 
@@ -593,6 +593,15 @@ function MarathonGoalCard({
   const [seenReset, setSeenReset] = useState(resetKey);
   if (seenReset !== resetKey) {
     setSeenReset(resetKey);
+    setDateDraft(targetDate ?? '');
+    resetTime();
+  }
+  // The stored date or time changed (after Akkoord): the drafts follow, and the
+  // card stays as it is, so an open "geavanceerd" does not fold shut.
+  const storedKey = `${targetDate ?? ''}|${totalMinutes ?? ''}`;
+  const [seenStored, setSeenStored] = useState(storedKey);
+  if (seenStored !== storedKey) {
+    setSeenStored(storedKey);
     setDateDraft(targetDate ?? '');
     resetTime();
   }
