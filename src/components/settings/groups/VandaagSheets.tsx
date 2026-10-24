@@ -84,13 +84,13 @@ export function ClothingSheet({ onClose }: { onClose: () => void }) {
           const atMax = v >= MAX_ADJUST_C;
           const atMin = v <= -MAX_ADJUST_C;
           return (
-            <div key={s} className="st-row">
+            <div key={s} className="st-row step">
               <span className="t"><span className="st-title-text">{SPORT_LABEL[s]}</span></span>
               <span className="v" style={{ pointerEvents: 'auto' }}>
                 <button type="button" className="st-step" aria-label={`${SPORT_LABEL[s]}: warmer kleden`} disabled={atMin} onClick={() => nudge(s, 'too_cold')}>
                   <Icon name="min" size={18} />
                 </button>
-                <span className="st-num" style={{ minWidth: 92, textAlign: 'center', color: v ? 'var(--color-ink)' : undefined }}>
+                <span className="st-num" style={{ minWidth: 84, textAlign: 'center', color: v ? 'var(--color-ink)' : undefined }}>
                   {v ? `${String(Math.abs(v)).replace('.', ',')}° ${v > 0 ? 'lichter' : 'warmer'}` : 'Standaard'}
                 </span>
                 <button type="button" className="st-step" aria-label={`${SPORT_LABEL[s]}: lichter kleden`} disabled={atMax} onClick={() => nudge(s, 'too_warm')}>
