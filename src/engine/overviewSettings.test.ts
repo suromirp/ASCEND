@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionLog } from '../models/training';
-import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showMorningCardSetting, showWeatherLine, showWeatherSwap, showWeeklyQuestion } from './overviewSettings';
+import { DEFAULT_OVERVIEWS, morningCheckInMode, needsWeather, resolveOverviews, showMorningCheckInCard, reviewWeekToShow, showCompletionQuote, showMorningCheckIn, showMorningCardSetting, showWeatherLine, showWeatherSwap, showWeeklyQuestion, showBestMoment } from './overviewSettings';
 import { reviewWeekFor } from './weekReview';
 
 describe('resolveOverviews', () => {
@@ -54,6 +54,7 @@ describe('de losse schakelaars', () => {
       ['morningCheckIn', showMorningCheckIn],
       ['weatherLine', showWeatherLine],
       ['weatherSwap', showWeatherSwap],
+      ['bestMoment', showBestMoment],
       ['completionMoment', showCompletionQuote],
     ] as const;
     for (const [key, fn] of fns) {

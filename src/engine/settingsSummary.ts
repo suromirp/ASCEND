@@ -322,6 +322,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.weatherLine };
     case 'weerruil':
       return { checked: o.weatherSwap };
+    case 'beste-moment':
+      return { checked: o.bestMoment };
     case 'kledingadvies':
       return { checked: o.clothingAdvice };
     case 'kleding-voorkeur': {
@@ -466,7 +468,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
     }
     case 'vandaag': {
       const o = resolveOverviews(s.overviews);
-      const aan = [o.morningCheckIn, o.weekReview, o.weeklyQuestion, o.weatherLine, o.weatherSwap, o.clothingAdvice, o.completionMoment, s.introSoundEnabled].filter(Boolean).length;
+      const aan = [o.morningCheckIn, o.weekReview, o.weeklyQuestion, o.weatherLine, o.weatherSwap, o.bestMoment, o.clothingAdvice, o.completionMoment, s.introSoundEnabled].filter(Boolean).length;
       const place = s.homeLocation;
       const follows = isMyLocation(place) && o.weatherFollowsLocation;
       return { value: `${aan} aan`, sub: follows ? 'Weer volgt je locatie' : place ? `Weer voor ${place.name}` : 'Nog geen plaats voor het weer' };

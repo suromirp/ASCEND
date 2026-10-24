@@ -5,7 +5,10 @@
 // ("bijgewerkt om 13.05").
 //
 // Placed on the mission card of Today and in the training explanation; the
-// engine (engine/weather.ts) does all the work.
+// engine (engine/weather.ts) does all the work. When the weather at your
+// usual hour is worse than a block later or earlier that day, a second dimmed
+// line says so ("Beste moment: 16 tot 17.30 uur, droog", engine/bestMoment.ts);
+// otherwise nothing is added.
 //
 // `onOpen` makes the line a button (the mission card passes it, the page Weer
 // opens). With it, an outdoor training with no place chosen yet gets one calm
@@ -17,7 +20,8 @@ import type { SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isForecastStale, isWeatherSensitive, updatedLabel, weatherForTraining } from '../engine/weather';
-import { showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
+import { showBestMoment, showClothingAdvice, showWeatherLine } from '../engine/overviewSettings';
+import { bestMomentForTraining } from '../engine/bestMoment';
 import { weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
 import { templateSport } from '../engine/sports';
@@ -56,10 +60,14 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
     clothingOn: showClothingAdvice(settings.overviews),
   }) ?? w.line;
   const lead = w.verdict === 'slecht' ? 'Slecht weer: ' : w.verdict === 'let_op' ? 'Let op: ' : '';
+  const best = showBestMoment(settings.overviews)
+    ? bestMomentForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now })
+    : undefined;
   const text = (
     <>
       {lead}{line}
       {stale && <span style={{ color: 'var(--color-ink-dim)' }}> · {updatedLabel(weather.forecast.fetchedAt)}</span>}
+      {best && <span className="mt-0.5 block" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</span>}
     </>
   );
   if (onOpen) {

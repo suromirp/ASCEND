@@ -35,6 +35,9 @@ export interface OverviewSettings {
   weatherLine?: boolean;
   // Ruilvoorstellen bij slecht weer (regel WEATHER-SWAP).
   weatherSwap?: boolean;
+  // Het beste moment van de dag voor een buitentraining, één rustige regel
+  // onder het weer (engine/bestMoment.ts). Ontbreekt de sleutel, dan staat hij aan.
+  bestMoment?: boolean;
   // Het kledingadvies bij het weer (engine/clothing.ts).
   clothingAdvice?: boolean;
   // "Weer volgt je locatie" (engine/weatherLocation.ts): een plaats die "Mijn
@@ -56,6 +59,7 @@ export const DEFAULT_OVERVIEWS: ResolvedOverviews = {
   morningCardFrom: '5',
   weatherLine: true,
   weatherSwap: true,
+  bestMoment: true,
   clothingAdvice: true,
   weatherFollowsLocation: true,
   completionMoment: true,
@@ -78,6 +82,7 @@ export function resolveOverviews(raw: OverviewSettings | undefined | null): Reso
     morningCardFrom: MORNING_FROM.find((h) => h === r.morningCardFrom) ?? DEFAULT_OVERVIEWS.morningCardFrom,
     weatherLine: flag('weatherLine'),
     weatherSwap: flag('weatherSwap'),
+    bestMoment: flag('bestMoment'),
     clothingAdvice: flag('clothingAdvice'),
     weatherFollowsLocation: flag('weatherFollowsLocation'),
     completionMoment: flag('completionMoment'),
@@ -126,6 +131,7 @@ export const showWeatherLine = (raw: OverviewSettings | undefined) => resolveOve
 export const showClothingAdvice = (raw: OverviewSettings | undefined) => resolveOverviews(raw).clothingAdvice;
 export const followsLocation = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherFollowsLocation;
 export const showWeatherSwap = (raw: OverviewSettings | undefined) => resolveOverviews(raw).weatherSwap;
+export const showBestMoment = (raw: OverviewSettings | undefined) => resolveOverviews(raw).bestMoment;
 // Het scherm na een training blijft altijd (feiten, coachregel, doel, week en
 // benen). De schakelaar bepaalt alleen of het citaat erbij staat. Een behaalde
 // mijlpaal krijgt het citaat altijd.
