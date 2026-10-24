@@ -57,7 +57,7 @@ export function WeekStrip({
                 ) : rest ? (
                   <span className="flex items-center" style={{ color: 'var(--color-status)' }}><MoonGlyph size={18} /></span>
                 ) : (
-                  <span className="mb-2 block h-0.5 w-2.5 rounded-full" style={{ background: 'var(--color-card-border)' }} />
+                  <span className="mb-2 block h-0.5 w-2.5 rounded-full" style={{ background: 'var(--color-control-border)' }} />
                 )}
               </div>
               <span

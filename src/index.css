@@ -378,23 +378,25 @@ html[data-sky='night'] .sky-band::before {
 /* Splash/loading-screen brand mark (components/AscendAnimatedLogo.tsx):
    pure SVG, no image asset. The outer ring+glow breathes, a point of light
    travels up the winding trail via CSS offset-path, and the peak flashes
-   as it arrives. */
+   as it arrives. Twice, then it rests (nothing keeps looping except the
+   breath of the mission card, docs/beslissingen/2026-10-24-beweging.md);
+   in Rustig once. */
 .ascend-logo-glowpulse {
-  animation: ascend-logo-glow-pulse 5s ease-in-out infinite;
+  animation: ascend-logo-glow-pulse 5s ease-in-out 2;
 }
 
 .ascend-logo-ringbreathe {
-  animation: ascend-logo-ring-breathe 5s ease-in-out infinite;
+  animation: ascend-logo-ring-breathe 5s ease-in-out 2;
 }
 
 .ascend-logo-sparkflash {
-  animation: ascend-logo-spark-flash 4.5s ease-in-out infinite;
+  animation: ascend-logo-spark-flash 4.5s ease-in-out 2;
 }
 
 .ascend-logo-lightpoint {
   offset-path: path('M120,58 C108,82 133,100 116,122 C102,142 130,158 112,182 C102,196 122,204 112,206');
   offset-rotate: 0deg;
-  animation: ascend-logo-travel-up 6s linear infinite;
+  animation: ascend-logo-travel-up 6s linear 2;
 }
 
 @keyframes ascend-logo-glow-pulse {
@@ -921,6 +923,13 @@ html[data-motion='calm'] .mx-meter,
 html[data-motion='calm'] .mx-pulse-once,
 html[data-motion='calm'] .mx-attention {
   animation: none;
+}
+
+html[data-motion='calm'] .ascend-logo-glowpulse,
+html[data-motion='calm'] .ascend-logo-ringbreathe,
+html[data-motion='calm'] .ascend-logo-sparkflash,
+html[data-motion='calm'] .ascend-logo-lightpoint {
+  animation-iteration-count: 1;
 }
 
 html[data-motion='calm'] .mx-notice-in {

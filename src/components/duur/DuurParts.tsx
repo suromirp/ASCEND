@@ -255,7 +255,7 @@ export function MoreText({ text, className = '', color }: { text: string; classN
         <>
           {' '}
           <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="relative font-medium" style={{ color: 'var(--color-action)' }}>
-            <span aria-hidden="true" className="absolute -inset-3" />
+            <span aria-hidden="true" className="absolute -inset-x-3 -inset-y-3.5" />
             {open ? 'Minder' : 'Meer'}
           </button>
         </>
