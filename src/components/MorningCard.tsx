@@ -75,7 +75,7 @@ export function MorningCard() {
             <SecondaryButton onClick={undo}>Ongedaan maken</SecondaryButton>
           </div>
         </Card>
-        {sheet && <MorningCheckInSheet onClose={() => setSheet(null)} />}
+        {sheet && <MorningCheckInSheet onClose={() => setSheet(null)} onSaved={() => markMorningAnswered(today)} />}
       </>
     );
   }
@@ -154,7 +154,7 @@ export function MorningCard() {
           Energie, slaap of pijn invullen
         </button>
       </Card>
-      {sheet && <MorningCheckInSheet initialLegs={sheet.legs} onClose={() => setSheet(null)} />}
+      {sheet && <MorningCheckInSheet initialLegs={sheet.legs} onClose={() => setSheet(null)} onSaved={() => markMorningAnswered(today)} />}
     </>
   );
 }
@@ -200,5 +200,5 @@ export function MorningDeepLink() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  return open ? <MorningCheckInSheet onClose={() => setOpen(false)} /> : null;
+  return open ? <MorningCheckInSheet onClose={() => setOpen(false)} onSaved={() => markMorningAnswered(today)} /> : null;
 }

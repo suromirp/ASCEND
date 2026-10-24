@@ -65,6 +65,13 @@
   --color-status-on-light: #1b5aa6;
   --color-warning-on-light: #8a5512;
   --color-danger-on-light: #b3263c;
+  /* De sportkleuren voor de lichte lucht: dezelfde tinten, donkerder. Minstens
+     3:1 op de lichte kaart (4,0 / 5,2 / 4,4 / 4,8) en op de lucht zelf (3,5 /
+     4,5 / 3,8 / 4,1). */
+  --color-sport-run-on-light: #c2610a;
+  --color-sport-strength-on-light: #6a54d6;
+  --color-sport-walk-on-light: #35853a;
+  --color-sport-stretch-on-light: #c13a7e;
   /* De twee bergrijen: achter saliegroen, voor donker groenblauw dat overloopt
      in het marine. */
   --color-mountain-back: #a7d1bd;
@@ -110,13 +117,6 @@
   --color-chart-strength: #b4a6ff;
   --color-chart-walk: #8fdb8a;
   --color-chart-other: #f4a3c8;
-  /* De bolletjes met herhalingen in reserve (RIR) in het workoutscherm van
-     Forge, de kleuren die de eigenaar kent: 0 en 1 rood, 2 oranje, 3 geel,
-     4 en meer steen. Met donkere tekst erop. */
-  --color-rir-hard: #ee5577;
-  --color-rir-mid: #e0753a;
-  --color-rir-easy: #f2d86a;
-  --color-rir-light: #94a6c8;
   /* De schijven op de stang in het invoerpaneel van Forge: één rustige kleur per gewicht. */
   --color-plate-1: #8c97a8;
   --color-plate-2: #7fa6c4;
@@ -226,51 +226,6 @@ body {
     repeating-radial-gradient(ellipse at 88% 8%, transparent 0 17px, color-mix(in srgb, var(--color-action) 4%, transparent) 18px 19px);
 }
 
-/* Je dag: een dunne lijn met een stip per regel (components/vandaag/DayRow.tsx). */
-.day-line {
-  position: relative;
-  padding-left: 22px;
-}
-.day-line::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 22px;
-  bottom: 22px;
-  width: 1px;
-  background: var(--color-card-border);
-}
-.day-row {
-  position: relative;
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-}
-.day-row::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  width: 9px;
-  height: 9px;
-  margin-top: -4.5px;
-  border-radius: 50%;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-stone);
-}
-.day-row[data-state='now']::before {
-  background: var(--color-status);
-  border-color: var(--color-status);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-status) 18%, transparent);
-}
-.day-row[data-state='skipped'] {
-  opacity: 0.6;
-}
-.day-row[data-state='done']::before {
-  background: var(--color-success);
-  border-color: var(--color-success);
-}
-
 .font-display {
   font-family: var(--font-display);
 }
@@ -303,6 +258,10 @@ html[data-sky='night'] {
   --color-status-on-light: #93ccff;
   --color-warning-on-light: #dba660;
   --color-danger-on-light: #ff9696;
+  --color-sport-run-on-light: #ffb26b;
+  --color-sport-strength-on-light: #b4a6ff;
+  --color-sport-walk-on-light: #8fdb8a;
+  --color-sport-stretch-on-light: #f4a3c8;
   --color-mountain-back: #34544c;
   --color-mountain-front: #123a40;
   --color-tab-vandaag-light: #5eead4;
@@ -364,6 +323,10 @@ html[data-sky='night'] .sky-band::before {
   --color-stone: var(--color-on-light-dim);
   --color-warning: var(--color-warning-on-light);
   --color-danger-text: var(--color-danger-on-light);
+  --color-sport-run: var(--color-sport-run-on-light);
+  --color-sport-strength: var(--color-sport-strength-on-light);
+  --color-sport-walk: var(--color-sport-walk-on-light);
+  --color-sport-stretch: var(--color-sport-stretch-on-light);
   --color-page: var(--color-page-light);
   color: var(--color-on-light);
 }

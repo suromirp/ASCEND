@@ -47,7 +47,7 @@ export function SettingsOverview() {
 
   return (
     <div className="st-page st-home animate-page-in">
-      <SkyBand variant="low">
+      <SkyBand variant="low" gear={false}>
         <Eyebrow>Meer</Eyebrow>
         <h1 className="st-title">Instellingen</h1>
       </SkyBand>

@@ -159,8 +159,9 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             )}
 
             {intention?.answer && (
-              <Section title="Waarom je dit doet">
-                <blockquote className="border-l-2 pl-3 text-sm italic leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{intention.answer}</blockquote>
+              <Section title="Je antwoord deze week">
+                {intention.question && <p className="mb-2 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{intention.question}</p>}
+                <blockquote className="border-l-2 pl-3 text-sm italic leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>{intention.answer}</blockquote>
               </Section>
             )}
 

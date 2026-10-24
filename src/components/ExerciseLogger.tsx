@@ -526,7 +526,6 @@ function GeneralLogger({
                     key={n}
                     role="radio"
                     aria-checked={active}
-                    aria-pressed={active}
                     onClick={() => setRpe(active ? '' : n)}
                     className="st-chip"
                     style={{ padding: 0, borderColor: active ? undefined : inPlan ? 'var(--color-action-muted)' : undefined, color: inPlan && !active ? 'var(--color-ink)' : undefined }}

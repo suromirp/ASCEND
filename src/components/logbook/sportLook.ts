@@ -12,7 +12,7 @@ export const SPORT_LOOK: Record<SportKey, { label: string; color: string; icon: 
   strength: { label: 'Kracht', color: 'var(--color-sport-strength)', icon: 'kracht' },
   walk: { label: 'Wandelen', color: 'var(--color-sport-walk)', icon: 'wandelen' },
   bike: { label: 'Fietsen', color: 'var(--color-sport-stretch)', icon: 'buiten' },
-  other: { label: 'Overig', color: 'var(--color-sport-stretch)', icon: 'rekken' },
+  other: { label: 'Overig', color: 'var(--color-ink-dim)', icon: 'rekken' },
 };
 
 export function sportKeyOfLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): SportKey {
