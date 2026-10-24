@@ -408,6 +408,13 @@ evidence from `docs/onderzoek/`.
 when a training falls in its window; otherwise the row says so or compares with the
 previous training, with its date. Exercises on reps (bodyweight) show reps as the
 main number. Exercises not done since the furthest moment sit under "Eerder gedaan".
+ASCEND is tested quietly against MacroFactor with one measure, **raak**
+(`engine/prescriptionCheck.ts`, decision
+`docs/beslissingen/2026-10-24-kracht-stil-toetsen.md`): the same function and slack for
+both sides, on the same set of the same day, never agreement between the two. For
+ASCEND it is an estimate afterwards, except in Forge when the proposed weight was used.
+On cables and weight stacks ASCEND learns the weights you really used
+(`engine/strengthWeights.ts`, "Gewichten van toestellen leren").
 
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when

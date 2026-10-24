@@ -235,6 +235,7 @@ export function ForgePage() {
 // staat.
 function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string }) {
   const [open, setOpen] = useState(false);
+  const [info, setInfo] = useState(false);
   const summary = useMemo(() => checkSummary(rows, from), [rows, from]);
   const all = checkLines(summary.all);
   const since = checkLines(summary.since);
@@ -244,7 +245,10 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
   const empty = !all.macrofactor && !all.forge;
   return (
     <Card className="flex flex-col gap-2">
-      <Eyebrow>Voorstel en wat je deed</Eyebrow>
+      <div className="flex items-center justify-between gap-2">
+        <Eyebrow>Voorstel en wat je deed</Eyebrow>
+        <InfoButton onClick={() => setInfo((v) => !v)} label={info ? 'Uitleg over raak sluiten' : 'Uitleg over raak'} />
+      </div>
       {empty && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen met herhalingen in reserve nodig, waarvoor ASCEND vooraf iets kon voorstellen.</p>
       )}
@@ -252,9 +256,11 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
       {sinceMacroFactor && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceMacroFactor}</p>}
       {all.forge && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.forge}</p>}
       {sinceForge && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceForge}</p>}
-      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het een schatting achteraf, uit de beste set van die dag, behalve in Forge als je het voorgestelde gewicht pakte.
-      </p>
+      {info && (
+        <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+          Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het een schatting achteraf, uit de beste set van die dag, behalve in Forge als je het voorgestelde gewicht pakte.
+        </p>
+      )}
       {rows.some((r) => r.check) && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per training bekijken</TextButton>}
       {open && <ComparisonSheet rows={rows} summary={summary} onClose={() => setOpen(false)} />}
     </Card>
@@ -307,7 +313,7 @@ function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; su
             );
           })}
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Een vinkje zegt dat het gewicht raak was voor die dag, bij jou en bij ASCEND voor dezelfde set. Bij ASCEND is dat een schatting achteraf, behalve in Forge als je het voorgestelde gewicht pakte.
+            Vinkje: raak voor die dag. Bij ASCEND een schatting achteraf, behalve in Forge.
           </p>
         </div>
         {groups.map((g) => (
