@@ -395,7 +395,9 @@ interface AppData {
   // loopt nog; de melding komt zodra het klaar is. 'partial': half gelukt en
   // terugzetten lukte niet; de melding toont wat veranderde, met ongedaan maken.
   planHorizonChange: (input: HorizonChangeInput) => Promise<HorizonPlan>;
-  applyHorizonPlan: (plan: HorizonPlan) => Promise<HorizonApplyStatus>;
+  // `onLate`: when the result is 'pending', called once the late run is done
+  // with how it ended, so an advice that waits on it can be answered then.
+  applyHorizonPlan: (plan: HorizonPlan, options?: { onLate?: (status: HorizonApplyStatus) => void }) => Promise<HorizonApplyStatus>;
   // Tussendoel or only followed (engine/raceBlock.ts): a proposal first,
   // stored with applyHorizonPlan after Akkoord.
   planGoalRole: (goalId: string, role: 'secondary' | 'track') => Promise<HorizonPlan | null>;
@@ -1767,7 +1769,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // after its caller was let go ('pending'): then it comes when it is done.
   const showHorizonResult = useCallback(async (plan: HorizonPlan, result: Extract<HorizonApplyResult, { before: PlannedSession[] }>) => {
     const now = new Date().toISOString();
-    if (result.status !== 'unchanged') await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
+    // Also when the sessions stayed: a rest week trained through changes only
+    // the program, and belongs in the change log on Week all the same.
+    if (result.status !== 'unchanged' || result.restore.program) await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
     const tpls = await SessionTemplatesRepo.getAll();
     const lines = [...describeChanges(plan.proposal.changes, result.before, tpls), ...plan.lengths];
     setRecentChange({
@@ -1790,7 +1794,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     void syncWatchWorkoutsAfterPlanChange();
   }, [refresh]);
 
-  const applyHorizonPlanImpl = useCallback(async (plan: HorizonPlan): Promise<HorizonApplyStatus> => {
+  const applyHorizonPlanImpl = useCallback(async (plan: HorizonPlan, options?: { onLate?: (status: HorizonApplyStatus) => void }): Promise<HorizonApplyStatus> => {
     const job = async () => {
       await bootSettled;
       const done = await applyHorizonPlanNow(plan, { prime: primePlanningRegisters });
@@ -1804,15 +1808,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const lateFailed = () => {
       setStorageNotice('Je planning bijwerken lukte niet. Alles staat weer zoals het was.');
       void refresh();
+      options?.onLate?.('failed');
     };
     const outcome = await horizonQueue.runOrLate(job, (late) => {
       if (late.status === 'stale') {
         setStorageNotice('Je planning was intussen veranderd, dus er is niets aangepast. Probeer het opnieuw.');
         void refresh();
+        options?.onLate?.('stale');
         return;
       }
       if (late.status === 'failed') { lateFailed(); return; }
-      void showHorizonResult(plan, late);
+      void showHorizonResult(plan, late).then(() => options?.onLate?.(late.status));
     }, lateFailed);
     if (outcome.status === 'late') return 'pending';
     if (outcome.status === 'failed') {

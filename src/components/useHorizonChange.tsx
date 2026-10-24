@@ -54,8 +54,10 @@ export function useHorizonChange(): {
   const [pending, setPending] = useState<{ plan: HorizonPlan; options: HorizonProposeOptions } | null>(null);
 
   async function apply(plan: HorizonPlan, options: HorizonProposeOptions) {
-    const status = await applyHorizonPlan(plan).catch((): HorizonApplyStatus => 'failed');
-    if (status === 'applied' || status === 'unchanged' || status === 'partial') options.onStored?.();
+    const stored = (status: HorizonApplyStatus) => status === 'applied' || status === 'unchanged' || status === 'partial';
+    // Akkoord that finishes late: the advice is answered once it is stored.
+    const status = await applyHorizonPlan(plan, { onLate: (late) => { if (stored(late)) options.onStored?.(); } }).catch((): HorizonApplyStatus => 'failed');
+    if (stored(status)) options.onStored?.();
     setNote(NOTE_FOR[status]);
   }
 
