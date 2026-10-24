@@ -26,3 +26,9 @@ Vult `2026-10-22-kledingadvies-bij-het-weer.md` aan, dat de bijstelling alleen v
 ## Terugdraaien
 
 In `ClothingSheet` de twee knoppen per sport weghalen en de titel "Geleerd over je kleding" terugzetten, met het label `AutoTag` bij een bijgestelde sport. Het veld `clothingAdjust` blijft zoals het was.
+
+## Aanvulling 24 oktober 2026: de rij in de lijst
+
+De rij "Je kleding" in de lijst met instellingen volgt dit besluit nu ook: geen
+label "auto" meer, en overal "warmer" in plaats van "zwaarder", zodat de rij,
+het blad en de zin onder het blad hetzelfde woord gebruiken.

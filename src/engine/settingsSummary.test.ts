@@ -198,7 +198,8 @@ describe('rowSummary: vandaag en meldingen', () => {
   it('wat ASCEND over je kleding leerde, alleen met kledingadvies aan', () => {
     expect(rowSummary('kleding-voorkeur', facts())).toEqual({ value: 'Standaard', auto: false, dim: true, hidden: false });
     const settings = { ...facts().settings, clothingAdjust: { running: 1 } };
-    expect(rowSummary('kleding-voorkeur', facts({ settings }))).toMatchObject({ value: 'Hardlopen 1° lichter', auto: true });
+    expect(rowSummary('kleding-voorkeur', facts({ settings }))).toMatchObject({ value: 'Hardlopen 1° lichter', auto: false, dim: false });
+    expect(rowSummary('kleding-voorkeur', facts({ settings: { ...settings, clothingAdjust: { running: -0.5 } } })).value).toBe('Hardlopen 0,5° warmer');
     expect(rowSummary('kleding-voorkeur', facts({ settings: { ...settings, overviews: { clothingAdvice: false } } })).hidden).toBe(true);
   });
 });

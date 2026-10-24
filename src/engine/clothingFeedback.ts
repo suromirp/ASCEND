@@ -64,13 +64,13 @@ export const hasClothingAdjust = (raw: unknown): boolean => Object.keys(readClot
 
 const degrees = (n: number) => String(Math.abs(n)).replace('.', ',');
 
-// "Nu: Hardlopen 1,5 graden lichter, fietsen 0,5 graden zwaarder." or the standard.
+// "Nu: Hardlopen 1,5 graden lichter, fietsen 0,5 graden warmer." or the standard.
 export function clothingAdjustSummary(raw: unknown): string {
   const adjust = readClothingAdjust(raw);
   const parts = SPORTS.flatMap((sport) => {
     const v = adjust[sport];
     if (!v) return [];
-    return [`${SPORT_WORD[sport]} ${degrees(v)} ${Math.abs(v) === 1 ? 'graad' : 'graden'} ${v > 0 ? 'lichter' : 'zwaarder'}`];
+    return [`${SPORT_WORD[sport]} ${degrees(v)} ${Math.abs(v) === 1 ? 'graad' : 'graden'} ${v > 0 ? 'lichter' : 'warmer'}`];
   });
   if (parts.length === 0) return 'Nu: de standaard.';
   const text = parts.join(', ');

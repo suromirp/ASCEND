@@ -54,7 +54,7 @@ describe('rommel wordt geweigerd', () => {
 describe('de zin in de instellingen', () => {
   it('zegt standaard als er niets is en anders wat er is bijgesteld', () => {
     expect(clothingAdjustSummary(undefined)).toBe('Nu: de standaard.');
-    expect(clothingAdjustSummary({ running: 1.5, cycling: -0.5 })).toBe('Nu: Hardlopen 1,5 graden lichter, fietsen 0,5 graden zwaarder.');
+    expect(clothingAdjustSummary({ running: 1.5, cycling: -0.5 })).toBe('Nu: Hardlopen 1,5 graden lichter, fietsen 0,5 graden warmer.');
     expect(clothingAdjustSummary({ hiking: 1 })).toBe('Nu: Wandelen 1 graad lichter.');
   });
 });

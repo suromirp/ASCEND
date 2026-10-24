@@ -155,9 +155,11 @@ function clothingValue(f: SettingsFacts): { value: string; auto: boolean } {
   const adjust = readClothingAdjust(f.settings.clothingAdjust);
   const entries = SPORTS.flatMap((s) => (adjust[s] ? [[s, adjust[s] as number] as const] : []));
   if (entries.length === 0) return { value: 'Standaard', auto: false };
-  if (entries.length > 1) return { value: `${entries.length} sporten`, auto: true };
+  // Yours as much as ASCEND's (you set it in the sheet too): no "auto"
+  // (docs/beslissingen/2026-10-24-kleding-zelf-bijstellen.md).
+  if (entries.length > 1) return { value: `${entries.length} sporten`, auto: false };
   const [sport, v] = entries[0];
-  return { value: `${SPORT_LABEL[sport]} ${num(Math.abs(v), 1)}° ${v > 0 ? 'lichter' : 'zwaarder'}`, auto: true };
+  return { value: `${SPORT_LABEL[sport]} ${num(Math.abs(v), 1)}° ${v > 0 ? 'lichter' : 'warmer'}`, auto: false };
 }
 
 function listWeights(list: number[]): string {
@@ -324,7 +326,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.clothingAdvice };
     case 'kleding-voorkeur': {
       const c = clothingValue(f);
-      return { value: c.value, auto: c.auto, dim: !c.auto, hidden: !o.clothingAdvice };
+      return { value: c.value, auto: false, dim: c.value === 'Standaard', hidden: !o.clothingAdvice };
     }
     case 'loopinzicht':
       return { checked: resolveRunInsight(s.runInsight).enabled };
