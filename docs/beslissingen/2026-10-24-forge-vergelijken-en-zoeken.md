@@ -83,3 +83,13 @@ De drie instellingen kunnen niet alles uitzetten, maar "Wat er verder veranderde
 uit haalt de extra regels weg. In de code: `ExerciseRow` en `ForgeFilters` in
 `src/components/forge/` vervangen door de oude `ExerciseCard` uit de geschiedenis
 van git. Opgeslagen waarden van de nieuwe velden doen dan niets.
+
+## Aanvulling (24 oktober, na de eerste blik met echte trainingen)
+
+Met een echt schema dat net veranderd is, gaven de meeste rijen "Geen vergelijking": de
+oefeningen uit het oude schema waren maanden niet gedaan en de nieuwe nog maar een of
+twee keer. Twee dingen veranderen daarom. Oefeningen die je niet meer deed sinds het
+verste vergelijkingsmoment (standaard 8 weken) staan weggeklapt onder "Eerder gedaan";
+een zoekterm zoekt wel in alles. En valt geen moment in zijn venster, dan vergelijkt de
+rij met de training ervoor ("+2,5 kg sinds 26 jun"), zodat je ook bij een oefening die
+je net weer oppakt ziet of het beter ging.

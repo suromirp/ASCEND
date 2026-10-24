@@ -12,6 +12,7 @@ import {
   matchesQuery,
   snapshotAt,
   sortViews,
+  splitByRecency,
   trainingFilters,
   valueChange,
   visibleViews,
@@ -301,5 +302,31 @@ describe('oefeningen op herhalingen', () => {
   it('de geschiedenis geeft beste set en totaal', () => {
     const rows = historyRows(reps);
     expect(rows[0]).toMatchObject({ date: '2026-10-15', bestReps: 12, totalReps: 31, workSetCount: 3 });
+  });
+});
+
+describe('splitByRecency', () => {
+  it('zet oefeningen die je de laatste weken deed apart van die van eerder', () => {
+    const last = (v: (typeof views)[number]) => v.history.sessions.reduce((m, x) => (x.date > m ? x.date : m), '');
+    const { recent, older } = splitByRecency(views, TODAY, 56);
+    expect(recent.length + older.length).toBe(views.length);
+    for (const v of recent) expect(last(v) >= '2026-08-27').toBe(true);
+    for (const v of older) expect(last(v) < '2026-08-27').toBe(true);
+    expect(splitByRecency(views, '2030-01-01', 56).recent).toEqual([]);
+  });
+});
+
+describe('compareExercise valt terug op de vorige training', () => {
+  it('geeft de training ervoor en het verschil, ook zonder moment in het venster', () => {
+    const pts = [point('2026-03-01', 60), point('2026-10-20', 62.5)];
+    const cmp = compareExercise(pts, '2026-10-22', [4, 8]);
+    expect(cmp.moments.every((m) => m.status === 'none')).toBe(true);
+    expect(cmp.previous?.date).toBe('2026-03-01');
+    expect(cmp.previousChange).toBe(2.5);
+  });
+  it('heeft geen vorige bij één training', () => {
+    const cmp = compareExercise([point('2026-10-20', 62.5)], '2026-10-22', [4, 8]);
+    expect(cmp.previous).toBeUndefined();
+    expect(cmp.previousChange).toBeUndefined();
   });
 });

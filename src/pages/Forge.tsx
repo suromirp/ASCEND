@@ -29,7 +29,7 @@ import { ExerciseRow } from '../components/forge/ExerciseRow';
 import { ExerciseHistorySheet } from '../components/forge/ExerciseHistorySheet';
 import { ForgeFilters } from '../components/forge/ForgeFilters';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { isRepsBased, trainingFilters, visibleViews } from '../engine/forgeHistory';
+import { isRepsBased, splitByRecency, trainingFilters, visibleViews } from '../engine/forgeHistory';
 import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
 import { externalOneRmByKey } from '../engine/externalOneRm';
 import { compareMoments, resolveStrengthSettings, type OneRmView, type StrengthSettings } from '../engine/strengthSettings';
@@ -103,6 +103,11 @@ export function ForgePage() {
   // A stored filter for a training that is no longer there counts as "Alles".
   const training = trainingChoice !== null && trainings.includes(trainingChoice) ? trainingChoice : null;
   const shown = useMemo(() => (model ? visibleViews(model.views, { query, training, sort: choices.listSort }) : []), [model, query, training, choices.listSort]);
+  // Wat je de laatste weken (tot het verste vergelijkingsmoment) nog deed staat bovenaan;
+  // oefeningen uit een oud schema staan weggeklapt onder Eerder gedaan. Een zoekterm
+  // zoekt in alles.
+  const split = useMemo(() => splitByRecency(shown, today, weeks[1] * 7), [shown, today, weeks]);
+  const [showOlder, setShowOlder] = usePageState('eerder', false);
   const historyView = historyKey ? model?.views.find((v) => v.history.key === historyKey) : undefined;
   const filtering = query.trim() !== '' || training !== null;
 
@@ -179,7 +184,7 @@ export function ForgePage() {
                 <TextButton onClick={() => { setQuery(''); setTrainingChoice(null); }} icon="verder">Zoekopdracht wissen</TextButton>
               </div>
             )}
-            {shown.map((v) => (
+            {(query.trim() ? shown : split.recent).map((v) => (
               <ExerciseRow
                 key={v.history.key}
                 view={v}
@@ -193,6 +198,27 @@ export function ForgePage() {
                 onHistory={() => setHistoryKey(v.history.key)}
               />
             ))}
+            {!query.trim() && split.older.length > 0 && (
+              <div className="flex flex-col border-t pt-1" style={{ borderColor: 'var(--color-card-border)' }}>
+                <TextButton onClick={() => setShowOlder(!showOlder)} className="self-start" icon="omlaag" flipped={showOlder}>
+                  {showOlder ? 'Eerder gedaan verbergen' : `Eerder gedaan (${split.older.length})`}
+                </TextButton>
+                {showOlder && split.older.map((v) => (
+                  <ExerciseRow
+                    key={v.history.key}
+                    view={v}
+                    mode={mode}
+                    bodyKg={bodyKg}
+                    today={today}
+                    weeks={weeks}
+                    showExtras={choices.showExtras}
+                    open={openKey === v.history.key}
+                    onToggle={() => setOpenKey(openKey === v.history.key ? null : v.history.key)}
+                    onHistory={() => setHistoryKey(v.history.key)}
+                  />
+                ))}
+              </div>
+            )}
           </Card>
 
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />

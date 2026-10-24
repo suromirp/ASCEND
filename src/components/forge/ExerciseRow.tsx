@@ -57,6 +57,8 @@ export function ExerciseRow({
   const kind = valueKind(view, mode);
   const text = (v: number) => valueText(v, kind, exercise, bodyKg);
   const diff = (d: number) => deltaText(d, kind, exercise, bodyKg);
+  // Zonder moment in zijn venster vergelijkt de rij met de training ervoor.
+  const rowChange = first?.change ?? cmp.previousChange;
 
   return (
     <div className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
@@ -74,8 +76,12 @@ export function ExerciseRow({
           {cmp.now ? (
             <>
               <span className="block text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{text(cmp.now.value)}</span>
-              <span className="block text-xs" style={{ color: first?.change !== undefined ? TONE[deltaTone(first.change)] : 'var(--color-ink-dim)' }}>
-                {first?.change !== undefined ? `${diff(first.change)} sinds ${first.weeks} wk` : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
+              <span className="block text-xs" style={{ color: rowChange !== undefined ? TONE[deltaTone(rowChange)] : 'var(--color-ink-dim)' }}>
+                {first?.change !== undefined
+                  ? `${diff(first.change)} sinds ${first.weeks} wk`
+                  : cmp.previous && cmp.previousChange !== undefined
+                    ? `${diff(cmp.previousChange)} sinds ${shortDateNL(cmp.previous.date, today)}`
+                    : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
               </span>
             </>
           ) : (

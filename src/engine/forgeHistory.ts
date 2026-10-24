@@ -192,6 +192,10 @@ export interface Comparison {
   best?: ForgePoint;
   // Nu is gelijk aan het beste ooit.
   atBest: boolean;
+  // De training voor nu en het verschil ermee: de rij valt hierop terug als geen moment
+  // in zijn venster valt (een oefening die je lang niet deed of net weer oppakt).
+  previous?: ForgePoint;
+  previousChange?: number;
 }
 
 // Alles voor een rij: nu, de gekozen momenten en het beste ooit. "Nu" is de laatste
@@ -212,7 +216,16 @@ export function compareExercise(points: ForgePoint[], today: string, weeks: numb
     const change = now ? valueChange(now, found) : undefined;
     return { weeks: w, asOf, status: 'ok', point: found, ...(change !== undefined ? { change } : {}), extras: extraChanges(now, found) };
   });
-  return { now, moments, best, atBest: !!now && !!best && now.value >= best.value };
+  const previous = points.length >= 2 ? points[points.length - 2] : undefined;
+  const previousChange = now && previous ? valueChange(now, previous) : undefined;
+  return {
+    now,
+    moments,
+    best,
+    atBest: !!now && !!best && now.value >= best.value,
+    ...(previous ? { previous } : {}),
+    ...(previousChange !== undefined ? { previousChange } : {}),
+  };
 }
 
 // --- de geschiedenis -----------------------------------------------------------------------------------
@@ -344,6 +357,17 @@ export function sortViews(views: ExerciseView[], sort: ForgeSort): ExerciseView[
   if (sort === 'name') return copy.sort(byName);
   if (sort === 'recent') return copy.sort((a, b) => lastDate(b).localeCompare(lastDate(a)) || byName(a, b));
   return copy.sort((a, b) => b.history.sessions.length - a.history.sessions.length || byName(a, b));
+}
+
+// Oefeningen die je de laatste `days` dagen nog deed, en die van eerder (een oud schema).
+// Forge zet de eerste bovenaan en klapt de tweede weg, zodat een oude oefening zonder
+// vergelijking de lijst niet vult. Een oefening zonder trainingen telt als eerder.
+export function splitByRecency(views: ExerciseView[], today: string, days: number): { recent: ExerciseView[]; older: ExerciseView[] } {
+  const from = addDays(today, -days);
+  const recent: ExerciseView[] = [];
+  const older: ExerciseView[] = [];
+  for (const v of views) (lastDate(v) >= from ? recent : older).push(v);
+  return { recent, older };
 }
 
 // De lijst zoals Forge hem toont: gefilterd op training en zoekterm, dan gesorteerd.
