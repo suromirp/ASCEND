@@ -70,3 +70,11 @@ Niets. Vult `2026-10-22-garmin-is-leidend.md` en `2026-10-22-macrofactor-leidend
 ## Terugdraaien
 
 Per training: "Inkorten ongedaan maken" in het logblad. Voor de functie zelf: haal de knop uit `LogDetailSheet`; logs die al zijn ingekort houden dan hun regel niet meer, maar `engine/trimLog.ts#undoTrim` en het veld blijven bestaan voor een back-up die ze bevat.
+
+## Aanvulling na review (Warden)
+
+De duur die ASCEND na inkorten aftrekt is bewegingstijd, omdat intervals.icu de
+bewegingstijd (`moving_time`) levert; stilstaan telt dus niet mee. Een inkorting
+van een blok dat de log niet heeft, valt bij het inlezen van een back-up weg.
+Het opslaan van gevoel en details van een training loopt in dezelfde wachtrij als
+inkorten, zodat een oudere kopie nooit over een inkorting heen schrijft.

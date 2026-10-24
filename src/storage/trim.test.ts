@@ -234,6 +234,14 @@ describe('reading the field', () => {
     expect(migrateLogTrim(log)).toEqual(log);
   });
 
+  it('drops a trim of a block the log does not have, and keeps the log', () => {
+    const { cardioData: _gone, ...noBlock } = { ...watchLog(), trim: whole };
+    void _gone;
+    const read = migrateLogTrim(noBlock as SessionLog);
+    expect(read.trim).toBeUndefined();
+    expect(read.id).toBe(watchLog().id);
+  });
+
   it('is a pass-through for a log without it', () => {
     const plainLog = watchLog();
     expect(migrateLogTrim(plainLog)).toBe(plainLog);

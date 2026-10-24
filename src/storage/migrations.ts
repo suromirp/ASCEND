@@ -383,6 +383,8 @@ export function migrateLogTrim(log: SessionLog): SessionLog {
   const { trim: damaged, ...rest } = log;
   const { trim, detailLost } = migrateSessionTrim(damaged);
   if (!trim) return rest;
+  // A trim of a block the log does not have could only put back half a block.
+  if (trim.block && !(rest as Record<string, unknown>)[trim.block]) return rest;
   if (detailLost) {
     const { detail: _wrong, ...withoutDetail } = rest;
     void _wrong;

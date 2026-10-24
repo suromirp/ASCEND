@@ -72,7 +72,7 @@ import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanCha
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 import { announcementFor, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
-import { applyAlignments, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
+import { applyAlignments, inTurn, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { trimStoredLog, undoTrimStoredLog } from '../storage/trim';
 import type { StreamSet } from '../models/activityDetail';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
@@ -1382,10 +1382,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const setLogFeedback = useCallback(
     async (logId: string, patch: FeedbackPatch) => {
-      const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
-      if (!log) return;
-      await SessionLogsRepo.put(applyFeedback(log, patch));
-      await refresh();
+      // In the same queue as trimming and aligning with the watch, so a stale
+      // copy never writes over a trim that landed in between.
+      const written = await inTurn(async () => {
+        const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
+        if (!log) return false;
+        await SessionLogsRepo.put(applyFeedback(log, patch));
+        return true;
+      });
+      if (written) await refresh();
     },
     [refresh],
   );
@@ -1495,10 +1500,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const setLogWorkout = useCallback(
     async (logId: string, workout: SessionLog['workout']) => {
       // The stored log, not the one on screen: the run profile may have come in since.
-      const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
-      if (!log) return;
-      await SessionLogsRepo.put({ ...log, workout });
-      await refresh();
+      // In the queue of trimming and aligning, like setLogFeedback.
+      const written = await inTurn(async () => {
+        const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
+        if (!log) return false;
+        await SessionLogsRepo.put({ ...log, workout });
+        return true;
+      });
+      if (written) await refresh();
     },
     [refresh],
   );
