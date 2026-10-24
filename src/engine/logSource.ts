@@ -24,7 +24,7 @@ const LABEL: Record<MetricSource, string> = {
   import: 'Geïmporteerd',
 };
 
-const fromIntervals = (log: SessionLog) => !!log.externalId && log.externalId.startsWith('intervals.icu');
+export const fromIntervals = (log: SessionLog) => !!log.externalId && log.externalId.startsWith('intervals.icu');
 
 // The source of the block that holds the numbers goes first; an id of
 // intervals.icu is a watch activity, so it reads as Garmin.

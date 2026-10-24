@@ -128,3 +128,78 @@ export function asProviderAnswer(set: StreamSet): unknown[] {
   }
   return out;
 }
+
+// --- a drive, for the tests of "Inkorten" ------------------------------------------------
+
+export interface DriveSpec {
+  // Minutes at cruising speed, and that speed in km/h.
+  minutes: number;
+  kmh: number;
+  // Seconds walking to the car and standing still before it.
+  walkSec?: number;
+  standSec?: number;
+  // Stops on the way (traffic lights): after this many minutes, this many seconds.
+  stops?: { atMinute: number; seconds: number }[];
+  altitude?: number;
+  // The heart rate of someone sitting; absent: no heart rate series.
+  hr?: number;
+}
+
+// A drive as the watch would record it: walking to the car, standing, speeding
+// up over 12 seconds, cruising, slowing down and standing again. The clock and
+// the distance start at 0; join it to a run with joinStreams.
+export function makeDrive(spec: DriveSpec): StreamSet {
+  const timeSec: number[] = [];
+  const distanceM: number[] = [];
+  const speedMs: number[] = [];
+  const altitudeM: number[] = [];
+  const heartRate: (number | null)[] = [];
+  let clock = 0;
+  let dist = 0;
+  const cruise = spec.kmh / 3.6;
+  const push = (v: number) => {
+    dist += v;
+    timeSec.push(clock);
+    distanceM.push(Math.round(dist * 10) / 10);
+    speedMs.push(Math.round(v * 100) / 100);
+    altitudeM.push(spec.altitude ?? 20);
+    heartRate.push(spec.hr ?? null);
+    clock += 1;
+  };
+  for (let i = 0; i < (spec.walkSec ?? 0); i++) push(1.1);
+  for (let i = 0; i < (spec.standSec ?? 0); i++) push(0);
+  for (let i = 1; i <= 12; i++) push((cruise * i) / 12);
+  const stops = [...(spec.stops ?? [])].sort((a, b) => a.atMinute - b.atMinute);
+  let nextStop = 0;
+  const cruiseSec = Math.round(spec.minutes * 60);
+  for (let s = 0; s < cruiseSec; s++) {
+    push(cruise);
+    while (nextStop < stops.length && stops[nextStop].atMinute * 60 <= s + 1) {
+      const stop = stops[nextStop++];
+      for (let k = 0; k < stop.seconds; k++) push(0);
+    }
+  }
+  for (let i = 11; i >= 0; i--) push((cruise * i) / 12);
+  for (let i = 0; i < 15; i++) push(0);
+  const set: StreamSet = { timeSec, distanceM, speedMs, altitudeM };
+  if (spec.hr !== undefined) set.heartRate = heartRate;
+  return set;
+}
+
+// One activity after the other, as if the watch had not been stopped: the clock
+// and the distance of the second carry on from the first. A series only one of
+// them has is null for the other.
+export function joinStreams(a: StreamSet, b: StreamSet): StreamSet {
+  const lastTime = a.timeSec[a.timeSec.length - 1];
+  const lastDist = a.distanceM?.[a.distanceM.length - 1] ?? 0;
+  const out: Record<string, unknown> = { timeSec: [...a.timeSec, ...b.timeSec.map((x) => x + lastTime + 1)] };
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)].filter((k) => k !== 'timeSec' && k !== 'start'));
+  for (const key of keys) {
+    const left = (a as unknown as Record<string, (number | null)[] | undefined>)[key] ?? a.timeSec.map(() => null);
+    const right = (b as unknown as Record<string, (number | null)[] | undefined>)[key] ?? b.timeSec.map(() => null);
+    out[key] = [...left, ...(key === 'distanceM' ? right.map((x) => (x === null ? null : x + lastDist)) : right)];
+  }
+  const start = a.start ?? b.start;
+  if (start) out.start = start;
+  return out as unknown as StreamSet;
+}

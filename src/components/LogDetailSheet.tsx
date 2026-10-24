@@ -17,15 +17,18 @@ import { logKindLabel } from '../engine/sports';
 import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine/workoutDetails';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
+import { TrimSheet } from './TrimSheet';
+import { isTrimmable, trimOriginalLine, trimRangeLine } from '../engine/trimLog';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
 const RESTORE_TIMEOUT_MS = 15_000;
+const UNDO_TRIM_TIMEOUT_MS = 15_000;
 
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
 export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
-  const { undoLog, setLogWorkout, restoreFromWatch, sessionLogs, templates, program } = useAppData();
+  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, sessionLogs, templates, program } = useAppData();
   // Read the log fresh, so the sheet follows a change (the own numbers put back).
   const log = sessionLogs.find((l) => l.id === shown.id) ?? shown;
   const activity = log.outdoorData ?? log.cardioData;
@@ -89,6 +92,25 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       setRestoring(false);
     }
   }
+  // "Inkorten": a watch activity cut at the end or the beginning, and the way back.
+  const [trimming, setTrimming] = useState(false);
+  const [undoingTrim, setUndoingTrim] = useState(false);
+  const [trimNote, setTrimNote] = useState<string | null>(null);
+  async function putTrimBack() {
+    if (undoingTrim) return;
+    setUndoingTrim(true);
+    setTrimNote(null);
+    try {
+      const done = await withTimeout(undoTrimWatchActivity(log.id), UNDO_TRIM_TIMEOUT_MS);
+      if (!done) setTrimNote('Er was niets terug te zetten; de training is al zoals hij was.');
+    } catch (err) {
+      setTrimNote(err instanceof TimeoutError
+        ? 'Ongedaan maken duurt langer dan het zou moeten. Kijk zo of je getallen terug staan, en probeer het anders nog eens.'
+        : 'Ongedaan maken lukte niet. Er is niets veranderd; probeer het zo nog eens.');
+    } finally {
+      setUndoingTrim(false);
+    }
+  }
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Fill in the hard part afterwards: from what was saved, or the plan of that day.
   const [editing, setEditing] = useState<WorkoutDetails | null>(null);
@@ -98,6 +120,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   }
 
   return (
+    <>
     <Portal>
       <div
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
@@ -132,6 +155,20 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               ))}
             </div>
           )}
+
+          {isTrimmable(log) && (log.trim ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{trimRangeLine(log.trim)}</p>
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{trimOriginalLine(log.trim)}</p>
+              <div className="flex"><SecondaryButton onClick={() => void putTrimBack()} disabled={undoingTrim}>{undoingTrim ? 'Bezig…' : 'Inkorten ongedaan maken'}</SecondaryButton></div>
+              {trimNote && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{trimNote}</p>}
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-col gap-2">
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zat er een stuk bij dat niet van jou is, zoals een autorit? Haal het weg.</p>
+              <div className="flex"><SecondaryButton onClick={() => setTrimming(true)}>Inkorten</SecondaryButton></div>
+            </div>
+          ))}
 
           {keptLine && (
             <div className="mt-3 flex flex-col gap-2">
@@ -204,6 +241,9 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
         </div>
       </div>
     </Portal>
+    {/* Next to the sheet, not inside it: a tap in this one must not close that one. */}
+    {trimming && <TrimSheet log={log} templateName={templateName} onClose={() => setTrimming(false)} />}
+    </>
   );
 }
 

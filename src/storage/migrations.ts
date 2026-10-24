@@ -9,7 +9,7 @@ import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engi
 import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, OneRmReading } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
-import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SetLog } from '../models/training';
+import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, TrimField } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -336,6 +336,59 @@ export function migrateLogDetail(log: SessionLog): SessionLog {
   const { detail: _damaged, ...rest } = log;
   void _damaged;
   return valid ? { ...rest, detail: valid } : rest;
+}
+
+// --- activiteit inkorten: SessionLog.trim ---------------------------------------------
+// A watch activity cut at the end and/or the beginning keeps the numbers the cut
+// replaced in `trim` (models/training.ts, engine/trimLog.ts,
+// docs/beslissingen/2026-10-24-activiteit-inkorten.md). The field is optional and
+// additive and every log travels whole, so the backup schema number does not
+// move: a file from before it has none and imports as it was. A field that is
+// damaged (hand-edited, cut off) is dropped as a whole and the log keeps
+// everything else, because putting back from damaged numbers would write
+// nonsense into the log. The numbers must be finite, the minutes and the length
+// of the activity above zero, the rest not below zero (a climb of 0 m is a
+// number); what is kept must lie inside the activity. The profile that was
+// replaced is read like any profile; when it is damaged, it is lost together
+// with the profile of the trimmed piece, because putting the wrong one back is
+// worse than having none. Fields the reader does not know are not kept.
+const TRIM_KEYS: TrimField[] = ['distanceKm', 'elevationGainM', 'elevationLossM', 'avgHeartRate', 'maxHeartRate'];
+
+export function migrateSessionTrim(raw: unknown): { trim: SessionTrim | undefined; detailLost: boolean } {
+  const none = { trim: undefined, detailLost: false };
+  if (!isObj(raw) || typeof raw.at !== 'string' || (raw.block !== 'cardioData' && raw.block !== 'outdoorData')) return none;
+  if (!fin(raw.startSec) || !fin(raw.endSec) || !fin(raw.totalSec) || raw.startSec < 0 || raw.totalSec <= 0 || raw.endSec <= raw.startSec || raw.endSec > raw.totalSec) return none;
+  const o = raw.original;
+  if (!isObj(o) || !fin(o.durationMinutes) || o.durationMinutes <= 0) return none;
+  if (o.blockDurationMinutes !== undefined && !(fin(o.blockDurationMinutes) && o.blockDurationMinutes > 0)) return none;
+  const original: SessionTrim['original'] = { durationMinutes: o.durationMinutes };
+  if (o.blockDurationMinutes !== undefined) original.blockDurationMinutes = o.blockDurationMinutes;
+  for (const key of TRIM_KEYS) {
+    if (o[key] === undefined) continue;
+    if (!fin(o[key]) || (o[key] as number) < 0) return none;
+    original[key] = o[key] as number;
+  }
+  let detailLost = false;
+  if (o.detail !== undefined) {
+    const detail = migrateActivityDetail(o.detail);
+    if (detail) original.detail = detail;
+    else detailLost = true;
+  }
+  return { trim: { at: raw.at, startSec: raw.startSec, endSec: raw.endSec, totalSec: raw.totalSec, block: raw.block, original }, detailLost };
+}
+
+// A log as it comes out of a file: the same log, with `trim` only when it is whole.
+export function migrateLogTrim(log: SessionLog): SessionLog {
+  if (!('trim' in log)) return log;
+  const { trim: damaged, ...rest } = log;
+  const { trim, detailLost } = migrateSessionTrim(damaged);
+  if (!trim) return rest;
+  if (detailLost) {
+    const { detail: _wrong, ...withoutDetail } = rest;
+    void _wrong;
+    return { ...withoutDetail, trim };
+  }
+  return { ...rest, trim };
 }
 
 // --- 1RM uit MacroFactor: settings.externalOneRm -------------------------------
