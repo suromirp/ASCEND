@@ -125,30 +125,9 @@ export function WeekPage() {
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6">
       {/* Vorige en volgende week staan rechtsboven direct links van het tandwiel: dezelfde
           hoogte, dezelfde maat (44 px), zonder cirkel. In het jaaroverzicht zijn ze er niet. */}
-      <SkyBand
-        variant="low"
-        actions={monthView ? undefined : (
-          <>
-            <button
-              onClick={() => setWeekStart(addDays(weekStart, -7))}
-              className="flex h-11 w-11 items-center justify-center"
-              style={{ color: 'var(--color-on-light)' }}
-              aria-label="Vorige week"
-            >
-              <Icon name="terug" size={24} />
-            </button>
-            <button
-              onClick={() => setWeekStart(addDays(weekStart, 7))}
-              className="flex h-11 w-11 items-center justify-center"
-              style={{ color: 'var(--color-on-light)' }}
-              aria-label="Volgende week"
-            >
-              <Icon name="verder" size={24} />
-            </button>
-          </>
-        )}
-      >
-        <header>
+      <SkyBand variant="low">
+        {/* De pijltjes staan onder het tandwiel, rechts op dezelfde lijn. */}
+        <header className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             {monthView ? (
               <div className="flex items-start gap-2">
@@ -168,6 +147,26 @@ export function WeekPage() {
               </h1>
             )}
           </div>
+          {!monthView && (
+            <div className="-mr-2.5 flex shrink-0 items-center">
+              <button
+                onClick={() => setWeekStart(addDays(weekStart, -7))}
+                className="flex h-11 w-11 items-center justify-center"
+                style={{ color: 'var(--color-on-light)' }}
+                aria-label="Vorige week"
+              >
+                <Icon name="terug" size={24} />
+              </button>
+              <button
+                onClick={() => setWeekStart(addDays(weekStart, 7))}
+                className="flex h-11 w-11 items-center justify-center"
+                style={{ color: 'var(--color-on-light)' }}
+                aria-label="Volgende week"
+              >
+                <Icon name="verder" size={24} />
+              </button>
+            </div>
+          )}
         </header>
       </SkyBand>
 

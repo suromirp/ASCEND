@@ -74,3 +74,10 @@ De rand en de ronde vorm terugzetten in `SettingsGear`, `StretchMenuButton` en d
 pijltjes van Week en Logboek, de staafjes terugzetten in `WeekStrip` en de lichte
 `LightCard` van "Klaar voor de GR5" terug in de lucht van Je stand. Er verandert niets
 aan gegevens of instellingen.
+
+## Aanvulling 24 oktober 2026: pijltjes onder het tandwiel
+
+Op advies van dezelfde ontwerper staan de pijltjes van Week en Logboek niet meer
+links naast het tandwiel, maar eronder, op de regel van de titel, en ze eindigen
+rechts op dezelfde lijn als het tandwiel. Zo staat rechtsboven altijd alleen het
+tandwiel en hoort het bladeren bij de titel.

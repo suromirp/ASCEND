@@ -153,19 +153,19 @@ export function HistoryPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
-      {/* Vorige en volgende maand staan op dezelfde plek als de weekpijltjes op Week:
-          rechtsboven direct links van het tandwiel, 44 px, zonder cirkel. */}
-      <SkyBand
-        actions={(
-          <>
+      {/* Vorige en volgende maand staan zoals de weekpijltjes op Week: onder het
+          tandwiel, rechts op dezelfde lijn, 44 px, zonder cirkel. */}
+      <SkyBand>
+        {/* De pijltjes staan onder het tandwiel, rechts op dezelfde lijn. */}
+        <div className="flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <Eyebrow>{formatMonthNL(anchor)}</Eyebrow>
+            <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Logboek</h1>
+          </div>
+          <div className="-mr-2.5 flex shrink-0 items-center">
             <button onClick={() => shiftMonth(-1)} className="flex h-11 w-11 items-center justify-center" aria-label="Vorige maand" style={{ color: 'var(--color-on-light)' }}><Icon name="terug" size={24} /></button>
             <button onClick={() => shiftMonth(1)} className="flex h-11 w-11 items-center justify-center" aria-label="Volgende maand" style={{ color: 'var(--color-on-light)' }}><Icon name="verder" size={24} /></button>
-          </>
-        )}
-      >
-        <div className="min-w-0">
-          <Eyebrow>{formatMonthNL(anchor)}</Eyebrow>
-          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Logboek</h1>
+          </div>
         </div>
         <LightCard className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
