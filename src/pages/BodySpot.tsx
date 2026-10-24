@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { SEVERITY_CHOICES } from '../data/bodyCare';
-import { careForSpot, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
+import { breakableSpotName, careForSpot, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
 import { resolveFigure } from '../engine/figureSettings';
 import type { InjurySeverity } from '../models/injury';
 import { todayISO } from '../utils/dates';
@@ -51,7 +51,7 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <PageHeader eyebrow="Lichaam" title={spot.name} line={spot.where} fallback="/lichaam" right={<SpotThumb spot={spot} figure={figure} />} />
+      <PageHeader eyebrow="Lichaam" title={breakableSpotName(spot.name)} line={spot.where} fallback="/lichaam" right={<SpotThumb spot={spot} figure={figure} />} />
 
       <div className="flex flex-col gap-3">
         <Card className="flex flex-col gap-3">

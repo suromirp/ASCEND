@@ -24,6 +24,13 @@ export const BODY_VIEWS: { value: BodyView; label: string }[] = [
 const MAX_STRETCHES = 6;
 const PER_AREA_WHEN_MANY = 2;
 
+// De naam om te tonen: na "Rechter" of "Linker" een zacht afbreekstreepje, zodat een lange
+// naam als Rechterachillespees op een smal scherm als "Rechter-" en "achillespees" breekt
+// en niet midden in een woord. Onzichtbaar zolang de naam op één regel past.
+export function breakableSpotName(name: string): string {
+  return name.replace(/^(Rechter|Linker)(?=\p{Ll})/u, '$1\u00AD');
+}
+
 export function spotsForView(view: BodyView): BodySpot[] {
   return BODY_SPOTS.filter((s) => s.view === view);
 }

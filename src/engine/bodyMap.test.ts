@@ -6,6 +6,7 @@ import { BODY_SPOTS } from '../data/bodySpots';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { PROBLEM_AREAS } from '../data/stretches';
 import {
+  breakableSpotName,
   careForSpot, injuryNameFor, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, spotForComplaint, spotForStretchArea,
   hitBoxes, isValidReportDate, MIN_TAP, offFigureParts, spotsForInjury, spotsForView, stretchesForSpot, stretchMinutes,
 } from './bodyMap';
@@ -231,5 +232,13 @@ describe('rode vlaggen', () => {
     expect(BODY_CARE.nek.direct).toMatch(/dubbelzien/);
     expect(BODY_CARE.achilles.direct).toMatch(/dezelfde dag/);
     expect(BODY_CARE.buik.direct).toMatch(/koorts/);
+  });
+});
+
+describe('breakableSpotName', () => {
+  it('zet een zacht afbreekstreepje na Rechter of Linker', () => {
+    expect(breakableSpotName('Rechterachillespees')).toBe('Rechter­achillespees');
+    expect(breakableSpotName('Linkerknie')).toBe('Linker­knie');
+    expect(breakableSpotName('Nek')).toBe('Nek');
   });
 });

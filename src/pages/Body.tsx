@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { BODY_VIEWS, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
+import { BODY_VIEWS, breakableSpotName, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
 import { resolveFigure } from '../engine/figureSettings';
 import { Card, Eyebrow, PageHeader, PrimaryButton, Segmented } from '../components/ui';
 import { TextButton } from '../components/TextButton';
@@ -68,7 +68,7 @@ export function BodyPage() {
           <div ref={barRef} className="sticky bottom-3 z-10 mt-3">
             <Card className="flex items-center gap-3 !p-3">
               <div className="min-w-0 flex-1" aria-live="polite">
-                <p className="break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{shown.name}</p>
+                <p className="break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{breakableSpotName(shown.name)}</p>
                 <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{shown.muscle}</p>
                 {flagged.has(shown.id) && (
                   <p className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-warning)' }}>
