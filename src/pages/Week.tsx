@@ -4,7 +4,8 @@ import { validWeekStart } from '../utils/pageMemory';
 import { useBackToClose } from '../utils/useBackToClose';
 import { scrollMainToTop } from '../utils/scrollMain';
 import { buildWeekReview } from '../engine/weekReview';
-import { dayLoads, weekMinutes, weekProgress } from '../engine/weekProfile';
+import { dayLoads, weekProgress } from '../engine/weekProfile';
+import { looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
 import { ChevronIcon } from '../components/WeekIcons';
@@ -12,7 +13,7 @@ import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
 import { resolveVariantDuration } from '../engine/substitutions';
-import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { WeekPlanner } from '../components/WeekPlanner';
 import { ChangeLogCard } from '../components/ChangeLogCard';
 import { LeavePeriodsCard } from '../components/LeavePeriods';
@@ -24,6 +25,7 @@ import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { Card, Eyebrow, Num, Ring, SecondaryButton, Stat } from '../components/ui';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
+import { LogDetailSheet } from '../components/LogDetailSheet';
 import { formatNumberNL } from '../utils/number';
 import { WeekLoadCards } from '../components/WeekLoadCards';
 import type { ScheduleProposal } from '../engine/scheduler';
@@ -46,6 +48,8 @@ export function WeekPage() {
   // The back button leaves the year overview first, then the page.
   useBackToClose(monthView, () => { setMonthView(false); scrollMainToTop(); });
   const [selected, setSelected] = useState<PlannedSession | null>(null);
+  // A training done without a plan (a loose one), opened from its row: the same log sheet as the Logboek.
+  const [openLog, setOpenLog] = useState<SessionLog | null>(null);
   const [logging, setLogging] = useState<{ session: PlannedSession; variant: SessionVariant; atForm?: boolean } | null>(null);
   const [pendingProposal, setPendingProposal] = useState<ScheduleProposal | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -62,10 +66,12 @@ export function WeekPage() {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
   const selectedLog = selected ? sessionLogs.find((l) => l.plannedSessionId === selected.id) : undefined;
 
-  // The time this week asks: open trainings at their planned length, done ones
-  // at the length they took, a skipped training and a rest day not at all
-  // (engine/weekProfile.ts#weekMinutes).
-  const totalWeekMinutes = weekMinutes(sessions, sessionLogs, templateById, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program));
+  // The time this week: what was done (the same sum as the weekly review, a loose
+  // training included) of that plus what is still open at its planned length. A
+  // skipped training and a rest day count not at all (engine/weekLogs.ts#weekTime).
+  const { doneMinutes, totalMinutes: totalWeekMinutes } = weekTime(sessions, sessionLogs, templateById, weekStart, (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program));
+  // Done without a plan: a row on their day (WeekPlanner), not in the count of planned trainings.
+  const looseLogs = useMemo(() => looseLogsOfWeek(sessionLogs, plannedSessions, weekStart), [sessionLogs, plannedSessions, weekStart]);
 
   // De bergkam: belasting per dag van deze week en van de week ervoor (engine/weekProfile.ts).
   const today = todayISO();
@@ -77,10 +83,8 @@ export function WeekPage() {
     };
   }, [weekStart, plannedSessions, sessionLogs, templates, today, program]);
   const progress = weekProgress(sessions, sessionLogs, templateById);
-  // Wat er deze week al gedaan is: tijd, kilometers en stijgen uit de logs.
-  const sessionIds = new Set(sessions.map((s) => s.id));
-  const doneMinutes = sessionLogs.filter((l) => l.plannedSessionId && sessionIds.has(l.plannedSessionId) && templateById.get(l.templateId)?.type !== 'recovery').reduce((n, l) => n + l.durationMinutes, 0);
-  const weekLogs = sessionLogs.filter((l) => l.completedDate >= weekStart && l.completedDate <= addDays(weekStart, 6) && l.type !== 'recovery');
+  // Wat er deze week al gedaan is: kilometers en stijgen uit dezelfde logs als de tijd.
+  const weekLogs = weekLogsOf(sessionLogs, templateById, weekStart);
   const weekKm = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.distanceKm ?? 0), 0);
   const weekGain = weekLogs.reduce((n, l) => n + ((l.cardioData ?? l.outdoorData)?.elevationGainM ?? 0), 0);
   const review = weekStart <= today ? buildWeekReview({ weekStart, plannedSessions, logs: sessionLogs, templates, program, planChangeLog, asOf: today, illnessEpisodes: settings.illnessEpisodes, weeklyChecks: settings.weeklyHealthChecks }) : null;
@@ -237,6 +241,8 @@ export function WeekPage() {
             adjustedIds={adjustedIds}
             leave={leavePeriods}
             onAddFree={() => setAdHocOpen(true)}
+            looseLogs={looseLogs}
+            onSelectLog={setOpenLog}
           />
         </>
       )}
@@ -268,6 +274,10 @@ export function WeekPage() {
       {adHocTemplate && <ExerciseLogger template={adHocTemplate} scheduledDate={todayISO()} program={program} onClose={() => setAdHocTemplate(null)} />}
 
       {reviewOpen && review && <WeekReviewSheet review={review} onClose={() => setReviewOpen(false)} />}
+
+      {openLog && (
+        <LogDetailSheet log={openLog} templateName={templateById.get(openLog.templateId)?.name ?? openLog.templateId} onClose={() => setOpenLog(null)} />
+      )}
 
       {!monthView && <ChangeLogCard weekStart={weekStart} />}
       {!monthView && <LeavePeriodsCard />}

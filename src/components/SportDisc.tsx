@@ -1,6 +1,7 @@
-import type { SessionTemplate } from '../models/training';
+import type { SessionLog, SessionTemplate } from '../models/training';
 import { Icon, type IconName } from './icons';
 import { SPORT_COLOR, sportIcon, sportKind } from './sportKind';
+import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
 import { MoonGlyph } from './vandaag/glyphs';
 
 // Het pictogram van de sport in een getinte schijf.
@@ -14,6 +15,22 @@ export function SportDisc({ template, size = 44, className = '' }: { template: S
       style={{ width: size, height: size, background: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
     >
       {kind === 'rest' ? <MoonGlyph size={Math.round(size * 0.46)} /> : <Icon name={sportIcon(template)} size={Math.round(size * 0.46)} />}
+    </span>
+  );
+}
+
+// De schijf van een log die geen geplande training heeft (een losse training op
+// Week): de sport zoals het Logboek hem laat zien, een rustdag het maantje.
+export function LogDisc({ log, size = 44 }: { log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>; size?: number }) {
+  if (log.type === 'recovery') return <IconDisc icon="maan" size={size} tone="status" />;
+  const look = SPORT_LOOK[sportKeyOfLog(log)];
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex shrink-0 items-center justify-center rounded-full"
+      style={{ width: size, height: size, background: `color-mix(in srgb, ${look.color} 18%, transparent)`, color: look.color }}
+    >
+      <Icon name={look.icon} size={Math.round(size * 0.46)} />
     </span>
   );
 }

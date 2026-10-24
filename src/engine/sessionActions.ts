@@ -12,9 +12,13 @@
 //   a day still to come, moving it; for a skipped training, doing it after all.
 // - Ticking off is never the main choice for a day still to come. It stays
 //   possible as "Vandaag al doen", as before.
+// - For a day still to come the explanation can be opened ahead: "Hoe je het
+//   doet", the same screen as on the day itself, read-only
+//   (docs/beslissingen/2026-10-24-uitleg-later-in-de-week.md).
 
-import { mondayOfWeek } from '../utils/dates';
+import { formatDateNL, mondayOfWeek, resolveProgramWeek, weekdayLongNL } from '../utils/dates';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
+import type { Program } from '../models/program';
 import { nameKey, type MacroFactorWorkout } from './macrofactorImport';
 import { isWorkSet } from './workSets';
 
@@ -24,9 +28,10 @@ import { isWorkSet } from './workSets';
 // - move, skip: the move step, and skipping
 // - backOnPlan: "Toch doen", a skipped training back on its own day
 // - doToday: a training of a later day, done today
+// - preview: the training screen of a later day to read, without ticking off
 // - saveWorkout: the MacroFactor workout of that day is in the last file read
 //   but not saved yet; one tap saves it, ticking off is not needed
-export type SheetAction = 'done' | 'start' | 'move' | 'skip' | 'backOnPlan' | 'doToday' | 'saveWorkout';
+export type SheetAction = 'done' | 'start' | 'move' | 'skip' | 'backOnPlan' | 'doToday' | 'preview' | 'saveWorkout';
 
 // How a training is ticked off: strength kept in MacroFactor (one short step
 // in the sheet), strength kept in ASCEND (the training screen), or anything
@@ -58,7 +63,18 @@ export function sessionSheetActions({ date, today, skipped, canComeBack, kind, w
     return { main: 'move', rows: due ? [tick] : [] };
   }
   if (due) return { main: tick, rows: kind === 'log' ? ['start', 'move', 'skip'] : ['move', 'skip'] };
-  return { main: 'move', rows: ['doToday', 'skip'] };
+  // A day still to come: read how it goes first (harmless), then the choices that change something.
+  return { main: 'move', rows: ['preview', 'doToday', 'skip'] };
+}
+
+// The line over a training screen opened ahead ("Hoe je het doet"): the day and
+// week of the training itself, never today's. "Donderdag 29 oktober · Week 6 van
+// 12, opbouwfase"; without a program (or outside it) only the day.
+export function previewDayLine(date: string, program: Program | null | undefined): string {
+  const day = weekdayLongNL(date);
+  const position = program ? resolveProgramWeek(program, date) : null;
+  const week = position ? `Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}` : undefined;
+  return [`${day.charAt(0).toUpperCase()}${day.slice(1)} ${formatDateNL(date)}`, week].filter(Boolean).join(' · ');
 }
 
 // The duration the short "Gedaan" step proposes for strength kept in

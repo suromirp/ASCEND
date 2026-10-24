@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { macroFactorLine, pendingMacroFactorWorkout, sessionSheetActions, strengthDoneDuration, QUICK_RPE_SCALE } from './sessionActions';
+import { macroFactorLine, pendingMacroFactorWorkout, previewDayLine, sessionSheetActions, strengthDoneDuration, QUICK_RPE_SCALE } from './sessionActions';
+import { buildDefaultProgramData } from '../data/defaultProgram';
+import { resolveProgramWeek } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 import type { MacroFactorWorkout } from './macrofactorImport';
 
@@ -10,8 +12,17 @@ describe('sessionSheetActions', () => {
     for (const kind of ['quick', 'inApp', 'log'] as const) {
       const a = sessionSheetActions({ date: '2026-10-23', today: TODAY, skipped: false, canComeBack: false, kind });
       expect(a.main).toBe('move');
-      expect(a.rows).toEqual(['doToday', 'skip']);
+      expect(a.rows).toEqual(['preview', 'doToday', 'skip']);
     }
+  });
+
+  it('"Hoe je het doet" opens ahead only for a training of a day still to come that is not skipped', () => {
+    const rowsOf = (over: Partial<Parameters<typeof sessionSheetActions>[0]>) => sessionSheetActions({ date: '2026-10-23', today: TODAY, skipped: false, canComeBack: false, kind: 'log', ...over }).rows;
+    expect(rowsOf({})).toContain('preview');
+    expect(rowsOf({ kind: 'inApp' })).toContain('preview');
+    expect(rowsOf({ date: TODAY })).not.toContain('preview');
+    expect(rowsOf({ date: '2026-10-20' })).not.toContain('preview');
+    expect(rowsOf({ skipped: true, canComeBack: true })).not.toContain('preview');
   });
 
   it('today: strength in MacroFactor and a run are ticked off, strength in ASCEND is started', () => {
@@ -28,6 +39,28 @@ describe('sessionSheetActions', () => {
     expect(sessionSheetActions({ date: '2026-10-24', today: TODAY, skipped: true, canComeBack: true, kind: 'log' })).toEqual({ main: 'backOnPlan', rows: ['move'] });
     expect(sessionSheetActions({ date: '2026-10-20', today: TODAY, skipped: true, canComeBack: false, kind: 'log' })).toEqual({ main: 'move', rows: ['done'] });
     expect(sessionSheetActions({ date: '2026-10-20', today: TODAY, skipped: true, canComeBack: false, kind: 'inApp' })).toEqual({ main: 'move', rows: ['start'] });
+  });
+});
+
+describe('previewDayLine: de dag en week van de training zelf', () => {
+  const { program } = buildDefaultProgramData();
+
+  it('noemt de weekdag, de datum en de week van het programma op die dag, niet van vandaag', () => {
+    const date = '2026-10-29';
+    const position = resolveProgramWeek(program, date)!;
+    expect(position).toBeTruthy();
+    const line = previewDayLine(date, program);
+    // formatDateNL zet het jaartal erbij als het niet dit jaar is: daarom toContain.
+    expect(line).toContain('Donderdag 29 oktober');
+    expect(line).toContain(`Week ${position.weekInPhase} van ${position.phase.weekCount}, ${position.phase.name.toLowerCase()}`);
+    // Een week later hoort een andere regel.
+    expect(previewDayLine('2026-11-05', program)).not.toBe(line);
+  });
+
+  it('zonder programma, of buiten het programma, alleen de dag', () => {
+    expect(previewDayLine('2026-10-29', null)).toContain('Donderdag 29 oktober');
+    expect(previewDayLine('2026-10-29', null)).not.toContain('Week');
+    expect(previewDayLine('2020-01-06', program)).toBe('Maandag 6 januari 2020');
   });
 });
 

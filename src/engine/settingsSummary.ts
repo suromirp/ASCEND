@@ -257,7 +257,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'forge-signaal':
       return { value: choiceShort('restsignaal', forge.restAlert), hidden: !forge.restAuto };
     case 'forge-geluid':
-      return { value: choiceShort('rustgeluid', forge.restSound), hidden: !forge.restAuto || forge.restAlert === 'vibrate' || forge.restAlert === 'off' };
+      // Bij alleen trillen kies je met het geluid het trilritme (engine/restVibration.ts): de rij blijft, met een feit eronder.
+      return { value: choiceShort('rustgeluid', forge.restSound), ...(forge.restAlert === 'vibrate' ? { sub: 'Je voelt alleen het ritme' } : {}), hidden: !forge.restAuto || forge.restAlert === 'off' };
     case 'forge-scherm':
       return { checked: forge.keepScreenOn };
     case 'forge-doorgeven':

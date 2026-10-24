@@ -17,6 +17,7 @@ import type { Program } from '../models/program';
 import { availableVariants, resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgressionNote } from '../engine/substitutions';
 import { getTrainingGuide, guideDayLabel } from '../data/trainingGuide';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
+import { ExerciseLogger } from './ExerciseLogger';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { PrimaryButton, SecondaryButton, InfoButton } from './ui';
@@ -119,6 +120,8 @@ export function SessionActionSheet({
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  // "Hoe je het doet" for a day still to come: the training screen of that day, to read only.
+  const [showPreview, setShowPreview] = useState(false);
   const [step, setStep] = useState<'main' | 'done' | 'move'>('main');
   // The "Gedaan" step for a training of a later day, done today.
   const [doneToday, setDoneToday] = useState(false);
@@ -251,6 +254,7 @@ export function SessionActionSheet({
         return;
       case 'start': return onStart(variant);
       case 'move': return setStep('move');
+      case 'preview': return setShowPreview(true);
       case 'skip': return onSkip();
       case 'backOnPlan': return onBackOnPlan?.();
       case 'doToday':
@@ -268,6 +272,7 @@ export function SessionActionSheet({
     // Kracht start je in de app (Forge); een loop of tocht doe je met je horloge, dus
     // hier opent het alleen de uitleg en opbouw, naast Gedaan.
     start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
+    preview: 'Hoe je het doet',
     move: 'Verplaatsen',
     skip: 'Overslaan',
     backOnPlan: 'Toch doen',
@@ -283,6 +288,16 @@ export function SessionActionSheet({
   return (
     <SheetFrame closing={closing} onClose={requestClose} label={template.name} scrollKey="main" head={<SheetHeader eyebrow={eyebrow} title={template.name} info={info} facts={facts} onClose={requestClose} />}>
       {guideSheet}
+      {showPreview && (
+        <ExerciseLogger
+          preview
+          template={template}
+          plannedSessionId={session.id}
+          scheduledDate={session.scheduledDate}
+          program={program}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
       {bikeOption && !skipped && (
         <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>Kan ook op de fiets, buiten of binnen.</p>
       )}

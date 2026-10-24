@@ -1,4 +1,6 @@
 import { playRestSound } from '../../../utils/sound';
+import { haptics } from '../../../utils/haptics';
+import { restAlertChannels, restVibrationPattern } from '../../../engine/restVibration';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -17,6 +19,13 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
   const s = resolveStrengthSettings(settings.strengthModel);
   const save = (patch: Partial<StrengthSettings>) => void updateSettings({ strengthModel: { ...settings.strengthModel, ...patch } });
   const close = () => setSheet(null);
+  // Tapping a sound lets you hear it and, when vibrating is on, feel its rhythm: as the
+  // signal at the end of the rest will do it (nothing of what is switched off).
+  const tryRestSound = (sound: Parameters<typeof playRestSound>[0]) => {
+    const channels = restAlertChannels(s.restAlert);
+    if (channels.sound) playRestSound(sound);
+    if (channels.vibrate) haptics.pattern(restVibrationPattern(sound));
+  };
 
   return (
     <>
@@ -84,7 +93,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'forge-opwarmbereik' && <ChoiceFromDef def={CHOICES.opwarmbereik} value={s.warmupScope} onPick={(v) => save({ warmupScope: v })} onClose={close} />}
       {sheet === 'forge-schatting' && <ChoiceFromDef def={CHOICES.schatting} value={s.estimateUpTo as 12 | 15 | 20} onPick={(v) => save({ estimateUpTo: v })} onClose={close} />}
       {sheet === 'forge-geluid' && (
-        <ChoiceFromDef def={CHOICES.rustgeluid} value={s.restSound} onPick={(v) => { playRestSound(v); save({ restSound: v }); }} onClose={close} />
+        <ChoiceFromDef def={CHOICES.rustgeluid} value={s.restSound} onPick={(v) => { tryRestSound(v); save({ restSound: v }); }} onClose={close} />
       )}
       {sheet === 'forge-signaal' && <ChoiceFromDef def={CHOICES.restsignaal} value={s.restAlert} onPick={(v) => save({ restAlert: v })} onClose={close} />}
       {sheet === 'forge-programma' && <ProgramSheet onClose={close} />}

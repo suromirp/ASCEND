@@ -147,7 +147,7 @@ export const CHOICES = {
     advice: 'sound_vibrate' as 'sound_vibrate' | 'vibrate' | 'sound' | 'off',
     options: [
       { value: 'sound_vibrate', label: 'Geluid en trillen', short: 'Geluid en trillen' },
-      { value: 'vibrate', label: 'Alleen trillen', short: 'Trillen' },
+      { value: 'vibrate', label: 'Alleen trillen', note: 'Met het ritme van je gekozen geluid', short: 'Trillen' },
       { value: 'sound', label: 'Alleen geluid', short: 'Geluid' },
       { value: 'off', label: 'Niets', note: 'Je kijkt zelf op de balk onderaan', short: 'Niets' },
     ],
@@ -155,7 +155,7 @@ export const CHOICES = {
   rustgeluid: def({
     group: 'Forge',
     title: 'Geluid na de rust',
-    line: 'Tik een keuze om hem te horen.',
+    line: 'Tik om te horen. Trillen volgt het ritme.',
     advice: 'chime' as 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong',
     options: [
       { value: 'chime', label: 'Klokjes', note: 'Drie zachte tonen omhoog', short: 'Klokjes' },

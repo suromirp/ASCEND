@@ -10,7 +10,8 @@ import { REST_DAY_COPY } from '../data/restDayCopy';
 import { useAppData } from '../state/AppDataContext';
 import { LeaveBand } from './LeaveBand';
 import { LegMark, WeekStatusIcon } from './WeekIcons';
-import { SportDisc } from './SportDisc';
+import { LogDisc, SportDisc } from './SportDisc';
+import { SPORT_LOOK, sportKeyOfLog } from './logbook/sportLook';
 import { zoneOfTemplate } from './vandaag/zone';
 import { Icon } from './icons';
 import { useWatchStatuses } from './useWatchStatus';
@@ -120,6 +121,41 @@ function SessionRow({
   );
 }
 
+// Een training die je deed zonder dat hij gepland stond (een losse training, een
+// Garmin-activiteit die je als zodanig bewaarde): een gedane rij zoals een gedane
+// geplande training, met "zonder plan" erbij. Een tik opent het logblad.
+function LooseRow({ log, template, isToday, onTap }: { log: SessionLog; template?: SessionTemplate; isToday: boolean; onTap: () => void }) {
+  const name = template?.name ?? SPORT_LOOK[sportKeyOfLog(log)].label;
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      className="flex min-h-[64px] w-full items-center gap-3 border-t px-3 py-2 text-left transition-colors active:opacity-75 first:border-t-0"
+      style={{ borderColor: 'var(--color-card-border)', ...(isToday ? todayStyle : {}) }}
+    >
+      <LogDisc log={log} size={44} />
+      <span className="min-w-0 flex-1">
+        <span className="block min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{name}</span>
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+          <span>{dayLabel(log.completedDate)}</span>
+          {log.durationMinutes > 0 && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{log.durationMinutes} min</span>
+            </>
+          )}
+          <span aria-hidden="true">·</span>
+          <span>zonder plan</span>
+        </span>
+      </span>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ boxShadow: 'inset 0 0 0 1.5px var(--color-progress)', color: 'var(--color-progress)' }}>
+        <Icon name="vinkje" size={14} />
+        <span className="sr-only">Gedaan</span>
+      </span>
+    </button>
+  );
+}
+
 export function WeekPlanner({
   weekStartDate,
   sessions,
@@ -130,6 +166,8 @@ export function WeekPlanner({
   adjustedIds,
   leave,
   onAddFree,
+  looseLogs = [],
+  onSelectLog,
 }: {
   weekStartDate: string;
   sessions: PlannedSession[];
@@ -142,6 +180,10 @@ export function WeekPlanner({
   leave?: LeavePeriod[];
   // De plus op een vrije dag van vandaag: de bestaande "Losse training".
   onAddFree?: () => void;
+  // Logs of this week without a planned training (engine/weekLogs.ts#looseLogsOfWeek),
+  // shown on their day as a done row; a tap opens the log (onSelectLog).
+  looseLogs?: SessionLog[];
+  onSelectLog?: (log: SessionLog) => void;
 }) {
   const days = weekDates(weekStartDate);
   const today = todayISO();
@@ -164,7 +206,8 @@ export function WeekPlanner({
           return template ? [{ s, template }] : [];
         });
         // A day with a band (holiday, tocht, a light day around it) already shows its date there: no second row.
-        const showEmpty = rows.length === 0 && !leaveLabel;
+        const loose = looseLogs.filter((l) => l.completedDate === date);
+        const showEmpty = rows.length === 0 && !leaveLabel && loose.length === 0;
         return (
           <div key={date} className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
             {leaveLabel && (
@@ -188,6 +231,9 @@ export function WeekPlanner({
                 isToday={isToday}
                 watch={showWatch ? statusOf(s, template).kind : undefined}
               />
+            ))}
+            {loose.map((l) => (
+              <LooseRow key={l.id} log={l} template={templateById.get(l.templateId)} isToday={isToday} onTap={() => onSelectLog?.(l)} />
             ))}
             {showEmpty && (
               <div className="flex min-h-[64px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>
