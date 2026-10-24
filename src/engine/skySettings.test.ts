@@ -1,28 +1,49 @@
 import { describe, expect, it } from 'vitest';
-import { resolveSky, skyModeAt } from './skySettings';
+import { resolveSky, skyModeAt, sunToday } from './skySettings';
 
 const at = (h: number, m = 0) => new Date(2026, 9, 24, h, m);
 
 describe('resolveSky', () => {
-  it('zonder keuze: op tijd, donker vanaf 20:00', () => {
-    expect(resolveSky(undefined)).toEqual({ sky: 'auto', nightFrom: '20:00' });
+  it('zonder keuze: op tijd, met de zon', () => {
+    expect(resolveSky(undefined)).toEqual({ sky: 'auto', nightFrom: 'zon' });
   });
 
   it('negeert onzin', () => {
-    expect(resolveSky({ sky: 'zon', skyNightFrom: '23:30' })).toEqual({ sky: 'auto', nightFrom: '20:00' });
+    expect(resolveSky({ sky: 'zon', skyNightFrom: '23:30' })).toEqual({ sky: 'auto', nightFrom: 'zon' });
     expect(resolveSky({ sky: 'night', skyNightFrom: '21:00' })).toEqual({ sky: 'night', nightFrom: '21:00' });
   });
 });
 
 describe('skyModeAt', () => {
-  it('op tijd: licht overdag, donker vanaf de begintijd tot 07:00', () => {
-    expect(skyModeAt({}, at(7, 0))).toBe('day');
-    expect(skyModeAt({}, at(12, 30))).toBe('day');
-    expect(skyModeAt({}, at(19, 59))).toBe('day');
-    expect(skyModeAt({}, at(20, 0))).toBe('night');
-    expect(skyModeAt({}, at(23, 59))).toBe('night');
-    expect(skyModeAt({}, at(0, 0))).toBe('night');
-    expect(skyModeAt({}, at(6, 59))).toBe('night');
+  it('een vast uur: licht overdag, donker vanaf de begintijd tot 07:00', () => {
+    const fixed = { skyNightFrom: '20:00' };
+    expect(skyModeAt(fixed, at(7, 0))).toBe('day');
+    expect(skyModeAt(fixed, at(12, 30))).toBe('day');
+    expect(skyModeAt(fixed, at(19, 59))).toBe('day');
+    expect(skyModeAt(fixed, at(20, 0))).toBe('night');
+    expect(skyModeAt(fixed, at(23, 59))).toBe('night');
+    expect(skyModeAt(fixed, at(0, 0))).toBe('night');
+    expect(skyModeAt(fixed, at(6, 59))).toBe('night');
+  });
+
+  it('met de zon (het advies): donker na zonsondergang, licht na zonsopkomst op je plek', () => {
+    // Midday is day and midnight is night in every time zone the tests run in.
+    expect(skyModeAt({}, at(12, 0))).toBe('day');
+    expect(skyModeAt({}, at(0, 30))).toBe('night');
+    const sun = sunToday(undefined, at(12, 0))!;
+    const before = new Date(2026, 9, 24, 0, sun.sunset - 1);
+    const after = new Date(2026, 9, 24, 0, sun.sunset + 1);
+    expect(skyModeAt({}, before)).toBe('day');
+    expect(skyModeAt({}, after)).toBe('night');
+    expect(skyModeAt({}, new Date(2026, 9, 24, 0, sun.sunrise - 1))).toBe('night');
+    expect(skyModeAt({}, new Date(2026, 9, 24, 0, sun.sunrise + 1))).toBe('day');
+  });
+
+  it('met de zon volgt de gekozen plaats', () => {
+    // Far to the west the sun sets later on the same clock.
+    const west = sunToday({ lat: 52, lon: -10 }, at(12))!;
+    const home = sunToday({ lat: 52, lon: 5 }, at(12))!;
+    expect(west.sunset).toBeGreaterThan(home.sunset);
   });
 
   it('volgt de gekozen begintijd', () => {

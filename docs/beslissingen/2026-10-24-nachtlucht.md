@@ -32,3 +32,18 @@ Niets.
 ## Terugdraaien
 
 Zet "Lucht bovenaan" op "Altijd licht", of haal het blok `html[data-sky='night']` uit `src/index.css`.
+
+## Aanvulling 24 oktober 2026: met de zon
+
+"Donker vanaf" heeft een keuze "Met de zon", en die is nu het advies: de lucht
+wordt donker na zonsondergang en weer licht bij zonsopkomst op je plek. De
+tijden worden op de telefoon uitgerekend (`engine/sun.ts`, de formule van de
+NOAA, op een paar minuten nauwkeurig), dus het werkt ook zonder internet en
+zonder weersvoorspelling. De plek is de plaats voor het weer
+(`AppSettings.homeLocation`); zonder plaats geldt het midden van Nederland. Op een
+dag zonder zonsondergang, ver in het noorden, geldt weer 20:00 tot 07:00. De
+vaste uren 19:00 tot 22:00 blijven kiesbaar. Een opgeslagen vast uur blijft
+staan; alleen wie nooit koos krijgt het nieuwe advies.
+
+Bron: de eigenaar vroeg om "auto, echt afhankelijk van het licht, aangezien we het
+weer al ophalen". Ophalen was niet nodig: de stand van de zon is uit te rekenen.

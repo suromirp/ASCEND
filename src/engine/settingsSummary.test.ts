@@ -306,7 +306,7 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
 
   it('de lucht is op tijd, donker vanaf 20:00, en de begintijd verdwijnt bij een vaste keuze', () => {
     expect(rowSummary('lucht', facts()).value).toBe('Op tijd');
-    expect(rowSummary('lucht-vanaf', facts()).value).toBe('Vanaf 20:00');
+    expect(rowSummary('lucht-vanaf', facts()).value).toBe('Met de zon');
     expect(rowSummary('lucht-vanaf', withSettings({ skyNightFrom: '22:00' })).value).toBe('Vanaf 22:00');
     expect(rowSummary('lucht', withSettings({ sky: 'night' })).value).toBe('Altijd donker');
     expect(rowSummary('lucht-vanaf', withSettings({ sky: 'night' })).hidden).toBe(true);

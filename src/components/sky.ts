@@ -12,14 +12,19 @@ import { resolveSky, skyModeAt, type SkyMode } from '../engine/skySettings';
 export function useSkyAttribute(): void {
   const { settings } = useAppData();
   const { sky, nightFrom } = resolveSky(settings);
-  const [clockMode, setClockMode] = useState<SkyMode>(() => skyModeAt({ sky, skyNightFrom: nightFrom }, new Date()));
+  // "Met de zon" hangt af van de plek; alleen de getallen, zodat een nieuw
+  // settings-object zonder andere plek het effect niet opnieuw start.
+  const lat = settings.homeLocation?.lat;
+  const lon = settings.homeLocation?.lon;
+  const [clockMode, setClockMode] = useState<SkyMode>(() => skyModeAt({ sky, skyNightFrom: nightFrom, homeLocation: settings.homeLocation }, new Date()));
 
-  // Dit effect loopt alleen bij een andere keuze (sky, nightFrom), nooit per
+  // Dit effect loopt alleen bij een andere keuze (sky, nightFrom, de plek), nooit per
   // minuut. De stand wordt eerst vóór het schilderen gezet, zodat een andere
   // "donker vanaf" meteen klopt; daarna houdt de timer hem bij.
   useLayoutEffect(() => {
     if (sky !== 'auto') return;
-    const tick = () => setClockMode(skyModeAt({ sky, skyNightFrom: nightFrom }, new Date()));
+    const place = lat !== undefined && lon !== undefined ? { lat, lon } : undefined;
+    const tick = () => setClockMode(skyModeAt({ sky, skyNightFrom: nightFrom, homeLocation: place }, new Date()));
     tick();
     const id = window.setInterval(tick, 60_000);
     const onVisible = () => {
@@ -30,7 +35,7 @@ export function useSkyAttribute(): void {
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [sky, nightFrom]);
+  }, [sky, nightFrom, lat, lon]);
 
   const mode: SkyMode = sky === 'auto' ? clockMode : sky;
   useLayoutEffect(() => {

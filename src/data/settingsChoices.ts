@@ -236,10 +236,11 @@ export const CHOICES = {
   luchtVanaf: def({
     group: 'Vandaag en meldingen',
     title: 'Donker vanaf',
-    line: 'Om 07:00 wordt het weer licht.',
-    advice: '20:00' as '19:00' | '20:00' | '21:00' | '22:00',
+    line: 'Met de zon volgt de echte zonsondergang en zonsopkomst op je plek. Een vaste tijd wordt om 07:00 weer licht.',
+    advice: 'zon' as 'zon' | '19:00' | '20:00' | '21:00' | '22:00',
     help: 'lucht',
     options: [
+      { value: 'zon', label: 'Met de zon', note: 'Donker na zonsondergang, licht bij zonsopkomst', short: 'Met de zon' },
       { value: '19:00', label: '19:00', short: 'Vanaf 19:00' },
       { value: '20:00', label: '20:00', short: 'Vanaf 20:00' },
       { value: '21:00', label: '21:00', short: 'Vanaf 21:00' },

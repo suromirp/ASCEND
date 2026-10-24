@@ -16,7 +16,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Lucht bovenaan',
     lead: 'De lichte lucht met bergen bovenaan een tab kan in de avond fel zijn. Hier kies je wanneer ze donker wordt.',
     points: [
-      { head: 'Op tijd', text: 'licht overdag, donker vanaf het uur dat je kiest tot 07:00. ASCEND wisselt binnen een minuut.' },
+      { head: 'Op tijd', text: 'standaard met de zon: donker na zonsondergang en licht bij zonsopkomst op je plek, uitgerekend op de telefoon. Of een vast uur tot 07:00. ASCEND wisselt binnen een minuut.' },
       { head: 'Altijd licht of donker', text: 'de klok doet er dan niet toe.' },
       { head: 'Donker', text: 'dezelfde kaarten en kleuren, maar op diep marine met zachte bergen en een paar zwakke sterren.' },
     ],
