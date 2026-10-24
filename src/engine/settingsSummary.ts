@@ -16,6 +16,7 @@ import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
+import { checkLines, type CheckSummary } from './prescriptionCheck';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from './sports';
 import { readClothingAdjust } from './clothingFeedback';
 import { backupAge, backupAgoText } from './settingsAttention';
@@ -72,6 +73,8 @@ export interface SettingsFacts {
   macroFactor: { readAt?: string; leads: boolean } | null;
   // Opgeslagen duur per krachttraining, geleerd of geschat.
   strengthDurations: { name: string; minutes: number; source: 'learned' | 'estimate' | 'default'; basedOn: number }[];
+  // Raak per training, alles en sinds de startdatum (engine/prescriptionCheck.ts); weglaten als nog niet berekend.
+  strengthCheck?: CheckSummary;
   // Open taken in de reisplanner en het basisgewicht van de paklijst (kg).
   journeyOpen?: number;
   packKg?: number;
@@ -280,6 +283,14 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.showExtras, hidden: !forge.enabled };
     case 'forge-lijntjes':
       return { checked: forge.showTrendLines, hidden: !forge.enabled };
+    case 'forge-leren':
+      return { checked: forge.learnStacks, auto: true, hidden: !forge.enabled };
+    case 'forge-naast': {
+      // De stand staat hier, zodat je hem kunt zien zonder dat het op Forge staat.
+      const lines = f.strengthCheck ? checkLines(f.strengthCheck.all) : {};
+      const line = lines.macrofactor ?? lines.forge;
+      return { checked: forge.showComparison, hidden: !forge.enabled, ...(line ? { sub: line } : {}) };
+    }
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':

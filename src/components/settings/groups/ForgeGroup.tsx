@@ -75,6 +75,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="forge-vergelijken" title="Vergelijken met" facts={facts} info="forgeVergelijken" onClick={() => setSheet('forge-vergelijken')} />
         <SummaryRow id="forge-extras" title="Wat er verder veranderde" facts={facts} info="forgeExtras" onChange={(on) => save({ showExtras: on })} />
         <SummaryRow id="forge-lijntjes" title="Lijntjes in de lijst" facts={facts} info="forgeLijntjes" onChange={(on) => save({ showTrendLines: on })} />
+        <SummaryRow id="forge-leren" title="Gewichten van toestellen leren" facts={facts} info="forgeLeren" onChange={(on) => save({ learnStacks: on })} />
+        <SummaryRow id="forge-naast" title="ASCEND naast MacroFactor" facts={facts} info="forgeNaast" onChange={(on) => save({ showComparison: on })} />
         <SummaryRow id="forge-volgorde-lijst" title="Volgorde van de oefeningen" facts={facts} onClick={() => setSheet('forge-volgorde-lijst')} />
         <SummaryRow id="forge-programma" title="Programma uit MacroFactor" facts={facts} onClick={() => setSheet('forge-programma')} />
       </SettingsSection>

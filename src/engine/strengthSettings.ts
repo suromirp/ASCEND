@@ -98,6 +98,13 @@ export interface StrengthSettings {
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
   exerciseNotes?: Record<string, string>;
+  // Learn the weights of a cable or machine from what you used on it, and round
+  // a proposal to those (default on).
+  learnStacks?: boolean;
+  // Show the block "ASCEND naast MacroFactor" at the bottom of Forge (default off).
+  showComparison?: boolean;
+  // The day the quiet measuring began (ISO), to see the weeks since apart.
+  checkFrom?: string;
   // The strength program read in from MacroFactor, after Akkoord: it fills the
   // strength templates (engine/macrofactorProgram.ts). Absent: ASCEND's own.
   program?: StoredStrengthProgram;
@@ -127,7 +134,13 @@ export interface ResolvedStrengthSettings {
   showTrendLines: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
+  learnStacks: boolean;
+  showComparison: boolean;
+  checkFrom: string;
 }
+
+// The day the quiet measuring began. A choice of the owner, kept here and not in a component.
+export const DEFAULT_CHECK_FROM = '2026-10-24';
 
 export const DEFAULT_PROFILE_ID = 'standaard';
 
@@ -262,6 +275,9 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (listSort) out.listSort = listSort;
   if (typeof raw.showExtras === 'boolean') out.showExtras = raw.showExtras;
   if (typeof raw.showTrendLines === 'boolean') out.showTrendLines = raw.showTrendLines;
+  if (typeof raw.learnStacks === 'boolean') out.learnStacks = raw.learnStacks;
+  if (typeof raw.showComparison === 'boolean') out.showComparison = raw.showComparison;
+  if (typeof raw.checkFrom === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.checkFrom)) out.checkFrom = raw.checkFrom;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
   const sound = REST_SOUNDS.find((a) => a === raw.restSound);
@@ -302,6 +318,9 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     showTrendLines: s.showTrendLines ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
+    learnStacks: s.learnStacks ?? true,
+    showComparison: s.showComparison ?? false,
+    checkFrom: s.checkFrom ?? DEFAULT_CHECK_FROM,
   };
 }
 

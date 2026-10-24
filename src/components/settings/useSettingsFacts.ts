@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { effectiveAmbition } from '../../engine/ambition';
-import { latestWeight, weightsInUse } from '../../engine/bodyWeight';
+import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { predictDuration } from '../../engine/durationLearning';
 import { journeyProgress } from '../../engine/journey';
 import { baseWeightGrams, resolvePackItems } from '../../engine/packList';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { programAnchorDate } from '../../engine/programLayout';
+import { quietCheck } from '../../engine/strengthHistory';
+import { resolveStrengthSettings } from '../../engine/strengthSettings';
 import { DEFAULT_WATCH_USE } from '../../engine/watchUse';
 import type { SettingsFacts } from '../../engine/settingsSummary';
 import { getConnection, getWatchState, onWatchChange, type WatchActivityState } from '../../storage/externalActivities';
@@ -85,6 +87,10 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     );
     const progress = goalDate ? journeyProgress(JOURNEY_TASKS, settings.journey) : undefined;
     const use = loaded.watch?.use ?? DEFAULT_WATCH_USE;
+    const strengthSettings = resolveStrengthSettings(settings.strengthModel);
+    const strengthCheck = strengthSettings.enabled
+      ? quietCheck(sessionLogs, templates, { logs: sessionLogs, templates, program, bodyKg: currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor) }, strengthSettings)
+      : undefined;
     return {
       today,
       settings,
@@ -106,6 +112,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         const p = predictDuration(t, sessionLogs, estimates[t.id]);
         return { name: t.name, minutes: p.minutes, source: p.source, basedOn: p.basedOn };
       }),
+      strengthCheck: strengthCheck,
       journeyOpen: progress ? progress.total - progress.done : undefined,
       packKg: Math.round(baseWeightGrams(resolvePackItems(settings.packList)) / 100) / 10,
       folderSupported: webBackupFileAdapter.supportsPreferredDirectory(),

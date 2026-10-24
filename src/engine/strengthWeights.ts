@@ -24,6 +24,9 @@ export interface WeightContext {
   bodyKg?: number;
   // The weight you logged last time, to choose the bar and the sign of help.
   lastExternalKg?: number;
+  // The weights really used on this exercise (work and warm-up sets). Only a
+  // cable or a machine with a stack learns from them (`learnedStack`).
+  usedKg?: number[];
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -77,6 +80,38 @@ export function barFor(profile: GymProfile, lastExternalKg?: number): number {
   return bars.find((b) => b <= lastExternalKg + 1e-9) ?? bars[bars.length - 1];
 }
 
+// How many steps beyond the used range a learned stack keeps offering.
+const LEARNED_EXTRA_STEPS = 20;
+
+// The weights of a stack as learned from what was used on it: exactly those
+// weights inside the used range, and beyond it steps of the smallest gap seen
+// (the profile step when only one weight is known, or when the gap is more than
+// twice the profile step, which means a gap that says nothing about the stack).
+// Undefined when nothing usable was used.
+export function learnedStack(usedKg: number[], profileStepKg: number): number[] | undefined {
+  const used = [...new Set(usedKg.filter((w) => Number.isFinite(w) && w > 0).map(r2))].sort((a, b) => a - b);
+  if (used.length === 0) return undefined;
+  let step = profileStepKg;
+  for (let i = 1; i < used.length; i++) {
+    const gap = r2(used[i] - used[i - 1]);
+    if (gap > 0 && gap <= 2 * profileStepKg && (step === profileStepKg || gap < step)) step = gap;
+  }
+  const below: number[] = [];
+  for (let k = 1; k <= LEARNED_EXTRA_STEPS; k++) {
+    const w = r2(used[0] - k * step);
+    if (w < step - 1e-9) break;
+    below.unshift(w);
+  }
+  const above: number[] = [];
+  for (let k = 1; k <= LEARNED_EXTRA_STEPS; k++) above.push(r2(used[used.length - 1] + k * step));
+  return [...below, ...used, ...above];
+}
+
+// The weights a set list really used, for `usedKg`.
+export function usedWeights(sets: { weightKg?: number }[]): number[] {
+  return sets.map((s) => s.weightKg ?? 0).filter((w) => w > 0);
+}
+
 function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ctx: WeightContext): number[] {
   const res = exercise?.resistance;
   switch (res) {
@@ -97,6 +132,11 @@ function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ct
     case 'assisted_bodyweight':
       return multiples(stepFor(exercise, profile), 0, 200);
     default:
+      // A cable or a stack that was used before: the weights it really has.
+      if ((res === 'cable' || res === 'machine_stack') && ctx.usedKg && ctx.usedKg.length > 0) {
+        const learned = learnedStack(ctx.usedKg, stepFor(exercise, profile));
+        if (learned) return learned;
+      }
       // Cable, machine with a stack, and an exercise the list does not know.
       return multiples(stepFor(exercise, profile), stepFor(exercise, profile), 400);
   }

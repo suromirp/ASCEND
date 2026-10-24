@@ -30,7 +30,8 @@ import { ExerciseHistorySheet } from '../components/forge/ExerciseHistorySheet';
 import { ForgeFilters } from '../components/forge/ForgeFilters';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { isRepsBased, splitByRecency, trainingFilters, visibleViews } from '../engine/forgeHistory';
-import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
+import { checkSummary, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
+import { biasWord, checkLines, type CheckSummary, type Tally } from '../engine/prescriptionCheck';
 import { externalOneRmByKey } from '../engine/externalOneRm';
 import { compareMoments, resolveStrengthSettings, type OneRmView, type StrengthSettings } from '../engine/strengthSettings';
 import type { OneRmReading } from '../models/metrics';
@@ -55,6 +56,8 @@ function modelKey(raw: StrengthSettings | undefined): string {
   delete copy.compareWeeks;
   delete copy.listSort;
   delete copy.showExtras;
+  delete copy.showComparison;
+  delete copy.checkFrom;
   return JSON.stringify(copy);
 }
 
@@ -97,7 +100,7 @@ export function ForgePage() {
     const tiredNow = legsTiredAt(today, undefined, deps);
     return {
       views: exerciseViews(histories, s, bodyKg, today, tiredNow),
-      rows: comparisonRows(histories, s, bodyKg),
+      rows: comparisonRows(histories, s, bodyKg, templates),
     };
   }, [strengthKey, sessionLogs, templates, program, bodyKg, today]);
 
@@ -227,7 +230,7 @@ export function ForgePage() {
             )}
           </Card>
 
-          <ComparisonSection rows={model.rows} />
+          {choices.showComparison && <ComparisonSection rows={model.rows} from={choices.checkFrom} />}
           <TextButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="self-start text-left" icon="verder">
             Instellingen van Forge: sportschool, opwarmen en meer
           </TextButton>
@@ -242,56 +245,109 @@ export function ForgePage() {
 }
 
 
-// Hoe goed ASCEND vooraf het gewicht raadde: op de pagina één regel, per training in
-// een onderblad. Per oefening alleen het voorgestelde en het gepakte gewicht, met een
-// vinkje als het hooguit één stap scheelde.
-function ComparisonSection({ rows }: { rows: ComparisonRow[] }) {
+// Hoe raak een voorstel was, voor MacroFactor en voor ASCEND tegen dezelfde dag
+// (engine/prescriptionCheck.ts). Op de pagina twee korte regels en geen oordeel, per
+// training in een onderblad. Het blok staat alleen als "ASCEND naast MacroFactor" aan
+// staat.
+function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string }) {
   const [open, setOpen] = useState(false);
-  const a = accuracy(rows);
+  const summary = useMemo(() => checkSummary(rows, from), [rows, from]);
+  const all = checkLines(summary.all);
+  const since = checkLines(summary.since);
+  const sinceLine = since.macrofactor ? `Sinds ${shortDate(from)}: ${since.macrofactor.replace('Raak: ', '')}` : undefined;
+  const empty = !all.macrofactor && !all.forge;
   return (
     <Card className="flex flex-col gap-2">
       <Eyebrow>Voorstel en wat je deed</Eyebrow>
-      <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{a.sentence}</p>
-      {rows.length > 0 && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per training bekijken</TextButton>}
-      {open && <ComparisonSheet rows={rows} onClose={() => setOpen(false)} />}
+      {empty && (
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen met herhalingen in reserve nodig, waarvoor ASCEND vooraf iets kon voorstellen.</p>
+      )}
+      {all.macrofactor && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.macrofactor}</p>}
+      {sinceLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceLine}</p>}
+      {all.forge && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.forge}</p>}
+      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+        Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het bij trainingen uit MacroFactor een schatting achteraf, uit de sets van die dag.
+      </p>
+      {rows.some((r) => r.check) && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per training bekijken</TextButton>}
+      {open && <ComparisonSheet rows={rows} summary={summary} onClose={() => setOpen(false)} />}
     </Card>
   );
 }
 
-function ComparisonSheet({ rows, onClose }: { rows: ComparisonRow[]; onClose: () => void }) {
+const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+const shortDate = (iso: string) => `${Number(iso.slice(8, 10))} ${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+
+// "18 van 25 raak, eerder te zwaar".
+function tallyText(t: Tally): string {
+  const bias = biasWord(t);
+  return `${t.hit} van ${t.total} raak${bias ? `, ${bias}` : ''}`;
+}
+
+function ComparisonSheet({ rows, summary, onClose }: { rows: ComparisonRow[]; summary: CheckSummary; onClose: () => void }) {
   const [showAll, setShowAll] = useState(false);
-  const shown = showAll ? rows : rows.slice(0, SHOWN_AT_FIRST);
+  const checked = rows.filter((r) => r.check);
+  const shown = showAll ? checked : checked.slice(0, SHOWN_AT_FIRST);
   // Per training day, newest first.
-  const groups: { key: string; date: string; name: string; rows: ComparisonRow[] }[] = [];
+  const groups: { key: string; date: string; name: string; forge: boolean; rows: ComparisonRow[] }[] = [];
   for (const r of shown) {
     let g = groups.find((x) => x.key === r.logId);
-    if (!g) groups.push((g = { key: r.logId, date: r.date, name: r.trainingName, rows: [] }));
+    if (!g) groups.push((g = { key: r.logId, date: r.date, name: r.trainingName, forge: r.check?.origin === 'forge', rows: [] }));
     g.rows.push(r);
   }
   const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
+  const parts: { title: string; totals: CheckSummary['all'] }[] = [{ title: 'Alles', totals: summary.all }, { title: `Sinds ${shortDate(summary.from)}`, totals: summary.since }];
   return (
-    <Sheet eyebrow="Forge" title="Voorstel en wat je deed" line="Wat ASCEND vooraf voorstelde, naast wat je pakte." onClose={onClose}>
+    <Sheet eyebrow="Forge" title="Voorstel en wat je deed" line="Per oefening: was het voorstel raak voor die dag?" onClose={onClose}>
       <div className="flex flex-col gap-4 pb-4">
+        <div className="flex flex-col gap-2">
+          {parts.map((p) => {
+            const mf = p.totals.macrofactor;
+            const fg = p.totals.forge.ascend;
+            if (mf.did.total === 0 && fg.total === 0) return null;
+            return (
+              <div key={p.title} className="flex flex-col">
+                <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{p.title}</p>
+                {mf.did.total > 0 && (
+                  <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
+                    MacroFactor: {tallyText(mf.did)}. ASCEND: {tallyText(mf.ascend)}.
+                  </p>
+                )}
+                {fg.total > 0 && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Forge, ASCEND: {tallyText(fg)}.</p>}
+              </div>
+            );
+          })}
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+            Een vinkje zegt dat het voorstel raak was voor die dag. Bij ASCEND is dat voor trainingen uit MacroFactor een schatting achteraf.
+          </p>
+        </div>
         {groups.map((g) => (
           <div key={g.key} className="flex flex-col">
-            <p className="pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{g.name}, {formatDateNL(g.date)}</p>
+            <p className="pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{g.name}, {formatDateNL(g.date)}{g.forge ? ', in Forge' : ''}</p>
             {g.rows.map((r) => (
               <div key={r.exerciseKey} className="flex min-h-[44px] items-center gap-3 border-t py-1.5" style={{ borderColor: 'var(--color-card-border)' }}>
                 <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{r.exerciseName}</p>
-                <p className="shrink-0 text-right font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                  ASCEND {kg(r.prescribedKg)}
-                  <br />
-                  <span style={{ color: 'var(--color-ink)' }}>jij {kg(r.actualKg)}</span>
-                </p>
-                <span className="w-5 shrink-0" style={{ color: r.withinOneStep ? 'var(--color-progress)' : 'var(--color-ink-dim)' }} aria-label={r.withinOneStep ? 'Hooguit één stap verschil' : 'Meer dan één stap verschil'}>
-                  {r.withinOneStep ? <Icon name="vinkje" size={18} /> : null}
-                </span>
+                <div className="flex shrink-0 flex-col gap-0.5 font-sans text-xs tabular-nums leading-snug">
+                  <HitLine label={`ASCEND ${kg(r.prescribedKg)}`} hit={r.check?.ascend.hit} />
+                  <HitLine label={`jij ${kg(r.actualKg)}`} hit={r.check?.did.hit} strong />
+                </div>
               </div>
             ))}
           </div>
         ))}
-        {!showAll && rows.length > SHOWN_AT_FIRST && <SecondaryButton onClick={() => setShowAll(true)}>Toon alles ({rows.length})</SecondaryButton>}
+        {!showAll && checked.length > SHOWN_AT_FIRST && <SecondaryButton onClick={() => setShowAll(true)}>Toon alles ({checked.length})</SecondaryButton>}
       </div>
     </Sheet>
+  );
+}
+
+// Een regel met het gewicht en, als het voorstel of wat je deed raak was, een vinkje.
+function HitLine({ label, hit, strong }: { label: string; hit: boolean | undefined; strong?: boolean }) {
+  return (
+    <span className="flex items-center justify-end gap-1" style={{ color: strong ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
+      {label}
+      <span className="flex w-4 justify-center" style={{ color: 'var(--color-progress)' }} role="img" aria-label={hit === undefined ? 'Niet te beoordelen' : hit ? 'Raak' : 'Niet raak'}>
+        {hit ? <Icon name="vinkje" size={14} /> : null}
+      </span>
+    </span>
   );
 }

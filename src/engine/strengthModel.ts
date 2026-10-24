@@ -24,7 +24,7 @@ import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { isWorkSet } from './workSets';
 import type { ResolvedStrengthSettings } from './strengthSettings';
-import { candidatesFor, externalFromLoad, loadFromExternal, nearestIndex, stepAt, type Candidate } from './strengthWeights';
+import { candidatesFor, externalFromLoad, loadFromExternal, nearestIndex, stepAt, usedWeights, type Candidate } from './strengthWeights';
 
 // --- constants -------------------------------------------------------------------------
 
@@ -470,6 +470,13 @@ export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. K
 // the rack). Then there is no proposal, only a sentence that says why. An
 // exercise the list does not know is rounded onto the steps of a machine, so
 // it is never refused.
+// The weights used on this exercise before the day of the proposal, for a stack
+// that learns (the setting "Gewichten van toestellen leren").
+export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings }): number[] | undefined {
+  if (!input.settings.learnStacks) return undefined;
+  return usedWeights(input.sessions.filter((s) => s.date < input.date).flatMap((s) => s.sets));
+}
+
 export function lastWeightMismatch(input: PrescribeInput): boolean {
   const { exercise, settings } = input;
   if (!exercise?.resistance) return false;
@@ -481,7 +488,7 @@ export function lastWeightMismatch(input: PrescribeInput): boolean {
   const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
   const last = points.filter((p) => p.top).at(-1);
   if (!last?.top) return false;
-  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg });
+  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg, usedKg: usedBefore(input) });
   if (!candidates) return false;
   return !candidates.some((c) => Math.abs(c.externalKg - last.top!.weightKg) < WEIGHT_MATCH_KG);
 }
@@ -493,7 +500,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const last = points.filter((p) => p.top).at(-1);
   const strengthKg = [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed;
   if (!last?.top || strengthKg === undefined) return undefined;
-  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg });
+  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg, usedKg: usedBefore(input) });
   if (!candidates) return undefined;
   const mismatch = lastWeightMismatch(input);
   if (mismatch && !input.nearestOnMismatch) return undefined;

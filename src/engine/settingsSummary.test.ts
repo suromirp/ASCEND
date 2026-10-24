@@ -177,6 +177,21 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-volgorde-lijst', withForge({ listSort: 'name' })).value).toBe('Op naam');
   });
 
+  it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-leren', facts())).toEqual({ checked: true, auto: true, hidden: false });
+    expect(rowSummary('forge-leren', withForge({ learnStacks: false })).checked).toBe(false);
+    expect(rowSummary('forge-naast', facts())).toEqual({ checked: false, hidden: false });
+    expect(rowSummary('forge-naast', withForge({ showComparison: true })).checked).toBe(true);
+    expect(rowSummary('forge-naast', withForge({ enabled: false })).hidden).toBe(true);
+    const tally = (hit: number, total: number) => ({ hit, total });
+    const none = { macrofactor: { did: tally(0, 0), ascend: tally(0, 0) }, forge: { ascend: tally(0, 0) } };
+    const totals = { ...none, macrofactor: { did: tally(18, 25), ascend: tally(17, 25) } };
+    const r = rowSummary('forge-naast', facts({ strengthCheck: { all: totals, since: none, from: '2026-10-24' } }));
+    expect(r.sub).toBe('Raak: MacroFactor 72%, ASCEND 68%');
+    expect(r.sub!.length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
+  });
+
   it('uit: de groep noemt de sportschool', () => {
     const settings = { ...facts().settings, strengthModel: { enabled: false } };
     expect(groupSummary('forge', facts({ settings }))).toEqual({ value: 'Uit', dim: true, sub: 'Sportschool: 2 stangen, 7 schijven' });

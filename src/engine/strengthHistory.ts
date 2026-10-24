@@ -13,6 +13,7 @@ import { addDays, daysBetween, formatDateNL } from '../utils/dates';
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
+import { checkDone, checkProposal, checkRow, logOrigin, summariseChecks, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
 import {
   analyseSessions,
   deriveRange,
@@ -20,6 +21,7 @@ import {
   lastWeightMismatch,
   prescribe,
   referenceWeight,
+  sessionStrength,
   topSetOf,
   type Prescription,
   type RepRange,
@@ -27,6 +29,7 @@ import {
   type SessionPoint,
 } from './strengthModel';
 import type { ResolvedStrengthSettings } from './strengthSettings';
+import { loadFromExternal } from './strengthWeights';
 import { isWorkSet } from './workSets';
 
 // --- tired legs --------------------------------------------------------------------------
@@ -95,6 +98,9 @@ export function legsTiredAt(date: string, before: string | undefined, deps: Legs
 export interface HistorySession extends SessionInput {
   logId: string;
   trainingName: string;
+  templateId?: string;
+  // Where the training came from (engine/prescriptionCheck.ts#logOrigin).
+  origin?: CheckOrigin;
   tired?: LegsTired;
 }
 
@@ -136,7 +142,7 @@ export function exerciseHistories(logs: SessionLog[], templates: SessionTemplate
         if (!tiredCache.has(ck)) tiredCache.set(ck, legsTiredAt(log.completedDate, log.completedAt, { ...deps, events }));
         tired = tiredCache.get(ck);
       }
-      history.sessions.push({ date: log.completedDate, sets: [...entry.sets], logId: log.id, trainingName: names.get(log.templateId) ?? 'Krachttraining', legsTired: !!tired, ...(tired ? { tired } : {}) });
+      history.sessions.push({ date: log.completedDate, sets: [...entry.sets], logId: log.id, trainingName: names.get(log.templateId) ?? 'Krachttraining', templateId: log.templateId, ...(logOrigin(log) ? { origin: logOrigin(log) } : {}), legsTired: !!tired, ...(tired ? { tired } : {}) });
     }
   }
   return [...map.values()];
@@ -214,21 +220,43 @@ export interface ComparisonRow {
   reason: string;
   // Why the advice was what it was, in a word: 'tired' means tired legs explained it.
   kind: Prescription['kind'];
+  // "Raak" for this exercise of this training; absent without reps in reserve
+  // or without a known origin (engine/prescriptionCheck.ts).
+  check?: RowCheck;
 }
 
-export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined): ComparisonRow[] {
+// The range and RIR the template of this training asks of this exercise; the
+// proposal's own (derived) range where the template says nothing.
+function planFor(templates: SessionTemplate[] | undefined, templateId: string | undefined, key: string): Partial<RepTarget> | undefined {
+  const template = templates?.find((t) => t.id === templateId);
+  const slot = template?.exercises?.find((e) => exerciseKey(e.id, e.exerciseName).key === key);
+  return targetOfSlot(slot);
+}
+
+export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined, templates?: SessionTemplate[]): ComparisonRow[] {
   const rows: ComparisonRow[] = [];
   for (const h of histories) {
     const ctx = { exercise: h.exercise, bodyKg, maxToFailure: settings.estimateUpTo };
     for (let i = 1; i < h.sessions.length; i++) {
       const s = h.sessions[i];
-      const rx = prescribe({ exercise: h.exercise, sessions: h.sessions.slice(0, i), date: s.date, bodyKg, settings, tired: s.tired });
+      const plan = planFor(templates, s.templateId, h.key);
+      const planned = plan && plan.low !== undefined && plan.high !== undefined ? { plan } : {};
+      const rx = prescribe({ exercise: h.exercise, sessions: h.sessions.slice(0, i), date: s.date, bodyKg, settings, tired: s.tired, ...planned });
       const top = topSetOf(s.sets, ctx);
       if (!rx || !top) continue;
       const first = rx.sets[0];
       if (first.weightKg === 0 && top.weightKg === 0) continue;
       const actualSet = { weightKg: top.weightKg, repsLow: top.reps, repsHigh: top.reps, rir: top.rir ?? 0 };
       const actual = top.rir === undefined ? describeActual(h.exercise, top.weightKg, top.reps) : describePlannedSet(h.exercise, actualSet);
+      let check: RowCheck | undefined;
+      if (s.origin) {
+        const target: RepTarget = { low: rx.range.low, high: rx.range.high, rir: rx.range.rir };
+        const done = checkDone(top, target);
+        const strengthKg = sessionStrength(s.sets, ctx);
+        const load = loadFromExternal(h.exercise, first.weightKg, bodyKg);
+        const proposal = strengthKg !== undefined && load !== undefined ? checkProposal(strengthKg, load, target) : undefined;
+        check = checkRow(s.origin, target, done, proposal);
+      }
       rows.push({
         logId: s.logId,
         date: s.date,
@@ -242,6 +270,7 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
         withinOneStep: Math.abs(top.weightKg - first.weightKg) <= rx.stepKg + 1e-6,
         reason: rx.reason,
         kind: rx.kind,
+        ...(check ? { check } : {}),
       });
     }
   }
@@ -250,6 +279,18 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
 
 function describeActual(exercise: Exercise | undefined, weightKg: number, reps: number): string {
   return describePlannedSet(exercise, { weightKg, repsLow: reps, repsHigh: reps, rir: 0 }).replace(/, tot het uiterste$/, '');
+}
+
+// The quiet measuring: raak per source, everything and since the start date.
+export function checkSummary(rows: ComparisonRow[], from: string): CheckSummary {
+  return summariseChecks(rows, from);
+}
+
+// Raak for the settings and the block on Forge, from the stored logs. Pure.
+export function quietCheck(logs: SessionLog[], templates: SessionTemplate[], deps: LegsDeps, settings: ResolvedStrengthSettings): CheckSummary {
+  const strengthLogs = logs.filter((l) => l.strengthData && l.strengthData.length > 0);
+  const rows = comparisonRows(exerciseHistories(strengthLogs, templates, deps), settings, deps.bodyKg, templates);
+  return checkSummary(rows, settings.checkFrom);
 }
 
 export interface Accuracy {

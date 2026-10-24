@@ -25,7 +25,7 @@ import { formatNumberNL } from '../utils/number';
 import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, expectedReps, FATIGUE_PER_SET, formatWeight, prescribe, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
+import { DEFAULT_RIR, expectedReps, FATIGUE_PER_SET, formatWeight, prescribe, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { setsText } from './macrofactorProgram';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -218,6 +218,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   // A swapped exercise is another exercise: the range of the template is not its
   // own (squat 5 to 8 is not leg extension 5 to 8). The reps in reserve stay.
   const plan = swapTo ? (fromSlot?.rir !== undefined ? { rir: fromSlot.rir } : undefined) : fromSlot;
+  const learned = usedBefore({ sessions: history?.sessions ?? [], date: ctx.date, settings: ctx.settings });
   let rx: Prescription | undefined;
   if (ctx.modelOn && history && history.sessions.length > 0) {
     rx = prescribe({
@@ -234,7 +235,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   }
 
   const lastTop = last?.sets.filter(isWorkSet).filter((s) => s.reps > 0).sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0];
-  const fromProgram = rx && targets ? programWeights(rx, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind) : undefined;
+  const fromProgram = rx && targets ? programWeights(rx, targets, exercise, ctx, lastTop?.weightKg, tired, warmKind, learned) : undefined;
   const workWeights: (number | undefined)[] = [];
   for (let i = 0; i < setCount; i++) {
     const t = targets?.[i];
@@ -248,7 +249,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   if (!rx && ctx.modelOn && exercise) {
     const w0 = workWeights[0];
     if (w0 !== undefined) {
-      const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: w0 });
+      const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: w0, usedKg: learned });
       if (candidates) warmups = warmupSets(ctx.settings, exercise, candidates, w0, undefined, warmKind, ctx.bodyKg);
     } else {
       emptyWarmups = warmupShapes(ctx.settings, exercise, warmKind);
@@ -312,8 +313,8 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
 // earlier set, unless the sets are equal) still gives the bottom of the
 // range with the asked reps left. A set whose range and RIR are Forge's own
 // keeps Forge's weight, with its limits per training (KR-5).
-function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, warm: WarmKind): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
-  const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg });
+function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, warm: WarmKind, usedKg?: number[]): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
+  const candidates = candidatesFor(exercise, ctx.settings.profile, { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg, usedKg });
   if (!candidates) return undefined;
   let differs = false;
   const weights = targets.map((t, i) => {

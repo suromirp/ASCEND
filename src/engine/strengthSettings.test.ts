@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareMoments, DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
+import { compareMoments, DEFAULT_CHECK_FROM, DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
 
 describe('de standaardwaarden', () => {
   it('zonder instellingen geldt het advies', () => {
@@ -144,5 +144,19 @@ describe('het workoutscherm', () => {
     const off = withExerciseValue(on, 'exerciseNotes', 'leg-press', undefined);
     expect(off).toEqual({ warmup: 'off' });
     expect(withExerciseValue(undefined, 'restSeconds', 'back-squat', 210)).toEqual({ restSeconds: { 'back-squat': 210 } });
+  });
+});
+
+describe('toetsen en toestellen leren', () => {
+  it('de adviezen: leren aan, blok uit, startdatum van het stille meten', () => {
+    const r = resolveStrengthSettings(undefined);
+    expect(r.learnStacks).toBe(true);
+    expect(r.showComparison).toBe(false);
+    expect(r.checkFrom).toBe(DEFAULT_CHECK_FROM);
+  });
+  it('eigen keuzes blijven en rommel valt weg', () => {
+    const r = resolveStrengthSettings({ learnStacks: false, showComparison: true, checkFrom: '2026-11-01' });
+    expect([r.learnStacks, r.showComparison, r.checkFrom]).toEqual([false, true, '2026-11-01']);
+    expect(normalizeStrengthSettings({ checkFrom: 'gisteren', learnStacks: 'ja' })).toEqual({});
   });
 });

@@ -129,6 +129,24 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen oordeel', text: 'het verschil is een kleine regel. Gelijk of lager is geen mislukking, een hogere 1RM is niet het enige doel.' },
     ],
   },
+  forgeLeren: {
+    title: 'Gewichten van toestellen leren',
+    lead: 'Bij een toestel of kabel met een gewichtstapel stelt ASCEND alleen gewichten voor die er echt zijn.',
+    points: [
+      { head: 'Zo leert het', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen, en rondt af op het dichtstbijzijnde.' },
+      { head: 'Buiten je bereik', text: 'voor een gewicht boven of onder wat je gebruikte geldt de kleinste stap die je op het toestel zag.' },
+      { head: 'Uit', text: 'dan rondt ASCEND af op de stap die je bij Kabels en toestellen instelde.' },
+    ],
+  },
+  forgeNaast: {
+    title: 'ASCEND naast MacroFactor',
+    lead: 'Onderaan Forge staat hoe vaak een voorstel raak was: binnen het herhalingenbereik, met de herhalingen in reserve die de training vraagt.',
+    points: [
+      { head: 'Dezelfde toets', text: 'MacroFactor en ASCEND worden aan dezelfde dag gehouden, niet aan elkaar. Of ze hetzelfde gewicht kiezen zegt niets.' },
+      { head: 'Een schatting', text: 'voor ASCEND is raak achteraf een schatting uit de sets van die dag. Voor trainingen in Forge zelf is het gewoon wat er gebeurde.' },
+      { head: 'Uit', text: 'het blok staat dan niet op Forge. De stand zie je hier, onder de schakelaar.' },
+    ],
+  },
   forgeLijntjes: {
     title: 'Lijntjes in de lijst',
     lead: 'Een klein lijntje naast elke oefening laat in één oogopslag zien hoe het de laatste trainingen ging.',
