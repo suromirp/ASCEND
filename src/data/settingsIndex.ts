@@ -64,7 +64,7 @@ export const SETTINGS_INDEX: SettingsIndexItem[] = [
   { id: 'hartslag', title: 'Mijn hartslag', group: 'lichaam', note: 'Je eigen hartslagwaarden, zodat zones in slagen per minuut staan.', keywords: ['zones', 'bpm', 'maximale hartslag', 'rusthartslag', 'drempel', 'horloge'] },
   { id: 'blessures', title: 'Blessures', group: 'lichaam', note: 'Waar je last van hebt, zodat ASCEND er rekening mee houdt.', keywords: ['pijn', 'last', 'knie', 'enkel', 'gezondheid', 'ziek'], route: '/blessures' },
   { id: 'lichaamsgewicht', title: 'Lichaamsgewicht', group: 'lichaam', note: 'Je trendgewicht, voor rugzakgewicht als deel van je lichaamsgewicht.', keywords: ['gewicht', 'kilo', 'kg', 'wegen', 'weegschaal', 'herinnering'] },
-  { id: 'herinnering-gewicht', title: 'Herinnering voor je gewicht', group: 'lichaam', note: 'Hoe vaak Vandaag vraagt om je trendgewicht bij te werken.', keywords: ['gewicht', 'wegen', 'herinnering', 'weekgewicht', 'elke week', 'nooit'] },
+  { id: 'herinnering-gewicht', title: 'Herinnering voor je gewicht', group: 'lichaam', note: 'Hoe vaak Vandaag vraagt om je trendgewicht bij te werken.', keywords: ['gewicht', 'wegen', 'herinnering', 'weekgewicht', 'elke dag', 'dagelijks', 'om de dag', 'elke week', 'nooit'] },
 
   { id: 'programma', title: 'Programma en fases', group: 'doel', note: 'In welke week en fase je zit, en de lengte van de fases.', keywords: ['fase', 'week', 'opnieuw beginnen', 'schone start', 'opbouw', 'afbouwen', 'taper'] },
   { id: 'lange-zondag', title: 'De lange zondag', group: 'doel', note: 'Of je op zondag een bergtocht of een lange duurloop doet.', keywords: ['zondag', 'bergtocht', 'duurloop', 'wandeling', 'marathon'] },

@@ -15,10 +15,12 @@ export function latestWeight(entries: WeightEntry[] | undefined): WeightEntry | 
 
 // Time for a new entry: none yet, or the last one is two weeks old, and
 // not snoozed in the last few days.
-// The interval is a setting (AppSettings.weightReminderDays; 0 = never).
+// The interval is a setting (AppSettings.weightReminderDays; 0 = never; 1 is
+// every day, 2 every other day). "Niet nu" never waits longer than the interval
+// itself, so a daily reminder is back tomorrow.
 export function weightDue(entries: WeightEntry[] | undefined, snoozedAt: string | undefined, asOf: string, reminderDays: number = WEIGHT_REMINDER_DAYS): boolean {
   if (reminderDays <= 0) return false;
-  if (snoozedAt && asOf < addDays(snoozedAt, SNOOZE_DAYS)) return false;
+  if (snoozedAt && asOf < addDays(snoozedAt, Math.min(SNOOZE_DAYS, reminderDays))) return false;
   const last = latestWeight(entries);
   return !last || daysBetween(last.date, asOf) >= reminderDays;
 }

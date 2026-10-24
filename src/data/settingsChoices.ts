@@ -160,8 +160,10 @@ export const CHOICES = {
     group: 'Lichaam',
     title: 'Herinnering',
     line: 'Op Vandaag, als MacroFactor niets nieuws geeft.',
-    advice: 14 as 0 | 7 | 14 | 28,
+    advice: 14 as 0 | 1 | 2 | 7 | 14 | 28,
     options: [
+      { value: 1, label: 'Elke dag' },
+      { value: 2, label: 'Om de dag' },
       { value: 7, label: 'Elke week' },
       { value: 14, label: 'Elke 2 weken' },
       { value: 28, label: 'Elke 4 weken' },

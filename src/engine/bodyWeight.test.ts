@@ -15,6 +15,20 @@ describe('body weight', () => {
     expect(weightDue([], undefined, '2026-10-03', 0)).toBe(false);
   });
 
+  it('every day or every other day', () => {
+    expect(weightDue([e('2026-10-02', 80)], undefined, '2026-10-03', 1)).toBe(true);
+    expect(weightDue([e('2026-10-03', 80)], undefined, '2026-10-03', 1)).toBe(false);
+    expect(weightDue([e('2026-10-02', 80)], undefined, '2026-10-03', 2)).toBe(false);
+    expect(weightDue([e('2026-10-01', 80)], undefined, '2026-10-03', 2)).toBe(true);
+  });
+
+  it('"later" never waits longer than the interval: a daily reminder is back tomorrow', () => {
+    expect(weightDue([], '2026-10-03', '2026-10-03', 1)).toBe(false);
+    expect(weightDue([], '2026-10-02', '2026-10-03', 1)).toBe(true);
+    expect(weightDue([], '2026-10-02', '2026-10-03', 2)).toBe(false);
+    expect(weightDue([], '2026-10-01', '2026-10-03', 2)).toBe(true);
+  });
+
   it('"later" snoozes the reminder for three days', () => {
     expect(weightDue([], '2026-10-02', '2026-10-03')).toBe(false);
     expect(weightDue([], '2026-09-30', '2026-10-03')).toBe(true);
