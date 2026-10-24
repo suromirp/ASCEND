@@ -15,7 +15,7 @@ import { ROLE_LABEL, getModalities, modalitySport } from '../../data/modalities'
 import { isSportEnabled, type EnabledSports } from '../../engine/sports';
 import { useAppData } from '../../state/AppDataContext';
 import { EFFORT_COLOR } from '../effortColor';
-import { firstSentence } from './text';
+import { firstSentence, restAfterFirstSentence } from './text';
 import { StretchItems } from '../StretchList';
 import { Icon, type IconName } from '../icons';
 
@@ -224,7 +224,7 @@ export function ModalityChoice({
               disabled={m.locked}
               className="flex min-h-[52px] items-center gap-3 rounded-xl px-3 py-2 text-left disabled:opacity-40"
               style={{
-                background: active ? 'var(--chip-on)' : 'transparent',
+                background: active ? 'var(--color-action-muted)' : 'transparent',
                 boxShadow: `inset 0 0 0 1px ${active ? 'var(--color-action)' : 'var(--color-card-border)'}`,
               }}
             >
@@ -232,15 +232,35 @@ export function ModalityChoice({
                 {active && <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-action)' }} />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] leading-snug" style={{ color: 'var(--color-ink)', fontWeight: active ? 600 : 400 }}>{name}</span>
+                <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)', fontWeight: active ? 600 : 400 }}>{name}</span>
                 <span className="block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{[sport, ROLE_LABEL[m.role]].filter(Boolean).join(' · ')}</span>
               </span>
             </button>
           );
         })}
       </div>
-      {selected && <p className="mt-2.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{firstSentence(selected.how)}</p>}
+      {selected && <MoreText key={selected.key} text={selected.how} className="mt-2.5" color="var(--color-ink-dim)" />}
     </div>
+  );
+}
+
+// Eén zin van een uitleg, en de rest achter Meer: niets van de tekst valt weg.
+export function MoreText({ text, className = '', color }: { text: string; className?: string; color: string }) {
+  const [open, setOpen] = useState(false);
+  const rest = restAfterFirstSentence(text);
+  return (
+    <p className={`text-sm leading-snug ${className}`} style={{ color }}>
+      {open || !rest ? text : firstSentence(text)}
+      {rest && (
+        <>
+          {' '}
+          <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="relative font-medium" style={{ color: 'var(--color-action)' }}>
+            <span aria-hidden="true" className="absolute -inset-3" />
+            {open ? 'Minder' : 'Meer'}
+          </button>
+        </>
+      )}
+    </p>
   );
 }
 
@@ -255,7 +275,7 @@ export function StretchRow({ icon, title, line, stretches }: { icon: IconName; t
           <Icon name={icon} size={18} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] leading-snug" style={{ color: 'var(--color-ink)' }}>{title}</span>
+          <span className="block text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{title}</span>
           <span className="block text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{line}</span>
         </span>
         <span className="shrink-0 transition-transform" style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(90deg)' : undefined }}>

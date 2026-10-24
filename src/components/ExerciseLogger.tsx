@@ -21,8 +21,7 @@ import { StopSignals } from './SessionHeader';
 import { SkyBand } from './SkyBand';
 import { CheckGlyph } from './vandaag/glyphs';
 import { ZONE_SENTENCE } from './vandaag/zone';
-import { IntervalProfile, KeyNumbers, ModalityChoice, StepList, StretchRow } from './duur/DuurParts';
-import { firstSentence } from './duur/text';
+import { IntervalProfile, KeyNumbers, ModalityChoice, MoreText, StepList, StretchRow } from './duur/DuurParts';
 import { WatchStatusRow } from './WatchStatusRow';
 import { buildSessionBrief } from '../engine/sessionBrief';
 import { progressionTarget } from '../engine/programLayout';
@@ -341,7 +340,7 @@ function GeneralLogger({
             <div className="min-w-0 flex-1 pt-1">
               <Eyebrow>{brief.headline}</Eyebrow>
               <h1 className="font-display text-3xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
-              {brief.purpose && <p className="mt-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{firstSentence(brief.purpose)}</p>}
+              {brief.purpose && <MoreText text={brief.purpose} className="mt-1" color="var(--color-ink)" />}
               <p className="mt-1 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{[dateLabel, brief.weekLabel].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
@@ -405,7 +404,7 @@ function GeneralLogger({
           </Card>
         )}
 
-        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length || plannedSession) ? (
+        {!restChosen && !quickComplete && (template.warmup?.length || template.cooldown?.length) ? (
           <div className="mt-4 flex flex-col divide-y divide-[var(--color-card-border)] rounded-2xl border px-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             {template.warmup && template.warmup.length > 0 && (
               <StretchRow icon="rekken" title="Eerst opwarmen" line={`${template.warmup.length} oefeningen`} stretches={template.warmup} />

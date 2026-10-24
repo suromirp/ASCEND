@@ -1818,7 +1818,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (late.status === 'failed') { lateFailed(); return; }
-      void showHorizonResult(plan, late).then(() => options?.onLate?.(late.status));
+      // The plan is stored by now, also when showing the result fails.
+      const answered = () => options?.onLate?.(late.status);
+      void showHorizonResult(plan, late).then(answered, answered);
     }, lateFailed);
     if (outcome.status === 'late') return 'pending';
     if (outcome.status === 'failed') {

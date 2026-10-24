@@ -119,6 +119,10 @@ function ExerciseCard({ view, showOneRm }: { view: ExerciseView; showOneRm: bool
   const [oneRmInfo, setOneRmInfo] = useState(false);
   const oneRm = useMemo(() => oneRmSeries(view.points), [view.points]);
   const oneRmDelta = oneRmChange(oneRm);
+  // One line per card: with the 1RM chart on, the line of the working weight
+  // would tell the same story twice. With help the first line reads otherwise
+  // (what you lift yourself), so that one stays.
+  const oneRmChart = showOneRm && strengthKg !== undefined && oneRm.length >= 2 && !assisted;
   // With your own body weight in it the number is the total load, not the plates.
   const totalLoad = exercise?.bodyweightFraction !== undefined || (exercise !== undefined && ['bodyweight', 'assisted_bodyweight', 'pack_or_vest'].includes(exercise.resistance));
 
@@ -151,7 +155,7 @@ function ExerciseCard({ view, showOneRm }: { view: ExerciseView; showOneRm: bool
           {exercise?.resistance === 'assisted_bodyweight' ? ' hulp' : ''} voor <Num>{now.reps}</Num> herhalingen met <Num>{now.rir}</Num> over.
         </p>
       )}
-      {line.length >= 2 && (
+      {line.length >= 2 && !oneRmChart && (
         <div className="font-sans tabular-nums">
           <TrendLineChart points={chartLine} color="var(--color-action)" height={90} formatValue={assisted && !liftedKg ? (v) => `hulp ${kg(Math.abs(v))}` : (v) => kg(Math.abs(v))} />
           {assisted && (
@@ -161,7 +165,7 @@ function ExerciseCard({ view, showOneRm }: { view: ExerciseView; showOneRm: bool
           )}
         </div>
       )}
-      {line.length === 1 && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>}
+      {line.length === 1 && !oneRmChart && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>}
       {showOneRm && strengthKg !== undefined && (
         <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
           <div className="flex items-center justify-between gap-2">

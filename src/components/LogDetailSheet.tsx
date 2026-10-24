@@ -11,11 +11,15 @@ import { Icon } from './icons';
 import { keptNumbersLine, logSource } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
 import { useState } from 'react';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
 import { logKindLabel } from '../engine/sports';
 import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine/workoutDetails';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
+
+// Putting the numbers back is local work; longer than this means it is stuck.
+const RESTORE_TIMEOUT_MS = 15_000;
 
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
@@ -67,13 +71,20 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   const { closing, requestClose } = useSheetClose(onClose);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [restoreNote, setRestoreNote] = useState<string | null>(null);
   const keptLine = keptNumbersLine(log);
   async function putBack() {
     if (restoring) return;
     setRestoring(true);
+    setRestoreNote(null);
     try {
-      await restoreFromWatch([log.id]);
+      const n = await withTimeout(restoreFromWatch([log.id]), RESTORE_TIMEOUT_MS);
       setConfirmRestore(false);
+      if (n === 0) setRestoreNote('Er was niets terug te zetten; je getallen staan al zo.');
+    } catch (err) {
+      setRestoreNote(err instanceof TimeoutError
+        ? 'Terugzetten duurt langer dan het zou moeten. Kijk zo of je getallen terug staan, en probeer het anders nog eens.'
+        : 'Terugzetten lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     } finally {
       setRestoring(false);
     }
@@ -127,15 +138,16 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{keptLine}</p>
               {confirmRestore ? (
                 <>
-                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? Garmin wordt dan niet meer gebruikt voor deze training.</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? De getallen van {source.label === 'Geïmporteerd' ? 'de import' : source.label} worden dan niet meer gebruikt voor deze training.</p>
                   <div className="flex gap-3">
-                    <button onClick={() => setConfirmRestore(false)} disabled={restoring} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
-                    <button onClick={() => void putBack()} disabled={restoring} className="min-h-11 flex-1 rounded-xl border text-xs font-semibold disabled:opacity-40" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>{restoring ? 'Bezig…' : 'Terugzetten'}</button>
+                    <SecondaryButton onClick={() => setConfirmRestore(false)} disabled={restoring}>Annuleren</SecondaryButton>
+                    <SecondaryButton onClick={() => void putBack()} disabled={restoring}>{restoring ? 'Bezig…' : 'Terugzetten'}</SecondaryButton>
                   </div>
                 </>
               ) : (
                 <div className="flex"><SecondaryButton onClick={() => setConfirmRestore(true)}>Mijn getallen terugzetten</SecondaryButton></div>
               )}
+              {restoreNote && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{restoreNote}</p>}
             </div>
           )}
 
