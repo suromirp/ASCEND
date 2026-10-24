@@ -317,10 +317,8 @@ export function GoalsPage() {
   const archivedGoals = trainingGoals.filter((g) => g.status === 'archived');
 
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
-      <SkyBand variant="low">
-        <PageHeader eyebrow="Ascend" title="Doelen" line="Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen." fallback="/ascend" />
-      </SkyBand>
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
+      <PageHeader eyebrow="Ascend" title="Doelen" line="Eén hoofddoel waar je plan naartoe werkt, en tussendoelen die erin passen." fallback="/ascend" />
 
       {horizon.note && (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>
