@@ -385,6 +385,17 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
   });
 });
 
+describe('rowSummary: tekst voor Strava', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('staat standaard aan, ook zonder koppeling met je horloge', () => {
+    expect(rowSummary('strava-tekst', facts()).checked).toBe(true);
+    expect(rowSummary('strava-tekst', withSettings({ stravaText: false })).checked).toBe(false);
+    const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
+    expect(rowSummary('strava-tekst', unlinked).hidden).toBeFalsy();
+  });
+});
+
 describe('rowSummary: loopinzicht en details van loopjes', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 

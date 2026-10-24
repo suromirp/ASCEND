@@ -86,7 +86,7 @@ export interface TrainingFilter {
 
 export const TRAINING_FILTERS: TrainingFilter[] = [
   { label: 'Heuvelintervallen', templateIds: ['tpl_hill_intervals'] },
-  { label: 'Heuvels op en af', templateIds: ['tpl_hills_descent'] },
+  { label: 'Heuvelsprints en afdalen', templateIds: ['tpl_hills_descent'] },
   { label: 'Bergop en trap', templateIds: ['tpl_bergconditie'] },
   { label: 'Rugzak', templateIds: ['tpl_ruck_walk'] },
   { label: 'Bergtocht', templateIds: ['tpl_mountain_hike', 'tpl_hike_day_one'] },

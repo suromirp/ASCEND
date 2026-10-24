@@ -59,7 +59,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     rows: [
       'garmin', 'garmin-trainingen', 'vanzelf-afvinken', 'garmin-leidend', 'horloge-details', 'slaap', 'rusthartslag', 'hrv', 'naar-horloge',
       'horloge-voorvoegsel', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week',
-      'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'health-connect',
+      'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst', 'health-connect',
     ],
     advanced: [],
   },

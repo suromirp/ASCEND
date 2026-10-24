@@ -8,6 +8,8 @@ import {
   restartProgramAtWeekOne,
   rebuildPlanningFromWeekOne,
   restorePatternSessionsRemovedByPrescription,
+  ensureDefaultTemplates,
+  SessionTemplatesRepo,
   PlanChangeProposalsRepo,
   ProgramsRepo,
   PlannedSessionsRepo,
@@ -622,5 +624,25 @@ describe('syncProgramHorizon: het rugzakdoel van het doel', () => {
     await setGoal(16);
     await syncProgramHorizon();
     expect(await GoalMilestoneProgressRepo.getAll()).toEqual([{ id: 'mine', goalId: 'g_gr5', milestoneId: 'ms_gr5_rugzaksessie', clearedDate: '2026-04-04', note: 'zelf afgevinkt' }]);
+  });
+});
+
+describe('ensureDefaultTemplates: nieuwe namen van trainingen', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+    await seedIfEmpty();
+  });
+
+  it('zet een opgeslagen sjabloon met de oude standaardnaam op de nieuwe naam, en laat de rest staan', async () => {
+    const all = await SessionTemplatesRepo.getAll();
+    const hills = all.find((t) => t.id === 'tpl_hills_descent')!;
+    const strides = all.find((t) => t.id === 'tpl_strides_run')!;
+    await SessionTemplatesRepo.put({ ...hills, name: 'Heuvels op en af' });
+    await SessionTemplatesRepo.put({ ...strides, name: 'Rustige loop met versnellingen' });
+    await ensureDefaultTemplates();
+    const after = await SessionTemplatesRepo.getAll();
+    expect(after.find((t) => t.id === 'tpl_hills_descent')?.name).toBe('Heuvelsprints en afdalen');
+    expect(after.find((t) => t.id === 'tpl_strides_run')?.name).toBe('Duurloop met versnellingen');
+    expect(after.find((t) => t.id === 'tpl_long_run')?.name).toBe('Lange duurloop');
   });
 });

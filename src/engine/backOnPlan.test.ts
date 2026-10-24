@@ -37,8 +37,8 @@ describe('Toch doen: een overgeslagen training terug op de planning', () => {
 });
 
 describe('verplaatsen op de 48-uursregel', () => {
-  it('ruilt Heuvels op en af en de lange duurloop niet om tot ze nog 24 uur na elkaar liggen in de verkeerde volgorde', () => {
-    // Heuvels op en af op zaterdag naar zondag, waar de lange duurloop staat.
+  it('ruilt Heuvelsprints en afdalen en de lange duurloop niet om tot ze nog 24 uur na elkaar liggen in de verkeerde volgorde', () => {
+    // Heuvelsprints en afdalen op zaterdag naar zondag, waar de lange duurloop staat.
     // Een volle week: alleen de zaterdag komt vrij.
     const week = [
       row('run', 'tpl_easy_run', '2026-10-19'), row('upa', 'tpl_upper_a', '2026-10-20'), row('lower', 'tpl_lower_a', '2026-10-21'), row('rest', 'tpl_herstel', '2026-10-22'),

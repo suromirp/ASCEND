@@ -166,7 +166,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_bergconditie',
-      name: 'Bergconditie',
+      name: 'Bergop wandelen',
       type: 'hiking',
       focus: 'Incline of hike, D+ opbouw',
       durationVariants: { full: 50, short: 30 },
@@ -296,7 +296,7 @@ function buildTemplates(): SessionTemplate[] {
     },
     {
       id: 'tpl_herstel',
-      name: 'Herstel',
+      name: 'Herstelwandeling',
       type: 'recovery',
       focus: 'Rust of rustig wandelen',
       durationVariants: { full: 45 },
@@ -361,7 +361,7 @@ function buildTemplates(): SessionTemplate[] {
     // (repeated bout effect; docs/onderzoek/Trainingsvormen en varianten.md).
     {
       id: 'tpl_hills_descent',
-      name: 'Heuvels op en af',
+      name: 'Heuvelsprints en afdalen',
       type: 'cardio',
       sport: 'running',
       focus: 'Bergop snelheid, daarna gecontroleerd afdalen voor de GR5',
@@ -388,7 +388,7 @@ function buildTemplates(): SessionTemplate[] {
     // die het verst van de zware beendagen ligt.
     {
       id: 'tpl_strides_run',
-      name: 'Rustige loop met versnellingen',
+      name: 'Duurloop met versnellingen',
       type: 'cardio',
       sport: 'running',
       focus: 'Extra rustige kilometers, plus soepel snel leren lopen',

@@ -54,8 +54,8 @@ export const GARMIN_DATA_SCREENS: GuideCard = {
   heading: 'DATASCHERMEN PER ACTIVITEIT',
   items: [
     'Rustige duurloop. Hoofdscherm: timer, hartslag, hartslagzone, tempo. Tweede scherm: afstand, gem. HR, gem. tempo, cadans.',
-    'Bergconditie (indoor), gebruik Treadmill/Indoor Walking of maak een custom activity "Bergconditie" met eigen dataschermen.',
-    'Bergconditie (buiten), met GPS: afstand, Total Ascent, Total Descent, hartslag, RPE.',
+    'Bergop wandelen (binnen), gebruik Treadmill/Indoor Walking of maak een custom activity "Bergop wandelen" met eigen dataschermen.',
+    'Bergop wandelen (buiten), met GPS: afstand, Total Ascent, Total Descent, hartslag, RPE.',
   ],
   note: 'Garmin weet niet dat de treadmill bijvoorbeeld op 12% staat, Total Ascent is daarom geen betrouwbare D+-bron indoor. Gebruik ASCEND\'s eigen schatting (afstand × helling%) in plaats daarvan. Bij treadmill running kan de Forerunner na minimaal 2,4 km handmatig gekalibreerd worden op de afstand van de treadmill.',
   sources: [GARMIN_CUSTOM_ACTIVITY, GARMIN_INDOOR_ACCELEROMETER, GARMIN_CALIBRATION, GARMIN_ELEVATION_FIELDS, GARMIN_HANDRAIL],

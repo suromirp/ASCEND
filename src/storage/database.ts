@@ -569,6 +569,9 @@ export interface AppSettings {
   // Take a done or past training out of the intervals.icu agenda at the next
   // round. Absent = on. Optional and additive.
   watchRemoveDone?: boolean;
+  // The button "Tekst voor Strava kopiëren" on a done training (engine/
+  // activityText.ts). Absent = on. Optional and additive, so no migration step.
+  stravaText?: boolean;
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';

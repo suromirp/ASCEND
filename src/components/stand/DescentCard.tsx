@@ -58,7 +58,7 @@ export function DescentCard({ weeks, routeDayDescent }: { weeks: WeekDescent[]; 
         {routeDayDescent ? <> Een gewone GR5-dag gaat zo'n <span className="tabular-nums">{formatNumberNL(routeDayDescent, 0)}</span> meter omlaag.</> : null}
       </p>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        In Nederland zijn dalen schaars. De trap, heuvels op en af en de Amerongse Berg tellen allemaal. Op de loopband daal je niet.
+        In Nederland zijn dalen schaars. De trap, de training Heuvelsprints en afdalen en de Amerongse Berg tellen allemaal. Op de loopband daal je niet.
       </p>
     </Card>
   );

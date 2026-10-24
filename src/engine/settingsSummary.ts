@@ -401,6 +401,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: f.macroFactor?.leads !== false, hidden: !f.macroFactor?.readAt };
     case 'macrofactor-gewicht':
       return { checked: s.weightFromMacroFactor !== false, hidden: !f.macroFactor?.readAt };
+    case 'strava-tekst':
+      return { checked: s.stravaText !== false };
     case 'health-connect':
       return { value: 'Komt later', dim: true };
 

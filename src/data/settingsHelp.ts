@@ -146,6 +146,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Daarna', text: 'vraagt ASCEND hoe het ging. Met Klopt niet haal je het weg.' },
     ],
   },
+  stravaTekst: {
+    title: 'Tekst voor Strava',
+    lead: 'Strava geeft elke activiteit een eigen naam. ASCEND zet een korte beschrijving klaar die je zelf in Strava plakt.',
+    points: [
+      { head: 'Waar', text: 'een kleine knop bij een gedane training in het logboek en in de vraag erna op Vandaag.' },
+      { head: 'Wat', text: 'één of twee regels, zoals 4× hard bergop, 4× rustig op en beheerst af, met afstand, tijd en stijging als je horloge ze had.' },
+      { head: 'Zelf plakken', text: 'ASCEND schrijft niet naar Strava, want daar is een server voor nodig en die heeft ASCEND bewust niet.' },
+    ],
+  },
   garminLeidend: {
     title: 'Garmin is leidend',
     lead: 'Komt een training die je zelf invulde ook van je horloge, dan tellen de cijfers van het horloge.',
