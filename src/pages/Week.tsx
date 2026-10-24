@@ -31,9 +31,7 @@ import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { SkyBand } from '../components/SkyBand';
 import { Icon } from '../components/icons';
-
-// Minuten als 3:15.
-const hm = (minutes: number) => `${Math.floor(minutes / 60)}:${String(Math.round(minutes) % 60).padStart(2, '0')}`;
+import { hoursMinutes } from '../components/hoursMinutes';
 
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
@@ -177,7 +175,7 @@ export function WeekPage() {
             </Ring>
             <div className="min-w-0 flex-1">
               {totalWeekMinutes > 0 ? (
-                <Stat label="Tijd" value={hm(doneMinutes)} unit={`van ${hm(totalWeekMinutes)} uur`} size="m" />
+                <Stat label="Tijd" value={hoursMinutes(doneMinutes)} unit={`van ${hoursMinutes(totalWeekMinutes)} uur`} size="m" />
               ) : (
                 <Stat label="Tijd" value="Niets gepland" size="s" />
               )}

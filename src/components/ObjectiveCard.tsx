@@ -54,7 +54,7 @@ export function ObjectiveCard({
             type="button"
             onClick={onSelect}
             disabled={!onSelect}
-            aria-label={onSelect ? `Meer info over ${definition.title}` : undefined}
+            aria-label={onSelect ? `Meer info over ${definition.title}${status === 'completed' && clearedDate ? `, behaald op ${formatDateNL(clearedDate)}` : ''}` : undefined}
             className={`flex w-full items-center justify-between gap-2 text-left disabled:cursor-default ${status === 'current' ? '' : 'min-h-[44px]'}`}
           >
             <span className="min-w-0">

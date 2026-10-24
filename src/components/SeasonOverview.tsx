@@ -114,12 +114,14 @@ function ClimbProfile({ phases, goalName, goalDate, onPick }: { phases: SeasonPh
             key={p.id}
             role="button"
             tabIndex={0}
+            className="[&:focus-visible>rect]:stroke-[var(--color-status)]"
             aria-label={`${sentenceCase(p.name)}, ${p.weeks.length} ${phaseWeeks(p)}. Open deze fase`}
             onClick={() => onPick(p.id)}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(p.id); } }}
             style={{ cursor: 'pointer', outline: 'none' }}
           >
-            <rect x={x0} y={0} width={x1 - x0} height={H} fill="transparent" />
+            {/* Het vlak is het tikdoel en bij Tab-focus de ring (ijs), binnen het beeld zodat hij niet wordt afgeknipt. */}
+            <rect x={x0 + 1} y={1} width={Math.max(0, x1 - x0 - 2)} height={H - 2} rx={8} fill="transparent" stroke="transparent" strokeWidth={2} />
             <polygon points={`${x0},${BASE_Y + 8} ${x0},${y0} ${x1},${y1} ${x1},${BASE_Y + 8}`} fill={color} opacity={p.current ? 0.32 : 0.16} />
             <line x1={x0} y1={y0} x2={x1} y2={y1} stroke={color} strokeWidth={3.5} strokeLinecap="round" opacity={p.current || p.weeks.every((w) => w.past) ? 1 : 0.75} />
           </g>

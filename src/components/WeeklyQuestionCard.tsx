@@ -13,7 +13,7 @@ import {
   weekQuestionContext,
 } from '../engine/weeklyQuestion';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
-import { Eyebrow, PrimaryButton } from './ui';
+import { PrimaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
 
@@ -112,22 +112,5 @@ export function WeeklyQuestionCard() {
         </TodaySheet>
       )}
     </>
-  );
-}
-
-// In the week review: the question of that week and what you answered, when
-// you did. Nothing at all when you did not, and no remark about it.
-export function WeeklyPlanSection({ weekStart }: { weekStart: string }) {
-  const { settings } = useAppData();
-  const entry = intentionForWeek(settings.weeklyIntentions, weekStart);
-  if (!entry?.answer) return null;
-  return (
-    <div className="mt-5">
-      <Eyebrow>Je plan van deze week</Eyebrow>
-      <div className="mt-2 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{entry.question}</p>
-        <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{entry.answer}</p>
-      </div>
-    </div>
   );
 }

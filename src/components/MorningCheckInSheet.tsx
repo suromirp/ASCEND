@@ -45,7 +45,9 @@ function ChoiceRow<K extends string>({ label, from, options, value, set }: { lab
 
 // painOnly: de ochtendcheck staat uit, maar er is een pijnplek van de laatste 14
 // dagen. Dan alleen die vraag, niet benen, energie en slaap.
-export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose }: { painOnly?: boolean; initialLegs?: LegFeeling; onClose: () => void }) {
+// onSaved: de ochtendkaart meldt hiermee dat je via het blad hebt beantwoord, zodat
+// ze net als na één tik blijft staan met Wijzigen en Ongedaan maken.
+export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, onSaved }: { painOnly?: boolean; initialLegs?: LegFeeling; onClose: () => void; onSaved?: () => void }) {
   const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds } = useAppData();
   const today = todayISO();
   const existing = settings.morningCheckIns?.find((c) => c.date === today);
@@ -66,6 +68,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose }: 
   const sleepFrom = suggest && !draft.sleep ? prefill.sleep?.from : undefined;
 
   function save(entry: MorningCheckIn) {
+    onSaved?.();
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
     void updateSettings({ morningCheckIns: [...others, entry].sort((a, b) => a.date.localeCompare(b.date)).slice(-KEEP) });
     onClose();

@@ -27,8 +27,9 @@ export function MorningCheckInCard({ painOnly = false, hideTodo = false }: { pai
   const ask = shouldAskCheckIn(today, settings.morningCheckIns, sessionLogs, plannedSessions, templates);
 
   if (!ask && !existing) return null;
-  // Voor het begin van de ochtend (instelbaar, standaard 5 uur) vraagt ASCEND nog niets.
-  if (!existing && new Date().getHours() < morningFromHour(settings.overviews)) return null;
+  // Voor het begin van de ochtend (instelbaar, standaard 5 uur) vraagt ASCEND nog niets,
+  // behalve naar een pijnplek: die vraag mag ook eerder staan.
+  if (!existing && !painOnly && new Date().getHours() < morningFromHour(settings.overviews)) return null;
   // De ochtendkaart staat er nog: die stelt de vraag of toont het antwoord, dus deze regel niet.
   if (hideTodo) return null;
 

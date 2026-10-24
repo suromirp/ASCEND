@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { changeLabel, type Gr5Readiness } from '../engine/gr5Readiness';
+import { changeLabel, metersLinkLabel, type Gr5Readiness } from '../engine/gr5Readiness';
 import { Gr5ReadinessSheet } from './Gr5ReadinessSheet';
 import { CountUp } from './CountUp';
 import { Icon } from './icons';
@@ -16,7 +16,7 @@ export function Gr5ReadinessCard({ readiness, light = false }: { readiness: Gr5R
   const Wrapper = light ? LightCard : Card;
   return (
     <>
-      <button onClick={() => setOpen(true)} className="block w-full text-left" aria-label="Klaar voor de GR5, bekijk de meters">
+      <button onClick={() => setOpen(true)} className="block w-full text-left">
         <Wrapper className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Klaar voor de GR5</span>
@@ -42,6 +42,8 @@ export function Gr5ReadinessCard({ readiness, light = false }: { readiness: Gr5R
             ))}
           </div>
           {readiness.weakestSentence && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{readiness.weakestSentence}</p>}
+          {/* De naam van de knop is de inhoud (het percentage en de zin); dit is alleen de hint. */}
+          <span className="sr-only">{metersLinkLabel(readiness.meters.length)}.</span>
         </Wrapper>
       </button>
       {open && <Gr5ReadinessSheet readiness={readiness} onClose={() => setOpen(false)} />}

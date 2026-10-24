@@ -168,7 +168,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 /* Chips (bij de sportschool) en segmenten (per dag, per week) */
 .st-chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .st-chip { min-height: 44px; min-width: 44px; padding: 0 var(--s4); border-radius: 22px; border: 1px solid var(--color-card-border); color: var(--color-ink-dim); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-variant-numeric: tabular-nums; }
-.st-chip[aria-pressed="true"] { border-color: var(--color-action); background: var(--chip-on); color: var(--color-ink); font-weight: 600; }
+.st-chip[aria-pressed="true"], .st-chip[aria-checked="true"] { border-color: var(--color-action); background: var(--chip-on); color: var(--color-ink); font-weight: 600; }
 .st-chip.dashed { border-style: dashed; border-color: var(--color-control-border); }
 .st-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--s1); padding: var(--s1); border-radius: 12px; background: var(--color-charcoal); border: 1px solid var(--color-card-border); }
 .st-seg button { min-height: 36px; border-radius: 8px; text-align: center; font-size: 13px; line-height: 16px; color: var(--color-ink-dim); font-variant-numeric: tabular-nums; position: relative; }
