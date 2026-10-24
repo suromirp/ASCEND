@@ -12,6 +12,15 @@ export interface SettingsHelp {
 }
 
 export const SETTINGS_HELP: Record<string, SettingsHelp> = {
+  lucht: {
+    title: 'Lucht bovenaan',
+    lead: 'De lichte lucht met bergen bovenaan een tab kan in de avond fel zijn. Hier kies je wanneer ze donker wordt.',
+    points: [
+      { head: 'Op tijd', text: 'licht overdag, donker vanaf het uur dat je kiest tot 07:00. ASCEND wisselt binnen een minuut.' },
+      { head: 'Altijd licht of donker', text: 'de klok doet er dan niet toe.' },
+      { head: 'Donker', text: 'dezelfde kaarten en kleuren, maar op diep marine met zachte bergen en een paar zwakke sterren.' },
+    ],
+  },
   beweging: {
     title: 'Beweging',
     lead: 'Hoeveel de app beweegt: een zachte indruk bij een tik, ringen die vollopen, getallen die optellen.',

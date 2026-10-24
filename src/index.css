@@ -284,6 +284,57 @@ body {
 [data-tab='ascend'] { --color-page: var(--color-tab-ascend); --color-page-light: var(--color-tab-ascend-light); }
 [data-tab='logboek'] { --color-page: var(--color-tab-logboek); --color-page-light: var(--color-tab-logboek-light); }
 
+/* De nachtlucht (docs/beslissingen/2026-10-24-nachtlucht.md): `data-sky="night"` op
+   <html> (components/sky.ts) draait de "licht"-tokens om. Het lichte vlak wordt diep
+   marine naar nachtblauw, de LightCard de gewone verhoogde kaart, de tekst erop de
+   gewone inkt, en mint, ijs en de tabkleuren hun varianten voor donker. Alles wat
+   .on-light of de licht-tokens leest verandert mee; geen component hoeft iets te
+   weten. Contrast blijft AA: de inkt is dezelfde als op de gewone kaart. */
+html[data-sky='night'] {
+  --color-sky-top: #0a1a38;
+  --color-sky-bottom: #14305a;
+  --color-light-card: #1d3664;
+  --color-light-border: #2f4b7d;
+  --color-light-control: #6a86b8;
+  --color-light-track: #1d3260;
+  --color-on-light: #f1f6ff;
+  --color-on-light-dim: #abbbdb;
+  --color-action-on-light: #5eead4;
+  --color-status-on-light: #93ccff;
+  --color-warning-on-light: #dba660;
+  --color-danger-on-light: #ff9696;
+  --color-mountain-back: #34544c;
+  --color-mountain-front: #123a40;
+  --color-tab-vandaag-light: #5eead4;
+  --color-tab-week-light: #93ccff;
+  --color-tab-stand-light: #c4b5fd;
+  --color-tab-ascend-light: #f9b4c8;
+  --color-tab-logboek-light: #bdf08f;
+  --color-page-light: #5eead4;
+}
+
+/* Een kaart op de nachtlucht heeft een haarlijn in plaats van een witte schaduw. */
+html[data-sky='night'] .sky-band .ui-card,
+html[data-sky='night'] .light-card {
+  box-shadow: inset 0 0 0 1px var(--color-light-border);
+}
+
+/* Een paar heel zwakke sterren, stil, boven in de lucht. */
+html[data-sky='night'] .sky-band::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 50% 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(1.2px 1.2px at 14% 22%, var(--color-on-light) 55%, transparent 100%),
+    radial-gradient(1px 1px at 31% 12%, var(--color-on-light) 55%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 52% 28%, var(--color-on-light) 55%, transparent 100%),
+    radial-gradient(1px 1px at 68% 10%, var(--color-on-light) 55%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 83% 24%, var(--color-on-light) 55%, transparent 100%),
+    radial-gradient(1px 1px at 93% 14%, var(--color-on-light) 55%, transparent 100%);
+}
+
 /* Een licht vlak (de lucht van SkyBand, een LightCard): dezelfde tokens, maar
    donker op licht. Alles wat erin staat leest gewoon --color-ink, --color-card
    of --color-gold en wordt vanzelf leesbaar (AA). De vulling van de hoofdknop

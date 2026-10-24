@@ -128,6 +128,10 @@ de missiekaart. De instelling Beweging (Normaal, Rustig, Uit; `engine/motionSett
 staat als `data-motion` op `<html>`; `prefers-reduced-motion: reduce` telt altijd als Uit.
 Een nieuwe animatie moet in Rustig en Uit dus ook netjes op de eindstand staan.
 
+De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
+"Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
+Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.
+
 ### Design tokens in code
 
 Theme tokens are defined once in `src/index.css` under `@theme` and

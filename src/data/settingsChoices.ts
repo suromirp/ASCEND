@@ -218,6 +218,31 @@ export const CHOICES = {
       { value: 'off', label: 'Uit', note: 'Alles staat meteen op zijn plek', short: 'Uit' },
     ],
   }),
+  lucht: def({
+    group: 'Vandaag en meldingen',
+    title: 'Lucht bovenaan',
+    line: 'De lichte lucht bovenaan een tab, of een donkere voor de avond.',
+    advice: 'auto' as 'auto' | 'day' | 'night',
+    help: 'lucht',
+    options: [
+      { value: 'auto', label: 'Op tijd', note: 'Licht overdag, donker in de avond en nacht', short: 'Op tijd' },
+      { value: 'day', label: 'Altijd licht', short: 'Altijd licht' },
+      { value: 'night', label: 'Altijd donker', short: 'Altijd donker' },
+    ],
+  }),
+  luchtVanaf: def({
+    group: 'Vandaag en meldingen',
+    title: 'Donker vanaf',
+    line: 'Om 07:00 wordt het weer licht.',
+    advice: '20:00' as '19:00' | '20:00' | '21:00' | '22:00',
+    help: 'lucht',
+    options: [
+      { value: '19:00', label: '19:00', short: 'Vanaf 19:00' },
+      { value: '20:00', label: '20:00', short: 'Vanaf 20:00' },
+      { value: '21:00', label: '21:00', short: 'Vanaf 21:00' },
+      { value: '22:00', label: '22:00', short: 'Vanaf 22:00' },
+    ],
+  }),
   ochtendTijd: def({
     group: 'Vandaag en meldingen',
     title: 'Tijd van de ochtendmelding',
