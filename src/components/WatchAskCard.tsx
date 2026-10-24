@@ -14,6 +14,7 @@ import { formatNumberNL } from '../utils/number';
 import { formatDateNL, todayISO, weekdayLongNL } from '../utils/dates';
 import { PainReportFields } from './PainReportFields';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
+import { TextButton } from './TextButton';
 
 const FEELS: [SubjectiveFeel, string][] = [['better', 'Beter'], ['normal', 'Normaal'], ['worse', 'Slechter']];
 
@@ -38,6 +39,7 @@ export function WatchAskCard({
   onAnswer,
   onReject,
   onLater,
+  onTrim,
 }: {
   log: SessionLog;
   template: SessionTemplate | undefined;
@@ -45,6 +47,8 @@ export function WatchAskCard({
   onAnswer: (patch: FeedbackPatch) => void;
   onReject: () => void;
   onLater: () => void;
+  // Only for a watch activity that can be cut (engine/trimLog.ts#isTrimmable).
+  onTrim?: () => void;
 }) {
   const [feel, setFeel] = useState<SubjectiveFeel | undefined>(log.subjectiveFeel);
   const [rpe, setRpe] = useState<number | undefined>(log.rpe);
@@ -122,6 +126,9 @@ export function WatchAskCard({
         <SecondaryButton onClick={onReject} disabled={busy}>Klopt niet</SecondaryButton>
         <SecondaryButton onClick={onLater} disabled={busy}>Niet nu</SecondaryButton>
       </div>
+      {onTrim && (
+        <TextButton onClick={onTrim} disabled={busy}>Horloge te lang aan laten staan? Inkorten</TextButton>
+      )}
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Klopt niet haalt de afvinking weer weg. Dan kun je zelf kiezen bij welke training dit hoort.
       </p>

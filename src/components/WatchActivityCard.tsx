@@ -18,6 +18,8 @@ import {
   type WatchActivityState,
 } from '../storage/externalActivities';
 import { canRejectAutoLog, pendingQuestions, planAutoTicks, type FeedbackPatch } from '../engine/autoTick';
+import { isTrimmable } from '../engine/trimLog';
+import { TrimSheet } from './TrimSheet';
 import { WatchAskCard } from './WatchAskCard';
 import { attachActivityDetail } from '../storage/activityDetail';
 import {
@@ -50,6 +52,8 @@ export function WatchActivityCard() {
   const [choosing, setChoosing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [later, setLater] = useState<string[]>([]);
+  // "Inkorten" straight from the question after a training (the same sheet as in the log).
+  const [trimming, setTrimming] = useState<string | null>(null);
   const ticking = useRef(false);
   const attempted = useRef(new Set<string>());
 
@@ -145,16 +149,21 @@ export function WatchActivityCard() {
   }
 
   if (question) {
+    const template = templates.find((t) => t.id === question.log.templateId);
     return (
-      <WatchAskCard
-        key={question.entry.externalId}
-        log={question.log}
-        template={templates.find((t) => t.id === question.log.templateId)}
-        busy={saving}
-        onAnswer={(patch) => void answer(patch)}
-        onReject={() => void reject()}
-        onLater={() => setLater((l) => [...l, question.entry.externalId])}
-      />
+      <>
+        <WatchAskCard
+          key={question.entry.externalId}
+          log={question.log}
+          template={template}
+          busy={saving}
+          onAnswer={(patch) => void answer(patch)}
+          onReject={() => void reject()}
+          onLater={() => setLater((l) => [...l, question.entry.externalId])}
+          onTrim={isTrimmable(question.log) && !question.log.trim ? () => setTrimming(question.log.id) : undefined}
+        />
+        {trimming === question.log.id && <TrimSheet log={question.log} templateName={template?.name ?? 'Training'} onClose={() => setTrimming(null)} />}
+      </>
     );
   }
   if (!proposal) return null;
