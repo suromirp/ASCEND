@@ -13,6 +13,7 @@ import {
   snapshotAt,
   sortViews,
   splitByRecency,
+  trendValues,
   trainingFilters,
   valueChange,
   visibleViews,
@@ -347,5 +348,16 @@ describe('compareExercise zegt alleen "sinds 4 wk" als de training dicht bij het
   it('een training een paar dagen voor het moment is dichtbij', () => {
     const cmp = compareExercise([point('2026-09-21', 60), point('2026-10-20', 62.5)], '2026-10-22', [4, 8]);
     expect(cmp.moments[0]).toMatchObject({ status: 'ok', near: true });
+  });
+});
+
+describe('trendValues', () => {
+  it('geeft hoogstens tien getallen, gelijk aan de punten van de rij, en niets onder drie', () => {
+    for (const v of views) {
+      const values = trendValues(v, 'one_rm');
+      const pts = forgePoints(v, 'one_rm');
+      if (pts.length < 3) expect(values).toEqual([]);
+      else expect(values).toEqual(pts.slice(-10).map((p) => p.value));
+    }
   });
 });

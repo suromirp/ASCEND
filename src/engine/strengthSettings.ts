@@ -92,6 +92,8 @@ export interface StrengthSettings {
   listSort?: ForgeSort;
   // The small lines next to the number: reps at the same weight, top weight, volume.
   showExtras?: boolean;
+  // A small line per exercise in the list on Forge, and the chart when a row opens.
+  showTrendLines?: boolean;
   // Your own rest per exercise (by exercise id), in seconds, over the estimate.
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
@@ -122,6 +124,7 @@ export interface ResolvedStrengthSettings {
   compareWeeks: CompareWeeks;
   listSort: ForgeSort;
   showExtras: boolean;
+  showTrendLines: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
 }
@@ -258,6 +261,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   const listSort = FORGE_SORTS.find((v) => v === raw.listSort);
   if (listSort) out.listSort = listSort;
   if (typeof raw.showExtras === 'boolean') out.showExtras = raw.showExtras;
+  if (typeof raw.showTrendLines === 'boolean') out.showTrendLines = raw.showTrendLines;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
   const sound = REST_SOUNDS.find((a) => a === raw.restSound);
@@ -295,6 +299,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     compareWeeks: s.compareWeeks ?? '4_8',
     listSort: s.listSort ?? 'most',
     showExtras: s.showExtras ?? true,
+    showTrendLines: s.showTrendLines ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
   };

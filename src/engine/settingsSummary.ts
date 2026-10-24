@@ -278,6 +278,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('forgeVolgorde', forge.listSort), hidden: !forge.enabled };
     case 'forge-extras':
       return { checked: forge.showExtras, hidden: !forge.enabled };
+    case 'forge-lijntjes':
+      return { checked: forge.showTrendLines, hidden: !forge.enabled };
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':

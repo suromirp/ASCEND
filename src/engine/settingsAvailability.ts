@@ -31,6 +31,7 @@ const REASON: Record<string, string> = {
   'forge-schatting': FORGE_OFF,
   'forge-vergelijken': FORGE_OFF,
   'forge-extras': FORGE_OFF,
+  'forge-lijntjes': FORGE_OFF,
   'forge-volgorde-lijst': FORGE_OFF,
   'forge-weergave': ONE_RM_OFF,
   'forge-1rm-macrofactor': ONE_RM_OFF,

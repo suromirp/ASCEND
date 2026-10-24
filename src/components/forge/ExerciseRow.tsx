@@ -9,8 +9,11 @@ import { formatNumberNL } from '../../utils/number';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
 import { Eyebrow } from '../ui';
+import { ExerciseChart } from './ExerciseChart';
+import { TrendSpark } from './TrendSpark';
+import type { OneRmReading } from '../../models/metrics';
 import { TextButton } from '../TextButton';
-import { compareExercise, forgePoints, type Comparison, type ForgePoint } from '../../engine/forgeHistory';
+import { compareExercise, forgePoints, trendValues, type Comparison, type ForgePoint } from '../../engine/forgeHistory';
 import { deltaText, deltaTone, extraText, extraTone, shortDateNL, topSetText, valueKind, valueText, type DeltaTone } from '../../engine/forgeText';
 import { missingData, type ExerciseView, type MissingData } from '../../engine/strengthHistory';
 import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../../engine/strengthModel';
@@ -34,6 +37,8 @@ export function ExerciseRow({
   today,
   weeks,
   showExtras,
+  showTrendLines,
+  macroFactor,
   open,
   onToggle,
   onHistory,
@@ -44,6 +49,9 @@ export function ExerciseRow({
   today: string;
   weeks: [number, number];
   showExtras: boolean;
+  // Het kleine lijntje in de rij en de grafiek in de opengeklapte rij.
+  showTrendLines: boolean;
+  macroFactor?: OneRmReading[];
   open: boolean;
   onToggle: () => void;
   onHistory: () => void;
@@ -52,6 +60,7 @@ export function ExerciseRow({
   const exercise = history.exercise;
   const points = useMemo(() => forgePoints(view, mode), [view, mode]);
   const cmp = useMemo(() => compareExercise(points, today, weeks), [points, today, weeks]);
+  const trend = useMemo(() => (showTrendLines ? trendValues(view, mode) : []), [showTrendLines, view, mode]);
   const count = history.sessions.length;
   const first = cmp.moments[0];
   const kind = valueKind(view, mode);
@@ -70,7 +79,10 @@ export function ExerciseRow({
       >
         <span className="min-w-0 flex-1">
           <span className="block font-display text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{history.name}</span>
-          <span className="block font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{count} {count === 1 ? 'training' : 'trainingen'}</span>
+          <span className="flex items-center gap-2 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+            <span className="whitespace-nowrap">{count} {count === 1 ? 'training' : 'trainingen'}</span>
+            {showTrendLines && <TrendSpark values={trend} />}
+          </span>
         </span>
         <span className="shrink-0 text-right font-sans tabular-nums">
           {cmp.now ? (
@@ -92,7 +104,16 @@ export function ExerciseRow({
           <Icon name="omlaag" size={20} />
         </span>
       </button>
-      {open && <ExerciseDetail view={view} kind={kind} bodyKg={bodyKg} today={today} cmp={cmp} showExtras={showExtras} onHistory={onHistory} />}
+      {open && (
+        <>
+          {showTrendLines && (
+            <div className="pb-3">
+              <ExerciseChart view={view} mode={mode} bodyKg={bodyKg} today={today} macroFactor={macroFactor} height={90} />
+            </div>
+          )}
+          <ExerciseDetail view={view} kind={kind} bodyKg={bodyKg} today={today} cmp={cmp} showExtras={showExtras} onHistory={onHistory} />
+        </>
+      )}
     </div>
   );
 }

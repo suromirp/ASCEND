@@ -193,6 +193,8 @@ export function ForgePage() {
                 today={today}
                 weeks={weeks}
                 showExtras={choices.showExtras}
+                showTrendLines={choices.showTrendLines}
+                macroFactor={macroFactorOneRm.get(v.history.key)}
                 open={openKey === v.history.key}
                 onToggle={() => setOpenKey(openKey === v.history.key ? null : v.history.key)}
                 onHistory={() => setHistoryKey(v.history.key)}
@@ -212,6 +214,8 @@ export function ForgePage() {
                     today={today}
                     weeks={weeks}
                     showExtras={choices.showExtras}
+                    showTrendLines={choices.showTrendLines}
+                    macroFactor={macroFactorOneRm.get(v.history.key)}
                     open={openKey === v.history.key}
                     onToggle={() => setOpenKey(openKey === v.history.key ? null : v.history.key)}
                     onHistory={() => setHistoryKey(v.history.key)}

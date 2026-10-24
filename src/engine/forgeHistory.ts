@@ -232,6 +232,13 @@ export function compareExercise(points: ForgePoint[], today: string, weeks: numb
   };
 }
 
+// De getallen voor het kleine lijntje in de lijst: de laatste `n` trainingen, met
+// hetzelfde getal als rechts in de rij. Minder dan drie: geen lijntje.
+export function trendValues(view: ExerciseView, mode: OneRmView, n = 10): number[] {
+  const values = forgePoints(view, mode).slice(-n).map((p) => p.value);
+  return values.length >= 3 ? values : [];
+}
+
 // --- de geschiedenis -----------------------------------------------------------------------------------
 
 export interface HistoryRow {

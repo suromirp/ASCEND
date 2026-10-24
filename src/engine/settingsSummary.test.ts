@@ -171,6 +171,8 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-vergelijken', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-extras', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-extras', withForge({ showExtras: false })).checked).toBe(false);
+    expect(rowSummary('forge-lijntjes', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-lijntjes', withForge({ showTrendLines: false })).checked).toBe(false);
     expect(rowSummary('forge-volgorde-lijst', facts()).value).toBe('Meest getraind');
     expect(rowSummary('forge-volgorde-lijst', withForge({ listSort: 'name' })).value).toBe('Op naam');
   });

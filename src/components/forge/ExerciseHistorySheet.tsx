@@ -4,12 +4,11 @@
 // MacroFactor als die er is. Het rekenwerk staat in engine/forgeHistory.ts.
 
 import { useMemo } from 'react';
-import { TrendLineChart } from '../TrendLineChart';
+import { ExerciseChart } from './ExerciseChart';
 import { Sheet } from '../settings/Sheet';
-import { forgePoints, historyRows, isRepsBased } from '../../engine/forgeHistory';
+import { historyRows, isRepsBased } from '../../engine/forgeHistory';
 import { repsLabel, shortDateNL, topSetText } from '../../engine/forgeText';
 import type { ExerciseView } from '../../engine/strengthHistory';
-import { oneRmSeries } from '../../engine/strengthOneRm';
 import type { OneRmView } from '../../engine/strengthSettings';
 import type { OneRmReading } from '../../models/metrics';
 import { formatNumberNL } from '../../utils/number';
@@ -37,25 +36,7 @@ export function ExerciseHistorySheet({
   const rows = useMemo(() => historyRows(view, macroFactor), [view, macroFactor]);
   const hasMacroFactor = rows.some((r) => r.macroFactorKg !== undefined);
 
-  // De grafiek volgt de gekozen kant. Bij een oefening met hulp is de lijn van het
-  // werkgewicht negatief: met je lichaamsgewicht erbij laat ze zien wat je zelf optilt.
   const repsLed = isRepsBased(view);
-  const assisted = exercise?.resistance === 'assisted_bodyweight';
-  const chart = useMemo(() => {
-    if (repsLed) {
-      const pts = forgePoints(view, mode).map((p) => ({ label: shortDateNL(p.date, today), value: p.value }));
-      return { points: pts, color: 'var(--color-progress)', note: 'De lijn zijn de herhalingen van je beste set.' };
-    }
-    if (mode === 'work_weight') {
-      const pts = forgePoints(view, 'work_weight').map((p) => ({ label: shortDateNL(p.date, today), value: assisted && bodyKg ? bodyKg + p.value : p.value }));
-      return { points: pts, color: 'var(--color-action)', note: assisted ? (bodyKg ? 'De lijn laat zien hoeveel je zelf optilt: je lichaamsgewicht min de hulp. Hoger is sterker.' : 'De lijn laat de hulp zien. Hoger op de lijn is minder hulp, dus sterker.') : undefined };
-    }
-    const own = oneRmSeries(view.points).map((p) => ({ label: shortDateNL(p.date, today), value: p.kg }));
-    if (own.length >= 2) return { points: own, color: 'var(--color-progress)', note: undefined };
-    const mf = (macroFactor ?? []).map((p) => ({ label: shortDateNL(p.date, today), value: p.kg }));
-    return { points: mf, color: 'var(--color-ink-dim)', note: mf.length >= 2 ? 'De lijn is de 1RM van MacroFactor.' : undefined };
-  }, [view, mode, repsLed, assisted, bodyKg, macroFactor, today]);
-
   const oldest = rows[rows.length - 1];
   const newest = rows[0];
 
@@ -67,14 +48,7 @@ export function ExerciseHistorySheet({
       onClose={onClose}
     >
       <div className="flex flex-col gap-4 pb-4">
-        {chart.points.length >= 2 ? (
-          <div className="font-sans tabular-nums">
-            <TrendLineChart points={chart.points} color={chart.color} height={110} formatValue={(v) => (repsLed ? `${Math.round(v)} herh.` : assisted && mode === 'work_weight' && !bodyKg ? `hulp ${kg(Math.abs(v))}` : kg(Math.abs(v)))} />
-            {chart.note && <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{chart.note}</p>}
-          </div>
-        ) : (
-          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>
-        )}
+        <ExerciseChart view={view} mode={mode} bodyKg={bodyKg} today={today} macroFactor={macroFactor} height={110} />
 
         <div className="flex flex-col">
           {rows.map((r) => {

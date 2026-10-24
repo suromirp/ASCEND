@@ -93,3 +93,11 @@ verste vergelijkingsmoment (standaard 8 weken) staan weggeklapt onder "Eerder ge
 een zoekterm zoekt wel in alles. En valt geen moment in zijn venster, dan vergelijkt de
 rij met de training ervoor ("+2,5 kg sinds 26 jun"), zodat je ook bij een oefening die
 je net weer oppakt ziet of het beter ging.
+
+## Tweede aanvulling (24 oktober): lijntjes in de lijst
+
+De eigenaar miste de grafieken: in de compacte lijst stonden ze alleen nog in het
+geschiedenisblad. De tussenweg: elke rij heeft naast het aantal trainingen een klein
+lijntje met de laatste tien trainingen (hetzelfde getal als rechts in de rij, het
+puntje is de laatste), en een opengeklapte rij toont de grafiek boven de vier getallen.
+Instelbaar met "Lijntjes in de lijst" bij Forge, standaard aan.

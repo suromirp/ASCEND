@@ -129,6 +129,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geen oordeel', text: 'het verschil is een kleine regel. Gelijk of lager is geen mislukking, een hogere 1RM is niet het enige doel.' },
     ],
   },
+  forgeLijntjes: {
+    title: 'Lijntjes in de lijst',
+    lead: 'Een klein lijntje naast elke oefening laat in één oogopslag zien hoe het de laatste trainingen ging.',
+    points: [
+      { head: 'Het lijntje', text: 'de laatste tien trainingen, met hetzelfde getal als rechts in de rij. Het puntje is je laatste training.' },
+      { head: 'Openklappen', text: 'klap je een oefening open, dan staat de hele grafiek erboven.' },
+      { head: 'Uit', text: 'alleen de getallen, de grafiek staat dan nog in de geschiedenis.' },
+    ],
+  },
   forgeExtras: {
     title: 'Wat er verder veranderde',
     lead: 'Vooruitgang is niet altijd een hogere 1RM. Forge laat ook de rest zien.',
