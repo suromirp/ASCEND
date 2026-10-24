@@ -7,10 +7,9 @@
 // weerregel op Vandaag. Zonder plaats staat er niets: de kaart "Je plaats"
 // eronder is dan het enige wat je nodig hebt.
 
-import type { PlannedSession, SessionTemplate } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
-import { isForecastStale, isWeatherSensitive, updatedLabel, verdictLine, weatherForTraining } from '../engine/weather';
+import { isForecastStale, nextOutdoorTraining, updatedLabel, verdictLine, weatherForTraining } from '../engine/weather';
 import { clothingForTraining, weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
 import { showClothingAdvice } from '../engine/overviewSettings';
@@ -20,7 +19,6 @@ import { SettingsLinkRow } from './settings/SettingsLink';
 import { Card, Eyebrow } from './ui';
 
 const TONE = { prima: 'var(--color-ink)', let_op: 'var(--color-warning)', slecht: 'var(--color-danger-text)' } as const;
-const LOOK_AHEAD_DAYS = 7;
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -93,25 +91,4 @@ export function WeatherTodayCard() {
       )}
     </Card>
   );
-}
-
-// De eerste training van vandaag tot en met over een week die buiten is, nog niet
-// gedaan en niet overgeslagen: dezelfde vraag "is dit een buitentraining" als de
-// weerregel (isWeatherSensitive).
-function nextOutdoorTraining(
-  planned: PlannedSession[],
-  logs: { plannedSessionId?: string }[],
-  templateById: Map<string, SessionTemplate>,
-  today: string,
-): { template: SessionTemplate; date: string } | undefined {
-  const done = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
-  for (let offset = 0; offset < LOOK_AHEAD_DAYS; offset++) {
-    const date = addDays(today, offset);
-    for (const s of planned) {
-      if (s.scheduledDate !== date || s.status === 'skipped' || done.has(s.id)) continue;
-      const template = templateById.get(s.templateId);
-      if (template && isWeatherSensitive(template)) return { template, date };
-    }
-  }
-  return undefined;
 }

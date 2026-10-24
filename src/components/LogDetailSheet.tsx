@@ -8,7 +8,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { Card, Eyebrow, SecondaryButton } from './ui';
 import { Icon } from './icons';
-import { keptNumbersLine, logSource } from '../engine/logSource';
+import { keptNumbersLine, logSource, sourceNoun } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
 import { useState } from 'react';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
@@ -138,7 +138,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{keptLine}</p>
               {confirmRestore ? (
                 <>
-                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? De getallen van {source.label === 'Geïmporteerd' ? 'de import' : source.label} worden dan niet meer gebruikt voor deze training.</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink)' }}>Je eigen getallen terugzetten? De getallen van {sourceNoun(source)} worden dan niet meer gebruikt voor deze training.</p>
                   <div className="flex gap-3">
                     <SecondaryButton onClick={() => setConfirmRestore(false)} disabled={restoring}>Annuleren</SecondaryButton>
                     <SecondaryButton onClick={() => void putBack()} disabled={restoring}>{restoring ? 'Bezig…' : 'Terugzetten'}</SecondaryButton>
@@ -191,7 +191,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
             <div className="mt-6 flex flex-col gap-2">
               <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je geschiedenis verwijderen?</p>
               <div className="flex gap-3">
-                <button onClick={() => setConfirmDelete(false)} className="min-h-11 flex-1 rounded-xl border text-xs" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' }}>Annuleren</button>
+                <SecondaryButton onClick={() => setConfirmDelete(false)}>Annuleren</SecondaryButton>
                 <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}>Verwijderen</button>
               </div>
             </div>

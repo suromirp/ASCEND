@@ -10,6 +10,7 @@ import { SettingsLinkRow } from './settings/SettingsLink';
 import { NotFitLink } from './IllnessCard';
 import { WellnessLines } from './WellnessLines';
 import { useMorningPrefill } from './useMorningPrefill';
+import { PrimaryButton } from './ui';
 
 // Het blad van de ochtendvraag (docs/onderzoek/Pijn spierpijn en vermoeidheid
 // melden.md): benen, energie en slaap, elk vergeleken met een gewone ochtend. Het
@@ -120,9 +121,9 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
         )}
         <div className="flex items-center justify-between gap-3">
           {painOnly ? <span /> : <NotFitLink />}
-          <button disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })} className="min-h-[44px] rounded-xl px-5 text-sm font-semibold disabled:opacity-40" style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}>
+          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })}>
             Opslaan
-          </button>
+          </PrimaryButton>
         </div>
         {existing && !painOnly && (
           <button

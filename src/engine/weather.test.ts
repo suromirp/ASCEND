@@ -5,13 +5,14 @@ import {
   clockNL,
   isForecastStale,
   isWeatherSensitive,
+  nextOutdoorTraining,
   sessionWeather,
   updatedLabel,
   usualStartHour,
   verdictLine,
   weatherForTraining,
 } from './weather';
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherHour } from '../models/weather';
 import { makeForecast } from './fixtures/weatherFixture';
 
@@ -259,5 +260,44 @@ describe('showing it', () => {
     expect(isForecastStale(fetched, new Date('2026-10-22T11:59:00.000Z'))).toBe(false);
     expect(isForecastStale(fetched, new Date('2026-10-22T12:01:00.000Z'))).toBe(true);
     expect(isForecastStale('nonsense', new Date())).toBe(true);
+  });
+});
+
+describe('de eerstvolgende buitentraining voor de pagina Weer', () => {
+  const byId = new Map([run, hike, lower, rest].map((t) => [t.id, t]));
+  const plan = (id: string, templateId: string, date: string, extra: Partial<PlannedSession> = {}): PlannedSession => ({
+    id, templateId, scheduledDate: date, weekStartDate: '2026-10-19', status: 'planned', order: 0, ...extra,
+  });
+  const done = (s: PlannedSession): SessionLog => ({
+    id: `log-${s.id}`, plannedSessionId: s.id, templateId: s.templateId, type: 'cardio', completedDate: s.scheduledDate,
+    completedAt: `${s.scheduledDate}T18:00:00Z`, variant: 'full', durationMinutes: 45, source: 'manual',
+  });
+
+  it('vandaag buiten: die', () => {
+    const today = plan('a', 'run', WEEKDAY);
+    expect(nextOutdoorTraining([plan('k', 'lower', WEEKDAY), today], [], byId, WEEKDAY)?.session.id).toBe('a');
+  });
+
+  it('vandaag alleen binnen of al gedaan: morgen of later', () => {
+    const ran = plan('a', 'run', WEEKDAY);
+    const tomorrow = plan('b', 'hike', '2026-10-22');
+    const next = nextOutdoorTraining([plan('k', 'lower', WEEKDAY), ran, tomorrow], [done(ran)], byId, WEEKDAY);
+    expect(next?.session.id).toBe('b');
+    expect(next?.date).toBe('2026-10-22');
+  });
+
+  it('een overgeslagen training telt niet', () => {
+    const skipped = plan('a', 'run', WEEKDAY, { status: 'skipped' });
+    expect(nextOutdoorTraining([skipped, plan('b', 'run', SATURDAY)], [], byId, WEEKDAY)?.session.id).toBe('b');
+  });
+
+  it('op een dag met twee buitentrainingen: de eerste in de volgorde van de dag', () => {
+    const first = plan('a', 'hike', WEEKDAY, { order: 0 });
+    const second = plan('b', 'run', WEEKDAY, { order: 1 });
+    expect(nextOutdoorTraining([second, first], [], byId, WEEKDAY)?.session.id).toBe('a');
+  });
+
+  it('niets buiten binnen zeven dagen: niets', () => {
+    expect(nextOutdoorTraining([plan('k', 'lower', WEEKDAY), plan('r', 'rest', SATURDAY), plan('far', 'run', '2026-10-28')], [], byId, WEEKDAY)).toBeUndefined();
   });
 });

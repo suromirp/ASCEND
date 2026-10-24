@@ -135,7 +135,7 @@ export const SETTINGS_INDEX: SettingsIndexItem[] = [
   { id: 'herbouwen', title: 'Adviezen opnieuw berekenen', group: 'gegevens', note: 'Laat ASCEND nu meteen opnieuw kijken. Er wordt niets verwijderd.', keywords: ['herbouw', 'adviezen', 'vernieuwen', 'opnieuw', 'aanbevelingen'] },
   { id: 'wissen', title: 'Alles verwijderen', group: 'gegevens', note: 'Wist alles op deze telefoon en begint opnieuw. Dit kan niet terug.', keywords: ['reset', 'wissen', 'leegmaken', 'opnieuw beginnen', 'verwijderen', 'demo'] },
 
-  { id: 'kennisbank', title: 'Kennisbank', group: 'gidsen', note: 'Navigeren, weer, sneeuw, slapen en meer: alles voor onderweg.', keywords: ['kennis', 'leren', 'tips', 'navigatie', 'sneeuw', 'slapen', 'veiligheid'], route: '/kennis' },
+  { id: 'kennisbank', title: 'Kennisbank', group: 'gidsen', note: 'Navigeren, weer, sneeuw, slapen en meer: alles voor onderweg.', keywords: ['kennis', 'leren', 'tips', 'navigatie', 'sneeuw', 'slapen', 'veiligheid', 'trainingsgids', 'gids'], route: '/kennis' },
   { id: 'plekken', title: 'Trainingsplekken', group: 'gidsen', note: 'Waar je in Nederland bergop en bergaf kunt trainen.', keywords: ['heuvels', 'trap', 'helling', 'bergop', 'locatie', 'dichtbij', 'woonplaats'], route: '/plekken' },
   { id: 'weer-gids', title: 'Weer en kleding', group: 'gidsen', note: 'Het weer en wat je aantrekt bij je training, je plaats, en hoe ASCEND het weer beoordeelt.', keywords: ['weer', 'weerbericht', 'kleding', 'aantrekken', 'jas', 'voorspelling', 'open-meteo', 'regen', 'wind', 'regels'], route: '/weer' },
   { id: 'bronnen', title: 'Bronnen', group: 'gidsen', note: 'Alle onderzoeken en bronnen achter de adviezen.', keywords: ['onderzoek', 'wetenschap', 'studie', 'literatuur', 'waarom', 'bewijs'], route: '/bronnen' },

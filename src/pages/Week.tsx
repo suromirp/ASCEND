@@ -31,7 +31,7 @@ import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
 import { SkyBand } from '../components/SkyBand';
 import { Icon } from '../components/icons';
-import { hoursMinutes } from '../components/hoursMinutes';
+import { hoursMinutes } from '../utils/hoursMinutes';
 
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 

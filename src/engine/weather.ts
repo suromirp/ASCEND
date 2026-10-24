@@ -10,10 +10,11 @@
 // No guessing: the same forecast and the same logs always give the same
 // answer, and every threshold below is a number on this page.
 
-import type { SessionLog, SessionTemplate } from '../models/training';
+import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { WeatherForecast, WeatherHour } from '../models/weather';
 import { isIndoorLog, logSport, templateSport } from './sports';
-import { daysBetween, isoWeekday, toISODate } from '../utils/dates';
+import { addDays, daysBetween, isoWeekday, toISODate } from '../utils/dates';
+import { deriveSessionStatus } from './sessionStatus';
 
 // --- 1. when do you usually train ----------------------------------------------
 
@@ -353,4 +354,28 @@ export function weatherForTraining(input: {
   if (!input.forecast || !isWeatherSensitive(input.template)) return undefined;
   const { hour } = usualStartHour(input.template, input.logs, input.date);
   return sessionWeather({ forecast: input.forecast, date: input.date, startHour: hour, durationMinutes: input.durationMinutes, now: input.now });
+}
+
+// The first training from today up to `days` days on that happens outside
+// (isWeatherSensitive, the same question as the weather line) and is still
+// open: not done and not skipped, read the way Week and Vandaag read it
+// (deriveSessionStatus). For the top of the weather page.
+export function nextOutdoorTraining(
+  planned: PlannedSession[],
+  logs: SessionLog[],
+  templateById: Map<string, SessionTemplate>,
+  today: string,
+  days = 7,
+): { session: PlannedSession; template: SessionTemplate; date: string } | undefined {
+  for (let offset = 0; offset < days; offset++) {
+    const date = addDays(today, offset);
+    const onDay = planned.filter((s) => s.scheduledDate === date).sort((a, b) => a.order - b.order);
+    for (const session of onDay) {
+      const status = deriveSessionStatus(session, logs).status;
+      if (status === 'completed' || status === 'skipped') continue;
+      const template = templateById.get(session.templateId);
+      if (template && isWeatherSensitive(template)) return { session, template, date };
+    }
+  }
+  return undefined;
 }

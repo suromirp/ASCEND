@@ -35,6 +35,11 @@ export function logSource(log: SessionLog): LogSourceInfo {
   return { label: LABEL[source], icon: source === 'manual' ? 'notitie' : 'horloge' };
 }
 
+// Whose numbers go when you put your own back: "Garmin", "de import".
+export function sourceNoun(info: LogSourceInfo): string {
+  return info.label === LABEL.import ? 'de import' : info.label;
+}
+
 const TEXT: Partial<Record<MeasuredField, (n: number) => string>> = {
   durationMinutes: (n) => durationLabel(n * 60),
   distanceKm: (n) => `${formatNumberNL(n, 1)} km`,
