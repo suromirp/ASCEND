@@ -173,10 +173,18 @@ describe('rowSummary: lichaam', () => {
 });
 
 describe('rowSummary: vandaag en meldingen', () => {
-  it('telt wat aan staat, standaard acht', () => {
-    expect(groupSummary('vandaag', facts()).value).toBe('8 aan');
+  it('telt wat aan staat, standaard negen', () => {
+    expect(groupSummary('vandaag', facts()).value).toBe('9 aan');
     const settings = { ...facts().settings, overviews: { weekReview: false, morningCheckIn: false }, introSoundEnabled: false };
-    expect(groupSummary('vandaag', facts({ settings })).value).toBe('5 aan');
+    expect(groupSummary('vandaag', facts({ settings })).value).toBe('6 aan');
+  });
+
+  it('beste moment: een schakelaar die standaard aan staat, ook als de sleutel ontbreekt', () => {
+    expect(rowSummary('beste-moment', facts())).toEqual({ checked: true });
+    expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { weatherLine: false } } })).checked).toBe(true);
+    expect(rowSummary('beste-moment', facts({ settings: { ...facts().settings, overviews: { bestMoment: false } } })).checked).toBe(false);
+    const off = { ...facts().settings, overviews: { bestMoment: false } };
+    expect(groupSummary('vandaag', facts({ settings: off })).value).toBe('8 aan');
   });
 
   it('de dag van de terugblik hoort bij de terugblik', () => {

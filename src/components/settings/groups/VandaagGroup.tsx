@@ -69,6 +69,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Weer">
         <SummaryRow id="weerplaats" title="Plaats" facts={facts} info="plaats" onClick={() => setSheet('weerplaats')} />
         <SummaryRow id="weerregel" title="Weer bij je training" facts={facts} onChange={(on) => set({ weatherLine: on })} />
+        <SummaryRow id="beste-moment" title="Beste moment tonen" facts={facts} info="besteMoment" onChange={(on) => set({ bestMoment: on })} />
         <SummaryRow id="weerruil" title="Ruilen bij slecht weer" facts={facts} onChange={(on) => set({ weatherSwap: on })} />
         <SummaryRow id="kledingadvies" title="Kledingadvies" facts={facts} onChange={(on) => set({ clothingAdvice: on })} />
         <SummaryRow id="kleding-voorkeur" title="Je kleding" facts={facts} onClick={() => setSheet('kleding-voorkeur')} />

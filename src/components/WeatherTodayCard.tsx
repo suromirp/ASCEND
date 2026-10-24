@@ -2,17 +2,18 @@
 // buitentraining van vandaag. Staat er vandaag niets buiten (of is dat al
 // gedaan), dan de eerstvolgende buitentraining van de komende week.
 //
-// Alleen tonen en doorgeven: de keuze van het uur, het oordeel en de kleding
-// komen uit de engine (weather.ts, clothing.ts), dezelfde functies als de
-// weerregel op Vandaag. Zonder plaats staat er niets: de kaart "Je plaats"
-// eronder is dan het enige wat je nodig hebt.
+// Alleen tonen en doorgeven: de keuze van het uur, het oordeel, de kleding en
+// het beste moment komen uit de engine (weather.ts, clothing.ts, bestMoment.ts),
+// dezelfde functies als de weerregel op Vandaag. Zonder plaats staat er niets:
+// de kaart "Je plaats" eronder is dan het enige wat je nodig hebt.
 
 import { useAppData } from '../state/AppDataContext';
 import { resolveEffectiveFullDuration } from '../engine/substitutions';
 import { isForecastStale, nextOutdoorTraining, updatedLabel, verdictLine, weatherForTraining } from '../engine/weather';
 import { clothingForTraining, weatherLineForTraining } from '../engine/clothing';
 import { adjustFor } from '../engine/clothingFeedback';
-import { showClothingAdvice } from '../engine/overviewSettings';
+import { showBestMoment, showClothingAdvice } from '../engine/overviewSettings';
+import { bestMomentForTraining } from '../engine/bestMoment';
 import { templateSport } from '../engine/sports';
 import { addDays, todayISO, weekdayLongNL } from '../utils/dates';
 import { SettingsLinkRow } from './settings/SettingsLink';
@@ -57,6 +58,9 @@ export function WeatherTodayCard() {
   const line = w
     ? weatherLineForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now, adjustC, clothingOn }) ?? w.line
     : undefined;
+  const best = w && showBestMoment(settings.overviews)
+    ? bestMomentForTraining({ forecast: weather.forecast, template, logs: sessionLogs, date, durationMinutes, now })
+    : undefined;
   const stale = !!weather.forecast && (navigator.onLine === false || isForecastStale(weather.forecast.fetchedAt, now));
 
   return (
@@ -73,6 +77,7 @@ export function WeatherTodayCard() {
             {line}
             {stale && weather.forecast ? ` · ${updatedLabel(weather.forecast.fetchedAt)}` : ''}
           </p>
+          {best && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{best.text}</p>}
         </div>
       ) : (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
