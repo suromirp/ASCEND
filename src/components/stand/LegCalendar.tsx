@@ -5,9 +5,11 @@ import { Card, Eyebrow } from '../ui';
 import { dayShort } from './chartParts';
 
 // Je stand → leg calendar: what each day's training puts into your legs,
-// four weeks back and the week ahead. One colour, darker is heavier; a
-// dashed square is still planned. Two dark squares close together is
-// what the planning tries to avoid. Tap a day.
+// four weeks back and the week ahead. Amber, the colour of leg days; brighter
+// is heavier, a dashed square is still planned. Two bright squares close
+// together is what the planning tries to avoid. Tap a day. The points are leg
+// points (engine/standing.ts#legCalendar), not the minutes times effort of the
+// weekly load, so they are called that.
 
 const WEEKDAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 const LEVEL_WORD = ['niets', 'licht', 'middel', 'zwaar', 'heel zwaar'];
@@ -22,7 +24,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
       <div>
         <Eyebrow>BEENKALENDER</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat elke dag in je benen stopt. Donkerder is zwaarder, gestippeld is nog gepland. Twee donkere vakjes vlak na elkaar wil je liever niet.
+          Wat elke dag in je benen stopt. Feller is zwaarder, gestippeld is nog gepland. Twee felle vakjes vlak na elkaar wil je liever niet.
         </p>
       </div>
 
@@ -48,7 +50,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
                 <span
                   className="absolute inset-0 rounded-md"
                   style={{
-                    background: 'var(--color-progress)',
+                    background: 'var(--color-warning)',
                     opacity: LEVEL_OPACITY[d.level] * (d.planned ? 0.7 : 1),
                     border: d.planned ? '1px dashed var(--color-ink)' : undefined,
                   }}
@@ -63,7 +65,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
 
       <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
         <span>licht</span>
-        {LEVEL_OPACITY.slice(1).map((o) => <span key={o} className="h-2.5 w-4 rounded-sm" style={{ background: 'var(--color-progress)', opacity: o }} />)}
+        {LEVEL_OPACITY.slice(1).map((o) => <span key={o} className="h-2.5 w-4 rounded-sm" style={{ background: 'var(--color-warning)', opacity: o }} />)}
         <span>zwaar</span>
       </div>
 
@@ -71,7 +73,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
         <div className="rounded-xl px-3 py-2 text-xs leading-relaxed" style={{ background: 'var(--color-charcoal)', color: 'var(--color-ink)' }} aria-live="polite">
           <p>
             <span className="font-medium">{day.date === today ? 'Vandaag' : dayShort(day.date)}: </span>
-            {day.names.length ? <>{LEVEL_WORD[day.level]}{day.planned ? ', gepland' : ''} <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>({formatNumberNL(day.points, 0)} punten)</span></> : 'geen training'}
+            {day.names.length ? <>{LEVEL_WORD[day.level]}{day.planned ? ', gepland' : ''} <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>({formatNumberNL(day.points, 0)} beenpunten)</span></> : 'geen training'}
           </p>
           {day.names.length > 0 && <p style={{ color: 'var(--color-ink-dim)' }}>{day.names.join(' · ')}</p>}
         </div>
