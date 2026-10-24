@@ -147,6 +147,8 @@ export function exerciseHistories(logs: SessionLog[], templates: SessionTemplate
 export interface LinePoint {
   label: string;
   value: number;
+  // The day of the training (ISO), so the line can be read at a date.
+  date?: string;
 }
 
 export interface ExerciseView {
@@ -175,7 +177,7 @@ export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengt
     if (p.smoothed === undefined) continue;
     const ref = referenceWeight(p.smoothed, range, ctx);
     if (!ref) continue;
-    line.push({ label: formatDateNL(p.date), value: ref.weightKg });
+    line.push({ label: formatDateNL(p.date), value: ref.weightKg, date: p.date });
     now = { weightKg: ref.weightKg, reps: ref.reps, rir: range.rir };
   }
   const input = { exercise: history.exercise, sessions: history.sessions, date: lastDateOrToday(history, today), bodyKg, settings, tired: tiredNow };

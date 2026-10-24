@@ -140,6 +140,29 @@ export const CHOICES = {
       { value: 'work_weight', label: 'Werkgewicht', note: 'Wat je bij je herhalingen aankunt', short: 'Werkgewicht' },
     ],
   }),
+  forgeVergelijken: def({
+    group: 'Forge',
+    title: 'Vergelijken met',
+    line: 'Met welke momenten Forge het getal van nu naast elkaar zet.',
+    advice: '4_8' as '4_8' | '2_4' | '8_12' | '12_26',
+    options: [
+      { value: '4_8', label: '4 en 8 weken', note: 'Een maand en twee maanden terug', short: '4 en 8 weken' },
+      { value: '2_4', label: '2 en 4 weken', note: 'Dichterbij, voor wie vaak traint', short: '2 en 4 weken' },
+      { value: '8_12', label: '8 en 12 weken', note: 'Rustiger, een blok van een kwartaal', short: '8 en 12 weken' },
+      { value: '12_26', label: '12 en 26 weken', note: 'Het lange werk, tot een half jaar terug', short: '12 en 26 weken' },
+    ],
+  }),
+  forgeVolgorde: def({
+    group: 'Forge',
+    title: 'Volgorde van de oefeningen',
+    line: 'Hoe de lijst op Forge gesorteerd staat.',
+    advice: 'most' as 'most' | 'recent' | 'name',
+    options: [
+      { value: 'most', label: 'Meest getraind', note: 'De oefeningen die je het vaakst deed eerst', short: 'Meest getraind' },
+      { value: 'recent', label: 'Laatst getraind', note: 'Wat je het laatst deed bovenaan', short: 'Laatst getraind' },
+      { value: 'name', label: 'Op naam', note: 'Van A tot Z', short: 'Op naam' },
+    ],
+  }),
   restsignaal: def({
     group: 'Forge',
     title: 'Signaal als de rust om is',

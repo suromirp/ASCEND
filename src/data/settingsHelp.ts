@@ -112,6 +112,24 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan staat er alleen de schatting van ASCEND. Wat je ingelezen hebt blijft bewaard.' },
     ],
   },
+  forgeVergelijken: {
+    title: 'Vergelijken met',
+    lead: 'Forge zet het getal van nu naast het getal van eerder, zodat je het verschil ziet.',
+    points: [
+      { head: '4 en 8 weken', text: 'het advies: een maand en twee maanden terug. Daarnaast staat altijd het beste ooit.' },
+      { head: 'Andere momenten', text: 'kies 2 en 4 weken als je vaak traint, of 12 en 26 weken voor het lange werk.' },
+      { head: 'Geen oordeel', text: 'het verschil is een kleine regel. Gelijk of lager is geen mislukking, een hogere 1RM is niet het enige doel.' },
+    ],
+  },
+  forgeExtras: {
+    title: 'Wat er verder veranderde',
+    lead: 'Vooruitgang is niet altijd een hogere 1RM. Forge laat ook de rest zien.',
+    points: [
+      { head: 'Herhalingen', text: 'meer herhalingen bij hetzelfde gewicht als eerder.' },
+      { head: 'Zwaarste gewicht', text: 'het zwaarste gewicht van je beste set.' },
+      { head: 'Volume', text: 'gewicht maal herhalingen over de werksets van een training. Opwarmsets tellen niet mee.' },
+    ],
+  },
   forgeSchijven: {
     title: 'Schijven bij de set',
     lead: 'Onder een werkset met een stang staat welke schijven je per kant nodig hebt.',

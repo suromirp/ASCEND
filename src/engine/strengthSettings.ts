@@ -25,6 +25,13 @@ export type RestSound = 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong
 // MacroFactor one next to it) or the weight you can handle at your rep range.
 export type OneRmView = 'one_rm' | 'work_weight';
 
+// Met welke momenten Forge het getal van nu vergelijkt, in weken terug: twee
+// momenten.
+export type CompareWeeks = '4_8' | '2_4' | '8_12' | '12_26';
+// De volgorde van de oefeningen: de meest getrainde eerst, de laatst getrainde
+// eerst, of op naam.
+export type ForgeSort = 'most' | 'recent' | 'name';
+
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
   startKg: number;
@@ -79,6 +86,12 @@ export interface StrengthSettings {
   oneRmView?: OneRmView;
   // The 1RM from the MacroFactor export, as a line next to ASCEND's own estimate.
   showMacroFactorOneRm?: boolean;
+  // The moments the numbers on Forge are set against ("4 en 8 weken geleden").
+  compareWeeks?: CompareWeeks;
+  // The order of the list on Forge.
+  listSort?: ForgeSort;
+  // The small lines next to the number: reps at the same weight, top weight, volume.
+  showExtras?: boolean;
   // Your own rest per exercise (by exercise id), in seconds, over the estimate.
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
@@ -106,6 +119,9 @@ export interface ResolvedStrengthSettings {
   showOneRm: boolean;
   oneRmView: OneRmView;
   showMacroFactorOneRm: boolean;
+  compareWeeks: CompareWeeks;
+  listSort: ForgeSort;
+  showExtras: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
 }
@@ -171,6 +187,13 @@ const WORK_SETS: WorkSetsMode[] = ['descending', 'equal'];
 const WARMUPS: WarmupMode[] = ['smart', 'scheme', 'off'];
 const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
 export const ONE_RM_VIEWS: OneRmView[] = ['one_rm', 'work_weight'];
+export const COMPARE_WEEKS: CompareWeeks[] = ['4_8', '2_4', '8_12', '12_26'];
+export const FORGE_SORTS: ForgeSort[] = ['most', 'recent', 'name'];
+// '4_8' to [4, 8].
+export const compareMoments = (c: CompareWeeks): [number, number] => {
+  const [a, b] = c.split('_').map(Number);
+  return [a, b];
+};
 export const REST_ALERTS: RestAlert[] = ['sound_vibrate', 'vibrate', 'sound', 'off'];
 export const REST_SOUNDS: RestSound[] = ['chime', 'bell', 'beep', 'boxing', 'whistle', 'gong'];
 export const REST_LIMITS = { min: 15, max: 600 };
@@ -230,6 +253,11 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
   if (oneRmView) out.oneRmView = oneRmView;
   if (typeof raw.showMacroFactorOneRm === 'boolean') out.showMacroFactorOneRm = raw.showMacroFactorOneRm;
+  const compareWeeks = COMPARE_WEEKS.find((v) => v === raw.compareWeeks);
+  if (compareWeeks) out.compareWeeks = compareWeeks;
+  const listSort = FORGE_SORTS.find((v) => v === raw.listSort);
+  if (listSort) out.listSort = listSort;
+  if (typeof raw.showExtras === 'boolean') out.showExtras = raw.showExtras;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
   const sound = REST_SOUNDS.find((a) => a === raw.restSound);
@@ -264,6 +292,9 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
     showMacroFactorOneRm: s.showMacroFactorOneRm ?? true,
+    compareWeeks: s.compareWeeks ?? '4_8',
+    listSort: s.listSort ?? 'most',
+    showExtras: s.showExtras ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
   };

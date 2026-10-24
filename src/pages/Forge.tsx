@@ -2,49 +2,60 @@
 // would propose next time. ASCEND counts along quietly with the trainings that
 // come in through the MacroFactor export (engine/strengthModel.ts, the rules KR-1
 // to KR-8 of docs/onderzoek/Kracht loggen en progressie.md). Nothing here
-// changes the plan or a log, and nothing is a maximum you must reach: the number
-// is called "geschatte kracht" and the line shows the weight you can handle at
-// your rep range.
+// changes the plan or a log, and nothing is a maximum you must reach.
 //
-// Every card has two sides, one choice for all cards that is stored with the Forge
-// settings (StrengthSettings.oneRmView): the estimated 1RM, with the 1RM from the
-// MacroFactor export next to it as a line (engine/externalOneRm.ts), or the weight
-// you can handle at your rep range, the line as it was before. With "Geschatte 1RM
-// tonen" off there is only the second and no switch
+// The page is a short list: one row per exercise with the number of now and the
+// difference with the first comparison moment. A tap opens the row with now, the
+// two moments (4 and 8 weeks as the advice) and the best ever side by side, what
+// else changed (reps at the same weight, top weight, volume) and the proposal for
+// next time; from there the full history opens in a sheet. Above the list are a
+// search field and a chip per training (the real templates). The search term and
+// the filter survive a visit to another page (usePageState). All the arithmetic
+// is in engine/forgeHistory.ts and engine/forgeText.ts
+// (docs/beslissingen/2026-10-24-forge-vergelijken-en-zoeken.md).
+//
+// One choice for all rows, stored with the Forge settings (StrengthSettings.oneRmView):
+// the estimated 1RM, with the 1RM from the MacroFactor export in the history
+// (engine/externalOneRm.ts), or the weight you can handle at your rep range. With
+// "Geschatte 1RM tonen" off there is only the second and no switch
 // (docs/beslissingen/2026-10-24-1rm-uit-macrofactor.md).
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendLineChart } from '../components/TrendLineChart';
-import { Card, Eyebrow, InfoButton, Num, PageHeader, PrimaryButton, SecondaryButton, Segmented, Stat, StatusPill } from '../components/ui';
+import { Card, Eyebrow, PageHeader, PrimaryButton, SecondaryButton, Segmented } from '../components/ui';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
+import { ExerciseRow } from '../components/forge/ExerciseRow';
+import { ExerciseHistorySheet } from '../components/forge/ExerciseHistorySheet';
+import { ForgeFilters } from '../components/forge/ForgeFilters';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, type ComparisonRow, type ExerciseView, type MissingData } from '../engine/strengthHistory';
-import { describePlannedSet, formatWeight, WEIGHT_MISMATCH_TEXT } from '../engine/strengthModel';
-import { oneRmChange, oneRmSeries } from '../engine/strengthOneRm';
-import { externalOneRmByKey, latestReading } from '../engine/externalOneRm';
-import { resolveStrengthSettings, type OneRmView, type StrengthSettings } from '../engine/strengthSettings';
+import { isRepsBased, trainingFilters, visibleViews } from '../engine/forgeHistory';
+import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
+import { externalOneRmByKey } from '../engine/externalOneRm';
+import { compareMoments, resolveStrengthSettings, type OneRmView, type StrengthSettings } from '../engine/strengthSettings';
 import type { OneRmReading } from '../models/metrics';
 import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, todayISO } from '../utils/dates';
-import { formatNumberNL } from '../utils/number';
 import { usePageState } from '../components/usePageState';
 import { TextButton } from '../components/TextButton';
 
 const SHOWN_AT_FIRST = 12;
-const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
 
-// What the model on this page is made from: the choices of the cards (which side,
-// the MacroFactor line) do not change a number, so a tap on the switch does not
-// recalculate every exercise.
+// What the model on this page is made from: the choices of the list (which side,
+// the moments, the order, the small lines) do not change a number, so a tap on the
+// switch does not recalculate every exercise.
 function modelKey(raw: StrengthSettings | undefined): string {
   const copy: StrengthSettings = { ...raw };
   delete copy.oneRmView;
   delete copy.showOneRm;
   delete copy.showMacroFactorOneRm;
+  delete copy.compareWeeks;
+  delete copy.listSort;
+  delete copy.showExtras;
   return JSON.stringify(copy);
 }
+
+const NO_READINGS = new Map<string, OneRmReading[]>();
 
 export function ForgePage() {
   const navigate = useNavigate();
@@ -53,11 +64,16 @@ export function ForgePage() {
   const today = todayISO();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   const [showAll, setShowAll] = usePageState('showAll', false);
+  const [query, setQuery] = usePageState('zoek', '');
+  const [trainingChoice, setTrainingChoice] = usePageState<string | null>('training', null);
+  const [openKey, setOpenKey] = usePageState<string | null>('open', null);
+  const [historyKey, setHistoryKey] = useState<string | null>(null);
 
   const strengthKey = modelKey(settings.strengthModel);
   const choices = resolveStrengthSettings(settings.strengthModel);
   const showOneRm = choices.showOneRm;
-  // One choice for all cards. The tap shows at once; the stored choice follows.
+  const weeks = useMemo(() => compareMoments(choices.compareWeeks), [choices.compareWeeks]);
+  // One choice for all rows. The tap shows at once; the stored choice follows.
   const [pendingView, setPendingView] = useState<OneRmView | null>(null);
   const mode: OneRmView = showOneRm ? (pendingView ?? choices.oneRmView) : 'work_weight';
   async function chooseView(next: OneRmView) {
@@ -68,7 +84,7 @@ export function ForgePage() {
       setPendingView(null);
     }
   }
-  const macroFactorOneRm = useMemo(() => (choices.showMacroFactorOneRm ? externalOneRmByKey(settings.externalOneRm) : new Map<string, OneRmReading[]>()), [choices.showMacroFactorOneRm, settings.externalOneRm]);
+  const macroFactorOneRm = useMemo(() => (choices.showMacroFactorOneRm ? externalOneRmByKey(settings.externalOneRm) : NO_READINGS), [choices.showMacroFactorOneRm, settings.externalOneRm]);
   const model = useMemo(() => {
     const s = resolveStrengthSettings(JSON.parse(strengthKey) as typeof settings.strengthModel);
     if (!s.enabled) return undefined;
@@ -81,6 +97,13 @@ export function ForgePage() {
       rows: comparisonRows(histories, s, bodyKg),
     };
   }, [strengthKey, sessionLogs, templates, program, bodyKg, today]);
+
+  const trainings = useMemo(() => (model ? trainingFilters(templates, model.views) : []), [model, templates]);
+  // A stored filter for a training that is no longer there counts as "Alles".
+  const training = trainingChoice !== null && trainings.includes(trainingChoice) ? trainingChoice : null;
+  const shown = useMemo(() => (model ? visibleViews(model.views, { query, training, sort: choices.listSort }) : []), [model, query, training, choices.listSort]);
+  const historyView = historyKey ? model?.views.find((v) => v.history.key === historyKey) : undefined;
+  const filtering = query.trim() !== '' || training !== null;
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -117,195 +140,66 @@ export function ForgePage() {
       {model && model.views.length > 0 && (
         <>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            {mode === 'one_rm'
-              ? 'ASCEND telt stil mee. De geschatte 1RM is een rekengetal om je eigen trainingen met elkaar te vergelijken, geen maximum dat je moet halen. Staat er een 1RM uit MacroFactor bij, dan rekent die op zijn eigen manier.'
-              : 'ASCEND telt stil mee. De lijn is het gewicht dat je volgens de schatting aankunt bij het aantal herhalingen van die oefening. Het is een rekengetal om je eigen trainingen met elkaar te vergelijken, geen maximum dat je moet halen.'}
+            ASCEND telt stil mee. Getallen zijn rekengetallen om je eigen trainingen te vergelijken, geen maximum dat je moet halen. Het verschil staat tegenover {weeks[0]} en {weeks[1]} weken geleden.
           </p>
-          {model.views.map((v) => (
-            <ExerciseCard key={v.history.key} view={v} mode={mode} showSwitch={showOneRm} onMode={(next) => void chooseView(next)} macroFactor={macroFactorOneRm.get(v.history.key)} />
-          ))}
+
+          {showOneRm && shown.some((v) => !isRepsBased(v)) && (
+            <div className="w-full max-w-[260px]">
+              <Segmented<OneRmView>
+                tall
+                label="Wat Forge laat zien"
+                value={mode}
+                onChange={(next) => void chooseView(next)}
+                options={[
+                  { value: 'one_rm', label: '1RM' },
+                  { value: 'work_weight', label: 'Werkgewicht' },
+                ]}
+              />
+            </div>
+          )}
+
+          <ForgeFilters query={query} onQuery={setQuery} trainings={trainings} training={training} onTraining={setTrainingChoice} />
+
+          <Card className="flex flex-col py-2">
+            <p role="status" className="pb-1 pt-2 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+              {filtering ? `${shown.length} van ${model.views.length} oefeningen` : `${model.views.length} oefeningen`}
+            </p>
+            {shown.length === 0 && (
+              <div className="flex flex-col items-start gap-1 py-3">
+                <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Geen oefening gevonden.</p>
+                <TextButton onClick={() => { setQuery(''); setTrainingChoice(null); }} icon="verder">Zoekopdracht wissen</TextButton>
+              </div>
+            )}
+            {shown.map((v) => (
+              <ExerciseRow
+                key={v.history.key}
+                view={v}
+                mode={mode}
+                bodyKg={bodyKg}
+                today={today}
+                weeks={weeks}
+                showExtras={choices.showExtras}
+                open={openKey === v.history.key}
+                onToggle={() => setOpenKey(openKey === v.history.key ? null : v.history.key)}
+                onHistory={() => setHistoryKey(v.history.key)}
+              />
+            ))}
+          </Card>
+
           <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
           <TextButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="self-start text-left" icon="verder">
             Instellingen van Forge: sportschool, opwarmen en meer
           </TextButton>
         </>
       )}
+
+      {historyView && (
+        <ExerciseHistorySheet view={historyView} mode={mode} bodyKg={bodyKg} today={today} macroFactor={macroFactorOneRm.get(historyView.history.key)} onClose={() => setHistoryKey(null)} />
+      )}
     </div>
   );
 }
 
-// Wat er aan de sets ontbreekt, en hoe het erbij komt.
-const REFILL_TEXT: Record<MissingData, string> = {
-  rir: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR); ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
-  help: 'Deze sets staan hier nog zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
-  rir_and_help: 'Deze sets staan hier nog zonder herhalingen in reserve (RIR) en zonder de hulp van het apparaat; ze komen uit een oudere import. Lees je MacroFactor-export opnieuw in en tik Alles verwerken, dan vult ASCEND ze aan.',
-};
-
-function ExerciseCard({
-  view,
-  mode,
-  showSwitch,
-  onMode,
-  macroFactor,
-}: {
-  view: ExerciseView;
-  mode: OneRmView;
-  showSwitch: boolean;
-  onMode: (mode: OneRmView) => void;
-  // The 1RM of this exercise from the MacroFactor export, oldest first; absent when there is none or the line is off.
-  macroFactor?: OneRmReading[];
-}) {
-  const { history, now, next, line, strengthKg, weightMismatch } = view;
-  const { settings } = useAppData();
-  const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const exercise = history.exercise;
-  // Pull-ups with help: the help is negative, so a line of it goes up while the
-  // number goes down. With a body weight the line shows what you lift yourself.
-  const assisted = exercise?.resistance === 'assisted_bodyweight';
-  const liftedKg = assisted ? bodyKg : undefined;
-  const chartLine = liftedKg ? line.map((p) => ({ ...p, value: liftedKg + p.value })) : line;
-  const count = history.sessions.length;
-  const [oneRmInfo, setOneRmInfo] = useState(false);
-  const oneRm = useMemo(() => oneRmSeries(view.points), [view.points]);
-  const oneRmDelta = oneRmChange(oneRm);
-  const macroFactorNow = latestReading(macroFactor);
-  // The line of the 1RM is ASCEND's own; with fewer than two trainings of ASCEND
-  // the line of MacroFactor takes its place (the source is named under it).
-  const ownChart = oneRm.length >= 2;
-  const macroFactorChart = !ownChart && (macroFactor?.length ?? 0) >= 2;
-  const chartPoints = ownChart
-    ? oneRm.map((p) => ({ label: formatDateNL(p.date), value: p.kg }))
-    : macroFactorChart
-      ? macroFactor!.map((p) => ({ label: formatDateNL(p.date), value: p.kg }))
-      : [];
-  const oneRmShown = strengthKg !== undefined || macroFactorNow !== undefined;
-  // With your own body weight in it the number is the total load, not the plates.
-  const totalLoad = exercise?.bodyweightFraction !== undefined || (exercise !== undefined && ['bodyweight', 'assisted_bodyweight', 'pack_or_vest'].includes(exercise.resistance));
-
-  const navigate = useNavigate();
-  let missing: string | undefined;
-  let refill: MissingData | undefined;
-  if (!next) {
-    refill = weightMismatch ? undefined : missingData(history);
-    missing = weightMismatch
-      ? WEIGHT_MISMATCH_TEXT
-      : refill
-        ? REFILL_TEXT[refill]
-        : bodyKg === undefined && exercise?.bodyweightFraction !== undefined
-          ? 'Vul je lichaamsgewicht in bij Instellingen, Lichaam, dan telt deze oefening mee.'
-          : strengthKg === undefined
-            ? 'Bij deze sets kan ASCEND nog geen kracht schatten.'
-            : 'Nog geen voorstel mogelijk.';
-  }
-
-  return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{history.name}</p>
-        <span className="shrink-0 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{count} {count === 1 ? 'training' : 'trainingen'}</span>
-      </div>
-
-      {showSwitch && (
-        <div className="w-full max-w-[260px]">
-          <Segmented<OneRmView>
-            tall
-            label={`Wat de kaart van ${history.name} laat zien`}
-            value={mode}
-            onChange={onMode}
-            options={[
-              { value: 'one_rm', label: '1RM' },
-              { value: 'work_weight', label: 'Werkgewicht' },
-            ]}
-          />
-        </div>
-      )}
-
-      {mode === 'work_weight' && now && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-          Nu ongeveer <Num>{kg(Math.abs(now.weightKg))}</Num>
-          {exercise?.resistance === 'assisted_bodyweight' ? ' hulp' : ''} voor <Num>{now.reps}</Num> herhalingen met <Num>{now.rir}</Num> over.
-        </p>
-      )}
-      {mode === 'work_weight' && line.length >= 2 && (
-        <div className="font-sans tabular-nums">
-          <TrendLineChart points={chartLine} color="var(--color-action)" height={90} formatValue={assisted && !liftedKg ? (v) => `hulp ${kg(Math.abs(v))}` : (v) => kg(Math.abs(v))} />
-          {assisted && (
-            <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              {liftedKg ? 'De lijn laat zien hoeveel je zelf optilt: je lichaamsgewicht min de hulp. Hoger is sterker.' : 'De lijn laat de hulp zien. Hoger op de lijn is minder hulp, dus sterker.'}
-            </p>
-          )}
-        </div>
-      )}
-      {mode === 'work_weight' && line.length === 1 && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>De lijn begint na de tweede training.</p>}
-      {mode === 'one_rm' && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <Eyebrow>Geschatte 1RM</Eyebrow>
-            <InfoButton onClick={() => setOneRmInfo((v) => !v)} label={oneRmInfo ? 'Uitleg over de geschatte 1RM sluiten' : 'Uitleg over de geschatte 1RM'} />
-          </div>
-          {oneRmInfo && (
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Een schatting uit je laatste sets, geen test. Gebruik hem om je trainingen te vergelijken.
-              {macroFactorNow ? ' MacroFactor rekent op zijn eigen manier, dus de twee getallen kunnen verschillen.' : ''}
-            </p>
-          )}
-          {strengthKg !== undefined && (
-            <div className="flex items-end justify-between gap-3">
-              <Stat label="Geschat door ASCEND" value={formatNumberNL(strengthKg, 1)} unit={totalLoad ? 'kg totale last' : 'kg'} size="m" />
-              {oneRmDelta && (
-                <StatusPill tone={oneRmDelta.deltaKg > 0 ? 'progress' : 'neutral'}>
-                  {oneRmDelta.deltaKg > 0 ? '+' : ''}{formatNumberNL(oneRmDelta.deltaKg, 1)} kg in 4 weken
-                </StatusPill>
-              )}
-            </div>
-          )}
-          {macroFactorNow && (
-            <p className="font-sans text-sm tabular-nums leading-snug" style={{ color: 'var(--color-ink)' }}>
-              <span style={{ color: 'var(--color-ink-dim)' }}>MacroFactor:</span> {kg(macroFactorNow.kg)} ({formatDateNL(macroFactorNow.date)})
-            </p>
-          )}
-          {!oneRmShown && (
-            <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              ASCEND kan bij deze sets nog geen 1RM schatten. Wissel naar Werkgewicht voor wat je wel kunt zien.
-            </p>
-          )}
-          {chartPoints.length >= 2 && (
-            <div className="font-sans tabular-nums">
-              <TrendLineChart points={chartPoints} color={ownChart ? 'var(--color-progress)' : 'var(--color-ink-dim)'} height={90} formatValue={(v) => kg(v)} />
-              {macroFactorChart && (
-                <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>De lijn is de 1RM van MacroFactor.</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {next && (
-        <div className="flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <Eyebrow>Volgende keer volgens ASCEND</Eyebrow>
-          <p className="font-sans text-base tabular-nums" style={{ color: 'var(--color-ink)' }}>{describePlannedSet(exercise, next.sets[0])}</p>
-          {next.sets.length > 1 && (
-            <p className="font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              {next.sets.length} werksets, de volgende per set: {next.sets.slice(1).map((x) => formatWeight(exercise, x.weightKg)).join(', ')}
-            </p>
-          )}
-          <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{next.reason}</p>
-          {next.warmups.length > 0 && (
-            <p className="font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-              Opwarmen: {next.warmups.map((w) => `${formatWeight(exercise, w.weightKg)} x ${w.reps}`).join(', ')}
-            </p>
-          )}
-        </div>
-      )}
-      {missing && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{missing}</p>}
-      {refill && (
-        <TextButton onClick={() => navigate('/koppelen/macrofactor')} className="self-start text-left" icon="verder">
-          MacroFactor opnieuw inlezen
-        </TextButton>
-      )}
-    </Card>
-  );
-}
 
 function ComparisonSection({ rows, showAll, onShowAll }: { rows: ComparisonRow[]; showAll: boolean; onShowAll: () => void }) {
   const a = accuracy(rows);
