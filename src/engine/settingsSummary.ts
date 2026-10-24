@@ -264,6 +264,10 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.carryWeights };
     case 'forge-1rm':
       return { checked: forge.showOneRm };
+    case 'forge-weergave':
+      return { value: choiceShort('forgeWeergave', forge.oneRmView), hidden: !forge.enabled || !forge.showOneRm };
+    case 'forge-1rm-macrofactor':
+      return { checked: forge.showMacroFactorOneRm, hidden: !forge.enabled || !forge.showOneRm };
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':

@@ -49,7 +49,8 @@ import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
-import { cleanNavigationSettings, migrateExport, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, type AscendExport } from './migrations';
+import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
@@ -218,6 +219,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     } else {
       s[key] = cleaned;
     }
+  }
+  // The 1RM per exercise from MacroFactor: read series by series, a damaged
+  // reading is dropped and counted, an older file has none and leaves the
+  // readings on the device alone (storage/migrations.ts#migrateExternalOneRm).
+  if ('externalOneRm' in s) {
+    const oneRm = migrateExternalOneRm(s.externalOneRm);
+    if (oneRm.series === undefined) delete s.externalOneRm;
+    else s.externalOneRm = oneRm.series;
+    skipped.n += oneRm.skipped;
   }
   // The switch for weight from MacroFactor: a yes or a no, or not there.
   if ('weightFromMacroFactor' in s && typeof s.weightFromMacroFactor !== 'boolean') {
@@ -595,6 +605,11 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     const byDate = new Map((incoming.weightEntries ?? []).map((e) => [e.date, e]));
     for (const e of current.weightEntries ?? []) byDate.set(e.date, e);
     merged.weightEntries = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  }
+  // The 1RM from MacroFactor is history too: per exercise and day the union,
+  // the device's own reading wins.
+  if (incoming.externalOneRm || current.externalOneRm) {
+    merged.externalOneRm = mergeExternalOneRm(incoming.externalOneRm, current.externalOneRm ?? []);
   }
   if (incoming.illnessEpisodes || current.illnessEpisodes) {
     const byId = new Map((incoming.illnessEpisodes ?? []).map((e) => [e.id, e]));

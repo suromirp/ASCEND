@@ -55,3 +55,27 @@ export interface WeightEntry {
   basis?: 'trend' | 'scale';
   scaleKg?: number;
 }
+
+// The 1RM of one exercise as another source reports it, one reading per day
+// (MacroFactor's sheet "Exercises - 1-RM", engine/macrofactorOneRm.ts). ASCEND's
+// own estimate is not stored: it is calculated from the logs
+// (engine/strengthOneRm.ts), so the two stay next to each other and neither
+// overwrites the other (docs/beslissingen/2026-10-24-1rm-uit-macrofactor.md).
+//
+// `exerciseName` is the name as the source writes it (without the unit); which
+// ASCEND exercise it is, is worked out when it is read (engine/externalOneRm.ts),
+// so a later change in the exercise list does not leave a stale key behind.
+// There is one series per exercise and source. The shape carries `source` like
+// every metric, so a later provider fills the same record. Optional on the
+// settings, so an older device or backup simply has none.
+export interface OneRmReading {
+  date: string; // ISO date
+  kg: number;
+}
+
+export interface ExternalOneRm {
+  exerciseName: string;
+  source: MetricSource;
+  // Oldest first, one per day.
+  points: OneRmReading[];
+}

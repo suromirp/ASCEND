@@ -127,6 +127,21 @@ describe('rowSummary: forge', () => {
     expect(groupSummary('forge', facts())).toEqual({ value: 'Aan', sub: 'Eerst gewicht, opwarmen slim' });
   });
 
+  it('Forge toont: 1RM als advies, werkgewicht als je het kiest, en weg zonder het 1RM-blok', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-weergave', facts())).toEqual({ value: '1RM', hidden: false });
+    expect(rowSummary('forge-weergave', withForge({ oneRmView: 'work_weight' })).value).toBe('Werkgewicht');
+    expect(rowSummary('forge-weergave', withForge({ showOneRm: false })).hidden).toBe(true);
+    expect(rowSummary('forge-weergave', withForge({ enabled: false })).hidden).toBe(true);
+  });
+
+  it('MacroFactor-1RM erbij: aan als advies, uit te zetten, weg zonder het 1RM-blok', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-1rm-macrofactor', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-1rm-macrofactor', withForge({ showMacroFactorOneRm: false })).checked).toBe(false);
+    expect(rowSummary('forge-1rm-macrofactor', withForge({ showOneRm: false })).hidden).toBe(true);
+  });
+
   it('uit: de groep noemt de sportschool', () => {
     const settings = { ...facts().settings, strengthModel: { enabled: false } };
     expect(groupSummary('forge', facts({ settings }))).toEqual({ value: 'Uit', dim: true, sub: 'Sportschool: 2 stangen, 7 schijven' });

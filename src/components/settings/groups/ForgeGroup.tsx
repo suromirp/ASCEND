@@ -61,6 +61,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="forge-doorgeven" title="Gewicht doorgeven aan volgende sets" facts={facts} info="forgeDoorgeven" onChange={(on) => save({ carryWeights: on })} />
         <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
         <SummaryRow id="forge-1rm" title="Geschatte 1RM tonen" facts={facts} info="forge1rm" onChange={(on) => save({ showOneRm: on })} />
+        <SummaryRow id="forge-weergave" title="Forge toont" facts={facts} info="forgeWeergave" onClick={() => setSheet('forge-weergave')} />
+        <SummaryRow id="forge-1rm-macrofactor" title="MacroFactor-1RM erbij" facts={facts} info="forge1rmMacrofactor" onChange={(on) => save({ showMacroFactorOneRm: on })} />
         <SummaryRow id="forge-programma" title="Programma uit MacroFactor" facts={facts} onClick={() => setSheet('forge-programma')} />
       </SettingsSection>
 
@@ -75,6 +77,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.kracht} value={facts.strengthExternal ? 'macrofactor' : 'ascend'} onPick={(v) => void setStrengthExternal(v === 'macrofactor')} onClose={close} />
       )}
       {sheet === 'trainingsduur' && <DurationSheet onClose={close} />}
+      {sheet === 'forge-weergave' && <ChoiceFromDef def={CHOICES.forgeWeergave} value={s.oneRmView} onPick={(v) => save({ oneRmView: v })} onClose={close} />}
       {sheet === 'forge-volgorde' && <ChoiceFromDef def={CHOICES.volgorde} value={s.progression} onPick={(v) => save({ progression: v })} onClose={close} />}
       {sheet === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={close} />}
       {sheet === 'forge-opwarmen' && <ChoiceFromDef def={CHOICES.opwarmen} value={s.warmup} onPick={(v) => save({ warmup: v })} onClose={close} />}

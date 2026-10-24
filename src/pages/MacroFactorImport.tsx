@@ -25,6 +25,8 @@ import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
 import { MacroFactorFormatError, nameKey } from '../engine/macrofactorImport';
 import { importSummary, readMacroFactorBytes } from '../engine/macrofactorFile';
+import { oneRmFromMacroFactor, type MacroFactorOneRmResult } from '../engine/macrofactorOneRm';
+import { countNewReadings, mergeExternalOneRm } from '../engine/externalOneRm';
 import { applyWeightImport, planWeightImport, weightEntryFromDay, type MacroFactorWeightResult, type WeightConflict } from '../engine/macrofactorWeight';
 import { hasMacroFactorWeight, MACROFACTOR_FRESH_DAYS } from '../engine/bodyWeight';
 import type { WeightEntry } from '../models/metrics';
@@ -74,11 +76,22 @@ export function MacroFactorImportPage() {
     return { kg: last.kg, date: last.date, basis: last.basis === 'trend' ? ('trend' as const) : ('scale' as const), added: weightPlan.add.length, offInSettings: current.weightFromMacroFactor === false };
   }
 
+  // The 1RM per exercise of a file: put next to what is stored, a day that is
+  // there already is taken from the file, a day only stored is kept.
+  async function storeOneRm(file: MacroFactorOneRmResult) {
+    const incoming = oneRmFromMacroFactor(file);
+    const stored = settingsRef.current.externalOneRm;
+    const { exercises, added } = countNewReadings(stored, incoming);
+    await updateSettings({ externalOneRm: mergeExternalOneRm(stored, incoming) });
+    return { exercises, added };
+  }
+
   async function readData(data: Uint8Array, name?: string) {
     setBusy(true);
     try {
       const content = await readMacroFactorBytes(data, name);
       const weight = content.weight ? await storeWeight(content.weight) : undefined;
+      const oneRm = content.oneRm && content.oneRm.exercises.length > 0 ? await storeOneRm(content.oneRm) : undefined;
       let workoutCount: number | undefined;
       if (content.workouts) {
         const result = await importMacroFactorWorkouts(content.workouts, name);
@@ -86,7 +99,7 @@ export function MacroFactorImportPage() {
       }
       setProgramOffer(content.program ?? null);
       const program = content.program ? { name: content.program.name, days: content.program.days.length, weeks: content.program.cycleCount } : undefined;
-      setNotice({ tone: 'ok', lines: importSummary({ weight, workoutCount, program, ignoredSheets: content.ignoredSheets }, formatDateNL) });
+      setNotice({ tone: 'ok', lines: importSummary({ weight, workoutCount, program, oneRm, ignoredSheets: content.ignoredSheets }, formatDateNL) });
     } catch (err) {
       setNotice(
         err instanceof MacroFactorFormatError
@@ -159,7 +172,7 @@ export function MacroFactorImportPage() {
           ASCEND leest het bestand alleen op deze telefoon; het gaat nergens heen. Bij krachttrainingen koppel je eerst de namen en verwerk je ze daarna in één keer; er wordt nooit iets stil opgeslagen.
         </p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND leest xlsx en csv en ziet aan de kolommen zelf wat erin zit: gewicht, krachttrainingen of allebei in één bestand.
+          ASCEND leest xlsx en csv en ziet aan de kolommen zelf wat erin zit: gewicht, krachttrainingen of allebei in één bestand. Zit in je export het blad Exercises&nbsp;-&nbsp;1-RM, dan leest ASCEND ook je 1RM per oefening.
         </p>
       </Card>
 
