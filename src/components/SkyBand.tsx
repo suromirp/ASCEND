@@ -11,8 +11,11 @@ import { SettingsGear } from './SettingsGear';
 // (`.on-light` in index.css), dus een Card wordt vanzelf de lichte kaart.
 //
 // `variant`: `tall` (standaard) draagt kop, titel en de eerste kaart; `low` is de
-// lagere band van Week, met alleen kop en titel. `actions` staat links van het
-// tandwiel (44 px, 8 px ertussen). Geen animatie, dus niets voor
+// lagere band van Week, met alleen kop en titel. `actions` staat direct links van
+// het tandwiel: pictogrammen zonder cirkel, elk een tikdoel van 44 bij 44 px, op
+// dezelfde hoogte en in dezelfde kleur. Rechts trekt de groep 10 px de
+// paginamarge in, zodat het pictogram zelf op de rand van de kaarten eindigt en
+// niet het lege deel van het tikdoel. Geen animatie, dus niets voor
 // prefers-reduced-motion om uit te zetten.
 
 // Het silhouet: rechte flanken met licht afgeronde toppen, op een vlak van 390
@@ -40,7 +43,7 @@ export function SkyBand({
     <div className="sky-band on-light" data-variant={variant}>
       <div className="flex min-h-[44px] items-center justify-between gap-2">
         <AppMark />
-        <div className="flex items-center gap-2">
+        <div className="-mr-2.5 flex items-center">
           {actions}
           {gear && <SettingsGear from={pathname} />}
         </div>

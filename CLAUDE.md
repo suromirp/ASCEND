@@ -97,12 +97,16 @@ fris en sportief op donker marine.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
   `src/App.tsx`), volledig dekkend marine, labels in zinsletters, met de
   actieve tab en het streepje erboven in de kleur van die tab. Meer is geen
-  tab maar het tandwiel rechtsboven (`SettingsGear`): 44 bij 44 px in een
-  ronde knop op de lucht van `SkyBand`, op elke tab op precies dezelfde plek,
-  schuift met de pagina mee. Het opent
+  tab maar het tandwiel rechtsboven (`SettingsGear`): alleen het pictogram,
+  zonder cirkel of rand, in `--color-on-light` op de lucht van `SkyBand`, een
+  tikdoel van 44 bij 44 px, op elke tab op precies dezelfde plek, schuift met
+  de pagina mee. Het opent
   `/more` (instellingen, gegevens en back-up, koppelingen, gidsen en kennis);
-  oude links naar `/more` blijven werken. Een pagina die zelf iets rechtsboven
-  nodig heeft (pijltjes, knoppen) laat daar ruimte voor het tandwiel vrij.
+  oude links naar `/more` blijven werken. Wat een pagina zelf rechtsboven nodig
+  heeft (pijltjes van Week en Logboek, het lichaamknopje van Vandaag) gaat in
+  `SkyBand` `actions`: pictogrammen zonder cirkel, direct links van het
+  tandwiel, dezelfde hoogte en maat, dezelfde kleur
+  (`docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md`).
 - Instellingen (`/more`, `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`):
   een overzicht met de stand en acht groepen (`/more/:groep`: Planning, Doel en
   tochten, Forge, Lichaam, Vandaag en meldingen, Koppelingen, Gegevens en

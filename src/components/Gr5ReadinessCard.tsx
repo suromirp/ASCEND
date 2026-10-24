@@ -3,21 +3,20 @@ import { changeLabel, metersLinkLabel, type Gr5Readiness } from '../engine/gr5Re
 import { Gr5ReadinessSheet } from './Gr5ReadinessSheet';
 import { CountUp } from './CountUp';
 import { Icon } from './icons';
-import { Card, LightCard, Meter, StatusPill } from './ui';
+import { Card, Meter, StatusPill } from './ui';
 
 // Klaar voor de GR5: het ene voortgangsgetal van de app, groot, met altijd de
 // zin eronder waaruit het bestaat en de vier meters. Een tik opent het blad met
-// per meter de uitleg. Op Je stand ligt de kaart licht op de lucht (`light`),
-// op Ascend is het de gewone kaart; beide tonen hetzelfde getal en dezelfde zin.
+// per meter de uitleg. Op Je stand en op Ascend is het dezelfde gewone marine
+// kaart onder de bergen; beide tonen hetzelfde getal en dezelfde zin.
 
-export function Gr5ReadinessCard({ readiness, light = false }: { readiness: Gr5Readiness; light?: boolean }) {
+export function Gr5ReadinessCard({ readiness }: { readiness: Gr5Readiness }) {
   const [open, setOpen] = useState(false);
   const change = changeLabel(readiness.change);
-  const Wrapper = light ? LightCard : Card;
   return (
     <>
       <button onClick={() => setOpen(true)} className="block w-full text-left">
-        <Wrapper className="flex flex-col gap-3">
+        <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Klaar voor de GR5</span>
             <span aria-hidden="true" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
@@ -44,7 +43,7 @@ export function Gr5ReadinessCard({ readiness, light = false }: { readiness: Gr5R
           {readiness.weakestSentence && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{readiness.weakestSentence}</p>}
           {/* De naam van de knop is de inhoud (het percentage en de zin); dit is alleen de hint. */}
           <span className="sr-only">{metersLinkLabel(readiness.meters.length)}.</span>
-        </Wrapper>
+        </Card>
       </button>
       {open && <Gr5ReadinessSheet readiness={readiness} onClose={() => setOpen(false)} />}
     </>

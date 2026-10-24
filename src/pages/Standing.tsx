@@ -129,8 +129,12 @@ export function StandingPage() {
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
         </div>
-        {gr5 && <Gr5ReadinessCard readiness={gr5} light />}
       </SkyBand>
+
+      {/* Het ene voortgangsgetal staat als gewone marine kaart onder de bergen, niet als
+          groot wit vlak op de lucht: de lucht houdt dezelfde licht-donkerverhouding als
+          op de andere tabs. */}
+      {gr5 && <Gr5ReadinessCard readiness={gr5} />}
 
       <nav className="sticky top-0 z-10 -mx-4 flex gap-2 px-4 py-2" style={{ background: 'var(--color-bg)' }} aria-label="Onderdelen">
         {SECTIONS.map((s) => (

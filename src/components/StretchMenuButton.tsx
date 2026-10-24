@@ -9,8 +9,10 @@ function minutesOf(area: (typeof PROBLEM_AREAS)[number]): number {
   return Math.max(1, Math.round(area.stretches.reduce((n, s) => n + (s.durationSec ?? 30), 0) / 60));
 }
 
-// Het knopje met het poppetje bovenaan Vandaag: een blad met de plekken waar je last van
-// hebt, zoals elke andere keuze in de app (geen los uitklapmenu over de kaarten).
+// Het knopje met het kleine lichaam bovenaan Vandaag, direct links van het tandwiel: een
+// blad met de plekken waar je last van hebt, zoals elke andere keuze in de app (geen los
+// uitklapmenu over de kaarten). Alleen het pictogram, zonder cirkel, in dezelfde kleur
+// als het tandwiel; het tikdoel is 44 bij 44 px.
 export function StretchMenuButton() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -20,12 +22,12 @@ export function StretchMenuButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Rekoefeningen"
+        aria-label="Lichaam: rekken en klachten"
         aria-haspopup="dialog"
-        className="flex h-11 w-11 items-center justify-center rounded-full border"
-        style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-action)' }}
+        className="flex h-11 w-11 shrink-0 items-center justify-center"
+        style={{ color: 'var(--color-on-light)' }}
       >
-        <Icon name="rekken" size={20} />
+        <Icon name="lichaam" size={24} />
       </button>
 
       {open && (

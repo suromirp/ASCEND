@@ -20,7 +20,6 @@ import { TrendLineChart } from '../components/TrendLineChart';
 import { getGR5MilestoneDetail, GR5_TRACK_DESCRIPTION } from '../data/gr5Details';
 import { JourneyEntryCard } from '../components/reis/JourneyEntryCard';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow, Num, NumText, PageHeader } from '../components/ui';
-import { AscendAnimatedLogo } from '../components/AscendAnimatedLogo';
 import { GoalFocusCard } from '../components/GoalFocusCard';
 import { OnCourseCard } from '../components/OnCourseCard';
 import { SeasonCard } from '../components/SeasonCard';
@@ -146,25 +145,24 @@ export function AscendPage() {
   // (production feedback: "te slordig", "raar dat dit bij elkaar staat").
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
-      {/* The animated brand mark lives here, on the tab that carries its
-          name: the light climbs the trail once each time you open Ascend. */}
+      {/* De kop is opgebouwd zoals op de andere tabs: het merkteken linksboven (in
+          SkyBand), daaronder links uitgelijnd het kopje, de naam van het doel en de
+          regel eronder. Het grote geanimeerde teken stond hier naast de tekst en maakte
+          de kop rommelig; het merkteken in de kop is hetzelfde teken. */}
       <SkyBand>
-        <div className="flex items-center gap-4">
-          <div className="shrink-0" aria-hidden="true"><AscendAnimatedLogo size={84} withWord={false} /></div>
-          <div className="min-w-0 flex-1">
-            <Eyebrow>{goal ? 'Hoofddoel' : 'Ascend'}</Eyebrow>
-            <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>{goal ? goal.name : 'Ascend'}</h1>
-            {goal ? (
-              <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
-                {timing?.state === 'ahead' && <span className="font-medium" style={{ color: 'var(--color-status)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
-                {timing?.state === 'underway' && <span className="font-medium" style={{ color: 'var(--color-status)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
-                {timing?.state === 'past' && <span>voorbij</span>}
-              </div>
-            ) : (
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
-            )}
-          </div>
+        <div className="min-w-0">
+          <Eyebrow>{goal ? 'Hoofddoel' : 'Ascend'}</Eyebrow>
+          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>{goal ? goal.name : 'Ascend'}</h1>
+          {goal ? (
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+              {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
+              {timing?.state === 'ahead' && <span className="font-medium" style={{ color: 'var(--color-status)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
+              {timing?.state === 'underway' && <span className="font-medium" style={{ color: 'var(--color-status)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
+              {timing?.state === 'past' && <span>voorbij</span>}
+            </div>
+          ) : (
+            <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
+          )}
         </div>
         {goal && <RouteLine goal={goal} />}
       </SkyBand>

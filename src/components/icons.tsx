@@ -154,6 +154,25 @@ const PATHS = {
       <path d="M12 7v7M7 9.5l5 1.5 5-1.5M9 21l3-7 3 7" />
     </>
   ),
+  // Een klein lichaam met één gemarkeerde plek (de knie): het knopje voor rekken en
+  // klachten op Vandaag.
+  lichaam: (
+    <>
+      <circle cx="12" cy="4" r="2" />
+      <path d="M8.4 8.6h7.2M12 8.6v6M12 14.6l-3.2 6.4M12 14.6l3.2 6.4M8.4 8.6L6.9 14.6M15.6 8.6l1.5 6" />
+      <circle cx="13.8" cy="18" r="2.1" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // Een poppetje dat met gekruiste benen rustig uitrust: de rustdag in de weekstrook.
+  ontspannen: (
+    <>
+      <circle cx="12" cy="5" r="2" />
+      <path d="M12 8v5" />
+      <path d="M12 9.4c-1.6.4-3 1.4-4 3.4M12 9.4c1.6.4 3 1.4 4 3.4" />
+      <path d="M3.6 19.2c.6-2.8 3-4.2 5.6-4.2H15c2.6 0 5 1.4 5.6 4.2" />
+      <path d="M7.4 15.4c1.4 1.6 3 2.2 4.6 2.2s3.2-.6 4.6-2.2" />
+    </>
+  ),
   // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
   verder: <path d="M9.5 6l6 6-6 6" />,
   // Terug naar het vorige scherm, en het teken in een InfoButton.
@@ -220,12 +239,15 @@ export function Icon({
   size = 22,
   label,
   className,
+  strokeWidth = 1.6,
 }: {
   name: IconName;
   size?: number;
   /** Alleen invullen als het icoon zonder woord staat. */
   label?: string;
   className?: string;
+  /** Alleen voor een klein teken in een badge, waar 1,6 te dun wordt. */
+  strokeWidth?: number;
 }) {
   return (
     <svg
@@ -234,7 +256,7 @@ export function Icon({
       height={size}
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}

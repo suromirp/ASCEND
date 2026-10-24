@@ -8,7 +8,6 @@ import { dayLoads, weekProgress } from '../engine/weekProfile';
 import { looseLogsOfWeek, weekLogsOf, weekTime } from '../engine/weekLogs';
 import { WeekRidge } from '../components/WeekRidge';
 import { WeekReviewSheet } from '../components/WeekReview';
-import { ChevronIcon } from '../components/WeekIcons';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { addDays, mondayOfWeek, resolveProgramWeek, todayISO } from '../utils/dates';
@@ -124,8 +123,32 @@ export function WeekPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-6">
-      <SkyBand variant="low">
-        <header className="flex items-center justify-between gap-2">
+      {/* Vorige en volgende week staan rechtsboven direct links van het tandwiel: dezelfde
+          hoogte, dezelfde maat (44 px), zonder cirkel. In het jaaroverzicht zijn ze er niet. */}
+      <SkyBand
+        variant="low"
+        actions={monthView ? undefined : (
+          <>
+            <button
+              onClick={() => setWeekStart(addDays(weekStart, -7))}
+              className="flex h-11 w-11 items-center justify-center"
+              style={{ color: 'var(--color-on-light)' }}
+              aria-label="Vorige week"
+            >
+              <Icon name="terug" size={24} />
+            </button>
+            <button
+              onClick={() => setWeekStart(addDays(weekStart, 7))}
+              className="flex h-11 w-11 items-center justify-center"
+              style={{ color: 'var(--color-on-light)' }}
+              aria-label="Volgende week"
+            >
+              <Icon name="verder" size={24} />
+            </button>
+          </>
+        )}
+      >
+        <header>
           <div className="min-w-0">
             {monthView ? (
               <div className="flex items-start gap-2">
@@ -144,26 +167,6 @@ export function WeekPage() {
                 {phaseName && <span className="ml-2 font-sans text-sm" style={{ color: 'var(--color-ink-dim)' }}>{phaseName.trim().toLowerCase()}</span>}
               </h1>
             )}
-          </div>
-          <div className="flex shrink-0 items-center" style={{ visibility: monthView ? 'hidden' : undefined }}>
-            <button
-              onClick={() => setWeekStart(addDays(weekStart, -7))}
-              className="flex h-11 w-11 items-center justify-center"
-              style={{ color: 'var(--color-ink-dim)' }}
-              aria-label="Vorige week"
-              tabIndex={monthView ? -1 : undefined}
-            >
-              <ChevronIcon dir="left" />
-            </button>
-            <button
-              onClick={() => setWeekStart(addDays(weekStart, 7))}
-              className="flex h-11 w-11 items-center justify-center"
-              style={{ color: 'var(--color-ink-dim)' }}
-              aria-label="Volgende week"
-              tabIndex={monthView ? -1 : undefined}
-            >
-              <ChevronIcon dir="right" />
-            </button>
           </div>
         </header>
       </SkyBand>

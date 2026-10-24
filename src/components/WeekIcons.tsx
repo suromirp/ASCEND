@@ -67,10 +67,6 @@ export function LegMark() {
   );
 }
 
-export function ChevronIcon({ dir }: { dir: 'left' | 'right' }) {
-  return <Svg size={22}><path d={dir === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'} /></Svg>;
-}
-
 export function MapIcon() {
   return <Svg size={16}><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" /><path d="M9 4v13.5M15 6.5V20" /></Svg>;
 }

@@ -2,14 +2,47 @@ import type { Program } from '../../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../../models/training';
 import { resolveEffectiveFullDuration } from '../../engine/substitutions';
 import { weekDates, weekdayLongNL } from '../../utils/dates';
+import { Icon, type IconName } from '../icons';
 import { LightCard } from '../ui';
-import { SPORT_COLOR, sportKind } from '../sportKind';
-import { MoonGlyph } from './glyphs';
+import { SPORT_COLOR, sportIcon, sportKind } from '../sportKind';
 
-// De week in één strook op de lucht van Vandaag: per dag een staafje in de kleur
-// van de sport (gevuld als het gedaan is, omlijnd als het nog komt), een maantje
-// voor een rustdag, een streepje voor een vrije dag en vandaag een ijsblauwe bol
-// met de letter. De hoogte is de duur van de training.
+// De week in één strook op de lucht van Vandaag: per dag het pictogram van de
+// sport in de kleur van die sport. Gepland is alleen het pictogram, gedaan is
+// hetzelfde pictogram met een klein mint vinkje, zodat je in één oogopslag ziet
+// wat al af is. Een rustdag is een poppetje dat ontspant (gedempt), een vrije dag
+// een streepje, en vandaag staat de letter in een ijsblauwe bol. Twee trainingen
+// op één dag staan kleiner onder elkaar (het pictogram van de langste bovenaan).
+// De sportkleuren zijn hier de donkere varianten op licht: de strook staat in een
+// LightCard, dus `.on-light` zet ze om.
+
+const MAX_PER_DAY = 2;
+
+function DayGlyph({ icon, done, small }: { icon: IconName; done: boolean; small: boolean }) {
+  const size = small ? 18 : 24;
+  const badge = small ? 10 : 12;
+  return (
+    <span className="relative flex">
+      <Icon name={icon} size={size} />
+      {done && (
+        <span
+          className="absolute flex items-center justify-center rounded-full"
+          style={{
+            width: badge,
+            height: badge,
+            right: small ? -4 : -5,
+            bottom: small ? -2 : -3,
+            background: 'var(--color-action-fill)',
+            color: 'var(--color-on-action)',
+            boxShadow: '0 0 0 1px var(--color-action)',
+          }}
+        >
+          <Icon name="vinkje" size={badge - 3} strokeWidth={3.4} />
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function WeekStrip({
   weekStart,
   sessions,
@@ -37,27 +70,31 @@ export function WeekStrip({
               const template = templateById.get(s.templateId);
               return template ? [{ s, template }] : [];
             });
-          const training = day.filter((d) => d.template.type !== 'recovery' && d.s.status !== 'skipped');
+          const training = day
+            .filter((d) => d.template.type !== 'recovery' && d.s.status !== 'skipped')
+            .map((d) => ({ ...d, minutes: resolveEffectiveFullDuration(d.template, date, program), done: logged.has(d.s.id) }))
+            .sort((a, b) => b.minutes - a.minutes);
           const rest = training.length === 0 && day.some((d) => d.template.type === 'recovery' && d.s.status !== 'skipped');
-          const minutes = training.reduce((n, d) => n + resolveEffectiveFullDuration(d.template, date, program), 0);
-          const main = [...training].sort((a, b) => resolveEffectiveFullDuration(b.template, date, program) - resolveEffectiveFullDuration(a.template, date, program))[0];
-          const done = training.length > 0 && training.every((d) => logged.has(d.s.id));
           const isToday = date === today;
-          const height = 10 + Math.round(20 * Math.min(1, minutes / 90));
-          const color = main ? SPORT_COLOR[sportKind(main.template)] : undefined;
-          const what = main ? `${main.template.name}, ${done ? 'gedaan' : 'gepland'}` : rest ? 'rustdag' : 'vrij';
+          const shown = training.slice(0, MAX_PER_DAY);
+          const state = (done: boolean) => (done ? 'gedaan' : date < today ? 'niet gedaan' : 'gepland');
+          const what = training.length > 0
+            ? training.map((t) => `${t.template.name}, ${state(t.done)}`).join(' en ')
+            : rest ? 'rustdag' : 'vrij';
+          const label = weekdayLongNL(date);
           return (
-            <li key={date} className="flex flex-col items-center gap-2" aria-label={`${weekdayLongNL(date)}${isToday ? ' (vandaag)' : ''}: ${what}`}>
-              <div aria-hidden="true" className="flex h-8 items-end justify-center">
-                {main && color ? (
-                  <span
-                    className="block w-2.5 rounded-full"
-                    style={{ height, background: done ? color : 'transparent', boxShadow: done ? undefined : `inset 0 0 0 1.5px ${color}` }}
-                  />
+            <li key={date} className="flex flex-col items-center gap-1.5" aria-label={`${label.charAt(0).toUpperCase()}${label.slice(1)}${isToday ? ' (vandaag)' : ''}: ${what}`}>
+              <div aria-hidden="true" className="flex h-10 flex-col items-center justify-center gap-[3px]">
+                {shown.length > 0 ? (
+                  shown.map((t) => (
+                    <span key={t.s.id} className="flex" style={{ color: SPORT_COLOR[sportKind(t.template)] }}>
+                      <DayGlyph icon={sportIcon(t.template)} done={t.done} small={shown.length > 1} />
+                    </span>
+                  ))
                 ) : rest ? (
-                  <span className="flex items-center" style={{ color: 'var(--color-status)' }}><MoonGlyph size={18} /></span>
+                  <span className="flex" style={{ color: 'var(--color-ink-dim)' }}><Icon name="ontspannen" size={24} /></span>
                 ) : (
-                  <span className="mb-2 block h-0.5 w-2.5 rounded-full" style={{ background: 'var(--color-control-border)' }} />
+                  <span className="block h-0.5 w-2.5 rounded-full" style={{ background: 'var(--color-control-border)' }} />
                 )}
               </div>
               <span
