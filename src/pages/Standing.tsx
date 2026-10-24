@@ -26,6 +26,7 @@ import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { Icon } from '../components/icons';
+import { SkyBand } from '../components/SkyBand';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -121,13 +122,15 @@ export function StandingPage() {
   ];
 
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-4">
-      <div>
-        <h1 className="font-display text-3xl" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          {position ? `Week ${position.weekInProgram}, ${position.phase.name.toLowerCase()}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
-        </p>
-      </div>
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
+      <SkyBand>
+        <div>
+          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+            {position ? `Week ${position.weekInProgram}, ${position.phase.name.toLowerCase()}. ` : ''}Hoe je ervoor staat, naast wat je vandaag doet.
+          </p>
+        </div>
+      </SkyBand>
 
       <nav className="sticky top-0 z-10 -mx-4 flex gap-2 px-4 py-2" style={{ background: 'var(--color-bg)' }} aria-label="Onderdelen">
         {SECTIONS.map((s) => (

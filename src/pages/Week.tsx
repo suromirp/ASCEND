@@ -27,6 +27,7 @@ import { repeatState } from '../engine/repeatWeek';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { asPlannedLog, canTickOffAsPlanned } from '../engine/asPlanned';
 import { AdviceItem } from '../components/CoachCard';
+import { SkyBand } from '../components/SkyBand';
 
 const REST_RULES = ['REST-PULL', 'REST-SWAP', 'SKIPPED-KEY-TO-REST'];
 
@@ -106,7 +107,8 @@ export function WeekPage() {
   }
 
   return (
-    <div className="animate-page-in flex flex-col gap-4 px-4 pb-6 pt-6">
+    <div className="animate-page-in flex flex-col gap-4 px-4 pb-6">
+      <SkyBand variant="low">
       <header className="flex items-center justify-between">
         <button
           onClick={() => setWeekStart(addDays(weekStart, -7))}
@@ -139,6 +141,7 @@ export function WeekPage() {
           <ChevronIcon dir="right" />
         </button>
       </header>
+      </SkyBand>
 
       {!monthView && restAdvice.length > 0 && (
         <Card className="flex flex-col gap-3" texture>

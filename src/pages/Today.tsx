@@ -57,6 +57,8 @@ import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { dailyQuote } from '../utils/quotes';
 import type { ScheduleProposal } from '../engine/scheduler';
 import { goalTiming } from '../engine/goalRoute';
+import { SkyBand } from '../components/SkyBand';
+import { StretchMenuButton } from '../components/StretchMenuButton';
 
 export function TodayPage() {
   const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -228,19 +230,19 @@ export function TodayPage() {
   );
 
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6 pt-3">
-      {/* Timer, rekken en het tandwiel staan samen in de rij erboven, naast het
-          logo (App.tsx, TodayTopButtons); deze regel heeft de hele breedte. */}
-      <header className="flex min-h-[44px] items-start justify-between gap-3">
-        <div className="min-w-0 pt-0.5">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
+      {/* De lucht met de kop: merkteken, rekken en het tandwiel, daaronder de
+          datum en de week. De schermronde zet de eerste kaart erop. */}
+      <SkyBand actions={<StretchMenuButton />}>
+        <header className="flex flex-col gap-1">
           <Eyebrow>{weekdayShortNL(today)} {formatDateNL(today)}</Eyebrow>
           {position && (
-            <p className="mt-1 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
+            <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
               Week {position.weekInProgram} · {position.phase.name.toLowerCase()}{restHeader ? ' · rustdag' : ''}
             </p>
           )}
-        </div>
-      </header>
+        </header>
+      </SkyBand>
 
       {/* Boven de missie alleen wat echt eerst moet: ziek, nieuw begonnen, back-up. */}
       <IllnessStatusCard />

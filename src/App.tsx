@@ -1,7 +1,7 @@
 import { resolveMorningNotice } from './engine/morningNotice';
 import { syncMorningNotice } from './utils/morningNotice';
 import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { BOOT_LOCK_BUSY_TEXT, BOOT_STEAL_FLAG } from './engine/bootWatch';
 import { AppDataProvider, useAppData } from './state/AppDataContext';
 import { BootScreen } from './components/BootScreen';
@@ -12,8 +12,6 @@ import { ChangeNotice } from './components/ChangeNotice';
 import { DebriefSheet } from './components/DebriefSheet';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
-import { AppMark } from './components/AppMark';
-import { StretchMenuButton } from './components/StretchMenuButton';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { useScrollRestoration } from './components/useScrollRestoration';
 import { resolveNavigation } from './engine/navigationSettings';
@@ -51,14 +49,24 @@ const AlleenOnderwegPage = lazy(() => import('./pages/AlleenOnderweg').then((m) 
 
 // De vijf tabs. Meer is geen tab meer maar het tandwiel rechtsboven
 // (SettingsGear); de route /more blijft bestaan, ook voor oude links.
-const TABS: { to: string; icon: IconName; label: string }[] = [
-  { to: '/', icon: 'vandaag', label: 'VANDAAG' },
-  { to: '/week', icon: 'week', label: 'WEEK' },
-  { to: '/stand', icon: 'stand', label: 'STAND' },
-  { to: '/ascend', icon: 'ascend', label: 'ASCEND' },
-  { to: '/history', icon: 'logboek', label: 'LOGBOEK' },
+// Elke tab heeft een eigen kleur voor de actieve tab, het streepje erboven en
+// het kopje op de pagina (--color-tab-* in index.css).
+const TABS: { to: string; icon: IconName; label: string; key: TabKey }[] = [
+  { to: '/', icon: 'vandaag', label: 'Vandaag', key: 'vandaag' },
+  { to: '/week', icon: 'week', label: 'Week', key: 'week' },
+  { to: '/stand', icon: 'stand', label: 'Stand', key: 'stand' },
+  { to: '/ascend', icon: 'ascend', label: 'Ascend', key: 'ascend' },
+  { to: '/history', icon: 'logboek', label: 'Logboek', key: 'logboek' },
 ];
+type TabKey = 'vandaag' | 'week' | 'stand' | 'ascend' | 'logboek';
 const TAB_ROUTES = TABS.map((t) => t.to);
+
+// Bij welke tab een adres hoort, voor de kleur van de pagina (data-tab). Een
+// subpagina van Ascend (/ascend/doelen) hoort bij Ascend; de rest valt buiten de
+// tabs en houdt mint.
+function tabKeyFor(pathname: string): TabKey | undefined {
+  return TABS.find((t) => (t.to === '/' ? pathname === '/' : pathname === t.to || pathname.startsWith(`${t.to}/`)))?.key;
+}
 
 // Wat er bij het starten van de pagina al vaststaat: hoe de app is geopend
 // (nieuw, herladen of terug) en waar je de vorige keer was. Eenmalig gelezen,
@@ -74,16 +82,6 @@ function navigationTypeAtLaunch(): string {
 const LAUNCH_NAVIGATION_TYPE = navigationTypeAtLaunch();
 const LAST_ROUTE_AT_LAUNCH = readLastRoute(localStorageOrNull());
 const routerIdx = () => (window.history.state as { idx?: number } | null)?.idx ?? 0;
-// Het merkteken links en het tandwiel rechts staan samen op een rij van 56 px
-// bovenaan. Elke pagina krijgt precies zoveel ruimte erboven dat haar eigen
-// inhoud (titel, pijltjes, datum) daaronder begint en niets overlapt.
-const TOP_ROW_PAD: Record<string, string> = {
-  '/': 'pt-11',
-  '/week': 'pt-8',
-  '/stand': 'pt-10',
-  '/ascend': 'pt-8',
-  '/history': 'pt-8',
-};
 
 // `fixed` rather than `sticky` — sticky is only pinned relative to its own
 // scroll container, so on mobile (address bar show/hide, momentum scroll,
@@ -126,7 +124,7 @@ function BottomNav() {
         e.stopPropagation();
       }}
       className="fixed inset-x-0 bottom-0 z-40 border-t"
-      style={{ background: 'rgba(13,13,15,0.92)', borderColor: 'var(--color-card-border)', backdropFilter: 'blur(12px)' }}
+      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
     >
       <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-1 pb-[max(env(safe-area-inset-bottom),8px)] pt-1.5">
         {TABS.map((tab) => (
@@ -135,13 +133,15 @@ function BottomNav() {
             to={tab.to}
             end={tab.to === '/'}
             onClick={(e) => onTab(e, tab.to)}
-            className="relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium tracking-[0.06em]"
-            style={({ isActive }) => ({ color: isActive ? 'var(--color-gold)' : 'var(--color-ink-dim)' })}
+            className="relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium"
+            style={({ isActive }) => ({ color: isActive ? `var(--color-tab-${tab.key})` : 'var(--color-ink-dim)' })}
           >
             {({ isActive }) => (
               <>
-                {isActive && <span aria-hidden="true" className="absolute -top-1.5 h-0.5 w-7 rounded-full" style={{ background: 'var(--color-gold)' }} />}
-                <Icon name={tab.icon} />
+                {isActive && <span aria-hidden="true" className="absolute -top-1.5 h-[3px] w-8 rounded-b-[3px]" style={{ background: `var(--color-tab-${tab.key})` }} />}
+                <span style={{ color: isActive ? undefined : `color-mix(in srgb, var(--color-tab-${tab.key}) 72%, var(--color-ink-dim))` }}>
+                  <Icon name={tab.icon} />
+                </span>
                 {tab.label}
               </>
             )}
@@ -149,34 +149,6 @@ function BottomNav() {
         ))}
       </div>
     </nav>
-  );
-}
-
-// Het tandwiel: Meer (instellingen, gegevens en back-up, koppelingen, gidsen
-// en kennis). Op elke tab op precies dezelfde plek, rechtsboven, 44 bij 44 px.
-// Het staat in het scrollvlak, dus het schuift met de pagina mee en hangt
-// niet over de inhoud.
-function SettingsGear({ from }: { from: string }) {
-  return (
-    <Link
-      to="/more"
-      state={{ from }}
-      aria-label="Meer: instellingen, gegevens, koppelingen en gidsen"
-      className="absolute right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border"
-      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', borderColor: 'var(--color-card-border)', background: 'var(--color-bg)', color: 'var(--color-ink-dim)' }}
-    >
-      <Icon name="tandwiel" />
-    </Link>
-  );
-}
-
-// Op Vandaag: timer en rekken naast het tandwiel, op dezelfde rij en even groot
-// (44 px), links van het tandwiel met 8 px ertussen.
-function TodayTopButtons() {
-  return (
-    <div className="absolute z-10 flex items-center gap-2" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)', right: 'calc(1rem + 44px + 8px)' }}>
-      <StretchMenuButton />
-    </div>
   );
 }
 
@@ -334,10 +306,9 @@ function AppShell() {
         className="mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(4.5rem + max(env(safe-area-inset-bottom), 8px))' }}
       >
-        <div className={`relative ${TOP_ROW_PAD[location.pathname] ?? ''}`}>
-        {TAB_ROUTES.includes(location.pathname) && <AppMark />}
-        {TAB_ROUTES.includes(location.pathname) && <SettingsGear from={location.pathname} />}
-        {location.pathname === '/' && <TodayTopButtons />}
+        {/* De kop (merkteken en tandwiel) staat op elke tab in SkyBand, bovenaan
+            de pagina zelf. data-tab geeft de pagina haar eigen kleur. */}
+        <div className="relative" data-tab={tabKeyFor(location.pathname)}>
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={null}>
           <Routes>

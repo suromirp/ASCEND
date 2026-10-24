@@ -37,6 +37,7 @@ import { usePageState } from '../components/usePageState';
 import { useHorizonChange } from '../components/useHorizonChange';
 import { ImpactSheet } from '../components/ImpactSheet';
 import { goalDateProblem } from '../engine/goalDate';
+import { SkyBand } from '../components/SkyBand';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -143,13 +144,15 @@ export function AscendPage() {
   // up lives on its own page (/doelen), so data and setup no longer mix
   // (production feedback: "te slordig", "raar dat dit bij elkaar staat").
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
       {/* The animated brand mark lives here, on the tab that carries its
           name: the light climbs the trail once each time you open Ascend. */}
-      <div className="flex flex-col items-center gap-1" aria-hidden="true">
-        <AscendAnimatedLogo size={96} withWord={false} />
-        <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
-      </div>
+      <SkyBand>
+        <div className="flex flex-col items-center gap-1" aria-hidden="true">
+          <AscendAnimatedLogo size={96} withWord={false} />
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
+        </div>
+      </SkyBand>
       {goal ? (
         <div>
           <Eyebrow>HOOFDDOEL</Eyebrow>

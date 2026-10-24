@@ -14,6 +14,7 @@ import { Card, Eyebrow } from '../components/ui';
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
 import { Icon } from '../components/icons';
+import { SkyBand } from '../components/SkyBand';
 
 
 function computeMonthSummary(logs: SessionLog[]) {
@@ -97,12 +98,14 @@ export function HistoryPage() {
   }
 
   return (
-    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <div className="flex items-center justify-between">
-        <button onClick={() => shiftMonth(-1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Vorige maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={22} /></button>
-        <Eyebrow>{formatMonthNL(anchor)}</Eyebrow>
-        <button onClick={() => shiftMonth(1)} className="min-h-[44px] min-w-[44px] text-lg" aria-label="Volgende maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={22} /></button>
-      </div>
+    <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
+      <SkyBand>
+        <div className="flex items-center justify-between">
+          <button onClick={() => shiftMonth(-1)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-lg" aria-label="Vorige maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="terug" size={22} /></button>
+          <Eyebrow>{formatMonthNL(anchor)}</Eyebrow>
+          <button onClick={() => shiftMonth(1)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-lg" aria-label="Volgende maand" style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={22} /></button>
+        </div>
+      </SkyBand>
 
       <Card className="grid grid-cols-2 gap-4">
         <Stat label="Krachtsessies" value={`${summary.strengthCount}`} delta={formatDelta(summary.strengthCount, prevSummary.strengthCount)} />
