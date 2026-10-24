@@ -1132,6 +1132,9 @@ export interface HorizonOverrides {
   // ambition): only for the one synchronous planning pass, never on the
   // module (engine/substitutions.ts#withDurationScope).
   registers?: DurationScope;
+  // The program as it would be (a rest week trained through, a week repeated,
+  // engine/weekLoadChange.ts). Only for a preview; Akkoord stores it first.
+  program?: Program;
 }
 
 export interface HorizonRun {
@@ -1184,7 +1187,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   ]);
   const sessions = [...(overrides.sessions ?? storedSessions)];
   const startedFrom = [...sessions];
-  const program = programs[0];
+  const program = overrides.program ?? programs[0];
   if (!program) return { result: { phasesChanged: false, added: 0, swapped: 0, removed: 0 }, before: startedFrom, after: startedFrom, program: null };
   const settings: AppSettings = overrides.settings ? { ...storedSettings, ...overrides.settings } : storedSettings;
   const replaced = new Map((overrides.goals ?? []).map((g) => [g.id, g]));

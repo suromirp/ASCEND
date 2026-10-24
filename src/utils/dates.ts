@@ -1,4 +1,4 @@
-import { PHASE_TAPER, WAVE_LENGTH, type Program, type ResolvedProgramPosition } from '../models/program';
+import { PHASE_TAPER, WAVE_LENGTH, type HeldWeekDays, type Program, type ResolvedProgramPosition } from '../models/program';
 import type { Weekday } from '../models/goalEngineConfig';
 
 export function toISODate(d: Date): string {
@@ -127,6 +127,19 @@ function repeatShift(repeated: string[] | undefined, monday: string, weekInPhase
   return none;
 }
 
+function heldOn(program: Program, monday: string, dateIso: string): HeldWeekDays | undefined {
+  let found: HeldWeekDays | undefined;
+  for (const h of program.heldWeekDays ?? []) {
+    if (h.week === monday && dateIso < h.until && (!found || h.until < found.until)) found = h;
+  }
+  return found;
+}
+
+function toggled(list: string[] | undefined, monday: string, on: boolean): string[] {
+  const others = (list ?? []).filter((w) => w !== monday);
+  return on ? [...others, monday] : others;
+}
+
 // Resolves which phase / week-in-phase / week-in-program a given date falls
 // on, purely from Program.startDate + each Phase's weekCount. Weeks are
 // never persisted (see models/program.ts) — this is the single source of
@@ -143,14 +156,19 @@ export function resolveProgramWeek(program: Program, dateIso: string): ResolvedP
   for (let i = 0; i < program.phases.length; i++) {
     const phase = program.phases[i];
     if (remaining < phase.weekCount) {
-      const repeat = repeatShift(program.repeatedWeeks, targetMonday, remaining + 1, phase.id);
+      // A change in the middle of this week: the days before it keep how the
+      // week stood then (Program.heldWeekDays).
+      const held = heldOn(program, targetMonday, dateIso);
+      const repeatedList = held ? toggled(program.repeatedWeeks, targetMonday, !!held.repeated) : program.repeatedWeeks;
+      const restSkipped = held ? !!held.restSkipped : !!program.skippedRestWeeks?.includes(targetMonday);
+      const repeat = repeatShift(repeatedList, targetMonday, remaining + 1, phase.id);
       return {
         phase,
         phaseIndex: i,
         weekInPhase: remaining + 1,
         weekInProgram: weekDiff + 1,
         totalWeeksInProgram,
-        ...(program.skippedRestWeeks?.includes(targetMonday) ? { restSkipped: true as const } : {}),
+        ...(restSkipped ? { restSkipped: true as const } : {}),
         ...(repeat.shift ? { loadShift: 1 as const } : {}),
         ...(repeat.repeated ? { repeated: true as const } : {}),
       };

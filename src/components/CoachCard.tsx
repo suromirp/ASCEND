@@ -12,6 +12,7 @@ import { Card, Eyebrow } from './ui';
 import { WhyPanel, WhyToggle } from './Why';
 import { TodaySheet } from './vandaag/TodaySheet';
 import { Icon } from './icons';
+import { useHorizonChange } from './useHorizonChange';
 
 const KIND: Record<AdviceTrigger, { label: string; color: string; icon: ReactNode }> = {
   session_missed: {
@@ -120,13 +121,28 @@ export function CoachCard() {
 
 // `whyAlways`: the why stands under the advice instead of behind "waarom" (the sheet on Vandaag).
 export function AdviceItem({ advice, compact = false, whyAlways = false }: { advice: Advice; compact?: boolean; whyAlways?: boolean }) {
-  const { respondToAdvice } = useAppData();
+  const { respondToAdvice, planWeekLoadChange } = useAppData();
+  // Training through a rest week and "Deze week nog een keer" change the
+  // program: first their own proposal with what changes, Akkoord in there
+  // (storage/weekLoadPlan.ts). Only then the answer to the advice is recorded.
+  const horizon = useHorizonChange();
+  const weekLoad = advice.restWeekSkip ? { kind: 'rest' as const, week: advice.restWeekSkip } : advice.repeatWeek ? { kind: 'repeat' as const, week: advice.repeatWeek } : undefined;
   const [open, setOpen] = useState(false);
   const [showWeek, setShowWeek] = useState(false);
   const [busy, setBusy] = useState(false);
   const kind = KIND[advice.trigger];
 
   async function respond(response: 'accepted' | 'declined') {
+    if (response === 'accepted' && weekLoad) {
+      await horizon.propose(() => planWeekLoadChange(weekLoad.kind, weekLoad.week, true), {
+        eyebrow: weekLoad.kind === 'rest' ? 'Rustweek' : 'Deze week nog een keer',
+        ask: 'always',
+        alwaysAsk: true,
+        declined: 'Je week blijft zoals hij was.',
+        onStored: () => void respondToAdvice(advice, 'accepted'),
+      });
+      return;
+    }
     setBusy(true);
     await respondToAdvice(advice, response);
     setBusy(false);
@@ -136,8 +152,8 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
     <div className="mt-3 flex flex-wrap items-center gap-2">
       {advice.proposal || advice.restWeekSkip || advice.repeatWeek || advice.goalChange || advice.goalTargetTime ? (
         <>
-          <Pill onClick={() => void respond('accepted')} disabled={busy}>Akkoord</Pill>
-          <Pill onClick={() => void respond('declined')} disabled={busy}>Liever niet</Pill>
+          <Pill onClick={() => void respond('accepted')} disabled={busy || horizon.busy}>{weekLoad ? 'Bekijk' : 'Akkoord'}</Pill>
+          <Pill onClick={() => void respond('declined')} disabled={busy || horizon.busy}>Liever niet</Pill>
         </>
       ) : (
         <Pill onClick={() => void respond('accepted')} disabled={busy}>Begrepen</Pill>
@@ -165,6 +181,12 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
   const weekPreview = showWeek && advice.proposal && <ProposalSheet advice={advice} onClose={() => setShowWeek(false)} />;
 
   const why = (open || whyAlways) && <WhyPanel accent={kind.color} className="mt-2.5">{advice.why}</WhyPanel>;
+  const weekLoadParts = weekLoad && (
+    <>
+      {horizon.note && <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
+      {horizon.sheet}
+    </>
+  );
 
   if (compact) {
     return (
@@ -174,6 +196,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
         {why}
         {weekToggle}
         {weekPreview}
+        {weekLoadParts}
       </div>
     );
   }
@@ -192,6 +215,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
       </div>
       {weekToggle}
       {weekPreview}
+      {weekLoadParts}
     </div>
   );
 }

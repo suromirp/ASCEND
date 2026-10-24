@@ -31,6 +31,7 @@ export const TRIGGER_LABEL: Record<EngineEvent, string> = {
   plan_check: 'Weekcontrole',
   leave_added: 'Vrije periode toegevoegd',
   leave_removed: 'Vrije periode verwijderd',
+  week_load_changed: 'Rustweek of herhaalde week',
 };
 
 export interface ChangeLogEntry {

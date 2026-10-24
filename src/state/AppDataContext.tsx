@@ -41,8 +41,7 @@ import { runBootUnderLock } from '../storage/bootLock';
 import { describeStorageError, describeWriteError } from '../storage/storageError';
 import { storageIsOpen, whenStorageOpen } from '../storage/lifecycle';
 import { syncGr5MilestoneDefinitions } from '../storage/goalMilestoneSync';
-import { withRestWeekSkipped } from '../engine/restWeek';
-import { withWeekRepeated } from '../engine/repeatWeek';
+import { weekLoadInput, type WeekLoadKind } from '../storage/weekLoadPlan';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
@@ -227,8 +226,11 @@ async function horizonKey(): Promise<string> {
       planFingerprint(planned),
       programs[0]?.startDate,
       programs[0]?.phases,
-      // A repeated week changes the wave week the Saturday follows.
+      // A repeated week changes the wave week the Saturday follows; a rest week
+      // trained through and the days held before a change do the same.
       programs[0]?.repeatedWeeks,
+      programs[0]?.skippedRestWeeks,
+      programs[0]?.heldWeekDays,
       programAnchorDate(goals, milestones, todayISO()),
       settings.longSundaySession,
       settings.enabledSports,
@@ -361,10 +363,11 @@ interface AppData {
   // Fill in or correct what the hard part was, afterwards. Only this
   // field; what was logged otherwise stays as it was.
   setLogWorkout: (logId: string, workout: SessionLog['workout']) => Promise<void>;
-  // Train through (or restore) the rest week of this week (engine/restWeek.ts).
-  setRestWeekSkipped: (weekStart: string, skip: boolean) => Promise<void>;
-  // Let this week carry last week's load, or take that back (engine/repeatWeek.ts).
-  setWeekRepeated: (weekStart: string, repeat: boolean) => Promise<void>;
+  // Train through (or restore) a rest week, or let a week carry last week's
+  // load (or take that back): a proposal first (storage/weekLoadPlan.ts),
+  // stored with applyHorizonPlan after Akkoord. Throws the sentence of the
+  // card when there is nothing left to change.
+  planWeekLoadChange: (kind: WeekLoadKind, weekStart: string, on: boolean) => Promise<HorizonPlan>;
   moveSession: (sessionId: string, targetDate: string) => ScheduleProposal;
   // One-tap move: the best few days for this session (engine/moveSuggestions.ts).
   suggestMoves: (sessionId: string) => MoveSuggestion[];
@@ -769,17 +772,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (response === 'accepted' && item.proposal && (await commitPlanChange(item.proposal, item.title))) {
       setRecentChange((prev) => (prev && prev.id === item.proposal!.id ? { ...prev, adviceId: item.id } : prev));
     }
-    // Training through a rest week changes the program, not a session.
-    if (response === 'accepted' && item.restWeekSkip && program) {
-      await ProgramsRepo.put(withRestWeekSkipped(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), item.restWeekSkip, true));
-      await refresh();
-    }
-    // "Deze week nog een keer" (rule REPEAT-WEEK) changes the program, and the
-    // planning round that follows adjusts what the system planned.
-    if (response === 'accepted' && item.repeatWeek && program) {
-      await ProgramsRepo.put(withWeekRepeated(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), item.repeatWeek, true));
-      planRevision++;
-      await refresh();
+    // Training through a rest week (REST-WEEK-SKIP) and "Deze week nog een
+    // keer" (REPEAT-WEEK) change the program through their own proposal with
+    // Akkoord (planWeekLoadChange, components/AdviceWeekLoad); this only records
+    // the answer, and undo of that notice brings the advice back.
+    if (response === 'accepted' && (item.restWeekSkip || item.repeatWeek)) {
+      setRecentChange((prev) => (prev && prev.trigger === 'week_load_changed' ? { ...prev, adviceId: item.id } : prev));
     }
     // A goal setting (rule GR5-PACK-TENT): only ever on Akkoord.
     if (response === 'accepted' && item.goalChange) {
@@ -801,7 +799,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const next = { ...current, [item.id]: { response, at: new Date().toISOString(), ruleId: item.ruleId } };
     await MetaRepo.set('adviceResponses', next);
     setAdviceResponses(next);
-  }, [commitPlanChange, program, refresh]);
+  }, [commitPlanChange, refresh]);
 
   const undoRecentChange = useCallback(async () => {
     if (!recentChange) return;
@@ -1372,25 +1370,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [goalMilestoneProgress, refresh],
   );
 
-  const setRestWeekSkipped = useCallback(
-    async (weekStart: string, skip: boolean) => {
-      if (!program) return;
-      await ProgramsRepo.put(withRestWeekSkipped(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), weekStart, skip));
-      await refresh();
-    },
-    [program, refresh],
-  );
-
-  const setWeekRepeated = useCallback(
-    async (weekStart: string, repeat: boolean) => {
-      if (!program) return;
-      await ProgramsRepo.put(withWeekRepeated(((await ProgramsRepo.getAll()).find((p) => p.id === program.id) ?? program), weekStart, repeat));
-      planRevision++;
-      await refresh();
-    },
-    [program, refresh],
-  );
-
   const setLogFeedback = useCallback(
     async (logId: string, patch: FeedbackPatch) => {
       const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
@@ -1803,6 +1782,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       settingsBefore: result.restore.settings,
       goalsBefore: result.restore.goals,
       goalsAdded: result.restore.newGoalIds,
+      ...(result.restore.program ? { programBefore: result.restore.program } : {}),
       createdAt: now,
     });
     planRevision++;
@@ -1844,6 +1824,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     await showHorizonResult(plan, result);
     return result.status;
   }, [refresh, showHorizonResult]);
+
+  // A rest week or a repeated week (storage/weekLoadPlan.ts), as a proposal in
+  // the queue of the planning sync, like every other planning setting.
+  const planWeekLoadChange = useCallback(async (kind: WeekLoadKind, weekStart: string, on: boolean): Promise<HorizonPlan> => {
+    const outcome = await horizonQueue.run(async () => {
+      await bootSettled;
+      await primePlanningRegisters();
+      // Nothing to choose (the week is over, nothing open changes): the sentence, not a failure.
+      const input = await weekLoadInput(kind, weekStart, on).catch((err: unknown) => (err instanceof Error ? err.message : String(err)));
+      if (typeof input === 'string') return { refusal: input };
+      return { plan: await computeHorizonPlan(input, { prime: primePlanningRegisters }) };
+    });
+    if (outcome && 'refusal' in outcome) throw new Error(outcome.refusal);
+    if (!outcome?.plan) throw new Error('De planning reageert nu niet. Er is niets aangepast; probeer het zo nog eens.');
+    return outcome.plan;
+  }, []);
 
   const planGoalChange = useCallback(async (goalId: string, change: { targetDate?: string | null; archive?: boolean }): Promise<HorizonPlan | null> => {
     const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goalId);
@@ -2240,8 +2236,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     takeOverFromMacroFactor,
     restoreFromMacroFactor,
     setLogWorkout,
-    setRestWeekSkipped,
-    setWeekRepeated,
+    planWeekLoadChange,
     moveSession,
     suggestMoves,
     applyProposal,

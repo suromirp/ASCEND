@@ -16,6 +16,7 @@ import type { PlannedSession } from './training';
 import type { CapabilityGap, PreparationTarget } from './capability';
 import type { FeasibilityAssessment } from './feasibility';
 import type { PlannedLeaveMark } from './leave';
+import type { Program } from './program';
 
 export type PlanChangeAction = 'keep' | 'add' | 'move' | 'swap' | 'reduce' | 'replace' | 'remove';
 
@@ -111,7 +112,10 @@ export type EngineEvent =
   | 'plan_check'
   // A period of free days, a holiday or a trek was added or removed
   // (engine/leaveProposal.ts).
-  | 'leave_added' | 'leave_removed';
+  | 'leave_added' | 'leave_removed'
+  // A rest week trained through or put back, a week repeated or the repeat
+  // taken back (engine/weekLoadChange.ts). Additive: older data never has it.
+  | 'week_load_changed';
 
 export interface PlanChangeAlternative {
   label: string;
@@ -178,6 +182,9 @@ export interface RecentPlanChange {
   // archived), and goals the change added: undo puts them back or removes them.
   goalsBefore?: TrainingGoal[];
   goalsAdded?: string[];
+  // The program exactly as it was before a rest week or a repeated week was
+  // changed (engine/weekLoadChange.ts): undo puts it back too.
+  programBefore?: Program;
   // The coach advice this change came from: undo brings the advice back.
   adviceId?: string;
   // Typed-in trainings that took over the watch's numbers (engine/watchAlign.ts):

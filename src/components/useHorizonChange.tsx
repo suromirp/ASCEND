@@ -36,6 +36,9 @@ export interface HorizonProposeOptions {
   onStored?: () => void;
   // Called on Liever niet: a field that holds what you typed goes back to what is stored.
   onDeclined?: () => void;
+  // Always the proposal first, also when the run itself moves nothing (a rest
+  // week trained through: what changes is in the lines of the proposal).
+  alwaysAsk?: boolean;
 }
 
 export function useHorizonChange(): {
@@ -64,7 +67,7 @@ export function useHorizonChange(): {
       const plan = await make();
       if (!plan) return;
       const items = plan.proposal.changes;
-      if (items.length === 0 && plan.lengths.length === 0) {
+      if (items.length === 0 && plan.lengths.length === 0 && !options.alwaysAsk) {
         await apply(plan, options);
         return;
       }
