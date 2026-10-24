@@ -162,7 +162,12 @@ Never hardcode hex or rgba values in a component.
 - Old names (`--color-gold` `--color-bronze` `--color-bronze-dark`
   `--color-on-gold` `--color-alpine` `--color-stone` `--color-sky`
   `--color-snow`) still work and point at the new palette (gold and bronze are
-  mint); new work uses the new names
+  mint); new work uses the new names. Components read the new names:
+  action, action-muted, on-action, status, ink, ink-dim, and `--color-sage` for
+  alpine (a calm tint next to mint and ice, for "fris" and for a phase or kind;
+  not a status and not an action). A rank that used to be gold against bronze now
+  has its own meaning (effort scale, mint, ice, amber), see
+  `docs/beslissingen/2026-10-24-stijlresten.md`
 - Typography: `--font-display` (Marcellus, via `.font-display`) for
   headings/wordmarks, `--font-sans` (Inter) for everything else. Scale: 12
   (labels, eyebrows, tab bar), 14 (second line), 16 (body), 20 (card title),
@@ -175,7 +180,9 @@ Never hardcode hex or rgba values in a component.
   theme to preserve; the sky band is one light surface, not a theme
 - Shared primitives live in `src/components/ui.tsx` (`Card`, `LightCard`,
   `PrimaryButton`, `SecondaryButton`, `StatusDot`, `StatusPill`, `Eyebrow`,
-  `Stat`, `Ring`, `Meter`, `ZoneBar`, `Toggle`, `InfoButton`), and the sky in
+  `Stat`, `Ring`, `Meter`, `ZoneBar`, `Toggle`, `InfoButton`), `TextButton` and
+  `TextLink` in `TextButton.tsx` (a small action in mint or dimmed, no underline,
+  44 px; only a source link outside the app stays underlined), and the sky in
   `SkyBand.tsx`. Reuse these rather than re-implementing card/button chrome in
   a page or feature component
 - Cards are `rounded-2xl` with a subtle border; the optional `topo-texture`
