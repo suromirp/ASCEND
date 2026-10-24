@@ -111,9 +111,21 @@ describe('activityText', () => {
     expect(text('tpl_lower_a', { durationMinutes: 40 })).toBe('Benen A (zwaar).\n40 min');
   });
 
-  it('zonder sjabloon staat er Training, en zonder getallen één regel', () => {
+  it('zonder sjabloon heet hij naar zijn sport, en zonder getallen één regel', () => {
     const result = activityText({ log: log('tpl_easy_run', { templateId: 'weg', durationMinutes: 0 }) });
-    expect(result).toBe('Training.');
+    expect(result).toBe('Hardlopen.');
+  });
+
+  it('noemt geen minuten bij een duur van 0', () => {
+    for (const id of ['tpl_easy_run', 'tpl_bergconditie', 'tpl_ruck_walk', 'tpl_strides_run', 'tpl_progression_run']) {
+      expect(text(id, { durationMinutes: 0 })).not.toMatch(/\bmin\b/);
+    }
+  });
+
+  it('noemt geen geplande herhalingen bij een training zonder plan', () => {
+    const result = activityText({ log: log('tpl_hills_descent'), template: tpl('tpl_hills_descent'), program });
+    expect(result).not.toMatch(/×/);
+    expect(result.startsWith('Heuvelsprints en afdalen')).toBe(true);
   });
 
   it('gebruikt nooit een gedachtestreep en houdt het bij twee regels', () => {

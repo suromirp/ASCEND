@@ -78,7 +78,7 @@ export function ExerciseRow({
               <span className="block text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{text(cmp.now.value)}</span>
               <span className="block text-xs" style={{ color: rowChange !== undefined ? TONE[deltaTone(rowChange)] : 'var(--color-ink-dim)' }}>
                 {first?.change !== undefined
-                  ? `${diff(first.change)} sinds ${first.weeks} wk`
+                  ? `${diff(first.change)} sinds ${first.near || !first.point ? `${first.weeks} wk` : shortDateNL(first.point.date, today)}`
                   : cmp.previous && cmp.previousChange !== undefined
                     ? `${diff(cmp.previousChange)} sinds ${shortDateNL(cmp.previous.date, today)}`
                     : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
@@ -172,7 +172,7 @@ function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory 
         <div className="flex flex-col gap-2">
           {withExtras.map((m) => (
             <div key={m.weeks} className="flex flex-col gap-0.5">
-              <span className="text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>Sinds {m.weeks} weken geleden</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>{m.near || !m.point ? `Sinds ${m.weeks} weken geleden` : `Sinds ${shortDateNL(m.point.date, today)}`}</span>
               {m.extras.map((c) => (
                 <span key={c.kind} className="font-sans text-sm tabular-nums leading-snug" style={{ color: TONE[extraTone(c)] }}>{extraText(c)}</span>
               ))}

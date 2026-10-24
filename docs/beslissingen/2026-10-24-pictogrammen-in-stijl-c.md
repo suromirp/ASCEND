@@ -36,3 +36,12 @@ Niets. Het vult de regel over de eigen iconenset in `CLAUDE.md` aan: de lijnset 
 ## Terugdraaien
 
 Laat `SportDisc`, `WeekStrip`, `sportLook` en de Logboekpagina weer `Icon` uit `icons.tsx` gebruiken (de lijniconen `lopen`, `kracht`, `wandelen`, `rugzak`, `rekken`, `ontspannen` staan er nog) en geef `walk` en `mountain` dezelfde kleur. De tokens kunnen blijven staan.
+
+## Aanvulling (24 oktober, na de review)
+
+Het knopje is inmiddels gekoppeld: het lichaamknopje rechtsboven op Vandaag is het
+pictogram "lichaam" in mint, 24 px, net zo groot als het tandwiel. De regel uit
+2026-10-24-ontwerpadvies-kop-en-weekstrook.md dat alles in `actions` de kleur van het
+tandwiel heeft, geldt hier bewust niet: de eigenaar wil een andere kleur, omdat het
+tandwiel bij de instellingen hoort. Het is een pictogram en geen gevulde knop, dus de
+gevulde mint knop blijft het ene accent van het scherm. CLAUDE.md is hierop bijgewerkt.

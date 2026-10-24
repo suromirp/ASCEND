@@ -181,6 +181,9 @@ export interface Moment {
   // moment, dus niet nog eens tonen.
   status: 'ok' | 'none' | 'same';
   point?: ForgePoint;
+  // De training ligt dicht bij het moment (een week, of een kwart van de afstand terug
+  // als dat meer is): dan mag de rij "sinds 4 wk" zeggen, anders noemt hij de datum.
+  near?: boolean;
   // Het verschil in getal met nu, en wat er verder veranderd is.
   change?: number;
   extras: ExtraChange[];
@@ -214,7 +217,8 @@ export function compareExercise(points: ForgePoint[], today: string, weeks: numb
     if (found.date === now?.date || seen.has(found.date)) return { weeks: w, asOf, status: 'same', extras: [] };
     seen.add(found.date);
     const change = now ? valueChange(now, found) : undefined;
-    return { weeks: w, asOf, status: 'ok', point: found, ...(change !== undefined ? { change } : {}), extras: extraChanges(now, found) };
+    const near = daysBetween(found.date, asOf) <= Math.max(7, Math.round((7 * w) / 4));
+    return { weeks: w, asOf, status: 'ok', point: found, near, ...(change !== undefined ? { change } : {}), extras: extraChanges(now, found) };
   });
   const previous = points.length >= 2 ? points[points.length - 2] : undefined;
   const previousChange = now && previous ? valueChange(now, previous) : undefined;
@@ -318,18 +322,20 @@ function editDistance(a: string, b: string, max: number): number {
 const typosAllowed = (len: number) => (len >= 7 ? 2 : len >= 4 ? 1 : 0);
 
 // Of een naam bij de zoekterm past. Hoofdletters, accenten en leestekens tellen niet.
-// Elk woord van de zoekterm moet ergens in de naam zitten, als stuk van een woord of
-// met een of twee typfouten ("squatt" vindt "Squat"). Een lege zoekterm past bij alles.
-export function matchesQuery(name: string, query: string): boolean {
+// Elk woord van de zoekterm moet een woord van de naam beginnen ("bench" vindt "Bench
+// Press", "row" vindt geen "Narrow"); een woord van vijf letters of meer mag ook midden
+// in een samengesteld woord staan ("druk" niet, "drukken" wel in "bankdrukken"). Met
+// `typos` telt ook een woord met een of twee typfouten ("squatt" vindt "Squat"), mits de
+// eerste letter klopt. Een lege zoekterm past bij alles.
+export function matchesQuery(name: string, query: string, typos = true): boolean {
   const tokens = normalizeExerciseName(query).split(' ').filter(Boolean);
   if (tokens.length === 0) return true;
   const words = normalizeExerciseName(name).split(' ').filter(Boolean);
-  const whole = words.join(' ');
   return tokens.every((t) => {
-    if (whole.includes(t)) return true;
-    const allowed = typosAllowed(t.length);
+    if (words.some((w) => w.startsWith(t) || (t.length >= 5 && w.includes(t)))) return true;
+    const allowed = typos ? typosAllowed(t.length) : 0;
     if (allowed === 0) return false;
-    return words.some((w) => editDistance(t, w, allowed) <= allowed || editDistance(t, w.slice(0, t.length), allowed) <= allowed);
+    return words.some((w) => w[0] === t[0] && (editDistance(t, w, allowed) <= allowed || editDistance(t, w.slice(0, t.length), allowed) <= allowed));
   });
 }
 
@@ -370,10 +376,18 @@ export function splitByRecency(views: ExerciseView[], today: string, days: numbe
   return { recent, older };
 }
 
+// Eerst alleen echte treffers; typfouten tellen pas als er geen enkele echte treffer is,
+// zodat "bent" niet ook Bench Press oplevert.
+function filterByQuery(views: ExerciseView[], query: string): ExerciseView[] {
+  const exact = views.filter((v) => searchNames(v).some((n) => matchesQuery(n, query, false)));
+  if (exact.length > 0 || query.trim() === '') return exact;
+  return views.filter((v) => searchNames(v).some((n) => matchesQuery(n, query)));
+}
+
 // De lijst zoals Forge hem toont: gefilterd op training en zoekterm, dan gesorteerd.
 export function visibleViews(views: ExerciseView[], opts: { query: string; training: string | null; sort: ForgeSort }): ExerciseView[] {
   return sortViews(
-    views.filter((v) => (opts.training === null || inTraining(v, opts.training)) && searchNames(v).some((n) => matchesQuery(n, opts.query))),
+    filterByQuery(views.filter((v) => opts.training === null || inTraining(v, opts.training)), opts.query),
     opts.sort,
   );
 }

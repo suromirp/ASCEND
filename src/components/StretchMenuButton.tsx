@@ -17,7 +17,7 @@ export function StretchMenuButton() {
       className="flex h-11 w-11 shrink-0 items-center justify-center"
       style={{ color: 'var(--color-action)' }}
     >
-      <Pictogram name="lichaam" size={26} />
+      <Pictogram name="lichaam" size={24} />
     </button>
   );
 }

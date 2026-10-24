@@ -205,6 +205,14 @@ describe('matchesQuery', () => {
     expect(matchesQuery('Back Squat', 'back press')).toBe(false);
     expect(matchesQuery('Back Squat', '  ')).toBe(true);
   });
+  it('geeft geen valse treffers midden in een woord of bij een andere eerste letter', () => {
+    expect(matchesQuery('Narrow Grip Bench Press', 'row')).toBe(false);
+    expect(matchesQuery("Farmer's Carry", 'arm')).toBe(false);
+    expect(matchesQuery('Plate-Loaded Leg Press', 'lat')).toBe(false);
+    expect(matchesQuery('Hack Squat', 'back')).toBe(false);
+    expect(matchesQuery('Calf Raise', 'half')).toBe(false);
+    expect(matchesQuery('Bankdrukken met stang', 'drukken')).toBe(true);
+  });
 });
 
 describe('filters en volgorde', () => {
@@ -328,5 +336,16 @@ describe('compareExercise valt terug op de vorige training', () => {
     const cmp = compareExercise([point('2026-10-20', 62.5)], '2026-10-22', [4, 8]);
     expect(cmp.previous).toBeUndefined();
     expect(cmp.previousChange).toBeUndefined();
+  });
+});
+
+describe('compareExercise zegt alleen "sinds 4 wk" als de training dicht bij het moment ligt', () => {
+  it('een training van 7 weken terug telt voor het moment van 4 weken, maar niet als dichtbij', () => {
+    const cmp = compareExercise([point('2026-09-03', 60), point('2026-10-20', 62.5)], '2026-10-22', [4, 8]);
+    expect(cmp.moments[0]).toMatchObject({ status: 'ok', near: false });
+  });
+  it('een training een paar dagen voor het moment is dichtbij', () => {
+    const cmp = compareExercise([point('2026-09-21', 60), point('2026-10-20', 62.5)], '2026-10-22', [4, 8]);
+    expect(cmp.moments[0]).toMatchObject({ status: 'ok', near: true });
   });
 });

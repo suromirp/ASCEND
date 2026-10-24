@@ -91,9 +91,14 @@ fris en sportief op donker marine.
   in Marcellus, maar liever niet.
 - Niets kleiner dan 12 px (`text-xs` is het minimum, ook voor `Eyebrow` en voor
   tekst in grafieken). Geen `text-[10px]` of `text-[11px]`.
-- Iconen komen uit één eigen set in `src/components/icons.tsx` (`Icon`): lijn
-  van 1,6 px, ronde uiteinden, de kleur van de omringende tekst. Geen
-  bibliotheek, geen losse tekens als ✓ of ↷ voor iets wat een icoon kan zijn.
+- Iconen komen uit twee eigen sets, zonder bibliotheek. De bediening (tandwiel,
+  pijltjes, info, vinkje, terug, tabbalk) is de lijnset in
+  `src/components/icons.tsx` (`Icon`): lijn van 1,6 px, ronde uiteinden, de kleur
+  van de omringende tekst. Sporten, rust en lichaam zijn kleine illustraties in
+  stijl C in `src/components/pictograms.tsx` (`Pictogram`): drie tinten van de
+  sportkleur, waarvan de volle vorm het silhouet draagt, met kleur uit de tokens
+  (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`). Geen losse tekens
+  als ✓ of ↷ voor iets wat een icoon kan zijn.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
   `src/App.tsx`), volledig dekkend marine, labels in zinsletters, met de
   actieve tab en het streepje erboven in de kleur van die tab. Meer is geen
@@ -106,7 +111,14 @@ fris en sportief op donker marine.
   heeft (pijltjes van Week en Logboek, het lichaamknopje van Vandaag) gaat in
   `SkyBand` `actions`: pictogrammen zonder cirkel, direct links van het
   tandwiel, dezelfde hoogte en maat, dezelfde kleur
-  (`docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md`).
+  (`docs/beslissingen/2026-10-24-ontwerpadvies-kop-en-weekstrook.md`). Eén
+  uitzondering op de kleur, op verzoek van de eigenaar: het lichaamknopje is het
+  pictogram in mint, omdat de kleur van het tandwiel bij de instellingen hoort
+  (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`).
+- Lange donkere pagina's krijgen hoogstens één vlak lucht halverwege (`SkyPanel`
+  in `SkyBand.tsx`: verloop van de lucht, smalle bergrand, `.on-light`, volgt de
+  nachtlucht), op een kaart die iets samenvat of aanwijst, nooit de eerste kaart
+  (`docs/beslissingen/2026-10-24-lucht-halverwege.md`).
 - Instellingen (`/more`, `docs/beslissingen/2026-10-22-instellingen-in-groepen.md`):
   een overzicht met de stand en acht groepen (`/more/:groep`: Planning, Doel en
   tochten, Forge, Lichaam, Vandaag en meldingen, Koppelingen, Gegevens en
@@ -156,7 +168,9 @@ Never hardcode hex or rgba values in a component.
   let op) `--color-danger` (fill) `--color-danger-text`
 - Effort zones: `--color-effort-1` to `--color-effort-5`; sports:
   `--color-sport-run` `--color-sport-strength` `--color-sport-walk`
-  `--color-sport-stretch` (also the `--color-chart-*` order)
+  `--color-sport-stretch` `--color-sport-mountain` (bergtocht, bergzon-geel; on
+  the sky an olive ochre; also the `--color-chart-*` order). A bergtocht is told
+  apart from a walk by `isMountainTrip` in `components/sportKind.ts`
 - The light sky: `--color-sky-top` `--color-sky-bottom` `--color-light-card`
   `--color-light-border` `--color-on-light` `--color-on-light-dim`
   `--color-action-on-light` `--color-status-on-light`; the mountains
@@ -375,6 +389,29 @@ milestones stay a ladder ("volgend kamp"), never a second progress number. The
 coach (Ascend) and "Volgehouden" (Je stand) count with the same function,
 `engine/onCourse.ts#recentAdherence`. Do not add another percentage or
 "x van y" for goal progress next to these; extend the engine function instead.
+
+**Lichaam** (`/lichaam`, `/lichaam/:plek`, decision
+`docs/beslissingen/2026-10-24-lichaam-als-figuur.md`) is the one place for
+stretching and complaints; `/stretches` and `/blessures` only redirect. Spots,
+stretches, care and the injury name are data (`data/bodySpots.ts`,
+`data/bodyCare.ts`) read through pure functions in `engine/bodyMap.ts`, which also
+lays out the tap boxes (44 by 44 px, never overlapping, tested). A complaint is
+stored under the name from `data/bodyAreas.ts` with the side after it, so
+INJURY-LEGS recognises it; a new leg spot belongs in `LEG_BODY_PARTS`. Reporting
+does not change the planning; once it does, it goes through a proposal with
+Akkoord. Care texts say "kan helpen", never "voorkomt", with the strength of the
+evidence from `docs/onderzoek/`.
+
+**Forge** compares each exercise now against 4 and 8 weeks back and the best ever
+(`engine/forgeHistory.ts`, decision
+`docs/beslissingen/2026-10-24-forge-vergelijken-en-zoeken.md`). A moment only counts
+when a training falls in its window; otherwise the row says so or compares with the
+previous training, with its date. Exercises on reps (bodyweight) show reps as the
+main number. Exercises not done since the furthest moment sit under "Eerder gedaan".
+
+**Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
+need a server); it prepares a short text to copy. Planned numbers appear only when
+the log belongs to a planned session, and no minutes without a measured duration.
 
 Weeks are derived, not stored: a week is just seven days starting on a
 Monday; which phase/week-number it belongs to is computed from
