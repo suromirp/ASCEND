@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Icon } from '../components/icons';
 import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, PageHeader } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
+import { WeatherTodayCard } from '../components/WeatherTodayCard';
 import { clearWeather } from '../storage/weather';
 import { OPEN_METEO_SITE, openMeteoErrorMessage, searchPlaces, type PlaceResult } from '../integrations/openMeteo';
 import { DEFAULT_WEEKDAY_HOUR, DEFAULT_WEEKEND_HOUR, MIN_LOGS, updatedLabel, weatherRuleRows, type WeatherRuleRow } from '../engine/weather';
@@ -117,7 +118,9 @@ export function WeatherPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
-      <PageHeader eyebrow="Buiten" title="Weer" line="Het weer bij je buitentraining, voor je plaats" />
+      <PageHeader eyebrow="Buiten" title="Weer en kleding" line="Het weer en wat je aantrekt bij je buitentraining" />
+
+      <WeatherTodayCard />
 
       <Card className="flex flex-col gap-3">
         <Eyebrow>Je plaats</Eyebrow>
@@ -135,7 +138,7 @@ export function WeatherPage() {
           </div>
         ) : (
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Nog geen plaats. Dan staat bij je hardloop-, wandel- en bergtrainingen één regel met het weer.
+            Nog geen plaats. Dan zie je hier en bij je hardloop-, wandel- en bergtrainingen het weer en wat je aantrekt.
           </p>
         )}
 

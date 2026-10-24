@@ -202,7 +202,7 @@ export function TrainingGuideSheet({
               )}
               {guide.garminNote && (
                 <button
-                  onClick={() => { onClose(); navigate('/garmin'); }}
+                  onClick={() => { onClose(); navigate('/koppelen/garmin', { state: { section: 'horloge-instellen' } }); }}
                   className="mt-4 w-full rounded-xl border p-3 text-left text-xs"
                   style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-sky)' }}
                 >

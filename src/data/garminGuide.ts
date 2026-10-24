@@ -1,7 +1,7 @@
 // General Garmin reference content — deliberately separate from
 // data/trainingGuide.ts because none of this is specific to one training
 // day (Easy Run and Bergconditie's guides link here rather than repeating
-// it). Shown on pages/GarminGuide.tsx.
+// it). Shown at the bottom of pages/GarminLink.tsx (components/WatchSetupGuide.tsx).
 //
 // Sources link to the exact pages the user supplied
 // (trainingsschema_bronnen_urls.txt). The Garmin Forerunner 255 manual

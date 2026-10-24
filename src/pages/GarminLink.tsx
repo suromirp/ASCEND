@@ -18,6 +18,7 @@
 // (components/WatchAlignCard.tsx).
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { Card, Eyebrow, InfoButton, PrimaryButton, SecondaryButton, Toggle, PageHeader } from '../components/ui';
 import {
@@ -37,6 +38,7 @@ import {
 } from '../storage/externalActivities';
 import { useAppData } from '../state/AppDataContext';
 import { AlignProposalCard, AlignedSheet } from '../components/WatchAlignCard';
+import { WatchSetupGuide } from '../components/WatchSetupGuide';
 import { useAlignActions, useWatchAlign } from '../components/useWatchAlign';
 import { HISTORY_MAX_DAYS } from '../engine/watchAlign';
 import { watchOverview, watchOverviewText } from '../engine/watchStatus';
@@ -207,6 +209,8 @@ export function GarminLinkPage() {
   const align = useWatchAlign();
   const alignActions = useAlignActions(align.items);
   const [showAligned, setShowAligned] = useState(false);
+  // Vanuit "Garmin-instellingen" bij een training: meteen naar het kopje Je horloge instellen.
+  const toWatchSetup = (useLocation().state as { section?: string } | null)?.section === 'horloge-instellen';
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -214,7 +218,7 @@ export function GarminLinkPage() {
       <SettingsPageLink page="koppelingen" row="garmin" label="Instellingen van je horloge" />
 
       <Card className="flex flex-col gap-3">
-        <Eyebrow>DRIE STAPPEN</Eyebrow>
+        <Eyebrow>Drie stappen</Eyebrow>
         <Step n={1}>Maak een gratis account op <span style={{ color: 'var(--color-action)' }}>intervals.icu</span>.</Step>
         <Step n={2}>Koppel daar je Garmin. Vanaf dan komt elke training na het synchroniseren vanzelf op intervals.icu te staan.</Step>
         <Step n={3}>Open de instellingen van intervals.icu, onder Developer Settings. Kopieer je athlete-id en je API-sleutel en plak ze hieronder.</Step>
@@ -225,7 +229,7 @@ export function GarminLinkPage() {
 
       {connection === undefined ? null : connected ? (
         <Card className="flex flex-col gap-3">
-          <Eyebrow>VERBONDEN</Eyebrow>
+          <Eyebrow>Verbonden</Eyebrow>
           <div className="flex flex-col gap-1 text-sm" style={{ color: 'var(--color-ink)' }}>
             <p>Athlete-id: {connection.athleteId}</p>
             <p>API-sleutel: {maskKey(connection.apiKey)}</p>
@@ -252,7 +256,7 @@ export function GarminLinkPage() {
         </Card>
       ) : (
         <Card className="flex flex-col gap-3">
-          <Eyebrow>JOUW GEGEVENS</Eyebrow>
+          <Eyebrow>Jouw gegevens</Eyebrow>
           <div>
             <label htmlFor="intervals-athlete" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Athlete-id (bijvoorbeeld i12345)</label>
             <input
@@ -264,7 +268,7 @@ export function GarminLinkPage() {
               spellCheck={false}
               value={athleteId}
               onChange={(e) => setAthleteId(e.target.value)}
-              className="mt-1 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm"
+              className="mt-1 min-h-[44px] w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm"
               style={fieldStyle}
             />
           </div>
@@ -279,7 +283,7 @@ export function GarminLinkPage() {
               spellCheck={false}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="mt-1 w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm"
+              className="mt-1 min-h-[44px] w-full rounded-lg border bg-transparent px-2.5 py-2 text-sm"
               style={fieldStyle}
             />
           </div>
@@ -450,6 +454,8 @@ export function GarminLinkPage() {
           ASCEND vergelijkt rusthartslag en HRV met je eigen gemiddelde van de laatste 4 weken, niet met een norm. Je horloge schat deze waarden: het is een hint en geen oordeel.
         </p>
       </Card>
+
+      <WatchSetupGuide scrollIntoView={toWatchSetup} />
     </div>
   );
 }
@@ -648,7 +654,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
-        <Eyebrow>NAAR JE HORLOGE</Eyebrow>
+        <Eyebrow>Naar je horloge</Eyebrow>
         <InfoButton onClick={() => setShowInfo((v) => !v)} label="Hoe werkt dit, en hoe ruim ik op?" />
       </div>
       {showInfo && <WatchInfo />}
