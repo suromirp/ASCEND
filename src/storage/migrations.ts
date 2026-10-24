@@ -350,7 +350,16 @@ export function migrateLogDetail(log: SessionLog): SessionLog {
 // Nothing is repaired or guessed, because a comparison on invented numbers is worse
 // than no comparison.
 const ONE_RM_SOURCES: MetricSource[] = ['manual', 'garmin', 'health-connect', 'macrofactor', 'import'];
-const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_DAY_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
+// The shape and a real date: 2026-13-45 has the shape but is no day.
+const ISO_DAY = {
+  test(value: string): boolean {
+    if (!ISO_DAY_SHAPE.test(value)) return false;
+    const [y, m, d] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+  },
+};
 const MAX_ONE_RM_SERIES = 300;
 const MAX_ONE_RM_POINTS = 3000;
 const MAX_ONE_RM_KG = 1000;

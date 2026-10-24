@@ -579,7 +579,12 @@ export function ForgeWorkout({
               {!readOnly && (
                 <MenuRow icon="ruilen" title="Ruilen" sub="Zelfde spieren, met wat je sportschool heeft. Alleen voor deze training." onClick={() => { close(); setSwapFor(menuEx.slot); }} />
               )}
-              <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
+              {preview ? (
+                // Alleen lezen voor een dag die nog komt: een notitie die er is staat er, schrijven kan op de dag zelf.
+                strength.exerciseNotes[menuEx.exerciseId] && <p className="px-4 py-3 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Notitie: {strength.exerciseNotes[menuEx.exerciseId]}</p>
+              ) : (
+                <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
+              )}
               {!readOnly && !menuEx.timed && (
                 <>
                   <MenuRow icon="plus" title="Set toevoegen" onClick={() => { setExercise(menuEx.slot, (e) => addRow(e, 'work')); close(); }} />
@@ -648,7 +653,7 @@ export function ForgeWorkout({
         </ForgeSheet>
       )}
 
-      {noteEx && (
+      {noteEx && !preview && (
         <NoteSheet
           name={noteEx.name}
           value={strength.exerciseNotes[noteEx.exerciseId] ?? ''}

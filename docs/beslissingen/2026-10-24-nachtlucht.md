@@ -47,3 +47,9 @@ staan; alleen wie nooit koos krijgt het nieuwe advies.
 
 Bron: de eigenaar vroeg om "auto, echt afhankelijk van het licht, aangezien we het
 weer al ophalen". Ophalen was niet nodig: de stand van de zon is uit te rekenen.
+
+Na review (Warden): ver in het noorden kan de zon na middernacht ondergaan; dan is
+alleen het korte stuk tussen zonsondergang en zonsopkomst nacht. Op een dag
+zonder zonsondergang blijft de lucht licht, op een dag zonder zonsopkomst
+donker (`engine/sun.ts#sunDay`, `isNightAt`), in plaats van terug te vallen op
+20:00 tot 07:00.

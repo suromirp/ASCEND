@@ -81,7 +81,7 @@ export const QUOTE_NL: Record<string, QuoteNl> = {
   Q063: { text: 'Je wil moet sterker zijn dan je techniek.', author: 'Muhammad Ali' },
   Q064: { text: 'Geen mens heeft grenzen.', author: 'Eliud Kipchoge' },
   Q067: { text: 'Niet de berg bedwingen we, maar onszelf.', author: 'Edmund Hillary' },
-  Q068: { text: 'Eind goed, al goed.', author: 'Latijns spreekwoord', latin: true },
+  Q068: { text: 'Het einde bekroont het werk.', author: 'Latijns spreekwoord', latin: true },
   Q069: { text: 'Daden, geen woorden.', author: 'Latijnse spreuk', latin: true },
   Q071: { text: 'Langs moeilijke wegen naar de sterren.', author: 'Latijnse spreuk', latin: true },
   Q072: { text: 'Zolang ik adem, hoop ik.', author: 'Latijnse spreuk', latin: true },

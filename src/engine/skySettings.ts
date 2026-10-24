@@ -6,7 +6,7 @@
 // licht bij zonsopkomst op je plek (engine/sun.ts; zonder plaats het midden van
 // Nederland). Een vaste begintijd wordt om 07:00 weer licht.
 
-import { sunPlace, sunTimes, type SunTimes } from './sun';
+import { isNightAt, sunDay, sunPlace, type PolarDay, type SunTimes } from './sun';
 
 export type SkySetting = 'auto' | 'day' | 'night';
 export type SkyMode = 'day' | 'night';
@@ -44,21 +44,15 @@ export function skyModeAt(raw: { sky?: unknown; skyNightFrom?: unknown; homeLoca
   if (sky === 'day') return 'day';
   if (sky === 'night') return 'night';
   const now = date.getHours() * 60 + date.getMinutes();
-  if (nightFrom === 'zon') {
-    const sun = sunToday(raw?.homeLocation, date);
-    if (sun) return now >= sun.sunset || now < sun.sunrise ? 'night' : 'day';
-  }
-  const from = nightFrom === 'zon' ? minutesOf(FALLBACK_NIGHT_FROM) : minutesOf(nightFrom);
-  return now >= from || now < SKY_DAY_FROM_MINUTES ? 'night' : 'day';
+  if (nightFrom === 'zon') return isNightAt(sunToday(raw?.homeLocation, date), now) ? 'night' : 'day';
+  return now >= minutesOf(nightFrom) || now < SKY_DAY_FROM_MINUTES ? 'night' : 'day';
 }
 
-// Without a sunset (far north or south) "met de zon" falls back to the old advice.
-const FALLBACK_NIGHT_FROM = '20:00';
-
 // Today's sun at the place, in local minutes; the date's own UTC offset, so
-// summer and winter time are right.
-export function sunToday(homeLocation: unknown, date: Date): SunTimes | undefined {
+// summer and winter time are right. Far north or south it can be a day
+// without a sunset (light all day) or without a sunrise (dark all day).
+export function sunToday(homeLocation: unknown, date: Date): SunTimes | PolarDay {
   const { lat, lon } = sunPlace(homeLocation);
   const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  return sunTimes(iso, lat, lon, -date.getTimezoneOffset());
+  return sunDay(iso, lat, lon, -date.getTimezoneOffset());
 }
