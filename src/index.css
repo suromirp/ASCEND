@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@theme {
+@theme static {
   /* Zee en berg (docs/beslissingen/2026-10-24-thema-zee-en-berg.md): marine als
      basis, mint als de ene actie, ijs voor status, een lichte lucht met groene
      bergen bovenaan elke tab. Contrast nagerekend op de kaart en op de lucht
