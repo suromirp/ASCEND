@@ -15,8 +15,9 @@ export function markMorningAnswered(day: string) {
 export function useMorningCardVisible(): boolean {
   const { settings, sessionLogs } = useAppData();
   const today = todayISO();
-  const checkIn = checkInFor(today, settings.morningCheckIns);
-  if (checkIn && answeredOn === today && showMorningCardSetting(settings.overviews)) return true;
+  // Beantwoord of net ongedaan gemaakt in dit bezoek: de kaart blijft, ook na twaalven,
+  // zodat Ongedaan maken de vraag terugbrengt in plaats van alles te laten verdwijnen.
+  if (answeredOn === today && showMorningCardSetting(settings.overviews)) return true;
   return showMorningCard({
     enabled: showMorningCardSetting(settings.overviews),
     hour: new Date().getHours(),
