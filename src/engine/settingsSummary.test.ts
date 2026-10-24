@@ -164,6 +164,17 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-1rm-macrofactor', withForge({ showOneRm: false })).hidden).toBe(true);
   });
 
+  it('Vergelijken met, extra regels en volgorde: het advies staat erin, een keuze verandert de rij, uit verbergt ze', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-vergelijken', facts())).toEqual({ value: '4 en 8 weken', hidden: false });
+    expect(rowSummary('forge-vergelijken', withForge({ compareWeeks: '2_4' })).value).toBe('2 en 4 weken');
+    expect(rowSummary('forge-vergelijken', withForge({ enabled: false })).hidden).toBe(true);
+    expect(rowSummary('forge-extras', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-extras', withForge({ showExtras: false })).checked).toBe(false);
+    expect(rowSummary('forge-volgorde-lijst', facts()).value).toBe('Meest getraind');
+    expect(rowSummary('forge-volgorde-lijst', withForge({ listSort: 'name' })).value).toBe('Op naam');
+  });
+
   it('uit: de groep noemt de sportschool', () => {
     const settings = { ...facts().settings, strengthModel: { enabled: false } };
     expect(groupSummary('forge', facts({ settings }))).toEqual({ value: 'Uit', dim: true, sub: 'Sportschool: 2 stangen, 7 schijven' });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
+import { compareMoments, DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
 
 describe('de standaardwaarden', () => {
   it('zonder instellingen geldt het advies', () => {
@@ -122,6 +122,16 @@ describe('het workoutscherm', () => {
     expect(clean.oneRmView).toBeUndefined();
     expect(clean.showMacroFactorOneRm).toBeUndefined();
     expect(normalizeStrengthSettings({ oneRmView: 'work_weight' })!.oneRmView).toBe('work_weight');
+  });
+  it('vergelijken met, volgorde en extra regels: advies 4 en 8 weken, meest getraind en aan; rommel valt weg', () => {
+    expect(resolveStrengthSettings(undefined)).toMatchObject({ compareWeeks: '4_8', listSort: 'most', showExtras: true });
+    expect(resolveStrengthSettings({ compareWeeks: '12_26', listSort: 'name', showExtras: false })).toMatchObject({ compareWeeks: '12_26', listSort: 'name', showExtras: false });
+    const clean = normalizeStrengthSettings({ compareWeeks: '3_5', listSort: 'willekeurig', showExtras: 'ja' })!;
+    expect(clean.compareWeeks).toBeUndefined();
+    expect(clean.listSort).toBeUndefined();
+    expect(clean.showExtras).toBeUndefined();
+    expect(compareMoments('4_8')).toEqual([4, 8]);
+    expect(compareMoments('12_26')).toEqual([12, 26]);
   });
   it('de nieuwe rustgeluiden blijven staan en onbekende vallen weg', () => {
     for (const k of ['boxing', 'whistle', 'gong', 'chime']) expect(normalizeStrengthSettings({ restSound: k })!.restSound).toBe(k);

@@ -272,6 +272,12 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('forgeWeergave', forge.oneRmView), hidden: !forge.enabled || !forge.showOneRm };
     case 'forge-1rm-macrofactor':
       return { checked: forge.showMacroFactorOneRm, hidden: !forge.enabled || !forge.showOneRm };
+    case 'forge-vergelijken':
+      return { value: choiceShort('forgeVergelijken', forge.compareWeeks), hidden: !forge.enabled };
+    case 'forge-volgorde-lijst':
+      return { value: choiceShort('forgeVolgorde', forge.listSort), hidden: !forge.enabled };
+    case 'forge-extras':
+      return { checked: forge.showExtras, hidden: !forge.enabled };
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':
