@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { InjuryNote, InjurySeverity } from '../../models/injury';
 import { SEVERITY_CHOICES } from '../../data/bodyCare';
 import { spotForComplaint } from '../../engine/bodyMap';
 import { formatDateNL } from '../../utils/dates';
-import { Card, SecondaryButton } from '../ui';
+import { useSheetClose } from '../../utils/useSheetClose';
+import { Card, PrimaryButton, SecondaryButton } from '../ui';
 import { TextButton } from '../TextButton';
+import { Portal } from '../Portal';
+import { SheetHeader } from '../SheetHeader';
 
 const SEVERITY_COLOR: Record<InjurySeverity, string> = {
   licht: 'var(--color-success-text)',
@@ -13,6 +17,29 @@ const SEVERITY_COLOR: Record<InjurySeverity, string> = {
 };
 
 const severityLabel = (s: InjurySeverity): string => SEVERITY_CHOICES.find((c) => c.value === s)?.label ?? s;
+
+// Verwijderen kan niet terug: eerst vragen, in een klein blad. De klacht blijft bestaan tot
+// je "Verwijderen" kiest; Annuleren, de achtergrond en de terugknop laten alles zoals het was.
+function DeleteComplaintSheet({ note, onConfirm, onClose }: { note: InjuryNote; onConfirm: (id: string) => void; onClose: () => void }) {
+  const { closing, requestClose } = useSheetClose(onClose);
+  return (
+    <Portal>
+      <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
+        <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klacht verwijderen">
+          <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
+            <SheetHeader eyebrow="Klacht" title="Verwijderen?" onClose={requestClose} />
+            <p className="text-base leading-snug" style={{ color: 'var(--color-ink)' }}>
+              {note.bodyPart} van <span className="tabular-nums">{formatDateNL(note.date)}</span> verdwijnt uit je lijst. Dat kun je niet terugzetten.
+            </p>
+            <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Is het over? Kies dan liever Opgelost, dan blijft het bewaard.</p>
+            <PrimaryButton onClick={() => onConfirm(note.id)}>Verwijderen</PrimaryButton>
+            <SecondaryButton onClick={requestClose}>Annuleren</SecondaryButton>
+          </Card>
+        </div>
+      </div>
+    </Portal>
+  );
+}
 
 // Een open klacht: waar, sinds wanneer en hoe erg, met "Opgelost" en "Verwijderen".
 // Is er een plek op het figuur bij, dan opent een tik op de titel het detail van die plek
@@ -29,6 +56,7 @@ export function OpenComplaint({
   onDelete: (id: string) => void;
 }) {
   const navigate = useNavigate();
+  const [confirming, setConfirming] = useState(false);
   const spot = linked ? spotForComplaint(note) : undefined;
   const head = (
     <>
@@ -50,14 +78,16 @@ export function OpenComplaint({
       {note.note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{note.note}</p>}
       <div className="flex items-center gap-3">
         <SecondaryButton onClick={() => onResolve(note.id)}>Opgelost</SecondaryButton>
-        <TextButton tone="dim" onClick={() => onDelete(note.id)} aria-label={`${note.bodyPart} verwijderen`}>Verwijderen</TextButton>
+        <TextButton tone="dim" onClick={() => setConfirming(true)} aria-label={`${note.bodyPart} verwijderen`}>Verwijderen</TextButton>
       </div>
+      {confirming && <DeleteComplaintSheet note={note} onConfirm={onDelete} onClose={() => setConfirming(false)} />}
     </Card>
   );
 }
 
 // Een opgeloste klacht in de weggeklapte lijst: één regel met de periode.
 export function ResolvedComplaint({ note, onDelete }: { note: InjuryNote; onDelete: (id: string) => void }) {
+  const [confirming, setConfirming] = useState(false);
   return (
     <div className="flex items-center justify-between gap-3 border-t py-1" style={{ borderColor: 'var(--color-card-border)' }}>
       <div className="min-w-0">
@@ -66,7 +96,8 @@ export function ResolvedComplaint({ note, onDelete }: { note: InjuryNote; onDele
           {formatDateNL(note.date)}{note.resolvedDate ? ` tot ${formatDateNL(note.resolvedDate)}` : ''}
         </p>
       </div>
-      <TextButton tone="dim" onClick={() => onDelete(note.id)} aria-label={`${note.bodyPart} verwijderen`}>Verwijderen</TextButton>
+      <TextButton tone="dim" onClick={() => setConfirming(true)} aria-label={`${note.bodyPart} verwijderen`}>Verwijderen</TextButton>
+      {confirming && <DeleteComplaintSheet note={note} onConfirm={onDelete} onClose={() => setConfirming(false)} />}
     </div>
   );
 }

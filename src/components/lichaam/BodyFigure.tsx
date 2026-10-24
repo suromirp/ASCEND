@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { FIGURE_HEIGHT, FIGURE_WIDTH, HEAD, SILHOUETTE, figureLines } from '../../data/bodyFigure';
-import { spotsForView, type BodySpot, type BodyView } from '../../engine/bodyMap';
+import { FIGURE_HEIGHT, FIGURE_SCALE, FIGURE_WIDTH, HEAD, SILHOUETTE, figureLines } from '../../data/bodyFigure';
+import { hitBoxes, spotsForView, type BodySpot, type BodyView } from '../../engine/bodyMap';
 import type { Figure } from '../../engine/figureSettings';
 
 // Het figuur van Lichaam in de lijnstijl van de iconen: een rustig silhouet met dunne
@@ -55,8 +55,7 @@ function Flag({ spot }: { spot: BodySpot }) {
   return <circle cx={spot.cx + spot.rx * 0.72} cy={spot.cy - spot.ry * 0.72} r={4.2} style={{ fill: 'var(--color-warning)', stroke: 'var(--color-bg)', strokeWidth: 1 }} />;
 }
 
-// De plekken met het grootste vlak eerst, zodat een kleine plek erbovenop komt te liggen
-// en de tikdoelen die elkaar raken de kleinste plek kiezen.
+// De plekken met het grootste vlak eerst, zodat een kleine plek bij het tekenen bovenop komt.
 function byAreaDescending(a: BodySpot, b: BodySpot): number {
   return b.rx * b.ry - a.rx * a.ry;
 }
@@ -67,7 +66,7 @@ export function BodyFigure({
   selectedId,
   flagged,
   onPick,
-  scale = 1.1,
+  scale = FIGURE_SCALE,
 }: {
   view: BodyView;
   figure: Figure;
@@ -78,6 +77,7 @@ export function BodyFigure({
   scale?: number;
 }) {
   const spots = spotsForView(view).slice().sort(byAreaDescending);
+  const boxes = hitBoxes(view, scale);
   const title = useId();
   const width = FIGURE_WIDTH * scale;
   const height = FIGURE_HEIGHT * scale;
@@ -89,9 +89,8 @@ export function BodyFigure({
         {spots.map((s) => <Mark key={s.id} spot={s} on={s.id === selectedId} />)}
         {spots.filter((s) => flagged.has(s.id)).map((s) => <Flag key={s.id} spot={s} />)}
       </svg>
-      {spots.map((s) => {
-        const w = Math.max(44, s.rx * 2 * scale + 10);
-        const h = Math.max(44, s.ry * 2 * scale + 10);
+      {boxes.map((b) => {
+        const s = spots.find((x) => x.id === b.id)!;
         return (
           <button
             key={s.id}
@@ -100,14 +99,8 @@ export function BodyFigure({
             aria-pressed={s.id === selectedId}
             data-spot={s.id}
             onClick={() => onPick(s)}
-            className="absolute rounded-full focus-visible:outline focus-visible:outline-2"
-            style={{
-              left: `calc(${(s.cx / FIGURE_WIDTH) * 100}% - ${w / 2}px)`,
-              top: `calc(${(s.cy / FIGURE_HEIGHT) * 100}% - ${h / 2}px)`,
-              width: w,
-              height: h,
-              outlineColor: 'var(--color-action)',
-            }}
+            className="absolute rounded-xl focus-visible:outline focus-visible:outline-2"
+            style={{ left: b.left, top: b.top, width: b.width, height: b.height, outlineColor: 'var(--color-action)' }}
           />
         );
       })}

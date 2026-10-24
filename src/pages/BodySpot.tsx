@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { SEVERITY_CHOICES } from '../data/bodyCare';
-import { careForSpot, injuryNameFor, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
+import { careForSpot, injuryNameFor, isValidReportDate, openComplaintsBySpot, spotById, stretchesForSpot, stretchMinutes, type BodySpot } from '../engine/bodyMap';
 import { resolveFigure } from '../engine/figureSettings';
 import type { InjurySeverity } from '../models/injury';
 import { todayISO } from '../utils/dates';
-import { Card, Eyebrow, PageHeader, PrimaryButton, SecondaryButton } from '../components/ui';
+import { withTimeout } from '../utils/withTimeout';
+import { Card, Eyebrow, InfoButton, PageHeader, PrimaryButton, SecondaryButton } from '../components/ui';
 import { ChoiceStrip } from '../components/ChoiceStrip';
 import { Icon } from '../components/icons';
 import { StretchItems } from '../components/StretchList';
 import { SpotThumb } from '../components/lichaam/BodyFigure';
 import { OpenComplaint } from '../components/lichaam/Complaints';
+import { ReportDateField } from '../components/lichaam/ReportSheet';
+import { REPORT_TIMEOUT_MS, reportInputStyle } from '../components/lichaam/reportConfig';
+import { StretchInfoSheet } from '../components/lichaam/StretchInfoSheet';
 
 const dot = <span aria-hidden="true" className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--color-action)' }} />;
-const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
+const inputStyle = reportInputStyle;
 
 // Het detail van een plek: wat je doet bij last (met wanneer naar een fysio), rekken en
 // losmaken, voorkomen en melden. Eigen route (/lichaam/:plek), zodat de terugknop werkt.
@@ -43,6 +47,7 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
   const care = careForSpot(spot);
   const stretches = stretchesForSpot(spot);
   const here = openComplaintsBySpot(injuryNotes)[spot.id] ?? [];
+  const [showStretchInfo, setShowStretchInfo] = useState(false);
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
@@ -77,7 +82,10 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
 
         <Card>
           <div className="flex items-baseline justify-between gap-3">
-            <Eyebrow>Rekken en losmaken</Eyebrow>
+            <div className="flex items-center gap-5">
+              <Eyebrow>Rekken en losmaken</Eyebrow>
+              <InfoButton onClick={() => setShowStretchInfo(true)} label="Over rekken en losmaken" />
+            </div>
             <span className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{stretchMinutes(stretches)} min</span>
           </div>
           <StretchItems stretches={stretches} className="mt-2 flex flex-col" />
@@ -102,7 +110,7 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
         </Card>
 
         <Card className="flex flex-col gap-3">
-          <Eyebrow>Melden voor je planning</Eyebrow>
+          <Eyebrow>Melden</Eyebrow>
           {here.map((n) => (
             <OpenComplaint key={n.id} note={n} linked={false} onResolve={(id) => void resolveInjury(id)} onDelete={(id) => void deleteInjury(id)} />
           ))}
@@ -111,6 +119,7 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
       </div>
 
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Algemene uitleg, geen diagnose. Twijfel je, vraag het een fysio of je huisarts.</p>
+      {showStretchInfo && <StretchInfoSheet onClose={() => setShowStretchInfo(false)} />}
     </div>
   );
 }
@@ -122,16 +131,20 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
   const { addInjury } = useAppData();
   const [severity, setSeverity] = useState<InjurySeverity>('licht');
   const [note, setNote] = useState('');
+  const [date, setDate] = useState(todayISO());
   const [busy, setBusy] = useState(false);
   const [state, setState] = useState<'idle' | 'done' | 'failed'>('idle');
   const line = SEVERITY_CHOICES.find((c) => c.value === severity)?.line;
 
   async function report() {
+    if (busy || !isValidReportDate(date, todayISO())) return;
     setBusy(true);
     setState('idle');
     try {
-      await addInjury({ date: todayISO(), bodyPart: injuryNameFor(spot), severity, note: note.trim() || undefined });
+      // Een grens in tijd: de knop blijft niet op "Bezig..." staan als opslaan stokt.
+      await withTimeout(addInjury({ date, bodyPart: injuryNameFor(spot), severity, note: note.trim() || undefined }), REPORT_TIMEOUT_MS);
       setNote('');
+      setDate(todayISO());
       setState('done');
     } catch {
       setState('failed');
@@ -150,6 +163,7 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
         onChange={(v) => v && setSeverity(v)}
       />
       {line && <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
+      <ReportDateField id="klacht-datum" value={date} onChange={setDate} />
       <div>
         <label htmlFor="klacht-notitie" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat merk je? (hoeft niet)</label>
         <textarea
@@ -165,7 +179,7 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
         Melden legt de klacht vast, meer niet. Je planning verandert er niet door. Bij een klacht aan been of voet laat ASCEND op Vandaag een hint zien bij zware beentrainingen; jij kiest per training. De week zelf pas je aan op Week.
       </p>
-      <PrimaryButton onClick={() => void report()} disabled={busy}>{busy ? 'Bezig…' : 'Melden'}</PrimaryButton>
+      <PrimaryButton onClick={() => void report()} disabled={busy || !isValidReportDate(date, todayISO())}>{busy ? 'Bezig…' : 'Melden'}</PrimaryButton>
       {state === 'done' && (
         <p role="status" className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-success-text)' }}>
           <Icon name="vinkje" size={16} /> Vastgelegd. Je vindt de klacht terug op Lichaam.

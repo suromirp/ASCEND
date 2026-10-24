@@ -45,6 +45,23 @@ function blankGoalDraft(): TrainingGoal {
   return { id: makeId('goal'), name: '', requirements: [], createdAt: now, updatedAt: now, status: 'paused' };
 }
 
+// A multi-day goal without its day count can't be turned into a typical
+// day yet (engine/goalRoute.ts) — ASCEND then compares nothing per day
+// for its route values, so say so instead of silently under-planning.
+function goalMissingDays(goal: TrainingGoal): boolean {
+  return goal.execution !== undefined && !eventDaysRequirement(goal.requirements)?.target;
+}
+
+// The totals of the route (what RouteLine shows), empty when there is nothing to say.
+function routeTotals(goal: TrainingGoal): string[] {
+  if (goal.execution === undefined) return [];
+  const dayWord = routeDayWord(routeDiscipline(goal));
+  const totals = ROUTE_KINDS.flatMap((k) => { const t = routeTotal(goal.requirements, k); return t ? [formatRouteDayValue(k, t.amount)] : []; });
+  const days = eventDaysRequirement(goal.requirements)?.target?.amount;
+  if (days) totals.push(`${days} ${dayWord.plural}`);
+  return totals;
+}
+
 // Surfaces the difference between 'active' and 'paused' that used to be
 // invisible on every goal card — a goal reads as fully configured (a race
 // type picked, a full editable card) with no visual sign it's actually
@@ -52,10 +69,7 @@ function blankGoalDraft(): TrainingGoal {
 // targetDate is set. Renders nothing for 'active' (the countdown above
 // already implies it).
 function GoalStatusNote({ status, goal }: { status: TrainingGoal['status']; goal?: TrainingGoal }) {
-  // A multi-day goal without its day count can't be turned into a typical
-  // day yet (engine/goalRoute.ts) — ASCEND then compares nothing per day
-  // for its route values, so say so instead of silently under-planning.
-  const missingDays = goal?.execution !== undefined && !eventDaysRequirement(goal.requirements)?.target;
+  const missingDays = goal ? goalMissingDays(goal) : false;
   return (
     <>
       {status === 'paused' && (
@@ -77,9 +91,8 @@ function GoalStatusNote({ status, goal }: { status: TrainingGoal['status']; goal
 function RouteLine({ goal }: { goal: TrainingGoal }) {
   if (goal.execution === undefined) return null;
   const dayWord = routeDayWord(routeDiscipline(goal));
-  const totals = ROUTE_KINDS.flatMap((k) => { const t = routeTotal(goal.requirements, k); return t ? [formatRouteDayValue(k, t.amount)] : []; });
+  const totals = routeTotals(goal);
   const days = eventDaysRequirement(goal.requirements)?.target?.amount;
-  if (days) totals.push(`${days} ${dayWord.plural}`);
   const average = days && days > 1 ? routeDayParts(goal.requirements, 'average') : [];
   const training = routeDayParts(goal.requirements, 'training');
   if (totals.length === 0) return null;
@@ -169,7 +182,11 @@ export function AscendPage() {
         {goal && (
           <div className="self-start">
             {goal.status === 'paused' && <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Gepauzeerd: nog geen streefdatum.</p>}
-            <TextButton onClick={() => setDetailsOpen(true)} icon="verder">Details van het doel</TextButton>
+            {goalMissingDays(goal) && <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Het aantal loopdagen ontbreekt nog.</p>}
+            {/* Het blad Details toont de route en wat er ontbreekt; is er niets van dat alles, dan is de knop er niet. */}
+            {(goal.status === 'paused' || goalMissingDays(goal) || routeTotals(goal).length > 0) && (
+              <TextButton onClick={() => setDetailsOpen(true)} icon="verder">Details van het doel</TextButton>
+            )}
           </div>
         )}
       </SkyBand>

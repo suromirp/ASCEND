@@ -7,6 +7,9 @@
 
 export const FIGURE_WIDTH = 200;
 export const FIGURE_HEIGHT = 440;
+// De schaal waarop het figuur op het scherm getekend wordt (pixels per eenheid van het vlak).
+// De tikvakken van de plekken (engine/bodyMap.ts#hitBoxes) worden voor deze schaal berekend.
+export const FIGURE_SCALE = 1.2;
 
 // Het hoofd.
 export const HEAD = { cx: 100, cy: 29, rx: 15, ry: 18.5 };

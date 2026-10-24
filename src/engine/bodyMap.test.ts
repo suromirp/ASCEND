@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { InjuryNote } from '../models/injury';
 import { BODY_CARE } from '../data/bodyCare';
+import { FIGURE_SCALE } from '../data/bodyFigure';
 import { BODY_SPOTS } from '../data/bodySpots';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { PROBLEM_AREAS } from '../data/stretches';
 import {
   careForSpot, injuryNameFor, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, spotForComplaint, spotForStretchArea,
-  spotsForInjury, spotsForView, stretchesForSpot, stretchMinutes,
+  hitBoxes, isValidReportDate, MIN_TAP, offFigureParts, spotsForInjury, spotsForView, stretchesForSpot, stretchMinutes,
 } from './bodyMap';
 
 function note(over: Partial<InjuryNote>): InjuryNote {
@@ -159,5 +160,76 @@ describe('oude links', () => {
     expect(spotForStretchArea('kuiten')?.id).toBe('kuit-r');
     expect(spotForStretchArea('bestaat-niet')).toBeUndefined();
     expect(spotForStretchArea(undefined)).toBeUndefined();
+  });
+});
+
+describe('de tikvakken op het figuur', () => {
+  for (const view of ['front', 'back'] as const) {
+    const boxes = hitBoxes(view, FIGURE_SCALE);
+    const spots = spotsForView(view);
+
+    it(`${view}: elk vak is minstens 44 bij 44 px`, () => {
+      expect(boxes.length).toBe(spots.length);
+      for (const b of boxes) {
+        expect(b.width, b.id).toBeGreaterThanOrEqual(MIN_TAP - 0.01);
+        expect(b.height, b.id).toBeGreaterThanOrEqual(MIN_TAP - 0.01);
+      }
+    });
+
+    it(`${view}: geen twee vakken overlappen elkaar`, () => {
+      const clashes: string[] = [];
+      boxes.forEach((a, i) => {
+        boxes.slice(i + 1).forEach((b) => {
+          const ox = Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left);
+          const oy = Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
+          if (ox > 0.01 && oy > 0.01) clashes.push(`${a.id} en ${b.id}: ${ox.toFixed(1)} bij ${oy.toFixed(1)}`);
+        });
+      });
+      expect(clashes).toEqual([]);
+    });
+
+    it(`${view}: het midden van elke plek ligt in het eigen vak`, () => {
+      for (const s of spots) {
+        const b = boxes.find((x) => x.id === s.id)!;
+        const x = s.cx * FIGURE_SCALE;
+        const y = s.cy * FIGURE_SCALE;
+        expect(x >= b.left && x <= b.left + b.width && y >= b.top && y <= b.top + b.height, s.id).toBe(true);
+      }
+    });
+  }
+
+  it('past binnen het figuur en een paar blijft aan zijn eigen kant van de middenlijn', () => {
+    for (const view of ['front', 'back'] as const) {
+      for (const b of hitBoxes(view, FIGURE_SCALE)) {
+        const s = spotById(b.id)!;
+        const mid = 100 * FIGURE_SCALE;
+        if (s.side && s.cx < 100) expect(b.left + b.width, b.id).toBeLessThanOrEqual(mid + 0.01);
+        if (s.side && s.cx > 100) expect(b.left, b.id).toBeGreaterThanOrEqual(mid - 0.01);
+      }
+    }
+  });
+});
+
+describe('klachten die niet op het figuur staan', () => {
+  it('geeft de namen uit de lijst die geen plek hebben', () => {
+    const parts = offFigureParts();
+    expect(parts).toContain('Elleboog');
+    for (const p of parts) expect(BODY_SPOTS.some((s) => s.injuryParts.includes(p)), p).toBe(false);
+    expect(parts).not.toContain('Knie');
+  });
+
+  it('neemt een datum van vandaag of eerder aan en geen datum in de toekomst', () => {
+    expect(isValidReportDate('2026-10-24', '2026-10-24')).toBe(true);
+    expect(isValidReportDate('2026-09-01', '2026-10-24')).toBe(true);
+    expect(isValidReportDate('2026-10-25', '2026-10-24')).toBe(false);
+    expect(isValidReportDate('', '2026-10-24')).toBe(false);
+  });
+});
+
+describe('rode vlaggen', () => {
+  it('stuurt nek, achillespees en buik bij een alarmsignaal naar de huisarts, dezelfde dag', () => {
+    expect(BODY_CARE.nek.direct).toMatch(/dubbelzien/);
+    expect(BODY_CARE.achilles.direct).toMatch(/dezelfde dag/);
+    expect(BODY_CARE.buik.direct).toMatch(/koorts/);
   });
 });
