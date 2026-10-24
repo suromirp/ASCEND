@@ -117,7 +117,7 @@ describe('een volledige reeks nagemaakte trainingen', () => {
     const rows = comparisonRows(histories, settings, BODY);
     const a = accuracy(rows);
     expect(a.total).toBe(rows.length);
-    expect(a.sentence).toBe(`Bij ${a.within} van de ${a.total} oefeningen zat het voorstel van ASCEND hooguit één stap van het gewicht dat je echt pakte.`);
+    expect(a.sentence).toBe(`${a.within} van de ${a.total} keer zat ASCEND hooguit één stap naast het gewicht dat je pakte.`);
     // de reeks is rustig en voorspelbaar: het voorstel zit er meestal dichtbij
     expect(a.within / a.total).toBeGreaterThanOrEqual(0.6);
   });

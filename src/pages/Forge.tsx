@@ -38,6 +38,9 @@ import { useAppData } from '../state/AppDataContext';
 import { formatDateNL, todayISO } from '../utils/dates';
 import { usePageState } from '../components/usePageState';
 import { TextButton } from '../components/TextButton';
+import { Sheet } from '../components/settings/Sheet';
+import { Icon } from '../components/icons';
+import { formatNumberNL } from '../utils/number';
 
 const SHOWN_AT_FIRST = 12;
 
@@ -63,7 +66,6 @@ export function ForgePage() {
   const { sessionLogs, templates, program, settings, updateSettings } = useAppData();
   const today = todayISO();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const [showAll, setShowAll] = usePageState('showAll', false);
   const [query, setQuery] = usePageState('zoek', '');
   const [trainingChoice, setTrainingChoice] = usePageState<string | null>('training', null);
   const [openKey, setOpenKey] = usePageState<string | null>('open', null);
@@ -225,7 +227,7 @@ export function ForgePage() {
             )}
           </Card>
 
-          <ComparisonSection rows={model.rows} showAll={showAll} onShowAll={() => setShowAll(true)} />
+          <ComparisonSection rows={model.rows} />
           <TextButton onClick={() => navigate(forgeSettings.to, { state: forgeSettings.state })} className="self-start text-left" icon="verder">
             Instellingen van Forge: sportschool, opwarmen en meer
           </TextButton>
@@ -240,40 +242,56 @@ export function ForgePage() {
 }
 
 
-function ComparisonSection({ rows, showAll, onShowAll }: { rows: ComparisonRow[]; showAll: boolean; onShowAll: () => void }) {
+// Hoe goed ASCEND vooraf het gewicht raadde: op de pagina één regel, per training in
+// een onderblad. Per oefening alleen het voorgestelde en het gepakte gewicht, met een
+// vinkje als het hooguit één stap scheelde.
+function ComparisonSection({ rows }: { rows: ComparisonRow[] }) {
+  const [open, setOpen] = useState(false);
   const a = accuracy(rows);
+  return (
+    <Card className="flex flex-col gap-2">
+      <Eyebrow>Voorstel en wat je deed</Eyebrow>
+      <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{a.sentence}</p>
+      {rows.length > 0 && <TextButton onClick={() => setOpen(true)} className="self-start" icon="verder">Per training bekijken</TextButton>}
+      {open && <ComparisonSheet rows={rows} onClose={() => setOpen(false)} />}
+    </Card>
+  );
+}
+
+function ComparisonSheet({ rows, onClose }: { rows: ComparisonRow[]; onClose: () => void }) {
+  const [showAll, setShowAll] = useState(false);
   const shown = showAll ? rows : rows.slice(0, SHOWN_AT_FIRST);
   // Per training day, newest first.
   const groups: { key: string; date: string; name: string; rows: ComparisonRow[] }[] = [];
   for (const r of shown) {
-    const key = `${r.logId}`;
-    let g = groups.find((x) => x.key === key);
-    if (!g) groups.push((g = { key, date: r.date, name: r.trainingName, rows: [] }));
+    let g = groups.find((x) => x.key === r.logId);
+    if (!g) groups.push((g = { key: r.logId, date: r.date, name: r.trainingName, rows: [] }));
     g.rows.push(r);
   }
+  const kg = (n: number) => `${formatNumberNL(n, 1)} kg`;
   return (
-    <Card className="flex flex-col gap-3">
-      <Eyebrow>Vergelijking</Eyebrow>
-      <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{a.sentence}</p>
-      <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Per training wat ASCEND vooraf had voorgesteld, alleen uit de trainingen ervoor, naast wat je echt deed.
-      </p>
-      {groups.map((g) => (
-        <div key={g.key} className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{g.name}, {formatDateNL(g.date)}</p>
-          {g.rows.map((r) => (
-            <div key={r.exerciseKey} className="flex flex-col gap-0.5">
-              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{r.exerciseName}</p>
-              <p className="font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>ASCEND: {r.prescribed}</p>
-              <p className="font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                Gedaan: {r.actual}. {r.withinOneStep ? 'Hooguit één stap verschil.' : 'Meer dan één stap verschil.'}
-              </p>
-              {(!r.withinOneStep || r.kind === 'tired') && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{r.reason}</p>}
-            </div>
-          ))}
-        </div>
-      ))}
-      {!showAll && rows.length > SHOWN_AT_FIRST && <SecondaryButton onClick={onShowAll}>Toon alles ({rows.length})</SecondaryButton>}
-    </Card>
+    <Sheet eyebrow="Forge" title="Voorstel en wat je deed" line="Wat ASCEND vooraf voorstelde, naast wat je pakte." onClose={onClose}>
+      <div className="flex flex-col gap-4 pb-4">
+        {groups.map((g) => (
+          <div key={g.key} className="flex flex-col">
+            <p className="pb-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{g.name}, {formatDateNL(g.date)}</p>
+            {g.rows.map((r) => (
+              <div key={r.exerciseKey} className="flex min-h-[44px] items-center gap-3 border-t py-1.5" style={{ borderColor: 'var(--color-card-border)' }}>
+                <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{r.exerciseName}</p>
+                <p className="shrink-0 text-right font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
+                  ASCEND {kg(r.prescribedKg)}
+                  <br />
+                  <span style={{ color: 'var(--color-ink)' }}>jij {kg(r.actualKg)}</span>
+                </p>
+                <span className="w-5 shrink-0" style={{ color: r.withinOneStep ? 'var(--color-progress)' : 'var(--color-ink-dim)' }} aria-label={r.withinOneStep ? 'Hooguit één stap verschil' : 'Meer dan één stap verschil'}>
+                  {r.withinOneStep ? <Icon name="vinkje" size={18} /> : null}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+        {!showAll && rows.length > SHOWN_AT_FIRST && <SecondaryButton onClick={() => setShowAll(true)}>Toon alles ({rows.length})</SecondaryButton>}
+      </div>
+    </Sheet>
   );
 }

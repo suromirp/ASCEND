@@ -268,7 +268,7 @@ export function accuracy(rows: ComparisonRow[]): Accuracy {
   if (total < MIN_COMPARISONS) {
     return { total, within, sentence: `Nog te weinig om iets over te zeggen: pas ${total} keer kon ASCEND vooraf iets voorstellen. Vanaf ${MIN_COMPARISONS} keer staat hier hoe vaak het klopte.` };
   }
-  return { total, within, sentence: `Bij ${within} van de ${total} oefeningen zat het voorstel van ASCEND hooguit één stap van het gewicht dat je echt pakte.` };
+  return { total, within, sentence: `${within} van de ${total} keer zat ASCEND hooguit één stap naast het gewicht dat je pakte.` };
 }
 
 // Why there is no estimate when the sets themselves are the reason: no reps in
