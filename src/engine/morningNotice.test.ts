@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import script from '../../public/morning-notice-sw.js?raw';
 import { MetaRepo, wipeAllData } from '../storage/database';
 import {
-  cleanMorningNotice, DEFAULT_NOTICE_TIME, NOTICE_BODY, NOTICE_LINK, NOTICE_SUPPORT_TEXT, NOTICE_TAG, NOTICE_TITLE, noticeSupport, resolveMorningNotice, shouldNotifyMorning,
+  cleanMorningNotice, DEFAULT_NOTICE_TIME, NOTICE_BODY, NOTICE_LINK, NOTICE_NOT_DONE_TEXT, NOTICE_SUPPORT_TEXT, NOTICE_SYNC_REFUSED_TEXT, noticeProblemText, NOTICE_TAG, NOTICE_TITLE, noticeSupport, resolveMorningNotice, shouldNotifyMorning,
   type NoticeEnvironment, type NoticeInputSettings,
 } from './morningNotice';
 
@@ -166,5 +166,14 @@ describe('public/morning-notice-sw.js', () => {
     await tap();
     expect(navigate).toHaveBeenCalledWith(url);
     expect(openWindow).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('noticeProblemText', () => {
+  it('zegt eerlijk dat Chrome de achtergrond nog weigert als meldingen wel mogen', () => {
+    expect(noticeProblemText('ready', 'sync_refused')).toBe(NOTICE_SYNC_REFUSED_TEXT);
+    expect(noticeProblemText('ready')).toBe(NOTICE_NOT_DONE_TEXT);
+    expect(noticeProblemText('blocked')).toBe(NOTICE_SUPPORT_TEXT.blocked);
+    expect(noticeProblemText(undefined)).toBe(NOTICE_SUPPORT_TEXT.unavailable);
   });
 });

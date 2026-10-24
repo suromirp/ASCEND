@@ -68,13 +68,25 @@ async function registerSync(reg: Registration): Promise<boolean> {
 
 // Aanzetten door een tik van de gebruiker: eerst toestemming, dan de periodieke sync.
 // 'ok' als beide gelukt zijn; anders waarom niet, zodat de rij het eerlijk kan zeggen.
-export async function enableMorningNotice(): Promise<'ok' | 'denied' | 'no_background'> {
+export async function enableMorningNotice(): Promise<'ok' | 'denied' | 'no_background' | 'sync_refused'> {
   if (typeof Notification === 'undefined') return 'no_background';
   const asked = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
   if (asked !== 'granted') return 'denied';
   const reg = await registration();
   if (!reg?.periodicSync) return 'no_background';
-  return (await registerSync(reg)) ? 'ok' : 'no_background';
+  if (await registerSync(reg)) return 'ok';
+  // Meldingen mogen, de aanmelding niet: dan weigert Chrome de achtergrond (nog).
+  return (await syncPermission()) === 'denied' ? 'sync_refused' : 'no_background';
+}
+
+// De toestemming van Chrome voor wakker maken op de achtergrond, als de browser die kent.
+async function syncPermission(): Promise<PermissionState | undefined> {
+  try {
+    const status = await navigator.permissions?.query({ name: 'periodic-background-sync' as PermissionName });
+    return status?.state;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function disableMorningNotice(): Promise<void> {

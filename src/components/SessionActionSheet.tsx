@@ -265,7 +265,9 @@ export function SessionActionSheet({
   };
   const label: Record<SheetAction, string> = {
     done: skipped ? 'Toch gedaan' : 'Gedaan',
-    start: 'Training starten',
+    // Kracht start je in de app (Forge); een loop of tocht doe je met je horloge, dus
+    // hier opent het alleen de uitleg en opbouw, naast Gedaan.
+    start: template.type === 'strength' ? 'Training starten' : 'Hoe je het doet',
     move: 'Verplaatsen',
     skip: 'Overslaan',
     backOnPlan: 'Toch doen',

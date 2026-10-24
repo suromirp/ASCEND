@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
@@ -27,6 +28,8 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const setTopic = (topic: InsightTopicSwitch, on: boolean) => setInsight({ topics: { ...settings.runInsight?.topics, [topic]: on } });
   const close = () => setSheet(null);
   const notice = resolveMorningNotice(settings.morningNotice);
+  // Waarom aanzetten net mislukte, voor het blad (Chrome kan de achtergrond weigeren).
+  const [noticeFailure, setNoticeFailure] = useState<'denied' | 'no_background' | 'sync_refused' | undefined>();
 
   // Aanzetten is een tik van jou: eerst vraagt de telefoon om toestemming, dan meldt ASCEND
   // zich aan voor de periodieke sync. Lukt een van de twee niet, dan blijft de schakelaar uit
@@ -40,7 +43,10 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
     }
     const result = await enableMorningNotice();
     if (result === 'ok') await updateSettings({ morningNotice: { ...settings.morningNotice, enabled: true, time: notice.time } });
-    else setSheet('ochtendmelding-info');
+    else {
+      setNoticeFailure(result);
+      setSheet('ochtendmelding-info');
+    }
     reload();
   }
 
@@ -110,7 +116,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'ochtend-vanaf' && <ChoiceFromDef def={CHOICES.ochtendVanaf} value={o.morningCardFrom} onPick={(v) => set({ morningCardFrom: v })} onClose={close} />}
       {sheet === 'weekterugblik-dag' && <ChoiceFromDef def={CHOICES.terugblikDag} value={o.weekReviewDay} onPick={(v) => set({ weekReviewDay: v })} onClose={close} />}
       {sheet === 'ochtendmelding-tijd' && <ChoiceFromDef def={CHOICES.ochtendTijd} value={notice.time as typeof CHOICES.ochtendTijd.advice} onPick={(v) => void updateSettings({ morningNotice: { ...settings.morningNotice, time: v } })} onClose={close} />}
-      {sheet === 'ochtendmelding-info' && <NoticeInfoSheet support={facts.notice?.support} onClose={close} />}
+      {sheet === 'ochtendmelding-info' && <NoticeInfoSheet support={facts.notice?.support} failure={noticeFailure} onClose={() => { setNoticeFailure(undefined); close(); }} />}
       {sheet === 'weerplaats' && <PlaceSheet onClose={close} />}
       {sheet === 'kleding-voorkeur' && <ClothingSheet onClose={close} />}
     </>

@@ -121,3 +121,16 @@ export const NOTICE_SUPPORT_TEXT: Record<Exclude<NoticeSupport, 'ready'>, string
 // De telefoon zegt dat het kan, maar aanzetten lukte niet (de vraag om toestemming is gesloten
 // zonder antwoord, of de aanmelding is geweigerd).
 export const NOTICE_NOT_DONE_TEXT = 'Aanzetten is niet gelukt. Kies Toestaan als je telefoon om meldingen vraagt, of zet ze voor ASCEND aan in je telefoon, en probeer het nog eens.';
+
+// Meldingen mogen wel, maar Chrome weigert het wakker maken op de achtergrond. Chrome
+// geeft dat alleen aan een geïnstalleerde app die je een tijd vaak opent; ASCEND kan
+// dat niet afdwingen (zonder server bestaat er geen andere manier).
+export const NOTICE_SYNC_REFUSED_TEXT = 'Meldingen mogen, maar Chrome laat ASCEND nog niet op de achtergrond wakker worden. Chrome staat dat pas toe als je de app een tijd vaak opent. Probeer het over een paar dagen opnieuw; tot dan staat de vraag klaar als je de app opent.';
+
+// De tekst in het blad na een mislukte poging, of bij het tikken op de rij.
+export function noticeProblemText(support: NoticeSupport | undefined, failure?: 'denied' | 'no_background' | 'sync_refused'): string {
+  if (failure === 'sync_refused') return NOTICE_SYNC_REFUSED_TEXT;
+  if (support === undefined) return NOTICE_SUPPORT_TEXT.unavailable;
+  if (support === 'ready') return NOTICE_NOT_DONE_TEXT;
+  return NOTICE_SUPPORT_TEXT[support];
+}
