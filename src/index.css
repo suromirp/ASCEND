@@ -278,7 +278,8 @@ html[data-sky='night'] {
 
 /* Een kaart op de nachtlucht heeft een haarlijn in plaats van een witte schaduw. */
 html[data-sky='night'] .sky-band .ui-card,
-html[data-sky='night'] .light-card {
+html[data-sky='night'] .light-card,
+html[data-sky='night'] .sky-panel {
   box-shadow: inset 0 0 0 1px var(--color-light-border);
 }
 
@@ -373,6 +374,30 @@ html[data-sky='night'] .sky-band::before {
 .sky-band > :not(.sky-ridge) {
   position: relative;
   z-index: 1;
+}
+
+/* Een vlak lucht halverwege een pagina (SkyPanel): het verloop van de lucht, met een
+   smalle rand bergen onderaan. Geen animatie. */
+.sky-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 16px 16px 44px;
+  background: linear-gradient(180deg, var(--color-sky-top) 0%, var(--color-sky-bottom) 100%);
+}
+.sky-panel > :not(.sky-panel-ridge) {
+  position: relative;
+  z-index: 1;
+}
+.sky-panel > .sky-panel-ridge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 34px;
+  display: block;
+  pointer-events: none;
 }
 
 /* Splash/loading-screen brand mark (components/AscendAnimatedLogo.tsx):

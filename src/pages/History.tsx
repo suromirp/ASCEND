@@ -17,7 +17,7 @@ import { SPORT_LOOK, sportKeyOfLog, type SportKey } from '../components/logbook/
 import { usePageState } from '../components/usePageState';
 import { validMonthAnchor } from '../utils/pageMemory';
 import { Icon } from '../components/icons';
-import { SkyBand } from '../components/SkyBand';
+import { SkyBand, SkyPanel } from '../components/SkyBand';
 
 
 function computeMonthSummary(logs: SessionLog[]) {
@@ -184,7 +184,7 @@ export function HistoryPage() {
       </Card>
 
       {sportRows.length > 0 && (
-        <Card className="flex flex-col py-1">
+        <SkyPanel className="flex flex-col" label="Per sport">
           {sportRows.map((r, i) => {
             const look = SPORT_LOOK[r.key];
             const t = sportLine(r);
@@ -201,7 +201,7 @@ export function HistoryPage() {
               </div>
             );
           })}
-        </Card>
+        </SkyPanel>
       )}
 
       <WeekReviewList />

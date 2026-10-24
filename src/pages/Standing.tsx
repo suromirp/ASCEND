@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { Card, Eyebrow } from '../components/ui';
+import { Eyebrow } from '../components/ui';
 import { LegFatigueCard, useLegFatigueInputs } from '../components/LegFatigueCard';
 import { FreshnessChart } from '../components/stand/FreshnessChart';
 import { LegCalendar } from '../components/stand/LegCalendar';
@@ -26,7 +26,7 @@ import { deriveSessionStatus } from '../engine/sessionStatus';
 import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { Icon } from '../components/icons';
-import { SkyBand } from '../components/SkyBand';
+import { SkyBand, SkyPanel } from '../components/SkyBand';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -171,7 +171,7 @@ export function StandingPage() {
         )}
       </section>
 
-      <Card className="flex flex-col">
+      <SkyPanel className="flex flex-col" label="Je stand in vier regels">
         {rows.map((r, i) => (
           <div key={r.label} className={`flex flex-col gap-1 py-3 ${i === 0 ? 'pt-0' : 'border-t'} ${i === rows.length - 1 ? 'pb-0' : ''}`} style={{ borderColor: 'var(--color-card-border)' }}>
             <div className="flex items-baseline justify-between gap-3">
@@ -181,14 +181,14 @@ export function StandingPage() {
             {'dots' in r && r.dots && r.dots.length > 0 && (
               <div className="flex gap-1.5" aria-hidden>
                 {r.dots.map((done, j) => (
-                  <span key={j} className="h-1.5 flex-1 rounded-full" style={{ background: done ? 'var(--color-progress)' : 'var(--color-charcoal)' }} />
+                  <span key={j} className="h-1.5 flex-1 rounded-full" style={{ background: done ? 'var(--color-progress)' : 'var(--color-track)' }} />
                 ))}
               </div>
             )}
             {r.text && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{r.text}</p>}
           </div>
         ))}
-      </Card>
+      </SkyPanel>
 
       <section ref={(el) => { refs.current.lopen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Lopen">
         <RunTrendsCard />

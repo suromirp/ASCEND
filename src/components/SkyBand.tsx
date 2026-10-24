@@ -62,3 +62,19 @@ export function SkyBand({
     </div>
   );
 }
+
+// Een vlak lucht halverwege een lange pagina (docs/beslissingen/2026-10-24-lucht-halverwege.md):
+// hetzelfde verloop als de lucht bovenaan, met een smalle rand bergen onderaan, en
+// donker op licht via `.on-light`. 's Avonds volgt het de donkere lucht vanzelf.
+// Hoogstens één per pagina, nooit de eerste kaart (die staat al op de lucht).
+export function SkyPanel({ children, className = '', label }: { children: ReactNode; className?: string; label?: string }) {
+  return (
+    <section className={`sky-panel on-light ${className}`} aria-label={label}>
+      {children}
+      <svg className="sky-panel-ridge" viewBox="0 0 390 64" preserveAspectRatio="none" aria-hidden="true">
+        <path d={BACK_RIDGE} style={{ fill: 'var(--color-mountain-back)' }} />
+        <path d={FRONT_RIDGE} style={{ fill: 'var(--color-mountain-front)' }} />
+      </svg>
+    </section>
+  );
+}

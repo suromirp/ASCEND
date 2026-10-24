@@ -36,7 +36,8 @@ import { usePageState } from '../components/usePageState';
 import { useHorizonChange } from '../components/useHorizonChange';
 import { ImpactSheet } from '../components/ImpactSheet';
 import { goalDateProblem } from '../engine/goalDate';
-import { SkyBand } from '../components/SkyBand';
+import { SkyBand, SkyPanel } from '../components/SkyBand';
+import { Sheet } from '../components/settings/Sheet';
 import { TextButton } from '../components/TextButton';
 
 function blankGoalDraft(): TrainingGoal {
@@ -96,6 +97,7 @@ export function AscendPage() {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [showLadder, setShowLadder] = usePageState('showLadder', false);
   const [splitOpen, setSplitOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   // Archiving (below) sets status:'archived' in place rather than removing
   // the row, so every "find the live goal" lookup here must exclude it —
   // otherwise the dedicated GR5/Marathon cards would keep showing an
@@ -164,7 +166,12 @@ export function AscendPage() {
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Train. Progress. Explore. Ascend.</p>
           )}
         </div>
-        {goal && <RouteLine goal={goal} />}
+        {goal && (
+          <div className="self-start">
+            {goal.status === 'paused' && <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Gepauzeerd: nog geen streefdatum.</p>}
+            <TextButton onClick={() => setDetailsOpen(true)} icon="verder">Details van het doel</TextButton>
+          </div>
+        )}
       </SkyBand>
       {!goal && (
         <Card className="flex flex-col gap-3">
@@ -193,7 +200,7 @@ export function AscendPage() {
       )}
 
       {progress && goal && progress.currentMilestone && !showLadder && (
-        <Card className="flex flex-col gap-2">
+        <SkyPanel className="flex flex-col gap-2" label="Volgend kamp">
           <Eyebrow>VOLGEND KAMP</Eyebrow>
           <button onClick={() => setSelectedMilestoneId(progress.currentMilestone!.definition.id)} className="text-left">
             <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}><NumText>{progress.currentMilestone.definition.title}</NumText></p>
@@ -203,11 +210,11 @@ export function AscendPage() {
           </button>
           <div className="mt-1 flex gap-1">
             {progress.milestones.map((m) => (
-              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-action)' : m.status === 'current' ? 'var(--color-action-muted)' : 'var(--color-card-border)' }} />
+              <span key={m.definition.id} className="h-1.5 flex-1 rounded-full" style={{ background: m.status === 'completed' ? 'var(--color-action)' : m.status === 'current' ? 'var(--color-action-muted)' : 'var(--color-track)' }} />
             ))}
           </div>
           <button onClick={() => setShowLadder(true)} className="flex min-h-11 items-center justify-between text-sm" style={{ color: 'var(--color-ink-dim)' }}>Alle {progress.milestones.length} kampen bekijken<Icon name="omlaag" size={18} /></button>
-        </Card>
+        </SkyPanel>
       )}
 
       {progress && goal && showLadder && (
@@ -271,6 +278,16 @@ export function AscendPage() {
       </Card>
 
       <JourneyEntryCard />
+
+      {detailsOpen && goal && (
+        <Sheet eyebrow="Hoofddoel" title={goal.name} line="De route en wat er nog ontbreekt." onClose={() => setDetailsOpen(false)}>
+          <div className="flex flex-col gap-3 pb-4">
+            <GoalStatusNote status={goal.status} goal={goal} />
+            <RouteLine goal={goal} />
+            <SecondaryButton onClick={() => navigate('/ascend/doelen')}>Naar je doelen</SecondaryButton>
+          </div>
+        </Sheet>
+      )}
 
       {splitOpen && <TrainingSplitSheet onClose={() => setSplitOpen(false)} />}
 
