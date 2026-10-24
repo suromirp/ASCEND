@@ -78,7 +78,7 @@ describe('the weekly question about trouble', () => {
     expect(review().weeklyCheck).toBeUndefined();
   });
 
-  it('trouble that kept you from training: no build-up next week, and write it down under Blessures', () => {
+  it('trouble that kept you from training: no build-up next week, and write it down under Lichaam', () => {
     expect(review({ trouble: 'niet_kunnen', area: 'Kuit' }).advice[0]).toContain('niet verder op');
     expect(review({ trouble: 'minder', area: 'Knie', severity: 'matig' }).advice[0]).toContain('zonder extra opbouw');
     expect(review({ trouble: 'wel_gewoon', severity: 'mild' }).advice.join(' ')).toContain('lichte klacht');

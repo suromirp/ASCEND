@@ -650,6 +650,10 @@ export interface AppSettings {
   // dark. Optional and additive; read defensively, so no migration step is needed.
   sky?: 'auto' | 'day' | 'night';
   skyNightFrom?: 'zon' | '19:00' | '20:00' | '21:00' | '22:00';
+  // "Figuur" (engine/figureSettings.ts): of het figuur op Lichaam een man of een vrouw is.
+  // Absent = 'auto' (van de koppeling als die het weet, anders een man). Optional and
+  // additive; read defensively, so no migration step is needed.
+  figure?: 'auto' | 'man' | 'vrouw';
   // "Loopinzicht" (engine/runInsightSettings.ts): the two lines after a run or
   // tocht, the weather lookup and the chest strap. Absent or missing keys = the
   // advice. Optional and additive; travels with the settings in a backup, where

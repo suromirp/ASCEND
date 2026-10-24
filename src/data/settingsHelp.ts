@@ -12,6 +12,14 @@ export interface SettingsHelp {
 }
 
 export const SETTINGS_HELP: Record<string, SettingsHelp> = {
+  figuur: {
+    title: 'Figuur',
+    lead: 'Op het scherm Lichaam tik je op een spier of gewricht. Hier kies je of dat figuur een man of een vrouw is.',
+    points: [
+      { head: 'Automatisch', text: 'ASCEND neemt het over van een koppeling als die het weet. Nu weet geen enkele koppeling het, dus je ziet dan een man.' },
+      { head: 'Man of vrouw', text: 'het silhouet verschilt een beetje in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
+    ],
+  },
   lucht: {
     title: 'Lucht bovenaan',
     lead: 'De lichte lucht met bergen bovenaan een tab kan in de avond fel zijn. Hier kies je wanneer ze donker wordt.',

@@ -46,3 +46,50 @@ scherm; oude links sturen door.
 
 Het poppetje op Vandaag weer de lijst laten openen en de route naar Blessures
 terugzetten. De gegevens (rekoefeningen, pijnmeldingen) veranderen niet.
+
+## Aanvulling
+
+Gebouwd op 24 oktober 2026, op de branch `claude/lichaam-als-figuur`.
+
+Wat er staat: het scherm `/lichaam` met de keuze Voorkant of Achterkant, het figuur in
+lijnstijl met 17 plekken voor en 11 achter (elk een tikdoel van minstens 44 bij 44 px),
+een balk met de gekozen plek en "Bekijk wat helpt", en daaronder de open klachten en,
+weggeklapt, de opgeloste. Het detail is een eigen route (`/lichaam/:plek`) met de vier
+delen: wat je doet bij last met wanneer je naar een fysio gaat, rekken en losmaken (de
+bestaande rekoefeningen), voorkomen (twee tot vier oefeningen per plek, met de
+onderbouwing en de sterkte van het bewijs uit `docs/onderzoek/`) en melden. De koppeling
+tussen plek en inhoud is data (`src/data/bodySpots.ts`, `bodyCare.ts`, `bodyFigure.ts`)
+plus pure functies met tests (`src/engine/bodyMap.ts`). Het poppetje op Vandaag opent het
+scherm; `/stretches`, `/stretches/:areaId` en `/blessures` sturen door (een groep
+rekoefeningen naar de bijbehorende plek). De pagina's Rekoefeningen, Rekoefening per
+groep en Blessures zijn verwijderd. De instelling Figuur (Automatisch, Man, Vrouw) staat
+bij Lichaam.
+
+Waar ik afweek of wat ik besliste:
+
+- Melden verandert de planning niet, dus er is geen voorstel met Akkoord. Een klacht
+  wordt vastgelegd met `addInjury`; wat de app daarmee doet is alleen de hint
+  INJURY-LEGS bij een klacht aan been of voet. De tekst bij het knopje zegt dat eerlijk.
+  Het ontwerp beloofde "ASCEND stelt daarna een aangepaste week voor"; dat doet de app
+  nu niet en dat staat er daarom niet. Zodra melden de planning wel gaat veranderen,
+  hoort er een voorstel met Akkoord tussen.
+- De naam van een klacht is de blessurenaam met de kant erachter ("Knie rechts"), zodat
+  de bestaande hint hem herkent. Daarvoor kwamen 'scheen' en 'bil' bij de beenplekken
+  van die hint, en 'Borst', 'Buik', 'Bil' en 'Onderarm' bij de lijst blessurenamen.
+- Het geslacht van de koppeling is nergens beschikbaar: intervals.icu wordt alleen voor
+  trainingen en welzijn gelezen en geen import levert het. Automatisch valt dus terug op
+  Man en de rij zegt "Nog niet bekend, we tonen Man". `resolveFigure` neemt al een
+  `linkedSex` aan voor als een koppeling het ooit levert.
+- De instelling is een optioneel veld (`AppSettings.figure`), gelezen met een
+  terugval, net als Beweging en Lucht bovenaan. Daarom geen migratiestap: een back-up
+  zonder het veld importeert als Automatisch.
+- De gekozen plek staat in een compacte balk die onderaan het scherm blijft hangen, niet
+  eronder zoals in het ontwerp, omdat op een telefoon de ruimte onder het figuur buiten
+  beeld valt. De pagina schuift een stukje op als de gekozen plek onder de balk zou
+  liggen.
+- De voorkom-oefeningen hebben geen videolink: er was geen gecontroleerde bron, dus
+  geen verzonnen link. Waar de onderzoeken niets over een plek zeggen (nek, onderarm),
+  staat dat in de onderbouwing.
+- Het verschil tussen man en vrouw zit in het silhouet (schouders, taille, heupen) en in
+  de borstlijn, zonder geslachtsdelen.
+

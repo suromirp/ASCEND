@@ -7,6 +7,7 @@ import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightsInUse, WEI
 import { zoneBpm } from '../../../engine/heartRateZones';
 import { heartRateProblem, type HeartRateField } from '../../../engine/inputLimits';
 import { shortDate } from '../../../engine/settingsSummary';
+import { resolveFigureSetting } from '../../../engine/figureSettings';
 import { formatNumberNL } from '../../../utils/number';
 import { todayISO } from '../../../utils/dates';
 import { NumberField } from '../../NumberField';
@@ -156,5 +157,18 @@ export function HeartRateSheet({ onClose }: { onClose: () => void }) {
         <p className="st-hint">Vul je drempel in, dan staan de zones in slagen per minuut.</p>
       )}
     </Sheet>
+  );
+}
+
+// Figuur: man, vrouw of Automatisch (van de koppeling, anders een man). Het blad sluit na een keuze.
+export function FigureSheet({ onClose }: { onClose: () => void }) {
+  const { settings, updateSettings } = useAppData();
+  return (
+    <ChoiceFromDef
+      def={CHOICES.figuur}
+      value={resolveFigureSetting(settings)}
+      onPick={(v) => void updateSettings({ figure: v })}
+      onClose={onClose}
+    />
   );
 }

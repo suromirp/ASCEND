@@ -173,6 +173,14 @@ const PATHS = {
       <path d="M7.4 15.4c1.4 1.6 3 2.2 4.6 2.2s3.2-.6 4.6-2.2" />
     </>
   ),
+  // Een driehoek met een uitroepteken: let op (een reden om naar een fysio te gaan).
+  letOp: (
+    <>
+      <path d="M12 3.5l9 15.5H3z" />
+      <path d="M12 10v4" />
+      <path d="M12 16.8v.4" />
+    </>
+  ),
   // Een pijltje naar rechts, voor een regel die naar een ander scherm gaat.
   verder: <path d="M9.5 6l6 6-6 6" />,
   // Terug naar het vorige scherm, en het teken in een InfoButton.

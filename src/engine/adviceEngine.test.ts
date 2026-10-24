@@ -295,3 +295,20 @@ describe('LIGHT-TWICE', () => {
     expect(computeAdvice(inputs({ ...base, logs: hard })).some((a) => a.ruleId === 'LIGHT-TWICE')).toBe(true);
   });
 });
+
+describe('INJURY-LEGS', () => {
+  // Elke plek op het figuur van Lichaam hoort, als het een been of voet is, een hint te geven.
+  it('geeft een hint bij een open klacht aan been en voet, ook bij scheen en bil', () => {
+    for (const bodyPart of ['Knie rechts', 'Quadriceps links', 'Scheen rechts', 'Bil links', 'Achillespees rechts']) {
+      const injury = { id: 'i1', date: '2026-09-28', bodyPart, severity: 'licht' as const };
+      expect(computeAdvice(inputs({ injuries: [injury] })).some((a) => a.ruleId === 'INJURY-LEGS'), bodyPart).toBe(true);
+    }
+  });
+
+  it('geeft geen hint bij een klacht aan nek of schouder, of als hij al opgelost is', () => {
+    const open = { id: 'i1', date: '2026-09-28', bodyPart: 'Nek', severity: 'licht' as const };
+    expect(computeAdvice(inputs({ injuries: [open] })).some((a) => a.ruleId === 'INJURY-LEGS')).toBe(false);
+    const done = { id: 'i2', date: '2026-09-28', bodyPart: 'Knie links', severity: 'licht' as const, resolvedDate: '2026-09-29' };
+    expect(computeAdvice(inputs({ injuries: [done] })).some((a) => a.ruleId === 'INJURY-LEGS')).toBe(false);
+  });
+});

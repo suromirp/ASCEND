@@ -38,7 +38,7 @@ describe('pain after a run or a hike', () => {
     const now = log('tpl_easy_run', '2026-10-08', { id: 'now', painAreas: ['Knie'] });
     expect(coachReaction(now, t('tpl_easy_run'), program)).toContain('Pijn aan je knie.');
     const earlier = log('tpl_long_run', '2026-10-04', { id: 'earlier', painAreas: ['Knie', 'Enkel'] });
-    expect(coachReaction(now, t('tpl_easy_run'), program, [earlier, now])).toMatch(/^Knie deed de afgelopen twee weken vaker pijn\. Zet het bij Blessures/);
+    expect(coachReaction(now, t('tpl_easy_run'), program, [earlier, now])).toMatch(/^Knie deed de afgelopen twee weken vaker pijn\. Meld het bij Lichaam/);
     const longAgo = log('tpl_long_run', '2026-09-20', { id: 'old', painAreas: ['Knie'] });
     expect(coachReaction(now, t('tpl_easy_run'), program, [longAgo, now])).toContain('Pijn aan je knie.');
   });

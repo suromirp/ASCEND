@@ -14,6 +14,8 @@ export const MUSCLE_GROUP_OPTIONS = [
 export const BODY_PART_OPTIONS = [
   'Knie', 'Enkel', 'Heup', 'Onderrug', 'Bovenrug', 'Schouder', 'Elleboog', 'Pols',
   'Nek', 'Hamstring', 'Kuit', 'Voet', 'Achillespees', 'Quadriceps', 'Scheen',
+  // Erbij voor het figuur op Lichaam (data/bodySpots.ts): elke plek op het figuur heeft hier een naam.
+  'Borst', 'Buik', 'Bil', 'Onderarm',
 ] as const;
 
 // After a run or a hike: the spots that usually speak up first.
