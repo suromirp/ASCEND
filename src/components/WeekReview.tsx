@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { buildWeekReview, type WeekReview } from '../engine/weekReview';
+import { intentionForWeek } from '../engine/weeklyQuestion';
 import { addDays, formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
-import { Card, Eyebrow, SecondaryButton } from './ui';
+import { IconDisc } from './SportDisc';
+import { Card, Chip, Eyebrow, InfoButton, Ring, SecondaryButton, Segmented, Stat } from './ui';
 import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../models/checkIn';
 import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
-import { WeeklyPlanSection } from './WeeklyQuestionCard';
 import { Icon } from './icons';
 import { DisclosureRow } from './DisclosureRow';
 import { usePageState } from './usePageState';
@@ -27,7 +28,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
   if (!review || review.planned === 0) return null;
   return (
     <Card className="flex flex-col gap-2">
-      <Eyebrow>WEEKTERUGBLIK</Eyebrow>
+      <Eyebrow>Weekterugblik</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
         {review.done} van {review.planned} trainingen · {formatHoursMinutesNL(review.minutes)}
       </p>
@@ -78,85 +79,104 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+// 141 minuten wordt "2:21 uur", 45 minuten "45 min".
+function clock(minutes: number): { value: string; unit: string } {
+  const m = Math.max(0, Math.round(minutes));
+  if (m < 60) return { value: String(m), unit: 'min' };
+  return { value: `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`, unit: 'uur' };
+}
+
+// "Week 1 van 26, opbouw" + "Wennen" wordt "opbouw, week 1 · wennen".
+function nextLabel(next: NonNullable<WeekReview['next']>): string {
+  const m = next.title.match(/^Week (\d+) van \d+, (.+)$/);
+  const base = m ? `${m[2]}, week ${m[1]}` : next.title;
+  return `${base}${next.note ? ` · ${next.note.toLowerCase()}` : ''}`;
+}
+
 export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClose: () => void }) {
   const { closing, requestClose } = useSheetClose(onClose);
+  const { settings } = useAppData();
+  const intention = intentionForWeek(settings.weeklyIntentions, review.weekStart);
+  const time = clock(review.minutes);
+  const nextTime = review.next ? clock(review.next.minutes) : null;
+  const unit = (n: number) => (n === 1 ? 'training' : 'trainingen');
+  const felt = [review.heavier > 0 ? `${review.heavier} ${unit(review.heavier)} zwaarder dan gepland` : '', review.lighter > 0 ? `${review.lighter} ${unit(review.lighter)} lichter dan gepland` : ''].filter(Boolean).join(', ');
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-8">
-            <div className="-mt-2"><SheetHeader eyebrow={`Week van ${formatDateNL(review.weekStart)}`} title="Je week" onClose={requestClose} /></div>
-            <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{review.title}</p>
-
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {[
-                { value: `${review.done}/${review.planned}`, label: 'trainingen' },
-                { value: formatHoursMinutesNL(review.minutes), label: 'getraind' },
-                { value: review.avgRpe !== undefined ? String(review.avgRpe).replace('.', ',') : 'n.v.t.', label: 'gem. zwaarte' },
-              ].map((f) => (
-                <div key={f.label} className="rounded-xl border px-2.5 py-2.5" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
-                  <p className={`font-sans tabular-nums leading-tight ${f.value.length > 9 ? 'text-sm' : 'text-lg'}`} style={{ color: 'var(--color-ink)' }}>{f.value}</p>
-                  <p className="mt-0.5 text-xs leading-tight" style={{ color: 'var(--color-ink-dim)' }}>{f.label}</p>
-                </div>
-              ))}
+            <div className="-mt-2">
+              <SheetHeader eyebrow={`Week van ${formatDateNL(review.weekStart)}`} title="Je week" facts={review.title.replace(', ', ' · ')} onClose={requestClose} />
             </div>
-            {review.perSport.length > 0 && (
-              <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{review.perSport.join(' · ')}</p>
+
+            <div className="mt-4 flex items-center gap-5">
+              <Ring value={review.planned > 0 ? review.done / review.planned : 0} label={`${review.done} van ${review.planned} trainingen gedaan`} size={88} stroke={8}>
+                <span className="font-sans text-xl font-semibold leading-none tabular-nums" style={{ color: 'var(--color-ink)' }}>{review.done}/{review.planned}</span>
+                <span className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>gedaan</span>
+              </Ring>
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <Stat label="Tijd" value={time.value} unit={time.unit} size="l" />
+                {review.perSport.length > 0 && (
+                  <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{review.perSport.map((p) => p.replace(': ', ' ')).join(' · ')}</p>
+                )}
+                {review.avgRpe !== undefined && (
+                  <p className="font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>gem. zwaarte {String(review.avgRpe).replace('.', ',')}</p>
+                )}
+              </div>
+            </div>
+            {(felt || review.pain.length > 0) && (
+              <div className="mt-3 flex flex-col gap-1">
+                {felt && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{felt.charAt(0).toUpperCase() + felt.slice(1)}.</p>}
+                {review.pain.length > 0 && <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Pijn: {review.pain.join(', ')}.</p>}
+              </div>
             )}
 
             {review.advice.length > 0 && (
-              <Section title="DE COACH">
+              <Section title="De coach">
                 <div className="flex flex-col gap-2">
                   {review.advice.map((a) => (
-                    <p key={a} className="rounded-xl border p-3 text-sm leading-relaxed" style={{ borderColor: 'var(--color-bronze-dark)', color: 'var(--color-ink)' }}>{a}</p>
+                    <p key={a} className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{a}</p>
                   ))}
                 </div>
               </Section>
             )}
 
-            <Section title="KLACHTEN">
-              <WeeklyHealthQuestion weekStart={review.weekStart} />
-            </Section>
+            <WeeklyHealthQuestion weekStart={review.weekStart} />
 
             {review.missed.length > 0 && (
-              <Section title="NIET GEDAAN">
+              <Section title="Niet gedaan">
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{review.missed.join(', ')}</p>
               </Section>
             )}
 
-            {(review.heavier > 0 || review.lighter > 0 || review.pain.length > 0) && (
-              <Section title="HOE HET VOELDE">
-                {(review.heavier > 0 || review.lighter > 0) && (
-                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-                    {[review.heavier > 0 ? `${review.heavier} zwaarder dan gepland` : '', review.lighter > 0 ? `${review.lighter} lichter dan gepland` : ''].filter(Boolean).join(', ')}.
-                  </p>
-                )}
-                {review.pain.length > 0 && (
-                  <p className="text-sm" style={{ color: 'var(--color-warning)' }}>Pijn: {review.pain.join(', ')}.</p>
-                )}
-              </Section>
-            )}
-
-            <WeeklyPlanSection weekStart={review.weekStart} />
-
             {review.changes.length > 0 && (
-              <Section title="WAT ASCEND AANPASTE">
+              <Section title="Wat ASCEND aanpaste">
                 <ul className="flex flex-col gap-1">
                   {review.changes.map((c) => <li key={c} className="text-sm" style={{ color: 'var(--color-ink)' }}>{c}</li>)}
                 </ul>
               </Section>
             )}
 
-            {review.next && (
-              <Section title="VOLGENDE WEEK">
-                <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{review.next.title}{review.next.note ? ` · ${review.next.note.toLowerCase()}` : ''}</p>
-                <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{formatHoursMinutesNL(review.next.minutes)} gepland</p>
-                {review.next.key && <p className="mt-1 text-xs" style={{ color: 'var(--color-action)' }}>{review.next.key}</p>}
+            {intention?.answer && (
+              <Section title="Waarom je dit doet">
+                <blockquote className="border-l-2 pl-3 text-sm italic leading-relaxed" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{intention.answer}</blockquote>
               </Section>
             )}
 
-            <div className="mt-4"><SettingsLinkRow page="vandaag" row="weekterugblik" /></div>
-            <button onClick={requestClose} className="mt-2 min-h-[44px] w-full text-center text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sluiten</button>
+            {review.next && nextTime && (
+              <div className="mt-5 flex items-center gap-3 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
+                <IconDisc icon="week" size={40} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Volgende week: {nextLabel(review.next)}</p>
+                  <p className="mt-0.5 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+                    {nextTime.value} {nextTime.unit} gepland{review.next.key ? ` · ${review.next.key.charAt(0).toLowerCase()}${review.next.key.slice(1).replace(': ', ' ')}` : ''}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <SettingsLinkRow page="vandaag" row="weekterugblik" />
           </Card>
         </div>
       </div>
@@ -164,50 +184,63 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
   );
 }
 
-const TROUBLE: [WeeklyTrouble, string][] = [
-  ['geen', 'Nee, ik kon alles doen'],
-  ['wel_gewoon', 'Ja, maar ik kon gewoon trainen'],
-  ['minder', 'Ja, ik moest minder of anders trainen'],
-  ['niet_kunnen', 'Ja, ik kon niet trainen'],
+// [waarde, kort label, regel bij "Klachten:", volledige zin]
+const TROUBLE: [WeeklyTrouble, string, string, string][] = [
+  ['geen', 'Nee', 'nee', 'Nee, ik kon alles doen'],
+  ['wel_gewoon', 'Ja, kon trainen', 'ja, kon trainen', 'Ja, maar ik kon gewoon trainen'],
+  ['minder', 'Ja, minder getraind', 'ja, minder getraind', 'Ja, ik moest minder of anders trainen'],
+  ['niet_kunnen', 'Ja, kon niet', 'ja, kon niet trainen', 'Ja, ik kon niet trainen'],
 ];
 const SEVERITY: [TroubleSeverity, string][] = [['mild', 'Mild'], ['matig', 'Matig'], ['ernstig', 'Ernstig']];
 
 // One question a week (OSTRC-O2 in short): did leg, foot or back trouble from
-// training get in the way? Only with a yes: where, and how bad.
+// training get in the way? Only with a yes: where, and how bad. Answered: one
+// line with "Wijzigen". The answer is saved exactly as before.
 function WeeklyHealthQuestion({ weekStart }: { weekStart: string }) {
   const { settings, updateSettings } = useAppData();
   const saved = settings.weeklyHealthChecks?.find((c) => c.weekStart === weekStart);
   const [draft, setDraft] = useState<WeeklyHealthCheck | undefined>(saved);
+  const [asking, setAsking] = useState(!saved);
+  const [why, setWhy] = useState(false);
   const save = (next: WeeklyHealthCheck) => {
     setDraft(next);
     const others = (settings.weeklyHealthChecks ?? []).filter((c) => c.weekStart !== weekStart);
     void updateSettings({ weeklyHealthChecks: [...others, next].sort((a, b) => a.weekStart.localeCompare(b.weekStart)).slice(-26) });
   };
-  const chip = (on: boolean) => ({ borderColor: on ? 'var(--color-action)' : 'var(--color-card-border)', color: on ? 'var(--color-action)' : 'var(--color-ink)' });
+  const currentRow = TROUBLE.find(([k]) => k === draft?.trouble);
+  if (!asking && draft && currentRow) {
+    const detail = draft.trouble !== 'geen' ? [draft.area?.toLowerCase(), draft.severity].filter(Boolean).join(', ') : '';
+    return (
+      <div className="mt-5 flex min-h-[44px] items-center justify-between gap-3">
+        <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)' }}>Klachten: {currentRow[2]}{detail ? ` (${detail})` : ''}</p>
+        <button type="button" onClick={() => setAsking(true)} className="flex min-h-[44px] shrink-0 items-center px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Wijzigen</button>
+      </div>
+    );
+  }
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm" style={{ color: 'var(--color-ink)' }}>Had je deze week klachten aan je benen, voeten of rug door het trainen?</p>
-      <div className="flex flex-col gap-1.5">
-        {TROUBLE.map(([k, text]) => (
-          <button key={k} onClick={() => save({ weekStart, trouble: k, area: k === 'geen' ? undefined : draft?.area, severity: k === 'geen' ? undefined : draft?.severity })} aria-pressed={draft?.trouble === k} className="min-h-[44px] rounded-xl border px-3 text-left text-xs" style={chip(draft?.trouble === k)}>
-            {text}
-          </button>
+    <div className="mt-5 flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)' }}>Had je deze week klachten aan je benen, voeten of rug door het trainen?</p>
+        <InfoButton onClick={() => setWhy((v) => !v)} label="Waarom vraagt ASCEND dit?" />
+      </div>
+      {why && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Zo ziet ASCEND vroeg of je wat rustiger aan moet doen, voordat een klacht een blessure wordt.</p>}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Klachten deze week">
+        {TROUBLE.map(([k, short, , full]) => (
+          <Chip key={k} label={full} selected={draft?.trouble === k} onClick={() => save({ weekStart, trouble: k, area: k === 'geen' ? undefined : draft?.area, severity: k === 'geen' ? undefined : draft?.severity })}>{short}</Chip>
         ))}
       </div>
+      {currentRow && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{currentRow[3]}</p>}
       {draft && draft.trouble !== 'geen' && (
         <>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {[...PAIN_AREA_OPTIONS].map((a) => (
-              <button key={a} onClick={() => save({ ...draft, area: draft.area === a ? undefined : a })} aria-pressed={draft.area === a} className="min-h-[44px] rounded-lg border px-2.5 text-xs" style={chip(draft.area === a)}>{a}</button>
+              <Chip key={a} selected={draft.area === a} onClick={() => save({ ...draft, area: draft.area === a ? undefined : a })}>{a}</Chip>
             ))}
           </div>
-          <div className="grid grid-cols-3 gap-1.5">
-            {SEVERITY.map(([k, text]) => (
-              <button key={k} onClick={() => save({ ...draft, severity: draft.severity === k ? undefined : k })} aria-pressed={draft.severity === k} className="min-h-[44px] rounded-lg border text-xs" style={chip(draft.severity === k)}>{text}</button>
-            ))}
-          </div>
+          <Segmented label="Hoe erg" value={draft.severity} onChange={(k) => save({ ...draft, severity: draft.severity === k ? undefined : k })} options={SEVERITY.map(([value, label]) => ({ value, label }))} tall />
         </>
       )}
+      {draft && <SecondaryButton onClick={() => setAsking(false)}>Klaar</SecondaryButton>}
     </div>
   );
 }
