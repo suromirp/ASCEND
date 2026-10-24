@@ -114,7 +114,7 @@ export interface AdviceInputs {
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
-const LEG_BODY_PARTS = ['knie', 'enkel', 'heup', 'hamstring', 'kuit', 'voet', 'achilles', 'quadriceps', 'been', 'benen'];
+const LEG_BODY_PARTS = ['knie', 'enkel', 'heup', 'hamstring', 'kuit', 'voet', 'achilles', 'quadriceps', 'scheen', 'bil', 'been', 'benen'];
 
 // A planned session counts as done when it has its own log, or when the
 // same training was logged within two days of it without being linked

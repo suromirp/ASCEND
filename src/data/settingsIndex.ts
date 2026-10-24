@@ -64,7 +64,8 @@ export const SETTINGS_INDEX: SettingsIndexItem[] = [
   { id: 'kabels', title: 'Kabels en toestellen', group: 'forge', note: 'Hoeveel het gewichtenblok per stand zwaarder wordt.', keywords: ['sportschool', 'toestel', 'stack', 'blok', 'forge'] },
   { id: 'ambitie', title: 'Ambitie', group: 'planning', note: 'Hoe snel hardlopen en wandelen opbouwen.', keywords: ['tempo', 'opbouw', 'rustig', 'stevig', 'progressie', 'snelheid'] },
   { id: 'hartslag', title: 'Mijn hartslag', group: 'lichaam', note: 'Je eigen hartslagwaarden, zodat zones in slagen per minuut staan.', keywords: ['zones', 'bpm', 'maximale hartslag', 'rusthartslag', 'drempel', 'horloge'] },
-  { id: 'blessures', title: 'Blessures', group: 'lichaam', note: 'Waar je last van hebt, zodat ASCEND er rekening mee houdt.', keywords: ['pijn', 'last', 'knie', 'enkel', 'gezondheid', 'ziek'], route: '/blessures' },
+  { id: 'blessures', title: 'Blessures', group: 'lichaam', note: 'Waar je last van hebt, zodat ASCEND er rekening mee houdt.', keywords: ['pijn', 'last', 'knie', 'enkel', 'gezondheid', 'ziek'], route: '/lichaam' },
+  { id: 'figuur', title: 'Figuur', group: 'lichaam', note: 'Het lichaam op het scherm Lichaam is een man of een vrouw. Automatisch neemt het over van je koppeling.', keywords: ['lichaam', 'man', 'vrouw', 'geslacht', 'figuur', 'silhouet', 'poppetje', 'anatomie', 'spieren'] },
   { id: 'lichaamsgewicht', title: 'Lichaamsgewicht', group: 'lichaam', note: 'Je trendgewicht, voor rugzakgewicht als deel van je lichaamsgewicht.', keywords: ['gewicht', 'kilo', 'kg', 'wegen', 'weegschaal', 'herinnering'] },
   { id: 'herinnering-gewicht', title: 'Herinnering voor je gewicht', group: 'lichaam', note: 'Hoe vaak Vandaag vraagt om je trendgewicht bij te werken.', keywords: ['gewicht', 'wegen', 'herinnering', 'weekgewicht', 'elke dag', 'dagelijks', 'om de dag', 'elke week', 'nooit'] },
 

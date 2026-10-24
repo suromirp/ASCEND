@@ -259,6 +259,18 @@ export const CHOICES = {
       { value: '22:00', label: '22:00', short: 'Vanaf 22:00' },
     ],
   }),
+  figuur: def({
+    group: 'Lichaam',
+    title: 'Figuur',
+    line: 'Het lichaam op het scherm Lichaam, als man of als vrouw.',
+    advice: 'auto' as 'auto' | 'man' | 'vrouw',
+    help: 'figuur',
+    options: [
+      { value: 'auto', label: 'Automatisch', note: 'Van je koppeling, als die het weet. Anders een man', short: 'Automatisch' },
+      { value: 'man', label: 'Man', short: 'Man' },
+      { value: 'vrouw', label: 'Vrouw', short: 'Vrouw' },
+    ],
+  }),
   ochtendTijd: def({
     group: 'Vandaag en meldingen',
     title: 'Tijd van de ochtendmelding',

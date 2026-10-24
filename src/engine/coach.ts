@@ -89,7 +89,7 @@ function joinNL(items: string[]): string {
 }
 
 // Pain comes first: it decides what tomorrow looks like. The same spot
-// twice in two weeks is a pattern, worth writing down under Blessures,
+// twice in two weeks is a pattern, worth writing down under Lichaam,
 // where ASCEND takes it into account (engine/adviceEngine.ts#injuryAdvice).
 // The pain-monitoring model (docs/onderzoek/Pijn spierpijn en vermoeidheid
 // melden.md): up to 2 is fine if it is gone by the morning, 3 to 5 holds
@@ -114,7 +114,7 @@ function painReaction(log: SessionLog, history: SessionLog[]): string | undefine
   const where = joinNL(areas.map((a) => a.toLowerCase()));
   if (again.length > 0) {
     const which = joinNL(again.map((a) => a.toLowerCase()));
-    return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Zet het bij Blessures, dan houdt ASCEND er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
+    return `${which.charAt(0).toUpperCase()}${which.slice(1)} deed de afgelopen twee weken vaker pijn. Meld het bij Lichaam, dan houdt ASCEND er rekening mee. Wordt het erger, laat een fysiotherapeut ernaar kijken.`;
   }
   return `Pijn aan je ${where}. Trainen mag, zolang het morgenochtend niet erger is; de komende 2 weken bouwt ASCEND op die plek niet verder op. Scherpe pijn of pijn die erger wordt is een reden om te stoppen.`;
 }

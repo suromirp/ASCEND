@@ -193,13 +193,13 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     advice.push(`${byId.get(repeated)?.name} viel twee weken op rij weg. Past een andere dag beter? Verplaats hem in Week, dan houdt ASCEND er rekening mee.`);
   }
   if ([...painCount.values()].some((n) => n >= 2) && advice.length < 3) {
-    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Zet het bij Blessures, dan houdt ASCEND er rekening mee, en bouw volgende week niet verder op.');
+    advice.push('Dezelfde plek deed deze week meer dan eens pijn. Meld het bij Lichaam, dan houdt ASCEND er rekening mee, en bouw volgende week niet verder op.');
   }
   // The weekly question (OSTRC-style): what the answer means for next week.
   if (weeklyCheck && weeklyCheck.trouble !== 'geen') {
     const where = weeklyCheck.area ? ` aan je ${weeklyCheck.area.toLowerCase()}` : '';
     if (weeklyCheck.trouble === 'niet_kunnen' || weeklyCheck.severity === 'ernstig') {
-      advice.unshift(`Je kon door klachten${where} niet trainen. Bouw volgende week niet verder op, zet het bij Blessures en laat het bekijken als het niet binnen 2 tot 3 weken beter wordt.`);
+      advice.unshift(`Je kon door klachten${where} niet trainen. Bouw volgende week niet verder op, meld het bij Lichaam en laat het bekijken als het niet binnen 2 tot 3 weken beter wordt.`);
     } else if (weeklyCheck.trouble === 'minder' || weeklyCheck.severity === 'matig') {
       advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
     } else {

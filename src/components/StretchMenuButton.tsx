@@ -1,68 +1,21 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PROBLEM_AREAS } from '../data/stretches';
 import { Icon } from './icons';
-import { TodaySheet } from './vandaag/TodaySheet';
 
-// Hoeveel minuten de oefeningen van een plek samen duren (afgerond, minstens 1).
-function minutesOf(area: (typeof PROBLEM_AREAS)[number]): number {
-  return Math.max(1, Math.round(area.stretches.reduce((n, s) => n + (s.durationSec ?? 30), 0) / 60));
-}
-
-// Het knopje met het kleine lichaam bovenaan Vandaag, direct links van het tandwiel: een
-// blad met de plekken waar je last van hebt, zoals elke andere keuze in de app (geen los
-// uitklapmenu over de kaarten). Alleen het pictogram, zonder cirkel, in dezelfde kleur
-// als het tandwiel; het tikdoel is 44 bij 44 px.
+// Het knopje met het kleine lichaam bovenaan Vandaag, direct links van het tandwiel: het
+// opent het scherm Lichaam, met het figuur waarop je aanwijst waar het zit
+// (docs/beslissingen/2026-10-24-lichaam-als-figuur.md). Alleen het pictogram, zonder
+// cirkel, in dezelfde kleur als het tandwiel; het tikdoel is 44 bij 44 px.
 export function StretchMenuButton() {
-  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Lichaam: rekken en klachten"
-        aria-haspopup="dialog"
-        className="flex h-11 w-11 shrink-0 items-center justify-center"
-        style={{ color: 'var(--color-on-light)' }}
-      >
-        <Icon name="lichaam" size={24} />
-      </button>
-
-      {open && (
-        <TodaySheet eyebrow="Rekken" title="Waar zit het?" onClose={() => setOpen(false)}>
-          {(close) => {
-            const go = (path: string) => {
-              close();
-              navigate(path);
-            };
-            return (
-              <div className="flex flex-col">
-                {PROBLEM_AREAS.map((area) => (
-                  <button
-                    key={area.id}
-                    type="button"
-                    onClick={() => go(`/stretches/${area.id}`)}
-                    className="flex min-h-[52px] items-center justify-between gap-3 border-b text-left"
-                    style={{ borderColor: 'var(--color-card-border)' }}
-                  >
-                    <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>{area.label}</span>
-                    <span className="flex shrink-0 items-center gap-2 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-                      {area.stretches.length} oefeningen · {minutesOf(area)} min
-                      <Icon name="verder" size={16} />
-                    </span>
-                  </button>
-                ))}
-                <button type="button" onClick={() => go('/stretches')} className="flex min-h-[52px] items-center justify-between gap-3 text-left">
-                  <span className="text-[15px]" style={{ color: 'var(--color-ink)' }}>Alle rekoefeningen</span>
-                  <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={16} /></span>
-                </button>
-              </div>
-            );
-          }}
-        </TodaySheet>
-      )}
-    </>
+    <button
+      type="button"
+      onClick={() => navigate('/lichaam')}
+      aria-label="Lichaam: rekken en klachten"
+      className="flex h-11 w-11 shrink-0 items-center justify-center"
+      style={{ color: 'var(--color-on-light)' }}
+    >
+      <Icon name="lichaam" size={24} />
+    </button>
   );
 }

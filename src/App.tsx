@@ -29,11 +29,12 @@ import { HistoryPage } from './pages/History';
 import { SettingsOverview } from './pages/settings/SettingsOverview';
 import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
 import { KnowledgePage, KnowledgeTopicPage } from './pages/Knowledge';
+import { StretchAreaRedirect } from './pages/StretchAreaRedirect';
 // Pages you open now and then load on demand, so the first start only
 // downloads what Today needs. The service worker precaches every chunk, so
 // they still work offline.
-const StretchesPage = lazy(() => import('./pages/Stretches').then((m) => ({ default: m.StretchesPage })));
-const StretchAreaPage = lazy(() => import('./pages/StretchArea').then((m) => ({ default: m.StretchAreaPage })));
+const BodyPage = lazy(() => import('./pages/Body').then((m) => ({ default: m.BodyPage })));
+const BodySpotPage = lazy(() => import('./pages/BodySpot').then((m) => ({ default: m.BodySpotPage })));
 const GarminLinkPage = lazy(() => import('./pages/GarminLink').then((m) => ({ default: m.GarminLinkPage })));
 const MacroFactorImportPage = lazy(() => import('./pages/MacroFactorImport').then((m) => ({ default: m.MacroFactorImportPage })));
 const SourcesPage = lazy(() => import('./pages/Sources').then((m) => ({ default: m.SourcesPage })));
@@ -41,7 +42,6 @@ const WeatherPage = lazy(() => import('./pages/Weather').then((m) => ({ default:
 const ForgePage = lazy(() => import('./pages/Forge').then((m) => ({ default: m.ForgePage })));
 const TrainingSpotsPage = lazy(() => import('./pages/TrainingSpots').then((m) => ({ default: m.TrainingSpotsPage })));
 const StandingPage = lazy(() => import('./pages/Standing').then((m) => ({ default: m.StandingPage })));
-const InjuriesPage = lazy(() => import('./pages/Injuries').then((m) => ({ default: m.InjuriesPage })));
 const JourneyPage = lazy(() => import('./pages/Journey').then((m) => ({ default: m.JourneyPage })));
 const PackListPage = lazy(() => import('./pages/PackList').then((m) => ({ default: m.PackListPage })));
 const EtappesPage = lazy(() => import('./pages/Etappes').then((m) => ({ default: m.EtappesPage })));
@@ -322,8 +322,11 @@ function AppShell() {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/more" element={<SettingsOverview />} />
             <Route path="/more/:groep" element={<SettingsGroupPage />} />
-            <Route path="/stretches" element={<StretchesPage />} />
-            <Route path="/stretches/:areaId" element={<StretchAreaPage />} />
+            <Route path="/lichaam" element={<BodyPage />} />
+            <Route path="/lichaam/:plek" element={<BodySpotPage />} />
+            {/* De lijst met rekoefeningen en de pagina Blessures zijn opgegaan in Lichaam. */}
+            <Route path="/stretches" element={<Navigate to="/lichaam" replace />} />
+            <Route path="/stretches/:areaId" element={<StretchAreaRedirect />} />
             <Route path="/kennis" element={<KnowledgePage />} />
             <Route path="/kennis/:topicId" element={<KnowledgeTopicPage />} />
             {/* Oude links: de trainingsgids is het blad "Hoe je het doet" bij elke
@@ -337,7 +340,7 @@ function AppShell() {
             <Route path="/weer" element={<WeatherPage />} />
             <Route path="/forge" element={<ForgePage />} />
             <Route path="/kracht" element={<Navigate to="/forge" replace />} />
-            <Route path="/blessures" element={<InjuriesPage />} />
+            <Route path="/blessures" element={<Navigate to="/lichaam" replace />} />
             <Route path="/reis" element={<JourneyPage />} />
             <Route path="/reis/paklijst" element={<PackListPage />} />
             <Route path="/etappes" element={<EtappesPage />} />

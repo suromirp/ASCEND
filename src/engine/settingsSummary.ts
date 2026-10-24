@@ -24,6 +24,7 @@ import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
 import { resolveSky } from './skySettings';
+import { resolveFigure, type Figure } from './figureSettings';
 import { resolveRunInsight } from './runInsightSettings';
 import { formatNumberNL } from '../utils/number';
 
@@ -58,6 +59,8 @@ export interface SettingsFacts {
   treks: number;
   vacations: number;
   activeInjuries: number;
+  // Wat een koppeling over je weet voor het figuur op Lichaam (nog geen enkele levert het).
+  linkedSex?: Figure | null;
   // De bron van "Krachttraining bijhouden": dezelfde keuze als het krachtblok.
   strengthExternal: boolean;
   // Wat ASCEND nu doet met je ambitie: terugvallen op Standaard bij pijn.
@@ -295,6 +298,13 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
     case 'blessures':
       return f.activeInjuries > 0 ? { value: `${f.activeInjuries} actief` } : { value: 'Geen', dim: true };
+    case 'figuur': {
+      const r = resolveFigure(s, f.linkedSex);
+      if (r.setting !== 'auto') return { value: choiceShort('figuur', r.setting) };
+      return r.source === 'linked'
+        ? { value: choiceShort('figuur', r.figure), auto: true, sub: 'Uit je koppeling' }
+        : { value: choiceShort('figuur', r.figure), auto: true, sub: 'Nog niet bekend, we tonen Man' };
+    }
 
     // Vandaag en meldingen
     case 'ochtendcheck':

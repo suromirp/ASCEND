@@ -915,6 +915,32 @@ button.w-full:not(.mx-primary):not(:disabled):not([role='switch']):active {
   animation: mx-ripple 0.45s ease-out backwards;
 }
 
+/* Lichaam (docs/beslissingen/2026-10-24-lichaam-als-figuur.md): een plek op het figuur die
+   oplicht in mint, in 200 ms. De plek staat als stippellijn klaar; de gekozen plek krijgt
+   een mintlijn, een heel zachte vulling en een zachte gloed. */
+.mx-body-mark {
+  fill: color-mix(in srgb, var(--color-ink-dim) 7%, transparent);
+  stroke: color-mix(in srgb, var(--color-ink-dim) 32%, transparent);
+  stroke-width: 1px;
+  stroke-dasharray: 3 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill 0.2s ease-out, stroke 0.2s ease-out, transform 0.2s ease-out, filter 0.2s ease-out;
+}
+
+.mx-body-mark[data-on='true'] {
+  fill: color-mix(in srgb, var(--color-action) 22%, transparent);
+  stroke: var(--color-action);
+  stroke-width: 1.5px;
+  stroke-dasharray: none;
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-action) 45%, transparent));
+}
+
+html[data-motion='calm'] .mx-body-mark {
+  transition: none;
+}
+
 /* Rustig: geen adem, geen puls, geen vullen. Tikfeedback, bladen, pagina's en
    lijsten blijven. Uit en beperkte beweging van het systeem: de adem staat stil
    op een zachte gloed, alles is meteen op de eindstand. */
