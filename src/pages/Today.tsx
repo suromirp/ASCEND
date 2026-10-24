@@ -61,7 +61,6 @@ import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { WeekStrip } from '../components/vandaag/WeekStrip';
 import { zoneOfTemplate } from '../components/vandaag/zone';
-import { templateIcon } from '../components/sportKind';
 
 export function TodayPage() {
   const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -379,7 +378,7 @@ export function TodayPage() {
             <DayRow
               key={s.id}
               label={done ? 'Gedaan' : 'Training'}
-              icon={templateIcon(t)}
+              template={t}
               state={trainingRowState(status, s.id === primary?.id)}
               onClick={() => setActionSheetSession(s)}
               trailing={rest ? REST_DAY_COPY[restMode].badge : `${resolveEffectiveFullDuration(t, s.scheduledDate, program)} min`}

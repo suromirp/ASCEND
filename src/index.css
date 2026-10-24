@@ -76,6 +76,8 @@
   --color-sport-strength-on-light: #6a54d6;
   --color-sport-walk-on-light: #35853a;
   --color-sport-stretch-on-light: #c13a7e;
+  /* Bergtocht: een olijfoker, 4,7:1 op de lichte kaart en 4,0:1 op de lucht (de zon van de berg). */
+  --color-sport-mountain-on-light: #7a6400;
   /* De twee bergrijen: achter saliegroen, voor donker groenblauw dat overloopt
      in het marine. */
   --color-mountain-back: #a7d1bd;
@@ -117,10 +119,13 @@
   --color-sport-strength: #b4a6ff;
   --color-sport-walk: #8fdb8a;
   --color-sport-stretch: #f4a3c8;
+  /* Bergtocht: een heldere bergzon-geel, geler en lichter dan het amber van let op (12:1 op het marine). */
+  --color-sport-mountain: #f4d94e;
   --color-chart-run: #ffb26b;
   --color-chart-strength: #b4a6ff;
   --color-chart-walk: #8fdb8a;
   --color-chart-other: #f4a3c8;
+  --color-chart-mountain: #f4d94e;
   /* De schijven op de stang in het invoerpaneel van Forge: één rustige kleur per gewicht. */
   --color-plate-1: #8c97a8;
   --color-plate-2: #7fa6c4;
@@ -266,6 +271,7 @@ html[data-sky='night'] {
   --color-sport-strength-on-light: #b4a6ff;
   --color-sport-walk-on-light: #8fdb8a;
   --color-sport-stretch-on-light: #f4a3c8;
+  --color-sport-mountain-on-light: #f4d94e;
   --color-mountain-back: #34544c;
   --color-mountain-front: #123a40;
   --color-tab-vandaag-light: #5eead4;
@@ -333,6 +339,7 @@ html[data-sky='night'] .sky-band::before {
   --color-sport-strength: var(--color-sport-strength-on-light);
   --color-sport-walk: var(--color-sport-walk-on-light);
   --color-sport-stretch: var(--color-sport-stretch-on-light);
+  --color-sport-mountain: var(--color-sport-mountain-on-light);
   --color-page: var(--color-page-light);
   color: var(--color-on-light);
 }
@@ -927,6 +934,29 @@ button.w-full:not(.mx-primary):not(:disabled):not([role='switch']):active {
 .mx-stagger > :nth-child(n + 11) { animation: none; }
 
 /* Een afgevinkte set in Forge: een ring die even uitwaaiert rond het vakje. */
+/* De pictogrammen (components/pictograms.tsx): de drie lagen komen na elkaar op,
+   elk 200 ms ease-out, 3 omhoog en erin vervagen, 80 ms ertussen. Alleen als het
+   pictogram verschijnt. De lichte en de middentint zijn dekking op de kleur zelf;
+   op de lichte lucht wat sterker, zodat de lichte vorm niet wegsmelt. */
+.pictogram {
+  --pic-light: 0.4;
+  --pic-mid: 0.6;
+}
+.on-light .pictogram {
+  --pic-light: 0.5;
+  --pic-mid: 0.72;
+}
+html[data-sky='night'] .on-light .pictogram {
+  --pic-light: 0.4;
+  --pic-mid: 0.6;
+}
+@keyframes mx-pic-rise {
+  from { opacity: 0; transform: translateY(3px); }
+}
+.mx-pic-1 { animation: mx-pic-rise 0.2s ease-out backwards; }
+.mx-pic-2 { animation: mx-pic-rise 0.2s ease-out 80ms backwards; }
+.mx-pic-3 { animation: mx-pic-rise 0.2s ease-out 160ms backwards; }
+
 @keyframes mx-ripple {
   from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-progress) 55%, transparent); }
   to { box-shadow: 0 0 0 9px transparent; }
@@ -972,6 +1002,9 @@ html[data-motion='calm'] .mx-body-mark {
 html[data-motion='calm'] .mx-ring,
 html[data-motion='calm'] .mx-meter,
 html[data-motion='calm'] .mx-pulse-once,
+html[data-motion='calm'] .mx-pic-1,
+html[data-motion='calm'] .mx-pic-2,
+html[data-motion='calm'] .mx-pic-3,
 html[data-motion='calm'] .mx-attention {
   animation: none;
 }
