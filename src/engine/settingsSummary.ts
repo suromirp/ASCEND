@@ -22,6 +22,8 @@ import { backupAge, backupAgoText } from './settingsAttention';
 import { shortGoalName } from './settingsStatus';
 import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
+import { resolveMotion } from './motionSettings';
+import { resolveSky } from './skySettings';
 import { resolveRunInsight } from './runInsightSettings';
 import { formatNumberNL } from '../utils/number';
 
@@ -336,6 +338,12 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
+    case 'lucht':
+      return { value: choiceShort('lucht', resolveSky(s).sky) };
+    case 'lucht-vanaf':
+      return { value: choiceShort('luchtVanaf', resolveSky(s).nightFrom), hidden: resolveSky(s).sky !== 'auto' };
+    case 'beweging':
+      return { value: choiceShort('beweging', resolveMotion(s)) };
     case 'terugknop':
       return { value: choiceShort('terugknop', resolveNavigation(s).tabBack) };
     case 'hervatten':

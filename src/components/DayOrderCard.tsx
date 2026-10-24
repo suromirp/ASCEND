@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { DayOrderAdvice } from '../engine/dayOrder';
 import type { PlannedSession, SessionTemplate } from '../models/training';
-import { Card } from './ui';
+import { Card, Eyebrow } from './ui';
 import { WhyPanel, WhyToggle } from './Why';
 
 // Two trainings on one day: the order as a small climb, 1 then 2, with the
@@ -15,7 +15,7 @@ export function DayOrderCard({ advice, sessions, templateById, title = 'VOLGORDE
   const accent = advice.avoid ? 'var(--color-warning)' : 'var(--color-gold)';
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-xs font-medium tracking-[0.18em]" style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-bronze)' }}>{advice.avoid ? 'LIEVER NIET OP ÉÉN DAG' : title}</p>
+      <Eyebrow tone={advice.avoid ? 'var(--color-warning)' : undefined}>{advice.avoid ? 'Liever niet op één dag' : title}</Eyebrow>
 
       <ol className="flex flex-col">
         {ordered.map((s, i) => {

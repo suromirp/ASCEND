@@ -4,6 +4,7 @@ import { BackButton } from './BackButton';
 import { SkyBand } from './SkyBand';
 import { Icon, type IconName } from './icons';
 import { EFFORT_COLOR } from './effortColor';
+import { CountUp } from './CountUp';
 import './settings/settings.css';
 import './sheets.css';
 
@@ -50,7 +51,7 @@ export function PrimaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${fullWidth ? 'w-full' : 'flex-1'} min-h-[52px] rounded-xl px-4 py-3 text-base font-semibold transition-all active:scale-[0.97] active:opacity-80 disabled:opacity-40 ${className}`}
+      className={`${fullWidth ? 'w-full' : 'flex-1'} min-h-[52px] rounded-xl px-4 py-3 text-base font-semibold active:opacity-80 disabled:opacity-40 mx-primary ${className}`}
       style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
     >
       {children}
@@ -74,7 +75,7 @@ export function SecondaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium transition-all active:scale-[0.97] active:opacity-70 disabled:opacity-40 ${className}`}
+      className={`flex-1 min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium active:opacity-70 disabled:opacity-40 ${className}`}
       style={{ border: '1.5px solid color-mix(in srgb, var(--color-action) 75%, transparent)', color: 'var(--color-action)' }}
     >
       {children}
@@ -181,12 +182,13 @@ export function NumText({ children }: { children: string }) {
 
 // Het kleine kopje in hoofdletters: 12 px, halfvet, smalle letterafstand, in de
 // kleur van de tab waar je bent (--color-page; mint buiten de tabs, donker op de
-// lichte lucht). Hooguit één per kaart. `as="span"` inside a button or a line of
+// lichte lucht). Hooguit één per kaart. `tone` is voor een kopje met een eigen
+// betekenis (amber, ijs). `as="span"` inside a button or a line of
 // text, where a div is not allowed.
-export function Eyebrow({ children, as = 'div' }: { children: ReactNode; as?: 'div' | 'span' }) {
+export function Eyebrow({ children, as = 'div', tone }: { children: ReactNode; as?: 'div' | 'span'; tone?: string }) {
   const Tag = as;
   return (
-    <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-semibold uppercase leading-4 tracking-[0.08em]`} style={{ color: 'var(--color-page)' }}>
+    <Tag className={`${as === 'span' ? 'block ' : ''}text-xs font-semibold uppercase leading-4 tracking-[0.08em]`} style={{ color: tone ?? 'var(--color-page)' }}>
       {children}
     </Tag>
   );
@@ -347,7 +349,7 @@ export function Stat({
     <div className={`flex min-w-0 flex-col gap-1 ${className}`}>
       {label && <span className="text-xs font-medium leading-4" style={{ color: 'var(--color-ink-dim)' }}>{label}</span>}
       <span className={`whitespace-nowrap font-sans font-semibold leading-none tabular-nums tracking-[-0.02em] ${STAT_SIZE[size]}`} style={{ color: 'var(--color-ink)' }}>
-        {value}
+        {(size === 'l' || size === 'xl') && typeof value === 'number' && Number.isInteger(value) && value >= 0 ? <CountUp value={value} /> : value}
         {unit && <span className="ml-[3px] text-sm font-medium tracking-normal" style={{ color: 'var(--color-ink-dim)' }}>{unit}</span>}
       </span>
     </div>
@@ -369,7 +371,7 @@ export function StatusPill({ children, tone = 'status', icon }: { children: Reac
   const t = PILL_TONE[tone];
   return (
     <span
-      className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold"
+      className="inline-flex h-6 w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold"
       style={{ background: t.bg, color: t.fg, boxShadow: tone === 'neutral' ? 'inset 0 0 0 1px var(--color-card-border)' : undefined }}
     >
       {icon && <Icon name={icon} size={13} />}
@@ -400,7 +402,7 @@ export function Ring({
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-track)" strokeWidth={stroke} />
         {pct > 0 && (
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-progress)" strokeWidth={stroke} strokeLinecap="round" pathLength={100} strokeDasharray={`${pct} 100`} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-progress)" strokeWidth={stroke} strokeLinecap="round" pathLength={100} strokeDasharray={`${pct} 100`} className="mx-ring" />
         )}
       </svg>
       {children && <div aria-hidden="true" className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>}
@@ -422,7 +424,7 @@ export function Meter({ value, label, tone = 'progress' }: { value: number; labe
       className="h-1.5 w-full overflow-hidden rounded-full"
       style={{ background: 'var(--color-track)' }}
     >
-      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `var(--color-${tone})` }} />
+      <div className="mx-meter h-full rounded-full" style={{ width: `${pct}%`, background: `var(--color-${tone})` }} />
     </div>
   );
 }

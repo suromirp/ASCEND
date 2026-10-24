@@ -74,7 +74,7 @@ export function ChangeNotice() {
   return (
     <div className={`${anchor} justify-center`}>
       <div
-        className="animate-page-in pointer-events-auto w-full max-w-md rounded-2xl border pl-3 shadow-lg"
+        className="mx-notice-in pointer-events-auto w-full max-w-md rounded-2xl border pl-3 shadow-lg"
         style={{ background: 'var(--color-surface)', borderColor: 'var(--color-card-border)' }}
         role="status"
       >

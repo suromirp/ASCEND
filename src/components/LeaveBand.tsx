@@ -1,3 +1,4 @@
+import { Eyebrow } from './ui';
 import type { LeaveLabel, LeaveLabelKind } from '../engine/leave';
 
 // A quiet band for a day that belongs to a holiday, a trek or free days
@@ -21,7 +22,7 @@ export function LeaveBand({ label }: { label: LeaveLabel }) {
       style={{ borderColor: tint(tone.color, 50), background: tint(tone.color, 12), borderStyle: label.kind === 'light' ? 'dashed' : 'solid' }}
     >
       <p className="flex flex-wrap items-baseline gap-x-2">
-        <span className="text-xs font-semibold tracking-[0.14em]" style={{ color: tone.text }}>{label.title.toUpperCase()}</span>
+        <Eyebrow as="span" tone={tone.text}>{label.title}</Eyebrow>
         <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{label.line}</span>
       </p>
       {label.note && <p className="mt-0.5 break-words text-xs" style={{ color: 'var(--color-ink)' }}>{label.note}</p>}

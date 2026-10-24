@@ -12,6 +12,24 @@ export interface SettingsHelp {
 }
 
 export const SETTINGS_HELP: Record<string, SettingsHelp> = {
+  lucht: {
+    title: 'Lucht bovenaan',
+    lead: 'De lichte lucht met bergen bovenaan een tab kan in de avond fel zijn. Hier kies je wanneer ze donker wordt.',
+    points: [
+      { head: 'Op tijd', text: 'licht overdag, donker vanaf het uur dat je kiest tot 07:00. ASCEND wisselt binnen een minuut.' },
+      { head: 'Altijd licht of donker', text: 'de klok doet er dan niet toe.' },
+      { head: 'Donker', text: 'dezelfde kaarten en kleuren, maar op diep marine met zachte bergen en een paar zwakke sterren.' },
+    ],
+  },
+  beweging: {
+    title: 'Beweging',
+    lead: 'Hoeveel de app beweegt: een zachte indruk bij een tik, ringen die vollopen, getallen die optellen.',
+    points: [
+      { head: 'Normaal', text: 'alles, kort en rustig. De missiekaart ademt zacht en nieuwe voorstellen knipperen een of twee keer.' },
+      { head: 'Rustig', text: 'alleen feedback op je tik en overgangen van bladen. Geen adem, puls of optellen.' },
+      { head: 'Uit', text: 'alles staat meteen op zijn plek. Heeft je telefoon beperkte beweging aan, dan geldt dit altijd.' },
+    ],
+  },
   wijzigingen: {
     title: 'Wijzigingen',
     lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',

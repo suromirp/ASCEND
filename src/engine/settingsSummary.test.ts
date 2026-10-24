@@ -300,6 +300,22 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
     expect(rowSummary('na-hoofddoel', withSettings({ afterMainGoal: 'maintain' })).value).toBe('Onderhoud');
   });
 
+  it('de lucht is op tijd, donker vanaf 20:00, en de begintijd verdwijnt bij een vaste keuze', () => {
+    expect(rowSummary('lucht', facts()).value).toBe('Op tijd');
+    expect(rowSummary('lucht-vanaf', facts()).value).toBe('Vanaf 20:00');
+    expect(rowSummary('lucht-vanaf', withSettings({ skyNightFrom: '22:00' })).value).toBe('Vanaf 22:00');
+    expect(rowSummary('lucht', withSettings({ sky: 'night' })).value).toBe('Altijd donker');
+    expect(rowSummary('lucht-vanaf', withSettings({ sky: 'night' })).hidden).toBe(true);
+    expect(rowSummary('lucht-vanaf', withSettings({ sky: 'day' })).hidden).toBe(true);
+  });
+
+  it('beweging is Normaal tot je iets anders kiest', () => {
+    expect(rowSummary('beweging', facts()).value).toBe('Normaal');
+    expect(rowSummary('beweging', withSettings({ motion: 'calm' })).value).toBe('Rustig');
+    expect(rowSummary('beweging', withSettings({ motion: 'off' })).value).toBe('Uit');
+    expect(rowSummary('beweging', withSettings({ motion: 'rommel' })).value).toBe('Normaal');
+  });
+
   it('de terugknop en het hervatten kennen hun advies', () => {
     expect(rowSummary('terugknop', facts()).value).toBe('Naar Vandaag');
     expect(rowSummary('terugknop', withSettings({ tabBack: 'previous' })).value).toBe('Vorige tab');

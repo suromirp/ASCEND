@@ -152,9 +152,9 @@ function SpotCard({ spot, home, filter, templateName }: { spot: TrainingSpot; ho
 
       {focus && (
         <p className="rounded-xl border px-3 py-2 text-sm leading-relaxed" style={{ borderColor: focus.limited ? 'var(--color-card-border)' : 'var(--color-action-muted)', color: 'var(--color-ink)' }}>
-          <span className="block text-xs font-medium tracking-[0.16em]" style={{ color: 'var(--color-ink-dim)' }}>
-            {(templateName(focus.templateId) ?? '').toUpperCase()} HIER{focus.limited ? ' · BEPERKT' : ''}
-          </span>
+          <Eyebrow as="span" tone="var(--color-ink-dim)">
+            {templateName(focus.templateId) ?? ''} hier{focus.limited ? ' · beperkt' : ''}
+          </Eyebrow>
           {focus.how}
         </p>
       )}

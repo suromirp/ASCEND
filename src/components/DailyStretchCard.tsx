@@ -46,7 +46,7 @@ export function DailyStretchCard({
                 color: completed ? 'var(--color-bg)' : 'transparent',
               }}
             >
-              <CheckGlyph size={16} />
+              <CheckGlyph key={completed ? 'on' : 'off'} size={16} draw={completed} />
             </span>
           </button>
         }

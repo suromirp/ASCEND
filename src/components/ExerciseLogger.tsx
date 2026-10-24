@@ -10,7 +10,7 @@ import { GARMIN_SUGGESTED_TYPES, GARMIN_TYPE_LABEL, COMPATIBILITY_LABEL, getComp
 import { ModalityPicker } from './ModalityPicker';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, Chip, Eyebrow, PrimaryButton, SecondaryButton, Segmented, Toggle } from './ui';
 import { StretchList } from './StretchList';
 import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
@@ -337,20 +337,14 @@ function GeneralLogger({
         {plannedSession && <WatchStatusRow session={plannedSession} template={template} onLeave={requestClose} className="mt-3" />}
 
         {availableVariants(template).length > 1 && !restChosen && (
-          <div className="mt-4 flex gap-2" role="group" aria-label="Versie">
-            {availableVariants(template).map((v) => (
-              <button
-                key={v}
-                onClick={() => selectVariant(v)}
-                className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
-                style={{
-                  borderColor: variant === v ? 'var(--color-gold)' : 'var(--color-card-border)',
-                  color: variant === v ? 'var(--color-gold)' : 'var(--color-ink-dim)',
-                }}
-              >
-                {VARIANT_LABEL[v]}
-              </button>
-            ))}
+          <div className="mt-4">
+            <Segmented
+              tall
+              label="Versie"
+              value={variant}
+              onChange={selectVariant}
+              options={availableVariants(template).map((v) => ({ value: v, label: VARIANT_LABEL[v] }))}
+            />
           </div>
         )}
 
@@ -443,21 +437,16 @@ function GeneralLogger({
         )}
 
         <div ref={formRef} className="scroll-mt-4" />
-        <p className="mt-8 font-display text-xl" style={{ color: 'var(--color-ink)' }}>Hoe ging het?</p>
+        <h2 className="mt-8 font-display text-2xl leading-tight" style={{ color: 'var(--color-ink)' }}>Hoe ging het?</h2>
 
         {(plannedInPast || !plannedSessionId) && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span style={{ color: 'var(--color-ink-dim)' }}>Gedaan op</span>
             {plannedInPast ? (
               [scheduledDate!, today].map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setDoneOn(d)}
-                  className="min-h-[44px] rounded-full border px-3"
-                  style={{ borderColor: doneOn === d ? 'var(--color-gold)' : 'var(--color-card-border)', color: doneOn === d ? 'var(--color-gold)' : 'var(--color-ink)' }}
-                >
+                <Chip key={d} selected={doneOn === d} onClick={() => setDoneOn(d)}>
                   {d === today ? 'vandaag' : `${weekdayShortNL(d).toLowerCase()} ${formatDateNL(d)}`}
-                </button>
+                </Chip>
               ))
             ) : (
               <input
@@ -495,13 +484,10 @@ function GeneralLogger({
                     key={n}
                     role="radio"
                     aria-checked={active}
+                    aria-pressed={active}
                     onClick={() => setRpe(active ? '' : n)}
-                    className="min-h-[44px] rounded-lg border text-sm tabular-nums"
-                    style={{
-                      borderColor: active ? 'var(--color-gold)' : inPlan ? 'var(--color-bronze-dark)' : 'var(--color-card-border)',
-                      background: active ? 'var(--color-gold)' : 'transparent',
-                      color: active ? 'var(--color-bg)' : inPlan ? 'var(--color-gold)' : 'var(--color-ink-dim)',
-                    }}
+                    className="st-chip"
+                    style={{ padding: 0, borderColor: active ? undefined : inPlan ? 'var(--color-action-muted)' : undefined, color: inPlan && !active ? 'var(--color-ink)' : undefined }}
                   >
                     {n}
                   </button>
@@ -522,18 +508,14 @@ function GeneralLogger({
           {ASK_LEGS_FOR.has(template.id) && (
             <div>
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelden je benen bij het inlopen? (optioneel; zo leert ASCEND hoe goed de beenindex bij jou klopt)</p>
-              <div className="mt-2 flex gap-2">
-                {LEGS_OPTIONS.map(([v, label]) => (
-                  <button
-                    key={v}
-                    onClick={() => setLegsAtStart(legsAtStart === v ? undefined : v)}
-                    aria-pressed={legsAtStart === v}
-                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
-                    style={{ borderColor: legsAtStart === v ? 'var(--color-gold)' : 'var(--color-card-border)', color: legsAtStart === v ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="mt-2">
+                <Segmented
+                  tall
+                  label="Benen bij het inlopen"
+                  value={legsAtStart}
+                  onChange={(v) => setLegsAtStart(legsAtStart === v ? undefined : v)}
+                  options={LEGS_OPTIONS.map(([value, label]) => ({ value, label }))}
+                />
               </div>
             </div>
           )}
@@ -541,17 +523,14 @@ function GeneralLogger({
           {template.type !== 'recovery' && (
             <div>
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelde het ten opzichte van normaal? (optioneel)</p>
-              <div className="mt-2 flex gap-2">
-                {(['better', 'normal', 'worse'] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setSubjectiveFeel(subjectiveFeel === f ? undefined : f)}
-                    className="min-h-[44px] flex-1 rounded-lg border text-xs font-semibold"
-                    style={{ borderColor: subjectiveFeel === f ? 'var(--color-gold)' : 'var(--color-card-border)', color: subjectiveFeel === f ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
-                  >
-                    {FEEL_LABEL[f]}
-                  </button>
-                ))}
+              <div className="mt-2">
+                <Segmented
+                  tall
+                  label="Ten opzichte van normaal"
+                  value={subjectiveFeel}
+                  onChange={(f) => setSubjectiveFeel(subjectiveFeel === f ? undefined : f)}
+                  options={(['better', 'normal', 'worse'] as const).map((value) => ({ value, label: FEEL_LABEL[value] }))}
+                />
               </div>
             </div>
           )}
@@ -568,21 +547,15 @@ function GeneralLogger({
               {fields.elevation && (
                 <>
                   <Field label={`Stijging${elevationEstimated ? ' (geschat)' : ''}`} unit="m D+" value={effectiveElevationGainM} onChange={setElevationGainM} placeholder={plannedStep?.elevationGainM ? formatNumberNL(plannedStep.elevationGainM, 0) : undefined} />
-                  {elevationEstimated && <p className="-mt-2 text-xs" style={{ color: 'var(--color-gold)' }}>Geschat uit afstand × helling, geen GPS-meting.</p>}
+                  {elevationEstimated && <p className="-mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geschat uit afstand × helling, geen GPS-meting.</p>}
                 </>
               )}
               {fields.elevationLoss && <Field label="Daling" unit="m D−" value={elevationLossM} onChange={setElevationLossM} placeholder={plannedStep?.elevationGainM ? formatNumberNL(plannedStep.elevationGainM, 0) : undefined} />}
               {fields.elevationLoss && (
-                <button
-                  type="button"
-                  onClick={() => setPoles((v) => !v)}
-                  aria-pressed={poles}
-                  className="-mt-1 flex min-h-[44px] items-center justify-between rounded-lg border px-3 text-xs font-semibold"
-                  style={{ borderColor: poles ? 'var(--color-gold)' : 'var(--color-card-border)', color: poles ? 'var(--color-gold)' : 'var(--color-ink-dim)' }}
-                >
-                  <span>Met stokken</span>
-                  <span>{poles ? 'ja' : 'nee'}</span>
-                </button>
+                <div className="-mt-1 flex min-h-[44px] items-center justify-between gap-3">
+                  <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Met stokken</span>
+                  <Toggle checked={poles} onChange={setPoles} label="Met stokken" />
+                </div>
               )}
               {fields.steps && (
                 <>
@@ -620,28 +593,18 @@ function GeneralLogger({
               {otherOpen && (
                 <div className="mt-2 flex flex-col gap-2">
                   {([['ascend_guided', 'Gedaan volgens dit plan'], ['garmin_suggested', 'Het voorstel van je Garmin gevolgd'], ['free', 'Een eigen training']] as const).map(([mode, label]) => (
-                    <button
-                      key={mode}
-                      onClick={() => setGuidanceMode(mode)}
-                      className="min-h-[44px] rounded-xl border px-3 text-left text-sm"
-                      style={{ borderColor: guidanceMode === mode ? 'var(--color-gold)' : 'var(--color-card-border)', color: guidanceMode === mode ? 'var(--color-gold)' : 'var(--color-ink)' }}
-                    >
+                    <Chip key={mode} selected={guidanceMode === mode} onClick={() => setGuidanceMode(mode)}>
                       {label}
-                    </button>
+                    </Chip>
                   ))}
                   {guidanceMode === 'garmin_suggested' && (
                     <div className="flex flex-col gap-2">
                       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat stelde je Garmin voor?</p>
                       <div className="flex flex-wrap gap-2">
                         {GARMIN_SUGGESTED_TYPES.map((t) => (
-                          <button
-                            key={t}
-                            onClick={() => setGarminSuggestedType(t)}
-                            className="min-h-[44px] rounded-lg border px-3 text-xs"
-                            style={{ borderColor: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-card-border)', color: garminSuggestedType === t ? 'var(--color-gold)' : 'var(--color-ink)' }}
-                          >
+                          <Chip key={t} selected={garminSuggestedType === t} onClick={() => setGarminSuggestedType(t)}>
                             {GARMIN_TYPE_LABEL[t] ?? t}
-                          </button>
+                          </Chip>
                         ))}
                       </div>
                       {compatibility && (

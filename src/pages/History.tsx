@@ -205,7 +205,7 @@ export function HistoryPage() {
 
       <Card className="flex flex-col py-1">
         <DisclosureRow title="Toon alle trainingen" value={monthLogs.length} open={logsOpen} onToggle={() => setLogsOpen(!logsOpen)}>
-          <div className="flex flex-col gap-2 pb-2">
+          <div className="mx-stagger flex flex-col gap-2 pb-2">
             {monthLogs.length === 0 && (
               <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen voltooide sessies deze maand.</p>
             )}

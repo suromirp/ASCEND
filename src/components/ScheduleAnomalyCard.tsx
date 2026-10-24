@@ -31,7 +31,7 @@ export function ScheduleAnomalyCard() {
   }
 
   return (
-    <Card className="flex flex-col gap-2">
+    <Card className="mx-attention flex flex-col gap-2">
       <Eyebrow>OPGEVALLEN IN JE SCHEMA</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{proposal.issue}.</p>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>

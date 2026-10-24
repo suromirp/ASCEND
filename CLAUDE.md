@@ -118,6 +118,20 @@ fris en sportief op donker marine.
   `engine/settingsSummary.ts` (pure functies met tests), zodat de rij, het
   zoekresultaat en het overzicht hetzelfde zeggen.
 
+### Beweging
+
+Subtiel en kort: 150 tot 400 ms, ease-out, nooit stuiterend, met CSS (`mx-*` onderaan
+`src/index.css`) en kleine hooks (`components/motion.ts`), zonder bibliotheek
+(`docs/beslissingen/2026-10-24-beweging.md`). Een animatie speelt alleen als een element
+verschijnt, nooit bij elke render, en er blijft geen lus draaien behalve de zachte adem van
+de missiekaart. De instelling Beweging (Normaal, Rustig, Uit; `engine/motionSettings.ts`)
+staat als `data-motion` op `<html>`; `prefers-reduced-motion: reduce` telt altijd als Uit.
+Een nieuwe animatie moet in Rustig en Uit dus ook netjes op de eindstand staan.
+
+De lucht bovenaan heeft een donkere variant (`data-sky="day|night"` op `<html>`, instelling
+"Lucht bovenaan", `engine/skySettings.ts`; `docs/beslissingen/2026-10-24-nachtlucht.md`).
+Een component gebruikt alleen de tokens en `.on-light`; wat licht lijkt wordt 's avonds vanzelf donker.
+
 ### Design tokens in code
 
 Theme tokens are defined once in `src/index.css` under `@theme` and

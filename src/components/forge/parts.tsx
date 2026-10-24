@@ -55,6 +55,7 @@ export function TickBox({ done, onClick, label }: { done: boolean; onClick: () =
         transition: 'background-color 0.2s ease, border-color 0.2s ease',
       }}
     >
+      {done && played && <span aria-hidden="true" className="mx-tick-ripple" />}
       {done && (
         <span className={played ? 'forge-check-draw' : 'forge-check'} style={{ display: 'flex' }}>
           <Icon name="vinkje" size={20} />

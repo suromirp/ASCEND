@@ -63,7 +63,7 @@ export function DoneTodayCard({ title, line, tomorrow, children }: { title: stri
         style={{ borderColor: 'var(--color-gold)', color: 'var(--color-gold)' }}
         aria-hidden="true"
       >
-        <CheckGlyph size={22} />
+        <CheckGlyph size={22} draw />
       </span>
       <div className="min-w-0 flex-1">
         <h2 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{title}</h2>

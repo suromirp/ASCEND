@@ -156,8 +156,8 @@ export function AscendPage() {
             {goal ? (
               <div className="mt-1 flex flex-wrap items-baseline gap-x-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
                 {goal.targetDate && <span>{formatDateNL(goal.targetDate)}</span>}
-                {timing?.state === 'ahead' && <span className="font-medium" style={{ color: 'var(--color-action)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
-                {timing?.state === 'underway' && <span className="font-medium" style={{ color: 'var(--color-action)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
+                {timing?.state === 'ahead' && <span className="font-medium" style={{ color: 'var(--color-status)' }}>nog <Num>{timing.weeksLeft}</Num> {timing.weeksLeft === 1 ? 'week' : 'weken'}</span>}
+                {timing?.state === 'underway' && <span className="font-medium" style={{ color: 'var(--color-status)' }}>onderweg, dag <Num>{timing.day}</Num> van <Num>{timing.days}</Num></span>}
                 {timing?.state === 'past' && <span>voorbij</span>}
               </div>
             ) : (

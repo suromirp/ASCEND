@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { changeLabel, type Gr5Readiness } from '../engine/gr5Readiness';
 import { Gr5ReadinessSheet } from './Gr5ReadinessSheet';
+import { CountUp } from './CountUp';
 import { Icon } from './icons';
 import { Card, LightCard, Meter, StatusPill } from './ui';
 
@@ -23,7 +24,7 @@ export function Gr5ReadinessCard({ readiness, light = false }: { readiness: Gr5R
           </div>
           <div className="flex items-center gap-3">
             <span className="whitespace-nowrap font-sans text-[56px] font-semibold leading-none tracking-[-0.04em] tabular-nums" style={{ color: 'var(--color-ink)' }}>
-              {readiness.percent}
+              <CountUp value={readiness.percent} />
               <span className="ml-0.5 text-[28px] tracking-normal">%</span>
             </span>
             {change && <StatusPill tone={(readiness.change ?? 0) > 0 ? 'progress' : 'neutral'}>{change}</StatusPill>}
