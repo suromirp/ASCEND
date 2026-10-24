@@ -19,7 +19,7 @@ export const QUOTE_NL: Record<string, QuoteNl> = {
   Q035: { text: 'De lafaard denkt dat hij eeuwig leeft, zolang hij elk gevecht ontloopt.', author: 'Hávamál', source: 'Strofe 16' },
   Q037: { text: 'Je vee sterft, je familie sterft, en ook jij zult sterven. Maar een goede naam sterft nooit.', author: 'Hávamál', source: 'Strofe 77' },
   Q038: { text: 'Eén ding weet ik dat nooit sterft: de naam die iemand met zijn daden achterlaat.', author: 'Hávamál', source: 'Strofe 78' },
-  Q041: { text: 'Vandaag versla je wie je gisteren was; morgen wie minder ver is dan jij.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
+  Q041: { text: 'Vandaag versla je je eigen gisteren, morgen de rest.', author: 'Miyamoto Musashi', source: 'Het boek van vijf ringen' },
   Q054: { text: 'De triomf van een grote prestatie.', author: 'Theodore Roosevelt', source: 'Burgerschap in een republiek, 1910' },
   Q057: { text: 'Kom ze maar halen.', author: 'Leonidas van Sparta (toegeschreven)', source: 'Plutarchus' },
   Q058: { text: 'Wie durft, wint.', author: 'Special Air Service', source: 'Motto van de SAS' },
