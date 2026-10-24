@@ -123,7 +123,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     ],
   },
   tpl_hills_descent: {
-    summary: (repeats) => `Opwarmen, ${repeats ?? 4} keer hard bergop, daarna rustig en beheerst afdalen.`,
+    summary: (repeats) => `Opwarmen, ${repeats ?? 4} keer hard bergop, daarna op dezelfde heuvel herhaald rustig omhoog en beheerst omlaag.`,
     keyTag: 'D+ en D−',
     structure: [
       { kind: 'warmup', label: 'Opwarmen', minutes: 10, intensity: 2 },
@@ -134,7 +134,8 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
           { kind: 'recover', label: 'Terug naar beneden', minutes: 2, intensity: 1, detail: 'Wandelend' },
         ],
       },
-      { kind: 'walk', label: 'Gecontroleerd afdalen', rest: true, intensity: 2, detail: 'Trap, duin of heuvel af. Kleine pasjes, niet rennen' },
+      // Not one long descent: the same hill or stairs, up at ease and down under control, again and again.
+      { kind: 'walk', label: 'Afdalen herhalen', rest: true, intensity: 2, detail: 'Rustig omhoog wandelen, beheerst omlaag, en opnieuw. Zelfde heuvel, trap of duin. Kleine pasjes, niet rennen' },
     ],
     garminSport: 'Hardlopen (of Wandelen)',
     builds: [

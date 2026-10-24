@@ -109,7 +109,7 @@ describe('trainings that run on heart rate zones', () => {
   });
 
   it('hills with a controlled descent keep a zone for the descent', () => {
-    expect(build('tpl_hills_descent')!.description).toContain('- Gecontroleerd afdalen 18m Z2 HR');
+    expect(build('tpl_hills_descent')!.description).toContain('- Afdalen herhalen 18m Z2 HR');
   });
 
   it('strides: only the easy run has a zone, the 20 second strides have none', () => {
