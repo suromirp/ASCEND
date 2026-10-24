@@ -69,6 +69,8 @@ export interface StrengthSettings {
   carryWeights?: boolean;
   // A small line "per kant 15 + 2,5" under a working set of a barbell exercise.
   showPlates?: boolean;
+  // The block "Geschatte 1RM" with a trend on the Forge page.
+  showOneRm?: boolean;
   // Your own rest per exercise (by exercise id), in seconds, over the estimate.
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
@@ -93,6 +95,7 @@ export interface ResolvedStrengthSettings {
   keepScreenOn: boolean;
   carryWeights: boolean;
   showPlates: boolean;
+  showOneRm: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
 }
@@ -212,6 +215,7 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.keepScreenOn === 'boolean') out.keepScreenOn = raw.keepScreenOn;
   if (typeof raw.carryWeights === 'boolean') out.carryWeights = raw.carryWeights;
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
+  if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
   if (alert) out.restAlert = alert;
   const sound = REST_SOUNDS.find((a) => a === raw.restSound);
@@ -243,6 +247,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     keepScreenOn: s.keepScreenOn ?? true,
     carryWeights: s.carryWeights ?? true,
     showPlates: s.showPlates ?? true,
+    showOneRm: s.showOneRm ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
   };

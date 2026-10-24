@@ -111,6 +111,9 @@ describe('het workoutscherm', () => {
     const clean = normalizeStrengthSettings({ carryWeights: 'nee', showPlates: 0 })!;
     expect(clean.carryWeights).toBeUndefined();
     expect(clean.showPlates).toBeUndefined();
+    expect(resolveStrengthSettings(undefined).showOneRm).toBe(true);
+    expect(resolveStrengthSettings({ showOneRm: false }).showOneRm).toBe(false);
+    expect(normalizeStrengthSettings({ showOneRm: 'nee' })!.showOneRm).toBeUndefined();
   });
   it('een waarde per oefening zetten en weer wissen', () => {
     const on = withExerciseValue({ warmup: 'off' }, 'exerciseNotes', 'leg-press', 'stoel op 4');
