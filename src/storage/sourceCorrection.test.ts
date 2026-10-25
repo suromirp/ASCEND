@@ -115,7 +115,7 @@ describe('the way back, stored', () => {
     expect(await restoreSourceUpdateStored('log_1')).toBe(true);
     const back = (await SessionLogsRepo.getAll())[0];
     expect(back.cardioData?.distanceKm).toBe(9.8);
-    expect(back.sourceSync).toEqual({ seen: { ...log.sourceSync!.seen, distanceKm: 8.1 } });
+    expect(back.sourceSync).toEqual({ seen: { ...log.sourceSync!.seen, distanceKm: 8.1 }, externalId: 'intervals.icu:i1' });
     // The same correction does not come back at the next fetch.
     expect((await applySourceCorrections([{ ...activity, distanceM: 8100 }], true, NOW)).updated).toBe(0);
     expect(await restoreSourceUpdateStored('log_1')).toBe(false);
@@ -207,13 +207,24 @@ describe('reading the field', () => {
     expect(migrateSourceSync({ ...whole, offered: { distanceKm: Number.NaN } })?.offered).toBeUndefined();
   });
 
-  it('drops the whole field when the fingerprint cannot be read', () => {
-    expect(migrateSourceSync({ ...whole, seen: { durationMinutes: 0 } })).toBeUndefined();
-    expect(migrateSourceSync({ ...whole, seen: { distanceKm: Infinity } })).toBeUndefined();
-    expect(migrateSourceSync({ ...whole, seen: undefined })).toBeUndefined();
+  it('keeps the update and the offer when the fingerprint cannot be read, and the fingerprint counts as missing', () => {
+    for (const seen of [{ durationMinutes: 0 }, { distanceKm: Infinity }, undefined, {}, { foo: 1 }]) {
+      const out = migrateSourceSync({ ...whole, seen })!;
+      expect(out.seen).toEqual({});
+      expect(out.updated).toEqual(whole.updated);
+      expect(out.offered).toEqual(whole.offered);
+    }
+    // Nothing else to keep: the field goes.
+    expect(migrateSourceSync({ seen: {} })).toBeUndefined();
+    expect(migrateSourceSync({ seen: { foo: 1 } })).toBeUndefined();
     expect(migrateSourceSync('x')).toBeUndefined();
     expect(migrateSourceSync(null)).toBeUndefined();
     expect(migrateSourceSync([])).toBeUndefined();
+  });
+
+  it('keeps the id of the activity, and drops one that is no text', () => {
+    expect(migrateSourceSync({ ...whole, externalId: 'intervals.icu:i1' })?.externalId).toBe('intervals.icu:i1');
+    expect(migrateSourceSync({ ...whole, externalId: 5 })).not.toHaveProperty('externalId');
   });
 
   it('does not keep fields it does not know', () => {

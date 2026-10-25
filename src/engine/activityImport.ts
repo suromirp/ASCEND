@@ -265,7 +265,7 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     outdoorData: template.type === 'hiking' ? metric : undefined,
     externalId: activity.externalId,
     // The fingerprint: what the source said at the moment the log was made.
-    sourceSync: { seen: sourceNumbers(activity) },
+    sourceSync: { seen: sourceNumbers(activity), externalId: activity.externalId },
     source: activity.source,
   };
   return clean(draft);

@@ -386,7 +386,11 @@ export interface SourceUpdate {
 }
 
 export interface SourceSync {
+  // An empty `seen` counts as missing: the next round makes a new baseline.
   seen: SourceNumbers;
+  // The activity the fingerprint was made for; another id reads as a new baseline.
+  // Optional, additive (a fingerprint from before it has none and is trusted).
+  externalId?: string;
   updated?: SourceUpdate;
   offered?: SourceNumbers;
 }

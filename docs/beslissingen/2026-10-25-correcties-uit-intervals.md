@@ -74,3 +74,13 @@ Niets. Het vult `2026-10-22-garmin-is-leidend.md` aan, waar een log na het koppe
 ## Terugdraaien
 
 Zet de schakelaar uit. Het veld `sourceSync` blijft dan als stille vingerafdruk staan en doet niets. Per log zet "Vorige getallen terugzetten" de getallen van voor de laatste update terug.
+
+## Aanvulling na review (25 oktober 2026)
+
+De tekst hierboven blijft staan; dit scherpt hem aan.
+
+- Met de hand gemaakt en overgenomen: bij het koppelen legt `manualMeasured.values` alleen de velden vast die het horloge toen veranderde. Corrigeert de bron later een ander veld (de eigen 10 km, terwijl het horloge alleen de duur veranderde), dan neemt de update dat veld in `manualMeasured.values` op, met de waarde van voor de update (`null` als het veld er niet was, zodat terugzetten het weghaalt). Een veld dat er al staat blijft ongemoeid, want dat is het eigen getal van de eigenaar. "Mijn getallen terugzetten" geeft zo de eigen getallen terug, ook als de bron ze intussen corrigeerde. Dit vervangt de zin hierboven dat `manualMeasured` precies blijft zoals het was.
+- Een lege of onbekende vingerafdruk (`seen` zonder bekend getal) telt als ontbrekend: de volgende ronde maakt een nieuwe baseline en overschrijft niets. Bij een beschadigde `seen` blijven `updated` en `offered` bewaard en vervalt alleen de vingerafdruk.
+- De vingerafdruk is gebonden aan de activiteit: `sourceSync.externalId` (optioneel, additief, mee in de migratie). Een afwijkend id leest als nieuwe baseline. Een vingerafdruk van voor dit veld wordt vertrouwd en krijgt het id bij de eerstvolgende schrijfactie.
+- Een ingekorte log krijgt alleen aangeboden wat van de log zoals die nu is verschilt. Knipt de eigenaar bij de bron hetzelfde stuk weg, dan schuift alleen de vingerafdruk mee en staat er geen melding. Stijging en daling van een loopband of schatting worden nooit aangeboden.
+- Met de schakelaar uit krijgt een log zonder vingerafdruk er toch een (een baseline met de getallen van dat moment). Er verandert dan geen getal, dus "uit: er wordt niets bijgewerkt" klopt nog steeds.

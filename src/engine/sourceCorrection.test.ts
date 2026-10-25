@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { SessionLog } from '../models/training';
+import type { SessionLog, SourceNumbers } from '../models/training';
 import { activityToDraft, sourceNumbers, type ExternalActivity } from './activityImport';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { applyAlignment, restoreManual } from './watchAlign';
@@ -36,7 +36,7 @@ function tied(extra: Partial<SessionLog> = {}, a: ExternalActivity = activity())
 describe('the fingerprint', () => {
   it('is made when the log is made, with the numbers of the activity', () => {
     const log = tied();
-    expect(log.sourceSync).toEqual({ seen: sourceNumbers(activity()) });
+    expect(log.sourceSync).toEqual({ seen: sourceNumbers(activity()), externalId: 'intervals.icu:a1' });
     expect(log.sourceSync?.seen).toMatchObject({ durationMinutes: 180, distanceKm: 12.4, elevationGainM: 610, avgHeartRate: 118, cadence: 82 });
   });
 
@@ -46,7 +46,7 @@ describe('the fingerprint', () => {
       variant: 'full', durationMinutes: 170, source: 'manual', cardioData: { durationMinutes: 170, distanceKm: 12, source: 'manual' },
     };
     const aligned = applyAlignment(hand, activity({ kind: 'run' }), NOW);
-    expect(aligned.sourceSync).toEqual({ seen: sourceNumbers(activity({ kind: 'run' })) });
+    expect(aligned.sourceSync).toEqual({ seen: sourceNumbers(activity({ kind: 'run' })), externalId: 'intervals.icu:a1' });
     expect(restoreManual(aligned)).not.toHaveProperty('sourceSync');
   });
 
@@ -138,7 +138,7 @@ describe('what it never touches', () => {
     const item = correctionFor(old as SessionLog, activity({ distanceM: 9000 }), true, NOW)!;
     expect(item.kind).toBe('baseline');
     expect(item.next.cardioData).toEqual(old.cardioData);
-    expect(item.next.sourceSync).toEqual({ seen: sourceNumbers(activity({ distanceM: 9000 })) });
+    expect(item.next.sourceSync).toEqual({ seen: sourceNumbers(activity({ distanceM: 9000 })), externalId: 'intervals.icu:a1' });
   });
 
   it('a log made by hand, a strength log and another id', () => {
@@ -189,6 +189,110 @@ describe('a log the watch took over by hand-made numbers', () => {
   });
 });
 
+describe('a hand-made log that the watch took over, and the source corrects a field the watch did not change', () => {
+  const hand: SessionLog = {
+    id: 'log_h', templateId: 'tpl_easy_run', type: 'cardio', sport: 'running', completedDate: '2026-10-22', completedAt: '2026-10-22T18:00:00.000Z',
+    variant: 'full', durationMinutes: 60, source: 'manual', cardioData: { durationMinutes: 60, distanceKm: 10, source: 'manual' }, rpe: 5,
+  };
+  const run = activity({ kind: 'run', durationSec: 63 * 60, distanceM: 10020, elevationGainM: undefined, elevationLossM: undefined, avgHeartRate: undefined, maxHeartRate: undefined, avgCadence: undefined });
+
+  it('gives the own 10 km back after tying, correcting and putting back', () => {
+    const aligned = applyAlignment(hand, run, NOW);
+    expect(aligned.manualMeasured?.values).toEqual({ durationMinutes: 60 });
+    const item = correctionFor(aligned, { ...run, distanceM: 8500 }, true, new Date('2026-10-26T08:00:00.000Z'))!;
+    expect(item.kind).toBe('update');
+    expect(item.next.cardioData?.distanceKm).toBe(8.5);
+    expect(item.next.manualMeasured?.values).toEqual({ durationMinutes: 60, distanceKm: 10 });
+    const back = restoreManual(item.next);
+    expect(back).toMatchObject({ durationMinutes: 60, source: 'manual', cardioData: { durationMinutes: 60, distanceKm: 10, source: 'manual' } });
+    expect(back).not.toHaveProperty('sourceSync');
+  });
+
+  it('leaves a field that is in there already alone, and a field the source adds goes at putting back', () => {
+    const aligned = applyAlignment(hand, run, NOW);
+    const first = correctionFor(aligned, { ...run, distanceM: 8500, avgHeartRate: 140 }, true, new Date('2026-10-26T08:00:00.000Z'))!;
+    expect(first.next.manualMeasured?.values).toEqual({ durationMinutes: 60, distanceKm: 10, avgHeartRate: null });
+    // A second correction of the distance must not overwrite the own 10 km.
+    const second = correctionFor(first.next, { ...run, distanceM: 7000, avgHeartRate: 140 }, true, new Date('2026-10-27T08:00:00.000Z'))!;
+    expect(second.next.manualMeasured?.values).toEqual({ durationMinutes: 60, distanceKm: 10, avgHeartRate: null });
+    const back = restoreManual(second.next);
+    expect(back.cardioData).toEqual({ durationMinutes: 60, distanceKm: 10, source: 'manual' });
+  });
+});
+
+describe('a fingerprint that says nothing, or belongs to another activity', () => {
+  it('an empty or unknown fingerprint is a new baseline, nothing is overwritten', () => {
+    for (const seen of [{}, { foo: 1 }] as unknown as SourceNumbers[]) {
+      const log = tied({ sourceSync: { seen } });
+      const item = correctionFor(log, activity({ distanceM: 9000 }), true, NOW)!;
+      expect(item.kind).toBe('baseline');
+      expect(item.next.cardioData).toEqual(log.cardioData);
+      expect(item.next.sourceSync?.seen).toEqual(sourceNumbers(activity({ distanceM: 9000 })));
+    }
+  });
+
+  it('keeps the update and the offer next to a new baseline', () => {
+    const updated = { at: NOW.toISOString(), block: 'cardioData' as const, previous: { distanceKm: 9 } };
+    const item = correctionFor(tied({ sourceSync: { seen: {}, updated, offered: { distanceKm: 8 } } }), activity(), true, NOW)!;
+    expect(item.next.sourceSync).toMatchObject({ updated, offered: { distanceKm: 8 } });
+  });
+
+  it('is bound to the activity: another id reads as a baseline', () => {
+    const log = tied();
+    expect(log.sourceSync?.externalId).toBe('intervals.icu:a1');
+    const other = tied({ sourceSync: { seen: sourceNumbers(activity({ distanceM: 5000 })), externalId: 'intervals.icu:old' } });
+    const item = correctionFor(other, activity(), true, NOW)!;
+    expect(item.kind).toBe('baseline');
+    expect(item.next.cardioData).toEqual(other.cardioData);
+    expect(item.next.sourceSync).toEqual({ seen: sourceNumbers(activity()), externalId: 'intervals.icu:a1' });
+  });
+
+  it('a fingerprint from before the id is trusted and gets the id with the next write', () => {
+    const old = tied({ sourceSync: { seen: sourceNumbers(activity()) } });
+    const item = correctionFor(old, activity({ distanceM: 9000 }), true, NOW)!;
+    expect(item.kind).toBe('update');
+    expect(item.next.sourceSync?.externalId).toBe('intervals.icu:a1');
+  });
+});
+
+describe('a cut log and an offer', () => {
+  const cutLog = (a: ExternalActivity = activity(), extra: Partial<SessionLog> = {}): SessionLog => {
+    const base = tied({}, a);
+    return {
+      ...base,
+      durationMinutes: 120,
+      cardioData: { ...base.cardioData!, durationMinutes: 120, distanceKm: 8, elevationGainM: 400, elevationLossM: 390 },
+      trim: { at: NOW.toISOString(), block: 'cardioData', original: { durationMinutes: 180, distanceKm: 12.4, elevationGainM: 610, elevationLossM: 600 } },
+      ...extra,
+    } as SessionLog;
+  };
+
+  it('offers only what differs from the cut log; the same cut at the source offers nothing', () => {
+    const log = cutLog();
+    const sameCut = correctionFor(log, activity({ durationSec: 120 * 60, distanceM: 8000, elevationGainM: 400, elevationLossM: 390 }), true, NOW)!;
+    expect(sameCut.kind).toBe('quiet');
+    expect(sameCut.next.sourceSync?.offered).toBeUndefined();
+    expect(sameCut.next.sourceSync?.seen.distanceKm).toBe(8);
+    expect(sameCut.next.trim).toEqual(log.trim);
+    expect(correctionFor(sameCut.next, activity({ durationSec: 120 * 60, distanceM: 8000, elevationGainM: 400, elevationLossM: 390 }), true, NOW)).toBeUndefined();
+    // A different cut: only the field that differs is offered.
+    const other = correctionFor(log, activity({ durationSec: 120 * 60, distanceM: 7000, elevationGainM: 400, elevationLossM: 390 }), true, NOW)!;
+    expect(other.kind).toBe('offer');
+    expect(other.next.sourceSync?.offered).toEqual({ distanceKm: 7 });
+  });
+
+  it('never offers the climb of a treadmill', () => {
+    const a = activity({ kind: 'run', treadmill: true, elevationGainM: undefined, elevationLossM: undefined });
+    const log = cutLog(a, { cardioData: { durationMinutes: 120, distanceKm: 8, source: 'garmin' }, trim: { at: NOW.toISOString(), block: 'cardioData', original: { durationMinutes: 180, distanceKm: 12.4 } } } as Partial<SessionLog>);
+    const item = correctionFor(log, { ...a, distanceM: 7000, elevationGainM: 30, elevationLossM: 30 }, true, NOW)!;
+    expect(item.kind).toBe('offer');
+    expect(item.next.sourceSync?.offered).toEqual({ distanceKm: 7 });
+    const took = takeOverOffered(item.next, NOW)!;
+    expect(took.cardioData?.elevationGainM).toBeUndefined();
+    expect(took.cardioData?.distanceKm).toBe(7);
+  });
+});
+
 describe('putting the previous numbers back', () => {
   const corrected = activity({ durationSec: 150 * 60, distanceM: 10100, elevationGainM: 480, avgCadence: undefined });
 
@@ -201,7 +305,7 @@ describe('putting the previous numbers back', () => {
     void [s0];
     expect(restBack).toEqual(restOld);
     // The source lost its cadence: the fingerprint keeps the last it knew.
-    expect(s1).toEqual({ seen: { ...sourceNumbers(activity()), ...sourceNumbers(corrected) } });
+    expect(s1).toEqual({ seen: { ...sourceNumbers(activity()), ...sourceNumbers(corrected) }, externalId: 'intervals.icu:a1' });
     expect(correctionFor(back, corrected, true, NOW)).toBeUndefined();
   });
 

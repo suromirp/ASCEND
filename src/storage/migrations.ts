@@ -443,13 +443,20 @@ function readSourceUpdate(raw: unknown): SourceUpdate | undefined {
 
 export function migrateSourceSync(raw: unknown): SourceSync | undefined {
   if (!isObj(raw)) return undefined;
-  const seen = readSourceNumbers(raw.seen);
-  if (!seen) return undefined;
+  // A fingerprint that is empty, holds no known number or cannot be read counts as
+  // missing. The update record and the offered numbers are kept next to it: the log
+  // then gets a new baseline at the next fetch (nothing is overwritten), and putting
+  // back an update still works.
+  const read = readSourceNumbers(raw.seen);
+  const seen: SourceNumbers = read && Object.keys(read).length > 0 ? read : {};
   const sync: SourceSync = { seen };
   const updated = readSourceUpdate(raw.updated);
   if (updated) sync.updated = updated;
   const offered = readSourceNumbers(raw.offered);
   if (offered && Object.keys(offered).length > 0) sync.offered = offered;
+  if (Object.keys(seen).length === 0 && !sync.updated && !sync.offered) return undefined;
+  // The activity the fingerprint belongs to; a value that is no text is dropped.
+  if (typeof raw.externalId === 'string' && raw.externalId.length > 0) sync.externalId = raw.externalId;
   return sync;
 }
 

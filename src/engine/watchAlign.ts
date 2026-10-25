@@ -194,7 +194,7 @@ export function applyAlignment(log: SessionLog, activity: ExternalActivity, now:
     ...(clearedProgressIds.length > 0 ? { clearedProgressIds } : {}),
   };
   // The fingerprint of the source numbers, so a later correction at the source is recognised.
-  return { ...log, durationMinutes, [key]: block, externalId: activity.externalId, source: activity.source, manualMeasured, sourceSync: { seen: sourceNumbers(activity) } };
+  return { ...log, durationMinutes, [key]: block, externalId: activity.externalId, source: activity.source, manualMeasured, sourceSync: { seen: sourceNumbers(activity), externalId: activity.externalId } };
 }
 
 // The log with the hand-made numbers back, and as a hand-made log again. Only

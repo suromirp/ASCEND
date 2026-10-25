@@ -141,8 +141,25 @@ function write(log: SessionLog, changes: SourceChange[], sync: Omit<SourceSync, 
     block.durationMinutes = durationMinutes;
     if (old.durationMinutes !== log.durationMinutes) update.blockDurationMinutes = old.durationMinutes;
   }
-  return { ...log, durationMinutes, [key]: block, sourceSync: { ...sync, updated: update } };
+  const next: SessionLog = { ...log, durationMinutes, [key]: block, sourceSync: { ...sync, updated: update } };
+  const m = log.manualMeasured;
+  if (m && !m.strength && m.block === key) {
+    // A hand-made log the watch took over: restoreManual puts back only what is in
+    // `values`. A field the source replaces now, that is not in there yet, goes in with
+    // the value from before this update (null: it was not there, so putting back takes
+    // it away). What is in there already is the owner's own number and stays.
+    const values = { ...m.values };
+    for (const c of changes) if (!(c.field in values)) values[c.field] = c.before ?? null;
+    next.manualMeasured = { ...m, values };
+  }
+  return next;
 }
+
+// A fingerprint that holds no known number says nothing: it counts as missing.
+const hasNumbers = (seen: SourceNumbers | undefined): seen is SourceNumbers => !!seen && SOURCE_FIELDS.some((f) => typeof seen[f] === 'number');
+
+// The sync with the id of the activity it was made for.
+const bound = (sync: SourceSync, activity: ExternalActivity): SourceSync => ({ ...sync, externalId: activity.externalId });
 
 // What to do with one log and the activity it is tied to. Undefined: nothing to
 // write (a second round without a change always ends here).
@@ -150,13 +167,20 @@ export function correctionFor(log: SessionLog, activity: ExternalActivity, on: b
   if (!followsSource(log) || log.externalId !== activity.externalId || activity.kind === 'strength') return undefined;
   const current = sourceNumbers(activity);
   const sync = log.sourceSync;
-  if (!sync) return { log, activity, kind: 'baseline', changes: [], next: { ...log, sourceSync: { seen: current } } };
+  if (!sync || !hasNumbers(sync.seen) || (sync.externalId !== undefined && sync.externalId !== activity.externalId)) {
+    // No usable fingerprint, or one made for another activity: a new baseline with the
+    // numbers of now, nothing is guessed. A fingerprint for another activity says
+    // nothing about this one, so what was kept next to it goes too.
+    const keep = sync && sync.externalId === undefined ? { ...(sync.updated ? { updated: sync.updated } : {}), ...(sync.offered ? { offered: sync.offered } : {}) } : {};
+    return { log, activity, kind: 'baseline', changes: [], next: { ...log, sourceSync: bound({ seen: current, ...keep }, activity) } };
+  }
   // Switched off: the fingerprint stays where it was, so what changed meanwhile is
   // taken over when the switch goes on again.
   if (!on) return undefined;
 
   const changedNow = changedAtSource(sync.seen, current);
   const seen: SourceNumbers = { ...sync.seen, ...current };
+  const id = activity.externalId;
   const cut = !!log.trim;
   // What was offered before is taken over as soon as the cut is gone.
   const wanted: SourceNumbers = cut ? changedNow : { ...(sync.offered ?? {}), ...changedNow };
@@ -164,17 +188,25 @@ export function correctionFor(log: SessionLog, activity: ExternalActivity, on: b
   if (nothingNew && (cut || !sync.offered)) return undefined;
 
   if (cut) {
-    const offered = { ...(sync.offered ?? {}), ...changedNow };
-    // A cut log differs from the source by itself; the offer is what changed at the source.
-    return { log, activity, kind: 'offer', changes: [], next: { ...log, sourceSync: { ...sync, seen, offered } } };
+    // Only what differs from the log as it is now (cut): when the owner cut the same
+    // stretch at the source, there is nothing to offer and only the fingerprint moves.
+    // The climb of a treadmill is never offered.
+    const offered: SourceNumbers = {};
+    for (const c of differences(log, { ...(sync.offered ?? {}), ...changedNow }, activity.treadmill)) offered[c.field] = c.after;
+    const { offered: _old, ...rest } = sync;
+    void _old;
+    if (Object.keys(offered).length === 0) {
+      return { log, activity, kind: 'quiet', changes: [], next: { ...log, sourceSync: { ...rest, seen, externalId: id } } };
+    }
+    return { log, activity, kind: 'offer', changes: [], next: { ...log, sourceSync: { ...rest, seen, offered, externalId: id } } };
   }
 
   const changes = differences(log, wanted, activity.treadmill);
   if (changes.length === 0) {
     // The log already says it (or the climb is no altitude): only the fingerprint moves.
-    return { log, activity, kind: 'quiet', changes, next: { ...log, sourceSync: { seen, ...(sync.updated ? { updated: sync.updated } : {}) } } };
+    return { log, activity, kind: 'quiet', changes, next: { ...log, sourceSync: { seen, externalId: id, ...(sync.updated ? { updated: sync.updated } : {}) } } };
   }
-  return { log, activity, kind: 'update', changes, next: write(log, changes, { seen }, now) };
+  return { log, activity, kind: 'update', changes, next: write(log, changes, { seen, externalId: id }, now) };
 }
 
 export interface CorrectionPlan {
@@ -223,7 +255,7 @@ export function restoreSourceUpdate(log: SessionLog): SessionLog {
     else block[field] = value;
   }
   (next as unknown as Record<string, unknown>)[u.block] = block;
-  next.sourceSync = { seen: sync.seen, ...(sync.offered ? { offered: sync.offered } : {}) };
+  next.sourceSync = { seen: sync.seen, ...(sync.externalId ? { externalId: sync.externalId } : {}), ...(sync.offered ? { offered: sync.offered } : {}) };
   return next;
 }
 
@@ -240,7 +272,7 @@ export function takeOverOffered(log: SessionLog, now: Date): SessionLog | undefi
     void offered;
     return { ...open, sourceSync: rest };
   }
-  return write(open, changes, { seen: sync.seen }, now);
+  return write(open, changes, { seen: sync.seen, ...(sync.externalId ? { externalId: sync.externalId } : {}) }, now);
 }
 
 // --- words -----------------------------------------------------------------------------

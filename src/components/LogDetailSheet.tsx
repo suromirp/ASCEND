@@ -132,6 +132,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     }
   }
   const updateLine = sourceUpdateLine(log);
+  const previousLine = sourceUpdatePreviousLine(log);
   const offerLine = sourceOfferLine(log);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Fill in the hard part afterwards: from what was saved, or the plan of that day.
@@ -195,7 +196,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
           {updateLine && (
             <div className="mt-3 flex flex-col gap-1">
               <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{updateLine}</p>
-              {sourceUpdatePreviousLine(log) && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sourceUpdatePreviousLine(log)}</p>}
+              {previousLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{previousLine}</p>}
               {canRestoreSourceUpdate(log) && (
                 <div className="flex">
                   <TextButton
