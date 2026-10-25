@@ -451,7 +451,16 @@ ASCEND is tested quietly against MacroFactor with one measure, **raak**
 both sides, on the same set of the same day, never agreement between the two. For
 ASCEND it is an estimate afterwards, except in Forge when the proposed weight was used.
 On cables and weight stacks ASCEND learns the weights you really used
-(`engine/strengthWeights.ts`, "Gewichten van toestellen leren").
+(`engine/strengthWeights.ts`, "Gewichten van toestellen": learned, only what you used, or the
+profile steps). The model's own rules (decision `docs/beslissingen/2026-10-25-kracht-eigen-regels.md`):
+KR-2 takes the best set of a training (the same measure as raak), KR-5 brakes the estimated
+strength and not the weight so a weekly wave in the rep range converts freely, after more than
+28 days without any strength training it starts 5% lighter, and dumbbells can be read as the
+total of two (`dumbbellLog`). In a training Forge proposes a lighter weight after a set below the
+range (`engine/forgeAdjust.ts`, "Lichter" or "Liever niet", never a weight that gives reps far
+above the range), and the RIR of a set starts empty with the target as a hint; a set ticked
+without touching it stores the target with `SetLog.rirAssumed`
+(`docs/beslissingen/2026-10-25-bijsturen-in-forge.md`).
 
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a

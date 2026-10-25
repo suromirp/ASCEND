@@ -24,7 +24,7 @@ import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { isWorkSet } from './workSets';
 import type { ResolvedStrengthSettings } from './strengthSettings';
-import { candidatesFor, externalFromLoad, loadFromExternal, nearestIndex, stepAt, usedWeights, type Candidate } from './strengthWeights';
+import { candidatesFor, dumbbellsAsTotal, externalFromLoad, loadFromExternal, nearestIndex, profileFor, stepAt, usedOnlyWeights, usedWeights, type Candidate } from './strengthWeights';
 
 // --- constants -------------------------------------------------------------------------
 
@@ -46,10 +46,20 @@ export const K_DOWN_TWICE = 0.5;
 export const K_DOWN_TIRED_LEGS = 0.1;
 export const K_AFTER_BREAK = 0.7;
 export const BREAK_DAYS = 21;
+// After more than this many days without the exercise the proposal counts with a
+// little less strength (setting "Na een pauze lichter beginnen"). Up to about four
+// weeks little strength is lost, after that more (Bosquet 2013, moderate).
+export const LIGHTER_AFTER_DAYS = 28;
+export const LIGHTER_AFTER_BREAK = 0.05;
 // A day counts as "bad" when it is more than 1% under the smoothed number.
 export const BAD_DAY_MARGIN = 0.99;
 
-// KR-5.
+// KR-5, on the estimated STRENGTH, not on the weight: the strength the proposal
+// counts with may rise at most this much per training and per week, and fall at
+// most this much per training, set against the strength from before the last
+// training. The weight then follows freely from that strength and the goal of
+// this time (KR-4), so a wave in the rep range (4 to 6, then 7 to 9, then 2 to 4;
+// Moesgaard 2022) moves the weight where it should.
 export const MAX_RAISE_PER_TRAINING = 0.05;
 export const MAX_RAISE_PER_WEEK = 0.1;
 export const MAX_DROP_PER_TRAINING = 0.1;
@@ -120,15 +130,18 @@ export function loadForReps(strengthKg: number, reps: number, rir: number): numb
 
 // --- KR-2 ------------------------------------------------------------------------------
 
-// The average of the two highest estimates of the training (weighted), or the
-// one there is. Not only the highest (one lucky set), not all (later sets are
-// lower because of tiredness, not because you got weaker).
+// The highest estimate among the sets with full weight (up to and including 3
+// in reserve); with none of those, the highest among the sets with half weight.
+// The set closest to failure is the most reliable one (Halperin 2022), and this
+// is the same measure the check "raak" uses (engine/prescriptionCheck.ts): the
+// best set of the day. Later sets are lower because of tiredness, not because
+// you got weaker, so they do not pull the number down.
 export function sessionStrength(sets: SetLog[], ctx: LoadContext): number | undefined {
   const estimates = sets.map((s) => estimateSet(s, ctx)).filter((e): e is SetEstimate => !!e);
   if (estimates.length === 0) return undefined;
-  const top = estimates.sort((a, b) => b.strengthKg - a.strengthKg).slice(0, 2);
-  const weight = top.reduce((n, e) => n + e.weight, 0);
-  return top.reduce((n, e) => n + e.strengthKg * e.weight, 0) / weight;
+  const full = estimates.filter((e) => e.weight >= 1);
+  const pool = full.length > 0 ? full : estimates;
+  return Math.max(...pool.map((e) => e.strengthKg));
 }
 
 // --- KR-3 ------------------------------------------------------------------------------
@@ -294,7 +307,7 @@ export interface WarmupSet {
   reps: number;
 }
 
-export type PrescriptionKind = 'tired' | 'two_under' | 'widened' | 'capped' | 'pause' | 'up' | 'down' | 'same';
+export type PrescriptionKind = 'tired' | 'two_under' | 'widened' | 'capped' | 'pause' | 'used_top' | 'used_bottom' | 'up' | 'down' | 'same';
 
 export interface Prescription {
   sets: PlannedSet[];
@@ -315,6 +328,8 @@ export interface Prescription {
   lastWeightKg: number;
   // A sentence to show before the reason, when the last weight was not one the gym can make.
   notice?: string;
+  // The weights are the total of two dumbbells (the exercise is logged that way).
+  dumbbellTotal?: boolean;
 }
 
 export interface PrescribeInput {
@@ -337,19 +352,25 @@ export interface PrescribeInput {
   // A last weight the gym profile cannot make: do not refuse, take the nearest
   // weight it can make and say so (`notice`).
   nearestOnMismatch?: boolean;
+  // The day of the last strength training with any exercise before `date`. A pause
+  // for this exercise is only a break from training when nothing was trained in between.
+  lastStrengthDate?: string;
 }
 
 const nl = (n: number) => formatNumberNL(n, 2);
 
-export function formatWeight(exercise: Exercise | undefined, weightKg: number): string {
+// With `dumbbellTotal` the weight is the total of two dumbbells and says so:
+// "60 kg (2 x 30)".
+export function formatWeight(exercise: Exercise | undefined, weightKg: number, dumbbellTotal = false): string {
   if (exercise?.resistance === 'assisted_bodyweight') return weightKg === 0 ? 'geen hulp' : `hulp ${nl(Math.abs(weightKg))} kg`;
   if (weightKg === 0 && (exercise?.resistance === 'bodyweight' || exercise?.resistance === 'pack_or_vest')) return 'eigen gewicht';
+  if (dumbbellTotal && exercise?.resistance === 'dumbbell' && !exercise.oneDumbbell && weightKg > 0) return `${nl(weightKg)} kg (2 x ${nl(weightKg / 2)})`;
   return `${nl(weightKg)} kg`;
 }
 
-export function describePlannedSet(exercise: Exercise | undefined, set: PlannedSet): string {
+export function describePlannedSet(exercise: Exercise | undefined, set: PlannedSet, dumbbellTotal = false): string {
   const reps = set.repsLow === set.repsHigh ? `${set.repsLow}` : `${set.repsLow} tot ${set.repsHigh}`;
-  return `${formatWeight(exercise, set.weightKg)} x ${reps}, ${set.rir === 0 ? 'tot het uiterste' : `${set.rir} over`}`;
+  return `${formatWeight(exercise, set.weightKg, dumbbellTotal)} x ${reps}, ${set.rir === 0 ? 'tot het uiterste' : `${set.rir} over`}`;
 }
 
 const NO_WARMUP_PATTERNS = new Set(['isolation_arm', 'isolation_shoulder', 'isolation_leg', 'calf', 'shin', 'core', 'hip']);
@@ -420,11 +441,12 @@ export function warmupSets(
   strengthKg: number | undefined,
   kind: WarmKind = 'full',
   bodyKg?: number,
+  dumbbellTotal = false,
 ): WarmupSet[] {
   if (!canWarmUp(settings, exercise, kind)) return [];
   const bars = settings.profile.barsKg;
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
-  if (isLightWeight(exercise, firstWeightKg, bar)) return [];
+  if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
   const heavy = exercise.resistance === 'barbell' && firstWeightKg > 3 * Math.max(...bars);
   const firstLoad = loadFromExternal(exercise, firstWeightKg, bodyKg) ?? firstWeightKg;
   const plan = warmupPlan(kind, settings, strengthKg !== undefined, heavy);
@@ -442,12 +464,6 @@ export function warmupSets(
     out.push({ weightKg: rounded, reps });
   }
   return out;
-}
-
-function lastIndexBelow(candidates: Candidate[], maxLoad: number, from: number): number {
-  let i = from;
-  for (let j = 0; j < candidates.length; j++) if (candidates[j].loadKg <= maxLoad + 1e-9) i = Math.max(i, j);
-  return i;
 }
 
 // The heaviest candidate (up to maxIndex) at which at least `minReps` reps are
@@ -473,8 +489,21 @@ export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. K
 // The weights used on this exercise before the day of the proposal, for a stack
 // that learns (the setting "Gewichten van toestellen leren").
 export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings }): number[] | undefined {
-  if (!input.settings.learnStacks) return undefined;
+  if (input.settings.stackWeights === 'profile') return undefined;
   return usedWeights(input.sessions.filter((s) => s.date < input.date).flatMap((s) => s.sets));
+}
+
+// Is this exercise logged as the total of two dumbbells, from the setting and
+// the weights in its own log before the day of the proposal?
+export function dumbbellTotalFor(input: { exercise?: Exercise; sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings }): boolean {
+  const { exercise, settings } = input;
+  if (exercise?.resistance !== 'dumbbell') return false;
+  const logged = input.sessions.filter((s) => s.date < input.date).flatMap((s) => s.sets.map((x) => x.weightKg ?? 0));
+  return dumbbellsAsTotal(exercise, settings.dumbbellLog, settings.profile, logged);
+}
+
+function candidatesOf(input: PrescribeInput, lastExternalKg: number, total: boolean): Candidate[] | undefined {
+  return candidatesFor(input.exercise, profileFor(input.settings.profile, total), { bodyKg: input.bodyKg, lastExternalKg, usedKg: usedBefore(input), stackWeights: input.settings.stackWeights });
 }
 
 export function lastWeightMismatch(input: PrescribeInput): boolean {
@@ -488,9 +517,21 @@ export function lastWeightMismatch(input: PrescribeInput): boolean {
   const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
   const last = points.filter((p) => p.top).at(-1);
   if (!last?.top) return false;
-  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg, usedKg: usedBefore(input) });
+  const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotalFor(input));
   if (!candidates) return false;
   return !candidates.some((c) => Math.abs(c.externalKg - last.top!.weightKg) < WEIGHT_MATCH_KG);
+}
+
+// The smoothed strength from before a training: that of the nearest point before it.
+function smoothedBefore(points: SessionPoint[], point: SessionPoint): number | undefined {
+  return points.slice(0, points.indexOf(point)).reverse().find((p) => p.smoothed !== undefined)?.smoothed;
+}
+
+// The last day before `date` among these days, for `lastStrengthDate`.
+export function lastDateBefore(dates: Iterable<string>, date: string): string | undefined {
+  let best: string | undefined;
+  for (const d of dates) if (d < date && (best === undefined || d > best)) best = d;
+  return best;
 }
 
 export function prescribe(input: PrescribeInput): Prescription | undefined {
@@ -498,16 +539,20 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo };
   const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
   const last = points.filter((p) => p.top).at(-1);
-  const strengthKg = [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed;
-  if (!last?.top || strengthKg === undefined) return undefined;
-  const candidates = candidatesFor(exercise, settings.profile, { bodyKg: input.bodyKg, lastExternalKg: last.top.weightKg, usedKg: usedBefore(input) });
+  const rawStrength = [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed;
+  if (!last?.top || rawStrength === undefined) return undefined;
+  const dumbbellTotal = dumbbellTotalFor(input);
+  const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotal);
   if (!candidates) return undefined;
+  // On a cable or stack "Alleen wat je gebruikte": only the used weights exist, and
+  // the proposal never invents another one.
+  const usedOnly = settings.stackWeights === 'used_only' && (exercise?.resistance === 'cable' || exercise?.resistance === 'machine_stack') && !!usedOnlyWeights(usedBefore(input));
   const mismatch = lastWeightMismatch(input);
   if (mismatch && !input.nearestOnMismatch) return undefined;
   // Did the smoothed strength really go down with the last training? Only then
   // may a lighter weight be put down to a lower strength.
-  const before = points.slice(0, points.indexOf(last)).reverse().find((p) => p.smoothed !== undefined)?.smoothed;
-  const strengthDropped = before !== undefined && strengthKg < before - 1e-9;
+  const before = smoothedBefore(points, last);
+  const strengthDropped = before !== undefined && rawStrength < before - 1e-9;
 
   const derived = deriveRange(points);
   const planLow = input.plan?.low;
@@ -522,57 +567,66 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const lastLoad = mismatch ? candidates[lastIdx].loadKg : last.top.loadKg;
   const lastExternal = mismatch ? candidates[lastIdx].externalKg : last.top.weightKg;
 
-  // KR-5: how far the weight may move in one training and in one week.
-  const nextUp = candidates[lastIdx + 1];
-  const nextDown = candidates[lastIdx - 1];
-  let capLoad = lastLoad + Math.max(nextUp ? nextUp.loadKg - lastLoad : 0, MAX_RAISE_PER_TRAINING * lastLoad);
+  // KR-5: how far the STRENGTH may move in one training and in one week, set
+  // against the strength from before the last training (`before`) and before the
+  // first training of the last seven days.
   const windowStart = points.find((p) => p.top && daysBetween(p.date, input.date) < 7 && daysBetween(p.date, input.date) > 0);
-  const weekBase = windowStart?.top?.loadKg ?? lastLoad;
-  capLoad = Math.min(capLoad, Math.max((1 + MAX_RAISE_PER_WEEK) * weekBase, nextUp ? nextUp.loadKg : 0));
-  const maxIdx = lastIndexBelow(candidates, capLoad, lastIdx);
-  const floorLoad = Math.min((1 - MAX_DROP_PER_TRAINING) * lastLoad, nextDown ? nextDown.loadKg : lastLoad);
-  let minIdx = lastIdx;
-  for (let j = lastIdx; j >= 0; j--) if (candidates[j].loadKg >= floorLoad - 1e-9) minIdx = j;
+  const weekBase = windowStart ? smoothedBefore(points, windowStart) : undefined;
+  const capHigh = before === undefined ? undefined : Math.min((1 + MAX_RAISE_PER_TRAINING) * before, weekBase === undefined ? Infinity : (1 + MAX_RAISE_PER_WEEK) * weekBase);
+  const capLow = before === undefined ? undefined : (1 - MAX_DROP_PER_TRAINING) * before;
+  const cappedStrength = capHigh === undefined || capLow === undefined ? rawStrength : Math.min(capHigh, Math.max(capLow, rawStrength));
+  const weekBound = capHigh !== undefined && weekBase !== undefined && (1 + MAX_RAISE_PER_WEEK) * weekBase < (1 + MAX_RAISE_PER_TRAINING) * (before ?? 0) - 1e-9;
 
   // Two trainings in a row clearly under what was expected, without tired legs.
   const lastTwo = points.filter((p) => p.shortfall !== undefined).slice(-2);
   const twoUnder = lastTwo.length === 2 && lastTwo.every((p) => (p.shortfall ?? 0) >= UNDER_EXPECTATION_REPS && !p.legsTired);
 
-  // KR-4: the weight for the first set.
-  let idx: number;
-  const lastExpected = expectedReps(strengthKg, candidates[lastIdx].loadKg, rir);
-  if (legsTired) {
-    idx = lastIdx;
-  } else if (settings.progression === 'reps_first' && lastExpected >= low && lastExpected < high && last.top.reps < high) {
-    idx = lastIdx;
-  } else {
-    idx = heaviestWith(candidates, strengthKg, rir, low, candidates.length - 1);
+  // After more than four weeks without this exercise: a little less strength to
+  // start with, and the weight does not hold on to last time's. Only when that was a
+  // break from strength training: Bosquet 2013 is about stopping, and an exercise that
+  // rested while other strength training went on (a new program) starts at its last level.
+  const pauseDays = daysBetween(last.date, input.date);
+  const trainedMeanwhile = input.lastStrengthDate !== undefined && daysBetween(input.lastStrengthDate, input.date) <= LIGHTER_AFTER_DAYS;
+  const lighter = settings.lighterAfterBreak && !legsTired && pauseDays > LIGHTER_AFTER_DAYS && !trainedMeanwhile;
+  const factor = lighter ? 1 - LIGHTER_AFTER_BREAK : 1;
+
+  // The goal of last time is not stored with a set, so it is derived from what
+  // was done: the middle of the reps of the last training. It is the same goal
+  // when that lies in today's range, give or take one rep. With another goal the weight may follow the
+  // conversion freely, also lighter than last time (a wave: 4 to 6, 7 to 9, 2 to 4).
+  const lastReps = last.workSets.map((x) => x.reps).filter((r) => r > 0);
+  const sameGoal = lastReps.length === 0 || Math.abs(median(lastReps) - (low + high) / 2) <= (high - low) / 2 + 1;
+
+  // KR-4: the weight for the first set, for a given strength.
+  const pick = (strengthKg: number): number => {
+    const lastExpected = expectedReps(strengthKg, candidates[lastIdx].loadKg, rir);
+    if (legsTired) return lastIdx;
+    if (!lighter && settings.progression === 'reps_first' && lastExpected >= low && lastExpected < high && last.top!.reps < high) return lastIdx;
+    let i = heaviestWith(candidates, strengthKg, rir, low, candidates.length - 1);
     // CHOICE OF THIS FILE: the smoothing lags behind a good day (half the way
     // up), so right after a better training the plain rule could ask for LESS
     // weight than you just did. If last time you reached the bottom of the range
-    // with at least the reps in reserve asked, the weight does not go down.
+    // with at least the reps in reserve asked, for the same goal, the weight does
+    // not go down. With another goal (more reps asked) it may.
     // A training on tired legs (a bad day that is explained) does not lower it either.
-    const held = (last.top.rir !== undefined && last.top.rir >= rir && last.top.reps >= low) || last.legsTired;
-    if (idx < lastIdx && held && !twoUnder) idx = lastIdx;
+    const held = ((last.top!.rir !== undefined && last.top!.rir >= rir && last.top!.reps >= low) || last.legsTired) && sameGoal && !lighter;
+    if (i < lastIdx && held && !twoUnder) i = lastIdx;
     // Double progression: with "eerst herhalingen" the top of the range, reached
     // with the reps in reserve asked, is the sign for one step heavier.
-    if (settings.progression === 'reps_first' && held && last.top.reps >= high && idx <= lastIdx) idx = lastIdx + 1;
-  }
-  let cappedUp = false;
-  let cappedDown = false;
-  if (!legsTired) {
-    if (idx > maxIdx) {
-      idx = maxIdx;
-      cappedUp = true;
-    }
-    if (idx < minIdx) {
-      idx = minIdx;
-      cappedDown = true;
-    }
-  }
+    if (settings.progression === 'reps_first' && held && last.top!.reps >= high && i <= lastIdx) i = lastIdx + 1;
+    return i;
+  };
+  const strengthKg = (legsTired ? rawStrength : cappedStrength) * factor;
+  let idx = pick(strengthKg);
+  if (lighter && idx > lastIdx) idx = lastIdx;
+  // The brake counts when it changed the weight: the same strength without the
+  // brake would have given another weight.
+  const free = legsTired ? idx : Math.min(pick(rawStrength * factor), lighter ? lastIdx : Infinity);
+  const cappedUp = idx < free;
+  const cappedDown = idx > free;
   if (twoUnder && !legsTired) {
     let j = idx;
-    while (j > minIdx && candidates[j].loadKg > (1 - UNDER_EXPECTATION_DROP) * lastLoad + 1e-9) j--;
+    while (j > 0 && candidates[j].loadKg > (1 - UNDER_EXPECTATION_DROP) * lastLoad + 1e-9) j--;
     idx = Math.min(idx, j);
   }
 
@@ -583,7 +637,13 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   let hi = Math.max(lo, high - shift);
   let widened = false;
   let shownRir = rir;
-  if (!legsTired && !cappedUp && expectedFirst > hi) {
+  // Only used weights: the heaviest one is the end. Asking for more strength than
+  // that, or having reached the top of the range with reps in reserve, is no reason
+  // to invent a weight or to widen the range.
+  const readyHeavier = last.top.reps >= high && last.top.rir !== undefined && last.top.rir >= rir && Math.abs(first.externalKg - lastExternal) < 1e-6;
+  const atTop = usedOnly && !legsTired && idx === candidates.length - 1 && (expectedFirst > hi || readyHeavier);
+  const atBottom = usedOnly && !legsTired && idx === 0 && expectedFirst < lo;
+  if (!legsTired && !cappedUp && !atTop && expectedFirst > hi) {
     if (settings.widenRange) {
       // The step is too coarse to stay inside the range: the range grows for this training.
       hi = expectedFirst;
@@ -637,7 +697,6 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   };
 
   const assisted = exercise?.resistance === 'assisted_bodyweight';
-  const pauseDays = daysBetween(last.date, input.date);
   let kind: PrescriptionKind;
   let reason: string;
   if (legsTired) {
@@ -651,19 +710,32 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       : dropped > 0.07
         ? 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu een stap lichter om weer op dreef te komen.'
         : 'Twee keer achter elkaar haalde je minder dan verwacht, dus nu 5% lichter om weer op dreef te komen.';
+  } else if (atTop) {
+    kind = 'used_top';
+    reason = readyHeavier
+      ? 'Je haalde de bovenkant van het bereik met genoeg over, dus je bent klaar voor zwaarder. Dit is het zwaarste gewicht dat je op dit toestel gebruikte: kies zelf het eerstvolgende gewicht op het toestel.'
+      : 'Dit is het zwaarste gewicht dat je op dit toestel gebruikte, dus het blijft staan en de herhalingen gaan omhoog tot de bovenkant van het bereik.';
+  } else if (atBottom) {
+    kind = 'used_bottom';
+    reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht ken ik hier niet, dus dat stel ik niet voor. Kies zelf iets lichter als dit te zwaar is.';
   } else if (widened) {
     kind = 'widened';
     const step = stepAt(candidates, idx);
     reason = `Een stap van ${nl(step)} kg is hier te grof voor ${low} tot ${high} herhalingen, daarom is het bereik nu tijdelijk verbreed.`;
-  } else if (cappedUp) {
-    kind = 'capped';
-    reason = 'Je geschatte kracht is gestegen, maar per training gaat het gewicht hooguit één stap of 5% omhoog.';
-  } else if (cappedDown) {
-    kind = 'capped';
-    reason = strengthDropped ? 'Je geschatte kracht is gedaald, maar per training gaat het gewicht hooguit 10% omlaag.' : `${whyLighter()} Per training gaat het gewicht hooguit 10% omlaag.`;
+  } else if (lighter) {
+    kind = 'pause';
+    reason = 'Je deed dit meer dan vier weken niet, dus we beginnen iets lichter en kijken na deze training opnieuw.';
   } else if (pauseDays > BREAK_DAYS) {
     kind = 'pause';
     reason = 'Je deed dit een tijd niet, dus we beginnen op je laatste niveau en kijken na deze training opnieuw.';
+  } else if (cappedUp) {
+    kind = 'capped';
+    reason = weekBound
+      ? 'Je geschatte kracht is gestegen, maar per week rekenen we hooguit 10% meer kracht mee, dus het gewicht gaat rustig omhoog.'
+      : 'Je geschatte kracht is gestegen, maar per training rekenen we hooguit 5% meer kracht mee, dus het gewicht gaat rustig omhoog.';
+  } else if (cappedDown) {
+    kind = 'capped';
+    reason = 'Je geschatte kracht is gedaald, maar per training rekenen we hooguit 10% minder kracht mee, dus het gewicht gaat rustig omlaag.';
   } else if (first.loadKg > lastLoad + 1e-6) {
     kind = 'up';
     reason = before === undefined
@@ -685,7 +757,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
 
   return {
     sets,
-    warmups: warmupSets(settings, exercise, candidates, first.externalKg, strengthKg, input.warm ?? 'full', input.bodyKg),
+    warmups: warmupSets(settings, exercise, candidates, first.externalKg, strengthKg, input.warm ?? 'full', input.bodyKg, dumbbellTotal),
     kind,
     reason,
     widened,
@@ -694,6 +766,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     targetReps,
     stepKg: stepAt(candidates, idx),
     lastWeightKg: last.top.weightKg,
+    ...(dumbbellTotal ? { dumbbellTotal } : {}),
     ...(mismatch ? { notice: `Je vorige gewicht (${formatWeight(exercise, last.top.weightKg)}) past niet bij je sportschool, daarom is dit het dichtstbijzijnde gewicht dat je wel hebt (${formatWeight(exercise, candidates[lastIdx].externalKg)}). Kijk bij je stangen en dumbbells in de instellingen.` } : {}),
   };
 }

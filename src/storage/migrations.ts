@@ -270,19 +270,21 @@ export function migrateLogManualMeasured(log: SessionLog): SessionLog {
   return valid ? { ...rest, manualMeasured: valid } : rest;
 }
 
-// --- meer per set: SetLog.rir en SetLog.kind ------------------------------------
+// --- meer per set: SetLog.rir, SetLog.kind en SetLog.rirAssumed -------------------
 // A set can carry the reps in reserve (`rir`, 0 to 10) and its kind (`kind`,
 // 'warmup' or 'work'; absent is a working set). Both are optional and additive:
 // every log travels whole, so the backup schema number does not move and a
 // backup from before the fields (any schema) imports exactly as it did. A set
 // whose new field is damaged (hand-edited) keeps its reps and weight and loses
-// only that field.
+// only that field. `rirAssumed` (true: the reps in reserve are the aim of the
+// plan, not measured) is only kept as `true` and only next to a valid `rir`.
 export function migrateSetLog(raw: SetLog): SetLog {
-  if (typeof raw !== 'object' || raw === null || (!('rir' in raw) && !('kind' in raw))) return raw;
-  const { rir, kind, ...rest } = raw as SetLog;
+  if (typeof raw !== 'object' || raw === null || (!('rir' in raw) && !('kind' in raw) && !('rirAssumed' in raw))) return raw;
+  const { rir, kind, rirAssumed, ...rest } = raw as SetLog;
   const out: SetLog = rest;
   if (typeof rir === 'number' && Number.isFinite(rir) && rir >= 0 && rir <= 10) out.rir = rir;
   if (kind === 'warmup' || kind === 'work') out.kind = kind;
+  if (rirAssumed === true && out.rir !== undefined) out.rirAssumed = true;
   return out;
 }
 

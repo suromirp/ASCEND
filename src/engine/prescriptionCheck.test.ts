@@ -274,6 +274,9 @@ describe('de vingerafdruk van wat raak bepaalt', () => {
     const base = checkModelKey({ enabled: true });
     expect(checkModelKey({ enabled: true, showTrendLines: false, showComparison: true, restAuto: false })).toBe(base);
     expect(checkModelKey({ enabled: true, learnStacks: false })).not.toBe(base);
+    expect(checkModelKey({ enabled: true, stackWeights: 'used_only' })).not.toBe(base);
+    expect(checkModelKey({ enabled: true, lighterAfterBreak: false })).not.toBe(base);
+    expect(checkModelKey({ enabled: true, dumbbellLog: 'total' })).not.toBe(base);
     expect(checkModelKey({ enabled: true, checkFrom: '2026-11-01' })).not.toBe(base);
   });
 });

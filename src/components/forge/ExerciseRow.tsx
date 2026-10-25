@@ -205,7 +205,7 @@ function ExerciseDetail({ view, kind, bodyKg, today, cmp, showExtras, onHistory 
       {next && (
         <div className="flex flex-col gap-1.5 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
           <Eyebrow>Volgende keer volgens ASCEND</Eyebrow>
-          <p className="font-sans text-base tabular-nums" style={{ color: 'var(--color-ink)' }}>{describePlannedSet(exercise, next.sets[0])}</p>
+          <p className="font-sans text-base tabular-nums" style={{ color: 'var(--color-ink)' }}>{describePlannedSet(exercise, next.sets[0], next.dumbbellTotal)}</p>
           {next.sets.length > 1 && (
             <p className="font-sans text-xs tabular-nums leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
               {next.sets.length} werksets, de volgende per set: {next.sets.slice(1).map((x) => formatWeight(exercise, x.weightKg)).join(', ')}

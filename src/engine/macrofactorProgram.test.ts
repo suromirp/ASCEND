@@ -177,7 +177,8 @@ describe('gebruiken', () => {
     // Een set tot falen: "12+", vooringevuld met 12.
     expect(raise.rows[0].target.failure).toBe(true);
     expect(raise.rows[0].reps).toBe(12);
-    expect(raise.rows[0].rir).toBe(0);
+    expect(raise.rows[0].rir).toBeUndefined();
+    expect(raise.rows[0].target.rir).toBe(0);
   });
 });
 

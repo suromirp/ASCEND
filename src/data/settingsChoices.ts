@@ -119,6 +119,17 @@ export const CHOICES = {
       { value: 'exercise', label: 'Per oefening', note: 'Elke samengestelde oefening de volle opbouw', short: 'Per oefening' },
     ],
   }),
+  rirVooraf: def({
+    group: 'Forge',
+    title: 'RIR vooraf invullen',
+    line: 'Wat er in het RIR-veld van een werkset staat voor je iets invult.',
+    advice: 'hint' as 'hint' | 'target',
+    help: 'forgeRirVooraf',
+    options: [
+      { value: 'hint', label: 'Als hint', note: 'Het veld is leeg, het doel staat gedimd in beeld', short: 'Als hint' },
+      { value: 'target', label: 'Met het doel', note: 'Het doel staat er al in, je past het aan als het anders was', short: 'Met het doel' },
+    ],
+  }),
   schatting: def({
     group: 'Forge',
     title: 'Sets die meetellen',
@@ -150,6 +161,30 @@ export const CHOICES = {
       { value: '2_4', label: '2 en 4 weken', note: 'Dichterbij, voor wie vaak traint', short: '2 en 4 weken' },
       { value: '8_12', label: '8 en 12 weken', note: 'Rustiger, een blok van een kwartaal', short: '8 en 12 weken' },
       { value: '12_26', label: '12 en 26 weken', note: 'Het lange werk, tot een half jaar terug', short: '12 en 26 weken' },
+    ],
+  }),
+  forgeLeren: def({
+    group: 'Forge',
+    title: 'Gewichten van toestellen',
+    line: 'Welke gewichten ASCEND op een toestel of kabel voorstelt.',
+    advice: 'learned' as 'learned' | 'used_only' | 'profile',
+    help: 'forgeLeren',
+    options: [
+      { value: 'learned', label: 'Geleerd en geschat', note: 'Wat je gebruikte, met de gaten en het stuk erboven aangevuld', short: 'Geleerd' },
+      { value: 'used_only', label: 'Alleen wat je gebruikte', note: 'Nooit een gewicht dat je er nog niet pakte', short: 'Alleen gebruikt' },
+      { value: 'profile', label: 'Stappen van je profiel', note: 'De stap die je bij Kabels en toestellen instelde', short: 'Profiel' },
+    ],
+  }),
+  dumbbellLog: def({
+    group: 'Forge',
+    title: 'Dumbbells in je log',
+    line: 'Of het gewicht dat je logt één dumbbell is of het totaal van twee.',
+    advice: 'auto' as 'auto' | 'each' | 'total',
+    help: 'forgeDumbbells',
+    options: [
+      { value: 'auto', label: 'Vanzelf herkennen', note: 'Per oefening, aan de gewichten in je logboek', short: 'Vanzelf' },
+      { value: 'each', label: 'Per dumbbell', note: 'Het gewicht is die ene dumbbell', short: 'Per dumbbell' },
+      { value: 'total', label: 'Totaal van twee', note: 'Het gewicht is beide dumbbells samen', short: 'Totaal van twee' },
     ],
   }),
   forgeVolgorde: def({

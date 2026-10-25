@@ -159,4 +159,33 @@ describe('toetsen en toestellen leren', () => {
     expect([r.learnStacks, r.showComparison, r.checkFrom]).toEqual([false, true, '2026-11-01']);
     expect(normalizeStrengthSettings({ checkFrom: 'gisteren', learnStacks: 'ja' })).toEqual({});
   });
+  it('de oude schakelaar wordt een keuze: uit is de stappen van het profiel, aan of weg is het advies', () => {
+    expect(resolveStrengthSettings({ learnStacks: false }).stackWeights).toBe('profile');
+    expect(resolveStrengthSettings({ learnStacks: true }).stackWeights).toBe('learned');
+    expect(resolveStrengthSettings(undefined).stackWeights).toBe('learned');
+    expect(normalizeStrengthSettings({ learnStacks: false })).toEqual({ stackWeights: 'profile' });
+    expect(resolveStrengthSettings({ learnStacks: false, stackWeights: 'used_only' }).stackWeights).toBe('used_only');
+    expect(resolveStrengthSettings({ stackWeights: 'used_only' }).learnStacks).toBe(true);
+  });
+  it('na een pauze lichter beginnen en dumbbells in je log: adviezen en rommel', () => {
+    const r = resolveStrengthSettings(undefined);
+    expect([r.lighterAfterBreak, r.dumbbellLog]).toEqual([true, 'auto']);
+    const own = resolveStrengthSettings({ lighterAfterBreak: false, dumbbellLog: 'total' });
+    expect([own.lighterAfterBreak, own.dumbbellLog]).toEqual([false, 'total']);
+    expect(normalizeStrengthSettings({ dumbbellLog: 'beide', stackWeights: 'veel', lighterAfterBreak: 'ja' })).toEqual({});
+  });
+});
+
+describe('bijsturen en RIR vooraf', () => {
+  it('het advies is bijsturen aan en het doel als hint', () => {
+    const r = resolveStrengthSettings(undefined);
+    expect(r.adjustLive).toBe(true);
+    expect(r.rirPrefill).toBe('hint');
+  });
+  it('een eigen keuze blijft, rommel wordt geweigerd', () => {
+    const r = resolveStrengthSettings({ adjustLive: false, rirPrefill: 'target' });
+    expect(r.adjustLive).toBe(false);
+    expect(r.rirPrefill).toBe('target');
+    expect(normalizeStrengthSettings({ adjustLive: 'nee', rirPrefill: 'altijd' })).toEqual({});
+  });
 });

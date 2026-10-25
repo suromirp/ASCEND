@@ -47,7 +47,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     advanced: [],
   },
   forge: {
-    rows: ['forge', 'forge-open', 'kracht', 'trainingsduur', 'forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-opwarmbereik', 'forge-rust', 'forge-signaal', 'forge-geluid', 'forge-scherm', 'forge-doorgeven', 'forge-schijven', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-leren', 'forge-naast', 'forge-sinds', 'forge-volgorde-lijst', 'forge-programma', 'stangen', 'schijven', 'dumbbells', 'kabels'],
+    rows: ['forge', 'forge-open', 'kracht', 'trainingsduur', 'forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-opwarmbereik', 'forge-pauze', 'forge-rust', 'forge-signaal', 'forge-geluid', 'forge-scherm', 'forge-bijsturen', 'forge-rir-vooraf', 'forge-doorgeven', 'forge-schijven', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-leren', 'forge-naast', 'forge-sinds', 'forge-volgorde-lijst', 'forge-programma', 'stangen', 'schijven', 'dumbbells', 'forge-dumbbells', 'kabels'],
     advanced: ['forge-bereik', 'forge-schatting'],
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd', 'intensiteit'], advanced: [] },

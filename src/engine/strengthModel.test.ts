@@ -7,14 +7,14 @@ import {
   describePlannedSet,
   estimateSet,
   expectedReps,
+  formatWeight,
   lastWeightMismatch,
   prescribe,
   referenceWeight,
   sessionStrength,
   topSetOf,
   warmupSets,
-  type SessionInput,
-} from './strengthModel';
+  type SessionInput, lastDateBefore } from './strengthModel';
 import { readMacroFactorRows } from './macrofactorImport';
 import { resolveStrengthSettings } from './strengthSettings';
 import { candidatesFor } from './strengthWeights';
@@ -69,20 +69,25 @@ describe('KR-1 geschatte kracht per set', () => {
 
 describe('KR-2 één getal per training', () => {
   const ctx = { exercise: ex('bench-press') };
-  it('neemt het gemiddelde van de twee hoogste schattingen', () => {
+  it('neemt de hoogste schatting, niet een gemiddelde', () => {
     const v = sessionStrength([work(8, 60, 2), work(7, 60, 2), work(6, 60, 2)], ctx)!;
-    const e = (r: number) => 60 * (1 + (r + 2) / 30);
-    expect(v).toBeCloseTo((e(8) + e(7)) / 2, 6);
+    expect(v).toBeCloseTo(60 * (1 + 10 / 30), 6);
+  });
+  it('de zwaarste set telt ook als hij niet de eerste is', () => {
+    const v = sessionStrength([work(10, 50, 2), work(6, 60, 1), work(8, 55, 2)], ctx)!;
+    expect(v).toBeCloseTo(60 * (1 + 7 / 30), 6);
   });
   it('neemt de ene als er maar één is, en niets als er geen is', () => {
     expect(sessionStrength([work(8, 60, 2), work(8, 60)], ctx)).toBeCloseTo(60 * (1 + 10 / 30), 6);
     expect(sessionStrength([work(8, 60)], ctx)).toBeUndefined();
   });
-  it('weegt een set ver van falen half', () => {
+  it('een set ver van falen telt niet mee zolang er een set met vol gewicht is', () => {
     const v = sessionStrength([work(8, 60, 2), work(8, 62, 4)], ctx)!;
-    const a = 60 * (1 + 10 / 30);
-    const b = 62 * (1 + 12 / 30);
-    expect(v).toBeCloseTo((a * 1 + b * 0.5) / 1.5, 6);
+    expect(v).toBeCloseTo(60 * (1 + 10 / 30), 6);
+  });
+  it('zonder set met vol gewicht telt de hoogste set met half gewicht', () => {
+    const v = sessionStrength([work(8, 60, 4), work(8, 62, 5)], { ...ctx, maxToFailure: 20 })!;
+    expect(v).toBeCloseTo(62 * (1 + 13 / 30), 6);
   });
 });
 
@@ -277,16 +282,52 @@ describe('KR-4 het voorschrift', () => {
 
 describe('KR-5 de stapgrens', () => {
   const bench = ex('bench-press');
-  it('gaat per training hooguit één stap of 5% omhoog', () => {
-    // Eerst een zware dag, daarna een lichte dag: de kracht is nog hoog, het gewicht komt stap voor stap terug.
+  it('de kracht waarmee het voorstel rekent gaat per training hooguit 5% omhoog', () => {
+    // Kracht 80 (60 kg x 8 met 2 over), daarna een dag met 70 kg x 8 met 1 over: de
+    // gladgestreken kracht stijgt met ruim 6%, het voorstel rekent met 5%.
     const s: SessionInput[] = [
-      { date: '2026-09-01', sets: [work(8, 80, 2), work(8, 80, 2), work(8, 80, 2)] },
-      { date: '2026-09-08', sets: [work(8, 60, 2), work(8, 60, 2), work(8, 60, 2)] },
+      { date: '2026-09-01', sets: [work(8, 60, 2), work(8, 60, 2), work(8, 60, 2)] },
+      { date: '2026-09-08', sets: [work(8, 70, 1), work(8, 70, 1), work(8, 70, 1)] },
     ];
     const p = prescribe({ exercise: bench, sessions: s, date: '2026-09-15', settings })!;
-    // laatste gewicht 60; 5% is 3 kg, een stap is 2,5 kg: hooguit 63 dus 62,5
-    expect(p.sets[0].weightKg).toBe(62.5);
+    expect(p.strengthKg).toBeCloseTo(80 * 1.05, 6);
     expect(p.kind).toBe('capped');
+    expect(p.reason).toContain('kracht');
+    expect(p.reason).toContain('5%');
+  });
+  it('bij een gelijk doel blijft een grote sprong geremd', () => {
+    // Drie weken met hetzelfde doel (7 tot 9, 2 over); dan een uitschieter van 60 naar 75 kg.
+    const plan = { low: 7, high: 9, rir: 2 };
+    const s: SessionInput[] = [
+      { date: '2026-09-01', sets: [work(8, 60, 2), work(8, 60, 2), work(8, 60, 2)] },
+      { date: '2026-09-08', sets: [work(8, 60, 2), work(8, 60, 2), work(8, 60, 2)] },
+      { date: '2026-09-15', sets: [work(8, 75, 1), work(8, 75, 1), work(8, 75, 1)] },
+    ];
+    const p = prescribe({ exercise: bench, sessions: s, date: '2026-09-22', settings, plan })!;
+    // De kracht van 60 x 8 met 2 over is 80; de sprong naar 75 kg wordt op 5% gehouden.
+    expect(p.strengthKg).toBeCloseTo(84, 6);
+    expect(p.sets[0].weightKg).toBeLessThanOrEqual(65);
+    expect(p.kind).toBe('capped');
+  });
+  it('een golf in het bereik: het gewicht volgt de omrekening, ook meer dan 10% omhoog of omlaag', () => {
+    const three = (reps: number, kg: number) => [work(reps, kg, 2), work(reps, kg, 2), work(reps, kg, 2)];
+    // Week 1: 4 tot 6 met 80 kg x 5. Week 2: 7 tot 9 met 72,5 kg x 8. Week 3: 2 tot 4.
+    const week12: SessionInput[] = [
+      { date: '2026-09-01', sets: three(5, 80) },
+      { date: '2026-09-08', sets: three(8, 72.5) },
+    ];
+    const lighter = prescribe({ exercise: bench, sessions: week12.slice(0, 1), date: '2026-09-08', settings, plan: { low: 7, high: 9, rir: 2 } })!;
+    expect(lighter.sets[0].weightKg).toBeLessThan(80);
+    const heavier = prescribe({ exercise: bench, sessions: week12, date: '2026-09-15', settings, plan: { low: 2, high: 4, rir: 2 } })!;
+    // 16% zwaarder dan vorige keer, omdat het doel veel minder herhalingen vraagt.
+    expect(heavier.sets[0].weightKg).toBeGreaterThan(72.5 * 1.15);
+    expect(heavier.kind).not.toBe('capped');
+  });
+  it('van weinig naar veel herhalingen mag het gewicht meer dan 10% omlaag', () => {
+    const s: SessionInput[] = [{ date: '2026-09-01', sets: [work(3, 100, 2), work(3, 100, 2), work(3, 100, 2)] }];
+    const p = prescribe({ exercise: bench, sessions: s, date: '2026-09-08', settings, plan: { low: 7, high: 9, rir: 2 } })!;
+    expect(p.sets[0].weightKg).toBeLessThanOrEqual(87.5);
+    expect(p.kind).not.toBe('capped');
   });
   it('gaat na een betere training niet lichter dan vorige keer als je het bereik haalde', () => {
     const s: SessionInput[] = [
@@ -610,5 +651,101 @@ describe('opwarmset met een negatief extern gewicht', () => {
     const w = warmupSets(settings, row, cands, 40, 20, 'full', 200);
     // 40% van een kracht van 20 kg is 8 kg, minder dan de 16 kg lichaam in deze rij
     expect(w).toEqual([]);
+  });
+});
+
+describe('na een pauze lichter beginnen', () => {
+  const bench = ex('bench-press');
+  const three = (reps: number, kg: number) => [work(reps, kg, 2), work(reps, kg, 2), work(reps, kg, 2)];
+  const sessions: SessionInput[] = [
+    { date: '2026-06-01', sets: three(8, 60) },
+    { date: '2026-06-08', sets: three(8, 60) },
+  ];
+  it('tot en met 28 dagen begint het voorstel op het laatste niveau', () => {
+    const p = prescribe({ exercise: bench, sessions, date: '2026-07-06', settings })!;
+    expect(p.kind).toBe('pause');
+    expect(p.reason).toContain('laatste niveau');
+    expect(p.strengthKg).toBeCloseTo(80, 6);
+  });
+  it('na meer dan 28 dagen rekent het met 5% minder kracht en zegt dat', () => {
+    const p = prescribe({ exercise: bench, sessions, date: '2026-07-07', settings })!;
+    expect(p.kind).toBe('pause');
+    expect(p.reason).toBe('Je deed dit meer dan vier weken niet, dus we beginnen iets lichter en kijken na deze training opnieuw.');
+    expect(p.strengthKg).toBeCloseTo(80 * 0.95, 6);
+    expect(p.sets[0].weightKg).toBeLessThan(60);
+  });
+  it('met de instelling uit blijft het op het laatste niveau', () => {
+    const off = resolveStrengthSettings({ lighterAfterBreak: false });
+    const p = prescribe({ exercise: bench, sessions, date: '2026-07-07', settings: off })!;
+    expect(p.strengthKg).toBeCloseTo(80, 6);
+    expect(p.reason).toContain('laatste niveau');
+  });
+  it('rustte alleen deze oefening terwijl je wel krachttraining deed, dan is het geen pauze van training', () => {
+    const p = prescribe({ exercise: bench, sessions, date: '2026-07-07', settings, lastStrengthDate: '2026-07-03' })!;
+    expect(p.strengthKg).toBeCloseTo(80, 6);
+    expect(p.reason).toContain('laatste niveau');
+    // Was ook de laatste krachttraining meer dan vier weken terug, dan wel lichter.
+    const q = prescribe({ exercise: bench, sessions, date: '2026-07-07', settings, lastStrengthDate: '2026-06-08' })!;
+    expect(q.strengthKg).toBeCloseTo(80 * 0.95, 6);
+  });
+  it('lastDateBefore geeft de laatste dag voor een datum', () => {
+    expect(lastDateBefore(['2026-06-01', '2026-07-03', '2026-07-09'], '2026-07-07')).toBe('2026-07-03');
+    expect(lastDateBefore(['2026-07-09'], '2026-07-07')).toBeUndefined();
+  });
+});
+
+describe('dumbbells als totaal', () => {
+  const press = ex('dumbbell-bench-press');
+  const three = (kg: number, reps = 8, rir = 2) => [work(reps, kg, rir), work(reps, kg, rir), work(reps, kg, rir)];
+  const run = (log: SessionInput[], mode?: 'auto' | 'each' | 'total') =>
+    prescribe({ exercise: press, sessions: log, date: '2026-09-22', settings: resolveStrengthSettings(mode ? { dumbbellLog: mode } : undefined), plan: { low: 7, high: 9, rir: 2 } });
+  const totals: SessionInput[] = [
+    { date: '2026-09-01', sets: three(56) },
+    { date: '2026-09-08', sets: three(60) },
+    { date: '2026-09-15', sets: three(60) },
+  ];
+  it('vanzelf: een logboek met totalen wordt als totaal gelezen', () => {
+    const p = run(totals)!;
+    expect(p).toBeDefined();
+    expect(p.dumbbellTotal).toBe(true);
+    // een som van twee gelijke dumbbells uit het rek: 60 is 2 x 30, in stappen van 5
+    expect(p.sets[0].weightKg % 5).toBe(0);
+    expect(p.sets[0].weightKg).toBeGreaterThan(50);
+    expect(p.kind).not.toBe('widened');
+    expect(describePlannedSet(press, p.sets[0], true)).toContain('(2 x ');
+  });
+  it('vanzelf: per dumbbell gelogde gewichten blijven per dumbbell', () => {
+    const each: SessionInput[] = [{ date: '2026-09-01', sets: three(27.5) }, { date: '2026-09-08', sets: three(30) }, { date: '2026-09-15', sets: three(30) }];
+    const p = run(each)!;
+    expect(p.dumbbellTotal).toBeUndefined();
+    expect(p.sets[0].weightKg).toBeLessThanOrEqual(35);
+  });
+  it('"Per dumbbell" leest nooit een totaal', () => {
+    expect(run(totals, 'each')?.dumbbellTotal).toBeUndefined();
+  });
+  it('"Totaal van twee" leest elk gewicht als totaal, ook als het onder het rek past', () => {
+    const light: SessionInput[] = [{ date: '2026-09-01', sets: three(20) }, { date: '2026-09-08', sets: three(20) }];
+    expect(run(light, 'total')?.dumbbellTotal).toBe(true);
+    expect(run(light, 'auto')?.dumbbellTotal).toBeUndefined();
+  });
+  it('een oefening met één dumbbell wordt nooit verdubbeld', () => {
+    const goblet = ex('goblet-squat');
+    const log: SessionInput[] = [{ date: '2026-09-01', sets: three(60) }];
+    const p = prescribe({ exercise: goblet, sessions: log, date: '2026-09-08', settings: resolveStrengthSettings({ dumbbellLog: 'total' }), nearestOnMismatch: true });
+    expect(p?.dumbbellTotal).toBeUndefined();
+  });
+  it('de last voor de schatting blijft wat er gelogd is', () => {
+    const p = run(totals)!;
+    expect(sessionStrength(three(60), { exercise: press })).toBeCloseTo(60 * (1 + 10 / 30), 6);
+    expect(p.strengthKg).toBeGreaterThan(70);
+  });
+  it('zonder totaal loopt een gelogd totaal vast op het rek (de oude klacht)', () => {
+    expect(lastWeightMismatch({ exercise: press, sessions: totals, date: '2026-09-22', settings: resolveStrengthSettings({ dumbbellLog: 'each' }) })).toBe(true);
+    expect(lastWeightMismatch({ exercise: press, sessions: totals, date: '2026-09-22', settings })).toBe(false);
+  });
+  it('het gewicht staat er met twee dumbbells bij', () => {
+    expect(formatWeight(press, 60, true)).toBe('60 kg (2 x 30)');
+    expect(formatWeight(press, 60)).toBe('60 kg');
+    expect(formatWeight(ex('goblet-squat'), 24, true)).toBe('24 kg');
   });
 });

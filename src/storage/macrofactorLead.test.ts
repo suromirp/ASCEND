@@ -175,13 +175,13 @@ describe('the switch and the names', () => {
 
   it('keeps all confirmed names in one go, per name and not per training', async () => {
     await setMappings([
-      { name: ' Intermediate Upper/Lower Split Newwave (Workout A) ', templateId: 'tpl_lower_a' },
-      { name: 'Intermediate Upper/Lower Split Newwave (Workout B)', templateId: 'tpl_upper_a' },
+      { name: ' Upper/Lower Split Voorbeeld (Workout A) ', templateId: 'tpl_lower_a' },
+      { name: 'Upper/Lower Split Voorbeeld (Workout B)', templateId: 'tpl_upper_a' },
       { name: 'Arms', templateId: null },
     ]);
     expect(await getMapping()).toEqual({
-      'intermediate upper/lower split newwave (workout a)': 'tpl_lower_a',
-      'intermediate upper/lower split newwave (workout b)': 'tpl_upper_a',
+      'upper/lower split voorbeeld (workout a)': 'tpl_lower_a',
+      'upper/lower split voorbeeld (workout b)': 'tpl_upper_a',
       arms: null,
     });
     await setMappings([]);

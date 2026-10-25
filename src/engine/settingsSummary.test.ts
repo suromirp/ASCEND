@@ -194,10 +194,27 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-volgorde-lijst', withForge({ listSort: 'name' })).value).toBe('Op naam');
   });
 
+  it('Bijsturen staat aan, RIR vooraf staat op hint, en een keuze verandert de rij', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-bijsturen', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-bijsturen', withForge({ adjustLive: false })).checked).toBe(false);
+    expect(rowSummary('forge-bijsturen', withForge({ enabled: false })).hidden).toBe(true);
+    expect(rowSummary('forge-rir-vooraf', facts()).value).toBe('Als hint');
+    expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'target' })).value).toBe('Met het doel');
+    expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'rommel' })).value).toBe('Als hint');
+  });
+
   it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
     const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
-    expect(rowSummary('forge-leren', facts())).toEqual({ checked: true, auto: true, hidden: false });
-    expect(rowSummary('forge-leren', withForge({ learnStacks: false })).checked).toBe(false);
+    expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', auto: true, hidden: false });
+    expect(rowSummary('forge-leren', withForge({ learnStacks: false })).value).toBe('Profiel');
+    expect(rowSummary('forge-leren', withForge({ stackWeights: 'used_only' })).value).toBe('Alleen gebruikt');
+    expect(rowSummary('forge-leren', withForge({ enabled: false })).hidden).toBe(true);
+    expect(rowSummary('forge-pauze', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('forge-pauze', withForge({ lighterAfterBreak: false })).checked).toBe(false);
+    expect(rowSummary('forge-dumbbells', facts())).toEqual({ value: 'Vanzelf', hidden: false });
+    expect(rowSummary('forge-dumbbells', withForge({ dumbbellLog: 'total' })).value).toBe('Totaal van twee');
+    expect(rowSummary('forge-dumbbells', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-naast', facts())).toEqual({ checked: false, hidden: false });
     expect(rowSummary('forge-naast', withForge({ showComparison: true })).checked).toBe(true);
     expect(rowSummary('forge-naast', withForge({ enabled: false })).hidden).toBe(true);

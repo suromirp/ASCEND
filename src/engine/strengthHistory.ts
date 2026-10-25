@@ -18,6 +18,7 @@ import {
   analyseSessions,
   deriveRange,
   describePlannedSet,
+  lastDateBefore,
   lastWeightMismatch,
   estimateSet,
   prescribe,
@@ -174,7 +175,7 @@ export interface ExerciseView {
   strengthKg?: number;
 }
 
-export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengthSettings, bodyKg: number | undefined, today: string, tiredNow?: LegsTired): ExerciseView {
+export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengthSettings, bodyKg: number | undefined, today: string, tiredNow?: LegsTired, strengthDates?: string[]): ExerciseView {
   const ctx = { exercise: history.exercise, bodyKg, maxToFailure: settings.estimateUpTo };
   const points = analyseSessions(history.sessions, ctx);
   const range = deriveRange(points);
@@ -187,7 +188,9 @@ export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengt
     line.push({ label: formatDateNL(p.date), value: ref.weightKg, date: p.date });
     now = { weightKg: ref.weightKg, reps: ref.reps, rir: range.rir };
   }
-  const input = { exercise: history.exercise, sessions: history.sessions, date: lastDateOrToday(history, today), bodyKg, settings, tired: tiredNow };
+  const date = lastDateOrToday(history, today);
+  const lastStrengthDate = strengthDates ? lastDateBefore(strengthDates, date) : undefined;
+  const input = { exercise: history.exercise, sessions: history.sessions, date, bodyKg, settings, tired: tiredNow, ...(lastStrengthDate ? { lastStrengthDate } : {}) };
   const next = prescribe(input);
   const weightMismatch = !next && lastWeightMismatch(input);
   return { history, points, range, line, now, next, ...(weightMismatch ? { weightMismatch } : {}), strengthKg: [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed };
@@ -200,8 +203,9 @@ function lastDateOrToday(history: ExerciseHistory, today: string): string {
 }
 
 export function exerciseViews(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined, today: string, tiredNow?: LegsTired): ExerciseView[] {
+  const strengthDates = histories.flatMap((h) => h.sessions.map((s) => s.date));
   return histories
-    .map((h) => exerciseView(h, settings, bodyKg, today, tiredNow))
+    .map((h) => exerciseView(h, settings, bodyKg, today, tiredNow, strengthDates))
     .sort((a, b) => b.history.sessions.length - a.history.sessions.length || a.history.name.localeCompare(b.history.name, 'nl'));
 }
 
@@ -234,6 +238,7 @@ function slotFor(templates: SessionTemplate[] | undefined, templateId: string | 
 
 export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined, templates?: SessionTemplate[]): ComparisonRow[] {
   const rows: ComparisonRow[] = [];
+  const strengthDates = histories.flatMap((x) => x.sessions.map((s) => s.date));
   for (const h of histories) {
     const ctx = { exercise: h.exercise, bodyKg, maxToFailure: settings.estimateUpTo };
     for (let i = 1; i < h.sessions.length; i++) {
@@ -241,7 +246,8 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
       const slot = slotFor(templates, s.templateId, h.key);
       const plan = targetOfSlot(slot);
       const planned = plan && plan.low !== undefined && plan.high !== undefined ? { plan } : {};
-      const rx = prescribe({ exercise: h.exercise, sessions: h.sessions.slice(0, i), date: s.date, bodyKg, settings, tired: s.tired, ...planned });
+      const lastStrengthDate = lastDateBefore(strengthDates, s.date);
+      const rx = prescribe({ exercise: h.exercise, sessions: h.sessions.slice(0, i), date: s.date, bodyKg, settings, tired: s.tired, ...planned, ...(lastStrengthDate ? { lastStrengthDate } : {}) });
       const top = topSetOf(s.sets, ctx);
       if (!rx || !top) continue;
       // The same set on both sides: the work set the target belongs to (the first

@@ -22,8 +22,12 @@ function rirColor(rir: number): string {
 }
 
 // Het bolletje met de herhalingen in reserve. Klein te zien, 44 px te tikken.
-export function RirBubble({ rir, onClick, label }: { rir: number; onClick?: () => void; label: string }) {
-  const style = { background: rirColor(rir), color: 'var(--color-on-action)' };
+// `hint`: het doel van het voorschrift, nog niet door jou ingevuld: een omlijnd,
+// gedimd bolletje in plaats van een gevuld.
+export function RirBubble({ rir, onClick, label, hint = false }: { rir: number; onClick?: () => void; label: string; hint?: boolean }) {
+  const style = hint
+    ? { background: 'transparent', color: 'var(--color-ink-dim)', border: '1.5px solid var(--color-control-border)' }
+    : { background: rirColor(rir), color: 'var(--color-on-action)' };
   const face = <span className="flex h-6 w-6 items-center justify-center rounded-full font-sans text-xs font-semibold tabular-nums" style={style}>{rir >= 5 ? '5+' : rir}</span>;
   if (!onClick) return <span aria-label={label} className="flex h-6 w-6 items-center justify-center">{face}</span>;
   return (

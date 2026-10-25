@@ -624,7 +624,7 @@ describe('vrije periodes in een back-up', () => {
   });
 });
 
-describe('meer per set in een back-up (rir en kind)', () => {
+describe('meer per set in een back-up (rir, kind en rirAssumed)', () => {
   beforeEach(async () => {
     await wipeAllData();
   });
@@ -665,6 +665,24 @@ describe('meer per set in een back-up (rir en kind)', () => {
     await wipeAllData();
     await restore(envelope);
     expect((await SessionLogsRepo.getAll())[0].strengthData).toEqual(newSets);
+  });
+
+  it('rirAssumed survives export and import, and a log without it reads as measured', async () => {
+    const withMark = [{ exerciseId: 'sq', exerciseName: 'Squat', sets: [{ reps: 6, weightKg: 100, rir: 2, kind: 'work' as const, rirAssumed: true }, { reps: 6, weightKg: 100, rir: 1, kind: 'work' as const }] }];
+    await SessionLogsRepo.put(baseLog('mark', withMark));
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    expect(envelope.payload.sessionLogs[0].strengthData).toEqual(withMark);
+    await wipeAllData();
+    await restore(envelope);
+    const sets = (await SessionLogsRepo.getAll())[0].strengthData![0].sets;
+    expect(sets[0].rirAssumed).toBe(true);
+    expect(sets[1].rirAssumed).toBeUndefined();
+  });
+
+  it('a damaged rirAssumed is dropped, also without a rir', () => {
+    const damaged = [{ exerciseId: 'sq', exerciseName: 'Squat', sets: [{ reps: 6, rir: 2, rirAssumed: 'ja' }, { reps: 5, rirAssumed: true }, { reps: 4, rir: 1, rirAssumed: false }] }];
+    const backup = normalizeBackupToCurrentModel(flat([baseLog('bad2', damaged as never)]));
+    expect(backup.sessionLogs[0].strengthData![0].sets).toEqual([{ reps: 6, rir: 2 }, { reps: 5 }, { reps: 4, rir: 1 }]);
   });
 
   it('a damaged rir or kind is dropped, the reps and weight stay', () => {

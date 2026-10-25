@@ -15,6 +15,21 @@ import type { Exercise, MovementPattern, MuscleGroup, Resistance } from '../mode
 
 type M = MuscleGroup;
 
+// Exercises with one dumbbell: the weight in the log is that one dumbbell, never a total of two.
+const ONE_DUMBBELL = new Set([
+  'goblet-squat',
+  'single-leg-rdl',
+  'tibialis-raise-loaded',
+  'dumbbell-row',
+  'dumbbell-pullover',
+  'dumbbell-preacher-curl',
+  'weighted-roman-chair-back-extension',
+  'weighted-ghd-hip-hinge',
+  'dumbbell-glute-bridge',
+  'dumbbell-frog-pump',
+  'decline-weighted-sit-up',
+]);
+
 function ex(
   id: string,
   name: string,
@@ -27,7 +42,7 @@ function ex(
   cues: string[],
   bodyweightFraction?: number,
 ): Exercise {
-  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
+  return { id, name, aliases, primary, secondary, resistance, pattern, loadsLegs, cues, ...(ONE_DUMBBELL.has(id) ? { oneDumbbell: true } : {}), ...(bodyweightFraction !== undefined ? { bodyweightFraction } : {}) };
 }
 
 export const EXERCISES: Exercise[] = [

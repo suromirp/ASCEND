@@ -309,6 +309,10 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('rustgeluid', forge.restSound), ...(forge.restAlert === 'vibrate' ? { sub: 'Je voelt alleen het ritme' } : {}), hidden: !forge.restAuto || forge.restAlert === 'off' };
     case 'forge-scherm':
       return { checked: forge.keepScreenOn };
+    case 'forge-bijsturen':
+      return { checked: forge.adjustLive, hidden: !forge.enabled };
+    case 'forge-rir-vooraf':
+      return { value: choiceShort('rirVooraf', forge.rirPrefill) };
     case 'forge-doorgeven':
       return { checked: forge.carryWeights };
     case 'forge-1rm':
@@ -326,7 +330,11 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'forge-lijntjes':
       return { checked: forge.showTrendLines, hidden: !forge.enabled };
     case 'forge-leren':
-      return { checked: forge.learnStacks, auto: true, hidden: !forge.enabled };
+      return { value: choiceShort('forgeLeren', forge.stackWeights), auto: true, hidden: !forge.enabled };
+    case 'forge-pauze':
+      return { checked: forge.lighterAfterBreak, hidden: !forge.enabled };
+    case 'forge-dumbbells':
+      return { value: choiceShort('dumbbellLog', forge.dumbbellLog), hidden: !forge.enabled };
     case 'forge-naast': {
       // De stand staat hier, zodat je hem kunt zien zonder dat het op Forge staat.
       const lines = f.strengthCheck ? checkLines(f.strengthCheck.all) : {};

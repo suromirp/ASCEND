@@ -235,10 +235,13 @@ describe('doorgegeven gewicht rondt af op wat je sportschool kan maken', () => {
 });
 
 describe('takeTarget en applyReps', () => {
-  it('een tik op het voorschrift neemt kg, herhalingen en RIR over', () => {
-    const w = ex('a', [row('a1', { weightKg: 40, reps: 5, rir: 0 })]);
+  it('een tik op het voorschrift neemt kg en herhalingen over, de RIR blijft een hint', () => {
+    const w = ex('a', [row('a1', { weightKg: 40, reps: 5, rir: undefined })]);
     const r = takeTarget(w, 'a1').rows[0];
-    expect(r).toMatchObject({ weightKg: 47.5, reps: 12, rir: 2, edited: true });
+    expect(r).toMatchObject({ weightKg: 47.5, reps: 12, edited: true });
+    expect(r.rir).toBeUndefined();
+    const mine = ex('a', [row('a1', { weightKg: 40, reps: 5, rir: 0 })]);
+    expect(takeTarget(mine, 'a1').rows[0].rir).toBe(0);
   });
   it('een afgevinkte set blijft zoals hij was', () => {
     const w = ex('a', [row('a1', { weightKg: 40, done: true })]);

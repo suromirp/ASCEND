@@ -87,7 +87,9 @@ describe('planWorkout', () => {
       expect(r.reps).toBeGreaterThan(0);
       expect(r.done).toBe(false);
     }
-    expect(work[0].rir).toBe(work[0].target.rir);
+    // De RIR begint leeg; het doel staat er alleen als hint.
+    expect(work[0].rir).toBeUndefined();
+    expect(work[0].target.rir).toBeDefined();
     // De opwarmsets liggen onder het eerste werkgewicht.
     expect(Math.max(...warm.map((r) => r.weightKg!))).toBeLessThan(work[0].weightKg!);
     expect(squat.previous?.length).toBeGreaterThan(0);
@@ -97,7 +99,7 @@ describe('planWorkout', () => {
   it('zonder geschiedenis: het sjabloon, met 2 over, geen opwarmsets', () => {
     const [ex] = planWorkout([slot('ex5', 'Lateral raises', 3, '12-15')], ctx());
     expect(ex.rows).toHaveLength(3);
-    expect(ex.rows.every((r) => r.kind === 'work' && r.target.repsLow === 12 && r.target.repsHigh === 15 && r.rir === 2 && r.reps === 14)).toBe(true);
+    expect(ex.rows.every((r) => r.kind === 'work' && r.target.repsLow === 12 && r.target.repsHigh === 15 && r.rir === undefined && r.target.rir === 2 && r.reps === 14)).toBe(true);
     expect(ex.reason).toBeUndefined();
   });
 
@@ -118,7 +120,7 @@ describe('planWorkout', () => {
   it('een RPE in het sjabloon wordt herhalingen over', () => {
     const [ex] = planWorkout([slot('x', 'Onbekende oefening', 2, '8', { rpe: 8 })], ctx());
     expect(ex.known).toBe(false);
-    expect(ex.rows[0].rir).toBe(2);
+    expect(ex.rows[0].target.rir).toBe(2);
     expect(ex.exerciseId).toBe('x');
   });
 });
@@ -170,7 +172,29 @@ describe('afvinken en de rusttimer', () => {
     const cleared = w.map((e) => (e.slot === 'ex5' ? updateRow(e, row.id, { reps: undefined, rir: undefined }) : e));
     const r = tickRow(cleared, 'ex5', row.id).workout[1].rows[0];
     expect(r.reps).toBe(14);
+    // Niet zelf ingevuld: het doel, met het merkje.
     expect(r.rir).toBe(2);
+    expect(r.rirAssumed).toBe(true);
+  });
+
+  it('een zelf ingevulde RIR is gemeten, ook als hij gelijk is aan het doel', () => {
+    const w = plan();
+    const row = w[1].rows[0];
+    const mine = w.map((e) => (e.slot === 'ex5' ? updateRow(e, row.id, { rir: 2 }) : e));
+    const r = tickRow(mine, 'ex5', row.id).workout[1].rows[0];
+    expect(r.rir).toBe(2);
+    expect(r.rirAssumed).toBeFalsy();
+  });
+
+  it('met "Met het doel" staat het doel erin en een onaangeraakte set houdt het merkje', () => {
+    const [ex] = planWorkout([slot('ex5', 'Lateral raises', 2, '12-15')], ctx({ settings: resolveStrengthSettings({ rirPrefill: 'target' }) }));
+    expect(ex.rows.every((r) => r.rir === 2 && r.rirAssumed === true)).toBe(true);
+    const touched = updateRow(ex, ex.rows[0].id, { rir: 1 });
+    expect(touched.rows[0]).toMatchObject({ rir: 1, rirAssumed: false });
+    const done = tickRow([touched], 'ex5', ex.rows[0].id).workout[0];
+    const done2 = tickRow([done], 'ex5', ex.rows[1].id).workout[0];
+    expect(toStrengthData([done2])![0].sets).toMatchObject([{ rir: 1 }, { rir: 2, rirAssumed: true }]);
+    expect(toStrengthData([done2])![0].sets[0].rirAssumed).toBeUndefined();
   });
 
   it('voortgang telt de werksets', () => {
@@ -189,6 +213,7 @@ describe('sets toevoegen en weghalen', () => {
     expect(more.rows).toHaveLength(ex.rows.length + 1);
     const added = more.rows.at(-1)!;
     expect(added.kind).toBe('work');
+    expect(added.rir).toBeUndefined();
     expect(added.weightKg).toBe(ex.rows.at(-1)!.weightKg);
     expect(added.done).toBe(false);
   });
@@ -212,9 +237,10 @@ describe('opslaan', () => {
     let w = planWorkout([slot('ex8', 'Barbell Back Squat', 2, '5-8'), slot('ex13', 'Core', 2, '45s')], ctx());
     expect(toStrengthData(w)).toBeUndefined();
     const warm = w[0].rows.find((r) => r.kind === 'warmup')!;
-    const work = w[0].rows.find((r) => r.kind === 'work')!;
+    let work = w[0].rows.find((r) => r.kind === 'work')!;
     w = tickRow(w, 'ex8', warm.id).workout;
     w = tickRow(w, 'ex8', work.id).workout;
+    work = w[0].rows.find((r) => r.id === work.id)!;
     w = tickRow(w, 'ex13', w[1].rows[0].id).workout;
     const data = toStrengthData(w)!;
     expect(data).toHaveLength(1);
@@ -222,7 +248,7 @@ describe('opslaan', () => {
     expect(data[0].sets).toHaveLength(2);
     expect(data[0].sets[0]).toMatchObject({ kind: 'warmup', weightKg: warm.weightKg, reps: warm.reps });
     expect(data[0].sets[0].rir).toBeUndefined();
-    expect(data[0].sets[1]).toMatchObject({ kind: 'work', weightKg: work.weightKg, reps: work.reps, rir: work.rir });
+    expect(data[0].sets[1]).toMatchObject({ kind: 'work', weightKg: work.weightKg, reps: work.reps, rir: work.rir, rirAssumed: true });
     // De opwarmset telt niet als werk (isWorkSet), de werkset wel.
     expect(data[0].sets.filter(isWorkSet)).toHaveLength(1);
     expect(hardestLegRir(w)).toBe(work.rir);

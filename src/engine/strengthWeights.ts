@@ -10,7 +10,7 @@
 
 import type { Exercise } from '../models/exercise';
 import { dumbbellWeights } from './gymProfileEdit';
-import type { GymProfile } from './strengthSettings';
+import type { DumbbellLog, DumbbellRack, GymProfile, StackWeights } from './strengthSettings';
 
 export interface Candidate {
   // The weight as it is logged: on the bar, in the hand, on the stack, the help
@@ -27,6 +27,10 @@ export interface WeightContext {
   // The weights really used on this exercise (work and warm-up sets). Only a
   // cable or a machine with a stack learns from them (`learnedStack`).
   usedKg?: number[];
+  // How the used weights are turned into candidates on a cable or a stack:
+  // 'used_only' offers exactly those (and nothing before they exist). Anything
+  // else learns (`learnedStack`).
+  stackWeights?: StackWeights;
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -138,6 +142,44 @@ export function learnedStack(usedKg: number[], profileStepKg: number): number[] 
   return [...below, ...inside, ...above];
 }
 
+// The weights you really used, cleaned the same way as for a learned stack
+// (one decimal at most, no converted pounds), ascending. Undefined when none.
+export function usedOnlyWeights(usedKg: number[] | undefined): number[] | undefined {
+  const used = [...new Set((usedKg ?? []).filter((w) => Number.isFinite(w) && w > 0).map(r2))]
+    .filter((w) => hasOneDecimalAtMost(w) && !looksLikePounds(w))
+    .sort((a, b) => a - b);
+  return used.length > 0 ? used : undefined;
+}
+
+// --- dumbbells as a total ----------------------------------------------------------------
+
+// The rack of two dumbbells together: every weight doubled, so the weights are
+// the sums of two equal dumbbells from the rack (steps of twice the step).
+export function totalRack(d: DumbbellRack): DumbbellRack {
+  return { startKg: r2(2 * d.startKg), stepKg: r2(2 * d.stepKg), upToKg: r2(2 * d.upToKg), thenStepKg: r2(2 * d.thenStepKg), maxKg: r2(2 * d.maxKg) };
+}
+
+// The gym profile as it counts for an exercise logged as the total of two
+// dumbbells. The load for the estimate stays what was logged.
+export function profileFor(profile: GymProfile, dumbbellTotal: boolean | undefined): GymProfile {
+  return dumbbellTotal ? { ...profile, dumbbells: totalRack(profile.dumbbells) } : profile;
+}
+
+// Is this exercise logged as the total of two dumbbells? Never for an exercise
+// with one dumbbell (`oneDumbbell`). "Vanzelf herkennen": only when the log holds
+// a weight heavier than the heaviest dumbbell of the rack and not more than twice
+// that, which one dumbbell cannot be. A weight the rack just lacks (12 or 16 kg on
+// a rack in steps of 2,5) stays a weight per dumbbell: gyms have more dumbbells
+// than a profile lists. For lighter exercises logged as a total the choice
+// "Totaal van twee" is there.
+export function dumbbellsAsTotal(exercise: Exercise | undefined, mode: DumbbellLog, profile: GymProfile, loggedKg: number[] | undefined): boolean {
+  if (exercise?.resistance !== 'dumbbell' || exercise.oneDumbbell) return false;
+  if (mode === 'each') return false;
+  if (mode === 'total') return true;
+  const max = profile.dumbbells.maxKg;
+  return (loggedKg ?? []).some((w) => w > max + 0.1 && w <= 2 * max + 0.1);
+}
+
 // The weights a set list really used, for `usedKg`.
 export function usedWeights(sets: { weightKg?: number }[]): number[] {
   return sets.map((s) => s.weightKg ?? 0).filter((w) => w > 0);
@@ -164,7 +206,10 @@ function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ct
       return multiples(stepFor(exercise, profile), 0, 200);
     default:
       // A cable or a stack that was used before: the weights it really has.
-      if ((res === 'cable' || res === 'machine_stack') && ctx.usedKg && ctx.usedKg.length > 0) {
+      if ((res === 'cable' || res === 'machine_stack') && ctx.stackWeights === 'used_only') {
+        const only = usedOnlyWeights(ctx.usedKg);
+        if (only) return only;
+      } else if ((res === 'cable' || res === 'machine_stack') && ctx.stackWeights !== 'profile' && ctx.usedKg && ctx.usedKg.length > 0) {
         const learned = learnedStack(ctx.usedKg, stepFor(exercise, profile));
         if (learned) return learned;
       }

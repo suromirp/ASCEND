@@ -209,7 +209,8 @@ export function targetReps(t: RowTarget): number {
   return t.timedSec ?? (t.failure ? t.repsLow : Math.round((t.repsLow + t.repsHigh) / 2));
 }
 
-// A tap on the prescription: kg and reps (and RIR) as the prescription says.
+// A tap on the prescription: kg and reps as the prescription says. The RIR stays
+// what it is (empty with the aim as a hint): it is for you to say how it felt.
 export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise {
   return {
     ...ex,
@@ -220,7 +221,6 @@ export function takeTarget(ex: WorkoutExercise, rowId: string): WorkoutExercise 
             ...r,
             ...(r.target.weightKg !== undefined ? { weightKg: r.target.weightKg } : {}),
             reps: targetReps(r.target),
-            ...(r.kind === 'work' && r.target.rir !== undefined ? { rir: r.target.rir } : {}),
             edited: true,
           },
     ),
@@ -232,7 +232,11 @@ export function copyRow(ex: WorkoutExercise, rowId: string): WorkoutExercise {
   const index = ex.rows.findIndex((r) => r.id === rowId);
   if (index < 0) return ex;
   const source = ex.rows[index];
-  const copy: WorkoutRow = { ...source, id: `${ex.slot}:c${Date.now().toString(36)}${ex.rows.length}`, done: false, edited: true };
+  // The RIR is not copied: the copy has not been done yet, so there is nothing felt to carry.
+  const { rir: _rir, rirAssumed: _assumed, ...rest } = source;
+  void _rir;
+  void _assumed;
+  const copy: WorkoutRow = { ...rest, id: `${ex.slot}:c${Date.now().toString(36)}${ex.rows.length}`, done: false, edited: true };
   return { ...ex, rows: [...ex.rows.slice(0, index + 1), copy, ...ex.rows.slice(index + 1)] };
 }
 

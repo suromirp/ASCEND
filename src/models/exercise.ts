@@ -133,6 +133,9 @@ export interface Exercise {
   bodyweightFraction?: number;
   // The legs carry real load (for the leg index and the warm-up).
   loadsLegs: boolean;
+  // Done with one dumbbell (goblet squat, single arm row): a logged weight is never
+  // the total of two dumbbells.
+  oneDumbbell?: boolean;
   // Three to five short points: what you do, what to watch, the most made mistake.
   cues: string[];
   videoUrl?: string;

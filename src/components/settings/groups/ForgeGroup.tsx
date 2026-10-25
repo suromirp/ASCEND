@@ -55,6 +55,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-sets" title="Werksets" facts={facts} onClick={() => setSheet('forge-sets')} />
           <SummaryRow id="forge-opwarmen" title="Opwarmen" facts={facts} info="forgeOpwarmen" onClick={() => setSheet('forge-opwarmen')} />
         <SummaryRow id="forge-opwarmbereik" title="Opwarmen per" facts={facts} onClick={() => setSheet('forge-opwarmbereik')} />
+          <SummaryRow id="forge-pauze" title="Na een pauze lichter beginnen" facts={facts} info="forgePauze" onChange={(on) => save({ lighterAfterBreak: on })} />
         </SettingsSection>
       ) : (
         <SettingsSection title="Voorstellen">
@@ -67,6 +68,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="forge-signaal" title="Signaal als de rust om is" facts={facts} onClick={() => setSheet('forge-signaal')} />
         <SummaryRow id="forge-geluid" title="Geluid na de rust" facts={facts} onClick={() => setSheet('forge-geluid')} />
         <SummaryRow id="forge-scherm" title="Scherm aan tijdens je training" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
+        <SummaryRow id="forge-bijsturen" title="Bijsturen in de training" facts={facts} info="forgeBijsturen" onChange={(on) => save({ adjustLive: on })} />
+        <SummaryRow id="forge-rir-vooraf" title="RIR vooraf invullen" facts={facts} info="forgeRirVooraf" onClick={() => setSheet('forge-rir-vooraf')} />
         <SummaryRow id="forge-doorgeven" title="Gewicht doorgeven aan volgende sets" facts={facts} info="forgeDoorgeven" onChange={(on) => save({ carryWeights: on })} />
         <SummaryRow id="forge-schijven" title="Schijven bij de set tonen" facts={facts} info="forgeSchijven" onChange={(on) => save({ showPlates: on })} />
         <SummaryRow id="forge-1rm" title="Geschatte 1RM tonen" facts={facts} info="forge1rm" onChange={(on) => save({ showOneRm: on })} />
@@ -75,7 +78,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="forge-vergelijken" title="Vergelijken met" facts={facts} info="forgeVergelijken" onClick={() => setSheet('forge-vergelijken')} />
         <SummaryRow id="forge-extras" title="Wat er verder veranderde" facts={facts} info="forgeExtras" onChange={(on) => save({ showExtras: on })} />
         <SummaryRow id="forge-lijntjes" title="Lijntjes in de lijst" facts={facts} info="forgeLijntjes" onChange={(on) => save({ showTrendLines: on })} />
-        <SummaryRow id="forge-leren" title="Gewichten van toestellen leren" facts={facts} info="forgeLeren" onChange={(on) => save({ learnStacks: on })} />
+        <SummaryRow id="forge-leren" title="Gewichten van toestellen" facts={facts} info="forgeLeren" onClick={() => setSheet('forge-leren')} />
         <SummaryRow id="forge-naast" title="ASCEND naast MacroFactor" facts={facts} info="forgeNaast" onChange={(on) => save({ showComparison: on })} />
         <SummaryRow id="forge-sinds" title="Stil meten sinds" facts={facts} info="forgeSinds" onClick={() => setSheet('forge-sinds')} />
         <SummaryRow id="forge-volgorde-lijst" title="Volgorde van de oefeningen" facts={facts} onClick={() => setSheet('forge-volgorde-lijst')} />
@@ -86,6 +89,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="stangen" title="Stangen" facts={facts} onClick={() => setSheet('stangen')} />
         <SummaryRow id="schijven" title="Schijven" facts={facts} onClick={() => setSheet('schijven')} />
         <SummaryRow id="dumbbells" title="Dumbbells" facts={facts} onClick={() => setSheet('dumbbells')} />
+        <SummaryRow id="forge-dumbbells" title="Dumbbells in je log" facts={facts} info="forgeDumbbells" onClick={() => setSheet('forge-dumbbells')} />
         <SummaryRow id="kabels" title="Kabels en toestellen" facts={facts} onClick={() => setSheet('kabels')} />
       </SettingsSection>
 
@@ -98,6 +102,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'forge-volgorde-lijst' && <ChoiceFromDef def={CHOICES.forgeVolgorde} value={s.listSort} onPick={(v) => save({ listSort: v })} onClose={close} />}
       {sheet === 'forge-volgorde' && <ChoiceFromDef def={CHOICES.volgorde} value={s.progression} onPick={(v) => save({ progression: v })} onClose={close} />}
       {sheet === 'forge-sets' && <ChoiceFromDef def={CHOICES.werksets} value={s.workSets} onPick={(v) => save({ workSets: v })} onClose={close} />}
+      {sheet === 'forge-rir-vooraf' && <ChoiceFromDef def={CHOICES.rirVooraf} value={s.rirPrefill} onPick={(v) => save({ rirPrefill: v })} onClose={close} />}
       {sheet === 'forge-opwarmen' && <ChoiceFromDef def={CHOICES.opwarmen} value={s.warmup} onPick={(v) => save({ warmup: v })} onClose={close} />}
       {sheet === 'forge-opwarmbereik' && <ChoiceFromDef def={CHOICES.opwarmbereik} value={s.warmupScope} onPick={(v) => save({ warmupScope: v })} onClose={close} />}
       {sheet === 'forge-schatting' && <ChoiceFromDef def={CHOICES.schatting} value={s.estimateUpTo as 12 | 15 | 20} onPick={(v) => save({ estimateUpTo: v })} onClose={close} />}
@@ -105,6 +110,8 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <ChoiceFromDef def={CHOICES.rustgeluid} value={s.restSound} onPick={(v) => { tryRestSound(v); save({ restSound: v }); }} onClose={close} />
       )}
       {sheet === 'forge-signaal' && <ChoiceFromDef def={CHOICES.restsignaal} value={s.restAlert} onPick={(v) => save({ restAlert: v })} onClose={close} />}
+      {sheet === 'forge-leren' && <ChoiceFromDef def={CHOICES.forgeLeren} value={s.stackWeights} onPick={(v) => save({ stackWeights: v })} onClose={close} />}
+      {sheet === 'forge-dumbbells' && <ChoiceFromDef def={CHOICES.dumbbellLog} value={s.dumbbellLog} onPick={(v) => save({ dumbbellLog: v })} onClose={close} />}
       {sheet === 'forge-sinds' && <CheckFromSheet onClose={close} />}
       {sheet === 'forge-programma' && <ProgramSheet onClose={close} />}
       {sheet === 'stangen' && <BarsSheet onClose={close} />}

@@ -67,6 +67,7 @@ import {
   type WorkoutRow,
 } from '../../engine/forgeWorkout';
 import type { GymProfile } from '../../engine/strengthSettings';
+import { profileFor } from '../../engine/strengthWeights';
 import { programExercisesFor } from '../../engine/macrofactorProgram';
 import { isLegHeavyTemplate } from '../../engine/scheduler';
 import { templateSport } from '../../engine/sports';
@@ -89,7 +90,9 @@ import { NumberField } from '../NumberField';
 import { PainReportFields } from '../PainReportFields';
 import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
+import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
+import { adjustText, applyLighter, stillOpen, suggestLighter, type Adjustment } from '../../engine/forgeAdjust';
 import { InputDock } from './InputDock';
 import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
 import { useWakeLock } from './useWakeLock';
@@ -178,6 +181,8 @@ export function ForgeWorkout({
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
+  // Het voorstel "Lichter?" per oefening, na een set die te zwaar was (engine/forgeAdjust.ts).
+  const [lighter, setLighter] = useState<Record<string, Adjustment>>({});
   const [workoutMenu, setWorkoutMenu] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(startAtForm && !preview);
@@ -314,6 +319,15 @@ export function ForgeWorkout({
     // De focus schuift vloeiend naar de volgende open set; is de oefening af, dan
     // klapt hij zacht in en gaat het scherm naar de volgende oefening.
     const ticked = result.workout.find((e) => e.slot === slot)?.rows.find((r) => r.id === rowId)?.done;
+    // Na een set die te zwaar was stelt Forge een lichter gewicht voor; een andere tik haalt een oud voorstel weg.
+    const tickedEx = result.workout.find((e) => e.slot === slot);
+    const proposal = ticked && tickedEx && strength.enabled && strength.adjustLive && !readOnly ? suggestLighter(tickedEx, rowId, { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights }) : undefined;
+    setLighter((l) => {
+      if (!proposal && !(slot in l)) return l;
+      const { [slot]: _old, ...others } = l;
+      void _old;
+      return proposal ? { ...others, [slot]: proposal } : others;
+    });
     if (ticked) {
       const next = activeRow(result.workout, { slot, rowId });
       setActiveRef(next);
@@ -379,7 +393,7 @@ export function ForgeWorkout({
         if (e.slot !== d.slot) return e;
         if (d.field === 'reps') return applyReps(e, d.rowId, v);
         if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
-        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), strength.profile, bodyKg, v), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), strength.profile));
+        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
       }),
     );
   }
@@ -391,7 +405,7 @@ export function ForgeWorkout({
     if (!d || !ex || !row) return 0;
     const isWeight = d.field === 'weightKg';
     const current = isWeight ? (row.weightKg ?? row.target.weightKg) : (row.reps ?? 0);
-    const step = isWeight ? weightStepFor(exerciseOf(ex), strength.profile, current) : REPS_STEP;
+    const step = isWeight ? weightStepFor(exerciseOf(ex), profileFor(strength.profile, ex.dumbbellTotal), current) : REPS_STEP;
     // Hulp van een toestel: het blok werkt met de hoeveelheid hulp (+ is meer hulp), opgeslagen als negatief.
     if (isWeight && isAssisted(ex)) {
       const help = stepNumber(Math.abs(current ?? 0), direction, step, 0, weightBounds(undefined).max);
@@ -423,9 +437,17 @@ export function ForgeWorkout({
   }
 
   // Vaste handelingen voor de tabel (zie BlockActions), die altijd de nieuwste staat gebruiken.
-  const latest = useRef({ tick, tickAll, openField, take, setExercise });
+  // "Lichter": het voorgestelde gewicht erin, alleen in sets die nog open en onaangeraakt zijn.
+  function takeLighter(slot: string) {
+    const adj = lighter[slot];
+    haptics.tap();
+    if (adj) setExercise(slot, (e) => applyLighter(e, adj));
+    setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)));
+  }
+
+  const latest = useRef({ tick, tickAll, openField, take, setExercise, takeLighter });
   useEffect(() => {
-    latest.current = { tick, tickAll, openField, take, setExercise };
+    latest.current = { tick, tickAll, openField, take, setExercise, takeLighter };
   });
   const actions = useMemo<BlockActions>(
     () => ({
@@ -439,6 +461,8 @@ export function ForgeWorkout({
       rowMenu: (slot, rowId) => setRowMenu({ slot, rowId }),
       rir: (slot, rowId) => setRirFor({ slot, rowId }),
       add: (slot) => latest.current.setExercise(slot, (e) => addRow(e, 'work')),
+      lighter: (slot) => latest.current.takeLighter(slot),
+      keep: (slot) => setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
     }),
     [],
   );
@@ -526,6 +550,8 @@ export function ForgeWorkout({
               folded={!!folded[ex.slot] && exerciseComplete(ex)}
               profile={strength.profile}
               showPlates={strength.showPlates}
+              lighterText={lighter[ex.slot] && stillOpen(ex, lighter[ex.slot]) ? adjustText(stillOpen(ex, lighter[ex.slot])!, exerciseOf(ex)) : undefined}
+              rirAsValue={strength.rirPrefill === 'target'}
               act={actions}
             />
           ))}
@@ -671,10 +697,10 @@ export function ForgeWorkout({
                   key={n}
                   type="button"
                   role="radio"
-                  aria-checked={rirRow.rir === n}
+                  aria-checked={!rirRow.rirAssumed && rirRow.rir === n}
                   onClick={() => { setExercise(rirFor.slot, (e) => updateRow(e, rirFor.rowId, { rir: n })); close(); }}
                   className="flex min-h-[48px] items-center justify-center rounded-xl border"
-                  style={{ borderColor: rirRow.rir === n ? 'var(--color-ink)' : 'var(--color-card-border)' }}
+                  style={{ borderColor: !rirRow.rirAssumed && rirRow.rir === n ? 'var(--color-ink)' : 'var(--color-card-border)' }}
                 >
                   <RirBubble rir={n} label={`${n} over`} />
                 </button>
@@ -807,6 +833,8 @@ interface BlockActions {
   rowMenu: (slot: string, rowId: string) => void;
   rir: (slot: string, rowId: string) => void;
   add: (slot: string) => void;
+  lighter: (slot: string) => void;
+  keep: (slot: string) => void;
 }
 
 const ExerciseBlock = memo(function ExerciseBlock({
@@ -821,6 +849,8 @@ const ExerciseBlock = memo(function ExerciseBlock({
   folded,
   profile,
   showPlates,
+  lighterText,
+  rirAsValue,
   act,
 }: {
   ex: WorkoutExercise;
@@ -835,6 +865,10 @@ const ExerciseBlock = memo(function ExerciseBlock({
   folded: boolean;
   profile: GymProfile;
   showPlates: boolean;
+  // Het voorstel om de volgende sets lichter te maken, als er een is.
+  lighterText?: string;
+  // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
+  rirAsValue: boolean;
   act: BlockActions;
 }) {
   const plates = useMemo(() => (usesPlates(exerciseOf(ex)) ? plateSteps(ex, profile) : undefined), [ex, profile]);
@@ -895,6 +929,16 @@ const ExerciseBlock = memo(function ExerciseBlock({
           )}
           {ex.reason && (
             <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-sage)', color: 'var(--color-ink-dim)' }}>{ex.reason}</p>
+          )}
+
+          {lighterText && !readOnly && (
+            <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Voorstel voor de volgende sets">
+              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{lighterText}</p>
+              <div className="-mb-1 flex gap-4">
+                <TextButton onClick={() => act.lighter(ex.slot)}>Lichter</TextButton>
+                <TextButton tone="dim" onClick={() => act.keep(ex.slot)}>Liever niet</TextButton>
+              </div>
+            </div>
           )}
 
           <div className="mt-2" role="table" aria-label={`Sets van ${ex.name}`}>
@@ -977,7 +1021,13 @@ const ExerciseBlock = memo(function ExerciseBlock({
                       {row.kind === 'work' && !ex.timed && (readOnly ? row.target.rir : row.rir ?? row.target.rir) !== undefined && (
                         <RirBubble
                           rir={(readOnly ? row.target.rir : row.rir ?? row.target.rir)!}
-                          label={`${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`}
+                          // Een RIR die je niet zelf invulde staat gedimd: het is een hint, geen meting. Met "RIR vooraf invullen: Met het doel" staat het doel er als gewone waarde.
+                          hint={!readOnly && (row.rir === undefined || (!!row.rirAssumed && !rirAsValue))}
+                          label={
+                            !readOnly && (row.rir === undefined || (row.rirAssumed && !rirAsValue))
+                              ? `Voorschrift ${row.rir ?? row.target.rir} over, set ${label}, tik om je eigen RIR in te vullen`
+                              : `${row.rir ?? row.target.rir} over, set ${label}${readOnly ? '' : ', tik om te wijzigen'}`
+                          }
                           onClick={readOnly ? undefined : () => act.rir(ex.slot, row.id)}
                         />
                       )}

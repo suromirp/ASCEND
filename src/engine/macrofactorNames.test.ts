@@ -8,10 +8,10 @@ import { describeSuggestion, exerciseSide, linkRows, suggestMappings, workoutSid
 // Made-up export (four MacroFactor names, some of them more than once) and a made-up plan.
 const { templates } = buildDefaultProgramData();
 
-const NAME_A = 'Intermediate Upper/Lower Split Newwave (Workout A)';
-const NAME_B = 'Intermediate Upper/Lower Split Newwave (Workout B)';
-const NAME_C = 'Intermediate Upper/Lower Split Newwave (Workout C)';
-const NAME_D = 'Intermediate Upper/Lower Split Newwave (Workout D)';
+const NAME_A = 'Upper/Lower Split Voorbeeld (Workout A)';
+const NAME_B = 'Upper/Lower Split Voorbeeld (Workout B)';
+const NAME_C = 'Upper/Lower Split Voorbeeld (Workout C)';
+const NAME_D = 'Upper/Lower Split Voorbeeld (Workout D)';
 
 const LEG_DAY = ['Back Squat (Barbell)', 'Romanian Deadlift (Barbell)', 'Leg Press', 'Standing Calf Raise'];
 const UPPER_DAY = ['Bench Press (Barbell)', 'Row, Seated Cable', 'Overhead Press (Barbell)', 'Lat Pulldown'];

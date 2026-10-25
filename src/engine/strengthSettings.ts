@@ -24,6 +24,13 @@ export type RestSound = 'chime' | 'bell' | 'beep' | 'boxing' | 'whistle' | 'gong
 // What the cards on Forge show per exercise: the estimated 1RM (with the
 // MacroFactor one next to it) or the weight you can handle at your rep range.
 export type OneRmView = 'one_rm' | 'work_weight';
+// How the weights you log with dumbbells are read: recognised per exercise (the
+// advice), always per dumbbell, or always as the total of two.
+export type DumbbellLog = 'auto' | 'each' | 'total';
+// The weights ASCEND proposes on a cable or a machine with a stack: learned from
+// what you used and estimated in between (the advice), only what you used, or
+// the steps of your gym profile.
+export type StackWeights = 'learned' | 'used_only' | 'profile';
 
 // Met welke momenten Forge het getal van nu vergelijkt, in weken terug: twee
 // momenten.
@@ -31,6 +38,10 @@ export type CompareWeeks = '4_8' | '2_4' | '8_12' | '12_26';
 // De volgorde van de oefeningen: de meest getrainde eerst, de laatst getrainde
 // eerst, of op naam.
 export type ForgeSort = 'most' | 'recent' | 'name';
+// Wat er in het RIR-veld van een werkset staat voor je iets invult: niets, met het
+// doel als gedimde hint ('hint'), of het doel zelf als waarde ('target'). In beide
+// gevallen krijgt een set die je niet aanraakte het merkje `rirAssumed`.
+export type RirPrefill = 'hint' | 'target';
 
 export interface DumbbellRack {
   // The lightest dumbbell, the step up to `upToKg`, the step above that and the heaviest.
@@ -98,13 +109,22 @@ export interface StrengthSettings {
   restSeconds?: Record<string, number>;
   // A pinned note per exercise (by exercise id): seat position, grip.
   exerciseNotes?: Record<string, string>;
-  // Learn the weights of a cable or machine from what you used on it, and round
-  // a proposal to those (default on).
+  // Older backups: "Gewichten van toestellen leren" as a switch. Read as
+  // `stackWeights` ('profile' for false, the advice otherwise); never written.
   learnStacks?: boolean;
+  stackWeights?: StackWeights;
+  // After more than four weeks without the exercise the proposal starts a little lighter (default on).
+  lighterAfterBreak?: boolean;
+  dumbbellLog?: DumbbellLog;
   // Show the block "ASCEND naast MacroFactor" at the bottom of Forge (default off).
   showComparison?: boolean;
   // The day the quiet measuring began (ISO), to see the weeks since apart.
   checkFrom?: string;
+  // Forge stelt tijdens de training een lichter gewicht voor na een set die te
+  // zwaar was (default on). Always a proposal, never by itself.
+  adjustLive?: boolean;
+  // The RIR field of a working set: empty with the aim as a hint (default), or the aim as value.
+  rirPrefill?: RirPrefill;
   // The strength program read in from MacroFactor, after Akkoord: it fills the
   // strength templates (engine/macrofactorProgram.ts). Absent: ASCEND's own.
   program?: StoredStrengthProgram;
@@ -134,9 +154,15 @@ export interface ResolvedStrengthSettings {
   showTrendLines: boolean;
   restSeconds: Record<string, number>;
   exerciseNotes: Record<string, string>;
+  // True unless the steps of the profile are chosen (derived from `stackWeights`).
   learnStacks: boolean;
+  stackWeights: StackWeights;
+  lighterAfterBreak: boolean;
+  dumbbellLog: DumbbellLog;
   showComparison: boolean;
   checkFrom: string;
+  adjustLive: boolean;
+  rirPrefill: RirPrefill;
 }
 
 // The day the quiet measuring began. A choice of the owner, kept here and not in a component.
@@ -205,6 +231,9 @@ const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
 export const ONE_RM_VIEWS: OneRmView[] = ['one_rm', 'work_weight'];
 export const COMPARE_WEEKS: CompareWeeks[] = ['4_8', '2_4', '8_12', '12_26'];
 export const FORGE_SORTS: ForgeSort[] = ['most', 'recent', 'name'];
+export const RIR_PREFILLS: RirPrefill[] = ['hint', 'target'];
+export const DUMBBELL_LOGS: DumbbellLog[] = ['auto', 'each', 'total'];
+export const STACK_WEIGHTS: StackWeights[] = ['learned', 'used_only', 'profile'];
 // '4_8' to [4, 8].
 export const compareMoments = (c: CompareWeeks): [number, number] => {
   const [a, b] = c.split('_').map(Number);
@@ -275,7 +304,15 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (listSort) out.listSort = listSort;
   if (typeof raw.showExtras === 'boolean') out.showExtras = raw.showExtras;
   if (typeof raw.showTrendLines === 'boolean') out.showTrendLines = raw.showTrendLines;
-  if (typeof raw.learnStacks === 'boolean') out.learnStacks = raw.learnStacks;
+  const stackWeights = STACK_WEIGHTS.find((v) => v === raw.stackWeights);
+  if (stackWeights) out.stackWeights = stackWeights;
+  else if (raw.learnStacks === false) out.stackWeights = 'profile';
+  if (typeof raw.lighterAfterBreak === 'boolean') out.lighterAfterBreak = raw.lighterAfterBreak;
+  const dumbbellLog = DUMBBELL_LOGS.find((v) => v === raw.dumbbellLog);
+  if (dumbbellLog) out.dumbbellLog = dumbbellLog;
+  if (typeof raw.adjustLive === 'boolean') out.adjustLive = raw.adjustLive;
+  const rirPrefill = RIR_PREFILLS.find((v) => v === raw.rirPrefill);
+  if (rirPrefill) out.rirPrefill = rirPrefill;
   if (typeof raw.showComparison === 'boolean') out.showComparison = raw.showComparison;
   if (typeof raw.checkFrom === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.checkFrom)) out.checkFrom = raw.checkFrom;
   const alert = REST_ALERTS.find((a) => a === raw.restAlert);
@@ -318,9 +355,14 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     showTrendLines: s.showTrendLines ?? true,
     restSeconds: s.restSeconds ?? {},
     exerciseNotes: s.exerciseNotes ?? {},
-    learnStacks: s.learnStacks ?? true,
+    learnStacks: (s.stackWeights ?? 'learned') !== 'profile',
+    stackWeights: s.stackWeights ?? 'learned',
+    lighterAfterBreak: s.lighterAfterBreak ?? true,
+    dumbbellLog: s.dumbbellLog ?? 'auto',
     showComparison: s.showComparison ?? false,
     checkFrom: s.checkFrom ?? DEFAULT_CHECK_FROM,
+    adjustLive: s.adjustLive ?? true,
+    rirPrefill: s.rirPrefill ?? 'hint',
   };
 }
 
@@ -374,6 +416,8 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.showExtras;
   delete copy.showComparison;
   delete copy.checkFrom;
+  delete copy.adjustLive;
+  delete copy.rirPrefill;
   return JSON.stringify(copy);
 }
 
@@ -381,7 +425,7 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
 // date. The switches of the screen and the rest timer are not in it, so changing
 // them on a settings page does not recount the whole strength history.
 export function checkModelKey(raw: StrengthSettings | undefined): string {
-  const r = raw ?? {};
-  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, learnStacks: r.learnStacks, program: r.program, checkFrom: r.checkFrom };
+  const r = normalizeStrengthSettings(raw) ?? {};
+  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, program: r.program, checkFrom: r.checkFrom };
   return JSON.stringify(keep);
 }

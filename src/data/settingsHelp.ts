@@ -81,6 +81,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Je planning', text: 'verandert er niet door.' },
     ],
   },
+  forgeBijsturen: {
+    title: 'Bijsturen in de training',
+    lead: 'Was een set zwaarder dan bedoeld, dan stelt Forge voor de volgende sets een lichter gewicht voor.',
+    points: [
+      { head: 'Wanneer', text: 'als je een werkset afvinkt met minder herhalingen en RIR samen dan de onderkant van het bereik plus het RIR dat gevraagd was. Vulde je de RIR niet zelf in, dan beslissen de herhalingen.' },
+      { head: 'Zo rekent het', text: 'uit die set schat Forge je kracht van vandaag, iets minder voor elke volgende set, en kiest het zwaarste gewicht van je sportschool waarbij je de onderkant nog haalt.' },
+      { head: 'Jij beslist', text: 'met Lichter komt het gewicht in de sets die nog open staan en die je niet zelf aanpaste. Met Liever niet blijft alles zoals het was.' },
+      { head: 'Past er niets', text: 'dan is er geen voorstel, in plaats van een gewicht dat veel te veel herhalingen geeft.' },
+    ],
+  },
+  forgeRirVooraf: {
+    title: 'RIR vooraf invullen',
+    lead: 'Herhalingen in reserve (RIR) zijn alleen iets waard als jij ze zelf zei.',
+    points: [
+      { head: 'Als hint', text: 'het veld is leeg en het doel staat gedimd in beeld. Vul je niets in, dan wordt het doel bewaard met een merkje dat je het niet zelf invulde.' },
+      { head: 'Met het doel', text: 'het doel staat er al als waarde, zoals voorheen. Raak je de set niet aan, dan krijgt hij hetzelfde merkje.' },
+      { head: 'Waarom', text: 'ASCEND rekent met een aangenomen RIR als zwakke aanname en weet zo welke sets gemeten zijn. De rekenregels veranderen niet.' },
+    ],
+  },
   forgeDoorgeven: {
     title: 'Gewicht doorgeven',
     lead: 'Pas je bij een set het gewicht aan, dan schuiven de sets erna mee.',
@@ -138,12 +157,31 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
   forgeLeren: {
-    title: 'Gewichten van toestellen leren',
-    lead: 'Bij een toestel of kabel met een gewichtstapel stelt ASCEND alleen gewichten voor die er echt zijn.',
+    title: 'Gewichten van toestellen',
+    lead: 'Bij een toestel of kabel met een gewichtstapel bepaal je hoe streng ASCEND is met de gewichten die het voorstelt.',
     points: [
-      { head: 'Zo leert het', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen, en rondt af op het dichtstbijzijnde.' },
-      { head: 'Buiten je bereik', text: 'boven en onder wat je gebruikte telt de stap die je op het toestel twee keer zag, anders de stap uit je sportschool. Een grote kloof ertussen wordt opgevuld.' },
-      { head: 'Uit', text: 'dan rondt ASCEND af op de stap die je bij Kabels en toestellen instelde.' },
+      { head: 'Geleerd en geschat', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen. Boven en onder wat je gebruikte telt de stap die je op het toestel twee keer zag, anders de stap uit je sportschool. Een grote kloof ertussen wordt opgevuld. Zo kan er een gewicht tussen zitten dat het toestel niet heeft.' },
+      { head: 'Alleen wat je gebruikte', text: 'ASCEND stelt nooit een gewicht voor dat je er nog niet pakte. Vraagt je kracht om zwaarder, dan blijft het gewicht staan en gaan de herhalingen omhoog. Haal je de bovenkant met genoeg over, dan kies je zelf het eerstvolgende gewicht op het toestel. Zonder gebruikte gewichten op dat toestel gelden de stappen van je profiel.' },
+      { head: 'Stappen van je profiel', text: 'ASCEND rondt af op de stap die je bij Kabels en toestellen instelde.' },
+    ],
+  },
+  forgePauze: {
+    title: 'Na een pauze lichter beginnen',
+    lead: 'Na meer dan vier weken zonder krachttraining begint het voorstel iets lichter.',
+    points: [
+      { head: 'Waarom', text: 'tot ongeveer vier weken verlies je weinig kracht, daarna meer (matig bewijs).' },
+      { head: 'Alleen een echte pauze', text: 'rustte alleen deze oefening terwijl je wel krachttraining deed, dan begint hij op je laatste niveau.' },
+      { head: 'Hoeveel', text: 'het voorstel rekent met 5% minder kracht en kijkt na die training opnieuw.' },
+      { head: 'Uit', text: 'dan begint het voorstel ook na een lange pauze op je laatste niveau.' },
+    ],
+  },
+  forgeDumbbells: {
+    title: 'Dumbbells in je log',
+    lead: 'Sommigen loggen bij een duwoefening het totaal van twee dumbbells, anderen het gewicht per dumbbell.',
+    points: [
+      { head: 'Vanzelf herkennen', text: 'staat in het logboek van een oefening een gewicht dat zwaarder is dan je zwaarste dumbbell, dan leest ASCEND die oefening als totaal. Log je ook bij lichtere oefeningen het totaal, kies dan Totaal van twee.' },
+      { head: 'Totaal', text: 'de gewichten zijn de sommen van twee gelijke dumbbells uit je rek, en het gewicht staat erbij als "60 kg (2 x 30)".' },
+      { head: 'Eén dumbbell', text: 'een oefening met één dumbbell, zoals de goblet squat, wordt nooit verdubbeld.' },
     ],
   },
   forgeNaast: {

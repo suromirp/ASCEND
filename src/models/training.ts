@@ -199,6 +199,11 @@ export interface SetLog {
   // A warm-up set or a working set. Absent means a working set, so every log
   // from before this field reads as it always did.
   kind?: SetKind;
+  // True when the reps in reserve were not measured: the set was ticked without
+  // touching the field and `rir` is the aim of the plan, not what you felt.
+  // Absent means measured (or no `rir` at all), so every log from before this
+  // field reads as it always did. Decision: docs/beslissingen/2026-10-25-bijsturen-in-forge.md.
+  rirAssumed?: boolean;
 }
 
 export interface ExerciseSetLog {
