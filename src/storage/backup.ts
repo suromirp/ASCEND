@@ -49,6 +49,7 @@ import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
+import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -634,11 +635,13 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     for (const p of current.leavePeriods ?? []) byId.set(p.id, p);
     merged.leavePeriods = [...byId.values()].sort((a, b) => a.startDate.localeCompare(b.startDate));
   }
-  // Verdicts on short nights are history too: the union, the device's own wins.
+  // Verdicts on short nights are history too: the union, the device's own wins, cut to
+  // the newest MAX_JUDGMENTS like the list is on the device. A restore brings back a
+  // verdict you undid on this device (the same pattern as weightEntries).
   if (incoming.nightJudgments || current.nightJudgments) {
     const byDate = new Map((incoming.nightJudgments ?? []).map((j) => [j.date, j]));
     for (const j of current.nightJudgments ?? []) byDate.set(j.date, j);
-    merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+    merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
   }
   // Ticked-off journey tasks are history too: the union, the device wins.
   if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);

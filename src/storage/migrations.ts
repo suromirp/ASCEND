@@ -88,8 +88,8 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
 // Optional and additive, so the backup schema number does not move: a file from
 // before it has no key, which means "not in this backup" and leaves the verdicts
 // on the device alone. A record without a date or with an unknown verdict is
-// dropped and counted; a damaged estimate loses only the estimate, because the
-// verdict itself is still true. One verdict per date, the last one wins.
+// dropped and counted; a damaged estimate or damaged minutes lose only themselves,
+// because the verdict itself is still true. One verdict per date, the last one wins.
 export function migrateNightJudgments(raw: unknown): { list: NightJudgment[] | undefined; skipped: number } {
   if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
   if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
@@ -97,15 +97,20 @@ export function migrateNightJudgments(raw: unknown): { list: NightJudgment[] | u
   let skipped = 0;
   for (const item of raw) {
     const j = typeof item === 'object' && item !== null && !Array.isArray(item) ? (item as Record<string, unknown>) : undefined;
-    if (!j || typeof j.date !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(j.date) || (j.verdict !== 'klopt' && j.verdict !== 'niet_goed')) {
+    if (!j || typeof j.date !== 'string' || !ISO_DAY.test(j.date.slice(0, 10)) || (j.verdict !== 'klopt' && j.verdict !== 'niet_goed')) {
       skipped++;
       continue;
     }
     const hours = typeof j.hours === 'number' && Number.isInteger(j.hours) && j.hours >= 5 && j.hours <= 9 ? j.hours : undefined;
     if (j.hours !== undefined && hours === undefined) skipped++;
+    // The sleep the watch showed when you judged; a damaged number only loses itself, and
+    // the verdict then holds as it did before the field existed.
+    const minutes = typeof j.minutes === 'number' && Number.isFinite(j.minutes) && j.minutes > 0 && j.minutes <= 1440 ? j.minutes : undefined;
+    if (j.minutes !== undefined && minutes === undefined) skipped++;
     byDate.set(j.date.slice(0, 10), {
       date: j.date.slice(0, 10),
       verdict: j.verdict,
+      ...(minutes !== undefined ? { minutes } : {}),
       ...(j.verdict === 'niet_goed' && hours !== undefined ? { hours } : {}),
       ...(j.verdict === 'niet_goed' && hours === undefined && j.hoursSkipped === true ? { hoursSkipped: true } : {}),
     });

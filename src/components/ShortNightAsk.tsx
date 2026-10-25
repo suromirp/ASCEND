@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { NightJudgment } from '../models/checkIn';
 import type { WellnessReading } from '../engine/wellnessCheck';
+import { reviseCheckInSleep } from '../engine/morningCard';
 import { HOUR_CHOICES, nightQuestionText, removeJudgment, upsertJudgment } from '../engine/shortNight';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
-import { SecondaryButton } from './ui';
+import { SecondaryButton, Segmented } from './ui';
 import { TextButton } from './TextButton';
 
 // De vraag bij een korte nacht (docs/beslissingen/2026-10-25-korte-nacht-vragen.md): zag
@@ -18,7 +19,9 @@ const SAVE_LIMIT_MS = 8000;
 export function ShortNightAsk({ reading, today }: { reading: WellnessReading; today: string }) {
   const { settings, updateSettings } = useAppData();
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState('');
+  // De melding hoort bij de stand waarin ze kwam: verandert de stand (het opslaan lukte
+  // alsnog), dan is ze weg.
+  const [failure, setFailure] = useState<{ text: string; key: string } | null>(null);
   const alive = useRef(true);
   useEffect(() => {
     alive.current = true;
@@ -28,17 +31,26 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
   }, []);
 
   const night = reading.night;
+  const stateKey = `${night?.state}|${night?.hours}|${night?.hoursSkipped}`;
+  const failed = failure?.key === stateKey ? failure.text : '';
   if (!night) return null;
 
   // Bewaart (of haalt weg) en zegt zichtbaar wat er gebeurde als het niet lukt.
   async function store(judgment: NightJudgment | null) {
     setBusy(true);
-    setFailed('');
+    setFailure(null);
     const next = judgment ? upsertJudgment(settings.nightJudgments, judgment) : removeJudgment(settings.nightJudgments, today);
+    // Stond de ochtend al opgeslagen met een slaapantwoord dat alleen uit het voorstel
+    // kwam, dan gaat dat mee met je oordeel. Wat je zelf koos blijft staan.
+    const checkIns = settings.morningCheckIns ?? [];
+    const mine = checkIns.find((c) => c.date === today);
+    const revised = mine ? reviseCheckInSleep(mine, judgment) : undefined;
+    const patch = mine && revised && revised !== mine ? { nightJudgments: next, morningCheckIns: checkIns.map((c) => (c.date === today ? revised : c)) } : { nightJudgments: next };
     try {
-      await withTimeout(updateSettings({ nightJudgments: next }), SAVE_LIMIT_MS, 'Opslaan');
+      await withTimeout(updateSettings(patch), SAVE_LIMIT_MS, 'Opslaan');
     } catch (err) {
-      if (alive.current) setFailed(err instanceof TimeoutError ? 'Opslaan duurde te lang. Probeer het straks nog eens.' : 'Opslaan lukte niet. Probeer het nog eens.');
+      // Na een time-out loopt het opslaan door en kan het nog lukken: dan verdwijnt deze regel vanzelf.
+      if (alive.current) setFailure({ key: stateKey, text: err instanceof TimeoutError ? 'Nog niet bevestigd, kijk zo of het staat.' : 'Opslaan lukte niet. Probeer het nog eens.' });
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -58,8 +70,8 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
       <>
         <p className="text-sm leading-snug" style={ink}>{nightQuestionText(night.minutes)}</p>
         <div className="mt-2 flex gap-2">
-          <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt' })}>Klopt</SecondaryButton>
-          <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed' })}>Niet goed gemeten</SecondaryButton>
+          <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'klopt', minutes: night.minutes })}>Klopt</SecondaryButton>
+          <SecondaryButton disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes })}>Niet goed gemeten</SecondaryButton>
         </div>
       </>
     );
@@ -74,17 +86,19 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
     body = (
       <>
         <p className="text-sm leading-snug" style={ink}>Die nacht telt niet mee. Hoe lang sliep je ongeveer?</p>
-        <div className="mt-2 grid grid-cols-5 gap-1.5">
-          {HOUR_CHOICES.map((h) => (
-            <button key={h} disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', hours: h })} className="min-h-[44px] rounded-lg border text-sm tabular-nums disabled:opacity-40" style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}>
-              {h} u
-            </button>
-          ))}
+        <div className="mt-2" aria-busy={busy}>
+          <Segmented<number>
+            label="Hoe lang sliep je ongeveer"
+            tall
+            value={undefined}
+            options={HOUR_CHOICES.map((h) => ({ value: h, label: `${h} u`, disabled: busy }))}
+            onChange={(h) => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes, hours: h })}
+          />
         </div>
         <div className="flex items-center justify-between gap-3">
-          <button disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', hoursSkipped: true })} className="min-h-[44px] text-sm font-medium disabled:opacity-40" style={{ color: 'var(--color-action)' }}>
+          <TextButton disabled={busy} onClick={() => void store({ date: today, verdict: 'niet_goed', minutes: night.minutes, hoursSkipped: true })}>
             Weet ik niet
-          </button>
+          </TextButton>
           {undo}
         </div>
       </>
