@@ -473,10 +473,14 @@ log is never changed; it travels in the backup (`storage/migrations.ts#migrateIn
 merged per id). An easy run with a heart rate outside 1.5 times the noise of the loopinzicht
 gets a sign in Logboek and Week; "Niet meetellen voor hartslag" keeps a run out of Tempo bij
 zone 2 and later comparisons, "Deze nacht niet meetellen" keeps a morning out of the resting
-heart rate and HRV averages; load, leg index and the GR5 meters always count. ASCEND suggests
-only facts it knows (weather, logbook, watch, illness) and never names alcohol or wiet itself;
-"lijkt op" (`engine/influenceEffects.ts#looksLike`) only with 4 own times on each side and
-bands that do not touch. Je stand shows "Wat doet dit met je?" from 3 times per reason against
+heart rate and HRV averages; load, leg index and the GR5 meters always count. What ASCEND knows
+itself (a heavy leg day from the logbook, warmth from the weather, a short night from the watch,
+an illness) is shown as a plain line, never asked to confirm, and counts in the overview by
+itself (`engine/influence.ts#derivedFactEntries`, never stored; warmth only for heart rate at pace
+and effort; only your own notes leave the bands; decision
+`docs/beslissingen/2026-10-25-feiten-tellen-vanzelf.md`). ASCEND never names alcohol or wiet
+itself; "lijkt op" (`engine/influenceEffects.ts#looksLike`) only for your own notes, with 4 times
+on each side and bands that do not touch. Je stand shows "Wat doet dit met je?" from 3 times per reason against
 your own band; a test the same day after 3 or more glasses (or wiet that day) gets a proposal
 with Akkoord (`engine/influenceProposal.ts`). Morning numbers from intervals.icu are kept 400
 days for this (`engine/wellnessRange.ts`). A reason is never in a list, a notification or the

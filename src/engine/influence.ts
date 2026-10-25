@@ -249,6 +249,10 @@ export interface KnownFactsInput {
   recovery: readonly RecoveryMetric[];
   illness: readonly IllnessEpisode[] | undefined;
   judgments?: NightJudgment[];
+  // The nights that are "niet goed gemeten", when the caller has them ready for many targets.
+  ignoredNights?: ReadonlySet<string>;
+  // Lookups built once by `buildFactIndex`, for many targets.
+  index?: FactIndex;
   // "Mogelijke oorzaak": with 'uit' there are no suggestions.
   cause: InfluenceCause | undefined;
 }
@@ -258,56 +262,166 @@ const feels = (log: SessionLog): number | undefined => {
   return c ? (c.feelsC ?? c.tempC) : undefined;
 };
 
+// The material of many targets at once: logs and nights looked up per date, built one time.
+export interface FactIndex {
+  logsByDate: ReadonlyMap<string, readonly SessionLog[]>;
+  recordByDate: ReadonlyMap<string, RecoveryMetric>;
+  templateById: ReadonlyMap<string, SessionTemplate>;
+  // Per sport the outdoor trainings with weather, oldest first, for the warmth fact.
+  weatherBySport: ReadonlyMap<string, readonly SessionLog[]>;
+}
+
+export function buildFactIndex(logs: readonly SessionLog[], templates: readonly SessionTemplate[], recovery: readonly RecoveryMetric[]): FactIndex {
+  const logsByDate = new Map<string, SessionLog[]>();
+  for (const l of logs) {
+    const list = logsByDate.get(l.completedDate);
+    if (list) list.push(l);
+    else logsByDate.set(l.completedDate, [l]);
+  }
+  const metricsByDate = new Map<string, RecoveryMetric[]>();
+  for (const m of recovery) {
+    const list = metricsByDate.get(m.date);
+    if (list) list.push(m);
+    else metricsByDate.set(m.date, [m]);
+  }
+  const recordByDate = new Map<string, RecoveryMetric>();
+  for (const [date, list] of metricsByDate) {
+    const rec = dayRecord(date, list);
+    if (rec) recordByDate.set(date, rec);
+  }
+  const weatherBySport = new Map<string, SessionLog[]>();
+  for (const l of logs) {
+    if (feels(l) === undefined || isIndoorLog(l)) continue;
+    const sport = logSport(l) ?? '';
+    const list = weatherBySport.get(sport);
+    if (list) list.push(l);
+    else weatherBySport.set(sport, [l]);
+  }
+  for (const list of weatherBySport.values()) list.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+  return { logsByDate, recordByDate, templateById: new Map(templates.map((t) => [t.id, t])), weatherBySport };
+}
+
 // Warmer than your earlier trainings of the same kind by at least the limit of the weather
 // in the comparison (TEMP_SAME_C), from the weather stored with the log. Not for a night.
-function warmFact(log: SessionLog, logs: readonly SessionLog[]): KnownFact | undefined {
+function warmFact(log: SessionLog, ix: FactIndex): KnownFact | undefined {
   const own = feels(log);
   if (own === undefined || isIndoorLog(log)) return undefined;
+  // The list is sorted by time: find the place of this training, then walk back over the most
+  // recent earlier ones of the same sport inside the window.
+  const list = ix.weatherBySport.get(logSport(log) ?? '') ?? [];
+  let lo = 0;
+  let hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (list[mid].completedAt < log.completedAt) lo = mid + 1;
+    else hi = mid;
+  }
   const from = addDays(log.completedDate, -WINDOW_DAYS);
-  const sport = logSport(log);
-  const others = logs
-    .filter((l) => l.id !== log.id && logSport(l) === sport && !isIndoorLog(l) && l.completedDate >= from && l.completedAt < log.completedAt && feels(l) !== undefined)
-    .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
-    .slice(0, MAX_BASELINE)
-    .map((l) => feels(l) as number);
-  if (others.length < MIN_BASELINE || own - median(others) < TEMP_SAME_C) return undefined;
+  const temps: number[] = [];
+  for (let i = lo - 1; i >= 0 && temps.length < MAX_BASELINE; i--) {
+    const l = list[i];
+    // completedAt and completedDate can differ by a day (time zone): stop only well outside the window.
+    if (l.completedDate < addDays(from, -2)) break;
+    if (l.completedDate < from) continue;
+    if (l.id !== log.id) temps.push(feels(l) as number);
+  }
+  if (temps.length < MIN_BASELINE || own - median(temps) < TEMP_SAME_C) return undefined;
   const shown = Math.round(log.detail?.conditions?.tempC ?? own);
   return { reason: 'warm', title: 'Warm', source: `${formatNumberNL(shown, 0)} graden bij de start, uit het weer` };
 }
 
 export function knownFacts(input: KnownFactsInput): KnownFact[] {
   if (input.cause === 'uit') return [];
+  const ix = input.index ?? buildFactIndex(input.logs, input.templates, input.recovery);
   const facts: KnownFact[] = [];
   const isLog = input.target.kind === 'log';
   const date = input.target.kind === 'log' ? input.target.log.completedDate : input.target.date;
 
   if (input.target.kind === 'log') {
-    const warm = warmFact(input.target.log, input.logs);
+    const warm = warmFact(input.target.log, ix);
     if (warm) facts.push(warm);
   }
 
   // A heavy leg day the day before a training; on a day note, that day itself.
   const legDay = isLog ? addDays(date, -1) : date;
-  const heavy = input.logs.find((l) => {
-    if (l.completedDate !== legDay || (input.target.kind === 'log' && l.id === input.target.log.id)) return false;
-    const t = input.templates.find((x) => x.id === l.templateId);
+  const targetId = input.target.kind === 'log' ? input.target.log.id : undefined;
+  const heavy = (ix.logsByDate.get(legDay) ?? []).find((l) => {
+    if (l.id === targetId) return false;
+    const t = ix.templateById.get(l.templateId);
     return !!t && isLegHeavyTemplate(t);
   });
   if (heavy) {
-    const name = input.templates.find((x) => x.id === heavy.templateId)?.name ?? 'Training';
+    const name = ix.templateById.get(heavy.templateId)?.name ?? 'Training';
     facts.push({ reason: 'zware_beendag', title: isLog ? 'Zware beendag gisteren' : 'Zware beendag', source: `${name}, uit je logboek` });
   }
 
   // A short night from the watch: the morning of the training, the morning after a day.
+  // A night nobody answered for yet counts as short; "Niet goed gemeten" does not.
   const morning = isLog ? date : addDays(date, 1);
-  const record = dayRecord(morning, [...input.recovery]);
-  if (record?.sleepMinutes !== undefined && record.sleepMinutes < SHORT_NIGHT_MINUTES && !ignoredNightDates(input.judgments, input.recovery).has(morning)) {
+  const record = ix.recordByDate.get(morning);
+  if (record?.sleepMinutes !== undefined && record.sleepMinutes < SHORT_NIGHT_MINUTES && !(input.ignoredNights ?? ignoredNightDates(input.judgments, input.recovery)).has(morning)) {
     facts.push({ reason: 'kort_geslapen', title: 'Kort geslapen', source: `${sleepLabel(record.sleepMinutes)} slaap, van je horloge` });
   }
 
   const ill = (input.illness ?? []).some((e) => e.startDate <= date && (e.endDate === undefined || e.endDate >= date));
   if (ill) facts.push({ reason: 'ziek', title: 'Ziek', source: 'uit je ziekmelding' });
   return facts;
+}
+
+// --- the facts as reasons, without a note ---------------------------------------------------------
+
+export interface DerivedFactsInput {
+  logs: readonly SessionLog[];
+  templates: readonly SessionTemplate[];
+  recovery: readonly RecoveryMetric[];
+  illness: readonly IllnessEpisode[] | undefined;
+  judgments?: NightJudgment[];
+}
+
+// How far back the overview reads (the mornings from intervals.icu are kept as long, storage/wellness.ts).
+export const FACT_WINDOW_DAYS = 400;
+
+// What ASCEND knows by itself, as notes that are never stored: one per training and one per day
+// with a fact, made by `knownFacts` itself so there is one way of counting. They sit at the same
+// place as a note you would have made (a training, or a day), so `affectedMorning` and the
+// once-per-place rule of `occurrencesOf` apply to them as to your own. Only the window of the
+// overview is looked at. Facts are facts: they do not depend on "Mogelijke oorzaak".
+// An illness counts once per period: the first morning of it inside the window, trained or not.
+export function derivedFactEntries(input: DerivedFactsInput): InfluenceEntry[] {
+  let to = '';
+  let first = '9999-12-31';
+  for (const m of input.recovery) {
+    if (m.date > to) to = m.date;
+    if (m.date < first) first = m.date;
+  }
+  for (const l of input.logs) {
+    if (l.completedDate > to) to = l.completedDate;
+    if (l.completedDate < first) first = l.completedDate;
+  }
+  if (to === '') return [];
+  const oldest = addDays(to, -FACT_WINDOW_DAYS);
+  const from = first > oldest ? first : oldest;
+  const ix = buildFactIndex(input.logs, input.templates, input.recovery);
+  const ignoredNights = ignoredNightDates(input.judgments, input.recovery);
+  // Illness is handled per period below, so the per-place facts leave it out.
+  const base = { logs: input.logs, templates: input.templates, recovery: input.recovery, illness: undefined, ignoredNights, index: ix, cause: 'patroon' as const };
+  const out: InfluenceEntry[] = [];
+  for (const log of input.logs) {
+    if (log.completedDate < from) continue;
+    const facts = knownFacts({ ...base, target: { kind: 'log', log } });
+    if (facts.length > 0) out.push({ id: `fact-log-${log.id}`, date: log.completedDate, logId: log.id, reasons: facts.map((f) => ({ reason: f.reason })), updatedAt: '' });
+  }
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const facts = knownFacts({ ...base, target: { kind: 'day', date: d } });
+    if (facts.length > 0) out.push({ id: `fact-day-${d}`, date: d, reasons: facts.map((f) => ({ reason: f.reason })), updatedAt: '' });
+  }
+  for (const e of input.illness ?? []) {
+    const morning = e.startDate > from ? e.startDate : from;
+    if (morning > to || (e.endDate !== undefined && e.endDate < morning)) continue;
+    // A day note affects the morning after it.
+    out.push({ id: `fact-ill-${e.id}`, date: addDays(morning, -1), reasons: [{ reason: 'ziek' }], updatedAt: '' });
+  }
+  return out;
 }
 
 // The chips that are left: what already stands as a suggestion is not offered twice.

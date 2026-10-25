@@ -4,6 +4,7 @@ import { AMOUNT_LABEL, AMOUNTS } from '../../data/influenceReasons';
 import type { AlcoholAmount, InfluenceEntry } from '../../models/influence';
 import {
   MEASURES,
+  appliesTo,
   MEASURE_TITLE,
   MEASURE_UNIT,
   alcoholAmounts,
@@ -32,12 +33,14 @@ import { InfluenceStrip } from './InfluenceStrip';
 // strook met één feitelijke zin en wat het onderzoek vindt. Geen oordeel en geen advies.
 // Ontwerp: Invloeden ASCEND, bord 3b.
 
-export function InfluenceEffectSheet({ groupKey, entries, effects, onClose }: { groupKey: string; entries: InfluenceEntry[]; effects: ReasonEffect[]; onClose: () => void }) {
+export function InfluenceEffectSheet({ groupKey, entries, own, effects, onClose }: { groupKey: string; entries: InfluenceEntry[]; own: InfluenceEntry[]; effects: ReasonEffect[]; onClose: () => void }) {
   const { closing, requestClose } = useSheetClose(onClose);
   const navigate = useNavigate();
   const [key, setKey] = useState(groupKey);
   const isAlcohol = groupKey.startsWith('alcohol');
   const group = knownGroup(entries, key) ?? knownGroup(entries, groupKey);
+  // "Vastgelegde keren bekijken" only where there is a note of your own behind the reason.
+  const ownRecorded = own.some((e) => groupsOf(e).some((g) => g.key === groupKey || g.key === key));
   const byMeasure = effectsOfGroup(effects, key);
   const amounts = alcoholAmounts(entries);
   const chosenAmount = AMOUNTS.find((a) => `alcohol:${a}` === key);
@@ -94,7 +97,7 @@ export function InfluenceEffectSheet({ groupKey, entries, effects, onClose }: { 
             )}
 
             <div className="mt-2 flex flex-col">
-              {MEASURES.map((m, i) => (
+              {MEASURES.filter((m) => !group || appliesTo(group, m)).map((m, i) => (
                 <MeasureBlock key={m} measure={m} effect={byMeasure.get(m)} group={group} first={i === 0} />
               ))}
             </div>
@@ -102,11 +105,11 @@ export function InfluenceEffectSheet({ groupKey, entries, effects, onClose }: { 
             <div className="mt-5 flex flex-col gap-1 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
               <Eyebrow>Hoe ASCEND rekent</Eyebrow>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-                Je schommeling is je eigen bereik in de vier weken ervoor, met de middelste waarde, zodat één uitschieter weinig uitmaakt. Andere ochtenden die je vastlegde tellen er niet in mee. Nachten en loopjes die je niet liet meetellen staan hier wel in, want daar gaat het om. Een paar keer is weinig: zie het als een richting.
+                Je schommeling is je eigen bereik in de vier weken ervoor, met de middelste waarde, zodat één uitschieter weinig uitmaakt. Andere ochtenden waar je zelf iets bij noteerde tellen er niet in mee. Wat ASCEND zelf weet, zoals een zware beendag, hoort bij je gewone week en telt er wel in mee. Nachten en loopjes die je niet liet meetellen staan hier wel in, want daar gaat het om. Een paar keer is weinig: zie het als een richting.
               </p>
             </div>
 
-            <TextButton className="mt-2" icon="verder" onClick={() => { onClose(); navigate('/more/lichaam'); }}>Vastgelegde keren bekijken</TextButton>
+            {ownRecorded && <TextButton className="mt-2" icon="verder" onClick={() => { onClose(); navigate('/more/lichaam'); }}>Vastgelegde keren bekijken</TextButton>}
           </Card>
         </div>
       </div>

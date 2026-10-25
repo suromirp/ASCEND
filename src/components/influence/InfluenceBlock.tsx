@@ -4,10 +4,9 @@ import { AMOUNTS, AMOUNT_LABEL, MAX_LABEL_LENGTH, REASON_CHIPS, REASON_LABEL } f
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason } from '../../models/influence';
 import { chipsWithout, EXCLUDE_LOG_EXPLAIN, setAmount, setExclude, setLabel, toggleReason, type KnownFact, type NoteTarget } from '../../engine/influence';
 import { TimeoutError, withTimeout } from '../../utils/withTimeout';
-import { Icon } from '../icons';
 import { Toggle } from '../ui';
 
-// "Wat speelde er": wat ASCEND al weet (met een tik te bevestigen), de keuzes, de hoeveelheid bij
+// "Wat speelde er": wat ASCEND al weet (gewone regels, niets te tikken), de keuzes, de hoeveelheid bij
 // alcohol, je eigen woord, en de schakelaar die iets uit je hartslagcijfers houdt. Voor een training
 // en voor een dag; de woorden verschillen alleen waar de plek het zegt. Elke tik bewaart meteen: er is
 // geen knop Opslaan en geen gevulde knop in dit blok.
@@ -45,14 +44,10 @@ export function InfluenceBlock({
     }
   }
 
-  // The suggestions, and the ones you confirmed earlier that ASCEND no longer sees.
-  const rows: KnownFact[] = [
-    ...facts,
-    ...reasons
-      .filter((r) => CONFIRMED_ONLY.includes(r.reason) && !facts.some((f) => f.reason === r.reason))
-      .map((r) => ({ reason: r.reason, title: REASON_LABEL[r.reason], source: 'door jou bevestigd' })),
-  ];
-  const chips = chipsWithout(REASON_CHIPS, facts);
+  // What ASCEND knows by itself is told, not asked: no circle, no tick, nothing to tap. It counts
+  // in "Wat doet dit met je?" without a note. A reason you confirmed earlier that ASCEND no longer
+  // sees stays here as a chosen chip, so you can still take it away.
+  const chips = [...chipsWithout(REASON_CHIPS, facts), ...CONFIRMED_ONLY.filter((r) => has(r) && !facts.some((f) => f.reason === r) && !REASON_CHIPS.includes(r))];
   const alcohol = reasons.find((r) => r.reason === 'alcohol');
   const other = reasons.find((r) => r.reason === 'anders');
   const exclude = entry?.excludeHeartRate === true;
@@ -84,39 +79,21 @@ export function InfluenceBlock({
 
   return (
     <div>
-      {rows.length > 0 && (
+      {facts.length > 0 && (
         <>
-          <p className="text-[13px] leading-[18px]" style={hint}>Wat ASCEND al weet. Tik als het klopt.</p>
-          <div className="mt-1 flex flex-col">
-            {rows.map((f) => {
-              const on = has(f.reason);
-              return (
-                <button
-                  key={f.reason}
-                  type="button"
-                  role="checkbox"
-                  aria-checked={on}
-                  onClick={() => void change((e) => toggleReason(e, f.reason))}
-                  className="flex min-h-[56px] w-full items-center gap-3 py-1.5 text-left"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] leading-5" style={{ color: 'var(--color-ink)' }}>{f.title}</span>
-                    <span className="block text-[13px] leading-[18px]" style={hint}>{f.source}</span>
-                  </span>
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                    style={{ boxShadow: `inset 0 0 0 1.5px ${on ? 'var(--color-progress)' : 'var(--color-control-border)'}`, color: 'var(--color-progress)' }}
-                  >
-                    {on && <Icon name="vinkje" size={14} />}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <p className="text-[13px] leading-[18px]" style={hint}>Wat ASCEND al weet</p>
+          <ul className="mt-1 flex flex-col">
+            {facts.map((f) => (
+              <li key={f.reason} className="py-1.5">
+                <span className="block text-[15px] leading-5" style={{ color: 'var(--color-ink)' }}>{f.title}</span>
+                <span className="block text-[13px] leading-[18px]" style={hint}>{f.source}</span>
+              </li>
+            ))}
+          </ul>
         </>
       )}
 
-      <p className={`text-[13px] leading-[18px] ${rows.length > 0 ? 'mt-3' : ''}`} style={hint}>{rows.length > 0 ? 'Speelde er nog iets?' : 'Speelde er iets?'}</p>
+      <p className={`text-[13px] leading-[18px] ${facts.length > 0 ? 'mt-3' : ''}`} style={hint}>{facts.length > 0 ? 'Speelde er nog iets?' : 'Speelde er iets?'}</p>
       <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Wat speelde er">
         {chips.map((r) => {
           const on = has(r);

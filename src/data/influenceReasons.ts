@@ -1,7 +1,7 @@
 // De redenen van "Wat speelde er" in de vaste volgorde van de chips, met hun woorden
 // (models/influence.ts). Alcohol en wiet staan gewoon tussen de rest: geen eigen
-// icoon en geen eigen kleur. Warm en een zware beendag komen alleen als voorstel uit
-// wat ASCEND al weet en staan daarom niet als chip.
+// icoon en geen eigen kleur. Warm en een zware beendag weet ASCEND zelf uit het weer en het
+// logboek; ze staan als gewone regel in het blad en daarom niet als chip.
 
 import type { AlcoholAmount, InfluenceReason } from '../models/influence';
 

@@ -28,7 +28,8 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { AMOUNT_LABEL, REASON_LABEL } from '../data/influenceReasons';
 import { addDays } from '../utils/dates';
-import { affectedMorning, excludedLogIds, excludedMornings } from './influence';
+import { affectedMorning, derivedFactEntries, excludedLogIds, excludedMornings } from './influence';
+import type { IllnessEpisode } from '../models/illness';
 import type { NightJudgment } from '../models/checkIn';
 import { ignoredNightDates } from './shortNight';
 import { plannedRpeTop } from './coach';
@@ -183,6 +184,11 @@ export interface EffectsInput {
   program: Program | null | undefined;
   // Je oordeel over nachten die niet goed gemeten zijn: die tellen niet mee in de band van slaap en HRV.
   nightJudgments?: NightJudgment[];
+  // De ziekmeldingen: een feit dat ASCEND zelf weet en vanzelf meetelt.
+  illness?: readonly IllnessEpisode[];
+  // De feiten als notities die nooit worden opgeslagen (influence.ts#derivedFactEntries), als de
+  // aanroeper ze al heeft uitgerekend. Anders rekent de calculator ze zelf uit.
+  facts?: InfluenceEntry[];
   // Voor de hartslag bij tempo. Zonder dit is die meting er niet.
   run?: { hr: HeartRateSettings | undefined; legs: LegFatigueInputs; chestStrap: boolean };
 }
@@ -290,6 +296,9 @@ export class InfluenceCalculator {
   private readonly memo = new Map<string, EffectPoint | null>();
 
   private readonly input: EffectsInput;
+  // Je eigen notities en de feiten die ASCEND zelf weet, samen. Een feit staat op dezelfde plek
+  // als een notitie, dus telt een bevestigde en een afgeleide reden daar samen één keer.
+  readonly entries: InfluenceEntry[];
   // Wat zonder reden "niet meetelt" blijft uit de banden: ochtenden voor rusthartslag, HRV en slaap,
   // trainingen voor zwaarte en hartslag bij tempo. Met een reden telt het wel als punt mee.
   private readonly skipMornings: ReadonlySet<string>;
@@ -299,6 +308,10 @@ export class InfluenceCalculator {
 
   constructor(input: EffectsInput) {
     this.input = input;
+    const facts = input.facts ?? derivedFactEntries({ logs: input.logs, templates: input.templates, recovery: input.metrics, illness: input.illness, judgments: input.nightJudgments });
+    this.entries = [...input.entries, ...facts];
+    // Only what you noted yourself keeps a morning out of the bands. A heavy leg day or a short night
+    // of the watch is part of your normal week: those facts get their own row but stay in the bands.
     this.recorded = new Set(input.entries.filter((e) => e.reasons.length > 0).map(morningOf));
     const plain = input.entries.filter((e) => e.reasons.length === 0);
     this.skipMornings = new Set([...this.recorded, ...excludedMornings(plain)]);
@@ -307,7 +320,7 @@ export class InfluenceCalculator {
     this.templateById = new Map(input.templates.map((t) => [t.id, t]));
   }
 
-  // De ochtenden met een vastgelegde reden: die tellen niet mee in een band.
+  // De ochtenden met een reden die je zelf vastlegde: die tellen niet mee in een band.
   get recordedMornings(): ReadonlySet<string> {
     return this.recorded;
   }
@@ -397,6 +410,12 @@ export class InfluenceCalculator {
   }
 }
 
+// Warmte gebeurt tijdens de training: ze zegt alleen iets over de hartslag bij tempo en over
+// zwaarte, niet over de ochtendgetallen of de slaap. Alle andere redenen gelden voor elke meting.
+export function appliesTo(group: Pick<ReasonGroup, 'reason'>, measure: InfluenceMeasure): boolean {
+  return group.reason !== 'warm' || measure === 'paceHr' || measure === 'effort';
+}
+
 // --- per reden en meting -----------------------------------------------------------------------
 
 function summarize(group: ReasonGroup, measure: InfluenceMeasure, points: EffectPoint[]): ReasonEffect {
@@ -423,12 +442,12 @@ function summarize(group: ReasonGroup, measure: InfluenceMeasure, points: Effect
 // Alles wat uit te rekenen valt: per groep en meting, ook onder de 3 keer (met het aantal).
 export function influenceEffects(input: EffectsInput, calc: InfluenceCalculator = new InfluenceCalculator(input)): ReasonEffect[] {
   const out: ReasonEffect[] = [];
-  const occurrences = occurrencesOf(input.entries);
+  const occurrences = occurrencesOf(calc.entries);
   const groups = new Map<string, ReasonGroup>();
   for (const o of occurrences) groups.set(o.group.key, o.group);
   for (const group of groups.values()) {
     const mornings = occurrences.filter((o) => o.group.key === group.key).map((o) => o.morning).sort();
-    for (const measure of MEASURES) {
+    for (const measure of MEASURES.filter((m) => appliesTo(group, m))) {
       const points = mornings.map((m) => calc.pointAt(measure, m)).filter((p): p is EffectPoint => !!p);
       if (points.length > 0) out.push(summarize(group, measure, points));
     }
@@ -689,6 +708,7 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   const calc = new InfluenceCalculator(input);
   const now = calc.pointAt(input.measure, input.date);
   if (!now) return undefined;
+  // Only reasons you noted yourself: "lijkt op" names a cause you recorded, never a fact ASCEND knows.
   const occurrences = occurrencesOf(input.entries).filter((o) => o.morning !== input.date);
   const groups = new Map<string, ReasonGroup>();
   for (const o of occurrences) groups.set(o.group.key, o.group);
@@ -704,6 +724,7 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   if (now.diff >= b.low && now.diff <= b.high) return undefined;
   let best: (LooksLike & { gap: number }) | undefined;
   for (const group of groups.values()) {
+    if (!appliesTo(group, input.measure)) continue;
     const own = new Set(occurrences.filter((o) => o.group.key === group.key).map((o) => o.morning));
     const ownDiffs = [...own].map(diffOf).filter((v): v is number => v !== undefined);
     if (ownDiffs.length < LOOKS_LIKE_MIN) continue;
