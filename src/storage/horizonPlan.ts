@@ -325,13 +325,20 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
       for (const m of first.milestones) await GoalMilestonesRepo.put(m);
       const config = await GoalEngineConfigRepo.get();
       await GoalEngineConfigRepo.set({ availability: { ...config.availability, allowedDays: first.allowedDays } });
-      // The strength block is made here, or deliberately not: the flag keeps
-      // the old default block from turning up on the next start.
-      if (first.strategy) await StrengthProgramStrategiesRepo.put(first.strategy);
+      // The flag keeps the old default strength block from turning up on the
+      // next start. The block itself is written below, after the goals.
       await MetaRepo.set('strengthProgramDefaultSeeded', true);
       await MetaRepo.set('appliedRestDay', first.restDay);
     }
     for (const g of input.goals ?? []) await TrainingGoalsRepo.put(g);
+    // The strength block starts now, after the goal and the availability it was
+    // made for: its own time is the latest, so the review of the block does not
+    // see a goal or availability "changed since the block began" and advise
+    // straight away.
+    if (first?.strategy) {
+      const at = new Date().toISOString();
+      await StrengthProgramStrategiesRepo.put({ ...first.strategy, createdAt: at, updatedAt: at });
+    }
     // The registers follow the stored settings again, now with the change.
     if (deps.prime) await deps.prime();
     if (diff.items.length > 0 || input.startItems?.length || input.program) {

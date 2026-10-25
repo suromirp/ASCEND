@@ -82,11 +82,39 @@ export function isIndoorLog(log: Pick<SessionLog, 'cardioData' | 'outdoorData'>)
 // weekly pattern. Unset: the pattern as the default program has it.
 export interface WeekShape {
   days: Record<string, number>;
+  // The days you said you can train on (1 to 7). A rest day chosen later spreads
+  // the weekday trainings over these only (engine/restDay.ts).
+  allowed?: number[];
+}
+
+// The templates a week shape may name: the fixed weekly pattern.
+export const WEEK_SHAPE_TEMPLATE_IDS: readonly string[] = ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_long_run', 'tpl_hill_intervals', 'tpl_easy_run', 'tpl_herstel'];
+
+// Reads a stored week shape defensively: only known templates with a whole
+// weekday from 1 to 7 get through; anything else (a file from elsewhere, a
+// damaged value) is nothing, and the pattern is then the default one.
+export function parseWeekShape(raw: unknown): WeekShape | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
+  const days = (raw as { days?: unknown }).days;
+  if (typeof days !== 'object' || days === null || Array.isArray(days)) return undefined;
+  const clean: Record<string, number> = {};
+  for (const [id, day] of Object.entries(days)) {
+    if (!WEEK_SHAPE_TEMPLATE_IDS.includes(id)) continue;
+    if (typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7) clean[id] = day;
+  }
+  // A shape without a single training is no shape.
+  if (!Object.keys(clean).some((id) => id !== 'tpl_herstel')) return undefined;
+  const allowedRaw = (raw as { allowed?: unknown }).allowed;
+  const allowed = Array.isArray(allowedRaw)
+    ? [...new Set(allowedRaw.filter((d): d is number => typeof d === 'number' && Number.isInteger(d) && d >= 1 && d <= 7))].sort((a, b) => a - b)
+    : [];
+  return { days: clean, ...(allowed.length > 0 ? { allowed } : {}) };
 }
 
 export function applyWeekShape(pattern: SessionTemplate[], shape: WeekShape | undefined): SessionTemplate[] {
-  if (!shape) return pattern;
-  return pattern.filter((t) => shape.days[t.id] !== undefined).map((t) => ({ ...t, defaultDayOfWeek: shape.days[t.id] }));
+  const read = parseWeekShape(shape);
+  if (!read) return pattern;
+  return pattern.filter((t) => read.days[t.id] !== undefined).map((t) => ({ ...t, defaultDayOfWeek: read.days[t.id] }));
 }
 
 export interface PatternSettings {

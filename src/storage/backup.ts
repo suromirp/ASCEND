@@ -16,6 +16,7 @@
 // transaction — so a bad import can always be undone by re-importing that
 // snapshot's own envelope.
 
+import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
 import type { Objective, MilestoneProgress } from '../models/objectives';
@@ -51,7 +52,7 @@ import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
-import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -230,6 +231,17 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (nights.list === undefined) delete s.nightJudgments;
     else s.nightJudgments = nights.list;
     skipped.n += nights.skipped;
+  }
+  // The shape of your week: known templates on a day from 1 to 7, or not there
+  // (storage/migrations.ts#readWeekShape).
+  if ('weekShape' in s) {
+    const shape = readWeekShape(s.weekShape);
+    if (shape === undefined) {
+      delete s.weekShape;
+      skipped.n++;
+    } else {
+      s.weekShape = shape;
+    }
   }
   // The fat percentage on a weigh-in: a number between 3 and 60 or not there; the
   // weigh-in itself stays (storage/migrations.ts#migrateWeightEntries).
@@ -768,9 +780,20 @@ function computeDiff(
   });
 
   const programAction = effective.program_and_templates;
-  const templatesResolved = resolveListCategory(programAction, backup.templates, current.templates, true);
+  // A device with nothing of your own (no program, planning, training or goal)
+  // only holds the building blocks ASCEND put there. A full restore then keeps
+  // the ones the backup does not know (a backup from an older version lacks the
+  // newer templates): they are not removed, so nothing "disappears" that you
+  // never chose.
+  const deviceEmpty = isEmptyStart({ programs: current.program ? 1 : 0, plannedSessions: current.plannedSessions.length, sessionLogs: current.sessionLogs.length, trainingGoals: current.trainingGoals.length });
+  const keepUnlisted = <T extends Keyed>(r: ResolvedListCategory<T>, currentList: T[]): ResolvedListCategory<T> => {
+    if (!deviceEmpty || programAction !== 'replace' || r.toRemove === 0) return r;
+    const incomingIds = new Set(r.final.map((x) => x.id));
+    return { ...r, final: [...r.final, ...currentList.filter((c) => !incomingIds.has(c.id))], toRemove: 0 };
+  };
+  const templatesResolved = keepUnlisted(resolveListCategory(programAction, backup.templates, current.templates, true), current.templates);
   const strategiesResolved = backup.strengthProgramStrategies
-    ? resolveListCategory(programAction, backup.strengthProgramStrategies, current.strengthProgramStrategies, true)
+    ? keepUnlisted(resolveListCategory(programAction, backup.strengthProgramStrategies, current.strengthProgramStrategies, true), current.strengthProgramStrategies)
     : undefined;
   const resolvedProgram = programAction === 'keep_current' || programAction === 'ignore'
     ? current.program
@@ -981,6 +1004,11 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const historyAction = effective.training_history;
   const goalsAction = effective.objectives_and_milestones;
 
+  // A device that had no program yet (a new installation) gets one from the
+  // backup: the old default strength block must not turn up unasked at the next
+  // update, so its flag is set (storage/goalMigration.ts#migrateStrengthProgramDefault).
+  const restoredMeta: Record<string, unknown> = !current.program && touches(programAction) && resolved.program ? { strengthProgramDefaultSeeded: true } : {};
+
   try {
     await applyBackupWrites({
       programs: touches(programAction) && resolved.program ? { clear: true, puts: [resolved.program] } : undefined,
@@ -997,7 +1025,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       capabilityEvidence: listWrite(effective.capability_evidence, resolved.capabilityEvidence),
       injuryNotes: listWrite(effective.injuries, resolved.injuryNotes),
       settings: resolved.settings,
-      meta: Object.keys(resolved.meta).length > 0 ? resolved.meta : undefined,
+      meta: Object.keys({ ...resolved.meta, ...restoredMeta }).length > 0 ? { ...resolved.meta, ...restoredMeta } : undefined,
     });
   } catch (err) {
     const detail = err instanceof Error ? ` (${err.message})` : '';

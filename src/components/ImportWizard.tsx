@@ -46,11 +46,11 @@ const MODE_LABEL: Record<ImportMode, string> = {
   custom: 'Zelf kiezen',
 };
 
-const MODE_NOTE: Record<ImportMode, string> = {
-  full_restore: 'Zet planning, doelen en instellingen terug naar de stand van de back-up. Trainingen worden nooit verwijderd.',
+const MODE_NOTE = (deviceEmpty: boolean): Record<ImportMode, string> => ({
+  full_restore: deviceEmpty ? 'Zet planning, doelen en instellingen terug naar de stand van de back-up.' : 'Zet planning, doelen en instellingen terug naar de stand van de back-up. Trainingen worden nooit verwijderd.',
   merge: 'Voegt de back-up toe aan wat je nu al hebt. Bestaande gegevens blijven staan.',
   custom: 'Kies per onderdeel wat er met de back-up gebeurt.',
-};
+});
 
 const ACTION_LABEL: Record<CategoryAction, string> = {
   keep_current: 'Huidige behouden',
@@ -171,7 +171,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
                     style={{ borderColor: 'var(--color-card-border)' }}
                   >
                     <p className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{MODE_LABEL[mode]}</p>
-                    <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{MODE_NOTE[mode]}</p>
+                    <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{MODE_NOTE(deviceEmpty)[mode]}</p>
                   </button>
                 ))}
               </div>
@@ -340,7 +340,7 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
                 ].filter(Boolean).join(' · ') || 'Geen wijzigingen'}
               </span>
             )}
-            {entry.toRemove > 0 && (
+            {!deviceEmpty && entry.toRemove > 0 && (
               <span style={{ color: 'var(--color-danger-text)' }}>{entry.toRemove} verdwijnen, omdat ze niet in de back-up staan</span>
             )}
             {entry.conflicts.length > 0 && (
@@ -355,7 +355,7 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {restoreSafetyLines(deviceEmpty).join(' ')}
       </p>
-      {totalRemoved > 0 && (
+      {!deviceEmpty && totalRemoved > 0 && (
         <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
           Let op: in totaal verdwijnen {totalRemoved} onderdelen die nu op je toestel staan.
         </p>

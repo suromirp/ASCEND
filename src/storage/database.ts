@@ -25,7 +25,7 @@ import type { ClothingAdjust } from '../engine/clothingFeedback';
 import type { RunInsightSettings } from '../engine/runInsightSettings';
 import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
-import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates, type WeekShape } from '../engine/sports';
+import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, parseWeekShape, weeklyPatternTemplates, type WeekShape } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
@@ -1106,7 +1106,7 @@ function withPackTarget(program: Program, kg: number | undefined): Program {
 // week at the start (AppSettings.weekShape) the pattern is the one of
 // weeklyPatternTemplates, so these never bring back the days you left out.
 async function defaultPatternSelector(): Promise<((templates: SessionTemplate[]) => SessionTemplate[]) | undefined> {
-  const { weekShape } = await SettingsRepo.get();
+  const weekShape = parseWeekShape((await SettingsRepo.get()).weekShape);
   return weekShape ? undefined : (all) => all.filter((t) => t.defaultDayOfWeek);
 }
 
@@ -1117,7 +1117,7 @@ async function patternContext(
 ): Promise<PatternContext> {
   const [settings, goals, milestones] = given ? [given.settings, given.goals, given.milestones] : await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
   const enabledSports = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports };
-  const pattern = arrangeWeekForRestDay(selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports }), templates, settings.restDay);
+  const pattern = arrangeWeekForRestDay(selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports }), templates, settings.restDay, parseWeekShape(settings.weekShape)?.allowed);
   return {
     pattern,
     // A hike only replaces a session when the caller's pattern would plan

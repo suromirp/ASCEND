@@ -17,7 +17,7 @@ import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
 import { checkLines, type CheckSummary } from './prescriptionCheck';
-import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, type Sport } from './sports';
+import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, parseWeekShape, type Sport } from './sports';
 import { readClothingAdjust } from './clothingFeedback';
 import { backupAge, backupAgoText } from './settingsAttention';
 import { shortGoalName } from './settingsStatus';
@@ -192,8 +192,14 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       const n = trainingDays(f);
       return n > 0 ? { value: plural(n, 'dag', 'dagen') } : { value: 'Niet ingesteld', dim: true };
     }
-    case 'rustdag':
-      return { value: WEEKDAYS[restDayIndex(f)] };
+    case 'rustdag': {
+      // A week you chose at the first questions: say so, with its days.
+      const shape = parseWeekShape(s.weekShape);
+      const days = shape
+        ? [...new Set(Object.entries(shape.days).filter(([id]) => id !== 'tpl_herstel').map(([, d]) => d))].sort((a, b) => a - b)
+        : [];
+      return { value: WEEKDAYS[restDayIndex(f)], ...(days.length > 0 ? { sub: `Eigen week: ${days.map((d) => WEEKDAYS_SHORT[d - 1]).join(', ')}` } : {}) };
+    }
     case 'rustdag-doen':
       return { value: s.restDayMode === 'active' ? 'Hersteldag' : 'Rust' };
     case 'meerdere':

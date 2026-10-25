@@ -1862,7 +1862,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // to go back to but an empty app, and undoing the plan would leave a
     // program the planning then fills in again without asking. The plan on
     // Vandaag is the answer (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
-    if (plan.input.firstPlan) {
+    // Only when it half worked ('partial') the usual notice does show, so you can see what changed.
+    if (plan.input.firstPlan && result.status !== 'partial') {
       planRevision++;
       await refresh();
       void syncWatchWorkoutsAfterPlanChange();

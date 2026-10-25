@@ -143,7 +143,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                   <button type="button" className="st-btn gold" onClick={() => go(1)}>Volgende</button>
                 </SheetButtons>
                 <div className="mt-1 flex justify-center">
-                  <TextButton tone="dim" disabled={horizon.busy} onClick={() => { const next = { ...defaultAnswers(existing?.kind ?? answers.goal), race: answers.race, goalDate: answers.goalDate }; onAnswers(next); void makePlan(close, next); }}>
+                  <TextButton tone="dim" disabled={horizon.busy} onClick={() => { const next = { ...defaultAnswers(existing?.kind ?? answers.goal), race: answers.race, goalDate: answers.goalDate, daysPerWeek: answers.daysPerWeek }; onAnswers(next); void makePlan(close, next); }}>
                     {horizon.busy ? 'Even rekenen…' : 'De rest overslaan, het advies gebruiken'}
                   </TextButton>
                 </div>
@@ -152,7 +152,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
 
             {step === 'which' && (
               <>
-                <div role="group" aria-label="Dagen waarop je kunt trainen" className="grid grid-cols-7 gap-1">
+                <div role="group" aria-label="Dagen waarop je kunt trainen" className="grid grid-cols-7 gap-0.5">
                   {DAY_LABELS.map((name, i) => {
                     const day = i + 1;
                     const on = answers.allowedDays.includes(day);
@@ -170,7 +170,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                         className="flex min-h-[48px] min-w-[44px] items-center justify-center rounded-xl border text-sm font-medium"
                         style={{
                           borderColor: on ? 'var(--color-action)' : 'var(--color-control-border)',
-                          background: on ? 'color-mix(in srgb, var(--color-action) 22%, transparent)' : 'transparent',
+                          background: on ? 'var(--color-action-muted)' : 'transparent',
                           color: on ? 'var(--color-ink)' : 'var(--color-ink-dim)',
                         }}
                       >

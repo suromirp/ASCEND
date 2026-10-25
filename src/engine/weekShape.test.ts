@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
-import { weeklyPatternTemplates } from './sports';
-import { adviceDays, chooseWeekShape, isStrengthTemplateId, type WeekShapeInput } from './weekShape';
+import { parseWeekShape, weeklyPatternTemplates } from './sports';
+import { arrangeWeekForRestDay } from './restDay';
+import { patternDays } from './planPass';
+import { readWeekShape } from '../storage/migrations';
+import { adviceDays, chooseWeekShape, isStrengthTemplateId, shapeSpacingConflicts, type WeekShapeInput } from './weekShape';
 
 const templates = buildDefaultProgramData().templates;
 const ALL = [1, 2, 3, 4, 5, 6, 7];
@@ -32,6 +35,8 @@ describe('chooseWeekShape', () => {
     expect(r.restDay).toBeGreaterThanOrEqual(1);
     expect(r.restDay).toBeLessThanOrEqual(5);
     expect(r.shape.days.tpl_herstel).toBe(r.restDay);
+    // Rust op een dag waarop je niet kunt: geen rustwandeling in de week.
+    expect(chooseWeekShape(templates, { ...base, allowedDays: [2, 4, 6, 7] }).shape.days.tpl_herstel).toBeUndefined();
     expect(r.kept.some(isStrengthTemplateId)).toBe(true);
     expect(r.notes).toEqual([]);
   });
@@ -51,12 +56,12 @@ describe('chooseWeekShape', () => {
     expect(chooseWeekShape(templates, base)).toEqual(chooseWeekShape(templates, base));
   });
 
-  it('keeps heavy leg days apart', () => {
+  it('keeps heavy days apart over the whole week, also with the mountain variant', () => {
     for (const goal of ['trek', 'race', 'fit'] as const) {
-      for (const daysPerWeek of [3, 4, 5, 6]) {
+      for (const daysPerWeek of [2, 3, 4, 5, 6]) {
         const r = chooseWeekShape(templates, { ...base, goal, daysPerWeek });
-        const legs = ['tpl_lower_a', 'tpl_long_run'].filter((id) => id in r.shape.days).map((id) => r.shape.days[id]);
-        if (legs.length === 2) expect(Math.min(Math.abs(legs[0] - legs[1]), 7 - Math.abs(legs[0] - legs[1]))).toBeGreaterThanOrEqual(2);
+        expect(shapeSpacingConflicts(templates, r.shape.days), `${goal} ${daysPerWeek}`).toBe(0);
+        expect(r.notes.join(' ')).not.toContain('dicht bij elkaar');
       }
     }
   });
@@ -82,5 +87,54 @@ describe('chooseWeekShape', () => {
 
   it('has an advice per goal', () => {
     expect(adviceDays('trek').days).toBeGreaterThan(adviceDays('fit').days);
+  });
+});
+
+describe('a week shape read defensively', () => {
+  it('lets only known templates on a day from 1 to 7 through', () => {
+    expect(readWeekShape({ days: { tpl_long_run: 7, tpl_upper_a: 2, tpl_onbekend: 3, tpl_easy_run: 0, tpl_lower_a: 9, tpl_upper_b: 2.5 } })).toEqual({ days: { tpl_long_run: 7, tpl_upper_a: 2 } });
+  });
+  it('is nothing for {}, days null, a day 0 or 9, or no real training', () => {
+    expect(readWeekShape({})).toBeUndefined();
+    expect(readWeekShape({ days: null })).toBeUndefined();
+    expect(readWeekShape({ days: { tpl_long_run: 0 } })).toBeUndefined();
+    expect(readWeekShape({ days: { tpl_long_run: 9 } })).toBeUndefined();
+    expect(readWeekShape({ days: { tpl_herstel: 1 } })).toBeUndefined();
+    expect(readWeekShape(undefined)).toBeUndefined();
+    expect(readWeekShape('x')).toBeUndefined();
+    expect(readWeekShape([])).toBeUndefined();
+  });
+  it('the weekly pattern is the default one for a damaged shape', () => {
+    const plain = weeklyPatternTemplates(templates, {});
+    for (const bad of [{}, { days: null }, { days: { tpl_long_run: 9 } }]) {
+      expect(weeklyPatternTemplates(templates, { weekShape: bad as never })).toEqual(plain);
+    }
+    expect(parseWeekShape({ days: { tpl_long_run: 6 }, allowed: [2, 9, 4, 4] })).toEqual({ days: { tpl_long_run: 6 }, allowed: [2, 4] });
+  });
+});
+
+describe('another rest day after the first plan', () => {
+  it('keeps the trainings on the days you chose (Tuesday, Thursday, Saturday, Sunday; rest then on Wednesday)', () => {
+    const r = chooseWeekShape(templates, { ...base, daysPerWeek: 4, allowedDays: [2, 4, 6, 7] });
+    const settings = { weekShape: r.shape };
+    const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, settings), templates, 3, r.shape.allowed);
+    const trainingDays = pattern.filter((t) => t.type !== 'recovery').map((t) => t.defaultDayOfWeek).sort();
+    expect(trainingDays).toEqual([2, 4, 6, 7]);
+    // Geen rustwandeling op een dag waarop je niet kunt: niets op de rustdag.
+    expect(pattern.some((t) => t.defaultDayOfWeek === 3)).toBe(false);
+    const days = patternDays(templates, settings, 3);
+    expect([...new Set(days.values())].filter((d) => d !== 3).sort()).toEqual([2, 4, 6, 7]);
+  });
+  it('moves a training off the new rest day onto another day you can, not onto a day you cannot', () => {
+    const r = chooseWeekShape(templates, { ...base, daysPerWeek: 3, allowedDays: [2, 3, 4, 6, 7] });
+    for (const rest of [1, 2, 3, 4, 5] as const) {
+      const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { weekShape: r.shape }), templates, rest, r.shape.allowed);
+      for (const t of pattern.filter((x) => x.type !== 'recovery')) {
+        expect(t.defaultDayOfWeek).not.toBe(rest);
+        if ((t.defaultDayOfWeek ?? 0) <= 5 && [2, 3, 4].filter((d) => d !== rest).length >= pattern.filter((x) => x.type !== 'recovery' && (x.defaultDayOfWeek ?? 0) <= 5).length) {
+          expect([2, 3, 4]).toContain(t.defaultDayOfWeek);
+        }
+      }
+    }
   });
 });

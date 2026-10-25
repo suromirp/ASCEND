@@ -7,7 +7,10 @@ import {
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from './horizonPlan';
 import { buildFirstPlan, defaultAnswers, kindOfExistingGoals, type StartAnswers } from '../engine/firstPlan';
 import { isEmptyStart, needsFirstPlan } from '../engine/freshStart';
-import { isoWeekday } from '../utils/dates';
+import { isoWeekday, mondayOfWeek, addDays } from '../utils/dates';
+import { runWeeklyPrescriptionStep } from './weeklyPrescriptionStep';
+import { computeForecastReplan } from '../engine/adaptiveReplanner';
+import { applyPlanChangeItems } from '../engine/proposalEngine';
 
 // De eerste start: een lege app plant niets tot je hebt gezegd wat je wilt, en
 // het plan komt als voorstel met Akkoord (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
@@ -158,6 +161,52 @@ describe('het eerste plan als voorstel met Akkoord', () => {
     const again = await syncProgramHorizon();
     expect(again).toMatchObject({ added: 0, swapped: 0, removed: 0 });
     expect(await rows()).toBe(before);
+  });
+
+  it('direct na het eerste plan is er geen reden om het krachtblok te herzien', async () => {
+    const { input } = await inputFor({ ...defaultAnswers('trek'), goalDate: '2027-07-10' });
+    const plan = await computeHorizonPlan(input);
+    // Akkoord komt later dan de vragen.
+    vi.setSystemTime(new Date(`${TODAY}T08:05:00`));
+    expect((await applyHorizonPlanNow(plan)).status).toBe('applied');
+    const [strategy] = await StrengthProgramStrategiesRepo.getAll();
+    const config = await GoalEngineConfigRepo.get();
+    const goals = await TrainingGoalsRepo.getAll();
+    // Dezelfde vergelijkingen als state/AppDataContext.tsx#runStrengthReviewCheck.
+    expect(goals.some((g) => g.status === 'active' && g.updatedAt > strategy.updatedAt)).toBe(false);
+    expect(Boolean(config.updatedAt && config.updatedAt > strategy.updatedAt)).toBe(false);
+    expect(strategy.createdAt).toBe(strategy.updatedAt);
+  });
+
+  it('de rest van de planning (forecast, weekprescriptie) houdt de gekozen week aan, ook ver vooruit', async () => {
+    const { input } = await inputFor({ ...defaultAnswers('trek'), goalDate: '2027-07-10', daysPerWeek: 4, allowedDays: [2, 4, 6, 7] });
+    expect((await applyHorizonPlanNow(await computeHorizonPlan(input))).status).toBe('applied');
+    const templates = new Map((await SessionTemplatesRepo.getAll()).map((t) => [t.id, t]));
+    // Wat de app bij een koude start daarna doet (zoals bootReplay.test.ts): sync, forecast, weekprescriptie, nog eens.
+    for (let round = 0; round < 2; round++) {
+      await runBootMigrations({ build: `test-m5-${round}` });
+      await syncProgramHorizon();
+      const planned = await PlannedSessionsRepo.getAll();
+      const forecast = computeForecastReplan({ plannedSessions: planned, templates: [...templates.values()], availability: (await GoalEngineConfigRepo.get()).availability, asOf: TODAY });
+      const { sessions, unsupported } = applyPlanChangeItems(forecast.proposal.changes, planned);
+      expect(unsupported).toEqual([]);
+      for (const s of sessions) await PlannedSessionsRepo.put(s);
+      // De forecast vindt niets dat op een dag staat waarop je niet kunt.
+      expect(forecast.proposal.changes, `ronde ${round}`).toEqual([]);
+      await runWeeklyPrescriptionStep(TODAY);
+    }
+    const open = (await PlannedSessionsRepo.getAll()).filter((s) => s.status !== 'skipped');
+    // Alles, ook een rustwandeling, staat op een dag waarop je kunt.
+    for (const s of open) expect([2, 4, 6, 7], `${s.templateId} op ${s.scheduledDate}`).toContain(isoWeekday(s.scheduledDate));
+    const all = open.filter((s) => templates.get(s.templateId)?.type !== 'recovery');
+    const weeks = new Map<string, number>();
+    for (const s of all) {
+      weeks.set(s.weekStartDate, (weeks.get(s.weekStartDate) ?? 0) + 1);
+    }
+    // Elke volle week vanaf de eerste hele week (ook in het forecastbereik) heeft er vier.
+    const fullWeeks = [...weeks.entries()].filter(([w]) => w >= '2026-11-09' && w < addDays(mondayOfWeek('2027-07-10'), -7));
+    expect(fullWeeks.length).toBeGreaterThan(30);
+    for (const [w, n] of fullWeeks) expect(n, `week ${w}`).toBe(4);
   });
 
   it('zonder kracht komt er geen krachtblok, en de vlag houdt het oude blok weg', async () => {

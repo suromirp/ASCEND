@@ -46,5 +46,9 @@ Laat `bootMigrations.ts` de stap `seedIfEmpty` weer zonder opties aanroepen: een
 ## Gevolgen en wat nog niet is gedaan
 
 - Wil je later een andere week (meer of minder dagen, andere dagen, kracht aan of uit), dan is daar nog geen instelling voor: de rustdag, de sporten en "Trainingstijd per dag" werken zoals altijd, maar `weekShape` zelf is alleen bij het eerste plan te kiezen. Een latere wijziging moet bestaande weken omzetten en hoort dus in een eigen voorstel (zoals een sport aan of uit); dat is een vervolgtaak.
-- "Alles verwijderen" (`resetToDemoData`) zaait nog het volledige standaardprogramma. Dat is een bewuste keuze van de gebruiker op een toestel met gegevens, en valt buiten dit besluit.
+- "Alles verwijderen" (`resetToDemoData`) begint nu ook leeg: de app eindigt met de sjablonen en het welkom, zoals een nieuwe installatie, in plaats van het standaardprogramma te zaaien.
 - "Schema opnieuw laden" en een nieuwe inhoudsversie van het schema leggen het gewone patroon neer zoals voorheen, maar gebruiken je gekozen week zodra je er een koos.
+- Een andere rustdag na het eerste plan houdt de trainingen op de dagen die je koos (`weekShape.allowed`). De rustwandeling staat alleen in de week als de rustdag op een dag valt waarop je kunt trainen; anders zou de planning haar steeds als "niet beschikbaar" verschuiven.
+- `weekShape` wordt overal defensief gelezen (`engine/sports.ts#parseWeekShape`, `storage/migrations.ts#readWeekShape`, ook bij het importeren): alleen bekende sjablonen met een dag van 1 tot 7; anders geldt het gewone patroon.
+- Terugzetten op een lege app laat de sjablonen die een oudere back-up niet kent staan (ze tellen niet als "verdwijnen"), en zet de vlag van het standaardkrachtblok, zodat een volgende versie niet ongevraagd een blok bijmaakt.
+- Het krachtblok van het eerste plan krijgt zijn tijd na het doel en de beschikbaarheid, zodat er niet meteen een advies komt om het te herzien.

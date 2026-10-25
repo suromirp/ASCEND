@@ -6,6 +6,7 @@
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
+import { parseWeekShape, type WeekShape } from '../engine/sports';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
 import type { NightJudgment } from '../models/checkIn';
@@ -85,6 +86,14 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
 }
 
 // --- korte nacht: settings.nightJudgments -------------------------------------
+// The shape of your week, chosen at the first questions (engine/weekShape.ts).
+// Optional and additive: a file from before it has none. Only known templates with a
+// weekday of 1 to 7 get through; a damaged value is nothing, and the pattern is then
+// the default one (engine/sports.ts#parseWeekShape).
+export function readWeekShape(raw: unknown): WeekShape | undefined {
+  return parseWeekShape(raw);
+}
+
 // Your own verdict on a night the watch only partly measured (models/checkIn.ts).
 // Optional and additive, so the backup schema number does not move: a file from
 // before it has no key, which means "not in this backup" and leaves the verdicts

@@ -90,6 +90,13 @@ const BASE_MONDAY = '2026-01-05';
 
 // Hoeveel trainingen op een te korte afstand van een zware training staan, over
 // drie weken heen (vorige, deze en volgende week), met en zonder de bergvariant.
+// Voor de test en de controle: hoeveel conflicten heeft een week met deze dagen?
+export function shapeSpacingConflicts(templates: SessionTemplate[], days: Record<string, number>): number {
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const slots = Object.entries(days).filter(([id]) => byId.get(id)?.type !== 'recovery' && byId.has(id)).map(([id, day]) => ({ t: byId.get(id)!, day }));
+  return spacingConflicts(slots, byId);
+}
+
 function spacingConflicts(slots: Slot[], byId: Map<string, SessionTemplate>): number {
   let conflicts = 0;
   for (const swapped of [false, true]) {
@@ -146,7 +153,7 @@ export function chooseWeekShape(templates: SessionTemplate[], input: WeekShapeIn
 
   const possible = keptFor(input, MAX_DAYS, has).length;
   if (!input.strength && count > possible) {
-    notes.push(`Zonder krachttraining plant ASCEND hoogstens ${possible} trainingen per week. Je kunt later altijd kracht erbij zetten.`);
+    notes.push(`Zonder krachttraining plant ASCEND hoogstens ${possible} trainingen per week.`);
   }
   count = Math.min(count, possible);
   if (allowed.length < count) {
@@ -176,7 +183,7 @@ export function chooseWeekShape(templates: SessionTemplate[], input: WeekShapeIn
   }
   usable.sort((a, b) => a.moved - b.moved);
   let best: { days: number[]; conflicts: number } | undefined;
-  // De goedkoopste eerst; de eerste zonder conflict wint, anders de beste van de eerste tweehonderd.
+  // De goedkoopste eerst (de minste verplaatsing); de eerste zonder conflict wint, anders de beste van de eerste vierhonderd.
   for (const cand of usable.slice(0, 400)) {
     const conflicts = spacingConflicts(slotsOf(cand.days), byId);
     if (!best || conflicts < best.conflicts) best = { days: cand.days, conflicts };
@@ -192,10 +199,11 @@ export function chooseWeekShape(templates: SessionTemplate[], input: WeekShapeIn
   const restDay = (freeWeekdays.find((d) => !allowed.includes(d)) ?? freeWeekdays[0]) as RestWeekday;
   const days: Record<string, number> = {};
   ids.forEach((id, i) => { days[id] = best!.days[i]; });
-  if (has('tpl_herstel')) days['tpl_herstel'] = restDay;
+  // The rest walk only on a day you can: on another day the planning would keep moving it as "not available".
+  if (has('tpl_herstel') && allowed.includes(restDay)) days['tpl_herstel'] = restDay;
   const order = [...ids].sort((a, b) => days[a] - days[b]);
   if (best.conflicts > 0) notes.push('Twee zware trainingen komen op deze dagen dicht bij elkaar. ASCEND let daar bij het plannen op, maar met meer dagen of een andere indeling gaat het soepeler.');
-  return { shape: { days }, restDay, kept: order, count, notes };
+  return { shape: { days, allowed }, restDay, kept: order, count, notes };
 }
 
 export function isStrengthTemplateId(id: string): boolean {
