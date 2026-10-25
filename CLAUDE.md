@@ -434,6 +434,16 @@ ASCEND it is an estimate afterwards, except in Forge when the proposed weight wa
 On cables and weight stacks ASCEND learns the weights you really used
 (`engine/strengthWeights.ts`, "Gewichten van toestellen leren").
 
+**A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
+average once there are 7 days) becomes a question in the morning check instead of a
+warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).
+Your verdict per date lives in `AppSettings.nightJudgments`, tied to the measured minutes
+(a later full night makes it lapse), read through `storage/migrations.ts#migrateNightJudgments`
+and merged per date on restore. "Niet goed gemeten" keeps sleep, sleep score and HRV of
+that night out of your own averages and the suggestion; resting heart rate still counts;
+the numbers at Garmin and intervals.icu are never changed. Switch "Vragen bij een korte
+nacht" (`AppSettings.askShortNight`).
+
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.
