@@ -18,7 +18,7 @@ import { addDays } from '../utils/dates';
 import { PATTERN_SWAPS } from './programLayout';
 import { respectsHeavySpacing } from './scheduler';
 import type { RestWeekday } from './restDay';
-import type { WeekShape } from './sports';
+import { WEEK_SHAPE_CARDIO, WEEK_SHAPE_STRENGTH, type WeekShape } from './sports';
 
 export type { WeekShape };
 
@@ -44,8 +44,8 @@ export interface WeekShapeResult {
   notes: string[];
 }
 
-const STRENGTH = ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'];
-const CARDIO = ['tpl_long_run', 'tpl_hill_intervals', 'tpl_easy_run'];
+const STRENGTH = WEEK_SHAPE_STRENGTH;
+const CARDIO = WEEK_SHAPE_CARDIO;
 
 // Welke training het eerst blijft als er minder dagen zijn dan het patroon heeft.
 const CARDIO_ORDER: Record<StartGoalKind, string[]> = {
@@ -88,8 +88,6 @@ interface Slot {
 
 const BASE_MONDAY = '2026-01-05';
 
-// Hoeveel trainingen op een te korte afstand van een zware training staan, over
-// drie weken heen (vorige, deze en volgende week), met en zonder de bergvariant.
 // Voor de test en de controle: hoeveel conflicten heeft een week met deze dagen?
 export function shapeSpacingConflicts(templates: SessionTemplate[], days: Record<string, number>): number {
   const byId = new Map(templates.map((t) => [t.id, t]));
@@ -97,6 +95,8 @@ export function shapeSpacingConflicts(templates: SessionTemplate[], days: Record
   return spacingConflicts(slots, byId);
 }
 
+// Hoeveel trainingen op een te korte afstand van een zware training staan, over
+// drie weken heen (vorige, deze en volgende week), met en zonder de bergvariant.
 function spacingConflicts(slots: Slot[], byId: Map<string, SessionTemplate>): number {
   let conflicts = 0;
   for (const swapped of [false, true]) {

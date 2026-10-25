@@ -340,7 +340,7 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
                 ].filter(Boolean).join(' · ') || 'Geen wijzigingen'}
               </span>
             )}
-            {!deviceEmpty && entry.toRemove > 0 && (
+            {entry.toRemove > 0 && (
               <span style={{ color: 'var(--color-danger-text)' }}>{entry.toRemove} verdwijnen, omdat ze niet in de back-up staan</span>
             )}
             {entry.conflicts.length > 0 && (
@@ -355,7 +355,7 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {restoreSafetyLines(deviceEmpty).join(' ')}
       </p>
-      {!deviceEmpty && totalRemoved > 0 && (
+      {totalRemoved > 0 && (
         <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
           Let op: in totaal verdwijnen {totalRemoved} onderdelen die nu op je toestel staan.
         </p>

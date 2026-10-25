@@ -87,8 +87,11 @@ export interface WeekShape {
   allowed?: number[];
 }
 
-// The templates a week shape may name: the fixed weekly pattern.
-export const WEEK_SHAPE_TEMPLATE_IDS: readonly string[] = ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b', 'tpl_long_run', 'tpl_hill_intervals', 'tpl_easy_run', 'tpl_herstel'];
+// The templates a week shape may name: the fixed weekly pattern. One list, also read by
+// engine/weekShape.ts, so a new template in the pattern is added in one place.
+export const WEEK_SHAPE_STRENGTH: readonly string[] = ['tpl_upper_a', 'tpl_lower_a', 'tpl_upper_b'];
+export const WEEK_SHAPE_CARDIO: readonly string[] = ['tpl_long_run', 'tpl_hill_intervals', 'tpl_easy_run'];
+export const WEEK_SHAPE_TEMPLATE_IDS: readonly string[] = [...WEEK_SHAPE_STRENGTH, ...WEEK_SHAPE_CARDIO, 'tpl_herstel'];
 
 // Reads a stored week shape defensively: only known templates with a whole
 // weekday from 1 to 7 get through; anything else (a file from elsewhere, a
