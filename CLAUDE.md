@@ -105,8 +105,10 @@ fris en sportief op donker marine.
   (`icon.svg`, `icon-maskable.svg`, `favicon.svg` en de PNG's), het kleine teken is
   `AppMark` (alleen ring en kam, in `--color-on-light`), het openingsscherm is
   `AscendSplashLogo` en `AscendAnimatedLogo` met alleen de tokens `--color-logo-*`. Het
-  teken bouwt zich één keer op en staat in Rustig, Uit en bij beperkte beweging meteen
-  op de eindstand.
+  openingsscherm bouwt zich op zoals het oude (gloed, ring, kam, berg, pad, vonk, woord)
+  en heeft daarna een rustige omgevingsbeweging die alleen draait zolang het scherm in
+  beeld is (`docs/beslissingen/2026-10-25-openingsscherm-terug.md`); in Rustig alleen kort
+  tekenen, in Uit en bij beperkte beweging meteen de eindstand.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
   `src/App.tsx`), volledig dekkend marine, labels in zinsletters, met de
   actieve tab en het streepje erboven in de kleur van die tab. Meer is geen
