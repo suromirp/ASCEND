@@ -945,7 +945,10 @@ export async function resetToDemoData(): Promise<void> {
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
   await MetaRepo.set('strengthProgramDefaultSeeded', false);
-  await seedIfEmpty();
+  // Like a fresh install: only the templates, no program or planning, so the app
+  // opens on the welcome and asks before it plans anything
+  // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
+  await seedIfEmpty({ withProgram: false });
 }
 
 // User-facing "reset my schedule" — Settings' SCHEMA OPNIEUW LADEN button.
