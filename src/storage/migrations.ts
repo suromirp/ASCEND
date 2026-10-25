@@ -605,6 +605,19 @@ export function migrateWeightEntries(entries: WeightEntry[]): { entries: WeightE
 const MAX_INFLUENCES = 2000;
 const NO_TIME = '1970-01-01T00:00:00.000Z';
 
+// One note per place: a training (`logId`) or a day (`date`, without logId). Two notes for the same
+// place come from two devices that both made one; the newest `updatedAt` wins, on a tie the
+// smaller id, so the outcome never depends on the order.
+export function dedupeInfluencesByPlace(list: readonly InfluenceEntry[]): InfluenceEntry[] {
+  const byPlace = new Map<string, InfluenceEntry>();
+  for (const e of list) {
+    const key = e.logId ? `log:${e.logId}` : `day:${e.date}`;
+    const cur = byPlace.get(key);
+    if (!cur || e.updatedAt > cur.updatedAt || (e.updatedAt === cur.updatedAt && e.id < cur.id)) byPlace.set(key, e);
+  }
+  return [...byPlace.values()];
+}
+
 export function migrateInfluences(raw: unknown): { list: InfluenceEntry[] | undefined; skipped: number } {
   if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
   if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
@@ -659,7 +672,9 @@ export function migrateInfluences(raw: unknown): { list: InfluenceEntry[] | unde
     const earlier = byId.get(entry.id);
     if (!earlier || entry.updatedAt >= earlier.updatedAt) byId.set(entry.id, entry);
   }
-  const list = [...byId.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const unique = dedupeInfluencesByPlace([...byId.values()]);
+  skipped += byId.size - unique.length;
+  const list = unique.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
   skipped += Math.max(0, list.length - MAX_INFLUENCES);
   return { list: list.slice(-MAX_INFLUENCES), skipped };
 }

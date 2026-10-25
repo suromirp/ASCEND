@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { AMOUNTS, AMOUNT_LABEL, MAX_LABEL_LENGTH, REASON_CHIPS, REASON_LABEL } from '../../data/influenceReasons';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason } from '../../models/influence';
@@ -63,6 +63,21 @@ export function InfluenceBlock({
   const [typing, setTyping] = useState(false);
   const [draft, setDraft] = useState('');
   const word = typing ? draft : storedWord;
+  // The word is stored on blur or 400 ms after the last keystroke, not on every keystroke.
+  const pending = useRef<string | null>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const latest = useRef(change);
+  useEffect(() => {
+    latest.current = change;
+  });
+  function flushWord() {
+    window.clearTimeout(timer.current);
+    const value = pending.current;
+    pending.current = null;
+    if (value !== null) void latest.current((e) => setLabel(e, value));
+  }
+  // Closing the sheet while typing still stores what was typed.
+  useEffect(() => () => flushWord(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const excludeTitle = mode === 'log' ? 'Niet meetellen voor hartslag' : 'Deze nacht niet meetellen';
   const excludeLine = mode === 'log' ? 'Telt wel mee voor je belasting.' : 'Blijft uit je gemiddelde van rusthartslag en HRV, de ochtend erna.';
@@ -167,10 +182,15 @@ export function InfluenceBlock({
               setDraft(storedWord);
               setTyping(true);
             }}
-            onBlur={() => setTyping(false)}
+            onBlur={() => {
+              flushWord();
+              setTyping(false);
+            }}
             onChange={(ev) => {
               setDraft(ev.target.value);
-              void change((e) => setLabel(e, ev.target.value));
+              pending.current = ev.target.value;
+              window.clearTimeout(timer.current);
+              timer.current = window.setTimeout(flushWord, 400);
             }}
             className="mt-1 block h-11 w-full rounded-xl border px-3 text-base"
             style={{ background: 'var(--color-surface)', borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}

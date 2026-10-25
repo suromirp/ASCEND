@@ -213,7 +213,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'In het blad van een training en van een dag kan ASCEND zeggen wat het al weet, met de bron erbij.',
     points: [
       { head: 'Wat ASCEND weet', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Het telt pas na jouw tik.' },
-      { head: 'Je patroon', text: 'op Je stand zegt ASCEND "lijkt op" pas als een reden minstens 4 keer is vastgelegd.' },
+      { head: 'Je patroon', text: 'in het blad van een training zegt ASCEND "lijkt op" pas als een reden minstens 4 keer is vastgelegd en je gewone loopjes ook, en de banden elkaar niet raken.' },
       { head: 'Alcohol en wiet', text: 'noemt ASCEND nooit uit zichzelf.' },
     ],
   },
@@ -227,9 +227,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   'wat-test': {
     title: 'Test verschuiven',
-    lead: 'ASCEND kan voorstellen een test of wedstrijd te verschuiven na een avond met veel glazen of wiet vlak ervoor.',
+    lead: 'ASCEND kan voorstellen een testloop te verschuiven na een avond met veel glazen of wiet vlak ervoor.',
     points: [
-      { head: 'Wanneer', text: 'als er die dag een test of wedstrijd staat en je de avond ervoor 3 of meer glazen vastlegde, of als er morgen een staat na 6 of meer glazen. Bij wiet alleen op dezelfde dag.' },
+      { head: 'Wanneer', text: 'als er die dag een testloop staat en je de avond ervoor 3 of meer glazen vastlegde, of als er morgen een staat na 6 of meer glazen. Bij wiet alleen op dezelfde dag.' },
       { head: 'Altijd een voorstel', text: 'het gaat zoals elk voorstel met Akkoord. Gewone trainingen schuiven nooit om een reden.' },
     ],
   },

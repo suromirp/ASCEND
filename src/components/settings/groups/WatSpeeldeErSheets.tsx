@@ -40,8 +40,9 @@ export function VastgelegdSheet({ onClose }: { onClose: () => void }) {
 
   const placeOf = (e: { logId?: string }): string => {
     if (!e.logId) return 'Dag';
+    // A note stays when the training is undone later: it is history.
     const log = sessionLogs.find((l) => l.id === e.logId);
-    return log ? templateById.get(log.templateId)?.name ?? 'Training' : 'Training';
+    return log ? templateById.get(log.templateId)?.name ?? 'Training' : 'Training (niet meer in je logboek)';
   };
 
   async function wipe() {

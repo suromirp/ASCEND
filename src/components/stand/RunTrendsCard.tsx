@@ -8,7 +8,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { runTrends, type TrendRow } from '../../engine/runTrends';
-import { excludedLogIds } from '../../engine/influence';
+import { useExcludedLogIds } from '../influence/useInfluence';
 import { todayISO } from '../../utils/dates';
 import { Card, Eyebrow } from '../ui';
 import { RunInsightSheet } from '../RunInsightSheet';
@@ -18,10 +18,11 @@ import { Sparkline } from './Sparkline';
 export function RunTrendsCard() {
   const { sessionLogs, templates, program, settings } = useAppData();
   const detailsOn = useDetailsOn();
+  const excluded = useExcludedLogIds();
   const [open, setOpen] = useState<TrendRow | null>(null);
   const trends = useMemo(
-    () => runTrends({ logs: sessionLogs, templates, program, hr: settings.heartRate, settings: settings.runInsight, detailsOn, today: todayISO(), excludedLogIds: excludedLogIds(settings.influences) }),
-    [sessionLogs, templates, program, settings.heartRate, settings.runInsight, settings.influences, detailsOn],
+    () => runTrends({ logs: sessionLogs, templates, program, hr: settings.heartRate, settings: settings.runInsight, detailsOn, today: todayISO(), excludedLogIds: excluded }),
+    [sessionLogs, templates, program, settings.heartRate, settings.runInsight, excluded, detailsOn],
   );
   if (trends.rows.length === 0) return null;
   // Zonder één rij met gegevens is er niets te laten zien: één regel is genoeg.

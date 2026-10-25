@@ -52,7 +52,7 @@ import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
-import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -262,6 +262,17 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
   // The switch for showing the fat percentage: a yes or a no, or not there.
   if ('showBodyFat' in s && typeof s.showBodyFat !== 'boolean') {
     delete s.showBodyFat;
+    skipped.n++;
+  }
+  // The switches of "Wat speelde er": a yes or a no, and the cause one of three words, or not there.
+  for (const key of ['influenceSign', 'influenceOverview', 'influenceTestMove']) {
+    if (key in s && typeof s[key] !== 'boolean') {
+      delete s[key];
+      skipped.n++;
+    }
+  }
+  if ('influenceCause' in s && s.influenceCause !== 'uit' && s.influenceCause !== 'weet' && s.influenceCause !== 'patroon') {
+    delete s.influenceCause;
     skipped.n++;
   }
   // The 1RM per exercise from MacroFactor: read series by series, a damaged
@@ -690,7 +701,7 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
       const theirs = byId.get(e.id);
       if (!theirs || e.updatedAt >= theirs.updatedAt) byId.set(e.id, e);
     }
-    merged.influences = [...byId.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    merged.influences = dedupeInfluencesByPlace([...byId.values()]).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
   }
   // Ticked-off journey tasks are history too: the union, the device wins.
   if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);

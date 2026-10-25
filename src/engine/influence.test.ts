@@ -67,12 +67,12 @@ describe('what does not count', () => {
 describe('heartRateDeviation', () => {
   it('says nothing for a heart rate like the earlier runs', () => {
     const s = subject(143);
-    expect(heartRateDeviation(s, ctxOf([...earlier(), s]))).toBeUndefined();
+    expect(heartRateDeviation(s, ctxOf([...earlier(), s]), true)).toBeUndefined();
   });
 
   it('gives the difference in beats, the pace and the dots for a clearly higher heart rate', () => {
     const s = subject(150);
-    const d = heartRateDeviation(s, ctxOf([...earlier(), s]))!;
+    const d = heartRateDeviation(s, ctxOf([...earlier(), s]), true)!;
     expect(d).toBeDefined();
     expect(d.deltaBpm).toBeGreaterThanOrEqual(6);
     expect(d.deltaBpm).toBeLessThanOrEqual(9);
@@ -93,7 +93,7 @@ describe('heartRateDeviation', () => {
   it('uses the same earlier runs as the loopinzicht and the same limit of 1,5 times the noise', () => {
     const s = subject(150);
     const logs = [...earlier(), s];
-    const d = heartRateDeviation(s, ctxOf(logs))!;
+    const d = heartRateDeviation(s, ctxOf(logs), true)!;
     expect(d.basisLogIds).toEqual(comparableLogs(s, 'efficiency', ctxOf(logs)).logs.map((l) => l.id));
     // A higher heart rate at the same pace is a slower pace at the same heart rate: the insight sees it too.
     const insight = runInsight({ log: s, logs, templates: TEMPLATES, program: null, hr: ctxOf(logs).hr, legs: ctxOf(logs).legs, settings: undefined, detailsOn: true, today: '2026-10-19' });
@@ -101,9 +101,16 @@ describe('heartRateDeviation', () => {
     expect(Math.abs(insight.watch!.strength)).toBeCloseTo(Math.abs(d.strength), 5);
   });
 
+  it('gives nothing when the details of runs are switched off', () => {
+    const s = subject(150);
+    const ctx = ctxOf([...earlier(), s]);
+    expect(heartRateDeviation(s, ctx, true)).toBeDefined();
+    expect(heartRateDeviation(s, ctx, false)).toBeUndefined();
+  });
+
   it('says lower for a lower heart rate', () => {
     const s = subject(134);
-    const d = heartRateDeviation(s, ctxOf([...earlier(), s]));
+    const d = heartRateDeviation(s, ctxOf([...earlier(), s]), true);
     // Below zone 2 by more than 15 beats is not comparable; 134 is inside the 15 under it.
     expect(d?.deltaBpm ?? -1).toBeLessThan(0);
     expect(deviationSentence(d!)).toMatch(/lager dan normaal/);
@@ -111,11 +118,11 @@ describe('heartRateDeviation', () => {
 
   it('gives nothing with too few earlier runs, on a treadmill, or for strength', () => {
     const s = subject(150);
-    expect(heartRateDeviation(s, ctxOf([...earlier().slice(0, 2), s]))).toBeUndefined();
+    expect(heartRateDeviation(s, ctxOf([...earlier().slice(0, 2), s]), true)).toBeUndefined();
     const belt = subject(150, { treadmill: true });
-    expect(heartRateDeviation(belt, ctxOf([...earlier(), belt]))).toBeUndefined();
+    expect(heartRateDeviation(belt, ctxOf([...earlier(), belt]), true)).toBeUndefined();
     const strength: SessionLog = { id: 'k', templateId: 'tpl_upper_a', type: 'strength', completedDate: SUBJECT_DATE, completedAt: `${SUBJECT_DATE}T18:00:00.000Z`, variant: 'full', durationMinutes: 50, source: 'manual' };
-    expect(heartRateDeviation(strength, ctxOf([...earlier(), strength]))).toBeUndefined();
+    expect(heartRateDeviation(strength, ctxOf([...earlier(), strength]), true)).toBeUndefined();
   });
 
   it('does not use a training that is set to not count as a comparison', () => {
@@ -126,7 +133,7 @@ describe('heartRateDeviation', () => {
     const without = comparableLogs(s, 'efficiency', ctxOf(logs, { excludedLogIds: new Set(['e0']) }));
     expect(without.logs.map((l) => l.id)).toEqual(['e1', 'e2', 'e3']);
     // With two left it cannot be compared any more.
-    expect(heartRateDeviation(s, ctxOf(logs, { excludedLogIds: new Set(['e0', 'e1']) }))).toBeUndefined();
+    expect(heartRateDeviation(s, ctxOf(logs, { excludedLogIds: new Set(['e0', 'e1']) }), true)).toBeUndefined();
     // The leg index still sees the excluded run: the ctx.logs are the same.
     expect(ctxOf(logs, { excludedLogIds: new Set(['e0']) }).legs.logs).toHaveLength(5);
   });
@@ -134,8 +141,8 @@ describe('heartRateDeviation', () => {
   it('keeps the rest the same when an excluded run was not in the comparison anyway', () => {
     const s = subject(150);
     const logs = [...earlier(), s];
-    const a = heartRateDeviation(s, ctxOf(logs))!;
-    const b = heartRateDeviation(s, ctxOf(logs, { excludedLogIds: new Set(['unrelated']) }))!;
+    const a = heartRateDeviation(s, ctxOf(logs), true)!;
+    const b = heartRateDeviation(s, ctxOf(logs, { excludedLogIds: new Set(['unrelated']) }), true)!;
     expect(b.deltaBpm).toBe(a.deltaBpm);
     expect(b.basisLogIds).toEqual(a.basisLogIds);
   });

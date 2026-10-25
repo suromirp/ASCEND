@@ -74,14 +74,16 @@ export function MonthCalendar({
   const hasRest = [...restDates].some((d) => !sportsByDate.has(d));
   const hasPlanned = [...plannedDates].some((d) => !sportsByDate.has(d));
 
+  // Elk tikvlak is 44 bij 44 px zonder overlap: de rijen sluiten op elkaar aan, en de kalender gebruikt
+  // de binnenmarge van de kaart mee, zodat een kolom ook op 360 px minstens 44 px breed is.
   return (
-    <div>
+    <div className="-mx-2">
       <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium" style={{ color: 'var(--color-ink-dim)' }}>
         {WEEKDAY_LABELS.map((label) => <span key={label}>{label}</span>)}
       </div>
-      <div className="mt-2 grid grid-cols-7 gap-y-1.5">
+      <div className="mt-1 grid grid-cols-7">
         {cells.map((date, i) => {
-          if (!date) return <div key={`blank-${i}`} />;
+          if (!date) return <div key={`blank-${i}`} className="h-11" />;
           const sports = sportsByDate.get(date);
           const sport = sports?.[0];
           const planned = !sport && plannedDates.has(date);
@@ -103,24 +105,23 @@ export function MonthCalendar({
                 }}
               >
                 {day}
-                {noted && <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />}
+                {noted && <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />}
               </span>
           );
           if (!tappable) {
             return (
-              <div key={date} className="flex items-center justify-center" role="img" aria-label={isToday ? `${label}, vandaag` : label}>
+              <div key={date} className="flex h-11 items-center justify-center" role="img" aria-label={isToday ? `${label}, vandaag` : label}>
                 {circle}
               </div>
             );
           }
-          // De cel blijft 32 px hoog zodat het raster niet verschuift; het tikdoel is 44 px hoog door een onzichtbare uitbreiding.
           return (
-            <div key={date} className="flex h-8 items-center justify-center">
+            <div key={date} className="flex h-11 items-center justify-center">
               <button
                 type="button"
                 onClick={() => onPickDay(date)}
                 aria-label={`${isToday ? `${label}, vandaag` : label}. Wat speelde er?${noted ? ' Ingevuld.' : ''}`}
-                className="relative flex h-8 w-full items-center justify-center before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-['']"
+                className="relative flex h-11 w-full items-center justify-center"
               >
                 {circle}
               </button>

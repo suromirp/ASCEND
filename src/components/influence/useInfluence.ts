@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
+import { useDetailsOn } from '../useRunInsight';
 import { useLegFatigueInputs } from '../LegFatigueCard';
 import { fatigueEvents } from '../../engine/legFatigue';
 import { resolveRunInsight } from '../../engine/runInsightSettings';
@@ -15,13 +16,21 @@ import type { ComparisonContext } from '../../engine/runComparison';
 import type { RecoveryMetric } from '../../models/metrics';
 import type { SessionLog } from '../../models/training';
 
+// The set of trainings that do not count for heart rate. Kept on a key of the ids, so a change that
+// does not touch the exclusion (a reason, a seen mark) does not make every list work again.
+export function useExcludedLogIds(): ReadonlySet<string> {
+  const { settings } = useAppData();
+  const key = useMemo(() => [...excludedLogIds(settings.influences)].sort().join('|'), [settings.influences]);
+  return useMemo(() => new Set(key ? key.split('|') : []), [key]);
+}
+
 // The same material as the loopinzicht: the same earlier runs, with the trainings you set to
 // "Niet meetellen voor hartslag" left out of the comparison.
 function useComparisonContext(): ComparisonContext {
   const { sessionLogs, templates, program, settings } = useAppData();
   const legs = useLegFatigueInputs();
   const events = useMemo(() => fatigueEvents(legs), [legs]);
-  const excluded = useMemo(() => excludedLogIds(settings.influences), [settings.influences]);
+  const excluded = useExcludedLogIds();
   const chestStrap = resolveRunInsight(settings.runInsight).chestStrap;
   return useMemo(
     () => ({ logs: sessionLogs, templates, program, hr: settings.heartRate, legs, chestStrap, excludedLogIds: excluded, events }),
@@ -32,15 +41,16 @@ function useComparisonContext(): ComparisonContext {
 // Per training the heart rate that stands out, for the lists (only runs with a profile are looked at).
 export function useDeviations(logs: readonly SessionLog[]): ReadonlyMap<string, HeartRateDeviation> {
   const ctx = useComparisonContext();
+  const detailsOn = useDetailsOn();
   return useMemo(() => {
     const map = new Map<string, HeartRateDeviation>();
     for (const log of logs) {
       if (!log.detail || logSport(log) !== 'running') continue;
-      const d = heartRateDeviation(log, ctx);
+      const d = heartRateDeviation(log, ctx, detailsOn);
       if (d) map.set(log.id, d);
     }
     return map;
-  }, [logs, ctx]);
+  }, [logs, ctx, detailsOn]);
 }
 
 export function useDeviation(log: SessionLog | undefined): HeartRateDeviation | undefined {

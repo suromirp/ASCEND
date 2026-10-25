@@ -173,8 +173,9 @@ const dateLabel = (iso: string) => `${Number(iso.slice(8, 10))}-${Number(iso.sli
 // Only an easy run that can be compared the way the loopinzicht compares it (the same
 // earlier runs, the same limit of 1,5 times the noise, runComparison.ts and runInsight.ts).
 // Strength training never gets one. Nothing is returned when it cannot be compared.
-export function heartRateDeviation(log: SessionLog, ctx: ComparisonContext): HeartRateDeviation | undefined {
-  if (logSport(log) !== 'running' || isIndoorLog(log) || !log.detail || !isEasyPlanned(log, ctx)) return undefined;
+// `detailsOn` is the switch "Details van loopjes en tochten": off means no deviation, as for the loopinzicht.
+export function heartRateDeviation(log: SessionLog, ctx: ComparisonContext, detailsOn: boolean): HeartRateDeviation | undefined {
+  if (!detailsOn || logSport(log) !== 'running' || isIndoorLog(log) || !log.detail || !isEasyPlanned(log, ctx)) return undefined;
   const cmp = comparableLogs(log, 'efficiency', ctx);
   if (!cmp.enough || cmp.referenceHr === undefined) return undefined;
   const ref = cmp.referenceHr;

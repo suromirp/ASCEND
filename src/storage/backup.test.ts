@@ -394,6 +394,31 @@ describe('backup envelope round-trip', () => {
       expect(migrateInfluences(undefined)).toEqual({ list: undefined, skipped: 0 });
     });
 
+    it('keeps one note per place after a restore and after a read, the newest wins', async () => {
+      await SettingsRepo.set({ influences: [note('x', '2026-10-20', '2026-10-21T08:00:00.000Z', { logId: 'l9' }), note('d1', '2026-10-22', '2026-10-22T08:00:00.000Z')] });
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ influences: [note('y', '2026-10-20', '2026-10-23T08:00:00.000Z', { logId: 'l9', excludeHeartRate: true }), note('d2', '2026-10-22', '2026-10-21T08:00:00.000Z')] });
+      await importEnvelope(envelope);
+      const list = (await SettingsRepo.get()).influences!;
+      expect(list.map((e) => e.id).sort()).toEqual(['d1', 'y']);
+      const read = migrateInfluences([note('a', '2026-10-22', '2026-10-22T08:00:00.000Z'), note('b', '2026-10-22', '2026-10-23T08:00:00.000Z'), note('c', '2026-10-22', '2026-10-23T08:00:00.000Z', { logId: 'l1' })]);
+      expect(read.list!.map((e) => e.id).sort()).toEqual(['b', 'c']);
+      expect(read.skipped).toBe(1);
+    });
+
+    it('lets only a yes or no through for the switches, and one of three words for the cause', async () => {
+      const envelope = await buildBackupEnvelope();
+      const bad = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { influenceSign: 'ja', influenceOverview: 1, influenceTestMove: null, influenceCause: 'misschien' } } });
+      expect(bad.settings.influenceSign).toBeUndefined();
+      expect(bad.settings.influenceOverview).toBeUndefined();
+      expect(bad.settings.influenceTestMove).toBeUndefined();
+      expect(bad.settings.influenceCause).toBeUndefined();
+      expect(bad.skippedInvalid).toBe(4);
+      const good = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { influenceSign: false, influenceOverview: true, influenceTestMove: false, influenceCause: 'weet' } } });
+      expect(good.settings).toMatchObject({ influenceSign: false, influenceOverview: true, influenceTestMove: false, influenceCause: 'weet' });
+      expect(good.skippedInvalid).toBe(0);
+    });
+
     it('keeps the newest of two records with one id', () => {
       const out = migrateInfluences([note('a', '2026-10-20', '2026-10-22T08:00:00.000Z', { excludeHeartRate: true }), note('a', '2026-10-20', '2026-10-21T08:00:00.000Z')]);
       expect(out.list).toHaveLength(1);
