@@ -8,6 +8,7 @@ import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
+import type { InfluenceEntry } from '../models/influence';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -607,6 +608,18 @@ export interface AppSettings {
   // "Vragen bij een korte nacht": ask instead of warning when the watch saw
   // doubtfully little sleep. Absent = on. Optional and additive.
   askShortNight?: boolean;
+  // "Wat speelde er": your own notes about a day or a training (models/influence.ts).
+  // Never changes a log or the watch numbers. Optional and additive, so the backup
+  // schema number does not move; travels with the settings and is read defensively
+  // on import (storage/migrations.ts#migrateInfluences), merged per id on restore.
+  influences?: InfluenceEntry[];
+  // The switches of "Wat speelde er" (group Lichaam). All absent = the advice:
+  // the sign on a training with a deviating heart rate, the overview on Je stand and
+  // the proposal to move a test are on, and the possible cause includes your pattern.
+  influenceSign?: boolean;
+  influenceCause?: 'uit' | 'weet' | 'patroon';
+  influenceOverview?: boolean;
+  influenceTestMove?: boolean;
   // The one question per week in the week review (models/checkIn.ts).
   weeklyHealthChecks?: WeeklyHealthCheck[];
   // The question of the week and your one-line plan (engine/weeklyQuestion.ts).

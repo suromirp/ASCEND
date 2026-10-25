@@ -13,6 +13,15 @@ describe('normalizeSearch', () => {
 });
 
 describe('searchSettings', () => {
+  it('alcohol, wiet en rusthartslag vinden de rijen van Wat speelde er', () => {
+    for (const q of ['alcohol', 'wiet', 'rusthartslag']) {
+      const found = ids(q);
+      expect(found, q).toContain('wat-vastgelegd');
+      expect(placementOf('wat-vastgelegd')).toEqual({ page: 'lichaam', row: 'wat-vastgelegd' });
+    }
+    expect(ids('alcohol')).toEqual(expect.arrayContaining(['wat-teken', 'wat-oorzaak', 'wat-test']));
+  });
+
   it('geeft niets bij een lege zoekopdracht', () => {
     expect(ids('')).toEqual([]);
     expect(ids('   ')).toEqual([]);

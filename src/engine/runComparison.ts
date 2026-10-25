@@ -18,7 +18,7 @@ import type { DetailConditions } from '../models/activityDetail';
 import { logSport, isIndoorLog } from './sports';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
-import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type LegFatigueInputs } from './legFatigue';
+import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { isLegHeavyTemplate } from './scheduler';
 import {
   LONG_RUN_EFFICIENCY_WINDOW_SEC,
@@ -49,6 +49,12 @@ export interface ComparisonContext {
   // the same source. Off: only trainings with the same sign of a strap are
   // compared (the ground contact balance only comes from a strap or a pod).
   chestStrap: boolean;
+  // Trainings you set to "Niet meetellen voor hartslag" (engine/influence.ts): they are
+  // never a comparison for a later one. Everything else about them counts as before.
+  excludedLogIds?: ReadonlySet<string>;
+  // The leg fatigue events when the caller already has them, so a list of many
+  // trainings does not work them out again for each one.
+  events?: FatigueEvent[];
 }
 
 // --- the numbers of the gate (own assumptions, to be tuned on own data) ---------------------
@@ -247,7 +253,7 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
   if (own0 === 'windy' || own0 === 'rainy') return { ...none({ code: own0 }), verdict: own0, referenceHr };
 
   // Rested legs, for the subject and every earlier one.
-  const events = fatigueEvents(ctx.legs);
+  const events = ctx.events ?? fatigueEvents(ctx.legs);
   const rested = (log: SessionLog) => {
     if (hardLegsBefore(log, ctx)) return false;
     const r = legFatigueOn(log.completedDate, ctx.legs, events);
@@ -267,7 +273,7 @@ export function comparableLogs(subject: SessionLog, topic: InsightTopic, ctx: Co
   };
 
   const pool = ctx.logs
-    .filter((l) => l.id !== subject.id && l.completedDate >= from && l.completedDate <= subject.completedDate && l.completedAt < subject.completedAt && sportsOf(topic).includes(logSport(l)))
+    .filter((l) => l.id !== subject.id && !ctx.excludedLogIds?.has(l.id) && l.completedDate >= from && l.completedDate <= subject.completedDate && l.completedAt < subject.completedAt && sportsOf(topic).includes(logSport(l)))
     .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
 
   const kept: Candidate[] = [];

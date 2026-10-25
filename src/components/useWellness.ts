@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { RecoveryMetric } from '../models/metrics';
 import { todayWellness, type WellnessReading } from '../engine/wellnessCheck';
 import { filterRecovery } from '../engine/watchUse';
+import { excludedMornings as excludedMorningsOf } from '../engine/influence';
 import { getConnection, getWatchState, onWatchChange } from '../storage/externalActivities';
 import { getRecoveryMetrics } from '../storage/wellness';
 import { useAppData } from '../state/AppDataContext';
@@ -42,7 +43,9 @@ export function useTodayWatch(today: string): { reading: WellnessReading | undef
   const { settings } = useAppData();
   const ask = settings.askShortNight !== false;
   const judgments = settings.nightJudgments;
-  const reading = useMemo(() => todayWellness(today, metrics, { ask, judgments }), [today, metrics, ask, judgments]);
+  // "Deze nacht niet meetellen" (engine/influence.ts): out of your averages of resting heart rate and HRV.
+  const excludedMornings = useMemo(() => excludedMorningsOf(settings.influences), [settings.influences]);
+  const reading = useMemo(() => todayWellness(today, metrics, { ask, judgments, excludedMornings }), [today, metrics, ask, judgments, excludedMornings]);
   return { reading, linked, sleepOn };
 }
 

@@ -332,6 +332,22 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
         : { value: choiceShort('figuur', r.figure), auto: true, sub: 'Nog niet bekend, we tonen Man' };
     }
 
+    // Wat speelde er (engine/influence.ts): alles staat aan, de oorzaak met je patroon.
+    case 'wat-teken':
+      return { checked: s.influenceSign !== false, sub: 'Teken bij een afwijkende hartslag' };
+    case 'wat-oorzaak': {
+      const cause = s.influenceCause ?? 'patroon';
+      return { value: choiceShort('oorzaak', cause), sub: cause === 'uit' ? 'Alleen wat je zelf kiest' : cause === 'weet' ? 'Uit weer, horloge en logboek' : 'Uit weer, horloge, logboek en je patroon' };
+    }
+    case 'wat-overzicht':
+      return { checked: s.influenceOverview !== false, sub: 'Wat doet dit met je?' };
+    case 'wat-test':
+      return { checked: s.influenceTestMove !== false, sub: 'Na een avond met 3 of meer glazen' };
+    case 'wat-vastgelegd': {
+      const n = (s.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate === true).length;
+      return n === 0 ? { value: 'Nog niets', dim: true } : { value: `${n} keer`, sub: 'Bekijken, wijzigen of wissen' };
+    }
+
     // Vandaag en meldingen
     case 'ochtendcheck':
       return { checked: o.morningCheckIn };

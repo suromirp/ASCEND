@@ -294,6 +294,18 @@ export const CHOICES = {
       { value: 'vrouw', label: 'Vrouw', short: 'Vrouw' },
     ],
   }),
+  oorzaak: def({
+    group: 'Wat speelde er',
+    title: 'Mogelijke oorzaak',
+    line: 'Wat ASCEND erbij noemt als je hartslag afwijkt.',
+    advice: 'patroon' as 'uit' | 'weet' | 'patroon',
+    help: 'wat-oorzaak',
+    options: [
+      { value: 'uit', label: 'Uit', note: 'Geen voorstellen, alleen wat je zelf kiest', short: 'Uit' },
+      { value: 'weet', label: 'Wat ASCEND weet', note: 'Weer, horloge, logboek en je ziekmelding', short: 'Wat ASCEND weet' },
+      { value: 'patroon', label: 'Ook je patroon', note: 'Plus "lijkt op" vanaf 4 keer', short: 'Ook je patroon' },
+    ],
+  }),
   ochtendTijd: def({
     group: 'Vandaag en meldingen',
     title: 'Tijd van de ochtendmelding',

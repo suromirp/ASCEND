@@ -95,6 +95,7 @@ export function SessionActionSheet({
   onPickSuggestion,
   onDoneAsPlanned,
   onBackOnPlan,
+  onOpenLog,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -117,6 +118,8 @@ export function SessionActionSheet({
   onDoneAsPlanned?: () => void;
   // "Toch doen": a skipped training back on its own day (only from today on).
   onBackOnPlan?: () => void;
+  // A done training: the sheet with its numbers and "Wat speelde er?" (components/LogDetailSheet.tsx).
+  onOpenLog?: () => void;
 }) {
   const [confirmingUndo, setConfirmingUndo] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -182,6 +185,13 @@ export function SessionActionSheet({
           )}
         />}>
         {guideSheet}
+        {onOpenLog && (
+          <div className="mt-4">
+            <SheetRows>
+              <SheetRow title="Training bekijken" sub="Cijfers en wat speelde er" onClick={onOpenLog} />
+            </SheetRows>
+          </div>
+        )}
         <div className="mt-6">
           {!confirmingUndo ? (
             <SecondaryButton onClick={() => setConfirmingUndo(true)} className="w-full">Ongedaan maken</SecondaryButton>

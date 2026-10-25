@@ -22,6 +22,9 @@ import { ignoredNightDates, judgmentFor, nightInfo, type NightInfo, type NightOp
 export const BASELINE_DAYS = 28;
 export const MIN_BASELINE_DAYS = 7;
 
+// A night under this many minutes is called short (6 hours).
+export const SHORT_NIGHT_MINUTES = 360;
+
 export type WellnessKey = 'sleep' | 'restingHeartRate' | 'hrv';
 
 export interface WellnessLine {
@@ -75,7 +78,7 @@ export function sleepLabel(minutes: number): string {
 }
 
 // The record of a day, with fields filled in from every source that has one.
-function dayRecord(date: string, metrics: RecoveryMetric[]): RecoveryMetric | undefined {
+export function dayRecord(date: string, metrics: RecoveryMetric[]): RecoveryMetric | undefined {
   const of = metrics.filter((m) => m.date === date);
   if (of.length === 0) return undefined;
   const merged: RecoveryMetric = { ...of[0] };
@@ -143,7 +146,7 @@ function sleepLine(record: RecoveryMetric, base: number[], night?: NightInfo): W
   let tone: WellnessLine['tone'] = 'normal';
   if (minutes !== undefined) {
     // A night that is still a question, or that you left out, is no reason to look.
-    if (minutes < 360 && (!night || night.state === 'klopt')) {
+    if (minutes < SHORT_NIGHT_MINUTES && (!night || night.state === 'klopt')) {
       tone = 'attention';
       parts.push('Kort: minder dan 6 uur.');
     }
@@ -187,15 +190,18 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
   if (!record) return undefined;
   const judgments = options.ask === true ? options.judgments ?? [] : [];
   const skip = ignoredNightDates(judgments, metrics);
+  // "Deze nacht niet meetellen" (engine/influence.ts): out of resting heart rate and HRV too.
+  const excluded = options.excludedMornings;
+  const hrvSkip = excluded && excluded.size > 0 ? new Set([...skip, ...excluded]) : skip;
   const sleepBase = baselineValues(today, metrics, (m) => m.sleepMinutes, skip);
   const night = options.ask === true ? nightInfo(record.sleepMinutes, sleepBase, judgmentFor(today, judgments)) : undefined;
   const ignored = night?.state === 'ignored';
   const lines: WellnessLine[] = [];
   const sleep = sleepLine(record, sleepBase, night);
   if (sleep) lines.push(sleep);
-  if (record.restingHeartRate !== undefined) lines.push(restingLine(record.restingHeartRate, baselineValues(today, metrics, (m) => m.restingHeartRate)));
+  if (record.restingHeartRate !== undefined) lines.push(restingLine(record.restingHeartRate, baselineValues(today, metrics, (m) => m.restingHeartRate, excluded)));
   if (record.hrv !== undefined) {
-    const hrv = hrvLine(record.hrv, baselineValues(today, metrics, (m) => m.hrv, skip));
+    const hrv = hrvLine(record.hrv, baselineValues(today, metrics, (m) => m.hrv, hrvSkip));
     // The HRV of a night that was not measured well says nothing either.
     lines.push(ignored ? { ...hrv, tone: 'normal', note: 'Deze nacht telt niet mee.', short: `HRV ${Math.round(record.hrv)} ms` } : hrv);
   }
@@ -215,7 +221,7 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
     suggestedSleep,
     ...(suggestedSleepFrom ? { suggestedSleepFrom } : {}),
     ...(night ? { night } : {}),
-    suggestedEnergy: ignored ? undefined : suggestEnergyFeeling(record, today, metrics, skip),
+    suggestedEnergy: ignored ? undefined : suggestEnergyFeeling(record, today, metrics, skip, excluded),
   };
 }
 
@@ -223,10 +229,10 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
 // and HRV clearly under your own range, or both clearly the good way. One
 // signal alone, or a week of days too few to compare with, says nothing: the
 // answer stays empty (and may stay empty).
-export function suggestEnergyFeeling(record: Pick<RecoveryMetric, 'restingHeartRate' | 'hrv'>, today: string, metrics: RecoveryMetric[], skip?: ReadonlySet<string>): EnergyFeeling | undefined {
+export function suggestEnergyFeeling(record: Pick<RecoveryMetric, 'restingHeartRate' | 'hrv'>, today: string, metrics: RecoveryMetric[], skip?: ReadonlySet<string>, excluded?: ReadonlySet<string>): EnergyFeeling | undefined {
   if (record.restingHeartRate === undefined || record.hrv === undefined) return undefined;
-  const rhrBase = baselineValues(today, metrics, (m) => m.restingHeartRate);
-  const hrvBase = baselineValues(today, metrics, (m) => m.hrv, skip);
+  const rhrBase = baselineValues(today, metrics, (m) => m.restingHeartRate, excluded);
+  const hrvBase = baselineValues(today, metrics, (m) => m.hrv, excluded && excluded.size > 0 ? new Set([...(skip ?? []), ...excluded]) : skip);
   if (rhrBase.length < MIN_BASELINE_DAYS || hrvBase.length < MIN_BASELINE_DAYS) return undefined;
   const rhrDiff = record.restingHeartRate - Math.round(mean(rhrBase));
   const hrvAvg = mean(hrvBase);

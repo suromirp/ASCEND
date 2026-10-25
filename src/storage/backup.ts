@@ -51,7 +51,7 @@ import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
-import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -230,6 +230,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (nights.list === undefined) delete s.nightJudgments;
     else s.nightJudgments = nights.list;
     skipped.n += nights.skipped;
+  }
+  // Your notes of "Wat speelde er": record by record, a damaged one is dropped and
+  // counted, an older file has none and leaves the notes on the device alone
+  // (storage/migrations.ts#migrateInfluences).
+  if ('influences' in s) {
+    const notes = migrateInfluences(s.influences);
+    if (notes.list === undefined) delete s.influences;
+    else s.influences = notes.list;
+    skipped.n += notes.skipped;
   }
   // The fat percentage on a weigh-in: a number between 3 and 60 or not there; the
   // weigh-in itself stays (storage/migrations.ts#migrateWeightEntries).
@@ -659,6 +668,17 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     const byDate = new Map((incoming.nightJudgments ?? []).map((j) => [j.date, j]));
     for (const j of current.nightJudgments ?? []) byDate.set(j.date, j);
     merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
+  }
+  // Notes of "Wat speelde er" are history too: the union per id, the newest updatedAt
+  // wins and on a tie the device does. A note you removed on this device comes back
+  // with a restore, like a verdict on a night.
+  if (incoming.influences || current.influences) {
+    const byId = new Map((incoming.influences ?? []).map((e) => [e.id, e]));
+    for (const e of current.influences ?? []) {
+      const theirs = byId.get(e.id);
+      if (!theirs || e.updatedAt >= theirs.updatedAt) byId.set(e.id, e);
+    }
+    merged.influences = [...byId.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
   }
   // Ticked-off journey tasks are history too: the union, the device wins.
   if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);

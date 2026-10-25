@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, listSnapshots, restoreSnapshot } from './backup';
 import type { SessionLog, PlannedSession } from '../models/training';
-import { migrateNightJudgments } from './migrations';
+import { migrateInfluences, migrateNightJudgments } from './migrations';
+import type { InfluenceEntry } from '../models/influence';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
 import type { Program } from '../models/program';
@@ -326,6 +327,77 @@ describe('backup envelope round-trip', () => {
       expect(backup.skippedInvalid).toBe(4);
       const notAList = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { nightJudgments: 'oops' } } });
       expect(notAList.settings.nightJudgments).toBeUndefined();
+    });
+  });
+
+  // "Wat speelde er" (models/influence.ts): additive in the settings, no schema step.
+  describe('influences (wat speelde er)', () => {
+    const note = (id: string, date: string, updatedAt: string, extra: Partial<InfluenceEntry> = {}): InfluenceEntry => ({ id, date, reasons: [{ reason: 'alcohol', amount: 'matig' }], updatedAt, ...extra });
+    const notes = [note('a', '2026-10-20', '2026-10-21T08:00:00.000Z', { logId: 'l1', excludeHeartRate: true }), note('b', '2026-10-22', '2026-10-23T08:00:00.000Z')];
+
+    it('round-trips through export and a full restore onto a clean device', async () => {
+      await SettingsRepo.set({ influences: notes, influenceSign: false });
+      const envelope = await buildBackupEnvelope();
+      await wipeAllData();
+      expect((await SettingsRepo.get()).influences).toBeUndefined();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.influences).toEqual(notes);
+      expect(restored.influenceSign).toBe(false);
+    });
+
+    it('a back-up without the field imports as before and leaves the notes on the device alone', async () => {
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ influences: notes });
+      const backup = normalizeBackupToCurrentModel(envelope);
+      expect(backup.skippedInvalid).toBe(0);
+      expect(backup.settings.influences).toBeUndefined();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).influences).toEqual(notes);
+    });
+
+    it('a restore merges per id: the newest updatedAt wins, on a tie the device', async () => {
+      await SettingsRepo.set({ influences: [note('a', '2026-10-20', '2026-10-21T08:00:00.000Z', { excludeHeartRate: true }), note('b', '2026-10-22', '2026-10-23T08:00:00.000Z'), note('c', '2026-10-24', '2026-10-24T08:00:00.000Z')] });
+      const envelope = await buildBackupEnvelope();
+      const device = [
+        note('a', '2026-10-20', '2026-10-21T09:00:00.000Z'),
+        note('b', '2026-10-22', '2026-10-23T08:00:00.000Z', { reasons: [{ reason: 'wiet' }] }),
+        note('c', '2026-10-24', '2026-10-24T07:00:00.000Z', { reasons: [{ reason: 'stress' }] }),
+        note('d', '2026-10-25', '2026-10-25T08:00:00.000Z'),
+      ];
+      await SettingsRepo.set({ influences: device });
+      await importEnvelope(envelope);
+      const list = (await SettingsRepo.get()).influences!;
+      expect(list.map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
+      expect(list[0].excludeHeartRate).toBeUndefined(); // device is newer
+      expect(list[1].reasons).toEqual([{ reason: 'wiet' }]); // tie: device
+      expect(list[2].reasons).toEqual([{ reason: 'alcohol', amount: 'matig' }]); // backup is newer
+    });
+
+    it('drops damaged notes and counts them, a damaged amount or label loses only itself', () => {
+      const out = migrateInfluences([
+        notes[0],
+        { id: '', date: '2026-10-20', reasons: [], updatedAt: '2026-10-20T08:00:00.000Z' },
+        { id: 'x', date: '2026-13-45', reasons: [], updatedAt: '2026-10-20T08:00:00.000Z' },
+        { id: 'y', date: '2026-10-21', reasons: 'oops', updatedAt: '2026-10-20T08:00:00.000Z' },
+        'oops',
+        { id: 'z', date: '2026-10-23', updatedAt: '2026-10-23T08:00:00.000Z', reasons: [{ reason: 'alcohol', amount: 'enorm' }, { reason: 'bier' }, { reason: 'anders', label: 'a'.repeat(60) }, { reason: 'wiet', label: 5 }, { reason: 'stress' }] },
+      ]);
+      expect(out.list).toHaveLength(2);
+      const z = out.list!.find((e) => e.id === 'z')!;
+      expect(z.reasons.map((r) => r.reason)).toEqual(['alcohol', 'anders', 'wiet', 'stress']);
+      expect(z.reasons[0].amount).toBeUndefined();
+      expect(z.reasons[1].label).toHaveLength(40);
+      expect(z.reasons[2].label).toBeUndefined();
+      expect(out.skipped).toBe(4 + 3);
+      expect(migrateInfluences('oops')).toEqual({ list: undefined, skipped: 1 });
+      expect(migrateInfluences(undefined)).toEqual({ list: undefined, skipped: 0 });
+    });
+
+    it('keeps the newest of two records with one id', () => {
+      const out = migrateInfluences([note('a', '2026-10-20', '2026-10-22T08:00:00.000Z', { excludeHeartRate: true }), note('a', '2026-10-20', '2026-10-21T08:00:00.000Z')]);
+      expect(out.list).toHaveLength(1);
+      expect(out.list![0].excludeHeartRate).toBe(true);
     });
   });
 

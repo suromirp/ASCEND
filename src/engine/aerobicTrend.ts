@@ -14,6 +14,9 @@
 // lower, good enough for a trend, not for one run. Per week the average,
 // weighted by distance.
 //
+// A training you set to "Niet meetellen voor hartslag" (engine/influence.ts) is left out
+// here (`excludedLogIds`); load, leg index and the week still count it.
+//
 // Pure: no React, no IndexedDB.
 
 import type { SessionLog, SessionTemplate } from '../models/training';
@@ -53,12 +56,12 @@ export function formatPace(sec: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, hr: HeartRateSettings | undefined, today: string): AerobicTrend {
+export function aerobicTrend(logs: SessionLog[], templates: SessionTemplate[], program: Program | null | undefined, hr: HeartRateSettings | undefined, today: string, excludedLogIds?: ReadonlySet<string>): AerobicTrend {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const band = zoneBpm(2, hr);
   const since = addDays(mondayOfWeek(today), -7 * (WEEKS - 1));
   const candidates = logs.flatMap((l) => {
-    if (l.completedDate < since || l.completedDate > today || logSport(l) !== 'running') return [];
+    if (l.completedDate < since || l.completedDate > today || logSport(l) !== 'running' || excludedLogIds?.has(l.id)) return [];
     const t = byId.get(l.templateId);
     const top = t ? plannedRpeTop(t, l.completedDate, program) : undefined;
     if (top === undefined || top > EASY_RPE_TOP) return [];

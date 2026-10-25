@@ -5,7 +5,7 @@ import { logLineParts } from '../engine/logLine';
 import { useCallback, useMemo, useState } from 'react';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { useAppData } from '../state/AppDataContext';
-import { formatDateNL, formatHoursMinutesNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
+import { formatDateNL, formatHoursMinutesNL, formatShortDayNL, formatMonthNL, monthBounds, shiftMonthAnchor, todayISO } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { isIllnessDay } from '../engine/illness';
 import { getModality } from '../data/modalities';
@@ -19,6 +19,12 @@ import { validMonthAnchor } from '../utils/pageMemory';
 import { Icon } from '../components/icons';
 import { Pictogram } from '../components/pictograms';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
+import { HeartSign } from '../components/influence/HeartSign';
+import { InfluenceSheet } from '../components/influence/InfluenceSheet';
+import { useDeviations } from '../components/influence/useInfluence';
+import { entryForLog, isNoted, signState } from '../engine/influence';
+
+const NO_LOGS: SessionLog[] = [];
 
 
 function computeMonthSummary(logs: SessionLog[]) {
@@ -142,6 +148,12 @@ export function HistoryPage() {
   const [logsOpen, setLogsOpen] = usePageState('logsOpen', false);
   const [moreOpen, setMoreOpen] = usePageState('moreOpen', false);
 
+  // "Wat speelde er": the sign by a run with a heart rate that stands out (only worked out while the list is open),
+  // and a day of the calendar, opened with a tap.
+  const deviations = useDeviations(logsOpen ? monthLogs : NO_LOGS);
+  const [dayOpen, setDayOpen] = useState<string | null>(null);
+  const notedDates = useMemo(() => new Set((settings.influences ?? []).filter((e) => !e.logId && isNoted(e)).map((e) => e.date)), [settings.influences]);
+
   function shiftMonth(delta: number) {
     setAnchor(shiftMonthAnchor(anchor, delta));
   }
@@ -181,7 +193,7 @@ export function HistoryPage() {
       </SkyBand>
 
       <Card>
-        <MonthCalendar anchor={anchor} plannedSessions={plannedSessions} sessionLogs={sessionLogs} isRest={isRest} />
+        <MonthCalendar anchor={anchor} plannedSessions={plannedSessions} sessionLogs={sessionLogs} isRest={isRest} onPickDay={setDayOpen} notedDates={notedDates} />
       </Card>
 
       {sportRows.length > 0 && (
@@ -226,7 +238,13 @@ export function HistoryPage() {
                     <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: look.color }} aria-hidden />
                     <span className="w-[56px] shrink-0 whitespace-nowrap text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(log.completedDate)}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="break-words text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{template?.name ?? log.templateId}</p>
+                      <p className="flex items-center gap-1.5 break-words text-sm font-medium" style={{ color: 'var(--color-ink)' }}>
+                        <span className="min-w-0 break-words">{template?.name ?? log.templateId}</span>
+                        {(() => {
+                          const sign = signState(deviations.get(log.id), entryForLog(settings.influences, log.id), settings.influenceSign);
+                          return sign ? <HeartSign state={sign} /> : null;
+                        })()}
+                      </p>
                       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                         {logLineParts({
                           kind: logKindLabel(log),
@@ -263,6 +281,15 @@ export function HistoryPage() {
           </div>
         </DisclosureRow>
       </Card>
+
+      {dayOpen && (
+        <InfluenceSheet
+          eyebrow="Logboek"
+          title={`Wat speelde er op ${formatShortDayNL(dayOpen)}?`}
+          target={{ date: dayOpen }}
+          onClose={() => setDayOpen(null)}
+        />
+      )}
 
       {selectedLog && (
         <LogDetailSheet
