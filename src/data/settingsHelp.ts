@@ -210,9 +210,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   'wat-oorzaak': {
     title: 'Mogelijke oorzaak',
-    lead: 'In het blad van een training en van een dag kan ASCEND zeggen wat het al weet, met de bron erbij.',
+    lead: 'In het blad van een training en van een dag zegt ASCEND wat het al weet, met de bron erbij. Dat hoef je niet te bevestigen.',
     points: [
-      { head: 'Wat ASCEND weet', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Het telt pas na jouw tik.' },
+      { head: 'Wat ASCEND weet', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. ASCEND telt dit zelf mee in "Wat doet dit met je?", ook als deze instelling uit staat. Je hoeft alleen vast te leggen wat ASCEND niet kan weten.' },
       { head: 'Je patroon', text: 'in het blad van een training zegt ASCEND "lijkt op" pas als een reden minstens 4 keer is vastgelegd en je gewone loopjes ook, en de banden elkaar niet raken.' },
       { head: 'Alcohol en wiet', text: 'noemt ASCEND nooit uit zichzelf.' },
     ],

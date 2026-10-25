@@ -312,8 +312,8 @@ describe('wat niet meetelt blijft uit de banden', () => {
 
   it('een nacht die je niet goed gemeten noemde telt niet voor slaap en HRV, wel voor rusthartslag niet te missen', () => {
     const days = ['2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'];
-    const low = Object.fromEntries(days.map((d) => [d, { hrv: 20, sleepMinutes: 120 }]));
-    const judgments = days.map((d) => ({ date: d, verdict: 'niet_goed' as const, minutes: 120 }));
+    const low = Object.fromEntries(days.map((d) => [d, { hrv: 20, sleepMinutes: 365 }]));
+    const judgments = days.map((d) => ({ date: d, verdict: 'niet_goed' as const, minutes: 365 }));
     const plain = at({ metrics: metrics(low) });
     const judged = at({ metrics: metrics(low), nightJudgments: judgments });
     expect(plain.pointAt('hrv', morning)!.center).toBeLessThan(judged.pointAt('hrv', morning)!.center);

@@ -28,7 +28,8 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { AMOUNT_LABEL, REASON_LABEL } from '../data/influenceReasons';
 import { addDays } from '../utils/dates';
-import { affectedMorning, excludedLogIds, excludedMornings } from './influence';
+import { affectedMorning, derivedFactEntries, excludedLogIds, excludedMornings } from './influence';
+import type { IllnessEpisode } from '../models/illness';
 import type { NightJudgment } from '../models/checkIn';
 import { ignoredNightDates } from './shortNight';
 import { plannedRpeTop } from './coach';
@@ -183,6 +184,11 @@ export interface EffectsInput {
   program: Program | null | undefined;
   // Je oordeel over nachten die niet goed gemeten zijn: die tellen niet mee in de band van slaap en HRV.
   nightJudgments?: NightJudgment[];
+  // De ziekmeldingen: een feit dat ASCEND zelf weet en vanzelf meetelt.
+  illness?: readonly IllnessEpisode[];
+  // De feiten als notities die nooit worden opgeslagen (influence.ts#derivedFactEntries), als de
+  // aanroeper ze al heeft uitgerekend. Anders rekent de calculator ze zelf uit.
+  facts?: InfluenceEntry[];
   // Voor de hartslag bij tempo. Zonder dit is die meting er niet.
   run?: { hr: HeartRateSettings | undefined; legs: LegFatigueInputs; chestStrap: boolean };
 }
@@ -290,6 +296,9 @@ export class InfluenceCalculator {
   private readonly memo = new Map<string, EffectPoint | null>();
 
   private readonly input: EffectsInput;
+  // Je eigen notities en de feiten die ASCEND zelf weet, samen. Een feit staat op dezelfde plek
+  // als een notitie, dus telt een bevestigde en een afgeleide reden daar samen één keer.
+  readonly entries: InfluenceEntry[];
   // Wat zonder reden "niet meetelt" blijft uit de banden: ochtenden voor rusthartslag, HRV en slaap,
   // trainingen voor zwaarte en hartslag bij tempo. Met een reden telt het wel als punt mee.
   private readonly skipMornings: ReadonlySet<string>;
@@ -299,8 +308,10 @@ export class InfluenceCalculator {
 
   constructor(input: EffectsInput) {
     this.input = input;
-    this.recorded = new Set(input.entries.filter((e) => e.reasons.length > 0).map(morningOf));
-    const plain = input.entries.filter((e) => e.reasons.length === 0);
+    const facts = input.facts ?? derivedFactEntries({ logs: input.logs, templates: input.templates, recovery: input.metrics, illness: input.illness, judgments: input.nightJudgments });
+    this.entries = [...input.entries, ...facts];
+    this.recorded = new Set(this.entries.filter((e) => e.reasons.length > 0).map(morningOf));
+    const plain = this.entries.filter((e) => e.reasons.length === 0);
     this.skipMornings = new Set([...this.recorded, ...excludedMornings(plain)]);
     this.skipNights = new Set([...this.skipMornings, ...ignoredNightDates(input.nightJudgments, input.metrics)]);
     this.skipLogs = excludedLogIds(plain);
@@ -423,7 +434,7 @@ function summarize(group: ReasonGroup, measure: InfluenceMeasure, points: Effect
 // Alles wat uit te rekenen valt: per groep en meting, ook onder de 3 keer (met het aantal).
 export function influenceEffects(input: EffectsInput, calc: InfluenceCalculator = new InfluenceCalculator(input)): ReasonEffect[] {
   const out: ReasonEffect[] = [];
-  const occurrences = occurrencesOf(input.entries);
+  const occurrences = occurrencesOf(calc.entries);
   const groups = new Map<string, ReasonGroup>();
   for (const o of occurrences) groups.set(o.group.key, o.group);
   for (const group of groups.values()) {
@@ -689,7 +700,7 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   const calc = new InfluenceCalculator(input);
   const now = calc.pointAt(input.measure, input.date);
   if (!now) return undefined;
-  const occurrences = occurrencesOf(input.entries).filter((o) => o.morning !== input.date);
+  const occurrences = occurrencesOf(calc.entries).filter((o) => o.morning !== input.date);
   const groups = new Map<string, ReasonGroup>();
   for (const o of occurrences) groups.set(o.group.key, o.group);
   const diffOf = (morning: string) => calc.pointAt(input.measure, morning)?.diff;

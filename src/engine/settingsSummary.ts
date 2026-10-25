@@ -343,7 +343,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.influenceSign !== false, sub: 'Teken bij een afwijkende hartslag' };
     case 'wat-oorzaak': {
       const cause = s.influenceCause ?? 'patroon';
-      return { value: choiceShort('oorzaak', cause), sub: cause === 'uit' ? 'Alleen wat je zelf kiest' : cause === 'weet' ? 'Uit weer, horloge en logboek' : 'Uit weer, horloge, logboek en je patroon' };
+      return { value: choiceShort('oorzaak', cause), sub: cause === 'uit' ? 'Feiten staan niet in het blad' : cause === 'weet' ? 'Uit weer, horloge en logboek' : 'Uit weer, horloge, logboek en je patroon' };
     }
     case 'wat-overzicht':
       return { checked: s.influenceOverview !== false, sub: 'Wat doet dit met je?' };

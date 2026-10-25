@@ -301,7 +301,7 @@ export const CHOICES = {
     advice: 'patroon' as 'uit' | 'weet' | 'patroon',
     help: 'wat-oorzaak',
     options: [
-      { value: 'uit', label: 'Uit', note: 'Geen voorstellen, alleen wat je zelf kiest', short: 'Uit' },
+      { value: 'uit', label: 'Uit', note: 'Geen regels met feiten in het blad, alleen wat je zelf kiest', short: 'Uit' },
       { value: 'weet', label: 'Wat ASCEND weet', note: 'Weer, horloge, logboek en je ziekmelding', short: 'Wat ASCEND weet' },
       { value: 'patroon', label: 'Ook je patroon', note: 'Plus "lijkt op" vanaf 4 keer', short: 'Ook je patroon' },
     ],

@@ -249,6 +249,8 @@ export interface KnownFactsInput {
   recovery: readonly RecoveryMetric[];
   illness: readonly IllnessEpisode[] | undefined;
   judgments?: NightJudgment[];
+  // The nights that are "niet goed gemeten", when the caller has them ready for many targets.
+  ignoredNights?: ReadonlySet<string>;
   // "Mogelijke oorzaak": with 'uit' there are no suggestions.
   cause: InfluenceCause | undefined;
 }
@@ -301,13 +303,53 @@ export function knownFacts(input: KnownFactsInput): KnownFact[] {
   // A short night from the watch: the morning of the training, the morning after a day.
   const morning = isLog ? date : addDays(date, 1);
   const record = dayRecord(morning, [...input.recovery]);
-  if (record?.sleepMinutes !== undefined && record.sleepMinutes < SHORT_NIGHT_MINUTES && !ignoredNightDates(input.judgments, input.recovery).has(morning)) {
+  if (record?.sleepMinutes !== undefined && record.sleepMinutes < SHORT_NIGHT_MINUTES && !(input.ignoredNights ?? ignoredNightDates(input.judgments, input.recovery)).has(morning)) {
     facts.push({ reason: 'kort_geslapen', title: 'Kort geslapen', source: `${sleepLabel(record.sleepMinutes)} slaap, van je horloge` });
   }
 
   const ill = (input.illness ?? []).some((e) => e.startDate <= date && (e.endDate === undefined || e.endDate >= date));
   if (ill) facts.push({ reason: 'ziek', title: 'Ziek', source: 'uit je ziekmelding' });
   return facts;
+}
+
+// --- the facts as reasons, without a note ---------------------------------------------------------
+
+export interface DerivedFactsInput {
+  logs: readonly SessionLog[];
+  templates: readonly SessionTemplate[];
+  recovery: readonly RecoveryMetric[];
+  illness: readonly IllnessEpisode[] | undefined;
+  judgments?: NightJudgment[];
+}
+
+// How far back the overview reads (the mornings from intervals.icu are kept as long, storage/wellness.ts).
+const FACT_WINDOW_DAYS = 400;
+
+// What ASCEND knows by itself, as notes that are never stored: one per training and one per day
+// with a fact, made by `knownFacts` itself so there is one way of counting. They sit at the same
+// place as a note you would have made (a training, or a day), so `affectedMorning` and the
+// once-per-place rule of `occurrencesOf` apply to them as to your own. Only the window of the
+// overview is looked at. Facts are facts: they do not depend on "Mogelijke oorzaak".
+export function derivedFactEntries(input: DerivedFactsInput): InfluenceEntry[] {
+  const dates = [...input.recovery.map((m) => m.date), ...input.logs.map((l) => l.completedDate)];
+  if (dates.length === 0) return [];
+  const to = dates.reduce((a, b) => (a > b ? a : b));
+  const oldest = addDays(to, -FACT_WINDOW_DAYS);
+  const first = dates.reduce((a, b) => (a < b ? a : b));
+  const from = first > oldest ? first : oldest;
+  const ignoredNights = ignoredNightDates(input.judgments, input.recovery);
+  const base = { logs: input.logs, templates: input.templates, recovery: input.recovery, illness: input.illness, ignoredNights, cause: 'patroon' as const };
+  const out: InfluenceEntry[] = [];
+  for (const log of input.logs) {
+    if (log.completedDate < from) continue;
+    const facts = knownFacts({ ...base, target: { kind: 'log', log } });
+    if (facts.length > 0) out.push({ id: `fact-log-${log.id}`, date: log.completedDate, logId: log.id, reasons: facts.map((f) => ({ reason: f.reason })), updatedAt: '' });
+  }
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const facts = knownFacts({ ...base, target: { kind: 'day', date: d } });
+    if (facts.length > 0) out.push({ id: `fact-day-${d}`, date: d, reasons: facts.map((f) => ({ reason: f.reason })), updatedAt: '' });
+  }
+  return out;
 }
 
 // The chips that are left: what already stands as a suggestion is not offered twice.

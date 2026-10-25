@@ -30,13 +30,16 @@ import { useInfluenceEffects } from './useInfluenceEffects';
 
 export function InfluenceCard() {
   const { settings } = useAppData();
-  const { entries, effects } = useInfluenceEffects();
+  const { entries, all, effects } = useInfluenceEffects();
   const [chosen, setChosen] = usePageState<InfluenceMeasure | null>('invloed-meting', null, (v) => v === null || MEASURES.includes(v as InfluenceMeasure));
   const [open, setOpen] = useState<string | null>(null);
 
   if (settings.influenceOverview === false) return null;
-  const recorded = recordedCounts(entries);
-  if (recorded.length === 0) return null;
+  // Facts ASCEND knows count by themselves. With only facts and no note of your own there is
+  // nothing to ask for: no empty state, the card shows once there is something to show.
+  const recorded = recordedCounts(all);
+  const ownNotes = entries.some((e) => e.reasons.length > 0);
+  if (recorded.length === 0 || (!ownNotes && !hasAnythingToShow(effects))) return null;
 
   const title = <h2 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Wat doet dit met je?</h2>;
 
@@ -74,7 +77,7 @@ export function InfluenceCard() {
   const measure = chosen ?? first;
   const rows = shownFor(effects, measure);
   const scale = scaleFor(rows);
-  const few = tooFewLine(entries);
+  const few = tooFewLine(all);
 
   return (
     <section className="flex flex-col gap-2" aria-label="Wat speelde er">
@@ -111,7 +114,7 @@ export function InfluenceCard() {
           Een gemiddelde over een paar keer, geen bewijs. Tik op een reden voor HRV, slaap en je trainingen.
         </p>
       </Card>
-      {open && <InfluenceEffectSheet groupKey={open} entries={entries} effects={effects} onClose={() => setOpen(null)} />}
+      {open && <InfluenceEffectSheet groupKey={open} entries={all} effects={effects} onClose={() => setOpen(null)} />}
     </section>
   );
 }
