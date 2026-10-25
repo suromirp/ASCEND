@@ -47,13 +47,16 @@ export interface NutritionMetric {
 // `kg` is the number ASCEND uses. From MacroFactor (engine/macrofactorWeight.ts)
 // it is the trend weight when the export has one, else the scale weight;
 // `basis` says which, and `scaleKg` keeps the weighing of that day when the
-// trend was used. Both are optional, so older entries and backups stay valid.
+// trend was used. `fatPct` is the fat percentage of that weighing. All are optional, so older entries and backups stay valid.
 export interface WeightEntry {
   date: string; // ISO date
   kg: number;
   source: MetricSource;
   basis?: 'trend' | 'scale';
   scaleKg?: number;
+  // Het vetpercentage van de weging van die dag (3 tot en met 60), uit de weegschaal
+  // via MacroFactor. Optioneel en alleen toegevoegd (storage/migrations.ts#migrateWeightEntries).
+  fatPct?: number;
 }
 
 // The 1RM of one exercise as another source reports it, one reading per day

@@ -73,7 +73,7 @@ export function MacroFactorImportPage() {
     const lastDay = [...file.days].reverse().find((d) => weightEntryFromDay(d));
     const last = lastDay ? weightEntryFromDay(lastDay) : undefined;
     if (!last) return undefined;
-    return { kg: last.kg, date: last.date, basis: last.basis === 'trend' ? ('trend' as const) : ('scale' as const), added: weightPlan.add.length, offInSettings: current.weightFromMacroFactor === false };
+    return { kg: last.kg, date: last.date, basis: last.basis === 'trend' ? ('trend' as const) : ('scale' as const), added: weightPlan.add.length, offInSettings: current.weightFromMacroFactor === false, fatDays: file.days.filter((d) => d.fatPct !== undefined).length };
   }
 
   // The 1RM per exercise of a file: put next to what is stored, a day that is

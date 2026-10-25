@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { effectiveAmbition } from '../../engine/ambition';
+import { hasBodyFat } from '../../engine/bodyFat';
 import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { predictDuration } from '../../engine/durationLearning';
 import { journeyProgress } from '../../engine/journey';
@@ -114,6 +115,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       activeInjuries: injuryNotes.filter((n) => !n.resolvedDate).length,
       strengthExternal,
       ambition: effectiveAmbition(settings.ambition, sessionLogs, templateById, program, today),
+      hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor)),
       weight: w ? { kg: w.kg, source: w.source, date: w.date } : null,
       watch: loaded.watch
         ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled }
