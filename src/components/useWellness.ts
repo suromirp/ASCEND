@@ -9,6 +9,7 @@ import { todayWellness, type WellnessReading } from '../engine/wellnessCheck';
 import { filterRecovery } from '../engine/watchUse';
 import { getConnection, getWatchState, onWatchChange } from '../storage/externalActivities';
 import { getRecoveryMetrics } from '../storage/wellness';
+import { useAppData } from '../state/AppDataContext';
 
 // `linked`: a watch is linked; `sleepOn`: sleep is switched on for it. Together
 // they make "no sleep from your watch" true to say. Without a link the morning
@@ -37,7 +38,11 @@ export function useTodayWatch(today: string): { reading: WellnessReading | undef
       stop();
     };
   }, []);
-  const reading = useMemo(() => todayWellness(today, metrics), [today, metrics]);
+  // Een korte nacht wordt een vraag en jouw oordeel telt mee (engine/shortNight.ts).
+  const { settings } = useAppData();
+  const ask = settings.askShortNight !== false;
+  const judgments = settings.nightJudgments;
+  const reading = useMemo(() => todayWellness(today, metrics, { ask, judgments }), [today, metrics, ask, judgments]);
   return { reading, linked, sleepOn };
 }
 

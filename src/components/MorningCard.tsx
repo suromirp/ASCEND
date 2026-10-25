@@ -11,6 +11,7 @@ import { todayISO } from '../utils/dates';
 import { Card, SecondaryButton, Stat } from './ui';
 import { Icon } from './icons';
 import { MorningCheckInSheet } from './MorningCheckInSheet';
+import { ShortNightAsk } from './ShortNightAsk';
 import { useMorningPrefill } from './useMorningPrefill';
 import { markMorningAnswered } from './useMorningCardVisible';
 
@@ -109,6 +110,7 @@ export function MorningCard() {
           ) : (
             line && <p className="mt-1.5 text-xs leading-snug tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>
           )}
+          {reading?.night && <div className="mt-3"><ShortNightAsk reading={reading} today={today} /></div>}
           {missingSleep && (
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {stats.length > 0 && <span className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{NO_SLEEP_TEXT}</span>}

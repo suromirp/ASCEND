@@ -7,7 +7,7 @@ import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
-import type { MorningCheckIn, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
+import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
@@ -598,6 +598,15 @@ export interface AppSettings {
   // The short morning check-in: legs, energy, sleep (models/checkIn.ts).
   // Optional and additive, travels with the settings in an export.
   morningCheckIns?: MorningCheckIn[];
+  // Your own verdict on a night the watch only partly measured, per date
+  // (engine/shortNight.ts, models/checkIn.ts#NightJudgment). The numbers from the
+  // watch are never changed; this is ASCEND's own note. Optional and additive, so
+  // the backup schema number does not move; travels with the settings and is read
+  // defensively on import (storage/migrations.ts#migrateNightJudgments).
+  nightJudgments?: NightJudgment[];
+  // "Vragen bij een korte nacht": ask instead of warning when the watch saw
+  // doubtfully little sleep. Absent = on. Optional and additive.
+  askShortNight?: boolean;
   // The one question per week in the week review (models/checkIn.ts).
   weeklyHealthChecks?: WeeklyHealthCheck[];
   // The question of the week and your one-line plan (engine/weeklyQuestion.ts).

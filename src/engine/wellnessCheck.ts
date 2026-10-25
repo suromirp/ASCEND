@@ -16,6 +16,7 @@
 import type { RecoveryMetric } from '../models/metrics';
 import type { EnergyFeeling, SleepFeeling } from '../models/checkIn';
 import { addDays } from '../utils/dates';
+import { ignoredNightDates, judgmentFor, nightInfo, type NightInfo, type NightOptions } from './shortNight';
 
 // Your own average: the 28 days before today, and at least 7 of them with a value.
 export const BASELINE_DAYS = 28;
@@ -41,6 +42,12 @@ export interface WellnessReading {
   lines: WellnessLine[];
   // The sleep answer the numbers point to; the check-in offers it filled in.
   suggestedSleep?: SleepFeeling;
+  // 'zelf' when the answer comes from your own estimate of a night the watch did not
+  // measure well (engine/shortNight.ts); otherwise it comes from the watch.
+  suggestedSleepFrom?: 'horloge' | 'zelf';
+  // A doubtfully short night: still to ask, confirmed or left out. Absent for a
+  // normal night, and when "Vragen bij een korte nacht" is off.
+  night?: NightInfo;
   // A soft suggestion for energy, only when resting heart rate AND HRV both
   // point the same clear way against your own average; otherwise left out.
   suggestedEnergy?: EnergyFeeling;
@@ -82,11 +89,12 @@ function dayRecord(date: string, metrics: RecoveryMetric[]): RecoveryMetric | un
 }
 
 // The values of one field in the four weeks before `today`.
-export function baselineValues(today: string, metrics: RecoveryMetric[], pick: (m: RecoveryMetric) => number | undefined): number[] {
+// `skip`: days you called badly measured (engine/shortNight.ts) do not count.
+export function baselineValues(today: string, metrics: RecoveryMetric[], pick: (m: RecoveryMetric) => number | undefined, skip?: ReadonlySet<string>): number[] {
   const from = addDays(today, -BASELINE_DAYS);
   const byDate = new Map<string, number>();
   for (const m of metrics) {
-    if (m.date < from || m.date >= today) continue;
+    if (m.date < from || m.date >= today || skip?.has(m.date)) continue;
     const v = pick(m);
     if (v !== undefined && !byDate.has(m.date)) byDate.set(m.date, v);
   }
@@ -128,15 +136,19 @@ function hrvLine(value: number, base: number[]): WellnessLine {
   return { ...line, tone: 'normal', note: `Binnen jouw gewone bereik (gemiddeld ${rounded}, laatste 4 weken).` };
 }
 
-function sleepLine(record: RecoveryMetric, base: number[]): WellnessLine | undefined {
+function sleepLine(record: RecoveryMetric, base: number[], night?: NightInfo): WellnessLine | undefined {
   const { sleepMinutes: minutes, sleepScore: score } = record;
   if (minutes === undefined && score === undefined) return undefined;
   const parts: string[] = [];
   let tone: WellnessLine['tone'] = 'normal';
   if (minutes !== undefined) {
-    if (minutes < 360) {
+    // A night that is still a question, or that you left out, is no reason to look.
+    if (minutes < 360 && (!night || night.state === 'klopt')) {
       tone = 'attention';
       parts.push('Kort: minder dan 6 uur.');
+    }
+    if (night?.state === 'ignored') {
+      parts.push(night.hours ? `Deze nacht telt niet mee. Jij schat ongeveer ${night.hours} uur.` : 'Deze nacht telt niet mee.');
     }
     if (base.length >= MIN_BASELINE_DAYS) parts.push(`Jouw gemiddelde is ${sleepLabel(mean(base))}.`);
   }
@@ -167,26 +179,54 @@ export function suggestSleepFeeling(record: Pick<RecoveryMetric, 'sleepMinutes' 
 // What the watch says this morning, or undefined when it has said nothing yet
 // (the Garmin has not synchronised, or wellness is not switched on in
 // intervals.icu): the check-in then works as it always did.
-export function todayWellness(today: string, metrics: RecoveryMetric[]): WellnessReading | undefined {
+// `options` (engine/shortNight.ts): with `ask` on, a doubtfully short night becomes a
+// question instead of a warning, and nights you called badly measured stay out of
+// your own averages. Without it everything works as it always did.
+export function todayWellness(today: string, metrics: RecoveryMetric[], options: NightOptions = {}): WellnessReading | undefined {
   const record = dayRecord(today, metrics);
   if (!record) return undefined;
+  const judgments = options.ask === true ? options.judgments ?? [] : [];
+  const skip = ignoredNightDates(judgments);
+  const sleepBase = baselineValues(today, metrics, (m) => m.sleepMinutes, skip);
+  const night = options.ask === true ? nightInfo(record.sleepMinutes, sleepBase, judgmentFor(today, judgments)) : undefined;
+  const ignored = night?.state === 'ignored';
   const lines: WellnessLine[] = [];
-  const sleep = sleepLine(record, baselineValues(today, metrics, (m) => m.sleepMinutes));
+  const sleep = sleepLine(record, sleepBase, night);
   if (sleep) lines.push(sleep);
   if (record.restingHeartRate !== undefined) lines.push(restingLine(record.restingHeartRate, baselineValues(today, metrics, (m) => m.restingHeartRate)));
-  if (record.hrv !== undefined) lines.push(hrvLine(record.hrv, baselineValues(today, metrics, (m) => m.hrv)));
+  if (record.hrv !== undefined) {
+    const hrv = hrvLine(record.hrv, baselineValues(today, metrics, (m) => m.hrv, skip));
+    // The HRV of a night that was not measured well says nothing either.
+    lines.push(ignored ? { ...hrv, tone: 'normal', short: `HRV ${Math.round(record.hrv)} ms` } : hrv);
+  }
   if (lines.length === 0) return undefined;
-  return { date: today, lines, suggestedSleep: suggestSleepFeeling(record), suggestedEnergy: suggestEnergyFeeling(record, today, metrics) };
+  let suggestedSleep: SleepFeeling | undefined;
+  let suggestedSleepFrom: WellnessReading['suggestedSleepFrom'];
+  if (night?.state === 'ask') suggestedSleep = undefined;
+  else if (ignored) {
+    if (night.hours) {
+      suggestedSleep = suggestSleepFeeling({ sleepMinutes: night.hours * 60 });
+      suggestedSleepFrom = 'zelf';
+    }
+  } else suggestedSleep = suggestSleepFeeling(record);
+  return {
+    date: today,
+    lines,
+    suggestedSleep,
+    ...(suggestedSleepFrom ? { suggestedSleepFrom } : {}),
+    ...(night ? { night } : {}),
+    suggestedEnergy: ignored ? undefined : suggestEnergyFeeling(record, today, metrics, skip),
+  };
 }
 
 // Energy from the body, only when it is clear: resting heart rate clearly up
 // and HRV clearly under your own range, or both clearly the good way. One
 // signal alone, or a week of days too few to compare with, says nothing: the
 // answer stays empty (and may stay empty).
-export function suggestEnergyFeeling(record: Pick<RecoveryMetric, 'restingHeartRate' | 'hrv'>, today: string, metrics: RecoveryMetric[]): EnergyFeeling | undefined {
+export function suggestEnergyFeeling(record: Pick<RecoveryMetric, 'restingHeartRate' | 'hrv'>, today: string, metrics: RecoveryMetric[], skip?: ReadonlySet<string>): EnergyFeeling | undefined {
   if (record.restingHeartRate === undefined || record.hrv === undefined) return undefined;
   const rhrBase = baselineValues(today, metrics, (m) => m.restingHeartRate);
-  const hrvBase = baselineValues(today, metrics, (m) => m.hrv);
+  const hrvBase = baselineValues(today, metrics, (m) => m.hrv, skip);
   if (rhrBase.length < MIN_BASELINE_DAYS || hrvBase.length < MIN_BASELINE_DAYS) return undefined;
   const rhrDiff = record.restingHeartRate - Math.round(mean(rhrBase));
   const hrvAvg = mean(hrvBase);

@@ -333,6 +333,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
       return { checked: o.morningCard, hidden: !o.morningCheckIn };
+    case 'korte-nacht':
+      return { checked: s.askShortNight !== false, hidden: !o.morningCheckIn };
     case 'ochtend-vanaf':
       return { value: choiceShort('ochtendVanaf', o.morningCardFrom), hidden: !o.morningCheckIn };
     case 'ochtendmelding': {

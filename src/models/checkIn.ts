@@ -20,6 +20,21 @@ export interface MorningCheckIn {
   spot?: { area: string; score: number };
 }
 
+// Your own verdict on a night the watch only partly measured (watch off the
+// wrist). Kept per date next to the check-ins (AppSettings.nightJudgments),
+// never in the watch numbers: intervals.icu and the watch stay as they are.
+// 'klopt': the short night counts as it is. 'niet_goed': the night is left out
+// of your own averages and of the proposal; `hours` is your own estimate (5 to
+// 9), `hoursSkipped` that you chose "Weet ik niet".
+export type NightVerdict = 'klopt' | 'niet_goed';
+
+export interface NightJudgment {
+  date: string; // ISO date of the morning, the same date as the sleep record
+  verdict: NightVerdict;
+  hours?: number;
+  hoursSkipped?: boolean;
+}
+
 // Pain on a spot after a session: where, how much at its worst (1 to 10),
 // and whether it got worse as you went on (then the pain-monitoring model
 // does not apply: stop, it may be a bone or a tear).

@@ -49,7 +49,7 @@ import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
-import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -220,6 +220,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
       s[key] = cleaned;
     }
   }
+  // Your verdicts on short nights: read record by record, a damaged one is
+  // dropped and counted, an older file has none and leaves the verdicts on the
+  // device alone (storage/migrations.ts#migrateNightJudgments).
+  if ('nightJudgments' in s) {
+    const nights = migrateNightJudgments(s.nightJudgments);
+    if (nights.list === undefined) delete s.nightJudgments;
+    else s.nightJudgments = nights.list;
+    skipped.n += nights.skipped;
+  }
   // The 1RM per exercise from MacroFactor: read series by series, a damaged
   // reading is dropped and counted, an older file has none and leaves the
   // readings on the device alone (storage/migrations.ts#migrateExternalOneRm).
@@ -240,7 +249,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.showNextTrek;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -624,6 +633,12 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     const byId = new Map((incoming.leavePeriods ?? []).map((p) => [p.id, p]));
     for (const p of current.leavePeriods ?? []) byId.set(p.id, p);
     merged.leavePeriods = [...byId.values()].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }
+  // Verdicts on short nights are history too: the union, the device's own wins.
+  if (incoming.nightJudgments || current.nightJudgments) {
+    const byDate = new Map((incoming.nightJudgments ?? []).map((j) => [j.date, j]));
+    for (const j of current.nightJudgments ?? []) byDate.set(j.date, j);
+    merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   }
   // Ticked-off journey tasks are history too: the union, the device wins.
   if (incoming.journey || current.journey) merged.journey = mergeJourneyState(current.journey, incoming.journey);

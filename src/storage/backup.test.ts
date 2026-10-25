@@ -253,6 +253,53 @@ describe('backup envelope round-trip', () => {
     });
   });
 
+  // Your verdicts on short nights (engine/shortNight.ts): additive in the settings,
+  // so no schema step, but they travel in a backup, an old backup without them still
+  // imports, and a restore never drops a verdict the device has.
+  describe('nightJudgments (korte nacht)', () => {
+    const verdicts = [{ date: '2026-10-20', verdict: 'klopt' as const }, { date: '2026-10-21', verdict: 'niet_goed' as const, hours: 7 }];
+
+    it('round-trips through export and a full restore onto a clean device', async () => {
+      await SettingsRepo.set({ nightJudgments: verdicts, askShortNight: false });
+      const envelope = await buildBackupEnvelope();
+      await wipeAllData();
+      expect((await SettingsRepo.get()).nightJudgments).toBeUndefined();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.nightJudgments).toEqual(verdicts);
+      expect(restored.askShortNight).toBe(false);
+    });
+
+    it('a back-up without the field imports as before and leaves the verdicts on the device alone', async () => {
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ nightJudgments: verdicts });
+      const backup = normalizeBackupToCurrentModel(envelope);
+      expect(backup.skippedInvalid).toBe(0);
+      expect(backup.settings.nightJudgments).toBeUndefined();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).nightJudgments).toEqual(verdicts);
+    });
+
+    it('a restore keeps verdicts the device has and takes the ones it lacks', async () => {
+      await SettingsRepo.set({ nightJudgments: [{ date: '2026-10-20', verdict: 'klopt' }] });
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ nightJudgments: [{ date: '2026-10-20', verdict: 'niet_goed', hoursSkipped: true }, { date: '2026-10-22', verdict: 'klopt' }] });
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).nightJudgments).toEqual([{ date: '2026-10-20', verdict: 'niet_goed', hoursSkipped: true }, { date: '2026-10-22', verdict: 'klopt' }]);
+    });
+
+    it('drops damaged verdicts and counts them', async () => {
+      const envelope = await buildBackupEnvelope();
+      const settings = { nightJudgments: [verdicts[1], { date: 'nooit', verdict: 'klopt' }, { date: '2026-10-23', verdict: 'misschien' }, { date: '2026-10-24', verdict: 'niet_goed', hours: 42 }], askShortNight: 'ja' };
+      const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings } });
+      expect(backup.settings.nightJudgments).toEqual([verdicts[1], { date: '2026-10-24', verdict: 'niet_goed' }]);
+      expect(backup.settings.askShortNight).toBeUndefined();
+      expect(backup.skippedInvalid).toBe(4);
+      const notAList = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { nightJudgments: 'oops' } } });
+      expect(notAList.settings.nightJudgments).toBeUndefined();
+    });
+  });
+
   it('a damaged file gets a readable message', () => {
     expect(() => parseBackupText('{"backupSchemaVersion": 4, "payl')).toThrow(/beschadigd of onvolledig/);
   });

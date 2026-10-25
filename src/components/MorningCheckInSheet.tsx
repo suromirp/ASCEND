@@ -9,6 +9,7 @@ import { TodaySheet } from './vandaag/TodaySheet';
 import { SettingsLinkRow } from './settings/SettingsLink';
 import { NotFitLink } from './IllnessCard';
 import { WellnessLines } from './WellnessLines';
+import { ShortNightAsk } from './ShortNightAsk';
 import { useMorningPrefill } from './useMorningPrefill';
 import { PrimaryButton } from './ui';
 
@@ -96,6 +97,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
           Gaat goed
         </button>}
         {wellness && <WellnessLines reading={wellness} />}
+        {wellness?.night && <ShortNightAsk reading={wellness} today={today} />}
         {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v })} />}
         {!painOnly && <ChoiceRow label={wellness ? 'Energie (mag leeg blijven)' : 'Energie'} from={energyFrom} options={ENERGY} value={energy} set={(v) => setDraft({ ...draft, energy: v })} />}
         {!painOnly && <ChoiceRow label="Slaap" from={sleepFrom} options={SLEEP} value={sleep} set={(v) => setDraft({ ...draft, sleep: v })} />}

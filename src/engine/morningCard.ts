@@ -31,7 +31,7 @@ export function suggestLegs(result: LegIndex | undefined): LegFeeling | undefine
   return level === 1 ? 'stijf' : 'spierpijn';
 }
 
-export type SuggestionSource = 'beenindex' | 'horloge';
+export type SuggestionSource = 'beenindex' | 'horloge' | 'zelf';
 
 export interface Suggested<T> {
   value: T;
@@ -48,7 +48,7 @@ export function morningPrefill(p: { legIndex: LegIndex | undefined; reading: Wel
   const out: MorningPrefill = {};
   const legs = suggestLegs(p.legIndex);
   if (legs) out.legs = { value: legs, from: 'beenindex' };
-  if (p.reading?.suggestedSleep) out.sleep = { value: p.reading.suggestedSleep, from: 'horloge' };
+  if (p.reading?.suggestedSleep) out.sleep = { value: p.reading.suggestedSleep, from: p.reading.suggestedSleepFrom ?? 'horloge' };
   if (p.reading?.suggestedEnergy) out.energy = { value: p.reading.suggestedEnergy, from: 'horloge' };
   return out;
 }
@@ -56,6 +56,7 @@ export function morningPrefill(p: { legIndex: LegIndex | undefined; reading: Wel
 export const SOURCE_TEXT: Record<SuggestionSource, string> = {
   beenindex: 'volgens je beenindex',
   horloge: 'uit je horloge',
+  zelf: 'zelf ingevuld',
 };
 
 // De keuzes van de ochtendvraag met hun woorden, voor de kaart, het blad en de samenvatting.

@@ -428,6 +428,21 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
   });
 });
 
+describe('rowSummary: vragen bij een korte nacht', () => {
+  const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
+
+  it('staat standaard aan en volgt de schakelaar', () => {
+    expect(rowSummary('korte-nacht', facts()).checked).toBe(true);
+    expect(rowSummary('korte-nacht', withSettings({ askShortNight: false })).checked).toBe(false);
+    expect(rowSummary('korte-nacht', withSettings({ askShortNight: true })).checked).toBe(true);
+  });
+
+  it('is gedimd zolang de ochtendcheck uit staat', () => {
+    expect(rowSummary('korte-nacht', facts()).hidden).toBeFalsy();
+    expect(rowSummary('korte-nacht', withSettings({ overviews: { morningCheckIn: false } })).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: tekst voor Strava', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 

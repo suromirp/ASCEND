@@ -18,6 +18,7 @@ const REASON: Record<string, string> = {
   backupmap: 'Deze keuze verschijnt alleen als je browser een vaste map kan onthouden. Deze nu niet.',
   'weekterugblik-dag': 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
   ochtendkaart: 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
+  'korte-nacht': 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
   'ochtend-vanaf': 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
   'ochtendmelding-tijd': 'Deze keuze verschijnt pas als je telefoon de ochtendmelding kan sturen.',
   'kleding-voorkeur': 'Deze keuze verschijnt pas als het kledingadvies aan staat.',
