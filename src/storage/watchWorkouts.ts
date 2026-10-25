@@ -22,13 +22,13 @@ import {
   createWorkoutEvents,
   deleteWorkoutEvents,
   fetchAscendEvents,
+  fetchRunHeartRateBasis,
   intervalsErrorMessage,
   updateWorkoutEvent,
   type FetchOptions,
   type IntervalsConnection,
 } from '../integrations/intervalsIcu';
 import { planWatchSync, selectWatchWorkouts, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
-import { fetchRunHeartRateBasis } from '../integrations/intervalsIcu';
 import { hasAscendHeartRate, resolveWatchHrMode, watchHrPlanFromSettings, type IntervalsHrBasis } from '../engine/watchHeartRate';
 import { racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
@@ -199,7 +199,8 @@ export async function syncWatchWorkouts(options: WorkoutOptions & { force?: bool
   } catch {
     const message = 'ASCEND kan je planning niet lezen om trainingen te sturen.';
     try {
-      await putState({ ...state, items, lastError: message });
+      // Read again: a threshold just read from intervals.icu must not vanish.
+      await putState({ ...(await getWatchWorkoutState()), items, lastError: message });
     } catch {
       // Storage trouble on top of it: the message still reaches the caller.
     }

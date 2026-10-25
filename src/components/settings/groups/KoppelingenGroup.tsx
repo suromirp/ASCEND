@@ -92,7 +92,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
             <SummaryRow id="naar-horloge" title="Trainingen naar je horloge" facts={facts} onChange={(on) => void changeSend(on)} />
             <SummaryRow id="horloge-voorvoegsel" title="Voorvoegsel voor de naam" facts={facts} onClick={() => setSheet('horloge-voorvoegsel')} />
             <SummaryRow id="horloge-hartslag" title="Hartslag op je horloge" facts={facts} info="hartslagHorloge" onClick={() => setSheet('horloge-hartslag')} />
-            <SummaryRow id="horloge-rustige-loop" title="Rustige loop: alleen een bovengrens" facts={facts} onChange={(on) => void changeCalm(on)} />
+            <SummaryRow id="horloge-rustige-loop" title="Rustige loop: ruime grens" facts={facts} onChange={(on) => void changeCalm(on)} />
             <SummaryRow id="horloge-gedaan-weghalen" title="Gedane trainingen weghalen" facts={facts} onChange={(on) => void updateSettings({ watchRemoveDone: on })} />
             <SummaryRow id="horloge-status" title="Status van het versturen" facts={facts} onChange={(on) => void updateSettings({ showWatchStatus: on })} />
             <SummaryRow id="horloge-status-week" title="Markering op Week" facts={facts} onChange={(on) => void updateSettings({ showWatchStatusOnWeek: on })} />

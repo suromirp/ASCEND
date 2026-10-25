@@ -18,7 +18,7 @@ const tpl = (id: string) => templates.find((t) => t.id === id)!;
 const day = addDays(program.startDate, 8);
 const session = (templateId: string): PlannedSession => ({ id: `ps_${templateId}`, templateId, scheduledDate: day, weekStartDate: program.startDate, status: 'planned', order: 0 });
 
-// Made-up numbers: ASCEND threshold 179 (zone 2 = 143 to 159), intervals.icu threshold 170.
+// Made-up numbers: ASCEND threshold 179 (zone 2 = 145 to 159), intervals.icu threshold 170.
 const ASCEND: HeartRateSettings = { lthr: 179, maxHr: 195 };
 const ICU: IntervalsHrBasis = { lthr: 170 };
 
@@ -47,10 +47,16 @@ describe('which plan the watch gets', () => {
 });
 
 describe('the beats of a step', () => {
-  it('calm: start of zone 1 to the end of zone 2', () => {
+  it('calm: start of zone 1 to the end of its own zone', () => {
     expect(stepBpm(2, ASCEND, true)).toEqual([zoneBpm(1, ASCEND)![0], zoneBpm(2, ASCEND)![1]]);
     expect(stepBpm(2, ASCEND, true)).toEqual([118, 159]);
-    expect(stepBpm(1, ASCEND, true)).toEqual([118, 159]);
+    // Recovery (intensity 1) stays in zone 1: 117 to 144 at threshold 178.
+    expect(stepBpm(1, { lthr: 178 }, true)).toEqual([117, 144]);
+  });
+
+  it('intensity 4 runs to the maximum of ASCEND, else to 110 percent of the threshold', () => {
+    expect(stepBpm(4, { lthr: 178, maxHr: 206 }, false)).toEqual([171, 206]);
+    expect(stepBpm(4, { lthr: 178 }, false)).toEqual([171, 196]);
   });
 
   it('not calm, or a harder step: the zone itself', () => {
@@ -91,8 +97,13 @@ describe('in the workout text', () => {
   const bpm = planFor(undefined);
 
   it('an easy run gets only the calm range in percent', () => {
-    // 118 to 159 bpm of ASCEND on a threshold of 170: 69 to 94 percent.
+    // 118 to 159 bpm of ASCEND (zone 1 to the end of zone 2, threshold 179) on a threshold of 170: 69 to 94 percent.
     expect(text('tpl_easy_run', bpm)).toBe('- Hardlopen 35m 69-94% LTHR');
+  });
+
+  it('a recovery run stays in zone 1', () => {
+    // 118 to 145 bpm on a threshold of 170: 69 to 85 percent.
+    expect(text('tpl_recovery_run', bpm)).toBe('- Heel rustig 25m 69-85% LTHR');
   });
 
   it('is the same as before without a plan or with intervals.icu zones', () => {

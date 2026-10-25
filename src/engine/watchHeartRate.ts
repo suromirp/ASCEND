@@ -84,16 +84,23 @@ export function watchHrPlanFromSettings(
   return resolveWatchHr({ mode: s.watchHeartRate, calmRun: s.watchCalmRun }, s.heartRate, basis);
 }
 
-// The beats ASCEND wants for a step of this intensity. A calm step (intensity
-// 1 or 2 with "alleen een bovengrens") runs from the start of zone 1 to the end
-// of zone 2, so the watch only beeps when you go too high.
+// The beats ASCEND wants for a step of this intensity.
+// - A calm step (intensity 1 or 2, with "Rustige loop: ruime grens") runs from the
+//   start of zone 1 to the end of its own zone: zone 1 for 1, zones 1 to 2 for 2.
+//   Running you hardly ever drop below zone 1, so the watch only beeps when you
+//   go too high.
+// - Intensity 4 runs from the start of zone 4 to the maximum heart rate of ASCEND
+//   when known, else to 110 percent of the threshold.
 export function stepBpm(intensity: Intensity, heartRate: HeartRateSettings, calm: boolean): [number, number] | undefined {
   if (calm && intensity <= 2) {
     const low = zoneBpm(1, heartRate);
-    const high = zoneBpm(2, heartRate);
+    const high = zoneBpm(intensity, heartRate);
     return low && high ? [low[0], high[1]] : undefined;
   }
-  return zoneBpm(intensity, heartRate);
+  const zone = zoneBpm(intensity, heartRate);
+  if (!zone || intensity !== 4) return zone;
+  const top = ok(heartRate.maxHr, 120, 230) ? heartRate.maxHr : ok(heartRate.lthr, 100, 220) ? Math.round(heartRate.lthr * 1.1) : zone[1];
+  return top > zone[0] ? [zone[0], top] : zone;
 }
 
 // A whole percent of `base` that lands within MAX_BPM_ERROR of `bpm`.

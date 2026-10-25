@@ -313,7 +313,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.watchCalmRun;
     skipped.n++;
   }
-  if ('trekLegRest' in s &&s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
+  if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;
   }

@@ -247,7 +247,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'ASCEND', text: 'je horloge piept op dezelfde slagen als waarmee ASCEND de training achteraf beoordeelt.' },
       { head: 'intervals.icu', text: 'ASCEND stuurt alleen de zonenaam en intervals.icu rekent die om met zijn eigen drempel. Dat kan anders uitkomen.' },
-      { head: 'Rustige loop', text: 'bij een rustige of lange duurloop komt er alleen een bovengrens: het einde van zone 2.' },
+      { head: 'Rustige loop', text: 'bij een rustige of lange duurloop loopt de grens van het begin van zone 1 tot het einde van zone 2. Hardlopend kom je praktisch nooit onder zone 1, dus het horloge piept alleen als je te hoog gaat.' },
       { head: 'Zonder', text: 'drempel of maximale hartslag, of als intervals.icu de jouwe niet laat lezen, blijft het bij de zonenaam.' },
     ],
   },

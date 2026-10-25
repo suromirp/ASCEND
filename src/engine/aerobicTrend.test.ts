@@ -8,7 +8,7 @@ const run = (id: string, templateId: string, date: string, km: number, minutes: 
   id, templateId, type: templates.find((t) => t.id === templateId)!.type, completedDate: date, completedAt: `${date}T17:00:00Z`, variant: 'full', durationMinutes: minutes, source: 'manual', sport: 'running',
   cardioData: { durationMinutes: minutes, distanceKm: km, avgHeartRate: bpm, elevationGainM: climb, source: 'manual' },
 });
-const hr = { lthr: 179 }; // zone 2: 143-159, reference 151
+const hr = { lthr: 179 }; // zone 2: 145-159, reference 152
 
 describe('aerobicTrend', () => {
   it('shows pace at zone 2 per week and how much faster it got', () => {

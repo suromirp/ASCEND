@@ -11,6 +11,7 @@ import { shortDate } from '../../../engine/settingsSummary';
 import { resolveFigureSetting } from '../../../engine/figureSettings';
 import { formatNumberNL } from '../../../utils/number';
 import { todayISO } from '../../../utils/dates';
+import { syncWatchWorkouts } from '../../../storage/watchWorkouts';
 import { NumberField } from '../../NumberField';
 import { AutoTag, InfoButton } from '../../ui';
 import { SettingsFieldRow, SettingsList, SettingsRow } from '../SettingsList';
@@ -143,7 +144,8 @@ export function HeartRateSheet({ onClose }: { onClose: () => void }) {
     const why = heartRateProblem(field, value, hr);
     setProblem(why ?? null);
     if (why) return;
-    void updateSettings({ heartRate: { ...hr, [field]: value } });
+    // De slagen op je horloge volgen de drempel: staat het sturen aan, dan draait een ronde meteen.
+    void updateSettings({ heartRate: { ...hr, [field]: value } }).then(() => syncWatchWorkouts({ force: true }));
   };
   const zones = ZONES.map((z) => ({ ...z, bpm: zoneBpm(z.level, hr) })).filter((z) => z.bpm);
   return (

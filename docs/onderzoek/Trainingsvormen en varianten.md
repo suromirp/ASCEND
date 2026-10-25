@@ -142,3 +142,7 @@ Een tweede inzicht is dat de app zijn eigen zones serieuzer moet nemen. Omdat zo
 21. **Houd rustige en lange duurlopen in de onderste helft van zone 2** (ongeveer 80 tot 85% van je LTHR) met de praattest als baas, en houd de zondag na de heuvels in het 10 km-blok strikt rustig.
 22. **Plan elke 4 tot 6 weken een tocht in echt reliëf** (Ardennen, Eifel, Sauerland) vanaf april, en voeg een eigen klim-benchmark toe (30 minuten op 15% met 12 kg onder ongeveer 94% van je LTHR, verticale meters per uur), uitdrukkelijk gelabeld als eigen meting, niet als voorspelling.
 23. **Bereken eentonigheid en strain** uit sessie-RPE maal minuten en geef een signaal als de strain meer dan ongeveer 25 tot 30% boven het 4-wekengemiddelde uitkomt (bewijs: matig voor het concept, expertopinie voor de drempel).
+
+## Aanvulling 25 oktober 2026: zonegrenzen
+
+ASCEND gebruikt sinds 25 oktober 2026 de Garmin-indeling "Standaard" op basis van %LDHS, zoals het horloge van de eigenaar die toont: zone 1 66 tot 81, zone 2 81 tot 89, zone 3 89 tot 96 en zone 4 96 tot 101 procent van de drempel. De percentages in de tekst hierboven blijven staan zoals ze toen waren. Zie `docs/beslissingen/2026-10-25-hartslag-op-het-horloge.md`.
