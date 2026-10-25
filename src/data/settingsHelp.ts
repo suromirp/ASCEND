@@ -405,6 +405,24 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Eerder', text: 'helpt een eigen schatting, onder Geavanceerd.' },
     ],
   },
+  bergschoenen: {
+    title: 'Bergschoenen inlopen',
+    lead: 'Nieuwe schoenen horen niet op de eerste dag van de tocht te beginnen. ASCEND telt de kilometers vanaf de dag dat je ze draagt.',
+    points: [
+      { head: 'Wat telt', text: 'wandelingen en tochten in je logboek. Hardlopen en kracht tellen niet mee.' },
+      { head: 'Het doel', text: 'standaard 100 km en minstens 6 weken voor vertrek, met tent liever drie maanden.' },
+      { head: 'Hardloopschoenen', text: 'houdt Garmin bij. ASCEND telt die kilometers niet.' },
+      { head: 'Waar je het vastlegt', text: 'bij de taak "Kies je schoenen" in de Reisplanner.' },
+    ],
+  },
+  bergschoenenHerinnering: {
+    title: 'Herinnering bij lange tochten',
+    lead: 'Op een lange wandeling of bergtocht met rugzak staat een korte regel zolang je schoenen nog niet ingelopen zijn.',
+    points: [
+      { head: 'Alleen een regel', text: 'er verandert niets aan je planning.' },
+      { head: 'Pas zichtbaar', text: 'nadat je in de Reisplanner hebt vastgelegd sinds wanneer je ze draagt.' },
+    ],
+  },
   rustNaTocht: {
     title: 'Rust na een bergtocht',
     lead: 'Hoe snel een zware beendag mag volgen op een bergtocht.',

@@ -295,6 +295,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.showNextTrek;
     skipped.n++;
   }
+  if ('bootBreakInKm' in s && !(typeof s.bootBreakInKm === 'number' && Number.isFinite(s.bootBreakInKm) && s.bootBreakInKm > 0 && s.bootBreakInKm <= 1000)) {
+    delete s.bootBreakInKm;
+    skipped.n++;
+  }
+  if ('bootBreakInReminder' in s && typeof s.bootBreakInReminder !== 'boolean') {
+    delete s.bootBreakInReminder;
+    skipped.n++;
+  }
   for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];

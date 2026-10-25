@@ -563,6 +563,11 @@ export interface AppSettings {
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
+  // Bergschoenen inlopen (engine/bootBreakIn.ts): het doel in kilometers (absent
+  // = 100) en of een lange tocht ernaar herinnert (absent = aan). Optional and
+  // additive; the date and name live in `journey.boots`.
+  bootBreakInKm?: number;
+  bootBreakInReminder?: boolean;
   // The line about the watch on a training ("Verstuurd naar je horloge om
   // 19.04", or the offer to link) and the small watch mark in the Week list
   // (only for sent or failed). Absent = on. Optional and additive.

@@ -4,6 +4,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { ImpactSheet } from '../../ImpactSheet';
 import { afterMainGoalChange } from '../../../engine/programLayout';
+import { bootGoalKm } from '../../../engine/bootBreakIn';
 import { todayISO } from '../../../utils/dates';
 import { SettingsSection } from '../SettingsList';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -55,6 +56,8 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Onderweg">
         <SummaryRow id="reisplanner" title="Reisplanner" facts={facts} onClick={() => navigate('/reis')} />
         <SummaryRow id="paklijst" title="Paklijst" facts={facts} onClick={() => navigate('/reis/paklijst')} />
+        <SummaryRow id="bergschoenen" title="Bergschoenen inlopen" facts={facts} info="bergschoenen" onClick={() => setSheet('bergschoenen')} />
+        <SummaryRow id="bergschoenen-herinnering" title="Herinnering bij lange tochten" facts={facts} info="bergschoenenHerinnering" onChange={(on) => void updateSettings({ bootBreakInReminder: on })} />
       </SettingsSection>
 
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
@@ -95,6 +98,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           onClose={() => setAfterGoalPlan(null)}
           busy={afterGoalBusy}
         />
+      )}
+      {sheet === 'bergschoenen' && (
+        <ChoiceFromDef def={CHOICES.bergschoenen} value={bootGoalKm(settings.bootBreakInKm) as 50 | 75 | 100 | 150} onPick={(v) => void updateSettings({ bootBreakInKm: v })} onClose={close} />
       )}
       {sheet === 'rust-na-tocht' && (
         <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={close} />

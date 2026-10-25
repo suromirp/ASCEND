@@ -94,6 +94,12 @@ describe('rowSummary: doel en tochten', () => {
     expect(rowSummary('vrije-dagen', facts()).value).toBe('1 gepland');
     expect(rowSummary('reisplanner', facts()).value).toBe('5 open');
     expect(rowSummary('paklijst', facts()).value).toBe('8,4 kg');
+    // Bergschoenen inlopen: het doel in de rij, de stand eronder zodra er een datum is.
+    expect(rowSummary('bergschoenen', facts()).value).toBe('100 km');
+    expect(rowSummary('bergschoenen', facts()).sub).toBeUndefined();
+    expect(rowSummary('bergschoenen', facts({ settings: { ...facts().settings, bootBreakInKm: 150 }, bootKm: 42.4 }))).toMatchObject({ value: '150 km', sub: '42 van 150 km ingelopen' });
+    expect(rowSummary('bergschoenen-herinnering', facts()).checked).toBe(true);
+    expect(rowSummary('bergschoenen-herinnering', facts({ settings: { ...facts().settings, bootBreakInReminder: false } })).checked).toBe(false);
   });
 
   it('de groep Doel en tochten noemt het aantal tochten, niet de week', () => {

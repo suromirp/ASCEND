@@ -5,6 +5,7 @@ import { hasBodyFat } from '../../engine/bodyFat';
 import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { predictDuration } from '../../engine/durationLearning';
 import { journeyProgress } from '../../engine/journey';
+import { breakInTotals } from '../../engine/bootBreakIn';
 import { baseWeightGrams, resolvePackItems } from '../../engine/packList';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { programAnchorDate } from '../../engine/programLayout';
@@ -128,6 +129,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         return { name: t.name, minutes: p.minutes, source: p.source, basedOn: p.basedOn };
       }),
       strengthCheck,
+      bootKm: settings.journey?.boots ? breakInTotals(sessionLogs, settings.journey.boots.since).km : undefined,
       journeyOpen: progress ? progress.total - progress.done : undefined,
       packKg: Math.round(baseWeightGrams(resolvePackItems(settings.packList)) / 100) / 10,
       folderSupported: webBackupFileAdapter.supportsPreferredDirectory(),
