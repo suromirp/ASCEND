@@ -66,6 +66,7 @@ import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type 
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
+import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine/influenceProposal';
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { useFollowLocation } from './useFollowLocation';
 import { syncWatchActivities } from '../storage/externalActivities';
@@ -524,6 +525,9 @@ interface AppData {
   // Fase 3: advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
   advice: Advice[];
+  // "Wat speelde er": the proposal to move a test after what you noted (engine/influenceProposal.ts).
+  // Not part of `advice`: Vandaag shows it as its own quiet card. Answered through respondToAdvice.
+  influenceMove: InfluenceMove | undefined;
   // Advice you already answered (Akkoord or Liever niet): not shown again.
   answeredAdviceIds: Set<string>;
   // The rest of the planning run over a proposed week, for its preview. With
@@ -2330,6 +2334,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
+  // The proposal to move a test after what you noted about the evening before. Its own memo
+  // so the coach advice above stays as it was; the answer is kept like any advice response.
+  const influenceMoveNow = useMemo(() => {
+    const today = todayISO();
+    const cause = influenceMoveCause({ today, plannedSessions, logs: sessionLogs, entries: settings.influences ?? [], enabled: settings.influenceTestMove !== false });
+    return influenceMove({
+      logs: sessionLogs,
+      plannedSessions,
+      templates,
+      injuries: injuryNotes,
+      program,
+      dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
+      sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+      enabledSports: settings.enabledSports,
+      respondedIds: new Set(Object.keys(adviceResponses)),
+      asOf: today,
+      illnessEpisodes: settings.illnessEpisodes,
+    }, cause);
+  }, [plannedSessions, sessionLogs, templates, injuryNotes, program, goalEngineConfig, settings.influences, settings.influenceTestMove, settings.enabledSports, settings.illnessEpisodes, adviceResponses]);
+
   const value: AppData = {
     loading,
     bootError,
@@ -2454,6 +2478,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     dismissForecastSummary: () => setForecastSummary(null),
     planChangeLog,
     advice,
+    influenceMove: influenceMoveNow,
     answeredAdviceIds,
     planPreviewPass,
     leavePeriods,
