@@ -620,6 +620,10 @@ export interface AppSettings {
   // it stays stored but is not used. Optional and additive, so older settings
   // and backups need no schema step; travels with the settings in an export.
   weightFromMacroFactor?: boolean;
+  // "Vetpercentage tonen" (engine/bodyFat.ts): absent or true = the fat percentage and the
+  // fat-free mass from the weigh-ins are shown under Lichaamsgewicht, false = they stay stored
+  // but are not shown. Optional and additive, so older settings and backups need no step.
+  showBodyFat?: boolean;
   // Where you live, for distances to training spots (engine/trainingSpots.ts).
   // Only ever stored on this device.
   homeLocation?: { name: string; lat: number; lon: number };

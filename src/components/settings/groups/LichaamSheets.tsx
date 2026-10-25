@@ -4,6 +4,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { INTENSITY, type Intensity } from '../../../data/workoutStructure';
 import { addWeightEntry, freshMacroFactorWeight, latestWeight, weightsInUse, WEIGHT_REMINDER_DAYS } from '../../../engine/bodyWeight';
+import { bodyFatLines, bodyFatTrend } from '../../../engine/bodyFat';
 import { zoneBpm } from '../../../engine/heartRateZones';
 import { heartRateProblem, type HeartRateField } from '../../../engine/inputLimits';
 import { shortDate } from '../../../engine/settingsSummary';
@@ -24,6 +25,7 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
   const [reminder, setReminder] = useState(false);
   const [self, setSelf] = useState(false);
   const [help, setHelp] = useState(false);
+  const [fatHelp, setFatHelp] = useState(false);
   const [kgDraft, setKgDraft] = useState<number | undefined>();
   const today = todayISO();
   const entries = weightsInUse(settings.weightEntries, settings.weightFromMacroFactor);
@@ -31,6 +33,9 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
   const fresh = freshMacroFactorWeight(settings.weightEntries, settings.weightFromMacroFactor, today);
   const fromMf = last?.source === 'macrofactor';
   const days = settings.weightReminderDays ?? WEIGHT_REMINDER_DAYS;
+  // Het vetpercentage uit de weegschaal, als trend en alleen als je het wilt zien.
+  const fat = settings.showBodyFat === false ? undefined : bodyFatTrend(entries);
+  const fatText = fat ? bodyFatLines(fat) : undefined;
 
   async function save() {
     if (!kgDraft) return;
@@ -60,6 +65,17 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
                 <div className="st-hero"><span className="n dim">--,-</span><span className="u">kg</span></div>
                 <div className="st-src">Nog geen gewicht ingevuld.</div>
               </>
+            )}
+
+            {fat && fatText && (
+              <div className="st-fat">
+                <div className="st-fat-line">
+                  <span className="st-num">{fatText.fat}</span>
+                  <InfoButton compact label="Uitleg: vetpercentage" onClick={() => setFatHelp(true)} />
+                </div>
+                {fatText.lean && <div className="st-fat-line dim"><span className="st-num">{fatText.lean}</span></div>}
+                <p className="st-fat-note st-num">Gemiddelde van je laatste {fat.readings === 1 ? 'meting' : `${fat.readings} metingen`}, tot {shortDate(fat.asOf)}</p>
+              </div>
             )}
 
             <SettingsList className="mt-4">
@@ -104,6 +120,7 @@ export function WeightSheet({ onClose }: { onClose: () => void }) {
         />
       )}
       {help && <InfoSheet helpKey="gewicht" onClose={() => setHelp(false)} />}
+      {fatHelp && <InfoSheet helpKey="vetpercentage" onClose={() => setFatHelp(false)} />}
     </>
   );
 }

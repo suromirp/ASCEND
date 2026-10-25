@@ -22,6 +22,7 @@
 
 import type { WeightEntry } from '../models/metrics';
 import { addDays } from '../utils/dates';
+import { isPlausibleFatPct } from './bodyFat';
 import { headingKey, headingUnit, LB_TO_KG, MacroFactorFormatError, parseCsv, parseDateCell, parseNumber } from './macrofactorImport';
 import { cellText, type Cell } from './sheetTable';
 
@@ -29,6 +30,8 @@ export interface MacroFactorWeightDay {
   date: string;
   scaleKg?: number;
   trendKg?: number;
+  // Het vetpercentage van die dag, alleen als het tussen 3 en 60 ligt.
+  fatPct?: number;
 }
 
 export interface MacroFactorWeightResult {
@@ -38,11 +41,13 @@ export interface MacroFactorWeightResult {
   skippedRows: number;
   // Does the file carry a trend weight at all?
   hasTrend: boolean;
+  // Staat er een kolom met vetpercentage met minstens één geldige waarde?
+  hasFat: boolean;
 }
 
 // --- columns ----------------------------------------------------------------
 
-export type WeightColumn = 'date' | 'trend' | 'scale';
+export type WeightColumn = 'date' | 'trend' | 'scale' | 'fat';
 
 // A sheet that holds just one kind of weight may call its column plain
 // "Weight": which kind it is then comes from the sheet name ("Weight Trend").
@@ -62,12 +67,15 @@ const ALIASES: Record<WeightColumn, string[]> = {
   // The trend first: "Weight Trend" must not be read as the scale weight.
   trend: ['trendweight', 'weighttrend', 'trendgewicht', 'gewichtstrend', 'trend', 'smoothedweight'],
   scale: ['scaleweight', 'weightscale', 'scalewt', 'scale', 'weegschaalgewicht', 'gewichtweegschaal', 'weegschaal', 'weight', 'gewicht', 'bodyweight', 'lichaamsgewicht'],
+  // "Fat Percent" in de export van MacroFactor, de rest zijn varianten.
+  fat: ['fatpercent', 'fatpercentage', 'fatpct', 'bodyfat', 'bodyfatpercent', 'bodyfatpercentage', 'bodyfatpct', 'vetpercentage'],
 };
 
 const COLUMN_LABEL: Record<WeightColumn, string> = {
   date: 'datum (Date)',
   trend: 'trendgewicht (Trend Weight)',
   scale: 'weegschaalgewicht (Scale Weight)',
+  fat: 'vetpercentage (Fat Percent)',
 };
 
 // Any of these means the file is a workout log (or meant to be one), even if a
@@ -82,7 +90,7 @@ const WORKOUT_KEYS = [
 export function mapWeightColumns(header: string[], hint?: WeightHint): Partial<Record<WeightColumn, number>> {
   const keys = header.map(headingKey);
   const index: Partial<Record<WeightColumn, number>> = {};
-  for (const id of ['date', 'trend', 'scale'] as WeightColumn[]) {
+  for (const id of ['date', 'trend', 'scale', 'fat'] as WeightColumn[]) {
     const aliases = id === 'trend' && hint === 'trend' ? [...ALIASES.trend, ...GENERIC_WEIGHT] : ALIASES[id];
     for (const alias of aliases) {
       const at = keys.findIndex((k, i) => k === alias && !Object.values(index).includes(i));
@@ -138,6 +146,7 @@ export function readMacroFactorWeightRows(rows: Cell[][], sheetName?: string): M
   }
   const factorOf = (column: number | undefined) => (column !== undefined && /\b(lb|lbs|pound|pounds)\b/.test(headingUnit(header[column] ?? '')) ? LB_TO_KG : 1);
   const trendFactor = factorOf(index.trend);
+  // Een ontbrekende kolom, een lege cel of een onzinnig getal geeft gewoon geen vetpercentage.
   const scaleFactor = factorOf(index.scale);
 
   const byDate = new Map<string, MacroFactorWeightDay>();
@@ -146,6 +155,8 @@ export function readMacroFactorWeightRows(rows: Cell[][], sheetName?: string): M
     const when = parseDateCell(cells[index.date]);
     const trendKg = index.trend === undefined ? undefined : plausibleKg(parseNumber(cells[index.trend]), trendFactor);
     const scaleKg = index.scale === undefined ? undefined : plausibleKg(parseNumber(cells[index.scale]), scaleFactor);
+    const fatRaw = index.fat === undefined ? undefined : parseNumber(cells[index.fat]);
+    const fatPct = isPlausibleFatPct(fatRaw) ? Math.round(fatRaw * 100) / 100 : undefined;
     if (!when || (trendKg === undefined && scaleKg === undefined)) {
       skippedRows++;
       continue;
@@ -154,13 +165,14 @@ export function readMacroFactorWeightRows(rows: Cell[][], sheetName?: string): M
     const day: MacroFactorWeightDay = { ...(byDate.get(when.date) ?? { date: when.date }) };
     if (trendKg !== undefined) day.trendKg = trendKg;
     if (scaleKg !== undefined) day.scaleKg = scaleKg;
+    if (fatPct !== undefined) day.fatPct = fatPct;
     byDate.set(when.date, day);
   }
   if (byDate.size === 0) {
     throw new MacroFactorFormatError('In dit bestand staat geen gewicht met een datum. Kies in MacroFactor een periode waarin je je hebt gewogen.');
   }
   const days = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
-  return { days, skippedRows, hasTrend: days.some((d) => d.trendKg !== undefined) };
+  return { days, skippedRows, hasTrend: days.some((d) => d.trendKg !== undefined), hasFat: days.some((d) => d.fatPct !== undefined) };
 }
 
 // --- from file to entries ---------------------------------------------------------
@@ -177,9 +189,14 @@ export function weightEntryFromDay(day: MacroFactorWeightDay): WeightEntry | und
   if (day.trendKg !== undefined) {
     const entry: WeightEntry = { date: day.date, kg: day.trendKg, source: 'macrofactor', basis: 'trend' };
     if (day.scaleKg !== undefined) entry.scaleKg = day.scaleKg;
+    if (day.fatPct !== undefined) entry.fatPct = day.fatPct;
     return entry;
   }
-  if (day.scaleKg !== undefined) return { date: day.date, kg: day.scaleKg, source: 'macrofactor', basis: 'scale' };
+  if (day.scaleKg !== undefined) {
+    const entry: WeightEntry = { date: day.date, kg: day.scaleKg, source: 'macrofactor', basis: 'scale' };
+    if (day.fatPct !== undefined) entry.fatPct = day.fatPct;
+    return entry;
+  }
   return undefined;
 }
 
@@ -212,14 +229,20 @@ export function planWeightImport(existing: WeightEntry[] | undefined, days: Macr
     const incoming = weightEntryFromDay(day);
     if (!incoming) continue;
     const current = byDate.get(day.date);
+    // Een bestand zonder vetpercentage laat een bewaard vetpercentage van die dag staan.
+    if (incoming.fatPct === undefined && current?.fatPct !== undefined) incoming.fatPct = current.fatPct;
+    // Een meting van jezelf zonder vetpercentage krijgt het van het bestand, en verder niets.
+    const withFat = current && current.fatPct === undefined && incoming.fatPct !== undefined ? { ...current, fatPct: incoming.fatPct } : undefined;
     if (!current) {
       plan.add.push(incoming);
     } else if (current.source === 'macrofactor') {
-      if (Math.abs(current.kg - incoming.kg) < 0.005 && current.basis === incoming.basis && current.scaleKg === incoming.scaleKg) plan.same++;
+      if (Math.abs(current.kg - incoming.kg) < 0.005 && current.basis === incoming.basis && current.scaleKg === incoming.scaleKg && current.fatPct === incoming.fatPct) plan.same++;
       else plan.add.push(incoming);
     } else if (Math.abs(current.kg - incoming.kg) < SAME_KG) {
-      plan.same++;
+      if (withFat) plan.add.push(withFat);
+      else plan.same++;
     } else {
+      if (withFat) plan.add.push(withFat);
       plan.conflicts.push({ own: current, incoming });
     }
   }

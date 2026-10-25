@@ -198,6 +198,14 @@ describe('backup envelope round-trip', () => {
     expect((await SettingsRepo.get()).weightEntries?.map((e) => e.date)).toEqual(['2026-09-01', '2026-10-01']);
   });
 
+  it('restoring settings adds a fat percentage only the backup has, and keeps the device weight', async () => {
+    await SettingsRepo.set({ weightEntries: [{ date: '2026-09-01', kg: 80, source: 'manual', fatPct: 19.5 }] });
+    const envelope = await buildBackupEnvelope();
+    await SettingsRepo.set({ weightEntries: [{ date: '2026-09-01', kg: 81, source: 'manual' }] });
+    await importEnvelope(envelope);
+    expect((await SettingsRepo.get()).weightEntries).toEqual([{ date: '2026-09-01', kg: 81, source: 'manual', fatPct: 19.5 }]);
+  });
+
   it('drops malformed records instead of storing them, and says how many', async () => {
     const envelope = await buildBackupEnvelope();
     const broken = { ...envelope, payload: { ...envelope.payload, sessionLogs: [{ id: 'junk' }, log('ok', '2026-09-01')], settings: { weightEntries: 'oops' } } };

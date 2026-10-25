@@ -4,10 +4,11 @@
 // migration will slot into, so an export made today keeps opening in
 // ASCEND years from now.
 
+import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
-import type { ExternalOneRm, OneRmReading } from '../models/metrics';
+import type { ExternalOneRm, OneRmReading, WeightEntry } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 
@@ -526,4 +527,22 @@ export function migrateExternalOneRm(raw: unknown): { series: ExternalOneRm[] | 
     series.push({ exerciseName: item.exerciseName.trim(), source: item.source as MetricSource, points });
   }
   return { series: series.length > 0 ? series : undefined, skipped };
+}
+
+// The weigh-ins in the settings (AppSettings.weightEntries). Since 25 Oct 2026 an entry
+// may carry `fatPct`, the fat percentage of that weighing from a MacroFactor export. A
+// file from before has none and reads as it did. A `fatPct` that is no number between
+// 3 and 60 is dropped (and counted) while the weight of that day stays: a weigh-in is
+// worth more than the one number on it. Nothing is repaired or guessed. See
+// docs/beslissingen/2026-10-25-vetpercentage-uit-macrofactor.md.
+export function migrateWeightEntries(entries: WeightEntry[]): { entries: WeightEntry[]; skipped: number } {
+  let skipped = 0;
+  const cleaned = entries.map((e) => {
+    if (!('fatPct' in e) || isPlausibleFatPct(e.fatPct)) return e;
+    skipped++;
+    const copy: WeightEntry = { ...e };
+    delete copy.fatPct;
+    return copy;
+  });
+  return { entries: cleaned, skipped };
 }

@@ -190,6 +190,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Zelf invullen', text: 'een globaal getal is genoeg.' },
     ],
   },
+  vetpercentage: {
+    title: 'Vetpercentage',
+    lead: 'Een weegschaal schat je vet met een zwak stroompje door je lichaam. Kijk daarom naar de trend, niet naar één dag.',
+    points: [
+      { head: 'Eerlijk', text: 'de meting schommelt met vocht, eten en het tijdstip, en het getal zelf kan een paar procentpunten naast de werkelijkheid zitten.' },
+      { head: 'Wel bruikbaar', text: 'de richting over weken, als je steeds onder dezelfde omstandigheden weegt, bijvoorbeeld in de ochtend en nuchter. ASCEND zet het gemiddelde van je laatste 7 metingen naast dat van 4 weken eerder.' },
+      { head: 'Vetvrije massa', text: 'je gewicht min het vet. Voor kracht en de GR5 zegt die meer dan het percentage: je kunt lichter worden en toch je spieren houden.' },
+    ],
+  },
   drempel: {
     title: 'Drempel',
     lead: 'De hartslag die je ongeveer een uur vol kunt houden. Garmin noemt hem lactaatdrempel (LTHR).',

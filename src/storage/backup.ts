@@ -22,6 +22,7 @@ import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
+import type { WeightEntry } from '../models/metrics';
 import {
   ProgramsRepo,
   SessionTemplatesRepo,
@@ -49,7 +50,7 @@ import { normalizeStrengthSettings } from '../engine/strengthSettings';
 import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
-import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, migrateExternalOneRm, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateWeightEntries, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -219,6 +220,18 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     } else {
       s[key] = cleaned;
     }
+  }
+  // The fat percentage on a weigh-in: a number between 3 and 60 or not there; the
+  // weigh-in itself stays (storage/migrations.ts#migrateWeightEntries).
+  if (Array.isArray(s.weightEntries)) {
+    const weights = migrateWeightEntries(s.weightEntries as WeightEntry[]);
+    s.weightEntries = weights.entries;
+    skipped.n += weights.skipped;
+  }
+  // The switch for showing the fat percentage: a yes or a no, or not there.
+  if ('showBodyFat' in s && typeof s.showBodyFat !== 'boolean') {
+    delete s.showBodyFat;
+    skipped.n++;
   }
   // The 1RM per exercise from MacroFactor: read series by series, a damaged
   // reading is dropped and counted, an older file has none and leaves the
@@ -603,7 +616,11 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
   const merged: Partial<AppSettings> = { ...incoming };
   if (incoming.weightEntries || current.weightEntries) {
     const byDate = new Map((incoming.weightEntries ?? []).map((e) => [e.date, e]));
-    for (const e of current.weightEntries ?? []) byDate.set(e.date, e);
+    for (const e of current.weightEntries ?? []) {
+      // The device's own record wins, but a fat percentage only the backup has is added to it.
+      const fromBackup = byDate.get(e.date);
+      byDate.set(e.date, e.fatPct === undefined && fromBackup?.fatPct !== undefined ? { ...e, fatPct: fromBackup.fatPct } : e);
+    }
     merged.weightEntries = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   }
   // The 1RM from MacroFactor is history too: per exercise and day the union,

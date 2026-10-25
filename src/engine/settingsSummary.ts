@@ -69,6 +69,8 @@ export interface SettingsFacts {
   ambition: { chosen: 'rustig' | 'standaard' | 'stevig'; effective: 'rustig' | 'standaard' | 'stevig'; reason?: string };
   // Het gewicht in gebruik.
   weight: { kg: number; source: string; date: string } | null;
+  // Zijn er weegmetingen met een vetpercentage (engine/bodyFat.ts)? Zonder is de schakelaar er niet.
+  hasBodyFat?: boolean;
   // De koppeling met het horloge; null als er (nog) niet gekeken is.
   watch: { linked: boolean; syncedAt?: string; use: WatchUse; autoTick: boolean; leads: boolean; sendEnabled: boolean; corrections?: boolean } | null;
   macroFactor: { readAt?: string; leads: boolean } | null;
@@ -312,6 +314,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return f.weight
         ? { value: `${num(f.weight.kg, 1)} kg`, auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
+    case 'vetpercentage':
+      return { checked: s.showBodyFat !== false, hidden: !f.hasBodyFat };
     case 'hartslag': {
       const hr = s.heartRate ?? {};
       if (hr.lthr) return { value: `Drempel ${hr.lthr}`, sub: 'Zones in bpm, zoals op je horloge' };

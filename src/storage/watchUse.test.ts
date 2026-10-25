@@ -185,6 +185,29 @@ describe('weight and the backup', () => {
     expect(normalized.settings?.weightEntries).toHaveLength(1);
     expect(normalized.settings?.weightFromMacroFactor).toBeUndefined();
   });
+
+  it('the fat percentage and its switch travel in the export', async () => {
+    await SettingsRepo.set({
+      weightEntries: [{ date: '2026-10-18', kg: 80.4, source: 'macrofactor', basis: 'scale', fatPct: 18.4 }],
+      showBodyFat: false,
+    });
+    const roundTripped = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect(roundTripped.settings?.weightEntries).toEqual([{ date: '2026-10-18', kg: 80.4, source: 'macrofactor', basis: 'scale', fatPct: 18.4 }]);
+    expect(roundTripped.settings?.showBodyFat).toBe(false);
+  });
+
+  it('drops an impossible fat percentage but keeps the weigh-in, and a damaged switch', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    envelope.payload.settings = {
+      ...envelope.payload.settings,
+      weightEntries: [{ date: '2026-09-01', kg: 87, source: 'manual', fatPct: 400 }, { date: '2026-09-02', kg: 86, source: 'manual', fatPct: 21.5 }],
+      showBodyFat: 'ja',
+    };
+    const normalized = normalizeBackupToCurrentModel(envelope);
+    expect(normalized.settings?.weightEntries).toEqual([{ date: '2026-09-01', kg: 87, source: 'manual' }, { date: '2026-09-02', kg: 86, source: 'manual', fatPct: 21.5 }]);
+    expect(normalized.settings?.showBodyFat).toBeUndefined();
+    expect(normalized.skippedInvalid).toBeGreaterThanOrEqual(2);
+  });
 });
 
 describe('the switches of Overzichten en vragen and the backup', () => {

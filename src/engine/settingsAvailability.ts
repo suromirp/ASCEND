@@ -57,6 +57,7 @@ const REASON: Record<string, string> = {
   'horloge-status-week': GARMIN_OFF,
   'macrofactor-leidend': MACROFACTOR_OFF,
   'macrofactor-gewicht': MACROFACTOR_OFF,
+  vetpercentage: 'Deze keuze verschijnt pas als je weegmetingen met een vetpercentage hebt, bijvoorbeeld uit een MacroFactor-export.',
 };
 
 export function rowAvailability(rowId: string, facts: SettingsFacts): { available: true } | { available: false; reason: string } {

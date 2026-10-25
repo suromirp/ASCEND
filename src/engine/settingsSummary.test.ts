@@ -224,6 +224,18 @@ describe('rowSummary: forge', () => {
   });
 });
 
+describe('rowSummary: vetpercentage tonen', () => {
+  it('staat standaard aan als er metingen zijn, en uit als je het zegt', () => {
+    expect(rowSummary('vetpercentage', facts({ hasBodyFat: true }))).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('vetpercentage', facts({ hasBodyFat: true, settings: { ...facts().settings, showBodyFat: false } }))).toEqual({ checked: false, hidden: false });
+  });
+
+  it('is er niet zonder metingen met vetpercentage', () => {
+    expect(rowSummary('vetpercentage', facts()).hidden).toBe(true);
+    expect(rowSummary('vetpercentage', facts({ hasBodyFat: false })).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: lichaam', () => {
   it('gewicht uit MacroFactor is auto, met de bron en de datum', () => {
     expect(rowSummary('lichaamsgewicht', facts())).toEqual({ value: '85,6 kg', auto: true, sub: 'MacroFactor, 22 okt' });

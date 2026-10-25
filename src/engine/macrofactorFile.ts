@@ -82,7 +82,7 @@ function mergeWeight(a: MacroFactorWeightResult | undefined, b: MacroFactorWeigh
   const byDate = new Map<string, MacroFactorWeightDay>(a.days.map((d) => [d.date, d]));
   for (const day of b.days) byDate.set(day.date, { ...byDate.get(day.date), ...day });
   const days = [...byDate.values()].sort((x, y) => x.date.localeCompare(y.date));
-  return { days, skippedRows: a.skippedRows + b.skippedRows, hasTrend: days.some((d) => d.trendKg !== undefined) };
+  return { days, skippedRows: a.skippedRows + b.skippedRows, hasTrend: days.some((d) => d.trendKg !== undefined), hasFat: days.some((d) => d.fatPct !== undefined) };
 }
 
 function mergeWorkouts(a: MacroFactorReadResult | undefined, b: MacroFactorReadResult): MacroFactorReadResult {
@@ -212,7 +212,7 @@ export interface ImportSummaryInput {
   // A training program was found: its name, the number of training days and weeks.
   program?: { name: string; days: number; weeks: number };
   // The last weight in the file, with what happened to it.
-  weight?: { kg: number; date: string; basis: 'trend' | 'scale'; added: number; offInSettings: boolean };
+  weight?: { kg: number; date: string; basis: 'trend' | 'scale'; added: number; offInSettings: boolean; fatDays?: number };
   workoutCount?: number;
   // The 1RM per exercise: for how many exercises how many new days were stored.
   oneRm?: { exercises: number; added: number };
@@ -232,6 +232,7 @@ export function importSummary(input: ImportSummaryInput, formatDate: (iso: strin
     const stored = w.added > 0 ? `${daysWord(w.added)} opgeslagen.` : 'stond al in ASCEND.';
     const off = w.offInSettings ? ' Let op: Gewicht uit MacroFactor gebruiken staat uit, dus ASCEND rekent er nog niet mee.' : '';
     lines.push(`Gewicht: ${kg} kg op ${formatDate(w.date)} (${what}), ${stored}${off}`);
+    if (w.fatDays && w.fatDays > 0) lines.push(`Vetpercentage: ${w.fatDays === 1 ? '1 meting' : `${w.fatDays} metingen`} uit je weegschaal gelezen.`);
   } else {
     lines.push('Gewicht: niet in dit bestand.');
   }

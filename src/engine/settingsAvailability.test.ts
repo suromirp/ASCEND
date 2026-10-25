@@ -19,6 +19,7 @@ function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
     strengthExternal: false,
     ambition: { chosen: 'standaard', effective: 'standaard' },
     weight: null,
+    hasBodyFat: true,
     watch: { linked: true, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false },
     macroFactor: { readAt: '2026-10-22T08:00:00.000Z', leads: true },
     strengthDurations: [{ name: 'A', minutes: 60, source: 'default', basedOn: 0 }],
