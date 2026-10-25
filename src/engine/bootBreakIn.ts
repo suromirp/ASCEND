@@ -1,4 +1,4 @@
-// ASCEND — bergschoenen inlopen (taak "schoenen" in de Reisplanner).
+// ASCEND: bergschoenen inlopen (taak "schoenen" in de Reisplanner).
 // Nieuwe bergschoenen moeten voor vertrek ingelopen zijn: minstens 6 weken en
 // 100 km (het doel is instelbaar). ASCEND telt vanaf de datum die je vastlegt de
 // kilometers en de stijging van wandelingen en tochten in het logboek. Hardlopen
