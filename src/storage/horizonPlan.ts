@@ -27,8 +27,10 @@ import type { PlannedSession, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrainingGoal } from '../models/goals';
 import type { GoalMilestone } from '../models/goals';
+import type { StrengthProgramStrategy } from '../models/strengthProgram';
+import type { GoalEngineConfig, Weekday } from '../models/goalEngineConfig';
 import {
-  GoalMilestonesRepo, MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo, SettingsRepo, TrainingGoalsRepo,
+  GoalEngineConfigRepo, GoalMilestonesRepo, MetaRepo, PlannedSessionsRepo, ProgramsRepo, SessionLogsRepo, SessionTemplatesRepo, SettingsRepo, StrengthProgramStrategiesRepo, TrainingGoalsRepo,
   previewProgramHorizon, syncProgramHorizon, type AppSettings, type HorizonOverrides,
 } from './database';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
@@ -62,6 +64,22 @@ export interface HorizonChangeInput {
   // The trainings that get another length, as the change itself names them
   // (all of them, not only the next two weeks). Without it: worked out here.
   lengths?: string[];
+  // The first plan of an app that was empty (engine/firstPlan.ts): next to the
+  // program, goal and settings above, what belongs to it. Written with Akkoord,
+  // put back if anything goes wrong. A device that already has a program never
+  // gets this.
+  firstPlan?: FirstPlanExtras;
+}
+
+export interface FirstPlanExtras {
+  // The ladder of the goal (a trek).
+  milestones: GoalMilestone[];
+  // The strength block, or none when you train without strength.
+  strategy: StrengthProgramStrategy | null;
+  // The days you can train on.
+  allowedDays: Weekday[];
+  // The rest day the plan is laid out for, so the sync does not lay it out again.
+  restDay: number;
 }
 
 export interface HorizonPlan {
@@ -118,7 +136,7 @@ async function diffFor(input: HorizonChangeInput, registers?: DurationScope) {
   const start = input.startItems?.length
     ? applyPlanChangeItems(input.startItems, base, () => `horizon-draft-${++drafts}`, { by: 'proposal', at: 'preview' }).sessions
     : (base !== stored ? base : undefined);
-  const run = await settledPreview({ settings: input.settings, goals: input.goals, sessions: start, registers, program: input.program });
+  const run = await settledPreview({ settings: input.settings, goals: input.goals, sessions: start, registers, program: input.program, milestones: input.firstPlan?.milestones });
   const diff = diffHorizon({ before: base, after: run.after, logs, templates, today: todayISO(), goalDay: run.anchor, reason: input.why });
   // The proposal's own items keep their own reason.
   const own = new Map((input.startItems ?? []).filter((i) => i.plannedSessionId).map((i) => [i.plannedSessionId!, i]));
@@ -219,6 +237,8 @@ interface Snapshot {
   programs: Program[];
   milestones: GoalMilestone[];
   appliedRestDay: unknown;
+  // Only for a first plan: what was there before it wrote its extras.
+  extras?: { config: GoalEngineConfig; strategies: StrengthProgramStrategy[]; strategyFlag: unknown };
 }
 
 async function takeSnapshot(input: HorizonChangeInput, sessions: PlannedSession[]): Promise<Snapshot> {
@@ -232,7 +252,10 @@ async function takeSnapshot(input: HorizonChangeInput, sessions: PlannedSession[
     newGoalIds: (input.goals ?? []).filter((g) => !storedGoals.has(g.id)).map((g) => g.id),
     ...(input.program && programs[0] ? { program: programs[0] } : {}),
   };
-  return { sessions, settingsRaw, restore, programs, milestones, appliedRestDay };
+  const extras = input.firstPlan
+    ? { config: await GoalEngineConfigRepo.get(), strategies: await StrengthProgramStrategiesRepo.getAll(), strategyFlag: await MetaRepo.get('strengthProgramDefaultSeeded') }
+    : undefined;
+  return { sessions, settingsRaw, restore, programs, milestones, appliedRestDay, ...(extras ? { extras } : {}) };
 }
 
 // Puts everything back exactly as the snapshot has it.
@@ -245,9 +268,20 @@ async function rollback(snap: Snapshot): Promise<void> {
   await MetaRepo.set('settings', snap.settingsRaw);
   for (const g of snap.restore.goals) await TrainingGoalsRepo.put(g);
   for (const id of snap.restore.newGoalIds) await TrainingGoalsRepo.delete(id);
+  // A program that was not there before (the first plan) goes again.
+  const programsNow = await ProgramsRepo.getAll();
+  for (const p of programsNow) if (!snap.programs.some((o) => o.id === p.id)) await ProgramsRepo.delete(p.id);
   for (const p of snap.programs) await ProgramsRepo.put(p);
+  const milestonesNow = await GoalMilestonesRepo.getAll();
+  for (const m of milestonesNow) if (!snap.milestones.some((o) => o.id === m.id)) await GoalMilestonesRepo.delete(m.id);
   for (const m of snap.milestones) await GoalMilestonesRepo.put(m);
   await MetaRepo.set('appliedRestDay', snap.appliedRestDay);
+  if (snap.extras) {
+    const strategiesNow = await StrengthProgramStrategiesRepo.getAll();
+    for (const st of strategiesNow) if (!snap.extras.strategies.some((o) => o.id === st.id)) await StrengthProgramStrategiesRepo.delete(st.id);
+    await GoalEngineConfigRepo.set({ availability: snap.extras.config.availability });
+    await MetaRepo.set('strengthProgramDefaultSeeded', snap.extras.strategyFlag);
+  }
 }
 
 async function changedSince(stored: PlannedSession[]): Promise<{ before: PlannedSession[]; addedIds: string[] }> {
@@ -286,7 +320,25 @@ export async function applyHorizonPlanNow(plan: HorizonPlan, deps: HorizonDeps =
     }
     if (input.program) await ProgramsRepo.put(input.program);
     if (input.settings) await SettingsRepo.set(input.settings);
+    const first = input.firstPlan;
+    if (first) {
+      for (const m of first.milestones) await GoalMilestonesRepo.put(m);
+      const config = await GoalEngineConfigRepo.get();
+      await GoalEngineConfigRepo.set({ availability: { ...config.availability, allowedDays: first.allowedDays } });
+      // The flag keeps the old default strength block from turning up on the
+      // next start. The block itself is written below, after the goals.
+      await MetaRepo.set('strengthProgramDefaultSeeded', true);
+      await MetaRepo.set('appliedRestDay', first.restDay);
+    }
     for (const g of input.goals ?? []) await TrainingGoalsRepo.put(g);
+    // The strength block starts now, after the goal and the availability it was
+    // made for: its own time is the latest, so the review of the block does not
+    // see a goal or availability "changed since the block began" and advise
+    // straight away.
+    if (first?.strategy) {
+      const at = new Date().toISOString();
+      await StrengthProgramStrategiesRepo.put({ ...first.strategy, createdAt: at, updatedAt: at });
+    }
     // The registers follow the stored settings again, now with the change.
     if (deps.prime) await deps.prime();
     if (diff.items.length > 0 || input.startItems?.length || input.program) {

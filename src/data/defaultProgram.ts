@@ -547,7 +547,7 @@ function buildTemplates(): SessionTemplate[] {
 // (engine/programLayout.ts).
 // ---------------------------------------------------------------------------
 
-function buildProgram(): Program {
+export function buildProgram(): Program {
   const startDate = mondayOfWeek(todayISO());
   return {
     id: 'prog_ascend',
@@ -618,7 +618,7 @@ function buildPlannedSessions(program: Program, templates: SessionTemplate[]): P
 // dataverlies kan laten doorlopen — zie dat bestand.
 // ---------------------------------------------------------------------------
 
-function buildObjective(): Objective {
+export function buildObjective(): Objective {
   const objectiveId = 'obj_gr5';
   const defs: Array<[string, Objective['milestones'][number]['requirement']]> = [
     ['40 min rustig: hardlopen of stevig wandelen', { kind: 'duration', activityType: ['cardio', 'hiking'], minMinutes: 40 }],

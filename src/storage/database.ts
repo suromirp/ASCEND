@@ -26,7 +26,7 @@ import type { ClothingAdjust } from '../engine/clothingFeedback';
 import type { RunInsightSettings } from '../engine/runInsightSettings';
 import type { MorningNoticeSettings } from '../engine/morningNotice';
 import { activeSwaps, patternSlotOf, layoutPhases, patternForWeek, planEndDay, programEndDate, templateForPhase, type PatternSwap, type PhaseLengthOverrides } from '../engine/programLayout';
-import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, weeklyPatternTemplates } from '../engine/sports';
+import { DEFAULT_ENABLED_SPORTS, isSportEnabled, isTemplatePlannable, parseWeekShape, weeklyPatternTemplates, type WeekShape } from '../engine/sports';
 import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
@@ -236,6 +236,7 @@ async function clearStore<K extends keyof AscendDB>(store: K) {
 export const ProgramsRepo = {
   getAll: () => getAll('programs') as Promise<Program[]>,
   put: (p: Program) => put('programs', p),
+  delete: (id: string) => del('programs', id),
 };
 
 export const SessionTemplatesRepo = {
@@ -537,6 +538,10 @@ export interface AppSettings {
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.
   sportFrequency?: Partial<Record<'running' | 'hiking' | 'cycling', number>>;
+  // The shape of your week, chosen at the first questions (engine/weekShape.ts,
+  // read by engine/sports.ts#weeklyPatternTemplates). Unset: the full default
+  // pattern. Optional, so older settings and backups need no migration.
+  weekShape?: WeekShape;
   // Fase 3 — the long Sunday from Bergcapaciteit on (engine/programLayout.ts).
   // Absent = 'hike'. Optional, so older settings need no migration.
   longSundaySession?: 'hike' | 'run';
@@ -735,9 +740,33 @@ export const StretchCompletionRepo = {
 
 // --- seeding & reset ---------------------------------------------------
 
-export async function seedIfEmpty(): Promise<void> {
+// What a new device gets. `withProgram: true` (the default, kept for the demo
+// data and for the tests that need a running plan) fills the whole default
+// program: a GR5 goal and a planning. The app itself opens with
+// `withProgram: false` (storage/bootMigrations.ts): only the building blocks
+// every screen reads (the training templates); no program, no goal, nothing
+// planned. The plan comes after the first questions, as a proposal with Akkoord
+// (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
+//
+// A device is new when no seeding was ever recorded. Whether the app is
+// "empty" for the screens is derived from the data itself (engine/freshStart.ts#isEmptyStart),
+// so a device with data is never treated as a new start, marker or not.
+export async function seedIfEmpty(options: { withProgram?: boolean } = {}): Promise<void> {
   const seeded = await MetaRepo.get<boolean>('seeded');
   if (seeded) return;
+  const withProgram = options.withProgram ?? true;
+
+  if (!withProgram) {
+    // Only the building blocks; never a program, so data that is already there
+    // (a marker lost, a backup put back in an odd order) is never overwritten.
+    await putAll('sessionTemplates', buildDefaultProgramData().templates);
+    await MetaRepo.set('seeded', true);
+    // No seededAt: the card "Nieuw begonnen" is for devices that were filled
+    // with the default program; this one waits for your own choices.
+    await MetaRepo.set('schemaVersion', SCHEMA_VERSION);
+    await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
+    return;
+  }
 
   const { program, templates, plannedSessions, objectives, sessionLogs, milestoneProgress } = buildDefaultProgramData();
   await ProgramsRepo.put(program);
@@ -877,7 +906,7 @@ export async function syncTemplateAndScheduleDefinitions(): Promise<void> {
   const toDelete = existingSessions.filter((s) => s.scheduledDate >= cutoff);
   await Promise.all(toDelete.map((s) => PlannedSessionsRepo.delete(s.id)));
 
-  const ctx = await patternContext(templates, () => templates.filter((t) => t.defaultDayOfWeek));
+  const ctx = await patternContext(templates, await defaultPatternSelector());
   await putAll('plannedSessions', patternSessions(program, templates, ctx.pattern, ctx.swaps, { from: cutoff, until: ctx.anchor }));
 
   await MetaRepo.set('scheduleVersion', SCHEDULE_CONTENT_VERSION);
@@ -929,7 +958,10 @@ export async function resetToDemoData(): Promise<void> {
   await MetaRepo.set('seeded', false);
   await MetaRepo.set('goalEngineMigrated', false);
   await MetaRepo.set('strengthProgramDefaultSeeded', false);
-  await seedIfEmpty();
+  // Like a fresh install: only the templates, no program or planning, so the app
+  // opens on the welcome and asks before it plans anything
+  // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
+  await seedIfEmpty({ withProgram: false });
 }
 
 // User-facing "reset my schedule" — Settings' SCHEMA OPNIEUW LADEN button.
@@ -966,7 +998,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
 
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
-  const ctx = await patternContext(templates, () => templates.filter((t) => t.defaultDayOfWeek));
+  const ctx = await patternContext(templates, await defaultPatternSelector());
   const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
   await ProgramsRepo.put(next);
 
@@ -1081,6 +1113,16 @@ function withPackTarget(program: Program, kg: number | undefined): Program {
 // swaps they allow, and the goal date nothing may be planned on or after.
 // `given`: settings and goals as they would be (the preview of a change, before
 // anything is stored); without it, as stored.
+// The default weekly pattern for the two places that lay out the default
+// schedule on their own (a new content version, "Schema opnieuw laden"): the
+// templates with a usual weekday, as before. Once you chose the shape of your
+// week at the start (AppSettings.weekShape) the pattern is the one of
+// weeklyPatternTemplates, so these never bring back the days you left out.
+async function defaultPatternSelector(): Promise<((templates: SessionTemplate[]) => SessionTemplate[]) | undefined> {
+  const weekShape = parseWeekShape((await SettingsRepo.get()).weekShape);
+  return weekShape ? undefined : (all) => all.filter((t) => t.defaultDayOfWeek);
+}
+
 async function patternContext(
   templates: SessionTemplate[],
   selectPattern?: (templates: SessionTemplate[]) => SessionTemplate[],
@@ -1088,7 +1130,7 @@ async function patternContext(
 ): Promise<PatternContext> {
   const [settings, goals, milestones] = given ? [given.settings, given.goals, given.milestones] : await Promise.all([SettingsRepo.get(), TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
   const enabledSports = { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports };
-  const pattern = arrangeWeekForRestDay(selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports }), templates, settings.restDay);
+  const pattern = arrangeWeekForRestDay(selectPattern ? selectPattern(templates) : weeklyPatternTemplates(templates, { ...settings, enabledSports }), templates, settings.restDay, parseWeekShape(settings.weekShape)?.allowed);
   return {
     pattern,
     // A hike only replaces a session when the caller's pattern would plan
@@ -1175,6 +1217,9 @@ export interface HorizonOverrides {
   // The program as it would be (a rest week trained through, a week repeated,
   // engine/weekLoadChange.ts). Only for a preview; Akkoord stores it first.
   program?: Program;
+  // The ladder of a goal that is not stored yet (the first plan): added to the
+  // stored milestones, so the preview knows which goal is the main one.
+  milestones?: GoalMilestone[];
 }
 
 export interface HorizonRun {
@@ -1216,7 +1261,7 @@ export async function previewProgramHorizon(overrides: HorizonOverrides = {}): P
 }
 
 async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): Promise<HorizonRun> {
-  const [programs, storedSessions, logs, templates, storedSettings, storedGoals, milestones] = await Promise.all([
+  const [programs, storedSessions, logs, templates, storedSettings, storedGoals, storedMilestones] = await Promise.all([
     ProgramsRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
@@ -1225,6 +1270,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
     TrainingGoalsRepo.getAll(),
     GoalMilestonesRepo.getAll(),
   ]);
+  const milestones = overrides.milestones ? [...storedMilestones, ...overrides.milestones.filter((m) => !storedMilestones.some((s) => s.id === m.id))] : storedMilestones;
   const sessions = [...(overrides.sessions ?? storedSessions)];
   const startedFrom = [...sessions];
   const program = overrides.program ?? programs[0];

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
@@ -30,6 +30,8 @@ import { useSleepRefetch } from '../components/useSleepRefetch';
 import { useMorningCardVisible } from '../components/useMorningCardVisible';
 import { ExportReminderBanner } from '../components/ExportReminderBanner';
 import { FreshStartCard } from '../components/FreshStartCard';
+import { StartWelcome } from '../components/start/StartWelcome';
+import { needsFirstPlan } from '../engine/freshStart';
 import { asPlannedLog } from '../engine/asPlanned';
 import { REST_DAY_COPY } from '../data/restDayCopy';
 import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner';
@@ -63,7 +65,7 @@ import { StretchMenuButton } from '../components/StretchMenuButton';
 import { WeekStrip } from '../components/vandaag/WeekStrip';
 import { zoneOfTemplate } from '../components/vandaag/zone';
 
-export function TodayPage() {
+function TodayContent() {
   const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   // Ochtend vóór 12:00, Avond erna — only one of the two daily routines is
@@ -494,4 +496,18 @@ export function TodayPage() {
 
     </div>
   );
+}
+
+// Een app zonder programma en zonder planning (een nieuwe installatie) opent
+// met het welkom in plaats van met een missie
+// (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md). Het welkom blijft
+// staan zolang een van zijn twee wegen open is, ook als de gegevens intussen
+// binnen zijn.
+export function TodayPage() {
+  const { program, plannedSessions } = useAppData();
+  const [hold, setHold] = useState(false);
+  const onHold = useCallback((value: boolean) => setHold(value), []);
+  const empty = needsFirstPlan({ programs: program ? 1 : 0, plannedSessions: plannedSessions.length });
+  if (empty || hold) return <StartWelcome onHold={onHold} />;
+  return <TodayContent />;
 }

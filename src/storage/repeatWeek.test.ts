@@ -40,7 +40,7 @@ async function countWrites<T>(fn: () => Promise<T>): Promise<{ result: T; writes
 }
 
 async function boot() {
-  await runBootMigrations();
+  await runBootMigrations({ seedProgram: true });
   await syncProgramHorizon();
   return runWeeklyPrescriptionStep(TODAY);
 }
@@ -61,7 +61,7 @@ describe('een herhaalde week in de opslag', () => {
     vi.setSystemTime(new Date(NOW));
     await wipeAllData();
     await SettingsRepo.set({ marathonRaceType: 'half', marathonTargetDate: '2027-03-20' });
-    await runBootMigrations();
+    await runBootMigrations({ seedProgram: true });
     const gr5 = (await TrainingGoalsRepo.getAll()).find((g) => g.id === 'obj_gr5');
     await TrainingGoalsRepo.put({ ...gr5!, status: 'active', targetDate: '2027-08-01' });
   });

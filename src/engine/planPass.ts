@@ -16,7 +16,7 @@ import { applyRaceBlocks, type RaceBlock } from './raceBlock';
 import { applyLeaveBlocks } from './leaveBlock';
 import { repairWeeks, type Finding, type Repair } from './weekValidator';
 import { arrangeWeekForRestDay, type RestWeekday } from './restDay';
-import { DEFAULT_ENABLED_SPORTS, weeklyPatternTemplates, type PatternSettings } from './sports';
+import { DEFAULT_ENABLED_SPORTS, parseWeekShape, weeklyPatternTemplates, type PatternSettings } from './sports';
 import { PATTERN_SWAPS } from './programLayout';
 
 export interface PlanPassContext {
@@ -91,7 +91,7 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
 // The weekday of each pattern session for a rest day; the phase variants
 // (mountain hike, first hike day) on the day of the session they replace.
 export function patternDays(templates: SessionTemplate[], settings: PatternSettings, restDay: number): Map<string, number> {
-  const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { ...settings, enabledSports: { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports } }), templates, restDay as RestWeekday);
+  const pattern = arrangeWeekForRestDay(weeklyPatternTemplates(templates, { ...settings, enabledSports: { ...DEFAULT_ENABLED_SPORTS, ...settings.enabledSports } }), templates, restDay as RestWeekday, parseWeekShape(settings.weekShape)?.allowed);
   const map = new Map(pattern.map((t) => [t.id, t.defaultDayOfWeek as number]));
   for (const sw of PATTERN_SWAPS) if (map.has(sw.from)) map.set(sw.to, map.get(sw.from)!);
   return map;

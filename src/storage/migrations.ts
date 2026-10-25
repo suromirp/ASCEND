@@ -6,6 +6,7 @@
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
+import { parseWeekShape, type WeekShape } from '../engine/sports';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
 import type { NightJudgment } from '../models/checkIn';
@@ -84,6 +85,15 @@ export function migrateLeavePeriods(raw: unknown): { periods: LeavePeriod[] | un
     };
   });
   return { periods, skipped: raw.length - periods.length + lostDetails };
+}
+
+// --- eigen week: settings.weekShape ---------------------------------------------
+// The shape of your week, chosen at the first questions (engine/weekShape.ts).
+// Optional and additive: a file from before it has none. Only known templates with a
+// weekday of 1 to 7 get through; a damaged value is nothing, and the pattern is then
+// the default one (engine/sports.ts#parseWeekShape).
+export function readWeekShape(raw: unknown): WeekShape | undefined {
+  return parseWeekShape(raw);
 }
 
 // --- korte nacht: settings.nightJudgments -------------------------------------

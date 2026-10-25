@@ -343,6 +343,23 @@ background; whatever changes the plan waits for the queued syncs and then reads
 the stored plan (`docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md`). Design and
 reasoning: `docs/onderzoek/Planning op een lijn.md`.
 
+**First ask, then plan** (`storage/database.ts#seedIfEmpty`, `engine/firstPlan.ts`,
+`engine/weekShape.ts`, decision `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`):
+a new install plans nothing. The app starts with `seedIfEmpty({ withProgram: false })`: only
+the templates, no program, goal or planning; "Alles verwijderen" ends the same way. Vandaag
+shows `StartWelcome` while there is no program and no planning
+(`engine/freshStart.ts#needsFirstPlan`, derived from the data, never a flag): "Nieuw beginnen"
+or "Back-up terugzetten". The questions (goal, date, days per week, which days, strength) become
+what the planning already reads (goal, rest day, `availability.allowedDays`, strength block) plus
+`AppSettings.weekShape` (which fixed sessions stay in the weekly pattern and on which day, read
+defensively through `engine/sports.ts#parseWeekShape` by `weeklyPatternTemplates` and
+`arrangeWeekForRestDay`). The plan is always a proposal with Akkoord through
+`computeHorizonPlan`/`applyHorizonPlanNow` with `firstPlan`; Liever niet leaves the app empty.
+Restoring a backup on an empty device counts only your own data as disappearing, never templates
+the backup lacks. `seedIfEmpty()` without options and `runBootMigrations({ seedProgram: true })`
+still fill the full default program, for the tests only. Nothing may create a program or planning
+at start without a proposal. Changing the week shape later is not built yet.
+
 **Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,
 shown on Week as "Vrije dagen en vakanties"). Three kinds: `no_training` (no
 training on those days; what was there moves to an empty day of that week or is

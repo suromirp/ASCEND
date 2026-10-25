@@ -26,9 +26,15 @@ function permutations<T>(items: T[]): T[][] {
 }
 
 // Every template of the pattern with the weekday it gets for this rest day.
-export function arrangeWeekForRestDay(pattern: SessionTemplate[], allTemplates: SessionTemplate[], restDay: RestWeekday | undefined): SessionTemplate[] {
+// `allowedDays`: with a week you chose at the start (AppSettings.weekShape) the
+// weekday trainings only go to those days (minus the rest day); only when too few
+// are left it spreads over the free days as before.
+export function arrangeWeekForRestDay(pattern: SessionTemplate[], allTemplates: SessionTemplate[], restDay: RestWeekday | undefined, allowedDays?: number[]): SessionTemplate[] {
   const rest = pattern.find((t) => t.type === 'recovery');
-  if (!restDay || !rest || rest.defaultDayOfWeek === restDay) return pattern;
+  // A week you chose at the start may have no rest walk of its own (a rest day on a day you cannot train
+  // anyway); then only a training on the new rest day makes it move.
+  if (!restDay || (!rest && !allowedDays)) return pattern;
+  if (rest ? rest.defaultDayOfWeek === restDay : !pattern.some((t) => t.defaultDayOfWeek === restDay)) return pattern;
   const byId = new Map(allTemplates.map((t) => [t.id, t]));
   const weekday = pattern.filter((t) => t !== rest && (t.defaultDayOfWeek ?? 0) >= 1 && (t.defaultDayOfWeek ?? 0) <= 5);
   const weekend = pattern.filter((t) => (t.defaultDayOfWeek ?? 0) >= 6);
@@ -37,7 +43,9 @@ export function arrangeWeekForRestDay(pattern: SessionTemplate[], allTemplates: 
     const to = byId.get(PATTERN_SWAPS.find((s) => s.from === t.id)?.to ?? '');
     return to ? { ...to, defaultDayOfWeek: t.defaultDayOfWeek } : t;
   })];
-  const freeDays = ([1, 2, 3, 4, 5] as number[]).filter((d) => d !== restDay);
+  const weekdayFree = ([1, 2, 3, 4, 5] as number[]).filter((d) => d !== restDay);
+  const withinAllowed = allowedDays ? weekdayFree.filter((d) => allowedDays.includes(d)) : weekdayFree;
+  const freeDays = withinAllowed.length >= weekday.length ? withinAllowed : weekdayFree;
 
   let best: { days: number[]; score: number } | undefined;
   for (const days of permutations(freeDays.slice(0, weekday.length))) {

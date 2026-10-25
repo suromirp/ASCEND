@@ -117,7 +117,7 @@ export function usePlanSettingChange(): {
     let onStored: (() => void) | undefined;
     if (on) {
       const fixed = frequency[sport];
-      const sportPattern = weeklyPatternTemplates(templates, { enabledSports: nextEnabled }).filter((t) => templateSport(t) === sport);
+      const sportPattern = weeklyPatternTemplates(templates, { enabledSports: nextEnabled, weekShape: settings.weekShape }).filter((t) => templateSport(t) === sport);
       if (fixed) start = frequencyPlan(sport, fixed);
       else if (sportPattern.length > 0) {
         start = computeSportEnableProposal(

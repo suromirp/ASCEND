@@ -49,6 +49,15 @@ describe('rowSummary: planning', () => {
     expect(rowSummary('rustdag', facts({ settings: { ...facts().settings, restDay: 3 } })).value).toBe('Woensdag');
   });
 
+  it('de rij Rustdag zegt dat je een eigen week koos, met de dagen', () => {
+    expect(rowSummary('rustdag', facts()).sub).toBeUndefined();
+    const shaped = facts({ settings: { ...facts().settings, restDay: 3, weekShape: { days: { tpl_long_run: 7, tpl_upper_a: 2, tpl_easy_run: 4, tpl_hill_intervals: 6 } } } });
+    expect(rowSummary('rustdag', shaped)).toEqual({ value: 'Woensdag', sub: 'Eigen week: di, do, za, zo' });
+    // Een beschadigde vorm telt niet.
+    const damaged = facts({ settings: { ...facts().settings, weekShape: { days: { tpl_long_run: 9 } } } });
+    expect(rowSummary('rustdag', damaged).sub).toBeUndefined();
+  });
+
   it('een sport staat uit, op het weekschema (auto) of op een vast aantal', () => {
     const settings = { ...facts().settings, sportFrequency: { running: 3 } };
     expect(rowSummary('sport-running', facts({ settings }))).toEqual({ value: '3× per week' });

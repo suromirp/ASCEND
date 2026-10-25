@@ -1896,6 +1896,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // Also when the sessions stayed: a rest week trained through changes only
     // the program, and belongs in the change log on Week all the same.
     if (result.status !== 'unchanged' || result.restore.program) await PlanChangeProposalsRepo.put({ ...plan.proposal, resolvedAt: now, resolution: 'accepted' });
+    // The first plan of an empty app has no notice with undo: there is nothing
+    // to go back to but an empty app, and undoing the plan would leave a
+    // program the planning then fills in again without asking. The plan on
+    // Vandaag is the answer (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
+    // Only when it half worked ('partial') the usual notice does show, so you can see what changed.
+    if (plan.input.firstPlan && result.status !== 'partial') {
+      planRevision++;
+      await refresh();
+      void syncWatchWorkoutsAfterPlanChange();
+      return;
+    }
     const tpls = await SessionTemplatesRepo.getAll();
     const lines = [...describeChanges(plan.proposal.changes, result.before, tpls), ...plan.lengths];
     setRecentChange({

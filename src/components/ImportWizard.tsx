@@ -4,6 +4,7 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
 import { formatDateNL } from '../utils/dates';
+import { isEmptyStart, restoreSafetyLines } from '../engine/freshStart';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import {
   normalizeBackupToCurrentModel,
@@ -45,11 +46,11 @@ const MODE_LABEL: Record<ImportMode, string> = {
   custom: 'Zelf kiezen',
 };
 
-const MODE_NOTE: Record<ImportMode, string> = {
-  full_restore: 'Zet planning, doelen en instellingen terug naar de stand van de back-up. Trainingen worden nooit verwijderd.',
+const MODE_NOTE = (deviceEmpty: boolean): Record<ImportMode, string> => ({
+  full_restore: deviceEmpty ? 'Zet planning, doelen en instellingen terug naar de stand van de back-up.' : 'Zet planning, doelen en instellingen terug naar de stand van de back-up. Trainingen worden nooit verwijderd.',
   merge: 'Voegt de back-up toe aan wat je nu al hebt. Bestaande gegevens blijven staan.',
   custom: 'Kies per onderdeel wat er met de back-up gebeurt.',
-};
+});
 
 const ACTION_LABEL: Record<CategoryAction, string> = {
   keep_current: 'Huidige behouden',
@@ -59,7 +60,9 @@ const ACTION_LABEL: Record<CategoryAction, string> = {
 };
 
 export function ImportWizard({ onClose }: { onClose: () => void }) {
-  const { refresh } = useAppData();
+  const { refresh, program, plannedSessions, sessionLogs, trainingGoals } = useAppData();
+  // Asked once, when the wizard opens: an empty app has nothing that can disappear.
+  const [deviceEmpty] = useState(() => isEmptyStart({ programs: program ? 1 : 0, plannedSessions: plannedSessions.length, sessionLogs: sessionLogs.length, trainingGoals: trainingGoals.length }));
   const [step, setStep] = useState<Step>({ kind: 'picking' });
   const { closing, requestClose } = useSheetClose(onClose, 200, () => step.kind !== 'applying' && step.kind !== 'undoing');
 
@@ -168,7 +171,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
                     style={{ borderColor: 'var(--color-card-border)' }}
                   >
                     <p className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{MODE_LABEL[mode]}</p>
-                    <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{MODE_NOTE[mode]}</p>
+                    <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{MODE_NOTE(deviceEmpty)[mode]}</p>
                   </button>
                 ))}
               </div>
@@ -187,6 +190,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
 
             {step.kind === 'preview' && (
               <PreviewStep
+                deviceEmpty={deviceEmpty}
                 preview={step.preview}
                 onConfirm={() => void confirmImport(step.backup, step.mode, step.categorySelections, step.planPolicy, step.preview)}
                 onBack={() =>
@@ -299,7 +303,7 @@ function OptionsStep({
   );
 }
 
-function PreviewStep({ preview, onConfirm, onBack }: { preview: ImportPreview; onConfirm: () => void; onBack: () => void }) {
+function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: ImportPreview; deviceEmpty: boolean; onConfirm: () => void; onBack: () => void }) {
   const totalConflicts = preview.diffByCategory.reduce((sum, d) => sum + d.conflicts.length, 0);
   const totalRemoved = preview.diffByCategory.reduce((sum, d) => sum + d.toRemove, 0);
   const { logsSinceBackup, skippedInvalid } = preview.backupMeta;
@@ -349,8 +353,7 @@ function PreviewStep({ preview, onConfirm, onBack }: { preview: ImportPreview; o
         )}
       </div>
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-        Vlak voor het importeren bewaart ASCEND een kopie van je huidige gegevens. Daarmee kun je de import ongedaan maken.
-        Trainingen worden bij importeren nooit verwijderd.
+        {restoreSafetyLines(deviceEmpty).join(' ')}
       </p>
       {totalRemoved > 0 && (
         <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>

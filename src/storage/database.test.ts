@@ -233,6 +233,17 @@ describe('resetToDemoData', () => {
     const afterReset = await TrainingGoalsRepo.getAll();
     expect(afterReset.some((g) => g.name === 'Marathon')).toBe(false);
   });
+
+  it('ends like a fresh install: templates, but no program or planning', async () => {
+    await seedIfEmpty();
+    expect((await PlannedSessionsRepo.getAll()).length).toBeGreaterThan(0);
+
+    await resetToDemoData();
+
+    expect(await ProgramsRepo.getAll()).toHaveLength(0);
+    expect(await PlannedSessionsRepo.getAll()).toHaveLength(0);
+    expect((await SessionTemplatesRepo.getAll()).length).toBeGreaterThan(0);
+  });
 });
 
 describe('restartProgramAtWeekOne', () => {

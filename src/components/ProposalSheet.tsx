@@ -50,6 +50,8 @@ export interface ProposalSheetProps {
   previewPass?: (sessions: PlannedSession[]) => PlannedSession[];
   leave?: LeavePeriod[];
   notes?: string[];
+  // The small heading above the notes. Default: what stays as it is.
+  notesTitle?: string;
   eyebrow?: string;
   // Shown when the proposal changes nothing.
   emptyText?: string;
@@ -63,7 +65,7 @@ export interface ProposalSheetProps {
   summary?: string;
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, eyebrow = 'VOORSTEL', emptyText, listUntil, extraLines, summary }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'VOORSTEL', emptyText, listUntil, extraLines, summary }: ProposalSheetProps) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   const planPreviewPass = previewPass ?? contextPass;
   const [busy, setBusy] = useState(false);
@@ -193,7 +195,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
               {notes && notes.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)' }}>
-                  <Eyebrow>Blijft staan</Eyebrow>
+                  <Eyebrow>{notesTitle}</Eyebrow>
                   {notes.map((n) => <p key={n} className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{n}</p>)}
                 </div>
               )}

@@ -39,6 +39,8 @@ export interface HorizonProposeOptions {
   // Always the proposal first, also when the run itself moves nothing (a rest
   // week trained through: what changes is in the lines of the proposal).
   alwaysAsk?: boolean;
+  // The heading above the notes of the proposal, when they are not about what stays.
+  notesTitle?: string;
 }
 
 export function useHorizonChange(): {
@@ -108,6 +110,7 @@ export function useHorizonChange(): {
       previewPass={(sessions) => sessions}
       leave={leavePeriods}
       notes={pending.plan.notes}
+      notesTitle={pending.options.notesTitle}
       extraLines={pending.plan.lengths}
       listUntil={addDays(mondayOfWeek(todayISO()), 13)}
       onRespond={async (response) => {
