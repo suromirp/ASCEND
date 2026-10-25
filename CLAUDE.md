@@ -300,6 +300,16 @@ can be cut at the beginning and the end (a drive home with the watch still on),
 which replaces its duration, distance, climb and heart rate and keeps the old
 ones in `SessionLog.trim`, put back by `engine/trimLog.ts#undoTrim`
 (`docs/beslissingen/2026-10-24-activiteit-inkorten.md`).
+A fourth: a log tied to an intervals.icu activity follows that activity when it is
+corrected there. Its measured numbers (duration, distance, climb and descent, heart
+rate, cadence) are replaced only when they differ from the fingerprint of the source
+kept at linking (`SessionLog.sourceSync.seen`, bound to the activity by `externalId`),
+so a change at the source is told apart from something ASCEND did itself. The numbers
+from before stay in `sourceSync.updated` and are put back by
+`engine/sourceCorrection.ts#restoreSourceUpdate`; a hand-made log keeps (and extends)
+its `manualMeasured`; a log cut here (`trim`) is never written over, the new numbers are
+only offered; a deleted activity changes nothing. Switch "Correcties uit intervals.icu
+overnemen" (`docs/beslissingen/2026-10-25-correcties-uit-intervals.md`).
 The same append-only pattern applies to `MilestoneProgress` (the record of
 when an Ascent Ladder milestone was actually cleared, vs. the static
 `Objective` / `MilestoneDefinition` ladder).

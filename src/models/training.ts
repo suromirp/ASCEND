@@ -9,7 +9,9 @@
 // of the watch (`manualMeasured` keeps the hand-made ones, so it can be undone;
 // docs/beslissingen/2026-10-22-garmin-is-leidend.md). A second, of the same kind:
 // a watch activity cut at the end or the beginning (`trim` keeps the numbers it
-// replaced; docs/beslissingen/2026-10-24-activiteit-inkorten.md).
+// replaced; docs/beslissingen/2026-10-24-activiteit-inkorten.md). A third: a log
+// tied to an intervals.icu activity follows a correction made there (`sourceSync`
+// keeps the numbers it replaced; docs/beslissingen/2026-10-25-correcties-uit-intervals.md).
 
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
@@ -396,7 +398,8 @@ export interface SourceSync {
 }
 
 // The record of what actually happened. Corrections are made by adding a new
-// log, not mutating this one (exception: `manualMeasured`, see above).
+// log, not mutating this one (exceptions: `manualMeasured`, `trim` and
+// `sourceSync`, see above).
 export interface SessionLog {
   id: string;
   plannedSessionId?: string; // absent for ad-hoc / unplanned sessions
