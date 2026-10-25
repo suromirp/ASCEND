@@ -306,6 +306,14 @@ describe('rowSummary: wat speelde er', () => {
   });
 });
 
+describe('rowSummary: intensiteit tellen', () => {
+  it('staat standaard op je hartslag en volgt de keuze', () => {
+    expect(rowSummary('intensiteit', facts()).value).toBe('Naar je hartslag');
+    expect(rowSummary('intensiteit', facts({ settings: { ...facts().settings, intensityCounting: 'plan' } })).value).toBe('Naar het plan');
+    expect(rowSummary('intensiteit', facts({ settings: { ...facts().settings, intensityCounting: 'iets' as never } })).value).toBe('Naar je hartslag');
+  });
+});
+
 describe('rowSummary: vandaag en meldingen', () => {
   it('telt wat aan staat, standaard negen', () => {
     expect(groupSummary('vandaag', facts()).value).toBe('9 aan');
