@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { JOURNEY_TASKS, type JourneyTask } from '../data/journeyTasks';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import {
-  EMPTY_JOURNEY, journeyProgress, journeyTimeline, journeyWeeksLeft, markDone, mergeJourneyState, normalizeJourneyState, pickJourneyTask, postponeTask,
-  taskDates, taskStatus, unmarkDone, weekStartForWeeksLeft, type JourneyState,
+  EMPTY_JOURNEY, withBootsDone, journeyProgress, journeyTimeline, journeyWeeksLeft, markDone, mergeJourneyState, normalizeJourneyState, pickJourneyTask, postponeTask,
+  taskDates, taskStatus, unmarkDone, weekStartForWeeksLeft, withDerivedDone, type JourneyState,
 } from './journey';
 
 const GOAL = '2027-08-01'; // a Sunday
@@ -181,5 +181,39 @@ describe('reading what is stored', () => {
     expect(mergeJourneyState(device, backup)).toEqual({ v: 1, done: { a: '2027-02-01', b: '2027-01-15' }, week: { weekStart: '2027-02-01', taskId: 'a' } });
     expect(mergeJourneyState(undefined, backup)).toBe(backup);
     expect(mergeJourneyState(device, undefined)).toBe(device);
+  });
+});
+
+describe('de taak "Meet je zweetverlies"', () => {
+  const weighed = (id: string, date: string) => ({
+    id, logId: `l-${id}`, date, activity: 'walk' as const, durationMinutes: 120,
+    weightBeforeKg: 80, weightAfterKg: 79, updatedAt: `${date}T10:00:00.000Z`,
+  });
+  it('bestaat in de lijst', () => {
+    expect(JOURNEY_TASKS.some((x) => x.id === 'meet-zweetverlies')).toBe(true);
+  });
+  it('is niet af met een meting en wel af met twee eigen metingen', () => {
+    expect(withDerivedDone(undefined, [weighed('a', '2026-06-01')])).toBeUndefined();
+    const state = withDerivedDone(undefined, [weighed('a', '2026-06-01'), weighed('b', '2026-06-09')]);
+    expect(state?.done['meet-zweetverlies']).toBe('2026-06-09');
+  });
+  it('telt een schatting van het horloge niet mee en laat een eigen vinkje staan', () => {
+    const watch = { ...weighed('w', '2026-06-02'), weightBeforeKg: undefined, weightAfterKg: undefined, watchMl: 900 };
+    expect(withDerivedDone(undefined, [weighed('a', '2026-06-01'), watch])).toBeUndefined();
+    const own = { v: 1 as const, done: { 'meet-zweetverlies': '2026-05-01' } };
+    expect(withDerivedDone(own, [weighed('a', '2026-06-01'), weighed('b', '2026-06-09')])).toBe(own);
+  });
+});
+
+describe('withBootsDone', () => {
+  it('zet de taak schoenen op af als de schoenen op tijd zijn ingelopen, zonder vlag te bewaren', () => {
+    expect(withBootsDone(undefined, { kind: 'busy' }, '2027-03-01')).toBeUndefined();
+    const done = withBootsDone(undefined, { kind: 'done', reachedOn: '2027-04-10' }, '2027-05-01');
+    expect(done?.done.schoenen).toBe('2027-04-10');
+  });
+
+  it('laat een eigen vinkje staan', () => {
+    const own = { ...EMPTY_JOURNEY, done: { schoenen: '2027-01-02' } };
+    expect(withBootsDone(own, { kind: 'done', reachedOn: '2027-04-10' }, '2027-05-01')?.done.schoenen).toBe('2027-01-02');
   });
 });

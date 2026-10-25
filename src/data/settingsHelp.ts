@@ -432,6 +432,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde tochten. Een tocht die al staat, houdt zijn planning tot je hem wijzigt.' },
     ],
   },
+  waterPerEtappe: {
+    title: 'Water per etappe',
+    lead: 'Bij elke GR5-etappe staat ongeveer hoeveel je onderweg zweet, uit je zweettempo en de uren van de etappe.',
+    points: [
+      { head: 'Je tempo', text: 'komt uit je eigen wegingen voor en na een training (in het blad van een training, onder Zweetverlies). Zonder wegingen staat er een voorzichtige standaard, met de woorden nog niet gemeten.' },
+      { head: 'Geen advies', text: 'het is een richtlijn voor wat je kwijtraakt, geen medisch advies. Het gaat om niet te veel uitdrogen, niet om alles terug te drinken.' },
+      { head: 'Uit', text: 'de etappes tonen dan geen water. Je wegingen blijven bewaard.' },
+    ],
+  },
 };
 
 export type SettingsHelpKey = keyof typeof SETTINGS_HELP;

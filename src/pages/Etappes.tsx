@@ -15,6 +15,7 @@ import { buildItinerary, compareWithBest, dayLabel, formatStageTime, hardestDays
 import { SLEEP_KINDS, SLEEP_LABEL } from '../models/routePlan';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { stageWater, stageWaterShort } from '../engine/stageWater';
 import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
 
@@ -26,8 +27,14 @@ function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): strin
 }
 
 export function EtappesPage() {
+
   const navigate = useNavigate();
-  const { trainingGoals, goalMilestones, sessionLogs } = useAppData();
+  const { trainingGoals, goalMilestones, sessionLogs, settings } = useAppData();
+  const showWater = settings.showStageWater !== false;
+  const waterShort = (stage: Gr5Stage): string => {
+    const w = stageWater(stage, settings.sweatEntries);
+    return w ? stageWaterShort(w) : '';
+  };
   const { plan, loaded, choose } = useTripPlan();
   const [openId, setOpenId] = usePageState<string | null>('openId', null, (v) => v === null || GR5_STAGES.some((st) => st.id === v));
   const today = todayISO();
@@ -141,6 +148,7 @@ export function EtappesPage() {
                       !first && choice?.sleep ? SLEEP_LABEL[choice.sleep] : '',
                       restAfter ? 'rustdag erna' : '',
                       hasHighPass(stage) ? 'hoge pas' : '',
+                      showWater ? waterShort(stage) : '',
                     ].filter(Boolean).join(' · ')}
                   </span>
                 </span>
@@ -166,6 +174,7 @@ export function EtappesPage() {
           day={dayOfStage(open)}
           logs={sessionLogs}
           today={today}
+          water={showWater ? stageWater(open, settings.sweatEntries) : undefined}
           onChoose={choose}
           onClose={() => setOpenId(null)}
         />

@@ -4,8 +4,8 @@ import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
 import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { predictDuration } from '../../engine/durationLearning';
-import { journeyProgress } from '../../engine/journey';
-import { breakInTotals } from '../../engine/bootBreakIn';
+import { journeyProgress, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
+import { bootBreakInStatus, bootGoalKm, breakInTotals } from '../../engine/bootBreakIn';
 import { baseWeightGrams, resolvePackItems } from '../../engine/packList';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { programAnchorDate } from '../../engine/programLayout';
@@ -104,7 +104,9 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     const strength = templates.filter(
       (t) => t.type === 'strength' && !t.weeklyProgression && (t.defaultDayOfWeek || plannedSessions.some((s) => s.templateId === t.id && s.scheduledDate >= today)),
     );
-    const progress = goalDate ? journeyProgress(JOURNEY_TASKS, settings.journey) : undefined;
+    const journeyState = normalizeJourneyState(settings.journey).state;
+    const boots = bootBreakInStatus({ boots: journeyState?.boots, logs: sessionLogs, goalKm: bootGoalKm(settings.bootBreakInKm), today, departure: goalDate });
+    const progress = goalDate ? journeyProgress(JOURNEY_TASKS, withBootsDone(withDerivedDone(journeyState, settings.sweatEntries), boots, today)) : undefined;
     const use = loaded.watch?.use ?? DEFAULT_WATCH_USE;
     return {
       today,

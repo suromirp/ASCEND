@@ -27,6 +27,8 @@ import { LogInfluenceCard } from './influence/LogInfluenceCard';
 import { InfluenceSheet } from './influence/InfluenceSheet';
 import { useDeviation } from './influence/useInfluence';
 import { entryForLog, isNoted } from '../engine/influence';
+import { SweatSheet } from './SweatSheet';
+import { entryResultLine, isSweatLog } from '../engine/sweat';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
 const RESTORE_TIMEOUT_MS = 15_000;
@@ -85,6 +87,8 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   const deviation = useDeviation(log);
   const showDeviation = !!deviation && settings.influenceSign !== false;
   const [influenceOpen, setInfluenceOpen] = useState(false);
+  const [sweatOpen, setSweatOpen] = useState(false);
+  const sweatEntry = settings.sweatEntries?.find((e) => e.logId === log.id);
   const influenceNoted = (() => { const e = entryForLog(settings.influences, log.id); return !!e && isNoted(e); })();
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -297,6 +301,18 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
             </div>
           )}
 
+          {isSweatLog(log) && (
+            <div className="mt-3">
+              <SheetRows>
+                <SheetRow
+                  title="Zweetverlies"
+                  sub={(sweatEntry && entryResultLine(sweatEntry)) || 'Weeg jezelf voor en na en leer je eigen tempo'}
+                  onClick={() => setSweatOpen(true)}
+                />
+              </SheetRows>
+            </div>
+          )}
+
           <div className="mt-2">
             <StravaTextButton log={log} template={templates.find((t) => t.id === log.templateId)} />
           </div>
@@ -322,6 +338,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     </Portal>
     {/* Next to the sheet, not inside it: a tap in this one must not close that one. */}
     {trimming && <TrimSheet log={log} templateName={templateName} onClose={() => setTrimming(false)} />}
+    {sweatOpen && <SweatSheet log={log} templateName={templateName} onClose={() => setSweatOpen(false)} />}
     {influenceOpen && (
       <InfluenceSheet eyebrow={formatDateNL(log.completedDate)} title="Wat speelde er?" line={templateName} target={{ date: log.completedDate, logId: log.id }} log={log} onClose={() => setInfluenceOpen(false)} />
     )}

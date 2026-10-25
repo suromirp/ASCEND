@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { bootBreakInStatus, bootGoalKm, type BootBreakInStatus, type BootsState } from '../../engine/bootBreakIn';
-import { journeyProgress, EMPTY_JOURNEY, markDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, type JourneyPick, type JourneyState } from '../../engine/journey';
+import { journeyProgress, EMPTY_JOURNEY, markDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, withBootsDone, withDerivedDone, type JourneyPick, type JourneyState } from '../../engine/journey';
 import { programAnchorDate } from '../../engine/programLayout';
 import { todayISO } from '../../utils/dates';
 
@@ -28,13 +28,12 @@ export function useJourney(): {
     () => bootBreakInStatus({ boots: stored?.boots, logs: sessionLogs, goalKm: bootGoalKm(settings.bootBreakInKm), today, departure: goalDate }),
     [stored?.boots, sessionLogs, settings.bootBreakInKm, today, goalDate],
   );
-  // De taak "schoenen" is af zodra het doel gehaald is op tijd; dat wordt afgeleid
-  // uit het logboek en nooit als vlag opgeslagen.
-  const state = useMemo<JourneyState | undefined>(() => {
-    if (boots.kind !== 'done' || stored?.done.schoenen) return stored;
-    const base = stored ?? EMPTY_JOURNEY;
-    return { ...base, done: { ...base.done, schoenen: boots.reachedOn ?? today } };
-  }, [stored, boots.kind, boots.reachedOn, today]);
+  // Wat uit je gegevens volgt telt als af, zonder vlag: de zweetmetingen en de bergschoenen
+  // (die zijn af zodra het doel op tijd gehaald is, uit het logboek).
+  const state = useMemo(
+    () => withBootsDone(withDerivedDone(stored, settings.sweatEntries), boots, today),
+    [stored, settings.sweatEntries, boots, today],
+  );
   const pick = pickJourneyTask(JOURNEY_TASKS, state, today, goalDate);
   const progress = journeyProgress(JOURNEY_TASKS, state);
 

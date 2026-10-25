@@ -77,6 +77,13 @@ export const JOURNEY_TASKS: JourneyTask[] = [
     link: { label: 'Je paklijst', to: '/reis/paklijst' },
   },
   {
+    id: 'meet-zweetverlies',
+    title: 'Meet je zweetverlies',
+    why: 'Hoeveel je zweet verschilt sterk van mens tot mens, en op de GR5 loop je zomerdagen van 6 tot 8 uur waar bronnen soms uren uit elkaar liggen. Weeg jezelf zonder kleren en na het plassen, vlak voor en vlak na een lange wandeling of loop op een warme dag. Schrijf op wat je dronk, en wat je onderweg plaste. Open daarna de training in je Logboek en kies Zweetverlies. Een kilo minder is ongeveer een liter zweet. Met twee metingen weet ASCEND je tempo bij die temperatuur en rekent het water per etappe daarmee. Deze taak is af zodra je twee metingen hebt.',
+    window: [16, 4],
+    link: { label: 'Water per etappe', to: '/etappes' },
+  },
+  {
     id: 'reservering-data',
     title: 'Zoek uit wanneer je bivakplekken kunt reserveren',
     why: 'In de drie natuurreservaten van de Haute-Savoie reserveer je bivakplekken online. In het hart van de Vanoise mag je alleen bivakkeren bij bepaalde refuges en op reservering. Kijk in januari wanneer de reserveringen opengaan en noteer de data.',

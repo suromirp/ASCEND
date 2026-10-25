@@ -100,6 +100,7 @@ describe('rowSummary: doel en tochten', () => {
     expect(rowSummary('bergschoenen', facts({ settings: { ...facts().settings, bootBreakInKm: 150 }, bootKm: 42.4 }))).toMatchObject({ value: '150 km', sub: '42 van 150 km ingelopen' });
     expect(rowSummary('bergschoenen-herinnering', facts()).checked).toBe(true);
     expect(rowSummary('bergschoenen-herinnering', facts({ settings: { ...facts().settings, bootBreakInReminder: false } })).checked).toBe(false);
+    expect(rowSummary('water-per-etappe', facts())).toEqual({ checked: true });
   });
 
   it('de groep Doel en tochten noemt het aantal tochten, niet de week', () => {
