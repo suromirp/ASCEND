@@ -486,6 +486,14 @@ with Akkoord (`engine/influenceProposal.ts`). Morning numbers from intervals.icu
 days for this (`engine/wellnessRange.ts`). A reason is never in a list, a notification or the
 Strava text.
 
+**Heart rate on the watch** (`engine/watchHeartRate.ts`, `engine/heartRateZones.ts`, decision
+`docs/beslissingen/2026-10-25-hartslag-op-het-horloge.md`): ASCEND's zones follow Garmin's
+"Standaard" split on the threshold (66-81, 81-89, 89-96, 96-101%). With "Zones van ASCEND" (the
+advice) a workout sent to intervals.icu carries ASCEND's own beats as a percentage of the
+threshold intervals.icu uses (read from its sport settings), so the watch shows the same range
+the app judges by; a zone name is only the fallback. An easy step runs from the start of zone 1 to
+the end of its own zone ("Rustige loop: ruime grens"), intensity 4 up to the maximum.
+
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.
