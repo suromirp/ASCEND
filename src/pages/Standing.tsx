@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from '../components/ui';
@@ -34,19 +34,11 @@ import { SkyBand, SkyPanel } from '../components/SkyBand';
 // descent, your running (Lopen: efficiency, long days, climbing and form, with
 // the card Tempo bij zone 2) and your main goal (engine/standing.ts).
 
-const SECTIONS = [
-  { id: 'benen', label: 'Benen' },
-  { id: 'belasting', label: 'Belasting' },
-  { id: 'lopen', label: 'Lopen' },
-  { id: 'doel', label: 'Doel' },
-] as const;
-
 export function StandingPage() {
   const navigate = useNavigate();
   const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones, goalMilestoneProgress, sessionsForWeek } = useAppData();
   const inputs = useLegFatigueInputs();
   const today = inputs.today;
-  const refs = useRef<Record<string, HTMLElement | null>>({});
 
   const curve = useMemo(() => freshnessCurve(inputs), [inputs]);
   const calendar = useMemo(() => legCalendar(inputs), [inputs]);
@@ -136,27 +128,14 @@ export function StandingPage() {
           op de andere tabs. */}
       {gr5 && <Gr5ReadinessCard readiness={gr5} />}
 
-      <nav className="sticky top-0 z-10 -mx-4 flex gap-2 px-4 py-2" style={{ background: 'var(--color-bg)' }} aria-label="Onderdelen">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => refs.current[s.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="min-h-[44px] rounded-full border px-4 text-xs"
-            style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink)' }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </nav>
-
-      <section ref={(el) => { refs.current.benen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Benen">
+      <section className="flex flex-col gap-5" aria-label="Benen">
         <LegFatigueCard />
         <FreshnessChart points={curve} today={today} />
         <LegCalendar days={calendar} today={today} />
         <IndexCheckCard checks={checks} />
       </section>
 
-      <section ref={(el) => { refs.current.belasting = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Belasting">
+      <section className="flex flex-col gap-5" aria-label="Belasting">
         <WeeklyLoadChart weeks={weeks} />
         <IntensityMixCard mix={mix} />
         <DescentCard weeks={descent} routeDayDescent={routeDescent} />
@@ -190,12 +169,12 @@ export function StandingPage() {
         ))}
       </SkyPanel>
 
-      <section ref={(el) => { refs.current.lopen = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Lopen">
+      <section className="flex flex-col gap-5" aria-label="Lopen">
         <RunTrendsCard />
         <AerobicTrendCard />
       </section>
 
-      <section ref={(el) => { refs.current.doel = el; }} className="flex scroll-mt-14 flex-col gap-5" aria-label="Doel">
+      <section className="flex flex-col gap-5" aria-label="Doel">
         {progress && <AdventureCard progress={progress} onOpenLadder={() => navigate('/ascend')} />}
         <LessonCard />
       </section>

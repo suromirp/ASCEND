@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays } from '../utils/dates';
 import { racePaces } from './racePaces';
@@ -15,6 +15,13 @@ import {
   selectWatchWorkouts,
   type TrackedWorkout,
 } from './watchWorkout';
+
+// The default plan starts at the real today, so on a Sunday the first week has hardly
+// any trainings left; these tests run on a fixed Wednesday instead.
+vi.hoisted(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-21T08:00:00'));
+});
 
 const { templates, program, plannedSessions } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;

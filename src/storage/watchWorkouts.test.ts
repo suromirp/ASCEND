@@ -18,6 +18,13 @@ import { selectWatchWorkouts } from '../engine/watchWorkout';
 import { addDays } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 
+// The default plan starts at the real today, so on a Sunday the first week has hardly
+// any trainings left; these tests run on a fixed Wednesday instead.
+vi.hoisted(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-21T08:00:00'));
+});
+
 const KEY = 'geheime-sleutel-0123';
 const ATHLETE = 'i12345';
 
