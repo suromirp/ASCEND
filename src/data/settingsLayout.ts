@@ -43,7 +43,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     advanced: ['zware-dingen'],
   },
   doel: {
-    rows: ['doelen', 'programma', 'lange-zondag', 'na-hoofddoel', 'volgende-tocht', 'rust-na-tocht', 'vrije-dagen', 'reisplanner', 'paklijst'],
+    rows: ['doelen', 'programma', 'lange-zondag', 'na-hoofddoel', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'vrije-dagen', 'reisplanner', 'paklijst'],
     advanced: [],
   },
   forge: {

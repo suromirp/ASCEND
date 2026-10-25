@@ -256,6 +256,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
+    case 'water-per-etappe':
+      return { checked: s.showStageWater !== false };
     case 'rust-na-tocht':
       return { value: choiceShort('rustNaTocht', s.trekLegRest ?? 'soft') };
     case 'vrije-dagen':

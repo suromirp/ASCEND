@@ -52,7 +52,8 @@ import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { mergeSweatEntries } from '../engine/sweat';
+import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -231,6 +232,20 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (nights.list === undefined) delete s.nightJudgments;
     else s.nightJudgments = nights.list;
     skipped.n += nights.skipped;
+  }
+  // Your own weighings for sweat loss: record by record, a damaged one is dropped and
+  // counted, an older file has none and leaves the weighings on the device alone
+  // (storage/migrations.ts#migrateSweatEntries).
+  if ('sweatEntries' in s) {
+    const sweat = migrateSweatEntries(s.sweatEntries);
+    if (sweat.list === undefined) delete s.sweatEntries;
+    else s.sweatEntries = sweat.list;
+    skipped.n += sweat.skipped;
+  }
+  // The switch for water per stage: a yes or a no, or not there.
+  if ('showStageWater' in s && typeof s.showStageWater !== 'boolean') {
+    delete s.showStageWater;
+    skipped.n++;
   }
   // Your notes of "Wat speelde er": record by record, a damaged one is dropped and
   // counted, an older file has none and leaves the notes on the device alone
@@ -699,6 +714,11 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     const byDate = new Map((incoming.nightJudgments ?? []).map((j) => [j.date, j]));
     for (const j of current.nightJudgments ?? []) byDate.set(j.date, j);
     merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
+  }
+  // Weighings for sweat loss are history too: the union per id, the device's own wins, one
+  // per training (engine/sweat.ts#mergeSweatEntries).
+  if (incoming.sweatEntries || current.sweatEntries) {
+    merged.sweatEntries = mergeSweatEntries(current.sweatEntries, incoming.sweatEntries);
   }
   // Notes of "Wat speelde er" are history too: the union per id, the newest updatedAt
   // wins and on a tie the device does. A note you removed on this device comes back

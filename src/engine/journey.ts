@@ -13,6 +13,8 @@
 // Pure: no React, no IndexedDB.
 
 import type { JourneyTask } from '../data/journeyTasks';
+import type { SweatEntry } from '../models/sweat';
+import { weighedCount, weighedDate } from './sweat';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 
 // What is stored (AppSettings.journey). `v` is the shape's own version, so
@@ -100,6 +102,21 @@ export function unmarkDone(state: JourneyState | undefined, taskId: string): Jou
 export function postponeTask(state: JourneyState | undefined, taskId: string, today: string): JourneyState {
   const base = state ?? EMPTY_JOURNEY;
   return { ...base, week: { weekStart: mondayOfWeek(today), taskId, postponed: true } };
+}
+
+// --- tasks that are done by what you did ----------------------------------------------------
+// "Meet je zweetverlies" is done once there are two weighings of your own. Never stored as a
+// flag: derived from the list, so removing a weighing opens the task again.
+export const SWEAT_TASK_ID = 'meet-zweetverlies';
+export const SWEAT_TASK_MEASUREMENTS = 2;
+
+// The state as the screens show it: what you ticked, plus what the data says is done.
+export function withDerivedDone(state: JourneyState | undefined, sweat: SweatEntry[] | undefined): JourneyState | undefined {
+  if (weighedCount(sweat) < SWEAT_TASK_MEASUREMENTS) return state;
+  const date = weighedDate(sweat, SWEAT_TASK_MEASUREMENTS);
+  const base = state ?? EMPTY_JOURNEY;
+  if (base.done[SWEAT_TASK_ID] || !date) return state;
+  return { ...base, done: { ...base.done, [SWEAT_TASK_ID]: date } };
 }
 
 // --- the timeline -----------------------------------------------------------------

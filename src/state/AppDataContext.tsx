@@ -292,6 +292,7 @@ import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDat
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { makeId } from '../utils/id';
 import type { InfluenceEntry } from '../models/influence';
+import type { SweatEntry } from '../models/sweat';
 import { applyChange, blankEntry, excludedLogIds, type NoteTarget } from '../engine/influence';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -517,6 +518,9 @@ interface AppData {
   // "Wat speelde er" (engine/influence.ts): your own notes next to the history. Each call
   // saves at once and reads the stored list first, so quick taps never overwrite each other.
   saveInfluence: (target: NoteTarget, change: (entry: InfluenceEntry) => InfluenceEntry) => Promise<void>;
+  // Your weighing for sweat loss, one per training (settings.sweatEntries); a weighing without
+  // numbers is removed.
+  saveSweat: (entry: SweatEntry | { logId: string; remove: true }) => Promise<void>;
   removeInfluence: (id: string) => Promise<void>;
   clearInfluences: () => Promise<void>;
   reportIllness: (kind: IllnessKind) => Promise<void>;
@@ -1839,6 +1843,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }),
     [writeInfluences],
   );
+  // Weighings for sweat loss share the same one-at-a-time lane as the notes.
+  const saveSweat = useCallback(
+    async (entry: SweatEntry | { logId: string; remove: true }) => {
+      const job = influenceTail.current.then(async () => {
+        const stored = await SettingsRepo.get();
+        const rest = (stored.sweatEntries ?? []).filter((e) => e.logId !== entry.logId);
+        setSettings(await SettingsRepo.set({ sweatEntries: 'remove' in entry ? rest : [...rest, entry] }));
+      });
+      influenceTail.current = job.catch(() => undefined);
+      return job;
+    },
+    [],
+  );
   const removeInfluence = useCallback((id: string) => writeInfluences((list) => list.filter((e) => e.id !== id)), [writeInfluences]);
   const clearInfluences = useCallback(() => writeInfluences(() => []), [writeInfluences]);
 
@@ -2507,6 +2524,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     commitPlanChange,
     undoRecentChange,
     saveInfluence,
+    saveSweat,
     removeInfluence,
     clearInfluences,
     reportIllness,

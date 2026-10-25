@@ -7,6 +7,7 @@ import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
+import type { SweatEntry } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { InfluenceEntry } from '../models/influence';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
@@ -618,6 +619,12 @@ export interface AppSettings {
   // the backup schema number does not move; travels with the settings and is read
   // defensively on import (storage/migrations.ts#migrateNightJudgments).
   nightJudgments?: NightJudgment[];
+  // Je eigen wegingen voor en na een training: het zweetverlies (models/sweat.ts,
+  // engine/sweat.ts). Een lijst naast de logs, zodat een log nooit verandert; wordt
+  // defensief gelezen (storage/migrations.ts#migrateSweatEntries) en per id samengevoegd.
+  sweatEntries?: SweatEntry[];
+  // Water per etappe tonen op Etappes en in het blad van een etappe. Standaard aan.
+  showStageWater?: boolean;
   // "Vragen bij een korte nacht": ask instead of warning when the watch saw
   // doubtfully little sleep. Absent = on. Optional and additive.
   askShortNight?: boolean;

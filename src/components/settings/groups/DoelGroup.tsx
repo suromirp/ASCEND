@@ -48,6 +48,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
 
       <SettingsSection title="Tochten">
         <SummaryRow id="volgende-tocht" title="Volgende tocht op Vandaag" facts={facts} onChange={(on) => void updateSettings({ showNextTrek: on })} />
+        <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
         <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setSheet('rust-na-tocht')} />
         <SummaryRow id="vrije-dagen" title="Vrije dagen en vakanties" facts={facts} onClick={() => navigate('/week')} />
       </SettingsSection>

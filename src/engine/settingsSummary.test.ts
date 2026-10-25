@@ -94,6 +94,7 @@ describe('rowSummary: doel en tochten', () => {
     expect(rowSummary('vrije-dagen', facts()).value).toBe('1 gepland');
     expect(rowSummary('reisplanner', facts()).value).toBe('5 open');
     expect(rowSummary('paklijst', facts()).value).toBe('8,4 kg');
+    expect(rowSummary('water-per-etappe', facts())).toEqual({ checked: true });
   });
 
   it('de groep Doel en tochten noemt het aantal tochten, niet de week', () => {

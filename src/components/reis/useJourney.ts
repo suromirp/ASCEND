@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
-import { journeyProgress, markDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, type JourneyPick, type JourneyState } from '../../engine/journey';
+import { journeyProgress, markDone, withDerivedDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, type JourneyPick, type JourneyState } from '../../engine/journey';
 import { programAnchorDate } from '../../engine/programLayout';
 import { todayISO } from '../../utils/dates';
 
@@ -19,13 +19,14 @@ export function useJourney(): {
   const { settings, updateSettings, trainingGoals, goalMilestones } = useAppData();
   const today = todayISO();
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, today);
-  const state = useMemo(() => normalizeJourneyState(settings.journey).state, [settings.journey]);
+  const stored = useMemo(() => normalizeJourneyState(settings.journey).state, [settings.journey]);
+  const state = useMemo(() => withDerivedDone(stored, settings.sweatEntries), [stored, settings.sweatEntries]);
   const pick = pickJourneyTask(JOURNEY_TASKS, state, today, goalDate);
   const progress = journeyProgress(JOURNEY_TASKS, state);
 
   // Two quick taps must not overwrite each other with an older state.
-  const latest = useRef(state);
-  useEffect(() => { latest.current = state; }, [state]);
+  const latest = useRef(stored);
+  useEffect(() => { latest.current = stored; }, [stored]);
   const commit = useCallback((next: JourneyState) => {
     latest.current = next;
     void updateSettings({ journey: next });

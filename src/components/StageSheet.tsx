@@ -9,6 +9,7 @@ import { EARLY_START_NOTE, GR5_SECTIONS, GR5_STAGES, STAGES_SOURCE, STAGES_TAKEN
 import { BIVOUAC_CHECK_NOTE, BIVOUAC_EVERYWHERE } from '../data/gr5Bivouac';
 import { canMergeWithNext, compareWithBest, formatStageTime, hasHighPass, regimesOf, sleepWarning, stageIndex, type DayCompareRow, type ItineraryDay } from '../engine/routePlan';
 import type { SessionLog } from '../models/training';
+import { stageWaterBasisLine, stageWaterLine, waterPointsLine, type StageWater } from '../engine/stageWater';
 import { formatDateNL, formatHoursMinutesNL, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
@@ -37,6 +38,7 @@ export function StageSheet({
   day,
   logs,
   today,
+  water,
   onChoose,
   onClose,
 }: {
@@ -46,6 +48,8 @@ export function StageSheet({
   day: ItineraryDay;
   logs: SessionLog[];
   today: string;
+  // Je zweet op deze etappe, als de instelling aan staat en de site een looptijd geeft.
+  water?: StageWater;
   onChoose: (stageId: string, patch: Partial<StageChoice>) => void;
   onClose: () => void;
 }) {
@@ -215,6 +219,16 @@ export function StageSheet({
             </Block>
 
             <Block heading="WATER EN WINKEL">
+              {water && (
+                <div className="mb-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
+                  <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{stageWaterLine(water)}</p>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{stageWaterBasisLine(water)}</p>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{waterPointsLine(stage)}</p>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                    Een richtlijn voor wat je kwijtraakt, geen medisch advies. Het gaat erom dat je niet te veel uitdroogt, niet om alles terug te drinken. De tijd is die van de site, zonder pauzes.
+                  </p>
+                </div>
+              )}
               {!stage.water && !stage.shop ? (
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                   Voor deze etappe is niet bekend waar water en winkels zijn. Neem genoeg mee voor de hele dag en filter water van weiden met vee.

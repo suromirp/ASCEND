@@ -10,6 +10,7 @@ import { parseWeekShape, type WeekShape } from '../engine/sports';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
 import type { NightJudgment } from '../models/checkIn';
+import type { SweatEntry } from '../models/sweat';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
 import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
 import type { ExternalOneRm, OneRmReading, WeightEntry } from '../models/metrics';
@@ -129,6 +130,66 @@ export function migrateNightJudgments(raw: unknown): { list: NightJudgment[] | u
     });
   }
   return { list: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)), skipped };
+}
+
+// --- zweetverlies: settings.sweatEntries ---------------------------------------------
+// Je eigen wegingen bij trainingen (models/sweat.ts). Optioneel en additief, dus het
+// schemanummer van de back-up verandert niet: een bestand van voor deze lijst heeft geen
+// sleutel, en dat laat de metingen op het toestel met rust. Een record zonder id, training,
+// datum of soort valt weg en wordt geteld; een kapot getal verliest alleen zichzelf. Een
+// meting zonder één bruikbaar getal (weging, horloge) valt ook weg. Per training blijft de
+// laatste staan.
+const SWEAT_RANGES = {
+  weightBeforeKg: [20, 300],
+  weightAfterKg: [20, 300],
+  drankMl: [0, 10000],
+  peeMl: [0, 3000],
+  watchMl: [1, 10000],
+  tempC: [-40, 55],
+} as const;
+
+export function migrateSweatEntries(raw: unknown): { list: SweatEntry[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byLog = new Map<string, SweatEntry>();
+  let skipped = 0;
+  for (const item of raw) {
+    const r = typeof item === 'object' && item !== null && !Array.isArray(item) ? (item as Record<string, unknown>) : undefined;
+    if (
+      !r ||
+      typeof r.id !== 'string' || !r.id ||
+      typeof r.logId !== 'string' || !r.logId ||
+      typeof r.date !== 'string' || !ISO_DAY.test(r.date.slice(0, 10)) ||
+      (r.activity !== 'run' && r.activity !== 'walk') ||
+      typeof r.durationMinutes !== 'number' || !Number.isFinite(r.durationMinutes) || r.durationMinutes <= 0 || r.durationMinutes > 2000
+    ) {
+      skipped++;
+      continue;
+    }
+    const entry: SweatEntry = {
+      id: r.id,
+      logId: r.logId,
+      date: r.date.slice(0, 10),
+      activity: r.activity,
+      durationMinutes: Math.round(r.durationMinutes),
+      updatedAt: typeof r.updatedAt === 'string' ? r.updatedAt : `${r.date.slice(0, 10)}T00:00:00.000Z`,
+    };
+    for (const key of Object.keys(SWEAT_RANGES) as (keyof typeof SWEAT_RANGES)[]) {
+      const v = r[key];
+      if (v === undefined) continue;
+      const [lo, hi] = SWEAT_RANGES[key];
+      if (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi) entry[key] = v;
+      else skipped++;
+    }
+    const weighed = entry.weightBeforeKg !== undefined && entry.weightAfterKg !== undefined;
+    if (!weighed && entry.watchMl === undefined) {
+      skipped++;
+      continue;
+    }
+    const seen = byLog.get(entry.logId);
+    if (!seen || entry.updatedAt >= seen.updatedAt) byLog.set(entry.logId, entry);
+  }
+  return { list: [...byLog.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)), skipped };
 }
 
 // --- Garmin is leidend: SessionLog.manualMeasured -----------------------------
