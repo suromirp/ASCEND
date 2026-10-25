@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RecoveryMetricsRepo, SessionLogsRepo, wipeAllData } from './database';
+import { RecoveryMetricsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import {
   clearConnection,
   getWatchState,
@@ -10,7 +10,7 @@ import {
   setAutoTick,
   syncWatchActivities,
 } from './externalActivities';
-import { getRecoveryMetrics, syncWellness } from './wellness';
+import { clearWellness, getRecoveryMetrics, pruneWellness, syncWellness } from './wellness';
 import { buildBackupEnvelope } from './backup';
 import type { SessionLog } from '../models/training';
 import { addDays, todayISO } from '../utils/dates';
@@ -93,12 +93,14 @@ describe('sleep, resting heart rate and HRV', () => {
     expect((await getRecoveryMetrics()).map((m) => m.id)).toEqual(['hand-1']);
   });
 
-  it('old days are dropped on the next fetch', async () => {
-    const old = addDays(todayISO(), -60);
+  it('days older than 400 are dropped on the next fetch, younger ones stay', async () => {
+    const old = addDays(todayISO(), -450);
+    const kept = addDays(todayISO(), -100);
+    await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${kept}`, date: kept, restingHeartRate: 50, source: 'import' }]);
     await RecoveryMetricsRepo.putAll([{ id: `intervals.icu:${old}`, date: old, restingHeartRate: 50, source: 'import' }]);
     const result = await syncWellness({ athleteId: ATHLETE, apiKey: KEY }, { fetchImpl: asFetch(intervalsFetch([tonight()])) });
     expect(result).toEqual({ status: 'ok', days: 1, today: true });
-    expect((await getRecoveryMetrics()).map((m) => m.date)).toEqual([todayISO()]);
+    expect((await getRecoveryMetrics()).map((m) => m.date).sort()).toEqual([kept, todayISO()]);
   });
 
   it('gives a message instead of throwing when the key is wrong', async () => {
@@ -114,6 +116,53 @@ describe('sleep, resting heart rate and HRV', () => {
     expect(text).not.toContain('intervals.icu:');
     expect(text).not.toContain('sleepMinutes');
     expect(text).not.toContain('restingHeartRate');
+  });
+});
+
+describe('the long stretch for "Wat speelde er"', () => {
+  beforeEach(async () => {
+    await wipeAllData();
+  });
+  const conn = { athleteId: ATHLETE, apiKey: KEY };
+  const wellnessUrls = (f: ReturnType<typeof intervalsFetch>) => f.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('/wellness'));
+  const note = (daysAgo: number) => ({ id: 'n1', date: addDays(todayISO(), -daysAgo), reasons: [{ reason: 'stress' as const }], updatedAt: '2026-10-25T08:00:00.000Z' });
+
+  it('is not fetched without notes', async () => {
+    const f = intervalsFetch([tonight()]);
+    await syncWellness(conn, { fetchImpl: asFetch(f) });
+    expect(wellnessUrls(f)).toHaveLength(1);
+  });
+
+  it('is fetched once for an old note, in parts, and not at the next sync', async () => {
+    await SettingsRepo.set({ influences: [note(250)] });
+    const f = intervalsFetch([tonight()]);
+    await syncWellness(conn, { fetchImpl: asFetch(f) });
+    const first = wellnessUrls(f);
+    expect(first.length).toBeGreaterThan(1);
+    expect(first[0]).toContain(`oldest=${addDays(todayISO(), -250 + 1 - 28)}`);
+    const f2 = intervalsFetch([tonight()]);
+    await syncWellness(conn, { fetchImpl: asFetch(f2) });
+    expect(wellnessUrls(f2)).toHaveLength(1);
+  });
+
+  it('never goes back further than 400 days', async () => {
+    await SettingsRepo.set({ influences: [note(399)] });
+    const f = intervalsFetch([]);
+    await syncWellness(conn, { fetchImpl: asFetch(f) });
+    expect(wellnessUrls(f)[0]).toContain(`oldest=${addDays(todayISO(), -400)}`);
+  });
+
+  it('is fetched again after unlinking or switching a kind off', async () => {
+    await SettingsRepo.set({ influences: [note(250)] });
+    await syncWellness(conn, { fetchImpl: asFetch(intervalsFetch([])) });
+    await clearWellness();
+    const f = intervalsFetch([]);
+    await syncWellness(conn, { fetchImpl: asFetch(f) });
+    expect(wellnessUrls(f).length).toBeGreaterThan(1);
+    await pruneWellness({ activities: true, sleep: false, restingHeartRate: true, hrv: true } as never);
+    const g = intervalsFetch([]);
+    await syncWellness(conn, { fetchImpl: asFetch(g) });
+    expect(wellnessUrls(g).length).toBeGreaterThan(1);
   });
 });
 

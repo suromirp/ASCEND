@@ -7,16 +7,20 @@
 // carry the id "intervals.icu:<date>", which is how unlinking finds exactly
 // these and leaves anything entered another way alone.
 
-import { RecoveryMetricsRepo } from './database';
-import { BASELINE_DAYS } from '../engine/wellnessCheck';
+import { MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
+import { KEEP_DAYS, wellnessPlan } from '../engine/wellnessRange';
+import { morningOf } from '../engine/influenceEffects';
 import { fetchIntervalsWellness, INTERVALS_ADAPTER_ID, intervalsErrorMessage, type FetchOptions, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import type { RecoveryMetric } from '../models/metrics';
 import { addDays, todayISO } from '../utils/dates';
 
-// The four weeks that make "your own average", plus today. Older records are
-// dropped on the next fetch: nothing needs them.
-const KEEP_DAYS = BASELINE_DAYS + 7;
+// Records are kept for KEEP_DAYS (engine/wellnessRange.ts): "Wat speelde er" compares a noted
+// morning with the 28 days before it, which can lie months back. Everything that reads them picks
+// its own window (engine/wellnessCheck.ts#baselineValues), so keeping more changes nothing there.
+// The earliest day the fetches have covered is remembered, so the long stretch is fetched once
+// (a new note, a restored backup) and not at every sync.
+const COVERED_KEY = 'wellnessCoveredFrom';
 
 export type WellnessSyncResult =
   | { status: 'ok'; days: number; today: boolean }
@@ -37,7 +41,16 @@ export async function syncWellness(connection: IntervalsConnection, options: Fet
     const today = options.today ?? todayISO();
     const use = options.use ?? DEFAULT_WATCH_USE;
     if (!wellnessWanted(use)) return { status: 'ok', days: 0, today: false };
-    const fetched = await fetchIntervalsWellness(connection, { from: addDays(today, -BASELINE_DAYS), to: today }, { fetchImpl: options.fetchImpl });
+    const settings = await SettingsRepo.get();
+    const plan = wellnessPlan({
+      today,
+      mornings: (settings.influences ?? []).filter((e) => e.reasons.length > 0).map(morningOf),
+      coveredFrom: await MetaRepo.get<string>(COVERED_KEY),
+    });
+    // Oldest first; every request has its own time limit (integrations/intervalsIcu.ts).
+    const fetched: RecoveryMetric[] = [];
+    for (const range of plan.ranges) fetched.push(...(await fetchIntervalsWellness(connection, range, { fetchImpl: options.fetchImpl })));
+    await MetaRepo.set(COVERED_KEY, plan.coveredFrom);
     const metrics = filterRecovery(fetched, use);
     const cutoff = addDays(today, -KEEP_DAYS);
     const existing = await RecoveryMetricsRepo.getAll();
@@ -53,6 +66,7 @@ export async function syncWellness(connection: IntervalsConnection, options: Fet
 
 // Unlinking: what came from intervals.icu goes, what you entered yourself stays.
 export async function clearWellness(): Promise<void> {
+  await MetaRepo.set(COVERED_KEY, undefined);
   for (const m of await RecoveryMetricsRepo.getAll()) {
     if (m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`)) await RecoveryMetricsRepo.delete(m.id);
   }
@@ -61,6 +75,7 @@ export async function clearWellness(): Promise<void> {
 // A kind was switched off: it leaves what is stored, so nothing keeps using it.
 // Records of other origin are not touched. Switching it on again fetches it anew.
 export async function pruneWellness(use: WatchUse): Promise<void> {
+  await MetaRepo.set(COVERED_KEY, undefined);
   const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`));
   const kept = filterRecovery(ours, use);
   const keptIds = new Set(kept.map((m) => m.id));
