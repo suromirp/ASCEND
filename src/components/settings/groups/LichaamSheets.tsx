@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
@@ -144,9 +144,16 @@ export function HeartRateSheet({ onClose }: { onClose: () => void }) {
     const why = heartRateProblem(field, value, hr);
     setProblem(why ?? null);
     if (why) return;
-    // De slagen op je horloge volgen de drempel: staat het sturen aan, dan draait een ronde meteen.
-    void updateSettings({ heartRate: { ...hr, [field]: value } }).then(() => syncWatchWorkouts({ force: true }));
+    void updateSettings({ heartRate: { ...hr, [field]: value } }).then(() => {
+      changed.current = true;
+    });
   };
+  // De slagen op je horloge volgen de drempel: staat het sturen aan, dan draait er één ronde zodra
+  // het blad sluit, niet bij elk getal dat je typt.
+  const changed = useRef(false);
+  useEffect(() => () => {
+    if (changed.current) void syncWatchWorkouts({ force: true });
+  }, []);
   const zones = ZONES.map((z) => ({ ...z, bpm: zoneBpm(z.level, hr) })).filter((z) => z.bpm);
   return (
     <Sheet eyebrow="Lichaam" title="Hartslag" line="Uit Garmin Connect, bij je hartslagzones." onClose={onClose}>
