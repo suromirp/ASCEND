@@ -134,5 +134,11 @@ describe('de tekst', () => {
     expect(morningNumber(THURSDAY, [...metrics, { id: 'x', date: THURSDAY, restingHeartRate: 58, source: 'garmin' }])).toEqual({ restingHr: 58, diff: 8 });
     expect(morningNumber(THURSDAY, [{ id: 'x', date: THURSDAY, restingHeartRate: 58, source: 'garmin' }])).toEqual({ restingHr: 58 });
     expect(morningNumber(THURSDAY, metrics)).toBeUndefined();
+    // Ochtenden met "Deze nacht niet meetellen" doen niet mee in het gemiddelde, zoals op de ochtendkaart.
+    const odd = new Set(metrics.slice(0, 3).map((m) => m.date));
+    const high = metrics.map((m) => (odd.has(m.date) ? { ...m, restingHeartRate: 80 } : m));
+    const today = { id: 'x', date: THURSDAY, restingHeartRate: 58, source: 'garmin' as const };
+    expect(morningNumber(THURSDAY, [...high, today])!.diff).toBeLessThan(8);
+    expect(morningNumber(THURSDAY, [...high, today], odd)!.diff).toBe(8);
   });
 });

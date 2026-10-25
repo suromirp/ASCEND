@@ -249,34 +249,38 @@ describe('hartslag bij een rustig tempo', () => {
 });
 
 describe('lijkt op', () => {
-  // Vier keer stress (+3) en vier keer alcohol (+8): de ochtend van nu is +8.
-  const stress = ['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27'];
+  // Vier keer alcohol (+8) tegenover je gewone ochtenden zonder notitie (rond 50): de ochtend van nu is +8.
   const wine = ['2026-10-01', '2026-10-05', '2026-10-09', '2026-10-13'];
-  const entries = [...nights(stress, { reason: 'stress' }, 's'), ...nights(wine, alcohol('matig'), 'a')];
-  const mm = (now: number) => metrics({ ...bumped(stress, { restingHeartRate: 53 }), ...bumped(wine, { restingHeartRate: 58 }), '2026-10-20': { restingHeartRate: now } });
-  const ask = (now: number, over: Record<string, unknown> = {}) =>
-    looksLike({ ...base({ entries, metrics: mm(now) }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20', ...over });
+  const entries = nights(wine, alcohol('matig'), 'a');
+  const mm = (now: number, extra: Record<string, Partial<RecoveryMetric>> = {}) => metrics({ ...bumped(wine, { restingHeartRate: 58 }), '2026-10-20': { restingHeartRate: now }, ...extra });
+  const ask = (now: number, over: Record<string, unknown> = {}, list = entries, extra: Record<string, Partial<RecoveryMetric>> = {}) =>
+    looksLike({ ...base({ entries: list, metrics: mm(now, extra) }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20', ...over });
 
-  it('noemt de reden als de waarde in haar band valt en buiten de andere', () => {
+  it('geeft een antwoord als alleen alcohol is vastgelegd, tegenover je gewone ochtenden', () => {
     const r = ask(58)!;
     expect(r.group.key).toBe('alcohol:matig');
     expect(r.times).toBe(4);
-    expect(r.otherTimes).toBe(4);
+    expect(r.otherTimes).toBeGreaterThanOrEqual(4);
+    expect(looksLikeText(r).line).toBe(`Uit 4 keer met die reden en ${r.otherTimes} keer zonder. Zeker weten doet ASCEND het niet.`);
   });
 
-  it('zegt niets als de waarde in geen van beide bandes valt of in de andere', () => {
+  it('zegt niets als de waarde bij je gewone ochtenden past', () => {
     expect(ask(50)).toBeUndefined();
-    expect(ask(53)?.group.key).toBe('stress');
+    expect(ask(51)).toBeUndefined();
   });
 
-  it('zegt niets bij minder dan 4 keer, of als de andere keren te weinig zijn', () => {
-    expect(looksLike({ ...base({ entries: entries.filter((e) => e.id !== 'a0'), metrics: mm(58) }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20' })?.group.key).toBeUndefined();
-    expect(looksLike({ ...base({ entries: entries.filter((e) => !['s0', 's1'].includes(e.id)), metrics: mm(58) }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20' })).toBeUndefined();
+  it('zegt niets bij minder dan 4 keer met de reden', () => {
+    expect(ask(58, {}, entries.slice(0, 3))).toBeUndefined();
   });
 
   it('zegt niets als de banden elkaar raken', () => {
-    const touching = metrics({ ...bumped(stress, { restingHeartRate: 55 }), ...bumped(wine, { restingHeartRate: 58 }), '2026-09-13': { restingHeartRate: 58 }, '2026-10-20': { restingHeartRate: 58 } });
-    expect(looksLike({ ...base({ entries, metrics: touching }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20' })).toBeUndefined();
+    expect(ask(58, {}, entries, { '2026-10-02': { restingHeartRate: 58 }, '2026-10-03': { restingHeartRate: 58 } })).toBeUndefined();
+  });
+
+  it('een andere reden is niet de andere kant: ochtenden met die reden tellen niet als gewoon', () => {
+    const stress = nights(['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27'], { reason: 'stress' }, 's');
+    const r = ask(58, {}, [...entries, ...stress], bumped(['2026-09-06', '2026-09-13', '2026-09-20', '2026-09-27'], { restingHeartRate: 58 }))!;
+    expect(r.group.key).toBe('alcohol:matig');
   });
 
   it('antwoordt alleen bij patroon of zonder keuze', () => {
@@ -286,10 +290,54 @@ describe('lijkt op', () => {
   });
 
   it('gebruikt bij wiet alleen je eigen keren', () => {
-    const weed = nights(wine, { reason: 'wiet' }, 'w');
-    const r = looksLike({ ...base({ entries: [...nights(stress, { reason: 'stress' }, 's'), ...weed], metrics: mm(58) }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20' })!;
+    const r = ask(58, {}, nights(wine, { reason: 'wiet' }, 'w'))!;
     expect(r.group.reason).toBe('wiet');
     expect(r.times).toBe(4);
+  });
+});
+
+describe('wat niet meetelt blijft uit de banden', () => {
+  const morning = '2026-10-11';
+  const at = (over: Partial<EffectsInput>) => new InfluenceCalculator(base({ entries: nights([morning], alcohol('matig')), ...over }));
+
+  it('een nacht zonder reden die niet meetelt doet niet mee in de band', () => {
+    const odd = Array.from({ length: 14 }, (_, i) => addDays('2026-09-25', i));
+    const high = Object.fromEntries(odd.map((d) => [d, { restingHeartRate: 70 }]));
+    const withOdd = at({ metrics: metrics(high) }).pointAt('restingHr', morning)!;
+    const flagged = odd.map((d, i) => entry(`x${i}`, addDays(d, -1), [], { excludeHeartRate: true }));
+    const skipped = at({ entries: [...nights([morning], alcohol('matig')), ...flagged], metrics: metrics(high) }).pointAt('restingHr', morning)!;
+    expect(withOdd.center).toBeGreaterThan(50);
+    expect(skipped.center).toBe(50);
+  });
+
+  it('een nacht die je niet goed gemeten noemde telt niet voor slaap en HRV, wel voor rusthartslag niet te missen', () => {
+    const days = ['2026-10-04', '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'];
+    const low = Object.fromEntries(days.map((d) => [d, { hrv: 20, sleepMinutes: 120 }]));
+    const judgments = days.map((d) => ({ date: d, verdict: 'niet_goed' as const, minutes: 120 }));
+    const plain = at({ metrics: metrics(low) });
+    const judged = at({ metrics: metrics(low), nightJudgments: judgments });
+    expect(plain.pointAt('hrv', morning)!.center).toBeLessThan(judged.pointAt('hrv', morning)!.center);
+    expect(judged.pointAt('sleep', morning)!.center).toBeGreaterThan(400);
+  });
+
+  it('een training zonder reden die niet meetelt blijft uit de band van zwaarte', () => {
+    const logAt = (id: string, date: string, feel: 'normal' | 'worse'): SessionLog => ({
+      id, templateId: 'x', type: 'cardio', completedDate: date, completedAt: `${date}T08:00:00.000Z`, variant: 'custom', durationMinutes: 40, subjectiveFeel: feel, source: 'manual',
+    });
+    const normal = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04'].map((d, i) => logAt(`n${i}`, d, 'normal'));
+    const heavy = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09'].map((d, i) => logAt(`h${i}`, d, 'worse'));
+    const target = logAt('t', '2026-10-10', 'worse');
+    const entriesFor = (skip: boolean) => [entry('e', '2026-10-10', [alcohol('matig')], { logId: 't' }), ...(skip ? heavy.map((l, i) => entry(`s${i}`, l.completedDate, [], { logId: l.id, excludeHeartRate: true })) : [])];
+    const without = new InfluenceCalculator(base({ entries: entriesFor(false), logs: [...normal, ...heavy, target] })).pointAt('effort', '2026-10-10')!;
+    const withSkip = new InfluenceCalculator(base({ entries: entriesFor(true), logs: [...normal, ...heavy, target] })).pointAt('effort', '2026-10-10')!;
+    expect(withSkip.center).toBe(0);
+    expect(without.center).toBeGreaterThan(0);
+  });
+
+  it('met een reden telt een nacht die niet meetelt wel als punt', () => {
+    const flagged = nights(['2026-09-20', '2026-09-27', '2026-10-04'], alcohol('matig')).map((e) => ({ ...e, excludeHeartRate: true }));
+    const e = influenceEffects(base({ entries: flagged, metrics: metrics(bumped(['2026-09-20', '2026-09-27', '2026-10-04'], { restingHeartRate: 57 })) })).find((x) => x.measure === 'restingHr')!;
+    expect(e.count).toBe(3);
   });
 });
 

@@ -28,13 +28,15 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { AMOUNT_LABEL, REASON_LABEL } from '../data/influenceReasons';
 import { addDays } from '../utils/dates';
-import { affectedMorning } from './influence';
+import { affectedMorning, excludedLogIds, excludedMornings } from './influence';
+import type { NightJudgment } from '../models/checkIn';
+import { ignoredNightDates } from './shortNight';
 import { plannedRpeTop } from './coach';
 import type { HeartRateSettings } from './heartRateZones';
 import { zoneBpm } from './heartRateZones';
-import type { LegFatigueInputs } from './legFatigue';
+import { fatigueEvents, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { baselineOf, comparableLogs, isEasyPlanned, median, windowOf, type ComparisonContext } from './runComparison';
-import { NOISE, efficiencyOf, isUnavailable } from './runMetrics';
+import { NOISE, STRENGTH_FOR_A_LINE, efficiencyOf, isUnavailable } from './runMetrics';
 import { BASELINE_DAYS, MIN_BASELINE_DAYS } from './wellnessCheck';
 
 // --- de vaste getallen (eigen aannames, af te stemmen op eigen data) ------------------------
@@ -179,6 +181,8 @@ export interface EffectsInput {
   logs: SessionLog[];
   templates: SessionTemplate[];
   program: Program | null | undefined;
+  // Je oordeel over nachten die niet goed gemeten zijn: die tellen niet mee in de band van slaap en HRV.
+  nightJudgments?: NightJudgment[];
   // Voor de hartslag bij tempo. Zonder dit is die meting er niet.
   run?: { hr: HeartRateSettings | undefined; legs: LegFatigueInputs; chestStrap: boolean };
 }
@@ -286,16 +290,33 @@ export class InfluenceCalculator {
   private readonly memo = new Map<string, EffectPoint | null>();
 
   private readonly input: EffectsInput;
+  // Wat zonder reden "niet meetelt" blijft uit de banden: ochtenden voor rusthartslag, HRV en slaap,
+  // trainingen voor zwaarte en hartslag bij tempo. Met een reden telt het wel als punt mee.
+  private readonly skipMornings: ReadonlySet<string>;
+  private readonly skipNights: ReadonlySet<string>;
+  private readonly skipLogs: ReadonlySet<string>;
+  private events: FatigueEvent[] | undefined;
 
   constructor(input: EffectsInput) {
     this.input = input;
     this.recorded = new Set(input.entries.filter((e) => e.reasons.length > 0).map(morningOf));
+    const plain = input.entries.filter((e) => e.reasons.length === 0);
+    this.skipMornings = new Set([...this.recorded, ...excludedMornings(plain)]);
+    this.skipNights = new Set([...this.skipMornings, ...ignoredNightDates(input.nightJudgments, input.metrics)]);
+    this.skipLogs = excludedLogIds(plain);
     this.templateById = new Map(input.templates.map((t) => [t.id, t]));
   }
 
   // De ochtenden met een vastgelegde reden: die tellen niet mee in een band.
   get recordedMornings(): ReadonlySet<string> {
     return this.recorded;
+  }
+
+  // Een gewone dag of ochtend voor de andere kant van "lijkt op": geen reden, geen "niet meetellen",
+  // geen nacht die je niet goed gemeten noemde.
+  isPlain(date: string, measure: InfluenceMeasure): boolean {
+    if (measure === 'effort' || measure === 'paceHr') return !this.skipMornings.has(date);
+    return !(measure === 'restingHr' ? this.skipMornings : this.skipNights).has(date);
   }
 
   pointAt(measure: InfluenceMeasure, date: string): EffectPoint | undefined {
@@ -313,7 +334,7 @@ export class InfluenceCalculator {
     const pick = PICK[measure];
     const value = valueOnDay(this.input.metrics, date, pick);
     if (value === undefined) return undefined;
-    const base = baselineDays(this.input.metrics, date, pick, this.recorded);
+    const base = baselineDays(this.input.metrics, date, pick, measure === 'restingHr' ? this.skipMornings : this.skipNights);
     if (base.length < MIN_BASELINE_DAYS) return undefined;
     const floor = measure === 'restingHr' ? () => BAND_FLOOR.restingHr : measure === 'sleep' ? () => BAND_FLOOR.sleep : (c: number) => c * BAND_FLOOR.hrvShare;
     const band = robustBand(base, floor);
@@ -326,7 +347,7 @@ export class InfluenceCalculator {
     if (mine.length === 0) return undefined;
     const from = addDays(date, -BASELINE_DAYS);
     const base = logs
-      .filter((l) => l.completedDate >= from && l.completedDate < date && !this.recorded.has(l.completedDate))
+      .filter((l) => l.completedDate >= from && l.completedDate < date && !this.skipMornings.has(l.completedDate) && !this.skipLogs.has(l.id))
       .map((l) => effortScore(l, this.templateById, program, this.effortCache))
       .filter((v): v is number => v !== undefined);
     if (base.length < MIN_BASELINE_TRAININGS) return undefined;
@@ -336,20 +357,23 @@ export class InfluenceCalculator {
 
   // Hartslag bij een rustig tempo: de bestaande vergelijking met je eerdere rustige loopjes
   // (comparableLogs), zonder loopjes op andere vastgelegde ochtenden. Het verschil in
-  // tempo bij dezelfde hartslag gaat om naar slagen bij hetzelfde tempo, en de band is de
-  // ruis van één loopje (NOISE.efficiencyPct).
+  // tempo bij dezelfde hartslag gaat om naar slagen bij hetzelfde tempo. De band is 1,5 keer de ruis
+  // van één loopje, zoals het teken in Logboek (STRENGTH_FOR_A_LINE): een verschil telt pas als
+  // "erbuiten" vanaf het punt waarop de rest van de app er ook een regel van maakt, anders zou
+  // dezelfde loop op het teken "gewoon" zijn en hier "erbuiten".
   private paceHr(date: string): EffectPoint | undefined {
     const { run, logs, templates, program } = this.input;
     if (!run) return undefined;
     const diffs: { diff: number; center: number }[] = [];
     for (const subject of logs.filter((l) => l.completedDate === date && l.detail)) {
       const ctx: ComparisonContext = {
-        logs: logs.filter((l) => l.id === subject.id || !this.recorded.has(l.completedDate)),
+        logs: logs.filter((l) => l.id === subject.id || (!this.skipMornings.has(l.completedDate) && !this.skipLogs.has(l.id))),
         templates,
         program,
         hr: run.hr,
         legs: run.legs,
         chestStrap: run.chestStrap,
+        events: (this.events ??= fatigueEvents(run.legs)),
       };
       if (!isEasyPlanned(subject, ctx)) continue;
       const cmp = comparableLogs(subject, 'efficiency', ctx);
@@ -369,7 +393,7 @@ export class InfluenceCalculator {
     if (diffs.length === 0) return undefined;
     const center = mean(diffs.map((d) => d.center));
     const diff = mean(diffs.map((d) => d.diff));
-    return pointOf(date, center + diff, { center, half: (center * NOISE.efficiencyPct) / 100 });
+    return pointOf(date, center + diff, { center, half: (center * NOISE.efficiencyPct * STRENGTH_FOR_A_LINE) / 100 });
   }
 }
 
@@ -655,10 +679,11 @@ export interface LooksLikeInput extends EffectsInput {
 
 const rangeOf = (values: number[]) => ({ low: Math.min(...values), high: Math.max(...values) });
 
-// Zegt alleen dat de waarde van nu lijkt op wat bij een reden hoorde als die reden minstens
-// 4 keer met getallen is vastgelegd, de andere ochtenden samen ook, de twee banden elkaar niet
-// raken, en de waarde van nu in de band van de reden valt en buiten de andere. Alleen met je
-// eigen keren, ook bij wiet: nooit met getallen uit het onderzoek. Anders: niets.
+// Zegt alleen dat de waarde van nu lijkt op wat bij een reden hoorde als die reden minstens 4 keer
+// met getallen is vastgelegd, je gewone ochtenden of loopjes zonder notitie samen ook (de andere
+// kant is dus "zonder", niet "een andere reden"), de twee banden elkaar niet raken, en de waarde van
+// nu in de band van de reden valt en buiten de gewone. Alleen met je eigen keren, ook bij wiet:
+// nooit met getallen uit het onderzoek. Anders: niets.
 export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   if (input.cause === 'uit' || input.cause === 'weet') return undefined;
   const calc = new InfluenceCalculator(input);
@@ -668,23 +693,26 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   const groups = new Map<string, ReasonGroup>();
   for (const o of occurrences) groups.set(o.group.key, o.group);
   const diffOf = (morning: string) => calc.pointAt(input.measure, morning)?.diff;
+  // De gewone dagen: alles waar je een meting van hebt en niets bij vastlegde.
+  const days = new Set(
+    (input.measure === 'effort' || input.measure === 'paceHr' ? input.logs.map((l) => l.completedDate) : input.metrics.map((m) => m.date))
+      .filter((d) => d !== input.date && calc.isPlain(d, input.measure)),
+  );
+  const plainDiffs = [...days].map(diffOf).filter((v): v is number => v !== undefined);
+  if (plainDiffs.length < LOOKS_LIKE_MIN) return undefined;
+  const b = rangeOf(plainDiffs);
+  if (now.diff >= b.low && now.diff <= b.high) return undefined;
   let best: (LooksLike & { gap: number }) | undefined;
   for (const group of groups.values()) {
     const own = new Set(occurrences.filter((o) => o.group.key === group.key).map((o) => o.morning));
     const ownDiffs = [...own].map(diffOf).filter((v): v is number => v !== undefined);
-    const otherMornings = new Set(occurrences.filter((o) => !own.has(o.morning)).map((o) => o.morning));
-    const otherDiffs = [...otherMornings].map(diffOf).filter((v): v is number => v !== undefined);
-    if (ownDiffs.length < LOOKS_LIKE_MIN || otherDiffs.length < LOOKS_LIKE_MIN) continue;
+    if (ownDiffs.length < LOOKS_LIKE_MIN) continue;
     const a = rangeOf(ownDiffs);
-    const b = rangeOf(otherDiffs);
-    const apart = a.high < b.low || b.high < a.low;
-    if (!apart) continue;
-    const inOwn = now.diff >= a.low && now.diff <= a.high;
-    const inOther = now.diff >= b.low && now.diff <= b.high;
-    if (!inOwn || inOther) continue;
+    if (!(a.high < b.low || b.high < a.low)) continue;
+    if (now.diff < a.low || now.diff > a.high) continue;
     const gap = a.high < b.low ? b.low - a.high : a.low - b.high;
     if (!best || ownDiffs.length > best.times || (ownDiffs.length === best.times && gap > best.gap)) {
-      best = { group, measure: input.measure, times: ownDiffs.length, otherTimes: otherDiffs.length, gap };
+      best = { group, measure: input.measure, times: ownDiffs.length, otherTimes: plainDiffs.length, gap };
     }
   }
   if (!best) return undefined;

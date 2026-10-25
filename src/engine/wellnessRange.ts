@@ -16,10 +16,17 @@ export const KEEP_DAYS = 400;
 // Een lang stuk gaat in delen, zodat elk verzoek klein blijft en zijn eigen tijdsgrens heeft.
 export const CHUNK_DAYS = 120;
 
+export interface DateSpan {
+  from: string;
+  to: string;
+}
+
 export interface WellnessPlan {
-  ranges: { from: string; to: string }[];
-  // Waar het opgehaalde stuk na een geslaagde sync begint, om te onthouden wat gedekt is.
-  coveredFrom: string;
+  // De gewone 28 dagen: dit moet lukken, en alleen dit telt voor de uitslag van de sync.
+  normal: DateSpan;
+  // Het lange stuk erachter, best effort: nieuwste deel eerst, zodat een gelukt deel altijd aansluit op
+  // wat er al is. Na elk gelukt deel is `from` van dat deel de nieuwe "gedekt vanaf".
+  long: DateSpan[];
 }
 
 // De oudste dag die nodig is: 28 dagen voor de oudste ochtend, binnen het plafond.
@@ -33,19 +40,17 @@ export function neededFrom(today: string, mornings: string[]): string | undefine
 
 export function wellnessPlan(input: { today: string; mornings: string[]; coveredFrom?: string }): WellnessPlan {
   const { today } = input;
-  const normal = addDays(today, -BASELINE_DAYS);
+  const normal = { from: addDays(today, -BASELINE_DAYS), to: today };
   const need = neededFrom(today, input.mornings);
-  const covered = input.coveredFrom;
-  // Niets nodig, of alles wat nodig is is al gedekt: de gewone 28 dagen.
-  if (!need || need >= normal || (covered !== undefined && covered <= need)) {
-    return { ranges: [{ from: normal, to: today }], coveredFrom: covered !== undefined && covered < normal ? covered : normal };
+  // Wat nog ontbreekt loopt tot vlak voor wat al gedekt is (of voor de gewone 28 dagen).
+  const upper = addDays(input.coveredFrom !== undefined && input.coveredFrom < normal.from ? input.coveredFrom : normal.from, -1);
+  if (!need || need > upper) return { normal, long: [] };
+  const long: DateSpan[] = [];
+  let to = upper;
+  while (to >= need) {
+    const from = addDays(to, -(CHUNK_DAYS - 1));
+    long.push({ from: from < need ? need : from, to });
+    to = addDays(from, -1);
   }
-  const ranges: { from: string; to: string }[] = [];
-  let from = need;
-  while (from <= today) {
-    const to = addDays(from, CHUNK_DAYS - 1);
-    ranges.push({ from, to: to > today ? today : to });
-    from = addDays(to, 1);
-  }
-  return { ranges, coveredFrom: need };
+  return { normal, long };
 }

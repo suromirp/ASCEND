@@ -47,7 +47,7 @@ export function InfluenceCard() {
         <Card className="flex flex-col gap-3">
           {title}
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            Leg bij een ochtend of training vast wat er speelde. Vanaf 3 keer per reden zie je hier wat het doet met je rusthartslag, HRV, slaap en trainingen.
+            Leg bij een training of een dag in het logboek vast wat er speelde. Vanaf 3 keer per reden zie je hier wat het doet met je rusthartslag, HRV, slaap en trainingen.
           </p>
           <div className="flex flex-col gap-1">
             <svg viewBox="0 0 300 28" className="block w-full" aria-hidden>
