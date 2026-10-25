@@ -4,8 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { LegFeeling } from '../models/checkIn';
 import { checkInFor, recentPainSpot } from '../engine/wellbeing';
-import { LEGS, SOURCE_TEXT } from '../engine/morningCard';
-import { NO_SLEEP_TEXT, watchSummaryLine, type WellnessLine } from '../engine/wellnessCheck';
+import { LEGS, SOURCE_TEXT, morningCardView } from '../engine/morningCard';
+import { NO_SLEEP_TEXT } from '../engine/wellnessCheck';
 import { wantsMorningLink, withoutShortcut } from '../engine/shortcutAction';
 import { todayISO } from '../utils/dates';
 import { Card, SecondaryButton, Stat } from './ui';
@@ -29,14 +29,14 @@ export function MorningCard() {
   const { settings, updateSettings, sessionLogs } = useAppData();
   const { prefill, reading, linked, sleepOn } = useMorningPrefill(today);
   const [sheet, setSheet] = useState<{ legs?: LegFeeling } | null>(null);
-  const line = reading || linked ? watchSummaryLine(reading, { sleepExpected: sleepOn }) : '';
+  const { stats, heading, line } = morningCardView(reading, { sleepExpected: sleepOn, linked });
   const suggested = prefill.legs;
   const spot = recentPainSpot(today, sessionLogs);
   // Eén tik: je benen, met energie en slaap van het horloge als die er zijn.
   const answer = (legs: LegFeeling) => {
     if (spot) { setSheet({ legs }); return; }
     const others = (settings.morningCheckIns ?? []).filter((c) => c.date !== today);
-    const entry = { date: today, legs, energy: prefill.energy?.value, sleep: prefill.sleep?.value };
+    const entry = { date: today, legs, energy: prefill.energy?.value, sleep: prefill.sleep?.value, ...(prefill.sleep ? { sleepSuggested: true } : {}) };
     markMorningAnswered(today);
     void updateSettings({ morningCheckIns: [...others, entry].sort((a, b) => a.date.localeCompare(b.date)).slice(-60) });
   };
@@ -81,25 +81,16 @@ export function MorningCard() {
     );
   }
 
-  // Een nacht die niet goed gemeten is: bovenaan niet de gemeten slaap, maar je eigen
-  // schatting, of niets als je die niet weet.
-  const ignored = reading?.night?.state === 'ignored' ? reading.night : undefined;
-  const stats = (reading?.lines ?? []).flatMap((l) => {
-    if (l.key === 'sleep' && ignored) return ignored.hours ? [{ label: 'Slaap, zelf', value: `±${ignored.hours}`, unit: 'u' }] : [];
-    const stat = statOf(l);
-    return stat ? [stat] : [];
-  });
-
   return (
     <>
       <Card className="flex flex-col gap-4">
         <div>
           <div className="flex items-center justify-between gap-2">
             <Title />
-            {stats.length > 0 && (
+            {heading && (
               <span className="inline-flex items-center gap-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="horloge" size={14} />
-                van je horloge
+                {heading}
               </span>
             )}
           </div>
@@ -167,23 +158,6 @@ export function MorningCard() {
 
 function Title() {
   return <h2 className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>Vanochtend</h2>;
-}
-
-// De drie getallen van het horloge als Stat: waarde en eenheid apart.
-function statOf(l: WellnessLine): { label: string; value: string; unit?: string } | undefined {
-  if (l.key === 'restingHeartRate') {
-    const n = /^(\d+)/.exec(l.value)?.[1];
-    return n ? { label: 'Rusthart', value: n, unit: 'bpm' } : undefined;
-  }
-  if (l.key === 'hrv') {
-    const n = /^(\d+)/.exec(l.value)?.[1];
-    return n ? { label: 'HRV', value: n, unit: 'ms' } : undefined;
-  }
-  const hm = /^(\d+) uur(?: (\d+))?$/.exec(l.value);
-  if (hm) return { label: 'Slaap', value: `${hm[1]}:${(hm[2] ?? '0').padStart(2, '0')}`, unit: 'u' };
-  const min = /^(\d+) min$/.exec(l.value);
-  if (min) return { label: 'Slaap', value: min[1], unit: 'min' };
-  return { label: 'Slaap', value: l.value };
 }
 
 // De melding "Goedemorgen. Hoe voel je je?" opent Vandaag op `#/?actie=ochtend`

@@ -15,6 +15,10 @@ export interface MorningCheckIn {
   legs?: LegFeeling;
   energy?: EnergyFeeling;
   sleep?: SleepFeeling;
+  // The sleep answer came from the proposal (watch or your own estimate of a night),
+  // not from a tap of yours. Then a later verdict on the night may update it
+  // (engine/morningCard.ts#reviseCheckInSleep). Absent once you chose it yourself.
+  sleepSuggested?: boolean;
   // The spot that hurt in the last 14 days, scored this morning 0 to 10
   // (pain-monitoring model: does it settle by the next morning?).
   spot?: { area: string; score: number };
@@ -33,6 +37,10 @@ export interface NightJudgment {
   verdict: NightVerdict;
   hours?: number;
   hoursSkipped?: boolean;
+  // The sleep the watch showed when you judged (minutes). The verdict holds only while
+  // the measured sleep is the same; when the rest of the night comes in later it lapses.
+  // Absent on a verdict from before this field: that holds as it always did.
+  minutes?: number;
 }
 
 // Pain on a spot after a session: where, how much at its worst (1 to 10),

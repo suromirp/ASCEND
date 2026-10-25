@@ -4,7 +4,9 @@ import type { NightJudgment } from '../models/checkIn';
 import { addDays } from '../utils/dates';
 import { ignoredNightDates, isDoubtfulShortNight, judgmentFor, nightQuestionText, removeJudgment, shortSleepLabel, upsertJudgment } from './shortNight';
 import { baselineValues, todayWellness } from './wellnessCheck';
-import { morningPrefill } from './morningCard';
+import { morningCardView, morningPrefill, reviseCheckInSleep } from './morningCard';
+import { watchSummaryLine } from './wellnessCheck';
+import { nightInfo } from './shortNight';
 
 const TODAY = '2026-10-22';
 
@@ -164,5 +166,98 @@ describe('oordelen bewaren', () => {
     for (let i = 0; i < 130; i++) list = upsertJudgment(list, { date: addDays('2026-01-01', i), verdict: 'klopt' });
     expect(list).toHaveLength(120);
     expect(list[0].date).toBe(addDays('2026-01-01', 10));
+  });
+});
+
+describe('een oordeel geldt voor de getallen die je zag', () => {
+  const niet: NightJudgment = { date: TODAY, verdict: 'niet_goed', minutes: 190 };
+
+  it('komt de rest van de nacht later binnen, dan vervalt het oordeel', () => {
+    const later = [...ordinary(), day(0, { sleepMinutes: 420, sleepScore: 75, restingHeartRate: 52, hrv: 60 })];
+    const r = todayWellness(TODAY, later, { ask: true, judgments: [niet] })!;
+    expect(r.night).toBeUndefined();
+    expect(r.suggestedSleep).toBe('goed');
+  });
+
+  it('een vervallen oordeel telt de nacht weer mee in de basis van de dagen erna', () => {
+    const tomorrow = addDays(TODAY, 1);
+    const metrics = [...ordinary(), day(0, { sleepMinutes: 420, hrv: 60 })];
+    expect(ignoredNightDates([niet], metrics).has(TODAY)).toBe(false);
+    expect(baselineValues(tomorrow, metrics, (m) => m.sleepMinutes, ignoredNightDates([niet], metrics))).toContain(420);
+    const same = [...ordinary(), short()];
+    expect(ignoredNightDates([niet], same).has(TODAY)).toBe(true);
+  });
+
+  it('is de nacht nog twijfelachtig, dan volgt de vraag opnieuw', () => {
+    const r = todayWellness(TODAY, [...ordinary(), short(200)], { ask: true, judgments: [niet] })!;
+    expect(r.night?.state).toBe('ask');
+  });
+
+  it('een Klopt geldt ook alleen voor dezelfde minuten', () => {
+    expect(nightInfo(190, [], { date: TODAY, verdict: 'klopt', minutes: 190 })?.state).toBe('klopt');
+    expect(nightInfo(200, [], { date: TODAY, verdict: 'klopt', minutes: 190 })?.state).toBe('ask');
+  });
+
+  it('een oud oordeel zonder minuten geldt als voorheen', () => {
+    const r = todayWellness(TODAY, [...ordinary(), short(200)], { ask: true, judgments: [{ date: TODAY, verdict: 'niet_goed' }] })!;
+    expect(r.night?.state).toBe('ignored');
+  });
+});
+
+describe('een genegeerde nacht op de kaart', () => {
+  const metrics = [...ordinary(), short()];
+  const ignored = (extra: Partial<NightJudgment> = {}) => todayWellness(TODAY, metrics, { ask: true, judgments: [{ date: TODAY, verdict: 'niet_goed', minutes: 190, ...extra }] })!;
+
+  it('de HRV-regel zegt dat de nacht niet meetelt', () => {
+    const hrv = ignored().lines.find((l) => l.key === 'hrv')!;
+    expect(hrv.tone).toBe('normal');
+    expect(hrv.note).toBe('Deze nacht telt niet mee.');
+  });
+
+  it('met een eigen schatting is de slaap zelf en staat het kopje er niet bij als alleen die er is', () => {
+    const v = morningCardView(ignored({ hours: 7 }));
+    expect(v.stats.map((s) => s.label)).toEqual(['Slaap, zelf', 'Rusthart', 'HRV']);
+    expect(v.heading).toBe('horloge en zelf');
+  });
+
+  it('zonder schatting ontbreekt de slaap en alles wat er staat komt van het horloge', () => {
+    const v = morningCardView(ignored({ hoursSkipped: true }), {});
+    expect(v.stats.map((s) => s.label)).toEqual(['Rusthart', 'HRV']);
+    expect(v.heading).toBe('van je horloge');
+  });
+
+  it('de regel zonder getallen toont de gemeten slaap niet', () => {
+    const only = todayWellness(TODAY, [...ordinary().map((m) => ({ ...m, restingHeartRate: undefined, hrv: undefined })), day(0, { sleepMinutes: 190 })], { ask: true, judgments: [{ date: TODAY, verdict: 'niet_goed', hoursSkipped: true, minutes: 190 }] })!;
+    expect(watchSummaryLine(only)).toBe('');
+    expect(morningCardView(only, { linked: true }).line).toBe('');
+    expect(watchSummaryLine(ignored({ hoursSkipped: true }))).not.toMatch(/3 uur/);
+    expect(watchSummaryLine(ignored({ hoursSkipped: true }))).not.toMatch(/Geen slaap/);
+  });
+
+  it('een gewone nacht blijft van het horloge', () => {
+    const v = morningCardView(todayWellness(TODAY, [...ordinary(), day(0, { sleepMinutes: 420, restingHeartRate: 52, hrv: 60 })], { ask: true, judgments: [] }));
+    expect(v.heading).toBe('van je horloge');
+    expect(v.stats[0]).toMatchObject({ label: 'Slaap', value: '7:00' });
+  });
+});
+
+describe('het slaapantwoord volgt je oordeel zolang je het niet zelf koos', () => {
+  const saved = { date: TODAY, legs: 'fris' as const, sleep: 'slecht' as const, sleepSuggested: true };
+
+  it('Niet goed gemeten met 7 uur zet het antwoord op goed', () => {
+    expect(reviseCheckInSleep(saved, { verdict: 'niet_goed', hours: 7 }).sleep).toBe('goed');
+  });
+
+  it('zonder schatting of na ongedaan maken verdwijnt het voorstel', () => {
+    expect(reviseCheckInSleep(saved, { verdict: 'niet_goed', hoursSkipped: true } as never).sleep).toBeUndefined();
+    const undone = reviseCheckInSleep(saved, null);
+    expect(undone.sleep).toBeUndefined();
+    expect(undone.sleepSuggested).toBe(true);
+  });
+
+  it('wat je zelf koos blijft staan, en Klopt verandert niets', () => {
+    const own = { date: TODAY, sleep: 'matig' as const };
+    expect(reviseCheckInSleep(own, { verdict: 'niet_goed', hours: 8 })).toBe(own);
+    expect(reviseCheckInSleep(saved, { verdict: 'klopt' })).toBe(saved);
   });
 });

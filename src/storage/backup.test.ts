@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, listSnapshots, restoreSnapshot } from './backup';
 import type { SessionLog, PlannedSession } from '../models/training';
+import { migrateNightJudgments } from './migrations';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
 import type { Program } from '../models/program';
@@ -286,6 +287,26 @@ describe('backup envelope round-trip', () => {
       await SettingsRepo.set({ nightJudgments: [{ date: '2026-10-20', verdict: 'niet_goed', hoursSkipped: true }, { date: '2026-10-22', verdict: 'klopt' }] });
       await importEnvelope(envelope);
       expect((await SettingsRepo.get()).nightJudgments).toEqual([{ date: '2026-10-20', verdict: 'niet_goed', hoursSkipped: true }, { date: '2026-10-22', verdict: 'klopt' }]);
+    });
+
+    it('keeps the minutes, and drops a damaged date or damaged minutes', () => {
+      const out = migrateNightJudgments([{ date: '2026-10-21', verdict: 'niet_goed', hours: 7, minutes: 190 }, { date: '2026-13-45', verdict: 'klopt' }, { date: '2026-10-22', verdict: 'klopt', minutes: -5 }]);
+      expect(out.list).toEqual([{ date: '2026-10-21', verdict: 'niet_goed', hours: 7, minutes: 190 }, { date: '2026-10-22', verdict: 'klopt' }]);
+      expect(out.skipped).toBe(2);
+    });
+
+    it('a restore cuts the merged list to the newest 120 and brings back an undone verdict', async () => {
+      const many = Array.from({ length: 130 }, (_, i) => ({ date: `2027-${String(1 + Math.floor(i / 28)).padStart(2, '0')}-${String(1 + (i % 28)).padStart(2, '0')}`, verdict: 'klopt' as const }));
+      await SettingsRepo.set({ nightJudgments: many.slice(0, 5) });
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ nightJudgments: many.slice(5) });
+      await importEnvelope(envelope);
+      const list = (await SettingsRepo.get()).nightJudgments!;
+      expect(list).toHaveLength(120);
+      expect(list[list.length - 1].date).toBe(many[129].date);
+      await SettingsRepo.set({ nightJudgments: [] });
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).nightJudgments).toEqual(many.slice(0, 5));
     });
 
     it('drops damaged verdicts and counts them', async () => {

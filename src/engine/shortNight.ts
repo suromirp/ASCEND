@@ -7,6 +7,7 @@
 // Puur: geen React, geen IndexedDB.
 
 import type { NightJudgment } from '../models/checkIn';
+import type { RecoveryMetric } from '../models/metrics';
 
 // Onder 4 uur is een nacht altijd twijfelachtig; daarnaast onder de helft van je eigen
 // gemiddelde, als dat uit minstens 7 dagen komt (dezelfde ondergrens als
@@ -46,8 +47,16 @@ export interface NightInfo {
   hoursSkipped?: boolean;
 }
 
-export function nightInfo(minutes: number | undefined, ownMinutes: number[], judgment: NightJudgment | undefined): NightInfo | undefined {
+// A verdict holds for the numbers you saw: when the watch later shows other minutes for
+// that night, it lapses. A verdict without minutes (from before) holds as it always did.
+export function judgmentHolds(judgment: NightJudgment | undefined, minutes: number | undefined): boolean {
+  if (!judgment) return false;
+  return judgment.minutes === undefined || judgment.minutes === minutes;
+}
+
+export function nightInfo(minutes: number | undefined, ownMinutes: number[], rawJudgment: NightJudgment | undefined): NightInfo | undefined {
   if (minutes === undefined) return undefined;
+  const judgment = judgmentHolds(rawJudgment, minutes) ? rawJudgment : undefined;
   if (judgment?.verdict === 'klopt') return { state: 'klopt', minutes };
   if (judgment?.verdict === 'niet_goed') return { state: 'ignored', minutes, hours: judgment.hours, hoursSkipped: judgment.hoursSkipped };
   return isDoubtfulShortNight(minutes, ownMinutes) ? { state: 'ask', minutes } : undefined;
@@ -58,8 +67,11 @@ export function judgmentFor(date: string, judgments: NightJudgment[] | undefined
 }
 
 // De datums waarvan slaapduur, slaapscore en HRV niet meetellen in je gemiddelden.
-export function ignoredNightDates(judgments: NightJudgment[] | undefined): ReadonlySet<string> {
-  return new Set((judgments ?? []).filter((j) => j.verdict === 'niet_goed').map((j) => j.date));
+// Met `metrics` telt een oordeel alleen zolang de gemeten slaap van die dag nog gelijk is
+// aan wat je zag.
+export function ignoredNightDates(judgments: NightJudgment[] | undefined, metrics?: readonly Pick<RecoveryMetric, 'date' | 'sleepMinutes'>[]): ReadonlySet<string> {
+  const sleepOf = (date: string) => metrics?.find((m) => m.date === date && m.sleepMinutes !== undefined)?.sleepMinutes;
+  return new Set((judgments ?? []).filter((j) => j.verdict === 'niet_goed' && (!metrics || judgmentHolds(j, sleepOf(j.date)))).map((j) => j.date));
 }
 
 export function upsertJudgment(list: NightJudgment[] | undefined, judgment: NightJudgment): NightJudgment[] {

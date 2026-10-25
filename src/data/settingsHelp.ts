@@ -284,8 +284,9 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   korteNacht: {
     title: 'Vragen bij een korte nacht',
-    lead: 'Gaat je horloge in de nacht van je pols, dan meet Garmin maar een deel van de nacht en zegt hij dat er niet bij. ASCEND vraagt het dan, in plaats van te denken dat je slecht sliep.',
+    lead: 'Zag je horloge maar een deel van de nacht, dan vraagt ASCEND of dat klopt in plaats van te denken dat je slecht sliep.',
     points: [
+      { head: 'Waarom', text: 'gaat je horloge in de nacht van je pols, dan meet Garmin maar een deel van de nacht en zegt hij dat er niet bij.' },
       { head: 'Wanneer', text: 'als je horloge minder dan 4 uur slaap zag, of minder dan de helft van jouw gemiddelde (na een week van je eigen nachten).' },
       { head: 'Niet goed gemeten', text: 'dan telt die nacht niet mee voor een voorstel en niet in jouw gemiddelden van slaap en HRV. Je rusthartslag blijft meetellen. Je kunt zelf zeggen hoe lang je ongeveer sliep.' },
       { head: 'Alleen jouw oordeel', text: 'de getallen bij intervals.icu en Garmin blijven zoals ze zijn. Met Ongedaan maken is alles terug.' },

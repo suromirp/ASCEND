@@ -7,7 +7,7 @@
 
 import type { EnergyFeeling, LegFeeling, MorningCheckIn, SleepFeeling } from '../models/checkIn';
 import { fatigueWord, type LegFatigueResult } from './legFatigue';
-import type { WellnessReading } from './wellnessCheck';
+import { suggestSleepFeeling, watchSummaryLine, type WellnessLine, type WellnessReading } from './wellnessCheck';
 
 // De kaart staat er vanaf het begin van de ochtend (instelbaar, standaard 5 uur)
 // tot de middag. Na middernacht is het nog geen ochtend.
@@ -63,3 +63,64 @@ export const SOURCE_TEXT: Record<SuggestionSource, string> = {
 export const LEGS: [LegFeeling, string][] = [['fris', 'Fris'], ['stijf', 'Wat stijf'], ['spierpijn', 'Spierpijn'], ['flink', 'Flinke spierpijn']];
 export const ENERGY: [EnergyFeeling, string][] = [['fit', 'Fit'], ['gewoon', 'Gewoon'], ['moe', 'Moe'], ['op', 'Op']];
 export const SLEEP: [SleepFeeling, string][] = [['goed', 'Goed'], ['gewoon', 'Gewoon'], ['matig', 'Matig'], ['slecht', 'Slecht of kort']];
+
+// --- de getallen bovenaan de kaart ---------------------------------------------------
+
+export interface CardStat {
+  label: string;
+  value: string;
+  unit?: string;
+  from: 'horloge' | 'zelf';
+}
+
+// De drie getallen van het horloge als waarde en eenheid apart.
+function statOf(l: WellnessLine): CardStat | undefined {
+  if (l.key === 'restingHeartRate') {
+    const n = /^(\d+)/.exec(l.value)?.[1];
+    return n ? { label: 'Rusthart', value: n, unit: 'bpm', from: 'horloge' } : undefined;
+  }
+  if (l.key === 'hrv') {
+    const n = /^(\d+)/.exec(l.value)?.[1];
+    return n ? { label: 'HRV', value: n, unit: 'ms', from: 'horloge' } : undefined;
+  }
+  const hm = /^(\d+) uur(?: (\d+))?$/.exec(l.value);
+  if (hm) return { label: 'Slaap', value: `${hm[1]}:${(hm[2] ?? '0').padStart(2, '0')}`, unit: 'u', from: 'horloge' };
+  const min = /^(\d+) min$/.exec(l.value);
+  if (min) return { label: 'Slaap', value: min[1], unit: 'min', from: 'horloge' };
+  return { label: 'Slaap', value: l.value, from: 'horloge' };
+}
+
+export interface MorningCardView {
+  stats: CardStat[];
+  // Waar de getallen vandaan komen: 'horloge' alleen als ze allemaal van het horloge zijn,
+  // 'horloge en zelf' bij een mengsel, anders niets (alleen een eigen schatting).
+  heading: 'van je horloge' | 'horloge en zelf' | undefined;
+  // De compacte regel als er geen getallen te tonen zijn.
+  line: string;
+}
+
+// Een nacht die je niet goed gemeten noemde laat de gemeten slaap overal weg: in de
+// plaats komt je eigen schatting (met "zelf" erbij), of niets als je die niet weet.
+export function morningCardView(reading: WellnessReading | undefined, options: { sleepExpected?: boolean; linked?: boolean } = {}): MorningCardView {
+  const ignored = reading?.night?.state === 'ignored' ? reading.night : undefined;
+  const stats = (reading?.lines ?? []).flatMap((l): CardStat[] => {
+    if (l.key === 'sleep' && ignored) return ignored.hours ? [{ label: 'Slaap, zelf', value: `±${ignored.hours}`, unit: 'u', from: 'zelf' }] : [];
+    const stat = statOf(l);
+    return stat ? [stat] : [];
+  });
+  const fromWatch = stats.filter((s) => s.from === 'horloge').length;
+  const heading = stats.length === 0 || fromWatch === 0 ? undefined : fromWatch === stats.length ? 'van je horloge' : 'horloge en zelf';
+  const line = reading || options.linked ? watchSummaryLine(reading, { sleepExpected: options.sleepExpected }) : '';
+  return { stats, heading, line };
+}
+
+// Is de ochtendcheck al opgeslagen met een slaapantwoord dat alleen uit het voorstel
+// kwam, en verandert je oordeel over de nacht, dan gaat dat antwoord mee. Wat je zelf
+// koos blijft staan. Zonder eigen schatting is er geen voorstel meer. Bij "Klopt" blijft
+// alles zoals het was.
+export function reviseCheckInSleep(checkIn: MorningCheckIn, judgment: { verdict: 'klopt' | 'niet_goed'; hours?: number } | null): MorningCheckIn {
+  if (!checkIn.sleepSuggested || judgment?.verdict === 'klopt') return checkIn;
+  const sleep = judgment?.hours ? suggestSleepFeeling({ sleepMinutes: judgment.hours * 60 }) : undefined;
+  const { sleep: _old, ...rest } = checkIn;
+  return sleep ? { ...rest, sleep } : rest;
+}

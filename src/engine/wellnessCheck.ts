@@ -186,7 +186,7 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
   const record = dayRecord(today, metrics);
   if (!record) return undefined;
   const judgments = options.ask === true ? options.judgments ?? [] : [];
-  const skip = ignoredNightDates(judgments);
+  const skip = ignoredNightDates(judgments, metrics);
   const sleepBase = baselineValues(today, metrics, (m) => m.sleepMinutes, skip);
   const night = options.ask === true ? nightInfo(record.sleepMinutes, sleepBase, judgmentFor(today, judgments)) : undefined;
   const ignored = night?.state === 'ignored';
@@ -197,7 +197,7 @@ export function todayWellness(today: string, metrics: RecoveryMetric[], options:
   if (record.hrv !== undefined) {
     const hrv = hrvLine(record.hrv, baselineValues(today, metrics, (m) => m.hrv, skip));
     // The HRV of a night that was not measured well says nothing either.
-    lines.push(ignored ? { ...hrv, tone: 'normal', short: `HRV ${Math.round(record.hrv)} ms` } : hrv);
+    lines.push(ignored ? { ...hrv, tone: 'normal', note: 'Deze nacht telt niet mee.', short: `HRV ${Math.round(record.hrv)} ms` } : hrv);
   }
   if (lines.length === 0) return undefined;
   let suggestedSleep: SleepFeeling | undefined;
@@ -244,8 +244,10 @@ export const NO_SLEEP_TEXT = 'Geen slaap van je horloge vannacht';
 export function watchSummaryLine(reading: WellnessReading | undefined, options: { sleepExpected?: boolean } = {}): string {
   const sleepExpected = options.sleepExpected ?? true;
   if (!reading) return sleepExpected ? NO_SLEEP_TEXT : '';
-  const text = reading.lines.map((l) => l.short).join(' · ');
+  // Een nacht die je niet goed gemeten noemde, toont de gemeten slaap nergens.
+  const ignored = reading.night?.state === 'ignored';
+  const text = reading.lines.filter((l) => !(ignored && l.key === 'sleep')).map((l) => l.short).join(' · ');
   const capital = text.charAt(0).toUpperCase() + text.slice(1);
-  const hasSleep = reading.lines.some((l) => l.key === 'sleep');
+  const hasSleep = ignored || reading.lines.some((l) => l.key === 'sleep');
   return hasSleep || !sleepExpected ? capital : `${NO_SLEEP_TEXT} · ${text}`;
 }

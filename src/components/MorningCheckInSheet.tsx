@@ -54,7 +54,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
   const today = todayISO();
   const existing = settings.morningCheckIns?.find((c) => c.date === today);
   const spot = recentPainSpot(today, sessionLogs);
-  const [draft, setDraft] = useState<MorningCheckIn>(() => existing ?? { date: today, legs: initialLegs, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
+  const [draft, setDraft] = useState<MorningCheckIn>(() => existing ? { ...existing, sleep: existing.sleepSuggested ? undefined : existing.sleep } : { date: today, legs: initialLegs, spot: spot ? { area: spot.area, score: spot.lastScore } : undefined });
   const { prefill, reading } = useMorningPrefill(today);
   const wellness = painOnly ? undefined : reading;
 
@@ -64,10 +64,14 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
   const suggest = !existing && !painOnly;
   const legs = draft.legs ?? (suggest ? prefill.legs?.value : undefined);
   const energy = draft.energy ?? (suggest ? prefill.energy?.value : undefined);
-  const sleep = draft.sleep ?? (suggest ? prefill.sleep?.value : undefined);
+  // Een slaapantwoord dat uit het voorstel kwam, volgt je oordeel over de nacht: het staat
+  // niet vast in het concept maar wordt vers uit de opgeslagen ochtend gelezen.
+  const sleep = draft.sleep ?? (existing?.sleepSuggested ? existing.sleep : suggest ? prefill.sleep?.value : undefined);
   const legsFrom = suggest && !draft.legs ? prefill.legs?.from : undefined;
   const energyFrom = suggest && !draft.energy ? prefill.energy?.from : undefined;
   const sleepFrom = suggest && !draft.sleep ? prefill.sleep?.from : undefined;
+  // Kwam het slaapantwoord uit het voorstel en koos je zelf niets, dan blijft het een voorstel.
+  const sleepSuggested = !draft.sleep && !!sleep ? true : draft.sleepSuggested;
 
   function save(entry: MorningCheckIn) {
     onSaved?.();
@@ -100,7 +104,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
         {wellness?.night && <ShortNightAsk reading={wellness} today={today} />}
         {!painOnly && <ChoiceRow label="Benen" from={legsFrom} options={LEGS} value={legs} set={(v) => setDraft({ ...draft, legs: v })} />}
         {!painOnly && <ChoiceRow label={wellness ? 'Energie (mag leeg blijven)' : 'Energie'} from={energyFrom} options={ENERGY} value={energy} set={(v) => setDraft({ ...draft, energy: v })} />}
-        {!painOnly && <ChoiceRow label="Slaap" from={sleepFrom} options={SLEEP} value={sleep} set={(v) => setDraft({ ...draft, sleep: v })} />}
+        {!painOnly && <ChoiceRow label="Slaap" from={sleepFrom} options={SLEEP} value={sleep} set={(v) => setDraft({ ...draft, sleep: v, sleepSuggested: undefined })} />}
         {spot && (
           <div>
             <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe is je {spot.area.toLowerCase()} vanochtend? 0 is niets. Na de training was het {spot.lastScore}.</p>
@@ -123,7 +127,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
         )}
         <div className="flex items-center justify-between gap-3">
           {painOnly ? <span /> : <NotFitLink />}
-          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, date: today, allNormal: undefined })}>
+          <PrimaryButton fullWidth={false} disabled={!complete} onClick={() => save(painOnly ? { date: today, spot: draft.spot } : { ...draft, legs, energy, sleep, sleepSuggested: sleepSuggested || undefined, date: today, allNormal: undefined })}>
             Opslaan
           </PrimaryButton>
         </div>
