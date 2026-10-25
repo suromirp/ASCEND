@@ -6,7 +6,7 @@ import { chipsWithout, EXCLUDE_LOG_EXPLAIN, setAmount, setExclude, setLabel, tog
 import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { Toggle } from '../ui';
 
-// "Wat speelde er": wat ASCEND al weet (met een tik te bevestigen), de keuzes, de hoeveelheid bij
+// "Wat speelde er": wat ASCEND al weet (gewone regels, niets te tikken), de keuzes, de hoeveelheid bij
 // alcohol, je eigen woord, en de schakelaar die iets uit je hartslagcijfers houdt. Voor een training
 // en voor een dag; de woorden verschillen alleen waar de plek het zegt. Elke tik bewaart meteen: er is
 // geen knop Opslaan en geen gevulde knop in dit blok.

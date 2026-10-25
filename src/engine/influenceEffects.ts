@@ -310,15 +310,17 @@ export class InfluenceCalculator {
     this.input = input;
     const facts = input.facts ?? derivedFactEntries({ logs: input.logs, templates: input.templates, recovery: input.metrics, illness: input.illness, judgments: input.nightJudgments });
     this.entries = [...input.entries, ...facts];
-    this.recorded = new Set(this.entries.filter((e) => e.reasons.length > 0).map(morningOf));
-    const plain = this.entries.filter((e) => e.reasons.length === 0);
+    // Only what you noted yourself keeps a morning out of the bands. A heavy leg day or a short night
+    // of the watch is part of your normal week: those facts get their own row but stay in the bands.
+    this.recorded = new Set(input.entries.filter((e) => e.reasons.length > 0).map(morningOf));
+    const plain = input.entries.filter((e) => e.reasons.length === 0);
     this.skipMornings = new Set([...this.recorded, ...excludedMornings(plain)]);
     this.skipNights = new Set([...this.skipMornings, ...ignoredNightDates(input.nightJudgments, input.metrics)]);
     this.skipLogs = excludedLogIds(plain);
     this.templateById = new Map(input.templates.map((t) => [t.id, t]));
   }
 
-  // De ochtenden met een vastgelegde reden: die tellen niet mee in een band.
+  // De ochtenden met een reden die je zelf vastlegde: die tellen niet mee in een band.
   get recordedMornings(): ReadonlySet<string> {
     return this.recorded;
   }
@@ -408,6 +410,12 @@ export class InfluenceCalculator {
   }
 }
 
+// Warmte gebeurt tijdens de training: ze zegt alleen iets over de hartslag bij tempo en over
+// zwaarte, niet over de ochtendgetallen of de slaap. Alle andere redenen gelden voor elke meting.
+export function appliesTo(group: Pick<ReasonGroup, 'reason'>, measure: InfluenceMeasure): boolean {
+  return group.reason !== 'warm' || measure === 'paceHr' || measure === 'effort';
+}
+
 // --- per reden en meting -----------------------------------------------------------------------
 
 function summarize(group: ReasonGroup, measure: InfluenceMeasure, points: EffectPoint[]): ReasonEffect {
@@ -439,7 +447,7 @@ export function influenceEffects(input: EffectsInput, calc: InfluenceCalculator 
   for (const o of occurrences) groups.set(o.group.key, o.group);
   for (const group of groups.values()) {
     const mornings = occurrences.filter((o) => o.group.key === group.key).map((o) => o.morning).sort();
-    for (const measure of MEASURES) {
+    for (const measure of MEASURES.filter((m) => appliesTo(group, m))) {
       const points = mornings.map((m) => calc.pointAt(measure, m)).filter((p): p is EffectPoint => !!p);
       if (points.length > 0) out.push(summarize(group, measure, points));
     }
@@ -715,6 +723,7 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   if (now.diff >= b.low && now.diff <= b.high) return undefined;
   let best: (LooksLike & { gap: number }) | undefined;
   for (const group of groups.values()) {
+    if (!appliesTo(group, input.measure)) continue;
     const own = new Set(occurrences.filter((o) => o.group.key === group.key).map((o) => o.morning));
     const ownDiffs = [...own].map(diffOf).filter((v): v is number => v !== undefined);
     if (ownDiffs.length < LOOKS_LIKE_MIN) continue;
