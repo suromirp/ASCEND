@@ -77,16 +77,29 @@ export function isIndoorLog(log: Pick<SessionLog, 'cardioData' | 'outdoorData'>)
   return findModalityByKey(data?.modality)?.environment === 'indoor';
 }
 
+// The shape of your week, chosen at the start (engine/weekShape.ts): per
+// template the weekday (1 Monday to 7 Sunday). What is not in it is not in the
+// weekly pattern. Unset: the pattern as the default program has it.
+export interface WeekShape {
+  days: Record<string, number>;
+}
+
+export function applyWeekShape(pattern: SessionTemplate[], shape: WeekShape | undefined): SessionTemplate[] {
+  if (!shape) return pattern;
+  return pattern.filter((t) => shape.days[t.id] !== undefined).map((t) => ({ ...t, defaultDayOfWeek: shape.days[t.id] }));
+}
+
 export interface PatternSettings {
   enabledSports?: Partial<EnabledSports>;
   sportFrequency?: Partial<Record<Sport, number>>;
+  weekShape?: WeekShape;
 }
 
 // The weekly pattern ASCEND builds a week from, shaped by the user's
 // settings: sports that are off drop out. A sport with a fixed number per
 // week is then brought to that number by engine/sportFrequency.ts.
 export function weeklyPatternTemplates(templates: SessionTemplate[], settings: PatternSettings): SessionTemplate[] {
-  return templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports));
+  return applyWeekShape(templates.filter((t) => t.defaultDayOfWeek && isTemplatePlannable(t, settings.enabledSports)), settings.weekShape);
 }
 
 // Sports the user pinned to a number per week — the automatic weekly

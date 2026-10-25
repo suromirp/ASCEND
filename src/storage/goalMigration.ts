@@ -23,6 +23,7 @@ import {
   GoalMilestoneProgressRepo,
   StrengthProgramStrategiesRepo,
   MetaRepo,
+  ProgramsRepo,
   SettingsRepo,
   clearLegacyObjectiveStores,
 } from './database';
@@ -70,6 +71,11 @@ export async function migrateToGoalEngine(): Promise<void> {
 export async function migrateStrengthProgramDefault(): Promise<void> {
   const migrated = await MetaRepo.get<boolean>('strengthProgramDefaultSeeded');
   if (migrated) return;
+
+  // A device that has not been asked anything yet has no strength block either:
+  // the first plan makes it (or not, when you train without strength), and sets
+  // this flag itself. No flag here, so nothing stops that.
+  if ((await ProgramsRepo.getAll()).length === 0) return;
 
   const existing = await StrengthProgramStrategiesRepo.getAll();
   if (existing.length === 0) {

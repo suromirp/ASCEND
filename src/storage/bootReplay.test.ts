@@ -53,7 +53,7 @@ async function countWrites<T>(fn: () => Promise<T>): Promise<{ result: T; writes
 // Wat de app bij een koude start doet, in dezelfde volgorde (state/AppDataContext.tsx):
 // opstartstappen, de planningssync, daarna de achtergrondstappen.
 async function boot() {
-  await runBootMigrations();
+  await runBootMigrations({ seedProgram: true });
   await syncProgramHorizon();
   const forecast = computeForecastReplan({
     plannedSessions: await PlannedSessionsRepo.getAll(),
@@ -81,7 +81,7 @@ describe('opstart twee keer naspelen', () => {
     await wipeAllData();
     // Het doel van de gebruiker, nagemaakt: een wedstrijd op 20 maart en de GR5 op 1 augustus.
     await SettingsRepo.set({ marathonRaceType: 'half', marathonTargetDate: '2027-03-20' });
-    await runBootMigrations();
+    await runBootMigrations({ seedProgram: true });
     const gr5 = (await TrainingGoalsRepo.getAll()).find((g) => g.id === 'obj_gr5');
     expect(gr5).toBeDefined();
     await TrainingGoalsRepo.put({ ...gr5!, status: 'active', targetDate: '2027-08-01' });

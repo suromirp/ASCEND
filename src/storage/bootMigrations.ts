@@ -20,7 +20,9 @@ import type { BootRunResult } from './bootLock';
 import { BOOT_MIGRATIONS, BOOT_MIGRATIONS_KEY, BOOT_STEP_LIMIT_MS, migrationsToRun, recordAfter, type BootMigrationRecord } from '../engine/bootWatch';
 
 const STEPS: Record<string, () => Promise<unknown>> = {
-  seedIfEmpty,
+  // A new device gets only the templates; the program and the plan come after
+  // the first questions (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
+  seedIfEmpty: () => seedIfEmpty({ withProgram: false }),
   // Replaces the retired syncObjectiveDefinitions() — one-time migration
   // to TrainingGoal/GoalMilestone (Technical Architecture v0.3.1 REVISED,
   // Phase 1), guarded so it only ever runs once.
@@ -51,6 +53,11 @@ export async function runBootMigrations(
     stepLimitMs?: number;
     // For the tests: a step replaced by another function.
     overrides?: Record<string, () => Promise<unknown>>;
+    // For the tests and the demo data: seed the whole default program (a goal and
+    // a planning) on a new device, as the app did before the first questions
+    // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md). The app itself
+    // never sets this.
+    seedProgram?: boolean;
     // Asked before each step: true stops here (the page went out of view), so
     // the caller can let go of the lock. What is done is in meta; the next run
     // goes on from there (storage/bootLock.ts).
@@ -73,7 +80,7 @@ export async function runBootMigrations(
   // never writes plannedSessions at the same time as the sync.
   let pending: Promise<void> | undefined;
   for (const step of migrationsToRun(record, build)) {
-    const run = options.overrides?.[step.id] ?? STEPS[step.id];
+    const run = options.overrides?.[step.id] ?? (step.id === 'seedIfEmpty' && options.seedProgram ? () => seedIfEmpty() : STEPS[step.id]);
     if (!run) continue;
     if (options.isCancelled?.()) return pending ? { skipped, cancelled: true, pending } : { skipped, cancelled: true };
     if (!repairsStopped && options.shouldPause?.()) return { skipped, paused: true };
