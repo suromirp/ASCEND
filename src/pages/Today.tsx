@@ -42,6 +42,7 @@ import { reviewWeekToShow, morningCheckInMode, showWeeklyQuestion } from '../eng
 import { leaveLabelOn } from '../engine/leave';
 import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
+import { InfluenceMoveCard } from '../components/influence/InfluenceMoveCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
 import { Card, Eyebrow } from '../components/ui';
@@ -326,6 +327,9 @@ export function TodayPage() {
           tomorrow={tomorrowLine}
         />
       )}
+
+      {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
+      <InfluenceMoveCard />
 
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />

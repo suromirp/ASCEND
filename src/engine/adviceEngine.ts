@@ -331,7 +331,18 @@ function removalCost(templateId: string, template: SessionTemplate): number | un
   return undefined;
 }
 
-function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>): Advice[] {
+// `forced`: a proposal to move one given test, asked for by something other than a missed
+// or tired-legs test (engine/influenceProposal.ts: what you noted about the evening before).
+// It runs the same search around the test's own date, with the same spacing rules, and
+// carries its own id and reason.
+export interface ForcedTestMove {
+  sessionId: string;
+  id: string;
+  title: string;
+  why: string;
+}
+
+function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>, usedIds: Set<string>, forced?: ForcedTestMove): Advice[] {
   if (activeIllness(inputs.illnessEpisodes) || recoveryRamp(inputs.illnessEpisodes, inputs.asOf)) return [];
   const test = templateById.get(TEST_RUN_ID);
   if (!test) return [];
@@ -339,7 +350,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
   const open = (s: PlannedSession) => s.status !== 'skipped' && !loggedIds.has(s.id);
   // Not in the two weeks before a race: that is the taper.
-  if (inputs.plannedSessions.some((s) => s.templateId === 'tpl_race' && open(s) && daysBetween(today, s.scheduledDate) >= 0 && daysBetween(today, s.scheduledDate) <= 14)) return [];
+  if (!forced && inputs.plannedSessions.some((s) => s.templateId === 'tpl_race' && open(s) && daysBetween(today, s.scheduledDate) >= 0 && daysBetween(today, s.scheduledDate) <= 14)) return [];
   // A test that sits on your rest day (the rest day moved onto it, or the
   // test fell on it): that is arranged like a missed one, around its own date.
   // Any test ahead, not only the next two weeks: the week check
@@ -356,7 +367,9 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     .filter((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate > today && daysBetween(today, s.scheduledDate) <= 14 && !usedIds.has(s.id)
       && freshnessAt(s.scheduledDate, inputs.plannedSessions.filter((o) => o.id !== s.id), templateById, inputs.logs).index > FATIGUE_THRESHOLDS.test.doubt)
     .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
-  const around = onRestDay ?? notFresh;
+  const forcedSession = forced ? inputs.plannedSessions.find((s) => s.id === forced.sessionId && s.templateId === TEST_RUN_ID && open(s)) : undefined;
+  if (forced && !forcedSession) return [];
+  const around = forcedSession ?? onRestDay ?? notFresh;
   // Another test already waiting in the next two weeks: nothing to arrange.
   if (!around && inputs.plannedSessions.some((s) => s.templateId === TEST_RUN_ID && open(s) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14)) return [];
 
@@ -375,9 +388,10 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     ? Array.from({ length: 9 }, (_, i) => addDays(lost.scheduledDate, [1, -1, 2, -2, 3, -3, 4, -4, 5][i]))
       .filter((d) => d > today && !restDates.has(d) && !isIllnessDay(d, inputs.illnessEpisodes, today))
     : Array.from({ length: TEST_ROOM_DAYS }, (_, i) => addDays(today, i + 1));
-  const why = 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
+  const why = forced?.why ?? 'De testloop van 5 km is het meetpunt voor je wedstrijdtempo: daarop stelt ASCEND je tempo af, en daaruit rekent hij je voorspelde tijd. Daarom hoort hij erin, ook als er een andere training voor moet wijken. Alleen jij beslist: dit is een voorstel.';
   const missedWord = lost.status === 'skipped' ? 'overgeslagen' : 'gemist';
-  const title = onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${shortDate(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
+  const title = forced ? forced.title : onRestDay ? `Testloop van ${shortDate(lost.scheduledDate)} staat op je rustdag` : notFresh ? `Testloop van ${shortDate(lost.scheduledDate)}: je benen zijn dan nog niet fris` : `Testloop van ${shortDate(lost.scheduledDate)} ${missedWord}`;
+  const adviceId = forced?.id ?? `testroom:${lost.id}`;
   const moveItem = (date: string): PlanChangeItem => ({ plannedSessionId: lost.id, action: 'move', fromDate: lost.scheduledDate, toDate: date, reason: 'De testloop is het meetpunt voor je tempo.', generatedBy: ['engine/adviceEngine.ts', 'TEST-MAKE-ROOM'] });
 
   // 1b. Move leg strength out of the way rather than dropping anything: to
@@ -434,7 +448,7 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
       moveItem(date),
     ];
     const effect = `Doe hem ${shortDate(date)}, en ${moveLines.join(' en ')}. Eerst lopen en daarna kracht verstoort je volgende loop niet, andersom wel.`;
-    return [{ id: `testroom:${lost.id}`, trigger: around ? 'plan_update' : 'session_missed', ruleId: 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
+    return [{ id: adviceId, trigger: around ? 'plan_update' : 'session_missed', ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect, why, priority: 3, proposal: proposal(title, items, `De testloop komt op ${shortDate(date)}; ${moveLines.join('; ')}.`, why) }];
   }
 
   // 1. Per day, nearest first: a free day, or else (1b below) a day that
@@ -500,9 +514,16 @@ function testRunAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const trigger = around ? 'plan_update' as const : 'session_missed' as const;
   if (ranked.length > 0) {
     const [first] = ranked;
-    return [{ id: `testroom:${lost.id}`, trigger, ruleId: 'TEST-MAKE-ROOM', title, effect: first.effect, why, priority: 3, proposal: first.proposal, options: ranked.length > 1 ? ranked.map((c) => ({ label: c.label, effect: c.effect, proposal: c.proposal })) : undefined }];
+    return [{ id: adviceId, trigger, ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect: first.effect, why, priority: 3, proposal: first.proposal, options: ranked.length > 1 ? ranked.map((c) => ({ label: c.label, effect: c.effect, proposal: c.proposal })) : undefined }];
   }
-  return [{ id: `testroom:${lost.id}`, trigger, ruleId: 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
+  return [{ id: adviceId, trigger, ruleId: forced ? 'TEST-INFLUENCE' : 'TEST-MAKE-ROOM', title, effect: 'De komende dagen is er geen goede plek voor de testloop zonder je zware dagen te raken. De volgende testloop staat in je plan; je kunt de testloop ook zelf in Week verplaatsen.', why, priority: 1 }];
+}
+
+// The proposal to move one given test (engine/influenceProposal.ts), with the same preview,
+// spacing and Akkoord as every other proposal. Without a place that keeps the leg rules: nothing.
+export function testMoveAdvice(inputs: AdviceInputs, forced: ForcedTestMove): Advice | undefined {
+  const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
+  return testRunAdvice(inputs, templateById, new Set(), forced).find((a) => a.proposal);
 }
 
 // --- Rule HARD-THEN-SPACE ----------------------------------------------------

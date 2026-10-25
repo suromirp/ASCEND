@@ -27,6 +27,7 @@ import { goalTiming, typicalDayValue } from '../engine/goalRoute';
 import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { Icon } from '../components/icons';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
+import { InfluenceCard } from '../components/influence/InfluenceCard';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -173,6 +174,8 @@ export function StandingPage() {
         <RunTrendsCard />
         <AerobicTrendCard />
       </section>
+
+      <InfluenceCard />
 
       <section className="flex flex-col gap-5" aria-label="Doel">
         {progress && <AdventureCard progress={progress} onOpenLadder={() => navigate('/ascend')} />}
