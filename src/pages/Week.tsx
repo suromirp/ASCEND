@@ -291,6 +291,7 @@ export function WeekPage() {
           program={program}
           quickComplete={isQuickComplete(templateById.get(selected.templateId))}
           completedLog={selectedLog}
+          onOpenLog={selectedLog ? () => setOpenLog(selectedLog) : undefined}
           onDoneAsPlanned={!selectedLog && selected.scheduledDate <= todayISO() && canTickOffAsPlanned(templateById.get(selected.templateId)!, strengthExternal, settings.restDayMode)
             ? () => {
                 void logSession(asPlannedLog(selected, templateById.get(selected.templateId)!, program, todayISO()));

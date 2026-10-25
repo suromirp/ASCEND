@@ -22,6 +22,11 @@ import { StravaTextButton } from './StravaTextButton';
 import { isTrimmable, trimOriginalLine, trimRangeLine } from '../engine/trimLog';
 import { canRestoreSourceUpdate, sourceOfferLine, sourceUpdateLine, sourceUpdatePreviousLine } from '../engine/sourceCorrection';
 import { TextButton } from './TextButton';
+import { SheetRow, SheetRows } from './SheetRows';
+import { LogInfluenceCard } from './influence/LogInfluenceCard';
+import { InfluenceSheet } from './influence/InfluenceSheet';
+import { useDeviation } from './influence/useInfluence';
+import { entryForLog, isNoted } from '../engine/influence';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
 const RESTORE_TIMEOUT_MS = 15_000;
@@ -32,7 +37,7 @@ const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
 export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
-  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, sessionLogs, templates, program } = useAppData();
+  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, sessionLogs, templates, program, settings } = useAppData();
   // Read the log fresh, so the sheet follows a change (the own numbers put back).
   const log = sessionLogs.find((l) => l.id === shown.id) ?? shown;
   const activity = log.outdoorData ?? log.cardioData;
@@ -76,6 +81,11 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   }
 
   const { closing, requestClose } = useSheetClose(onClose);
+  // "Wat speelde er": with a heart rate that stands out the block sits on top; otherwise a quiet row lower down.
+  const deviation = useDeviation(log);
+  const showDeviation = !!deviation && settings.influenceSign !== false;
+  const [influenceOpen, setInfluenceOpen] = useState(false);
+  const influenceNoted = (() => { const e = entryForLog(settings.influences, log.id); return !!e && isNoted(e); })();
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [restoreNote, setRestoreNote] = useState<string | null>(null);
@@ -158,6 +168,8 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
             {logKindLabel(log)} · {log.durationMinutes} min
           </p>
+
+          {showDeviation && <LogInfluenceCard log={log} deviation={deviation} />}
 
           {log.subjectiveFeel && (
             <p className="mt-2 text-xs font-medium" style={{ color: log.subjectiveFeel === 'worse' ? 'var(--color-warning)' : 'var(--color-action)' }}>
@@ -277,6 +289,14 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
             </div>
           )}
 
+          {!showDeviation && (
+            <div className="mt-4">
+              <SheetRows>
+                <SheetRow title="Wat speelde er?" sub={influenceNoted ? 'Ingevuld, alleen voor jou' : undefined} onClick={() => setInfluenceOpen(true)} />
+              </SheetRows>
+            </div>
+          )}
+
           <div className="mt-2">
             <StravaTextButton log={log} template={templates.find((t) => t.id === log.templateId)} />
           </div>
@@ -302,6 +322,9 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     </Portal>
     {/* Next to the sheet, not inside it: a tap in this one must not close that one. */}
     {trimming && <TrimSheet log={log} templateName={templateName} onClose={() => setTrimming(false)} />}
+    {influenceOpen && (
+      <InfluenceSheet eyebrow={formatDateNL(log.completedDate)} title="Wat speelde er?" line={templateName} target={{ date: log.completedDate, logId: log.id }} log={log} onClose={() => setInfluenceOpen(false)} />
+    )}
     </>
   );
 }

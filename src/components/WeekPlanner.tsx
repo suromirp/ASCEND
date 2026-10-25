@@ -19,6 +19,10 @@ import type { WatchStatusKind } from '../engine/watchStatus';
 import { addDays, weekDates, weekdayShortNL, todayISO } from '../utils/dates';
 import { Eyebrow, StatusPill } from './ui';
 import { EFFORT_COLOR } from './effortColor';
+import { HeartSign } from './influence/HeartSign';
+import { useDeviations } from './influence/useInfluence';
+import { entryForLog, signState, type SignState } from '../engine/influence';
+import { useMemo } from 'react';
 
 // De week als compacte lijst op één scherm: per dag een regel met status,
 // dag, sport, naam en duur. Een tik opent de actiesheet van die training
@@ -38,7 +42,7 @@ const todayStyle = {
 const restStyle = { background: 'color-mix(in srgb, var(--color-status) 6%, transparent)' };
 
 function SessionRow({
-  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch,
+  session, template, date, logs, program, templates, onTap, adjusted, isToday, watch, sign,
 }: {
   session: PlannedSession;
   template: SessionTemplate;
@@ -51,6 +55,8 @@ function SessionRow({
   isToday: boolean;
   // Only 'sent' and 'failed' get a mark; everything else stays quiet.
   watch?: WatchStatusKind;
+  // Het hartslagteken van "Wat speelde er", naast de naam van een gedane training.
+  sign?: SignState;
 }) {
   const restMode = useAppData().settings.restDayMode ?? 'rest';
   const isRest = template.type === 'recovery';
@@ -76,6 +82,7 @@ function SessionRow({
             {isRest ? REST_DAY_COPY[restMode].title : template.name}
           </span>
           {legs && <LegMark />}
+          {sign && <HeartSign state={sign} />}
         </span>
         <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
           <span>{dayLabel(date)}</span>
@@ -124,7 +131,7 @@ function SessionRow({
 // Een training die je deed zonder dat hij gepland stond (een losse training, een
 // Garmin-activiteit die je als zodanig bewaarde): een gedane rij zoals een gedane
 // geplande training, met "zonder plan" erbij. Een tik opent het logblad.
-function LooseRow({ log, template, isToday, onTap }: { log: SessionLog; template?: SessionTemplate; isToday: boolean; onTap: () => void }) {
+function LooseRow({ log, template, isToday, onTap, sign }: { log: SessionLog; template?: SessionTemplate; isToday: boolean; onTap: () => void; sign?: SignState }) {
   const name = template?.name ?? SPORT_LOOK[sportKeyOfLog(log)].label;
   return (
     <button
@@ -135,7 +142,10 @@ function LooseRow({ log, template, isToday, onTap }: { log: SessionLog; template
     >
       <LogDisc log={log} size={44} />
       <span className="min-w-0 flex-1">
-        <span className="block min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{name}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="min-w-0 break-words text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{name}</span>
+          {sign && <HeartSign state={sign} />}
+        </span>
         <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-4 tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
           <span>{dayLabel(log.completedDate)}</span>
           {log.durationMinutes > 0 && (
@@ -189,7 +199,15 @@ export function WeekPlanner({
   const today = todayISO();
   const loggedIds = new Set(logs.map((l) => l.plannedSessionId));
   const { statusOf } = useWatchStatuses();
-  const showWatch = useAppData().settings.showWatchStatusOnWeek !== false;
+  const { settings } = useAppData();
+  const showWatch = settings.showWatchStatusOnWeek !== false;
+  // "Wat speelde er": the sign by a done run with a heart rate that stands out.
+  const weekLogs = useMemo(() => {
+    const dates = weekDates(weekStartDate);
+    return logs.filter((l) => l.completedDate >= dates[0] && l.completedDate <= dates[dates.length - 1]);
+  }, [logs, weekStartDate]);
+  const deviations = useDeviations(weekLogs);
+  const signOf = (log: SessionLog | undefined): SignState | undefined => (log ? signState(deviations.get(log.id), entryForLog(settings.influences, log.id), settings.influenceSign) : undefined);
   const templates = Array.from(templateById.values());
 
   if (days.length === 0) return <Eyebrow>GEEN DATA</Eyebrow>;
@@ -230,10 +248,11 @@ export function WeekPlanner({
                 adjusted={!!adjustedIds?.has(s.id)}
                 isToday={isToday}
                 watch={showWatch ? statusOf(s, template).kind : undefined}
+                sign={signOf(logs.find((l) => l.plannedSessionId === s.id))}
               />
             ))}
             {loose.map((l) => (
-              <LooseRow key={l.id} log={l} template={templateById.get(l.templateId)} isToday={isToday} onTap={() => onSelectLog?.(l)} />
+              <LooseRow key={l.id} log={l} template={templateById.get(l.templateId)} isToday={isToday} onTap={() => onSelectLog?.(l)} sign={signOf(l)} />
             ))}
             {showEmpty && (
               <div className="flex min-h-[64px] items-center gap-3 px-3 py-2" style={isToday ? todayStyle : undefined}>

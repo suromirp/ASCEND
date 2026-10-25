@@ -7,6 +7,7 @@ import { runInsight, type RunInsight, type ShownInsight } from '../engine/runIns
 import { getWatchState, onWatchChange } from '../storage/externalActivities';
 import { getShownInsights, recordShownInsights } from '../storage/runInsightShown';
 import { detailsWanted } from '../engine/watchUse';
+import { excludedLogIds } from '../engine/influence';
 import { todayISO } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 
@@ -52,8 +53,9 @@ export function useRunInsight(logId: string | undefined, options: { brake?: bool
     return runInsight({
       log, logs: sessionLogs, templates, program, hr: settings.heartRate, legs,
       settings: settings.runInsight, detailsOn, shown: brake ? shown : undefined, today: todayISO(),
+      excludedLogIds: excludedLogIds(settings.influences),
     });
-  }, [log, sessionLogs, templates, program, settings.heartRate, settings.runInsight, legs, detailsOn, shown, brake]);
+  }, [log, sessionLogs, templates, program, settings.heartRate, settings.runInsight, settings.influences, legs, detailsOn, shown, brake]);
 
   // What the card showed is remembered, so the same line does not come back
   // right away after the next training.

@@ -56,6 +56,8 @@ export interface RunTrendsInput {
   settings: RunInsightSettings | undefined;
   detailsOn: boolean;
   today: string;
+  // Trainings set to "Niet meetellen voor hartslag": out of the heart rate trends (engine/influence.ts).
+  excludedLogIds?: ReadonlySet<string>;
 }
 
 export const TREND_WEEKS = 12;
@@ -85,7 +87,7 @@ function lastThree<T>(items: T[]): { last: T[]; before: T[] } | undefined {
 // --- efficiency: aerobicTrend itself ------------------------------------------------------------
 
 function efficiencyRow(input: RunTrendsInput): TrendRow {
-  const trend = aerobicTrend(input.logs, input.templates, input.program, input.hr, input.today);
+  const trend = aerobicTrend(input.logs, input.templates, input.program, input.hr, input.today, input.excludedLogIds);
   const change = trend.changeSec;
   const word: TrendWord = change === undefined ? 'Te weinig gegevens' : Math.abs(change) < MEANINGFUL_CHANGE_SEC ? 'Normaal' : change < 0 ? 'Beter' : 'Slechter';
   const points = trend.points.map((p) => ({ label: p.label, value: p.value }));
@@ -143,7 +145,8 @@ function driftRow(input: RunTrendsInput): TrendRow {
   if (!input.detailsOn) return { key: 'longDays', title, word: 'Te weinig gegevens', points: [], model: empty('drift', title, 'percent', 'De details van loopjes en tochten staan uit. Zet ze aan bij Garmin koppelen.', criteria) };
   const runs: Dated<number>[] = [];
   for (const l of usable(input)) {
-    if (logSport(l) !== 'running' || !isEasyPlanned(l, input)) continue;
+    // Drift is a heart rate measure: a training set to "Niet meetellen voor hartslag" stays out.
+    if (logSport(l) !== 'running' || !isEasyPlanned(l, input) || input.excludedLogIds?.has(l.id)) continue;
     const d = driftOf(l.detail);
     if (!isUnavailable(d)) runs.push({ date: l.completedDate, log: l, v: d.percent });
   }

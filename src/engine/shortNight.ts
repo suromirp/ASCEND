@@ -86,4 +86,7 @@ export interface NightOptions {
   // "Vragen bij een korte nacht" staat aan. Zonder opties werkt alles zoals voorheen.
   ask?: boolean;
   judgments?: NightJudgment[];
+  // "Deze nacht niet meetellen" (engine/influence.ts#excludedMornings): these mornings
+  // stay out of your own averages of resting heart rate and HRV.
+  excludedMornings?: ReadonlySet<string>;
 }

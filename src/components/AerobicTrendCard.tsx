@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { aerobicTrend, formatPace, MEANINGFUL_CHANGE_SEC } from '../engine/aerobicTrend';
+import { excludedLogIds } from '../engine/influence';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
 import { TrendLineChart } from './TrendLineChart';
@@ -9,7 +10,8 @@ import { TrendLineChart } from './TrendLineChart';
 // (engine/aerobicTrend.ts). A line going up means faster at the same effort.
 export function AerobicTrendCard() {
   const { sessionLogs, templates, program, settings } = useAppData();
-  const trend = useMemo(() => aerobicTrend(sessionLogs, templates, program, settings.heartRate, todayISO()), [sessionLogs, templates, program, settings.heartRate]);
+  // A training set to "Niet meetellen voor hartslag" stays out (engine/influence.ts).
+  const trend = useMemo(() => aerobicTrend(sessionLogs, templates, program, settings.heartRate, todayISO(), excludedLogIds(settings.influences)), [sessionLogs, templates, program, settings.heartRate, settings.influences]);
   const latest = trend.points.at(-1);
   const hasZones = !!(settings.heartRate?.lthr || settings.heartRate?.maxHr);
 

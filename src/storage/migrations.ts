@@ -9,6 +9,8 @@ import { isLeavePeriod, isTrekDetails } from '../engine/leave';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
 import type { NightJudgment } from '../models/checkIn';
+import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
+import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
 import type { ExternalOneRm, OneRmReading, WeightEntry } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
 import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
@@ -581,4 +583,73 @@ export function migrateWeightEntries(entries: WeightEntry[]): { entries: WeightE
     return copy;
   });
   return { entries: cleaned, skipped };
+}
+
+// --- wat speelde er: settings.influences ---------------------------------------
+// Your own notes about a day or a training (models/influence.ts). Optional and
+// additive, so the backup schema number does not move: a file from before it has no
+// key, which means "not in this backup" and leaves the notes on the device alone.
+// A record without an id, a valid date or a readable list of reasons is dropped and
+// counted; an unknown reason is left out; a damaged amount or label loses only
+// itself, because the reason is still true. One note per id, the newest updatedAt wins.
+const MAX_INFLUENCES = 2000;
+const NO_TIME = '1970-01-01T00:00:00.000Z';
+
+export function migrateInfluences(raw: unknown): { list: InfluenceEntry[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byId = new Map<string, InfluenceEntry>();
+  let skipped = 0;
+  for (const item of raw) {
+    if (!isObj(item) || typeof item.id !== 'string' || item.id === '' || item.id.length > 80 || typeof item.date !== 'string' || !ISO_DAY.test(item.date) || !Array.isArray(item.reasons)) {
+      skipped++;
+      continue;
+    }
+    // The place is part of the meaning (a training or a day), so a damaged logId drops the note.
+    if (item.logId !== undefined && (typeof item.logId !== 'string' || item.logId === '')) {
+      skipped++;
+      continue;
+    }
+    const reasons: InfluenceReasonNote[] = [];
+    const seen = new Set<InfluenceReason>();
+    for (const r of item.reasons) {
+      if (!isObj(r) || typeof r.reason !== 'string' || !Object.prototype.hasOwnProperty.call(REASON_LABEL, r.reason) || seen.has(r.reason as InfluenceReason)) {
+        skipped++;
+        continue;
+      }
+      const reason = r.reason as InfluenceReason;
+      seen.add(reason);
+      let amount: AlcoholAmount | undefined;
+      if (r.amount !== undefined) {
+        if (reason === 'alcohol' && AMOUNTS.includes(r.amount as AlcoholAmount)) amount = r.amount as AlcoholAmount;
+        else skipped++;
+      }
+      let label: string | undefined;
+      if (r.label !== undefined) {
+        const text = typeof r.label === 'string' ? r.label.trim().slice(0, MAX_LABEL_LENGTH).trim() : '';
+        if (reason === 'anders' && text !== '') label = text;
+        else skipped++;
+      }
+      reasons.push({ reason, ...(amount ? { amount } : {}), ...(label ? { label } : {}) });
+    }
+    let updatedAt = NO_TIME;
+    if (typeof item.updatedAt === 'string' && Number.isFinite(Date.parse(item.updatedAt))) updatedAt = item.updatedAt;
+    else skipped++;
+    if (item.excludeHeartRate !== undefined && typeof item.excludeHeartRate !== 'boolean') skipped++;
+    if (item.seen !== undefined && typeof item.seen !== 'boolean') skipped++;
+    const entry: InfluenceEntry = {
+      id: item.id,
+      date: item.date,
+      ...(item.logId ? { logId: item.logId as string } : {}),
+      reasons,
+      ...(item.excludeHeartRate === true ? { excludeHeartRate: true } : {}),
+      ...(item.seen === true ? { seen: true } : {}),
+      updatedAt,
+    };
+    const earlier = byId.get(entry.id);
+    if (!earlier || entry.updatedAt >= earlier.updatedAt) byId.set(entry.id, entry);
+  }
+  const list = [...byId.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  skipped += Math.max(0, list.length - MAX_INFLUENCES);
+  return { list: list.slice(-MAX_INFLUENCES), skipped };
 }

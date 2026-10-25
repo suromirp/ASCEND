@@ -238,6 +238,8 @@ const PATHS = {
   ),
   ruilen: <path d="M5 8.5h13M14.5 5l3.5 3.5L14.5 12M19 15.5H6M9.5 12L6 15.5 9.5 19" />,
   notitie: <path d="M9 3.5h6M10 3.5v5.5l-3 3.5h10l-3-3.5V3.5M12 12.5V20.5" />,
+  // Het teken bij een training met een hartslag die afwijkt (Wat speelde er): een hartslaglijn.
+  hartslag: <path d="M2.5 12.5h4l2.2-5 3.6 10 2.6-7 1.6 2H21.5" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

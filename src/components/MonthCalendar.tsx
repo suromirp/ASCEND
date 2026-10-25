@@ -16,11 +16,17 @@ export function MonthCalendar({
   plannedSessions,
   sessionLogs,
   isRest = () => false,
+  onPickDay,
+  notedDates,
 }: {
   anchor: string;
   plannedSessions: PlannedSession[];
   sessionLogs: SessionLog[];
   isRest?: (session: PlannedSession) => boolean;
+  // Elke dag tot en met vandaag is tikbaar: "Wat speelde er?" (components/influence/).
+  onPickDay?: (date: string) => void;
+  // Dagen met een eigen notitie: een klein gedempt stipje, nooit de reden.
+  notedDates?: ReadonlySet<string>;
 }) {
   const { start, end } = monthBounds(anchor);
   const today = todayISO();
@@ -83,10 +89,11 @@ export function MonthCalendar({
           const isToday = date === today;
           const day = parseISODate(date).getDate();
           const label = sports ? `${day}: ${sports.map((k) => SPORT_LOOK[k].label.toLowerCase()).join(', ')}` : planned ? `${day}: gepland` : rest ? `${day}: rustdag` : `${day}`;
-          return (
-            <div key={date} className="flex items-center justify-center" role="img" aria-label={isToday ? `${label}, vandaag` : label}>
+          const tappable = !!onPickDay && date <= today;
+          const noted = notedDates?.has(date) === true;
+          const circle = (
               <span
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
                 style={{
                   background: sport ? SPORT_LOOK[sport].color : 'transparent',
                   color: sport ? 'var(--color-on-action)' : planned ? 'var(--color-ink)' : 'var(--color-ink-dim)',
@@ -96,7 +103,27 @@ export function MonthCalendar({
                 }}
               >
                 {day}
+                {noted && <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full" style={{ background: 'var(--color-ink-dim)' }} aria-hidden />}
               </span>
+          );
+          if (!tappable) {
+            return (
+              <div key={date} className="flex items-center justify-center" role="img" aria-label={isToday ? `${label}, vandaag` : label}>
+                {circle}
+              </div>
+            );
+          }
+          // De cel blijft 32 px hoog zodat het raster niet verschuift; het tikdoel is 44 px hoog door een onzichtbare uitbreiding.
+          return (
+            <div key={date} className="flex h-8 items-center justify-center">
+              <button
+                type="button"
+                onClick={() => onPickDay(date)}
+                aria-label={`${isToday ? `${label}, vandaag` : label}. Wat speelde er?${noted ? ' Ingevuld.' : ''}`}
+                className="relative flex h-8 w-full items-center justify-center before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-['']"
+              >
+                {circle}
+              </button>
             </div>
           );
         })}

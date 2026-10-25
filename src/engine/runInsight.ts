@@ -131,6 +131,8 @@ export interface RunInsightInput {
   // The switch "Details van loopjes en tochten": off means not shown, not counted.
   detailsOn: boolean;
   shown?: ShownInsight[];
+  // Trainings set to "Niet meetellen voor hartslag": never a comparison (engine/influence.ts).
+  excludedLogIds?: ReadonlySet<string>;
   today: string;
 }
 
@@ -566,6 +568,7 @@ export function runInsight(input: RunInsightInput): RunInsight {
     hr: input.hr,
     legs: input.legs,
     chestStrap: s.chestStrap,
+    excludedLogIds: input.excludedLogIds,
   };
   const topics = topicsFor(input.log, ctx).filter((t) => s.topics[TOPIC_SWITCH[t]]);
   if (topics.length === 0) return {};

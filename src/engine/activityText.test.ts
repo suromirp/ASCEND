@@ -3,6 +3,7 @@ import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays } from '../utils/dates';
 import type { PlannedSession, SessionLog } from '../models/training';
 import { activityText, minutesText, spanText } from './activityText';
+import { REASON_CHIPS, REASON_LABEL } from '../data/influenceReasons';
 
 const { templates, program } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;
@@ -133,6 +134,16 @@ describe('activityText', () => {
       const result = text(t.id, { outdoorData: { durationMinutes: 45, distanceKm: 5, elevationGainM: 50, source: 'garmin' } });
       expect(result).not.toMatch(/[–—]/);
       expect(result.split('\n').length).toBeLessThanOrEqual(2);
+    }
+  });
+
+  // "Wat speelde er" is alleen voor jou (docs/beslissingen/2026-10-25-wat-speelde-er.md):
+  // de tekst voor Strava kent geen notitie en noemt nooit een reden.
+  it('noemt nooit een reden van Wat speelde er', () => {
+    const words = new RegExp(`${REASON_CHIPS.map((r) => REASON_LABEL[r]).join('|')}|glazen|wiet|alcohol`, 'i');
+    for (const t of templates) {
+      const result = text(t.id, { outdoorData: { durationMinutes: 45, distanceKm: 5, elevationGainM: 50, source: 'garmin' } });
+      expect(result).not.toMatch(words);
     }
   });
 });

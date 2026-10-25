@@ -264,6 +264,39 @@ describe('rowSummary: lichaam', () => {
   });
 });
 
+describe('rowSummary: wat speelde er', () => {
+  const withSettings = (over: Partial<SettingsFacts['settings']>) => facts({ settings: { ...facts().settings, ...over } });
+
+  it('alles staat standaard aan, met je patroon als oorzaak', () => {
+    expect(rowSummary('wat-teken', facts()).checked).toBe(true);
+    expect(rowSummary('wat-overzicht', facts())).toEqual({ checked: true, sub: 'Wat doet dit met je?' });
+    expect(rowSummary('wat-test', facts()).checked).toBe(true);
+    expect(rowSummary('wat-oorzaak', facts())).toEqual({ value: 'Ook je patroon', sub: 'Uit weer, horloge, logboek en je patroon' });
+  });
+
+  it('een schakelaar die uit staat, en de oorzaak in drie stappen', () => {
+    expect(rowSummary('wat-teken', withSettings({ influenceSign: false })).checked).toBe(false);
+    expect(rowSummary('wat-overzicht', withSettings({ influenceOverview: false })).checked).toBe(false);
+    expect(rowSummary('wat-test', withSettings({ influenceTestMove: false })).checked).toBe(false);
+    expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'weet' })).value).toBe('Wat ASCEND weet');
+    expect(rowSummary('wat-oorzaak', withSettings({ influenceCause: 'uit' })).value).toBe('Uit');
+  });
+
+  it('vastgelegd telt de keren, en een blad dat alleen bekeken is telt niet', () => {
+    expect(rowSummary('wat-vastgelegd', facts())).toEqual({ value: 'Nog niets', dim: true });
+    const note = (id: string, over = {}) => ({ id, date: '2026-10-20', reasons: [], updatedAt: '2026-10-21T08:00:00.000Z', ...over });
+    const list = [note('a', { reasons: [{ reason: 'stress' }] }), note('b', { excludeHeartRate: true }), note('c', { seen: true })];
+    expect(rowSummary('wat-vastgelegd', withSettings({ influences: list }))).toEqual({ value: '2 keer', sub: 'Bekijken, wijzigen of wissen' });
+  });
+
+  it('zegt nergens een oordeel', () => {
+    const f = withSettings({ influences: [{ id: 'a', date: '2026-10-20', reasons: [{ reason: 'alcohol' }], updatedAt: '2026-10-21T08:00:00.000Z' }] });
+    for (const id of ['wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd']) {
+      expect(JSON.stringify(rowSummary(id, f))).not.toMatch(/helaas|minder drinken/i);
+    }
+  });
+});
+
 describe('rowSummary: vandaag en meldingen', () => {
   it('telt wat aan staat, standaard negen', () => {
     expect(groupSummary('vandaag', facts()).value).toBe('9 aan');

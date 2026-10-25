@@ -199,6 +199,40 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Vetvrije massa', text: 'je gewicht min het vet. Voor kracht en de GR5 zegt die meer dan het percentage: je kunt lichter worden en toch je spieren houden.' },
     ],
   },
+  'wat-teken': {
+    title: 'Training wijkt af',
+    lead: 'Bij een rustige loop met een hartslag die duidelijk afwijkt van je vergelijkbare loopjes, staat een klein hartslagteken naast de naam.',
+    points: [
+      { head: 'Wanneer', text: 'alleen als de afwijking minstens 1,5 keer de gewone schommeling is, zoals bij het loopinzicht. Krachttraining krijgt het nooit.' },
+      { head: 'Kleur', text: 'amber zolang je niets invulde, gedimd zodra je het blad bekeek of iets koos.' },
+      { head: 'Privé', text: 'in de lijst staat nooit de reden zelf.' },
+    ],
+  },
+  'wat-oorzaak': {
+    title: 'Mogelijke oorzaak',
+    lead: 'In het blad van een training en van een dag kan ASCEND zeggen wat het al weet, met de bron erbij.',
+    points: [
+      { head: 'Wat ASCEND weet', text: 'warmte uit het weer, een zware beendag uit je logboek, een korte nacht van je horloge en een ziekmelding. Het telt pas na jouw tik.' },
+      { head: 'Je patroon', text: 'op Je stand zegt ASCEND "lijkt op" pas als een reden minstens 4 keer is vastgelegd.' },
+      { head: 'Alcohol en wiet', text: 'noemt ASCEND nooit uit zichzelf.' },
+    ],
+  },
+  'wat-overzicht': {
+    title: 'Op Je stand',
+    lead: 'Vanaf 3 keer per reden laat Je stand zien wat het met je rusthartslag, HRV, slaap, hartslag bij tempo en zwaarte doet.',
+    points: [
+      { head: 'Vergeleken met', text: 'je eigen normale schommeling, niet met een norm.' },
+      { head: 'Feiten', text: 'getallen, zonder oordeel.' },
+    ],
+  },
+  'wat-test': {
+    title: 'Test verschuiven',
+    lead: 'ASCEND kan voorstellen een test of wedstrijd te verschuiven na een avond met veel glazen of wiet vlak ervoor.',
+    points: [
+      { head: 'Wanneer', text: 'als er die dag een test of wedstrijd staat en je de avond ervoor 3 of meer glazen vastlegde, of als er morgen een staat na 6 of meer glazen. Bij wiet alleen op dezelfde dag.' },
+      { head: 'Altijd een voorstel', text: 'het gaat zoals elk voorstel met Akkoord. Gewone trainingen schuiven nooit om een reden.' },
+    ],
+  },
   drempel: {
     title: 'Drempel',
     lead: 'De hartslag die je ongeveer een uur vol kunt houden. Garmin noemt hem lactaatdrempel (LTHR).',

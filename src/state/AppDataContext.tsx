@@ -290,6 +290,8 @@ import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedR
 import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { makeId } from '../utils/id';
+import type { InfluenceEntry } from '../models/influence';
+import { applyChange, blankEntry, excludedLogIds, type NoteTarget } from '../engine/influence';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, setLearnedDurations, setFixedSessionMinutes, setAmbition, resolveVariantDuration } from '../engine/substitutions';
@@ -511,6 +513,11 @@ interface AppData {
   commitPlanChange: (proposal: PlanChangeProposal, title: string, restore?: UndoRestore) => Promise<boolean>;
   undoRecentChange: () => Promise<void>;
   // Ziek melden / weer beter (engine/illness.ts): one tap each.
+  // "Wat speelde er" (engine/influence.ts): your own notes next to the history. Each call
+  // saves at once and reads the stored list first, so quick taps never overwrite each other.
+  saveInfluence: (target: NoteTarget, change: (entry: InfluenceEntry) => InfluenceEntry) => Promise<void>;
+  removeInfluence: (id: string) => Promise<void>;
+  clearInfluences: () => Promise<void>;
   reportIllness: (kind: IllnessKind) => Promise<void>;
   recoverFromIllness: () => Promise<void>;
   dismissRecentChange: () => void;
@@ -1352,9 +1359,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         let coachNote = coachReaction(log, allTemplates.find((t) => t.id === log.templateId), currentProgram, allLogs);
         // Faster at the same heart rate over weeks: said once, right after
         // an easy run (engine/aerobicTrend.ts#progressMoment).
-        const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate);
+        // A training set to "Niet meetellen voor hartslag" stays out of the trend (engine/influence.ts).
+        const excluded = excludedLogIds((await SettingsRepo.get()).influences);
+        const trend = aerobicTrend(allLogs, allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded);
         const lastProgress = await MetaRepo.get<ProgressCelebrated>('aerobicProgressCelebrated');
-        const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate).runs;
+        const counted = trend.runs > aerobicTrend(allLogs.filter((l) => l.id !== log.id), allTemplates, currentProgram, settings.heartRate, log.completedDate, excluded).runs;
         const progress = counted ? progressMoment(trend, lastProgress, log.completedDate) : undefined;
         if (progress && trend.changeSec !== undefined) {
           coachNote = `${coachNote} ${progress}`;
@@ -1806,6 +1815,28 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
     await refresh();
   }, [refresh]);
+
+  // Notes of "Wat speelde er": one write at a time, each from the stored list.
+  const influenceTail = useRef<Promise<unknown>>(Promise.resolve());
+  const writeInfluences = useCallback((compute: (stored: InfluenceEntry[]) => InfluenceEntry[]): Promise<void> => {
+    const job = influenceTail.current.then(async () => {
+      const stored = await SettingsRepo.get();
+      setSettings(await SettingsRepo.set({ influences: compute(stored.influences ?? []) }));
+    });
+    influenceTail.current = job.catch(() => undefined);
+    return job;
+  }, []);
+  const saveInfluence = useCallback(
+    (target: NoteTarget, change: (entry: InfluenceEntry) => InfluenceEntry) =>
+      writeInfluences((list) => {
+        const now = new Date().toISOString();
+        const found = list.find((e) => (target.logId ? e.logId === target.logId : !e.logId && e.date === target.date));
+        return applyChange(list, found ?? blankEntry(target, makeId('influence'), now), change, now);
+      }),
+    [writeInfluences],
+  );
+  const removeInfluence = useCallback((id: string) => writeInfluences((list) => list.filter((e) => e.id !== id)), [writeInfluences]);
+  const clearInfluences = useCallback(() => writeInfluences(() => []), [writeInfluences]);
 
   const reportIllness = useCallback(async (kind: IllnessKind) => {
     const asOf = todayISO();
@@ -2439,6 +2470,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     recentChange,
     commitPlanChange,
     undoRecentChange,
+    saveInfluence,
+    removeInfluence,
+    clearInfluences,
     reportIllness,
     recoverFromIllness,
     dismissRecentChange: () => setRecentChange(null),
