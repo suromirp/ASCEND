@@ -21,33 +21,39 @@ function sourceLine(mix: IntensityMix): string {
 }
 
 export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
-  if (mix.total < 3 || mix.totalMinutes <= 0) return null;
-  const pct = (n: number) => (mix.totalMinutes ? Math.round((n / mix.totalMinutes) * 100) : 0);
-  const easyPct = pct(mix.minutes.easy);
+  const perTraining = mix.unit === 'sessions';
+  if (mix.total < 3 || (!perTraining && mix.totalMinutes <= 0)) return null;
+  // Naar het plan: per training geteld, zoals altijd; naar je hartslag: in minuten.
+  const amounts = perTraining ? mix.sessions : mix.minutes;
+  const whole = perTraining ? mix.total : mix.totalMinutes;
+  const pct = (n: number) => (whole ? Math.round((n / whole) * 100) : 0);
+  const easyPct = pct(amounts.easy);
   return (
     <Card className="flex flex-col gap-3">
       <div>
         <Eyebrow>INTENSITEIT</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Je loop- en wandelminuten van de laatste vier weken{mix.measuredSessions > 0 ? ', naar je hartslag' : ''}. Goede duursporters doen ongeveer {Math.round(EASY_TARGET * 100)}% rustig.
+          {perTraining
+            ? 'Je loop- en wandeltrainingen van de laatste vier weken.'
+            : `Je loop- en wandelminuten van de laatste vier weken${mix.measuredSessions > 0 ? ', naar je hartslag' : ''}.`} Goede duursporters doen ongeveer {Math.round(EASY_TARGET * 100)}% rustig.
         </p>
       </div>
 
       <div className="relative">
-        <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" role="img" aria-label={PARTS.map((p) => `${p.label} ${pct(mix.minutes[p.key])}%`).join(', ')}>
-          {PARTS.filter((p) => mix.minutes[p.key] > 0).map((p) => (
-            <span key={p.key} style={{ width: `${pct(mix.minutes[p.key])}%`, background: 'var(--color-progress)', opacity: p.opacity }} />
+        <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" role="img" aria-label={PARTS.map((p) => `${p.label} ${pct(amounts[p.key])}%`).join(', ')}>
+          {PARTS.filter((p) => amounts[p.key] > 0).map((p) => (
+            <span key={p.key} style={{ width: `${pct(amounts[p.key])}%`, background: 'var(--color-progress)', opacity: p.opacity }} />
           ))}
         </div>
         <span className="absolute -top-1 h-5 w-0.5 rounded" style={{ left: `${EASY_TARGET * 100}%`, background: 'var(--color-ink)' }} aria-hidden />
       </div>
       <div className="flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }}>
         {PARTS.map((p) => (
-          <span key={p.key}><span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{pct(mix.minutes[p.key])}%</span> {p.label} <span className="tabular-nums">({mix.minutes[p.key]} min)</span></span>
+          <span key={p.key}><span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{pct(amounts[p.key])}%</span> {p.label} <span className="tabular-nums">({amounts[p.key]}{perTraining ? '' : ' min'})</span></span>
         ))}
       </div>
 
-      <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{sourceLine(mix)}</p>
+      {!perTraining && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{sourceLine(mix)}</p>}
 
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
         {easyPct >= EASY_TARGET * 100 - 5

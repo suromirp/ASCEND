@@ -9,9 +9,9 @@ const own: SweatEntry = {
 
 describe('stageWater', () => {
   it('rekent zweettempo maal uren, op een halve liter', () => {
-    // stuk 1 is 20 graden: standaard 800 ml per uur, 5,5 uur is 4,4 liter
+    // stuk 1 is 20 graden: standaard 900 ml per uur, 5,5 uur is bijna 5 liter
     const w = stageWater({ section: 1, minutes: 330 }, undefined);
-    expect(w).toMatchObject({ liters: 4.5, hours: 5.5 });
+    expect(w).toMatchObject({ liters: 5, hours: 5.5 });
     expect(w?.rate.basis).toBe('default');
   });
   it('gebruikt de temperatuur van het stuk en je eigen meting', () => {
@@ -25,17 +25,24 @@ describe('stageWater', () => {
     expect(stageWater({ section: 2, minutes: null }, undefined)).toBeUndefined();
   });
   it('geeft een eigen temperatuur voorrang', () => {
-    expect(stageWater({ section: 1, minutes: 60 }, undefined, 30)?.rate.mlPerHour).toBe(1200);
+    expect(stageWater({ section: 1, minutes: 60 }, undefined, 30)?.rate.mlPerHour).toBe(1250);
   });
 });
 
 describe('teksten', () => {
   const w = stageWater({ section: 1, minutes: 330 }, undefined)!;
   it('noemt het ongeveer en markeert de standaard', () => {
-    expect(stageWaterLine(w)).toBe('Je zweet op deze etappe ongeveer 4,5 liter.');
-    expect(stageWaterShort(w)).toBe('water ± 4,5 l (nog niet gemeten)');
-    expect(stageWaterBasisLine(w)).toContain('nog niet gemeten');
+    expect(stageWaterLine(w)).toBe('Je zweet op deze etappe ongeveer 5 liter.');
+    expect(stageWaterShort(w)).toBe('water ± 5 l');
+    expect(stageWaterBasisLine(w)).toContain('nog niet gemeten, naar algemene cijfers');
+    expect(stageWaterBasisLine(w)).not.toMatch(/voorzichtig/i);
     expect(stageWaterBasisLine(w)).toContain('Weeg jezelf');
+  });
+  it('zegt dat de temperatuur van het stuk een aanname is, en een gegeven temperatuur niet', () => {
+    expect(stageWaterBasisLine(w)).toContain('aanname: bij ongeveer 20 graden, verwacht op een zomerdag');
+    const given = stageWater({ section: 1, minutes: 330 }, undefined, 24)!;
+    expect(given.tempAssumed).toBe(false);
+    expect(stageWaterBasisLine(given)).not.toContain('aanname');
   });
   it('noemt bij een eigen meting geen standaard', () => {
     const m = stageWater({ section: 4, minutes: 420 }, [own])!;

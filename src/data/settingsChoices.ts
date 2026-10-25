@@ -234,7 +234,7 @@ export const CHOICES = {
       { value: 50, label: '50 km', note: 'Voor schoenen die al bijna zitten' },
       { value: 75, label: '75 km' },
       { value: 100, label: '100 km', note: 'Samen met minstens 6 weken voor vertrek' },
-      { value: 150, label: '150 km', note: 'Voor een lange tocht met tent' },
+      { value: 150, label: '150 km', note: 'Meer dan het advies' },
     ],
   }),
   naHoofddoel: def({

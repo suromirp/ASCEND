@@ -226,7 +226,10 @@ export interface IntensityMix {
   // How many trainings were counted by heart rate and how many by plan.
   measuredSessions: number;
   plannedSessions: number;
-  easyShare: number; // of minutes, 0 to 1
+  // 'minutes' when counted by heart rate, 'sessions' for "Naar het plan": the old
+  // behaviour, one count per training.
+  unit: 'minutes' | 'sessions';
+  easyShare: number; // of minutes (or of trainings with unit 'sessions'), 0 to 1
   easyTooHard: { date: string; name: string; why: 'hartslag' | 'zwaarte' }[];
   // Number of trainings counted.
   total: number;
@@ -243,7 +246,7 @@ const TOO_HARD_SHARE = 0.55;
 export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], today: string, hr?: HeartRateSettings, days = 28, counting: IntensityCounting = 'heartrate'): IntensityMix {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const since = addDays(today, -days);
-  const mix: IntensityMix = { sessions: { easy: 0, middle: 0, hard: 0 }, minutes: { easy: 0, middle: 0, hard: 0 }, totalMinutes: 0, measuredSessions: 0, plannedSessions: 0, easyShare: 0, easyTooHard: [], total: 0 };
+  const mix: IntensityMix = { sessions: { easy: 0, middle: 0, hard: 0 }, minutes: { easy: 0, middle: 0, hard: 0 }, totalMinutes: 0, measuredSessions: 0, plannedSessions: 0, unit: counting === 'plan' ? 'sessions' : 'minutes', easyShare: 0, easyTooHard: [], total: 0 };
   const easyTop = zoneBpm(2, hr)?.[1];
   for (const l of logs) {
     if (l.completedDate < since || l.completedDate > today) continue;
@@ -276,7 +279,7 @@ export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], t
   }
   mix.minutes = { easy: Math.round(mix.minutes.easy), middle: Math.round(mix.minutes.middle), hard: Math.round(mix.minutes.hard) };
   mix.totalMinutes = mix.minutes.easy + mix.minutes.middle + mix.minutes.hard;
-  mix.easyShare = mix.totalMinutes ? mix.minutes.easy / mix.totalMinutes : 0;
+  mix.easyShare = counting === 'plan' ? (mix.total ? mix.sessions.easy / mix.total : 0) : mix.totalMinutes ? mix.minutes.easy / mix.totalMinutes : 0;
   return mix;
 }
 

@@ -4,6 +4,7 @@ import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview,
 import type { SessionLog, PlannedSession } from '../models/training';
 import { migrateInfluences, migrateNightJudgments } from './migrations';
 import type { InfluenceEntry } from '../models/influence';
+import type { SweatEntry } from '../models/sweat';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
 import type { InjuryNote } from '../models/injury';
 import type { Program } from '../models/program';
@@ -344,6 +345,61 @@ describe('backup envelope round-trip', () => {
       expect(backup.skippedInvalid).toBe(4);
       const notAList = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { nightJudgments: 'oops' } } });
       expect(notAList.settings.nightJudgments).toBeUndefined();
+    });
+  });
+
+  // Your own sweat weighings (models/sweat.ts): additive in the settings, no schema step.
+  describe('sweatEntries (zweetverlies)', () => {
+    const entry = (id: string, logId: string, date: string, updatedAt: string, extra: Partial<SweatEntry> = {}): SweatEntry => ({
+      id, logId, date, activity: 'walk', durationMinutes: 120, weightBeforeKg: 80, weightAfterKg: 78.8, tempC: 24, updatedAt, ...extra,
+    });
+    const list = [entry('s1', 'l1', '2026-06-01', '2026-06-01T10:00:00.000Z'), entry('s2', 'l2', '2026-06-08', '2026-06-08T10:00:00.000Z', { activity: 'run' })];
+
+    it('travels in the export and comes back on a clean device', async () => {
+      await SettingsRepo.set({ sweatEntries: list, showStageWater: false });
+      const envelope = await buildBackupEnvelope();
+      expect(envelope.payload.settings.sweatEntries).toEqual(list);
+      await wipeAllData();
+      expect((await SettingsRepo.get()).sweatEntries).toBeUndefined();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.sweatEntries).toEqual(list);
+      expect(restored.showStageWater).toBe(false);
+    });
+
+    it('a back-up without the key imports as before and leaves the weighings on the device alone', async () => {
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ sweatEntries: list });
+      const backup = normalizeBackupToCurrentModel(envelope);
+      expect(backup.skippedInvalid).toBe(0);
+      expect(backup.settings.sweatEntries).toBeUndefined();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).sweatEntries).toEqual(list);
+    });
+
+    it('a restore merges: the device wins per training and the back-up adds the ones it lacks', async () => {
+      await SettingsRepo.set({ sweatEntries: [entry('b1', 'l1', '2026-06-01', '2026-06-05T10:00:00.000Z', { weightAfterKg: 78 }), entry('b3', 'l3', '2026-06-15', '2026-06-15T10:00:00.000Z')] });
+      const envelope = await buildBackupEnvelope();
+      // On the device: a different (older) weighing for l1 and one for l2.
+      await SettingsRepo.set({ sweatEntries: [entry('d1', 'l1', '2026-06-01', '2026-06-01T10:00:00.000Z'), entry('d2', 'l2', '2026-06-08', '2026-06-08T10:00:00.000Z')] });
+      await importEnvelope(envelope);
+      const merged = (await SettingsRepo.get()).sweatEntries!;
+      expect(merged.map((e) => e.id)).toEqual(['d1', 'd2', 'b3']);
+      expect(merged[0].weightAfterKg).toBe(78.8);
+    });
+
+    it('drops damaged switches and counts them', async () => {
+      const envelope = await buildBackupEnvelope();
+      const settings = { showStageWater: 'ja', intensityCounting: 'altijd', bootBreakInKm: 120, bootBreakInReminder: 'aan' };
+      const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings } });
+      expect(backup.settings.showStageWater).toBeUndefined();
+      expect(backup.settings.intensityCounting).toBeUndefined();
+      expect(backup.settings.bootBreakInKm).toBeUndefined();
+      expect(backup.settings.bootBreakInReminder).toBeUndefined();
+      expect(backup.skippedInvalid).toBe(4);
+      const fine = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { showStageWater: false, intensityCounting: 'plan', bootBreakInKm: 150, bootBreakInReminder: false } } });
+      expect(fine.skippedInvalid).toBe(0);
+      expect(fine.settings.bootBreakInKm).toBe(150);
     });
   });
 

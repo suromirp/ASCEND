@@ -69,6 +69,14 @@ export function logSport(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' |
   return undefined;
 }
 
+// Een wandeling of tocht: de sport is wandelen, of het is een tocht (avontuur) zonder
+// andere sport. Een fietstocht die als avontuur is gelogd is dus geen wandeling.
+// Eén regel voor de schoenen (engine/bootBreakIn.ts) en het zweetverlies (engine/sweat.ts).
+export function isWalkOrTripLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): boolean {
+  const sport = logSport(log);
+  return sport === 'hiking' || (log.type === 'adventure' && sport === undefined);
+}
+
 // Indoor = no real terrain: a treadmill, or a bike on a trainer. Indoor
 // cycling gives no climbing credit (Fase 4).
 export function isIndoorLog(log: Pick<SessionLog, 'cardioData' | 'outdoorData'>): boolean {

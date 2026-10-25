@@ -16,6 +16,7 @@ import { SLEEP_KINDS, SLEEP_LABEL } from '../models/routePlan';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { stageWater, stageWaterShort } from '../engine/stageWater';
+import { sweatRateAt, usableSweatEntries } from '../engine/sweat';
 import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
 
@@ -27,12 +28,14 @@ function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): strin
 }
 
 export function EtappesPage() {
-
   const navigate = useNavigate();
   const { trainingGoals, goalMilestones, sessionLogs, settings } = useAppData();
   const showWater = settings.showStageWater !== false;
+  // Alleen metingen van trainingen die er nog zijn, met de duur uit de log zelf.
+  const sweat = useMemo(() => usableSweatEntries(settings.sweatEntries, sessionLogs), [settings.sweatEntries, sessionLogs]);
+  const waterUnmeasured = showWater && sweatRateAt(sweat, 20, 'walk').basis === 'default';
   const waterShort = (stage: Gr5Stage): string => {
-    const w = stageWater(stage, settings.sweatEntries);
+    const w = stageWater(stage, sweat);
     return w ? stageWaterShort(w) : '';
   };
   const { plan, loaded, choose } = useTripPlan();
@@ -113,6 +116,12 @@ export function EtappesPage() {
 
       {!loaded && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Je plan wordt geladen.</p>}
 
+      {waterUnmeasured && (
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+          Het water per etappe is nog niet gemeten, naar algemene cijfers. Meet je zweetverlies bij een training om het jouwe te zien.
+        </p>
+      )}
+
       {GR5_SECTIONS.map((section) => (
         <Card key={section.id} className="flex flex-col gap-1">
           <Eyebrow>{`Stuk ${section.id} · ${section.name}`}</Eyebrow>
@@ -174,7 +183,7 @@ export function EtappesPage() {
           day={dayOfStage(open)}
           logs={sessionLogs}
           today={today}
-          water={showWater ? stageWater(open, settings.sweatEntries) : undefined}
+          water={showWater ? stageWater(open, sweat) : undefined}
           onChoose={choose}
           onClose={() => setOpenId(null)}
         />

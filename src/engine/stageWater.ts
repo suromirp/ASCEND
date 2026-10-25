@@ -2,13 +2,13 @@
 // uren van de etappe (docs/beslissingen/2026-10-25-zweet-en-water.md).
 //
 // Het is hoeveel je ongeveer kwijtraakt, niet een drinkvoorschrift: het doel is minder dan 2%
-// van je gewicht kwijt, niet alles terugdrinken (Sawka e.a. 2007). Feitelijk en voorzichtig,
-// nooit medisch advies. De uren zijn de looptijd van de officiële site, zonder pauzes.
+// van je gewicht kwijt, niet alles terugdrinken (Sawka e.a. 2007). Feitelijk, nooit
+// medisch advies. De uren zijn de looptijd van de officiële site, zonder pauzes.
 //
-// De temperatuur per stuk is een eigen aanname voor een zomerdag in het hoofdseizoen op de
-// hoogte waar je dan loopt (de noordelijke stukken hoger en koeler, het zuiden laag en
-// warm; vergelijk de gemiddelden van Briançon in docs/visie/GR5-reis en coaching.md). Het
-// weerbericht van de week zelf gaat altijd voor.
+// De temperatuur per stuk (20, 18, 20 en 26 graden) is een eigen schatting voor een zomerdag
+// in het hoofdseizoen: de noordelijke stukken hoger en koeler, het zuiden laag en warm. Het
+// is geen gemeten gemiddelde en er staan geen gemiddelden van een plaats achter; op het
+// scherm heet het daarom een aanname. Het weerbericht van de week zelf gaat altijd voor.
 //
 // Puur: geen React, geen IndexedDB.
 
@@ -27,6 +27,8 @@ export interface StageWater {
   liters: number;
   hours: number;
   rate: SweatRate;
+  // True als de temperatuur de eigen schatting voor een zomerdag is, niet een gegeven.
+  tempAssumed: boolean;
 }
 
 // Undefined als de site geen looptijd geeft: dan rekent de app niet met een gok.
@@ -35,7 +37,7 @@ export function stageWater(stage: Pick<Gr5Stage, 'section' | 'minutes'>, entries
   const hours = stage.minutes / 60;
   const rate = sweatRateAt(entries, tempC ?? expectedStageTempC(stage), 'walk');
   const liters = Math.max(0.5, Math.round(((rate.mlPerHour * hours) / 1000) * 2) / 2);
-  return { liters, hours, rate };
+  return { liters, hours, rate, tempAssumed: tempC === undefined };
 }
 
 export function litersText(liters: number): string {
@@ -52,15 +54,18 @@ export function stageWaterBasisLine(w: StageWater): string {
   const temp = Math.round(w.rate.tempC);
   const hours = w.hours.toLocaleString('nl-NL', { maximumFractionDigits: 1 });
   const rate = mlPerHourText(w.rate.mlPerHour);
-  const base = `Dat is ${rate} bij ongeveer ${temp} graden, ${hours} uur lang, ${basisLabel(w.rate)}.`;
+  const base = `Dat is ${rate}, ${hours} uur lang, ${basisLabel(w.rate)}.`;
+  const tempLine = w.tempAssumed
+    ? ` De temperatuur is een aanname: bij ongeveer ${temp} graden, verwacht op een zomerdag.`
+    : ` Gerekend bij ongeveer ${temp} graden.`;
   return w.rate.basis === 'default'
-    ? `${base} Weeg jezelf voor en na een lange tocht op een warme dag om je eigen tempo te kennen.`
-    : base;
+    ? `${base}${tempLine} Weeg jezelf voor en na een lange tocht op een warme dag om je eigen tempo te kennen.`
+    : `${base}${tempLine}`;
 }
 
 // Een korte regel voor in de lijst: "water ongeveer 4,5 l".
 export function stageWaterShort(w: StageWater): string {
-  return `water ± ${w.liters.toLocaleString('nl-NL', { minimumFractionDigits: w.liters % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })} l${w.rate.basis === 'default' ? ' (nog niet gemeten)' : ''}`;
+  return `water ± ${w.liters.toLocaleString('nl-NL', { minimumFractionDigits: w.liters % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })} l`;
 }
 
 // De regel over waterpunten uit de data van de etappe: de eerste zin van wat er bekend is.

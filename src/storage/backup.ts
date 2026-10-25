@@ -53,6 +53,7 @@ import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
+import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
 import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -310,7 +311,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.showNextTrek;
     skipped.n++;
   }
-  if ('bootBreakInKm' in s && !(typeof s.bootBreakInKm === 'number' && Number.isFinite(s.bootBreakInKm) && s.bootBreakInKm > 0 && s.bootBreakInKm <= 1000)) {
+  if ('bootBreakInKm' in s && !(BREAKIN_KM_OPTIONS as readonly unknown[]).includes(s.bootBreakInKm)) {
     delete s.bootBreakInKm;
     skipped.n++;
   }

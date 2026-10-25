@@ -16,10 +16,11 @@ import { journeyTimeline, journeyWeeksLeft, type TimelineTask } from '../engine/
 import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
 import { formatDateNL, formatMonthNL, todayISO } from '../utils/dates';
 import { Icon } from '../components/icons';
-import type { BootBreakInStatus } from '../engine/bootBreakIn';
+import { MIN_BREAKIN_WEEKS, type BootBreakInStatus } from '../engine/bootBreakIn';
 
 function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
-  if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? 'te laat voor 6 weken' : boots.line;
+  if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? `te laat voor ${MIN_BREAKIN_WEEKS} weken` : boots.line;
+  if (row.status === 'done' && row.derived) return row.derived.toLowerCase();
   if (row.status === 'done') return row.doneOn ? `gedaan op ${shortDateNL(row.doneOn)}` : 'gedaan';
   if (row.status === 'later') return `vanaf ${shortDateNL(row.opensOn)}`;
   if (row.status === 'lapsed') return 'nog open';
@@ -29,11 +30,11 @@ function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
 export function JourneyPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { goalDate, state, pick, progress, tick, untick, boots, setBoots } = useJourney();
+  const { goalDate, state, derived, pick, progress, tick, untick, boots, setBoots } = useJourney();
   const { items } = usePackList();
   const today = todayISO();
 
-  const timeline = goalDate ? journeyTimeline(JOURNEY_TASKS, state, today, goalDate, pick?.task.id) : [];
+  const timeline = goalDate ? journeyTimeline(JOURNEY_TASKS, state, today, goalDate, pick?.task.id, derived) : [];
   // The open task lives in state, not in the address: the sheet takes one
   // step in the history (the back button closes it), and an address that is
   // rewritten under that step would leave a copy of this page behind. A link
@@ -103,7 +104,7 @@ export function JourneyPage() {
                       background: row.isThisWeek && row.status !== 'done' ? 'var(--color-surface)' : undefined,
                     }}
                   >
-                    <CheckCircle checked={row.status === 'done'} onToggle={() => (row.status === 'done' ? untick(row.task.id) : tick(row.task.id))} label={`${row.task.title}: ${row.status === 'done' ? 'haal vinkje weg' : 'vink af'}`} />
+                    <CheckCircle checked={row.status === 'done'} onToggle={() => (row.derived ? setSelectedId(row.task.id) : row.status === 'done' ? untick(row.task.id) : tick(row.task.id))} label={`${row.task.title}: ${row.derived ? 'af door je gegevens' : row.status === 'done' ? 'haal vinkje weg' : 'vink af'}`} />
                     <button onClick={() => setSelectedId(row.task.id)} className="flex min-h-[52px] min-w-0 flex-1 flex-col justify-center py-1.5 pr-2 text-left">
                       <span
                         className="text-sm leading-snug"

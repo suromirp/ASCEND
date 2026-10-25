@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { SessionLog } from '../models/training';
 import type { SweatEntry } from '../models/sweat';
-import { entryResultLine, sweatActivityOf, sweatLossMl } from '../engine/sweat';
-import { logSport } from '../engine/sports';
+import { entryResultLine, sweatActivityOfLog, sweatLossMl } from '../engine/sweat';
 import { formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
@@ -22,7 +21,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
   const { settings, saveSweat } = useAppData();
   const existing = settings.sweatEntries?.find((e) => e.logId === log.id);
   const { closing, requestClose } = useSheetClose(onClose);
-  const activity = sweatActivityOf(logSport(log)) ?? 'walk';
+  const activity = sweatActivityOfLog(log) ?? 'walk';
   const [before, setBefore] = useState(existing?.weightBeforeKg);
   const [after, setAfter] = useState(existing?.weightAfterKg);
   const [drank, setDrank] = useState(existing?.drankMl);
@@ -119,7 +118,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
             )}
 
             <div className="mt-4 flex flex-col gap-3">
-              <PrimaryButton onClick={() => void save()} disabled={busy || !hasNumbers}>{busy ? 'Bezig…' : 'Opslaan'}</PrimaryButton>
+              <PrimaryButton onClick={() => void save()} disabled={busy || !result}>{busy ? 'Bezig…' : 'Opslaan'}</PrimaryButton>
               {existing && <SecondaryButton onClick={() => void remove()} disabled={busy}>Meting weghalen</SecondaryButton>}
               {note && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{note}</p>}
             </div>

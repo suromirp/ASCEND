@@ -13,7 +13,7 @@ Garmin telde een rustige duurloop op 162 slagen als stevig, en ASCEND telde deze
 
 ## Alternatieven
 
-Naar het plan blijven tellen: simpel, maar het zegt niet wat er gebeurde. Dat blijft kiesbaar als instelling "Intensiteit tellen" ("Naar je hartslag" is de standaard, "Naar het plan" geeft het oude gedrag). Per sample tellen: het profiel bewaart maar 48 stukjes, en gemiddelden per stuk zijn voor deze kaart genoeg.
+Naar het plan blijven tellen: simpel, maar het zegt niet wat er gebeurde. Dat blijft kiesbaar als instelling "Intensiteit tellen" ("Naar je hartslag" is de standaard, "Naar het plan" geeft precies het oude gedrag: tellen per training, met het aandeel trainingen en de oude kaarttekst met aantallen). Per sample tellen: het profiel bewaart maar 48 stukjes, en gemiddelden per stuk zijn voor deze kaart genoeg.
 
 ## Bron
 
@@ -21,7 +21,7 @@ Naar het plan blijven tellen: simpel, maar het zegt niet wat er gebeurde. Dat bl
 
 ## Vervangt
 
-Niets. De opslag verandert niet: `AppSettings.intensityCounting` is optioneel en wordt defensief gelezen.
+Niets. "Naar je hartslag" telt in minuten, "Naar het plan" per training. De opslag verandert niet: `AppSettings.intensityCounting` is optioneel en wordt defensief gelezen.
 
 ## Terugdraaien
 

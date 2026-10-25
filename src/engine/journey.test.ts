@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { JOURNEY_TASKS, type JourneyTask } from '../data/journeyTasks';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import {
-  EMPTY_JOURNEY, withBootsDone, journeyProgress, journeyTimeline, journeyWeeksLeft, markDone, mergeJourneyState, normalizeJourneyState, pickJourneyTask, postponeTask,
+  EMPTY_JOURNEY, derivedDoneLines, withBootsDone, journeyProgress, journeyTimeline, journeyWeeksLeft, markDone, mergeJourneyState, normalizeJourneyState, pickJourneyTask, postponeTask,
   taskDates, taskStatus, unmarkDone, weekStartForWeeksLeft, withDerivedDone, type JourneyState,
 } from './journey';
 
@@ -215,5 +215,43 @@ describe('withBootsDone', () => {
   it('laat een eigen vinkje staan', () => {
     const own = { ...EMPTY_JOURNEY, done: { schoenen: '2027-01-02' } };
     expect(withBootsDone(own, { kind: 'done', reachedOn: '2027-04-10' }, '2027-05-01')?.done.schoenen).toBe('2027-01-02');
+  });
+});
+
+describe('taken die af zijn door je gegevens', () => {
+  const weighed = (id: string, date: string) => ({
+    id, logId: `l-${id}`, date, activity: 'walk' as const, durationMinutes: 120,
+    weightBeforeKg: 80, weightAfterKg: 79, updatedAt: `${date}T10:00:00.000Z`,
+  });
+  const two = [weighed('a', '2026-06-01'), weighed('b', '2026-06-09')];
+  const busy = { kind: 'busy' as const, km: 40, goalKm: 100 };
+  const done = { kind: 'done' as const, km: 100.4, goalKm: 100 };
+
+  it('zegt bij elke afgeleide taak waarom hij af is', () => {
+    expect(derivedDoneLines(two, busy)).toEqual({ 'meet-zweetverlies': 'Af door je metingen' });
+    expect(derivedDoneLines([weighed('a', '2026-06-01')], done)).toEqual({ schoenen: 'Af: 100 van 100 km ingelopen' });
+    expect(derivedDoneLines(two, done)).toEqual({ 'meet-zweetverlies': 'Af door je metingen', schoenen: 'Af: 100 van 100 km ingelopen' });
+    expect(derivedDoneLines(undefined, busy)).toEqual({});
+  });
+
+  it('een taak die je zelf afvinkte, zonder dat de gegevens hem afmaken, krijgt geen regel en houdt zijn knop', () => {
+    const own = { ...EMPTY_JOURNEY, done: { 'meet-zweetverlies': '2026-05-01' } };
+    const lines = derivedDoneLines([weighed('a', '2026-06-01')], busy);
+    expect(lines).toEqual({});
+    const rows = journeyTimeline(JOURNEY_TASKS, own, '2026-10-21', GOAL, undefined, lines).flatMap((g) => g.tasks);
+    expect(rows.find((r) => r.task.id === 'meet-zweetverlies')?.derived).toBeUndefined();
+  });
+
+  it('zet op de tijdlijn de vlag afgeleid alleen bij wat de gegevens afmaken', () => {
+    const lines = derivedDoneLines(two, done);
+    const state = withBootsDone(withDerivedDone(undefined, two), done, '2027-05-01');
+    const rows = journeyTimeline(JOURNEY_TASKS, state, '2027-05-01', GOAL, undefined, lines).flatMap((g) => g.tasks);
+    expect(rows.find((r) => r.task.id === 'meet-zweetverlies')).toMatchObject({ status: 'done', derived: 'Af door je metingen' });
+    expect(rows.find((r) => r.task.id === 'schoenen')).toMatchObject({ status: 'done', derived: 'Af: 100 van 100 km ingelopen' });
+    expect(rows.filter((r) => r.derived)).toHaveLength(2);
+  });
+
+  it('zonder tweede meting is de taak weer open en zonder regel', () => {
+    expect(derivedDoneLines([weighed('a', '2026-06-01')], busy)['meet-zweetverlies']).toBeUndefined();
   });
 });

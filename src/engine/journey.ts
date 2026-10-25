@@ -113,6 +113,18 @@ export function postponeTask(state: JourneyState | undefined, taskId: string, to
 export const SWEAT_TASK_ID = 'meet-zweetverlies';
 export const SWEAT_TASK_MEASUREMENTS = 2;
 
+// Which tasks the data says are done, with the line that tells why. Such a task has no
+// "Haal vinkje weg": the data would only tick it again. `sweat` is the list as
+// engine/sweat.ts#usableSweatEntries gives it (logs that still exist).
+export const BOOTS_TASK_ID = 'schoenen';
+
+export function derivedDoneLines(sweat: SweatEntry[] | undefined, boots: Pick<BootBreakInStatus, 'kind' | 'km' | 'goalKm'>): Record<string, string> {
+  const lines: Record<string, string> = {};
+  if (weighedCount(sweat) >= SWEAT_TASK_MEASUREMENTS) lines[SWEAT_TASK_ID] = 'Af door je metingen';
+  if (boots.kind === 'done') lines[BOOTS_TASK_ID] = `Af: ${Math.round(boots.km)} van ${Math.round(boots.goalKm)} km ingelopen`;
+  return lines;
+}
+
 // The state as the screens show it: what you ticked, plus what the data says is done.
 export function withDerivedDone(state: JourneyState | undefined, sweat: SweatEntry[] | undefined): JourneyState | undefined {
   if (weighedCount(sweat) < SWEAT_TASK_MEASUREMENTS) return state;
@@ -125,9 +137,9 @@ export function withDerivedDone(state: JourneyState | undefined, sweat: SweatEnt
 // "Kies je schoenen en begin met inlopen" is done once the boots reached their goal in time
 // (engine/bootBreakIn.ts). The same rule for the Reisplanner and the overview in Instellingen.
 export function withBootsDone(state: JourneyState | undefined, boots: Pick<BootBreakInStatus, 'kind' | 'reachedOn'>, today: string): JourneyState | undefined {
-  if (boots.kind !== 'done' || state?.done.schoenen) return state;
+  if (boots.kind !== 'done' || state?.done[BOOTS_TASK_ID]) return state;
   const base = state ?? EMPTY_JOURNEY;
-  return { ...base, done: { ...base.done, schoenen: boots.reachedOn ?? today } };
+  return { ...base, done: { ...base.done, [BOOTS_TASK_ID]: boots.reachedOn ?? today } };
 }
 
 // --- the timeline -----------------------------------------------------------------
@@ -140,6 +152,9 @@ export interface TimelineTask {
   opensOn: string;
   closesOn: string;
   doneOn?: string;
+  // Set when the data makes the task done (derivedDoneLines): the line that says why.
+  // Such a task cannot be un-ticked by hand.
+  derived?: string;
 }
 
 export interface TimelineGroup {
@@ -158,7 +173,7 @@ export function taskDates(task: JourneyTask, goalDate: string): { opensOn: strin
 }
 
 // All tasks in order of when they close, grouped by the month they close in.
-export function journeyTimeline(tasks: JourneyTask[], state: JourneyState | undefined, today: string, goalDate: string, thisWeekTaskId?: string): TimelineGroup[] {
+export function journeyTimeline(tasks: JourneyTask[], state: JourneyState | undefined, today: string, goalDate: string, thisWeekTaskId?: string, derived?: Record<string, string>): TimelineGroup[] {
   const weeksLeft = journeyWeeksLeft(today, goalDate);
   const rows: TimelineTask[] = tasks.map((task) => ({
     task,
@@ -166,6 +181,7 @@ export function journeyTimeline(tasks: JourneyTask[], state: JourneyState | unde
     isThisWeek: task.id === thisWeekTaskId,
     ...taskDates(task, goalDate),
     doneOn: state?.done[task.id],
+    ...(derived?.[task.id] && state?.done[task.id] ? { derived: derived[task.id] } : {}),
   }));
   rows.sort((a, b) => a.closesOn.localeCompare(b.closesOn) || a.opensOn.localeCompare(b.opensOn) || a.task.id.localeCompare(b.task.id));
   const groups: TimelineGroup[] = [];

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { bootBreakInStatus, bootGoalKm, type BootBreakInStatus, type BootsState } from '../../engine/bootBreakIn';
-import { journeyProgress, EMPTY_JOURNEY, markDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, withBootsDone, withDerivedDone, type JourneyPick, type JourneyState } from '../../engine/journey';
+import { derivedDoneLines, journeyProgress, EMPTY_JOURNEY, markDone, normalizeJourneyState, pickJourneyTask, postponeTask, unmarkDone, withBootsDone, withDerivedDone, type JourneyPick, type JourneyState } from '../../engine/journey';
+import { usableSweatEntries } from '../../engine/sweat';
 import { programAnchorDate } from '../../engine/programLayout';
 import { todayISO } from '../../utils/dates';
 
@@ -11,6 +12,8 @@ import { todayISO } from '../../utils/dates';
 export function useJourney(): {
   goalDate: string | undefined;
   state: JourneyState | undefined;
+  // Tasks the data makes done (task id -> why). No un-ticking by hand.
+  derived: Record<string, string>;
   pick: JourneyPick | undefined;
   progress: { done: number; total: number };
   tick: (taskId: string, opts?: { keepForWeek?: boolean }) => void;
@@ -30,10 +33,13 @@ export function useJourney(): {
   );
   // Wat uit je gegevens volgt telt als af, zonder vlag: de zweetmetingen en de bergschoenen
   // (die zijn af zodra het doel op tijd gehaald is, uit het logboek).
+  // Alleen metingen van trainingen die er nog zijn tellen mee.
+  const sweat = useMemo(() => usableSweatEntries(settings.sweatEntries, sessionLogs), [settings.sweatEntries, sessionLogs]);
   const state = useMemo(
-    () => withBootsDone(withDerivedDone(stored, settings.sweatEntries), boots, today),
-    [stored, settings.sweatEntries, boots, today],
+    () => withBootsDone(withDerivedDone(stored, sweat), boots, today),
+    [stored, sweat, boots, today],
   );
+  const derived = useMemo(() => derivedDoneLines(sweat, boots), [sweat, boots]);
   const pick = pickJourneyTask(JOURNEY_TASKS, state, today, goalDate);
   const progress = journeyProgress(JOURNEY_TASKS, state);
 
@@ -48,6 +54,7 @@ export function useJourney(): {
   return {
     goalDate,
     state,
+    derived,
     pick,
     progress,
     tick: (taskId, opts) => commit(markDone(latest.current, taskId, todayISO(), opts?.keepForWeek)),

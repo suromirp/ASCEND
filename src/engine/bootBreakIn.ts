@@ -11,7 +11,7 @@
 
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { daysBetween } from '../utils/dates';
-import { isIndoorLog, logSport, templateSport } from './sports';
+import { isIndoorLog, isWalkOrTripLog, templateSport } from './sports';
 
 export interface BootsState {
   // De eerste dag dat je de nieuwe bergschoenen draagt (ISO-datum).
@@ -32,12 +32,13 @@ export interface BreakInTotals {
   count: number;
 }
 
-// Telt een log mee: een wandeling of tocht (geen hardlopen, kracht of fietsen),
+// Telt een log mee: een wandeling of tocht (geen hardlopen, kracht of fietsen; de regel
+// staat in engine/sports.ts#isWalkOrTripLog),
 // buiten (een loopband geeft geen echte kilometers op de schoen).
 function isWalkOrTrip(log: SessionLog): boolean {
   if (log.type === 'strength' || log.type === 'recovery') return false;
   if (isIndoorLog(log)) return false;
-  return log.type === 'adventure' || logSport(log) === 'hiking';
+  return isWalkOrTripLog(log);
 }
 
 function logsFrom(logs: SessionLog[], since: string): SessionLog[] {

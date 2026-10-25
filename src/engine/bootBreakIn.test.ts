@@ -31,6 +31,15 @@ describe('kilometers en stijging vanaf de datum', () => {
     expect(t.count).toBe(2);
   });
 
+  it('telt een tocht zonder andere sport, maar een fietstocht als avontuur niet', () => {
+    const logs = [
+      log('tocht', '2027-02-01', { type: 'adventure', sport: undefined }, 20),
+      log('fiets', '2027-02-02', { type: 'adventure', sport: 'cycling' }, 40),
+      log('fiets2', '2027-02-03', { type: 'adventure', sport: undefined, outdoorData: { durationMinutes: 120, distanceKm: 35, modality: 'bike_outdoor', source: 'manual' } }),
+    ];
+    expect(breakInTotals(logs, '2027-01-04')).toMatchObject({ km: 20, count: 1 });
+  });
+
   it('leest de afstand ook uit cardioData en slaat logs zonder afstand over', () => {
     const l = log('c', '2027-03-01', { outdoorData: undefined, cardioData: { durationMinutes: 90, distanceKm: 7, source: 'manual' } });
     expect(breakInTotals([l, log('leeg', '2027-03-02')], '2027-01-01').km).toBe(7);

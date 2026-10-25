@@ -9,6 +9,7 @@ import { Icon } from '../icons';
 import { TextButton } from '../TextButton';
 
 function windowLine(row: TimelineTask): string {
+  if (row.status === 'done' && row.derived) return row.derived;
   if (row.status === 'done' && row.doneOn) return `Gedaan op ${shortDateNL(row.doneOn)}`;
   if (row.status === 'later') return `Komt aan de beurt vanaf ${shortDateNL(row.opensOn)}`;
   if (row.status === 'lapsed') return `Nog open. Het mooiste moment was tot en met ${shortDateNL(row.closesOn)}`;
@@ -43,7 +44,7 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose, extra }: { ro
             {extra}
             <div className="mt-2 flex gap-3">
               <SecondaryButton onClick={requestClose}>Sluiten</SecondaryButton>
-              {done ? (
+              {row.derived ? null : done ? (
                 <SecondaryButton onClick={() => { onUntick(); requestClose(); }}>Haal vinkje weg</SecondaryButton>
               ) : (
                 <PrimaryButton onClick={() => { onTick(); requestClose(); }} fullWidth={false}>Gedaan</PrimaryButton>

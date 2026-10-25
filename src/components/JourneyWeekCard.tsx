@@ -12,7 +12,7 @@ import { TextButton } from './TextButton';
 // week, kept for the week, never red.
 export function JourneyWeekCard() {
   const navigate = useNavigate();
-  const { pick, tick, untick, postpone } = useJourney();
+  const { pick, derived, tick, untick, postpone } = useJourney();
   const [open, setOpen] = useState(false);
   if (!pick || pick.state === 'postponed') return null;
   const { task } = pick;
@@ -30,10 +30,12 @@ export function JourneyWeekCard() {
               <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{task.why}</p>
               {done ? (
                 <>
-                  <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Gedaan. Volgende week komt er een nieuwe taak.</p>
-                  <TextButton tone="dim" onClick={() => { untick(task.id); close(); }} className="self-start">
-                    Toch nog niet gedaan
-                  </TextButton>
+                  <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>{derived[task.id] ? `${derived[task.id]}.` : 'Gedaan.'} Volgende week komt er een nieuwe taak.</p>
+                  {!derived[task.id] && (
+                    <TextButton tone="dim" onClick={() => { untick(task.id); close(); }} className="self-start">
+                      Toch nog niet gedaan
+                    </TextButton>
+                  )}
                 </>
               ) : (
                 <div className="flex gap-3">

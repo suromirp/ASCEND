@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SweatEntry } from '../models/sweat';
-import { defaultSweatRate, entryRate, entryResultLine, mergeSweatEntries, sweatLossMl, sweatRateAt, weighedCount, weighedDate } from './sweat';
+import { basisLabel, defaultSweatRate, entryRate, entryResultLine, mergeSweatEntries, isSweatLog, sweatActivityOfLog, sweatLossMl, sweatRateAt, usableSweatEntries, weighedCount, weighedDate } from './sweat';
 
 const entry = (over: Partial<SweatEntry> & { id: string }): SweatEntry => ({
   logId: `log-${over.id}`,
@@ -46,16 +46,25 @@ describe('entryRate', () => {
 });
 
 describe('sweatRateAt: de terugval zonder metingen', () => {
-  it('geeft de voorzichtige standaard, gemarkeerd als nog niet gemeten', () => {
-    expect(sweatRateAt(undefined, 20)).toEqual({ mlPerHour: 800, basis: 'default', count: 0, tempC: 20 });
+  it('geeft de standaard naar algemene cijfers, gemarkeerd als nog niet gemeten', () => {
+    expect(sweatRateAt(undefined, 20)).toEqual({ mlPerHour: 900, basis: 'default', count: 0, tempC: 20 });
     expect(sweatRateAt([], 20).basis).toBe('default');
   });
-  it('de standaardlijn loopt van 400 naar 1.200 en blijft daartussen', () => {
-    expect(defaultSweatRate(0)).toBe(400);
-    expect(defaultSweatRate(10)).toBe(400);
-    expect(defaultSweatRate(30)).toBe(1200);
-    expect(defaultSweatRate(40)).toBe(1200);
-    expect(defaultSweatRate(15)).toBe(600);
+  it('de standaardlijn loopt van 500 naar 1.250 en blijft daartussen', () => {
+    expect(defaultSweatRate(0)).toBe(500);
+    expect(defaultSweatRate(10)).toBe(500);
+    expect(defaultSweatRate(30)).toBe(1250);
+    expect(defaultSweatRate(40)).toBe(1250);
+    expect(defaultSweatRate(15)).toBe(700);
+  });
+  it('de standaard blijft binnen de algemene cijfers: 1,0 tot 1,5 liter per uur in de warmte', () => {
+    expect(defaultSweatRate(28)).toBeGreaterThanOrEqual(1000);
+    expect(defaultSweatRate(30)).toBeLessThanOrEqual(1500);
+  });
+  it('noemt de standaard nog niet gemeten, naar algemene cijfers, zonder het woord voorzichtig', () => {
+    const label = basisLabel(sweatRateAt([], 20));
+    expect(label).toBe('nog niet gemeten, naar algemene cijfers');
+    expect(label).not.toMatch(/voorzichtig/i);
   });
   it('een meting zonder bruikbare getallen telt niet als meting', () => {
     expect(sweatRateAt([entry({ id: 'a', durationMinutes: 10, weightBeforeKg: 80, weightAfterKg: 79 })], 20).basis).toBe('default');
@@ -119,20 +128,63 @@ describe('weighedCount en weighedDate', () => {
 describe('mergeSweatEntries', () => {
   const a = entry({ id: 'a', logId: 'l1', watchMl: 900 });
   const b = entry({ id: 'b', logId: 'l2', watchMl: 800, date: '2026-06-05' });
-  it('is de som per id en het toestel wint', () => {
+  it('voegt samen per training en het toestel wint', () => {
     const device = { ...a, watchMl: 1000 };
     const merged = mergeSweatEntries([device], [a, b]);
     expect(merged?.map((e) => e.id)).toEqual(['a', 'b']);
     expect(merged?.find((e) => e.id === 'a')?.watchMl).toBe(1000);
   });
-  it('houdt per training één meting, de nieuwste', () => {
+  it('het toestel wint per training, ook als de meting uit de back-up nieuwer is', () => {
     const newer = entry({ id: 'x', logId: 'l1', watchMl: 700, updatedAt: '2026-07-01T00:00:00.000Z' });
     const merged = mergeSweatEntries([a], [newer]);
     expect(merged).toHaveLength(1);
-    expect(merged?.[0].id).toBe('x');
+    expect(merged?.[0].id).toBe('a');
+  });
+  it('houdt van twee metingen uit de back-up voor één training de nieuwste', () => {
+    const newer = entry({ id: 'x', logId: 'l9', watchMl: 700, updatedAt: '2026-07-01T00:00:00.000Z' });
+    const older = entry({ id: 'y', logId: 'l9', watchMl: 600, updatedAt: '2026-06-01T00:00:00.000Z' });
+    expect(mergeSweatEntries(undefined, [older, newer])?.map((e) => e.id)).toEqual(['x']);
   });
   it('brengt een meting terug die je hier wiste en laat niets staan als beide leeg zijn', () => {
     expect(mergeSweatEntries([], [a])).toHaveLength(1);
     expect(mergeSweatEntries(undefined, undefined)).toBeUndefined();
+  });
+});
+
+describe('usableSweatEntries', () => {
+  const e = entry({ id: 'a', logId: 'l1', durationMinutes: 120, weightBeforeKg: 80, weightAfterKg: 78 });
+  it('rekent met de duur uit de log zelf, en met de bewaarde duur als terugval', () => {
+    expect(usableSweatEntries([e], [{ id: 'l1', durationMinutes: 60 }])[0].durationMinutes).toBe(60);
+    expect(entryRate(usableSweatEntries([e], [{ id: 'l1', durationMinutes: 60 }])[0])?.mlPerHour).toBe(2000);
+    expect(usableSweatEntries([e], [{ id: 'l1', durationMinutes: 0 }])[0].durationMinutes).toBe(120);
+  });
+  it('slaat metingen van een training die er niet meer is over, zonder ze te wissen', () => {
+    const list = [e];
+    expect(usableSweatEntries(list, [{ id: 'l2', durationMinutes: 60 }])).toEqual([]);
+    expect(usableSweatEntries(list, undefined)).toEqual([]);
+    expect(list).toHaveLength(1);
+  });
+  it('de taak en het tempo tellen alleen metingen van bestaande trainingen', () => {
+    const two = [e, entry({ id: 'b', logId: 'l2', date: '2026-06-02', weightBeforeKg: 80, weightAfterKg: 78.5 })];
+    expect(weighedCount(usableSweatEntries(two, [{ id: 'l1', durationMinutes: 120 }, { id: 'l2', durationMinutes: 120 }]))).toBe(2);
+    expect(weighedCount(usableSweatEntries(two, [{ id: 'l1', durationMinutes: 120 }]))).toBe(1);
+  });
+});
+
+describe('welke trainingen een zweetmeting krijgen', () => {
+  const base = { type: 'adventure' as const };
+  it('een loop, wandeling en tocht wel', () => {
+    expect(sweatActivityOfLog({ type: 'cardio' })).toBe('run');
+    expect(sweatActivityOfLog({ type: 'hiking' })).toBe('walk');
+    expect(isSweatLog(base)).toBe(true);
+    expect(sweatActivityOfLog(base)).toBe('walk');
+  });
+  it('een bergtocht zonder modaliteit krijgt wel de rij Zweetverlies', () => {
+    expect(isSweatLog({ type: 'adventure', outdoorData: { durationMinutes: 300, source: 'manual' } })).toBe(true);
+  });
+  it('een fietstocht als avontuur en kracht niet', () => {
+    expect(isSweatLog({ type: 'adventure', sport: 'cycling' })).toBe(false);
+    expect(isSweatLog({ type: 'adventure', outdoorData: { durationMinutes: 120, modality: 'bike_outdoor', source: 'manual' } })).toBe(false);
+    expect(isSweatLog({ type: 'strength' })).toBe(false);
   });
 });

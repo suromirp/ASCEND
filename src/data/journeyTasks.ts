@@ -93,7 +93,7 @@ export const JOURNEY_TASKS: JourneyTask[] = [
   {
     id: 'schoenen',
     title: 'Kies je schoenen en begin met inlopen',
-    why: 'Nieuwe schoenen op de eerste dag is een klassieke fout. Loop ze minstens 6 weken en 100 km in voor vertrek, met tent liever drie maanden. Laat ze op een winterwandeling kennismaken met je voeten.',
+    why: 'Nieuwe schoenen op de eerste dag is een klassieke fout. Loop ze minstens 6 weken en 100 km in voor vertrek. Laat ze op een winterwandeling kennismaken met je voeten.',
     window: [31, 14],
     link: { label: 'Voeten, schoenen en blaren', to: '/kennis/voeten-blaren' },
   },

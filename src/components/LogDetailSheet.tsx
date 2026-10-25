@@ -306,7 +306,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <SheetRows>
                 <SheetRow
                   title="Zweetverlies"
-                  sub={(sweatEntry && entryResultLine(sweatEntry)) || 'Weeg jezelf voor en na en leer je eigen tempo'}
+                  sub={(sweatEntry && entryResultLine({ ...sweatEntry, durationMinutes: log.durationMinutes > 0 ? log.durationMinutes : sweatEntry.durationMinutes })) || 'Weeg jezelf voor en na en leer je eigen tempo'}
                   onClick={() => setSweatOpen(true)}
                 />
               </SheetRows>

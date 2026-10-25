@@ -3,6 +3,8 @@ import { descentOf, freshnessCurve, intensityMix, legCalendar, loadVersusBefore,
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { GoalRequirement } from '../models/goals';
+import { resolveEffectiveStressProfile } from './stressProfile';
+import { zoneBpm } from './heartRateZones';
 import type { ActivityDetail } from '../models/activityDetail';
 
 const { templates } = buildDefaultProgramData();
@@ -153,12 +155,49 @@ describe('intensity mix by heart rate', () => {
     expect(mix.easyTooHard).toEqual([{ date: '2026-10-13', name: tpl('tpl_easy_run').name, why: 'hartslag' }]);
   });
 
-  it('"naar het plan" gives the old behaviour', () => {
-    const logs = [partlyZone3(), log('tpl_easy_run', '2026-10-13', 40)];
+  it('"naar het plan" gives the old behaviour: one count per training', () => {
+    // The code as it was before the minutes came (per training, by what it was meant to be).
+    const HARD = new Set(['tpl_hill_intervals', 'tpl_intervals', 'tpl_test_run', 'tpl_race']);
+    const oldMix = (all: SessionLog[]) => {
+      const sessions = { easy: 0, middle: 0, hard: 0 };
+      const tooHard: { date: string; name: string; why: string }[] = [];
+      let total = 0;
+      for (const l of all) {
+        if (l.type === 'strength' || l.type === 'recovery') continue;
+        const t = tpl(l.templateId);
+        const goal = resolveEffectiveStressProfile(t).intensity;
+        const kind = goal === 'high' || HARD.has(t.id) ? 'hard' : goal === 'moderate' ? 'middle' : 'easy';
+        sessions[kind]++;
+        total++;
+        if (kind === 'easy') {
+          const avg = l.cardioData?.avgHeartRate;
+          const easyTop = zoneBpm(2, HR)?.[1];
+          if (easyTop && avg && avg > easyTop) tooHard.push({ date: l.completedDate, name: t.name, why: 'hartslag' });
+          else if ((l.rpe ?? 0) >= 7) tooHard.push({ date: l.completedDate, name: t.name, why: 'zwaarte' });
+        }
+      }
+      return { sessions, total, easyShare: total ? sessions.easy / total : 0, tooHard };
+    };
+    const logs = [
+      partlyZone3(),
+      log('tpl_easy_run', '2026-10-13', 40, { rpe: 7 }),
+      log('tpl_easy_run', '2026-10-14', 40, { cardioData: { durationMinutes: 40, avgHeartRate: 170, source: 'manual' } }),
+      log('tpl_long_run', '2026-10-15', 90),
+      log('tpl_hill_intervals', '2026-10-17', 50, { rpe: 8 }),
+      log('tpl_lower_a', '2026-10-18', 60, { rpe: 8 }),
+    ];
+    const old = oldMix(logs);
     const mix = intensityMix(logs, templates, TODAY, HR, 28, 'plan');
-    expect(mix.minutes).toEqual({ easy: 80, middle: 0, hard: 0 });
+    expect(mix.unit).toBe('sessions');
+    expect(mix.sessions).toEqual(old.sessions);
+    expect(mix.total).toBe(old.total);
+    expect(mix.easyShare).toBeCloseTo(old.easyShare);
+    expect(mix.easyTooHard).toEqual(old.tooHard);
     expect(mix.measuredSessions).toBe(0);
-    expect(mix.easyShare).toBe(1);
+    // The profile of the first run is ignored: it counts as the easy run it was meant to be.
+    expect(intensityMix([partlyZone3(), log('tpl_easy_run', '2026-10-13', 40)], templates, TODAY, HR, 28, 'plan').easyShare).toBe(1);
+    // "Naar je hartslag" counts minutes.
+    expect(intensityMix(logs, templates, TODAY, HR).unit).toBe('minutes');
   });
 });
 

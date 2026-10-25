@@ -4,6 +4,7 @@ import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
 import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
 import { predictDuration } from '../../engine/durationLearning';
+import { usableSweatEntries } from '../../engine/sweat';
 import { journeyProgress, normalizeJourneyState, withBootsDone, withDerivedDone } from '../../engine/journey';
 import { bootBreakInStatus, bootGoalKm, breakInTotals } from '../../engine/bootBreakIn';
 import { baseWeightGrams, resolvePackItems } from '../../engine/packList';
@@ -106,7 +107,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     );
     const journeyState = normalizeJourneyState(settings.journey).state;
     const boots = bootBreakInStatus({ boots: journeyState?.boots, logs: sessionLogs, goalKm: bootGoalKm(settings.bootBreakInKm), today, departure: goalDate });
-    const progress = goalDate ? journeyProgress(JOURNEY_TASKS, withBootsDone(withDerivedDone(journeyState, settings.sweatEntries), boots, today)) : undefined;
+    const progress = goalDate ? journeyProgress(JOURNEY_TASKS, withBootsDone(withDerivedDone(journeyState, usableSweatEntries(settings.sweatEntries, sessionLogs)), boots, today)) : undefined;
     const use = loaded.watch?.use ?? DEFAULT_WATCH_USE;
     return {
       today,
@@ -131,7 +132,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         return { name: t.name, minutes: p.minutes, source: p.source, basedOn: p.basedOn };
       }),
       strengthCheck,
-      bootKm: settings.journey?.boots ? breakInTotals(sessionLogs, settings.journey.boots.since).km : undefined,
+      bootKm: journeyState?.boots ? breakInTotals(sessionLogs, journeyState.boots.since).km : undefined,
       journeyOpen: progress ? progress.total - progress.done : undefined,
       packKg: Math.round(baseWeightGrams(resolvePackItems(settings.packList)) / 100) / 10,
       folderSupported: webBackupFileAdapter.supportsPreferredDirectory(),

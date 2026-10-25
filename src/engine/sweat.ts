@@ -7,11 +7,13 @@
 // - Hoeveel iemand zweet verschilt sterk van persoon tot persoon en van dag tot dag,
 //   van 0,5 tot 4 liter per uur, met de meeste duursporters rond 1,0 tot 1,5 (Baker 2017;
 //   NATA 2017). Een algemeen getal zegt dus weinig over jou: daarom eerst eigen metingen.
-// - Zonder metingen geldt de standaard uit het GR5-onderzoek, regel B3: 0,4 tot 0,8 L per
-//   uur bij gematigd bergweer en 0,8 tot 1,2 L per uur bij hete klimmen (docs/onderzoek/
-//   Aanvullend onderzoek GR5 voorbereiding.md). Die staat hier als een lijn van 10 tot
-//   30 graden. Het is een voorzichtige schatting, nooit een meting, en altijd gemarkeerd
-//   als "nog niet gemeten".
+// - Zonder metingen geldt een standaardlijn naar algemene cijfers: de NATA-verklaring van
+//   2017 en de ACSM-verklaring noemen voor duursporters gemiddeld ongeveer 1,0 tot 1,5 L per
+//   uur bij inspanning in de warmte, met een breed bereik per persoon. De lijn loopt van 500 ml
+//   per uur bij 10 graden of kouder naar 1.250 bij 30 of warmer. Dat is een eigen vertaling
+//   van die cijfers naar een temperatuur, geen gepubliceerd model, en altijd gemarkeerd als
+//   "nog niet gemeten, naar algemene cijfers". Regel B3 van het GR5-onderzoek (0,4 tot 0,8 L per
+//   uur) is een drinkadvies, geen zweetverlies, en is hier dus niet de basis.
 // - Het doel is minder dan 2% verlies van je lichaamsgewicht, niet alles terugdrinken
 //   (Sawka 2007). Daarom noemt de app het zweetverlies, geen drinkvoorschrift.
 //
@@ -21,7 +23,7 @@
 //
 // Puur: geen React, geen IndexedDB.
 
-import { logSport, type Sport } from './sports';
+import { isWalkOrTripLog, logSport } from './sports';
 import type { SessionLog } from '../models/training';
 import type { SweatActivity, SweatEntry } from '../models/sweat';
 
@@ -45,16 +47,31 @@ export interface SweatRate {
 
 const finite = (v: number | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
 
-// Welke trainingen een zweetmeting krijgen: lopen, wandelen en tochten.
-export function sweatActivityOf(sport: Sport | undefined): SweatActivity | undefined {
-  if (sport === 'running') return 'run';
-  if (sport === 'hiking') return 'walk';
-  return undefined;
+// De soort meting van een training: lopen is 'run', een wandeling of tocht 'walk'; de rest
+// krijgt geen zweetmeting. De wandeling-of-tochtregel is die van de schoenen
+// (engine/sports.ts#isWalkOrTripLog): een bergtocht zonder modaliteit hoort erbij, een
+// fietstocht niet.
+export function sweatActivityOfLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): SweatActivity | undefined {
+  if (logSport(log) === 'running') return 'run';
+  return isWalkOrTripLog(log) ? 'walk' : undefined;
 }
 
 // Heeft deze training een zweetmeting nodig: een loop, wandeling of tocht.
 export function isSweatLog(log: Pick<SessionLog, 'type' | 'sport' | 'cardioData' | 'outdoorData'>): boolean {
-  return sweatActivityOf(logSport(log)) !== undefined;
+  return sweatActivityOfLog(log) !== undefined;
+}
+
+// De metingen zoals de berekening ze leest: alleen van trainingen die nog in het logboek
+// staan, met de duur uit de log zelf (die klopt ook na inkorten of een correctie uit
+// intervals.icu) en de bewaarde duur als terugval. Een meting van een training die er niet
+// meer is blijft bewaard, maar telt niet mee voor de taak en het tempo.
+export function usableSweatEntries(entries: SweatEntry[] | undefined, logs: Pick<SessionLog, 'id' | 'durationMinutes'>[] | undefined): SweatEntry[] {
+  const byId = new Map((logs ?? []).map((l) => [l.id, l]));
+  return (entries ?? []).flatMap((e) => {
+    const log = byId.get(e.logId);
+    if (!log) return [];
+    return [finite(log.durationMinutes) && log.durationMinutes > 0 ? { ...e, durationMinutes: log.durationMinutes } : e];
+  });
 }
 
 // Het zweetverlies van één weging in ml: gewichtsverschil, plus wat je dronk, min wat je
@@ -92,11 +109,12 @@ export function weighedDate(entries: SweatEntry[] | undefined, n: number): strin
   return dates[n - 1];
 }
 
-// De standaard zonder metingen: een lijn van 400 ml per uur bij 10 graden of kouder naar
-// 1.200 bij 30 of warmer, afgerond op 50.
+// De standaard zonder metingen: een lijn van 500 ml per uur bij 10 graden of kouder naar
+// 1.250 bij 30 of warmer, afgerond op 50. Naar de algemene cijfers van NATA 2017 en ACSM
+// (zie de kop van dit bestand); een eigen vertaling, geen gepubliceerd model.
 export function defaultSweatRate(tempC: number): number {
   const t = Math.min(30, Math.max(10, tempC));
-  return Math.round((400 + ((t - 10) / 20) * 800) / 50) * 50;
+  return Math.round((500 + ((t - 10) / 20) * 750) / 50) * 50;
 }
 
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -160,7 +178,7 @@ export function sweatRateAt(entries: SweatEntry[] | undefined, tempC: number, ac
 export function basisLabel(rate: Pick<SweatRate, 'basis' | 'count'>): string {
   if (rate.basis === 'measured') return rate.count === 1 ? 'op je eigen meting' : `op je ${rate.count} eigen metingen`;
   if (rate.basis === 'watch') return 'op de schatting van je horloge';
-  return 'nog niet gemeten, een voorzichtige standaard';
+  return 'nog niet gemeten, naar algemene cijfers';
 }
 
 // "750 ml per uur"; boven de 1.000 in liters met een komma.
@@ -181,17 +199,24 @@ export function entryResultLine(e: SweatEntry): string | undefined {
 
 export const MAX_SWEAT_ENTRIES = 500;
 
-// Samenvoegen bij herstel: per id de som, het exemplaar op dit toestel wint; per training
-// blijft er één over (de nieuwste). Een meting die je hier wiste, komt met een herstel terug,
-// zoals een oordeel over een nacht.
+// Samenvoegen bij herstel: per training blijft er één over, en het exemplaar op dit toestel
+// wint (ook als dat ouder is). Staat een training alleen in de back-up, dan komt die meting
+// erbij; had je hier een meting gewist, dan komt hij met een herstel terug, zoals een
+// oordeel over een nacht.
 export function mergeSweatEntries(current: SweatEntry[] | undefined, incoming: SweatEntry[] | undefined): SweatEntry[] | undefined {
   if (!current && !incoming) return undefined;
-  const byId = new Map((incoming ?? []).map((e) => [e.id, e]));
-  for (const e of current ?? []) byId.set(e.id, e);
   const byLog = new Map<string, SweatEntry>();
-  for (const e of byId.values()) {
+  // Eerst wat in de back-up staat (bij twee metingen voor één training de nieuwste), dan
+  // overschrijft wat dit toestel heeft: per training wint het toestel.
+  for (const e of incoming ?? []) {
     const seen = byLog.get(e.logId);
     if (!seen || e.updatedAt > seen.updatedAt) byLog.set(e.logId, e);
   }
+  const mine = new Map<string, SweatEntry>();
+  for (const e of current ?? []) {
+    const seen = mine.get(e.logId);
+    if (!seen || e.updatedAt > seen.updatedAt) mine.set(e.logId, e);
+  }
+  for (const [logId, e] of mine) byLog.set(logId, e);
   return [...byLog.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)).slice(-MAX_SWEAT_ENTRIES);
 }
