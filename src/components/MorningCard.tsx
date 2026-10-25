@@ -81,7 +81,11 @@ export function MorningCard() {
     );
   }
 
+  // Een nacht die niet goed gemeten is: bovenaan niet de gemeten slaap, maar je eigen
+  // schatting, of niets als je die niet weet.
+  const ignored = reading?.night?.state === 'ignored' ? reading.night : undefined;
   const stats = (reading?.lines ?? []).flatMap((l) => {
+    if (l.key === 'sleep' && ignored) return ignored.hours ? [{ label: 'Slaap, zelf', value: `±${ignored.hours}`, unit: 'u' }] : [];
     const stat = statOf(l);
     return stat ? [stat] : [];
   });
