@@ -9,7 +9,7 @@ import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engi
 import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, OneRmReading } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
-import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, TrimField } from '../models/training';
+import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -391,6 +391,78 @@ export function migrateLogTrim(log: SessionLog): SessionLog {
     return { ...withoutDetail, trim };
   }
   return { ...rest, trim };
+}
+
+// --- correcties uit intervals.icu: SessionLog.sourceSync ------------------------------
+// A log tied to a watch activity keeps a fingerprint of the numbers the source gave
+// and, after an update from the source, the numbers from before it
+// (models/training.ts#SourceSync, engine/sourceCorrection.ts,
+// docs/beslissingen/2026-10-25-correcties-uit-intervals.md). The field is optional
+// and additive and every log travels whole, so the backup schema number does not
+// move: a file from before it has none and imports as it was (the next fetch gives
+// the log a fingerprint with the numbers of that day, it changes nothing). A part
+// that is damaged is dropped, and only that part: a fingerprint that cannot be read
+// is made again at the next fetch; an update record that cannot be read is dropped
+// because putting back from damaged numbers would write nonsense; the offered numbers
+// of a cut log likewise. A field of a log that does not come from the watch, or that
+// has no block, is dropped as a whole. Numbers must be finite and not below zero (a
+// climb of 0 m is a number), minutes above zero; fields the reader does not know are
+// not kept.
+const SOURCE_KEYS: SourceField[] = ['durationMinutes', 'distanceKm', 'elevationGainM', 'elevationLossM', 'avgHeartRate', 'maxHeartRate', 'cadence'];
+
+function readSourceNumbers(raw: unknown): SourceNumbers | undefined {
+  if (!isObj(raw)) return undefined;
+  const out: SourceNumbers = {};
+  for (const key of SOURCE_KEYS) {
+    const v = raw[key];
+    if (v === undefined) continue;
+    if (!fin(v) || v < 0 || (key === 'durationMinutes' && v <= 0)) return undefined;
+    out[key] = v;
+  }
+  return out;
+}
+
+function readSourceUpdate(raw: unknown): SourceUpdate | undefined {
+  if (!isObj(raw) || typeof raw.at !== 'string' || (raw.block !== 'cardioData' && raw.block !== 'outdoorData') || !isObj(raw.previous)) return undefined;
+  const previous: SourceUpdate['previous'] = {};
+  for (const key of SOURCE_KEYS) {
+    const v = raw.previous[key];
+    if (v === undefined) continue;
+    if (v === null) previous[key] = null;
+    else if (fin(v) && v >= 0 && (key !== 'durationMinutes' || v > 0)) previous[key] = v;
+    else return undefined;
+  }
+  if (Object.keys(previous).length === 0) return undefined;
+  const update: SourceUpdate = { at: raw.at, block: raw.block, previous };
+  if (raw.blockDurationMinutes !== undefined) {
+    if (!(fin(raw.blockDurationMinutes) && raw.blockDurationMinutes > 0)) return undefined;
+    update.blockDurationMinutes = raw.blockDurationMinutes;
+  }
+  return update;
+}
+
+export function migrateSourceSync(raw: unknown): SourceSync | undefined {
+  if (!isObj(raw)) return undefined;
+  const seen = readSourceNumbers(raw.seen);
+  if (!seen) return undefined;
+  const sync: SourceSync = { seen };
+  const updated = readSourceUpdate(raw.updated);
+  if (updated) sync.updated = updated;
+  const offered = readSourceNumbers(raw.offered);
+  if (offered && Object.keys(offered).length > 0) sync.offered = offered;
+  return sync;
+}
+
+// A log as it comes out of a file: the same log, with `sourceSync` only when it is whole.
+export function migrateLogSourceSync(log: SessionLog): SessionLog {
+  if (!('sourceSync' in log)) return log;
+  const { sourceSync: damaged, ...rest } = log;
+  const sync = migrateSourceSync(damaged);
+  const block = rest.cardioData ?? rest.outdoorData;
+  if (!sync || !block || !rest.externalId?.startsWith('intervals.icu')) return rest;
+  // An update of a block the log does not have could only put back half a block.
+  if (sync.updated && !(rest as Record<string, unknown>)[sync.updated.block]) delete sync.updated;
+  return { ...rest, sourceSync: sync };
 }
 
 // --- 1RM uit MacroFactor: settings.externalOneRm -------------------------------

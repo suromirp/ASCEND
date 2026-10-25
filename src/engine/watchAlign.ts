@@ -25,7 +25,7 @@
 
 import type { CardioMetric, ManualMeasured, MeasuredField, MetricSource, OutdoorMetric, SessionLog } from '../models/training';
 import { isIndoorLog } from './sports';
-import { durationLabel, isHandLog, pairWithManualLogs, type ExternalActivity } from './activityImport';
+import { durationLabel, isHandLog, pairWithManualLogs, sourceNumbers, type ExternalActivity } from './activityImport';
 import { addDays } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 
@@ -58,14 +58,7 @@ function sameAtShownPrecision(field: MeasuredField, a: number, b: number): boole
 // --- what the watch measured ---------------------------------------------------------
 
 export function watchValues(activity: ExternalActivity): Partial<Record<MeasuredField, Value>> {
-  const values: Partial<Record<MeasuredField, Value>> = { durationMinutes: Math.max(1, Math.round(activity.durationSec / 60)) };
-  if (activity.distanceM !== undefined && activity.distanceM > 0) values.distanceKm = roundTo(activity.distanceM / 1000, 2);
-  if (activity.elevationGainM !== undefined) values.elevationGainM = Math.round(activity.elevationGainM);
-  if (activity.elevationLossM !== undefined) values.elevationLossM = Math.round(activity.elevationLossM);
-  if (activity.avgHeartRate !== undefined) values.avgHeartRate = Math.round(activity.avgHeartRate);
-  if (activity.maxHeartRate !== undefined) values.maxHeartRate = Math.round(activity.maxHeartRate);
-  if (activity.avgCadence !== undefined) values.cadence = Math.round(activity.avgCadence);
-  return values;
+  return sourceNumbers(activity);
 }
 
 // The block of the log that holds the measured fields: the one it has, else the
@@ -200,7 +193,8 @@ export function applyAlignment(log: SessionLog, activity: ExternalActivity, now:
     ...(old ? { blockSource: old.source } : { blockAdded: true as const }),
     ...(clearedProgressIds.length > 0 ? { clearedProgressIds } : {}),
   };
-  return { ...log, durationMinutes, [key]: block, externalId: activity.externalId, source: activity.source, manualMeasured };
+  // The fingerprint of the source numbers, so a later correction at the source is recognised.
+  return { ...log, durationMinutes, [key]: block, externalId: activity.externalId, source: activity.source, manualMeasured, sourceSync: { seen: sourceNumbers(activity) } };
 }
 
 // The log with the hand-made numbers back, and as a hand-made log again. Only
@@ -222,6 +216,8 @@ export function restoreManual(log: SessionLog): SessionLog {
   else (next as unknown as Record<string, unknown>)[m.block] = { ...block, source: m.blockSource ?? 'manual' };
   delete next.externalId;
   delete next.manualMeasured;
+  // A hand-made log again: no source to follow.
+  delete next.sourceSync;
   next.source = 'manual';
   return next;
 }

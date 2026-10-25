@@ -20,16 +20,19 @@ import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrimSheet } from './TrimSheet';
 import { StravaTextButton } from './StravaTextButton';
 import { isTrimmable, trimOriginalLine, trimRangeLine } from '../engine/trimLog';
+import { canRestoreSourceUpdate, sourceOfferLine, sourceUpdateLine, sourceUpdatePreviousLine } from '../engine/sourceCorrection';
+import { TextButton } from './TextButton';
 
 // Putting the numbers back is local work; longer than this means it is stuck.
 const RESTORE_TIMEOUT_MS = 15_000;
 const UNDO_TRIM_TIMEOUT_MS = 15_000;
+const SOURCE_TIMEOUT_MS = 15_000;
 
 const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
 export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
-  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, sessionLogs, templates, program } = useAppData();
+  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, sessionLogs, templates, program } = useAppData();
   // Read the log fresh, so the sheet follows a change (the own numbers put back).
   const log = sessionLogs.find((l) => l.id === shown.id) ?? shown;
   const activity = log.outdoorData ?? log.cardioData;
@@ -112,6 +115,24 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       setUndoingTrim(false);
     }
   }
+  // Corrections made at intervals.icu: "Vorige getallen terugzetten", and "Cijfers overnemen" for a cut log.
+  const [sourceBusy, setSourceBusy] = useState(false);
+  const [sourceNote, setSourceNote] = useState<string | null>(null);
+  async function changeSourceNumbers(work: (id: string) => Promise<boolean>, nothing: string, failed: string) {
+    if (sourceBusy) return;
+    setSourceBusy(true);
+    setSourceNote(null);
+    try {
+      const done = await withTimeout(work(log.id), SOURCE_TIMEOUT_MS);
+      if (!done) setSourceNote(nothing);
+    } catch (err) {
+      setSourceNote(err instanceof TimeoutError ? 'Dit duurt langer dan het zou moeten. Kijk zo of de getallen kloppen, en probeer het anders nog eens.' : failed);
+    } finally {
+      setSourceBusy(false);
+    }
+  }
+  const updateLine = sourceUpdateLine(log);
+  const offerLine = sourceOfferLine(log);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Fill in the hard part afterwards: from what was saved, or the plan of that day.
   const [editing, setEditing] = useState<WorkoutDetails | null>(null);
@@ -170,6 +191,38 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <div className="flex"><SecondaryButton onClick={() => setTrimming(true)}>Inkorten</SecondaryButton></div>
             </div>
           ))}
+
+          {updateLine && (
+            <div className="mt-3 flex flex-col gap-1">
+              <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{updateLine}</p>
+              {sourceUpdatePreviousLine(log) && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sourceUpdatePreviousLine(log)}</p>}
+              {canRestoreSourceUpdate(log) && (
+                <div className="flex">
+                  <TextButton
+                    onClick={() => void changeSourceNumbers(restoreSourceUpdate, 'Er was niets terug te zetten; de getallen staan al zo.', 'Terugzetten lukte niet. Er is niets veranderd; probeer het zo nog eens.')}
+                    disabled={sourceBusy}
+                  >
+                    {sourceBusy ? 'Bezig…' : 'Vorige getallen terugzetten'}
+                  </TextButton>
+                </div>
+              )}
+            </div>
+          )}
+
+          {offerLine && (
+            <div className="mt-3 flex flex-col gap-1">
+              <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{offerLine}</p>
+              <div className="flex">
+                <TextButton
+                  onClick={() => void changeSourceNumbers(takeOverSourceNumbers, 'Er was niets over te nemen.', 'Overnemen lukte niet. Er is niets veranderd; probeer het zo nog eens.')}
+                  disabled={sourceBusy}
+                >
+                  {sourceBusy ? 'Bezig…' : 'Cijfers overnemen'}
+                </TextButton>
+              </div>
+            </div>
+          )}
+          {sourceNote && <p role="status" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{sourceNote}</p>}
 
           {keptLine && (
             <div className="mt-3 flex flex-col gap-2">

@@ -74,6 +74,7 @@ import { announcementFor, type SavedMoment } from '../engine/savedMoments';
 import { recordClearedMilestones } from '../storage/milestoneClearing';
 import { applyAlignments, inTurn, restoreAlignments, type AlignRequest } from '../storage/watchAlign';
 import { trimStoredLog, undoTrimStoredLog } from '../storage/trim';
+import { onSourceCorrected, restoreSourceUpdateStored, takeOverOfferedStored } from '../storage/sourceCorrection';
 import type { StreamSet } from '../models/activityDetail';
 import { applyStrengthTakeovers, restoreStrengthTakeovers, type TakeoverRequest } from '../storage/macrofactorLead';
 import { createSerialQueue } from '../utils/serialQueue';
@@ -363,6 +364,11 @@ interface AppData {
   // read the new numbers through the usual refresh (engine/trimLog.ts).
   trimWatchActivity: (logId: string, streams: StreamSet, startSec: number, endSec: number) => Promise<boolean>;
   undoTrimWatchActivity: (logId: string) => Promise<boolean>;
+  // "Correcties uit intervals.icu overnemen" (engine/sourceCorrection.ts): the old
+  // numbers of an updated log come back, or the numbers of intervals.icu replace the
+  // cut of a log that was cut here. Both resolve to whether anything was written.
+  restoreSourceUpdate: (logId: string) => Promise<boolean>;
+  takeOverSourceNumbers: (logId: string) => Promise<boolean>;
   // "MacroFactor is leidend voor kracht": existing strength logs take over the
   // numbers of the file; the moments go into the caller's batch, which the
   // caller announces once. restoreFromMacroFactor puts the old numbers back.
@@ -589,6 +595,7 @@ export interface LogSessionInput {
   // came from, its id there, and when it ended. Absent on manual logs.
   source?: SessionLog['source'];
   externalId?: string;
+  sourceSync?: SessionLog['sourceSync'];
   completedAt?: string;
   // Ticked off by itself (components/WatchActivityCard.tsx): no chime, no
   // completion moment and no debrief for something the user did not just do.
@@ -1317,6 +1324,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           strengthRir: input.strengthRir,
           legsAtStart: input.legsAtStart,
           externalId: input.externalId,
+          sourceSync: input.sourceSync,
           source: input.source ?? 'manual',
         };
         await SessionLogsRepo.put(log);
@@ -1463,6 +1471,40 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
       return written;
     },
+    [refresh],
+  );
+
+  const restoreSourceUpdate = useCallback(
+    async (logId: string): Promise<boolean> => {
+      const written = await restoreSourceUpdateStored(logId);
+      if (written) {
+        planRevision++;
+        await refresh();
+      }
+      return written;
+    },
+    [refresh],
+  );
+
+  const takeOverSourceNumbers = useCallback(
+    async (logId: string): Promise<boolean> => {
+      const written = await takeOverOfferedStored(logId);
+      if (written) {
+        planRevision++;
+        await refresh();
+      }
+      return written;
+    },
+    [refresh],
+  );
+
+  // A fetch from intervals.icu rewrote logs (a correction at the source): read them again.
+  useEffect(
+    () =>
+      onSourceCorrected(() => {
+        planRevision++;
+        void refresh();
+      }),
     [refresh],
   );
 
@@ -2287,6 +2329,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     restoreFromWatch,
     trimWatchActivity,
     undoTrimWatchActivity,
+    restoreSourceUpdate,
+    takeOverSourceNumbers,
     takeOverFromMacroFactor,
     restoreFromMacroFactor,
     setLogWorkout,

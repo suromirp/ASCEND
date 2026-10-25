@@ -116,7 +116,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       ambition: effectiveAmbition(settings.ambition, sessionLogs, templateById, program, today),
       weight: w ? { kg: w.kg, source: w.source, date: w.date } : null,
       watch: loaded.watch
-        ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, sendEnabled: loaded.sendEnabled }
+        ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled }
         : null,
       macroFactor: loaded.macroFactor ? { readAt: loaded.macroFactor.readAt, leads: loaded.macroFactor.leads } : null,
       strengthDurations: strength.map((t) => {
