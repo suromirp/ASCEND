@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { influenceMoveSummary, morningNumber } from '../../engine/influenceProposal';
+import { excludedMornings } from '../../engine/influence';
 import { useAppData } from '../../state/AppDataContext';
 import { todayISO } from '../../utils/dates';
 import { ProposalSheet } from '../ProposalSheet';
@@ -13,11 +14,11 @@ import { useRecoveryMetrics } from '../useRecoveryMetrics';
 // niet, en na Akkoord de melding met Ongedaan maken.
 
 export function InfluenceMoveCard() {
-  const { influenceMove } = useAppData();
+  const { influenceMove, settings } = useAppData();
   const metrics = useRecoveryMetrics();
   const [open, setOpen] = useState(false);
   const today = todayISO();
-  const morning = useMemo(() => morningNumber(today, metrics), [today, metrics]);
+  const morning = useMemo(() => morningNumber(today, metrics, excludedMornings(settings.influences)), [today, metrics, settings.influences]);
   if (!influenceMove) return null;
   const { advice, cause, targetDate } = influenceMove;
   const summary = influenceMoveSummary(cause, morning, targetDate);

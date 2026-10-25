@@ -8,7 +8,7 @@
 // these and leaves anything entered another way alone.
 
 import { MetaRepo, RecoveryMetricsRepo, SettingsRepo } from './database';
-import { KEEP_DAYS, wellnessPlan } from '../engine/wellnessRange';
+import { KEEP_DAYS, wellnessPlan, type DateSpan } from '../engine/wellnessRange';
 import { morningOf } from '../engine/influenceEffects';
 import { fetchIntervalsWellness, INTERVALS_ADAPTER_ID, intervalsErrorMessage, type FetchOptions, type IntervalsConnection } from '../integrations/intervalsIcu';
 import { DEFAULT_WATCH_USE, filterRecovery, wellnessWanted, type WatchUse } from '../engine/watchUse';
@@ -21,6 +21,7 @@ import { addDays, todayISO } from '../utils/dates';
 // The earliest day the fetches have covered is remembered, so the long stretch is fetched once
 // (a new note, a restored backup) and not at every sync.
 const COVERED_KEY = 'wellnessCoveredFrom';
+const TRIED_KEY = 'wellnessLongTriedOn';
 
 export type WellnessSyncResult =
   | { status: 'ok'; days: number; today: boolean }
@@ -47,26 +48,44 @@ export async function syncWellness(connection: IntervalsConnection, options: Fet
       mornings: (settings.influences ?? []).filter((e) => e.reasons.length > 0).map(morningOf),
       coveredFrom: await MetaRepo.get<string>(COVERED_KEY),
     });
-    // Oldest first; every request has its own time limit (integrations/intervalsIcu.ts).
-    const fetched: RecoveryMetric[] = [];
-    for (const range of plan.ranges) fetched.push(...(await fetchIntervalsWellness(connection, range, { fetchImpl: options.fetchImpl })));
-    await MetaRepo.set(COVERED_KEY, plan.coveredFrom);
-    const metrics = filterRecovery(fetched, use);
+    // First the usual four weeks, stored at once: this decides whether the sync worked.
+    const metrics = filterRecovery(await fetchIntervalsWellness(connection, plan.normal, { fetchImpl: options.fetchImpl }), use);
     const cutoff = addDays(today, -KEEP_DAYS);
     const existing = await RecoveryMetricsRepo.getAll();
     for (const old of existing) {
       if (old.id.startsWith(`${INTERVALS_ADAPTER_ID}:`) && old.date < cutoff) await RecoveryMetricsRepo.delete(old.id);
     }
     if (metrics.length > 0) await RecoveryMetricsRepo.putAll(metrics);
+    const covered = await MetaRepo.get<string>(COVERED_KEY);
+    if (covered === undefined || covered > plan.normal.from) await MetaRepo.set(COVERED_KEY, plan.normal.from);
+    await fetchLongStretch(connection, plan.long, use, today, options.fetchImpl);
     return { status: 'ok', days: metrics.length, today: metrics.some((m) => m.date === today) };
   } catch (err) {
     return { status: 'error', message: intervalsErrorMessage(err) };
   }
 }
 
+// The older stretch for "Wat speelde er": best effort, newest part first, tried once a day at most.
+// A part that fails changes nothing about the sync; what was fetched stays and is remembered.
+async function fetchLongStretch(connection: IntervalsConnection, parts: DateSpan[], use: WatchUse, today: string, fetchImpl: FetchOptions['fetchImpl']): Promise<void> {
+  if (parts.length === 0) return;
+  try {
+    if ((await MetaRepo.get<string>(TRIED_KEY)) === today) return;
+    await MetaRepo.set(TRIED_KEY, today);
+    for (const part of parts) {
+      const records = filterRecovery(await fetchIntervalsWellness(connection, part, { fetchImpl }), use);
+      if (records.length > 0) await RecoveryMetricsRepo.putAll(records);
+      await MetaRepo.set(COVERED_KEY, part.from);
+    }
+  } catch {
+    // The next day tries again from where this stopped.
+  }
+}
+
 // Unlinking: what came from intervals.icu goes, what you entered yourself stays.
 export async function clearWellness(): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
+  await MetaRepo.set(TRIED_KEY, undefined);
   for (const m of await RecoveryMetricsRepo.getAll()) {
     if (m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`)) await RecoveryMetricsRepo.delete(m.id);
   }
@@ -76,6 +95,7 @@ export async function clearWellness(): Promise<void> {
 // Records of other origin are not touched. Switching it on again fetches it anew.
 export async function pruneWellness(use: WatchUse): Promise<void> {
   await MetaRepo.set(COVERED_KEY, undefined);
+  await MetaRepo.set(TRIED_KEY, undefined);
   const ours = (await RecoveryMetricsRepo.getAll()).filter((m) => m.id.startsWith(`${INTERVALS_ADAPTER_ID}:`));
   const kept = filterRecovery(ours, use);
   const keptIds = new Set(kept.map((m) => m.id));

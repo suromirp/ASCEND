@@ -7,41 +7,43 @@ import { addDays } from '../utils/dates';
 const TODAY = '2026-10-25';
 
 describe('welk stuk ochtendgetallen wordt opgehaald', () => {
-  it('zonder notities de gewone 28 dagen', () => {
-    expect(wellnessPlan({ today: TODAY, mornings: [] })).toEqual({ ranges: [{ from: addDays(TODAY, -28), to: TODAY }], coveredFrom: addDays(TODAY, -28) });
+  const normal = { from: addDays(TODAY, -28), to: TODAY };
+
+  it('zonder notities alleen de gewone 28 dagen', () => {
+    expect(wellnessPlan({ today: TODAY, mornings: [] })).toEqual({ normal, long: [] });
   });
 
-  it('met een recente notitie ook de gewone 28 dagen', () => {
-    const plan = wellnessPlan({ today: TODAY, mornings: [addDays(TODAY, -3)] });
-    expect(plan.ranges).toHaveLength(1);
+  it('met een recente notitie alleen de paar dagen die de 28 dagen ervoor nog missen', () => {
+    expect(wellnessPlan({ today: TODAY, mornings: [addDays(TODAY, -3)] }).long).toEqual([{ from: addDays(TODAY, -31), to: addDays(TODAY, -29) }]);
+    expect(wellnessPlan({ today: TODAY, mornings: [addDays(TODAY, -40)] }).long).toHaveLength(1);
   });
 
-  it('met een oude notitie terug tot 28 dagen ervoor, in delen met een eigen verzoek', () => {
+  it('met een oude notitie het lange stuk erachter, nieuwste deel eerst, aansluitend', () => {
     const morning = addDays(TODAY, -200);
     const plan = wellnessPlan({ today: TODAY, mornings: [morning, addDays(TODAY, -10)] });
-    expect(plan.coveredFrom).toBe(addDays(morning, -28));
-    expect(plan.ranges[0].from).toBe(addDays(morning, -28));
-    expect(plan.ranges.at(-1)!.to).toBe(TODAY);
-    expect(plan.ranges.length).toBe(Math.ceil(229 / CHUNK_DAYS));
-    // Aansluitend, zonder gat of overlap.
-    for (let i = 1; i < plan.ranges.length; i++) expect(plan.ranges[i].from).toBe(addDays(plan.ranges[i - 1].to, 1));
+    expect(plan.normal).toEqual(normal);
+    expect(plan.long[0].to).toBe(addDays(normal.from, -1));
+    expect(plan.long.at(-1)!.from).toBe(addDays(morning, -28));
+    for (let i = 1; i < plan.long.length; i++) expect(plan.long[i].to).toBe(addDays(plan.long[i - 1].from, -1));
+    expect(plan.long.every((r) => addDays(r.from, CHUNK_DAYS - 1) >= r.to)).toBe(true);
   });
 
-  it('haalt het lange stuk niet opnieuw op als het al gedekt is, maar dekt een nieuwe oudere notitie wel', () => {
+  it('haalt alleen wat nog niet gedekt is', () => {
     const morning = addDays(TODAY, -200);
-    const first = wellnessPlan({ today: TODAY, mornings: [morning] });
-    const again = wellnessPlan({ today: TODAY, mornings: [morning], coveredFrom: first.coveredFrom });
-    expect(again.ranges).toEqual([{ from: addDays(TODAY, -28), to: TODAY }]);
-    expect(again.coveredFrom).toBe(first.coveredFrom);
-    const older = wellnessPlan({ today: TODAY, mornings: [addDays(TODAY, -300)], coveredFrom: first.coveredFrom });
-    expect(older.ranges.length).toBeGreaterThan(1);
+    const full = wellnessPlan({ today: TODAY, mornings: [morning] });
+    const need = addDays(morning, -28);
+    expect(wellnessPlan({ today: TODAY, mornings: [morning], coveredFrom: need }).long).toEqual([]);
+    const half = wellnessPlan({ today: TODAY, mornings: [morning], coveredFrom: full.long[0].from });
+    expect(half.long).toHaveLength(full.long.length - 1);
+    const older = wellnessPlan({ today: TODAY, mornings: [addDays(TODAY, -300)], coveredFrom: need });
+    expect(older.long[0].to).toBe(addDays(need, -1));
   });
 
   it('gaat nooit verder terug dan 400 dagen', () => {
     expect(neededFrom(TODAY, [addDays(TODAY, -900)])).toBeUndefined();
     expect(neededFrom(TODAY, [addDays(TODAY, -KEEP_DAYS + 5)])).toBe(addDays(TODAY, -KEEP_DAYS));
     const plan = wellnessPlan({ today: TODAY, mornings: [addDays(TODAY, -KEEP_DAYS + 5)] });
-    expect(plan.ranges[0].from).toBe(addDays(TODAY, -KEEP_DAYS));
+    expect(plan.long.at(-1)!.from).toBe(addDays(TODAY, -KEEP_DAYS));
   });
 });
 

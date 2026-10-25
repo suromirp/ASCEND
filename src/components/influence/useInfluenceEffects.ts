@@ -25,13 +25,14 @@ export function useInfluenceEffects(): { entries: InfluenceEntry[]; effects: Rea
       ? influenceEffects({
         entries,
         metrics,
+        nightJudgments: settings.nightJudgments,
         logs: sessionLogs,
         templates,
         program,
         run: detailsOn ? { hr: settings.heartRate, legs, chestStrap } : undefined,
       })
       : []),
-    [entries, metrics, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap],
+    [entries, metrics, settings.nightJudgments, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap],
   );
   return { entries, effects };
 }
@@ -51,6 +52,7 @@ export function useLooksLike(date: string, measure: InfluenceMeasure): LooksLike
       ? looksLike({
         entries,
         metrics,
+        nightJudgments: settings.nightJudgments,
         logs: sessionLogs,
         templates,
         program,
@@ -60,6 +62,6 @@ export function useLooksLike(date: string, measure: InfluenceMeasure): LooksLike
         date,
       })
       : undefined),
-    [entries, cause, metrics, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap, measure, date],
+    [entries, cause, metrics, settings.nightJudgments, sessionLogs, templates, program, detailsOn, settings.heartRate, legs, chestStrap, measure, date],
   );
 }

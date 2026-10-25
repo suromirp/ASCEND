@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RecoveryMetricsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
+import { MetaRepo, RecoveryMetricsRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import {
   clearConnection,
   getWatchState,
@@ -124,45 +124,77 @@ describe('the long stretch for "Wat speelde er"', () => {
     await wipeAllData();
   });
   const conn = { athleteId: ATHLETE, apiKey: KEY };
-  const wellnessUrls = (f: ReturnType<typeof intervalsFetch>) => f.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('/wellness'));
+  const wellnessUrls = (f: { mock: { calls: unknown[][] } }) => f.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('/wellness'));
   const note = (daysAgo: number) => ({ id: 'n1', date: addDays(todayISO(), -daysAgo), reasons: [{ reason: 'stress' as const }], updatedAt: '2026-10-25T08:00:00.000Z' });
+  // The usual four weeks answer with tonight; any older stretch with one old record, or with an error.
+  const answering = (olderOk = true) => vi.fn(async (url: string) => {
+    if (!String(url).includes('/wellness')) return new Response('[]', { status: 200 });
+    const oldest = new URL(String(url)).searchParams.get('oldest')!;
+    if (oldest >= addDays(todayISO(), -28)) return new Response(JSON.stringify([tonight()]), { status: 200 });
+    return olderOk ? new Response(JSON.stringify([{ id: oldest, restingHR: 52 }]), { status: 200 }) : new Response('{}', { status: 500 });
+  });
 
   it('is not fetched without notes', async () => {
-    const f = intervalsFetch([tonight()]);
+    const f = answering();
     await syncWellness(conn, { fetchImpl: asFetch(f) });
     expect(wellnessUrls(f)).toHaveLength(1);
   });
 
-  it('is fetched once for an old note, in parts, and not at the next sync', async () => {
+  it('comes after the usual days, newest part first, and the result counts only the usual days', async () => {
     await SettingsRepo.set({ influences: [note(250)] });
-    const f = intervalsFetch([tonight()]);
+    const f = answering();
+    const result = await syncWellness(conn, { fetchImpl: asFetch(f) });
+    expect(result).toEqual({ status: 'ok', days: 1, today: true });
+    const urls = wellnessUrls(f);
+    expect(urls.length).toBeGreaterThan(2);
+    expect(urls[0]).toContain(`oldest=${addDays(todayISO(), -28)}`);
+    expect(urls[1]).toContain(`newest=${addDays(todayISO(), -29)}`);
+    expect(urls.at(-1)).toContain(`oldest=${addDays(todayISO(), -249 - 28)}`);
+    expect((await getRecoveryMetrics()).length).toBeGreaterThan(2);
+  });
+
+  it('is tried at most once a day', async () => {
+    await SettingsRepo.set({ influences: [note(250)] });
+    await syncWellness(conn, { fetchImpl: asFetch(answering(false)) });
+    const again = answering();
+    await syncWellness(conn, { fetchImpl: asFetch(again) });
+    expect(wellnessUrls(again)).toHaveLength(1);
+  });
+
+  it('a failing long part does not fail the sync and keeps the usual days', async () => {
+    await SettingsRepo.set({ influences: [note(250)] });
+    const result = await syncWellness(conn, { fetchImpl: asFetch(answering(false)) });
+    expect(result).toEqual({ status: 'ok', days: 1, today: true });
+    expect((await getRecoveryMetrics()).map((m) => m.date)).toEqual([todayISO()]);
+  });
+
+  it('is not fetched again once it is covered', async () => {
+    await SettingsRepo.set({ influences: [note(250)] });
+    await syncWellness(conn, { fetchImpl: asFetch(answering()) });
+    await MetaRepo.set('wellnessLongTriedOn', undefined);
+    const f = answering();
     await syncWellness(conn, { fetchImpl: asFetch(f) });
-    const first = wellnessUrls(f);
-    expect(first.length).toBeGreaterThan(1);
-    expect(first[0]).toContain(`oldest=${addDays(todayISO(), -250 + 1 - 28)}`);
-    const f2 = intervalsFetch([tonight()]);
-    await syncWellness(conn, { fetchImpl: asFetch(f2) });
-    expect(wellnessUrls(f2)).toHaveLength(1);
+    expect(wellnessUrls(f)).toHaveLength(1);
   });
 
   it('never goes back further than 400 days', async () => {
     await SettingsRepo.set({ influences: [note(399)] });
-    const f = intervalsFetch([]);
+    const f = answering();
     await syncWellness(conn, { fetchImpl: asFetch(f) });
-    expect(wellnessUrls(f)[0]).toContain(`oldest=${addDays(todayISO(), -400)}`);
+    expect(wellnessUrls(f).at(-1)).toContain(`oldest=${addDays(todayISO(), -400)}`);
   });
 
   it('is fetched again after unlinking or switching a kind off', async () => {
     await SettingsRepo.set({ influences: [note(250)] });
-    await syncWellness(conn, { fetchImpl: asFetch(intervalsFetch([])) });
+    await syncWellness(conn, { fetchImpl: asFetch(answering()) });
     await clearWellness();
-    const f = intervalsFetch([]);
+    const f = answering();
     await syncWellness(conn, { fetchImpl: asFetch(f) });
-    expect(wellnessUrls(f).length).toBeGreaterThan(1);
+    expect(wellnessUrls(f).length).toBeGreaterThan(2);
     await pruneWellness({ activities: true, sleep: false, restingHeartRate: true, hrv: true } as never);
-    const g = intervalsFetch([]);
+    const g = answering();
     await syncWellness(conn, { fetchImpl: asFetch(g) });
-    expect(wellnessUrls(g).length).toBeGreaterThan(1);
+    expect(wellnessUrls(g).length).toBeGreaterThan(2);
   });
 });
 

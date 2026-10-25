@@ -92,10 +92,12 @@ export interface MorningNumber {
   diff?: number;
 }
 
-export function morningNumber(today: string, metrics: RecoveryMetric[]): MorningNumber | undefined {
+// `skip`: ochtenden met "Deze nacht niet meetellen" (influence.ts#excludedMornings), zodat je gemiddelde
+// gelijk is aan dat van de ochtendkaart.
+export function morningNumber(today: string, metrics: RecoveryMetric[], skip?: ReadonlySet<string>): MorningNumber | undefined {
   const record = metrics.find((m) => m.date === today && m.restingHeartRate !== undefined);
   if (!record || record.restingHeartRate === undefined) return undefined;
-  const base = baselineValues(today, metrics, (m) => m.restingHeartRate);
+  const base = baselineValues(today, metrics, (m) => m.restingHeartRate, skip);
   if (base.length < MIN_BASELINE_DAYS) return { restingHr: record.restingHeartRate };
   const avg = Math.round(base.reduce((a, b) => a + b, 0) / base.length);
   return { restingHr: record.restingHeartRate, diff: record.restingHeartRate - avg };
