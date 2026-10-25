@@ -7,7 +7,7 @@ import { runInsight, type RunInsight, type ShownInsight } from '../engine/runIns
 import { getWatchState, onWatchChange } from '../storage/externalActivities';
 import { getShownInsights, recordShownInsights } from '../storage/runInsightShown';
 import { detailsWanted } from '../engine/watchUse';
-import { useExcludedLogIds } from './influence/useInfluence';
+import { useExcludedLogIds } from './influence/useExcludedLogIds';
 import { todayISO } from '../utils/dates';
 import type { SessionLog } from '../models/training';
 

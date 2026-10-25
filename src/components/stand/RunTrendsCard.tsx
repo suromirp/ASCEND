@@ -8,7 +8,7 @@
 import { useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { runTrends, type TrendRow } from '../../engine/runTrends';
-import { useExcludedLogIds } from '../influence/useInfluence';
+import { useExcludedLogIds } from '../influence/useExcludedLogIds';
 import { todayISO } from '../../utils/dates';
 import { Card, Eyebrow } from '../ui';
 import { RunInsightSheet } from '../RunInsightSheet';

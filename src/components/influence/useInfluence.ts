@@ -4,25 +4,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { useDetailsOn } from '../useRunInsight';
+import { useExcludedLogIds } from './useExcludedLogIds';
 import { useLegFatigueInputs } from '../LegFatigueCard';
 import { fatigueEvents } from '../../engine/legFatigue';
 import { resolveRunInsight } from '../../engine/runInsightSettings';
 import { filterRecovery } from '../../engine/watchUse';
 import { getRecoveryMetrics } from '../../storage/wellness';
 import { getWatchState, onWatchChange } from '../../storage/externalActivities';
-import { excludedLogIds, heartRateDeviation, knownFacts, type FactTarget, type HeartRateDeviation, type InfluenceCause, type KnownFact } from '../../engine/influence';
+import { heartRateDeviation, knownFacts, type FactTarget, type HeartRateDeviation, type InfluenceCause, type KnownFact } from '../../engine/influence';
 import { logSport } from '../../engine/sports';
 import type { ComparisonContext } from '../../engine/runComparison';
 import type { RecoveryMetric } from '../../models/metrics';
 import type { SessionLog } from '../../models/training';
-
-// The set of trainings that do not count for heart rate. Kept on a key of the ids, so a change that
-// does not touch the exclusion (a reason, a seen mark) does not make every list work again.
-export function useExcludedLogIds(): ReadonlySet<string> {
-  const { settings } = useAppData();
-  const key = useMemo(() => [...excludedLogIds(settings.influences)].sort().join('|'), [settings.influences]);
-  return useMemo(() => new Set(key ? key.split('|') : []), [key]);
-}
 
 // The same material as the loopinzicht: the same earlier runs, with the trainings you set to
 // "Niet meetellen voor hartslag" left out of the comparison.

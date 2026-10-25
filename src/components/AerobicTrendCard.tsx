@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { aerobicTrend, formatPace, MEANINGFUL_CHANGE_SEC } from '../engine/aerobicTrend';
-import { useExcludedLogIds } from './influence/useInfluence';
+import { useExcludedLogIds } from './influence/useExcludedLogIds';
 import { todayISO } from '../utils/dates';
 import { Card, Eyebrow } from './ui';
 import { TrendLineChart } from './TrendLineChart';
