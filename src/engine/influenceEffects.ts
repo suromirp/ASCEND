@@ -28,6 +28,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import { AMOUNT_LABEL, REASON_LABEL } from '../data/influenceReasons';
 import { addDays } from '../utils/dates';
+import { affectedMorning } from './influence';
 import { plannedRpeTop } from './coach';
 import type { HeartRateSettings } from './heartRateZones';
 import { zoneBpm } from './heartRateZones';
@@ -97,11 +98,9 @@ export const MEASURE_UNIT: Record<InfluenceMeasure, { one: string; many: string 
 
 // --- welke ochtend raakt een notitie ------------------------------------------------------------
 
-// Met een training (`logId`) is het de dag van de training: alcohol was de avond ervoor, wiet
-// de uren ervoor. Zonder training (een dag in de kalender) is het de dag erna.
-export function morningOf(entry: Pick<InfluenceEntry, 'date' | 'logId'>): string {
-  return entry.logId ? entry.date : addDays(entry.date, 1);
-}
+// De ene regel staat in engine/influence.ts#affectedMorning: met een training (`logId`) de dag
+// van de training, zonder training (een dag in de kalender) de dag erna.
+export const morningOf = affectedMorning;
 
 // --- reden en hoeveelheid als groep -------------------------------------------------------------
 
@@ -690,4 +689,14 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   }
   if (!best) return undefined;
   return { group: best.group, measure: best.measure, times: best.times, otherTimes: best.otherTimes };
+}
+
+// De twee regels in het blad van een training: wat het lijkt, en waar dat op steunt. Geen
+// percentage en geen "waarschijnlijk": het aantal keer en dat ASCEND het niet zeker weet.
+export function looksLikeText(l: LooksLike): { title: string; line: string } {
+  const name = l.group.label ? l.group.name : l.group.name.charAt(0).toLowerCase() + l.group.name.slice(1);
+  return {
+    title: `Lijkt op je loopjes bij ${name}`,
+    line: `Uit ${l.times} keer met die reden en ${l.otherTimes} keer zonder. Zeker weten doet ASCEND het niet.`,
+  };
 }

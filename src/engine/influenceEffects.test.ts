@@ -26,6 +26,7 @@ import {
   fewLine,
   scaleFor,
   type EffectsInput,
+  looksLikeText,
 } from './influenceEffects';
 
 // Nagemaakte gegevens: een rustige reeks ochtenden zonder eigenaar.
@@ -325,5 +326,19 @@ describe('de schaal van een meting', () => {
     const e = effects.find((x) => x.measure === 'restingHr')!;
     expect(scaleFor([e])).toBeGreaterThan(Math.max(...e.points.map((p) => Math.abs(p.diff))));
     expect(scaleFor([])).toBe(1);
+  });
+});
+
+describe('lijkt op, de zinnen', () => {
+  it('noemt de reden in kleine letters en het aantal keer, zonder percentage', () => {
+    const t = looksLikeText({ group: groupOf({ reason: 'alcohol', amount: 'matig' }), measure: 'paceHr', times: 4, otherTimes: 6 });
+    expect(t.title).toBe('Lijkt op je loopjes bij alcohol, 3 tot 5 glazen');
+    expect(t.line).toBe('Uit 4 keer met die reden en 6 keer zonder. Zeker weten doet ASCEND het niet.');
+    expect(`${t.title} ${t.line}`).not.toMatch(/%|waarschijnlijk/);
+  });
+
+  it('laat een eigen woord zoals je het schreef', () => {
+    const t = looksLikeText({ group: groupOf({ reason: 'anders', label: 'Verjaardag' }), measure: 'paceHr', times: 4, otherTimes: 4 });
+    expect(t.title).toBe('Lijkt op je loopjes bij Verjaardag');
   });
 });

@@ -446,6 +446,25 @@ that night out of your own averages and the suggestion; resting heart rate still
 the numbers at Garmin and intervals.icu are never changed. Switch "Vragen bij een korte
 nacht" (`AppSettings.askShortNight`).
 
+**Wat speelde er** (`models/influence.ts`, `AppSettings.influences`, decision
+`docs/beslissingen/2026-10-25-wat-speelde-er.md`): your own note about a training or a day
+(alcohol with its amount, wiet, ziek, kort geslapen, stress, an own word). Noted only in the
+Logboek: the sheet of a training and a tapped day in the calendar, never on the morning card.
+A note on a training touches the morning of that day, one on a calendar day the morning after
+(`engine/influence.ts#affectedMorning`, the one rule). It is a list next to the history, so a
+log is never changed; it travels in the backup (`storage/migrations.ts#migrateInfluences`,
+merged per id). An easy run with a heart rate outside 1.5 times the noise of the loopinzicht
+gets a sign in Logboek and Week; "Niet meetellen voor hartslag" keeps a run out of Tempo bij
+zone 2 and later comparisons, "Deze nacht niet meetellen" keeps a morning out of the resting
+heart rate and HRV averages; load, leg index and the GR5 meters always count. ASCEND suggests
+only facts it knows (weather, logbook, watch, illness) and never names alcohol or wiet itself;
+"lijkt op" (`engine/influenceEffects.ts#looksLike`) only with 4 own times on each side and
+bands that do not touch. Je stand shows "Wat doet dit met je?" from 3 times per reason against
+your own band; a test the same day after 3 or more glasses (or wiet that day) gets a proposal
+with Akkoord (`engine/influenceProposal.ts`). Morning numbers from intervals.icu are kept 400
+days for this (`engine/wellnessRange.ts`). A reason is never in a list, a notification or the
+Strava text.
+
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.
