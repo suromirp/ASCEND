@@ -99,6 +99,14 @@ fris en sportief op donker marine.
   sportkleur, waarvan de volle vorm het silhouet draagt, met kleur uit de tokens
   (`docs/beslissingen/2026-10-24-pictogrammen-in-stijl-c.md`). Geen losse tekens
   als ✓ of ↷ voor iets wat een icoon kan zijn.
+- Logo: "Ring en pad" (`docs/beslissingen/2026-10-25-logo-ring-en-pad.md`): een lichte
+  ring, een lichte kam met drie toppen die op de ring eindigt, een groenblauwe berg die
+  overloopt in marine, een S-pad en een stip in mint. Het app-icoon staat in `public/`
+  (`icon.svg`, `icon-maskable.svg`, `favicon.svg` en de PNG's), het kleine teken is
+  `AppMark` (alleen ring en kam, in `--color-on-light`), het openingsscherm is
+  `AscendSplashLogo` en `AscendAnimatedLogo` met alleen de tokens `--color-logo-*`. Het
+  teken bouwt zich één keer op en staat in Rustig, Uit en bij beperkte beweging meteen
+  op de eindstand.
 - Tabbalk: Vandaag, Week, Stand, Ascend, Logboek (`BottomNav` in
   `src/App.tsx`), volledig dekkend marine, labels in zinsletters, met de
   actieve tab en het streepje erboven in de kleur van die tab. Meer is geen
