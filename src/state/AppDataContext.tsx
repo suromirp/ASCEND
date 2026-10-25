@@ -64,6 +64,7 @@ import { applyScheduleAnomalyFixNow } from '../storage/scheduleAnomalyFix';
 import { undoPlanChangeNow } from '../storage/undoPlanChange';
 import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type HorizonApplyStatus, type HorizonChangeInput, type HorizonPlan } from '../storage/horizonPlan';
 import { SHOW_SPLASH } from '../utils/updateFlag';
+import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { useFollowLocation } from './useFollowLocation';
@@ -1170,16 +1171,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      // AscendSplashLogo's entrance sequence (ring, crest, mountain, trail,
-      // dot, wordmark; .alogo-* in index.css) finishes at 1.7s. 2s lets the
-      // finished mark stand still for a moment. On a warm load,
-      // seedIfEmpty/refresh can resolve in a handful of ms — without a
-      // floor, the splash would unmount before its later stages ever fire,
-      // so the animation would "sometimes" look broken depending on how
-      // fast IndexedDB happened to respond.
+      // AscendSplashLogo's entrance sequence (glow, ring, crest, mountain,
+      // trail, dot with spark, wordmark; .alogo-* in index.css) finishes at
+      // 2.2s in Normaal, 0.8s in Rustig; Uit stands still at once
+      // (engine/motionSettings.ts#splashMinimumMs). On a warm load,
+      // seedIfEmpty/refresh can resolve in a handful of ms; without a floor
+      // the splash would unmount before the sequence is seen. It is only a
+      // floor: the loading never waits for the animation, and the ambient
+      // motion (glow, breathing ring, travelling light) stops with the splash.
       // Only the first open of the day shows the splash (utils/updateFlag.ts
       // #SHOW_SPLASH); otherwise there is no minimum duration.
-      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, SHOW_SPLASH ? 2000 : 0));
+      const splashMotion = resolveMotion({ motion: document.documentElement.dataset.motion });
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, SHOW_SPLASH ? splashMinimumMs(splashMotion) : 0));
       const stopBlockedNotice = onDatabaseBlocked(() =>
         setBootError('ASCEND is in een ander venster nog open met een oudere versie. Sluit dat venster om de update af te ronden.'),
       );

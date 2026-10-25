@@ -419,39 +419,82 @@ html[data-sky='night'] .sky-band::before {
 
 /* Het bewegende logo (components/AscendAnimatedLogo.tsx, ook het openingsscherm):
    het teken staat in zijn eindstand in de basisstijl; de animatie loopt alleen
-   "van" de beginstand naar die eindstand, één keer, als het teken verschijnt.
-   Volgorde: de ring tekent zich (400 ms), de kam (350 ms), de berg kleurt in
-   (300 ms), het pad loopt omhoog (400 ms), als laatste verschijnt de stip
-   (250 ms) en het woord (400 ms). Ease-out, niets stuitert, geen lus.
-   Rustig en Uit (en beperkte beweging van het systeem) staan meteen op de
-   eindstand; zie onderaan bij data-motion. */
+   "van" de beginstand naar die eindstand. Volgorde van de opbouw, één keer, als
+   het teken verschijnt: de gloed komt op (rond de ring 0,2 tot 0,9 s, rond kam en pad 1,3 tot 2,0 s), de ring tekent zich
+   (0 tot 0,55), de kam (0,45 tot 0,95), de berg vult zich in (0,85 tot 1,25),
+   het pad loopt omhoog (1,05 tot 1,6), de vonk licht op de stip (1,55 tot 2,05),
+   het woord komt omhoog (1,7 tot 2,2 s). Ease-out, niets stuitert.
+   Daarna alleen op het openingsscherm (.alogo-ambient): de gloed pulseert, de ring
+   ademt en een lichtpuntje reist omhoog langs het pad. Die lus hangt aan de
+   elementen zelf en stopt dus als het openingsscherm na het laden verdwijnt.
+   Rustig: alleen het tekenen, kort (0,8 s) en zonder lus. Uit en beperkte beweging
+   van het systeem staan meteen op de eindstand (zie onderaan bij data-motion). */
 .alogo-play .alogo-ring {
-  animation: alogo-draw 0.4s ease-out backwards;
+  animation: alogo-draw 0.55s ease-out backwards;
 }
 
 .alogo-play .alogo-crest {
-  animation: alogo-draw 0.35s ease-out 0.4s backwards;
+  animation: alogo-draw 0.5s ease-out 0.45s backwards;
 }
 
 .alogo-play .alogo-mountain {
-  animation: alogo-fade 0.3s ease-out 0.6s backwards;
+  animation: alogo-fade 0.4s ease-out 0.85s backwards;
 }
 
 .alogo-play .alogo-path {
-  animation: alogo-draw 0.4s ease-out 0.75s backwards;
+  animation: alogo-draw 0.55s ease-out 1.05s backwards;
 }
 
-.alogo-dot {
+.alogo-dot,
+.alogo-spark {
   transform-box: fill-box;
   transform-origin: center;
 }
 
+.alogo-spark {
+  opacity: 0.3;
+}
+
 .alogo-play .alogo-dot {
-  animation: alogo-dot 0.25s ease-out 1.15s backwards;
+  animation: alogo-dot 0.3s ease-out 1.55s backwards;
+}
+
+.alogo-play .alogo-spark {
+  animation: alogo-spark 0.5s ease-out 1.55s backwards;
 }
 
 .alogo-play .alogo-word {
-  animation: alogo-fade-up 0.4s ease-out 1.3s backwards;
+  animation: alogo-fade-up 0.5s ease-out 1.7s backwards;
+}
+
+.alogo-glow {
+  opacity: 0.6;
+}
+
+.alogo-ambient .alogo-glow {
+  animation:
+    alogo-glow-in 0.7s ease-out 0.2s backwards,
+    alogo-glow-pulse 4s ease-in-out 2s infinite;
+}
+
+.alogo-ambient .alogo-breathe {
+  animation: alogo-breathe 5s ease-in-out 2s infinite;
+}
+
+.alogo-ambient .alogo-glow-late {
+  animation:
+    alogo-glow-in 0.7s ease-out 1.3s backwards,
+    alogo-glow-pulse 4s ease-in-out 2s infinite;
+}
+
+.alogo-light {
+  offset-path: path('M48 82 C40 74 40 66 47 58.5 C54 51 54 42 49.5 34 C48 31 47.6 27 48 23');
+  offset-rotate: 0deg;
+  opacity: 0;
+}
+
+.alogo-ambient .alogo-light {
+  animation: alogo-travel 2.8s ease-out 2s infinite;
 }
 
 @keyframes alogo-draw {
@@ -470,18 +513,57 @@ html[data-sky='night'] .sky-band::before {
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes alogo-fade-up {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes alogo-spark {
+  0% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 0.9; transform: scale(1.5); }
+  100% { opacity: 0.3; transform: scale(1); }
 }
 
-html[data-motion='calm'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-word),
-html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-word) {
+@keyframes alogo-fade-up {
+  from { opacity: 0; transform: translateY(2px); letter-spacing: 4px; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: 2.2px; }
+}
+
+@keyframes alogo-glow-in {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
+@keyframes alogo-glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes alogo-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes alogo-travel {
+  0% { offset-distance: 0%; opacity: 0; }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+html[data-motion='calm'] .alogo-play .alogo-ring { animation-duration: 0.25s; }
+html[data-motion='calm'] .alogo-play .alogo-crest { animation-duration: 0.25s; animation-delay: 0.15s; }
+html[data-motion='calm'] .alogo-play .alogo-mountain { animation-duration: 0.2s; animation-delay: 0.3s; }
+html[data-motion='calm'] .alogo-play .alogo-path { animation-duration: 0.25s; animation-delay: 0.35s; }
+html[data-motion='calm'] .alogo-play .alogo-dot { animation-duration: 0.2s; animation-delay: 0.55s; }
+html[data-motion='calm'] .alogo-play .alogo-word { animation-duration: 0.25s; animation-delay: 0.55s; }
+
+html[data-motion='calm'] .alogo-play .alogo-spark,
+html[data-motion='calm'] .alogo-ambient .alogo-glow,
+html[data-motion='calm'] .alogo-ambient .alogo-glow-late,
+html[data-motion='calm'] .alogo-ambient .alogo-breathe,
+html[data-motion='calm'] .alogo-ambient .alogo-light,
+html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-spark, .alogo-word, .alogo-glow, .alogo-breathe, .alogo-light) {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-word) {
+  .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-spark, .alogo-word, .alogo-glow, .alogo-breathe, .alogo-light) {
     animation: none;
   }
 }

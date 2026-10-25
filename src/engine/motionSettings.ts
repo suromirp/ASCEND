@@ -15,3 +15,14 @@ export function resolveMotion(raw: { motion?: unknown } | undefined, prefersRedu
   if (prefersReduced) return 'off';
   return MOTION_MODES.find((m) => m === raw?.motion) ?? DEFAULT_MOTION;
 }
+
+// De ondergrens van het openingsscherm (state/AppDataContext.tsx). Het laden
+// wacht hier nooit op: dit is alleen een vloer, zodat een snelle start de
+// opbouw van het logo niet afknipt. Normaal: de opbouw duurt 2,2 s
+// (.alogo-play in index.css) plus een korte stilte waarin het lichtpuntje al omhoog begint. Rustig: het korte tekenen
+// van 0,8 s. Uit: het logo staat meteen, het blijft even in beeld.
+export function splashMinimumMs(mode: MotionMode): number {
+  if (mode === 'off') return 600;
+  if (mode === 'calm') return 1200;
+  return 2600;
+}
