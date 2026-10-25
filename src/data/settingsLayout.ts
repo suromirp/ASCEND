@@ -50,7 +50,7 @@ export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: strin
     rows: ['forge', 'forge-open', 'kracht', 'trainingsduur', 'forge-volgorde', 'forge-sets', 'forge-opwarmen', 'forge-opwarmbereik', 'forge-rust', 'forge-signaal', 'forge-geluid', 'forge-scherm', 'forge-doorgeven', 'forge-schijven', 'forge-1rm', 'forge-weergave', 'forge-1rm-macrofactor', 'forge-vergelijken', 'forge-extras', 'forge-lijntjes', 'forge-leren', 'forge-naast', 'forge-sinds', 'forge-volgorde-lijst', 'forge-programma', 'stangen', 'schijven', 'dumbbells', 'kabels'],
     advanced: ['forge-bereik', 'forge-schatting'],
   },
-  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd'], advanced: [] },
+  lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd', 'intensiteit'], advanced: [] },
   vandaag: {
     rows: ['ochtendcheck', 'ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik', 'weekterugblik-dag', 'weekvraag', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur', 'citaten', 'geluid', 'beweging', 'lucht', 'lucht-vanaf', 'loopinzicht', 'terugknop', 'hervatten'],
     advanced: ['loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'],

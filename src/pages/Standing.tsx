@@ -16,6 +16,7 @@ import { indexChecks } from '../engine/learning';
 import { AdventureCard } from '../components/AdventureCard';
 import { strengthModelOn } from '../engine/strengthSettings';
 import { LessonCard } from '../components/LessonCard';
+import { resolveIntensityCounting } from '../engine/intensitySettings';
 import { freshnessCurve, intensityMix, legCalendar, weeklyDescent, weeklyLoad } from '../engine/standing';
 import { computeGr5Readiness } from '../engine/gr5Readiness';
 import { adherenceSummary, recentAdherence } from '../engine/onCourse';
@@ -50,7 +51,8 @@ export function StandingPage() {
     }),
     [sessionLogs, plannedSessions, templates, today, inputs.minutesOf, program],
   );
-  const mix = useMemo(() => intensityMix(sessionLogs, templates, today, settings.heartRate), [sessionLogs, templates, today, settings.heartRate]);
+  const counting = resolveIntensityCounting(settings);
+  const mix = useMemo(() => intensityMix(sessionLogs, templates, today, settings.heartRate, 28, counting), [sessionLogs, templates, today, settings.heartRate, counting]);
   const descent = useMemo(() => weeklyDescent(sessionLogs, today), [sessionLogs, today]);
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 

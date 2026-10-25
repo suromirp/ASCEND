@@ -282,6 +282,17 @@ export const CHOICES = {
       { value: '22:00', label: '22:00', short: 'Vanaf 22:00' },
     ],
   }),
+  intensiteit: def({
+    group: 'Lichaam',
+    title: 'Intensiteit tellen',
+    line: 'Waarop de kaart Intensiteit op Je stand je loop- en wandelminuten telt.',
+    advice: 'heartrate' as 'heartrate' | 'plan',
+    help: 'intensiteit',
+    options: [
+      { value: 'heartrate', label: 'Naar je hartslag', note: 'Wat je echt liep, per zone. Zonder hartslag telt het plan', short: 'Naar je hartslag' },
+      { value: 'plan', label: 'Naar het plan', note: 'Elke training telt als wat ze bedoeld was', short: 'Naar het plan' },
+    ],
+  }),
   figuur: def({
     group: 'Lichaam',
     title: 'Figuur',

@@ -6,8 +6,9 @@
 // - Freshness: the leg fatigue index (engine/legFatigue.ts) day by day, from
 //   last week to two weeks ahead, with what is planned on each day.
 // - Leg calendar: what each day's training leaves in your legs.
-// - Intensity: how your endurance sessions split into easy, middle and hard
-//   (session-goal method, Seiler & Kjerland 2006; about 80% easy, Seiler 2010).
+// - Intensity: how the minutes of your endurance sessions split into easy, middle and
+//   hard, by heart rate where the log has a profile, else by intention (session-goal
+//   method, Seiler & Kjerland 2006; about 80% easy, Seiler 2010).
 // - Descent: metres down per week; the GR5 day asks a lot of it.
 // - GR5 day: a typical route day next to your best of the last eight weeks.
 //
@@ -20,6 +21,8 @@ import { fatigueEvents, legFatigueOn, sessionImpulse, PLANNED_RPE, PLANNED_STREN
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { logSport, templateSport } from './sports';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
+import { minutesByZone } from './intensityMinutes';
+import type { IntensityCounting } from './intensitySettings';
 import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
 
 // --- weekly load (session-RPE) ---------------------------------------------------
@@ -215,22 +218,32 @@ export function legCalendar(inputs: LegFatigueInputs, weeksBack = 3, weeksAhead 
 
 // --- intensity mix -----------------------------------------------------------------
 export interface IntensityMix {
+  // How many trainings fall in each group by what they were meant to be.
   sessions: { easy: number; middle: number; hard: number };
+  // The minutes in each group: by heart rate where the log has a profile, else by intention.
   minutes: { easy: number; middle: number; hard: number };
-  easyShare: number; // of sessions, 0 to 1
+  totalMinutes: number;
+  // How many trainings were counted by heart rate and how many by plan.
+  measuredSessions: number;
+  plannedSessions: number;
+  easyShare: number; // of minutes, 0 to 1
   easyTooHard: { date: string; name: string; why: 'hartslag' | 'zwaarte' }[];
+  // Number of trainings counted.
   total: number;
 }
 
-// About 80% of endurance sessions easy is what well-trained endurance athletes
+// About 80% of endurance training easy is what well-trained endurance athletes
 // end up doing (Seiler 2010); below 70% the easy part is getting squeezed.
 export const EASY_TARGET = 0.8;
 export const EASY_FLOOR = 0.7;
 
-export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], today: string, hr?: HeartRateSettings, days = 28): IntensityMix {
+// An easy run counts as too hard when clearly more than half of it was above zone 2.
+const TOO_HARD_SHARE = 0.55;
+
+export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], today: string, hr?: HeartRateSettings, days = 28, counting: IntensityCounting = 'heartrate'): IntensityMix {
   const byId = new Map(templates.map((t) => [t.id, t]));
   const since = addDays(today, -days);
-  const mix: IntensityMix = { sessions: { easy: 0, middle: 0, hard: 0 }, minutes: { easy: 0, middle: 0, hard: 0 }, easyShare: 0, easyTooHard: [], total: 0 };
+  const mix: IntensityMix = { sessions: { easy: 0, middle: 0, hard: 0 }, minutes: { easy: 0, middle: 0, hard: 0 }, totalMinutes: 0, measuredSessions: 0, plannedSessions: 0, easyShare: 0, easyTooHard: [], total: 0 };
   const easyTop = zoneBpm(2, hr)?.[1];
   for (const l of logs) {
     if (l.completedDate < since || l.completedDate > today) continue;
@@ -239,15 +252,31 @@ export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], t
     const goal = t ? resolveEffectiveStressProfile(t).intensity : 'low';
     const kind = goal === 'high' || (t && HARD_INTENSITY.has(t.id)) ? 'hard' : goal === 'moderate' ? 'middle' : 'easy';
     mix.sessions[kind]++;
-    mix.minutes[kind] += l.durationMinutes;
     mix.total++;
+    const measured = counting === 'heartrate' ? minutesByZone(l, hr) : undefined;
+    const name = t?.name ?? 'Training';
+    if (measured) {
+      mix.measuredSessions++;
+      mix.minutes.easy += measured.easy;
+      mix.minutes.middle += measured.middle;
+      mix.minutes.hard += measured.hard;
+    } else {
+      mix.plannedSessions++;
+      mix.minutes[kind] += l.durationMinutes;
+    }
     if (kind === 'easy') {
       const avg = l.cardioData?.avgHeartRate;
-      if (easyTop && avg && avg > easyTop) mix.easyTooHard.push({ date: l.completedDate, name: t?.name ?? 'Training', why: 'hartslag' });
-      else if ((l.rpe ?? 0) >= 7) mix.easyTooHard.push({ date: l.completedDate, name: t?.name ?? 'Training', why: 'zwaarte' });
+      if (measured) {
+        const above = (measured.middle + measured.hard) / Math.max(1, l.durationMinutes);
+        if (above > TOO_HARD_SHARE) mix.easyTooHard.push({ date: l.completedDate, name, why: 'hartslag' });
+        else if ((l.rpe ?? 0) >= 7) mix.easyTooHard.push({ date: l.completedDate, name, why: 'zwaarte' });
+      } else if (easyTop && avg && avg > easyTop) mix.easyTooHard.push({ date: l.completedDate, name, why: 'hartslag' });
+      else if ((l.rpe ?? 0) >= 7) mix.easyTooHard.push({ date: l.completedDate, name, why: 'zwaarte' });
     }
   }
-  mix.easyShare = mix.total ? mix.sessions.easy / mix.total : 0;
+  mix.minutes = { easy: Math.round(mix.minutes.easy), middle: Math.round(mix.minutes.middle), hard: Math.round(mix.minutes.hard) };
+  mix.totalMinutes = mix.minutes.easy + mix.minutes.middle + mix.minutes.hard;
+  mix.easyShare = mix.totalMinutes ? mix.minutes.easy / mix.totalMinutes : 0;
   return mix;
 }
 

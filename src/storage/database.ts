@@ -692,6 +692,10 @@ export interface AppSettings {
   // dark. Optional and additive; read defensively, so no migration step is needed.
   sky?: 'auto' | 'day' | 'night';
   skyNightFrom?: 'zon' | '19:00' | '20:00' | '21:00' | '22:00';
+  // "Intensiteit tellen" (engine/intensitySettings.ts): of Je stand de minuten telt naar je
+  // hartslag ('heartrate', de standaard) of naar het plan ('plan'). Optional and additive;
+  // read defensively, so no migration step is needed.
+  intensityCounting?: 'heartrate' | 'plan';
   // "Figuur" (engine/figureSettings.ts): of het figuur op Lichaam een man of een vrouw is.
   // Absent = 'auto' (van de koppeling als die het weet, anders een man). Optional and
   // additive; read defensively, so no migration step is needed.

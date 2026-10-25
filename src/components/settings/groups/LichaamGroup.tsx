@@ -3,6 +3,9 @@ import { useAppData } from '../../../state/AppDataContext';
 import { SettingsSection } from '../SettingsList';
 import { FigureSheet, HeartRateSheet, WeightSheet } from './LichaamSheets';
 import { OorzaakSheet, VastgelegdSheet } from './WatSpeeldeErSheets';
+import { ChoiceFromDef } from './ChoiceFromDef';
+import { CHOICES } from '../../../data/settingsChoices';
+import { resolveIntensityCounting } from '../../../engine/intensitySettings';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -10,7 +13,7 @@ import type { GroupProps } from './types';
 // (die staan op het scherm Lichaam) en of het figuur daar een man of een vrouw is.
 export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
   const navigate = useNavigate();
-  const { updateSettings } = useAppData();
+  const { updateSettings, settings } = useAppData();
   const close = () => setSheet(null);
   return (
     <>
@@ -28,8 +31,12 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="wat-test" title="Test verschuiven" facts={facts} info="wat-test" onChange={(on) => void updateSettings({ influenceTestMove: on })} />
         <SummaryRow id="wat-vastgelegd" title="Vastgelegd" facts={facts} onClick={() => setSheet('wat-vastgelegd')} />
       </SettingsSection>
+      <SettingsSection title="Je stand">
+        <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
+      </SettingsSection>
       {sheet === 'lichaamsgewicht' && <WeightSheet onClose={close} />}
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}
+      {sheet === 'intensiteit' && <ChoiceFromDef def={CHOICES.intensiteit} value={resolveIntensityCounting(settings)} onPick={(v) => void updateSettings({ intensityCounting: v })} onClose={close} />}
       {sheet === 'figuur' && <FigureSheet onClose={close} />}
       {sheet === 'wat-oorzaak' && <OorzaakSheet onClose={close} />}
       {sheet === 'wat-vastgelegd' && <VastgelegdSheet onClose={close} />}

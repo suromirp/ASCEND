@@ -20,6 +20,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Man of vrouw', text: 'het silhouet verschilt een beetje in schouders, heupen en borst. De plekken en de oefeningen blijven hetzelfde.' },
     ],
   },
+  intensiteit: {
+    title: 'Intensiteit tellen',
+    lead: 'De kaart Intensiteit op Je stand laat zien hoeveel van je loop- en wandelminuten rustig waren. Hier kies je waar ze op gebaseerd is.',
+    points: [
+      { head: 'Naar je hartslag', text: 'standaard: de minuten uit je hartslagprofiel, in rustig (zone 1 en 2), middel (zone 3) en hard (zone 4 en hoger). Zonder genoeg hartslag, drempel of maximum telt die training naar plan.' },
+      { head: 'Naar het plan', text: 'elke training telt helemaal als wat ze bedoeld was, ook als je harder liep.' },
+    ],
+  },
   lucht: {
     title: 'Lucht bovenaan',
     lead: 'De lichte lucht met bergen bovenaan een tab kan in de avond fel zijn. Hier kies je wanneer ze donker wordt.',

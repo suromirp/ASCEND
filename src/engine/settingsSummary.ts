@@ -25,6 +25,7 @@ import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
 import { resolveSky } from './skySettings';
+import { resolveIntensityCounting } from './intensitySettings';
 import { resolveFigure, type Figure } from './figureSettings';
 import { resolveRunInsight } from './runInsightSettings';
 import { zoneBpm } from './heartRateZones';
@@ -430,6 +431,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
       return { checked: resolveRunInsight(s.runInsight).chestStrap };
+    case 'intensiteit':
+      return { value: choiceShort('intensiteit', resolveIntensityCounting(s)) };
     case 'lucht':
       return { value: choiceShort('lucht', resolveSky(s).sky) };
     case 'lucht-vanaf':

@@ -3,6 +3,7 @@ import { descentOf, freshnessCurve, intensityMix, legCalendar, loadVersusBefore,
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 import type { GoalRequirement } from '../models/goals';
+import type { ActivityDetail } from '../models/activityDetail';
 
 const { templates } = buildDefaultProgramData();
 const tpl = (id: string) => templates.find((t) => t.id === id)!;
@@ -86,6 +87,78 @@ describe('intensity mix', () => {
     expect(mix.total).toBe(4);
     expect(mix.sessions.hard).toBe(1);
     expect(mix.easyTooHard.map((x) => x.why).sort()).toEqual(['hartslag', 'zwaarte']);
+  });
+});
+
+describe('intensity mix by heart rate', () => {
+  // Threshold 179: zone 3 starts at 159, zone 4 at 172.
+  const HR = { lthr: 179 };
+  const profile = (beats: number[], coverage = 100): ActivityDetail => ({
+    version: 1,
+    source: 'import',
+    sliceCount: beats.length,
+    slices: beats.map((heartRate) => ({ sec: 600, distanceM: 1500, gainM: 0, lossM: 0, heartRate })),
+    stretches: [],
+    movingSec: beats.length * 600,
+    quality: { heartRateCoveragePct: coverage },
+  });
+  // Four slices of ten minutes: 40 minutes.
+  const partlyZone3 = () => log('tpl_easy_run', '2026-10-12', 40, { detail: profile([140, 150, 162, 165]) });
+
+  it('counts a run with a profile by its zones, not by its intention', () => {
+    const logs = [partlyZone3(), log('tpl_easy_run', '2026-10-13', 40), log('tpl_easy_run', '2026-10-14', 40)];
+    const mix = intensityMix(logs, templates, TODAY, HR);
+    expect(mix.minutes).toEqual({ easy: 100, middle: 20, hard: 0 });
+    expect(mix.measuredSessions).toBe(1);
+    expect(mix.plannedSessions).toBe(2);
+    expect(mix.total).toBe(3);
+  });
+
+  it('puts zone 4 and up under hard', () => {
+    const mix = intensityMix([log('tpl_easy_run', '2026-10-12', 40, { detail: profile([140, 150, 175, 180]) })], templates, TODAY, HR);
+    expect(mix.minutes).toEqual({ easy: 20, middle: 0, hard: 20 });
+  });
+
+  it('a run without a profile falls back to its intention', () => {
+    const mix = intensityMix([log('tpl_easy_run', '2026-10-12', 40), log('tpl_hill_intervals', '2026-10-14', 50, { rpe: 8 })], templates, TODAY, HR);
+    expect(mix.minutes).toEqual({ easy: 40, middle: 0, hard: 50 });
+    expect(mix.measuredSessions).toBe(0);
+    expect(mix.plannedSessions).toBe(2);
+  });
+
+  it('too little heart rate in the profile falls back to the intention', () => {
+    const mix = intensityMix([log('tpl_easy_run', '2026-10-12', 40, { detail: profile([165, 165, 165, 165], 50) })], templates, TODAY, HR);
+    expect(mix.minutes.easy).toBe(40);
+    expect(mix.measuredSessions).toBe(0);
+  });
+
+  it('the share easy is the share of easy minutes', () => {
+    const logs = [log('tpl_easy_run', '2026-10-12', 60), log('tpl_easy_run', '2026-10-13', 40, { detail: profile([150, 150, 165, 165]) })];
+    const mix = intensityMix(logs, templates, TODAY, HR);
+    expect(mix.minutes).toEqual({ easy: 80, middle: 20, hard: 0 });
+    expect(mix.easyShare).toBeCloseTo(0.8);
+  });
+
+  it('without a threshold and a maximum everything falls back to the intention', () => {
+    const mix = intensityMix([partlyZone3()], templates, TODAY, {});
+    expect(mix.minutes).toEqual({ easy: 40, middle: 0, hard: 0 });
+    expect(mix.measuredSessions).toBe(0);
+    expect(intensityMix([partlyZone3()], templates, TODAY, undefined).measuredSessions).toBe(0);
+  });
+
+  it('an easy run is flagged only when clearly more than half was above zone 2', () => {
+    const half = partlyZone3();
+    const most = log('tpl_easy_run', '2026-10-13', 40, { detail: profile([165, 165, 165, 150]) });
+    const mix = intensityMix([half, most], templates, TODAY, HR);
+    expect(mix.easyTooHard).toEqual([{ date: '2026-10-13', name: tpl('tpl_easy_run').name, why: 'hartslag' }]);
+  });
+
+  it('"naar het plan" gives the old behaviour', () => {
+    const logs = [partlyZone3(), log('tpl_easy_run', '2026-10-13', 40)];
+    const mix = intensityMix(logs, templates, TODAY, HR, 28, 'plan');
+    expect(mix.minutes).toEqual({ easy: 80, middle: 0, hard: 0 });
+    expect(mix.measuredSessions).toBe(0);
+    expect(mix.easyShare).toBe(1);
   });
 });
 

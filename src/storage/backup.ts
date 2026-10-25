@@ -301,6 +301,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
       skipped.n++;
     }
   }
+  if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {
+    delete s.intensityCounting;
+    skipped.n++;
+  }
   if ('watchNamePrefix' in s && s.watchNamePrefix !== 'short' && s.watchNamePrefix !== 'long' && s.watchNamePrefix !== 'none') {
     delete s.watchNamePrefix;
     skipped.n++;
