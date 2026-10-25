@@ -21,6 +21,7 @@ import { upsertAutoLogged, withAutoStatus, type AutoLogged, type AutoLoggedStatu
 import { clearWellness, pruneWellness, syncWellness } from './wellness';
 import { filterActivityDetails, nothingWanted, normalizeWatchUse, wellnessWanted, type WatchUse } from '../engine/watchUse';
 import { historyStart } from '../engine/watchAlign';
+import { applySourceCorrections } from './sourceCorrection';
 import { addDays, todayISO } from '../utils/dates';
 import {
   createIntervalsIcuAdapter,
@@ -70,6 +71,10 @@ export interface WatchActivityState {
   // externalIds the user refused or took back: not proposed again, not done
   // by itself.
   alignDeclined: string[];
+  // "Correcties uit intervals.icu overnemen": a log tied to an activity follows the
+  // activity when it is corrected there (engine/sourceCorrection.ts). On unless the
+  // user switched it off.
+  takeCorrections: boolean;
 }
 
 // --- the connection ---------------------------------------------------------------
@@ -127,6 +132,7 @@ export async function getWatchState(): Promise<WatchActivityState> {
     garminLeads: stored?.garminLeads !== false,
     alignResolved: stored?.alignResolved === true,
     alignDeclined: Array.isArray(stored?.alignDeclined) ? stored.alignDeclined : [],
+    takeCorrections: stored?.takeCorrections !== false,
   };
 }
 
@@ -152,6 +158,12 @@ export async function setAutoTick(on: boolean): Promise<void> {
 export async function setGarminLeads(on: boolean): Promise<void> {
   const state = await getWatchState();
   await putWatchState({ ...state, garminLeads: on });
+}
+
+// The switch "Correcties uit intervals.icu overnemen".
+export async function setTakeCorrections(on: boolean): Promise<void> {
+  const state = await getWatchState();
+  await putWatchState({ ...state, takeCorrections: on });
 }
 
 // "Liever niet" on the proposal, or a training put back: these activities are
@@ -331,6 +343,16 @@ async function runWatchSync(options: SyncOptions = {}): Promise<SyncResult> {
     }
     const state = await getWatchState();
     await putWatchState({ ...state, activities, fetchedAt: now.toISOString(), lastError: undefined });
+    // What was corrected at the source follows into the logs tied to these activities.
+    // It uses the activities just fetched (no extra request) and never decides whether
+    // this fetch counts as a success.
+    if (use.activities && activities.length > 0) {
+      try {
+        await applySourceCorrections(activities, state.takeCorrections, now);
+      } catch {
+        // The logs stay as they were; the next fetch looks again.
+      }
+    }
     // Last night's sleep, resting heart rate and HRV for the morning check-in,
     // as far as they are switched on. They never decide whether this fetch
     // counts as a success.

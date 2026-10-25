@@ -70,7 +70,7 @@ export interface SettingsFacts {
   // Het gewicht in gebruik.
   weight: { kg: number; source: string; date: string } | null;
   // De koppeling met het horloge; null als er (nog) niet gekeken is.
-  watch: { linked: boolean; syncedAt?: string; use: WatchUse; autoTick: boolean; leads: boolean; sendEnabled: boolean } | null;
+  watch: { linked: boolean; syncedAt?: string; use: WatchUse; autoTick: boolean; leads: boolean; sendEnabled: boolean; corrections?: boolean } | null;
   macroFactor: { readAt?: string; leads: boolean } | null;
   // Opgeslagen duur per krachttraining, geleerd of geschat.
   strengthDurations: { name: string; minutes: number; source: 'learned' | 'estimate' | 'default'; basedOn: number }[];
@@ -407,6 +407,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: f.watch?.autoTick !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
     case 'garmin-leidend':
       return { checked: f.watch?.leads !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
+    case 'correcties-overnemen':
+      return { checked: f.watch?.corrections !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
     case 'horloge-details':
       return { checked: f.watch?.use.details !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
     case 'slaap':

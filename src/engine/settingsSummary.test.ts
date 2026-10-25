@@ -467,6 +467,27 @@ describe('rowSummary: loopinzicht en details van loopjes', () => {
   });
 });
 
+describe('rowSummary: correcties uit intervals.icu overnemen', () => {
+  const watch = (extra: object = {}) => facts({ watch: { linked: true, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false, ...extra } });
+
+  it('staat standaard aan, ook bij een oudere stand zonder het veld', () => {
+    expect(rowSummary('correcties-overnemen', facts()).checked).toBe(true);
+    expect(rowSummary('correcties-overnemen', watch()).checked).toBe(true);
+    expect(rowSummary('correcties-overnemen', watch({ corrections: true })).checked).toBe(true);
+  });
+
+  it('staat uit als je het uitzette', () => {
+    expect(rowSummary('correcties-overnemen', watch({ corrections: false })).checked).toBe(false);
+  });
+
+  it('volgt Trainingen en de koppeling', () => {
+    const noActivities = watch({ use: { ...DEFAULT_WATCH_USE, activities: false } });
+    expect(rowSummary('correcties-overnemen', noActivities)).toMatchObject({ checked: false, sub: 'Werkt alleen als Trainingen aan staat' });
+    const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
+    expect(rowSummary('correcties-overnemen', unlinked).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: de ochtendkaart en de ochtendmelding', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 

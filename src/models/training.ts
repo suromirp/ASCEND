@@ -361,6 +361,36 @@ export interface SessionTrim {
   } & Partial<Record<TrimField, number>>;
 }
 
+// Corrections made at the source (engine/sourceCorrection.ts,
+// docs/beslissingen/2026-10-25-correcties-uit-intervals.md): a log that is tied to a
+// watch activity follows the activity when it is corrected at intervals.icu (a stretch
+// cut off, the climb corrected). `seen` is the fingerprint: the numbers the source gave
+// when the log was tied or last looked at, so a change at the source can be told from
+// something ASCEND did itself. `updated` keeps the log's numbers from before the last
+// update, so "Vorige getallen terugzetten" gives them back. `offered` holds the new
+// numbers of a log that was cut in ASCEND: those are never written over the cut by
+// themselves, the log sheet offers them. Optional, additive.
+export type SourceField = Exclude<MeasuredField, 'estimatedElevation'>;
+export type SourceNumbers = Partial<Record<SourceField, number>>;
+
+export interface SourceUpdate {
+  // When the numbers were updated (ISO date-time).
+  at: string;
+  // The block of the log that holds the measured fields.
+  block: 'cardioData' | 'outdoorData';
+  // The log's numbers before the update, only for the fields that were replaced;
+  // `null`: there was no value, so putting back takes the field away again.
+  previous: Partial<Record<SourceField, number | null>>;
+  // The duration of the block, only when it was not the same number as the log's.
+  blockDurationMinutes?: number;
+}
+
+export interface SourceSync {
+  seen: SourceNumbers;
+  updated?: SourceUpdate;
+  offered?: SourceNumbers;
+}
+
 // The record of what actually happened. Corrections are made by adding a new
 // log, not mutating this one (exception: `manualMeasured`, see above).
 export interface SessionLog {
@@ -412,6 +442,9 @@ export interface SessionLog {
   // A watch activity cut at the end and/or the beginning: the numbers it
   // replaced, as they were. Optional, additive; present only on such a log.
   trim?: SessionTrim;
+  // The fingerprint of the source numbers and the last update from the source
+  // (see SourceSync). Optional, additive; only on a log tied to an intervals.icu activity.
+  sourceSync?: SourceSync;
   // The compact profile of a run or tocht: 48 pieces, the climbs and descents,
   // the conditions (models/activityDetail.ts). Derived from the watch's series
   // and fetched again from there if lost, so it is not part of the "never

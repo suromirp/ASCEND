@@ -41,6 +41,7 @@ const REASON: Record<string, string> = {
   'garmin-trainingen': GARMIN_OFF,
   'vanzelf-afvinken': GARMIN_OFF,
   'garmin-leidend': GARMIN_OFF,
+  'correcties-overnemen': GARMIN_OFF,
   slaap: GARMIN_OFF,
   rusthartslag: GARMIN_OFF,
   hrv: GARMIN_OFF,

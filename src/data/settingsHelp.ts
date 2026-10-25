@@ -225,6 +225,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Terug', text: 'je eigen cijfers zijn bewaard en kun je terugzetten.' },
     ],
   },
+  correctiesOvernemen: {
+    title: 'Correcties uit intervals.icu overnemen',
+    lead: 'Knip je in intervals.icu een stuk van een training af, of corrigeer je de hoogtemeters of de afstand, dan neemt ASCEND dat over.',
+    points: [
+      { head: 'Overgenomen', text: 'duur, afstand, stijging, daling, hartslag en cadans, alleen als ze in intervals.icu veranderden.' },
+      { head: 'Blijft staan', text: 'gevoel, inspanning, pijn, notities, je rugzak, je krachtsets en de koppeling aan je planning.' },
+      { head: 'Ingekort in ASCEND', text: 'dan blijft je inkorting staan en vraagt het logboek of je de nieuwe cijfers wilt.' },
+      { head: 'Terug', text: 'de vorige cijfers zijn bewaard; in het logboek zet je ze terug.' },
+    ],
+  },
   macrofactorLeidend: {
     title: 'Leidend voor kracht',
     lead: 'Voor een krachttraining die je al vastlegde, nemen de cijfers van MacroFactor het over.',

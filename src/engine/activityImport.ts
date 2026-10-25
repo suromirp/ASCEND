@@ -16,7 +16,7 @@
 //   with that log (engine/watchAlign.ts) is a separate, explicit step
 //   (docs/beslissingen/2026-10-22-garmin-is-leidend.md).
 
-import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SubjectiveFeel } from '../models/training';
+import type { MetricSource, PlannedSession, SessionLog, SessionTemplate, SourceNumbers, SubjectiveFeel } from '../models/training';
 import { logSport, templateSport, type Sport } from './sports';
 import { formatNumberNL } from '../utils/number';
 import type { RunDynamics, StreamKind } from '../models/activityDetail';
@@ -197,6 +197,21 @@ export function fallbackTemplate(activity: ExternalActivity, templates: SessionT
   }
 }
 
+// What the source measured, as numbers of the log (minutes, km with two
+// decimals, whole metres and beats): the same rounding the log gets when it is
+// made, so this is also the fingerprint kept on the log (SessionLog.sourceSync,
+// engine/sourceCorrection.ts) and the numbers "Garmin is leidend" takes over.
+export function sourceNumbers(activity: ExternalActivity): SourceNumbers {
+  const out: SourceNumbers = { durationMinutes: Math.max(1, Math.round(activity.durationSec / 60)) };
+  if (activity.distanceM !== undefined && activity.distanceM > 0) out.distanceKm = Math.round((activity.distanceM / 1000) * 100) / 100;
+  if (activity.elevationGainM !== undefined) out.elevationGainM = Math.round(activity.elevationGainM);
+  if (activity.elevationLossM !== undefined) out.elevationLossM = Math.round(activity.elevationLossM);
+  if (activity.avgHeartRate !== undefined) out.avgHeartRate = Math.round(activity.avgHeartRate);
+  if (activity.maxHeartRate !== undefined) out.maxHeartRate = Math.round(activity.maxHeartRate);
+  if (activity.avgCadence !== undefined) out.cadence = Math.round(activity.avgCadence);
+  return out;
+}
+
 // --- the draft log ------------------------------------------------------------
 
 // A SessionLog without its id: the app gives that out when it stores it.
@@ -249,6 +264,8 @@ export function activityToDraft(activity: ExternalActivity, template: SessionTem
     cardioData: template.type === 'cardio' || template.type === 'recovery' ? metric : undefined,
     outdoorData: template.type === 'hiking' ? metric : undefined,
     externalId: activity.externalId,
+    // The fingerprint: what the source said at the moment the log was made.
+    sourceSync: { seen: sourceNumbers(activity) },
     source: activity.source,
   };
   return clean(draft);

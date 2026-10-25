@@ -20,6 +20,7 @@ import { alignItemFor, applyAlignment, describeAlignLine, restoreManual } from '
 import { undoTrim } from '../engine/trimLog';
 import type { ExternalActivity } from '../engine/activityImport';
 import { formatDateNL } from '../utils/dates';
+import { inTurn } from './turn';
 
 export interface AlignRequest {
   logId: string;
@@ -34,14 +35,9 @@ export interface AlignOutcome {
   clearedTitles: string[];
 }
 
-let queue: Promise<unknown> = Promise.resolve();
-// Shared with storage/macrofactorLead.ts: both replace numbers of a log and
-// write milestones, so they wait for each other too.
-export function inTurn<T>(work: () => Promise<T>): Promise<T> {
-  const run = queue.then(work, work);
-  queue = run.catch(() => undefined);
-  return run;
-}
+// Shared with storage/macrofactorLead.ts, storage/trim.ts and storage/sourceCorrection.ts: all of
+// them replace numbers of a log, so they wait for each other (storage/turn.ts).
+export { inTurn };
 
 export function applyAlignments(requests: AlignRequest[], now: Date = new Date()): Promise<AlignOutcome> {
   return inTurn(async () => {
