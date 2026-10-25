@@ -224,6 +224,19 @@ export const CHOICES = {
       { value: 'strict', label: 'Streng', note: 'Altijd 72 uur' },
     ],
   }),
+  bergschoenen: def({
+    group: 'Doel en tochten',
+    title: 'Bergschoenen inlopen',
+    line: 'Hoeveel kilometer wandelen en tochten je nieuwe schoenen nodig hebben.',
+    advice: 100 as 50 | 75 | 100 | 150,
+    help: 'bergschoenen',
+    options: [
+      { value: 50, label: '50 km', note: 'Voor schoenen die al bijna zitten' },
+      { value: 75, label: '75 km' },
+      { value: 100, label: '100 km', note: 'Samen met minstens 6 weken voor vertrek' },
+      { value: 150, label: '150 km', note: 'Voor een lange tocht met tent' },
+    ],
+  }),
   naHoofddoel: def({
     group: 'Doel en tochten',
     title: 'Na je hoofddoel',

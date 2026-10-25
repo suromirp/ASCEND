@@ -14,6 +14,7 @@
 
 import type { JourneyTask } from '../data/journeyTasks';
 import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
+import { normalizeBoots, type BootsState } from './bootBreakIn';
 
 // What is stored (AppSettings.journey). `v` is the shape's own version, so
 // a later change can migrate it without touching the backup schema.
@@ -23,6 +24,8 @@ export interface JourneyState {
   done: Record<string, string>;
   // The task kept for one week, once you acted on it on Today.
   week?: { weekStart: string; taskId: string; postponed?: boolean };
+  // Sinds wanneer je de nieuwe bergschoenen draagt (engine/bootBreakIn.ts).
+  boots?: BootsState;
 }
 
 export const EMPTY_JOURNEY: JourneyState = { v: 1, done: {} };
@@ -181,6 +184,11 @@ export function normalizeJourneyState(raw: unknown): { state?: JourneyState; ski
   } else if (w !== undefined) {
     skipped++;
   }
+  if (raw.boots !== undefined) {
+    const boots = normalizeBoots(raw.boots);
+    if (boots) state.boots = boots;
+    else skipped++;
+  }
   return { state, skipped };
 }
 
@@ -189,5 +197,6 @@ export function normalizeJourneyState(raw: unknown): { state?: JourneyState; ski
 export function mergeJourneyState(current: JourneyState | undefined, incoming: JourneyState | undefined): JourneyState | undefined {
   if (!current) return incoming;
   if (!incoming) return current;
-  return { v: 1, done: { ...incoming.done, ...current.done }, week: current.week ?? incoming.week };
+  const boots = current.boots ?? incoming.boots;
+  return { v: 1, done: { ...incoming.done, ...current.done }, week: current.week ?? incoming.week, ...(boots ? { boots } : {}) };
 }

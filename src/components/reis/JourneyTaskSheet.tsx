@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { TimelineTask } from '../../engine/journey';
 import { useSheetClose } from '../../utils/useSheetClose';
@@ -15,7 +16,7 @@ function windowLine(row: TimelineTask): string {
 }
 
 // One task of the reisplanner: why, a link, and the tick box.
-export function JourneyTaskSheet({ row, onTick, onUntick, onClose }: { row: TimelineTask; onTick: () => void; onUntick: () => void; onClose: () => void }) {
+export function JourneyTaskSheet({ row, onTick, onUntick, onClose, extra }: { row: TimelineTask; onTick: () => void; onUntick: () => void; onClose: () => void; extra?: ReactNode }) {
   const { closing, requestClose } = useSheetClose(onClose);
   const navigate = useNavigate();
   const { task } = row;
@@ -39,6 +40,7 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose }: { row: Time
                 {task.link.label}
               </TextButton>
             ) : null)}
+            {extra}
             <div className="mt-2 flex gap-3">
               <SecondaryButton onClick={requestClose}>Sluiten</SecondaryButton>
               {done ? (

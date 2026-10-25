@@ -28,6 +28,7 @@ import { resolveSky } from './skySettings';
 import { resolveFigure, type Figure } from './figureSettings';
 import { resolveRunInsight } from './runInsightSettings';
 import { zoneBpm } from './heartRateZones';
+import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL } from '../utils/dates';
@@ -101,6 +102,8 @@ export interface SettingsFacts {
   strengthCheck?: CheckSummary;
   // Open taken in de reisplanner en het basisgewicht van de paklijst (kg).
   journeyOpen?: number;
+  // Kilometers die ASCEND telde sinds de bergschoenen; weg zolang er geen datum is vastgelegd.
+  bootKm?: number;
   packKg?: number;
   // Of de browser een vaste map kan onthouden en of die gekozen is.
   folderSupported: boolean;
@@ -262,6 +265,12 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return f.vacations > 0 ? { value: `${f.vacations} gepland` } : { value: 'Geen', dim: true };
     case 'reisplanner':
       return f.journeyOpen === undefined ? {} : f.journeyOpen > 0 ? { value: `${f.journeyOpen} open` } : { value: 'Alles af', dim: true };
+    case 'bergschoenen': {
+      const goal = bootGoalKm(s.bootBreakInKm);
+      return { value: `${goal} km`, sub: f.bootKm === undefined ? undefined : `${Math.round(f.bootKm)} van ${goal} km ingelopen` };
+    }
+    case 'bergschoenen-herinnering':
+      return { checked: s.bootBreakInReminder !== false };
     case 'paklijst':
       return f.packKg === undefined ? {} : { value: kg(f.packKg) };
 

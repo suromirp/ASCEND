@@ -6,6 +6,7 @@ import { useLayoutEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Eyebrow, PrimaryButton, PageHeader } from '../components/ui';
 import { CheckCircle } from '../components/reis/CheckCircle';
+import { BootBreakInPanel } from '../components/reis/BootBreakInPanel';
 import { JourneyTaskSheet } from '../components/reis/JourneyTaskSheet';
 import { useJourney } from '../components/reis/useJourney';
 import { usePackList } from '../components/reis/usePackList';
@@ -15,8 +16,10 @@ import { journeyTimeline, journeyWeeksLeft, type TimelineTask } from '../engine/
 import { baseWeightGrams, formatKg, packProgress } from '../engine/packList';
 import { formatDateNL, formatMonthNL, todayISO } from '../utils/dates';
 import { Icon } from '../components/icons';
+import type { BootBreakInStatus } from '../engine/bootBreakIn';
 
-function rowMeta(row: TimelineTask): string {
+function rowMeta(row: TimelineTask, boots?: BootBreakInStatus): string {
+  if (row.task.id === 'schoenen' && boots && (boots.kind === 'busy' || boots.kind === 'late') && row.status !== 'done') return boots.kind === 'late' ? 'te laat voor 6 weken' : boots.line;
   if (row.status === 'done') return row.doneOn ? `gedaan op ${shortDateNL(row.doneOn)}` : 'gedaan';
   if (row.status === 'later') return `vanaf ${shortDateNL(row.opensOn)}`;
   if (row.status === 'lapsed') return 'nog open';
@@ -26,7 +29,7 @@ function rowMeta(row: TimelineTask): string {
 export function JourneyPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { goalDate, state, pick, progress, tick, untick } = useJourney();
+  const { goalDate, state, pick, progress, tick, untick, boots, setBoots } = useJourney();
   const { items } = usePackList();
   const today = todayISO();
 
@@ -109,7 +112,7 @@ export function JourneyPage() {
                         {row.task.title}
                       </span>
                       <span className="text-xs" style={{ color: row.isThisWeek && row.status !== 'done' ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>
-                        {row.isThisWeek && row.status !== 'done' ? `deze week, ${rowMeta(row)}` : rowMeta(row)}
+                        {row.isThisWeek && row.status !== 'done' ? `deze week, ${rowMeta(row, boots)}` : rowMeta(row, boots)}
                       </span>
                     </button>
                   </div>
@@ -126,6 +129,7 @@ export function JourneyPage() {
           onTick={() => tick(selected.task.id)}
           onUntick={() => untick(selected.task.id)}
           onClose={closeSheet}
+          extra={selected.task.id === 'schoenen' ? <BootBreakInPanel status={boots} boots={state?.boots} onSave={setBoots} /> : undefined}
         />
       )}
     </div>
