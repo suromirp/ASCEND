@@ -708,7 +708,8 @@ export function looksLike(input: LooksLikeInput): LooksLike | undefined {
   const calc = new InfluenceCalculator(input);
   const now = calc.pointAt(input.measure, input.date);
   if (!now) return undefined;
-  const occurrences = occurrencesOf(calc.entries).filter((o) => o.morning !== input.date);
+  // Only reasons you noted yourself: "lijkt op" names a cause you recorded, never a fact ASCEND knows.
+  const occurrences = occurrencesOf(input.entries).filter((o) => o.morning !== input.date);
   const groups = new Map<string, ReasonGroup>();
   for (const o of occurrences) groups.set(o.group.key, o.group);
   const diffOf = (morning: string) => calc.pointAt(input.measure, morning)?.diff;

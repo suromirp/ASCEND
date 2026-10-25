@@ -5,6 +5,7 @@ import type { SessionLog } from '../models/training';
 import { addDays } from '../utils/dates';
 import { TEMPLATES } from './fixtures/runLogs';
 import { derivedFactEntries, knownFacts } from './influence';
+import { createFactsCache } from './factsCache';
 import { InfluenceCalculator, appliesTo, hasAnythingToShow, influenceEffects, looksLike, recordedCounts, type EffectsInput } from './influenceEffects';
 
 // Nagemaakte gegevens: een rustige reeks ochtenden en een paar beendagen.
@@ -148,5 +149,47 @@ describe('feiten die ASCEND zelf weet', () => {
     const ms = performance.now() - t0;
     console.log(`derivedFactEntries: ${facts.length} feiten, ${Math.round(ms)} ms (700 logs, 400 dagen)`);
     expect(ms).toBeLessThan(1000);
+  });
+
+  it('zegt bij lijkt op nooit iets over een feit, wel over dezelfde reden als eigen notitie', () => {
+    const mornings = ['2026-10-01', '2026-10-05', '2026-10-09', '2026-10-13'];
+    const rec = metrics({ ...Object.fromEntries(mornings.map((d) => [d, { restingHeartRate: 58 }])), '2026-10-20': { restingHeartRate: 58 } });
+    const facts: InfluenceEntry[] = mornings.map((d, i) => ({ id: `f${i}`, date: addDays(d, -1), reasons: [{ reason: 'zware_beendag' }], updatedAt: '' }));
+    const ask = (entries: InfluenceEntry[]) => looksLike({ ...base({ entries, facts, metrics: rec }), cause: 'patroon', measure: 'restingHr', date: '2026-10-20' });
+    expect(ask([])).toBeUndefined();
+    const own = mornings.map((d, i) => note(`n${i}`, addDays(d, -1), 'zware_beendag'));
+    expect(ask(own)?.group.key).toBe('zware_beendag');
+  });
+
+  it('rekent met 800 logs met weer snel genoeg door, ook bij elke log', () => {
+    const logs: SessionLog[] = Array.from({ length: 800 }, (_, i) => {
+      const date = addDays('2024-08-01', i);
+      const warm = 8 + (i % 20);
+      return { ...(i % 3 === 0 ? legDay(`p${i}`, date) : easy(`p${i}`, date)), type: 'cardio', sport: 'running', detail: { conditions: { tempC: warm, feelsC: warm } } } as unknown as SessionLog;
+    });
+    const recovery: RecoveryMetric[] = Array.from({ length: 400 }, (_, i) => ({ id: `r${i}`, date: addDays('2026-09-20', i - 399), restingHeartRate: 50, sleepMinutes: i % 9 === 0 ? 300 : 430, source: 'garmin' as const }));
+    const t0 = performance.now();
+    const facts = derivedFactEntries({ logs, templates: TEMPLATES, recovery, illness: undefined });
+    const ms = performance.now() - t0;
+    console.log(`derivedFactEntries met weer: ${facts.length} feiten, ${ms.toFixed(1)} ms (800 logs, 400 dagen)`);
+    expect(ms).toBeLessThan(1000);
+  });
+});
+
+describe('cache van de feiten', () => {
+  const input = () => ({ logs: [...legLogs], templates: TEMPLATES, recovery: metrics(), illness: undefined, judgments: [{ date: '2026-10-01', verdict: 'niet_goed' as const, minutes: 300 }] });
+  it('telt dezelfde inhoud in nieuwe lijsten als een hit', () => {
+    const cache = createFactsCache();
+    const first = cache.get(input());
+    expect(cache.get(input())).toBe(first);
+    expect(cache.computed).toBe(1);
+  });
+  it('rekent opnieuw bij een nieuwe log en bij een gewijzigd nachtoordeel', () => {
+    const cache = createFactsCache();
+    cache.get(input());
+    cache.get({ ...input(), logs: [...legLogs, legDay('nieuw', '2026-10-14')] });
+    expect(cache.computed).toBe(2);
+    cache.get({ ...input(), logs: [...legLogs, legDay('nieuw', '2026-10-14')], judgments: [{ date: '2026-10-01', verdict: 'goed' as never, minutes: 300 }] });
+    expect(cache.computed).toBe(3);
   });
 });

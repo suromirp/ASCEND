@@ -4,6 +4,7 @@ import { AMOUNT_LABEL, AMOUNTS } from '../../data/influenceReasons';
 import type { AlcoholAmount, InfluenceEntry } from '../../models/influence';
 import {
   MEASURES,
+  appliesTo,
   MEASURE_TITLE,
   MEASURE_UNIT,
   alcoholAmounts,
@@ -96,7 +97,7 @@ export function InfluenceEffectSheet({ groupKey, entries, own, effects, onClose 
             )}
 
             <div className="mt-2 flex flex-col">
-              {MEASURES.map((m, i) => (
+              {MEASURES.filter((m) => !group || appliesTo(group, m)).map((m, i) => (
                 <MeasureBlock key={m} measure={m} effect={byMeasure.get(m)} group={group} first={i === 0} />
               ))}
             </div>

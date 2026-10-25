@@ -267,6 +267,8 @@ export interface FactIndex {
   logsByDate: ReadonlyMap<string, readonly SessionLog[]>;
   recordByDate: ReadonlyMap<string, RecoveryMetric>;
   templateById: ReadonlyMap<string, SessionTemplate>;
+  // Per sport the outdoor trainings with weather, oldest first, for the warmth fact.
+  weatherBySport: ReadonlyMap<string, readonly SessionLog[]>;
 }
 
 export function buildFactIndex(logs: readonly SessionLog[], templates: readonly SessionTemplate[], recovery: readonly RecoveryMetric[]): FactIndex {
@@ -287,7 +289,16 @@ export function buildFactIndex(logs: readonly SessionLog[], templates: readonly 
     const rec = dayRecord(date, list);
     if (rec) recordByDate.set(date, rec);
   }
-  return { logsByDate, recordByDate, templateById: new Map(templates.map((t) => [t.id, t])) };
+  const weatherBySport = new Map<string, SessionLog[]>();
+  for (const l of logs) {
+    if (feels(l) === undefined || isIndoorLog(l)) continue;
+    const sport = logSport(l) ?? '';
+    const list = weatherBySport.get(sport);
+    if (list) list.push(l);
+    else weatherBySport.set(sport, [l]);
+  }
+  for (const list of weatherBySport.values()) list.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+  return { logsByDate, recordByDate, templateById: new Map(templates.map((t) => [t.id, t])), weatherBySport };
 }
 
 // Warmer than your earlier trainings of the same kind by at least the limit of the weather
@@ -295,17 +306,25 @@ export function buildFactIndex(logs: readonly SessionLog[], templates: readonly 
 function warmFact(log: SessionLog, ix: FactIndex): KnownFact | undefined {
   const own = feels(log);
   if (own === undefined || isIndoorLog(log)) return undefined;
-  const sport = logSport(log);
-  const others: SessionLog[] = [];
-  for (let i = 0; i <= WINDOW_DAYS; i++) {
-    for (const l of ix.logsByDate.get(addDays(log.completedDate, -i)) ?? []) {
-      if (l.id !== log.id && l.completedAt < log.completedAt && feels(l) !== undefined && logSport(l) === sport && !isIndoorLog(l)) others.push(l);
-    }
+  // The list is sorted by time: find the place of this training, then walk back over the most
+  // recent earlier ones of the same sport inside the window.
+  const list = ix.weatherBySport.get(logSport(log) ?? '') ?? [];
+  let lo = 0;
+  let hi = list.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (list[mid].completedAt < log.completedAt) lo = mid + 1;
+    else hi = mid;
   }
-  const temps = others
-    .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
-    .slice(0, MAX_BASELINE)
-    .map((l) => feels(l) as number);
+  const from = addDays(log.completedDate, -WINDOW_DAYS);
+  const temps: number[] = [];
+  for (let i = lo - 1; i >= 0 && temps.length < MAX_BASELINE; i--) {
+    const l = list[i];
+    // completedAt and completedDate can differ by a day (time zone): stop only well outside the window.
+    if (l.completedDate < addDays(from, -2)) break;
+    if (l.completedDate < from) continue;
+    if (l.id !== log.id) temps.push(feels(l) as number);
+  }
   if (temps.length < MIN_BASELINE || own - median(temps) < TEMP_SAME_C) return undefined;
   const shown = Math.round(log.detail?.conditions?.tempC ?? own);
   return { reason: 'warm', title: 'Warm', source: `${formatNumberNL(shown, 0)} graden bij de start, uit het weer` };

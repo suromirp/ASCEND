@@ -5,13 +5,10 @@
 import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import { resolveRunInsight } from '../../engine/runInsightSettings';
-import { derivedFactEntries } from '../../engine/influence';
+import { createFactsCache } from '../../engine/factsCache';
 import { influenceEffects, looksLike, type InfluenceMeasure, type LooksLike, type ReasonEffect } from '../../engine/influenceEffects';
 import type { InfluenceEntry } from '../../models/influence';
 import type { RecoveryMetric } from '../../models/metrics';
-import type { IllnessEpisode } from '../../models/illness';
-import type { NightJudgment } from '../../models/checkIn';
-import type { SessionLog, SessionTemplate } from '../../models/training';
 import { useLegFatigueInputs } from '../LegFatigueCard';
 import { useDetailsOn } from '../useRunInsight';
 import { useRecoveryMetrics } from '../useRecoveryMetrics';
@@ -19,23 +16,14 @@ import { useRecoveryMetrics } from '../useRecoveryMetrics';
 const NONE: InfluenceEntry[] = [];
 
 // What ASCEND knows by itself (a heavy leg day, warmth, a short night, illness) as notes that are
-// never stored. They count in the overview whatever "Mogelijke oorzaak" says.
-// The 400 days are worked out once and shared by the card on Je stand and the sheet of a training:
-// the memo follows the content (the dates of illness and the verdicts on nights), not the identity
-// of the lists, so a tap on a chip, which rewrites the settings, does not work it out again.
-let last: { logs: unknown; templates: unknown; metrics: unknown; key: string; value: InfluenceEntry[] } | undefined;
-
-function sharedFacts(logs: SessionLog[], templates: SessionTemplate[], metrics: RecoveryMetric[], illness: IllnessEpisode[] | undefined, judgments: NightJudgment[] | undefined): InfluenceEntry[] {
-  const key = JSON.stringify([(illness ?? []).map((e) => [e.id, e.startDate, e.endDate]), (judgments ?? []).map((j) => [j.date, j.verdict, j.minutes])]);
-  if (last && last.logs === logs && last.templates === templates && last.metrics === metrics && last.key === key) return last.value;
-  const value = derivedFactEntries({ logs, templates, recovery: metrics, illness, judgments });
-  last = { logs, templates, metrics, key, value };
-  return value;
-}
+// never stored. They count in the overview whatever "Mogelijke oorzaak" says. The 400 days are
+// worked out once, shared by the card on Je stand and the sheet of a training, and again only when
+// the content changes (engine/factsCache.ts), not when a list is merely rebuilt.
+const factsMemo = createFactsCache();
 
 function useFactEntries(metrics: RecoveryMetric[]): InfluenceEntry[] {
   const { settings, sessionLogs, templates } = useAppData();
-  return sharedFacts(sessionLogs, templates, metrics, settings.illnessEpisodes, settings.nightJudgments);
+  return factsMemo.get({ logs: sessionLogs, templates, recovery: metrics, illness: settings.illnessEpisodes, judgments: settings.nightJudgments });
 }
 
 // `entries` are your own notes, `all` your notes plus the facts.
