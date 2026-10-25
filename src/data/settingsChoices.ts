@@ -334,6 +334,17 @@ export const CHOICES = {
       { value: 480, label: 'Binnen 8 uur' },
     ],
   }),
+  hartslagHorloge: def({
+    group: 'Koppelingen',
+    title: 'Hartslag op je horloge',
+    line: 'Welke slagen je horloge bij een hartslagdoel krijgt.',
+    advice: 'ascend' as 'ascend' | 'intervals',
+    help: 'hartslagHorloge',
+    options: [
+      { value: 'ascend', label: 'Zones van ASCEND', note: 'Dezelfde slagen als in de app', short: 'ASCEND' },
+      { value: 'intervals', label: 'Zones van intervals.icu', note: 'De zonenaam, intervals.icu rekent om', short: 'intervals.icu' },
+    ],
+  }),
   voorvoegsel: def({
     group: 'Koppelingen',
     title: 'Voorvoegsel voor de naam',

@@ -45,6 +45,7 @@ import { WORKOUTS, type StepKind } from '../data/workoutStructure';
 import { addDays, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan, type PlanStep, type WorkoutPlan } from './workoutPlan';
 import { formatPace, type PaceRange, type RacePaces } from './racePaces';
+import { hrPercentTarget, type WatchHrPlan } from './watchHeartRate';
 
 export const WATCH_EXTERNAL_PREFIX = 'ascend:';
 // intervals.icu sends about the next 7 days to the watch, so that is as far
@@ -63,6 +64,11 @@ export interface WatchBuildOptions {
   // none, a short dated line in the description. Absent = short
   // (AppSettings.watchNamePrefix).
   namePrefix?: WatchNamePrefix;
+  // How a heart rate target is written (engine/watchHeartRate.ts): ASCEND's
+  // own beats as a percentage of the threshold of intervals.icu, or the zone
+  // name. Absent = the zone name. Only runs use it: the zones of ASCEND are
+  // running zones.
+  hr?: WatchHrPlan;
 }
 
 const SHORT_MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
@@ -136,8 +142,12 @@ function stepRange(step: PlanStep, template: SessionTemplate, paces: RacePaces):
 // Steps done by feel: no target on the watch.
 const OPEN_KINDS = new Set<StepKind>(['warmup', 'cooldown', 'walk']);
 
-function hrTarget(step: PlanStep): string | undefined {
+function hrTarget(step: PlanStep, hr?: WatchHrPlan): string | undefined {
   if (step.noTarget || step.kind === 'recover' || OPEN_KINDS.has(step.kind) || step.seconds < HR_MIN_SECONDS) return undefined;
+  if (hr?.kind === 'bpm') {
+    const percent = hrPercentTarget(hr, step.intensity);
+    if (percent) return percent;
+  }
   if (step.intensity === 4) return 'Z4-Z5 HR';
   return `Z${step.intensity} HR`;
 }
@@ -151,7 +161,7 @@ export interface WorkoutText {
 
 // The workout text for a session. `paces` is optional: without a test every
 // session runs on heart rate zones.
-export function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, paces?: RacePaces): WorkoutText {
+export function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, paces?: RacePaces, hr?: WatchHrPlan): WorkoutText {
   const target: WatchTarget = paces && PACE_SESSIONS.has(template.id) ? 'PACE' : 'HR';
   const distance = DISTANCE_STEPS[template.id];
 
@@ -163,7 +173,7 @@ export function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplat
     if (distance && step.kind === 'work') goal = undefined;
     else if (OPEN_KINDS.has(step.kind)) goal = undefined;
     else if (target === 'PACE') goal = step.seconds >= PACE_MIN_SECONDS && paces ? paceTarget(stepRange(step, template, paces)) : undefined;
-    else goal = hrTarget(step);
+    else goal = hrTarget(step, hr);
     return ['-', label, amount, goal].filter(Boolean).join(' ');
   };
 
@@ -210,7 +220,7 @@ export function buildWatchWorkout(
   if (!type) return undefined;
   const plan = buildWorkoutPlan(template, session.scheduledDate, program);
   if (!plan) return undefined;
-  const built = intervalsWorkoutText(plan, template, paces);
+  const built = intervalsWorkoutText(plan, template, paces, type === 'Run' ? options.hr : undefined);
   const target = built.target;
   const prefix = WATCH_NAME_PREFIXES[options.namePrefix ?? DEFAULT_WATCH_NAME_PREFIX];
   const marked = options.namePrefix !== 'none';

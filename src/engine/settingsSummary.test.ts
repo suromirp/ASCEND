@@ -482,6 +482,44 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
   });
 });
 
+describe('rowSummary: hartslag op je horloge', () => {
+  const withSettings = (over: Partial<SettingsFacts['settings']>, hrBasis?: { lthr?: number; maxHr?: number; failed?: boolean }) =>
+    facts({ settings: { ...facts().settings, ...over }, watch: { ...facts().watch!, hrBasis } });
+
+  it('standaard de zones van ASCEND, met de grens van zone 2', () => {
+    const r = rowSummary('horloge-hartslag', withSettings({ heartRate: { lthr: 179 } }, { lthr: 179 }));
+    expect(r.value).toBe('ASCEND');
+    expect(r.sub).toBe('Zone 2: 145 tot 159 bpm');
+    expect(r.hidden).toBe(false);
+  });
+
+  it('zegt waarom het bij de zonenaam blijft', () => {
+    expect(rowSummary('horloge-hartslag', withSettings({})).sub).toBe('Zonder drempel: de zonenaam');
+    expect(rowSummary('horloge-hartslag', withSettings({ heartRate: { lthr: 179 } })).sub).toBe('Drempel intervals.icu onbekend');
+  });
+
+  it('toont het verschil als de drempels meer dan 3 slagen verschillen, anders niet', () => {
+    const far = rowSummary('horloge-hartslag', withSettings({ heartRate: { lthr: 179 } }, { lthr: 187 }));
+    expect(far.sub).toBe('Drempel: intervals.icu 187, ASCEND 179');
+    expect(rowSummary('horloge-hartslag', withSettings({ heartRate: { lthr: 179 } }, { lthr: 182 })).sub).toBe('Zone 2: 145 tot 159 bpm');
+    expect(rowSummary('horloge-hartslag', withSettings({ heartRate: { lthr: 179 } }, { lthr: 183 })).sub).toMatch(/^Drempel/);
+    expect(rowSummary('horloge-hartslag', withSettings({ heartRate: { lthr: 179 }, watchHeartRate: 'intervals' }, { lthr: 187 })).sub).toBe('Drempel: intervals.icu 187, ASCEND 179');
+    expect(far.sub!.length).toBeLessThanOrEqual(SUB_MAX_LENGTH);
+  });
+
+  it('de keuze van intervals.icu en de schakelaar voor de rustige loop', () => {
+    expect(rowSummary('horloge-hartslag', withSettings({ watchHeartRate: 'intervals' })).value).toBe('intervals.icu');
+    expect(rowSummary('horloge-rustige-loop', facts()).checked).toBe(true);
+    expect(rowSummary('horloge-rustige-loop', withSettings({ watchCalmRun: false })).checked).toBe(false);
+    expect(rowSummary('horloge-rustige-loop', withSettings({ watchHeartRate: 'intervals' })).hidden).toBe(true);
+  });
+
+  it('staan er alleen met een koppeling', () => {
+    const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
+    for (const id of ['horloge-hartslag', 'horloge-rustige-loop']) expect(rowSummary(id, unlinked).hidden).toBe(true);
+  });
+});
+
 describe('rowSummary: vragen bij een korte nacht', () => {
   const withSettings = (extra: object) => facts({ settings: { ...facts().settings, ...extra } });
 

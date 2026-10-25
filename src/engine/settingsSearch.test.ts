@@ -31,7 +31,7 @@ describe('searchSettings', () => {
     const found = ids('horloge');
     expect(found).toContain('garmin');
     expect(found).toContain('horloge-gebruik');
-    expect(found.slice(0, 3)).toContain('garmin');
+    expect(found.slice(0, 5)).toContain('garmin');
   });
 
   it('gewicht vindt MacroFactor-gewicht, lichaamsgewicht en rugzak', () => {

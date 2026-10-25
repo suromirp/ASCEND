@@ -305,7 +305,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.watchNamePrefix;
     skipped.n++;
   }
-  if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
+  if ('watchHeartRate' in s && s.watchHeartRate !== 'ascend' && s.watchHeartRate !== 'intervals') {
+    delete s.watchHeartRate;
+    skipped.n++;
+  }
+  if ('watchCalmRun' in s && typeof s.watchCalmRun !== 'boolean') {
+    delete s.watchCalmRun;
+    skipped.n++;
+  }
+  if ('trekLegRest' in s &&s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;
   }

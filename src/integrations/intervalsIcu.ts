@@ -28,6 +28,7 @@ import type { ExternalActivity, ExternalActivityKind } from '../engine/activityI
 import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
+import type { IntervalsHrBasis } from '../engine/watchHeartRate';
 import type { RunDynamics, StreamKind, StreamSet } from '../models/activityDetail';
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu';
@@ -491,6 +492,32 @@ export async function fetchIntervalsStreams(
   const kinds = streamsToRequest(activity.streamsAvailable);
   if (!id || kinds.length === 0) return undefined;
   return mapIntervalsStreams(await getJson(connection, () => streamsUrl(id, kinds), options), activity.kind);
+}
+
+// --- the heart rate intervals.icu holds for running ------------------------------
+
+export function sportSettingsUrl(athleteId: string): string {
+  return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/sport-settings`;
+}
+
+const plainHr = (n: unknown, min: number, max: number): number | undefined =>
+  typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max ? Math.round(n) : undefined;
+
+// From the sport settings (a list; the fields lthr, max_hr and types are in
+// the OpenAPI description) the threshold and maximum of the setting that holds
+// "Run". A setting for Run alone wins over one that lists more sports.
+export function mapRunHrBasis(raw: unknown): IntervalsHrBasis {
+  const list = Array.isArray(raw) ? raw : [];
+  const runs = list.filter((x): x is { types?: unknown; lthr?: unknown; max_hr?: unknown } => !!x && typeof x === 'object' && Array.isArray((x as { types?: unknown }).types) && ((x as { types: unknown[] }).types).includes('Run'));
+  const pick = runs.find((x) => (x.types as unknown[]).length === 1) ?? runs[0];
+  if (!pick) return {};
+  return { lthr: plainHr(pick.lthr, 100, 220), maxHr: plainHr(pick.max_hr, 120, 230) };
+}
+
+// One request, limited in time like every other (TIMEOUT_MS). Throws an
+// IntervalsError; the caller decides what to do without it.
+export async function fetchRunHeartRateBasis(connection: IntervalsConnection, options: FetchOptions = {}): Promise<IntervalsHrBasis> {
+  return mapRunHrBasis(await getJson(connection, sportSettingsUrl, options));
 }
 
 // What to tell the user about any error from this file; anything that is not

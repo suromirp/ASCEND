@@ -28,6 +28,8 @@ import {
   type IntervalsConnection,
 } from '../integrations/intervalsIcu';
 import { planWatchSync, selectWatchWorkouts, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
+import { fetchRunHeartRateBasis } from '../integrations/intervalsIcu';
+import { hasAscendHeartRate, resolveWatchHrMode, watchHrPlanFromSettings, type IntervalsHrBasis } from '../engine/watchHeartRate';
 import { racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
 import { addDays, todayISO } from '../utils/dates';
@@ -42,6 +44,16 @@ export interface WatchWorkoutState {
   syncedAt?: string;
   // What the last attempt said when it failed; cleared by the next success.
   lastError?: string;
+  // The threshold and maximum heart rate for running that intervals.icu holds,
+  // as last read (for "Hartslag op je horloge"); on this device only.
+  hrBasis?: IntervalsHrBasis;
+}
+
+function cleanBasis(raw: unknown): IntervalsHrBasis | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : undefined);
+  return { lthr: num(r.lthr), maxHr: num(r.maxHr), readAt: typeof r.readAt === 'string' ? r.readAt : undefined, failed: r.failed === true ? true : undefined };
 }
 
 export async function getWatchWorkoutState(): Promise<WatchWorkoutState> {
@@ -51,6 +63,7 @@ export async function getWatchWorkoutState(): Promise<WatchWorkoutState> {
     items: stored?.items && typeof stored.items === 'object' ? stored.items : {},
     syncedAt: stored?.syncedAt,
     lastError: stored?.lastError,
+    hrBasis: cleanBasis(stored?.hrBasis),
   };
 }
 
@@ -70,17 +83,55 @@ export interface WorkoutOptions extends FetchOptions {
   today?: string;
 }
 
+// Reads the threshold and maximum heart rate for running at intervals.icu, but
+// only when they are needed (the choice is ASCEND's zones and ASCEND has a
+// threshold or maximum of its own). A failed read keeps what was known before
+// and marks it failed; the row in Instellingen says so. Writes only on change.
+async function refreshHrBasis(
+  state: WatchWorkoutState,
+  settings: { watchHeartRate?: 'ascend' | 'intervals'; heartRate?: { maxHr?: number; lthr?: number } },
+  connection: IntervalsConnection | null | undefined,
+  options: FetchOptions,
+  now: Date,
+): Promise<IntervalsHrBasis | undefined> {
+  if (resolveWatchHrMode({ mode: settings.watchHeartRate }) !== 'ascend' || !hasAscendHeartRate(settings.heartRate) || !connection) return state.hrBasis;
+  let next: IntervalsHrBasis;
+  try {
+    const read = await fetchRunHeartRateBasis(connection, options);
+    next = { lthr: read.lthr, maxHr: read.maxHr, readAt: now.toISOString() };
+  } catch {
+    next = { ...state.hrBasis, failed: true };
+  }
+  const before = state.hrBasis;
+  const same = before?.lthr === next.lthr && before?.maxHr === next.maxHr && !!before?.failed === !!next.failed;
+  if (same) return before;
+  try {
+    await putState({ ...(await getWatchWorkoutState()), hrBasis: next });
+  } catch {
+    // Not kept: the next round reads again.
+  }
+  return next;
+}
+
 // What should be on the watch right now, from the stored plan, and which of
 // the planned sessions are done.
-async function loadDesired(today: string): Promise<{ desired: WatchWorkout[]; logged: Set<string>; removeDone: boolean }> {
-  const [programs, templates, sessions, logs, settings] = await Promise.all([
+async function loadDesired(
+  today: string,
+  connection?: IntervalsConnection | null,
+  options: FetchOptions = {},
+  now: Date = new Date(),
+): Promise<{ desired: WatchWorkout[]; logged: Set<string>; removeDone: boolean }> {
+  const [programs, templates, sessions, logs, settings, state] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
     PlannedSessionsRepo.getAll(),
     SessionLogsRepo.getAll(),
     SettingsRepo.get(),
+    getWatchWorkoutState(),
   ]);
-  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: racePaces(testResults(logs)), today, options: { namePrefix: settings.watchNamePrefix } });
+  const basis = await refreshHrBasis(state, settings, connection, options, now);
+  const hr = watchHrPlanFromSettings(settings, basis);
+  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: racePaces(testResults(logs)), today, options: { namePrefix: settings.watchNamePrefix, hr } });
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   return { desired, logged, removeDone: settings.watchRemoveDone !== false };
 }
@@ -114,7 +165,9 @@ export async function syncWatchWorkouts(options: WorkoutOptions & { force?: bool
   const items = { ...state.items };
   const counts = { created: 0, updated: 0, removed: 0 };
   try {
-    const { desired, logged, removeDone } = await loadDesired(today);
+    const { desired, logged, removeDone } = await loadDesired(today, connection, options, now);
+    // The read of the heart rate may have stored something new; keep it when the books are written.
+    state = await getWatchWorkoutState();
     const plan = planWatchSync(desired, items, today, logged, { removeDone });
     const remember = (w: WatchWorkout, eventId: number | undefined, previous?: TrackedWorkout) => {
       items[w.plannedId] = { externalId: w.externalId, date: w.date, fingerprint: w.fingerprint, eventId: eventId ?? previous?.eventId, sentAt: now.toISOString() };
@@ -180,7 +233,7 @@ export async function sendNextWatchWorkout(options: WorkoutOptions = {}): Promis
   }
   if (!connection) return { status: 'not-connected' };
   try {
-    const { desired } = await loadDesired(today);
+    const { desired } = await loadDesired(today, connection, options, options.now ?? new Date());
     const next = desired[0];
     if (!next) return { status: 'nothing' };
     const state = await getWatchWorkoutState();

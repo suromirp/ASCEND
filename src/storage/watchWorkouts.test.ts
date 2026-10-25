@@ -30,7 +30,7 @@ const ATHLETE = 'i12345';
 
 // A fake intervals.icu agenda: it keeps what was created, by external id, the
 // way the real one upserts, and answers the other calls like the real one.
-function fakeAgenda(options: { failWith?: number } = {}) {
+function fakeAgenda(options: { failWith?: number; sport?: { lthr?: number; max_hr?: number } | 'down' } = {}) {
   const events = new Map<string, { id: number; body: Record<string, unknown> }>();
   const calls: { method: string; url: string; body: unknown }[] = [];
   // Things the list returns that are not ASCEND's: the owner's own events, other categories.
@@ -40,6 +40,10 @@ function fakeAgenda(options: { failWith?: number } = {}) {
     const method = init.method ?? 'GET';
     const body = init.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, url, body });
+    if (url.endsWith('/sport-settings')) {
+      if (!options.sport || options.sport === 'down') return new Response('', { status: 500 });
+      return new Response(JSON.stringify([{ id: 1, types: ['Run'], ...options.sport }]), { status: 200 });
+    }
     if (options.failWith) return new Response('', { status: options.failWith });
     if (method === 'GET' && url.includes('/events?')) {
       const list = [...events.entries()].map(([ext, v]) => ({ id: v.id, external_id: ext, category: 'WORKOUT', start_date_local: '2026-10-26T00:00:00', ...v.body }));
@@ -514,5 +518,77 @@ describe('"Opnieuw versturen"', () => {
     const agenda = fakeAgenda();
     expect(await resendWatchWorkouts({ fetchImpl: agenda.fn, today })).toEqual({ status: 'off' });
     expect(agenda.calls).toHaveLength(0);
+  });
+});
+
+describe('the heart rate of ASCEND on the watch', () => {
+  const descriptions = (agenda: ReturnType<typeof fakeAgenda>) => [...agenda.events.values()].map((v) => String(v.body.description));
+  const sportCalls = (agenda: ReturnType<typeof fakeAgenda>) => agenda.calls.filter((c) => c.url.endsWith('/sport-settings')).length;
+
+  it('writes percentages of the threshold of intervals.icu, and follows when it changes', async () => {
+    const { today } = await setup();
+    await SettingsRepo.set({ heartRate: { lthr: 179 } });
+    await setWatchWorkoutsEnabled(true);
+    const first = fakeAgenda({ sport: { lthr: 170, max_hr: 190 } });
+    await syncWatchWorkouts({ fetchImpl: first.fn, today, force: true });
+    expect(descriptions(first).join('\n')).toMatch(/\d+-\d+% LTHR/);
+    expect(sportCalls(first)).toBe(1);
+    expect((await getWatchWorkoutState()).hrBasis).toMatchObject({ lthr: 170, maxHr: 190 });
+
+    const n = first.events.size;
+    const quiet = await syncWatchWorkouts({ fetchImpl: first.fn, today, force: true });
+    expect(quiet).toEqual({ status: 'ok', created: 0, updated: 0, removed: 0 });
+
+    const changed = { ...first, fn: fakeAgenda({ sport: { lthr: 165, max_hr: 190 } }).fn };
+    const result = await syncWatchWorkouts({ fetchImpl: changed.fn, today, force: true });
+    expect(result.status).toBe('ok');
+    if (result.status === 'ok') expect(result.updated).toBeGreaterThan(0);
+    expect(n).toBeGreaterThan(0);
+  });
+
+  it('keeps what it knew when intervals.icu cannot be read, and falls back without anything', async () => {
+    const { today } = await setup();
+    await SettingsRepo.set({ heartRate: { lthr: 179 } });
+    await setWatchWorkoutsEnabled(true);
+    const agenda = fakeAgenda({ sport: { lthr: 170 } });
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    const before = descriptions(agenda);
+    const down = fakeAgenda({ sport: 'down' });
+    await syncWatchWorkouts({ fetchImpl: down.fn, today, force: true });
+    expect((await getWatchWorkoutState()).hrBasis).toMatchObject({ lthr: 170, failed: true });
+    expect(descriptions(agenda)).toEqual(before);
+  });
+
+  it('sends the zone name when nothing was ever read', async () => {
+    const { today } = await setup();
+    await SettingsRepo.set({ heartRate: { lthr: 179 } });
+    await setWatchWorkoutsEnabled(true);
+    const agenda = fakeAgenda({ sport: 'down' });
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(descriptions(agenda).join('\n')).toMatch(/Z\d HR/);
+    expect(descriptions(agenda).join('\n')).not.toMatch(/% LTHR/);
+  });
+
+  it('does not ask intervals.icu with the old way of working or without a threshold of its own', async () => {
+    const { today } = await setup();
+    await setWatchWorkoutsEnabled(true);
+    const none = fakeAgenda({ sport: { lthr: 170 } });
+    await syncWatchWorkouts({ fetchImpl: none.fn, today, force: true });
+    expect(sportCalls(none)).toBe(0);
+    await SettingsRepo.set({ heartRate: { lthr: 179 }, watchHeartRate: 'intervals' });
+    await syncWatchWorkouts({ fetchImpl: none.fn, today, force: true });
+    expect(sportCalls(none)).toBe(0);
+  });
+
+  it('a changed setting updates what is on the watch', async () => {
+    const { today } = await setup();
+    await SettingsRepo.set({ heartRate: { lthr: 179 } });
+    await setWatchWorkoutsEnabled(true);
+    const agenda = fakeAgenda({ sport: { lthr: 170 } });
+    await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    await SettingsRepo.set({ heartRate: { lthr: 179 }, watchHeartRate: 'intervals' });
+    const result = await syncWatchWorkouts({ fetchImpl: agenda.fn, today, force: true });
+    expect(result.status === 'ok' && result.updated).toBeGreaterThan(0);
+    expect(descriptions(agenda).join('\n')).not.toMatch(/% LTHR/);
   });
 });

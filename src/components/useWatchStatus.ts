@@ -9,6 +9,7 @@ import { useAppData } from '../state/AppDataContext';
 import { getConnection } from '../storage/externalActivities';
 import { getWatchWorkoutState, WATCH_STATE_EVENT, type WatchWorkoutState } from '../storage/watchWorkouts';
 import { watchStatusFor, type WatchStatus } from '../engine/watchStatus';
+import { watchHrPlanFromSettings } from '../engine/watchHeartRate';
 import { racePaces } from '../engine/racePaces';
 import { testResults } from '../engine/racePrediction';
 import { todayISO } from '../utils/dates';
@@ -69,10 +70,11 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
         program,
         paces,
         namePrefix: settings.watchNamePrefix,
+        hr: watchHrPlanFromSettings(settings, state.hrBasis),
         logged,
       });
     },
-    [snapshot, program, paces, logged, settings.watchNamePrefix],
+    [snapshot, program, paces, logged, settings],
   );
 
   return { statusOf, ready: snapshot !== null, reload };

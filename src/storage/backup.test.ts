@@ -263,6 +263,23 @@ describe('backup envelope round-trip', () => {
     });
   });
 
+  // Hartslag op je horloge: two optional fields, read defensively.
+  describe('watchHeartRate en watchCalmRun', () => {
+    it('round-trips, and rubbish is dropped and counted', async () => {
+      await SettingsRepo.set({ watchHeartRate: 'intervals', watchCalmRun: false });
+      const envelope = await buildBackupEnvelope();
+      await wipeAllData();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.watchHeartRate).toBe('intervals');
+      expect(restored.watchCalmRun).toBe(false);
+      const bad = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { watchHeartRate: 'zones', watchCalmRun: 'ja' } } });
+      expect(bad.settings.watchHeartRate).toBeUndefined();
+      expect(bad.settings.watchCalmRun).toBeUndefined();
+      expect(bad.skippedInvalid).toBe(2);
+    });
+  });
+
   // Your verdicts on short nights (engine/shortNight.ts): additive in the settings,
   // so no schema step, but they travel in a backup, an old backup without them still
   // imports, and a restore never drops a verdict the device has.

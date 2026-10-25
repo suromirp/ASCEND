@@ -50,7 +50,7 @@ describe('efficiency: which runs are comparable', () => {
     expect(c.logs.map((l) => l.id)).toEqual(['e0', 'e1', 'e2', 'e3']);
     expect(c.reasons).toEqual([]);
     expect(c.verdict).toBe('same');
-    expect(c.referenceHr).toBe(144);
+    expect(c.referenceHr).toBe(145);
   });
 
   it('takes at most five, the newest', () => {

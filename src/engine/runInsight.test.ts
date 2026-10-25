@@ -45,7 +45,7 @@ describe('an easy run: efficiency', () => {
     const r = insight(subjectOf({ ...EASY, pace: 338 }), earlierLogs(EASY));
     const l = r.better!;
     expect(l.figures.today).toMatch(/^5:\d\d per km$/);
-    expect(l.figures.middle).toBe('5:55 per km');
+    expect(l.figures.middle).toBe('5:52 per km');
     expect(l.figures.difference).toMatch(/^\d+ s per km sneller$/);
     expect(l.series).toHaveLength(5);
     expect(l.series.filter((p) => p.current)).toHaveLength(1);

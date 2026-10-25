@@ -11,6 +11,7 @@ import { programAnchorDate } from '../../engine/programLayout';
 import { checkDataKey, quietCheck } from '../../engine/strengthHistory';
 import { checkModelKey, resolveStrengthSettings, type StrengthSettings } from '../../engine/strengthSettings';
 import { DEFAULT_WATCH_USE } from '../../engine/watchUse';
+import type { IntervalsHrBasis } from '../../engine/watchHeartRate';
 import type { SettingsFacts } from '../../engine/settingsSummary';
 import { getConnection, getWatchState, onWatchChange, type WatchActivityState } from '../../storage/externalActivities';
 import { getWatchWorkoutState } from '../../storage/watchWorkouts';
@@ -30,6 +31,7 @@ interface Loaded {
   linked: boolean;
   watch: WatchActivityState | null;
   sendEnabled: boolean;
+  hrBasis?: IntervalsHrBasis;
   macroFactor: MacroFactorState | null;
   storage: PersistenceStatus | undefined;
   snapshots: number;
@@ -59,7 +61,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         readNoticeEnvironment().catch(() => undefined),
       ]);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
+      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
     };
     void load();
     const offWatch = onWatchChange(() => void load());
@@ -118,7 +120,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor)),
       weight: w ? { kg: w.kg, source: w.source, date: w.date } : null,
       watch: loaded.watch
-        ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled }
+        ? { linked: loaded.linked, syncedAt: loaded.watch.fetchedAt, use, autoTick: loaded.watch.autoTick, leads: loaded.watch.garminLeads, corrections: loaded.watch.takeCorrections, sendEnabled: loaded.sendEnabled, hrBasis: loaded.hrBasis }
         : null,
       macroFactor: loaded.macroFactor ? { readAt: loaded.macroFactor.readAt, leads: loaded.macroFactor.leads } : null,
       strengthDurations: strength.map((t) => {

@@ -53,6 +53,8 @@ const REASON: Record<string, string> = {
   'loop-berg': INSIGHT_OFF,
   'loop-vorm': INSIGHT_OFF,
   'horloge-voorvoegsel': GARMIN_OFF,
+  'horloge-hartslag': GARMIN_OFF,
+  'horloge-rustige-loop': 'Deze keuze verschijnt pas als je Garmin hebt gekoppeld en de hartslag van ASCEND naar je horloge gaat.',
   'horloge-gedaan-weghalen': GARMIN_OFF,
   'horloge-status': GARMIN_OFF,
   'horloge-status-week': GARMIN_OFF,

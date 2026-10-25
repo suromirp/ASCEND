@@ -572,6 +572,14 @@ export interface AppSettings {
   // absent = short), "ASCEND \u00b7 " (long) or nothing. Unless none, the
   // description starts with a dated line. Optional and additive.
   watchNamePrefix?: 'short' | 'long' | 'none';
+  // Whose heart rate numbers the watch gets (engine/watchHeartRate.ts):
+  // 'ascend' (absent = ascend) writes the beats of your own zones as a
+  // percentage that intervals.icu turns into the same beats; 'intervals' sends
+  // the zone name as before. Optional and additive.
+  watchHeartRate?: 'ascend' | 'intervals';
+  // An easy or long run gets only an upper limit (start of zone 1 to the end
+  // of zone 2). Absent = on. Only with watchHeartRate 'ascend'.
+  watchCalmRun?: boolean;
   // Take a done or past training out of the intervals.icu agenda at the next
   // round. Absent = on. Optional and additive.
   watchRemoveDone?: boolean;

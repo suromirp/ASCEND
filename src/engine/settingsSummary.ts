@@ -27,6 +27,8 @@ import { resolveMotion } from './motionSettings';
 import { resolveSky } from './skySettings';
 import { resolveFigure, type Figure } from './figureSettings';
 import { resolveRunInsight } from './runInsightSettings';
+import { zoneBpm } from './heartRateZones';
+import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL } from '../utils/dates';
 
@@ -47,6 +49,25 @@ export interface RowSummary {
   checked?: boolean;
   // De rij hoort er nu niet te staan (geen sterktetrainingen, geen browserondersteuning).
   hidden?: boolean;
+}
+
+// De regel onder "Hartslag op je horloge": waarom het bij de zonenaam blijft, anders het
+// verschil als de drempel van intervals.icu meer dan 3 slagen afwijkt, anders de grens van zone 2.
+export const THRESHOLD_GAP = 3;
+function watchHrSub(f: SettingsFacts): string | undefined {
+  const s = f.settings;
+  const basis = f.watch?.hrBasis;
+  const mine = s.heartRate?.lthr;
+  const gap = typeof mine === 'number' && typeof basis?.lthr === 'number' && Math.abs(basis.lthr - mine) > THRESHOLD_GAP;
+  if (resolveWatchHrMode({ mode: s.watchHeartRate }) === 'intervals') return gap ? gapText(basis!.lthr!, mine!) : undefined;
+  const plan = resolveWatchHr({ mode: 'ascend' }, s.heartRate, basis);
+  if (plan.kind === 'zones' && plan.reason) return HR_FALLBACK_TEXT[plan.reason];
+  if (gap) return gapText(basis!.lthr!, mine!);
+  const z = zoneBpm(2, s.heartRate);
+  return z ? `Zone 2: ${z[0]} tot ${z[1]} bpm` : undefined;
+}
+function gapText(icu: number, mine: number): string {
+  return `Drempel: intervals.icu ${icu}, ASCEND ${mine}`;
 }
 
 export interface SettingsFacts {
@@ -72,7 +93,7 @@ export interface SettingsFacts {
   // Zijn er weegmetingen met een vetpercentage (engine/bodyFat.ts)? Zonder is de schakelaar er niet.
   hasBodyFat?: boolean;
   // De koppeling met het horloge; null als er (nog) niet gekeken is.
-  watch: { linked: boolean; syncedAt?: string; use: WatchUse; autoTick: boolean; leads: boolean; sendEnabled: boolean; corrections?: boolean } | null;
+  watch: { linked: boolean; syncedAt?: string; use: WatchUse; autoTick: boolean; leads: boolean; sendEnabled: boolean; corrections?: boolean; hrBasis?: IntervalsHrBasis } | null;
   macroFactor: { readAt?: string; leads: boolean } | null;
   // Opgeslagen duur per krachttraining, geleerd of geschat.
   strengthDurations: { name: string; minutes: number; source: 'learned' | 'estimate' | 'default'; basedOn: number }[];
@@ -449,6 +470,10 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: !!f.watch?.sendEnabled, hidden: !watchOn };
     case 'horloge-voorvoegsel':
       return { value: choiceShort('voorvoegsel', s.watchNamePrefix ?? 'short'), hidden: !watchOn };
+    case 'horloge-hartslag':
+      return { value: choiceShort('hartslagHorloge', resolveWatchHrMode({ mode: s.watchHeartRate })), sub: watchHrSub(f), hidden: !watchOn };
+    case 'horloge-rustige-loop':
+      return { checked: resolveCalmRun({ calmRun: s.watchCalmRun }), hidden: !watchOn || resolveWatchHrMode({ mode: s.watchHeartRate }) === 'intervals' };
     case 'horloge-gedaan-weghalen':
       return { checked: s.watchRemoveDone !== false, hidden: !watchOn };
     case 'horloge-status':

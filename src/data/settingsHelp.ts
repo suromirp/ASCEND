@@ -241,6 +241,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Zonder', text: 'rekent ASCEND met je maximale hartslag. Dat is minder precies.' },
     ],
   },
+  hartslagHorloge: {
+    title: 'Hartslag op je horloge',
+    lead: 'Bij een hartslagdoel krijgt je horloge slagen. Die komen uit de zones van ASCEND of uit die van intervals.icu.',
+    points: [
+      { head: 'ASCEND', text: 'je horloge piept op dezelfde slagen als waarmee ASCEND de training achteraf beoordeelt.' },
+      { head: 'intervals.icu', text: 'ASCEND stuurt alleen de zonenaam en intervals.icu rekent die om met zijn eigen drempel. Dat kan anders uitkomen.' },
+      { head: 'Rustige loop', text: 'bij een rustige of lange duurloop komt er alleen een bovengrens: het einde van zone 2.' },
+      { head: 'Zonder', text: 'drempel of maximale hartslag, of als intervals.icu de jouwe niet laat lezen, blijft het bij de zonenaam.' },
+    ],
+  },
   vanzelfAfvinken: {
     title: 'Vanzelf afvinken',
     lead: 'Een training van je horloge vinkt zichzelf af, maar alleen als het niet anders kan.',

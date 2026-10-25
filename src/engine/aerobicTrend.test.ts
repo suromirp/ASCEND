@@ -13,13 +13,13 @@ const hr = { lthr: 179 }; // zone 2: 143-159, reference 151
 describe('aerobicTrend', () => {
   it('shows pace at zone 2 per week and how much faster it got', () => {
     const logs = [
-      run('a', 'tpl_easy_run', '2026-09-15', 5, 42.5, 151), // 8:30
-      run('b', 'tpl_long_run', '2026-09-20', 8, 68, 151), // 8:30
-      run('c', 'tpl_easy_run', '2026-10-13', 5, 40, 151), // 8:00
-      run('d', 'tpl_long_run', '2026-10-18', 8, 64, 151), // 8:00
+      run('a', 'tpl_easy_run', '2026-09-15', 5, 42.5, 152), // 8:30
+      run('b', 'tpl_long_run', '2026-09-20', 8, 68, 152), // 8:30
+      run('c', 'tpl_easy_run', '2026-10-13', 5, 40, 152), // 8:00
+      run('d', 'tpl_long_run', '2026-10-18', 8, 64, 152), // 8:00
     ];
     const t = aerobicTrend(logs, templates, program, hr, '2026-10-19');
-    expect(t.referenceHr).toBe(151);
+    expect(t.referenceHr).toBe(152);
     expect(t.points.map((p) => formatPace(p.paceSec))).toEqual(['8:30', '8:00']);
     expect(Math.round(t.changeSec!)).toBe(-30);
   });
@@ -38,7 +38,7 @@ describe('aerobicTrend', () => {
   });
 
   it('corrects for a few beats higher or lower', () => {
-    const same = aerobicTrend([run('a', 'tpl_easy_run', '2026-10-13', 5, 40, 151)], templates, program, hr, '2026-10-19').points[0].paceSec;
+    const same = aerobicTrend([run('a', 'tpl_easy_run', '2026-10-13', 5, 40, 152)], templates, program, hr, '2026-10-19').points[0].paceSec;
     const lowerHr = aerobicTrend([run('a', 'tpl_easy_run', '2026-10-13', 5, 40, 145)], templates, program, hr, '2026-10-19').points[0].paceSec;
     expect(lowerHr).toBeLessThan(same);
   });

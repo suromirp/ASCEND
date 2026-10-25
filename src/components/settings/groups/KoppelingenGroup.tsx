@@ -58,6 +58,21 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
     }
   }
 
+  // De slagen op het horloge veranderen bij de volgende ronde; staat het sturen aan, dan draait die meteen.
+  async function changeHr(patch: { watchHeartRate?: 'ascend' | 'intervals'; watchCalmRun?: boolean }) {
+    setNote(null);
+    try {
+      await updateSettings(patch);
+      if (facts.watch?.sendEnabled) {
+        const result = await syncWatchWorkouts({ force: true });
+        if (result.status === 'error') setNote(result.message);
+      }
+    } finally {
+      reload();
+    }
+  }
+  const changeCalm = (on: boolean) => changeHr({ watchCalmRun: on });
+
   return (
     <>
       {note && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-warning)' }} role="status">{note}</p>}
@@ -76,6 +91,8 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
             <SummaryRow id="hrv" title="HRV" facts={facts} onChange={(on) => void changeUse('hrv', on)} />
             <SummaryRow id="naar-horloge" title="Trainingen naar je horloge" facts={facts} onChange={(on) => void changeSend(on)} />
             <SummaryRow id="horloge-voorvoegsel" title="Voorvoegsel voor de naam" facts={facts} onClick={() => setSheet('horloge-voorvoegsel')} />
+            <SummaryRow id="horloge-hartslag" title="Hartslag op je horloge" facts={facts} info="hartslagHorloge" onClick={() => setSheet('horloge-hartslag')} />
+            <SummaryRow id="horloge-rustige-loop" title="Rustige loop: alleen een bovengrens" facts={facts} onChange={(on) => void changeCalm(on)} />
             <SummaryRow id="horloge-gedaan-weghalen" title="Gedane trainingen weghalen" facts={facts} onChange={(on) => void updateSettings({ watchRemoveDone: on })} />
             <SummaryRow id="horloge-status" title="Status van het versturen" facts={facts} onChange={(on) => void updateSettings({ showWatchStatus: on })} />
             <SummaryRow id="horloge-status-week" title="Markering op Week" facts={facts} onChange={(on) => void updateSettings({ showWatchStatusOnWeek: on })} />
@@ -96,6 +113,10 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
 
       {sheet === 'horloge-voorvoegsel' && (
         <ChoiceFromDef def={CHOICES.voorvoegsel} value={settings.watchNamePrefix ?? DEFAULT_WATCH_NAME_PREFIX} onPick={(v) => void changePrefix(v)} onClose={() => setSheet(null)} />
+      )}
+
+      {sheet === 'horloge-hartslag' && (
+        <ChoiceFromDef def={CHOICES.hartslagHorloge} value={settings.watchHeartRate ?? 'ascend'} onPick={(v) => void changeHr({ watchHeartRate: v })} onClose={() => setSheet(null)} />
       )}
 
       <SettingsSection>
