@@ -144,15 +144,15 @@ export function HeartRateSheet({ onClose }: { onClose: () => void }) {
     const why = heartRateProblem(field, value, hr);
     setProblem(why ?? null);
     if (why) return;
-    void updateSettings({ heartRate: { ...hr, [field]: value } }).then(() => {
-      changed.current = true;
-    });
+    pending.current = updateSettings({ heartRate: { ...hr, [field]: value } });
   };
   // De slagen op je horloge volgen de drempel: staat het sturen aan, dan draait er één ronde zodra
-  // het blad sluit, niet bij elk getal dat je typt.
-  const changed = useRef(false);
+  // het blad sluit, niet bij elk getal dat je typt. Een opslag die nog loopt wacht de ronde af.
+  const pending = useRef<Promise<unknown> | null>(null);
   useEffect(() => () => {
-    if (changed.current) void syncWatchWorkouts({ force: true });
+    pending.current?.then(() => syncWatchWorkouts({ force: true })).catch(() => {
+      // Een achtergrondronde: een fout staat in de status van het horloge.
+    });
   }, []);
   const zones = ZONES.map((z) => ({ ...z, bpm: zoneBpm(z.level, hr) })).filter((z) => z.bpm);
   return (
