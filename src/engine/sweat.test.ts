@@ -60,6 +60,10 @@ describe('sweatRateAt: de terugval zonder metingen', () => {
   it('de standaard blijft binnen de algemene cijfers: 1,0 tot 1,5 liter per uur in de warmte', () => {
     expect(defaultSweatRate(28)).toBeGreaterThanOrEqual(1000);
     expect(defaultSweatRate(30)).toBeLessThanOrEqual(1500);
+    // Wandelen met een rugzak: 60% van de lijn.
+    expect(defaultSweatRate(20, 'walk')).toBe(550);
+    expect(defaultSweatRate(30, 'walk')).toBe(750);
+    expect(sweatRateAt(undefined, 20, 'walk').mlPerHour).toBe(550);
   });
   it('noemt de standaard nog niet gemeten, naar algemene cijfers, zonder het woord voorzichtig', () => {
     const label = basisLabel(sweatRateAt([], 20));

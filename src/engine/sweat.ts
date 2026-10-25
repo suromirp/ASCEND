@@ -112,9 +112,16 @@ export function weighedDate(entries: SweatEntry[] | undefined, n: number): strin
 // De standaard zonder metingen: een lijn van 500 ml per uur bij 10 graden of kouder naar
 // 1.250 bij 30 of warmer, afgerond op 50. Naar de algemene cijfers van NATA 2017 en ACSM
 // (zie de kop van dit bestand); een eigen vertaling, geen gepubliceerd model.
-export function defaultSweatRate(tempC: number): number {
+// Die cijfers gaan over duursporters, dus over hardlopen. Wandelen met een rugzak kost
+// ongeveer de helft tot twee derde van de energie van rustig hardlopen, en zweten volgt de
+// energie: voor wandelen geldt daarom 60% van de lijn (eigen afleiding, geen gepubliceerd
+// getal). Zo komt een etappe van 8 uur bij 20 graden op ongeveer 4,5 liter, niet op 7.
+export const WALK_SWEAT_FACTOR = 0.6;
+
+export function defaultSweatRate(tempC: number, activity?: SweatActivity): number {
   const t = Math.min(30, Math.max(10, tempC));
-  return Math.round((500 + ((t - 10) / 20) * 750) / 50) * 50;
+  const run = 500 + ((t - 10) / 20) * 750;
+  return Math.round((activity === 'walk' ? run * WALK_SWEAT_FACTOR : run) / 50) * 50;
 }
 
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -170,7 +177,7 @@ export function sweatRateAt(entries: SweatEntry[] | undefined, tempC: number, ac
     const found = fromPoints(pool.map((x) => ({ rate: x.r.mlPerHour, tempC: x.e.tempC })), tempC);
     if (found) return { mlPerHour: found.mlPerHour, basis: source === 'weighed' ? 'measured' : 'watch', count: found.count, tempC };
   }
-  return { mlPerHour: defaultSweatRate(tempC), basis: 'default', count: 0, tempC };
+  return { mlPerHour: defaultSweatRate(tempC, activity), basis: 'default', count: 0, tempC };
 }
 
 // --- tekst ---------------------------------------------------------------------------
