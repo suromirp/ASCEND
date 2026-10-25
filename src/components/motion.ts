@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveMotion, type MotionMode } from '../engine/motionSettings';
+import { MOTION_KEY } from '../utils/updateFlag';
 
 // Hoeveel de app beweegt (instelling "Beweging", docs/beslissingen/2026-10-24-beweging.md).
 // `prefers-reduced-motion: reduce` telt altijd als Uit. De CSS leest dezelfde stand uit
@@ -16,11 +17,21 @@ export function useMotionMode(): MotionMode {
 }
 
 // Zet de stand op <html> zodat de stijlen er op kunnen sturen. Eén keer per wijziging.
-export function useMotionAttribute(): void {
+// Zolang de instellingen nog laden (`ready` is onwaar) blijft de stand van de vorige keer staan.
+export function useMotionAttribute(ready = true): void {
   const mode = useMotionMode();
   useLayoutEffect(() => {
+    if (!ready) return;
     document.documentElement.dataset.motion = mode;
-  }, [mode]);
+    // De instellingen laden pas na het openingsscherm; de volgende keer zet
+    // utils/updateFlag.ts deze stand alvast, zodat het logo in Rustig en Uit
+    // meteen op de eindstand staat.
+    try {
+      localStorage.setItem(MOTION_KEY, mode);
+    } catch {
+      // geen opslag: de stand geldt dan pas als de instellingen geladen zijn
+    }
+  }, [mode, ready]);
 }
 
 // Telt een geheel getal kort op bij het eerste verschijnen (500 ms, ease-out). Schrijft

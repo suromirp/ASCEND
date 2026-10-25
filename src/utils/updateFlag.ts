@@ -28,7 +28,7 @@ function readAndClear(): boolean {
 // Evaluated once per page load, shared by everything that asks.
 export const JUST_UPDATED = typeof window !== 'undefined' && readAndClear();
 
-// The full splash (about 2.6 s) plays once a day, on the first open; every
+// The full splash (about 2 s) plays once a day, on the first open; every
 // other open goes straight to the app, so "what is my mission today" is on
 // screen within two seconds (CLAUDE.md). Never with reduced motion.
 const SPLASH_KEY = 'ascend.splashShownOn';
@@ -48,3 +48,17 @@ function shouldShowSplash(): boolean {
 }
 
 export const SHOW_SPLASH = typeof window !== 'undefined' && shouldShowSplash();
+
+// De stand van de instelling Beweging van de vorige keer, zodat het logo op het
+// openingsscherm (waar de instellingen nog niet geladen zijn) ook in Rustig en
+// Uit meteen op de eindstand staat. components/motion.ts schrijft hem weg.
+export const MOTION_KEY = 'ascend.motionMode';
+
+if (typeof window !== 'undefined') {
+  try {
+    const stored = localStorage.getItem(MOTION_KEY);
+    if (stored === 'calm' || stored === 'off') document.documentElement.dataset.motion = stored;
+  } catch {
+    // geen opslag: het logo speelt dan gewoon
+  }
+}

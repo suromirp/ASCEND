@@ -170,7 +170,7 @@ function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   useOverlayA11y();
-  useMotionAttribute();
+  useMotionAttribute(!loading);
   useSkyAttribute();
 
   // Terug brengt je op dezelfde hoogte, ook na een herlaad (components/useScrollRestoration.ts).

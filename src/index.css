@@ -83,6 +83,16 @@
   --color-mountain-back: #a7d1bd;
   --color-mountain-front: #1d5a5c;
 
+  /* Het logo (Ring en pad, docs/beslissingen/2026-10-25-logo-ring-en-pad.md):
+     vaste kleuren, ook 's nachts dezelfde, want het teken staat op marine.
+     De ring en de kam zijn licht (lucht), de berg loopt van groenblauw naar
+     marine, het pad en de stip zijn mint. */
+  --color-logo-ring-top: #dcebf8;
+  --color-logo-ring-bottom: #d9efe6;
+  --color-logo-mountain-top: #1d5a5c;
+  --color-logo-mountain-bottom: #0b1733;
+  --color-logo-path: #5eead4;
+
   /* Elke tab een eigen kleur, voor de actieve tab en het kopje (Eyebrow). De
      -light-variant is dezelfde kleur, donker genoeg voor de lichte lucht. */
   --color-tab-vandaag: #5eead4;
@@ -407,150 +417,73 @@ html[data-sky='night'] .sky-band::before {
   pointer-events: none;
 }
 
-/* Splash/loading-screen brand mark (components/AscendAnimatedLogo.tsx):
-   pure SVG, no image asset. The outer ring+glow breathes, a point of light
-   travels up the winding trail via CSS offset-path, and the peak flashes
-   as it arrives. Twice, then it rests (nothing keeps looping except the
-   breath of the mission card, docs/beslissingen/2026-10-24-beweging.md);
-   in Rustig once. */
-.ascend-logo-glowpulse {
-  animation: ascend-logo-glow-pulse 5s ease-in-out 2;
+/* Het bewegende logo (components/AscendAnimatedLogo.tsx, ook het openingsscherm):
+   het teken staat in zijn eindstand in de basisstijl; de animatie loopt alleen
+   "van" de beginstand naar die eindstand, één keer, als het teken verschijnt.
+   Volgorde: de ring tekent zich (400 ms), de kam (350 ms), de berg kleurt in
+   (300 ms), het pad loopt omhoog (400 ms), als laatste verschijnt de stip
+   (250 ms) en het woord (400 ms). Ease-out, niets stuitert, geen lus.
+   Rustig en Uit (en beperkte beweging van het systeem) staan meteen op de
+   eindstand; zie onderaan bij data-motion. */
+.alogo-play .alogo-ring {
+  animation: alogo-draw 0.4s ease-out backwards;
 }
 
-.ascend-logo-ringbreathe {
-  animation: ascend-logo-ring-breathe 5s ease-in-out 2;
+.alogo-play .alogo-crest {
+  animation: alogo-draw 0.35s ease-out 0.4s backwards;
 }
 
-.ascend-logo-sparkflash {
-  animation: ascend-logo-spark-flash 4.5s ease-in-out 2;
+.alogo-play .alogo-mountain {
+  animation: alogo-fade 0.3s ease-out 0.6s backwards;
 }
 
-.ascend-logo-lightpoint {
-  offset-path: path('M120,58 C108,82 133,100 116,122 C102,142 130,158 112,182 C102,196 122,204 112,206');
-  offset-rotate: 0deg;
-  animation: ascend-logo-travel-up 6s linear 2;
+.alogo-play .alogo-path {
+  animation: alogo-draw 0.4s ease-out 0.75s backwards;
 }
 
-@keyframes ascend-logo-glow-pulse {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.85; }
+.alogo-dot {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-@keyframes ascend-logo-ring-breathe {
-  0%, 100% { stroke-opacity: 0.55; }
-  50% { stroke-opacity: 0.95; }
+.alogo-play .alogo-dot {
+  animation: alogo-dot 0.25s ease-out 1.15s backwards;
 }
 
-@keyframes ascend-logo-travel-up {
-  0% { offset-distance: 100%; opacity: 0; }
-  8% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { offset-distance: 0%; opacity: 0; }
+.alogo-play .alogo-word {
+  animation: alogo-fade-up 0.4s ease-out 1.3s backwards;
 }
 
-@keyframes ascend-logo-spark-flash {
-  0%, 100% { opacity: 0; }
-  6% { opacity: 1; }
-  14% { opacity: 0; }
+@keyframes alogo-draw {
+  0% { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+  1% { opacity: 1; }
+  100% { stroke-dasharray: 1; stroke-dashoffset: 0; opacity: 1; }
 }
 
-/* Splash-only entrance mark (components/AscendSplashLogo.tsx): the ring,
-   mountain and trail stroke-draw themselves in once, the peak flashes, the
-   wordmark fades up, then it settles into an ambient loop (glow pulse,
-   ring breathe, a light travelling the trail) — distinct from
-   .ascend-logo-* above, which loops from the very first frame and is used
-   inline on Today where a repeating intro would be too much. */
-.ascend-splash-glow {
-  opacity: 0.7;
-  animation: ascend-splash-glow-pulse 5s ease-in-out infinite;
-  animation-delay: 1.3s;
+@keyframes alogo-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.ascend-splash-ring-draw {
-  animation: ascend-splash-draw-ring 1.1s ease-out forwards;
+@keyframes alogo-dot {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-.ascend-splash-ring-solid {
-  opacity: 0;
-  animation:
-    ascend-splash-ring-solid-in 1.1s linear forwards,
-    ascend-splash-ring-breathe 5s ease-in-out infinite;
-  animation-delay: 0s, 1.3s;
+@keyframes alogo-fade-up {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.ascend-splash-mountain-draw {
-  animation: ascend-splash-draw-in 1.1s ease-out forwards;
-  animation-delay: 0.2s;
+html[data-motion='calm'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-word),
+html[data-motion='off'] .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-word) {
+  animation: none;
 }
 
-.ascend-splash-trail-draw {
-  animation: ascend-splash-draw-in 0.8s ease-out forwards;
-  animation-delay: 0.5s;
-}
-
-.ascend-splash-spark {
-  opacity: 0;
-  animation: ascend-splash-spark-flash 0.6s ease-out forwards;
-  animation-delay: 1.3s;
-}
-
-.ascend-splash-wordmark {
-  opacity: 0;
-  animation: ascend-splash-fade-up 0.9s ease-out forwards;
-  animation-delay: 1.4s;
-}
-
-.ascend-splash-light-point {
-  offset-path: path('M120,58 C108,82 133,100 116,122 C102,142 130,158 112,182 C102,196 122,204 112,206');
-  offset-rotate: 0deg;
-  animation: ascend-splash-travel-up 3.2s linear infinite;
-  animation-delay: 2.2s;
-}
-
-@keyframes ascend-splash-draw-ring {
-  0% { stroke-dashoffset: 1; opacity: 0; }
-  0.1% { opacity: 1; }
-  95% { stroke-dashoffset: 0.02; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0; }
-}
-
-@keyframes ascend-splash-ring-solid-in {
-  0%, 94% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes ascend-splash-ring-breathe {
-  0%, 100% { stroke-opacity: 0.6; }
-  50% { stroke-opacity: 0.95; }
-}
-
-@keyframes ascend-splash-draw-in {
-  0% { stroke-dashoffset: 1; opacity: 0; }
-  0.1% { opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 1; }
-}
-
-@keyframes ascend-splash-fade-up {
-  from { opacity: 0; transform: translateY(8px); letter-spacing: 14px; }
-  to { opacity: 1; transform: translateY(0); letter-spacing: 9px; }
-}
-
-@keyframes ascend-splash-spark-flash {
-  0% { opacity: 0; transform: scale(0.4); }
-  55% { opacity: 1; transform: scale(1.4); }
-  100% { opacity: 0.9; transform: scale(1); }
-}
-
-@keyframes ascend-splash-glow-pulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
-
-@keyframes ascend-splash-travel-up {
-  0% { offset-distance: 100%; opacity: 0; }
-  8% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { offset-distance: 0%; opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .alogo-play :is(.alogo-ring, .alogo-crest, .alogo-mountain, .alogo-path, .alogo-dot, .alogo-word) {
+    animation: none;
+  }
 }
 
 /* General-purpose entrance/exit motion, used app-wide so nothing just
@@ -1007,13 +940,6 @@ html[data-motion='calm'] .mx-pic-2,
 html[data-motion='calm'] .mx-pic-3,
 html[data-motion='calm'] .mx-attention {
   animation: none;
-}
-
-html[data-motion='calm'] .ascend-logo-glowpulse,
-html[data-motion='calm'] .ascend-logo-ringbreathe,
-html[data-motion='calm'] .ascend-logo-sparkflash,
-html[data-motion='calm'] .ascend-logo-lightpoint {
-  animation-iteration-count: 1;
 }
 
 html[data-motion='calm'] .mx-notice-in {

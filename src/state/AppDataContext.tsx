@@ -1163,18 +1163,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      // AscendSplashLogo's entrance sequence (ring/mountain/trail draw-in,
-      // peak flash, wordmark fade-up) finishes around 2.3s in, with the
-      // light-travel loop starting at 2.2s. 2.6s gives that loop a brief
-      // moment to actually be seen, not just the reveal, while keeping the
-      // splash noticeably shorter than before. On a warm load,
+      // AscendSplashLogo's entrance sequence (ring, crest, mountain, trail,
+      // dot, wordmark; .alogo-* in index.css) finishes at 1.7s. 2s lets the
+      // finished mark stand still for a moment. On a warm load,
       // seedIfEmpty/refresh can resolve in a handful of ms — without a
       // floor, the splash would unmount before its later stages ever fire,
       // so the animation would "sometimes" look broken depending on how
       // fast IndexedDB happened to respond.
       // Only the first open of the day shows the splash (utils/updateFlag.ts
       // #SHOW_SPLASH); otherwise there is no minimum duration.
-      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, SHOW_SPLASH ? 2600 : 0));
+      const minSplashDuration = new Promise((resolve) => setTimeout(resolve, SHOW_SPLASH ? 2000 : 0));
       const stopBlockedNotice = onDatabaseBlocked(() =>
         setBootError('ASCEND is in een ander venster nog open met een oudere versie. Sluit dat venster om de update af te ronden.'),
       );
