@@ -48,14 +48,3 @@ Niets. Het werkt het wedstrijdblok uit `engine/raceBlock.ts` uit met het label, 
 ## Terugdraaien
 
 Revert van de commit van ronde 2b. De velden `TrainingGoal.taperDays`, `TrainingGoal.conflictAccepted` en `Program.runBuild` zijn optioneel en onschadelijk als ze blijven staan; een oud bestand zonder de velden importeert zoals voorheen.
-
-## Aanvulling na de review van ronde 2b (26 oktober 2026)
-
-Dit besluit blijft zoals het was; dit zijn de rechtzettingen uit de review.
-
-- Een Verkenning krijgt alleen een wedstrijd op zijn dag (anker) en herstel als je het label zelf koos (`TrainingGoal.priorityChosen`, gezet in de app, nooit door de migratie). Een doel dat uit het oude "alleen volgen" kwam, blijft zonder anker en zonder blok.
-- Het herstel (AFTER-GOAL) loopt door na de dag van de wedstrijd (`engine/raceBlock.ts#afterGoalWindows`), los van het blok. Een harde training die het herstel rustig maakte, krijgt `PlannedSession.afterGoal` en komt terug als het doel verschuift of weggaat.
-- "Toch allebei" bewaart het paar van beide datums; verschuift een van beide, dan komt de melding terug.
-- Een overgeslagen of al gelogde wedstrijd komt niet opnieuw in de planning.
-- Bewust niet gedaan: half herstel bij een andere soort (onderzoek "Meerdere doelen en prioriteit", regel 5) is nog niet gebouwd, omdat er alleen hardloopblokken zijn.
-- Het vierde punt (de lange loop) en de bewuste beperking "niet naast een tocht" zijn vervangen door `2026-10-26-groei-lange-loop.md`.

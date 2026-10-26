@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
-import { addDays } from '../utils/dates';
+import { addDays, mondayOfWeek } from '../utils/dates';
 
 // Ronde 2b: het herstel na een doel (regel AFTER-GOAL in engine/weekValidator.ts), van de soort en
 // nooit van het label. Nagemaakte week: dezelfde indeling als in weekValidator.test.ts.
@@ -124,6 +124,34 @@ describe('AFTER-GOAL: herstel na een wedstrijd', () => {
       const r = run(locked, []);
       const s = r.sessions.find((x) => x.id === 'tempo')!;
       expect(s.templateId).toBe('tpl_easy_run');
+      expect(s.afterGoal).toBeUndefined();
+    });
+  });
+
+  describe('de terugzetlus laat de historie ongemoeid', () => {
+    const mark = { templateId: 'tpl_tempo_run', date: RACE_DAY };
+    const marked = (id: string, date: string, patch: Partial<PlannedSession> = {}): PlannedSession => ({ id, templateId: 'tpl_easy_run', scheduledDate: date, weekStartDate: mondayOfWeek(date), status: 'planned', order: 1, afterGoal: mark, ...patch });
+    const run = (list: PlannedSession[], over: Partial<CheckInput> = {}) => repairWeeks(input(list, { afterGoals: [], dailyTimeBudget, ...over }));
+
+    it('een gelogde gemarkeerde sessie blijft precies zoals ze is, de markering ook', () => {
+      const logged = marked('done', '2026-10-28');
+      const logs = [{ id: 'l', plannedSessionId: 'done', templateId: 'tpl_easy_run', type: 'cardio' as const, completedDate: '2026-10-28', completedAt: '', variant: 'full' as const, durationMinutes: 30, source: 'manual' as const }];
+      const r = run([race, logged], { logs, today: '2026-10-30' });
+      expect(r.sessions.find((s) => s.id === 'done')).toEqual(logged);
+      expect(r.repairs).toEqual([]);
+    });
+
+    it('een gemarkeerde sessie in het verleden blijft precies zoals ze is, de markering ook', () => {
+      const past = marked('past', '2026-10-20', { weekStartDate: '2026-10-19' });
+      const r = run([past]);
+      expect(r.sessions.find((s) => s.id === 'past')).toEqual(past);
+      expect(r.repairs).toEqual([]);
+    });
+
+    it('een toekomstige systeemsessie zonder herstelvenster krijgt haar harde training terug', () => {
+      const r = run([marked('later', '2026-10-28')]);
+      const s = r.sessions.find((x) => x.id === 'later')!;
+      expect(s.templateId).toBe('tpl_tempo_run');
       expect(s.afterGoal).toBeUndefined();
     });
   });

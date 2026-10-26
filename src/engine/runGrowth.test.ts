@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { longRunCapAfterRace, programRunBuild, resolveLongRunGrowth } from './runGrowth';
-import { PHASE_BASIS, PHASE_OPBOUW, progressionTarget, layoutPhasesForGoal } from './programLayout';
+import { PHASE_BASIS, PHASE_OPBOUW, progressionTarget, layoutPhasesForGoal, readRunBuild } from './programLayout';
 import { recentSessionMaxima, resolveEffectiveFullDuration, setRecentSessionMaxima } from './substitutions';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
@@ -54,7 +54,8 @@ describe('Groei van de lange loop (instelling)', () => {
     expect(programRunBuild(goals, undefined, TODAY)?.stepWeeks).toBe(1);
     expect(programRunBuild(goals, undefined, TODAY, 'weekly')?.stepWeeks).toBe(1);
     expect(programRunBuild(goals, undefined, TODAY, 'biweekly')?.stepWeeks).toBe(2);
-    expect(programRunBuild(goals, undefined, TODAY, 'wave')).toBeUndefined();
+    expect(readRunBuild(programRunBuild(goals, undefined, TODAY, 'wave'))).toBeUndefined();
+    expect(programRunBuild(goals, undefined, TODAY, 'wave')?.alternatePeak).toBe(false);
   });
 
   it('een onbekende waarde wordt het advies', () => {

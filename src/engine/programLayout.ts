@@ -307,27 +307,27 @@ function gradualLongRunMinutes(template: SessionTemplate, program: Program, gene
   const opbouw = opbouwStartWeek(program);
   if (!build || !opbouw || opbouw.weeks === 0 || week < opbouw.start) return undefined;
   const raceWeek = Math.floor(daysBetween(mondayOfWeek(program.startDate), mondayOfWeek(build.raceDate)) / 7) + 1;
-  if (!Number.isFinite(raceWeek) || week > raceWeek) return undefined;
+  if (!Number.isFinite(raceWeek) || week >= raceWeek) return undefined;
   const ladder = [1, 2, 3, 4].map((n) => generic.find((g) => g.weekInPhase === n)?.targetMinutes);
   if (ladder.some((m) => !(typeof m === 'number' && m > 0))) return undefined;
   const [, , heavy, light] = ladder as number[];
   const lightRatio = light / heavy;
   const peak = longRunPeak(program);
-  // The first build week grows from the week before Opbouw, as that week stands in the plan (the
-  // usual build-up), so the step into Opbouw is also at most 10%. A light week there does not count:
-  // then the week before it.
+  // The first build week grows from the highest non-light week of the last four weeks before
+  // Opbouw, as those weeks stand in the plan (the usual build-up): the same measure as the 110%
+  // cap on the longest run of 30 days, so the step into Opbouw is also at most 10%.
   let level = 0;
-  for (let back = 2; back <= 3 && opbouw.start - back >= 0; back++) {
+  for (let back = 2; back <= WAVE_LENGTH + 1 && opbouw.start - back >= 0; back++) {
     const before = resolveProgramWeek(program, addDays(mondayOfWeek(program.startDate), 7 * (opbouw.start - back)));
     const usualBefore = before ? genericTarget(template, program, before, generic) : undefined;
     if (!before || !usualBefore || usualBefore.taper) continue;
-    level = Math.floor(usualBefore.minutes);
-    if (waveWeek(before) !== WAVE_LENGTH) break;
+    if (waveWeek(before) === WAVE_LENGTH) continue;
+    level = Math.max(level, Math.floor(usualBefore.minutes));
   }
   if (!(level > 0)) level = Math.floor(heavy);
   let builds = 0;
   for (let w = opbouw.start; w <= week; w++) {
-    const isLight = ((w - opbouw.start) % WAVE_LENGTH) + 1 === WAVE_LENGTH && !(w === week && restSkipped);
+    const isLight = ((w - opbouw.start) % WAVE_LENGTH) + 1 === WAVE_LENGTH && !(w === week && restSkipped) && !(w < week && resolveProgramWeek(program, addDays(mondayOfWeek(program.startDate), 7 * (w - 1)))?.restSkipped);
     let value: number;
     if (isLight) value = Math.max(15, Math.round(level * lightRatio));
     else {
@@ -420,7 +420,7 @@ export const PEAK_ALTERNATE_RATIO = 0.8;
 
 function alternatePeak(template: SessionTemplate, program: Program, dateIso: string, generic: WeeklyProgressionStep[], minutes: number): number {
   const peak = longRunPeak(program);
-  if (minutes < peak || readRunBuild(program.runBuild)?.alternatePeak === false) return minutes;
+  if (minutes < peak || program.runBuild?.alternatePeak === false) return minutes;
   // How many weeks in a row before this one stood on the peak: odd = this week is the lighter one.
   let run = 0;
   while (run < 60) {

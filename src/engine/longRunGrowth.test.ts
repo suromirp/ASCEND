@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { PHASE_BASIS, PHASE_OPBOUW, layoutPhasesForGoal } from './programLayout';
+import { PHASE_BASIS, PHASE_OPBOUW, layoutPhasesForGoal, readRunBuild } from './programLayout';
 import { recentSessionMaxima, resolveEffectiveFullDuration, setDurationAdjustments, setRecentSessionMaxima } from './substitutions';
 import { programRunBuild } from './runGrowth';
 import { buildDefaultProgramData } from '../data/defaultProgram';
@@ -40,7 +40,7 @@ describe('elke week hoogstens 10% boven de vorige opbouwweek, nooit in één kee
 
   it('Volgens het onderzoek: elke opbouwweek hoogstens 10% boven de vorige opbouwweek', () => {
     let lastBuild = 70;
-    for (let week = OPBOUW_START; week <= RACE_WEEK; week++) {
+    for (let week = OPBOUW_START; week < RACE_WEEK; week++) {
       if (isLight(week)) continue;
       expect(at(week), `week ${week}`).toBeLessThanOrEqual(Math.floor(lastBuild * 1.1));
       // De week na een piek is de afgeleide van 80%: die telt niet als nieuwe opbouwweek.
@@ -53,7 +53,7 @@ describe('elke week hoogstens 10% boven de vorige opbouwweek, nooit in één kee
   });
 
   it('de lichtere week van de golf blijft: lager dan de week ervoor en erna', () => {
-    for (let week = OPBOUW_START; week < RACE_WEEK; week++) {
+    for (let week = OPBOUW_START; week < RACE_WEEK - 1; week++) {
       if (!isLight(week)) continue;
       expect(at(week), `week ${week}`).toBeLessThan(at(week - 1));
       expect(at(week + 1), `week ${week + 1}`).toBeGreaterThan(at(week));
@@ -76,10 +76,42 @@ describe('elke week hoogstens 10% boven de vorige opbouwweek, nooit in één kee
   it('Rustiger is langzamer dan het advies en Heel rustig is het oude gedrag', () => {
     const calm = series(programFor('biweekly'));
     const old = series(programFor('wave'));
-    expect(programFor('wave').runBuild).toBeUndefined();
+    // Heel rustig: geen geleidelijke groei (readRunBuild negeert het) en geen afwisseling op de piek.
+    expect(readRunBuild(programFor('wave').runBuild)).toBeUndefined();
+    expect(programFor('wave').runBuild?.alternatePeak).toBe(false);
     for (let week = OPBOUW_START; week <= 11; week++) expect(calm[week - 1]).toBeLessThanOrEqual(at(week));
     expect(calm[OPBOUW_START - 1]).toBeLessThan(calm[OPBOUW_START + 1]);
     expect(Math.max(...old.slice(0, RACE_WEEK))).toBeLessThan(Math.max(...weekly.slice(0, RACE_WEEK)));
+  });
+});
+
+describe('Heel rustig, de stop bij de wedstrijd en de start van de opbouw', () => {
+  it('Heel rustig laat de piek niet afwisselen (het oude gedrag), de andere keuzes wel', () => {
+    const wave = series(programFor('wave'), 1, 40);
+    for (let i = 0; i + 1 < wave.length; i++) expect(wave[i] === 96, `week ${i + 1}`).toBe(false);
+    expect(series(programFor('weekly'), 1, 20).some((m) => m === 96)).toBe(true);
+  });
+
+  it('vanaf de week van de wedstrijd groeit de lange loop niet meer geleidelijk door', () => {
+    const weekly = series(programFor('weekly'), 1, 26);
+    const usual = series(programFor('wave'), 1, 26);
+    for (let week = RACE_WEEK; week <= 26; week++) expect(weekly[week - 1], `week ${week}`).toBe(usual[week - 1]);
+  });
+
+  it('de opbouw start vanaf de hoogste niet-lichte week van de laatste vier weken', () => {
+    const program = programFor('weekly');
+    const before = series(program, 1, OPBOUW_START - 1);
+    // De lichte week (week 4 van de basis) telt niet; de hoogste van de weken ervoor is de maat.
+    const base = Math.max(...before.slice(0, 3));
+    expect(series(program, OPBOUW_START, OPBOUW_START)[0]).toBeLessThanOrEqual(Math.floor(base * 1.1));
+    expect(series(program, OPBOUW_START, OPBOUW_START)[0]).toBeGreaterThanOrEqual(base);
+  });
+
+  it('een doorgetrainde rustweek eerder in de opbouw telt als opbouwweek, niet als lichte week', () => {
+    const program = programFor('weekly');
+    const lightWeek = 8;
+    const skipped: Program = { ...program, skippedRestWeeks: [addDays(START, 7 * (lightWeek - 1))] };
+    expect(series(skipped, lightWeek + 1, lightWeek + 1)[0]).not.toBe(series(program, lightWeek + 1, lightWeek + 1)[0]);
   });
 });
 

@@ -17,11 +17,11 @@ Een verandering van de instelling is altijd een voorstel met Akkoord (`usePlanSe
 
 De regels van de geleidelijke groei (`engine/programLayout.ts#gradualLongRunMinutes`):
 
-- Vanaf de eerste week van Opbouw groeit de lange loop vanaf de week ervoor, zoals die in het plan staat (een lichte week telt niet, dan de week ervoor), met hoogstens 10% per opbouwweek (bij Rustiger om de twee opbouwweken). Nooit in één keer naar de piek of naar de 110%-grens.
+- Vanaf de eerste week van Opbouw groeit de lange loop vanaf de hoogste week ervoor, zoals die in het plan staat (de hoogste niet-lichte week van de laatste vier weken, dezelfde maat als de 110%-rem), met hoogstens 10% per opbouwweek (bij Rustiger om de twee opbouwweken). Nooit in één keer naar de piek of naar de 110%-grens.
 - De lichtere week van de golf blijft. Na die week gaat de opbouw verder vanaf de laatste opbouwweek, niet vanaf de lichte.
-- De piek is het grootste van de piek voor de wedstrijd (10 km 75, halve marathon 120, marathon 180) en de bestaande piek van 120 minuten van het programma. Tot en met de week van de wedstrijd; daarna geldt de gewone opbouw weer.
+- De piek is het grootste van de piek voor de wedstrijd (10 km 75, halve marathon 120, marathon 180) en de bestaande piek van 120 minuten van het programma. Tot de week van de wedstrijd; vanaf die week geldt de gewone opbouw weer.
 - Dit geldt ook in een programma naar een tocht: de uitzondering uit het besluit van ronde 2b is vervallen, op verzoek van de eigenaar. Alleen een Top of Voortop telt, een Verkenning niet.
-- Afwisselen op de piek (expert, keuze van de eigenaar): zodra de lange loop de piek heeft bereikt, staat hij een week op de piek en is de week erna ongeveer 80% van de piek, naast de lichtere week van de golf. De piek staat dus hoogstens om de week. Dit geldt voor de lange loop (`tpl_long_run`) in elk programma, ook zonder hardloopwedstrijd, en niet voor de bergtochten en wandeldagen van de tochtladder. Bij Stevig en Sneller geldt het niet.
+- Afwisselen op de piek (expert, keuze van de eigenaar): zodra de lange loop de piek heeft bereikt, staat hij een week op de piek en is de week erna ongeveer 80% van de piek, naast de lichtere week van de golf. De piek staat dus hoogstens om de week. Dit geldt voor de lange loop (`tpl_long_run`) in elk programma, ook zonder hardloopwedstrijd, en niet voor de bergtochten en wandeldagen van de tochtladder. Bij Heel rustig, Stevig en Sneller geldt het niet.
 - De 110%-rem op wat je echt liep (`engine/substitutions.ts`, langste gelogde loop van 30 dagen) blijft op elke stand de bovengrens, behalve bij Sneller (120%, alleen voor de lange loop en alleen via `Program.runBuild.spikeLimit`). Liep je korter of sloeg je een loop over, dan groeit de volgende vanaf wat je echt deed. Een herstart na een pauze (ziekte, `durationAdjustments`) en de rem bij pijn (Ambitie valt terug op Standaard) werken door op elke stand.
 
 ## Reden
@@ -54,4 +54,4 @@ Het vierde punt van `2026-10-26-planning-met-labels.md` waar het ervan afwijkt (
 
 ## Terugdraaien
 
-Zet de instelling op Heel rustig voor het oude gedrag van de groei. De velden `AppSettings.longRunGrowth` en `Program.runBuild.stepPercent`, `.alternatePeak` en `.spikeLimit` zijn optioneel en onschadelijk als ze blijven staan.
+Zet de instelling op Heel rustig voor het oude gedrag: de groei per blok van vier weken en ook geen afwisseling op de piek. De velden `AppSettings.longRunGrowth` en `Program.runBuild.stepPercent`, `.alternatePeak` en `.spikeLimit` zijn optioneel en onschadelijk als ze blijven staan.

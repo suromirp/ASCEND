@@ -394,11 +394,14 @@ export function repairWeeks(input: CheckInput): RepairResult {
   // A hard training the recovery made easy comes back as it was when that recovery is no longer
   // there (the goal moved, went, or the days passed): the way a moved leave session goes back.
   // Only while it is still the system's own and still the easy run; otherwise the mark just goes.
-  for (const marked of sessions.filter((s) => s.afterGoal)) {
+  // History (logged or past) is left exactly as it is, the mark included. Only a session of the
+  // system itself (lock level 3, not in a trek, not of the race block) is put back; of anything
+  // else the mark just goes.
+  for (const marked of sessions.filter((s) => s.afterGoal && level(s) !== 0)) {
     const mark = marked.afterGoal!;
     const { afterGoal: _drop, ...plain } = marked;
     void _drop;
-    const stillEasy = marked.templateId === EASY_ID && marked.status === 'planned' && !marked.lock;
+    const stillEasy = movable(marked) && marked.templateId === EASY_ID && marked.status === 'planned';
     if (!stillEasy || !byId.has(mark.templateId)) {
       sessions = sessions.map((s) => (s.id === marked.id ? plain : s));
       continue;

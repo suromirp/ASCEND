@@ -44,6 +44,8 @@ const GROWTH_SPEC: Record<Exclude<LongRunGrowth, 'wave'>, NonNullable<Program['r
   fast: { raceDate: '', stepWeeks: 1, peakMinutes: 0, alternatePeak: false, stepPercent: 20, spikeLimit: 1.2 },
 };
 
+export const WAVE_NO_ALTERNATION: NonNullable<Program['runBuild']> = { raceDate: '', stepWeeks: 1, peakMinutes: 0, alternatePeak: false };
+
 // Defensief gelezen: wat geen bekende keuze is, wordt het advies.
 export function resolveLongRunGrowth(raw: unknown): LongRunGrowth {
   return raw === 'weekly' || raw === 'biweekly' || raw === 'wave' || raw === 'firm' || raw === 'fast' ? raw : LONG_RUN_GROWTH_ADVICE;
@@ -65,7 +67,9 @@ export function longRunPeakMinutes(variant: string | undefined): number {
 // "per blok van vier weken", niets: dan blijft de gewone opbouw.
 export function programRunBuild(goals: TrainingGoal[], mainGoalId: string | undefined, today: string, growth: unknown = LONG_RUN_GROWTH_ADVICE): NonNullable<Program['runBuild']> | undefined {
   const choice = resolveLongRunGrowth(growth);
-  if (choice === 'wave') return undefined;
+  // Heel rustig: geen geleidelijke groei en ook geen afwisseling op de piek (het gedrag van voor ronde 2b).
+  // De leeg gelaten datum maakt dat readRunBuild het negeert; alleen de afwisseling leest de markering.
+  if (choice === 'wave') return WAVE_NO_ALTERNATION;
   const next = goals
     .filter((g): g is TrainingGoal & { targetDate: string } => g.status === 'active' && !!g.targetDate && g.targetDate >= today && isRaceGoal(g))
     .filter((g) => effectivePriority(g, mainGoalId) !== 'verkenning')
