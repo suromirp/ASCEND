@@ -404,11 +404,11 @@ function stepTarget(template: SessionTemplate, program: Program | null | undefin
   if (generic.length === 0) return undefined;
   const raw = genericTarget(template, program, position, generic);
   if (!raw) return undefined;
-  if (raw.taper) return { step: raw.step, minutes: raw.minutes, phaseSteps: generic };
+  if (raw.taper) return { step: raw.step, minutes: template.id === LONG_RUN_ID ? raceTaperCap(program, dateIso, raw.minutes) : raw.minutes, phaseSteps: generic };
   let minutes = raw.minutes;
   // The long run on its peak alternates: a week on the peak, the next about 80% of it, next to the
   // lighter week of the wave. So the peak stands at most every other week (expert).
-  if (template.id === LONG_RUN_ID) minutes = alternatePeak(template, program, dateIso, generic, minutes);
+  if (template.id === LONG_RUN_ID) minutes = raceTaperCap(program, dateIso, alternatePeak(template, program, dateIso, generic, minutes));
   return { step: repeatNote(raw.step, position), minutes, phaseSteps: generic };
 }
 
@@ -416,6 +416,19 @@ function stepTarget(template: SessionTemplate, program: Program | null | undefin
 function longRunPeak(program: Program): number {
   return Math.max(RUN_BUILD_PEAK_MINUTES[LONG_RUN_ID], readRunBuild(program.runBuild)?.peakMinutes ?? 0);
 }
+// Derived rule (not a study): a taper lowers the volume and keeps the intensity (Bosquet 2007). In the 14
+// days before a running race of a Top or Voortop goal the long run is at most the peak of that race
+// (10 km 75 minutes, half 120, marathon 180), in the last 7 days at most 70% of it. After the race the
+// usual recovery applies. Only with a known race peak (Program.runBuild.peakMinutes).
+export const RACE_TAPER_RATIO = 0.7;
+function raceTaperCap(program: Program, dateIso: string, minutes: number): number {
+  const build = readRunBuild(program.runBuild);
+  if (!build || !(build.peakMinutes > 0)) return minutes;
+  const days = daysBetween(dateIso, build.raceDate);
+  if (days < 0 || days > 14) return minutes;
+  return Math.min(minutes, Math.round(build.peakMinutes * (days <= 7 ? RACE_TAPER_RATIO : 1)));
+}
+
 export const PEAK_ALTERNATE_RATIO = 0.8;
 
 function alternatePeak(template: SessionTemplate, program: Program, dateIso: string, generic: WeeklyProgressionStep[], minutes: number): number {

@@ -115,6 +115,31 @@ describe('Heel rustig, de stop bij de wedstrijd en de start van de opbouw', () =
   });
 });
 
+describe('afbouw voor de wedstrijd (afgeleide regel)', () => {
+  const tenK = (): Program => {
+    const base: Program = { id: 'p', name: 'P', startDate: START, phases };
+    const race = addDays(START, 7 * (RACE_WEEK - 1) + 5);
+    const runBuild = programRunBuild([{ ...raceGoal(race), requirements: [{ id: 'r', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 10, unit: 'km' }, discipline: 'running' }], details: { variant: '10k' } } as unknown as TrainingGoal], undefined, START, 'weekly');
+    return { ...base, runBuild };
+  };
+  const race = addDays(START, 7 * (RACE_WEEK - 1) + 5);
+  it('de laatste 14 dagen hoogstens de wedstrijdpiek, de laatste 7 dagen hoogstens 70% daarvan', () => {
+    const p = tenK();
+    expect(p.runBuild?.peakMinutes).toBe(75);
+    for (let back = 1; back <= 14; back++) {
+      const d = addDays(race, -back);
+      const m = resolveEffectiveFullDuration(longRun, d, p);
+      expect(m, d).toBeLessThanOrEqual(back <= 7 ? Math.round(75 * 0.7) : 75);
+    }
+  });
+  it('daarbuiten blijft de gewone groei, en een programma zonder wedstrijdpiek wordt niet begrensd', () => {
+    const p = tenK();
+    expect(resolveEffectiveFullDuration(longRun, addDays(race, -21), p)).toBeGreaterThan(75);
+    const none: Program = { ...p, runBuild: { ...p.runBuild!, peakMinutes: 0 } };
+    expect(resolveEffectiveFullDuration(longRun, addDays(race, -6), none)).toBeGreaterThan(Math.round(75 * 0.7));
+  });
+});
+
 describe('de rem rekent met wat je echt liep', () => {
   // Elke week een zondag: de lange loop wordt gelopen zoals gepland, of overgeslagen.
   function walk(program: Program, skip: number[], from = 5, to = 16) {
