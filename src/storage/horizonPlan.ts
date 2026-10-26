@@ -35,6 +35,7 @@ import {
 } from './database';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { diffHorizon, type HorizonDiff } from '../engine/horizonChange';
+import { acceptConflicts, applyResolution, conflictsForGoals, newConflicts, type GoalConflict } from '../engine/goalConflicts';
 import { makeId } from '../utils/id';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
@@ -89,6 +90,10 @@ export interface HorizonPlan {
   // Trainingen in de komende twee weken die alleen een andere lengte krijgen.
   lengths: string[];
   counts: HorizonDiff['counts'];
+  // Goals that now come too close together because of this change (engine/goalConflicts.ts),
+  // also said in `notes`. "Toch allebei" is withAcceptedConflicts; ASCEND's own suggestion is
+  // withResolvedConflicts. Both give a new input for computeHorizonPlan.
+  conflicts?: GoalConflict[];
   // The stored program the proposal was made against, when it changes the
   // program: another one at Akkoord means the plan changed in between.
   programWas?: string;
@@ -178,6 +183,40 @@ async function scopeFor(input: HorizonChangeInput): Promise<DurationScope | unde
   return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay };
 }
 
+// The goals as the change would leave them: the stored ones, the changed ones in their place, new ones added.
+function goalsAfter(stored: TrainingGoal[], changed: TrainingGoal[] | undefined): TrainingGoal[] {
+  const replaced = new Map((changed ?? []).map((g) => [g.id, g]));
+  return [...stored.map((g) => replaced.get(g.id) ?? g), ...(changed ?? []).filter((g) => !stored.some((s) => s.id === g.id))];
+}
+
+// The collisions of goals this change brings (docs/beslissingen/2026-10-26-planning-met-labels.md):
+// the ones after the change that were not there before. Only a change that touches goals.
+async function goalConflictsOf(input: HorizonChangeInput, today: string): Promise<GoalConflict[]> {
+  if (!input.goals?.length) return [];
+  const [stored, storedMilestones] = await Promise.all([TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll()]);
+  const ladder = new Set([...storedMilestones, ...(input.firstPlan?.milestones ?? [])].map((m) => m.goalId));
+  return newConflicts(conflictsForGoals(stored, ladder, today), conflictsForGoals(goalsAfter(stored, input.goals), ladder, today));
+}
+
+// "Toch allebei": the same change, and the goal that had to give way remembers the date of the other
+// one, so the notice does not come back while that date stays.
+export async function withAcceptedConflicts(input: HorizonChangeInput, conflicts: GoalConflict[]): Promise<HorizonChangeInput> {
+  const all = goalsAfter(await TrainingGoalsRepo.getAll(), input.goals);
+  const patched = acceptConflicts(all, conflicts);
+  return { ...input, goals: goalsAfter(input.goals ?? [], patched) };
+}
+
+// ASCEND's own suggestion for the collisions (a shorter taper, a label lower): the same change with it.
+export async function withResolvedConflicts(input: HorizonChangeInput, conflicts: GoalConflict[]): Promise<HorizonChangeInput> {
+  let all = goalsAfter(await TrainingGoalsRepo.getAll(), input.goals);
+  const touched = new Set<string>();
+  for (const c of conflicts) {
+    all = all.map((g) => (g.id === c.goalId ? applyResolution(g, c.resolution) : g));
+    touched.add(c.goalId);
+  }
+  return { ...input, goals: goalsAfter(input.goals ?? [], all.filter((g) => touched.has(g.id))) };
+}
+
 export async function computeHorizonPlan(input: HorizonChangeInput, deps: HorizonDeps = {}): Promise<HorizonPlan> {
   const today = todayISO();
   if (deps.prime) await deps.prime();
@@ -207,8 +246,11 @@ export async function computeHorizonPlan(input: HorizonChangeInput, deps: Horizo
     explanation: input.explanation,
     createdAt: new Date().toISOString(),
   };
+  const conflicts = await goalConflictsOf(input, today);
+  const conflictNotes = conflicts.flatMap((c) => [c.message, c.suggestion]);
   return {
-    input, proposal, notes: [...(input.notes ?? []), ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
+    input, proposal, notes: [...(input.notes ?? []), ...conflictNotes, ...diff.notes], lengths: input.lengths ?? lengths, counts: diff.counts,
+    ...(conflicts.length > 0 ? { conflicts } : {}),
     ...(input.program ? { programWas: JSON.stringify(programs[0] ?? null) } : {}),
   };
 }

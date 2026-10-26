@@ -44,6 +44,7 @@ import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
 import type { JourneyState } from '../engine/journey';
 import type { PackListState } from '../engine/packList';
 import { mainGoal } from '../engine/mainGoal';
+import { programRunBuild } from '../engine/runGrowth';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
@@ -1026,7 +1027,7 @@ export async function resetScheduleToDefault(startFrom: 'this_week' | 'next_week
   const { templates } = buildDefaultProgramData();
   await putAll('sessionTemplates', templates);
   const ctx = await patternContext(templates, await defaultPatternSelector());
-  const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
+  const next = withPackTarget({ ...program, startDate: thisMonday, phases: layoutPhases(thisMonday, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget, ctx.runBuild);
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -1081,7 +1082,7 @@ export async function rebuildPlanningFromWeekOne(
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const cutoff = startFrom === 'this_week' ? todayISO() : newStart;
   const ctx = await patternContext(templates, selectPattern);
-  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
+  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget, ctx.runBuild);
   await ProgramsRepo.put(next);
 
   const loggedPlannedIds = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
@@ -1109,7 +1110,7 @@ export async function restartProgramAtWeekOne(startFrom: 'this_week' | 'next_wee
   const newStart = startFrom === 'this_week' ? thisMonday : addDays(thisMonday, 7);
   const templates = await SessionTemplatesRepo.getAll();
   const ctx = await patternContext(templates);
-  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget);
+  const next = withPackTarget({ ...program, startDate: newStart, phases: layoutPhases(newStart, ctx.anchor, todayISO(), ctx.overrides) }, ctx.packTarget, ctx.runBuild);
   await ProgramsRepo.put(next);
 
   const weeksWithSessions = new Set(existingSessions.map((s) => mondayOfWeek(s.scheduledDate)));
@@ -1126,14 +1127,17 @@ interface PatternContext {
   overrides: PhaseLengthOverrides | undefined;
   // The main goal's rucksack target, for Program.packTargetKg.
   packTarget: number | undefined;
+  // The next running race of a Top or Voortop goal, for Program.runBuild (engine/runGrowth.ts).
+  runBuild: Program['runBuild'];
 }
 
 // The program with the pack target of its main goal (or without, when the
 // goal has none): the pack ladder reads it from the program.
-function withPackTarget(program: Program, kg: number | undefined): Program {
-  const { packTargetKg: _old, ...rest } = program;
+function withPackTarget(program: Program, kg: number | undefined, runBuild?: Program['runBuild']): Program {
+  const { packTargetKg: _old, runBuild: _oldBuild, ...rest } = program;
   void _old;
-  return kg === undefined ? rest : { ...rest, packTargetKg: kg };
+  void _oldBuild;
+  return { ...rest, ...(kg === undefined ? {} : { packTargetKg: kg }), ...(runBuild ? { runBuild } : {}) };
 }
 
 // What a rebuilt week looks like for this user: their sports, the hike
@@ -1167,6 +1171,7 @@ async function patternContext(
     anchor: planEndDay(goals, milestones, todayISO(), settings.afterMainGoal),
     overrides: settings.programPhaseOverrides,
     packTarget: programPackTarget(goals, milestones),
+    runBuild: programRunBuild(goals, mainGoal(goals, new Set(milestones.map((m) => m.goalId)))?.id, todayISO()),
   };
 }
 
@@ -1307,11 +1312,11 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const goals = [...storedGoals.map((g) => replaced.get(g.id) ?? g), ...[...replaced.values()].filter((g) => !storedGoals.some((s) => s.id === g.id))];
   const today = todayISO();
   const ctx = await patternContext(templates, undefined, { settings, goals, milestones });
-  const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides) }, ctx.packTarget);
+  const next: Program = withPackTarget({ ...program, phases: layoutPhases(program.startDate, ctx.anchor, today, ctx.overrides) }, ctx.packTarget, ctx.runBuild);
   const phasesChanged = JSON.stringify(program.phases) !== JSON.stringify(next.phases);
   // The pack target of the goal travels with the phases (the ladder of the
   // hikes reads it from the program).
-  if (!dryRun && (phasesChanged || program.packTargetKg !== next.packTargetKg)) await ProgramsRepo.put(next);
+  if (!dryRun && (phasesChanged || program.packTargetKg !== next.packTargetKg || JSON.stringify(program.runBuild) !== JSON.stringify(next.runBuild))) await ProgramsRepo.put(next);
 
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter(Boolean));
   const proposals = await PlanChangeProposalsRepo.getAll();

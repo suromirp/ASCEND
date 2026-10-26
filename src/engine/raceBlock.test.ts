@@ -5,6 +5,7 @@ import { layoutPhasesForGoal, PHASE_BASIS } from './programLayout';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession } from '../models/training';
+import { lockLevel } from './weekValidator';
 import { addDays, mondayOfWeek } from '../utils/dates';
 
 const { templates } = buildDefaultProgramData();
@@ -30,7 +31,10 @@ describe('race block', () => {
     expect(goalPlanRole({ ...race, planRole: 'track' }, 'gr5')).toBe('track');
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatchObject({ raceDate: '2027-03-20', raceWeek: '2027-03-15', blockStart: '2027-01-18', targetMinutes: 45 });
-    expect(raceBlocks([{ ...race, planRole: 'track' }], 'gr5', '2027-08-01', '2026-10-12')).toEqual([]);
+    // Alleen volgen heet nu Verkenning: geen blok, maar de wedstrijd staat wel op zijn dag.
+    expect(raceBlocks([{ ...race, planRole: 'track' }], 'gr5', '2027-08-01', '2026-10-12').map((b) => b.priority)).toEqual(['verkenning']);
+    // Het hoofddoel zelf heeft nooit een wedstrijdblok.
+    expect(raceBlocks([race], 'race', '2027-08-01', '2026-10-12')).toEqual([]);
   });
 
   it('turns the easy run into a tempo run in the 8 weeks before, not in race week, and back outside', () => {
@@ -334,5 +338,72 @@ describe('one quality session in a week with three runs', () => {
     const c = applyRaceBlocks(week('2027-01-25'), blocks, without, newId, program);
     expect(c.update.find((u) => u.id.endsWith('hill_intervals'))?.templateId).toBe('tpl_intervals');
     expect(c.update.find((u) => u.id.endsWith('easy_run'))?.templateId).toBe('tpl_tempo_run');
+  });
+});
+
+
+// Ronde 2b: de planning leest het label (docs/beslissingen/2026-10-26-planning-met-labels.md).
+describe('het label van het doel in het wedstrijdblok', () => {
+  const at = (over: Partial<TrainingGoal>, date = '2027-03-20') => raceBlocks([{ ...race, ...over, targetDate: date } as TrainingGoal], 'gr5', '2027-08-01', '2026-10-12');
+
+  it('Voortop krijgt de korte afbouw van zijn soort, Top houdt de wedstrijdweek, Verkenning heeft geen afbouw', () => {
+    // 10 km: afbouw 4 dagen, herstel 4 dagen.
+    expect(at({ priority: 'voortop' })[0]).toMatchObject({ priority: 'voortop', taperStart: '2027-03-16', recoveryDays: 4 });
+    expect(at({ priority: 'top' })[0]).toMatchObject({ priority: 'top', taperStart: '2027-03-15', recoveryDays: 4 });
+    expect(at({ priority: 'verkenning' })[0]).toMatchObject({ priority: 'verkenning', taperStart: '2027-03-20', blockStart: '2027-03-15' });
+    // Een marathon als Voortop: 7 dagen afbouw, dus ook de zondag voor de wedstrijdweek is al kort.
+    const marathon = { requirements: [{ id: 'm', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 42.2, unit: 'km' }, discipline: 'running' }] } as Partial<TrainingGoal>;
+    expect(at({ ...marathon, priority: 'voortop' })[0]).toMatchObject({ taperStart: '2027-03-13', recoveryDays: 10 });
+    // Een eigen kortere afbouw (uit een botsing) telt.
+    expect(at({ ...marathon, priority: 'voortop', taperDays: 3 })[0].taperStart).toBe('2027-03-17');
+  });
+
+  it('de afbouw van een Voortop begint op de dag die zijn soort zegt', () => {
+    const open = week('2027-03-15');
+    const c = applyRaceBlocks(open, at({ priority: 'voortop' }), templates, newId);
+    // Dinsdag 16 maart is dag 4 voor de wedstrijd: kort. De zondag ervoor niet.
+    expect(c.update).toContainEqual(expect.objectContaining({ templateId: 'tpl_upper_a', scheduledDate: '2027-03-16', plannedMinutes: 45 }));
+    const marathon = { requirements: [{ id: 'm', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 42.2, unit: 'km' }, discipline: 'running' }] } as Partial<TrainingGoal>;
+    const longBefore = [{ id: 'sun', templateId: 'tpl_long_run', scheduledDate: '2027-03-14', weekStartDate: '2027-03-08', status: 'planned' as const, order: 0 }];
+    expect(applyRaceBlocks(longBefore, at({ ...marathon, priority: 'voortop' }), templates, newId).update).toContainEqual(expect.objectContaining({ id: 'sun', plannedMinutes: 45 }));
+    expect(applyRaceBlocks(longBefore, at({ priority: 'voortop' }), templates, newId).update).toEqual([]);
+  });
+
+  it('Verkenning: de wedstrijd staat op zijn dag, als anker, zonder blok, zonder afbouw en zonder korte dag erna', () => {
+    const exploring = at({ priority: 'verkenning' });
+    // Geen tempoloop, geen testloop, geen blok in de weken ervoor.
+    expect(templateForRaceBlock('tpl_easy_run', '2027-01-21', exploring)).toBe('tpl_easy_run');
+    expect(templateForRaceBlock('tpl_easy_run', '2027-02-18', exploring)).toBe('tpl_easy_run');
+    expect(saturdayTemplate('2027-01-23', exploring)).toBe('tpl_hill_intervals');
+
+    const open = [...week('2027-03-15'), ...week('2027-03-22')];
+    const c = applyRaceBlocks(open, exploring, templates, newId);
+    expect(c.add).toEqual([expect.objectContaining({ templateId: 'tpl_race', scheduledDate: '2027-03-20', plannedMinutes: 45 })]);
+    // Op de wedstrijddag niets anders (de heuvelintervallen), en de dag ervoor niets zwaars: vrijdag is Upper B, dat blijft.
+    expect(c.remove.map((s) => s.templateId)).toEqual(['tpl_hill_intervals']);
+    // Geen afbouw: niets wordt korter, ook de lange loop de dag erna niet.
+    expect(c.update).toEqual([]);
+    // De wedstrijd is een anker (niveau 2): alleen via een voorstel te verplaatsen.
+    const race = c.add[0];
+    expect(lockLevel(race, new Set(), '2026-10-12')).toBe(2);
+  });
+
+  it('Verkenning: de dag ervoor geen heuvelintervallen of zware beenkracht, maar twee dagen ervoor wel', () => {
+    const exploring = at({ priority: 'verkenning' }, '2027-03-21');
+    const sessions: PlannedSession[] = [
+      { id: 'lower', templateId: 'tpl_lower_a', scheduledDate: '2027-03-19', weekStartDate: '2027-03-15', status: 'planned', order: 0 },
+      { id: 'lower2', templateId: 'tpl_lower_b', scheduledDate: '2027-03-20', weekStartDate: '2027-03-15', status: 'planned', order: 1 },
+    ];
+    const c = applyRaceBlocks(sessions, exploring, templates, newId);
+    expect(c.remove.map((s) => s.id)).toEqual(['lower2']);
+  });
+
+  it('een Verkenning wordt een Voortop: het blok komt erbij, zonder dubbele wedstrijd', () => {
+    const open = week('2027-03-15');
+    const first = applyRaceBlocks(open, at({ priority: 'verkenning' }), templates, newId);
+    const planned = [...open.filter((s) => !first.remove.includes(s)), ...first.add];
+    const second = applyRaceBlocks(planned, at({ priority: 'voortop' }), templates, newId);
+    expect(second.add).toEqual([]);
+    expect(second.update.length).toBeGreaterThan(0);
   });
 });

@@ -3,6 +3,8 @@ import type { Program } from '../models/program';
 import { ambitionFactor, type Ambition } from './ambitionLevels';
 import { addDays } from '../utils/dates';
 import { progressionTarget } from './programLayout';
+import { longRunCapAfterRace } from './runGrowth';
+import { idHasRole } from './templateRoles';
 
 // "Short" keeps core + accessory work, drops optional. "Minimum" keeps only
 // core work — the smallest version of the session that still counts.
@@ -67,22 +69,32 @@ export function setDurationAdjustments(adjustments: DurationAdjustment[]): void 
 export interface RecentSessionMaxima {
   asOf: string;
   minutesByTemplate: Record<string, number>;
+  // A race in the last week: the long run toward the days after it is at most half the race
+  // (engine/runGrowth.ts#longRunCapAfterRace). The race itself never counts as the reference above.
+  afterRace?: { date: string; durationMinutes: number }[];
 }
 let recentMaxima: RecentSessionMaxima = { asOf: '', minutesByTemplate: {} };
 export function setRecentSessionMaxima(maxima: RecentSessionMaxima): void {
   recentMaxima = maxima;
 }
 const SESSION_SPIKE_LIMIT = 1.1;
+const LONG_RUN_ID = 'tpl_long_run';
 const SPIKE_CAP_DAYS = 13;
 
 export function recentSessionMaxima(logs: { templateId: string; completedDate: string; durationMinutes: number }[], asOf: string): RecentSessionMaxima {
   const from = addDays(asOf, -30);
   const minutesByTemplate: Record<string, number> = {};
+  const afterRace: { date: string; durationMinutes: number }[] = [];
   for (const l of logs) {
     if (l.completedDate < from || l.completedDate > asOf || !(l.durationMinutes > 0)) continue;
+    // A race is not the longest run to measure the next one against: it was run at race pace.
+    if (idHasRole(l.templateId, 'race')) {
+      afterRace.push({ date: l.completedDate, durationMinutes: l.durationMinutes });
+      continue;
+    }
     minutesByTemplate[l.templateId] = Math.max(minutesByTemplate[l.templateId] ?? 0, l.durationMinutes);
   }
-  return { asOf, minutesByTemplate };
+  return { asOf, minutesByTemplate, ...(afterRace.length > 0 ? { afterRace } : {}) };
 }
 
 // The ambition in force (engine/ambition.ts#effectiveAmbition), set on every
@@ -152,6 +164,13 @@ export function resolveEffectiveFullDuration(
     const floor = (target.phaseSteps.find((s) => s.weekInPhase === 1) ?? target.step).targetMinutes;
     const cap = Math.max(floor, Math.round((longest * SESSION_SPIKE_LIMIT) / 5) * 5);
     base = Math.min(base, cap);
+  }
+  // The first week after a race: the long run is at most half the race.
+  if (!fixed && target && template.id === LONG_RUN_ID) {
+    for (const race of recentMaxima.afterRace ?? []) {
+      const cap = longRunCapAfterRace({ completedDate: race.date, durationMinutes: race.durationMinutes }, scheduledDate);
+      if (cap !== undefined) base = Math.min(base, cap);
+    }
   }
   const adjustment = durationAdjustments.find((a) => scheduledDate >= a.from && scheduledDate <= a.until);
   if (!adjustment) return base;

@@ -101,6 +101,14 @@ export interface TrainingGoalBase {
   kind?: GoalKindId;
   details?: GoalDetails;
   priority?: GoalPriority;
+  // Een eigen, kortere afbouw in dagen dan het advies van de soort en het label. Alleen gezet
+  // als een botsing met een ander doel de afbouw inkortte en je Akkoord gaf
+  // (engine/goalConflicts.ts). Optioneel; wie hem niet heeft krijgt het advies.
+  taperDays?: number;
+  // "Toch allebei": de datums van andere doelen waarmee je de botsing bewust aanvaardde
+  // (engine/goalConflicts.ts). Verschuift dat andere doel, dan geldt de keuze niet meer en
+  // komt de melding terug. Optioneel.
+  conflictAccepted?: string[];
   createdAt: string;
   updatedAt: string;
 }

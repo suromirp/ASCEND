@@ -259,6 +259,7 @@ export function cycleMultiplier(weekInProgram: number): number {
 // for (engine/extraRun.ts). After Opbouw the runs hold that level. The
 // per-session cap in engine/substitutions.ts still guards every session.
 export const RUN_BUILD_PER_WAVE = 0.1;
+const LONG_RUN_ID = 'tpl_long_run';
 export const RUN_BUILD_PEAK_MINUTES: Record<string, number> = {
   tpl_long_run: 120,
   tpl_easy_run: 55,
@@ -290,7 +291,27 @@ export function runBuildMultiplier(template: SessionTemplate, program: Program, 
   const wave = Math.min(Math.floor((week - opbouw.start) / WAVE_LENGTH), lastWave);
   const from = opbouw.start > 1 ? cycleMultiplier(opbouw.start - 1) : 1;
   const built = from * Math.pow(1 + RUN_BUILD_PER_WAVE, wave + 1);
-  return Math.max(basic, Math.min(built, peak / heaviestStepMinutes));
+  const usual = Math.max(basic, Math.min(built, peak / heaviestStepMinutes));
+  // A running goal as Top or Voortop: the long run builds faster toward its race (below).
+  const fast = fastLongRunMultiplier(template, program, week, opbouw, from, heaviestStepMinutes);
+  return fast === undefined ? usual : Math.max(usual, fast);
+}
+
+// The long run toward a running race of a Top or Voortop goal: 10% more every
+// `stepWeeks` weeks from the start of Opbouw (instead of every wave of four weeks), up to the
+// week of the race, the peak of that race and the usual 110% cap of the session (which is
+// measured on your own logs, engine/substitutions.ts). After the race the level holds; the usual
+// build-up takes over again when it is higher. Only the long run, and only with a running goal:
+// a tocht keeps its own build-up (docs/onderzoek/Doelsoorten duur.md, gedeelde regel 3).
+function fastLongRunMultiplier(template: SessionTemplate, program: Program, week: number, opbouw: { start: number; weeks: number }, from: number, heaviestStepMinutes: number): number | undefined {
+  const build = program.runBuild;
+  if (!build || template.id !== LONG_RUN_ID || build.stepWeeks < 1) return undefined;
+  const raceWeek = Math.floor(daysBetween(mondayOfWeek(program.startDate), mondayOfWeek(build.raceDate)) / 7) + 1;
+  const lastStep = Math.floor((opbouw.weeks - 1) / build.stepWeeks);
+  const step = Math.min(Math.floor((Math.min(week, raceWeek) - opbouw.start) / build.stepWeeks), lastStep);
+  if (step < 0) return undefined;
+  const peak = Math.max(RUN_BUILD_PEAK_MINUTES[LONG_RUN_ID], build.peakMinutes);
+  return Math.min(from * Math.pow(1 + RUN_BUILD_PER_WAVE, step + 1), peak / heaviestStepMinutes);
 }
 
 export interface ProgressionTarget {

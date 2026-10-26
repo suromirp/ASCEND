@@ -902,7 +902,19 @@ export function migrateTrainingGoal(goal: TrainingGoal, ctx: GoalKindContext): T
   const extras = unknownDetailFields(goal.details);
   if (details || extras) next.details = { ...(details ?? {}), ...(extras ?? {}) }; else delete next.details;
   if (priority) next.priority = priority; else if (!unknownPriority) delete next.priority;
+  // Ronde 2b: een eigen afbouw en de aanvaarde botsingen, defensief gelezen. Wat niet klopt gaat weg.
+  const taper: unknown = goal.taperDays;
+  if (typeof taper === 'number' && Number.isFinite(taper) && taper >= 0) next.taperDays = Math.round(taper); else delete next.taperDays;
+  const accepted = readAcceptedConflicts(goal.conflictAccepted);
+  if (accepted) next.conflictAccepted = accepted; else delete next.conflictAccepted;
   return next;
+}
+
+// De datums van aanvaarde botsingen (TrainingGoal.conflictAccepted): alleen echte datums, zonder dubbelen.
+export function readAcceptedConflicts(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const dates = [...new Set(raw.filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)))];
+  return dates.length > 0 ? dates : undefined;
 }
 
 // Velden van de gegevens die deze versie niet kent (uit een nieuwere back-up): ongemoeid laten.

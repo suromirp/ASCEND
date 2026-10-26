@@ -50,6 +50,12 @@ export interface Program {
   // it (engine/packLadder.ts). Absent = the default with a tent. Optional,
   // additive: older programs and backups simply don't have it.
   packTargetKg?: number;
+  // The next running race of a Top or Voortop goal, copied here by
+  // storage/database.ts#syncProgramHorizon like the pack target: until that race the long run
+  // grows every `stepWeeks` weeks by 10% (the 110% cap of the session still holds) instead of 10%
+  // per wave of four weeks (engine/runGrowth.ts, docs/beslissingen/2026-10-26-planning-met-labels.md).
+  // Absent = the usual build-up. Optional, additive: older programs and backups don't have it.
+  runBuild?: { raceDate: string; stepWeeks: number; peakMinutes: number };
 }
 
 // For the days of `week` (a Monday) before `until`: whether the rest week was
