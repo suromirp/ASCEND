@@ -64,8 +64,8 @@ export function makeLight(exercise: Exercise | undefined, profile: GymProfile): 
 // nearest dumbbell, the nearest step of the stack. What you type yourself is
 // never rounded; a weight that is passed on to the next sets always is, the
 // same as the prescription. Built once per change (the list of weights is long).
-export function makeSnap(exercise: Exercise | undefined, profile: GymProfile, bodyKg?: number, around?: number): (kg: number) => number {
-  const candidates = candidatesFor(exercise, profile, { bodyKg, lastExternalKg: around });
+export function makeSnap(exercise: Exercise | undefined, profile: GymProfile, bodyKg?: number, around?: number, dumbbellTotal?: boolean): (kg: number) => number {
+  const candidates = candidatesFor(exercise, profile, { bodyKg, lastExternalKg: around, dumbbellTotal });
   const step = weightStepFor(exercise, profile, around) || 1;
   return (kg) => (candidates ? candidates[nearestIndex(candidates, kg)].externalKg : r2(Math.round(kg / step) * step));
 }
@@ -104,6 +104,11 @@ export function textToNumber(text: string, decimals: number): number | undefined
 }
 
 export const numberToText = (value: number | undefined, decimals: number): string => (value === undefined ? '' : formatNumberNL(value, decimals));
+
+// The key of the field in the input dock. `taps` counts the taps on a field: a new tap, also on
+// the same field, gives a new key, so the number is "selected" again and the first digit replaces
+// it, as with the first tap.
+export const dockFieldKey = (at: FieldRef, taps: number): string => `${at.slot}:${at.rowId}:${at.field}:${taps}`;
 
 // --- which field is next ------------------------------------------------------------------
 

@@ -16,6 +16,7 @@ import { logSport } from './sports';
 import { checkDone, checkProposal, checkRow, isNear, logOrigin, summariseChecks, targetIndexOf, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
 import {
   analyseSessions,
+  dumbbellTotalFor,
   deriveRange,
   describePlannedSet,
   lastDateBefore,
@@ -175,8 +176,15 @@ export interface ExerciseView {
   strengthKg?: number;
 }
 
+// Is the weight in this whole history the total of two dumbbells? One answer for
+// the history, from the setting and every weight logged (the same rule as for a
+// proposal, `dumbbellTotalFor`, but over all of it).
+function historyDumbbellTotal(history: ExerciseHistory, settings: ResolvedStrengthSettings): boolean {
+  return dumbbellTotalFor({ exercise: history.exercise, sessions: history.sessions, date: '9999-12-31', settings });
+}
+
 export function exerciseView(history: ExerciseHistory, settings: ResolvedStrengthSettings, bodyKg: number | undefined, today: string, tiredNow?: LegsTired, strengthDates?: string[]): ExerciseView {
-  const ctx = { exercise: history.exercise, bodyKg, maxToFailure: settings.estimateUpTo };
+  const ctx = { exercise: history.exercise, bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal: historyDumbbellTotal(history, settings) };
   const points = analyseSessions(history.sessions, ctx);
   const range = deriveRange(points);
   const line: LinePoint[] = [];
@@ -240,7 +248,8 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
   const rows: ComparisonRow[] = [];
   const strengthDates = histories.flatMap((x) => x.sessions.map((s) => s.date));
   for (const h of histories) {
-    const ctx = { exercise: h.exercise, bodyKg, maxToFailure: settings.estimateUpTo };
+    const dumbbellTotal = historyDumbbellTotal(h, settings);
+    const ctx = { exercise: h.exercise, bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal };
     for (let i = 1; i < h.sessions.length; i++) {
       const s = h.sessions[i];
       const slot = slotFor(templates, s.templateId, h.key);
@@ -271,7 +280,7 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
         const strengths = s.sets.map((x) => estimateSet(x, ctx)?.strengthKg).filter((v): v is number => v !== undefined);
         const strengthKg = strengths.length > 0 ? Math.max(...strengths) : undefined;
         const doneLoad = setLoad(done, ctx);
-        const proposedLoad = loadFromExternal(h.exercise, proposed.weightKg, bodyKg);
+        const proposedLoad = loadFromExternal(h.exercise, proposed.weightKg, bodyKg, dumbbellTotal);
         if (strengthKg !== undefined && doneLoad !== undefined) {
           // A hand-made log counts as measured only when it followed the proposal.
           const measured = s.origin === 'forge' && withinOneStep;

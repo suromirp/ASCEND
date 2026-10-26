@@ -22,6 +22,7 @@ import {
   carryChange,
   mergeDraft,
   copyRow,
+  dockFieldKey,
   exerciseComplete,
   exerciseSummary,
   makeLight,
@@ -93,7 +94,7 @@ import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
-import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
+import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
 import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
@@ -197,6 +198,8 @@ export function ForgeWorkout({
   const [showGuide, setShowGuide] = useState(false);
   // Het invoerpaneel en wat er rond de tabel meebeweegt.
   const [dock, setDock] = useState<FieldRef | null>(null);
+  // Telt de tikken op een veld: ook dezelfde plek opnieuw aantikken begint opnieuw (dockFieldKey).
+  const [dockTaps, setDockTaps] = useState(0);
   const [selected, setSelected] = useState(true);
   const [dockH, setDockH] = useState(0);
   const [platesOn, setPlatesOn] = useState(true);
@@ -407,6 +410,7 @@ export function ForgeWorkout({
   function openField(slot: string, rowId: string, field: FieldName) {
     if (readOnly) return;
     baseRef.current = null;
+    setDockTaps((n) => n + 1);
     setDock({ slot, rowId, field });
     setSelected(true);
     setActiveRef({ slot, rowId });
@@ -428,7 +432,7 @@ export function ForgeWorkout({
           const changed = applyReps(base, d.rowId, v);
           return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'reps') : changed;
         }
-        const changed = applyWeight(base, d.rowId, v, strength.carryMode === 'shift', makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
+        const changed = applyWeight(base, d.rowId, v, strength.carryMode === 'shift', makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v, e.dumbbellTotal), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
         return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'weightKg') : changed;
       }),
     );
@@ -613,7 +617,7 @@ export function ForgeWorkout({
         <InputDock
           key={`${dock.slot}:${dock.rowId}:${dock.field}`}
           label={`${dock.field === 'weightKg' ? (isAssisted(dockEx) ? 'Hulp' : 'Gewicht') : 'Herhalingen'}, set ${dockRowLabel(dockEx, dockIndex)}, ${dockEx.name}`}
-          fieldKey={`${dock.slot}:${dock.rowId}:${dock.field}`}
+          fieldKey={dockFieldKey(dock, dockTaps)}
           value={dock.field === 'weightKg' ? (isAssisted(dockEx) && dockRow.weightKg !== undefined ? Math.abs(dockRow.weightKg) : dockRow.weightKg) : dockRow.reps}
           decimals={dock.field === 'weightKg' ? 2 : 0}
           onChange={(v) => changeValue(dock.field === 'weightKg' && isAssisted(dockEx) && v !== undefined ? -v : v)}
@@ -750,7 +754,13 @@ export function ForgeWorkout({
             }
             // Nog steeds te zwaar: geen nieuwe vraag, alleen een stille regel onder de oefening.
             const still = suggestOwnWeights(fillEx, fit.fromRowId, ctx);
-            if (still) setHeavyTip((l) => ({ ...l, [fillEx.slot]: stillHeavyTip(still) }));
+            if (still) {
+              setHeavyTip((l) => ({ ...l, [fillEx.slot]: stillHeavyTip(still) }));
+              return;
+            }
+            // Het lichtere gewicht ligt er ver boven: ook dan een stille regel.
+            const big = suggestTooBigStep(fillEx, fit.fromRowId, ctx);
+            if (big) setHeavyTip((l) => ({ ...l, [fillEx.slot]: tooBigStepTip(big) }));
           }}
           onClose={() => setFillFor(null)}
         />
@@ -1048,7 +1058,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
               <span role="columnheader" className="text-center">RIR</span>
               <span role="columnheader" className="flex justify-center">
                 {readOnly ? <span className="sr-only">Gedaan</span> : (
-                  <button type="button" onClick={() => act.tickAll(ex.slot)} className="relative before:absolute before:-inset-y-[14px] before:-inset-x-1 before:content-['']" aria-label={`Alle sets van ${ex.name} gedaan`}>
+                  <button type="button" onClick={() => act.tickAll(ex.slot)} className="relative -mx-1 min-w-[44px] before:absolute before:-inset-y-[14px] before:inset-x-0 before:content-['']" aria-label={`Alle sets van ${ex.name} gedaan`}>
                     Alles
                   </button>
                 )}

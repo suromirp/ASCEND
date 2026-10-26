@@ -32,6 +32,9 @@ export interface WeightContext {
   // 'used_only' offers exactly those (and nothing before they exist). Anything
   // else learns (`learnedStack`).
   stackWeights?: StackWeights;
+  // The weight is logged as the total of two dumbbells (`dumbbellsAsTotal`). Only
+  // matters for the load of an exercise with a share of the body weight.
+  dumbbellTotal?: boolean;
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -223,9 +226,18 @@ function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ct
   }
 }
 
+// How many dumbbells are in the hands for one logged weight when a share of the
+// body weight is part of the load: two for a weight per dumbbell, one when the
+// total of two is logged, and for an exercise with one dumbbell. Without a share
+// of the body weight the unit does not matter, so it does not come in here.
+function handsFactor(exercise: Exercise | undefined, dumbbellTotal: boolean): number {
+  if (exercise?.resistance !== 'dumbbell' || exercise.oneDumbbell || exercise.bodyweightFraction === undefined) return 1;
+  return dumbbellTotal ? 1 : 2;
+}
+
 // The load of a weight that is written down. Undefined when the load cannot be
 // known (a share of the body weight without a body weight) or is not positive.
-export function loadFromExternal(exercise: Exercise | undefined, externalKg: number, bodyKg: number | undefined): number | undefined {
+export function loadFromExternal(exercise: Exercise | undefined, externalKg: number, bodyKg: number | undefined, dumbbellTotal = false): number | undefined {
   const f = exercise?.bodyweightFraction;
   let load: number;
   if (f === undefined) {
@@ -233,18 +245,18 @@ export function loadFromExternal(exercise: Exercise | undefined, externalKg: num
     load = externalKg;
   } else {
     if (bodyKg === undefined) return undefined;
-    load = exercise?.resistance === 'assisted_bodyweight' ? f * bodyKg - Math.abs(externalKg) : f * bodyKg + externalKg;
+    load = exercise?.resistance === 'assisted_bodyweight' ? f * bodyKg - Math.abs(externalKg) : f * bodyKg + handsFactor(exercise, dumbbellTotal) * externalKg;
   }
   return load > 0 ? load : undefined;
 }
 
 // The weight to write down for a load. The reverse of loadFromExternal.
-export function externalFromLoad(exercise: Exercise | undefined, loadKg: number, bodyKg: number | undefined, assistSign = -1): number | undefined {
+export function externalFromLoad(exercise: Exercise | undefined, loadKg: number, bodyKg: number | undefined, assistSign = -1, dumbbellTotal = false): number | undefined {
   const f = exercise?.bodyweightFraction;
   if (f === undefined) return loadKg;
   if (bodyKg === undefined) return undefined;
   if (exercise?.resistance === 'assisted_bodyweight') return assistSign * Math.max(0, f * bodyKg - loadKg);
-  return loadKg - f * bodyKg;
+  return (loadKg - f * bodyKg) / handsFactor(exercise, dumbbellTotal);
 }
 
 // All the weights that can be put on, ascending by load. Undefined when the
@@ -254,7 +266,7 @@ export function candidatesFor(exercise: Exercise | undefined, profile: GymProfil
   const list: Candidate[] = [];
   for (const w of externalWeights(exercise, profile, ctx)) {
     const external = exercise?.resistance === 'assisted_bodyweight' ? assistSign * w : w;
-    const load = loadFromExternal(exercise, external, ctx.bodyKg);
+    const load = loadFromExternal(exercise, external, ctx.bodyKg, ctx.dumbbellTotal);
     if (load !== undefined) list.push({ externalKg: external, loadKg: load });
   }
   list.sort((a, b) => a.loadKg - b.loadKg);

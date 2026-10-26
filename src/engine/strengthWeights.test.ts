@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
-import { candidatesFor, dumbbellsAsTotal, learnedStack, looksLikePounds, nearestIndex, profileFor, usedWeights } from './strengthWeights';
+import { candidatesFor, dumbbellsAsTotal, externalFromLoad, loadFromExternal, learnedStack, looksLikePounds, nearestIndex, profileFor, usedWeights } from './strengthWeights';
 import { DEFAULT_PROFILE, resolveStrengthSettings } from './strengthSettings';
-import { prescribe } from './strengthModel';
+import { prescribe, setLoad } from './strengthModel';
 
 const press = exerciseById('leg-press')!;
 
@@ -199,5 +199,56 @@ describe('dumbbells als totaal van twee', () => {
     expect(dumbbellsAsTotal(goblet, 'total', rack, [56])).toBe(false);
     expect(dumbbellsAsTotal(goblet, 'auto', rack, [56])).toBe(false);
     expect(dumbbellsAsTotal(exerciseById('back-squat'), 'total', rack, [100])).toBe(false);
+  });
+});
+
+describe('twee dumbbells met lichaamsgewicht in de last', () => {
+  const split = exerciseById('split-squat')!;
+  const goblet = exerciseById('goblet-squat')!;
+  const bench = exerciseById('dumbbell-bench-press')!;
+  const rack = { ...DEFAULT_PROFILE, dumbbells: { startKg: 2, stepKg: 2, upToKg: 40, thenStepKg: 2, maxKg: 40 } };
+  const f = split.bodyweightFraction!;
+
+  it('per dumbbell telt twee dumbbells, als totaal telt het gelogde gewicht zelf', () => {
+    expect(loadFromExternal(split, 16, 80, false)).toBe(f * 80 + 32);
+    expect(loadFromExternal(split, 32, 80, true)).toBe(f * 80 + 32);
+  });
+  it('2 x 16 kg per dumbbell en 32 kg als totaal geven dezelfde last', () => {
+    const per = setLoad({ reps: 8, weightKg: 16, kind: 'work' }, { exercise: split, bodyKg: 80 });
+    const total = setLoad({ reps: 8, weightKg: 32, kind: 'work' }, { exercise: split, bodyKg: 80, dumbbellTotal: true });
+    expect(per).toBe(total);
+    expect(per).toBe(f * 80 + 32);
+  });
+  it('externalFromLoad is het omgekeerde', () => {
+    const load = loadFromExternal(split, 16, 80, false)!;
+    expect(externalFromLoad(split, load, 80, -1, false)).toBeCloseTo(16, 9);
+    const loadT = loadFromExternal(split, 32, 80, true)!;
+    expect(externalFromLoad(split, loadT, 80, -1, true)).toBeCloseTo(32, 9);
+  });
+  it('de stappen per hand passen: een stap van 2 kg per dumbbell is 4 kg in de last', () => {
+    const c = candidatesFor(split, rack, { bodyKg: 80, lastExternalKg: 16 })!;
+    const i = c.findIndex((x) => x.externalKg === 16);
+    expect(c[i + 1].externalKg - c[i].externalKg).toBe(2);
+    expect(c[i + 1].loadKg - c[i].loadKg).toBe(4);
+    const t = candidatesFor(split, profileFor(rack, true), { bodyKg: 80, lastExternalKg: 32, dumbbellTotal: true })!;
+    const j = t.findIndex((x) => x.externalKg === 32);
+    expect(t[j].loadKg).toBe(c[i].loadKg);
+    expect(t[j + 1].loadKg - t[j].loadKg).toBe(4);
+  });
+  it('een voorstel per hand en hetzelfde als totaal geven dezelfde last', () => {
+    const sets = [{ reps: 12, weightKg: 16, rir: 1 }, { reps: 12, weightKg: 16, rir: 1 }];
+    const each = prescribe({ exercise: split, sessions: [{ date: '2026-09-01', sets }], date: '2026-09-08', bodyKg: 80, settings: { ...resolveStrengthSettings({ dumbbellLog: 'each' }), profile: rack } })!;
+    const total = prescribe({ exercise: split, sessions: [{ date: '2026-09-01', sets: sets.map((s) => ({ ...s, weightKg: 32 })) }], date: '2026-09-08', bodyKg: 80, settings: { ...resolveStrengthSettings({ dumbbellLog: 'total' }), profile: rack } })!;
+    expect(each.dumbbellTotal).toBeUndefined();
+    expect(total.dumbbellTotal).toBe(true);
+    expect(total.sets[0].weightKg).toBe(2 * each.sets[0].weightKg);
+    expect(total.stepKg).toBe(2 * each.stepKg);
+  });
+  it('een oefening met één dumbbell en een oefening zonder lichaamsgewicht veranderen niet', () => {
+    expect(loadFromExternal(goblet, 20, 80, false)).toBe(20);
+    expect(loadFromExternal(goblet, 20, 80, true)).toBe(20);
+    expect(loadFromExternal(bench, 20, 80, false)).toBe(20);
+    expect(loadFromExternal(bench, 40, 80, true)).toBe(40);
+    expect(externalFromLoad(bench, 20, 80)).toBe(20);
   });
 });

@@ -63,10 +63,10 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
   const row = ex.rows[index];
   if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
   const exercise = exerciseOf(ex);
-  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure });
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
   if (!est) return undefined;
   // Begin bij het gewicht dat je echt gebruikte, ook als het toestel het nog niet kent.
-  const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights });
+  const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
   if (!candidates) return undefined;
   const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
   const items: AdjustItem[] = [];
@@ -77,7 +77,7 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
     const distance = workIds.indexOf(r.id) - fromWork;
     const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
     const rir = r.target.rir ?? DEFAULT_RIR;
-    const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg);
+    const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg, ex.dumbbellTotal);
     if (now === undefined) continue;
     let pick = -1;
     for (let j = candidates.length - 1; j >= 0; j--) {
@@ -118,9 +118,9 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
   const index = ex.rows.findIndex((r) => r.id === rowId);
   const row = ex.rows[index];
   if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
-  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure });
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
   if (!est) return undefined;
-  const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights });
+  const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
   if (!candidates) return undefined;
   const lightest = candidates[0].loadKg;
   const lightestKg = candidates[0].externalKg;
@@ -151,6 +151,64 @@ export function stillHeavyTip(fit: NoFit): string {
   const kg = formatNumberNL(fit.lightestKg, 2);
   if (fit.expectedReps <= 0) return `Ook ${kg} kg is nog te zwaar voor deze set.`;
   return `Ook ${kg} kg is nog te zwaar, naar verwachting ${fit.expectedReps} ${fit.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`;
+}
+
+export interface TooBigStep {
+  // De set die te zwaar was.
+  fromRowId: string;
+  // Het eerstvolgende lichtere gewicht dat de onderkant haalt, en wat je daarmee naar
+  // verwachting haalt: ver boven het bereik.
+  stepKg: number;
+  expectedReps: number;
+}
+
+// Na het invullen van de gewichten: `suggestLighter` zwijgt omdat het eerstvolgende lichtere
+// gewicht ver boven het bereik uitkomt (de stap is te groot), terwijl `suggestOwnWeights` ook
+// zwijgt omdat het lichtste gewicht de onderkant wel haalt. Dezelfde rekening en dezelfde
+// vermoeidheid per set als `suggestLighter`; alleen de eerste open set die zo uitkomt telt.
+export function suggestTooBigStep(ex: WorkoutExercise, rowId: string, ctx: AdjustContext): TooBigStep | undefined {
+  if (ex.timed) return undefined;
+  if (suggestLighter(ex, rowId, ctx)) return undefined;
+  const index = ex.rows.findIndex((r) => r.id === rowId);
+  const row = ex.rows[index];
+  if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
+  const exercise = exerciseOf(ex);
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure, dumbbellTotal: ex.dumbbellTotal });
+  if (!est) return undefined;
+  const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights, dumbbellTotal: ex.dumbbellTotal });
+  if (!candidates) return undefined;
+  const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
+  const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
+  const fromWork = workIds.indexOf(rowId);
+  for (const r of ex.rows.slice(index + 1)) {
+    if (r.kind !== 'work' || r.done || r.edited || r.weightKg === undefined || r.target.failure) continue;
+    const distance = workIds.indexOf(r.id) - fromWork;
+    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
+    const rir = r.target.rir ?? DEFAULT_RIR;
+    const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg, ex.dumbbellTotal);
+    if (now === undefined) continue;
+    let pick = -1;
+    for (let j = candidates.length - 1; j >= 0; j--) {
+      if (expectedReps(strength, candidates[j].loadKg, rir) >= r.target.repsLow) {
+        pick = j;
+        break;
+      }
+    }
+    if (pick < 0) continue;
+    const c = candidates[pick];
+    if (c.loadKg >= now - 1e-9) continue;
+    const reps = expectedReps(strength, c.loadKg, rir);
+    if (reps > r.target.repsHigh + REPS_ROOM) return { fromRowId: rowId, stepKg: c.externalKg, expectedReps: reps };
+  }
+  return undefined;
+}
+
+// De stille regel als de stap te groot is ("35 kg is een te grote stap: naar verwachting 16 herhalingen.").
+export function tooBigStepTip(step: TooBigStep): string {
+  const kg = formatNumberNL(step.stepKg, 2);
+  // Een getal ver boven elk bereik (de omrekening is daar ook het minst zeker) zegt niets meer.
+  if (step.expectedReps > 30) return `${kg} kg is een te grote stap: veel te veel herhalingen.`;
+  return `${kg} kg is een te grote stap: naar verwachting ${step.expectedReps} ${step.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`;
 }
 
 // De regel bij de oefening: "Die set was zwaarder dan bedoeld. Volgende sets 62,5 kg?"

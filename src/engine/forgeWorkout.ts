@@ -265,7 +265,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
   if (!rx && ctx.modelOn && exercise) {
     const w0 = workWeights[0];
     if (w0 !== undefined) {
-      const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: w0, usedKg: learned, stackWeights: ctx.settings.stackWeights });
+      const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: w0, usedKg: learned, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
       if (candidates) warmups = warmupSets(ctx.settings, exercise, candidates, w0, undefined, warmKind, ctx.bodyKg, dumbbellTotal);
     } else {
       emptyWarmups = warmupShapes(ctx.settings, exercise, warmKind);
@@ -298,7 +298,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
     // With a program the row starts at what the model expects at this weight, never
     // above it (and not outside the range): ticking is then honest.
     if (t && rx && !t.failure && target.weightKg !== undefined) {
-      const load = loadFromExternal(exercise, target.weightKg, ctx.bodyKg);
+      const load = loadFromExternal(exercise, target.weightKg, ctx.bodyKg, dumbbellTotal);
       if (load !== undefined) {
         const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - rx.fatiguePerSet) ** i;
         reps = Math.min(reps, Math.max(t.repsLow, expectedReps(strength, load, t.rir)));
@@ -333,7 +333,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
 // range with the asked reps left. A set whose range and RIR are Forge's own
 // keeps Forge's weight, with its limits per training (KR-5).
 function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exercise | undefined, ctx: PlanContext, lastWeightKg: number | undefined, tired: boolean, warm: WarmKind, usedKg?: number[], dumbbellTotal?: boolean): { weights: number[]; warmups: WarmupSet[]; differs: boolean } | undefined {
-  const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg, usedKg, stackWeights: ctx.settings.stackWeights });
+  const candidates = candidatesFor(exercise, profileFor(ctx.settings.profile, dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: lastWeightKg, usedKg, stackWeights: ctx.settings.stackWeights, dumbbellTotal });
   if (!candidates) return undefined;
   let differs = false;
   const weights = targets.map((t, i) => {

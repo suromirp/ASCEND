@@ -7,6 +7,7 @@ import {
   applyWeight,
   carryChange,
   copyRow,
+  dockFieldKey,
   makeSnap,
   plateClosest,
   plateShortText,
@@ -404,5 +405,17 @@ describe('carryChange: wijzigingen doorvoeren naar gelijke sets', () => {
     // Een set die door doorvoer veranderde is niet aangepast en kan het voorschrift nog nemen.
     const carried = carryChange(before, applyWeight(before, 'a1', 45, false), 'a1', 'weightKg');
     expect(takeTarget(carried, 'a2').rows[1]).toMatchObject({ weightKg: 47.5, edited: true });
+  });
+});
+
+describe('dockFieldKey: een nieuwe tik begint opnieuw', () => {
+  const at = { slot: 'a', rowId: 'a1', field: 'weightKg' as const };
+  it('dezelfde tik geeft dezelfde sleutel, een nieuwe tik op hetzelfde veld een andere', () => {
+    expect(dockFieldKey(at, 1)).toBe(dockFieldKey(at, 1));
+    expect(dockFieldKey(at, 2)).not.toBe(dockFieldKey(at, 1));
+  });
+  it('een ander veld geeft een andere sleutel', () => {
+    expect(dockFieldKey({ ...at, field: 'reps' }, 1)).not.toBe(dockFieldKey(at, 1));
+    expect(dockFieldKey({ ...at, rowId: 'a2' }, 1)).not.toBe(dockFieldKey(at, 1));
   });
 });

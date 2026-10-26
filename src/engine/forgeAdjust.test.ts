@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustText, applyLighter, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type AdjustContext } from './forgeAdjust';
+import { adjustText, applyLighter, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, tooHeavy, type AdjustContext } from './forgeAdjust';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { DEFAULT_PROFILE } from './strengthSettings';
 
@@ -179,5 +179,66 @@ describe('suggestOwnWeights: geen gewicht past', () => {
     const ex = exercise('cable-fly', sets());
     const filled = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [10, 20, 30, 32.5, 35, 40] } };
     expect(suggestLighter(ex, 'r0', ctx({ profile: filled }))).toBeDefined();
+  });
+});
+
+describe('suggestTooBigStep: het lichtere gewicht is een te grote stap', () => {
+  // Een nagemaakte kabel met alleen 10 en 40: 10 kg geeft veel te veel herhalingen.
+  const gap = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [10, 40, 45] } };
+  const sets = (): WorkoutRow[] => [
+    row(0, { done: true, weightKg: 40, reps: 5, rir: 0 }, { weightKg: 40 }),
+    row(1, { weightKg: 40, reps: 9 }, { weightKg: 40 }),
+  ];
+
+  it('geeft de stap en de verwachte herhalingen als suggestLighter en suggestOwnWeights zwijgen', () => {
+    const ex = exercise('cable-fly', sets());
+    expect(suggestLighter(ex, 'r0', ctx({ profile: gap }))).toBeUndefined();
+    expect(suggestOwnWeights(ex, 'r0', ctx({ profile: gap }))).toBeUndefined();
+    const step = suggestTooBigStep(ex, 'r0', ctx({ profile: gap }))!;
+    expect(step).toMatchObject({ fromRowId: 'r0', stepKg: 10 });
+    expect(step.expectedReps).toBeGreaterThan(11);
+    expect(tooBigStepTip(step)).toBe(step.expectedReps > 30 ? '10 kg is een te grote stap: veel te veel herhalingen.' : `10 kg is een te grote stap: naar verwachting ${step.expectedReps} herhalingen.`);
+  });
+  it('rekent met dezelfde vermoeidheid per set als het bijsturen', () => {
+    const ex = exercise('cable-fly', sets());
+    const calm = suggestTooBigStep(ex, 'r0', ctx({ profile: gap, fatiguePerSet: 0.03 }))!;
+    const tired = suggestTooBigStep(ex, 'r0', ctx({ profile: gap, fatiguePerSet: 0.2 }))!;
+    expect(tired.expectedReps).toBeLessThan(calm.expectedReps);
+    const equal = suggestTooBigStep(ex, 'r0', ctx({ profile: gap, workSets: 'equal' }))!;
+    expect(equal.expectedReps).toBeGreaterThanOrEqual(calm.expectedReps);
+  });
+  it('zwijgt als er wel een voorstel is, als geen gewicht past, of als de set niet te zwaar was', () => {
+    const ex = exercise('cable-fly', sets());
+    const fine = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [10, 20, 30, 32.5, 35, 40] } };
+    expect(suggestTooBigStep(ex, 'r0', ctx({ profile: fine }))).toBeUndefined();
+    const heavyOnly = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [40, 45] } };
+    expect(suggestTooBigStep(ex, 'r0', ctx({ profile: heavyOnly }))).toBeUndefined();
+    const ok = exercise('cable-fly', [{ ...sets()[0], reps: 10, rir: 2 }, sets()[1]]);
+    expect(suggestTooBigStep(ok, 'r0', ctx({ profile: gap }))).toBeUndefined();
+  });
+  it('de tekst zegt herhaling bij één', () => {
+    expect(tooBigStepTip({ fromRowId: 'r0', stepKg: 32.5, expectedReps: 1 })).toBe('32,5 kg is een te grote stap: naar verwachting 1 herhaling.');
+    expect(tooBigStepTip({ fromRowId: 'r0', stepKg: 35, expectedReps: 16 })).toBe('35 kg is een te grote stap: naar verwachting 16 herhalingen.');
+    expect(tooBigStepTip({ fromRowId: 'r0', stepKg: 10, expectedReps: 128 })).toBe('10 kg is een te grote stap: veel te veel herhalingen.');
+  });
+});
+
+// Een nagemaakte split squat met twee dumbbells en lichaamsgewicht (80 kg), en een rek met
+// alleen 2 en 30 kg per dumbbell: per hand gelogd of als totaal is het dezelfde last, dus
+// dezelfde tip, met de stap in dezelfde maat als het logboek.
+describe('twee dumbbells met lichaamsgewicht: de tip rekent in dezelfde maat als het bijsturen', () => {
+  const rack = { ...DEFAULT_PROFILE, dumbbells: { startKg: 2, stepKg: 28, upToKg: 30, thenStepKg: 28, maxKg: 30 } };
+  const rowsAt = (kg: number): WorkoutRow[] => [row(0, { done: true, weightKg: kg, reps: 4, rir: 0 }, { weightKg: kg }), row(1, { weightKg: kg, reps: 9 }, { weightKg: kg })];
+  it('per hand 30 en als totaal 60 geven dezelfde verwachte herhalingen', () => {
+    const perHand = { ...exercise('bulgarian-split-squat', rowsAt(30)), dumbbellTotal: false };
+    const total = { ...exercise('bulgarian-split-squat', rowsAt(60)), dumbbellTotal: true };
+    const c = ctx({ profile: rack });
+    expect(suggestLighter(perHand, 'r0', c)).toBeUndefined();
+    expect(suggestLighter(total, 'r0', c)).toBeUndefined();
+    const a = suggestTooBigStep(perHand, 'r0', c)!;
+    const b = suggestTooBigStep(total, 'r0', c)!;
+    expect(a.expectedReps).toBe(b.expectedReps);
+    expect(a.stepKg).toBe(2);
+    expect(b.stepKg).toBe(4);
   });
 });

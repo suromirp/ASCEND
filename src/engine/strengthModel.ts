@@ -99,6 +99,8 @@ export interface LoadContext {
   bodyKg?: number;
   // Up to how many reps to failure a set counts (the setting; 20 by default).
   maxToFailure?: number;
+  // The weight is logged as the total of two dumbbells (`dumbbellTotalFor`).
+  dumbbellTotal?: boolean;
 }
 
 // What moves in total with this set. Undefined when it cannot be known.
@@ -106,7 +108,7 @@ export function setLoad(set: SetLog, ctx: LoadContext): number | undefined {
   // A set on an assisted machine without a weight says nothing about the help:
   // it is not "no help", so there is no load to know.
   if (ctx.exercise?.resistance === 'assisted_bodyweight' && set.weightKg === undefined) return undefined;
-  return loadFromExternal(ctx.exercise, set.weightKg ?? 0, ctx.bodyKg);
+  return loadFromExternal(ctx.exercise, set.weightKg ?? 0, ctx.bodyKg, ctx.dumbbellTotal);
 }
 
 export interface SetEstimate {
@@ -336,7 +338,7 @@ export function deriveRange(points: SessionPoint[]): RepRange {
 export function referenceWeight(strengthKg: number, range: RepRange, ctx: LoadContext, assistSign = -1): { weightKg: number; reps: number } | undefined {
   const reps = Math.round((range.low + range.high) / 2);
   const load = loadForReps(strengthKg, reps, range.rir);
-  const external = externalFromLoad(ctx.exercise, load, ctx.bodyKg, assistSign);
+  const external = externalFromLoad(ctx.exercise, load, ctx.bodyKg, assistSign, ctx.dumbbellTotal);
   if (external === undefined) return undefined;
   return { weightKg: Math.round(external * 2) / 2, reps };
 }
@@ -500,12 +502,12 @@ export function warmupSets(
   const bar = exercise.resistance === 'barbell' ? Math.min(...candidates.map((c) => c.externalKg)) : 0;
   if (isLightWeight(exercise, dumbbellTotal ? firstWeightKg / 2 : firstWeightKg, bar)) return [];
   const heavy = exercise.resistance === 'barbell' && firstWeightKg > 3 * Math.max(...bars);
-  const firstLoad = loadFromExternal(exercise, firstWeightKg, bodyKg) ?? firstWeightKg;
+  const firstLoad = loadFromExternal(exercise, firstWeightKg, bodyKg, dumbbellTotal) ?? firstWeightKg;
   const plan = warmupPlan(kind, settings, strengthKg !== undefined, heavy);
   const out: WarmupSet[] = [];
   for (const p of plan) {
     const load = p.pct * (p.of === 'strength' ? (strengthKg ?? firstLoad) : firstLoad);
-    const external = externalFromLoad(exercise, load, bodyKg) ?? load;
+    const external = externalFromLoad(exercise, load, bodyKg, -1, dumbbellTotal) ?? load;
     // A share of the body that is already more than the load: nothing to put on the bar.
     if (external <= 0) continue;
     const rounded = candidates[nearestIndex(candidates, external)].externalKg;
@@ -556,7 +558,7 @@ export function dumbbellTotalFor(input: { exercise?: Exercise; sessions: Session
 }
 
 function candidatesOf(input: PrescribeInput, lastExternalKg: number, total: boolean): Candidate[] | undefined {
-  return candidatesFor(input.exercise, profileFor(input.settings.profile, total), { bodyKg: input.bodyKg, lastExternalKg, usedKg: usedBefore(input), stackWeights: input.settings.stackWeights });
+  return candidatesFor(input.exercise, profileFor(input.settings.profile, total), { bodyKg: input.bodyKg, lastExternalKg, usedKg: usedBefore(input), stackWeights: input.settings.stackWeights, dumbbellTotal: total });
 }
 
 export function lastWeightMismatch(input: PrescribeInput): boolean {
@@ -566,11 +568,12 @@ export function lastWeightMismatch(input: PrescribeInput): boolean {
   // dumbbells). A cable or machine stack differs per machine and per gym, so a
   // logged weight there is taken as a real position on that stack.
   if (exercise.resistance !== 'barbell' && exercise.resistance !== 'dumbbell') return false;
-  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo };
+  const dumbbellTotal = dumbbellTotalFor(input);
+  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal };
   const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
   const last = points.filter((p) => p.top).at(-1);
   if (!last?.top) return false;
-  const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotalFor(input));
+  const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotal);
   if (!candidates) return false;
   return !candidates.some((c) => Math.abs(c.externalKg - last.top!.weightKg) < WEIGHT_MATCH_KG);
 }
@@ -589,12 +592,12 @@ export function lastDateBefore(dates: Iterable<string>, date: string): string | 
 
 export function prescribe(input: PrescribeInput): Prescription | undefined {
   const { exercise, settings } = input;
-  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo };
+  const dumbbellTotal = dumbbellTotalFor(input);
+  const ctx: LoadContext = { exercise, bodyKg: input.bodyKg, maxToFailure: settings.estimateUpTo, dumbbellTotal };
   const points = analyseSessions(input.sessions.filter((s) => s.date < input.date), ctx);
   const last = points.filter((p) => p.top).at(-1);
   const rawStrength = [...points].reverse().find((p) => p.smoothed !== undefined)?.smoothed;
   if (!last?.top || rawStrength === undefined) return undefined;
-  const dumbbellTotal = dumbbellTotalFor(input);
   const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotal);
   if (!candidates) return undefined;
   const fatiguePerSet = settings.fatigue === 'learned' ? learnFatigue(input.sessions.filter((s) => s.date < input.date), ctx, settings.workSets === 'equal').perSet : FATIGUE_PER_SET;
