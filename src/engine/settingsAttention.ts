@@ -5,7 +5,7 @@
 // (docs/beslissingen/2026-10-22-instellingen-in-groepen.md). Is de back-up
 // recent, dan staat er geen goud.
 
-import { daysBetween } from '../utils/dates';
+import { daysBetween, localDateOf } from '../utils/dates';
 
 export const BACKUP_OLD_AFTER_DAYS = 7;
 
@@ -20,7 +20,7 @@ export interface BackupAge {
 // `lastExportedAt` is de tijd van de laatste back-up (ISO), zoals in AppSettings.
 export function backupAge(lastExportedAt: string | undefined, today: string): BackupAge {
   if (!lastExportedAt) return { days: null, level: 'never' };
-  const days = Math.max(0, daysBetween(lastExportedAt.slice(0, 10), today));
+  const days = Math.max(0, daysBetween(localDateOf(lastExportedAt), today));
   return { days, level: days > BACKUP_OLD_AFTER_DAYS ? 'old' : 'ok' };
 }
 
