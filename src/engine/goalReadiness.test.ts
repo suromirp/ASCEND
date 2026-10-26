@@ -297,3 +297,40 @@ describe('een combinatiedoel toont het laagste onderdeel met de naam erbij', () 
     expect(none.percent).toBeUndefined();
   });
 });
+
+describe('reviewpunten van ronde 2a (trail en fietsen)', () => {
+  const daysAgo = (n: number) => new Date(Date.parse(TODAY) - n * 86_400_000).toISOString().slice(0, 10);
+  const trail = { kind: 'trail' as const, details: { distanceKm: 40, gainM: 2000, lossM: 2000, expectedMinutes: 400 } };
+  const fresh = (logs: SessionLog[]) => computeGoalReadiness(trail, logs, TODAY).meters.find((m) => m.key === 'dalen')!.share;
+  const down = (n: number, m: number): SessionLog => ({ ...run(daysAgo(n), 120, 15), cardioData: { modality: 'run', durationMinutes: 120, distanceKm: 15, elevationGainM: m, elevationLossM: m, source: 'manual' } } as SessionLog);
+
+  it('dalen vers: minstens 600 m, vol tot 21 dagen, nul na 6 weken', () => {
+    expect(fresh([down(20, 700)])).toBe(1);
+    expect(fresh([down(21, 700)])).toBe(1);
+    expect(fresh([down(31, 700)])).toBeGreaterThan(0.3);
+    expect(fresh([down(31, 700)])).toBeLessThan(0.7);
+    expect(fresh([down(42, 700)])).toBe(0);
+    // Een afdaling van 400 m telt niet als bergafprikkel.
+    expect(fresh([down(5, 400)])).toBe(0);
+  });
+
+  it('trail stijgen valt terug op ongeveer 2.000 m per week als het doel geen D+ heeft', () => {
+    const noGain = computeGoalReadiness({ kind: 'trail', details: { distanceKm: 40, lossM: 2000, expectedMinutes: 400 } }, [run(daysAgo(3), 120, 15, 1000)], TODAY);
+    const part = noGain.meters.find((m) => m.key === 'stijgen')!.parts[0];
+    expect(part.need).toBe(2000);
+    const withGain = computeGoalReadiness(trail, [run(daysAgo(3), 120, 15, 1000)], TODAY).meters.find((m) => m.key === 'stijgen')!.parts[0];
+    expect(withGain.need).toBe(1200);
+  });
+
+  it('fiets dagen achter elkaar: een dag telt vanaf 60% van de geplande dagafstand', () => {
+    const reis = { kind: 'bike' as const, details: { variant: 'reis', distanceKm: 400, expectedMinutes: 300, days: 5 } }; // 80 km per dag
+    // Ritten van 100 minuten (korter dan twee uur): 60 km telt (80% van 80 km), 40 km niet (50%).
+    const rides = (km: number) => [0, 1, 2].map((i) => ride(daysAgo(i + 1), 100, km));
+    const run3 = (km: number) => computeGoalReadiness(reis, rides(km), TODAY).meters.find((m) => m.key === 'dagenOpRij')!.parts[0].best;
+    expect(run3(60)).toBe(3);
+    expect(run3(40)).toBe(0);
+    // Zonder afstand en dagen in het doel geldt de terugval van twee uur.
+    const zonder = computeGoalReadiness({ kind: 'bike', details: { variant: 'reis', expectedMinutes: 300, days: 5 } }, [0, 1, 2].map((i) => ride(daysAgo(i + 1), 130, 10)), TODAY);
+    expect(zonder.meters.find((m) => m.key === 'dagenOpRij')!.parts[0].best).toBe(3);
+  });
+});

@@ -492,7 +492,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
 
   // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze
   // ronde heeft ze niet. Het hoofddoel is het doel met mijlpalen.
-  normalized.trainingGoals = migrateTrainingGoals(normalized.trainingGoals, new Set(normalized.goalMilestones.map((m) => m.goalId)), normalized.routePlan);
+  normalized.trainingGoals = migrateTrainingGoals(normalized.trainingGoals, new Set(normalized.goalMilestones.map((m) => m.goalId)), normalized.routePlan, { ladderKnown: false });
 
   normalized.skippedInvalid = skipped.n;
   return normalized;

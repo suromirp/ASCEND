@@ -15,6 +15,7 @@ import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engi
 import type { LeavePeriod } from '../models/leave';
 import { GOAL_KIND_IDS, GOAL_PRIORITIES, type GoalDetails, type GoalKindId, type GoalPriority, type GoalRequirement, type TrainingGoal } from '../models/goals';
 import { goalPlanRole, isRaceGoal } from '../engine/raceBlock';
+import { mainGoal } from '../engine/mainGoal';
 import { variantOf } from '../data/goalKinds';
 import type { RoutePlan } from '../models/routePlan';
 import type { NightJudgment } from '../models/checkIn';
@@ -824,14 +825,20 @@ export function routePlanUsesTent(plan: Pick<RoutePlan, 'choices'> | null | unde
 }
 
 export interface GoalKindContext {
-  // Het doel heeft mijlpalen (de Ascent Ladder): het is het hoofddoel.
-  hasLadder: boolean;
+  // Dit doel is het hoofddoel: het doel met mijlpalen (de Ascent Ladder) dat
+  // engine/mainGoal.ts#mainGoal aanwijst. Een tweede doel met mijlpalen of een
+  // gearchiveerd doel is het niet.
+  isMain: boolean;
   tent: boolean;
+  // Onbekend of er mijlpalen zijn (een back-up zonder die lijst): zonder rol op het doel
+  // wordt de belangrijkheid dan niet gezet, de opstartstap doet dat later goed.
+  ladderUnknown?: boolean;
 }
 
 function amountOf(reqs: GoalRequirement[], kind: GoalRequirement['kind'], unit?: string): number | undefined {
   const found = reqs.filter((r) => r.kind === kind && r.target && (!unit || r.target.unit === unit));
-  const pick = found.find((r) => r.scope === 'TOTAL_EVENT' || r.scope === 'SINGLE_EVENT') ?? found[0];
+  // Een eis per dag is geen totaal: die wordt hier niet als totaal overgenomen.
+  const pick = found.find((r) => r.scope === 'TOTAL_EVENT' || r.scope === 'SINGLE_EVENT') ?? found.find((r) => r.scope !== 'PER_DAY');
   const n = pick?.target?.amount;
   return typeof n === 'number' && n > 0 ? n : undefined;
 }
@@ -862,12 +869,17 @@ function runDetails(reqs: GoalRequirement[]): GoalDetails {
 // dat ze al heeft houdt ze (gelezen en schoongemaakt). Idempotent. Raakt niets anders aan.
 export function migrateTrainingGoal(goal: TrainingGoal, ctx: GoalKindContext): TrainingGoal {
   const reqs = Array.isArray(goal.requirements) ? goal.requirements : [];
+  // Vooruitcompatibel: een soort, belangrijkheid of veld uit een nieuwere versie blijft staan.
+  const rawKind: unknown = goal.kind;
+  const rawPriority: unknown = goal.priority;
+  const unknownKind = rawKind !== undefined && rawKind !== null && readGoalKind(rawKind) === undefined;
+  const unknownPriority = rawPriority !== undefined && rawPriority !== null && readGoalPriority(rawPriority) === undefined;
   let kind = readGoalKind(goal.kind);
   let details = readGoalDetails(goal.details);
   let priority = readGoalPriority(goal.priority);
 
-  if (!kind) {
-    if (ctx.hasLadder) {
+  if (!kind && !unknownKind) {
+    if (ctx.isMain) {
       kind = ctx.tent ? 'trek_tent' : 'trek_hut';
       details = details ?? readGoalDetails(trekDetails(reqs, ctx.tent ? 'tent' : 'hut'));
     } else if (isRaceGoal({ ...goal, requirements: reqs })) {
@@ -875,23 +887,44 @@ export function migrateTrainingGoal(goal: TrainingGoal, ctx: GoalKindContext): T
       details = details ?? readGoalDetails(runDetails(reqs));
     }
   }
-  if (!priority) {
+  if (!priority && !unknownPriority) {
     // De rol zoals de planning hem al las (raceBlock.ts): het hoofddoel is top, een andere
-    // hardloopwedstrijd voortop, de rest verkenning.
-    priority = ctx.hasLadder
-      ? 'top'
-      : priorityFromPlanRole(goal.planRole) ?? priorityFromPlanRole(goalPlanRole({ ...goal, requirements: reqs }, undefined));
+    // hardloopwedstrijd voortop, de rest verkenning. Zonder bekende mijlpalen en zonder rol
+    // is niet te zeggen wat het is: dan niets zetten.
+    const fromRole = priorityFromPlanRole(goal.planRole);
+    if (ctx.isMain) priority = 'top';
+    else if (fromRole) priority = fromRole;
+    else if (!ctx.ladderUnknown) priority = priorityFromPlanRole(goalPlanRole({ ...goal, requirements: reqs }, undefined));
   }
 
   const next: TrainingGoal = { ...goal };
-  if (kind) next.kind = kind; else delete next.kind;
-  if (details) next.details = details; else delete next.details;
-  if (priority) next.priority = priority; else delete next.priority;
+  if (kind) next.kind = kind; else if (!unknownKind) delete next.kind;
+  const extras = unknownDetailFields(goal.details);
+  if (details || extras) next.details = { ...(details ?? {}), ...(extras ?? {}) }; else delete next.details;
+  if (priority) next.priority = priority; else if (!unknownPriority) delete next.priority;
   return next;
 }
 
-// Een lijst doelen. De doelen met mijlpalen zijn het hoofddoel.
-export function migrateTrainingGoals(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, plan: Pick<RoutePlan, 'choices'> | null | undefined): TrainingGoal[] {
+// Velden van de gegevens die deze versie niet kent (uit een nieuwere back-up): ongemoeid laten.
+function unknownDetailFields(raw: unknown): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const known = new Set<string>(['variant', 'shelter', 'strengthTargets', ...DETAIL_NUMBERS]);
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) if (!known.has(k)) out[k] = v;
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+// Een lijst doelen. Alleen het hoofddoel (het doel met mijlpalen dat mainGoal aanwijst, eerst een
+// actief, anders een niet gearchiveerd) wordt een tocht met priority top. De andere doelen krijgen
+// hun belangrijkheid uit hun rol. `ladderKnown: false` voor een back-up zonder mijlpalenlijst.
+export function migrateTrainingGoals(
+  goals: readonly TrainingGoal[],
+  ladderGoalIds: ReadonlySet<string>,
+  plan: Pick<RoutePlan, 'choices'> | null | undefined,
+  opts: { ladderKnown?: boolean } = {},
+): TrainingGoal[] {
   const tent = routePlanUsesTent(plan);
-  return goals.map((g) => migrateTrainingGoal(g, { hasLadder: ladderGoalIds.has(g.id), tent }));
+  const main = mainGoal(goals, ladderGoalIds, 'activeFirst');
+  const ladderUnknown = opts.ladderKnown === false && ladderGoalIds.size === 0;
+  return goals.map((g) => migrateTrainingGoal(g, { isMain: main?.id === g.id, tent, ...(ladderUnknown ? { ladderUnknown } : {}) }));
 }

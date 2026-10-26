@@ -85,7 +85,7 @@ export type NeedRule =
   | { from: 'detail'; key: keyof GoalDetails; dayShare?: boolean } // 100% is het ingevulde getal, bij een dagdoel keer het dagaandeel
   | { from: 'hikingDay'; dayShare?: boolean } // de DIN-tijd van de dag (of de verwachte tijd), bij een dagdoel keer het dagaandeel
   | { from: 'fixed'; value: number; byVariant?: Record<string, number> }
-  | { from: 'fractionOf'; key: keyof GoalDetails; factor: number; max?: number; variants?: Record<string, { factor: number; max?: number }> }
+  | { from: 'fractionOf'; key: keyof GoalDetails; factor: number; max?: number; variants?: Record<string, { factor: number; max?: number }>; fallback?: number } // fallback: de waarde als het doel het getal niet heeft
   | { from: 'guideline'; key: keyof GoalDetails; value: number } // de richtlijn, de gebruiker mag hem verhogen
   | { from: 'external' };
 
@@ -102,6 +102,11 @@ export interface MeterSpec {
   need: Sourced<NeedRule>;
   // Voor reeks: minimale duur van een dag die meetelt, en de grens van wat je thuis oefent.
   minDayMinutes?: number;
+  // Een dag telt vanaf dit aandeel van de geplande dagafstand (totale afstand gedeeld door het aantal dagen),
+  // als die is ingevuld; anders geldt minDayMinutes.
+  dayDistanceShare?: Sourced<number>;
+  // Voor versheid: een afdaling telt vanaf zoveel meter dalen (standaard 100).
+  minDescentM?: number;
   homeDays?: number;
   // De meter telt alleen mee als dit waar is (anders is hij niet van toepassing, niet ontbrekend).
   appliesWhen?: { key: keyof GoalDetails; atLeast?: number; atMost?: number } | { variant: readonly string[] };
@@ -340,7 +345,7 @@ const MOUNTAINEERING: GoalKindDefinition = {
   recovery: v(s({ days: 3, perTripDay: 0.5, maxDays: 14 }, 'afgeleid', B('6 (5), herstelweek volgens 2.6; hoogteherstel niet onderzocht'))),
   minimums: [
     min('strength', 'Krachttraining (2 in basis en opbouw, 1 in de specifieke periode)', { min: 1, max: 2 }, 'week', 'matig', B('6 (1)')),
-    min('easy_endurance', 'Rustige duur, piekweek van 8 tot 11 uur', { min: 360, max: 660 }, 'week', 'expert', B('6 (1), Uphill Athlete en Alpine Ascents'), 'In minuten.'),
+    min('easy_endurance', 'Rustige duur, piekweek van 8 tot 11 uur', { min: 480, max: 660 }, 'week', 'expert', B('6 (1), Uphill Athlete en Alpine Ascents'), 'In minuten.'),
     min('long_day', 'Lange dag met een rugzak van 10 tot 20% van je gewicht', { min: 1 }, 'week', 'expert', B('6 (1)'), 'Vanaf de opbouw.'),
     min('back_to_back', 'Weekend met twee lange dagen', { min: 2, max: 3 }, 'laatste 8 weken', 'expert', B('6 (1)')),
     min('descent_stimulus', 'Afdaalprikkel', { min: 1 }, 'week', 'matig', B('2.3, elke 7 tot 14 dagen')),
@@ -491,18 +496,19 @@ const TRAIL: GoalKindDefinition = {
     },
     {
       id: 'stijgen', label: 'Stijgen', type: 'volume_of_trend', metric: 'weekStijgen', unit: 'm', sports: ['running', 'hiking'], windowDays: WINDOW_42,
-      need: s({ from: 'fractionOf', key: 'gainM', factor: 0.6, variants: { ultra: { factor: 0.5 } } }, 'afgeleid', D('4.4 meter 3: een ASCEND-keuze, laagste zekerheid in het stuk')),
+      need: s({ from: 'fractionOf', key: 'gainM', factor: 0.6, variants: { ultra: { factor: 0.5 } }, fallback: 2000 }, 'afgeleid', D('4.4 meter 3: een ASCEND-keuze, laagste zekerheid in het stuk; zonder D+ van het doel ongeveer 2.000 m per week (afgeleid)')),
       measure: 'Je beste week aan hoogtemeters omhoog van de laatste 6 weken.',
-      full: 'Ongeveer de helft tot 60% van het stijgen van de wedstrijd, in één week.',
+      full: 'Ongeveer de helft tot 60% van het stijgen van de wedstrijd, in één week. Heeft je doel geen D+, dan ongeveer 2.000 m in een week.',
       why: 'Er is geen onderzoek naar de nodige weekstijging; doe in kleinere porties wat de wedstrijd vraagt.',
     },
     {
-      id: 'dalen', label: 'Dalen vers', type: 'versheid', metric: 'afdalenVers', unit: 'dagen', sports: [], windowDays: s(63, 'zwak', D('4.4 meter 4')),
-      need: s({ from: 'fixed', value: 14 }, 'matig', D('4.4 meter 4, de bescherming houdt 6 tot 9 weken stand (Bontemps)')),
+      id: 'dalen', label: 'Dalen vers', type: 'versheid', metric: 'afdalenVers', unit: 'dagen', sports: [], windowDays: s(42, 'matig', D('4.4 meter 4, na 6 weken loopt de meter terug naar 0')),
+      need: s({ from: 'fixed', value: 21 }, 'afgeleid', D('4.4 meter 4, de laatste prikkel jonger dan 21 dagen; de 21 dagen is een afgeleide marge, de bescherming houdt 6 tot 9 weken stand (matig)')),
+      minDescentM: 600,
       appliesWhen: { key: 'lossM', atLeast: 300 },
-      measure: 'Dagen sinds je laatste afdaling van minstens 100 m.',
-      full: '100% bij een afdaling in de laatste 14 dagen, lineair omlaag naar 0% bij 63 dagen.',
-      why: 'De bescherming tegen spierschade bergaf is na negen weken weg.',
+      measure: 'Dagen sinds je laatste bergafprikkel van minstens 600 m dalen in één training.',
+      full: '100% bij een afdaling van 600 m of meer in de laatste 21 dagen, lineair omlaag naar 0% bij 6 weken.',
+      why: 'De bescherming tegen spierschade bergaf houdt een tijd stand, maar niet eeuwig.',
     },
     {
       id: 'dagenOpRij', label: 'Dagen achter elkaar', type: 'reeks', metric: 'reeksDagen', unit: 'dagen', sports: ['running', 'hiking'], windowDays: WINDOW_84,
@@ -575,9 +581,10 @@ const BIKE: GoalKindDefinition = {
     {
       id: 'dagenOpRij', label: 'Dagen achter elkaar', type: 'reeks', metric: 'reeksDagen', unit: 'dagen', sports: ['cycling'], windowDays: s(56, 'expert', D('5.4 meter 5, de laatste 8 weken')),
       minDayMinutes: 120, homeDays: 3,
+      dayDistanceShare: s(0.6, 'expert', D('5.4 meter 5, een rit van minstens 60% van de geplande dagafstand')),
       need: s({ from: 'detail', key: 'days' }, 'expert', D('5.4 meter 5')),
       appliesWhen: { variant: ['reis'] },
-      measure: 'Je langste reeks dagen met een rit van minstens twee uur in de laatste 8 weken.',
+      measure: 'Je langste reeks dagen met een rit van minstens 60% van de geplande dagafstand (of, zonder afstand en dagen in je doel, van minstens twee uur) in de laatste 8 weken.',
       full: 'Het aantal dagen van de reis, met een grens van 3.',
       why: 'Opeenvolgende dagen stapelen vermoeidheid op; voor fietsen is dat afgeleid van wandelen.',
     },

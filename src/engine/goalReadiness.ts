@@ -234,7 +234,7 @@ function resolveNeed(rule: NeedRule, details: GoalDetails, variant: string | und
     case 'guideline': return num(rule.key) ?? rule.value;
     case 'fractionOf': {
       const base = num(rule.key);
-      if (base === undefined) return undefined;
+      if (base === undefined) return rule.fallback;
       const f = (variant ? rule.variants?.[variant] : undefined) ?? { factor: rule.factor, max: rule.max };
       const value = base * f.factor;
       return f.max !== undefined ? Math.min(value, f.max) : value;
@@ -357,7 +357,7 @@ function measureGeneric(spec: MeterSpec, ctx: Ctx): Measured {
   }
 
   if (spec.metric === 'afdalenVers') {
-    const foot = inWindow(logs, today, spec.windowDays.value, ['hiking', 'running']).filter((l) => descentOf(l) >= 100);
+    const foot = inWindow(logs, today, spec.windowDays.value, ['hiking', 'running']).filter((l) => descentOf(l) >= (spec.minDescentM ?? 100));
     const last = foot.reduce<string | undefined>((a, l) => (!a || l.completedDate > a ? l.completedDate : a), undefined);
     const needDays = typeof spec.need.value === 'object' && spec.need.value.from === 'fixed' ? spec.need.value.value : 14;
     if (!last) {
@@ -411,7 +411,11 @@ function measureGeneric(spec: MeterSpec, ctx: Ctx): Measured {
     case 'reeksDagen': {
       const home = ctx.options.homeDays ?? details.homeDaysInRow ?? spec.homeDays ?? Infinity;
       need = Math.min(need, home);
-      const run = longestRun(list.filter((l) => l.durationMinutes >= (spec.minDayMinutes ?? 90)).map((l) => l.completedDate));
+      const planned = details.distanceKm !== undefined && details.days !== undefined && details.days > 0 ? details.distanceKm / details.days : undefined;
+      const counts = spec.dayDistanceShare && planned
+        ? (l: SessionLog) => kmOf(l) >= spec.dayDistanceShare!.value * planned
+        : (l: SessionLog) => l.durationMinutes >= (spec.minDayMinutes ?? 90);
+      const run = longestRun(list.filter(counts).map((l) => l.completedDate));
       return { meter: makeMeter(spec, [buildPart('dagen achter elkaar', 'dagen', run, need)], spec.why) };
     }
     default: return undefined;

@@ -30,7 +30,7 @@ const followGoal: TrainingGoal = { id: 'goal_follow', name: 'Eigen doel', status
 
 describe('soort, gegevens en belangrijkheid van een doel', () => {
   it('het hoofddoel met mijlpalen wordt een tocht met hutten, met de huidige getallen en priority top', () => {
-    const next = migrateTrainingGoal(trekGoal, { hasLadder: true, tent: false });
+    const next = migrateTrainingGoal(trekGoal, { isMain: true, tent: false });
     expect(next.kind).toBe('trek_hut');
     expect(next.priority).toBe('top');
     expect(next.details).toEqual({ shelter: 'hut', distanceKm: 600, gainM: 30000, lossM: 28000, days: 30, packKg: 14, homeDaysInRow: 2 });
@@ -41,7 +41,7 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
   });
 
   it('met een gekozen nacht in tent of bivak wordt het een tocht met tent', () => {
-    expect(migrateTrainingGoal(trekGoal, { hasLadder: true, tent: true }).kind).toBe('trek_tent');
+    expect(migrateTrainingGoal(trekGoal, { isMain: true, tent: true }).kind).toBe('trek_tent');
     expect(routePlanUsesTent({ choices: { a: { sleep: 'gite' }, b: { sleep: 'bivak' } } })).toBe(true);
     expect(routePlanUsesTent({ choices: { a: { sleep: 'tent' } } })).toBe(true);
     expect(routePlanUsesTent({ choices: { a: { sleep: 'gite' }, b: {} } })).toBe(false);
@@ -51,27 +51,27 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
   });
 
   it('een hardloopdoel wordt run_race, met de belangrijkheid uit planRole', () => {
-    const main = migrateTrainingGoal(raceGoal('a', 'main'), { hasLadder: false, tent: false });
+    const main = migrateTrainingGoal(raceGoal('a', 'main'), { isMain: false, tent: false });
     expect(main).toMatchObject({ kind: 'run_race', priority: 'top', planRole: 'main' });
     expect(main.details).toEqual({ variant: 'half', distanceKm: 21.1, targetMinutes: 110 });
-    expect(migrateTrainingGoal(raceGoal('b', 'secondary'), { hasLadder: false, tent: false }).priority).toBe('voortop');
-    expect(migrateTrainingGoal(raceGoal('c', 'track'), { hasLadder: false, tent: false }).priority).toBe('verkenning');
+    expect(migrateTrainingGoal(raceGoal('b', 'secondary'), { isMain: false, tent: false }).priority).toBe('voortop');
+    expect(migrateTrainingGoal(raceGoal('c', 'track'), { isMain: false, tent: false }).priority).toBe('verkenning');
     // Zonder rol las de planning een andere wedstrijd al als tussendoel.
-    expect(migrateTrainingGoal(raceGoal('d'), { hasLadder: false, tent: false }).priority).toBe('voortop');
+    expect(migrateTrainingGoal(raceGoal('d'), { isMain: false, tent: false }).priority).toBe('voortop');
   });
 
   it('"alleen volgen" bestaat niet meer: het wordt verkenning, zonder soort', () => {
-    const next = migrateTrainingGoal(followGoal, { hasLadder: false, tent: false });
+    const next = migrateTrainingGoal(followGoal, { isMain: false, tent: false });
     expect(next.priority).toBe('verkenning');
     expect(next.kind).toBeUndefined();
     expect(next.planRole).toBe('track');
   });
 
   it('is idempotent en houdt de volgorde van de velden, zodat opstarten niets herschrijft', () => {
-    const once = migrateTrainingGoal(trekGoal, { hasLadder: true, tent: false });
-    const twice = migrateTrainingGoal(once, { hasLadder: true, tent: false });
+    const once = migrateTrainingGoal(trekGoal, { isMain: true, tent: false });
+    const twice = migrateTrainingGoal(once, { isMain: true, tent: false });
     expect(JSON.stringify(twice)).toBe(JSON.stringify(once));
-    const again = migrateTrainingGoal(once, { hasLadder: true, tent: true });
+    const again = migrateTrainingGoal(once, { isMain: true, tent: true });
     expect(again.kind).toBe('trek_hut'); // een bestaande soort wordt niet omgezet
   });
 
@@ -87,9 +87,11 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
     expect(readGoalDetails([1, 2])).toBeUndefined();
     expect(readGoalDetails({ distanceKm: -3, gainM: 'veel', packKg: 12, shelter: 'kasteel', variant: 'half', extra: 1 })).toEqual({ variant: 'half', packKg: 12 });
     expect(readGoalDetails({ strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }, { exercise: 7 }, null] })).toEqual({ strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }] });
-    const broken = migrateTrainingGoal({ ...trekGoal, kind: 'kapot' as never, details: 'x' as never, priority: 'nu' as never }, { hasLadder: true, tent: false });
-    expect(broken.kind).toBe('trek_hut');
-    expect(broken.priority).toBe('top');
+    const broken = migrateTrainingGoal({ ...trekGoal, kind: 'kapot' as never, details: 'x' as never, priority: 'nu' as never }, { isMain: true, tent: false });
+    // Een onbekende soort of belangrijkheid kan uit een nieuwere versie komen: die blijft staan.
+    expect(broken.kind).toBe('kapot');
+    expect(broken.priority).toBe('nu');
+    expect(broken.details).toBeUndefined();
   });
 
   it('een lijst: alleen het doel met mijlpalen is het hoofddoel', () => {
@@ -102,7 +104,7 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
       id: 'l1', templateId: 't', type: 'hiking', completedDate: '2026-10-10', completedAt: '2026-10-10T10:00:00Z', variant: 'full', durationMinutes: 300, source: 'manual',
       outdoorData: { durationMinutes: 300, elevationGainM: 800, elevationLossM: 800, backpackWeightKg: 9, source: 'manual' },
     }] as never;
-    const migrated = migrateTrainingGoal(trekGoal, { hasLadder: true, tent: true });
+    const migrated = migrateTrainingGoal(trekGoal, { isMain: true, tent: true });
     const before = computeGr5Readiness(trekGoal.requirements, logs, '2026-10-21');
     const after = computeGoalReadiness({ kind: migrated.kind!, details: migrated.details, requirements: migrated.requirements }, logs, '2026-10-21', { naming: { the: 'de GR5', your: 'je GR5' } });
     expect(after.percent).toBe(before!.percent);
@@ -180,5 +182,81 @@ describe('de opstartstap migrateGoalKinds', () => {
     const stored = JSON.stringify(await TrainingGoalsRepo.getAll());
     await migrateGoalKinds();
     expect(JSON.stringify(await TrainingGoalsRepo.getAll())).toBe(stored);
+  });
+});
+
+describe('reviewpunten van ronde 2a', () => {
+  const ms = (goalId: string): GoalMilestone => ({ id: `m_${goalId}`, goalId, order: 1, title: 'Eerste', requirement: { kind: 'duration', activityType: 'cardio', minMinutes: 40 } as never });
+
+  it('een gearchiveerd doel met mijlpalen wordt geen tocht met top', () => {
+    const old: TrainingGoal = { ...trekGoal, id: 'goal_old', status: 'archived', planRole: 'secondary' };
+    const list = migrateTrainingGoals([old, trekGoal], new Set(['goal_old', 'goal_trek']), { choices: {} });
+    expect(list[0].kind).toBeUndefined();
+    expect(list[0].priority).toBe('voortop');
+    expect(list[1]).toMatchObject({ kind: 'trek_hut', priority: 'top' });
+  });
+
+  it('bij twee doelen met mijlpalen is alleen het eerste actieve het hoofddoel', () => {
+    const second: TrainingGoal = { ...trekGoal, id: 'goal_second', planRole: 'track' };
+    const list = migrateTrainingGoals([trekGoal, second], new Set(['goal_trek', 'goal_second']), { choices: {} });
+    expect(list[0]).toMatchObject({ kind: 'trek_hut', priority: 'top' });
+    expect(list[1].kind).toBeUndefined();
+    expect(list[1].priority).toBe('verkenning');
+  });
+
+  it('een back-up met doelen maar zonder mijlpalen maakt het hoofddoel niet verkenning', () => {
+    const backup = normalizeBackupToCurrentModel({
+      backupSchemaVersion: 5, createdAt: NOW,
+      payload: { version: 5, program: null, templates: [], plannedSessions: [], sessionLogs: [], injuryNotes: [], settings: {}, trainingGoals: [trekGoal, followGoal] },
+    });
+    expect(backup.trainingGoals[0].priority).toBeUndefined();
+    expect(backup.trainingGoals[0].kind).toBeUndefined();
+    // Met een rol op het doel blijft die gelden.
+    expect(backup.trainingGoals[1].priority).toBe('verkenning');
+    // De opstartstap zet het daarna goed, zodra de mijlpalen er zijn.
+    const later = migrateTrainingGoals(backup.trainingGoals, new Set(['goal_trek']), { choices: {} });
+    expect(later[0]).toMatchObject({ kind: 'trek_hut', priority: 'top' });
+  });
+
+  it('een onbekende soort, belangrijkheid of veld uit een nieuwere versie blijft staan', () => {
+    const future = { ...trekGoal, kind: 'kitesurf', priority: 'urgent', details: { days: 5, nieuwVeld: { a: 1 }, kapot: 'x' } } as unknown as TrainingGoal;
+    const next = migrateTrainingGoal(future, { isMain: true, tent: false }) as unknown as Record<string, unknown>;
+    expect(next.kind).toBe('kitesurf');
+    expect(next.priority).toBe('urgent');
+    expect(next.details).toEqual({ days: 5, nieuwVeld: { a: 1 }, kapot: 'x' });
+    const again = migrateTrainingGoal(next as unknown as TrainingGoal, { isMain: true, tent: false });
+    expect(JSON.stringify(again)).toBe(JSON.stringify(next));
+  });
+
+  it('een eis per dag wordt niet het totaal van de tocht', () => {
+    const perDay: TrainingGoal = { ...trekGoal, requirements: [req('distance', 20, 'km', 'PER_DAY', 'hiking'), req('consecutiveDays', 6, 'days', 'CONSECUTIVE_DAYS')] };
+    const next = migrateTrainingGoal(perDay, { isMain: true, tent: false });
+    expect(next.details?.distanceKm).toBeUndefined();
+    expect(next.details?.days).toBe(6);
+  });
+
+  it('de opstartstap overschrijft geen bewerking die tussen lezen en schrijven kwam', async () => {
+    await wipeAllData();
+    await TrainingGoalsRepo.put(raceGoal('r', 'secondary'));
+    const realGetAll = TrainingGoalsRepo.getAll;
+    let calls = 0;
+    TrainingGoalsRepo.getAll = async () => {
+      const list = await realGetAll();
+      calls++;
+      // Na de eerste lezing bewerkt de gebruiker het doel.
+      if (calls === 1) await TrainingGoalsRepo.put({ ...raceGoal('r', 'secondary'), name: 'Eigen naam', updatedAt: '2026-10-02T00:00:00.000Z' });
+      return list;
+    };
+    try {
+      await migrateGoalKinds();
+    } finally {
+      TrainingGoalsRepo.getAll = realGetAll;
+    }
+    const stored = (await realGetAll())[0];
+    expect(stored.name).toBe('Eigen naam');
+    expect(stored.kind).toBeUndefined();
+    await migrateGoalKinds();
+    expect((await realGetAll())[0]).toMatchObject({ name: 'Eigen naam', kind: 'run_race' });
+    void ms;
   });
 });

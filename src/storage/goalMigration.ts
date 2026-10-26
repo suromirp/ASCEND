@@ -110,6 +110,11 @@ export async function migrateGoalKinds(): Promise<void> {
   const [goals, milestones, plan] = await Promise.all([TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll(), RoutePlanRepo.get()]);
   const migrated = migrateTrainingGoals(goals, new Set(milestones.map((m) => m.goalId)), plan);
   for (let i = 0; i < goals.length; i++) {
-    if (JSON.stringify(goals[i]) !== JSON.stringify(migrated[i])) await TrainingGoalsRepo.put(migrated[i]);
+    if (JSON.stringify(goals[i]) === JSON.stringify(migrated[i])) continue;
+    // Lees het doel vlak voor het schrijven opnieuw: heeft de gebruiker het intussen bewerkt
+    // (updatedAt of inhoud veranderd), dan slaan we het over; de volgende start probeert het opnieuw.
+    const fresh = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goals[i].id);
+    if (!fresh || JSON.stringify(fresh) !== JSON.stringify(goals[i])) continue;
+    await TrainingGoalsRepo.put(migrated[i]);
   }
 }
