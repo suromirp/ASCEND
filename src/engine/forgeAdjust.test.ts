@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustText, applyLighter, noFitText, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type AdjustContext } from './forgeAdjust';
+import { adjustText, applyLighter, noFitText, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type AdjustContext } from './forgeAdjust';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { DEFAULT_PROFILE } from './strengthSettings';
 
@@ -153,12 +153,18 @@ describe('suggestOwnWeights: geen gewicht past', () => {
     const ex = exercise('cable-fly', sets());
     expect(suggestLighter(ex, 'r0', ctx({ profile: heavyOnly }))).toBeUndefined();
     const fit = suggestOwnWeights(ex, 'r0', ctx({ profile: heavyOnly }))!;
-    expect(fit).toEqual({ fromRowId: 'r0', repsLow: 9, repsHigh: 11 });
+    expect(fit).toMatchObject({ fromRowId: 'r0', repsLow: 9, repsHigh: 11, lightestKg: 40 });
+    expect(fit.expectedReps).toBeLessThan(9);
     expect(noFitText(fit)).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
     expect(noFitText(fit, true)).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel aanpassen?');
   });
   it('zegt één getal als het bereik één getal is', () => {
-    expect(noFitText({ fromRowId: 'r0', repsLow: 10, repsHigh: 10 })).toContain('bij 10 herhalingen');
+    expect(noFitText({ fromRowId: 'r0', repsLow: 10, repsHigh: 10, lightestKg: 40, expectedReps: 6 })).toContain('bij 10 herhalingen');
+  });
+  it('de stille tip na het invullen noemt het lichtste gewicht en wat je daarmee haalt', () => {
+    expect(stillHeavyTip({ fromRowId: 'r0', repsLow: 10, repsHigh: 12, lightestKg: 35, expectedReps: 8 })).toBe('Ook 35 kg is nog te zwaar, naar verwachting 8 herhalingen.');
+    expect(stillHeavyTip({ fromRowId: 'r0', repsLow: 10, repsHigh: 12, lightestKg: 32.5, expectedReps: 1 })).toBe('Ook 32,5 kg is nog te zwaar, naar verwachting 1 herhaling.');
+    expect(stillHeavyTip({ fromRowId: 'r0', repsLow: 10, repsHigh: 12, lightestKg: 40, expectedReps: 0 })).toBe('Ook 40 kg is nog te zwaar voor deze set.');
   });
   it('vraagt niets als er wel een lichter gewicht is of als de set niet te zwaar was', () => {
     const ex = exercise('cable-fly', sets());

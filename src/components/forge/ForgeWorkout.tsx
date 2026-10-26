@@ -93,7 +93,7 @@ import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
-import { adjustText, applyLighter, noFitText as noFitLine, stillOpen, suggestLighter, suggestOwnWeights, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
+import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
 import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
@@ -189,6 +189,8 @@ export function ForgeWorkout({
   // Geen gewicht van dit toestel past: de regel die vraagt of je de gewichten invult, per oefening.
   const [noFit, setNoFit] = useState<Record<string, NoFit>>({});
   const [fillFor, setFillFor] = useState<string | null>(null);
+  // Een stille tip na het invullen van de gewichten, als er dan nog steeds niets past.
+  const [heavyTip, setHeavyTip] = useState<Record<string, string>>({});
   const [workoutMenu, setWorkoutMenu] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(startAtForm && !preview);
@@ -338,6 +340,7 @@ export function ForgeWorkout({
       void _old;
       return proposal ? { ...others, [slot]: proposal } : others;
     });
+    setHeavyTip((l) => (slot in l ? Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)) : l));
     setNoFit((l) => {
       if (!fit && !(slot in l)) return l;
       const { [slot]: _old, ...others } = l;
@@ -368,10 +371,19 @@ export function ForgeWorkout({
     }
   }
 
+  // De voorstellen en de stille tip van één oefening weg, bij alles afvinken en bij ruilen.
+  function clearHints(slot: string) {
+    const drop = <T,>(l: Record<string, T>) => (slot in l ? Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot)) : l);
+    setLighter(drop);
+    setNoFit(drop);
+    setHeavyTip(drop);
+  }
+
   function tickAll(slot: string) {
     haptics.tap();
     primeAudio();
     baseRef.current = null;
+    clearHints(slot);
     const result = tickAllRows(workout, slot);
     setWorkout(result.workout);
     const after = result.workout.find((e) => e.slot === slot);
@@ -498,6 +510,7 @@ export function ForgeWorkout({
     if (!prescription) return;
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
+    clearHints(slot);
     setExercise(slot, () => planExercise(prescription, ctx, state, to));
   }
 
@@ -579,6 +592,7 @@ export function ForgeWorkout({
               showPlates={strength.showPlates}
               lighterText={lighter[ex.slot] && stillOpen(ex, lighter[ex.slot]) ? adjustText(stillOpen(ex, lighter[ex.slot])!, exerciseOf(ex)) : undefined}
               noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
+              heavyTip={heavyTip[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) ? heavyTip[ex.slot] : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
               act={actions}
             />
@@ -728,8 +742,15 @@ export function ForgeWorkout({
             setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== fillEx.slot)));
             if (!fit) return;
             const profile = resolveStrengthSettings(next).profile;
-            const again = suggestLighter(fillEx, fit.fromRowId, { bodyKg, profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights });
-            if (again) setLighter((l) => ({ ...l, [fillEx.slot]: again }));
+            const ctx = { bodyKg, profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights };
+            const again = suggestLighter(fillEx, fit.fromRowId, ctx);
+            if (again) {
+              setLighter((l) => ({ ...l, [fillEx.slot]: again }));
+              return;
+            }
+            // Nog steeds te zwaar: geen nieuwe vraag, alleen een stille regel onder de oefening.
+            const still = suggestOwnWeights(fillEx, fit.fromRowId, ctx);
+            if (still) setHeavyTip((l) => ({ ...l, [fillEx.slot]: stillHeavyTip(still) }));
           }}
           onClose={() => setFillFor(null)}
         />
@@ -901,6 +922,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
   showPlates,
   lighterText,
   noFitText,
+  heavyTip,
   rirAsValue,
   act,
 }: {
@@ -920,6 +942,8 @@ const ExerciseBlock = memo(function ExerciseBlock({
   lighterText?: string;
   // De vraag of je de gewichten van dit toestel invult, als geen gewicht past.
   noFitText?: string;
+  // Na het invullen nog steeds te zwaar: één stille regel, zonder knoppen.
+  heavyTip?: string;
   // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
   rirAsValue: boolean;
   act: BlockActions;
@@ -992,6 +1016,10 @@ const ExerciseBlock = memo(function ExerciseBlock({
                 <TextButton tone="dim" onClick={() => act.keep(ex.slot)}>Liever niet</TextButton>
               </div>
             </div>
+          )}
+
+          {heavyTip && !readOnly && !noFitText && (
+            <p className="mt-1.5 border-l-2 pl-2 text-xs leading-snug" style={{ borderColor: 'var(--color-card-border)', color: 'var(--color-ink-dim)' }}>{heavyTip}</p>
           )}
 
           {noFitText && !readOnly && (

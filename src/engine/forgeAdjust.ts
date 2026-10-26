@@ -101,6 +101,10 @@ export interface NoFit {
   fromRowId: string;
   repsLow: number;
   repsHigh: number;
+  // Het lichtste gewicht dat ASCEND van dit toestel kent, en wat je daarmee naar
+  // verwachting haalt bij de eerste set die het bereik niet haalt.
+  lightestKg: number;
+  expectedReps: number;
 }
 
 // Past er op dit toestel geen enkel gewicht meer? Alleen bij een kabel of toestel met een
@@ -119,6 +123,7 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
   const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights });
   if (!candidates) return undefined;
   const lightest = candidates[0].loadKg;
+  const lightestKg = candidates[0].externalKg;
   // Dezelfde daling per set als het bijsturen (suggestLighter), zodat beide hetzelfde beslissen.
   const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
   const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
@@ -128,7 +133,8 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
     const distance = workIds.indexOf(r.id) - fromWork;
     const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
     const rir = r.target.rir ?? DEFAULT_RIR;
-    if (expectedReps(strength, lightest, rir) < r.target.repsLow) return { fromRowId: rowId, repsLow: r.target.repsLow, repsHigh: r.target.repsHigh };
+    const reps = expectedReps(strength, lightest, rir);
+    if (reps < r.target.repsLow) return { fromRowId: rowId, repsLow: r.target.repsLow, repsHigh: r.target.repsHigh, lightestKg, expectedReps: Math.max(0, reps) };
   }
   return undefined;
 }
@@ -137,6 +143,14 @@ export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: Adjus
 export function noFitText(fit: NoFit, hasList = false): string {
   const reps = fit.repsLow === fit.repsHigh ? `${fit.repsLow}` : `${fit.repsLow} tot ${fit.repsHigh}`;
   return `Geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${hasList ? 'aanpassen' : 'invullen'}?`;
+}
+
+// Na het invullen van de gewichten: past er nog steeds niets, dan alleen een korte, stille
+// tip onder de oefening, zonder knoppen ("Ook 35 kg is nog te zwaar, naar verwachting 8 herhalingen.").
+export function stillHeavyTip(fit: NoFit): string {
+  const kg = formatNumberNL(fit.lightestKg, 2);
+  if (fit.expectedReps <= 0) return `Ook ${kg} kg is nog te zwaar voor deze set.`;
+  return `Ook ${kg} kg is nog te zwaar, naar verwachting ${fit.expectedReps} ${fit.expectedReps === 1 ? 'herhaling' : 'herhalingen'}.`;
 }
 
 // De regel bij de oefening: "Die set was zwaarder dan bedoeld. Volgende sets 62,5 kg?"
