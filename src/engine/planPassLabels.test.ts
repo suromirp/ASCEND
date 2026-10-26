@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { planPass, type PlanPassContext } from './planPass';
-import { raceBlocks } from './raceBlock';
+import { raceBlocks, afterGoalWindows } from './raceBlock';
 import { lockLevel } from './weekValidator';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { TrainingGoal } from '../models/goals';
@@ -15,8 +15,8 @@ const DAYS = ['tpl_easy_run', 'tpl_upper_a', 'tpl_lower_a', 'tpl_herstel', 'tpl_
 const week = (monday: string): PlannedSession[] => DAYS.map((templateId, i) => ({ id: `${monday}-${i}`, templateId, scheduledDate: addDays(monday, i), weekStartDate: monday, status: 'planned', order: i }));
 const sessions = [...week('2026-10-19'), ...week('2026-10-26'), ...week('2026-11-02')];
 
-const race = (priority: TrainingGoal['priority']): TrainingGoal => ({
-  id: 'race', name: 'Wedstrijd', status: 'active', targetDate: '2026-10-24', createdAt: '', updatedAt: '', priority,
+const race = (priority: TrainingGoal['priority'], chosen = priority === 'verkenning'): TrainingGoal => ({
+  id: 'race', name: 'Wedstrijd', status: 'active', targetDate: '2026-10-24', createdAt: '', updatedAt: '', priority, ...(chosen ? { priorityChosen: true } : {}),
   requirements: [{ id: 'r', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 10, unit: 'km' }, discipline: 'running' }],
 }) as TrainingGoal;
 
@@ -55,6 +55,34 @@ describe('de planningsronde met het label van een wedstrijd', () => {
     // Herstel van een 10 km (4 dagen) geldt ook voor een Verkenning.
     expect(result.repairs.some((r) => r.rule === 'AFTER-GOAL')).toBe(true);
     expect(planPass(result.sessions, ctxFor('verkenning')).repairs).toEqual([]);
+  });
+
+  it('een Verkenning die je niet zelf koos (uit het oude "alleen volgen") krijgt geen anker, geen blok en geen herstel', () => {
+    const goals = [race('verkenning', false)];
+    expect(raceBlocks(goals, 'gr5', '2027-08-01', TODAY)).toEqual([]);
+    expect(afterGoalWindows(goals, 'gr5', '2027-08-01', TODAY)).toEqual([]);
+    const result = planPass(sessions, { ...ctxFor('voortop'), blocks: [], afterGoals: [] });
+    expect(result.sessions.some((s) => s.templateId === 'tpl_race')).toBe(false);
+    // Dezelfde Verkenning, maar door jou gekozen: wel een blok (zonder training) en herstel.
+    expect(raceBlocks([race('verkenning', true)], 'gr5', '2027-08-01', TODAY)).toHaveLength(1);
+    expect(afterGoalWindows([race('verkenning', true)], 'gr5', '2027-08-01', TODAY)).toEqual([{ date: '2026-10-24', days: 4 }]);
+  });
+
+  it('het herstel loopt door als het blok er niet meer is: op dag 2 na de wedstrijd', () => {
+    const today = '2026-10-26';
+    const goals = [race('voortop')];
+    // Het blok bestaat niet meer (de wedstrijd is voorbij), het herstel nog wel.
+    expect(raceBlocks(goals, 'gr5', '2027-08-01', today)).toEqual([]);
+    const windows = afterGoalWindows(goals, 'gr5', '2027-08-01', today);
+    expect(windows).toEqual([{ date: '2026-10-24', days: 4 }]);
+    expect(afterGoalWindows(goals, 'gr5', '2027-08-01', '2026-10-28')).toHaveLength(1);
+    expect(afterGoalWindows(goals, 'gr5', '2027-08-01', '2026-10-29')).toEqual([]);
+    expect(afterGoalWindows(goals, 'gr5', '2027-08-01', '2026-11-01')).toEqual([]);
+    const result = planPass(sessions, { ...ctxFor('voortop'), today, blocks: [], afterGoals: windows });
+    expect(result.repairs.some((r) => r.rule === 'AFTER-GOAL' && r.sessionId === '2026-10-26-2')).toBe(true);
+    // Zonder de herstelvensters (zoals voor deze reparatie) bleef de beendag staan.
+    const without = planPass(sessions, { ...ctxFor('voortop'), today, blocks: [], afterGoals: [] });
+    expect(without.repairs.some((r) => r.rule === 'AFTER-GOAL')).toBe(false);
   });
 
   it('Voortop heeft afbouw en Verkenning niet: Upper A op dinsdag voor de wedstrijd', () => {

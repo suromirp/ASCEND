@@ -817,7 +817,9 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {role === 'secondary'
           ? `Tussendoel: ASCEND traint ervoor.${blockStart ? ` Vanaf ${formatDateNL(blockStart)} krijgt elke week een kwaliteitstraining voor je wedstrijd: een tempoloop of lange intervallen. Met drie loopjes per week is dat er één, de belangrijkste van die week; met vier of meer loopjes allebei. Er komt een testloop de week ervoor. Een eerste testloop komt al eerder, zodat ASCEND je tempo kent.` : ''} De wedstrijd komt in je planning, de wedstrijdweek is licht en de lange duurloop erna kort.`
-          : 'Alleen volgen: je ziet hoe je ervoor staat, maar je planning verandert er niet voor.'}
+          : goal.priorityChosen
+            ? 'Alleen volgen: geen eigen blok, wel een eigen dag. De wedstrijd komt als training op zijn dag in je planning, de dag ervoor blijft licht voor de benen. Je ziet eerst het voorstel en geeft Akkoord.'
+            : 'Alleen volgen: je ziet hoe je ervoor staat, maar je planning verandert er niet voor.'}
       </p>
       {prediction?.predictedMinutes !== undefined && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink)' }}>

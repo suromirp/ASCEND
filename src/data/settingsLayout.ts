@@ -122,6 +122,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Planning
   ...inSheet('bundel-dagen', 'trainingstijd', 'rustdag', 'rustdag-doen'),
   ...inSheet('meerdere', 'zware-dingen'),
+  ...inSheet('ambitie', 'lange-loop'),
   // Doel en tochten
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge

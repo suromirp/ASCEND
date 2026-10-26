@@ -31,6 +31,13 @@ export const PRIORITY_NAME: Record<GoalPriority, string> = { top: 'Top', voortop
 
 const fromRole: Record<GoalPlanRole, GoalPriority> = { main: 'top', secondary: 'voortop', track: 'verkenning' };
 
+// Of het doel echt in de planning zit: een Top of Voortop altijd, een Verkenning alleen als jij het
+// label zelf koos (`priorityChosen`). Een Verkenning die uit het oude "alleen volgen" kwam, krijgt
+// geen anker en geen blok, zoals voorheen.
+export function isPlanned(goal: TrainingGoal, mainGoalId: string | undefined): boolean {
+  return effectivePriority(goal, mainGoalId) !== 'verkenning' || goal.priorityChosen === true;
+}
+
 export function effectivePriority(goal: TrainingGoal, mainGoalId: string | undefined): GoalPriority {
   if (goal.id === mainGoalId) return 'top';
   const own: unknown = goal.priority;

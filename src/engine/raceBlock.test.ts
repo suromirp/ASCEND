@@ -31,8 +31,10 @@ describe('race block', () => {
     expect(goalPlanRole({ ...race, planRole: 'track' }, 'gr5')).toBe('track');
     expect(blocks).toHaveLength(1);
     expect(blocks[0]).toMatchObject({ raceDate: '2027-03-20', raceWeek: '2027-03-15', blockStart: '2027-01-18', targetMinutes: 45 });
-    // Alleen volgen heet nu Verkenning: geen blok, maar de wedstrijd staat wel op zijn dag.
-    expect(raceBlocks([{ ...race, planRole: 'track' }], 'gr5', '2027-08-01', '2026-10-12').map((b) => b.priority)).toEqual(['verkenning']);
+    // Het oude "alleen volgen" blijft zoals het was: geen blok en geen wedstrijd op zijn dag.
+    expect(raceBlocks([{ ...race, planRole: 'track' }], 'gr5', '2027-08-01', '2026-10-12')).toEqual([]);
+    // Kies je zelf Verkenning, dan staat de wedstrijd wel op zijn dag (zonder blok).
+    expect(raceBlocks([{ ...race, planRole: 'track', priority: 'verkenning', priorityChosen: true }], 'gr5', '2027-08-01', '2026-10-12').map((b) => b.priority)).toEqual(['verkenning']);
     // Het hoofddoel zelf heeft nooit een wedstrijdblok.
     expect(raceBlocks([race], 'race', '2027-08-01', '2026-10-12')).toEqual([]);
   });
@@ -68,6 +70,14 @@ describe('race block', () => {
     // Idempotent: with the race there and the changes applied, nothing more.
     const after = [...open.filter((s) => !c.remove.includes(s)).map((s) => c.update.find((u) => u.id === s.id) ?? s), ...c.add];
     expect(applyRaceBlocks(after, blocks, templates, newId)).toEqual({ update: [], add: [], remove: [] });
+  });
+
+  it('a race you skipped (or already logged) does not come back', () => {
+    const open = [...week('2027-03-15'), ...week('2027-03-22')];
+    const skipped = { id: 'r', templateId: 'tpl_race', scheduledDate: '2027-03-20', weekStartDate: mondayOfWeek('2027-03-20'), status: 'skipped' as const, order: 0, lock: { by: 'user' as const, at: '' } };
+    expect(applyRaceBlocks(open, blocks, templates, newId, null, [...open, skipped]).add).toEqual([]);
+    // Without the skipped one in view it would be added, so the lookup is what keeps it away.
+    expect(applyRaceBlocks(open, blocks, templates, newId).add).toHaveLength(1);
   });
 
   it('takes the race out again when the goal goes', () => {
@@ -344,7 +354,7 @@ describe('one quality session in a week with three runs', () => {
 
 // Ronde 2b: de planning leest het label (docs/beslissingen/2026-10-26-planning-met-labels.md).
 describe('het label van het doel in het wedstrijdblok', () => {
-  const at = (over: Partial<TrainingGoal>, date = '2027-03-20') => raceBlocks([{ ...race, ...over, targetDate: date } as TrainingGoal], 'gr5', '2027-08-01', '2026-10-12');
+  const at = (over: Partial<TrainingGoal>, date = '2027-03-20') => raceBlocks([{ ...race, ...over, ...(over.priority === 'verkenning' ? { priorityChosen: true } : {}), targetDate: date } as TrainingGoal], 'gr5', '2027-08-01', '2026-10-12');
 
   it('Voortop krijgt de korte afbouw van zijn soort, Top houdt de wedstrijdweek, Verkenning heeft geen afbouw', () => {
     // 10 km: afbouw 4 dagen, herstel 4 dagen.

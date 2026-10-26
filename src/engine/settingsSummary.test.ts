@@ -75,6 +75,13 @@ describe('rowSummary: planning', () => {
     expect(rowSummary('ambitie', facts({ ambition: { chosen: 'stevig', effective: 'standaard' } })).value).toBe('Standaard, tijdelijk');
   });
 
+  it('Groei van de lange loop: het advies, een keuze en een beschadigde waarde', () => {
+    expect(rowSummary('lange-loop', facts()).value).toBe('Volgens het onderzoek');
+    expect(rowSummary('lange-loop', facts({ settings: { ...facts().settings, longRunGrowth: 'biweekly' } })).value).toBe('Rustiger');
+    expect(rowSummary('lange-loop', facts({ settings: { ...facts().settings, longRunGrowth: 'wave' } })).value).toBe('Heel rustig');
+    expect(rowSummary('lange-loop', facts({ settings: { ...facts().settings, longRunGrowth: 'snel' as never } })).value).toBe('Volgens het onderzoek');
+  });
+
   it('Benen en een zware loop verdwijnt als twee trainingen niet mag', () => {
     expect(rowSummary('zware-dingen', facts()).hidden).toBe(false);
     expect(rowSummary('zware-dingen', facts({ pairing: 'never' })).hidden).toBe(true);

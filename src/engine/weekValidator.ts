@@ -121,13 +121,14 @@ function leaveContext(input: CheckInput, byId: Map<string, SessionTemplate>) {
 }
 
 // The goal whose recovery a date falls in (the latest one before it), and which day after it this is.
-function afterGoal(input: CheckInput, date: string): { day: number } | undefined {
+function afterGoal(input: CheckInput, date: string): { day: number; date: string } | undefined {
   let best: number | undefined;
+  let bestDate = '';
   for (const g of input.afterGoals ?? []) {
     const d = daysBetween(g.date, date);
-    if (d >= 1 && d <= g.days && (best === undefined || d < best)) best = d;
+    if (d >= 1 && d <= g.days && (best === undefined || d < best)) { best = d; bestDate = g.date; }
   }
-  return best === undefined ? undefined : { day: best };
+  return best === undefined ? undefined : { day: best, date: bestDate };
 }
 
 const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}-${Number(iso.slice(5, 7))}`;
@@ -390,6 +391,23 @@ export function repairWeeks(input: CheckInput): RepairResult {
     return false;
   };
 
+  // A hard training the recovery made easy comes back as it was when that recovery is no longer
+  // there (the goal moved, went, or the days passed): the way a moved leave session goes back.
+  // Only while it is still the system's own and still the easy run; otherwise the mark just goes.
+  for (const marked of sessions.filter((s) => s.afterGoal)) {
+    const mark = marked.afterGoal!;
+    const { afterGoal: _drop, ...plain } = marked;
+    void _drop;
+    const stillEasy = marked.templateId === EASY_ID && marked.status === 'planned' && !marked.lock;
+    if (!stillEasy || !byId.has(mark.templateId)) {
+      sessions = sessions.map((s) => (s.id === marked.id ? plain : s));
+      continue;
+    }
+    if (afterGoal(input, marked.scheduledDate)) continue;
+    sessions = sessions.map((s) => (s.id === marked.id ? { ...plain, templateId: mark.templateId } : s));
+    repairs.push({ sessionId: marked.id, rule: 'AFTER-GOAL', from: marked.scheduledDate, to: marked.scheduledDate, reason: 'je wedstrijd is verschoven of weg, daarom weer de harde training van eerst' });
+  }
+
   const leaveFindings = !input.leave?.length ? 0 : validateWeeks(input).filter((f) => f.rule === 'LEAVE-OFF' || f.rule === 'LEAVE-LIGHT').length;
   const maxRounds = MAX_ROUNDS + leaveFindings * ROUNDS_PER_LEAVE_FINDING;
   for (let round = 0; round < maxRounds; round++) {
@@ -449,7 +467,9 @@ export function repairWeeks(input: CheckInput): RepairResult {
         if (relocate(subject, next.rule, [], short)) continue;
       }
       if (isHardRun(t) && t.id !== EASY_ID && byId.has(EASY_ID)) {
-        const easy = sessions.map((x) => (x.id === subject.id ? { ...x, templateId: EASY_ID } : x));
+        // Marked, so the hard training comes back when the goal moves or goes (restoreAfterGoal below).
+        const mark = { templateId: subject.templateId, date: afterGoal(input, subject.scheduledDate)?.date ?? '' };
+        const easy = sessions.map((x) => (x.id === subject.id ? { ...x, templateId: EASY_ID, ...(mark.date ? { afterGoal: mark } : {}) } : x));
         if (judge([subject.scheduledDate])(easy)) {
           sessions = easy;
           repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: 'je herstelt nog van je wedstrijd, daarom een rustig loopje in plaats van een harde training' });

@@ -101,12 +101,18 @@ export interface TrainingGoalBase {
   kind?: GoalKindId;
   details?: GoalDetails;
   priority?: GoalPriority;
+  // Alleen true als jij zelf in de app een label koos (Rol in je plan, of een voorstel van ASCEND
+  // waar je Akkoord op gaf). Een Verkenning krijgt de wedstrijd alleen op zijn dag in de planning
+  // als dit gezet is; een doel dat de overzetting van het oude "alleen volgen" tot Verkenning
+  // maakte, heeft het niet en blijft zoals het was: geen anker en geen blok. De migratie zet het
+  // nooit. Optioneel.
+  priorityChosen?: boolean;
   // Een eigen, kortere afbouw in dagen dan het advies van de soort en het label. Alleen gezet
   // als een botsing met een ander doel de afbouw inkortte en je Akkoord gaf
   // (engine/goalConflicts.ts). Optioneel; wie hem niet heeft krijgt het advies.
   taperDays?: number;
-  // "Toch allebei": de datums van andere doelen waarmee je de botsing bewust aanvaardde
-  // (engine/goalConflicts.ts). Verschuift dat andere doel, dan geldt de keuze niet meer en
+  // "Toch allebei": de paren van datums ("eerste|tweede") waarmee je de botsing bewust aanvaardde
+  // (engine/goalConflicts.ts). Verschuift een van beide doelen, dan is het een ander paar en
   // komt de melding terug. Optioneel.
   conflictAccepted?: string[];
   createdAt: string;

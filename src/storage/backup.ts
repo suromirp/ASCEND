@@ -344,6 +344,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.watchCalmRun;
     skipped.n++;
   }
+  if ('longRunGrowth' in s && s.longRunGrowth !== 'weekly' && s.longRunGrowth !== 'biweekly' && s.longRunGrowth !== 'wave' && s.longRunGrowth !== 'firm' && s.longRunGrowth !== 'fast') {
+    delete s.longRunGrowth;
+    skipped.n++;
+  }
   if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;

@@ -100,6 +100,15 @@ export function conflictsForGoals(goals: TrainingGoal[], milestoneGoalIds: Reado
   return goalConflicts(conflictGoalsFrom(goals, mainGoal(goals, milestoneGoalIds)?.id), today);
 }
 
+// "Toch allebei" bewaart het paar van beide datums. Verschuift een van beide doelen, dan is het een
+// ander paar en komt de melding terug. (Een los bewaarde datum van het andere doel, uit een eerdere
+// versie, telt nog zoals het deed.)
+export const conflictPairKey = (dateA: string, dateB: string) => (dateA <= dateB ? `${dateA}|${dateB}` : `${dateB}|${dateA}`);
+const isAccepted = (a: ConflictGoal, b: ConflictGoal) => {
+  const pair = conflictPairKey(a.date, b.date);
+  return a.accepted.includes(pair) || b.accepted.includes(pair) || a.accepted.includes(b.date) || b.accepted.includes(a.date);
+};
+
 // --- de som --------------------------------------------------------------------------
 
 const recovery = (g: ConflictGoal) => recoveryDaysFor(g.kind, g.details).value;
@@ -176,7 +185,7 @@ export function goalConflicts(goals: ConflictGoal[], today: string): GoalConflic
     for (let j = i + 1; j < ahead.length; j++) {
       const a = ahead[i];
       const b = ahead[j];
-      if (a.accepted.includes(b.date) || b.accepted.includes(a.date)) continue;
+      if (isAccepted(a, b)) continue;
       const gap = daysBetween(a.date, b.date);
       const need = needBetween(a, a.priority, b.priority, taperOf(b, b.priority));
       if (!need || gap >= need.days) continue;
@@ -231,8 +240,8 @@ export function newConflicts(before: GoalConflict[], after: GoalConflict[]): Goa
   return after.filter((c) => !known.has(keyOf(c)));
 }
 
-// "Toch allebei": het doel dat moest wijken onthoudt de datum van het andere doel, zodat de
-// melding niet terugkomt zolang die datum blijft. Geeft alleen de doelen terug die veranderen.
+// "Toch allebei": het doel dat moest wijken onthoudt het paar van beide datums, zodat de
+// melding niet terugkomt zolang allebei blijven. Geeft alleen de doelen terug die veranderen.
 export function acceptConflicts(goals: TrainingGoal[], conflicts: GoalConflict[]): TrainingGoal[] {
   const byId = new Map(goals.map((g) => [g.id, g]));
   const patched = new Map<string, TrainingGoal>();
@@ -241,7 +250,8 @@ export function acceptConflicts(goals: TrainingGoal[], conflicts: GoalConflict[]
     const other = byId.get(c.otherGoalId);
     if (!goal || !other?.targetDate) continue;
     const dates = new Set(goal.conflictAccepted ?? []);
-    dates.add(other.targetDate);
+    if (!goal.targetDate) continue;
+    dates.add(conflictPairKey(goal.targetDate, other.targetDate));
     patched.set(goal.id, { ...goal, conflictAccepted: [...dates].sort() });
   }
   return [...patched.values()];
@@ -255,7 +265,7 @@ export function applyResolution(goal: TrainingGoal, resolution: ConflictResoluti
   if (resolution.kind === 'lower_label') {
     next.priority = resolution.to;
     if (resolution.to === 'voortop') next.planRole = 'secondary';
-    if (resolution.to === 'verkenning') next.planRole = 'track';
+    if (resolution.to === 'verkenning') { next.planRole = 'track'; next.priorityChosen = true; } // jouw Akkoord op het voorstel
     if (resolution.taperDays !== undefined) next.taperDays = resolution.taperDays;
     else delete next.taperDays;
   } else {

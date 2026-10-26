@@ -29,6 +29,7 @@ import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
 import { resolveBodyCheck } from './bodyCheckSettings';
 import { resolveSky } from './skySettings';
+import { resolveLongRunGrowth } from './runGrowth';
 import { resolveIntensityCounting } from './intensitySettings';
 import { resolveFigure, type Figure } from './figureSettings';
 import { resolveRunInsight } from './runInsightSettings';
@@ -325,6 +326,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       const label = choiceShort('ambitie', f.ambition.effective);
       return { value: f.ambition.chosen !== f.ambition.effective ? `${label}, tijdelijk` : label };
     }
+    case 'lange-loop':
+      return { value: choiceShort('langeLoopGroei', resolveLongRunGrowth(s.longRunGrowth)) };
     case 'zware-dingen':
       return { checked: !!s.hardSameDay, sub: 'Op één dag, eerst de loop' };
 

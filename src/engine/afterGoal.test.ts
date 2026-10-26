@@ -83,6 +83,51 @@ describe('AFTER-GOAL: herstel na een wedstrijd', () => {
     expect(found(h.sessions, { afterGoals: long }).filter((f) => f.subjectId === `${MONDAY}-0`)).toEqual([]);
   });
 
+  describe('een harde training die het herstel rustig maakte, komt terug', () => {
+    const tempo: PlannedSession = { id: 'tempo', templateId: 'tpl_tempo_run', scheduledDate: '2026-10-27', weekStartDate: MONDAY, status: 'planned', order: 1 };
+    // Veertien dagen herstel: de hele week is bezet, er is geen andere dag.
+    const long = [{ date: RACE_DAY, days: 14 }];
+    const run = (list: PlannedSession[], goals: CheckInput['afterGoals']) => repairWeeks(input(list, { afterGoals: goals, dailyTimeBudget }));
+    const eased = () => run([race, tempo], long);
+
+    it('wordt een rustig loopje met een markering van wat het was en van welk doel', () => {
+      const r = eased();
+      const s = r.sessions.find((x) => x.id === 'tempo')!;
+      expect(s.templateId).toBe('tpl_easy_run');
+      expect(s.afterGoal).toEqual({ templateId: 'tpl_tempo_run', date: RACE_DAY });
+      expect(r.repairs.some((x) => x.rule === 'AFTER-GOAL' && x.sessionId === 'tempo')).toBe(true);
+      // Een tweede ronde met hetzelfde doel verandert niets.
+      expect(run(r.sessions, long).repairs).toEqual([]);
+    });
+
+    it('komt terug als het doel verdwijnt of zo ver verschuift dat de dag vrij is', () => {
+      const easy = eased().sessions;
+      for (const goals of [[], [{ date: '2026-12-05', days: 14 }]]) {
+        const back = run(easy, goals);
+        const s = back.sessions.find((x) => x.id === 'tempo')!;
+        expect(s.templateId).toBe('tpl_tempo_run');
+        expect(s.afterGoal).toBeUndefined();
+        expect(back.repairs.map((x) => x.sessionId)).toEqual(['tempo']);
+        expect(run(back.sessions, goals).repairs).toEqual([]);
+      }
+    });
+
+    it('blijft rustig zolang een doel de dag nog dekt, ook als het een dag verschuift', () => {
+      const easy = eased().sessions;
+      const still = run(easy, [{ date: '2026-10-25', days: 14 }]);
+      expect(still.sessions.find((x) => x.id === 'tempo')!.templateId).toBe('tpl_easy_run');
+    });
+
+    it('van jou geworden (vastgezet) of al gedaan: niet teruggezet, de markering gaat weg', () => {
+      const easy = eased().sessions;
+      const locked = easy.map((s) => (s.id === 'tempo' ? { ...s, lock: { by: 'user' as const, at: '' } } : s));
+      const r = run(locked, []);
+      const s = r.sessions.find((x) => x.id === 'tempo')!;
+      expect(s.templateId).toBe('tpl_easy_run');
+      expect(s.afterGoal).toBeUndefined();
+    });
+  });
+
   it('het herstel van het ene doel dat voorbij is, telt niet meer', () => {
     expect(found(withRace, { afterGoals: [{ date: '2026-10-10', days: 5 }] })).toEqual([]);
   });

@@ -133,6 +133,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   // Planning
   choice('wijzigingen', 'Wijzigingen', 'planning', 'changeApplyMode', 'auto_small', 'wijzigingen'),
   choice('ambitie', 'Ambitie', 'planning', 'ambition', 'standaard', 'ambitie', true),
+  choice('lange-loop', 'Groei van de lange loop', 'planning', 'longRunGrowth', 'weekly', 'langeLoopGroei', true),
   choice('rustdag-doen', 'Op je rustdag', 'planning', 'restDayMode', 'rest', 'rustdagDoen', true),
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
 

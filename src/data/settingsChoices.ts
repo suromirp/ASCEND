@@ -271,6 +271,20 @@ export const CHOICES = {
       { value: 'run', label: 'Duurloop', note: 'Elke zondag hardlopen', short: 'Duurloop' },
     ],
   }),
+  langeLoopGroei: def({
+    group: 'Planning',
+    title: 'Groei van de lange loop',
+    line: 'Hoe snel de lange loop groeit naar je hardloopwedstrijd.',
+    advice: 'weekly' as 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast',
+    help: 'langeLoopGroei',
+    options: [
+      { value: 'wave', label: 'Heel rustig', note: 'Per blok van vier weken, zoals eerst', short: 'Heel rustig' },
+      { value: 'biweekly', label: 'Rustiger', note: 'Om de twee weken een stap van 10%', short: 'Rustiger' },
+      { value: 'weekly', label: 'Volgens het onderzoek', note: 'Elke week hoogstens 10%, de piek om de week', short: 'Volgens het onderzoek' },
+      { value: 'firm', label: 'Stevig', note: 'Elke week hoogstens 10%, de piek elke week toegestaan', short: 'Stevig' },
+      { value: 'fast', label: 'Sneller dan het onderzoek', note: 'Wekelijks tot 120% van je langste loop van 30 dagen', short: 'Sneller dan het onderzoek' },
+    ],
+  }),
   rustNaTocht: def({
     group: 'Doel en tochten',
     title: 'Rust na een bergtocht',

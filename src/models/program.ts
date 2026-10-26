@@ -55,7 +55,12 @@ export interface Program {
   // grows every `stepWeeks` weeks by 10% (the 110% cap of the session still holds) instead of 10%
   // per wave of four weeks (engine/runGrowth.ts, docs/beslissingen/2026-10-26-planning-met-labels.md).
   // Absent = the usual build-up. Optional, additive: older programs and backups don't have it.
-  runBuild?: { raceDate: string; stepWeeks: number; peakMinutes: number };
+  runBuild?: {
+    raceDate: string; stepWeeks: number; peakMinutes: number;
+    // Per choice of "Groei van de lange loop" (engine/runGrowth.ts). Absent = 10% a step, the peak
+    // alternates, the cap of the long run is 110% of your longest of 30 days.
+    stepPercent?: number; alternatePeak?: boolean; spikeLimit?: number;
+  };
 }
 
 // For the days of `week` (a Monday) before `until`: whether the rest week was

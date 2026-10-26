@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { acceptConflicts, applyResolution, conflictGoalsFrom, conflictsForGoals, goalConflicts, newConflicts, type ConflictGoal } from './goalConflicts';
+import { acceptConflicts, applyResolution, conflictGoalsFrom, conflictsForGoals, goalConflicts, newConflicts, conflictPairKey, type ConflictGoal } from './goalConflicts';
 import type { GoalDetails, GoalKindId, GoalPriority, TrainingGoal } from '../models/goals';
 import { addDays } from '../utils/dates';
 
@@ -144,7 +144,7 @@ describe('toch allebei', () => {
     id: g.id, name: g.name, status: 'active', targetDate: g.date, kind: g.kind, priority: g.priority, details: g.details, requirements: [], createdAt: '', updatedAt: '',
   });
 
-  it('wordt bewaard als de datum van het andere doel, en de melding komt dan niet terug', () => {
+  it('wordt bewaard als het paar van beide datums, en de melding komt dan niet terug', () => {
     const a = marathon(BASE);
     const b = trek(at(30));
     const conflicts = goalConflicts([a, b], TODAY);
@@ -152,20 +152,22 @@ describe('toch allebei', () => {
     const patched = acceptConflicts([stored(a), stored(b)], conflicts);
     expect(patched).toHaveLength(1);
     expect(patched[0].id).toBe(conflicts[0].goalId);
-    expect(patched[0].conflictAccepted).toEqual([conflicts[0].goalId === a.id ? b.date : a.date]);
+    expect(patched[0].conflictAccepted).toEqual([conflictPairKey(a.date, b.date)]);
     const goals = [stored(a), stored(b)].map((g) => patched.find((p) => p.id === g.id) ?? g);
     expect(conflictsForGoals(goals, new Set(), TODAY)).toEqual([]);
   });
 
-  it('geldt niet meer als het andere doel van datum verandert', () => {
+  it('geldt niet meer als een van beide doelen van datum verandert, welk doel ook', () => {
     const a = marathon(BASE);
     const b = trek(at(30));
     const [c] = goalConflicts([a, b], TODAY);
     const patched = acceptConflicts([stored(a), stored(b)], [c])[0];
-    const goals = [stored(a), stored(b)].map((g) => (g.id === patched.id ? patched : g)).map((g) => (g.id === b.id ? { ...g, targetDate: at(31) } : g)) as TrainingGoal[];
-    // Als de aanvaarde datum de datum van het andere doel was, is die nu verschoven; anders het eigen doel.
-    const again = conflictsForGoals(goals, new Set(), TODAY);
-    expect(again.length).toBe(patched.id === a.id ? 1 : 0);
+    const accepted = [stored(a), stored(b)].map((g) => (g.id === patched.id ? patched : g)) as TrainingGoal[];
+    for (const moving of [a.id, b.id]) {
+      const goals = accepted.map((g) => (g.id === moving ? { ...g, targetDate: addDays(g.targetDate!, 1) } : g));
+      expect(conflictsForGoals(goals, new Set(), TODAY), `verschoven: ${moving}`).toHaveLength(1);
+    }
+    expect(conflictsForGoals(accepted, new Set(), TODAY)).toEqual([]);
   });
 
   it('vindt alleen de nieuwe botsingen na een verandering', () => {

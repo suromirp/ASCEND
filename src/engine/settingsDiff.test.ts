@@ -20,6 +20,7 @@ const everything: AppSettings = {
   showNextTrek: false,
   showStageWater: false,
   trekLegRest: 'strict',
+  longRunGrowth: 'wave',
   bootBreakInKm: 150,
   bootBreakInReminder: false,
   strengthModel: {
@@ -86,7 +87,7 @@ describe('adviceDifferences', () => {
 
   it('alleen wat de planning raakt is gemarkeerd', () => {
     const planIds = adviceDifferences(everything).filter((d) => d.plan).map((d) => d.id).sort();
-    expect(planIds).toEqual(['ambitie', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'zware-dingen']);
+    expect(planIds).toEqual(['ambitie', 'lange-loop', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'zware-dingen']);
   });
 
   it('elke instelling in de lijst staat in de index en heeft een plek', () => {
@@ -110,8 +111,8 @@ describe('resetPatch', () => {
   it('zet alles terug op het advies, in twee delen: wat meteen kan en wat de planning raakt', () => {
     const all = adviceDifferences(everything).map((d) => d.id);
     const { now, plan, planTitles } = resetPatch(everything, all);
-    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'hardSameDay', 'longSundaySession', 'restDayMode', 'trekLegRest']);
-    expect(planTitles).toHaveLength(6);
+    expect(Object.keys(plan).sort()).toEqual(['afterMainGoal', 'ambition', 'hardSameDay', 'longRunGrowth', 'longSundaySession', 'restDayMode', 'trekLegRest']);
+    expect(planTitles).toHaveLength(7);
     expect(Object.keys(now)).not.toContain('ambition');
     const after = apply(apply(everything, now), plan);
     expect(adviceDifferences(after)).toEqual([]);
@@ -120,7 +121,7 @@ describe('resetPatch', () => {
   it('zonder het planningsdeel blijft de planning staan', () => {
     const { now } = resetPatch(everything, adviceDifferences(everything).map((d) => d.id));
     const half = apply(everything, now);
-    expect(adviceDifferences(half).map((d) => d.id).sort()).toEqual(['ambitie', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'zware-dingen']);
+    expect(adviceDifferences(half).map((d) => d.id).sort()).toEqual(['ambitie', 'lange-loop', 'lange-zondag', 'na-hoofddoel', 'rust-na-tocht', 'rustdag-doen', 'zware-dingen']);
     expect(half.ambition).toBe('stevig');
   });
 

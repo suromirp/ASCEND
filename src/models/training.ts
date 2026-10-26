@@ -198,6 +198,10 @@ export interface PlannedSession {
   // A period of free days or a holiday placed, moved or let go of this
   // session (models/leave.ts, engine/leave.ts). Optional, additive.
   leave?: PlannedLeaveMark;
+  // The recovery after a goal (rule AFTER-GOAL, engine/weekValidator.ts) made this hard training an
+  // easy run: the template it had and the date of the goal. When that recovery is gone or has moved,
+  // the check puts the template back. Optional, additive.
+  afterGoal?: { templateId: string; date: string };
 }
 
 export interface PlanLock {

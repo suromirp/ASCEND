@@ -34,7 +34,7 @@ import { arrangeWeekForRestDay, type RestWeekday } from '../engine/restDay';
 import { describeRepair, lockLevel, visibleRepair } from '../engine/weekValidator';
 import { patternDays, planPass } from '../engine/planPass';
 import { resolveVariantDuration, withDurationScope, type DurationScope } from '../engine/substitutions';
-import { raceBlocks, revivePrescriptionRemovedTests } from '../engine/raceBlock';
+import { raceBlocks, afterGoalWindows, revivePrescriptionRemovedTests } from '../engine/raceBlock';
 import { strayTrekRows } from '../engine/leaveStrays';
 import { relayoutForRestDay } from '../engine/restDayProposal';
 import { TENT_PACK_KG, packMilestoneUpdate, packWeightOf, programPackGoal, programPackTarget } from '../engine/gr5Profile';
@@ -599,6 +599,9 @@ export interface AppSettings {
   // Rest after a bergtocht: 'soft' (absent = soft) lets the short version of a
   // heavy leg day stand 48 hours after it, 'strict' keeps 72 hours.
   trekLegRest?: 'soft' | 'strict';
+  // How fast the long run grows toward a running race (engine/runGrowth.ts): 'weekly' (absent =
+  // weekly, the advice), 'biweekly' or 'wave' (per block of four weeks, as before). Optional, additive.
+  longRunGrowth?: 'weekly' | 'biweekly' | 'wave' | 'firm' | 'fast';
   // After the main goal (engine/programLayout.ts#planEndDay): 'stop' (absent =
   // stop) plans nothing during and after it until you choose a new goal;
   // 'maintain' plans maintenance weeks once the trip is over. During the trip
@@ -1175,7 +1178,7 @@ async function patternContext(
     anchor: planEndDay(goals, milestones, todayISO(), settings.afterMainGoal),
     overrides: settings.programPhaseOverrides,
     packTarget: programPackTarget(goals, milestones),
-    runBuild: programRunBuild(goals, mainGoal(goals, new Set(milestones.map((m) => m.goalId)))?.id, todayISO()),
+    runBuild: programRunBuild(goals, mainGoal(goals, new Set(milestones.map((m) => m.goalId)))?.id, todayISO(), settings.longRunGrowth),
   };
 }
 
@@ -1403,7 +1406,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   const engineConfig = await GoalEngineConfigRepo.get();
   const restDay = settings.restDay ?? 1;
   const pass = withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
-    today, logs, templates, program: next, blocks, restDay, goalDay: ctx.anchor,
+    today, logs, templates, program: next, blocks, afterGoals: afterGoalWindows(goals, mainGoalId, ctx.anchor, today), restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),

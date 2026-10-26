@@ -60,7 +60,7 @@ describe('botsende doelen in het voorstel', () => {
     const stored = await TrainingGoalsRepo.getAll();
     const loser = stored.find((g) => g.id === first.conflicts![0].goalId)!;
     const other = stored.find((g) => g.id === first.conflicts![0].otherGoalId)!;
-    expect(loser.conflictAccepted).toEqual([other.targetDate]);
+    expect(loser.conflictAccepted).toEqual([[loser.targetDate, other.targetDate].sort().join('|')]);
 
     // Dezelfde situatie nog eens voorstellen (een datum die gelijk blijft): geen nieuwe melding.
     const again = await computeHorizonPlan({ ...base, title: 'Nog eens', goals: [{ ...stored.find((g) => g.id === 'goal-test-marathon')!, name: 'Marathon in de zomer' }] });

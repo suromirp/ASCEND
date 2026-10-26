@@ -291,27 +291,73 @@ export function runBuildMultiplier(template: SessionTemplate, program: Program, 
   const wave = Math.min(Math.floor((week - opbouw.start) / WAVE_LENGTH), lastWave);
   const from = opbouw.start > 1 ? cycleMultiplier(opbouw.start - 1) : 1;
   const built = from * Math.pow(1 + RUN_BUILD_PER_WAVE, wave + 1);
-  const usual = Math.max(basic, Math.min(built, peak / heaviestStepMinutes));
-  // A running goal as Top or Voortop: the long run builds faster toward its race (below).
-  const fast = fastLongRunMultiplier(template, program, week, opbouw, from, heaviestStepMinutes);
-  return fast === undefined ? usual : Math.max(usual, fast);
+  return Math.max(basic, Math.min(built, peak / heaviestStepMinutes));
 }
 
-// The long run toward a running race of a Top or Voortop goal: 10% more every
-// `stepWeeks` weeks from the start of Opbouw (instead of every wave of four weeks), up to the
-// week of the race, the peak of that race and the usual 110% cap of the session (which is
-// measured on your own logs, engine/substitutions.ts). After the race the level holds; the usual
-// build-up takes over again when it is higher. Only the long run, and only with a running goal:
-// a tocht keeps its own build-up (docs/onderzoek/Doelsoorten duur.md, gedeelde regel 3).
-function fastLongRunMultiplier(template: SessionTemplate, program: Program, week: number, opbouw: { start: number; weeks: number }, from: number, heaviestStepMinutes: number): number | undefined {
-  const build = program.runBuild;
-  if (!build || template.id !== LONG_RUN_ID || build.stepWeeks < 1) return undefined;
+// The long run toward a running race of a Top or Voortop goal (Program.runBuild, setting "Groei van
+// de lange loop"): from the start of Opbouw a step of at most 10% every `stepWeeks` build weeks on the
+// last build week, never a jump to the peak or to the 110% limit. The lighter week of the wave stays
+// (as light as the written ladder has it) and the build resumes from the last build week, not from
+// the light one. The ceiling is the peak of that race or the program's own peak of 120, the larger;
+// after the week of the race the usual build-up takes over. The 110% cap on your own longest run of
+// 30 days (engine/substitutions.ts) still holds on top, so a skipped or shorter run makes the next
+// one grow from what you really did.
+function gradualLongRunMinutes(template: SessionTemplate, program: Program, generic: WeeklyProgressionStep[], week: number, restSkipped: boolean): number | undefined {
+  const build = readRunBuild(program.runBuild);
+  const opbouw = opbouwStartWeek(program);
+  if (!build || !opbouw || opbouw.weeks === 0 || week < opbouw.start) return undefined;
   const raceWeek = Math.floor(daysBetween(mondayOfWeek(program.startDate), mondayOfWeek(build.raceDate)) / 7) + 1;
-  const lastStep = Math.floor((opbouw.weeks - 1) / build.stepWeeks);
-  const step = Math.min(Math.floor((Math.min(week, raceWeek) - opbouw.start) / build.stepWeeks), lastStep);
-  if (step < 0) return undefined;
-  const peak = Math.max(RUN_BUILD_PEAK_MINUTES[LONG_RUN_ID], build.peakMinutes);
-  return Math.min(from * Math.pow(1 + RUN_BUILD_PER_WAVE, step + 1), peak / heaviestStepMinutes);
+  if (!Number.isFinite(raceWeek) || week > raceWeek) return undefined;
+  const ladder = [1, 2, 3, 4].map((n) => generic.find((g) => g.weekInPhase === n)?.targetMinutes);
+  if (ladder.some((m) => !(typeof m === 'number' && m > 0))) return undefined;
+  const [, , heavy, light] = ladder as number[];
+  const lightRatio = light / heavy;
+  const peak = longRunPeak(program);
+  // The first build week grows from the week before Opbouw, as that week stands in the plan (the
+  // usual build-up), so the step into Opbouw is also at most 10%. A light week there does not count:
+  // then the week before it.
+  let level = 0;
+  for (let back = 2; back <= 3 && opbouw.start - back >= 0; back++) {
+    const before = resolveProgramWeek(program, addDays(mondayOfWeek(program.startDate), 7 * (opbouw.start - back)));
+    const usualBefore = before ? genericTarget(template, program, before, generic) : undefined;
+    if (!before || !usualBefore || usualBefore.taper) continue;
+    level = Math.floor(usualBefore.minutes);
+    if (waveWeek(before) !== WAVE_LENGTH) break;
+  }
+  if (!(level > 0)) level = Math.floor(heavy);
+  let builds = 0;
+  for (let w = opbouw.start; w <= week; w++) {
+    const isLight = ((w - opbouw.start) % WAVE_LENGTH) + 1 === WAVE_LENGTH && !(w === week && restSkipped);
+    let value: number;
+    if (isLight) value = Math.max(15, Math.round(level * lightRatio));
+    else {
+      if (builds % build.stepWeeks === 0) level = Math.min(peak, Math.floor(level * (1 + (build.stepPercent ?? RUN_BUILD_PER_WAVE * 100) / 100)));
+      builds++;
+      value = level;
+    }
+    if (w === week) return value;
+  }
+  return undefined;
+}
+
+// Program.runBuild defensief gelezen (een oude of beschadigde back-up): een echte datum, een stap
+// van minstens een week en een piek zonder rare waarden; anders niets, en dan geldt de gewone groei.
+export function readRunBuild(raw: unknown): NonNullable<Program['runBuild']> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const b = raw as Record<string, unknown>;
+  const date = b.raceDate;
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) return undefined;
+  const step = b.stepWeeks;
+  if (typeof step !== 'number' || !Number.isFinite(step) || step < 1) return undefined;
+  const peak = typeof b.peakMinutes === 'number' && Number.isFinite(b.peakMinutes) && b.peakMinutes > 0 ? b.peakMinutes : 0;
+  const percent = b.stepPercent;
+  const limit = b.spikeLimit;
+  return {
+    raceDate: date, stepWeeks: Math.floor(step), peakMinutes: peak,
+    ...(typeof percent === 'number' && Number.isFinite(percent) && percent > 10 && percent <= 20 ? { stepPercent: percent } : {}),
+    ...(b.alternatePeak === false ? { alternatePeak: false } : {}),
+    ...(typeof limit === 'number' && Number.isFinite(limit) && limit > 1.1 && limit <= 1.2 ? { spikeLimit: limit } : {}),
+  };
 }
 
 export interface ProgressionTarget {
@@ -347,7 +393,6 @@ function stepTarget(template: SessionTemplate, program: Program | null | undefin
   if (!steps || !program) return undefined;
   const position = resolveProgramWeek(program, dateIso);
   if (!position) return undefined;
-  const wave = waveWeek(position);
 
   const own = steps.filter((s) => s.phaseId === position.phase.id);
   if (own.length > 0) {
@@ -357,6 +402,41 @@ function stepTarget(template: SessionTemplate, program: Program | null | undefin
 
   const generic = steps.filter((s) => !s.phaseId);
   if (generic.length === 0) return undefined;
+  const raw = genericTarget(template, program, position, generic);
+  if (!raw) return undefined;
+  if (raw.taper) return { step: raw.step, minutes: raw.minutes, phaseSteps: generic };
+  let minutes = raw.minutes;
+  // The long run on its peak alternates: a week on the peak, the next about 80% of it, next to the
+  // lighter week of the wave. So the peak stands at most every other week (expert).
+  if (template.id === LONG_RUN_ID) minutes = alternatePeak(template, program, dateIso, generic, minutes);
+  return { step: repeatNote(raw.step, position), minutes, phaseSteps: generic };
+}
+
+// The peak the long run of this program tops out at: its own 120 minutes, or more toward a race.
+function longRunPeak(program: Program): number {
+  return Math.max(RUN_BUILD_PEAK_MINUTES[LONG_RUN_ID], readRunBuild(program.runBuild)?.peakMinutes ?? 0);
+}
+export const PEAK_ALTERNATE_RATIO = 0.8;
+
+function alternatePeak(template: SessionTemplate, program: Program, dateIso: string, generic: WeeklyProgressionStep[], minutes: number): number {
+  const peak = longRunPeak(program);
+  if (minutes < peak || readRunBuild(program.runBuild)?.alternatePeak === false) return minutes;
+  // How many weeks in a row before this one stood on the peak: odd = this week is the lighter one.
+  let run = 0;
+  while (run < 60) {
+    const position = resolveProgramWeek(program, addDays(dateIso, -7 * (run + 1)));
+    const before = position ? genericTarget(template, program, position, generic) : undefined;
+    if (!before || before.taper || before.minutes < peak) break;
+    run++;
+  }
+  return run % 2 === 1 ? Math.round(peak * PEAK_ALTERNATE_RATIO) : minutes;
+}
+
+// The generic step of a week, scaled: before any alternation of the peak.
+function genericTarget(template: SessionTemplate, program: Program, position: ResolvedProgramPosition, generic: WeeklyProgressionStep[]): { step: WeeklyProgressionStep; minutes: number; taper: boolean } | undefined {
+  // A phase with steps of its own is not this path.
+  if (template.weeklyProgression?.some((s) => s.phaseId === position.phase.id)) return undefined;
+  const wave = waveWeek(position);
   const taper = taperFactor(position);
   const step = generic.find((s) => s.weekInPhase === (taper ? 2 : wave));
   if (!step) return undefined;
@@ -364,9 +444,10 @@ function stepTarget(template: SessionTemplate, program: Program | null | undefin
   const scaled = step.targetMinutes * runBuildMultiplier(template, program, position, heaviest);
   if (taper) {
     const minutes = Math.max(15, Math.round((scaled * taper) / 5) * 5);
-    return { step: { ...step, note: position.weekInPhase === position.phase.weekCount ? 'Laatste week voor de start, kort en fris' : 'Minder volume, zelfde tempo' }, minutes, phaseSteps: generic };
+    return { step: { ...step, note: position.weekInPhase === position.phase.weekCount ? 'Laatste week voor de start, kort en fris' : 'Minder volume, zelfde tempo' }, minutes, taper: true };
   }
-  return { step: repeatNote(step, position), minutes: Math.round(scaled), phaseSteps: generic };
+  const gradual = template.id === LONG_RUN_ID ? gradualLongRunMinutes(template, program, generic, loadWeekInProgram(position), !!position.restSkipped) : undefined;
+  return { step, minutes: gradual ?? Math.round(scaled), taper: false };
 }
 
 // A repeated week says so in its note ("Opbouw (herhaalweek)").

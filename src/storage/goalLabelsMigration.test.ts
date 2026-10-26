@@ -20,9 +20,9 @@ describe('taperDays en conflictAccepted op een doel', () => {
   });
 
   it('geldige waarden blijven, en een tweede keer lezen verandert niets', () => {
-    const once = migrateTrainingGoal(goal({ taperDays: 3, conflictAccepted: ['2027-07-25', '2027-07-25', '2027-05-01'] }), ctx);
+    const once = migrateTrainingGoal(goal({ taperDays: 3, conflictAccepted: ['2027-07-25', '2027-07-25', '2027-05-01', '2027-05-01|2027-07-25'] }), ctx);
     expect(once.taperDays).toBe(3);
-    expect(once.conflictAccepted).toEqual(['2027-07-25', '2027-05-01']);
+    expect(once.conflictAccepted).toEqual(['2027-07-25', '2027-05-01', '2027-05-01|2027-07-25']);
     expect(migrateTrainingGoal(once, ctx)).toEqual(once);
   });
 
@@ -33,5 +33,20 @@ describe('taperDays en conflictAccepted op een doel', () => {
     expect('taperDays' in migrateTrainingGoal(goal({ taperDays: 'drie' }), ctx)).toBe(false);
     expect(readAcceptedConflicts('2027-07-25')).toBeUndefined();
     expect(readAcceptedConflicts([])).toBeUndefined();
+  });
+});
+
+describe('priorityChosen: alleen jouw eigen keuze van een label', () => {
+  it('de migratie zet het nooit, ook niet bij een doel dat uit "alleen volgen" een Verkenning werd', () => {
+    const next = migrateTrainingGoal(goal({ planRole: 'track' }), ctx);
+    expect(next.priority).toBe('verkenning');
+    expect('priorityChosen' in next).toBe(false);
+  });
+
+  it('een echte true blijft staan, al het andere gaat weg', () => {
+    expect(migrateTrainingGoal(goal({ priority: 'verkenning', priorityChosen: true }), ctx).priorityChosen).toBe(true);
+    for (const bad of ['ja', 1, false, null]) expect('priorityChosen' in migrateTrainingGoal(goal({ priorityChosen: bad }), ctx)).toBe(false);
+    const once = migrateTrainingGoal(goal({ priority: 'verkenning', priorityChosen: true }), ctx);
+    expect(migrateTrainingGoal(once, ctx)).toEqual(once);
   });
 });

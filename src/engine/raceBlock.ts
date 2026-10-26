@@ -53,7 +53,7 @@ import { PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD, waveWeek } from './programL
 import { isLegHeavyTemplate } from './scheduler';
 import { templateSport } from './sports';
 import { idHasRole } from './templateRoles';
-import { effectivePriority, goalDetailsOf, goalKindOf, goalRecoveryDays, goalTaperDays, goalPlanRole, isRaceGoal, type GoalPlanRole } from './goalLabels';
+import { effectivePriority, isPlanned, goalDetailsOf, goalKindOf, goalRecoveryDays, goalTaperDays, goalPlanRole, isRaceGoal, type GoalPlanRole } from './goalLabels';
 import type { GoalPriority } from '../models/goals';
 
 // Waar het label van een doel en de oude rol gelezen worden staat in goalLabels.ts.
@@ -122,6 +122,7 @@ export function raceBlocks(goals: TrainingGoal[], mainGoalId: string | undefined
   return goals
     .filter((g): g is TrainingGoal & { targetDate: string } => g.status === 'active' && !!g.targetDate && g.targetDate >= today && (!anchor || g.targetDate < anchor))
     .filter((g) => isRaceGoal(g) && g.id !== mainGoalId && goalPlanRole(g, mainGoalId) !== 'main')
+    .filter((g) => isPlanned(g, mainGoalId))
     .map((g) => {
       const details = goalDetailsOf(g);
       const priority = effectivePriority(g, mainGoalId);
@@ -137,6 +138,22 @@ export function raceBlocks(goals: TrainingGoal[], mainGoalId: string | undefined
         priority, taperStart, recoveryDays: goalRecoveryDays(g),
       };
     });
+}
+
+// The recovery after a race (rule AFTER-GOAL in engine/weekValidator.ts), kept apart from the blocks:
+// a block stops existing the day after its race, but the recovery runs on for the days of its kind.
+// Only goals that really were in the plan count (a Top, a Voortop, or a Verkenning you chose yourself),
+// until the last recovery day has passed.
+export function afterGoalWindows(goals: TrainingGoal[], mainGoalId: string | undefined, anchor: string | undefined, today: string): { date: string; days: number }[] {
+  const out: { date: string; days: number }[] = [];
+  for (const g of goals) {
+    if (g.status !== 'active' || !g.targetDate || !isRaceGoal(g) || g.id === mainGoalId || goalPlanRole(g, mainGoalId) === 'main') continue;
+    if (anchor && g.targetDate >= anchor) continue;
+    if (!isPlanned(g, mainGoalId)) continue;
+    const days = goalRecoveryDays(g);
+    if (days > 0 && g.targetDate >= addDays(today, -days)) out.push({ date: g.targetDate, days });
+  }
+  return out;
 }
 
 // What a week looks like for the quality rule: how many runs it has (all of
@@ -280,7 +297,8 @@ export function applyRaceBlocks(
 
   for (const b of blocks) {
     const raceMinutes = b.targetMinutes ?? (b.distanceKm ? Math.round(b.distanceKm * 6) : 60);
-    if (!open.some((s) => s.templateId === RACE_TEMPLATE_ID && s.scheduledDate === b.raceDate)) {
+    // Also a skipped race (you let it go) or a logged one counts as there: it does not come back.
+    if (!everything.some((s) => s.templateId === RACE_TEMPLATE_ID && s.scheduledDate === b.raceDate)) {
       add.push({ id: newId(), templateId: RACE_TEMPLATE_ID, scheduledDate: b.raceDate, weekStartDate: b.raceWeek, status: 'planned', order: 0, plannedMinutes: raceMinutes });
     }
     // A Verkenning (take part as a training): the race on its day, the day before nothing heavy for

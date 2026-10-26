@@ -73,6 +73,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Stevig', text: 'valt vanzelf terug op Standaard bij pijn of trainingen die te zwaar voelen.' },
     ],
   },
+  langeLoopGroei: {
+    title: 'Groei van de lange loop',
+    lead: 'Hoe snel je lange loop groeit naar je hardloopwedstrijd. De 110% van je langste loop is het advies; daarboven is in het onderzoek geen veilige marge gevonden.',
+    points: [
+      { head: 'Volgens het onderzoek', text: 'elke week een stap van hoogstens 10%, met de lichtere week van de golf en de piek om de week. Tot 30% per twee weken gaf geen hoger risico, boven 30% wel (Nielsen 2014, matig).' },
+      { head: 'Stevig', text: 'ook hoogstens 10% per week en binnen de 110%, maar de piek mag elke week staan.' },
+      { head: 'Rustiger en Heel rustig', text: 'om de twee weken een stap, of per blok van vier weken zoals eerst.' },
+      { head: 'Sneller dan het onderzoek', text: 'onder Geavanceerd: wekelijks tot 120% van je langste loop van 30 dagen. Boven 10% gaf in het grootste onderzoek ongeveer 64% meer kans op een overbelastingsblessure (Frandsen 2025, matig).' },
+      { head: 'Altijd', text: 'de lichtere week, de herstart na een pauze en het rekenen vanaf wat je echt liep blijven.' },
+    ],
+  },
   meerdere: {
     title: 'Meerdere trainingen op één dag',
     lead: 'Mag ASCEND twee sessies op dezelfde dag plannen, als je tijd die dag het toelaat?',
