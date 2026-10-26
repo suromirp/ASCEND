@@ -35,18 +35,18 @@ function Layer({ n, tone, children }: { n: 1 | 2 | 3; tone: Tone; children: Reac
 const round = { strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
 const SHAPES: Record<PictogramName, ReactNode> = {
-  // Een poppetje met gekruiste benen dat uitrust, met een paar rustlijntjes.
+  // Een hangmat tussen twee palen, met iemand erin die uitrust.
   rust: (
     <>
       <Layer n={1} tone="light">
-        <path d="M17.6 4.6c1 .5 1.6 1.4 1.6 2.5M19.6 3c1.4.8 2.2 2 2.2 3.6" fill="none" stroke="currentColor" strokeWidth="1.3" {...round} />
+        <path d="M3 3.5v17M21 3.5v17" fill="none" stroke="currentColor" strokeWidth="2" {...round} />
       </Layer>
       <Layer n={2} tone="mid">
-        <path d="M12 8.6c-2.4.3-4 1.8-4.8 4.4l.9 1.6h7.8l.9-1.6c-.8-2.6-2.4-4.1-4.8-4.4z" fill="currentColor" />
+        <path d="M3 8.5c3.2 5 14.8 5 18 0" fill="none" stroke="currentColor" strokeWidth="1.5" {...round} />
       </Layer>
       <Layer n={3} tone="full">
-        <circle cx="12" cy="5" r="2.4" fill="currentColor" />
-        <path d="M3.2 19.4c.5-2.9 2.9-4.6 5.7-4.6h6.2c2.8 0 5.2 1.7 5.7 4.6-.1.9-.9 1.4-1.8 1.1C16.8 19.6 14.4 18.6 12 18.6S7.2 19.6 5 20.5c-.9.3-1.7-.2-1.8-1.1z" fill="currentColor" />
+        <path d="M4.8 10.4c2.8 3.8 11.6 3.8 14.4 0-.3 3-3.2 5.2-7.2 5.2s-6.9-2.2-7.2-5.2z" fill="currentColor" />
+        <circle cx="7.6" cy="9.4" r="1.9" fill="currentColor" />
       </Layer>
     </>
   ),
