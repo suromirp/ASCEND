@@ -52,6 +52,41 @@ export interface GoalRequirement {
 // equals the whole trip (engine/goalRoute.ts).
 export type GoalExecution = 'continuous' | 'stages';
 
+// De soort van een doel (ronde 2a, docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md).
+// De soorten zelf, met hun getallen en bronnen, staan als gegevens in data/goalKinds.ts.
+export const GOAL_KIND_IDS = [
+  'trek_hut', 'trek_tent', 'day_hike', 'mountaineering', 'run_race', 'trail', 'bike', 'triathlon', 'stronger', 'fit',
+] as const;
+export type GoalKindId = (typeof GOAL_KIND_IDS)[number];
+
+// Hoe belangrijk een doel is. Top: het hoofddoel, de opbouw telt terug met een volle afbouw.
+// Voortop: belangrijk, met een korte afbouw. Verkenning: meedoen als training, zonder afbouw.
+// "Alleen volgen" bestaat niet meer als aparte stand.
+export const GOAL_PRIORITIES = ['top', 'voortop', 'verkenning'] as const;
+export type GoalPriority = (typeof GOAL_PRIORITIES)[number];
+
+// Wat de gebruiker over zijn doel invulde. Alles is optioneel; welke velden bij een
+// soort horen staat in data/goalKinds.ts. Een veld dat niet klopt wordt bij het lezen
+// weggelaten (storage/migrations.ts#readGoalDetails).
+export interface GoalDetails {
+  variant?: string; // bijvoorbeeld '10k', 'ultra', 'cols'
+  distanceKm?: number; // totaal van het doel
+  gainM?: number; // D+ totaal
+  lossM?: number; // D- totaal
+  days?: number; // aantal dagen van een meerdaags doel
+  packKg?: number; // rugzak
+  shelter?: 'hut' | 'tent';
+  highestPointM?: number;
+  sleepingPointM?: number;
+  expectedMinutes?: number; // verwachte tijd van de doeldag of de wedstrijd
+  targetMinutes?: number; // doeltijd (hardlopen)
+  baggageKg?: number; // bagage op de fiets
+  homeDaysInRow?: number; // hoeveel dagen achter elkaar je thuis oefent (overschrijft de soort)
+  strengthTargets?: { exercise: string; kg: number; reps: number }[];
+  weeklyMinutes?: number; // fit blijven: eigen doel, standaard de richtlijn
+  strengthDays?: number;
+}
+
 export interface TrainingGoalBase {
   id: string;
   name: string;
@@ -60,7 +95,12 @@ export interface TrainingGoalBase {
   // The goal's place in the plan (engine/raceBlock.ts): 'secondary' (a
   // tussendoel that gets its own block), or 'track' (only followed). The
   // main goal is the one with the ascent ladder; unset means automatic.
+  // Oud veld, alleen nog gelezen voor terugwaartse compatibiliteit. Nieuw is `priority`;
+  // storage/migrations.ts#deriveGoalKind zet het ene om in het andere.
   planRole?: 'main' | 'secondary' | 'track';
+  kind?: GoalKindId;
+  details?: GoalDetails;
+  priority?: GoalPriority;
   createdAt: string;
   updatedAt: string;
 }

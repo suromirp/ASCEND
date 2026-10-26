@@ -29,7 +29,9 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
     vi.setSystemTime(new Date(`${TODAY}T08:00:00`));
     await wipeAllData();
     await seedIfEmpty();
-    await runBootMigrations({ build: 'test-horizon-plan' });
+    // Ruime grens: onder drukte mag een herstelstap niet naar de achtergrond gaan en
+    // tijdens de toets nog schrijven.
+    await runBootMigrations({ build: 'test-horizon-plan', stepLimitMs: 120_000 });
   });
   afterEach(() => vi.useRealTimers());
 
@@ -103,8 +105,11 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
       const tpls = new Map((await SessionTemplatesRepo.getAll()).map((x) => [x.id, x]));
       const open = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate >= TODAY && s.scheduledDate <= '2026-11-20' && s.status !== 'skipped' && !s.lock);
       const isRun = (s: { templateId: string }) => tpls.get(s.templateId) && templateSport(tpls.get(s.templateId)!) === 'running' && tpls.get(s.templateId)!.type !== 'recovery';
-      const runs = open.filter((s) => isRun(s) && s.templateId !== 'tpl_long_run');
-      const legsList = open.filter((s) => s.templateId === 'tpl_lower_a');
+      // Op datum gesorteerd: de id's zijn willekeurig, en de volgorde van zoeken mag de
+      // uitkomst niet bepalen.
+      const byDate = (a: { scheduledDate: string }, b: { scheduledDate: string }) => a.scheduledDate.localeCompare(b.scheduledDate);
+      const runs = open.filter((s) => isRun(s) && s.templateId !== 'tpl_long_run').sort(byDate);
+      const legsList = open.filter((s) => s.templateId === 'tpl_lower_a').sort(byDate);
       // Benen en een zware loop op één dag, zoals de instelling dat toelaat: uit het voorstel
       // verschuift dat, aan laten staan niet.
       let shown = false;

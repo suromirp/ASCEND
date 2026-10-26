@@ -388,6 +388,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Anders niets', text: 'is je gewone uur al prima, of is er geen beter blok, dan staat er niets extra.' },
     ],
   },
+  kaarten: {
+    title: 'Kaarten op Vandaag',
+    lead: 'Een profiel zet in een keer de losse schakelaars voor je. Je training staat altijd op Vandaag.',
+    points: [
+      { head: 'Alles laten zien', text: 'alle kaarten, zoals het advies.' },
+      { head: 'Alleen het belangrijkste', text: 'je training, de ochtendcheck en het weer. Weekterugblik, vraag van de week, citaat, ochtendkaart en geluid gaan uit.' },
+      { head: 'Alleen mijn training', text: 'ook de ochtendcheck en het weer gaan uit.' },
+      { head: 'Aangepast', text: 'je losse schakelaars passen bij geen profiel. Je kunt ze hieronder zelf zetten.' },
+    ],
+  },
   ochtendcheck: {
     title: 'Ochtendcheck',
     lead: 'Een korte vraag over je benen, energie en slaap, voor je training.',

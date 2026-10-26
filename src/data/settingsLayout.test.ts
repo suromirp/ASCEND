@@ -62,7 +62,8 @@ describe('de indeling in acht groepen', () => {
 
   it('een gewone rij opent geen blad, een oud anker blijft vindbaar', () => {
     expect(placementOf('forge')).toEqual({ page: 'forge', row: 'forge' });
-    expect(placementOf('ochtendcheck')).toEqual({ page: 'vandaag', row: 'ochtendcheck' });
+    expect(placementOf('ochtendcheck')).toEqual({ page: 'vandaag', row: 'kaarten', sheet: true });
+    expect(placementOf('beweging')).toEqual({ page: 'vandaag', row: 'beweging' });
   });
 
   it('wat geen instelling is staat niet meer als rij, en blijft als verwijzing vindbaar', () => {

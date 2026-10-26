@@ -449,6 +449,18 @@ export const CHOICES = {
       { value: '7', label: '7 uur', note: 'Voor wie later opstaat', short: '07:00' },
     ],
   }),
+  kaarten: def({
+    group: 'Vandaag en meldingen',
+    title: 'Kaarten op Vandaag',
+    line: 'Welke kaarten je op Vandaag ziet. Je training staat er altijd.',
+    advice: 'alles' as 'alles' | 'belangrijkst' | 'training',
+    help: 'kaarten',
+    options: [
+      { value: 'alles', label: 'Alles laten zien', note: 'Alle kaarten, zoals het advies', short: 'Alles' },
+      { value: 'belangrijkst', label: 'Alleen het belangrijkste', note: 'Je training, de ochtendcheck en het weer', short: 'Het belangrijkste' },
+      { value: 'training', label: 'Alleen mijn training', note: 'Alleen je training van vandaag', short: 'Alleen training' },
+    ],
+  }),
   terugblikDag: def({
     group: 'Vandaag en meldingen',
     title: 'Dag van de terugblik',

@@ -14,6 +14,8 @@
 // Pure transform logic lives in engine/goalMigration.ts — this file only
 // orchestrates reading/writing IndexedDB.
 
+import { migrateTrainingGoals } from './migrations';
+import { RoutePlanRepo } from './routePlan';
 import { migrateGr5ObjectiveData, buildMarathonGoal, buildDefaultStrengthProgramStrategy, convertLegacyRouteGoal } from '../engine/goalMigration';
 import {
   ObjectivesRepo,
@@ -97,5 +99,22 @@ export async function migrateGoalRouteProfiles(): Promise<void> {
   for (const goal of goals) {
     const converted = convertLegacyRouteGoal(goal);
     if (converted) await TrainingGoalsRepo.put(converted);
+  }
+}
+
+// Ronde 2a: zet soort, gegevens en belangrijkheid op de doelen die ze nog niet hebben
+// (storage/migrations.ts#migrateTrainingGoals). Idempotent en alleen schrijven als er iets
+// verandert; het planningsgedrag verandert er niet door. Het hoofddoel is het doel met mijlpalen;
+// een gekozen nacht in tent of bivak in het etappeplan maakt de tocht een tocht met tent.
+export async function migrateGoalKinds(): Promise<void> {
+  const [goals, milestones, plan] = await Promise.all([TrainingGoalsRepo.getAll(), GoalMilestonesRepo.getAll(), RoutePlanRepo.get()]);
+  const migrated = migrateTrainingGoals(goals, new Set(milestones.map((m) => m.goalId)), plan);
+  for (let i = 0; i < goals.length; i++) {
+    if (JSON.stringify(goals[i]) === JSON.stringify(migrated[i])) continue;
+    // Lees het doel vlak voor het schrijven opnieuw: heeft de gebruiker het intussen bewerkt
+    // (updatedAt of inhoud veranderd), dan slaan we het over; de volgende start probeert het opnieuw.
+    const fresh = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goals[i].id);
+    if (!fresh || JSON.stringify(fresh) !== JSON.stringify(goals[i])) continue;
+    await TrainingGoalsRepo.put(migrated[i]);
   }
 }
