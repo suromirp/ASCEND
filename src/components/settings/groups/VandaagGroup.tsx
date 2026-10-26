@@ -6,6 +6,8 @@ import { resolveNavigation } from '../../../engine/navigationSettings';
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveSky } from '../../../engine/skySettings';
 import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
+import { matchTodayProfile, todayProfilePatch, type TodayProfileChoice } from '../../../engine/settingsProfiles';
+import { Eyebrow } from '../../ui';
 import { SettingsList, SettingsSection } from '../SettingsList';
 import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -26,6 +28,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte blijft ontbreken en betekent dus de standaard.
   const set = (patch: Partial<OverviewSettings>) => void updateSettings({ overviews: { ...settings.overviews, ...patch } });
   const nav = resolveNavigation(settings);
+  const profile = matchTodayProfile(settings);
   const sky = resolveSky(settings);
   // Alleen de gewijzigde sleutel erbij; wat je niet aanraakte betekent de standaard.
   const setInsight = (patch: Partial<RunInsightSettings>) => void updateSettings({ runInsight: { ...settings.runInsight, ...patch } });
@@ -60,9 +63,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   return (
     <>
       <SettingsSection title="Op Vandaag">
-        <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
-        <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
-        <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
+        <SummaryRow id="kaarten" title="Kaarten op Vandaag" facts={facts} info="kaarten" onClick={() => setSheet('kaarten')} />
       </SettingsSection>
 
       <SettingsSection title="Meldingen">
@@ -76,8 +77,6 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="Na een training">
-        <SummaryRow id="citaten" title="Citaat" facts={facts} onChange={(on) => set({ completionMoment: on })} />
-        <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
         <SummaryRow id="bundel-inzicht" title="Inzicht na een training" facts={facts} info="loopinzicht" onClick={() => setSheet('bundel-inzicht')} />
       </SettingsSection>
 
@@ -104,6 +103,26 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         {null}
       </SettingsSection>
 
+      {sheet === 'kaarten' && (
+        <ChoiceFromDef
+          def={CHOICES.kaarten}
+          value={profile as TodayProfileChoice}
+          onPick={(v) => void updateSettings(todayProfilePatch(v, settings))}
+          onClose={close}
+          footer={
+            <div style={{ marginTop: 16 }}>
+              <Eyebrow>Of kies zelf</Eyebrow>
+              <SettingsList>
+                <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
+                <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
+                <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
+                <SummaryRow id="citaten" title="Citaat na een training" facts={facts} onChange={(on) => set({ completionMoment: on })} />
+                <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
+              </SettingsList>
+            </div>
+          }
+        />
+      )}
       {sheet === 'bundel-weer' && (
         <BundleSheet eyebrow="Vandaag en meldingen" title="Weer en kleding" line="Het weer bij je training en wat je aantrekt." onClose={close}>
           <SummaryRow id="weerregel" title="Weer bij je training" facts={facts} onChange={(on) => set({ weatherLine: on })} />

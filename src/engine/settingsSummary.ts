@@ -11,6 +11,7 @@ import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
+import { matchTodayProfile, TODAY_PROFILE_LABEL } from './settingsProfiles';
 import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
 import { countDifferences } from './settingsDiff';
 import { resolveOverviews } from './overviewSettings';
@@ -484,6 +485,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     }
 
     // Vandaag en meldingen
+    case 'kaarten': {
+      const p = matchTodayProfile(s);
+      return p === 'aangepast' ? { value: TODAY_PROFILE_LABEL.aangepast, dim: true } : { value: TODAY_PROFILE_LABEL[p], dim: false };
+    }
     case 'ochtendcheck':
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':

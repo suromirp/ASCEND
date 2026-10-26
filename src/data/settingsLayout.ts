@@ -73,7 +73,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'intensiteit'], advanced: [] },
   vandaag: {
-    rows: ['ochtendcheck', 'weekterugblik', 'weekvraag', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'citaten', 'geluid', 'beweging', 'lucht', 'bundel-inzicht'],
+    rows: ['kaarten', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'lucht', 'bundel-inzicht'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
@@ -134,6 +134,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Lichaam
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd'),
   // Vandaag en meldingen
+  ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'weekvraag', 'citaten', 'geluid'),
   ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
