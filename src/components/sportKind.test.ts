@@ -36,4 +36,9 @@ describe('sportKind en sportPictogram', () => {
     expect(sportPictogram(tpl({ type: 'cardio' }))).toBe('lopen');
     expect(sportPictogram(tpl({ type: 'recovery' }))).toBe('rust');
   });
+  it('geeft fietsen de fiets, ook als het onder conditie staat', () => {
+    const t = tpl({ id: 'tpl_bike', type: 'cardio', sport: 'cycling' });
+    expect(sportKind(t)).toBe('bike');
+    expect(sportPictogram(t)).toBe('fietsen');
+  });
 });
