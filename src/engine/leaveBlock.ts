@@ -31,11 +31,10 @@ import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { templateSport } from './sports';
 import { restWeekState } from './restWeek';
 import { PHASE_TAPER } from './programLayout';
+import { hasRole, idHasRole, idIsTestOrRace } from './templateRoles';
 
 export const TREK_TEMPLATE_ID = 'tpl_mountain_hike';
 export const FREE_DAY_WALK_TEMPLATE_ID = 'tpl_ruck_walk';
-const LONG = new Set(['tpl_long_run', 'tpl_mountain_hike']);
-const ANCHORS = new Set(['tpl_test_run', 'tpl_race']);
 
 export interface LeaveStepInput {
   // The week check's own input without the sessions: a placement is only kept
@@ -67,7 +66,7 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
   const usable = (date: string) => date >= today && (!goalDay || date < goalDay) && !raceDays.has(date);
   const open = (s: PlannedSession) => s.status !== 'skipped';
   const on = (date: string) => sessions.filter((s) => s.scheduledDate === date);
-  const blocked = (date: string) => on(date).some((s) => ANCHORS.has(s.templateId) || logged.has(s.id));
+  const blocked = (date: string) => on(date).some((s) => idIsTestOrRace(s.templateId, byId) || logged.has(s.id));
   const isWalk = (s: PlannedSession) => isHikingTemplate(byId.get(s.templateId));
   const sorted = [...days.entries()].sort(([a], [b]) => a.localeCompare(b));
 
@@ -115,10 +114,10 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
   // hike the day before or after, hard running that day, or a test or race
   // within two days (the week check judges the legs on top of this).
   const keyDayNear = (date: string) =>
-    [-2, -1, 0, 1, 2].some((o) => on(addDays(date, o)).some((s) => open(s) && ANCHORS.has(s.templateId))) ||
+    [-2, -1, 0, 1, 2].some((o) => on(addDays(date, o)).some((s) => open(s) && idIsTestOrRace(s.templateId, byId))) ||
     [-1, 0, 1].some((o) => on(addDays(date, o)).some((s) => {
       const t = byId.get(s.templateId);
-      return open(s) && !!t && (LONG.has(s.templateId) || isWalk(s) || isHardRun(t) || (o === 0 && isLegHeavyTemplate(t)));
+      return open(s) && !!t && (hasRole(t, 'long') || isWalk(s) || isHardRun(t) || (o === 0 && isLegHeavyTemplate(t)));
     }));
 
   const done = new Set<string>();
@@ -128,14 +127,14 @@ export function applyLeaveBlocks(all: PlannedSession[], input: LeaveStepInput): 
     const slot = `${day.period.id}|${week}`;
     if (done.has(slot) || !usable(date) || isoWeekday(date) === restDay || blocked(date)) continue;
     const weekSessions = sessions.filter((s) => mondayOfWeek(s.scheduledDate) === week && open(s));
-    const longOnFree = weekSessions.some((s) => LONG.has(s.templateId) && !s.plannedMinutes && days.get(s.scheduledDate)?.kind === 'free');
+    const longOnFree = weekSessions.some((s) => idHasRole(s.templateId, 'long', byId) && !s.plannedMinutes && days.get(s.scheduledDate)?.kind === 'free');
     // This period already did something in this week (also when you moved or skipped it since).
     const placedHere = sessions.some((s) => s.leave?.periodId === day.period.id && (mondayOfWeek(s.scheduledDate) === week || (!!s.leave.from && mondayOfWeek(s.leave.from) === week)));
     if (longOnFree || placedHere || !buildWeek(week)) { done.add(slot); continue; }
 
     // 1. The long training of the week moves to this day when its own day is tight.
     const tight = weekSessions
-      .filter((s) => LONG.has(s.templateId) && !s.plannedMinutes && !s.raceBlock && lockLevel(s, logged, today) === 3 && s.scheduledDate !== date)
+      .filter((s) => idHasRole(s.templateId, 'long', byId) && !s.plannedMinutes && !s.raceBlock && lockLevel(s, logged, today) === 3 && s.scheduledDate !== date)
       .filter((s) => weekSessions.some((o) => o.id !== s.id && o.scheduledDate === s.scheduledDate && byId.get(o.templateId)?.type !== 'recovery'))
       .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0];
     if (tight) {

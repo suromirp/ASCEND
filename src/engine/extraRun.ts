@@ -43,6 +43,7 @@ import { isLegHeavyTemplate, respectsHeavySpacing } from './scheduler';
 import { templateSport } from './sports';
 import { isLeaveBlockedDay } from './leave';
 import type { LeavePeriod } from '../models/leave';
+import { idHasRole } from './templateRoles';
 
 export const EXTRA_RUN_TEMPLATE_ID = 'tpl_strides_run';
 const LOOKBACK_WEEKS = 4;
@@ -141,8 +142,7 @@ export function extraRunDay(weekStart: string, weekSessions: PlannedSession[], b
 
 // --- which training: the one that contributes most -------------------------
 
-// The catalogue the extra training is chosen from.
-export const EXTRA_CATALOGUE = ['tpl_strides_run', 'tpl_fartlek', 'tpl_progression_run', 'tpl_recovery_run', 'tpl_bergconditie', 'tpl_ruck_walk'];
+// The catalogue the extra training is chosen from: the templates with the role 'extra'.
 
 const DIMENSION_LABEL: Record<CapabilityDimension, string> = {
   aerobic_engine: 'je conditie',
@@ -254,7 +254,7 @@ export function proposeExtraSession(inputs: ExtraAdviceInputs): ExtraProposal | 
     if (races.some((r) => r.raceDate >= weekStart && r.raceDate <= weekEnd)) continue;
     const week = plannedSessions.filter((s) => s.scheduledDate >= weekStart && s.scheduledDate <= weekEnd);
     // (A quiet Saturday run of the race block is a run in place of the Saturday session, not the extra one.)
-    if (week.some((s) => EXTRA_CATALOGUE.includes(s.templateId) && !s.blockQuiet)) continue;
+    if (week.some((s) => idHasRole(s.templateId, 'extra', byId) && !s.blockQuiet)) continue;
     const verdict = extraRunEarned(inputs, weekStart);
     if (!verdict.earned) continue;
     const choice = chooseExtraSession({

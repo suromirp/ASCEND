@@ -12,17 +12,6 @@
 // existing one, or typed via the editor's "andere sport" fallback); it just
 // won't yet contribute to automatic capability tracking.
 
-export type Discipline = 'running' | 'hiking' | 'cycling';
+import type { SportId } from '../data/sports';
 
-export const DISCIPLINE_LABEL: Record<Discipline, string> = {
-  running: 'Hardlopen',
-  hiking: 'Wandelen / hiken',
-  cycling: 'Fietsen',
-};
-
-export const DISCIPLINE_OPTIONS = Object.keys(DISCIPLINE_LABEL) as Discipline[];
-
-export function disciplineLabel(discipline: string | undefined): string | undefined {
-  if (!discipline) return undefined;
-  return DISCIPLINE_LABEL[discipline as Discipline] ?? discipline;
-}
+export type Discipline = SportId;

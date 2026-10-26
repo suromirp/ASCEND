@@ -4,7 +4,7 @@ import { useAppData } from '../state/AppDataContext';
 import { todayISO, formatDateNL } from '../utils/dates';
 import { questionMetaFor, DIMENSION_META, DIMENSION_ORDER, dimensionLabel } from '../data/baselineQuestions';
 import { UNIT_LABEL, formatMeasuredValue } from '../models/units';
-import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../models/disciplines';
+import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS, disciplineLabel } from '../data/disciplines';
 import { Card, SecondaryButton, Eyebrow } from './ui';
 
 const CUSTOM_DISCIPLINE = '__custom__';

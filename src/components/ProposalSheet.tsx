@@ -16,6 +16,7 @@ import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { formatNumberNL } from '../utils/number';
 import { Icon } from './icons';
+import { idIsTestOrRace } from '../engine/templateRoles';
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
 // top what changes, one line each; below the week in the same style as the
@@ -85,13 +86,13 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
   // A test or race this proposal moves: how fresh the legs are there, now and after.
   const freshness = useMemo(() => {
     if (!chosen) return undefined;
-    const item = chosen.changes.find((c) => c.action === 'move' && c.plannedSessionId && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? ''));
+    const item = chosen.changes.find((c) => c.action === 'move' && c.plannedSessionId && idIsTestOrRace(plannedSessions.find((s) => s.id === c.plannedSessionId)?.templateId ?? '', templates));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((s) => s.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' : 'test';
     const after = planPreviewPass(applyPlanChangeItems(chosen.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
-  }, [chosen, plannedSessions, fatigueInputs, planPreviewPass]);
+  }, [chosen, plannedSessions, templates, fatigueInputs, planPreviewPass]);
 
   const minutes = (e: PreviewEntry, date: string) => {
     if (e.type === 'recovery') return undefined;
@@ -102,13 +103,13 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
   // Per option: how fresh the legs are on the test or race day it gives.
   const optionFreshness = useMemo(() => (advice.options ?? []).map((o) => {
-    const item = o.proposal.changes.find((c) => c.action === 'move' && ['tpl_test_run', 'tpl_race'].includes(plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? ''));
+    const item = o.proposal.changes.find((c) => c.action === 'move' && idIsTestOrRace(plannedSessions.find((x) => x.id === c.plannedSessionId)?.templateId ?? '', templates));
     if (!item?.toDate) return undefined;
     const kind = plannedSessions.find((x) => x.id === item.plannedSessionId)!.templateId === 'tpl_race' ? 'race' as const : 'test' as const;
     const after = planPreviewPass(applyPlanChangeItems(o.proposal.changes.filter((c) => c.action !== 'replace'), plannedSessions, previewIds(), { by: 'proposal', at: 'preview' }).sessions);
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { index: at.index, status: fatigueStatus(at, kind) };
-  }), [advice, plannedSessions, fatigueInputs, planPreviewPass]);
+  }), [advice, plannedSessions, templates, fatigueInputs, planPreviewPass]);
 
   async function respond(response: 'accepted' | 'declined') {
     setBusy(true);

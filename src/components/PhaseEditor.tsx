@@ -6,6 +6,7 @@ import { raceBlocks } from '../engine/raceBlock';
 import { usePlanSettingChange } from './settings/usePlanSettingChange';
 import { Icon } from './icons';
 import { TextButton } from './TextButton';
+import { mainGoal } from '../engine/mainGoal';
 
 
 // Settings → Training → Programma: the phases toward the goal as one bar,
@@ -50,7 +51,7 @@ export function PhaseEditor({ goalDate }: { goalDate: string | undefined }) {
 
   // Tussendoelen on the same bar (engine/raceBlock.ts), and per phase row.
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
-  const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
   const blocks = raceBlocks(trainingGoals, mainGoalId, goalDate, today);
   const pct = (date: string) => Math.min(100, Math.max(0, (daysBetween(start, date) / (total * 7)) * 100));
 

@@ -26,6 +26,7 @@ import { weekDoneMinutes, weekLogsOf } from './weekLogs';
 import { isIllnessDay } from './illness';
 import { EASY_RPE_TOP } from './coach';
 import type { IllnessEpisode } from '../models/illness';
+import { idHasRole } from './templateRoles';
 
 export interface WeekReview {
   weekStart: string;
@@ -60,7 +61,7 @@ interface ReviewInputs {
   weeklyChecks?: WeeklyHealthCheck[];
 }
 
-export const KEY_TEMPLATES = ['tpl_long_run', 'tpl_mountain_hike'];
+// The key sessions are the templates with the role 'key' (engine/templateRoles.ts).
 
 function weekTitle(program: Program | null | undefined, weekStart: string): string {
   const position = program ? resolveProgramWeek(program, weekStart) : null;
@@ -153,7 +154,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
       const t = byId.get(s.templateId);
       return t ? n + resolveEffectiveFullDuration(t, s.scheduledDate, program) : n;
     }, 0);
-    const key = nextSessions.find((s) => KEY_TEMPLATES.includes(s.templateId));
+    const key = nextSessions.find((s) => idHasRole(s.templateId, 'key', byId));
     const keyT = key ? byId.get(key.templateId) : undefined;
     const keyStep = keyT && key ? progressionTarget(keyT, program, key.scheduledDate)?.step : undefined;
     const note = nextSessions.map((s) => byId.get(s.templateId)).map((t) => (t && progressionTarget(t, program, nextStart)?.step.note?.split(/, | \(/)[0])).find(Boolean);
@@ -175,7 +176,7 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
   } else if (missedSessions.length > 0) {
     // Only a key session that is still open can be caught up; a skipped one
     // was already let go.
-    const keyMissed = missedSessions.find((s) => KEY_TEMPLATES.includes(s.templateId) && s.status !== 'skipped');
+    const keyMissed = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
     advice.push(
       `${missedNames.length === 1 ? missedNames[0] : `${missedNames.slice(0, -1).join(', ')} en ${missedNames.at(-1)}`} ${missedNames.length === 1 ? 'schoot' : 'schoten'} erbij in. ` +
       (keyMissed
@@ -224,8 +225,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     perSport,
     missed: missedNames,
     missedTemplateIds: missedSessions.map((s) => s.templateId),
-    keyPlanned: trainings.filter((s) => KEY_TEMPLATES.includes(s.templateId)).length,
-    keyDone: trainings.filter((s) => KEY_TEMPLATES.includes(s.templateId) && loggedIds.has(s.id)).length,
+    keyPlanned: trainings.filter((s) => idHasRole(s.templateId, 'key', byId)).length,
+    keyDone: trainings.filter((s) => idHasRole(s.templateId, 'key', byId) && loggedIds.has(s.id)).length,
     heavier,
     pain,
     lighter,

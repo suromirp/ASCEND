@@ -273,6 +273,15 @@ src/
   utils/         Date math, id generation
 ```
 
+The main goal is found in one place, `engine/mainGoal.ts#mainGoal` (scopes `active`, `live`,
+`activeFirst`); a rule that needs a kind of session asks for a role on the template
+(`SessionTemplate.roles`, `engine/templateRoles.ts#hasRole`, the built-in table in
+`data/templateRoles.ts`) instead of a list of template ids. Sports are data in
+`data/sports.ts` (label, colour, pictogram, five traits, intervals.icu types); lists of
+sports are derived from it. `src/storage/planGolden.test.ts` freezes a year of planning for
+three cases: a change to the planning only updates its snapshot with the reason in the commit
+(`docs/beslissingen/2026-10-26-kracht-en-berg-voor-iedereen.md`).
+
 Everything that counts sets (volume, top weights, set totals) goes through
 `engine/workSets.ts#isWorkSet`, so a warm-up set is stored but never counted
 (`docs/beslissingen/2026-10-22-kracht-per-set.md`).

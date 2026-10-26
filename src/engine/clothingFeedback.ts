@@ -9,7 +9,8 @@
 // travels with the settings in a backup and is read defensively on import.
 // Design: docs/onderzoek/Kleding bij het weer.md ("Wat nog onzeker is").
 
-import type { Sport } from './sports';
+import { SPORT_LIST, type Sport } from './sports';
+import { SPORTS as DEFINED_SPORTS } from '../data/sports';
 
 export type ClothingFeel = 'too_warm' | 'good' | 'too_cold';
 export type ClothingAdjust = Partial<Record<Sport, number>>;
@@ -18,8 +19,8 @@ export const CLOTHING_FEEL_LABEL: Record<ClothingFeel, string> = { too_warm: 'Te
 
 export const FEEDBACK_STEP_C = 0.5;
 export const MAX_ADJUST_C = 4;
-const SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
-const SPORT_WORD: Record<Sport, string> = { running: 'hardlopen', hiking: 'wandelen', cycling: 'fietsen' };
+const SPORTS: Sport[] = SPORT_LIST;
+const SPORT_WORD = Object.fromEntries(DEFINED_SPORTS.map((s) => [s.id, s.verb])) as Record<Sport, string>;
 
 const snap = (n: number) => Math.round(Math.max(-MAX_ADJUST_C, Math.min(MAX_ADJUST_C, n)) / FEEDBACK_STEP_C) * FEEDBACK_STEP_C;
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../../state/AppDataContext';
-import { SPORT_LABEL, type Sport } from '../../../engine/sports';
+import { SPORT_LABEL, SPORT_LIST, type Sport } from '../../../engine/sports';
 import { applyClothingFeedback, hasClothingAdjust, MAX_ADJUST_C, readClothingAdjust } from '../../../engine/clothingFeedback';
 import { resolveOverviews } from '../../../engine/overviewSettings';
 import { isMyLocation } from '../../../engine/weatherLocation';
@@ -64,7 +64,7 @@ export function PlaceSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-const SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
+const SPORTS: Sport[] = SPORT_LIST;
 
 // Je kleding: wat ASCEND leerde uit je tikken na een buitentraining, per sport. "Terug naar de
 // standaard" zet alles op nul.

@@ -13,6 +13,7 @@
 // tied to an intervals.icu activity follows a correction made there (`sourceSync`
 // keeps the numbers it replaced; docs/beslissingen/2026-10-25-correcties-uit-intervals.md).
 
+import type { SportId } from '../data/sports';
 import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
 import type { PlannedLeaveMark } from './leave';
@@ -94,6 +95,24 @@ export interface Stretch {
   videoUrl?: string;
 }
 
+// What a template is for in the planning rules (engine/templateRoles.ts). A rule
+// asks for a role instead of listing template ids, so a new template can take
+// part by carrying the role. Absent on a stored template = the default roles of
+// its id (data/templateRoles.ts), so old backups and old stored templates work.
+export type TemplateRole =
+  | 'long' // the one long session of a week (long run, mountain hike)
+  | 'key' // the session the week review counts as the key one
+  | 'test' // a test run
+  | 'race' // a race
+  | 'easy_pace' // run at the easy pace
+  | 'hard_run' // counts as a hard run for the order of the day
+  | 'hard_load' // counts as hard in the load picture
+  | 'hard_effort' // counts as hard effort in the week intensity
+  | 'ask_legs' // asks how the legs feel before it starts
+  | 'before_race_out' // comes out of the days before a race
+  | 'walked_down' // the descent is walked, not run
+  | 'extra'; // an extra session the planner may add to a week
+
 // The reusable definition of a workout — "what" a session is, independent of
 // when it happens.
 export interface SessionTemplate {
@@ -103,7 +122,9 @@ export interface SessionTemplate {
   // Which endurance sport this is, when type alone doesn't say (a cycling
   // session is type 'cardio' like a run). Absent = derived from type
   // (engine/sports.ts#templateSport): cardio -> running, hiking -> hiking.
-  sport?: 'running' | 'hiking' | 'cycling';
+  sport?: SportId;
+  // See TemplateRole. Optional: absent falls back to the defaults of the id.
+  roles?: TemplateRole[];
   focus?: string; // e.g. "Borst • Rug • Schouders"
   durationVariants: DurationVariants;
   weeklyProgression?: WeeklyProgressionStep[];
@@ -413,7 +434,7 @@ export interface SessionLog {
   // Fase 4 — the endurance sport this was, when type alone doesn't say (a
   // ride is type 'cardio' like a run). Optional: older logs are read via
   // their modality (engine/sports.ts#logSport).
-  sport?: 'running' | 'hiking' | 'cycling';
+  sport?: SportId;
   completedDate: string; // ISO date
   completedAt: string; // ISO datetime
   variant: SessionVariant;

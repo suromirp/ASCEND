@@ -46,8 +46,9 @@ import type { IllnessEpisode } from '../models/illness';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, WAVE_LENGTH, progressionTarget } from './programLayout';
 import { activeIllness, recoveryRamp } from './illness';
-import { KEY_TEMPLATES, buildWeekReview } from './weekReview';
+import { buildWeekReview } from './weekReview';
 import { currentChoices, loadChange, type LoadChange, type WeekLoadContext } from './weekLoadChange';
+import { idHasRole } from './templateRoles';
 
 // Below this share of the planned trainings (rest sessions not counted) a
 // week fell short. A round, explainable line, not a number from a study.
@@ -154,7 +155,7 @@ function loadAt(template: SessionTemplate, program: Program, date: string): Load
 // the repeat: this week, and the heaviest week of the wave.
 export function keyImpact(program: Program, weekStart: string, plannedSessions: PlannedSession[], templates: SessionTemplate[]): KeyImpact | undefined {
   const monday = mondayOfWeek(weekStart);
-  const key = plannedSessions.find((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped' && KEY_TEMPLATES.includes(s.templateId));
+  const key = plannedSessions.find((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped' && idHasRole(s.templateId, 'key', templates));
   const template = key && templates.find((t) => t.id === key.templateId);
   const position = resolveProgramWeek(program, monday);
   if (!key || !template || !position) return undefined;
@@ -232,7 +233,7 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
   if (!verdict.fellShort) return undefined;
 
   const names = new Map(inputs.templates.map((t) => [t.id, t.name]));
-  const missedKey = [...new Set(review.missedTemplateIds.filter((t) => KEY_TEMPLATES.includes(t)))].map((t) => names.get(t) ?? 'de lange training');
+  const missedKey = [...new Set(review.missedTemplateIds.filter((t) => idHasRole(t, 'key', inputs.templates)))].map((t) => names.get(t) ?? 'de lange training');
   return {
     id, weekStart, previousWeek, done: review.done, planned: review.planned, verdict, missedKey,
     impact: keyImpact(program, weekStart, inputs.plannedSessions, inputs.templates),

@@ -9,6 +9,7 @@ import { resolveEffectiveFullDuration } from './substitutions';
 import { searchWeeklyPlacement, type PlacementRequest, type WeekPlacementCandidate } from './candidatePlacement';
 import { FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueResult } from './legFatigue';
 import { patternSlotOf } from './programLayout';
+import { isTestOrRace } from './templateRoles';
 
 // ASCEND's scheduling engine is deterministic on purpose (spec §16, §29):
 // it never guesses and it never runs an LLM in the loop. A future AI layer
@@ -281,13 +282,11 @@ export function legSpacingDays(first: SessionTemplate, second: SessionTemplate):
 // hours itself was never tested). The other way round (hard run first,
 // strength the next day) is fine. Same day only with the setting "Zware
 // dingen op één dag".
-const TEST_OR_RACE = new Set(['tpl_test_run', 'tpl_race']);
-
 export function isHardRun(t: SessionTemplate): boolean {
   if (t.type === 'strength' || templateSport(t) !== 'running') return false;
   // Only what a template says itself: without a profile nothing is assumed.
   const intensity = t.baseStressProfile?.intensity;
-  return intensity === 'moderate' || intensity === 'high' || TEST_OR_RACE.has(t.id);
+  return intensity === 'moderate' || intensity === 'high' || isTestOrRace(t);
 }
 
 function isLegStrength(t: SessionTemplate): boolean {
@@ -300,7 +299,7 @@ function hardRunAfterLegStrength(a: SessionTemplate, aDate: string, b: SessionTe
   const gap = daysBetween(strengthDate, runDate);
   if (gap === 0) return !hardSameDayAllowed(strength, run);
   if (gap < 0) return false; // the run first: fine
-  if (TEST_OR_RACE.has(run.id)) return false; // the leg fatigue index decides (findHeavyConflicts)
+  if (isTestOrRace(run)) return false; // the leg fatigue index decides (findHeavyConflicts)
   return gap <= 1;
 }
 

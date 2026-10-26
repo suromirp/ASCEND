@@ -28,6 +28,7 @@ import {
   clearLegacyObjectiveStores,
 } from './database';
 import { todayISO } from '../utils/dates';
+import { isMarathonGoal } from '../engine/mainGoal';
 
 export async function migrateToGoalEngine(): Promise<void> {
   const migrated = await MetaRepo.get<boolean>('goalEngineMigrated');
@@ -50,7 +51,7 @@ export async function migrateToGoalEngine(): Promise<void> {
   // An earlier run that stopped before the flag below was set may already
   // have written one; never mint a second Marathon goal.
   const marathonGoal = buildMarathonGoal(settings.marathonRaceType, settings.marathonTargetDate, settings.marathonTargetTimeMinutes);
-  const hasMarathon = (await TrainingGoalsRepo.getAll()).some((g) => g.name === 'Marathon');
+  const hasMarathon = (await TrainingGoalsRepo.getAll()).some((g) => isMarathonGoal(g));
   if (marathonGoal && !hasMarathon) await TrainingGoalsRepo.put(marathonGoal);
 
   // Legacy stores emptied, not deleted (Technical Architecture v0.3.1

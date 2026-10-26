@@ -10,7 +10,7 @@ import type { Program } from '../models/program';
 import { addDays, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_TAPER, progressionTarget, waveWeek } from './programLayout';
 import { resolveEffectiveFullDuration } from './substitutions';
-import { EXTRA_CATALOGUE } from './extraRun';
+import { hasRole } from './templateRoles';
 
 export interface SeasonWeekItem {
   label: string;
@@ -41,7 +41,6 @@ export interface SeasonPhase {
 }
 
 const WAVE_LABEL: Record<number, string> = { 1: 'Wennen', 2: 'Opbouw', 3: 'Zwaarste week', 4: 'Rustweek' };
-const LONG = ['tpl_long_run', 'tpl_mountain_hike'];
 const SATURDAY = ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_hike_day_one'];
 const QUALITY = ['tpl_tempo_run', 'tpl_intervals', 'tpl_hills_descent'];
 
@@ -100,13 +99,13 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
         // The range per training: normal weeks only, not a fixed length (a taper, a catch-up).
         if (!restWeek && s.plannedMinutes === undefined) minutes.set(t.id, [...(minutes.get(t.id) ?? []), min]);
 
-        if (t.id === 'tpl_race') {
+        if (hasRole(t, 'race')) {
           items.push({ label: `${t.name} op ${shortDate(s.scheduledDate)}`, kind: 'race' });
           races.push(shortDate(s.scheduledDate));
-        } else if (t.id === 'tpl_test_run') {
+        } else if (hasRole(t, 'test')) {
           items.push({ label: `Testloop 5 km, ${shortDate(s.scheduledDate)}`, kind: 'test' });
           tests.push(shortDate(s.scheduledDate));
-        } else if (LONG.includes(t.id)) {
+        } else if (hasRole(t, 'long')) {
           const step = progressionTarget(t, program, s.scheduledDate)?.step;
           const extra = t.id === 'tpl_mountain_hike' && step ? `, ${step.elevationGainM ?? 0} m omhoog, ${step.backpackKg ?? 0} kg` : '';
           if (t.id === 'tpl_mountain_hike' && step) {
@@ -116,7 +115,7 @@ export function buildSeasonPlan(program: Program, plannedSessions: PlannedSessio
           items.push({ label: `${t.name} ${min} min${extra}`, kind: 'long' });
         } else if (QUALITY.includes(t.id) || t.id === 'tpl_hike_day_one') {
           items.push({ label: `${t.name} ${min} min`, kind: 'quality' });
-        } else if (EXTRA_CATALOGUE.includes(t.id)) {
+        } else if (hasRole(t, 'extra')) {
           items.push({ label: `Extra: ${t.name}`, kind: 'extra' });
         }
         if (SATURDAY.includes(t.id)) saturdayNames.set(t.name, (saturdayNames.get(t.name) ?? 0) + 1);

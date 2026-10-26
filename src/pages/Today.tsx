@@ -64,6 +64,7 @@ import { SkyBand } from '../components/SkyBand';
 import { StretchMenuButton } from '../components/StretchMenuButton';
 import { WeekStrip } from '../components/vandaag/WeekStrip';
 import { zoneOfTemplate } from '../components/vandaag/zone';
+import { mainGoal as findMainGoal } from '../engine/mainGoal';
 
 function TodayContent() {
   const { suggestMoves, program, plannedSessions, sessionLogs, settings, strengthExternal, stretchCompletion, templateById, sessionsForWeek, moveSession, applyProposal, proposeSkip, proposeBackOnPlan, logSession, undoLog, toggleStretchRoutine, exportData, updateSettings, forecastSummary, dismissForecastSummary, templates, leavePeriods, trainingGoals, goalMilestones } = useAppData();
@@ -140,7 +141,7 @@ function TodayContent() {
   // On a holiday day (engine/leave.ts) the empty day says so.
   const onHoliday = leaveLabelOn(today, leavePeriods)?.kind === 'off';
   // During and after the main goal nothing is planned (engine/programLayout.ts#planEndDay): say why.
-  const mainGoal = trainingGoals.find((g) => g.status === 'active' && goalMilestones.some((m) => m.goalId === g.id));
+  const mainGoal = findMainGoal(trainingGoals, goalMilestones);
   const timingNow = mainGoal ? goalTiming(mainGoal, today) : undefined;
   // With maintenance weeks after the goal (AppSettings.afterMainGoal) the days after it are ordinary days.
   const mainTiming = timingNow?.state === 'past' && settings.afterMainGoal === 'maintain' ? undefined : timingNow;

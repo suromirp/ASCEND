@@ -24,6 +24,7 @@ import { zoneBpm, type HeartRateSettings } from './heartRateZones';
 import { minutesByZone } from './intensityMinutes';
 import type { IntensityCounting } from './intensitySettings';
 import { estimatedHikingMinutes, typicalDayValue } from './goalRoute';
+import { hasRole } from './templateRoles';
 
 // --- weekly load (session-RPE) ---------------------------------------------------
 export type LoadSport = 'lopen' | 'kracht' | 'wandelen' | 'overig';
@@ -147,16 +148,14 @@ export interface FreshnessPoint {
 }
 
 // A hard day on the calendar; the intensity mix below counts tempo as middle.
-const HARD_TEMPLATES = new Set(['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_tempo_run']);
 // Above the second threshold: repeats, the test and the race.
-const HARD_INTENSITY = new Set(['tpl_hill_intervals', 'tpl_intervals', 'tpl_test_run', 'tpl_race']);
 
 function markOf(t: SessionTemplate): DayMark {
-  if (t.id === 'tpl_test_run') return 'test';
-  if (t.id === 'tpl_race') return 'race';
+  if (hasRole(t, 'test')) return 'test';
+  if (hasRole(t, 'race')) return 'race';
   const p = resolveEffectiveStressProfile(t);
   if (t.type === 'strength') return p.lowerBodyLoad === 'heavy' || p.lowerBodyLoad === 'moderate' ? 'legs' : 'easy';
-  if (HARD_TEMPLATES.has(t.id) || p.intensity === 'high') return 'hard';
+  if (hasRole(t, 'hard_load') || p.intensity === 'high') return 'hard';
   if (p.lowerBodyLoad === 'heavy' || p.eccentricLoad === 'heavy' || p.lowerBodyLoad === 'moderate') return 'legs';
   return 'easy';
 }
@@ -253,7 +252,7 @@ export function intensityMix(logs: SessionLog[], templates: SessionTemplate[], t
     if (l.type === 'strength' || l.type === 'recovery') continue;
     const t = byId.get(l.templateId);
     const goal = t ? resolveEffectiveStressProfile(t).intensity : 'low';
-    const kind = goal === 'high' || (t && HARD_INTENSITY.has(t.id)) ? 'hard' : goal === 'moderate' ? 'middle' : 'easy';
+    const kind = goal === 'high' || (t && hasRole(t, 'hard_effort')) ? 'hard' : goal === 'moderate' ? 'middle' : 'easy';
     mix.sessions[kind]++;
     mix.total++;
     const measured = counting === 'heartrate' ? minutesByZone(l, hr) : undefined;

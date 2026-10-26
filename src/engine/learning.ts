@@ -14,6 +14,7 @@ import type { Advice } from './adviceEngine';
 import type { SessionLog, SessionTemplate } from '../models/training';
 import { addDays } from '../utils/dates';
 import { FATIGUE_THRESHOLDS, legFatigueOn } from './legFatigue';
+import { hasRole } from './templateRoles';
 
 // --- 1. proposals you turn down --------------------------------------------------
 export interface StoredResponse {
@@ -53,7 +54,8 @@ export function learnFromDeclines(advice: Advice[], quiet: Set<string>): Advice[
 export type LegsAtStart = 'fris' | 'normaal' | 'zwaar';
 
 // Trainings where fresh legs matter, the ones the planner checks the index for.
-export const ASK_LEGS_FOR = new Set(['tpl_test_run', 'tpl_race', 'tpl_tempo_run', 'tpl_intervals', 'tpl_hill_intervals', 'tpl_hills_descent']);
+// They carry the role 'ask_legs' (engine/templateRoles.ts).
+export const asksLegs = (template: SessionTemplate) => hasRole(template, 'ask_legs');
 
 export interface IndexCheck {
   date: string;

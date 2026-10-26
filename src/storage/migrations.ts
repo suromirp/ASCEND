@@ -3,6 +3,10 @@
 // function keyed on the version found in the file) is what every future
 // migration will slot into, so an export made today keeps opening in
 // ASCEND years from now.
+//
+// SessionTemplate.roles (2026-10-26) needs no step: the field is optional and
+// additive, and engine/templateRoles.ts falls back to the roles of the id when
+// it is missing or not a list, so an older backup imports as before.
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';

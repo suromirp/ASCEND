@@ -10,6 +10,7 @@ import type { TrainingGoal } from '../models/goals';
 import { Icon } from './icons';
 import { useHorizonChange } from './useHorizonChange';
 import { TextButton } from './TextButton';
+import { mainGoal } from '../engine/mainGoal';
 
 // Doelen: the whole season on one card (production feedback: "het moet
 // voelen dat je naar een groter doel toewerkt en ondertussen kleinere
@@ -27,7 +28,7 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
     void horizon.propose(() => planGoalRole(goal.id, role), { eyebrow: 'Rol in je plan', ask: 'always', declined: 'Je doel en je planning blijven zoals ze waren.' });
   const today = todayISO();
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
-  const main = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id));
+  const main = mainGoal(trainingGoals, ladder);
   const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
   const blocks = raceBlocks(trainingGoals, main?.id, anchor, today);
   const others = trainingGoals.filter((g) => g.status === 'active' && g.id !== main?.id && g.targetDate && g.targetDate >= today);

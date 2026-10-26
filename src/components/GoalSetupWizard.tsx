@@ -23,7 +23,7 @@ import type { TrainingAvailability, TrainingGuardrail } from '../models/goalEngi
 import type { GoalActivationPlan } from '../models/planChange';
 import type { Unit } from '../models/units';
 import { UNIT_LABEL, formatCapabilityValue } from '../models/units';
-import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS } from '../models/disciplines';
+import { DISCIPLINE_LABEL, DISCIPLINE_OPTIONS } from '../data/disciplines';
 import { computeGoalActivationPlan } from '../engine/goalActivation';
 import { identifyBaselineNeeds } from '../engine/goalSetupAssist';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';

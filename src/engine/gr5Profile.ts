@@ -18,6 +18,7 @@ import type { SessionLog } from '../models/training';
 import { makeId } from '../utils/id';
 import { formatNumberNL } from '../utils/number';
 import { requirementAutoSatisfied } from './progression';
+import { mainGoal } from './mainGoal';
 
 // --- Rugzakdoel ---------------------------------------------------------------
 
@@ -58,7 +59,7 @@ export function programPackTarget(goals: TrainingGoal[], milestones: GoalMilesto
 // The goal whose rucksack target the program follows: the main goal.
 export function programPackGoal(goals: TrainingGoal[], milestones: GoalMilestone[]): TrainingGoal | undefined {
   const withLadder = new Set(milestones.map((m) => m.goalId));
-  return goals.find((g) => g.status === 'active' && withLadder.has(g.id)) ?? goals.find((g) => g.status !== 'archived' && withLadder.has(g.id));
+  return mainGoal(goals, withLadder, 'activeFirst');
 }
 
 export interface TentPackProposal {
@@ -73,7 +74,7 @@ export interface TentPackProposal {
 // als het rugzakdoel exact op de oude standaard staat. Elk ander getal heb
 // je zelf gekozen en blijft met rust.
 export function tentPackProposal(goals: TrainingGoal[], ladderGoalIds: ReadonlySet<string>): TentPackProposal | undefined {
-  const goal = goals.find((g) => g.status !== 'archived' && ladderGoalIds.has(g.id));
+  const goal = mainGoal(goals, ladderGoalIds, 'live');
   if (!goal) return undefined;
   const kg = packWeightOf(goal.requirements);
   if (kg !== HUT_PACK_KG) return undefined;

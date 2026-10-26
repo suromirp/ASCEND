@@ -25,6 +25,7 @@ import { LEAVE_KIND_LABEL, dayCount, describePeriodDates, leaveLabelOn, sortPeri
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import type { Finding } from './weekValidator';
+import { idIsTestOrRace } from './templateRoles';
 
 const SOURCE = ['engine/leaveProposal.ts'];
 const AFTER_DAYS = 14;
@@ -176,7 +177,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   // A test or race right before or inside a trek stays where it is: say so.
   if (mode === 'add' && period.kind === 'trek') {
     for (const s of result.sessions) {
-      if (s.status === 'skipped' || !['tpl_test_run', 'tpl_race'].includes(s.templateId) || s.scheduledDate < addDays(period.startDate, -trekLightDaysBefore(dayCount(period), period.trek?.importance)) || s.scheduledDate > period.endDate) continue;
+      if (s.status === 'skipped' || !idIsTestOrRace(s.templateId, byId) || s.scheduledDate < addDays(period.startDate, -trekLightDaysBefore(dayCount(period), period.trek?.importance)) || s.scheduledDate > period.endDate) continue;
       notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verplaats ik niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
     }
   }

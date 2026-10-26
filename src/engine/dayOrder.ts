@@ -9,21 +9,21 @@
 import type { PlannedSession, SessionTemplate } from '../models/training';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport } from './sports';
+import { hasRole } from './templateRoles';
 
 export type DayRole = 'test' | 'race' | 'heuvelsOpEnAf' | 'hardeLoop' | 'langeLoop' | 'rustigeLoop' | 'rustigDuur' | 'bergtocht' | 'benen' | 'bovenlichaam' | 'overig';
 
 // Sessions that end at tempo count as hard even when the profile says moderate.
-const HARD_RUNS = new Set(['tpl_progression_run', 'tpl_fartlek', 'tpl_tempo_run', 'tpl_intervals', 'tpl_hill_intervals']);
 
 export function roleOf(t: SessionTemplate): DayRole {
-  if (t.id === 'tpl_test_run') return 'test';
-  if (t.id === 'tpl_race') return 'race';
+  if (hasRole(t, 'test')) return 'test';
+  if (hasRole(t, 'race')) return 'race';
   const p = resolveEffectiveStressProfile(t);
   if (t.type === 'strength') return p.lowerBodyLoad === 'heavy' ? 'benen' : 'bovenlichaam';
   const sport = templateSport(t);
   if (sport === 'running') {
     if (p.eccentricLoad === 'heavy') return 'heuvelsOpEnAf';
-    if (HARD_RUNS.has(t.id) || p.intensity === 'high' || (p.intensity === 'moderate' && p.cardioLoad === 'heavy')) return 'hardeLoop';
+    if (hasRole(t, 'hard_run') || p.intensity === 'high' || (p.intensity === 'moderate' && p.cardioLoad === 'heavy')) return 'hardeLoop';
     if (p.intensity === 'low' && p.cardioLoad === 'heavy') return 'langeLoop';
     return 'rustigeLoop';
   }

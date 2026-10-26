@@ -4,7 +4,7 @@ import { ProposalSheet } from '../../ProposalSheet';
 import type { RestDayPlan } from '../../../engine/restDayProposal';
 import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
 import { CHOICES, choiceShort } from '../../../data/settingsChoices';
-import { SPORT_LABEL, type Sport } from '../../../engine/sports';
+import { SPORT_LABEL, SPORT_LIST, type Sport } from '../../../engine/sports';
 import { SettingsSection } from '../SettingsList';
 import { usePlanSettingChange } from '../usePlanSettingChange';
 import { ChoiceFromDef } from './ChoiceFromDef';
@@ -14,7 +14,7 @@ import type { GroupProps } from './types';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { ChoiceSheet } from '../Sheet';
 
-const SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
+const SPORTS: Sport[] = SPORT_LIST;
 const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
 
 // Planning: je week, je sporten en hoe ASCEND plant. Alles wat de planning verandert gaat via

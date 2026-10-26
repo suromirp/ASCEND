@@ -5,11 +5,13 @@
 
 import type { SessionTemplate, SessionLog } from '../models/training';
 import { findModalityByKey, isCyclingModality, modalitySport } from '../data/modalities';
+import { SPORTS, SPORT_IDS, type SportId } from '../data/sports';
 
-export type Sport = 'running' | 'hiking' | 'cycling';
+export type Sport = SportId;
 export type EnabledSports = Record<Sport, boolean>;
 
-export const SPORT_LABEL: Record<Sport, string> = { running: 'Hardlopen', hiking: 'Wandelen', cycling: 'Fietsen' };
+export const SPORT_LABEL = Object.fromEntries(SPORTS.map((s) => [s.id, s.label])) as Record<Sport, string>;
+export const SPORT_LIST: Sport[] = SPORT_IDS;
 
 export const DEFAULT_ENABLED_SPORTS: EnabledSports = { running: true, hiking: true, cycling: false };
 

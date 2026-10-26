@@ -21,6 +21,7 @@ import { patternSlotOf } from './programLayout';
 import { FATIGUE_THRESHOLDS } from './legFatigue';
 import { leaveDays, lightDays } from './leave';
 import { templateSport } from './sports';
+import { hasRole, idHasRole, idIsTestOrRace, isTestOrRace } from './templateRoles';
 
 // --- who may touch a session ------------------------------------------------------
 // 0 history: logged, or its day has passed. 1 yours: you placed or moved it,
@@ -28,12 +29,11 @@ import { templateSport } from './sports';
 // counts as yours too: when in doubt, leave it). 2 an anchor: a test or the
 // race. 3 the system's: free to repair.
 export type LockLevel = 0 | 1 | 2 | 3;
-const ANCHORS = new Set(['tpl_test_run', 'tpl_race']);
 
 export function lockLevel(s: PlannedSession, logged: Set<string | undefined>, today: string): LockLevel {
   if (logged.has(s.id) || s.scheduledDate < today) return 0;
   if (s.lock || s.status === 'moved') return 1;
-  if (ANCHORS.has(s.templateId)) return 2;
+  if (idIsTestOrRace(s.templateId)) return 2;
   return 3;
 }
 
@@ -88,7 +88,6 @@ export interface CheckInput {
   trekRest?: 'soft' | 'strict';
 }
 
-const LONG = new Set(['tpl_long_run', 'tpl_mountain_hike']);
 const HORIZON_DAYS = 7 * 44;
 
 function context(input: CheckInput) {
@@ -162,7 +161,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
     // The day before and after a trek: nothing hard, nothing heavy for the legs.
     const lightDay = leave.light.get(s.scheduledDate);
-    if (lightDay && !leave.inTrek(s) && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t) || LONG.has(t.id))) {
+    if (lightDay && !leave.inTrek(s) && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t) || hasRole(t, 'long'))) {
       findings.push({ rule: 'LEAVE-LIGHT', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} ${lightDay.side === 'before' ? (lightDay.distance <= 1 ? 'de dag voor je tocht' : `${lightDay.distance} dagen voor je tocht`) : 'de dag na je tocht'} (${day(s.scheduledDate)}).` });
     }
 
@@ -203,27 +202,27 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
 
     // The day after a test or race.
-    const testBefore = (allByDate.get(addDays(s.scheduledDate, -1)) ?? []).find((o) => ANCHORS.has(o.templateId));
+    const testBefore = (allByDate.get(addDays(s.scheduledDate, -1)) ?? []).find((o) => idIsTestOrRace(o.templateId, byId));
     // The long training the day after, in its short version, is how the race
     // block plans it: easy legs, not a second effort.
-    const shortLong = LONG.has(t.id) && !!s.plannedMinutes && !!t.durationVariants.short && s.plannedMinutes <= t.durationVariants.short;
+    const shortLong = hasRole(t, 'long') && !!s.plannedMinutes && !!t.durationVariants.short && s.plannedMinutes <= t.durationVariants.short;
     // A trek is what you chose: the day after a test the walk stays (the proposal says so).
     if (testBefore && !shortLong && !leave.inTrek(s) && t.type !== 'strength' && t.type !== 'recovery' && (isHardRun(t) || isLegHeavyTemplate(t))) {
-      findings.push({ rule: 'AFTER-TEST', date: s.scheduledDate, sessionIds: [s.id, testBefore.id], subjectId: s.id, level: level(s), message: `${name} de dag na de ${testBefore.templateId === 'tpl_race' ? 'wedstrijd' : 'testloop'}.` });
+      findings.push({ rule: 'AFTER-TEST', date: s.scheduledDate, sessionIds: [s.id, testBefore.id], subjectId: s.id, level: level(s), message: `${name} de dag na de ${idHasRole(testBefore.templateId, 'race', byId) ? 'wedstrijd' : 'testloop'}.` });
     }
 
     // On the test or race day itself: reported on the other session.
-    if (ANCHORS.has(t.id)) {
+    if (isTestOrRace(t)) {
       for (const o of sameDay) {
         const ot = tpl(o);
         if (!ot || !conflictsOnTestDay(ot)) continue;
-        findings.push({ rule: 'TEST-DAY', date: s.scheduledDate, sessionIds: [o.id, s.id], subjectId: o.id, level: level(o), message: `${ot.name} op dezelfde dag als de ${t.id === 'tpl_race' ? 'wedstrijd' : 'testloop'} (${day(s.scheduledDate)}).` });
+        findings.push({ rule: 'TEST-DAY', date: s.scheduledDate, sessionIds: [o.id, s.id], subjectId: o.id, level: level(o), message: `${ot.name} op dezelfde dag als de ${hasRole(t, 'race') ? 'wedstrijd' : 'testloop'} (${day(s.scheduledDate)}).` });
       }
     }
 
     // Fresh legs for a test or race.
-    if (ANCHORS.has(t.id)) {
-      const limit = t.id === 'tpl_race' ? FATIGUE_THRESHOLDS.race.doubt : FATIGUE_THRESHOLDS.test.fresh;
+    if (isTestOrRace(t)) {
+      const limit = hasRole(t, 'race') ? FATIGUE_THRESHOLDS.race.doubt : FATIGUE_THRESHOLDS.test.fresh;
       const legIndex = freshnessAt(s.scheduledDate, around(s.scheduledDate, 52).filter((o) => o.id !== s.id), byId, recentLogs).index;
       if (legIndex > limit) {
         findings.push({ rule: 'TEST-FRESH', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} op ${day(s.scheduledDate)}: beenindex ${legIndex.toFixed(1).replace('.', ',')}, grens ${limit}.` });
@@ -234,7 +233,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     // Heavy days for the same muscles: each pair once, the later session as
     // the subject unless only the earlier one may be moved.
     for (const c of findHeavyConflicts(s.id, t, s.scheduledDate, around(s.scheduledDate, 4), byId, recentLogs)) {
-      if (ANCHORS.has(c.templateId)) continue; // TEST-FRESH and AFTER-TEST cover the test
+      if (idIsTestOrRace(c.templateId, byId)) continue; // TEST-FRESH and AFTER-TEST cover the test
       if (c.scheduledDate > s.scheduledDate || (c.scheduledDate === s.scheduledDate && c.id < s.id)) continue;
       if (leave.inTrek(s) && leave.inTrek(c)) continue; // the days of one trek follow each other on purpose
       // Soft rest after a tocht: the short version of a heavy leg day may stand 48 hours after a walking day of the tocht.
@@ -246,7 +245,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
 
   // One full long session a week.
   const weeks = new Map<string, PlannedSession[]>();
-  for (const s of active) if (LONG.has(s.templateId) && !s.plannedMinutes && !leave.inTrek(s)) weeks.set(s.weekStartDate, [...(weeks.get(s.weekStartDate) ?? []), s]);
+  for (const s of active) if (idHasRole(s.templateId, 'long', byId) && !s.plannedMinutes && !leave.inTrek(s)) weeks.set(s.weekStartDate, [...(weeks.get(s.weekStartDate) ?? []), s]);
   for (const list of weeks.values()) {
     if (list.length < 2) continue;
     const sorted = [...list].sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));

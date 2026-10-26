@@ -29,6 +29,7 @@ import { mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { Icon } from '../components/icons';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
 import { InfluenceCard } from '../components/influence/InfluenceCard';
+import { mainGoal } from '../engine/mainGoal';
 
 // Je stand: where you are, apart from what to do today. Today stays the
 // mission; here are the numbers behind it, each on its own card, no
@@ -57,7 +58,7 @@ export function StandingPage() {
   const checks = useMemo(() => indexChecks(sessionLogs, templates, inputs.bodyKg), [sessionLogs, templates, inputs.bodyKg]);
 
   // Not an archived goal, as on Ascend (pages/Ascend.tsx).
-  const primaryGoal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  const primaryGoal = mainGoal(trainingGoals, goalMilestones, 'live');
   // The same number and sentence as on Ascend (engine/gr5Readiness.ts).
   const gr5 = useMemo(() => (primaryGoal ? computeGr5Readiness(primaryGoal.requirements, sessionLogs, today) : undefined), [primaryGoal, sessionLogs, today]);
   const routeDescent = primaryGoal ? typicalDayValue(primaryGoal.requirements, 'elevationLoss')?.value.amount : undefined;

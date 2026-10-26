@@ -20,6 +20,7 @@ import { HIKE_DAY_ONE_LADDER, MOUNTAIN_HIKE_LADDER } from '../data/hikeLadder';
 import { packLadder, type LadderWeek } from './packLadder';
 import { TENT_PACK_KG } from './gr5Profile';
 import { goalTiming } from './goalRoute';
+import { mainGoal } from './mainGoal';
 
 export const PHASE_BASIS = 'phase_1';
 export const PHASE_OPBOUW = 'phase_2';
@@ -66,7 +67,7 @@ function phase(id: string, order: number, weekCount: number): Phase {
 // Ascent Ladder), when it is active and still ahead.
 export function programAnchorDate(goals: TrainingGoal[], milestones: GoalMilestone[], today: string): string | undefined {
   const withLadder = new Set(milestones.map((m) => m.goalId));
-  const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
+  const main = mainGoal(goals, withLadder);
   if (!main || main.status !== 'active') return undefined;
   return main.targetDate > today ? main.targetDate : undefined;
 }
@@ -82,7 +83,7 @@ export function planEndDay(goals: TrainingGoal[], milestones: GoalMilestone[], t
   const ahead = programAnchorDate(goals, milestones, today);
   if (ahead) return ahead;
   const withLadder = new Set(milestones.map((m) => m.goalId));
-  const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
+  const main = mainGoal(goals, withLadder);
   if (main?.status !== 'active') return undefined;
   if (after === 'maintain' && goalTiming(main, today).state === 'past') return undefined;
   return main.targetDate;
@@ -105,7 +106,7 @@ export function afterMainGoalChange(
 ): { proposal: boolean; lines: string[] } {
   if (from === to) return { proposal: false, lines: [] };
   const withLadder = new Set(milestones.map((m) => m.goalId));
-  const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
+  const main = mainGoal(goals, withLadder);
   if (!main || goalTiming(main, today).state !== 'past') return { proposal: false, lines: [] };
   if (to === 'maintain') {
     return { proposal: true, lines: ['Vanaf deze week plant ASCEND weer gewone onderhoudsweken, met je weekschema en je rustdag.', 'Je geschiedenis blijft zoals hij is.'] };

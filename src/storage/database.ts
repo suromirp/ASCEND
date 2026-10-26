@@ -11,6 +11,7 @@ import type { SweatEntry } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { InfluenceEntry } from '../models/influence';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { SportId } from '../data/sports';
 import type { TrainingPrescription } from '../models/prescription';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
@@ -41,6 +42,7 @@ import { whenStorageOpen } from './lifecycle';
 import { BOOT_MIGRATIONS_KEY } from '../engine/bootWatch';
 import type { JourneyState } from '../engine/journey';
 import type { PackListState } from '../engine/packList';
+import { mainGoal } from '../engine/mainGoal';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
@@ -534,11 +536,11 @@ export interface AppSettings {
   changeApplyMode?: 'always_ask' | 'auto_small' | 'auto_all';
   // Fase 2 — which sports ASCEND may plan (engine/sports.ts). Logging is
   // never restricted. Absent = engine/sports.ts#DEFAULT_ENABLED_SPORTS.
-  enabledSports?: { running: boolean; hiking: boolean; cycling: boolean };
+  enabledSports?: Record<SportId, boolean>;
   // "Zoveel keer per week" per sport (engine/sportFrequency.ts). A sport
   // missing here is on Automatisch: the weekly pattern and weekly planning
   // decide. Optional, so older settings need no migration.
-  sportFrequency?: Partial<Record<'running' | 'hiking' | 'cycling', number>>;
+  sportFrequency?: Partial<Record<SportId, number>>;
   // The shape of your week, chosen at the first questions (engine/weekShape.ts,
   // read by engine/sports.ts#weeklyPatternTemplates). Unset: the full default
   // pattern. Optional, so older settings and backups need no migration.
@@ -1375,7 +1377,7 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   // A running race before the main goal: its own block (engine/raceBlock.ts).
   if (!dryRun) await syncPackMilestone(goals, milestones, logs);
   const ladder = new Set(milestones.map((m) => m.goalId));
-  const mainGoalId = goals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const mainGoalId = mainGoal(goals, ladder)?.id;
   const blocks = raceBlocks(goals, mainGoalId, ctx.anchor, today);
   // The plan as it will be after the steps above, then the last two steps:
   // the race block and the week check (engine/planPass.ts, the same pass a

@@ -7,6 +7,8 @@
 // instelling een plek mist. De id van een rij is ook het anker
 // (`instelling-<id>`), en bij een instelling uit de index is het hetzelfde id.
 
+import { SPORT_IDS } from './sports';
+
 // De plek van de pagina's: /more is het overzicht (ook voor het tandwiel en oude links),
 // /more/:groep een groep. Een onbekende groep gaat terug naar het overzicht.
 export const SETTINGS_ROOT = '/more';
@@ -39,7 +41,7 @@ export const settingsPageTitle = (id: SettingsPageId): string => SETTINGS_PAGES.
 // Alle rijen per pagina, in volgorde. `advanced` staan achter "Geavanceerd".
 export const PAGE_ROWS: Record<SettingsPageId, { rows: string[]; advanced: string[] }> = {
   planning: {
-    rows: ['trainingstijd', 'rustdag', 'rustdag-doen', 'meerdere', 'sport-running', 'sport-hiking', 'sport-cycling', 'wijzigingen', 'ambitie'],
+    rows: ['trainingstijd', 'rustdag', 'rustdag-doen', 'meerdere', ...SPORT_IDS.map((id) => `sport-${id}`), 'wijzigingen', 'ambitie'],
     advanced: ['zware-dingen'],
   },
   doel: {

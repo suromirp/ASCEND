@@ -11,6 +11,7 @@
 import type { BriefFact, SessionBrief } from './sessionBrief';
 import { formatPace, paceForTemplate, type PaceRange, type RacePaces } from './racePaces';
 import { formatDateNL } from '../utils/dates';
+import { idHasRole } from './templateRoles';
 
 export type MissionChipKind = 'duur' | 'zone' | 'tempo' | 'overig';
 
@@ -27,12 +28,10 @@ export interface MissionFacts {
 
 // Rustige trainingen krijgen het rustige tempo uit de test. Tempoloop,
 // intervallen en bergafdaling hebben hun eigen tempo (racePaces.ts).
-const EASY_PACE_TEMPLATES = new Set(['tpl_easy_run', 'tpl_recovery_run', 'tpl_long_run']);
-
 function paceFor(templateId: string, paces: RacePaces): PaceRange | undefined {
   const own = paceForTemplate(templateId, paces)?.range;
   if (own) return own;
-  return EASY_PACE_TEMPLATES.has(templateId) ? paces.easy : undefined;
+  return idHasRole(templateId, 'easy_pace') ? paces.easy : undefined;
 }
 
 export function formatPaceChip(range: PaceRange): string {

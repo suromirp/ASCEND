@@ -8,6 +8,8 @@
 // modality is a data change, not a model change — see
 // ActivityModality in models/training.ts.
 
+import type { SportId } from './sports';
+
 export interface ModalitySource {
   label: string;
   url?: string;
@@ -478,7 +480,7 @@ export function findModalityByKey(key: string | undefined): ModalityDefinition |
 // guessed from the key name (audit 2026-10: StairMaster intervals on the
 // hill-interval day were saved as running). Rest and mobility count as no
 // sport, a recovery walk stays recovery.
-const MODALITY_SPORT: Record<string, 'running' | 'hiking' | 'cycling' | undefined> = {
+const MODALITY_SPORT: Record<string, SportId | undefined> = {
   run_outdoor: 'running', run_treadmill: 'running', run_walk: 'running',
   bike_outdoor: 'cycling', bike_indoor: 'cycling', bike_easy_friday: 'cycling', very_easy_bike: 'cycling',
   incline_treadmill: 'hiking', hill_hike: 'hiking', stairmaster: 'hiking', outdoor_stairs: 'hiking', trail_hike: 'hiking',
@@ -489,7 +491,7 @@ const MODALITY_SPORT: Record<string, 'running' | 'hiking' | 'cycling' | undefine
   rest: undefined, recovery_walk: undefined, gentle_mobility: undefined,
 };
 
-export function modalitySport(key: string | undefined): 'running' | 'hiking' | 'cycling' | undefined {
+export function modalitySport(key: string | undefined): SportId | undefined {
   if (!key) return undefined;
   if (key in MODALITY_SPORT) return MODALITY_SPORT[key];
   // Keys from older versions not in the list: read them from the name.

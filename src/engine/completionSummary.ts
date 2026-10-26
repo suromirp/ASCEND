@@ -21,6 +21,7 @@ import { fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } 
 import { logSport } from './sports';
 import { addDays, daysBetween, formatDateNL, formatHoursMinutesNL, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
+import { mainGoal } from './mainGoal';
 
 export interface CompletionLine {
   id: 'goal' | 'week' | 'legs';
@@ -152,7 +153,7 @@ function weeksText(today: string, goal: TrainingGoal): string | undefined {
 // enkel doel, dan is er geen regel.
 function goalLine(inputs: CompletionInputs, latest: SessionLog | undefined): CompletionLine | undefined {
   const { goals, goalMilestones, goalMilestoneProgress, logs, today } = inputs;
-  const withLadder = goals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  const withLadder = mainGoal(goals, goalMilestones, 'live');
 
   if (inputs.milestoneTitle) {
     const milestone = goalMilestones.find((m) => m.title === inputs.milestoneTitle);

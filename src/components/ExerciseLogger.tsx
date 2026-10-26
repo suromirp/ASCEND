@@ -14,7 +14,7 @@ import { CountdownTimer } from './CountdownTimer';
 import { addDays, formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
 import { cleanDetails, detailForm, plannedDetails } from '../engine/workoutDetails';
-import { ASK_LEGS_FOR, type LegsAtStart } from '../engine/learning';
+import { asksLegs, type LegsAtStart } from '../engine/learning';
 import { WorkoutDetailsFields } from './WorkoutDetailsFields';
 import { TrainingGuideSheet } from './TrainingGuideSheet';
 import { StopSignals } from './SessionHeader';
@@ -281,7 +281,7 @@ function GeneralLogger({
       rpe: rpe === '' || isRest ? undefined : rpe,
       notes: notes || undefined,
       subjectiveFeel,
-      legsAtStart: ASK_LEGS_FOR.has(template.id) && !isRest ? legsAtStart : undefined,
+      legsAtStart: asksLegs(template) && !isRest ? legsAtStart : undefined,
       painAreas: painReports.length > 0 ? painReports.map((p) => p.area) : undefined,
       painReports: painReports.length > 0 ? painReports : undefined,
       workout: detailForm(template.id) && !isRest ? cleanDetails(workout) : undefined,
@@ -557,7 +557,7 @@ function GeneralLogger({
             <PainReportFields value={painReports} onChange={setPainReports} />
           )}
 
-          {ASK_LEGS_FOR.has(template.id) && (
+          {asksLegs(template) && (
             <div>
               <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelden je benen bij het inlopen? (optioneel; zo leert ASCEND hoe goed de beenindex bij jou klopt)</p>
               <div className="mt-2">

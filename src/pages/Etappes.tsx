@@ -19,6 +19,7 @@ import { stageWater, stageWaterShort } from '../engine/stageWater';
 import { sweatRateAt, usableSweatEntries } from '../engine/sweat';
 import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
+import { mainGoal } from '../engine/mainGoal';
 
 // "Nachten: 2 tent, 1 gîte, 33 nog niet gekozen." Alleen wat er is.
 function nightsText(nights: ReturnType<typeof itineraryTotals>['nights']): string {
@@ -43,7 +44,7 @@ export function EtappesPage() {
   const today = todayISO();
 
   // Het hoofddoel (het doel met de ladder) bepaalt de startdatum.
-  const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  const goal = mainGoal(trainingGoals, goalMilestones, 'live');
   const startDate = goal?.targetDate;
 
   const days = useMemo(() => buildItinerary(plan, startDate), [plan, startDate]);

@@ -18,6 +18,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { formatDateNL } from '../utils/dates';
 import { Icon } from '../components/icons';
 import { TextButton } from '../components/TextButton';
+import { mainGoal } from '../engine/mainGoal';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 const inputClass = 'mt-1 w-full rounded-xl border px-3 py-2.5 text-sm';
@@ -35,7 +36,7 @@ export function AlleenOnderwegPage() {
   const [letterOpen, setLetterOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  const goal = mainGoal(trainingGoals, goalMilestones, 'live');
   const startDate = goal?.targetDate;
   const days = useMemo(() => buildItinerary(plan, startDate), [plan, startDate]);
   const totals = useMemo(() => itineraryTotals(days), [days]);

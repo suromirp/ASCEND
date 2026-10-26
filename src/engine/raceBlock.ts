@@ -52,6 +52,7 @@ import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils
 import { PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD, waveWeek } from './programLayout';
 import { isLegHeavyTemplate } from './scheduler';
 import { templateSport } from './sports';
+import { idHasRole } from './templateRoles';
 
 export const RACE_BLOCK_WEEKS = 8;
 export const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
@@ -82,8 +83,6 @@ const QUALITY_TEMPLATES = new Set([TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID, INTERVAL
 // intervals sharpen in the middle; block week 5 is the test (four weeks
 // before the race), which sits on the run slot.
 const KEY_BY_BLOCK_WEEK: ('run' | 'saturday')[] = ['run', 'run', 'saturday', 'saturday', 'run', 'saturday', 'run', 'run'];
-const BEFORE_RACE_TAKEN_OUT = ['tpl_hill_intervals', 'tpl_hills_descent', 'tpl_intervals', 'tpl_lower_a', 'tpl_lower_b'];
-const AFTER_RACE_SHORT = ['tpl_long_run', 'tpl_mountain_hike'];
 
 export type GoalPlanRole = 'main' | 'secondary' | 'track';
 
@@ -269,7 +268,7 @@ export function applyRaceBlocks(
       const current = update.get(s.id) ?? s;
       const before = s.scheduledDate < b.raceDate && s.scheduledDate >= addDays(b.raceDate, -2);
       // Race day itself: only the race. Two days before: nothing heavy for the legs.
-      if (s.scheduledDate === b.raceDate || (before && BEFORE_RACE_TAKEN_OUT.includes(current.templateId))) {
+      if (s.scheduledDate === b.raceDate || (before && idHasRole(current.templateId, 'before_race_out', byId))) {
         update.delete(s.id);
         remove.push(s);
         continue;
@@ -281,7 +280,7 @@ export function applyRaceBlocks(
         continue;
       }
       // The day after: the long training short.
-      if (s.scheduledDate === addDays(b.raceDate, 1) && AFTER_RACE_SHORT.includes(current.templateId) && short && current.plannedMinutes !== short) {
+      if (s.scheduledDate === addDays(b.raceDate, 1) && idHasRole(current.templateId, 'long', byId) && short && current.plannedMinutes !== short) {
         update.set(s.id, { ...current, plannedMinutes: short });
       }
     }

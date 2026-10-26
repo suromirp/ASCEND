@@ -9,6 +9,7 @@ import { ChoiceList, Sheet } from '../Sheet';
 import { SettingsList } from '../SettingsList';
 import { haptics } from '../../../utils/haptics';
 import { usePlanSettingChange } from '../usePlanSettingChange';
+import { mainGoal } from '../../../engine/mainGoal';
 
 // De kleur van elke fase in de balk, zonder goud: goud is het ene accent van het scherm.
 const PHASE_COLOR_SOFT: Record<string, string> = {
@@ -32,7 +33,7 @@ export function ProgramSheet({ onClose, onRestart }: { onClose: () => void; onRe
   const today = todayISO();
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, today);
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
-  const main = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id));
+  const main = mainGoal(trainingGoals, ladder);
   if (!program) return null;
 
   const overrides = settings.programPhaseOverrides ?? {};

@@ -25,6 +25,7 @@ import { buildLabel } from '../../utils/buildLabel';
 import { noticeSupport } from '../../engine/morningNotice';
 import { readNoticeEnvironment } from '../../utils/morningNotice';
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
+import { mainGoal as findMainGoal } from '../../engine/mainGoal';
 
 // Alles wat de instellingen over je weten, als de feiten die engine/settingsSummary.ts
 // leest. De opslag die niet in de app-staat zit (horloge, MacroFactor, back-up) wordt
@@ -97,7 +98,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
     const position = program ? resolveProgramWeek(program, today) : null;
     const goalDate = programAnchorDate(trainingGoals, goalMilestones, today);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
-    const mainGoal = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id));
+    const mainGoal = findMainGoal(trainingGoals, ladder);
     const mainIsTrek = !!mainGoal?.requirements.some((r) => r.discipline === 'hiking' || r.kind === 'elevationGain' || r.kind === 'elevationLoss');
     const periods = (settings.leavePeriods ?? []).filter((p) => p.endDate >= today);
     const w = latestWeight(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor));

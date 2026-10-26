@@ -18,7 +18,7 @@ import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
 import { allProfiles, machineListCount } from './machineWeights';
 import { checkLines, type CheckSummary } from './prescriptionCheck';
-import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, parseWeekShape, type Sport } from './sports';
+import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, SPORT_LIST, parseWeekShape, type Sport } from './sports';
 import { readClothingAdjust } from './clothingFeedback';
 import { backupAge, backupAgoText } from './settingsAttention';
 import { shortGoalName } from './settingsStatus';
@@ -156,7 +156,7 @@ function clock(iso: string): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-const SPORTS: Sport[] = ['running', 'hiking', 'cycling'];
+const SPORTS: Sport[] = SPORT_LIST;
 
 function sportState(f: SettingsFacts, sport: Sport) {
   const on = { ...DEFAULT_ENABLED_SPORTS, ...f.settings.enabledSports }[sport];

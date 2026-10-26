@@ -1,6 +1,7 @@
 import type { SessionTemplate } from '../models/training';
 import { templateSport } from '../engine/sports';
 import type { PictogramName } from './pictograms';
+import { sportDefinition } from '../data/sports';
 
 // De sport van een training in één van de sportkleuren: hardlopen oranje,
 // kracht paars, wandelen groen, een bergtocht bergzon-geel, fietsen roze (zoals
@@ -24,21 +25,21 @@ export function sportKind(template: SessionTemplate): SportKind {
 }
 
 export const SPORT_COLOR: Record<SportKind, string> = {
-  run: 'var(--color-sport-run)',
+  run: sportDefinition('running').colorToken,
   strength: 'var(--color-sport-strength)',
-  walk: 'var(--color-sport-walk)',
+  walk: sportDefinition('hiking').colorToken,
   mountain: 'var(--color-sport-mountain)',
-  bike: 'var(--color-sport-stretch)',
+  bike: sportDefinition('cycling').colorToken,
   rest: 'var(--color-status)',
 };
 
 // Het pictogram bij een training (de hangmat voor een rustdag).
 export const SPORT_PICTOGRAM: Record<SportKind, PictogramName> = {
-  run: 'lopen',
+  run: sportDefinition('running').pictogram as PictogramName,
   strength: 'kracht',
-  walk: 'wandelen',
+  walk: sportDefinition('hiking').pictogram as PictogramName,
   mountain: 'bergtocht',
-  bike: 'fietsen',
+  bike: sportDefinition('cycling').pictogram as PictogramName,
   rest: 'rust',
 };
 

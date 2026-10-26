@@ -23,6 +23,7 @@ import { buildDefaultStrengthProgramStrategy, buildMarathonGoal, migrateGr5Objec
 import { isRaceGoal } from './raceBlock';
 import { layoutPhases } from './programLayout';
 import type { RestWeekday } from './restDay';
+import { mainGoal } from './mainGoal';
 import type { WeekShape } from './sports';
 import { adviceDays, chooseWeekShape, isStrengthTemplateId, type StartGoalKind } from './weekShape';
 
@@ -128,9 +129,8 @@ function goalLine(answers: StartAnswers): string {
 
 // Which kind of week fits goals that are already there.
 export function kindOfExistingGoals(goals: TrainingGoal[], milestones: GoalMilestone[]): StartGoalKind {
-  const live = goals.filter((g) => g.status !== 'archived');
-  if (live.some((g) => milestones.some((m) => m.goalId === g.id))) return 'trek';
-  if (live.some(isRaceGoal)) return 'race';
+  if (mainGoal(goals, milestones, 'live')) return 'trek';
+  if (goals.filter((g) => g.status !== 'archived').some(isRaceGoal)) return 'race';
   return 'fit';
 }
 

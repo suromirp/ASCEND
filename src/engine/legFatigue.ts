@@ -21,6 +21,7 @@ import { progressionTarget } from './programLayout';
 import { daysBetween, addDays } from '../utils/dates';
 import { resolveEffectiveStressProfile } from './stressProfile';
 import { templateSport } from './sports';
+import { hasRole } from './templateRoles';
 
 type Level = 'none' | 'light' | 'moderate' | 'heavy';
 
@@ -51,7 +52,6 @@ export const PLANNED_STRENGTH_RPE = 8;
 // the up-and-down session run down).
 const DEFAULT_DESCENT_M: Record<string, number> = { tpl_hill_intervals: 150, tpl_hills_descent: 200 };
 // The hill repeats are walked down; everything else of a run is run.
-const WALKED_DOWN = new Set(['tpl_hill_intervals']);
 const DEFAULT_BODY_KG = 80;
 // The pack weighs heavier on the damage layer than on energy cost: going
 // downhill the knee extensors take the load (activity up 104 to 172% with the
@@ -270,7 +270,7 @@ export function sessionImpulse(event: FatigueEvent, template: SessionTemplate, a
     const pack = event.packKg ? 1 + event.packKg / bodyKg : 1;
     const damagePack = event.packKg ? 1 + DAMAGE_PACK_WEIGHT * event.packKg / bodyKg : 1;
     const poles = event.poles ? POLES_DESCENT_FACTOR : 1;
-    const running = templateSport(template) === 'running' && !WALKED_DOWN.has(template.id);
+    const running = templateSport(template) === 'running' && !hasRole(template, 'walked_down');
     intensity = (INTENSITY_PER_HOUR[p.intensity] ?? 2) * hours * factor * pack;
     strength = (IMPACT_PER_HOUR[p.impact as Level] * hours + CLIMB_PER_1000 * (event.climbM ?? 0) / 1000) * factor * pack;
     damage = DESCENT_PER_1000 * ((event.descentM ?? 0) / 1000) * (running ? RUNNING_DESCENT : 1) * damagePack * poles * adapt;

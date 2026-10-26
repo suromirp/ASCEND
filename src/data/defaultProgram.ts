@@ -7,6 +7,7 @@ import { activeSwaps, layoutPhases, patternForWeek } from '../engine/programLayo
 import { DYNAMIC_WARMUP, COOLDOWN_UPPER, COOLDOWN_LOWER, COOLDOWN_RUN, COOLDOWN_RECOVERY } from './stretches';
 import { HIKE_DAY_ONE_LADDER, MOUNTAIN_HIKE_LADDER } from './hikeLadder';
 import { TENT_PACK_KG, packMilestone } from '../engine/gr5Profile';
+import { defaultRolesOf } from './templateRoles';
 
 // ---------------------------------------------------------------------------
 // Session templates: de vaste week. Hoe lang en zwaar een sessie in een
@@ -35,8 +36,16 @@ import { TENT_PACK_KG, packMilestone } from '../engine/gr5Profile';
 // categorical read of content that already exists above. This is what
 // resolveEffectiveStressProfile() falls back to legacyIsLegHeavyToStressProfile()
 // for on any template that DOESN'T have one — every template here does.
+// De rollen komen uit één tabel (data/templateRoles.ts).
+function withRoles(templates: SessionTemplate[]): SessionTemplate[] {
+  return templates.map((t) => {
+    const roles = defaultRolesOf(t.id);
+    return roles.length > 0 ? { ...t, roles } : t;
+  });
+}
+
 function buildTemplates(): SessionTemplate[] {
-  return [
+  return withRoles([
     {
       id: 'tpl_upper_a',
       name: 'Bovenlichaam A',
@@ -536,7 +545,7 @@ function buildTemplates(): SessionTemplate[] {
       // beendag" voor de 48-uursregel.
       baseStressProfile: { lowerBodyLoad: 'moderate', impact: 'none', eccentricLoad: 'none', intensity: 'low', upperBodyLoad: 'none', cardioLoad: 'moderate' },
     },
-  ];
+  ]);
 }
 
 // ---------------------------------------------------------------------------

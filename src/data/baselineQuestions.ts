@@ -13,7 +13,7 @@
 
 import type { CapabilityDimension, CapabilityKey } from '../models/capability';
 import type { Unit } from '../models/units';
-import { disciplineLabel } from '../models/disciplines';
+import { disciplineLabel } from './disciplines';
 
 export type BaselineDimension = Exclude<CapabilityDimension, 'fatigue_resistance'>;
 
@@ -49,7 +49,7 @@ export function dimensionLabel(dimension: CapabilityDimension): string {
 // Full human label for a capability key ("Duurzaam tempo (hardlopen)"),
 // combining the dimension label with a friendly discipline label — falls
 // back to the raw discipline string for anything outside the known list
-// (models/disciplines.ts), so an unrecognized value still renders instead
+// (data/disciplines.ts), so an unrecognized value still renders instead
 // of disappearing.
 export function capabilityKeyLabel(key: Pick<CapabilityKey, 'dimension' | 'discipline'>): string {
   const dim = dimensionLabel(key.dimension);

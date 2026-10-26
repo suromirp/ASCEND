@@ -16,6 +16,7 @@ import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 import { PrimaryButton, SecondaryButton } from './ui';
 import { DayRow } from './vandaag/DayRow';
 import { TodaySheet } from './vandaag/TodaySheet';
+import { mainGoal } from '../engine/mainGoal';
 
 // The question of the week on Today (engine/weeklyQuestion.ts), as one line in
 // "Je dag": one "Als ..., wat doe je dan?" with a short Stoic source, and one
@@ -33,7 +34,7 @@ export function WeeklyQuestionCard() {
 
   const anchor = programAnchorDate(trainingGoals, goalMilestones, today);
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
-  const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
   const question = pickWeekQuestion(weekQuestionContext({
     weekStart,
     program,

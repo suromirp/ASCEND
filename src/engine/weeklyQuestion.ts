@@ -31,6 +31,7 @@ import type { GoalMilestone, TrainingGoal } from '../models/goals';
 import type { Program } from '../models/program';
 import { addDays, daysBetween, mondayOfWeek, resolveProgramWeek } from '../utils/dates';
 import { PHASE_BASIS, PHASE_BERG, PHASE_EXPEDITIE, PHASE_OPBOUW, PHASE_TAPER } from './programLayout';
+import { mainGoal } from './mainGoal';
 
 export const MAX_ANSWER_LENGTH = 160;
 
@@ -57,8 +58,7 @@ export interface WeekQuestionContext {
 // Same choice as engine/programLayout.ts#programAnchorDate: the active goal
 // that has the Ascent Ladder.
 export function mainGoalDate(goals: TrainingGoal[], milestones: GoalMilestone[]): string | undefined {
-  const withLadder = new Set(milestones.map((m) => m.goalId));
-  const main = goals.find((g) => g.status === 'active' && withLadder.has(g.id));
+  const main = mainGoal(goals, milestones);
   return main && main.status === 'active' ? main.targetDate : undefined;
 }
 

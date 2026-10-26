@@ -25,6 +25,7 @@
 
 import type { DataSourceAdapter, DateRange } from './types';
 import type { ExternalActivity, ExternalActivityKind } from '../engine/activityImport';
+import { sportOfExternalType, type SportId } from '../data/sports';
 import { WATCH_EXTERNAL_PREFIX, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import type { SubjectiveFeel } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
@@ -124,15 +125,13 @@ export interface IntervalsActivity {
   stream_types?: string[];
 }
 
-const RUN_TYPES = new Set(['Run', 'TrailRun', 'VirtualRun']);
-const HIKE_TYPES = new Set(['Hike', 'Walk']);
-const RIDE_TYPES = new Set(['Ride', 'GravelRide', 'MountainBikeRide', 'EBikeRide', 'EMountainBikeRide', 'Cyclocross', 'TrackRide', 'VirtualRide', 'Velomobile']);
+// Welke intervals.icu-types bij welke sport horen staat in data/sports.ts (externalKinds).
+const SPORT_KIND: Record<SportId, ExternalActivityKind> = { running: 'run', hiking: 'hike', cycling: 'ride' };
 
 export function kindOf(type: string | undefined): ExternalActivityKind {
   if (!type) return 'other';
-  if (RUN_TYPES.has(type)) return 'run';
-  if (HIKE_TYPES.has(type)) return 'hike';
-  if (RIDE_TYPES.has(type)) return 'ride';
+  const sport = sportOfExternalType(type);
+  if (sport) return SPORT_KIND[sport];
   if (type === 'WeightTraining') return 'strength';
   return 'other';
 }

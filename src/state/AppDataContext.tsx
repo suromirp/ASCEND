@@ -309,6 +309,7 @@ import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine
 import { raceBlocks } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
 import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
+import { isMarathonGoal, mainGoal } from '../engine/mainGoal';
 
 interface AppData {
   loading: boolean;
@@ -1768,7 +1769,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       // doet niks", and it read as a permanent, undeletable goal slot).
       // Clearing it here resets the card to its unconfigured state, the same
       // as GR5's own dedicated card disappearing once archived.
-      if (goal.name === 'Marathon') {
+      if (isMarathonGoal(goal)) {
         const nextSettings = await SettingsRepo.set({ marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined });
         setSettings(nextSettings);
       }
@@ -2011,7 +2012,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (change.archive) {
       const archived: TrainingGoal = { ...goal, status: 'archived', targetDate: undefined, updatedAt: now };
       // The Marathon card reads its own settings: those go with it (see archiveGoal).
-      const settingsPatch = goal.name === 'Marathon' ? { marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined } : undefined;
+      const settingsPatch = isMarathonGoal(goal) ? { marathonRaceType: undefined, marathonTargetDate: undefined, marathonTargetTimeMinutes: undefined } : undefined;
       return planHorizonChangeImpl({ title: `${goal.name} archiveren`, why: 'Je doel is gearchiveerd.', explanation, trigger: 'goal_removed', goals: [archived], ...(settingsPatch ? { settings: settingsPatch } : {}) });
     }
     const date = change.targetDate || undefined;
@@ -2046,7 +2047,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // the same proposal; when nothing in the plan changes it is simply stored.
   const planMarathonGoal = useCallback(async (patch: MarathonGoalPatch): Promise<HorizonPlan | null> => {
     const [goals, stored] = await Promise.all([TrainingGoalsRepo.getAll(), SettingsRepo.get()]);
-    const existing = goals.find((g) => g.name === 'Marathon' && g.status !== 'archived') ?? goals.find((g) => g.name === 'Marathon');
+    const existing = goals.find((g) => isMarathonGoal(g) && g.status !== 'archived') ?? goals.find((g) => isMarathonGoal(g));
     // A date set in the goal wizard lives on the goal, not in settings; a quick
     // pick (Halve, Hele) keeps it instead of rebuilding the goal without one.
     const keptDate = 'marathonTargetDate' in patch ? patch.marathonTargetDate : (stored.marathonTargetDate ?? existing?.targetDate);
@@ -2221,7 +2222,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const today = todayISO();
     const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
-    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
     const restDay = restDayOverride ?? settings.restDay ?? 1;
     let n = 0;
     const periods = leave ?? settings.leavePeriods;
@@ -2246,7 +2247,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const today = todayISO();
     const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
-    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
     const restDay = settings.restDay ?? 1;
     const blocks = raceBlocks(trainingGoals, mainGoalId, anchor, today);
     const slotDays = patternDays(templates, settings, restDay);
@@ -2284,7 +2285,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const today = todayISO();
     const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
-    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
     let n = 0;
     return planRestDayChange({
       restDay, sessions: plannedSessions, logs: sessionLogs, templates, today, anchor,
@@ -2321,7 +2322,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const today = todayISO();
     const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
     const ladder = new Set(goalMilestones.map((m) => m.goalId));
-    const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+    const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
     return {
       gaps: rankFocusGaps(goalOverviews),
       races: raceBlocks(trainingGoals, mainGoalId, anchor, today),

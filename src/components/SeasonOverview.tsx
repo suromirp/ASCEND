@@ -6,6 +6,7 @@ import { PHASE_COLOR } from '../data/phaseColors';
 import { formatDateNL, formatHoursMinutesNL, todayISO } from '../utils/dates';
 import { Card, StatusPill } from './ui';
 import { Icon, type IconName } from './icons';
+import { mainGoal as findMainGoal } from '../engine/mainGoal';
 
 // Week → Jaaroverzicht: the whole road to the main goal. A schematic climb on
 // top (phases as stretches of one mountain line), then the phases as cards
@@ -30,7 +31,7 @@ export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: str
 
   const goalDate = programAnchorDate(trainingGoals, goalMilestones, today);
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
-  const mainGoal = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id));
+  const mainGoal = findMainGoal(trainingGoals, ladder);
 
   // Tap on the profile: open that phase and bring it into view.
   function jumpTo(id: string) {

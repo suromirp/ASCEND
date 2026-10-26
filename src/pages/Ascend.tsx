@@ -39,6 +39,7 @@ import { goalDateProblem } from '../engine/goalDate';
 import { SkyBand, SkyPanel } from '../components/SkyBand';
 import { Sheet } from '../components/settings/Sheet';
 import { TextButton } from '../components/TextButton';
+import { isMarathonGoal, mainGoal } from '../engine/mainGoal';
 
 function blankGoalDraft(): TrainingGoal {
   const now = new Date().toISOString();
@@ -115,17 +116,17 @@ export function AscendPage() {
   // the row, so every "find the live goal" lookup here must exclude it —
   // otherwise the dedicated GR5/Marathon cards would keep showing an
   // archived goal as if it were still active.
-  const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
+  const marathonGoal = trainingGoals.find((g) => isMarathonGoal(g) && g.status !== 'archived');
 
   // The GR5 goal is always the one with milestones — the marathon goal
   // (migrated from AppSettings) has none. Mirrors the old objectives[0]
   // assumption, now stated explicitly rather than by array position.
-  const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
+  const goal = mainGoal(trainingGoals, goalMilestones, 'live');
   // Any other goal created via "+ NIEUW DOEL" — GR5 and Marathon each have
   // their own dedicated card above, so this is the only place a custom
   // goal is visible/editable/archivable at all.
   const customGoals = trainingGoals.filter(
-    (g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id),
+    (g) => g.status !== 'archived' && !isMarathonGoal(g) && !goalMilestones.some((m) => m.goalId === g.id),
   );
   // Archiving used to be a one-way door — nothing in the UI ever read
   // status:'archived', so an archived goal simply vanished with no way
@@ -344,9 +345,9 @@ export function GoalsPage() {
   // planning does not change, it is simply stored.
   const changeMarathon = (patch: MarathonGoalPatch) =>
     void horizon.propose(() => planMarathonGoal(patch), { eyebrow: 'Marathondoel', ask: 'always', declined: keep, onDeclined: resetDrafts });
-  const goal = trainingGoals.find((g) => g.status !== 'archived' && goalMilestones.some((m) => m.goalId === g.id));
-  const marathonGoal = trainingGoals.find((g) => g.name === 'Marathon' && g.status !== 'archived');
-  const customGoals = trainingGoals.filter((g) => g.status !== 'archived' && g.name !== 'Marathon' && !goalMilestones.some((m) => m.goalId === g.id));
+  const goal = mainGoal(trainingGoals, goalMilestones, 'live');
+  const marathonGoal = trainingGoals.find((g) => isMarathonGoal(g) && g.status !== 'archived');
+  const customGoals = trainingGoals.filter((g) => g.status !== 'archived' && !isMarathonGoal(g) && !goalMilestones.some((m) => m.goalId === g.id));
   const archivedGoals = trainingGoals.filter((g) => g.status === 'archived');
 
   return (
@@ -793,7 +794,7 @@ function GoalRoleRow({ goal }: { goal: TrainingGoal }) {
   const targetMin = goal.requirements.find((r) => r.kind === 'targetTime' && r.target?.unit === 'min')?.target?.amount;
   const prediction = raceKm ? predictRace(sessionLogs, raceKm) : undefined;
   const ladder = new Set(goalMilestones.map((m) => m.goalId));
-  const mainGoalId = trainingGoals.find((g) => g.status === 'active' && ladder.has(g.id))?.id;
+  const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
   const role = goalPlanRole(goal, mainGoalId);
   const blockStart = goal.targetDate ? addDays(mondayOfWeek(goal.targetDate), -7 * RACE_BLOCK_WEEKS) : undefined;
   return (

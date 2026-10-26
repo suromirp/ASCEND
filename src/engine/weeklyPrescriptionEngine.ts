@@ -38,9 +38,9 @@ import { proposeCyclingPrescription } from './specialists/cycling';
 import { templateSport } from './sports';
 import { proposeMountainAdventurePrescription } from './specialists/mountainAdventure';
 import { writeTrainingPrescription } from './prescriptionWriter';
-import { EXTRA_CATALOGUE } from './extraRun';
 import { addDays } from '../utils/dates';
 import { makeId } from '../utils/id';
+import { hasRole, isTestOrRace } from './templateRoles';
 
 const SOURCE = 'engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan';
 // Recovery is never a candidate — same reasoning/precedent as
@@ -54,14 +54,15 @@ const PROTECTED_TYPES = new Set(['recovery'] as const);
 // meer bij de berekende samenstelling").
 // Bergconditie is also a normal candidate of the prescription itself (it
 // swaps it with the long run), so that one stays swappable.
-const KEPT_OUTSIDE_PATTERN = new Set<string>(['tpl_test_run', 'tpl_race', ...EXTRA_CATALOGUE.filter((id) => id !== 'tpl_bergconditie')]);
+// A test, a race and the extra sessions stay outside the pattern (bergconditie is the exception).
+const keptOutsidePattern = (t: Pick<SessionTemplate, 'id' | 'roles'>) => isTestOrRace(t) || (hasRole(t, 'extra') && t.id !== 'tpl_bergconditie');
 
 // Kept: a pattern template, a session that fills a pattern slot (the tempo
 // run, intervals and mountain hike of a race block or phase), a test or race,
 // an extra, and anything you or an accepted proposal fixed in place.
-export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek'>, session?: Pick<PlannedSession, 'lock' | 'leave'>): boolean {
+export function keepsInPlace(template: Pick<SessionTemplate, 'id' | 'defaultDayOfWeek' | 'roles'>, session?: Pick<PlannedSession, 'lock' | 'leave'>): boolean {
   // A period of yours (free days, holiday, trek) put it there or moved it: leave it.
-  return !!session?.lock || !!session?.leave || template.defaultDayOfWeek !== undefined || patternSlotOf(template.id) !== template.id || KEPT_OUTSIDE_PATTERN.has(template.id);
+  return !!session?.lock || !!session?.leave || template.defaultDayOfWeek !== undefined || patternSlotOf(template.id) !== template.id || keptOutsidePattern(template);
 }
 
 // Combines the deduplicated new-session requests (invariant b,
