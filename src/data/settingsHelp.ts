@@ -12,6 +12,14 @@ export interface SettingsHelp {
 }
 
 export const SETTINGS_HELP: Record<string, SettingsHelp> = {
+  aangepast: {
+    title: 'Aangepaste instellingen',
+    lead: 'ASCEND geeft bij elke keuze een advies. Hier staat wat jij zelf anders instelde.',
+    points: [
+      { head: 'Tikken', text: 'een regel opent de instelling zelf, waar je kunt kiezen. Kies je het advies, dan staat het weer terug.' },
+      { head: 'Alles terugzetten', text: 'zet alles terug naar het advies. Wat je planning raakt zie je eerst als voorstel. Pas na Akkoord verandert het.' },
+    ],
+  },
   figuur: {
     title: 'Figuur',
     lead: 'Op het scherm Lichaam tik je op een spier of gewricht. Hier kies je of dat figuur een man of een vrouw is.',

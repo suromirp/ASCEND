@@ -1,6 +1,7 @@
 import { ImportWizard } from '../../ImportWizard';
 import { TextButton } from '../../TextButton';
 import { settingsAnchor } from '../../../data/settingsIndex';
+import { AdjustedSheet } from '../AdviceReset';
 import { SettingsSection } from '../SettingsList';
 import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
@@ -22,6 +23,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection title="App">
         <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} onClick={() => setSheet('startniveau')} />
         <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} onClick={() => setSheet('herbouwen')} />
+        <SummaryRow id="aangepast" title="Aangepaste instellingen" facts={facts} info="aangepast" onClick={() => setSheet('aangepast')} />
       </SettingsSection>
 
       <SettingsSection>
@@ -43,6 +45,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'versie' && <VersionSheet onClose={close} />}
       {sheet === 'startniveau' && <BaselineSheet onClose={close} />}
       {sheet === 'herbouwen' && <RebuildSheet onClose={close} />}
+      {sheet === 'aangepast' && <AdjustedSheet facts={facts} onClose={close} />}
       {sheet === 'wissen' && <ResetSheet onClose={close} onBackup={() => setSheet('backup')} />}
     </>
   );

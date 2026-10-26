@@ -234,6 +234,12 @@ export function AutoTag() {
   return <span className="st-auto">auto</span>;
 }
 
+// Het kleine label "aangepast" bij een instelling die jij anders koos dan het advies. Zelfde
+// stijl als "auto": gedempt, geen kleur.
+export function AdjustedTag() {
+  return <span className="st-auto">aangepast</span>;
+}
+
 // Een tikbare keuze in de vorm van een afgeronde chip (de sportschool). Een
 // gestippelde chip is "Eigen gewicht" of "Anders".
 export function Chip({ selected, onClick, children, dashed = false, label }: { selected?: boolean; onClick: () => void; children: ReactNode; dashed?: boolean; label?: string }) {

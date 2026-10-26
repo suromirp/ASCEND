@@ -4,7 +4,6 @@ import { usePageState } from '../../components/usePageState';
 import { Icon } from '../../components/icons';
 import { SkyBand } from '../../components/SkyBand';
 import { SettingsList, SettingsRow } from '../../components/settings/SettingsList';
-import { AdviceCard } from '../../components/settings/AdviceCard';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { jumpRoute, normalizeJumpTarget, useJumpState } from '../../components/settings/jump';
 import { SETTINGS_INDEX } from '../../data/settingsIndex';
@@ -71,8 +70,6 @@ export function SettingsOverview() {
           </button>
         ))}
       </div>
-
-      {!searching && <AdviceCard facts={facts} />}
 
       <div className="st-search">
         <label>

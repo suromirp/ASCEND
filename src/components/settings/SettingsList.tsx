@@ -2,9 +2,9 @@ import { useContext, useState, type ReactNode } from 'react';
 import { settingsAnchor } from '../../data/settingsIndex';
 import { haptics } from '../../utils/haptics';
 import { Icon } from '../icons';
-import { AutoTag, Eyebrow, InfoButton, ToggleVisual } from '../ui';
+import { AdjustedTag, AutoTag, Eyebrow, InfoButton, ToggleVisual } from '../ui';
 import { InfoSheet } from './Sheet';
-import { SettingsJumpContext } from './jumpContext';
+import { SettingsAdjustedContext, SettingsJumpContext } from './jumpContext';
 import './settings.css';
 
 // De bouwstenen van de instellingen (docs/beslissingen/2026-10-22-instellingen-in-groepen.md):
@@ -127,6 +127,7 @@ export interface SettingsRowProps {
 export function SettingsRow(props: SettingsRowProps) {
   const { id, title, kind = 'nav', value, sub, auto, dim, dot, info, onClick, checked, onChange, noChevron, group, off, highlight, result } = props;
   const [help, setHelp] = useState(false);
+  const adjusted = useContext(SettingsAdjustedContext).has(id);
   const toggle = kind === 'toggle';
   const hasValue = value !== undefined && value !== null && value !== '';
   const classes = [
@@ -139,7 +140,7 @@ export function SettingsRow(props: SettingsRowProps) {
     highlight ? 'flash' : '',
     result ? 'result' : '',
   ].filter(Boolean).join(' ');
-  const label = hasValue && typeof value === 'string' ? `${title}, ${value}` : title;
+  const label = (hasValue && typeof value === 'string' ? `${title}, ${value}` : title) + (adjusted ? ', aangepast' : '');
   return (
     <div className={classes} id={settingsAnchor(id)} data-row={id}>
       {toggle ? (
@@ -164,15 +165,17 @@ export function SettingsRow(props: SettingsRowProps) {
             <InfoButton compact label={`Uitleg: ${title}`} onClick={() => setHelp(true)} />
           </span>
         )}
+        {adjusted && toggle && <AdjustedTag />}
       </span>
       {sub && <span className="s st-num">{sub}</span>}
       {toggle ? (
         <span className="sw"><ToggleVisual checked={!!checked} /></span>
       ) : (
         <>
-          {(hasValue || auto || dot) && (
+          {(hasValue || auto || dot || adjusted) && (
             <span className={`v${dim ? ' dim' : ''}`}>
               {auto && <AutoTag />}
+              {adjusted && <AdjustedTag />}
               {dot && <span className={`st-dot ${dot}`} aria-hidden="true" />}
               {hasValue && <span className="st-num">{value}</span>}
             </span>
