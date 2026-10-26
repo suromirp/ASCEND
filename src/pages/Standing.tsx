@@ -11,6 +11,8 @@ import { DescentCard } from '../components/stand/DescentCard';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
+import { StrengthProgressionCard } from '../components/stand/StrengthProgressionCard';
+import { TrainingSplitRow } from '../components/stand/TrainingSplitRow';
 import { IndexCheckCard } from '../components/stand/IndexCheckCard';
 import { indexChecks } from '../engine/learning';
 import { AdventureCard } from '../components/AdventureCard';
@@ -152,6 +154,8 @@ export function StandingPage() {
             <span className="shrink-0 text-sm" style={{ color: 'var(--color-progress)' }}><Icon name="verder" size={16} /></span>
           </button>
         )}
+        <StrengthProgressionCard logs={sessionLogs} />
+        <TrainingSplitRow />
       </section>
 
       <SkyPanel className="flex flex-col" label="Je stand in vier regels">

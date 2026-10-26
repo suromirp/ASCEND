@@ -90,7 +90,7 @@ export function conflictGoalsFrom(goals: TrainingGoal[], mainGoalId: string | un
     if (g.status !== 'active' || !g.targetDate || !kind) return;
     out.push({
       id: g.id, name: g.name || 'Je doel', date: g.targetDate, kind, priority: effectivePriority(g, mainGoalId),
-      details: goalDetailsOf(g), order, taperDays: g.taperDays, accepted: g.conflictAccepted ?? [],
+      details: goalDetailsOf(g), order: g.order ?? order, taperDays: g.taperDays, accepted: g.conflictAccepted ?? [],
     });
   });
   return out;
