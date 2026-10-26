@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { localDateOf, localTimeOf } from './dates';
 import { backupAge } from '../engine/settingsAttention';
 
-// Draait met TZ=Europe/Amsterdam (zie de test zelf): een back-up om 00:13 's nachts
+// Werkt in elke tijdzone, omdat het moment lokaal wordt opgebouwd: een back-up om 00:13
 // is in UTC nog de dag ervoor.
 describe('lokale datum van een opgeslagen moment', () => {
   it('geeft de lokale dag, niet de UTC-dag', () => {
