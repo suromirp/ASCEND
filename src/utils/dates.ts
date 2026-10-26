@@ -12,6 +12,23 @@ export function todayISO(): string {
   return toISODate(new Date());
 }
 
+// The local calendar date of a stored moment. A moment is stored as UTC
+// (`new Date().toISOString()`), so slicing its first ten characters gives the
+// UTC date: just after midnight in the Netherlands that is still yesterday.
+// A plain date ('2026-10-27') is returned as it is.
+export function localDateOf(moment: string): string {
+  if (!moment.includes('T')) return moment.slice(0, 10);
+  const d = new Date(moment);
+  return Number.isNaN(d.getTime()) ? moment.slice(0, 10) : toISODate(d);
+}
+
+// The local time of a stored moment, as HH:MM.
+export function localTimeOf(moment: string): string {
+  const d = new Date(moment);
+  if (Number.isNaN(d.getTime())) return moment.slice(11, 16);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 export function parseISODate(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d);

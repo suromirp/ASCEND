@@ -8,7 +8,7 @@ import { webBackupFileAdapter } from '../../../storage/backupFileAdapter';
 import type { PreImportSnapshot } from '../../../storage/backupTypes';
 import { checkForUpdate } from '../../../utils/appUpdate';
 import { buildLabel } from '../../../utils/buildLabel';
-import { formatDateNL, todayISO } from '../../../utils/dates';
+import { formatDateNL, localDateOf, localTimeOf, todayISO } from '../../../utils/dates';
 import { BaselineEvidenceCard } from '../../BaselineEvidenceCard';
 import { SettingsList } from '../SettingsList';
 import { Sheet } from '../Sheet';
@@ -23,7 +23,7 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
   const since = last ? sessionLogs.filter((l) => l.completedAt > last).length : sessionLogs.length;
   const line = age.days === null
     ? 'Nog nooit gemaakt. Alles staat alleen op deze telefoon.'
-    : `Laatste op ${longDate(settings.lastExportedAt!.slice(0, 10))}, ${age.days === 0 ? 'vandaag' : age.days === 1 ? 'gisteren' : `${age.days} dagen geleden`}.`;
+    : `Laatste op ${longDate(localDateOf(settings.lastExportedAt!))}, ${age.days === 0 ? 'vandaag' : age.days === 1 ? 'gisteren' : `${age.days} dagen geleden`}.`;
 
   async function make() {
     setBusy(true);
@@ -152,7 +152,7 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
             return (
               <div key={s.id} style={{ padding: '12px 16px', borderTop: '1px solid var(--color-card-border)' }}>
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="st-num" style={{ color: 'var(--color-ink)' }}>{formatDateNL(s.createdAt.slice(0, 10))}, {s.createdAt.slice(11, 16)}</span>
+                  <span className="st-num" style={{ color: 'var(--color-ink)' }}>{formatDateNL(localDateOf(s.createdAt))}, {localTimeOf(s.createdAt)}</span>
                   <span className="st-num" style={{ color: 'var(--color-ink-dim)', fontSize: 13 }}>{logs} trainingen</span>
                 </div>
                 {confirmId === s.id ? (
