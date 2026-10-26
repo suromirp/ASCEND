@@ -1,3 +1,4 @@
+import { withHardSameDay } from '../engine/scheduler';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -1392,14 +1393,14 @@ async function runProgramHorizon(dryRun: boolean, overrides: HorizonOverrides): 
   ];
   const engineConfig = await GoalEngineConfigRepo.get();
   const restDay = settings.restDay ?? 1;
-  const pass = withDurationScope(overrides.registers, () => planPass(asWillBe, {
+  const pass = withHardSameDay(overrides.registers?.hardSameDay, () => withDurationScope(overrides.registers, () => planPass(asWillBe, {
     today, logs, templates, program: next, blocks, restDay, goalDay: ctx.anchor,
     dailyTimeBudget: engineConfig.availability.dailyTimeBudget, sameDayPairingPreference: engineConfig.strategy.sameDayPairingPreference,
     slotDays: patternDays(templates, settings, restDay),
     minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, next),
     newId: () => makeId('planned'),
     leave: settings.leavePeriods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
-  }));
+  })));
   if (!dryRun && pass.remaining.length > 0) console.info('Weekcontrole:', pass.remaining.map((f) => `${f.rule} ${f.date}: ${f.message}`));
 
   // Write only what differs from what is stored.

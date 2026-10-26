@@ -7,7 +7,8 @@ import type { WatchUseKey } from '../../../engine/watchUse';
 import { getConnection, setAutoTick, setGarminLeads, setTakeCorrections, setWatchUse, syncWatchActivities } from '../../../storage/externalActivities';
 import { setMacroFactorLeads } from '../../../storage/macrofactor';
 import { setWatchWorkoutsEnabled, syncWatchWorkouts } from '../../../storage/watchWorkouts';
-import { SettingsRow, SettingsSection } from '../SettingsList';
+import { SettingsSection } from '../SettingsList';
+import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
@@ -19,6 +20,8 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppData();
   const [note, setNote] = useState<string | null>(null);
+  // Een keuze in het blad Trainingen naar je horloge opent haar onderblad bovenop dat blad.
+  const [inner, setInner] = useState<string | null>(null);
 
   // Uit: weg van de telefoon. Aan: meteen ophalen, als er een koppeling is.
   async function changeUse(key: WatchUseKey, on: boolean) {
@@ -79,49 +82,52 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
 
       <SettingsSection title="Garmin">
         <SummaryRow id="garmin" title="Via intervals.icu" facts={facts} onClick={() => navigate('/koppelen/garmin')} />
-        {/* Zonder koppeling hoort een rij er niet (hidden in engine/settingsSummary.ts). */}
-        <>
-            <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
-            <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
-            <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
-            <SummaryRow id="correcties-overnemen" title="Correcties uit intervals.icu overnemen" facts={facts} info="correctiesOvernemen" onChange={(on) => void setTakeCorrections(on).finally(reload)} />
-            <SummaryRow id="horloge-details" title="Details van loopjes" facts={facts} onChange={(on) => void changeUse('details', on)} />
-            <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />
-            <SummaryRow id="rusthartslag" title="Rusthartslag" facts={facts} onChange={(on) => void changeUse('restingHeartRate', on)} />
-            <SummaryRow id="hrv" title="HRV" facts={facts} onChange={(on) => void changeUse('hrv', on)} />
-            <SummaryRow id="naar-horloge" title="Trainingen naar je horloge" facts={facts} onChange={(on) => void changeSend(on)} />
-            <SummaryRow id="horloge-voorvoegsel" title="Voorvoegsel voor de naam" facts={facts} onClick={() => setSheet('horloge-voorvoegsel')} />
-            <SummaryRow id="horloge-hartslag" title="Hartslag op je horloge" facts={facts} info="hartslagHorloge" onClick={() => setSheet('horloge-hartslag')} />
-            <SummaryRow id="horloge-rustige-loop" title="Rustige loop: ruime grens" facts={facts} onChange={(on) => void changeCalm(on)} />
-            <SummaryRow id="horloge-gedaan-weghalen" title="Gedane trainingen weghalen" facts={facts} onChange={(on) => void updateSettings({ watchRemoveDone: on })} />
-            <SummaryRow id="horloge-status" title="Status van het versturen" facts={facts} onChange={(on) => void updateSettings({ showWatchStatus: on })} />
-            <SummaryRow id="horloge-status-week" title="Markering op Week" facts={facts} onChange={(on) => void updateSettings({ showWatchStatusOnWeek: on })} />
-        </>
+        {/* Zonder koppeling hoort een rij er niet (SHOW_WHEN in data/settingsLayout.ts). */}
+        <SummaryRow id="bundel-horloge-gebruik" title="Wat ik van mijn horloge gebruik" facts={facts} onClick={() => setSheet('bundel-horloge-gebruik')} />
+        <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
+        <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
+        <SummaryRow id="correcties-overnemen" title="Correcties uit intervals.icu overnemen" facts={facts} info="correctiesOvernemen" onChange={(on) => void setTakeCorrections(on).finally(reload)} />
+        <SummaryRow id="bundel-horloge-sturen" title="Trainingen naar je horloge" facts={facts} onClick={() => setSheet('bundel-horloge-sturen')} />
       </SettingsSection>
 
       <SettingsSection title="MacroFactor">
         <SummaryRow id="macrofactor" title="Laatste export" facts={facts} onClick={() => navigate('/koppelen/macrofactor')} />
-        <>
-            <SummaryRow id="macrofactor-leidend" title="Leidend voor kracht" facts={facts} info="macrofactorLeidend" onChange={(on) => void setMacroFactorLeads(on).finally(reload)} />
-            <SummaryRow id="macrofactor-gewicht" title="Gewicht gebruiken" facts={facts} onChange={(on) => void updateSettings({ weightFromMacroFactor: on })} />
-        </>
+        <SummaryRow id="macrofactor-leidend" title="Leidend voor kracht" facts={facts} info="macrofactorLeidend" onChange={(on) => void setMacroFactorLeads(on).finally(reload)} />
+        <SummaryRow id="macrofactor-gewicht" title="Gewicht gebruiken" facts={facts} onChange={(on) => void updateSettings({ weightFromMacroFactor: on })} />
       </SettingsSection>
 
       <SettingsSection title="Strava">
         <SummaryRow id="strava-tekst" title="Tekst voor Strava" facts={facts} info="stravaTekst" onChange={(on) => void updateSettings({ stravaText: on })} />
       </SettingsSection>
 
-      {sheet === 'horloge-voorvoegsel' && (
-        <ChoiceFromDef def={CHOICES.voorvoegsel} value={settings.watchNamePrefix ?? DEFAULT_WATCH_NAME_PREFIX} onPick={(v) => void changePrefix(v)} onClose={() => setSheet(null)} />
+      {sheet === 'bundel-horloge-gebruik' && (
+        <BundleSheet eyebrow="Koppelingen" title="Wat ik van mijn horloge gebruik" line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
+          <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
+          <SummaryRow id="horloge-details" title="Details van loopjes" facts={facts} onChange={(on) => void changeUse('details', on)} />
+          <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />
+          <SummaryRow id="rusthartslag" title="Rusthartslag" facts={facts} onChange={(on) => void changeUse('restingHeartRate', on)} />
+          <SummaryRow id="hrv" title="HRV" facts={facts} onChange={(on) => void changeUse('hrv', on)} />
+        </BundleSheet>
       )}
 
-      {sheet === 'horloge-hartslag' && (
-        <ChoiceFromDef def={CHOICES.hartslagHorloge} value={settings.watchHeartRate ?? 'ascend'} onPick={(v) => void changeHr({ watchHeartRate: v })} onClose={() => setSheet(null)} />
+      {sheet === 'bundel-horloge-sturen' && (
+        <BundleSheet eyebrow="Koppelingen" title="Trainingen naar je horloge" onClose={() => setSheet(null)}>
+          <SummaryRow id="naar-horloge" title="Trainingen naar je horloge" facts={facts} onChange={(on) => void changeSend(on)} />
+          <SummaryRow id="horloge-voorvoegsel" title="Voorvoegsel voor de naam" facts={facts} onClick={() => setInner('horloge-voorvoegsel')} />
+          <SummaryRow id="horloge-hartslag" title="Hartslag op je horloge" facts={facts} info="hartslagHorloge" onClick={() => setInner('horloge-hartslag')} />
+          <SummaryRow id="horloge-rustige-loop" title="Rustige loop: ruime grens" facts={facts} onChange={(on) => void changeCalm(on)} />
+          <SummaryRow id="horloge-gedaan-weghalen" title="Gedane trainingen weghalen" facts={facts} onChange={(on) => void updateSettings({ watchRemoveDone: on })} />
+          <SummaryRow id="horloge-status" title="Laten zien of het gelukt is" facts={facts} onChange={(on) => void updateSettings({ showWatchStatus: on, showWatchStatusOnWeek: on })} />
+        </BundleSheet>
       )}
 
-      <SettingsSection>
-        <SettingsRow id="health-connect" title="Health Connect" kind="static" value="Komt later" dim off />
-      </SettingsSection>
+      {inner === 'horloge-voorvoegsel' && (
+        <ChoiceFromDef def={CHOICES.voorvoegsel} value={settings.watchNamePrefix ?? DEFAULT_WATCH_NAME_PREFIX} onPick={(v) => void changePrefix(v)} onClose={() => setInner(null)} />
+      )}
+
+      {inner === 'horloge-hartslag' && (
+        <ChoiceFromDef def={CHOICES.hartslagHorloge} value={settings.watchHeartRate ?? 'ascend'} onPick={(v) => void changeHr({ watchHeartRate: v })} onClose={() => setInner(null)} />
+      )}
     </>
   );
 }

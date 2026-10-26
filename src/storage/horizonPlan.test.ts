@@ -5,6 +5,8 @@ import { applyHorizonPlanNow, computeHorizonPlan, type HorizonChangeInput } from
 import { previewProposal } from '../engine/proposalPreview';
 import type { TrainingGoal } from '../models/goals';
 import { SessionTemplatesRepo } from './database';
+import { templateSport } from '../engine/sports';
+import { isHardSameDayAllowed, setHardSameDayAllowed, withHardSameDay } from '../engine/scheduler';
 
 // Warden Logica punten 1 en 2: een andere doeldatum en "De lange zondag" worden
 // een voorstel met wat er verdwijnt of omgaat, niets verandert voor Akkoord, en
@@ -90,5 +92,49 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
     await PlannedSessionsRepo.put({ ...hike, lock });
     expect((await applyHorizonPlanNow(plan)).status).toBe('stale');
     expect((await SettingsRepo.get()).longSundaySession).toBeUndefined();
+  });
+
+  it('Benen en een zware loop: het voorbeeld rekent met de waarde van het voorstel en zet de oude terug', async () => {
+    await goal('2027-08-01');
+    await SettingsRepo.set({ hardSameDay: true });
+    setHardSameDayAllowed(true);
+    await syncProgramHorizon();
+    try {
+      const tpls = new Map((await SessionTemplatesRepo.getAll()).map((x) => [x.id, x]));
+      const open = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate >= TODAY && s.scheduledDate <= '2026-11-20' && s.status !== 'skipped' && !s.lock);
+      const isRun = (s: { templateId: string }) => tpls.get(s.templateId) && templateSport(tpls.get(s.templateId)!) === 'running' && tpls.get(s.templateId)!.type !== 'recovery';
+      const runs = open.filter((s) => isRun(s) && s.templateId !== 'tpl_long_run');
+      const legsList = open.filter((s) => s.templateId === 'tpl_lower_a');
+      // Benen en een zware loop op één dag, zoals de instelling dat toelaat: uit het voorstel
+      // verschuift dat, aan laten staan niet.
+      let shown = false;
+      for (const run of runs) {
+        for (const legs of legsList) {
+          if (legs.scheduledDate === run.scheduledDate) continue;
+          await PlannedSessionsRepo.put({ ...legs, scheduledDate: run.scheduledDate });
+          const off = await computeHorizonPlan({ ...base, trigger: 'availability_changed', title: 'Benen en een zware loop', settings: { hardSameDay: false } });
+          const on = await computeHorizonPlan({ ...base, trigger: 'availability_changed', title: 'Benen en een zware loop', settings: { hardSameDay: true } });
+          await PlannedSessionsRepo.put(legs);
+          if (off.proposal.changes.some((i) => i.plannedSessionId === legs.id) && !on.proposal.changes.some((i) => i.plannedSessionId === legs.id)) shown = true;
+          if (shown) break;
+        }
+        if (shown) break;
+      }
+      expect(shown).toBe(true);
+      // De module staat daarna weer zoals hij was, en niets is bewaard.
+      expect(isHardSameDayAllowed()).toBe(true);
+      expect((await SettingsRepo.get()).hardSameDay).toBe(true);
+    } finally {
+      setHardSameDayAllowed(false);
+    }
+  }, 30000);
+
+  it('withHardSameDay geldt maar voor één aanroep', () => {
+    setHardSameDayAllowed(false);
+    expect(withHardSameDay(true, () => isHardSameDayAllowed())).toBe(true);
+    expect(isHardSameDayAllowed()).toBe(false);
+    expect(withHardSameDay(undefined, () => isHardSameDayAllowed())).toBe(false);
+    expect(() => withHardSameDay(true, () => { throw new Error('x'); })).toThrow();
+    expect(isHardSameDayAllowed()).toBe(false);
   });
 });

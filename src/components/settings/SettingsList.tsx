@@ -45,12 +45,15 @@ export function SettingsSection({
   children,
   advanced,
   advancedIds = [],
+  advancedTitles,
   storageKey,
 }: {
   title?: string;
   children: ReactNode;
   advanced?: ReactNode;
   advancedIds?: string[];
+  // De titels van wat achter Geavanceerd zit, in één regel eronder zolang het dicht is.
+  advancedTitles?: string;
   storageKey?: string;
 }) {
   const jump = useContext(SettingsJumpContext);
@@ -77,6 +80,7 @@ export function SettingsSection({
               <span>Geavanceerd</span>
               <Icon name="verder" size={16} />
             </button>
+            {!shown && advancedTitles && <p className="st-more-titles">{advancedTitles}</p>}
             {shown && advanced}
           </>
         )}

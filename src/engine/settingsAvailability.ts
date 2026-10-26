@@ -1,81 +1,38 @@
-// ASCEND: staat een instelling er nu op de pagina? Een paar rijen verschijnen
-// alleen onder een voorwaarde (Garmin gekoppeld, Kracht meerekenen aan, het
-// kledingadvies aan). Een sprong naar zo'n rij zou nergens heen gaan; de pagina
-// zegt dan waarom, en springt naar de groep. Puur: de rij zegt zelf of hij er
-// is (`hidden` in settingsSummary.ts), dit bestand geeft de reden.
+// ASCEND: staat een instelling er nu op de pagina? Wat bij een andere instelling hoort
+// bestaat niet zolang die uit staat (Garmin niet gekoppeld, Kracht meerekenen uit, geen
+// doel). De voorwaarden staan op één plek, in `SHOW_WHEN` (data/settingsLayout.ts); dit
+// bestand geeft er de reden bij voor het zoekveld en zegt welke instelling het oplost,
+// zodat een tik daarheen gaat. Puur.
 
-import { placementOf } from '../data/settingsLayout';
-import { rowSummary, type SettingsFacts } from './settingsSummary';
+import { SHOW_WHEN, blockerOf, placementOf, type SettingsPageId } from '../data/settingsLayout';
+import { rowContext, type SettingsFacts } from './settingsSummary';
 
-const FORGE_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen aan staat.';
-const ONE_RM_OFF = 'Deze keuze verschijnt pas als Kracht meerekenen en Geschatte 1RM tonen aan staan.';
-const GARMIN_OFF = 'Deze keuze verschijnt pas als je Garmin hebt gekoppeld.';
-const INSIGHT_OFF = 'Deze keuze verschijnt pas als Inzicht na een training aan staat.';
-const MACROFACTOR_OFF = 'Deze keuze verschijnt pas als je een MacroFactor-export hebt ingelezen.';
+export type Availability = { available: true } | { available: false; reason: string; parent: string };
 
-const REASON: Record<string, string> = {
-  'lange-zondag': 'Deze keuze verschijnt pas als je hoofddoel geen bergtocht is. Bij een bergdoel staat er op zondag altijd een bergtocht.',
-  backupmap: 'Deze keuze verschijnt alleen als je browser een vaste map kan onthouden. Deze nu niet.',
-  'weekterugblik-dag': 'Deze keuze verschijnt pas als de weekterugblik aan staat.',
-  ochtendkaart: 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
-  'korte-nacht': 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
-  'ochtend-vanaf': 'Deze keuze verschijnt pas als de ochtendcheck aan staat.',
-  'ochtendmelding-tijd': 'Deze keuze verschijnt pas als je telefoon de ochtendmelding kan sturen.',
-  'kleding-voorkeur': 'Deze keuze verschijnt pas als het kledingadvies aan staat.',
-  'zware-dingen': 'Deze keuze verschijnt pas als twee trainingen op een dag mag.',
-  trainingsduur: 'Deze keuze verschijnt pas als er krachttrainingen in je planning staan.',
-  'forge-volgorde': FORGE_OFF,
-  'forge-sets': FORGE_OFF,
-  'forge-vermoeidheid': FORGE_OFF,
-  'forge-opwarmen': FORGE_OFF,
-  'forge-opwarmbereik': FORGE_OFF,
-  'forge-bereik': FORGE_OFF,
-  'forge-schatting': FORGE_OFF,
-  'forge-vergelijken': FORGE_OFF,
-  'forge-extras': FORGE_OFF,
-  'forge-lijntjes': FORGE_OFF,
-  'forge-leren': FORGE_OFF,
-  'forge-bijsturen': FORGE_OFF,
-  'forge-pauze': FORGE_OFF,
-  'forge-dumbbells': FORGE_OFF,
-  'forge-naast': FORGE_OFF,
-  'forge-sinds': FORGE_OFF,
-  'forge-volgorde-lijst': FORGE_OFF,
-  'forge-weergave': ONE_RM_OFF,
-  'forge-1rm-macrofactor': ONE_RM_OFF,
-  'garmin-trainingen': GARMIN_OFF,
-  'vanzelf-afvinken': GARMIN_OFF,
-  'garmin-leidend': GARMIN_OFF,
-  'correcties-overnemen': GARMIN_OFF,
-  slaap: GARMIN_OFF,
-  rusthartslag: GARMIN_OFF,
-  hrv: GARMIN_OFF,
-  'naar-horloge': GARMIN_OFF,
-  'horloge-details': GARMIN_OFF,
-  'loop-efficientie': INSIGHT_OFF,
-  'loop-langedagen': INSIGHT_OFF,
-  'loop-berg': INSIGHT_OFF,
-  'loop-vorm': INSIGHT_OFF,
-  'horloge-voorvoegsel': GARMIN_OFF,
-  'horloge-hartslag': GARMIN_OFF,
-  'horloge-rustige-loop': 'Deze keuze verschijnt pas als je Garmin hebt gekoppeld en de hartslag van ASCEND naar je horloge gaat.',
-  'horloge-gedaan-weghalen': GARMIN_OFF,
-  'horloge-status': GARMIN_OFF,
-  'horloge-status-week': GARMIN_OFF,
-  'macrofactor-leidend': MACROFACTOR_OFF,
-  'macrofactor-gewicht': MACROFACTOR_OFF,
-  vetpercentage: 'Deze keuze verschijnt pas als je weegmetingen met een vetpercentage hebt, bijvoorbeeld uit een MacroFactor-export.',
-};
-
-export function rowAvailability(rowId: string, facts: SettingsFacts): { available: true } | { available: false; reason: string } {
-  if (!rowSummary(rowId, facts).hidden) return { available: true };
-  return { available: false, reason: REASON[rowId] ?? 'Deze keuze staat er nu niet.' };
+export function rowAvailability(rowId: string, facts: SettingsFacts): Availability {
+  const blocker = blockerOf(rowId, facts.settings, rowContext(facts));
+  return blocker ? { available: false, reason: blocker.reason, parent: blocker.parent } : { available: true };
 }
 
-// Voor een instelling uit de index: de rij waar hij staat en of die er nu is.
-export function settingAvailabilityOnPage(settingId: string, facts: SettingsFacts): { available: true } | { available: false; reason: string } {
+// Voor een instelling uit de index: eerst de eigen voorwaarden, dan die van de rij of het blad
+// waar hij in zit (de rij Rusttimer is er ook niet als je sets in MacroFactor bijhoudt).
+export function settingAvailabilityOnPage(settingId: string, facts: SettingsFacts): Availability {
+  const own = rowAvailability(settingId, facts);
+  if (!own.available) return own;
   const placement = placementOf(settingId);
-  return placement ? rowAvailability(placement.row, facts) : { available: true };
+  return placement && placement.row !== settingId ? rowAvailability(placement.row, facts) : own;
 }
 
-export const CONDITIONAL_ROWS = Object.keys(REASON);
+// Waar een verschil in "Anders dan het advies" heen springt: de rij zelf, of, als die nu
+// verborgen is, de rij die het oplost, met de reden erbij (zoals het zoekveld doet).
+export interface AdviceTarget { page: SettingsPageId; row: string; sheet?: boolean; reason?: string }
+export function adviceTarget(settingId: string, facts: SettingsFacts): AdviceTarget | undefined {
+  const own = placementOf(settingId);
+  if (!own) return undefined;
+  const availability = settingAvailabilityOnPage(settingId, facts);
+  if (availability.available) return { page: own.page, row: own.row, ...(own.sheet ? { sheet: true } : {}) };
+  const parent = placementOf(availability.parent) ?? own;
+  return { page: parent.page, row: parent.row, ...(parent.sheet ? { sheet: true } : {}), reason: availability.reason };
+}
+
+export const CONDITIONAL_ROWS = Object.keys(SHOW_WHEN);

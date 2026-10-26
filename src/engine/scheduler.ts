@@ -314,6 +314,18 @@ export function setHardSameDayAllowed(allowed: boolean): void {
 export function isHardSameDayAllowed(): boolean {
   return hardSameDay;
 }
+// The value for one synchronous call only (the preview of a proposal), put back at once, so no
+// other reader ever sees a value you did not accept. Nothing given: the stored value stays.
+export function withHardSameDay<T>(allowed: boolean | undefined, fn: () => T): T {
+  if (allowed === undefined) return fn();
+  const saved = hardSameDay;
+  hardSameDay = allowed;
+  try {
+    return fn();
+  } finally {
+    hardSameDay = saved;
+  }
+}
 
 // Only strength with a run, never two strength sessions or two runs, and
 // never a hike (that's a whole day out).

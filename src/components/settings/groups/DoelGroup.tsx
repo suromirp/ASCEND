@@ -7,6 +7,7 @@ import { afterMainGoalChange } from '../../../engine/programLayout';
 import { bootGoalKm } from '../../../engine/bootBreakIn';
 import { todayISO } from '../../../utils/dates';
 import { SettingsSection } from '../SettingsList';
+import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { usePlanSettingChange } from '../usePlanSettingChange';
 import { choiceShort } from '../../../data/settingsChoices';
@@ -36,6 +37,9 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
     void updateSettings({ afterMainGoal: v }).then(() => refresh());
   }
   const close = () => setSheet(null);
+  // Een keuze in het blad Tochten opent haar onderblad bovenop dat blad.
+  const [inner, setInner] = useState<string | null>(null);
+  const closeInner = () => setInner(null);
 
   return (
     <>
@@ -48,19 +52,19 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="Tochten">
-        <SummaryRow id="volgende-tocht" title="Volgende tocht op Vandaag" facts={facts} onChange={(on) => void updateSettings({ showNextTrek: on })} />
-        <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
-        <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setSheet('rust-na-tocht')} />
+        <SummaryRow id="bundel-tochten" title="Tochten" facts={facts} onClick={() => setSheet('bundel-tochten')} />
         <SummaryRow id="vrije-dagen" title="Vrije dagen en vakanties" facts={facts} onClick={() => navigate('/week')} />
       </SettingsSection>
 
-      <SettingsSection title="Onderweg">
-        <SummaryRow id="reisplanner" title="Reisplanner" facts={facts} onClick={() => navigate('/reis')} />
-        <SummaryRow id="paklijst" title="Paklijst" facts={facts} onClick={() => navigate('/reis/paklijst')} />
-        <SummaryRow id="bergschoenen" title="Bergschoenen inlopen" facts={facts} info="bergschoenen" onClick={() => setSheet('bergschoenen')} />
-        <SummaryRow id="bergschoenen-herinnering" title="Herinnering bij lange tochten" facts={facts} info="bergschoenenHerinnering" onChange={(on) => void updateSettings({ bootBreakInReminder: on })} />
-      </SettingsSection>
-
+      {sheet === 'bundel-tochten' && (
+        <BundleSheet eyebrow="Doel en tochten" title="Tochten" line="Wat ASCEND doet rond een tocht." onClose={close}>
+          <SummaryRow id="volgende-tocht" title="Volgende tocht op Vandaag" facts={facts} onChange={(on) => void updateSettings({ showNextTrek: on })} />
+          <SummaryRow id="water-per-etappe" title="Water per etappe tonen" facts={facts} info="waterPerEtappe" onChange={(on) => void updateSettings({ showStageWater: on })} />
+          <SummaryRow id="rust-na-tocht" title="Rust na een bergtocht" facts={facts} info="rustNaTocht" onClick={() => setInner('rust-na-tocht')} />
+          <SummaryRow id="bergschoenen" title="Bergschoenen inlopen" facts={facts} info="bergschoenen" onClick={() => setInner('bergschoenen')} />
+          <SummaryRow id="bergschoenen-herinnering" title="Herinnering bij lange tochten" facts={facts} info="bergschoenenHerinnering" onChange={(on) => void updateSettings({ bootBreakInReminder: on })} />
+        </BundleSheet>
+      )}
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
       {sheet === 'lange-zondag' && (
@@ -100,11 +104,11 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
           busy={afterGoalBusy}
         />
       )}
-      {sheet === 'bergschoenen' && (
-        <ChoiceFromDef def={CHOICES.bergschoenen} value={bootGoalKm(settings.bootBreakInKm) as 50 | 75 | 100 | 150} onPick={(v) => void updateSettings({ bootBreakInKm: v })} onClose={close} />
+      {inner === 'bergschoenen' && (
+        <ChoiceFromDef def={CHOICES.bergschoenen} value={bootGoalKm(settings.bootBreakInKm) as 50 | 75 | 100 | 150} onPick={(v) => void updateSettings({ bootBreakInKm: v })} onClose={closeInner} />
       )}
-      {sheet === 'rust-na-tocht' && (
-        <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={close} />
+      {inner === 'rust-na-tocht' && (
+        <ChoiceFromDef def={CHOICES.rustNaTocht} value={settings.trekLegRest ?? 'soft'} onPick={(v) => { if (v !== (settings.trekLegRest ?? 'soft')) { setNote(null); void plan.changeSetting(`Rust na een bergtocht: ${choiceShort('rustNaTocht', v)}`, { trekLegRest: v }, 'Volgt je keuze voor rust na een bergtocht.'); } }} onClose={closeInner} />
       )}
       {plan.impact}
     </>

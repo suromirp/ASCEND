@@ -174,7 +174,8 @@ export interface HorizonDeps {
 async function scopeFor(input: HorizonChangeInput): Promise<DurationScope | undefined> {
   if (!input.settings) return undefined;
   const [settings, logs, templates, programs] = await Promise.all([SettingsRepo.get(), SessionLogsRepo.getAll(), SessionTemplatesRepo.getAll(), ProgramsRepo.getAll()]);
-  return durationScopeFor({ ...settings, ...input.settings }, logs, templates, programs[0], todayISO());
+  const merged = { ...settings, ...input.settings };
+  return { ...durationScopeFor(merged, logs, templates, programs[0], todayISO()), hardSameDay: !!merged.hardSameDay };
 }
 
 export async function computeHorizonPlan(input: HorizonChangeInput, deps: HorizonDeps = {}): Promise<HorizonPlan> {

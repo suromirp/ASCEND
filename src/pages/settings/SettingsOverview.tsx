@@ -4,6 +4,7 @@ import { usePageState } from '../../components/usePageState';
 import { Icon } from '../../components/icons';
 import { SkyBand } from '../../components/SkyBand';
 import { SettingsList, SettingsRow } from '../../components/settings/SettingsList';
+import { AdviceCard } from '../../components/settings/AdviceCard';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { jumpRoute, normalizeJumpTarget, useJumpState } from '../../components/settings/jump';
 import { SETTINGS_INDEX } from '../../data/settingsIndex';
@@ -71,6 +72,8 @@ export function SettingsOverview() {
         ))}
       </div>
 
+      {!searching && <AdviceCard facts={facts} />}
+
       <div className="st-search">
         <label>
           <span className="sr-only">Zoek in de instellingen</span>
@@ -98,6 +101,22 @@ export function SettingsOverview() {
                 const placement = placementOf(item.id);
                 if (!placement) return null;
                 const availability = settingAvailabilityOnPage(item.id, facts);
+                // Een instelling die er nu niet is zegt waarom; tikken gaat naar de rij die het oplost.
+                if (!availability.available) {
+                  const parent = placementOf(availability.parent);
+                  return (
+                    <SettingsRow
+                      key={item.id}
+                      id={`zoek-${item.id}`}
+                      title={item.title}
+                      result
+                      sub={availability.reason}
+                      value="Verborgen"
+                      dim
+                      onClick={() => (parent ? open(parent.page, parent.row, parent.sheet, availability.reason) : open(placement.page, placement.row, placement.sheet, availability.reason))}
+                    />
+                  );
+                }
                 const value = searchValue(placement.row, facts);
                 return (
                   <SettingsRow
@@ -106,9 +125,9 @@ export function SettingsOverview() {
                     title={item.title}
                     result
                     sub={settingsPageTitle(placement.page)}
-                    value={availability.available ? value.text : 'Niet nu'}
-                    dim={!availability.available || value.dim}
-                    onClick={() => open(placement.page, placement.row, placement.sheet, availability.available ? undefined : availability.reason)}
+                    value={placement.link ? undefined : value.text}
+                    dim={value.dim}
+                    onClick={() => (placement.link && item.route ? navigate(item.route) : open(placement.page, placement.row, placement.sheet, placement.link ? item.note : undefined))}
                   />
                 );
               })}

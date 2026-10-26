@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BundleSheet } from './BundleSheet';
 import { useAppData } from '../../../state/AppDataContext';
 import { SettingsSection } from '../SettingsList';
 import { FigureSheet, HeartRateSheet, WeightSheet } from './LichaamSheets';
@@ -15,6 +17,9 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
   const navigate = useNavigate();
   const { updateSettings, settings } = useAppData();
   const close = () => setSheet(null);
+  // Een keuze in het blad Wat speelde er opent haar onderblad bovenop dat blad.
+  const [inner, setInner] = useState<string | null>(null);
+  const closeInner = () => setInner(null);
   return (
     <>
       <SettingsSection>
@@ -24,12 +29,8 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="blessures" title="Blessures" facts={facts} onClick={() => navigate('/lichaam')} />
         <SummaryRow id="figuur" title="Figuur" facts={facts} info="figuur" onClick={() => setSheet('figuur')} />
       </SettingsSection>
-      <SettingsSection title="Wat speelde er">
-        <SummaryRow id="wat-teken" title="Training wijkt af" facts={facts} info="wat-teken" onChange={(on) => void updateSettings({ influenceSign: on })} />
-        <SummaryRow id="wat-oorzaak" title="Mogelijke oorzaak" facts={facts} info="wat-oorzaak" onClick={() => setSheet('wat-oorzaak')} />
-        <SummaryRow id="wat-overzicht" title="Op Je stand" facts={facts} info="wat-overzicht" onChange={(on) => void updateSettings({ influenceOverview: on })} />
-        <SummaryRow id="wat-test" title="Test verschuiven" facts={facts} info="wat-test" onChange={(on) => void updateSettings({ influenceTestMove: on })} />
-        <SummaryRow id="wat-vastgelegd" title="Vastgelegd" facts={facts} onClick={() => setSheet('wat-vastgelegd')} />
+      <SettingsSection>
+        <SummaryRow id="bundel-wat" title="Wat speelde er" facts={facts} onClick={() => setSheet('bundel-wat')} />
       </SettingsSection>
       <SettingsSection title="Je stand">
         <SummaryRow id="intensiteit" title="Intensiteit tellen" facts={facts} info="intensiteit" onClick={() => setSheet('intensiteit')} />
@@ -38,8 +39,17 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'hartslag' && <HeartRateSheet onClose={close} />}
       {sheet === 'intensiteit' && <ChoiceFromDef def={CHOICES.intensiteit} value={resolveIntensityCounting(settings)} onPick={(v) => void updateSettings({ intensityCounting: v })} onClose={close} />}
       {sheet === 'figuur' && <FigureSheet onClose={close} />}
-      {sheet === 'wat-oorzaak' && <OorzaakSheet onClose={close} />}
-      {sheet === 'wat-vastgelegd' && <VastgelegdSheet onClose={close} />}
+      {sheet === 'bundel-wat' && (
+        <BundleSheet eyebrow="Lichaam" title="Wat speelde er" line="Je eigen aantekeningen bij een training of een dag." onClose={close}>
+          <SummaryRow id="wat-teken" title="Training wijkt af" facts={facts} info="wat-teken" onChange={(on) => void updateSettings({ influenceSign: on })} />
+          <SummaryRow id="wat-oorzaak" title="Mogelijke oorzaak" facts={facts} info="wat-oorzaak" onClick={() => setInner('wat-oorzaak')} />
+          <SummaryRow id="wat-overzicht" title="Op Je stand" facts={facts} info="wat-overzicht" onChange={(on) => void updateSettings({ influenceOverview: on })} />
+          <SummaryRow id="wat-test" title="Test verschuiven" facts={facts} info="wat-test" onChange={(on) => void updateSettings({ influenceTestMove: on })} />
+          <SummaryRow id="wat-vastgelegd" title="Vastgelegd" facts={facts} onClick={() => setInner('wat-vastgelegd')} />
+        </BundleSheet>
+      )}
+      {inner === 'wat-oorzaak' && <OorzaakSheet onClose={closeInner} />}
+      {inner === 'wat-vastgelegd' && <VastgelegdSheet onClose={closeInner} />}
     </>
   );
 }

@@ -506,6 +506,23 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'de etappes tonen dan geen water. Je wegingen blijven bewaard.' },
     ],
   },
+  bundelRekenmodel: {
+    title: 'Rekenmodel',
+    lead: 'Zes keuzes over hoe Forge rekent. Het advies past bij de meeste mensen, dus je hoeft hier niets te doen.',
+    points: [
+      { head: 'Staat er Advies', text: 'dan staat alles hier zoals ASCEND het zelf kiest. Pas je iets aan, dan staat er hoeveel keuzes anders staan.' },
+      { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },
+      { head: 'Alleen voorstellen', text: 'het model verandert nooit stil je planning of je trainingen. Het stelt gewichten voor, jij beslist.' },
+    ],
+  },
+  bundelInvullen: {
+    title: 'Bij het invullen',
+    lead: 'Drie keuzes over wat het workoutscherm voor je doet terwijl je sets invult.',
+    points: [
+      { head: 'Alleen met sets in ASCEND', text: 'houd je sets in MacroFactor bij, dan is het workoutscherm alleen om mee te kijken en doen deze keuzes niets. Ze verdwijnen dan uit beeld.' },
+      { head: 'Terugzetten', text: 'kan per keuze, of met Terug naar het advies bovenaan Instellingen.' },
+    ],
+  },
 };
 
 export type SettingsHelpKey = keyof typeof SETTINGS_HELP;

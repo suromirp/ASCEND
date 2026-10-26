@@ -17,7 +17,7 @@ describe('searchSettings', () => {
     for (const q of ['alcohol', 'wiet', 'rusthartslag']) {
       const found = ids(q);
       expect(found, q).toContain('wat-vastgelegd');
-      expect(placementOf('wat-vastgelegd')).toEqual({ page: 'lichaam', row: 'wat-vastgelegd' });
+      expect(placementOf('wat-vastgelegd')).toEqual({ page: 'lichaam', row: 'bundel-wat', sheet: true });
     }
     expect(ids('alcohol')).toEqual(expect.arrayContaining(['wat-teken', 'wat-oorzaak', 'wat-test']));
   });

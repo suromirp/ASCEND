@@ -1,4 +1,6 @@
 import { ImportWizard } from '../../ImportWizard';
+import { TextButton } from '../../TextButton';
+import { settingsAnchor } from '../../../data/settingsIndex';
 import { SettingsSection } from '../SettingsList';
 import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
@@ -18,7 +20,6 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="App">
-        <SummaryRow id="versie" title="Versie" facts={facts} onClick={() => setSheet('versie')} />
         <SummaryRow id="startniveau" title="Startniveau zelf invullen" facts={facts} onClick={() => setSheet('startniveau')} />
         <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} onClick={() => setSheet('herbouwen')} />
       </SettingsSection>
@@ -26,6 +27,13 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       <SettingsSection>
         <SummaryRow id="wissen" title="Alles verwijderen" facts={facts} kind="danger" onClick={() => setSheet('wissen')} />
       </SettingsSection>
+
+      {/* De versie is geen instelling maar een voettekst; tikken zoekt naar een update. */}
+      <p className="st-foot" id={settingsAnchor('versie')} data-row="versie">
+        <TextButton onClick={() => setSheet('versie')}>
+          Versie <span className="st-num">{facts.buildLabel}</span>
+        </TextButton>
+      </p>
 
       {sheet === 'backup' && <BackupSheet onClose={close} onImport={() => setSheet('import')} />}
       {sheet === 'import' && <ImportWizard onClose={close} />}

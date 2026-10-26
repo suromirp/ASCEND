@@ -15,7 +15,8 @@ import { KoppelingenGroup } from '../../components/settings/groups/KoppelingenGr
 import { GegevensGroup } from '../../components/settings/groups/GegevensGroup';
 import { GidsenGroup } from '../../components/settings/groups/GidsenGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
-import { SETTINGS_ROOT, isSettingsPageId, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
+import { GroupReset } from '../../components/settings/AdviceCard';
+import { SETTINGS_ROOT, isSettingsPageId, placementOf, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
 // Welke inhoud bij welke groep hoort. Een groep die er nog niet is, toont Soon.
 const GROUPS: Partial<Record<SettingsPageId, ComponentType<GroupProps>>> = {
@@ -42,13 +43,17 @@ function GroupPageInner({ id }: { id: SettingsPageId }) {
   const navigate = useNavigate();
   const jump = useJumpState();
   const { facts, reload } = useSettingsFacts();
-  const [sheet, setSheet] = useState<string | null>(jump.openSheet && jump.jumpTo ? jump.jumpTo : null);
+  // Een link naar een keuze die nu in het blad van een rij zit (de oude rij-id's) gaat naar die
+  // rij en opent het blad; een sprong naar een gewone rij laat hem oplichten.
+  const place = jump.jumpTo ? placementOf(jump.jumpTo.replace(/^instelling-/, '')) : undefined;
+  const target = place && place.page === id ? place.row : jump.jumpTo;
+  const [sheet, setSheet] = useState<string | null>(target && (jump.openSheet || place?.sheet) ? target : null);
   const Content = GROUPS[id] ?? Soon;
 
-  useFlashOnMount(jump.jumpTo);
+  useFlashOnMount(target);
 
   return (
-    <SettingsJumpContext.Provider value={{ target: jump.jumpTo }}>
+    <SettingsJumpContext.Provider value={{ target }}>
       <div className="st-page animate-page-in">
         <SkyBand variant="low" gear={false}>
           <button type="button" className="st-back" onClick={() => navigate(SETTINGS_ROOT)}>
@@ -59,6 +64,7 @@ function GroupPageInner({ id }: { id: SettingsPageId }) {
         </SkyBand>
         {jump.reason && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }} role="status">{jump.reason}</p>}
         <Content facts={facts} reload={reload} sheet={sheet} setSheet={setSheet} />
+        <GroupReset page={id} facts={facts} />
       </div>
     </SettingsJumpContext.Provider>
   );

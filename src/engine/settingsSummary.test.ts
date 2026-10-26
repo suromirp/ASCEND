@@ -23,7 +23,7 @@ function facts(over: Partial<SettingsFacts> = {}): SettingsFacts {
     strengthExternal: true,
     ambition: { chosen: 'standaard', effective: 'standaard' },
     weight: { kg: 85.62, source: 'macrofactor', date: '2026-10-22' },
-    watch: { linked: true, syncedAt: new Date(2026, 9, 22, 14, 2).toISOString(), use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false },
+    watch: { linked: true, syncedAt: new Date(2026, 9, 22, 14, 2).toISOString(), use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: true },
     macroFactor: { readAt: '2026-10-22T08:00:00.000Z', leads: true },
     strengthDurations: [
       { name: 'Bovenlichaam A', minutes: 55, source: 'learned', basedOn: 3 },
@@ -61,7 +61,7 @@ describe('rowSummary: planning', () => {
   it('een sport staat uit, op het weekschema (auto) of op een vast aantal', () => {
     const settings = { ...facts().settings, sportFrequency: { running: 3 } };
     expect(rowSummary('sport-running', facts({ settings }))).toEqual({ value: '3× per week' });
-    expect(rowSummary('sport-hiking', facts({ settings }))).toEqual({ value: 'Weekschema', auto: true });
+    expect(rowSummary('sport-hiking', facts({ settings }))).toEqual({ value: 'Aan', auto: true });
     expect(rowSummary('sport-cycling', facts({ settings }))).toEqual({ value: 'Uit', dim: true });
   });
 
@@ -90,7 +90,7 @@ describe('rowSummary: planning', () => {
 describe('rowSummary: doel en tochten', () => {
   it('toont het doel, het programma en de tochten met echte waarden', () => {
     expect(rowSummary('doelen', facts()).value).toBe('GR5, 4 jul');
-    expect(rowSummary('programma', facts())).toEqual({ value: 'Week 9 van 45', sub: 'Opbouw, teruggerekend vanaf je doel' });
+    expect(rowSummary('programma', facts())).toEqual({ value: 'Week 9 van 45', sub: 'Opbouw, teruggerekend vanaf je doel', hidden: false });
     expect(rowSummary('vrije-dagen', facts()).value).toBe('1 gepland');
     expect(rowSummary('reisplanner', facts()).value).toBe('5 open');
     expect(rowSummary('paklijst', facts()).value).toBe('8,4 kg');
@@ -100,7 +100,7 @@ describe('rowSummary: doel en tochten', () => {
     expect(rowSummary('bergschoenen', facts({ settings: { ...facts().settings, bootBreakInKm: 150 }, bootKm: 42.4 }))).toMatchObject({ value: '150 km', sub: '42 van 150 km ingelopen' });
     expect(rowSummary('bergschoenen-herinnering', facts()).checked).toBe(true);
     expect(rowSummary('bergschoenen-herinnering', facts({ settings: { ...facts().settings, bootBreakInReminder: false } })).checked).toBe(false);
-    expect(rowSummary('water-per-etappe', facts())).toEqual({ checked: true });
+    expect(rowSummary('water-per-etappe', facts())).toEqual({ checked: true, hidden: false });
   });
 
   it('de groep Doel en tochten noemt het aantal tochten, niet de week', () => {
@@ -123,10 +123,11 @@ describe('rowSummary: doel en tochten', () => {
 });
 
 describe('rowSummary: het geluid na de rust en het trillen', () => {
-  const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+  // De rusttimer bestaat alleen als je sets in ASCEND bijhoudt.
+  const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
 
   it('bij geluid en trillen, of alleen geluid, staat de rij er gewoon', () => {
-    expect(rowSummary('forge-geluid', facts()).hidden).toBeFalsy();
+    expect(rowSummary('forge-geluid', withForge({})).hidden).toBeFalsy();
     expect(rowSummary('forge-geluid', withForge({ restAlert: 'sound' })).hidden).toBeFalsy();
     expect(rowSummary('forge-geluid', withForge({ restAlert: 'sound' })).sub).toBeUndefined();
   });
@@ -163,7 +164,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-doorvoeren', facts()).value).toBe('Gelijke sets');
     expect(rowSummary('forge-doorvoeren', facts({ settings: { ...facts().settings, strengthModel: { carryWeights: false } } })).value).toBe('Uit');
     expect(rowSummary('forge-doorvoeren', facts({ settings: { ...facts().settings, strengthModel: { carryMode: 'shift' } } })).value).toBe('Zelfde verschil');
-    expect(rowSummary('forge-programma', facts())).toEqual({ value: 'Van ASCEND', dim: true });
+    expect(rowSummary('forge-programma', facts())).toEqual({ value: 'Van ASCEND', dim: true, hidden: false });
     expect(groupSummary('forge', facts())).toEqual({ value: 'Aan', sub: 'Eerst gewicht, opwarmen slim' });
   });
 
@@ -196,10 +197,15 @@ describe('rowSummary: forge', () => {
   });
 
   it('Bijsturen staat aan, RIR vooraf staat op hint, en een keuze verandert de rij', () => {
-    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
-    expect(rowSummary('forge-bijsturen', facts())).toEqual({ checked: true, hidden: false });
+    const withForge = (strengthModel: object) => facts({ strengthExternal: false, settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('forge-bijsturen', withForge({}))).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-bijsturen', withForge({ adjustLive: false })).checked).toBe(false);
     expect(rowSummary('forge-bijsturen', withForge({ enabled: false })).hidden).toBe(true);
+    // Houd je sets in MacroFactor bij, dan is het workoutscherm alleen om mee te kijken: bijsturen en de invulkeuzes doen niets.
+    for (const id of ['forge-bijsturen', 'forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven', 'forge-rust', 'bundel-rusttimer', 'bundel-invullen']) {
+      expect(rowSummary(id, facts({ strengthExternal: true })).hidden, id).toBe(true);
+    }
+    expect(rowSummary('forge-scherm', facts({ strengthExternal: true })).hidden).toBeUndefined();
     expect(rowSummary('forge-rir-vooraf', facts()).value).toBe('Als hint');
     expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'target' })).value).toBe('Met het doel');
     expect(rowSummary('forge-rir-vooraf', withForge({ rirPrefill: 'rommel' })).value).toBe('Als hint');
@@ -207,14 +213,14 @@ describe('rowSummary: forge', () => {
 
   it('Toestellen leren staat aan met het label auto, en ASCEND naast MacroFactor staat uit en toont de stand', () => {
     const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
-    expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', auto: true, hidden: false });
+    expect(rowSummary('forge-leren', facts())).toEqual({ value: 'Geleerd', hidden: false });
     expect(rowSummary('forge-leren', withForge({ learnStacks: false })).value).toBe('Profiel');
     expect(rowSummary('forge-leren', withForge({ stackWeights: 'used_only' })).value).toBe('Alleen gebruikt');
     expect(rowSummary('forge-leren', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-pauze', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-pauze', withForge({ lighterAfterBreak: false })).checked).toBe(false);
-    expect(rowSummary('forge-vermoeidheid', facts())).toEqual({ value: 'Leren', auto: true, hidden: false });
-    expect(rowSummary('forge-vermoeidheid', withForge({ fatigue: 'fixed' }))).toEqual({ value: 'Vast 3%', auto: false, hidden: false });
+    expect(rowSummary('forge-vermoeidheid', facts())).toEqual({ value: 'Leren', hidden: false });
+    expect(rowSummary('forge-vermoeidheid', withForge({ fatigue: 'fixed' }))).toEqual({ value: 'Vast 3%', hidden: false });
     expect(rowSummary('forge-vermoeidheid', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-dumbbells', facts())).toEqual({ value: 'Vanzelf', hidden: false });
     expect(rowSummary('forge-dumbbells', withForge({ dumbbellLog: 'total' })).value).toBe('Totaal van twee');
@@ -261,8 +267,8 @@ describe('rowSummary: forge', () => {
   });
 
   it('de trainingsduur is auto als ASCEND hem leerde, en verdwijnt zonder krachttrainingen', () => {
-    expect(rowSummary('trainingsduur', facts())).toEqual({ value: '55 tot 70 min', auto: true });
-    expect(rowSummary('trainingsduur', facts({ strengthDurations: [{ name: 'A', minutes: 60, source: 'default', basedOn: 0 }] }))).toEqual({ value: '60 min', auto: false });
+    expect(rowSummary('trainingsduur', facts())).toEqual({ value: '55 tot 70 min', auto: true, hidden: false });
+    expect(rowSummary('trainingsduur', facts({ strengthDurations: [{ name: 'A', minutes: 60, source: 'default', basedOn: 0 }] }))).toEqual({ value: '60 min', auto: false, hidden: false });
     expect(rowSummary('trainingsduur', facts({ strengthDurations: [] })).hidden).toBe(true);
   });
 
@@ -408,9 +414,10 @@ describe('rowSummary: koppelingen', () => {
     expect(groupSummary('koppelingen', f)).toEqual({ value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' });
   });
 
-  it('Vanzelf afvinken werkt alleen als Trainingen aan staat', () => {
+  it('Vanzelf afvinken verdwijnt als Trainingen uit staat, in plaats van uitgegrijsd te blijven', () => {
     const f = facts({ watch: { linked: true, use: { ...DEFAULT_WATCH_USE, activities: false }, autoTick: true, leads: true, sendEnabled: false } });
-    expect(rowSummary('vanzelf-afvinken', f)).toMatchObject({ checked: false, sub: 'Werkt alleen als Trainingen aan staat' });
+    expect(rowSummary('vanzelf-afvinken', f)).toEqual({ checked: true, hidden: true });
+    expect(rowSummary('vanzelf-afvinken', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('garmin-trainingen', f).checked).toBe(false);
   });
 });
@@ -426,7 +433,7 @@ describe('rowSummary: gegevens en back-up', () => {
 
   it('de vaste map staat er alleen als de browser dat kan', () => {
     expect(rowSummary('backupmap', facts({ folderSupported: false })).hidden).toBe(true);
-    expect(rowSummary('backupmap', facts({ folderChosen: false }))).toEqual({ value: 'Niet gekozen', dim: true });
+    expect(rowSummary('backupmap', facts({ folderChosen: false }))).toEqual({ value: 'Niet gekozen', dim: true, hidden: false });
   });
 
   it('opslag en kopieën', () => {
@@ -524,6 +531,8 @@ describe('rowSummary: wat er na het samenvoegen bij kwam', () => {
     expect(rowSummary('horloge-gedaan-weghalen', withSettings({ watchRemoveDone: false })).checked).toBe(false);
     expect(rowSummary('horloge-status', withSettings({ showWatchStatus: false })).checked).toBe(false);
     expect(rowSummary('horloge-status-week', facts()).checked).toBe(true);
+    expect(rowSummary('horloge-status', withSettings({ showWatchStatusOnWeek: false }))).toMatchObject({ checked: false, sub: 'Niet op Week' });
+    expect(rowSummary('horloge-status', facts()).sub).toBeUndefined();
     const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
     for (const id of ['horloge-voorvoegsel', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week']) expect(rowSummary(id, unlinked).hidden).toBe(true);
   });
@@ -559,6 +568,8 @@ describe('rowSummary: hartslag op je horloge', () => {
     expect(rowSummary('horloge-rustige-loop', facts()).checked).toBe(true);
     expect(rowSummary('horloge-rustige-loop', withSettings({ watchCalmRun: false })).checked).toBe(false);
     expect(rowSummary('horloge-rustige-loop', withSettings({ watchHeartRate: 'intervals' })).hidden).toBe(true);
+    // Zonder sturen naar het horloge is er ook geen ruime grens.
+    expect(rowSummary('horloge-rustige-loop', facts({ watch: { ...facts().watch!, sendEnabled: false } })).hidden).toBe(true);
   });
 
   it('staan er alleen met een koppeling', () => {
@@ -610,12 +621,12 @@ describe('rowSummary: loopinzicht en details van loopjes', () => {
     expect(rowSummary('loopweer', off).hidden).toBeUndefined();
   });
 
-  it('details van loopjes volgt Trainingen en de koppeling', () => {
+  it('details van loopjes verdwijnt als Trainingen uit staat of zonder koppeling', () => {
     expect(rowSummary('horloge-details', facts()).checked).toBe(true);
     const noDetails = facts({ watch: { linked: true, use: { ...DEFAULT_WATCH_USE, details: false }, autoTick: true, leads: true, sendEnabled: false } });
     expect(rowSummary('horloge-details', noDetails).checked).toBe(false);
     const noActivities = facts({ watch: { linked: true, use: { ...DEFAULT_WATCH_USE, activities: false }, autoTick: true, leads: true, sendEnabled: false } });
-    expect(rowSummary('horloge-details', noActivities)).toMatchObject({ checked: false, sub: 'Werkt alleen als Trainingen aan staat' });
+    expect(rowSummary('horloge-details', noActivities)).toEqual({ checked: true, hidden: true });
     const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
     expect(rowSummary('horloge-details', unlinked).hidden).toBe(true);
   });
@@ -634,9 +645,9 @@ describe('rowSummary: correcties uit intervals.icu overnemen', () => {
     expect(rowSummary('correcties-overnemen', watch({ corrections: false })).checked).toBe(false);
   });
 
-  it('volgt Trainingen en de koppeling', () => {
+  it('verdwijnt als Trainingen uit staat of zonder koppeling', () => {
     const noActivities = watch({ use: { ...DEFAULT_WATCH_USE, activities: false } });
-    expect(rowSummary('correcties-overnemen', noActivities)).toMatchObject({ checked: false, sub: 'Werkt alleen als Trainingen aan staat' });
+    expect(rowSummary('correcties-overnemen', noActivities)).toEqual({ checked: true, hidden: true });
     const unlinked = facts({ watch: { linked: false, use: DEFAULT_WATCH_USE, autoTick: true, leads: true, sendEnabled: false } });
     expect(rowSummary('correcties-overnemen', unlinked).hidden).toBe(true);
   });
@@ -683,5 +694,79 @@ describe('rowSummary: de ochtendkaart en de ochtendmelding', () => {
   it('het zoekresultaat zegt hetzelfde als de rij', () => {
     expect(searchValue('ochtendmelding', facts())).toEqual({ text: 'Uit', dim: true });
     expect(searchValue('ochtendmelding', facts({ notice: { support: 'unavailable', granted: false } }))).toEqual({ text: 'Niet mogelijk', dim: true });
+  });
+});
+
+describe('rowSummary: rijen met een blad', () => {
+  const withSettings = (extra: object, over: Partial<SettingsFacts> = {}) => facts({ settings: { ...facts().settings, ...extra }, ...over });
+
+  it('Dagen en tijd telt de dagen en noemt de rustdag', () => {
+    expect(rowSummary('bundel-dagen', facts())).toEqual({ value: '6 dagen', dim: false, sub: 'Rust op maandag' });
+    expect(rowSummary('bundel-dagen', facts({ dailyTimeBudget: {} })).value).toBe('Rust ma');
+    expect(rowSummary('bundel-dagen', facts({ dailyTimeBudget: {}, settings: { ...facts().settings, restDay: 3 } })).value).toBe('Rust wo');
+    // Waarden in de rij blijven kort genoeg voor 360 px.
+    for (const id of ['sport-running', 'sport-hiking', 'sport-cycling', 'bundel-dagen', 'forge-leren', 'forge-vermoeidheid']) {
+      expect(rowSummary(id, facts()).value!.length, id).toBeLessThanOrEqual(14);
+    }
+    expect(rowSummary('forge-vermoeidheid', facts()).auto).toBeUndefined();
+  });
+
+  it('Tochten telt de tochten en staat er niet zonder doel of tocht', () => {
+    expect(rowSummary('bundel-tochten', facts())).toEqual({ value: '2 tochten', hidden: false });
+    expect(rowSummary('bundel-tochten', facts({ treks: 0 })).value).toBe('Geen tochten');
+    expect(rowSummary('bundel-tochten', facts({ goal: null, position: null, treks: 0 })).hidden).toBe(true);
+    expect(rowSummary('bundel-tochten', facts({ goal: null, treks: 1 })).hidden).toBe(false);
+  });
+
+  it('Mijn sportschool noemt het profiel en wat erin ligt', () => {
+    expect(rowSummary('bundel-sportschool', facts())).toEqual({ value: 'Mijn sportschool', sub: '2 stangen, 7 schijven' });
+  });
+
+  it('Weergave op Forge, Rusttimer en Toets tegen MacroFactor vatten hun keuzes samen', () => {
+    expect(rowSummary('bundel-weergave', facts())).toEqual({ value: '1RM', sub: 'Vergelijkt met 4 en 8 weken', hidden: false });
+    expect(rowSummary('bundel-weergave', withSettings({ strengthModel: { showOneRm: false } })).value).toBe('Werkgewicht');
+    expect(rowSummary('bundel-weergave', withSettings({ strengthModel: { enabled: false } })).hidden).toBe(true);
+    const inApp = { strengthExternal: false };
+    expect(rowSummary('bundel-rusttimer', facts(inApp))).toEqual({ value: 'Geluid en trillen', hidden: false });
+    expect(rowSummary('bundel-rusttimer', withSettings({ strengthModel: { restAuto: false } }, inApp))).toMatchObject({ value: 'Uit', dim: true });
+    expect(rowSummary('bundel-toets', facts())).toMatchObject({ value: 'Uit', dim: true, hidden: false });
+    expect(rowSummary('bundel-toets', withSettings({ strengthModel: { showComparison: true } })).value).toBe('Aan');
+    expect(rowSummary('bundel-toets', facts({ macroFactor: { leads: true } })).hidden).toBe(true);
+  });
+
+  it('Rekenmodel en Bij het invullen zeggen Advies, of hoeveel er anders staat', () => {
+    const inApp = { strengthExternal: false };
+    expect(rowSummary('bundel-rekenmodel', facts()).value).toBe('Advies');
+    expect(rowSummary('bundel-rekenmodel', withSettings({ strengthModel: { fatigue: 'fixed', widenRange: false } })).value).toBe('2 aangepast');
+    expect(rowSummary('bundel-invullen', facts(inApp)).value).toBe('Advies');
+    expect(rowSummary('bundel-invullen', withSettings({ strengthModel: { rirPrefill: 'target' } }, inApp)).value).toBe('1 aangepast');
+    expect(rowSummary('bundel-invullen', facts({ strengthExternal: true })).hidden).toBe(true);
+  });
+
+  it('Weer en kleding, Inzicht na een training en Wat ik van mijn horloge gebruik', () => {
+    expect(rowSummary('bundel-weer', facts()).value).toBe('4 van 4 aan');
+    expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('2 van 4 aan');
+    expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });
+    expect(rowSummary('bundel-inzicht', withSettings({ runInsight: { enabled: false } }))).toEqual({ value: 'Uit', dim: true });
+    expect(rowSummary('bundel-horloge-gebruik', facts())).toEqual({ value: '5 van 5 aan', hidden: false });
+    expect(rowSummary('bundel-horloge-gebruik', facts({ watch: { ...facts().watch!, use: { ...DEFAULT_WATCH_USE, sleep: false, hrv: false } } })).value).toBe('3 van 5 aan');
+    expect(rowSummary('bundel-horloge-gebruik', facts({ watch: { ...facts().watch!, linked: false } })).hidden).toBe(true);
+  });
+
+  it('Trainingen naar je horloge is een rij met de stand, en Wat speelde er telt je aantekeningen', () => {
+    expect(rowSummary('bundel-horloge-sturen', facts())).toEqual({ value: 'Aan', hidden: false });
+    expect(rowSummary('bundel-horloge-sturen', facts({ watch: { ...facts().watch!, sendEnabled: false } })).value).toBe('Uit');
+    expect(rowSummary('bundel-wat', facts())).toEqual({ value: 'Nog niets', dim: true });
+  });
+
+  it('de lucht noemt wanneer ze donker wordt, alleen op automatisch', () => {
+    expect(rowSummary('lucht', facts()).sub).toBe('Donker vanaf met de zon');
+    expect(rowSummary('lucht', withSettings({ sky: 'day' })).sub).toBeUndefined();
+  });
+
+  it('geen enkele regel onder een rij met een blad is langer dan een regel', () => {
+    for (const id of ['bundel-dagen', 'bundel-tochten', 'bundel-sportschool', 'bundel-weergave', 'bundel-rusttimer', 'bundel-toets', 'bundel-inzicht', 'lucht']) {
+      expect((rowSummary(id, facts()).sub ?? '').length, id).toBeLessThanOrEqual(SUB_MAX_LENGTH);
+    }
   });
 });

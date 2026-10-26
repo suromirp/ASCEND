@@ -5,11 +5,13 @@ import type { RestDayPlan } from '../../../engine/restDayProposal';
 import { addDays, mondayOfWeek, todayISO } from '../../../utils/dates';
 import { CHOICES, choiceShort } from '../../../data/settingsChoices';
 import { SPORT_LABEL, SPORT_LIST, type Sport } from '../../../engine/sports';
-import { SettingsSection } from '../SettingsList';
+import { SettingsList, SettingsSection } from '../SettingsList';
 import { usePlanSettingChange } from '../usePlanSettingChange';
+import { BundleSheet } from './BundleSheet';
 import { ChoiceFromDef } from './ChoiceFromDef';
 import { BudgetSheet, SportSheet } from './PlanningSheets';
 import { SummaryRow } from './SummaryRow';
+import { rowShown } from './rowShown';
 import type { GroupProps } from './types';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { ChoiceSheet } from '../Sheet';
@@ -25,6 +27,9 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
   const [restNote, setRestNote] = useState<string | null>(null);
   const plan = usePlanSettingChange();
   const close = () => setSheet(null);
+  // Een keuze in het blad Dagen en tijd opent haar onderblad bovenop dat blad.
+  const [inner, setInner] = useState<string | null>(null);
+  const closeInner = () => setInner(null);
   const sport = SPORTS.find((s) => sheet === `sport-${s}`);
   const restDay = settings.restDay ?? 1;
 
@@ -46,10 +51,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
 
       <SettingsSection title="Mijn week">
-        <SummaryRow id="trainingstijd" title="Trainingstijd per dag" facts={facts} onClick={() => setSheet('trainingstijd')} />
-        <SummaryRow id="rustdag" title="Rustdag" facts={facts} onClick={() => setSheet('rustdag')} />
-        <SummaryRow id="rustdag-doen" title="Op je rustdag" facts={facts} onClick={() => setSheet('rustdag-doen')} />
-        <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} onClick={() => setSheet('meerdere')} />
+        <SummaryRow id="bundel-dagen" title="Dagen en tijd" facts={facts} onClick={() => setSheet('bundel-dagen')} />
       </SettingsSection>
 
       <SettingsSection title="Sporten">
@@ -58,20 +60,23 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         ))}
       </SettingsSection>
 
-      <SettingsSection
-        title="Hoe ASCEND plant"
-        advancedIds={['zware-dingen']}
-        storageKey="planning-plant"
-        advanced={<SummaryRow id="zware-dingen" title="Benen en een zware loop" facts={facts} onChange={(on) => void updateSettings({ hardSameDay: on }).then(() => refresh())} />}
-      >
+      <SettingsSection title="Hoe ASCEND plant">
+        <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} onClick={() => setSheet('meerdere')} />
         <SummaryRow id="wijzigingen" title="Wijzigingen" facts={facts} info="wijzigingen" onClick={() => setSheet('wijzigingen')} />
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
       </SettingsSection>
 
-      {sheet === 'trainingstijd' && (
-        <BudgetSheet dailyTimeBudget={goalEngineConfig.availability.dailyTimeBudget} onSave={plan.saveBudget} onClose={close} />
+      {sheet === 'bundel-dagen' && (
+        <BundleSheet eyebrow="Planning" title="Dagen en tijd" line="Hoeveel tijd je hebt en wanneer je rust." onClose={close}>
+          <SummaryRow id="trainingstijd" title="Trainingstijd per dag" facts={facts} onClick={() => setInner('trainingstijd')} />
+          <SummaryRow id="rustdag" title="Rustdag" facts={facts} onClick={() => setInner('rustdag')} />
+          <SummaryRow id="rustdag-doen" title="Op je rustdag" facts={facts} onClick={() => setInner('rustdag-doen')} />
+        </BundleSheet>
       )}
-      {sheet === 'rustdag' && (
+      {inner === 'trainingstijd' && (
+        <BudgetSheet dailyTimeBudget={goalEngineConfig.availability.dailyTimeBudget} onSave={plan.saveBudget} onClose={closeInner} />
+      )}
+      {inner === 'rustdag' && (
         <ChoiceSheet<number>
           eyebrow="Planning"
           title="Rustdag"
@@ -80,15 +85,29 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           value={restDay}
           advice={1}
           onPick={(d) => chooseRestDay(d)}
-          onClose={close}
+          onClose={closeInner}
           footer={<p className="st-hint" style={{ marginLeft: 0 }}>Het geldt pas na Akkoord, ook deze week. Wat je zelf verplaatste of afvinkte blijft staan. Het weekend blijft voor de lange trainingen.</p>}
         />
       )}
-      {sheet === 'rustdag-doen' && (
-        <ChoiceFromDef def={CHOICES.rustdagDoen} value={settings.restDayMode ?? 'rest'} onPick={(v) => void updateSettings({ restDayMode: v }).then(() => refresh())} onClose={close} />
+      {inner === 'rustdag-doen' && (
+        <ChoiceFromDef def={CHOICES.rustdagDoen} value={settings.restDayMode ?? 'rest'} onPick={(v) => void updateSettings({ restDayMode: v }).then(() => refresh())} onClose={closeInner} />
       )}
       {sheet === 'meerdere' && (
-        <ChoiceFromDef def={CHOICES.meerdere} value={facts.pairing} onPick={(v) => void plan.setPairing(v)} onClose={close} />
+        <ChoiceFromDef
+          def={CHOICES.meerdere}
+          value={facts.pairing}
+          onPick={(v) => void plan.setPairing(v)}
+          onClose={close}
+          footer={
+            rowShown('zware-dingen', facts) ? (
+              <div style={{ marginTop: 16 }}>
+                <SettingsList>
+                  <SummaryRow id="zware-dingen" title="Benen en een zware loop" facts={facts} onChange={(on) => void plan.changeSetting('Benen en een zware loop', { hardSameDay: on }, on ? 'Je laat benen en een zware loop op één dag toe.' : 'Je zet benen en een zware loop op één dag uit.')} />
+                </SettingsList>
+              </div>
+            ) : undefined
+          }
+        />
       )}
       {sport && <SportSheet sport={sport} note={plan.note} onToggle={(s, on) => void plan.toggleSport(s, on)} onFrequency={(s, n) => void plan.setFrequency(s, n)} onClose={close} />}
       {sheet === 'wijzigingen' && (

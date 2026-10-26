@@ -111,6 +111,7 @@ button.st-hit:not(:disabled):active { transform: none; }
 .st-more svg { transition: transform .2s; }
 .st-more[aria-expanded="true"] svg { transform: rotate(90deg); }
 .st-more.plain { padding: 0; }
+.st-more-titles { margin: calc(var(--s2) * -1) 0 0; padding: 0 var(--s4) var(--s3); font-size: 12px; line-height: 16px; color: var(--color-ink-dim); }
 
 /* Schakelaar: aan in mint gedempt, zodat de gevulde mint knop het ene accent blijft */
 .st-switch { position: relative; display: block; width: 44px; height: 24px; border-radius: 12px; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-control-border); transition: background .15s, box-shadow .15s; }

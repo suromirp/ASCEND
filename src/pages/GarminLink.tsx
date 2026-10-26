@@ -391,15 +391,9 @@ export function GarminLinkPage() {
         )}
         <UseRow
           title="Status van het versturen"
-          text="Op het trainingsscherm één regel die zegt of de training naar je horloge is gestuurd, en een knop als dat niet lukte."
-          checked={settings.showWatchStatus !== false}
-          onChange={(on) => void updateSettings({ showWatchStatus: on })}
-        />
-        <UseRow
-          title="Markering op Week"
-          text="Een klein horloge achter een training in de weeklijst, alleen als hij is verstuurd of het niet lukte."
-          checked={settings.showWatchStatusOnWeek !== false}
-          onChange={(on) => void updateSettings({ showWatchStatusOnWeek: on })}
+          text="Op het trainingsscherm één regel die zegt of de training naar je horloge is gestuurd, en een knop als dat niet lukte. Op Week staat dan ook een klein horloge achter een training."
+          checked={settings.showWatchStatus !== false && settings.showWatchStatusOnWeek !== false}
+          onChange={(on) => void updateSettings({ showWatchStatus: on, showWatchStatusOnWeek: on })}
         />
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           Gewicht komt nooit uit Garmin. Dat leest ASCEND uit MacroFactor.

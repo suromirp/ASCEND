@@ -11,7 +11,8 @@ import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
 import type { WatchUse } from './watchUse';
 import { choiceShort } from '../data/settingsChoices';
-import type { SettingsPageId } from '../data/settingsLayout';
+import { SHOW_WHEN, isRowShown, type RowContext, type SettingsPageId } from '../data/settingsLayout';
+import { countDifferences } from './settingsDiff';
 import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { isMyLocation } from './weatherLocation';
@@ -203,7 +204,43 @@ function listWeights(list: number[]): string {
 
 // ---- de rijen ------------------------------------------------------------------
 
+// Wat deze telefoon en deze gegevens zijn, voor de voorwaarden in data/settingsLayout.ts.
+export function rowContext(f: SettingsFacts): RowContext {
+  const support = f.notice?.support ?? 'ready';
+  return {
+    garmin: f.watch?.linked === true,
+    activities: f.watch?.use.activities !== false,
+    sendToWatch: f.watch?.sendEnabled === true,
+    macroFactorExport: !!f.macroFactor?.readAt,
+    goal: f.goal !== null,
+    program: f.position !== null,
+    trek: f.treks > 0,
+    strengthInApp: !f.strengthExternal,
+    strengthTrainings: f.strengthDurations.length > 0,
+    longSundayVisible: f.longSundayVisible,
+    sameDayAllowed: f.pairing !== 'never',
+    folderSupported: f.folderSupported,
+    noticeAvailable: support !== 'unavailable' && support !== 'not_installed',
+    bodyFat: f.hasBodyFat === true,
+  };
+}
+
+// De samenvatting van een rij. Of de rij er nu hoort (`hidden`) komt uit SHOW_WHEN in
+// data/settingsLayout.ts, zodat de afhankelijkheden op één plek staan.
 export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
+  const base = baseSummary(rowId, f);
+  return SHOW_WHEN[rowId] ? { ...base, hidden: !isRowShown(rowId, f.settings, rowContext(f)) } : base;
+}
+
+const countOn = (flags: boolean[]) => flags.filter(Boolean).length;
+const BUNDLE_MODEL = ['forge-sets', 'forge-vermoeidheid', 'forge-pauze', 'forge-bereik', 'forge-schatting', 'forge-leren'];
+const BUNDLE_FILL = ['forge-rir-vooraf', 'forge-doorvoeren', 'forge-schijven'];
+const adviceOrCount = (ids: string[], s: AppSettings): RowSummary => {
+  const n = countDifferences(ids, s);
+  return n === 0 ? { value: 'Advies' } : { value: `${n} aangepast` };
+};
+
+function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
   const s = f.settings;
   const o = resolveOverviews(s.overviews);
   const forge = resolveStrengthSettings(s.strengthModel);
@@ -213,6 +250,47 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
   const watchOn = f.watch?.linked === true;
 
   switch (rowId) {
+    // Rijen met een blad: de samenvatting van wat erin zit (docs/beslissingen/2026-10-26-instellingen-opruimen.md).
+    case 'bundel-dagen': {
+      const n = trainingDays(f);
+      if (n > 0) return { value: plural(n, 'dag', 'dagen'), dim: false, sub: `Rust op ${lower(WEEKDAYS[restDayIndex(f)])}` };
+      // Geen tijden per dag, wel een rustdag: zeg wat er staat.
+      return { value: `Rust ${lower(WEEKDAYS_SHORT[restDayIndex(f)])}`, dim: false };
+    }
+    case 'bundel-tochten':
+      return f.treks > 0 ? { value: plural(f.treks, 'tocht', 'tochten') } : { value: 'Geen tochten', dim: true };
+    case 'bundel-sportschool':
+      return { value: forge.profile.name, sub: `${plural(forge.profile.barsKg.length, 'stang', 'stangen')}, ${plural(forge.profile.platesKg.length, 'schijf', 'schijven')}` };
+    case 'bundel-weergave':
+      return { value: forge.showOneRm ? choiceShort('forgeWeergave', forge.oneRmView) : 'Werkgewicht', sub: `Vergelijkt met ${lower(choiceShort('forgeVergelijken', forge.compareWeeks))}` };
+    case 'bundel-rusttimer':
+      return forge.restAuto ? { value: choiceShort('restsignaal', forge.restAlert) } : { value: 'Uit', dim: true };
+    case 'bundel-rekenmodel':
+      return adviceOrCount(BUNDLE_MODEL, s);
+    case 'bundel-invullen':
+      return adviceOrCount(BUNDLE_FILL, s);
+    case 'bundel-toets': {
+      const lines = f.strengthCheck ? checkLines(f.strengthCheck.all) : {};
+      const line = lines.macrofactor ?? lines.forge;
+      return { value: forge.showComparison ? 'Aan' : 'Uit', dim: !forge.showComparison, ...(line ? { sub: line } : {}) };
+    }
+    case 'bundel-wat': {
+      const n = (s.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate === true).length;
+      return n === 0 ? { value: 'Nog niets', dim: true } : { value: `${n} keer` };
+    }
+    case 'bundel-weer':
+      return { value: `${countOn([o.weatherLine, o.bestMoment, o.weatherSwap, o.clothingAdvice])} van 4 aan` };
+    case 'bundel-inzicht': {
+      const r = resolveRunInsight(s.runInsight);
+      return r.enabled ? { value: 'Aan', sub: `${countOn(Object.values(r.topics))} van 4 onderwerpen` } : { value: 'Uit', dim: true };
+    }
+    case 'bundel-horloge-gebruik': {
+      const use = f.watch?.use;
+      return { value: `${countOn([use?.activities !== false, use?.details !== false && use?.activities !== false, use?.sleep !== false, use?.restingHeartRate !== false, use?.hrv !== false])} van 5 aan` };
+    }
+    case 'bundel-horloge-sturen':
+      return f.watch?.sendEnabled ? { value: 'Aan' } : { value: 'Uit', dim: true };
+
     // Planning
     case 'trainingstijd': {
       const n = trainingDays(f);
@@ -237,7 +315,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       const st = sportState(f, sport);
       if (!st.on) return { value: 'Uit', dim: true };
       if (st.perWeek) return { value: `${st.perWeek}× per week` };
-      return { value: 'Weekschema', auto: true };
+      return { value: 'Aan', auto: true };
     }
     case 'wijzigingen':
       return { value: choiceShort('wijzigingen', s.changeApplyMode ?? 'auto_small') };
@@ -246,7 +324,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: f.ambition.chosen !== f.ambition.effective ? `${label}, tijdelijk` : label };
     }
     case 'zware-dingen':
-      return { checked: !!s.hardSameDay, sub: 'Op één dag, eerst de loop', hidden: f.pairing === 'never' };
+      return { checked: !!s.hardSameDay, sub: 'Op één dag, eerst de loop' };
 
     // Doel en tochten
     case 'doelen':
@@ -256,7 +334,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
         ? { value: `Week ${f.position.weekInProgram} van ${f.position.totalWeeks}`, sub: f.goal ? `${capitalize(lower(f.position.phaseName))}, teruggerekend vanaf je doel` : capitalize(lower(f.position.phaseName)) }
         : { value: 'Buiten het programma', dim: true };
     case 'lange-zondag':
-      return { value: choiceShort('langeZondag', s.longSundaySession ?? 'hike'), hidden: !f.longSundayVisible };
+      return { value: choiceShort('langeZondag', s.longSundaySession ?? 'hike') };
     case 'na-hoofddoel':
       return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
     case 'volgende-tocht':
@@ -287,31 +365,31 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('kracht', f.strengthExternal ? 'macrofactor' : 'ascend') };
     case 'trainingsduur': {
       const d = durationsValue(f);
-      return d ? { value: d.value, auto: d.auto } : { hidden: true };
+      return d ? { value: d.value, auto: d.auto } : { dim: true };
     }
     case 'forge-volgorde':
-      return { value: choiceShort('volgorde', forge.progression), hidden: !forge.enabled };
+      return { value: choiceShort('volgorde', forge.progression) };
     case 'forge-sets':
-      return { value: choiceShort('werksets', forge.workSets), hidden: !forge.enabled };
+      return { value: choiceShort('werksets', forge.workSets) };
     case 'forge-opwarmen':
-      return { value: choiceShort('opwarmen', forge.warmup), hidden: !forge.enabled };
+      return { value: choiceShort('opwarmen', forge.warmup) };
     case 'forge-opwarmbereik':
-      return { value: choiceShort('opwarmbereik', forge.warmupScope), hidden: !forge.enabled };
+      return { value: choiceShort('opwarmbereik', forge.warmupScope) };
     case 'forge-bereik':
-      return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen', hidden: !forge.enabled };
+      return { checked: forge.widenRange, sub: 'Bij toestellen met grote stappen' };
     case 'forge-schatting':
-      return { value: choiceShort('schatting', forge.estimateUpTo), hidden: !forge.enabled };
+      return { value: choiceShort('schatting', forge.estimateUpTo) };
     case 'forge-rust':
       return { checked: forge.restAuto };
     case 'forge-signaal':
-      return { value: choiceShort('restsignaal', forge.restAlert), hidden: !forge.restAuto };
+      return { value: choiceShort('restsignaal', forge.restAlert) };
     case 'forge-geluid':
       // Bij alleen trillen kies je met het geluid het trilritme (engine/restVibration.ts): de rij blijft, met een feit eronder.
-      return { value: choiceShort('rustgeluid', forge.restSound), ...(forge.restAlert === 'vibrate' ? { sub: 'Je voelt alleen het ritme' } : {}), hidden: !forge.restAuto || forge.restAlert === 'off' };
+      return { value: choiceShort('rustgeluid', forge.restSound), ...(forge.restAlert === 'vibrate' ? { sub: 'Je voelt alleen het ritme' } : {}) };
     case 'forge-scherm':
       return { checked: forge.keepScreenOn };
     case 'forge-bijsturen':
-      return { checked: forge.adjustLive, hidden: !forge.enabled };
+      return { checked: forge.adjustLive };
     case 'forge-rir-vooraf':
       return { value: choiceShort('rirVooraf', forge.rirPrefill) };
     case 'forge-doorvoeren':
@@ -319,33 +397,33 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'forge-1rm':
       return { checked: forge.showOneRm };
     case 'forge-weergave':
-      return { value: choiceShort('forgeWeergave', forge.oneRmView), hidden: !forge.enabled || !forge.showOneRm };
+      return { value: choiceShort('forgeWeergave', forge.oneRmView) };
     case 'forge-1rm-macrofactor':
-      return { checked: forge.showMacroFactorOneRm, hidden: !forge.enabled || !forge.showOneRm };
+      return { checked: forge.showMacroFactorOneRm };
     case 'forge-vergelijken':
-      return { value: choiceShort('forgeVergelijken', forge.compareWeeks), hidden: !forge.enabled };
+      return { value: choiceShort('forgeVergelijken', forge.compareWeeks) };
     case 'forge-volgorde-lijst':
-      return { value: choiceShort('forgeVolgorde', forge.listSort), hidden: !forge.enabled };
+      return { value: choiceShort('forgeVolgorde', forge.listSort) };
     case 'forge-extras':
-      return { checked: forge.showExtras, hidden: !forge.enabled };
+      return { checked: forge.showExtras };
     case 'forge-lijntjes':
-      return { checked: forge.showTrendLines, hidden: !forge.enabled };
+      return { checked: forge.showTrendLines };
     case 'forge-leren':
-      return { value: choiceShort('forgeLeren', forge.stackWeights), auto: true, hidden: !forge.enabled };
+      return { value: choiceShort('forgeLeren', forge.stackWeights) };
     case 'forge-vermoeidheid':
-      return { value: choiceShort('vermoeidheid', forge.fatigue), auto: forge.fatigue === 'learned', hidden: !forge.enabled };
+      return { value: choiceShort('vermoeidheid', forge.fatigue) };
     case 'forge-pauze':
-      return { checked: forge.lighterAfterBreak, hidden: !forge.enabled };
+      return { checked: forge.lighterAfterBreak };
     case 'forge-dumbbells':
-      return { value: choiceShort('dumbbellLog', forge.dumbbellLog), hidden: !forge.enabled };
+      return { value: choiceShort('dumbbellLog', forge.dumbbellLog) };
     case 'forge-naast': {
       // De stand staat hier, zodat je hem kunt zien zonder dat het op Forge staat.
       const lines = f.strengthCheck ? checkLines(f.strengthCheck.all) : {};
       const line = lines.macrofactor ?? lines.forge;
-      return { checked: forge.showComparison, hidden: !forge.enabled, ...(line ? { sub: line } : {}) };
+      return { checked: forge.showComparison, ...(line ? { sub: line } : {}) };
     }
     case 'forge-sinds':
-      return { value: formatDateNL(forge.checkFrom), hidden: !forge.enabled };
+      return { value: formatDateNL(forge.checkFrom) };
     case 'forge-schijven':
       return { checked: forge.showPlates };
     case 'forge-programma':
@@ -372,7 +450,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
         ? { value: `${num(f.weight.kg, 1)} kg`, auto: f.weight.source === 'macrofactor', sub: weightWords(f.weight) }
         : { value: 'Niet ingevuld', dim: true };
     case 'vetpercentage':
-      return { checked: s.showBodyFat !== false, hidden: !f.hasBodyFat };
+      return { checked: s.showBodyFat !== false };
     case 'hartslag': {
       const hr = s.heartRate ?? {};
       if (hr.lthr) return { value: `Drempel ${hr.lthr}`, sub: 'Zones in bpm, zoals op je horloge' };
@@ -409,11 +487,11 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'ochtendcheck':
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
-      return { checked: o.morningCard, hidden: !o.morningCheckIn };
+      return { checked: o.morningCard };
     case 'korte-nacht':
-      return { checked: s.askShortNight !== false, hidden: !o.morningCheckIn };
+      return { checked: s.askShortNight !== false };
     case 'ochtend-vanaf':
-      return { value: choiceShort('ochtendVanaf', o.morningCardFrom), hidden: !o.morningCheckIn };
+      return { value: choiceShort('ochtendVanaf', o.morningCardFrom) };
     case 'ochtendmelding': {
       const n = noticeState(f);
       if (n.support === 'unavailable') return { value: 'Niet mogelijk', dim: true, sub: 'Alleen als je de app opent' };
@@ -423,12 +501,12 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'ochtendmelding-tijd': {
       // Er voor als de telefoon het kan; gedimd zolang de melding uit staat.
       const n = noticeState(f);
-      return { value: choiceShort('ochtendTijd', resolveMorningNotice(s.morningNotice).time), dim: !n.on, hidden: n.support === 'unavailable' || n.support === 'not_installed' };
+      return { value: choiceShort('ochtendTijd', resolveMorningNotice(s.morningNotice).time), dim: !n.on };
     }
     case 'weekterugblik':
       return { checked: o.weekReview };
     case 'weekterugblik-dag':
-      return { value: choiceShort('terugblikDag', o.weekReviewDay), hidden: !o.weekReview };
+      return { value: choiceShort('terugblikDag', o.weekReviewDay) };
     case 'weekvraag':
       return { checked: o.weeklyQuestion };
     case 'weerplaats':
@@ -444,18 +522,18 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.clothingAdvice };
     case 'kleding-voorkeur': {
       const c = clothingValue(f);
-      return { value: c.value, auto: false, dim: c.value === 'Standaard', hidden: !o.clothingAdvice };
+      return { value: c.value, auto: false, dim: c.value === 'Standaard' };
     }
     case 'loopinzicht':
       return { checked: resolveRunInsight(s.runInsight).enabled };
     case 'loop-efficientie':
-      return { checked: resolveRunInsight(s.runInsight).topics.efficiency, hidden: !resolveRunInsight(s.runInsight).enabled };
+      return { checked: resolveRunInsight(s.runInsight).topics.efficiency };
     case 'loop-langedagen':
-      return { checked: resolveRunInsight(s.runInsight).topics.longDays, hidden: !resolveRunInsight(s.runInsight).enabled };
+      return { checked: resolveRunInsight(s.runInsight).topics.longDays };
     case 'loop-berg':
-      return { checked: resolveRunInsight(s.runInsight).topics.climbing, hidden: !resolveRunInsight(s.runInsight).enabled };
+      return { checked: resolveRunInsight(s.runInsight).topics.climbing };
     case 'loop-vorm':
-      return { checked: resolveRunInsight(s.runInsight).topics.form, hidden: !resolveRunInsight(s.runInsight).enabled };
+      return { checked: resolveRunInsight(s.runInsight).topics.form };
     case 'loopweer':
       return { checked: resolveRunInsight(s.runInsight).weather };
     case 'borstband':
@@ -463,9 +541,9 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'intensiteit':
       return { value: choiceShort('intensiteit', resolveIntensityCounting(s)) };
     case 'lucht':
-      return { value: choiceShort('lucht', resolveSky(s).sky) };
+      return { value: choiceShort('lucht', resolveSky(s).sky), ...(resolveSky(s).sky === 'auto' ? { sub: `Donker vanaf ${lower(choiceShort('luchtVanaf', resolveSky(s).nightFrom))}` } : {}) };
     case 'lucht-vanaf':
-      return { value: choiceShort('luchtVanaf', resolveSky(s).nightFrom), hidden: resolveSky(s).sky !== 'auto' };
+      return { value: choiceShort('luchtVanaf', resolveSky(s).nightFrom) };
     case 'beweging':
       return { value: choiceShort('beweging', resolveMotion(s)) };
     case 'terugknop':
@@ -483,43 +561,45 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
         ? { value: 'Verbonden', dot: 'ok', sub: f.watch?.syncedAt ? `Laatst bijgewerkt om ${clock(f.watch.syncedAt)}` : 'Nog niet opgehaald' }
         : { value: 'Koppelen', sub: 'Trainingen, slaap en hartslag' };
     case 'garmin-trainingen':
-      return { checked: f.watch?.use.activities !== false, hidden: !watchOn };
+      return { checked: f.watch?.use.activities !== false };
     case 'vanzelf-afvinken':
-      return { checked: f.watch?.autoTick !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
+      return { checked: f.watch?.autoTick !== false };
     case 'garmin-leidend':
-      return { checked: f.watch?.leads !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
+      return { checked: f.watch?.leads !== false };
     case 'correcties-overnemen':
-      return { checked: f.watch?.corrections !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
+      return { checked: f.watch?.corrections !== false };
     case 'horloge-details':
-      return { checked: f.watch?.use.details !== false && f.watch?.use.activities !== false, hidden: !watchOn, ...(f.watch?.use.activities === false ? { sub: 'Werkt alleen als Trainingen aan staat' } : {}) };
+      return { checked: f.watch?.use.details !== false };
     case 'slaap':
-      return { checked: f.watch?.use.sleep !== false, hidden: !watchOn };
+      return { checked: f.watch?.use.sleep !== false };
     case 'rusthartslag':
-      return { checked: f.watch?.use.restingHeartRate !== false, hidden: !watchOn };
+      return { checked: f.watch?.use.restingHeartRate !== false };
     case 'hrv':
-      return { checked: f.watch?.use.hrv !== false, hidden: !watchOn };
+      return { checked: f.watch?.use.hrv !== false };
     case 'naar-horloge':
-      return { checked: !!f.watch?.sendEnabled, hidden: !watchOn };
+      return { checked: !!f.watch?.sendEnabled };
     case 'horloge-voorvoegsel':
-      return { value: choiceShort('voorvoegsel', s.watchNamePrefix ?? 'short'), hidden: !watchOn };
+      return { value: choiceShort('voorvoegsel', s.watchNamePrefix ?? 'short') };
     case 'horloge-hartslag':
-      return { value: choiceShort('hartslagHorloge', resolveWatchHrMode({ mode: s.watchHeartRate })), sub: watchHrSub(f), hidden: !watchOn };
+      return { value: choiceShort('hartslagHorloge', resolveWatchHrMode({ mode: s.watchHeartRate })), sub: watchHrSub(f) };
     case 'horloge-rustige-loop':
-      return { checked: resolveCalmRun({ calmRun: s.watchCalmRun }), hidden: !watchOn || resolveWatchHrMode({ mode: s.watchHeartRate }) === 'intervals' };
+      return { checked: resolveCalmRun({ calmRun: s.watchCalmRun }) };
     case 'horloge-gedaan-weghalen':
-      return { checked: s.watchRemoveDone !== false, hidden: !watchOn };
+      return { checked: s.watchRemoveDone !== false };
     case 'horloge-status':
-      return { checked: s.showWatchStatus !== false, hidden: !watchOn };
+      return s.showWatchStatus !== false && s.showWatchStatusOnWeek === false
+        ? { checked: false, sub: 'Niet op Week' }
+        : { checked: s.showWatchStatus !== false && s.showWatchStatusOnWeek !== false };
     case 'horloge-status-week':
-      return { checked: s.showWatchStatusOnWeek !== false, hidden: !watchOn };
+      return { checked: s.showWatchStatus !== false && s.showWatchStatusOnWeek !== false };
     case 'macrofactor':
       return f.macroFactor?.readAt
         ? { title: 'Laatste export', value: shortDate(f.macroFactor.readAt.slice(0, 10)) }
         : { title: 'Export inlezen', value: 'Nog niet', dim: true, sub: 'Kracht en gewicht uit MacroFactor' };
     case 'macrofactor-leidend':
-      return { checked: f.macroFactor?.leads !== false, hidden: !f.macroFactor?.readAt };
+      return { checked: f.macroFactor?.leads !== false };
     case 'macrofactor-gewicht':
-      return { checked: s.weightFromMacroFactor !== false, hidden: !f.macroFactor?.readAt };
+      return { checked: s.weightFromMacroFactor !== false };
     case 'strava-tekst':
       return { checked: s.stravaText !== false };
     case 'health-connect':
@@ -529,7 +609,7 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'backup':
       return { value: backupAgoText(age), dim: age.level === 'never' };
     case 'backupmap':
-      return f.folderSupported ? { value: f.folderChosen ? 'Gekozen' : 'Niet gekozen', dim: !f.folderChosen } : { hidden: true };
+      return f.folderSupported ? { value: f.folderChosen ? 'Gekozen' : 'Niet gekozen', dim: !f.folderChosen } : {};
     case 'opslag':
       if (f.storage === 'protected') return { value: 'Ja' };
       if (f.storage === 'not_protected') return { value: 'Nee', dim: true };
