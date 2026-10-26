@@ -54,8 +54,18 @@ describe('Groei van de lange loop (instelling)', () => {
     expect(programRunBuild(goals, undefined, TODAY)?.stepWeeks).toBe(1);
     expect(programRunBuild(goals, undefined, TODAY, 'weekly')?.stepWeeks).toBe(1);
     expect(programRunBuild(goals, undefined, TODAY, 'biweekly')?.stepWeeks).toBe(2);
-    expect(readRunBuild(programRunBuild(goals, undefined, TODAY, 'wave'))).toBeUndefined();
+    expect(programRunBuild(goals, undefined, TODAY, 'wave')).toMatchObject({ raceDate: '2027-05-01', peakMinutes: 75, alternatePeak: false, taperOnly: true });
     expect(programRunBuild(goals, undefined, TODAY, 'wave')?.alternatePeak).toBe(false);
+  });
+
+  it('zonder wedstrijd geven Heel rustig, Stevig en Sneller de markering zonder afwisseling, de andere niets', () => {
+    for (const g of ['wave', 'firm', 'fast'] as const) {
+      const marker = programRunBuild([], undefined, TODAY, g);
+      expect(marker?.alternatePeak, g).toBe(false);
+      expect(readRunBuild(marker), g).toBeUndefined();
+    }
+    expect(programRunBuild([], undefined, TODAY, 'weekly')).toBeUndefined();
+    expect(programRunBuild([], undefined, TODAY, 'biweekly')).toBeUndefined();
   });
 
   it('een onbekende waarde wordt het advies', () => {

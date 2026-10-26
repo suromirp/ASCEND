@@ -60,6 +60,8 @@ export interface Program {
     // Per choice of "Groei van de lange loop" (engine/runGrowth.ts). Absent = 10% a step, the peak
     // alternates, the cap of the long run is 110% of your longest of 30 days.
     stepPercent?: number; alternatePeak?: boolean; spikeLimit?: number;
+    // Heel rustig: only the taper before the race, no gradual growth (engine/runGrowth.ts).
+    taperOnly?: boolean;
   };
 }
 

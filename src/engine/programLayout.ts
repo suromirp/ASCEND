@@ -305,7 +305,7 @@ export function runBuildMultiplier(template: SessionTemplate, program: Program, 
 function gradualLongRunMinutes(template: SessionTemplate, program: Program, generic: WeeklyProgressionStep[], week: number, restSkipped: boolean): number | undefined {
   const build = readRunBuild(program.runBuild);
   const opbouw = opbouwStartWeek(program);
-  if (!build || !opbouw || opbouw.weeks === 0 || week < opbouw.start) return undefined;
+  if (!build || build.taperOnly || !opbouw || opbouw.weeks === 0 || week < opbouw.start) return undefined;
   const raceWeek = Math.floor(daysBetween(mondayOfWeek(program.startDate), mondayOfWeek(build.raceDate)) / 7) + 1;
   if (!Number.isFinite(raceWeek) || week >= raceWeek) return undefined;
   const ladder = [1, 2, 3, 4].map((n) => generic.find((g) => g.weekInPhase === n)?.targetMinutes);
@@ -356,6 +356,7 @@ export function readRunBuild(raw: unknown): NonNullable<Program['runBuild']> | u
     raceDate: date, stepWeeks: Math.floor(step), peakMinutes: peak,
     ...(typeof percent === 'number' && Number.isFinite(percent) && percent > 10 && percent <= 20 ? { stepPercent: percent } : {}),
     ...(b.alternatePeak === false ? { alternatePeak: false } : {}),
+    ...(b.taperOnly === true ? { taperOnly: true } : {}),
     ...(typeof limit === 'number' && Number.isFinite(limit) && limit > 1.1 && limit <= 1.2 ? { spikeLimit: limit } : {}),
   };
 }

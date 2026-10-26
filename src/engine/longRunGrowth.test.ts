@@ -77,7 +77,7 @@ describe('elke week hoogstens 10% boven de vorige opbouwweek, nooit in één kee
     const calm = series(programFor('biweekly'));
     const old = series(programFor('wave'));
     // Heel rustig: geen geleidelijke groei (readRunBuild negeert het) en geen afwisseling op de piek.
-    expect(readRunBuild(programFor('wave').runBuild)).toBeUndefined();
+    expect(readRunBuild(programFor('wave').runBuild)).toMatchObject({ taperOnly: true });
     expect(programFor('wave').runBuild?.alternatePeak).toBe(false);
     for (let week = OPBOUW_START; week <= 11; week++) expect(calm[week - 1]).toBeLessThanOrEqual(at(week));
     expect(calm[OPBOUW_START - 1]).toBeLessThan(calm[OPBOUW_START + 1]);
@@ -214,5 +214,31 @@ describe('Sneller dan het onderzoek', () => {
       setRecentSessionMaxima(recentSessionMaxima([{ templateId: 'tpl_long_run', completedDate: addDays(sunday(9), -3), durationMinutes: 60 }], addDays(sunday(9), -3)));
       expect(resolveEffectiveFullDuration(longRun, sunday(9), programFor(growth)), growth).toBeLessThanOrEqual(65);
     }
+  });
+});
+
+describe('afbouw: grensgevallen en Heel rustig', () => {
+  const race = addDays(START, 7 * (RACE_WEEK - 1) + 5);
+  const withPeak = (growth: Parameters<typeof programRunBuild>[3]): Program => {
+    const base: Program = { id: 'p', name: 'P', startDate: START, phases };
+    const goal = { ...raceGoal(race), requirements: [{ id: 'r', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 10, unit: 'km' }, discipline: 'running' }], details: { variant: '10k' } } as unknown as TrainingGoal;
+    return { ...base, runBuild: programRunBuild([goal], undefined, START, growth) };
+  };
+  const at = (p: Program, daysBefore: number) => resolveEffectiveFullDuration(longRun, addDays(race, -daysBefore), p);
+
+  it('dag 15 is niet begrensd, dag 14 en dag 8 staan op de piek, dag 7 op 70%', () => {
+    const p = withPeak('weekly');
+    expect(at(p, 15)).toBeGreaterThan(75);
+    expect(at(p, 14)).toBeLessThanOrEqual(75);
+    expect(at(p, 8)).toBeLessThanOrEqual(75);
+    expect(at(p, 8)).toBeGreaterThan(Math.round(75 * 0.7));
+    expect(at(p, 7)).toBeLessThanOrEqual(Math.round(75 * 0.7));
+  });
+
+  it('Heel rustig krijgt de afbouw ook, en houdt de oude groei', () => {
+    const p = withPeak('wave');
+    const old: Program = { ...p, runBuild: undefined };
+    for (let back = 1; back <= 14; back++) expect(at(p, back), `dag ${back}`).toBeLessThanOrEqual(back <= 7 ? Math.round(75 * 0.7) : 75);
+    for (let back = 15; back <= 60; back++) expect(at(p, back), `dag ${back}`).toBe(at(old, back));
   });
 });

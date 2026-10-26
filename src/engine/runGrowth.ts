@@ -22,7 +22,7 @@ import { effectivePriority, goalDetailsOf, isRaceGoal } from './goalLabels';
 import { addDays, daysBetween } from '../utils/dates';
 
 // Hoe snel de lange loop groeit naar een hardloopwedstrijd (AppSettings.longRunGrowth).
-// - wave ("Heel rustig"): per blok van vier weken, het gedrag van voor ronde 2b (geen Program.runBuild).
+// - wave ("Heel rustig"): per blok van vier weken, het gedrag van voor ronde 2b (Program.runBuild met taperOnly, of alleen de markering zonder wedstrijd).
 // - biweekly ("Rustiger"): om de twee weken een stap van hoogstens 10%.
 // - weekly ("Volgens het onderzoek", het advies): elke week een stap van hoogstens 10%, altijd binnen
 //   de 110%-rem, met de lichtere week van de golf en de piek om de week (Frandsen 2025, matig;
@@ -63,19 +63,23 @@ export function longRunPeakMinutes(variant: string | undefined): number {
 // De opbouw van het programma naar de eerstvolgende hardloopwedstrijd van een Top of Voortop
 // (Program.runBuild), ook in een programma naar een tocht: de wedstrijd is dan een tussendoel dat
 // de lange loop sneller laat groeien, binnen de 110%-rem, en de piek is het grootste van de piek
-// voor de wedstrijd en de bestaande piek van het programma. Zonder zo'n wedstrijd, of op
-// "per blok van vier weken", niets: dan blijft de gewone opbouw.
+// voor de wedstrijd en de bestaande piek van het programma. Zonder zo'n wedstrijd blijft de gewone
+// opbouw. Op "Heel rustig" blijft de oude groei per blok van vier weken, maar de afbouw voor de
+// wedstrijd geldt wel (taperOnly).
 export function programRunBuild(goals: TrainingGoal[], mainGoalId: string | undefined, today: string, growth: unknown = LONG_RUN_GROWTH_ADVICE): NonNullable<Program['runBuild']> | undefined {
   const choice = resolveLongRunGrowth(growth);
-  // Heel rustig: geen geleidelijke groei en ook geen afwisseling op de piek (het gedrag van voor ronde 2b).
-  // De leeg gelaten datum maakt dat readRunBuild het negeert; alleen de afwisseling leest de markering.
-  if (choice === 'wave') return WAVE_NO_ALTERNATION;
+  // Zonder wedstrijd leest alleen de afwisseling van de piek de markering (de leeg gelaten datum maakt
+  // dat readRunBuild hem negeert): Heel rustig, Stevig en Sneller laten de piek dan niet afwisselen.
   const next = goals
     .filter((g): g is TrainingGoal & { targetDate: string } => g.status === 'active' && !!g.targetDate && g.targetDate >= today && isRaceGoal(g))
     .filter((g) => effectivePriority(g, mainGoalId) !== 'verkenning')
     .sort((a, b) => a.targetDate.localeCompare(b.targetDate))[0];
-  if (!next) return undefined;
-  return { ...GROWTH_SPEC[choice], raceDate: next.targetDate, peakMinutes: longRunPeakMinutes(goalDetailsOf(next).variant) };
+  if (!next) return choice === 'weekly' || choice === 'biweekly' ? undefined : WAVE_NO_ALTERNATION;
+  const peakMinutes = longRunPeakMinutes(goalDetailsOf(next).variant);
+  // Heel rustig: geen geleidelijke groei en geen afwisseling op de piek (het gedrag van voor ronde 2b),
+  // maar wel de afbouw vlak voor de wedstrijd.
+  if (choice === 'wave') return { ...WAVE_NO_ALTERNATION, raceDate: next.targetDate, peakMinutes, taperOnly: true };
+  return { ...GROWTH_SPEC[choice], raceDate: next.targetDate, peakMinutes };
 }
 
 // --- na een wedstrijd -----------------------------------------------------------
