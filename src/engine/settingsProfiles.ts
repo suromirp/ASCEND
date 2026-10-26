@@ -4,12 +4,13 @@
 // uit afgelezen. Past de combinatie bij geen enkel profiel, dan heet ze "Aangepast".
 
 import type { AppSettings } from '../storage/database';
+import { resolveBodyCheck, type BodyCheckMode } from './bodyCheckSettings';
 import { resolveOverviews, type OverviewSettings } from './overviewSettings';
 
 export type TodayProfile = 'alles' | 'belangrijkst' | 'training' | 'aangepast';
 export type TodayProfileChoice = Exclude<TodayProfile, 'aangepast'>;
 
-// De zeven schakelaars die een profiel vastlegt. De missiekaart zelf is geen schakelaar: die
+// De acht keuzes die een profiel vastlegt. De missiekaart zelf is geen schakelaar: die
 // staat altijd op Vandaag. Wat onder de ochtendcheck of het weer hangt (korte nacht, beste
 // moment, kleding) blijft zoals je het zette.
 export interface TodayCardValues {
@@ -20,14 +21,16 @@ export interface TodayCardValues {
   weeklyQuestion: boolean;
   completionMoment: boolean;
   introSoundEnabled: boolean;
+  // "Hoe voelt je lijf?": reden (het advies) of uit.
+  bodyCheck: BodyCheckMode;
 }
 
-const KEYS: (keyof TodayCardValues)[] = ['morningCheckIn', 'morningCard', 'weatherLine', 'weekReview', 'weeklyQuestion', 'completionMoment', 'introSoundEnabled'];
+const KEYS: (keyof TodayCardValues)[] = ['morningCheckIn', 'morningCard', 'weatherLine', 'weekReview', 'weeklyQuestion', 'completionMoment', 'introSoundEnabled', 'bodyCheck'];
 
 const PROFILES: Record<TodayProfileChoice, TodayCardValues> = {
-  alles: { morningCheckIn: true, morningCard: true, weatherLine: true, weekReview: true, weeklyQuestion: true, completionMoment: true, introSoundEnabled: true },
-  belangrijkst: { morningCheckIn: true, morningCard: false, weatherLine: true, weekReview: false, weeklyQuestion: false, completionMoment: false, introSoundEnabled: false },
-  training: { morningCheckIn: false, morningCard: false, weatherLine: false, weekReview: false, weeklyQuestion: false, completionMoment: false, introSoundEnabled: false },
+  alles: { morningCheckIn: true, morningCard: true, weatherLine: true, weekReview: true, weeklyQuestion: true, completionMoment: true, introSoundEnabled: true, bodyCheck: 'reden' },
+  belangrijkst: { morningCheckIn: true, morningCard: false, weatherLine: true, weekReview: false, weeklyQuestion: false, completionMoment: false, introSoundEnabled: false, bodyCheck: 'reden' },
+  training: { morningCheckIn: false, morningCard: false, weatherLine: false, weekReview: false, weeklyQuestion: false, completionMoment: false, introSoundEnabled: false, bodyCheck: 'uit' },
 };
 
 export const TODAY_PROFILE_ORDER: TodayProfileChoice[] = ['alles', 'belangrijkst', 'training'];
@@ -45,7 +48,7 @@ export const TODAY_PROFILE_NOTE: Record<TodayProfileChoice, string> = {
   training: 'Alleen je training van vandaag.',
 };
 
-type ProfileInput = Pick<AppSettings, 'overviews' | 'introSoundEnabled'>;
+type ProfileInput = Pick<AppSettings, 'overviews' | 'introSoundEnabled' | 'bodyCheck'>;
 
 // De losse waarden van dit moment, met de standaard waar een waarde ontbreekt.
 export function todayCardValues(settings: Partial<ProfileInput>): TodayCardValues {
@@ -58,6 +61,7 @@ export function todayCardValues(settings: Partial<ProfileInput>): TodayCardValue
     weeklyQuestion: o.weeklyQuestion,
     completionMoment: o.completionMoment,
     introSoundEnabled: settings.introSoundEnabled !== false,
+    bodyCheck: resolveBodyCheck(settings),
   };
 }
 
@@ -72,7 +76,7 @@ export function todayProfileValues(profile: TodayProfileChoice): TodayCardValues
   return { ...PROFILES[profile] };
 }
 
-// De wijziging voor updateSettings: alleen de zeven sleutels, de rest van de overzichten
+// De wijziging voor updateSettings: alleen de acht sleutels, de rest van de overzichten
 // (dag van de terugblik, ochtend begint om, beste moment, kleding) blijft staan.
 export function todayProfilePatch(profile: TodayProfileChoice, settings: Partial<Pick<AppSettings, 'overviews'>>): ProfileInput {
   const v = todayProfileValues(profile);
@@ -85,5 +89,5 @@ export function todayProfilePatch(profile: TodayProfileChoice, settings: Partial
     weeklyQuestion: v.weeklyQuestion,
     completionMoment: v.completionMoment,
   };
-  return { overviews, introSoundEnabled: v.introSoundEnabled };
+  return { overviews, introSoundEnabled: v.introSoundEnabled, bodyCheck: v.bodyCheck };
 }

@@ -90,9 +90,13 @@ export function recurringSpots(input: {
     if (part) hits.push({ part, side: '', week: c.weekStart, level: 2, open: false });
   }
 
+  // Een melding met kant en een markering zonder kant voor hetzelfde deel in dezelfde week zijn
+  // dezelfde plek: de markering telt dan niet apart mee (anders staat de knie er twee keer).
+  const sidedKey = new Set(hits.filter((h) => h.side).map((h) => `${h.part}|${h.week}`));
   const groups = new Map<string, Hit[]>();
   for (const h of hits) {
     if (!weekList.includes(h.week)) continue;
+    if (!h.side && sidedKey.has(`${h.part}|${h.week}`)) continue;
     const key = `${h.part}|${h.side}`;
     groups.set(key, [...(groups.get(key) ?? []), h]);
   }

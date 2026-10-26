@@ -29,3 +29,10 @@ export function isOpenOn(note: Pick<InjuryNote, 'kind' | 'date' | 'resolvedDate'
   if (isSoreness(note) && daysBetween(note.date, today) >= SORENESS_OPEN_DAYS) return false;
   return true;
 }
+
+// Is er sinds `since` een melding bijgekomen of opgelost die de planning kan raken? Spierpijn en
+// stijf tellen niet: die blokkeren niets (zie de kop van dit bestand). `since` is een tijdstip of
+// een datum; vergeleken wordt als tekst, zoals de datums van een melding.
+export function injuryChangedSince(notes: Pick<InjuryNote, 'kind' | 'date' | 'resolvedDate'>[], since: string): boolean {
+  return notes.some((n) => !isSoreness(n) && (n.date > since || (!!n.resolvedDate && n.resolvedDate > since)));
+}

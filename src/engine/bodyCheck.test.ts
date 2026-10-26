@@ -282,6 +282,13 @@ describe('de markering van de week', () => {
     expect(third[0]).toMatchObject({ area: 'Kuit', severity: 'ernstig' });
   });
 
+  it('een zwaarder antwoord van deze week blijft staan bij een nieuwe pijnmelding', () => {
+    for (const trouble of ['niet_kunnen', 'minder'] as const) {
+      const heavy = [{ weekStart: week, trouble, area: 'Rug', severity: 'mild' as const }];
+      expect(answerWeek(heavy, week, { kind: 'melding', soreness: false, area: 'Knie', severity: 'ernstig' })).toEqual(heavy);
+    }
+  });
+
   it('spierpijn en stijf sluiten de week zonder er een klacht van te maken', () => {
     expect(answerWeek(undefined, week, { kind: 'melding', soreness: true, area: 'Quadriceps', severity: 'licht' })).toEqual([{ weekStart: week, trouble: 'geen' }]);
     const pain = answerWeek(undefined, week, { kind: 'melding', soreness: false, area: 'Knie', severity: 'matig' });

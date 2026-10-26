@@ -144,15 +144,15 @@ describe('klachten', () => {
   it('telt alleen open klachten voor de stip', () => {
     const open = note({ id: 'a' });
     const done = note({ id: 'b', bodyPart: 'Kuit links', resolvedDate: '2026-10-22' });
-    expect(openComplaintsBySpot([open, done])).toEqual({ 'knie-r': [open] });
+    expect(openComplaintsBySpot([open, done], '2026-10-26')).toEqual({ 'knie-r': [open] });
   });
 
   it('sorteert nieuw naar oud en scheidt open van opgelost', () => {
     const a = note({ id: 'a', date: '2026-10-01' });
     const b = note({ id: 'b', date: '2026-10-10' });
     const c = note({ id: 'c', date: '2026-09-01', resolvedDate: '2026-09-10' });
-    expect(openComplaints([a, b, c]).map((n) => n.id)).toEqual(['b', 'a']);
-    expect(resolvedComplaints([a, b, c]).map((n) => n.id)).toEqual(['c']);
+    expect(openComplaints([a, b, c], '2026-10-26').map((n) => n.id)).toEqual(['b', 'a']);
+    expect(resolvedComplaints([a, b, c], '2026-10-26').map((n) => n.id)).toEqual(['c']);
   });
 });
 

@@ -8,7 +8,6 @@ import type { Stretch } from '../models/training';
 import { BODY_CARE, GENERAL_RED_FLAGS, type BodyCare } from '../data/bodyCare';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
 import { isOpenOn, isSoreness, sorenessEnd } from './injuryKind';
-import { todayISO } from '../utils/dates';
 import { BODY_SPOTS, STRETCH_AREA_SPOT, type BodySide, type BodySpot, type BodyView } from '../data/bodySpots';
 import {
   COOLDOWN_LOWER, COOLDOWN_RECOVERY, COOLDOWN_RUN, COOLDOWN_UPPER, DYNAMIC_WARMUP, EVENING_ROUTINE, MORNING_ROUTINE, PROBLEM_AREAS,
@@ -272,8 +271,8 @@ export function sideOfInjury(note: Pick<InjuryNote, 'bodyPart' | 'side'>): SideC
 }
 
 // Open op een dag: pijn tot je hem oplost, spierpijn en stijf na 7 dagen vanzelf dicht (afgeleid
-// bij het lezen, nooit geschreven). Zonder dag geldt vandaag.
-export function isOpen(note: InjuryNote, today: string = todayISO()): boolean {
+// bij het lezen, nooit geschreven). De dag geef je zelf mee.
+export function isOpen(note: InjuryNote, today: string): boolean {
   return isOpenOn(note, today);
 }
 
@@ -286,7 +285,7 @@ export function closedOn(note: InjuryNote): string | undefined {
 
 // Open klachten per plek, voor de amber stip en voor het detail van een plek. Spierpijn en stijf
 // tellen hier niet: die hebben een eigen, rustige weergave.
-export function openComplaintsBySpot(notes: InjuryNote[], today: string = todayISO()): Record<string, InjuryNote[]> {
+export function openComplaintsBySpot(notes: InjuryNote[], today: string): Record<string, InjuryNote[]> {
   const out: Record<string, InjuryNote[]> = {};
   for (const note of notes.filter((n) => isOpen(n, today) && !isSoreness(n))) {
     for (const spot of spotsForInjury(note)) (out[spot.id] ??= []).push(note);
@@ -295,7 +294,7 @@ export function openComplaintsBySpot(notes: InjuryNote[], today: string = todayI
 }
 
 // Open spierpijn en stijf per plek: de salieglans op het figuur.
-export function openSorenessBySpot(notes: InjuryNote[], today: string = todayISO()): Record<string, InjuryNote[]> {
+export function openSorenessBySpot(notes: InjuryNote[], today: string): Record<string, InjuryNote[]> {
   const out: Record<string, InjuryNote[]> = {};
   for (const note of notes.filter((n) => isOpen(n, today) && isSoreness(n))) {
     for (const spot of spotsForInjury(note)) (out[spot.id] ??= []).push(note);
@@ -307,17 +306,17 @@ const byDateDesc = (a: InjuryNote, b: InjuryNote) => (a.date < b.date ? 1 : a.da
 
 // De open klachten van het lijstje onder het figuur: pijn en oude meldingen. Spierpijn en
 // stijf staan niet in dit lijstje (ze verlopen vanzelf), die staan als regel onder het figuur.
-export function openComplaints(notes: InjuryNote[], today: string = todayISO()): InjuryNote[] {
+export function openComplaints(notes: InjuryNote[], today: string): InjuryNote[] {
   return notes.filter((n) => isOpen(n, today) && !isSoreness(n)).sort(byDateDesc);
 }
 
-export function openSoreness(notes: InjuryNote[], today: string = todayISO()): InjuryNote[] {
+export function openSoreness(notes: InjuryNote[], today: string): InjuryNote[] {
   return notes.filter((n) => isOpen(n, today) && isSoreness(n)).sort(byDateDesc);
 }
 
 // Opgelost: wat je zelf als opgelost markeerde, en pijn die dicht is. Spierpijn en stijf die vanzelf
 // sloten staan hier niet: ze komen terug onder "Wat terugkomt" en zouden de lijst alleen vullen.
-export function resolvedComplaints(notes: InjuryNote[], today: string = todayISO()): InjuryNote[] {
+export function resolvedComplaints(notes: InjuryNote[], today: string): InjuryNote[] {
   return notes.filter((n) => !isOpen(n, today) && (!isSoreness(n) || !!n.resolvedDate)).sort(byDateDesc);
 }
 

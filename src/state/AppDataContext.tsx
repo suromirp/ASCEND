@@ -314,6 +314,7 @@ import { raceBlocks, afterGoalWindows, isRaceGoal } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
 import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
 import { isMarathonGoal, mainGoal } from '../engine/mainGoal';
+import { injuryChangedSince } from '../engine/injuryKind';
 
 interface AppData {
   loading: boolean;
@@ -1164,7 +1165,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       goalEnteredNewPhaseSinceBlockStart: overviews.some((o) => o.focus.reasons.some((r) => r.component === 'phase')),
       availabilityOrPriorityChangedSinceBlockStart: Boolean(engineConfig.updatedAt && engineConfig.updatedAt > currentStrategy.updatedAt),
       recentLegConflictCount,
-      injuryChangedSinceBlockStart: injuries.some((n) => n.date > currentStrategy.updatedAt || (n.resolvedDate && n.resolvedDate > currentStrategy.updatedAt)),
+      injuryChangedSinceBlockStart: injuryChangedSince(injuries, currentStrategy.updatedAt),
     };
 
     const triggers = computeStrengthReviewTriggers(signals);

@@ -372,7 +372,8 @@ export function suggestionFor(spot: BodySpot, kind: InjuryKind, severity?: Injur
 // plek en de ernst van een melding voor de coachregel van de weekterugblik (engine/weekReview.ts):
 // - Voel me fris: { trouble: 'geen' }.
 // - Een melding van spierpijn of stijf: ook 'geen', want het blokkeert niets.
-// - Een pijnmelding: 'wel_gewoon' met de plek en de ernst; een tweede melding houdt de zwaarste.
+// - Een pijnmelding: 'wel_gewoon' met de plek en de ernst; een tweede melding houdt de zwaarste, en
+//   een zwaarder antwoord ('niet_kunnen' of 'minder') van deze week blijft altijd staan.
 // - Niet nu: { trouble: 'geen', laterOn } zolang de week nog niet beantwoord is.
 const SEVERITY_RANK: Record<TroubleSeverity, number> = { mild: 1, matig: 2, ernstig: 3 };
 const TROUBLE_SEVERITY: Record<InjurySeverity, TroubleSeverity> = { licht: 'mild', matig: 'matig', ernstig: 'ernstig' };
@@ -394,6 +395,8 @@ export function answerWeek(checks: WeeklyHealthCheck[] | undefined, weekStart: s
     next = answered ?? { weekStart, trouble: 'geen' };
   } else {
     const severity = TROUBLE_SEVERITY[answer.severity];
+    // Een zwaarder antwoord van deze week (kon niet trainen, minder getraind) blijft staan.
+    if (answered && (answered.trouble === 'niet_kunnen' || answered.trouble === 'minder')) return [...others, answered].sort((a, b) => a.weekStart.localeCompare(b.weekStart)).slice(-26);
     const keep = answered?.severity !== undefined && SEVERITY_RANK[answered.severity] >= SEVERITY_RANK[severity];
     next = keep && answered ? answered : { weekStart, trouble: 'wel_gewoon', area: answer.area, severity };
   }

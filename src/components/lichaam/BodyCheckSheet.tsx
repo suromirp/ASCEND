@@ -245,9 +245,9 @@ function Suggestion({
       )}
 
       <PrimaryButton onClick={onDone}>Klaar</PrimaryButton>
-      <div className="-mt-2 flex items-center justify-between gap-3">
+      <div className="-mt-2 flex flex-col items-start">
         <TextButton onClick={onAll} icon="verder">Alles voor deze plek</TextButton>
-        <span className="text-right text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je planning verandert niet.</span>
+        <span className="whitespace-nowrap text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je planning verandert niet.</span>
       </div>
     </>
   );

@@ -62,4 +62,19 @@ describe('wat terugkomt', () => {
     expect(recurringSpots({ notes: [note({ kind: 'spierpijn', bodyPart: 'Kuit', date: '2026-01-05' }), note({ kind: 'spierpijn', bodyPart: 'Kuit', date: '2026-01-12' })], logs: [], today: TODAY })).toEqual([]);
     expect(recurrenceRange(TODAY)).toEqual({ from: '2026-09-07', to: TODAY });
   });
+
+  it('zet dezelfde knie niet twee keer neer als de melding een kant heeft en het weekantwoord niet', () => {
+    const out = recurringSpots({
+      notes: [note({ bodyPart: 'Knie rechts', date: '2026-10-20' }), note({ bodyPart: 'Knie rechts', date: '2026-10-13', resolvedDate: '2026-10-14' })],
+      logs: [],
+      checks: [
+        { weekStart: '2026-10-19', trouble: 'wel_gewoon', area: 'Knie', severity: 'mild' },
+        { weekStart: '2026-10-12', trouble: 'wel_gewoon', area: 'Knie', severity: 'mild' },
+      ],
+      today: TODAY,
+    });
+    expect(out).toHaveLength(1);
+    expect(out[0].key).toBe('Knie|rechts');
+    expect(out[0].weeks).toBe(3);
+  });
 });

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { BODY_VIEWS, breakableSpotName, noteTitle, openComplaints, openComplaintsBySpot, openSoreness, openSorenessBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
 import { recurrenceRange, recurringSpots, RECURRENCE_WEEKS, type RecurringSpot } from '../engine/bodyRecurrence';
+import type { InjuryNote } from '../models/injury';
 import { kindOf } from '../engine/injuryKind';
 import { todayISO } from '../utils/dates';
 import { scrollMainToTop } from '../utils/scrollMain';
@@ -28,24 +29,24 @@ export function BodyPage() {
   const [reporting, setReporting] = useState(false);
 
   const { figure } = resolveFigure(settings);
-  const bySpot = useMemo(() => openComplaintsBySpot(injuryNotes), [injuryNotes]);
+  const today = todayISO();
+  const bySpot = useMemo(() => openComplaintsBySpot(injuryNotes, today), [injuryNotes, today]);
   const flagged = useMemo(() => new Set(Object.keys(bySpot)), [bySpot]);
-  const open = useMemo(() => openComplaints(injuryNotes), [injuryNotes]);
-  const resolved = useMemo(() => resolvedComplaints(injuryNotes), [injuryNotes]);
-  const soreness = useMemo(() => openSoreness(injuryNotes), [injuryNotes]);
+  const open = useMemo(() => openComplaints(injuryNotes, today), [injuryNotes, today]);
+  const resolved = useMemo(() => resolvedComplaints(injuryNotes, today), [injuryNotes, today]);
+  const soreness = useMemo(() => openSoreness(injuryNotes, today), [injuryNotes, today]);
 
   // Wat terugkomt: afgeleid bij het lezen uit de meldingen, de pijn van trainingen en de oude
   // weekantwoorden, nooit opgeslagen. De plekken ervan krijgen een zachte salieglans op het
   // figuur, net als open spierpijn en stijf (rustiger).
-  const today = todayISO();
   const recurring = useMemo(() => recurringSpots({ notes: injuryNotes, logs: sessionLogs, checks: settings.weeklyHealthChecks, today }), [injuryNotes, sessionLogs, settings.weeklyHealthChecks, today]);
   const glow = useMemo(() => {
     const out: Record<string, GlowLevel> = {};
     const put = (id: string, level: GlowLevel) => { out[id] = Math.max(out[id] ?? 0, level) as GlowLevel; };
     for (const r of recurring) for (const id of r.spotIds) put(id, r.weeks >= 5 ? 3 : r.weeks >= 3 ? 2 : 1);
-    for (const id of Object.keys(openSorenessBySpot(injuryNotes))) put(id, 1);
+    for (const id of Object.keys(openSorenessBySpot(injuryNotes, today))) put(id, 1);
     return out;
-  }, [recurring, injuryNotes]);
+  }, [recurring, injuryNotes, today]);
   const range = recurrenceRange(today);
   const pickRecurring = (item: RecurringSpot) => {
     const spot = spotById(item.spotId);
@@ -128,7 +129,7 @@ export function BodyPage() {
         ))}
         {soreness.length > 0 && (
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            Deze week: {soreness.map((n) => `${kindOf(n)} in je ${noteTitle(n).toLowerCase()}`).join(', ')}. Dat gaat vanzelf weer dicht.
+            Deze week: {sorenessPhrases(soreness)}. Dat gaat vanzelf weer dicht.
           </p>
         )}
         <div>
@@ -150,4 +151,10 @@ export function BodyPage() {
       <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Algemene uitleg, geen diagnose. Twijfel je, vraag het een fysio of je huisarts.</p>
     </div>
   );
+}
+
+// "spierpijn in je bovenbenen, stijfheid in je knie": elke soort en plek een keer.
+function sorenessPhrases(notes: InjuryNote[]): string {
+  const phrases = notes.map((n) => `${kindOf(n) === 'stijf' ? 'stijfheid' : kindOf(n)} in je ${noteTitle(n).toLowerCase()}`);
+  return phrases.filter((p, i) => phrases.indexOf(p) === i).join(', ');
 }
