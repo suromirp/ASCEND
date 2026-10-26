@@ -13,8 +13,9 @@ import { BudgetSheet, SportSheet } from './PlanningSheets';
 import { SummaryRow } from './SummaryRow';
 import { rowShown } from './rowShown';
 import type { GroupProps } from './types';
+import { FAST_GROWTH_WARNING, resolveLongRunGrowth } from '../../../engine/runGrowth';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
-import { ChoiceSheet } from '../Sheet';
+import { ChoiceList, ChoiceSheet } from '../Sheet';
 
 const SPORTS: Sport[] = SPORT_LIST;
 const WEEKDAYS_NL = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag'];
@@ -30,6 +31,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
   // Een keuze in het blad Dagen en tijd opent haar onderblad bovenop dat blad.
   const [inner, setInner] = useState<string | null>(null);
   const closeInner = () => setInner(null);
+  const [advancedGrowth, setAdvancedGrowth] = useState(false);
   const sport = SPORTS.find((s) => sheet === `sport-${s}`);
   const restDay = settings.restDay ?? 1;
 
@@ -119,11 +121,54 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           value={facts.ambition.chosen}
           onPick={(v) => { if (v !== facts.ambition.chosen) void plan.changeSetting(`Ambitie: ${choiceShort('ambitie', v)}`, { ambition: v }, 'Volgt je nieuwe ambitie.'); }}
           onClose={close}
-          footer={facts.ambition.chosen !== facts.ambition.effective && facts.ambition.reason
-            ? <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-warning)' }}>{`Nu tijdelijk Standaard. ${facts.ambition.reason} Gaat het weer goed, dan staat Stevig vanzelf weer aan.`}</p>
-            : undefined}
+          footer={
+            <>
+              {facts.ambition.chosen !== facts.ambition.effective && facts.ambition.reason && (
+                <p className="st-hint" style={{ marginLeft: 0, color: 'var(--color-warning)' }}>{`Nu tijdelijk Standaard. ${facts.ambition.reason} Gaat het weer goed, dan staat Stevig vanzelf weer aan.`}</p>
+              )}
+              <div style={{ marginTop: 16 }}>
+                <SettingsList>
+                  <SummaryRow id="lange-loop" title="Groei van de lange loop" facts={facts} info="langeLoopGroei" onClick={() => setInner('lange-loop')} />
+                </SettingsList>
+              </div>
+            </>
+          }
         />
       )}
+      {inner === 'lange-loop' && (() => {
+        const current = resolveLongRunGrowth(settings.longRunGrowth);
+        const pick = (v: ReturnType<typeof resolveLongRunGrowth>) => {
+          if (v === current) return;
+          void plan.changeSetting(
+            `Groei van de lange loop: ${choiceShort('langeLoopGroei', v)}`,
+            { longRunGrowth: v },
+            v === 'fast' ? FAST_GROWTH_WARNING : 'Volgt je keuze voor de groei van de lange loop.',
+          );
+        };
+        const main = { ...CHOICES.langeLoopGroei, options: CHOICES.langeLoopGroei.options.filter((o) => o.value !== 'fast') };
+        const fast = CHOICES.langeLoopGroei.options.filter((o) => o.value === 'fast').map((o) => ({ value: o.value, label: o.label, note: o.note }));
+        return (
+          <ChoiceFromDef
+            def={main}
+            value={current}
+            onPick={pick}
+            onClose={closeInner}
+            footer={
+              <div style={{ marginTop: 16 }}>
+                <button type="button" className="st-more" aria-expanded={advancedGrowth || current === 'fast'} onClick={() => setAdvancedGrowth((v) => !v)}>
+                  <span>Geavanceerd</span>
+                </button>
+                {(advancedGrowth || current === 'fast') && (
+                  <>
+                    <ChoiceList label="Geavanceerd" options={fast} value={current} onPick={pick} />
+                    <p className="st-hint" style={{ marginLeft: 0 }}>{FAST_GROWTH_WARNING}</p>
+                  </>
+                )}
+              </div>
+            }
+          />
+        );
+      })()}
       {plan.impact}
       {restPlan && (
         <ProposalSheet

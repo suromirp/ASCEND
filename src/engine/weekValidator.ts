@@ -46,6 +46,7 @@ export type CheckRule =
   | 'TWO-HARD-RUNS' // at most one hard run a day
   | 'TEST-DAY' // on a test or race day: nothing else hard, strength after it only with "Zware dingen op één dag"
   | 'AFTER-TEST' // the day after a test or race: no hard run, nothing heavy for the legs but strength
+  | 'AFTER-GOAL' // the days of recovery after a goal (recoveryDaysFor of its kind): no hard training, no heavy leg strength
   | 'LEG-SPACING' // heavy days for the same muscles far enough apart
   | 'TEST-FRESH' // fresh legs for a test or race, by the leg index
   | 'ONE-LONG' // one full long session a week
@@ -71,6 +72,10 @@ export interface CheckInput {
   restDay?: number; // weekday 1 to 7 of the rest day
   goalDay?: string; // the main goal's day: the plan ends the day before
   raceDays?: string[];
+  // The recovery after a goal that is in the plan (a race): `days` days after `date` without a hard
+  // training and without heavy leg strength. The days come from the kind of the goal and its
+  // distance, never from its label (data/goalKinds.ts#recoveryDaysFor).
+  afterGoals?: { date: string; days: number }[];
   program?: Program | null;
   dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>;
   sameDayPairingPreference?: TrainingStrategyProfile['sameDayPairingPreference'];
@@ -89,6 +94,7 @@ export interface CheckInput {
 }
 
 const HORIZON_DAYS = 7 * 44;
+const EASY_ID = 'tpl_easy_run';
 
 function context(input: CheckInput) {
   const byId = new Map(input.templates.map((t) => [t.id, t]));
@@ -112,6 +118,17 @@ function leaveContext(input: CheckInput, byId: Map<string, SessionTemplate>) {
   };
   const inTrek = (s: PlannedSession) => days.get(s.scheduledDate)?.kind === 'trek' && isWalk(s);
   return { days, light, inTrek };
+}
+
+// The goal whose recovery a date falls in (the latest one before it), and which day after it this is.
+function afterGoal(input: CheckInput, date: string): { day: number; date: string } | undefined {
+  let best: number | undefined;
+  let bestDate = '';
+  for (const g of input.afterGoals ?? []) {
+    const d = daysBetween(g.date, date);
+    if (d >= 1 && d <= g.days && (best === undefined || d < best)) { best = d; bestDate = g.date; }
+  }
+  return best === undefined ? undefined : { day: best, date: bestDate };
 }
 
 const day = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${Number(iso.slice(8, 10))}-${Number(iso.slice(5, 7))}`;
@@ -211,6 +228,18 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       findings.push({ rule: 'AFTER-TEST', date: s.scheduledDate, sessionIds: [s.id, testBefore.id], subjectId: s.id, level: level(s), message: `${name} de dag na de ${idHasRole(testBefore.templateId, 'race', byId) ? 'wedstrijd' : 'testloop'}.` });
     }
 
+    // The recovery after a goal: not the first day after a test or race (AFTER-TEST has that),
+    // and not what the goal's own taper made short: the long training in its short version is
+    // easy legs, and from the third day a short leg day is too.
+    const recovery = afterGoal(input, s.scheduledDate);
+    if (recovery && !leave.inTrek(s) && t.type !== 'recovery' && !(recovery.day === 1 && testBefore) && (isHardRun(t) || isLegHeavyTemplate(t))) {
+      const lighter = !!s.plannedMinutes && !!t.durationVariants.short && s.plannedMinutes <= t.durationVariants.short;
+      const easyLegs = lighter && (hasRole(t, 'long') || (t.type === 'strength' && recovery.day >= 3));
+      if (!easyLegs) {
+        findings.push({ rule: 'AFTER-GOAL', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} ${recovery.day} ${recovery.day === 1 ? 'dag' : 'dagen'} na je wedstrijd, je herstelt nog (${day(s.scheduledDate)}).` });
+      }
+    }
+
     // On the test or race day itself: reported on the other session.
     if (isTestOrRace(t)) {
       for (const o of sameDay) {
@@ -292,7 +321,7 @@ const MAX_ROUNDS = 60;
 // A holiday or a trek can ask for a repair per session; those get their own rounds.
 const ROUNDS_PER_LEAVE_FINDING = 2;
 // The order repairs are tried in: what the rest are judged on first.
-const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
+const RULE_ORDER: CheckRule[] = ['WEEK-START', 'DUPLICATE', 'GOAL-DAY', 'LEAVE-OFF', 'LEAVE-LIGHT', 'REST-DAY', 'TEST-DAY', 'DAY-FULL', 'AFTER-TEST', 'AFTER-GOAL', 'TWO-HARD-RUNS', 'TEST-FRESH', 'LEG-SPACING', 'ONE-LONG'];
 const key = (f: Finding) => `${f.rule}:${[...f.sessionIds].sort().join(',')}`;
 // Two findings are the same finding when this is the same.
 export const findingKey = key;
@@ -362,6 +391,26 @@ export function repairWeeks(input: CheckInput): RepairResult {
     return false;
   };
 
+  // A hard training the recovery made easy comes back as it was when that recovery is no longer
+  // there (the goal moved, went, or the days passed): the way a moved leave session goes back.
+  // Only while it is still the system's own and still the easy run; otherwise the mark just goes.
+  // History (logged or past) is left exactly as it is, the mark included. Only a session of the
+  // system itself (lock level 3, not in a trek, not of the race block) is put back; of anything
+  // else the mark just goes.
+  for (const marked of sessions.filter((s) => s.afterGoal && level(s) !== 0)) {
+    const mark = marked.afterGoal!;
+    const { afterGoal: _drop, ...plain } = marked;
+    void _drop;
+    const stillEasy = movable(marked) && marked.templateId === EASY_ID && marked.status === 'planned';
+    if (!stillEasy || !byId.has(mark.templateId)) {
+      sessions = sessions.map((s) => (s.id === marked.id ? plain : s));
+      continue;
+    }
+    if (afterGoal(input, marked.scheduledDate)) continue;
+    sessions = sessions.map((s) => (s.id === marked.id ? { ...plain, templateId: mark.templateId } : s));
+    repairs.push({ sessionId: marked.id, rule: 'AFTER-GOAL', from: marked.scheduledDate, to: marked.scheduledDate, reason: 'je wedstrijd is verschoven of weg, daarom weer de harde training van eerst' });
+  }
+
   const leaveFindings = !input.leave?.length ? 0 : validateWeeks(input).filter((f) => f.rule === 'LEAVE-OFF' || f.rule === 'LEAVE-LIGHT').length;
   const maxRounds = MAX_ROUNDS + leaveFindings * ROUNDS_PER_LEAVE_FINDING;
   for (let round = 0; round < maxRounds; round++) {
@@ -402,6 +451,33 @@ export function repairWeeks(input: CheckInput): RepairResult {
     if (next.rule === 'DUPLICATE' || next.rule === 'GOAL-DAY') {
       sessions = sessions.filter((s) => s.id !== subject.id);
       repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, removed: true });
+      continue;
+    }
+    if (next.rule === 'AFTER-GOAL') {
+      // Another day of that week outside the recovery; else lighter: the short version of a long
+      // training or a leg day (on another day when it must), or a hard run as an easy one.
+      // Never let go: what cannot be made light stays reported.
+      if (relocate(subject, next.rule)) continue;
+      const short = t.durationVariants.short;
+      const canShort = !!short && subject.plannedMinutes !== short && (hasRole(t, 'long') || (t.type === 'strength' && isLegHeavyTemplate(t)));
+      if (canShort) {
+        const lighter = sessions.map((x) => (x.id === subject.id ? { ...x, plannedMinutes: short } : x));
+        if (judge([subject.scheduledDate])(lighter)) {
+          sessions = lighter;
+          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, plannedMinutes: short });
+          continue;
+        }
+        if (relocate(subject, next.rule, [], short)) continue;
+      }
+      if (isHardRun(t) && t.id !== EASY_ID && byId.has(EASY_ID)) {
+        // Marked, so the hard training comes back when the goal moves or goes (restoreAfterGoal below).
+        const mark = { templateId: subject.templateId, date: afterGoal(input, subject.scheduledDate)?.date ?? '' };
+        const easy = sessions.map((x) => (x.id === subject.id ? { ...x, templateId: EASY_ID, ...(mark.date ? { afterGoal: mark } : {}) } : x));
+        if (judge([subject.scheduledDate])(easy)) {
+          sessions = easy;
+          repairs.push({ sessionId: subject.id, rule: next.rule, from: subject.scheduledDate, to: subject.scheduledDate, reason: 'je herstelt nog van je wedstrijd, daarom een rustig loopje in plaats van een harde training' });
+        }
+      }
       continue;
     }
     if (next.rule === 'TEST-FRESH') {
@@ -479,6 +555,7 @@ const REASON: Record<RepairRule, string> = {
   'TWO-HARD-RUNS': 'niet twee harde loopjes op één dag',
   'TEST-DAY': 'niets zwaars op de dag van een test of wedstrijd',
   'AFTER-TEST': 'de dag na een test of wedstrijd niets zwaars',
+  'AFTER-GOAL': 'je herstelt nog van je wedstrijd: niets hards en geen zware beenkracht',
   'LEG-SPACING': 'genoeg ruimte tussen zware dagen voor dezelfde spieren',
   'TEST-FRESH': 'frisse benen voor de test',
   'ONE-LONG': 'één volle lange training per week',

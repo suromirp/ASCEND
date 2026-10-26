@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { InjuryNote, InjurySeverity } from '../../models/injury';
 import { SEVERITY_CHOICES } from '../../data/bodyCare';
-import { spotForComplaint } from '../../engine/bodyMap';
+import { closedOn, spotForComplaint } from '../../engine/bodyMap';
 import { formatDateNL } from '../../utils/dates';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Card, PrimaryButton, SecondaryButton } from '../ui';
@@ -93,7 +93,7 @@ export function ResolvedComplaint({ note, onDelete }: { note: InjuryNote; onDele
       <div className="min-w-0">
         <p className="text-base" style={{ color: 'var(--color-ink)' }}>{note.bodyPart}</p>
         <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-          {formatDateNL(note.date)}{note.resolvedDate ? ` tot ${formatDateNL(note.resolvedDate)}` : ''}
+          {formatDateNL(note.date)}{closedOn(note) ? ` tot ${formatDateNL(closedOn(note)!)}` : ''}
         </p>
       </div>
       <TextButton tone="dim" onClick={() => setConfirming(true)} aria-label={`${note.bodyPart} verwijderen`}>Verwijderen</TextButton>

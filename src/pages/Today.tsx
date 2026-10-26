@@ -38,6 +38,7 @@ import { ForecastAdjustmentBanner } from '../components/ForecastAdjustmentBanner
 import { ScheduleAnomalyCard } from '../components/ScheduleAnomalyCard';
 import { QuoteCard } from '../components/QuoteCard';
 import { WeekReviewCard } from '../components/WeekReview';
+import { BodyCheckCard } from '../components/BodyCheckCard';
 import { JourneyWeekCard } from '../components/JourneyWeekCard';
 import { WeeklyQuestionCard } from '../components/WeeklyQuestionCard';
 import { reviewWeekToShow, morningCheckInMode, showWeeklyQuestion } from '../engine/overviewSettings';
@@ -370,6 +371,8 @@ function TodayContent() {
       <CoachCard />
 
       {reviewWeek && <WeekReviewCard weekStart={reviewWeek} />}
+
+      <BodyCheckCard />
 
       <YourDay>
         {isMorning && stretchRow}

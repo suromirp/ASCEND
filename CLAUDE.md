@@ -352,6 +352,19 @@ background; whatever changes the plan waits for the queued syncs and then reads
 the stored plan (`docs/beslissingen/2026-10-22-openen-wacht-niet-op-de-planning.md`). Design and
 reasoning: `docs/onderzoek/Planning op een lijn.md`.
 
+**The planning reads the label of a goal** (Top, Voortop, Verkenning; `engine/goalLabels.ts`,
+`engine/goalConflicts.ts`, `engine/runGrowth.ts`, decision
+`docs/beslissingen/2026-10-26-planning-met-labels.md`). The label sets the taper of a race in the race
+block: Top the race week, Voortop the short taper of its kind (`taperDaysFor`), Verkenning none, but the
+race stands on its day as an anchor. The recovery after a race follows the kind and the distance
+(`recoveryDaysFor`), never the label: rule AFTER-GOAL in the week check moves or lightens only the system's
+own sessions and announces it. Goals that come too close (`goalConflicts`) are said in plain words in the
+proposal when a goal is added or moved, in a fixed order (shorten the taper, one label lower, say it
+honestly); "Toch allebei" is kept as `TrainingGoal.conflictAccepted` (the date of the other goal) and the
+safety limits between heavy leg days stay. With a running goal as Top or Voortop and no tocht as main goal,
+the long run grows every two weeks toward the race (`Program.runBuild`), under the 110% cap on your own
+logs, and the first week after a race it is at most half the race.
+
 **First ask, then plan** (`storage/database.ts#seedIfEmpty`, `engine/firstPlan.ts`,
 `engine/weekShape.ts`, decision `docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md`):
 a new install plans nothing. The app starts with `seedIfEmpty({ withProgram: false })`: only
@@ -447,6 +460,14 @@ INJURY-LEGS recognises it; a new leg spot belongs in `LEG_BODY_PARTS`. Reporting
 does not change the planning; once it does, it goes through a proposal with
 Akkoord. Care texts say "kan helpen", never "voorkomt", with the strength of the
 evidence from `docs/onderzoek/`.
+
+**Hoe voelt je lijf?** (`engine/bodyCheck.ts`, decision
+`docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`) replaces the weekly complaints question: a
+card on Vandaag only when there is a reason (setting `bodyCheck`), "Voel me fris" or tap a spot,
+then spierpijn, stijf or pijn and the side (nek, bovenrug and onderrug also `midden`). It writes
+to the same `InjuryNote` list as Lichaam (`kind`, `side`); spierpijn and stijf never count as an
+injury and close after 7 days when read (`engine/injuryKind.ts`). "Wat terugkomt" on Lichaam is
+derived, never stored (`engine/bodyRecurrence.ts`).
 
 **Forge** compares each exercise now against 4 and 8 weeks back and the best ever
 (`engine/forgeHistory.ts`, decision

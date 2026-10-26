@@ -25,28 +25,40 @@ describe('profiel Kaarten op Vandaag', () => {
     expect(new Set(json).size).toBe(3);
   });
 
-  it('elke combinatie van de zeven schakelaars is een profiel of aangepast', () => {
+  it('elke combinatie van de schakelaars is een profiel of aangepast', () => {
     const fitting = TODAY_PROFILE_ORDER.map((p) => todayProfileValues(p));
     let aangepast = 0;
     for (const sound of [true, false]) {
+     for (const bodyCheck of ['reden', 'elke-week', 'uit'] as const) {
       for (let mask = 0; mask < 1 << FLAGS.length; mask++) {
         const overviews = Object.fromEntries(FLAGS.map((k, i) => [k, (mask & (1 << i)) !== 0]));
-        const now = { ...overviews, introSoundEnabled: sound } as unknown as TodayCardValues;
-        const idx = fitting.findIndex((v) => FLAGS.every((k) => v[k] === now[k]) && v.introSoundEnabled === sound);
-        const got = matchTodayProfile({ overviews, introSoundEnabled: sound });
+        const now = { ...overviews, introSoundEnabled: sound, bodyCheck } as unknown as TodayCardValues;
+        const idx = fitting.findIndex((v) => FLAGS.every((k) => v[k] === now[k]) && v.introSoundEnabled === sound && v.bodyCheck === bodyCheck);
+        const got = matchTodayProfile({ overviews, introSoundEnabled: sound, bodyCheck });
         if (idx >= 0) expect(got).toBe(TODAY_PROFILE_ORDER[idx]);
         else {
           expect(got).toBe('aangepast');
           aangepast++;
         }
       }
+     }
     }
-    expect(aangepast).toBe(2 * 64 - 3);
+    expect(aangepast).toBe(2 * 3 * 64 - 3);
   });
 
   it('een ontbrekende geluidswaarde telt als aan, een enkele afwijking als aangepast', () => {
     expect(matchTodayProfile({ overviews: {} })).toBe('alles');
     expect(matchTodayProfile({ overviews: { weatherLine: false } })).toBe('aangepast');
     expect(matchTodayProfile({ introSoundEnabled: false })).toBe('aangepast');
+  });
+
+  it('de kaart Hoe voelt je lijf? hoort bij het profiel', () => {
+    expect(todayProfileValues('alles').bodyCheck).toBe('reden');
+    expect(todayProfileValues('belangrijkst').bodyCheck).toBe('reden');
+    expect(todayProfileValues('training').bodyCheck).toBe('uit');
+    expect(todayProfilePatch('training', {}).bodyCheck).toBe('uit');
+    expect(matchTodayProfile({ bodyCheck: 'uit' })).toBe('aangepast');
+    expect(matchTodayProfile({ bodyCheck: 'elke-week' })).toBe('aangepast');
+    expect(matchTodayProfile({ bodyCheck: 'rommel' as never })).toBe('alles');
   });
 });

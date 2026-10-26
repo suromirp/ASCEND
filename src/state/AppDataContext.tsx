@@ -187,7 +187,7 @@ let planRevision = 0;
 // substitutions.ts, engine/scheduler.ts). Set before the sync too, so the
 // sync and its week check never work with the state of the refresh before
 // (docs/onderzoek/Planning op een lijn.md, conflict 10).
-function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], planned: PlannedSession[], logs: SessionLog[], loadedSettings: AppSettings) {
+function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], planned: PlannedSession[], logs: SessionLog[], loadedSettings: AppSettings, goals: TrainingGoal[]) {
   // Volume after illness follows the illness history everywhere a duration
   // is shown or planned; strength trainings take your estimate or the
   // duration learned from logs; the ambition in force (engine/durationScope.ts).
@@ -195,7 +195,9 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
   setDurationAdjustments(scope.durationAdjustments);
   // No session in the next two weeks asks for more than 110% of the
   // longest of its kind in the last 30 days.
-  setRecentSessionMaxima(recentSessionMaxima(logs, todayISO()));
+  // A run on the date of a running goal is that race (engine/runGrowth.ts), not a reference for the 110%.
+  const raceGoalDates = new Set(goals.filter((g) => g.targetDate && isRaceGoal(g)).map((g) => g.targetDate!));
+  setRecentSessionMaxima(recentSessionMaxima(logs, todayISO(), raceGoalDates));
   setLearnedDurations(scope.learnedDurations);
   setHardSameDayAllowed(!!loadedSettings.hardSameDay);
   // The planner's leg index with the same inputs as the Benen card.
@@ -209,8 +211,8 @@ function setPlanningRegisters(program: Program | null, tpls: SessionTemplate[], 
 // not accept: it passes its own registers to the planning run
 // (storage/horizonPlan.ts, Warden Planning punt 3).
 async function primePlanningRegisters() {
-  const [programs, tpls, planned, logs, loadedSettings] = await Promise.all([ProgramsRepo.getAll(), SessionTemplatesRepo.getAll(), PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), SettingsRepo.get()]);
-  setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings);
+  const [programs, tpls, planned, logs, loadedSettings, goals] = await Promise.all([ProgramsRepo.getAll(), SessionTemplatesRepo.getAll(), PlannedSessionsRepo.getAll(), SessionLogsRepo.getAll(), SettingsRepo.get(), TrainingGoalsRepo.getAll()]);
+  setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings, goals);
 }
 
 // What the week check put right in the last sync, until refresh() shows it.
@@ -245,13 +247,15 @@ async function horizonKey(): Promise<string> {
       settings.leavePeriods,
       // Soft or strict rest after a bergtocht: switching it plans again at once.
       settings.trekLegRest,
+      // How fast the long run grows toward a race (engine/runGrowth.ts).
+      settings.longRunGrowth,
       // Planning after the main goal (engine/programLayout.ts#planEndDay).
       settings.afterMainGoal,
       // The fourth run in Opbouw (engine/extraRun.ts) is off on Rustig.
       settings.ambition,
       // Tussendoelen (engine/raceBlock.ts) change the plan too. The rucksack
       // target of the main goal sets the pack ladder (engine/packLadder.ts).
-      goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.requirements.length, packWeightOf(g.requirements)]),
+      goals.map((g) => [g.id, g.status, g.targetDate, g.planRole, g.priorityChosen, g.requirements.length, packWeightOf(g.requirements)]),
     ]);
 }
 
@@ -306,10 +310,11 @@ import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from
 import { planEndDay, programAnchorDate } from '../engine/programLayout';
 import { rankFocusGaps } from '../engine/extraRun';
 import { aerobicTrend, progressMoment, type ProgressCelebrated } from '../engine/aerobicTrend';
-import { raceBlocks } from '../engine/raceBlock';
+import { raceBlocks, afterGoalWindows, isRaceGoal } from '../engine/raceBlock';
 import { withTargetMinutes } from '../engine/goals';
 import { needsWeather, showCompletionQuote, showWeatherSwap } from '../engine/overviewSettings';
 import { isMarathonGoal, mainGoal } from '../engine/mainGoal';
+import { injuryChangedSince } from '../engine/injuryKind';
 
 interface AppData {
   loading: boolean;
@@ -709,7 +714,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setInjuryNotes(injuries);
     setCapabilityEvidence(manualEvidence);
     setGoalEngineConfig(engineConfig);
-    setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings);
+    setPlanningRegisters(programs[0] ?? null, tpls, planned, logs, loadedSettings, goals);
     setSettings(loadedSettings);
     setStretchCompletion(loadedStretchCompletion);
     setStrengthProgramStrategies(strengthStrategies);
@@ -1160,7 +1165,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       goalEnteredNewPhaseSinceBlockStart: overviews.some((o) => o.focus.reasons.some((r) => r.component === 'phase')),
       availabilityOrPriorityChangedSinceBlockStart: Boolean(engineConfig.updatedAt && engineConfig.updatedAt > currentStrategy.updatedAt),
       recentLegConflictCount,
-      injuryChangedSinceBlockStart: injuries.some((n) => n.date > currentStrategy.updatedAt || (n.resolvedDate && n.resolvedDate > currentStrategy.updatedAt)),
+      injuryChangedSinceBlockStart: injuryChangedSince(injuries, currentStrategy.updatedAt),
     };
 
     const triggers = computeStrengthReviewTriggers(signals);
@@ -2036,10 +2041,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return planHorizonChangeImpl({
       title: `${goal.name || 'Je doel'}: ${role === 'secondary' ? 'tussendoel' : 'alleen volgen'}`,
       why: role === 'secondary' ? 'Je traint nu voor deze wedstrijd.' : 'Je volgt deze wedstrijd alleen.',
-      explanation: 'Een tussendoel krijgt een eigen blok in je planning: kwaliteitstrainingen, een testloop en een lichte wedstrijdweek. Alleen volgen haalt dat blok weg. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
+      explanation: 'Een tussendoel krijgt een eigen blok in je planning: kwaliteitstrainingen, een testloop en een lichte wedstrijdweek. Alleen volgen haalt dat blok weg; de wedstrijd zelf komt dan als training op zijn dag in je planning, met de dag ervoor licht voor de benen. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
       trigger: 'goal_changed',
       // The main goal (Top) keeps its label: this choice is only for a race next to it.
-      goals: [{ ...goal, planRole: role, priority: goal.priority === 'top' ? 'top' : role === 'secondary' ? 'voortop' : 'verkenning', updatedAt: new Date().toISOString() }],
+      goals: [{ ...goal, planRole: role, priority: goal.priority === 'top' ? 'top' : role === 'secondary' ? 'voortop' : 'verkenning', ...(goal.priority === 'top' ? {} : { priorityChosen: true }), updatedAt: new Date().toISOString() }],
     });
   }, [planHorizonChangeImpl]);
 
@@ -2230,7 +2235,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // The weeks near, and the weeks of a period further away.
     const until = [addDays(today, 28), ...(periods ?? []).map((p) => addDays(p.endDate, 21))].sort().pop()!;
     return planPass(sessions, {
-      today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
+      today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), afterGoals: afterGoalWindows(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
       slotDays: patternDays(templates, settings, restDay),
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
@@ -2257,7 +2262,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       context: (periods) => {
         let n = 0;
         return {
-          today, logs: sessionLogs, templates, program, blocks, restDay, goalDay: anchor,
+          today, logs: sessionLogs, templates, program, blocks, afterGoals: afterGoalWindows(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
           dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
           slotDays,
           minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
@@ -2291,7 +2296,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return planRestDayChange({
       restDay, sessions: plannedSessions, logs: sessionLogs, templates, today, anchor,
       context: {
-        today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
+        today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), afterGoals: afterGoalWindows(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
         dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
         slotDays: patternDays(templates, settings, restDay),
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),

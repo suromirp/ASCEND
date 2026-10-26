@@ -3,6 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
 import { resolveNavigation } from '../../../engine/navigationSettings';
+import { resolveBodyCheck } from '../../../engine/bodyCheckSettings';
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveSky } from '../../../engine/skySettings';
 import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
@@ -115,6 +116,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
               <SettingsList>
                 <SummaryRow id="ochtendcheck" title="Ochtendcheck" facts={facts} info="ochtendcheck" onChange={(on) => set({ morningCheckIn: on })} />
                 <SummaryRow id="weekterugblik" title="Weekterugblik" facts={facts} onChange={(on) => set({ weekReview: on })} />
+                <SummaryRow id="lijfvraag" title="Hoe voelt je lijf?" facts={facts} info="lijfvraag" onClick={() => setInner('lijfvraag')} />
                 <SummaryRow id="weekvraag" title="Vraag van de week" facts={facts} onChange={(on) => set({ weeklyQuestion: on })} />
                 <SummaryRow id="citaten" title="Citaat na een training" facts={facts} onChange={(on) => set({ completionMoment: on })} />
                 <SummaryRow id="geluid" title="Geluid" facts={facts} onChange={(on) => void updateSettings({ introSoundEnabled: on })} />
@@ -160,6 +162,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           }
         />
       )}
+      {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}
       {sheet === 'beweging' && <ChoiceFromDef def={CHOICES.beweging} value={resolveMotion(settings)} onPick={(v) => void updateSettings({ motion: v })} onClose={close} />}
       {sheet === 'terugknop' && <ChoiceFromDef def={CHOICES.terugknop} value={nav.tabBack} onPick={(v) => void updateSettings({ tabBack: v })} onClose={close} />}

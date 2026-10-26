@@ -8,9 +8,9 @@ import { SettingsLinkRow } from './settings/SettingsLink';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { IconDisc } from './SportDisc';
-import { Card, Chip, Eyebrow, InfoButton, Ring, SecondaryButton, Segmented, Stat } from './ui';
-import type { TroubleSeverity, WeeklyHealthCheck, WeeklyTrouble } from '../models/checkIn';
-import { PAIN_AREA_OPTIONS } from '../data/bodyAreas';
+import { Card, Eyebrow, Ring, Stat } from './ui';
+import { TextButton } from './TextButton';
+import { weeklyCheckLine } from '../engine/bodyCheck';
 import { Icon } from './icons';
 import { DisclosureRow } from './DisclosureRow';
 import { usePageState } from './usePageState';
@@ -33,7 +33,7 @@ export function WeekReviewCard({ weekStart }: { weekStart: string }) {
         {review.done} van {review.planned} trainingen · {formatHoursMinutesNL(review.minutes)}
       </p>
       {review.advice[0] && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{review.advice[0]}</p>}
-      <SecondaryButton onClick={() => setOpen(true)} className="mt-1">Bekijk je week</SecondaryButton>
+      <div className="-mb-2"><TextButton onClick={() => setOpen(true)} icon="verder">Bekijk je week</TextButton></div>
       {open && <WeekReviewSheet review={review} onClose={() => setOpen(false)} />}
     </Card>
   );
@@ -142,7 +142,9 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
               </Section>
             )}
 
-            <WeeklyHealthQuestion weekStart={review.weekStart} />
+            {review.weeklyCheck && !review.weeklyCheck.laterOn && (
+              <p className="mt-5 text-sm" style={{ color: 'var(--color-ink)' }}>{weeklyCheckLine(review.weeklyCheck)}</p>
+            )}
 
             {review.missed.length > 0 && (
               <Section title="Niet gedaan">
@@ -182,66 +184,5 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
         </div>
       </div>
     </Portal>
-  );
-}
-
-// [waarde, kort label, regel bij "Klachten:", volledige zin]
-const TROUBLE: [WeeklyTrouble, string, string, string][] = [
-  ['geen', 'Nee', 'nee', 'Nee, ik kon alles doen'],
-  ['wel_gewoon', 'Ja, kon trainen', 'ja, kon trainen', 'Ja, maar ik kon gewoon trainen'],
-  ['minder', 'Ja, minder getraind', 'ja, minder getraind', 'Ja, ik moest minder of anders trainen'],
-  ['niet_kunnen', 'Ja, kon niet', 'ja, kon niet trainen', 'Ja, ik kon niet trainen'],
-];
-const SEVERITY: [TroubleSeverity, string][] = [['mild', 'Mild'], ['matig', 'Matig'], ['ernstig', 'Ernstig']];
-
-// One question a week (OSTRC-O2 in short): did leg, foot or back trouble from
-// training get in the way? Only with a yes: where, and how bad. Answered: one
-// line with "Wijzigen". The answer is saved exactly as before.
-function WeeklyHealthQuestion({ weekStart }: { weekStart: string }) {
-  const { settings, updateSettings } = useAppData();
-  const saved = settings.weeklyHealthChecks?.find((c) => c.weekStart === weekStart);
-  const [draft, setDraft] = useState<WeeklyHealthCheck | undefined>(saved);
-  const [asking, setAsking] = useState(!saved);
-  const [why, setWhy] = useState(false);
-  const save = (next: WeeklyHealthCheck) => {
-    setDraft(next);
-    const others = (settings.weeklyHealthChecks ?? []).filter((c) => c.weekStart !== weekStart);
-    void updateSettings({ weeklyHealthChecks: [...others, next].sort((a, b) => a.weekStart.localeCompare(b.weekStart)).slice(-26) });
-  };
-  const currentRow = TROUBLE.find(([k]) => k === draft?.trouble);
-  if (!asking && draft && currentRow) {
-    const detail = draft.trouble !== 'geen' ? [draft.area?.toLowerCase(), draft.severity].filter(Boolean).join(', ') : '';
-    return (
-      <div className="mt-5 flex min-h-[44px] items-center justify-between gap-3">
-        <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)' }}>Klachten: {currentRow[2]}{detail ? ` (${detail})` : ''}</p>
-        <button type="button" onClick={() => setAsking(true)} className="flex min-h-[44px] shrink-0 items-center px-2 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Wijzigen</button>
-      </div>
-    );
-  }
-  return (
-    <div className="mt-5 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <p className="min-w-0 text-sm" style={{ color: 'var(--color-ink)' }}>Had je deze week klachten aan je benen, voeten of rug door het trainen?</p>
-        <InfoButton onClick={() => setWhy((v) => !v)} label="Waarom vraagt ASCEND dit?" />
-      </div>
-      {why && <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Zo ziet ASCEND vroeg of je wat rustiger aan moet doen, voordat een klacht een blessure wordt.</p>}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Klachten deze week">
-        {TROUBLE.map(([k, short, , full]) => (
-          <Chip key={k} label={full} selected={draft?.trouble === k} onClick={() => save({ weekStart, trouble: k, area: k === 'geen' ? undefined : draft?.area, severity: k === 'geen' ? undefined : draft?.severity })}>{short}</Chip>
-        ))}
-      </div>
-      {currentRow && <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{currentRow[3]}</p>}
-      {draft && draft.trouble !== 'geen' && (
-        <>
-          <div className="flex flex-wrap gap-2">
-            {[...PAIN_AREA_OPTIONS].map((a) => (
-              <Chip key={a} selected={draft.area === a} onClick={() => save({ ...draft, area: draft.area === a ? undefined : a })}>{a}</Chip>
-            ))}
-          </div>
-          <Segmented label="Hoe erg" value={draft.severity} onChange={(k) => save({ ...draft, severity: draft.severity === k ? undefined : k })} options={SEVERITY.map(([value, label]) => ({ value, label }))} tall />
-        </>
-      )}
-      {draft && <SecondaryButton onClick={() => setAsking(false)}>Klaar</SecondaryButton>}
-    </div>
   );
 }

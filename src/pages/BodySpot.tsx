@@ -46,7 +46,7 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
   const { figure } = resolveFigure(settings);
   const care = careForSpot(spot);
   const stretches = stretchesForSpot(spot);
-  const here = openComplaintsBySpot(injuryNotes)[spot.id] ?? [];
+  const here = openComplaintsBySpot(injuryNotes, todayISO())[spot.id] ?? [];
   const [showStretchInfo, setShowStretchInfo] = useState(false);
 
   return (

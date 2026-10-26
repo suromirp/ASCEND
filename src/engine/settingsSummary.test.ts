@@ -75,6 +75,13 @@ describe('rowSummary: planning', () => {
     expect(rowSummary('ambitie', facts({ ambition: { chosen: 'stevig', effective: 'standaard' } })).value).toBe('Standaard, tijdelijk');
   });
 
+  it('Groei van de lange loop: het advies, een keuze en een beschadigde waarde', () => {
+    expect(rowSummary('lange-loop', facts()).value).toBe('Volgens het onderzoek');
+    expect(rowSummary('lange-loop', facts({ settings: { ...facts().settings, longRunGrowth: 'biweekly' } })).value).toBe('Rustiger');
+    expect(rowSummary('lange-loop', facts({ settings: { ...facts().settings, longRunGrowth: 'wave' } })).value).toBe('Heel rustig');
+    expect(rowSummary('lange-loop', facts({ settings: { ...facts().settings, longRunGrowth: 'snel' as never } })).value).toBe('Volgens het onderzoek');
+  });
+
   it('Benen en een zware loop verdwijnt als twee trainingen niet mag', () => {
     expect(rowSummary('zware-dingen', facts()).hidden).toBe(false);
     expect(rowSummary('zware-dingen', facts({ pairing: 'never' })).hidden).toBe(true);
@@ -768,5 +775,14 @@ describe('rowSummary: rijen met een blad', () => {
     for (const id of ['bundel-dagen', 'bundel-tochten', 'bundel-sportschool', 'bundel-weergave', 'bundel-rusttimer', 'bundel-toets', 'bundel-inzicht', 'lucht']) {
       expect((rowSummary(id, facts()).sub ?? '').length, id).toBeLessThanOrEqual(SUB_MAX_LENGTH);
     }
+  });
+});
+
+describe('rowSummary: Hoe voelt je lijf?', () => {
+  it('zegt de stand in een paar woorden en valt terug op het advies', () => {
+    expect(rowSummary('lijfvraag', facts()).value).toBe('Bij reden');
+    expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'elke-week' } })).value).toBe('Elke week');
+    expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'uit' } })).value).toBe('Uit');
+    expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'rommel' } as never })).value).toBe('Bij reden');
   });
 });

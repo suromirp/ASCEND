@@ -18,7 +18,8 @@ import { goalPlanRole, isRaceGoal } from '../engine/raceBlock';
 import { mainGoal } from '../engine/mainGoal';
 import { variantOf } from '../data/goalKinds';
 import type { RoutePlan } from '../models/routePlan';
-import type { NightJudgment } from '../models/checkIn';
+import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
+import type { InjuryNote } from '../models/injury';
 import type { SweatEntry } from '../models/sweat';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
 import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
@@ -290,6 +291,33 @@ export function migrateLogGymProfile(log: SessionLog): SessionLog {
   const { gymProfileId: _damaged, ...rest } = log;
   void _damaged;
   return rest;
+}
+
+// --- InjuryNote.kind en InjuryNote.side ---------------------------------------------------
+// What you noticed (spierpijn, stijf or pijn) and which side (links, midden, rechts or beide), from
+// the card "Hoe voelt je lijf?" (decision 2026-10-26-hoe-voelt-je-lijf.md). Both are optional and
+// additive: a note without them is pain, and a back part without a side reads as 'midden'
+// (engine/bodyMap.ts#sideOfInjury), so a backup from before imports exactly as it did and the
+// schema number does not move. A damaged value loses only that field. An older app that reads a
+// newer backup sees soreness as plain pain; that is the price of not bumping the schema.
+const INJURY_KINDS = ['spierpijn', 'stijf', 'pijn'];
+const INJURY_SIDES = ['links', 'midden', 'rechts', 'beide'];
+export function migrateInjuryNote(note: InjuryNote): InjuryNote {
+  if (typeof note !== 'object' || note === null || (!('kind' in note) && !('side' in note))) return note;
+  const { kind, side, ...rest } = note;
+  const out: InjuryNote = rest;
+  if (typeof kind === 'string' && INJURY_KINDS.includes(kind)) out.kind = kind as InjuryNote['kind'];
+  if (typeof side === 'string' && INJURY_SIDES.includes(side)) out.side = side as InjuryNote['side'];
+  return out;
+}
+
+// --- WeeklyHealthCheck.laterOn --------------------------------------------------------------
+// The day you pressed "Niet nu" on the card "Hoe voelt je lijf?". Optional and additive; kept only
+// as a date.
+export function migrateWeeklyHealthCheck(check: WeeklyHealthCheck): WeeklyHealthCheck {
+  if (typeof check !== 'object' || check === null || !('laterOn' in check)) return check;
+  const { laterOn, ...rest } = check;
+  return typeof laterOn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(laterOn) ? check : rest;
 }
 
 // --- meer per set: SetLog.rir, SetLog.kind en SetLog.rirAssumed -------------------
@@ -902,7 +930,23 @@ export function migrateTrainingGoal(goal: TrainingGoal, ctx: GoalKindContext): T
   const extras = unknownDetailFields(goal.details);
   if (details || extras) next.details = { ...(details ?? {}), ...(extras ?? {}) }; else delete next.details;
   if (priority) next.priority = priority; else if (!unknownPriority) delete next.priority;
+  // Ronde 2b: een eigen afbouw en de aanvaarde botsingen, defensief gelezen. Wat niet klopt gaat weg.
+  const taper: unknown = goal.taperDays;
+  if (typeof taper === 'number' && Number.isFinite(taper) && taper >= 0) next.taperDays = Math.round(taper); else delete next.taperDays;
+  // Alleen een echte true blijft staan; de migratie zet het zelf nooit (het is jouw keuze in de app).
+  const chosen: unknown = goal.priorityChosen;
+  if (chosen === true) next.priorityChosen = true; else delete next.priorityChosen;
+  const accepted = readAcceptedConflicts(goal.conflictAccepted);
+  if (accepted) next.conflictAccepted = accepted; else delete next.conflictAccepted;
   return next;
+}
+
+// De aanvaarde botsingen (TrainingGoal.conflictAccepted): een paar datums "van|tot" (of, van een
+// eerdere versie, één datum), alleen echte datums, zonder dubbelen.
+export function readAcceptedConflicts(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const dates = [...new Set(raw.filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}(\|\d{4}-\d{2}-\d{2})?$/.test(d)))];
+  return dates.length > 0 ? dates : undefined;
 }
 
 // Velden van de gegevens die deze versie niet kent (uit een nieuwere back-up): ongemoeid laten.

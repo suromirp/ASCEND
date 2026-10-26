@@ -23,6 +23,7 @@ import type { Objective, MilestoneProgress } from '../models/objectives';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
+import type { WeeklyHealthCheck } from '../models/checkIn';
 import type { WeightEntry } from '../models/metrics';
 import {
   ProgramsRepo,
@@ -54,7 +55,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogGymProfile, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -225,6 +226,8 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
       s[key] = cleaned;
     }
   }
+  // The day of "Niet nu" on the card "Hoe voelt je lijf?" is kept only as a date.
+  if (Array.isArray(s.weeklyHealthChecks)) s.weeklyHealthChecks = (s.weeklyHealthChecks as WeeklyHealthCheck[]).map(migrateWeeklyHealthCheck);
   // Your verdicts on short nights: read record by record, a damaged one is
   // dropped and counted, an older file has none and leaves the verdicts on the
   // device alone (storage/migrations.ts#migrateNightJudgments).
@@ -341,6 +344,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.watchCalmRun;
     skipped.n++;
   }
+  if ('longRunGrowth' in s && s.longRunGrowth !== 'weekly' && s.longRunGrowth !== 'biweekly' && s.longRunGrowth !== 'wave' && s.longRunGrowth !== 'firm' && s.longRunGrowth !== 'fast') {
+    delete s.longRunGrowth;
+    skipped.n++;
+  }
   if ('trekLegRest' in s && s.trekLegRest !== 'soft' && s.trekLegRest !== 'strict') {
     delete s.trekLegRest;
     skipped.n++;
@@ -425,7 +432,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped);
   const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile);
-  const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped);
+  const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);
   const program = hasId(raw.program) ? (raw.program as unknown as Program) : null;

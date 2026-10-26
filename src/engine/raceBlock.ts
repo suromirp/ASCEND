@@ -53,6 +53,12 @@ import { PHASE_BASIS, PHASE_OPBOUW, PHASE_ONDERHOUD, waveWeek } from './programL
 import { isLegHeavyTemplate } from './scheduler';
 import { templateSport } from './sports';
 import { idHasRole } from './templateRoles';
+import { effectivePriority, isPlanned, goalDetailsOf, goalKindOf, goalRecoveryDays, goalTaperDays, goalPlanRole, isRaceGoal, type GoalPlanRole } from './goalLabels';
+import type { GoalPriority } from '../models/goals';
+
+// Waar het label van een doel en de oude rol gelezen worden staat in goalLabels.ts.
+export { goalPlanRole, isRaceGoal };
+export type { GoalPlanRole };
 
 export const RACE_BLOCK_WEEKS = 8;
 export const TEMPO_TEMPLATE_ID = 'tpl_tempo_run';
@@ -84,8 +90,6 @@ const QUALITY_TEMPLATES = new Set([TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID, INTERVAL
 // before the race), which sits on the run slot.
 const KEY_BY_BLOCK_WEEK: ('run' | 'saturday')[] = ['run', 'run', 'saturday', 'saturday', 'run', 'saturday', 'run', 'run'];
 
-export type GoalPlanRole = 'main' | 'secondary' | 'track';
-
 export interface RaceBlock {
   goalId: string;
   name: string;
@@ -94,29 +98,62 @@ export interface RaceBlock {
   raceWeek: string; // Monday of race week
   distanceKm?: number;
   targetMinutes?: number;
+  // Ronde 2b (docs/beslissingen/2026-10-26-planning-met-labels.md): wat het label van het doel
+  // met dit blok doet. Zonder (blokken van voor deze ronde, tests): voortop zoals altijd.
+  // top: de afbouw is de wedstrijdweek. voortop: de korte afbouw van de soort (`taperStart`).
+  // verkenning: geen blok en geen afbouw, alleen de wedstrijd op zijn dag.
+  priority?: GoalPriority;
+  // De eerste dag van de afbouw: vanaf hier tot de wedstrijd de korte versies.
+  taperStart?: string;
+  // Het aantal dagen na de wedstrijd zonder harde training en zonder zware beenkracht
+  // (herstel van de soort, regel AFTER-GOAL in engine/weekValidator.ts).
+  recoveryDays?: number;
 }
 
-export function isRaceGoal(goal: TrainingGoal): boolean {
-  return goal.requirements.some((r) => (r.kind === 'distance' || r.kind === 'targetTime') && r.discipline === 'running');
-}
+// Een verkenning heeft geen blok: geen tempoloop, geen testloop, geen afbouw.
+const hasBlock = (b: RaceBlock) => b.priority !== 'verkenning';
+const trainingBlocks = (blocks: RaceBlock[]) => (blocks.every(hasBlock) ? blocks : blocks.filter(hasBlock));
 
-// The role a goal plays in the plan: the main goal is fixed; any other
-// running race defaults to a tussendoel, everything else to "only follow".
-export function goalPlanRole(goal: TrainingGoal, mainGoalId: string | undefined): GoalPlanRole {
-  if (goal.id === mainGoalId) return 'main';
-  return goal.planRole ?? (isRaceGoal(goal) ? 'secondary' : 'track');
-}
-
+// Every running race before the anchor gets a block that follows its label: a Top gets the
+// full race week as taper, a Voortop the short taper of its kind (data/goalKinds.ts#taperDaysFor),
+// a Verkenning nothing but the race on its day. The recovery after it follows the kind and the
+// distance (recoveryDaysFor), never the label.
 export function raceBlocks(goals: TrainingGoal[], mainGoalId: string | undefined, anchor: string | undefined, today: string): RaceBlock[] {
   return goals
     .filter((g): g is TrainingGoal & { targetDate: string } => g.status === 'active' && !!g.targetDate && g.targetDate >= today && (!anchor || g.targetDate < anchor))
-    .filter((g) => isRaceGoal(g) && goalPlanRole(g, mainGoalId) === 'secondary')
+    .filter((g) => isRaceGoal(g) && g.id !== mainGoalId && goalPlanRole(g, mainGoalId) !== 'main')
+    .filter((g) => isPlanned(g, mainGoalId))
     .map((g) => {
-      const distance = g.requirements.find((r) => r.kind === 'distance' && r.target?.unit === 'km')?.target?.amount;
-      const time = g.requirements.find((r) => r.kind === 'targetTime' && r.target?.unit === 'min')?.target?.amount;
+      const details = goalDetailsOf(g);
+      const priority = effectivePriority(g, mainGoalId);
       const raceWeek = mondayOfWeek(g.targetDate);
-      return { goalId: g.id, name: g.name, raceDate: g.targetDate, raceWeek, blockStart: addDays(raceWeek, -7 * RACE_BLOCK_WEEKS), distanceKm: distance, targetMinutes: time };
+      // Top keeps the race week as its taper (the phase taper of the plan toward it is the program's);
+      // Voortop starts its short taper that many days before the race.
+      const taper = priority === 'voortop' && goalKindOf(g) ? goalTaperDays(g, 'voortop') : undefined;
+      const taperStart = priority === 'verkenning' ? g.targetDate : taper !== undefined ? addDays(g.targetDate, -taper) : raceWeek;
+      return {
+        goalId: g.id, name: g.name, raceDate: g.targetDate, raceWeek,
+        blockStart: priority === 'verkenning' ? raceWeek : addDays(raceWeek, -7 * RACE_BLOCK_WEEKS),
+        distanceKm: details.distanceKm, targetMinutes: details.targetMinutes,
+        priority, taperStart, recoveryDays: goalRecoveryDays(g),
+      };
     });
+}
+
+// The recovery after a race (rule AFTER-GOAL in engine/weekValidator.ts), kept apart from the blocks:
+// a block stops existing the day after its race, but the recovery runs on for the days of its kind.
+// Only goals that really were in the plan count (a Top, a Voortop, or a Verkenning you chose yourself),
+// until the last recovery day has passed.
+export function afterGoalWindows(goals: TrainingGoal[], mainGoalId: string | undefined, anchor: string | undefined, today: string): { date: string; days: number }[] {
+  const out: { date: string; days: number }[] = [];
+  for (const g of goals) {
+    if (g.status !== 'active' || !g.targetDate || !isRaceGoal(g) || g.id === mainGoalId || goalPlanRole(g, mainGoalId) === 'main') continue;
+    if (anchor && g.targetDate >= anchor) continue;
+    if (!isPlanned(g, mainGoalId)) continue;
+    const days = goalRecoveryDays(g);
+    if (days > 0 && g.targetDate >= addDays(today, -days)) out.push({ date: g.targetDate, days });
+  }
+  return out;
 }
 
 // What a week looks like for the quality rule: how many runs it has (all of
@@ -144,7 +181,8 @@ function qualitySlots(date: string, blocks: RaceBlock[], quality?: WeekQuality):
 // becomes a tempo run inside a block (not in race week, and in a week with
 // three runs only when it is the key session), and back outside. A test week
 // stays a test week: the test is the measuring point, never traded away.
-export function templateForRaceBlock(templateId: string, date: string, blocks: RaceBlock[], program?: Program | null, quality?: WeekQuality): string {
+export function templateForRaceBlock(templateId: string, date: string, allBlocks: RaceBlock[], program?: Program | null, quality?: WeekQuality): string {
+  const blocks = trainingBlocks(allBlocks);
   if (SATURDAY_FAMILY.includes(templateId)) return saturdayTemplate(date, blocks, program, quality);
   if (![EASY_TEMPLATE_ID, TEMPO_TEMPLATE_ID, TEST_TEMPLATE_ID].includes(templateId)) return templateId;
   const week = mondayOfWeek(date);
@@ -158,7 +196,8 @@ export function templateForRaceBlock(templateId: string, date: string, blocks: R
 // 2 and 4 of the wave in the basis and Opbouw. In a block week that has room
 // for one quality session only and where Saturday is not the key one: a quiet
 // run with strides.
-export function saturdayTemplate(date: string, blocks: RaceBlock[], program?: Program | null, quality?: WeekQuality): string {
+export function saturdayTemplate(date: string, allBlocks: RaceBlock[], program?: Program | null, quality?: WeekQuality): string {
+  const blocks = trainingBlocks(allBlocks);
   const week = mondayOfWeek(date);
   const block = blocks.find((b) => date >= b.blockStart && date < b.raceWeek);
   if (block) {
@@ -258,24 +297,31 @@ export function applyRaceBlocks(
 
   for (const b of blocks) {
     const raceMinutes = b.targetMinutes ?? (b.distanceKm ? Math.round(b.distanceKm * 6) : 60);
-    if (!open.some((s) => s.templateId === RACE_TEMPLATE_ID && s.scheduledDate === b.raceDate)) {
+    // Also a skipped race (you let it go) or a logged one counts as there: it does not come back.
+    if (!everything.some((s) => s.templateId === RACE_TEMPLATE_ID && s.scheduledDate === b.raceDate)) {
       add.push({ id: newId(), templateId: RACE_TEMPLATE_ID, scheduledDate: b.raceDate, weekStartDate: b.raceWeek, status: 'planned', order: 0, plannedMinutes: raceMinutes });
     }
+    // A Verkenning (take part as a training): the race on its day, the day before nothing heavy for
+    // the legs, no taper and no short day after (the recovery rule of the week check covers that).
+    const exploring = b.priority === 'verkenning';
+    const outDays = exploring ? 1 : 2;
+    const taperFrom = b.taperStart ?? b.raceWeek;
     for (const s of open) {
       if (!free(s) || s.templateId === RACE_TEMPLATE_ID) continue;
       const t = byId.get(s.templateId);
       if (!t || t.type === 'recovery') continue;
       const current = update.get(s.id) ?? s;
-      const before = s.scheduledDate < b.raceDate && s.scheduledDate >= addDays(b.raceDate, -2);
-      // Race day itself: only the race. Two days before: nothing heavy for the legs.
+      const before = s.scheduledDate < b.raceDate && s.scheduledDate >= addDays(b.raceDate, -outDays);
+      // Race day itself: only the race. Two days before (a Verkenning: the day before): nothing heavy for the legs.
       if (s.scheduledDate === b.raceDate || (before && idHasRole(current.templateId, 'before_race_out', byId))) {
         update.delete(s.id);
         remove.push(s);
         continue;
       }
-      // Race week, before the race: the short version (a taper).
+      if (exploring) continue;
+      // The taper before the race (race week for a Top, the short taper of its kind for a Voortop): the short version.
       const short = byId.get(current.templateId)?.durationVariants.short;
-      if (s.scheduledDate >= b.raceWeek && s.scheduledDate < b.raceDate && short && current.plannedMinutes !== short) {
+      if (s.scheduledDate >= taperFrom && s.scheduledDate < b.raceDate && short && current.plannedMinutes !== short) {
         update.set(s.id, { ...current, plannedMinutes: short });
         continue;
       }
@@ -286,7 +332,7 @@ export function applyRaceBlocks(
     }
   }
   const gone = new Set(remove.map((r) => r.id));
-  restoreLegSwaps(open, update, byId, gone, new Set(blocks.map((b) => b.raceWeek)));
+  restoreLegSwaps(open, update, byId, gone, new Set(trainingBlocks(blocks).map((b) => b.raceWeek)));
   swapLegsBeforeHardRuns(open, update, byId, gone);
   return { update: [...update.values()], add, remove };
 }

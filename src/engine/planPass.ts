@@ -25,6 +25,9 @@ export interface PlanPassContext {
   templates: SessionTemplate[];
   program: Program | null;
   blocks: RaceBlock[];
+  // The recovery after goals (engine/raceBlock.ts#afterGoalWindows): it runs on after the block is
+  // gone. Without it the recovery follows the blocks (tests).
+  afterGoals?: { date: string; days: number }[];
   restDay: number;
   goalDay?: string;
   dailyTimeBudget?: Partial<Record<Weekday, DailyTimeBudget>>;
@@ -70,7 +73,9 @@ export function planPass(all: PlannedSession[], ctx: PlanPassContext): PlanPassR
     const afterRace = [...current.filter((s) => !gone.has(s.id)).map((s) => updated.get(s.id) ?? s), ...race.add];
     const checkInput = {
       logs: ctx.logs, templates: ctx.templates, today: ctx.today, restDay: ctx.restDay, goalDay: ctx.goalDay,
-      raceDays: ctx.blocks.map((b) => b.raceDate), program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
+      raceDays: ctx.blocks.map((b) => b.raceDate),
+      afterGoals: ctx.afterGoals ?? ctx.blocks.filter((b) => (b.recoveryDays ?? 0) > 0).map((b) => ({ date: b.raceDate, days: b.recoveryDays! })),
+      program: ctx.program, dailyTimeBudget: ctx.dailyTimeBudget,
       sameDayPairingPreference: ctx.sameDayPairingPreference, slotDays: ctx.slotDays, minutesOf: ctx.minutesOf, until: ctx.until,
       leave: ctx.leave, trekRest: ctx.trekRest,
     };

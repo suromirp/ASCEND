@@ -96,7 +96,9 @@ export function SeasonCard({ onOpenGoal }: { onOpenGoal?: (goal: TrainingGoal) =
                     : role === 'secondary'
                       ? `Tussendoel${pos ? `, in ${pos.phase} (week ${pos.week})` : ''}. Testloop in de week van ${formatDateNL(addDays(blockStart, -7))}, tempolopen vanaf de week van ${formatDateNL(blockStart)}, de wedstrijdweek afbouwen.`
                       : race
-                        ? 'Alleen volgen: je planning verandert er niet voor.'
+                        ? (g.priorityChosen
+                          ? 'Alleen volgen: geen eigen blok, wel een eigen dag. De wedstrijd komt als training op zijn dag in je planning, de dag ervoor blijft licht voor de benen.'
+                          : 'Alleen volgen: je planning verandert er niet voor.')
                         : 'ASCEND volgt dit doel; alleen een hardloopwedstrijd kan nu een eigen blok krijgen.'}
                 </p>
                 {race && !afterMain && (

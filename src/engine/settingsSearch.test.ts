@@ -71,6 +71,10 @@ describe('searchSettings', () => {
     expect(ids('terugbl')).toContain('weekterugblik');
   });
 
+  it('Hoe voelt je lijf? is te vinden op de woorden die je ervoor gebruikt', () => {
+    for (const q of ['lijf', 'spierpijn', 'stijf', 'klachten']) expect(ids(q), q).toContain('lijfvraag');
+  });
+
   it('zet gelijke scores in de volgorde van de index', () => {
     const items: SearchableSetting[] = [
       { id: 'b', title: 'Beta', note: 'x', group: 'planning', keywords: ['zoek'] },

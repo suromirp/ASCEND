@@ -122,6 +122,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Planning
   ...inSheet('bundel-dagen', 'trainingstijd', 'rustdag', 'rustdag-doen'),
   ...inSheet('meerdere', 'zware-dingen'),
+  ...inSheet('ambitie', 'lange-loop'),
   // Doel en tochten
   ...inSheet('bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
   // Forge
@@ -134,7 +135,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Lichaam
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd'),
   // Vandaag en meldingen
-  ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'weekvraag', 'citaten', 'geluid'),
+  ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'geluid'),
   ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),

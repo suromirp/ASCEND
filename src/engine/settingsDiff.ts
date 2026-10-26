@@ -133,6 +133,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   // Planning
   choice('wijzigingen', 'Wijzigingen', 'planning', 'changeApplyMode', 'auto_small', 'wijzigingen'),
   choice('ambitie', 'Ambitie', 'planning', 'ambition', 'standaard', 'ambitie', true),
+  choice('lange-loop', 'Groei van de lange loop', 'planning', 'longRunGrowth', 'weekly', 'langeLoopGroei', true),
   choice('rustdag-doen', 'Op je rustdag', 'planning', 'restDayMode', 'rest', 'rustdagDoen', true),
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
 
@@ -205,6 +206,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('korte-nacht', 'Vragen bij een korte nacht', 'vandaag', 'askShortNight'),
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
+  choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
   overviewFlag('weekvraag', 'Vraag van de week', 'weeklyQuestion'),
   overviewFlag('weerregel', 'Weer bij je training', 'weatherLine'),
   overviewFlag('beste-moment', 'Beste moment tonen', 'bestMoment'),
