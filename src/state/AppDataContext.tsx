@@ -2038,7 +2038,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       why: role === 'secondary' ? 'Je traint nu voor deze wedstrijd.' : 'Je volgt deze wedstrijd alleen.',
       explanation: 'Een tussendoel krijgt een eigen blok in je planning: kwaliteitstrainingen, een testloop en een lichte wedstrijdweek. Alleen volgen haalt dat blok weg. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
       trigger: 'goal_changed',
-      goals: [{ ...goal, planRole: role, priority: role === 'secondary' ? 'voortop' : 'verkenning', updatedAt: new Date().toISOString() }],
+      // The main goal (Top) keeps its label: this choice is only for a race next to it.
+      goals: [{ ...goal, planRole: role, priority: goal.priority === 'top' ? 'top' : role === 'secondary' ? 'voortop' : 'verkenning', updatedAt: new Date().toISOString() }],
     });
   }, [planHorizonChangeImpl]);
 
