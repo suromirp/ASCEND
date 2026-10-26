@@ -461,6 +461,14 @@ does not change the planning; once it does, it goes through a proposal with
 Akkoord. Care texts say "kan helpen", never "voorkomt", with the strength of the
 evidence from `docs/onderzoek/`.
 
+**Hoe voelt je lijf?** (`engine/bodyCheck.ts`, decision
+`docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md`) replaces the weekly complaints question: a
+card on Vandaag only when there is a reason (setting `bodyCheck`), "Voel me fris" or tap a spot,
+then spierpijn, stijf or pijn and the side (nek, bovenrug and onderrug also `midden`). It writes
+to the same `InjuryNote` list as Lichaam (`kind`, `side`); spierpijn and stijf never count as an
+injury and close after 7 days when read (`engine/injuryKind.ts`). "Wat terugkomt" on Lichaam is
+derived, never stored (`engine/bodyRecurrence.ts`).
+
 **Forge** compares each exercise now against 4 and 8 weeks back and the best ever
 (`engine/forgeHistory.ts`, decision
 `docs/beslissingen/2026-10-24-forge-vergelijken-en-zoeken.md`). A moment only counts
