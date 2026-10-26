@@ -236,8 +236,18 @@ export function AutoTag() {
 
 // Het kleine label "aangepast" bij een instelling die jij anders koos dan het advies. Zelfde
 // stijl als "auto": gedempt, geen kleur.
+// A small dot before the value: this setting differs from the advice. The
+// sheet "Aangepaste instellingen" explains the dot; screen readers hear it.
 export function AdjustedTag() {
-  return <span className="st-auto">aangepast</span>;
+  return (
+    <span
+      role="img"
+      aria-label="aangepast"
+      title="Anders dan het advies"
+      className="inline-block shrink-0 rounded-full"
+      style={{ width: 8, height: 8, background: 'var(--color-action)', opacity: 0.55 }}
+    />
+  );
 }
 
 // Een tikbare keuze in de vorm van een afgeronde chip (de sportschool). Een

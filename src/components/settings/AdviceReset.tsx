@@ -51,7 +51,7 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
       <Sheet
         eyebrow="Gegevens en back-up"
         title="Aangepaste instellingen"
-        line={diffs.length === 0 ? 'Alles staat op het advies.' : 'Dit koos je zelf anders dan het advies. Tik op een regel om de instelling te openen.'}
+        line={diffs.length === 0 ? 'Alles staat op het advies.' : 'Dit koos je zelf anders dan het advies. Een stipje bij een instelling betekent hetzelfde. Tik op een regel om hem te openen.'}
         onClose={() => {
           onClose();
           const next = pending.current;
