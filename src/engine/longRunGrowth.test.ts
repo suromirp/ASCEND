@@ -242,3 +242,26 @@ describe('afbouw: grensgevallen en Heel rustig', () => {
     for (let back = 15; back <= 60; back++) expect(at(p, back), `dag ${back}`).toBe(at(old, back));
   });
 });
+
+describe('de wekelijkse groei geldt tot de wedstrijdpiek, daarboven de gewone opbouw', () => {
+  const tenKProgram = (growth: Parameters<typeof programRunBuild>[3] = 'weekly'): Program => {
+    const base: Program = { id: 'p', name: 'P', startDate: START, phases };
+    const race = addDays(START, 7 * (RACE_WEEK - 1) + 5);
+    const goal = { ...raceGoal(race), requirements: [{ id: 'r', kind: 'distance', scope: 'SINGLE_EVENT', target: { amount: 10, unit: 'km' }, discipline: 'running' }], details: { variant: '10k' } } as unknown as TrainingGoal;
+    return { ...base, runBuild: programRunBuild([goal], undefined, START, growth) };
+  };
+  const usual: Program = { id: 'p', name: 'P', startDate: START, phases };
+
+  it('een 10 km (piek 75) groeit hoogstens tot 75 en volgt daarboven de gewone opbouw, nooit lager dan die', () => {
+    const ten = series(tenKProgram());
+    const plain = series(usual);
+    for (let week = OPBOUW_START; week < RACE_WEEK - 2; week++) {
+      expect(ten[week - 1], `week ${week}`).toBeGreaterThanOrEqual(plain[week - 1]);
+      if (ten[week - 1] > 75) expect(ten[week - 1], `week ${week}`).toBe(plain[week - 1]);
+    }
+  });
+
+  it('een halve marathon (piek 120) groeit zoals voorheen tot 120', () => {
+    expect(Math.max(...series(programFor('weekly'), 1, RACE_WEEK - 1))).toBe(120);
+  });
+});
