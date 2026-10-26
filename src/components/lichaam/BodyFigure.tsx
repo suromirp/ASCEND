@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { FIGURE_HEIGHT, FIGURE_SCALE, FIGURE_WIDTH, HEAD, SILHOUETTE, figureLines } from '../../data/bodyFigure';
-import { hitBoxes, spotsForView, type BodySpot, type BodyView } from '../../engine/bodyMap';
+import { halfClip, hitBoxes, spotById, spotsForSide, spotsForView, type BodySpot, type BodyView, type SideChoice } from '../../engine/bodyMap';
 import type { Figure } from '../../engine/figureSettings';
 
 // Het figuur van Lichaam in de lijnstijl van de iconen: een rustig silhouet met dunne
@@ -45,9 +45,41 @@ function Body({ view, figure }: { view: BodyView; figure: Figure }) {
   );
 }
 
-// De plek zelf: een zachte stippellijn, of mint als hij gekozen is.
-function Mark({ spot, on }: { spot: BodySpot; on: boolean }) {
-  return <ellipse className="mx-body-mark" data-on={on} cx={spot.cx} cy={spot.cy} rx={spot.rx} ry={spot.ry} />;
+// De plek zelf: een zachte stippellijn, of mint als hij gekozen is. Met `half` kleurt alleen dat deel
+// van een plek langs de ruggengraat mint (Links, Midden of Rechts, engine/bodyMap.ts#halfClip) en blijft
+// de rest gestippeld.
+function Mark({ spot, on, half }: { spot: BodySpot; on: boolean; half?: SideChoice }) {
+  const clipId = useId();
+  const partial = on && spot.middle && half !== undefined && half !== 'beide';
+  if (!partial) return <ellipse className="mx-body-mark" data-on={on} cx={spot.cx} cy={spot.cy} rx={spot.rx} ry={spot.ry} />;
+  const { x1, x2 } = halfClip(spot, half);
+  return (
+    <>
+      <ellipse className="mx-body-mark" data-on={false} cx={spot.cx} cy={spot.cy} rx={spot.rx} ry={spot.ry} />
+      <clipPath id={clipId}><rect x={x1} y={spot.cy - spot.ry - 4} width={x2 - x1} height={spot.ry * 2 + 8} /></clipPath>
+      <g clipPath={`url(#${clipId})`}>
+        <ellipse className="mx-body-mark" data-on cx={spot.cx} cy={spot.cy} rx={spot.rx} ry={spot.ry} style={{ transform: 'none' }} />
+      </g>
+    </>
+  );
+}
+
+// Een zachte salieglans op een plek die terugkomt of deze week hard werkte, in drie sterktes. Het
+// niveau zit ook in de dekking, nooit alleen in de kleur: de vorm van de plek blijft zichtbaar.
+const GLOW_OPACITY = { 1: 0.28, 2: 0.42, 3: 0.58 } as const;
+export type GlowLevel = keyof typeof GLOW_OPACITY;
+
+function Glow({ spot, level, tone = 'sage' }: { spot: BodySpot; level: GlowLevel; tone?: 'sage' | 'warning' }) {
+  return (
+    <ellipse
+      className="mx-lijf-glow"
+      cx={spot.cx}
+      cy={spot.cy}
+      rx={spot.rx}
+      ry={spot.ry}
+      style={{ fill: tone === 'warning' ? 'var(--color-warning)' : 'var(--color-sage)', fillOpacity: GLOW_OPACITY[level] }}
+    />
+  );
 }
 
 // De kleine amber stip van een plek met een open klacht (de kleur van "let op").
@@ -65,6 +97,7 @@ export function BodyFigure({
   figure,
   selectedId,
   flagged,
+  glow,
   onPick,
   scale = FIGURE_SCALE,
 }: {
@@ -73,6 +106,8 @@ export function BodyFigure({
   selectedId?: string;
   // Id's van plekken met een open klacht.
   flagged: ReadonlySet<string>;
+  // Plekken met een zachte salieglans (terugkerend), per plek het niveau.
+  glow?: Readonly<Record<string, GlowLevel>>;
   onPick: (spot: BodySpot) => void;
   scale?: number;
 }) {
@@ -86,6 +121,7 @@ export function BodyFigure({
       <svg viewBox={`0 0 ${FIGURE_WIDTH} ${FIGURE_HEIGHT}`} width={width} height={height} role="img" aria-labelledby={title} className="absolute inset-0">
         <title id={title}>{`Lichaam met spieren, ${view === 'front' ? 'voorkant' : 'achterkant'}`}</title>
         <Body view={view} figure={figure} />
+        {glow && spots.filter((s) => glow[s.id]).map((s) => <Glow key={s.id} spot={s} level={glow[s.id]} />)}
         {spots.map((s) => <Mark key={s.id} spot={s} on={s.id === selectedId} />)}
         {spots.filter((s) => flagged.has(s.id)).map((s) => <Flag key={s.id} spot={s} />)}
       </svg>
@@ -108,17 +144,24 @@ export function BodyFigure({
   );
 }
 
-// Een kleine uitsnede van het figuur met één plek erop, naast de titel van het detail.
-// Het staat op de lucht, dus de tokens zijn daar donker op licht; de rand houdt het
-// plaatje bij elkaar.
-export function SpotThumb({ spot, figure }: { spot: BodySpot; figure: Figure }) {
+// Een kleine uitsnede van het figuur met één plek erop, naast de titel van het detail. Met `side`
+// licht alleen de gekozen kant op: bij een paar de ene of beide helften, bij een plek langs de
+// ruggengraat alleen dat deel. Het staat op de lucht, dus de tokens zijn daar donker op licht; de
+// rand houdt het plaatje bij elkaar.
+export function SpotThumb({ spot, figure, side }: { spot: BodySpot; figure: Figure; side?: SideChoice }) {
   const w = 72;
   const h = 80;
-  const vw = 96;
+  const marks = spotsForSide(spot, side);
+  // Alle gekozen plekken moeten erin passen, met wat ruimte eromheen.
+  const left = Math.min(...marks.map((m) => m.cx - m.rx));
+  const right = Math.max(...marks.map((m) => m.cx + m.rx));
+  const top = Math.min(...marks.map((m) => m.cy - m.ry));
+  const bottom = Math.max(...marks.map((m) => m.cy + m.ry));
+  const vw = Math.max(96, right - left + 28, ((bottom - top + 28) * w) / h);
   const vh = (vw * h) / w;
   // Binnen het vlak houden, zodat de uitsnede niet buiten het lichaam valt.
-  const x = Math.min(Math.max(spot.cx - vw / 2, 0), FIGURE_WIDTH - vw);
-  const y = Math.min(Math.max(spot.cy - vh / 2, 0), FIGURE_HEIGHT - vh);
+  const x = Math.min(Math.max((left + right) / 2 - vw / 2, 0), FIGURE_WIDTH - vw);
+  const y = Math.min(Math.max((top + bottom) / 2 - vh / 2, 0), FIGURE_HEIGHT - vh);
   return (
     <svg
       viewBox={`${x} ${y} ${vw} ${vh}`}
@@ -129,7 +172,36 @@ export function SpotThumb({ spot, figure }: { spot: BodySpot; figure: Figure }) 
       style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
     >
       <Body view={spot.view} figure={figure} />
-      <Mark spot={spot} on />
+      {marks.map((m) => <Mark key={m.id} spot={m} on half={side} />)}
     </svg>
+  );
+}
+
+// Het kleine figuur op de kaart "Hoe voelt je lijf?": voor- en achterkant naast elkaar, met de
+// plekken die deze week het hardst werkten zacht gekleurd (salie) en een open pijnmelding amber.
+// Alleen een plaatje: de rijen ernaast zijn de tikdoelen, want op dit formaat liggen de plekken
+// te dicht op elkaar voor 44 px.
+export interface MiniMark {
+  spotId: string;
+  level: GlowLevel;
+  pain?: boolean;
+}
+
+export function MiniBody({ figure, marks, label }: { figure: Figure; marks: MiniMark[]; label: string }) {
+  const title = useId();
+  const views: BodyView[] = ['front', 'back'];
+  return (
+    <div className="flex shrink-0 gap-0.5" role="img" aria-labelledby={title}>
+      <span id={title} className="sr-only">{label}</span>
+      {views.map((view) => (
+        <svg key={view} viewBox={`0 0 ${FIGURE_WIDTH} ${FIGURE_HEIGHT}`} width={44} height={97} aria-hidden="true">
+          <Body view={view} figure={figure} />
+          {marks
+            .map((m) => ({ m, spot: spotById(m.spotId) }))
+            .filter((x): x is { m: MiniMark; spot: BodySpot } => x.spot !== undefined && x.spot.view === view)
+            .map(({ m, spot }) => <Glow key={spot.id} spot={spot} level={m.level} tone={m.pain ? 'warning' : 'sage'} />)}
+        </svg>
+      ))}
+    </div>
   );
 }

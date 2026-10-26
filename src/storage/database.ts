@@ -703,6 +703,10 @@ export interface AppSettings {
   // "Beweging" (engine/motionSettings.ts): how much the app moves. Absent = 'full'.
   // Optional and additive; read defensively, so no migration step is needed.
   motion?: 'full' | 'calm' | 'off';
+  // "Hoe voelt je lijf?" (engine/bodyCheck.ts): wanneer de kaart op Vandaag komt: alleen als er
+  // reden is (de standaard), elke week of nooit. Optional and additive; read defensively
+  // (engine/bodyCheck.ts#resolveBodyCheck), so no migration step is needed.
+  bodyCheck?: 'reden' | 'elke-week' | 'uit';
   // "Lucht bovenaan" (engine/skySettings.ts): the light or dark sky on the tabs, by
   // the clock ('auto', the default), always light or always dark, and from when it is
   // dark. Optional and additive; read defensively, so no migration step is needed.

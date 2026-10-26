@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
-import { BODY_VIEWS, breakableSpotName, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
+import { BODY_VIEWS, breakableSpotName, noteTitle, openComplaints, openComplaintsBySpot, openSoreness, openSorenessBySpot, resolvedComplaints, spotById, type BodyView } from '../engine/bodyMap';
+import { recurrenceRange, recurringSpots, RECURRENCE_WEEKS, type RecurringSpot } from '../engine/bodyRecurrence';
+import { kindOf } from '../engine/injuryKind';
+import { todayISO } from '../utils/dates';
+import { scrollMainToTop } from '../utils/scrollMain';
 import { resolveFigure } from '../engine/figureSettings';
 import { Card, Eyebrow, PageHeader, PrimaryButton, Segmented } from '../components/ui';
 import { TextButton } from '../components/TextButton';
-import { BodyFigure } from '../components/lichaam/BodyFigure';
+import { BodyFigure, type GlowLevel } from '../components/lichaam/BodyFigure';
+import { RecurringCard } from '../components/lichaam/RecurringCard';
 import { OpenComplaint, ResolvedComplaint } from '../components/lichaam/Complaints';
 import { ReportSheet } from '../components/lichaam/ReportSheet';
 import { usePageState } from '../components/usePageState';
@@ -15,7 +20,7 @@ import { usePageState } from '../components/usePageState';
 // detail met wat je doet, rekt, versterkt en meldt. Onder het figuur staan de klachten,
 // open en (weggeklapt) opgelost; de oude pagina Blessures is hierin opgegaan.
 export function BodyPage() {
-  const { injuryNotes, settings, resolveInjury, deleteInjury } = useAppData();
+  const { injuryNotes, sessionLogs, settings, resolveInjury, deleteInjury } = useAppData();
   const navigate = useNavigate();
   const [view, setView] = usePageState<BodyView>('kant', 'front', (v) => v === 'front' || v === 'back');
   const [selectedId, setSelectedId] = usePageState<string | null>('plek', null, (v) => v === null || typeof v === 'string');
@@ -27,6 +32,28 @@ export function BodyPage() {
   const flagged = useMemo(() => new Set(Object.keys(bySpot)), [bySpot]);
   const open = useMemo(() => openComplaints(injuryNotes), [injuryNotes]);
   const resolved = useMemo(() => resolvedComplaints(injuryNotes), [injuryNotes]);
+  const soreness = useMemo(() => openSoreness(injuryNotes), [injuryNotes]);
+
+  // Wat terugkomt: afgeleid bij het lezen uit de meldingen, de pijn van trainingen en de oude
+  // weekantwoorden, nooit opgeslagen. De plekken ervan krijgen een zachte salieglans op het
+  // figuur, net als open spierpijn en stijf (rustiger).
+  const today = todayISO();
+  const recurring = useMemo(() => recurringSpots({ notes: injuryNotes, logs: sessionLogs, checks: settings.weeklyHealthChecks, today }), [injuryNotes, sessionLogs, settings.weeklyHealthChecks, today]);
+  const glow = useMemo(() => {
+    const out: Record<string, GlowLevel> = {};
+    const put = (id: string, level: GlowLevel) => { out[id] = Math.max(out[id] ?? 0, level) as GlowLevel; };
+    for (const r of recurring) for (const id of r.spotIds) put(id, r.weeks >= 5 ? 3 : r.weeks >= 3 ? 2 : 1);
+    for (const id of Object.keys(openSorenessBySpot(injuryNotes))) put(id, 1);
+    return out;
+  }, [recurring, injuryNotes]);
+  const range = recurrenceRange(today);
+  const pickRecurring = (item: RecurringSpot) => {
+    const spot = spotById(item.spotId);
+    if (!spot) return;
+    setView(spot.view);
+    setSelectedId(spot.id);
+    scrollMainToTop();
+  };
 
   const selected = spotById(selectedId ?? undefined);
   // Een gekozen plek hoort bij de kant die je ziet.
@@ -63,7 +90,13 @@ export function BodyPage() {
       </div>
 
       <div>
-        <BodyFigure view={view} figure={figure} selectedId={shown?.id} flagged={flagged} onPick={(s) => setSelectedId(s.id)} />
+        <BodyFigure view={view} figure={figure} selectedId={shown?.id} flagged={flagged} glow={glow} onPick={(s) => setSelectedId(s.id)} />
+        {(Object.keys(glow).length > 0 || flagged.size > 0) && (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
+            {Object.keys(glow).length > 0 && <span className="flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-3 w-3 rounded-[4px]" style={{ background: 'var(--color-sage)', opacity: 0.7 }} />kwam terug of speelt nu</span>}
+            {flagged.size > 0 && <span className="flex items-center gap-1.5"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-warning)' }} />open klacht</span>}
+          </div>
+        )}
         {shown && (
           <div ref={barRef} className="sticky bottom-3 z-10 mt-3">
             <Card className="flex items-center gap-3 !p-3">
@@ -93,10 +126,16 @@ export function BodyPage() {
         {open.map((n) => (
           <OpenComplaint key={n.id} note={n} onResolve={(id) => void resolveInjury(id)} onDelete={(id) => void deleteInjury(id)} />
         ))}
+        {soreness.length > 0 && (
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
+            Deze week: {soreness.map((n) => `${kindOf(n)} in je ${noteTitle(n).toLowerCase()}`).join(', ')}. Dat gaat vanzelf weer dicht.
+          </p>
+        )}
         <div>
           <TextButton onClick={() => setReporting(true)}>Iets anders melden</TextButton>
         </div>
       </section>
+      <RecurringCard items={recurring} from={range.from} weeks={RECURRENCE_WEEKS} onPick={pickRecurring} />
       {reporting && <ReportSheet onClose={() => setReporting(false)} />}
 
       {resolved.length > 0 && (

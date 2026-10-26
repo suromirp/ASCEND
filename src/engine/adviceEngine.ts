@@ -25,6 +25,7 @@ import { costSentence, proposeRepeatWeek, shortfallSentence } from './repeatWeek
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { InjuryNote } from '../models/injury';
+import { isSoreness } from './injuryKind';
 import type { DailyTimeBudget, TrainingStrategyProfile, Weekday } from '../models/goalEngineConfig';
 import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
@@ -600,11 +601,11 @@ function tooLightAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
 }
 
 // --- Rule INJURY-LEGS ---------------------------------------------------------
-// Trigger: an open injury on a leg area noted in the last 14 days. Rule:
+// Trigger: an open pain (soreness and stiffness never block) on a leg area noted in the last 14 days. Rule:
 // ASCEND adds nothing heavy for the legs; the user picks the short variant
 // or skips. Effect: a hint naming this week's leg-heavy sessions.
 function injuryAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTemplate>): Advice[] {
-  const leg = inputs.injuries.find((i) => !i.resolvedDate && daysBetween(i.date, inputs.asOf) <= 14 && LEG_BODY_PARTS.some((p) => i.bodyPart.toLowerCase().includes(p)));
+  const leg = inputs.injuries.find((i) => !i.resolvedDate && !isSoreness(i) && daysBetween(i.date, inputs.asOf) <= 14 && LEG_BODY_PARTS.some((p) => i.bodyPart.toLowerCase().includes(p)));
   if (!leg) return [];
   const upcoming = inputs.plannedSessions
     .filter((s) => s.status !== 'skipped' && s.scheduledDate >= inputs.asOf && daysBetween(inputs.asOf, s.scheduledDate) <= 6)

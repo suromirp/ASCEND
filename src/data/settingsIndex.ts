@@ -105,6 +105,7 @@ export const SETTINGS_INDEX: SettingsIndexItem[] = [
   { id: 'paklijst', title: 'Paklijst', group: 'doel', note: 'Wat er in je rugzak gaat en wat dat weegt.', keywords: ['rugzak', 'gewicht', 'spullen', 'tent', 'uitrusting', 'inpakken'], route: '/reis/paklijst' },
 
   { id: 'kaarten', title: 'Kaarten op Vandaag', group: 'vandaag', note: 'Alles, alleen het belangrijkste of alleen je training. Daaronder de losse schakelaars.', keywords: ['kaarten', 'profiel', 'rustig', 'minder', 'weinig', 'alleen training', 'vandaag', 'scherm', 'opruimen', 'ochtendcheck', 'weekterugblik', 'citaat', 'geluid'] },
+  { id: 'lijfvraag', title: 'Hoe voelt je lijf?', group: 'vandaag', note: 'Een korte kaart op Vandaag over spierpijn, stijfheid of pijn. Alleen als er reden is, elke week of uit.', keywords: ['lijf', 'klachten', 'pijn', 'spierpijn', 'stijf', 'blessure', 'vraag', 'kaart', 'lichaam', 'voel me fris', 'week'] },
   { id: 'weekterugblik', title: 'Weekterugblik', group: 'vandaag', note: 'Een korte terugblik op je week, op Vandaag.', keywords: ['terugblik', 'samenvatting', 'overzicht', 'week', 'review', 'evaluatie'] },
   { id: 'weekterugblik-dag', title: 'Dag van de weekterugblik', group: 'vandaag', note: 'Op welke dag de terugblik verschijnt.', keywords: ['zondag', 'maandag', 'terugblik', 'wanneer', 'dag'] },
   { id: 'weekvraag', title: 'Vraag van de week', group: 'vandaag', note: 'Elke week één vraag om je plan scherp te houden.', keywords: ['vraag', 'stoïcijns', 'stoisch', 'intentie', 'plan', 'week'] },

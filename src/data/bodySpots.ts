@@ -7,7 +7,8 @@
 // engine/bodyMap.ts zoekt er in.
 
 export type BodyView = 'front' | 'back';
-export type BodySide = 'links' | 'rechts';
+// 'midden' alleen voor de plekken langs de ruggengraat (BodySpot.middle).
+export type BodySide = 'links' | 'rechts' | 'midden';
 
 export interface BodySpot {
   id: string;
@@ -19,6 +20,8 @@ export interface BodySpot {
   // Waar op het lichaam, voor onder de titel van de plek: "Voorkant, rond de knieschijf".
   where: string;
   side?: BodySide;
+  // Een plek langs de ruggengraat (nek, bovenrug, onderrug): de kant is Links, Midden, Rechts of Beide.
+  middle?: boolean;
   // Middelpunt en halve breedte en hoogte op het vlak van 200 bij 440.
   cx: number;
   cy: number;
@@ -52,7 +55,7 @@ function pair(id: string, view: BodyView, label: string, cxRight: number, half: 
 const FRONT: BodySpot[] = [
   {
     id: 'nek', view: 'front', name: 'Nek', muscle: 'Kopdraaiers en trapezius', where: 'Voorkant, de hals en de zijkant van de nek',
-    cx: 100, cy: 56, rx: 9, ry: 7, injuryParts: ['Nek'], stretchAreaIds: ['nek'], care: 'nek',
+    cx: 100, cy: 56, rx: 9, ry: 7, middle: true, injuryParts: ['Nek'], stretchAreaIds: ['nek'], care: 'nek',
   },
   ...pair('schouder', 'front', 'schouder', 62, {
     view: 'front', muscle: 'Deltaspier', where: 'Voorkant, rond het schoudergewricht',
@@ -95,15 +98,15 @@ const FRONT: BodySpot[] = [
 const BACK: BodySpot[] = [
   {
     id: 'nek-a', view: 'back', name: 'Nek', muscle: 'Trapezius en nekstrekkers', where: 'Achterkant, de nek',
-    cx: 100, cy: 58, rx: 9, ry: 7, injuryParts: ['Nek'], stretchAreaIds: ['nek'], care: 'nek',
+    cx: 100, cy: 58, rx: 9, ry: 7, middle: true, injuryParts: ['Nek'], stretchAreaIds: ['nek'], care: 'nek',
   },
   {
     id: 'bovenrug', view: 'back', name: 'Schouders en bovenrug', muscle: 'Trapezius en schouderbladen', where: 'Achterkant, tussen en boven de schouderbladen',
-    cx: 100, cy: 96, rx: 26, ry: 16, injuryParts: ['Bovenrug', 'Schouder'], stretchAreaIds: ['schouders'], care: 'bovenrug',
+    cx: 100, cy: 96, rx: 26, ry: 16, middle: true, injuryParts: ['Bovenrug', 'Schouder'], stretchAreaIds: ['schouders'], care: 'bovenrug',
   },
   {
     id: 'onderrug', view: 'back', name: 'Onderrug', muscle: 'Rugstrekkers', where: 'Achterkant, onder de ribben tot het bekken',
-    cx: 100, cy: 168, rx: 16, ry: 16, injuryParts: ['Onderrug'], stretchAreaIds: ['onderrug'], care: 'onderrug',
+    cx: 100, cy: 168, rx: 16, ry: 16, middle: true, injuryParts: ['Onderrug'], stretchAreaIds: ['onderrug'], care: 'onderrug',
   },
   ...pair('bil', 'back', 'bil', 84, {
     view: 'back', muscle: 'Bilspieren en piriformis', where: 'Achterkant, de bil',

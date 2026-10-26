@@ -327,6 +327,18 @@ export const CHOICES = {
       { value: 'off', label: 'Uit', note: 'Alles staat meteen op zijn plek', short: 'Uit' },
     ],
   }),
+  lijfvraag: def({
+    group: 'Vandaag en meldingen',
+    title: 'Hoe voelt je lijf?',
+    line: 'Een korte kaart op Vandaag over spierpijn, stijfheid of pijn.',
+    advice: 'reden' as 'reden' | 'elke-week' | 'uit',
+    help: 'lijfvraag',
+    options: [
+      { value: 'reden', label: 'Alleen als er reden is', note: 'Bij pijn, een zware week of na een tocht of wedstrijd', short: 'Bij reden' },
+      { value: 'elke-week', label: 'Elke week', note: 'Ook zonder reden, op de dag van de weekterugblik', short: 'Elke week' },
+      { value: 'uit', label: 'Uit', note: 'Geen kaart. Klachten melden kan altijd op Lichaam', short: 'Uit' },
+    ],
+  }),
   lucht: def({
     group: 'Vandaag en meldingen',
     title: 'Lucht bovenaan',

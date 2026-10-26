@@ -1011,6 +1011,19 @@ html[data-motion='calm'] .mx-body-mark {
   transition: none;
 }
 
+/* "Hoe voelt je lijf?" (components/BodyCheckCard.tsx): de zachte kleur van de plekken komt kort
+   op als het figuur verschijnt, 400 ms ease-out, en daarna blijft hij staan. Rustig en Uit:
+   meteen op de eindstand (Uit en beperkte beweging door de regels onderaan). */
+@keyframes mx-lijf-glow {
+  from { opacity: 0; }
+}
+.mx-lijf-glow {
+  animation: mx-lijf-glow 0.4s ease-out 0.15s backwards;
+}
+html[data-motion='calm'] .mx-lijf-glow {
+  animation: none;
+}
+
 /* Rustig: geen adem, geen puls, geen vullen. Tikfeedback, bladen, pagina's en
    lijsten blijven. Uit en beperkte beweging van het systeem: de adem staat stil
    op een zachte gloed, alles is meteen op de eindstand. */

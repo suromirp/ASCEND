@@ -37,6 +37,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Donker', text: 'dezelfde kaarten en kleuren, maar op diep marine met zachte bergen en een paar zwakke sterren.' },
     ],
   },
+  lijfvraag: {
+    title: 'Hoe voelt je lijf?',
+    lead: 'Een korte kaart op Vandaag: voel je iets van je week? Je tikt op een plek, kiest spierpijn, stijf of pijn, en krijgt wat kan helpen. Je planning verandert er niet door.',
+    points: [
+      { head: 'Alleen als er reden is', text: 'bij een open pijnmelding, een zware week voor je benen, of twee dagen na een tocht of wedstrijd, als spierpijn vaak pas komt. Hoogstens een keer per week.' },
+      { head: 'Elke week', text: 'ook zonder reden, op de dag van de weekterugblik.' },
+      { head: 'Uit', text: 'geen kaart. Op Lichaam meld je altijd zelf wat je voelt. Pijn in je benen blijft een hint geven bij zware beentrainingen.' },
+    ],
+  },
   beweging: {
     title: 'Beweging',
     lead: 'Hoeveel de app beweegt: een zachte indruk bij een tik, ringen die vollopen, getallen die optellen.',

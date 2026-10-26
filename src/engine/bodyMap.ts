@@ -7,12 +7,15 @@ import type { InjuryNote } from '../models/injury';
 import type { Stretch } from '../models/training';
 import { BODY_CARE, GENERAL_RED_FLAGS, type BodyCare } from '../data/bodyCare';
 import { BODY_PART_OPTIONS } from '../data/bodyAreas';
+import { isOpenOn, isSoreness, sorenessEnd } from './injuryKind';
+import { todayISO } from '../utils/dates';
 import { BODY_SPOTS, STRETCH_AREA_SPOT, type BodySide, type BodySpot, type BodyView } from '../data/bodySpots';
 import {
   COOLDOWN_LOWER, COOLDOWN_RECOVERY, COOLDOWN_RUN, COOLDOWN_UPPER, DYNAMIC_WARMUP, EVENING_ROUTINE, MORNING_ROUTINE, PROBLEM_AREAS,
 } from '../data/stretches';
 
 export type { BodySpot, BodyView, BodySide } from '../data/bodySpots';
+export { isSoreness, sorenessEnd } from './injuryKind';
 
 export const BODY_VIEWS: { value: BodyView; label: string }[] = [
   { value: 'front', label: 'Voorkant' },
@@ -172,14 +175,66 @@ export function careForSpot(spot: BodySpot): SpotCare {
 
 // ---- klachten -----------------------------------------------------------------------
 
-const SIDE_WORD: Record<BodySide, string> = { links: 'links', rechts: 'rechts' };
+// ---- de kant van een melding -----------------------------------------------------------
+// Docs: docs/beslissingen/2026-10-26-hoe-voelt-je-lijf.md. Een paar plekken (schouder, knie)
+// hebben een eigen links en rechts; nek, bovenrug en onderrug lopen langs de ruggengraat en
+// hebben ook een midden. "Beide" is altijd mogelijk en laat de kant uit de naam weg.
 
-// De naam waaronder een klacht van deze plek wordt opgeslagen: "Knie rechts". De
-// blessurenaam komt uit data/bodyAreas.ts, zodat de bestaande hint bij een been- of
-// voetklacht (engine/adviceEngine.ts) hem herkent.
-export function injuryNameFor(spot: BodySpot): string {
+export type SideChoice = BodySide | 'beide';
+
+export const SIDE_LABEL: Record<SideChoice, string> = { links: 'Links', midden: 'Midden', rechts: 'Rechts', beide: 'Beide' };
+
+// De kanten die je bij een plek kunt kiezen, in de volgorde van het scherm. Een plek zonder
+// eigen kant (buik, borst) heeft geen keuze.
+export function sideChoicesFor(spot: BodySpot): SideChoice[] {
+  if (spot.middle) return ['links', 'midden', 'rechts', 'beide'];
+  if (spot.side) return ['links', 'rechts', 'beide'];
+  return [];
+}
+
+// De andere helft van een paar (dij-l bij dij-r), of niets.
+export function partnerOf(spot: BodySpot): BodySpot | undefined {
+  if (!spot.side || spot.middle) return undefined;
+  const base = spot.id.slice(0, -2);
+  return BODY_SPOTS.find((s) => s.view === spot.view && s.id === `${base}-${spot.side === 'links' ? 'r' : 'l'}`);
+}
+
+// De plekken die bij een gekozen kant op het figuur oplichten: bij een paar de gekozen helft
+// (of beide), bij een plek langs de ruggengraat die ene plek (de helft zelf komt uit `halfClip`).
+export function spotsForSide(spot: BodySpot, side: SideChoice | undefined): BodySpot[] {
+  const partner = partnerOf(spot);
+  if (!partner) return [spot];
+  if (side === 'beide' || side === undefined) return [spot, partner].sort((a, b) => a.cx - b.cx);
+  return [spot, partner].filter((s) => s.side === side);
+}
+
+// Het deel van een plek langs de ruggengraat dat oplicht, als bereik langs de x-as van het
+// figuur. De kant is die van de persoon: op de voorkant staat zijn links rechts in beeld, op
+// de achterkant juist links. Midden is een smalle strook langs de ruggengraat; links en rechts
+// zijn wat daarbuiten ligt. Beide (of een plek zonder keuze) is de hele plek.
+export const MIDDLE_STRIP = 0.34;
+export function halfClip(spot: BodySpot, side: SideChoice | undefined): { x1: number; x2: number } {
+  const left = spot.cx - spot.rx - 1;
+  const right = spot.cx + spot.rx + 1;
+  if (!spot.middle || side === undefined || side === 'beide') return { x1: left, x2: right };
+  const strip = spot.rx * MIDDLE_STRIP;
+  if (side === 'midden') return { x1: spot.cx - strip, x2: spot.cx + strip };
+  // In beeld links is op de voorkant de rechterkant van de persoon.
+  const imageLeft = (spot.view === 'front' ? 'rechts' : 'links') === side;
+  return imageLeft ? { x1: left, x2: spot.cx - strip } : { x1: spot.cx + strip, x2: right };
+}
+
+const SIDE_WORD: Record<BodySide, string> = { links: 'links', midden: 'midden', rechts: 'rechts' };
+
+// De naam waaronder een klacht van deze plek wordt opgeslagen: "Knie rechts" of "Onderrug
+// midden". De blessurenaam komt uit data/bodyAreas.ts, zodat de bestaande hint bij een been- of
+// voetklacht (engine/adviceEngine.ts) hem herkent. Zonder `side` geldt de kant van de plek zelf;
+// "beide" laat de kant weg, zodat de naam op beide kanten uitkomt.
+export function injuryNameFor(spot: BodySpot, side?: SideChoice): string {
   const part = spot.injuryParts[0];
-  return spot.side ? `${part} ${SIDE_WORD[spot.side]}` : part;
+  if (side === undefined) return spot.side ? `${part} ${SIDE_WORD[spot.side]}` : part;
+  if (side === 'beide' || sideChoicesFor(spot).length === 0) return part;
+  return `${part} ${SIDE_WORD[side]}`;
 }
 
 function sideOf(text: string): BodySide | undefined {
@@ -188,6 +243,7 @@ function sideOf(text: string): BodySide | undefined {
   if (links >= 0 && rechts >= 0) return undefined; // "links en rechts": beide kanten
   if (links >= 0) return 'links';
   if (rechts >= 0) return 'rechts';
+  if (text.includes('midden')) return 'midden';
   return undefined;
 }
 
@@ -203,25 +259,89 @@ export function spotsForInjury(note: Pick<InjuryNote, 'bodyPart'>): BodySpot[] {
   });
 }
 
-export function isOpen(note: InjuryNote): boolean {
-  return !note.resolvedDate;
+// De kant van een melding om te tonen: wat erbij staat, anders wat in de naam staat, en een
+// melding aan een plek langs de ruggengraat zonder kant (van voor de kantkeuze) leest als
+// midden. Een plek zonder kant geeft niets.
+export function sideOfInjury(note: Pick<InjuryNote, 'bodyPart' | 'side'>): SideChoice | undefined {
+  if (note.side) return note.side;
+  const named = sideOf(note.bodyPart.toLowerCase());
+  if (named) return named;
+  const spots = spotsForInjury(note);
+  if (spots.length > 0 && spots.every((s) => s.middle)) return 'midden';
+  return undefined;
 }
 
-// Open klachten per plek, voor de amber stip en voor het detail van een plek.
-export function openComplaintsBySpot(notes: InjuryNote[]): Record<string, InjuryNote[]> {
+// Open op een dag: pijn tot je hem oplost, spierpijn en stijf na 7 dagen vanzelf dicht (afgeleid
+// bij het lezen, nooit geschreven). Zonder dag geldt vandaag.
+export function isOpen(note: InjuryNote, today: string = todayISO()): boolean {
+  return isOpenOn(note, today);
+}
+
+// Het einde van een gesloten melding: de dag van oplossen, of bij spierpijn en stijf de dag
+// waarop hij vanzelf sloot.
+export function closedOn(note: InjuryNote): string | undefined {
+  if (note.resolvedDate) return note.resolvedDate;
+  return isSoreness(note) ? sorenessEnd(note) : undefined;
+}
+
+// Open klachten per plek, voor de amber stip en voor het detail van een plek. Spierpijn en stijf
+// tellen hier niet: die hebben een eigen, rustige weergave.
+export function openComplaintsBySpot(notes: InjuryNote[], today: string = todayISO()): Record<string, InjuryNote[]> {
   const out: Record<string, InjuryNote[]> = {};
-  for (const note of notes.filter(isOpen)) {
+  for (const note of notes.filter((n) => isOpen(n, today) && !isSoreness(n))) {
     for (const spot of spotsForInjury(note)) (out[spot.id] ??= []).push(note);
   }
   return out;
 }
 
-export function openComplaints(notes: InjuryNote[]): InjuryNote[] {
-  return notes.filter(isOpen).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+// Open spierpijn en stijf per plek: de salieglans op het figuur.
+export function openSorenessBySpot(notes: InjuryNote[], today: string = todayISO()): Record<string, InjuryNote[]> {
+  const out: Record<string, InjuryNote[]> = {};
+  for (const note of notes.filter((n) => isOpen(n, today) && isSoreness(n))) {
+    for (const spot of spotsForInjury(note)) (out[spot.id] ??= []).push(note);
+  }
+  return out;
 }
 
-export function resolvedComplaints(notes: InjuryNote[]): InjuryNote[] {
-  return notes.filter((n) => !isOpen(n)).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+const byDateDesc = (a: InjuryNote, b: InjuryNote) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+
+// De open klachten van het lijstje onder het figuur: pijn en oude meldingen. Spierpijn en
+// stijf staan niet in dit lijstje (ze verlopen vanzelf), die staan als regel onder het figuur.
+export function openComplaints(notes: InjuryNote[], today: string = todayISO()): InjuryNote[] {
+  return notes.filter((n) => isOpen(n, today) && !isSoreness(n)).sort(byDateDesc);
+}
+
+export function openSoreness(notes: InjuryNote[], today: string = todayISO()): InjuryNote[] {
+  return notes.filter((n) => isOpen(n, today) && isSoreness(n)).sort(byDateDesc);
+}
+
+// Opgelost: wat je zelf als opgelost markeerde, en pijn die dicht is. Spierpijn en stijf die vanzelf
+// sloten staan hier niet: ze komen terug onder "Wat terugkomt" en zouden de lijst alleen vullen.
+export function resolvedComplaints(notes: InjuryNote[], today: string = todayISO()): InjuryNote[] {
+  return notes.filter((n) => !isOpen(n, today) && (!isSoreness(n) || !!n.resolvedDate)).sort(byDateDesc);
+}
+
+// De naam in het meervoud voor een plek die je links en rechts hebt, zonder kant.
+export const PART_PLURAL: Record<string, string> = {
+  Quadriceps: 'Bovenbenen', Knie: 'Knieën', Kuit: 'Kuiten', Schouder: 'Schouders', Hamstring: 'Hamstrings', Bil: 'Billen',
+  Scheen: 'Scheenbenen', Heup: 'Heupen', Enkel: 'Enkels', Achillespees: 'Achillespezen', Pols: 'Polsen', Onderarm: 'Onderarmen',
+};
+
+// De titel van een plek in het blad van de kaart: een paar heet "Bovenbenen" (de kant kies je
+// daaronder), de rest houdt zijn eigen naam. De regel eronder is de spier of het gewricht.
+export function spotTitle(spot: BodySpot): { title: string; sub: string } {
+  const paired = sideChoicesFor(spot).length > 0 && !spot.middle;
+  return { title: paired ? PART_PLURAL[spot.injuryParts[0]] ?? spot.name : spot.name, sub: spot.muscle };
+}
+
+// De naam van een melding om te tonen: met een kant "Knie rechts", zonder kant op een paar de
+// meervoudsnaam ("Bovenbenen"), anders zoals opgeslagen.
+export function noteTitle(note: Pick<InjuryNote, 'bodyPart' | 'side'>): string {
+  const spots = spotsForInjury(note);
+  const first = spots[0];
+  const side = note.side ?? sideOf(note.bodyPart.toLowerCase());
+  if (first && sideChoicesFor(first).length > 0 && !first.middle && (!side || side === 'beide')) return PART_PLURAL[first.injuryParts[0]] ?? note.bodyPart;
+  return note.bodyPart;
 }
 
 // De plek om naartoe te springen vanuit een klacht: de eerste die bij de naam hoort,

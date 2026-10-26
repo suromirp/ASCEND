@@ -134,7 +134,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   // Lichaam
   ...inSheet('bundel-wat', 'wat-teken', 'wat-oorzaak', 'wat-overzicht', 'wat-test', 'wat-vastgelegd'),
   // Vandaag en meldingen
-  ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'weekvraag', 'citaten', 'geluid'),
+  ...inSheet('kaarten', 'ochtendcheck', 'weekterugblik', 'lijfvraag', 'weekvraag', 'citaten', 'geluid'),
   ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),

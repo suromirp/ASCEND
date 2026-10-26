@@ -8,6 +8,7 @@ import { PROBLEM_AREAS } from '../data/stretches';
 import {
   breakableSpotName,
   careForSpot, injuryNameFor, openComplaints, openComplaintsBySpot, resolvedComplaints, spotById, spotForComplaint, spotForStretchArea,
+  halfClip, isOpen, noteTitle, spotTitle, openComplaintsBySpot as bySpotOpen, openSoreness, openSorenessBySpot, partnerOf, sideChoicesFor, sideOfInjury, spotsForSide, closedOn,
   hitBoxes, isValidReportDate, MIN_TAP, offFigureParts, spotsForInjury, spotsForView, stretchesForSpot, stretchMinutes,
 } from './bodyMap';
 
@@ -240,5 +241,110 @@ describe('breakableSpotName', () => {
     expect(breakableSpotName('Rechterachillespees')).toBe('Rechter­achillespees');
     expect(breakableSpotName('Linkerknie')).toBe('Linker­knie');
     expect(breakableSpotName('Nek')).toBe('Nek');
+  });
+});
+
+describe('de kant van een melding', () => {
+  it('geeft een paar Links, Rechts en Beide, en een plek langs de ruggengraat ook Midden', () => {
+    expect(sideChoicesFor(spotById('knie-r')!)).toEqual(['links', 'rechts', 'beide']);
+    for (const id of ['nek', 'nek-a', 'bovenrug', 'onderrug']) expect(sideChoicesFor(spotById(id)!), id).toEqual(['links', 'midden', 'rechts', 'beide']);
+    expect(sideChoicesFor(spotById('buik')!)).toEqual([]);
+  });
+
+  it('noemt de blessure met de kant, en laat de kant weg bij Beide', () => {
+    expect(injuryNameFor(spotById('onderrug')!, 'rechts')).toBe('Onderrug rechts');
+    expect(injuryNameFor(spotById('onderrug')!, 'midden')).toBe('Onderrug midden');
+    expect(injuryNameFor(spotById('onderrug')!, 'beide')).toBe('Onderrug');
+    expect(injuryNameFor(spotById('knie-r')!, 'links')).toBe('Knie links');
+    expect(injuryNameFor(spotById('knie-r')!)).toBe('Knie rechts');
+    expect(injuryNameFor(spotById('buik')!, 'rechts')).toBe('Buik');
+  });
+
+  it('leest een naam met midden of zonder kant als de hele plek', () => {
+    expect(spotsForInjury({ bodyPart: 'Onderrug midden' }).map((s) => s.id)).toEqual(['onderrug']);
+    expect(spotsForInjury({ bodyPart: 'Onderrug rechts' }).map((s) => s.id)).toEqual(['onderrug']);
+    expect(spotsForInjury({ bodyPart: 'Onderrug' }).map((s) => s.id)).toEqual(['onderrug']);
+  });
+
+  it('leest een oude melding aan een rugplek zonder kant als midden', () => {
+    expect(sideOfInjury({ bodyPart: 'Onderrug' })).toBe('midden');
+    expect(sideOfInjury({ bodyPart: 'Onderrug', side: 'beide' })).toBe('beide');
+    expect(sideOfInjury({ bodyPart: 'Nek links' })).toBe('links');
+    expect(sideOfInjury({ bodyPart: 'Knie' })).toBeUndefined();
+    expect(sideOfInjury({ bodyPart: 'Knie rechts' })).toBe('rechts');
+  });
+
+  it('licht bij een paar alleen de gekozen helft op', () => {
+    const r = spotById('knie-r')!;
+    expect(partnerOf(r)?.id).toBe('knie-l');
+    expect(spotsForSide(r, 'links').map((s) => s.id)).toEqual(['knie-l']);
+    expect(spotsForSide(r, 'rechts').map((s) => s.id)).toEqual(['knie-r']);
+    expect(spotsForSide(r, 'beide').map((s) => s.id).sort()).toEqual(['knie-l', 'knie-r']);
+    expect(spotsForSide(spotById('onderrug')!, 'midden').map((s) => s.id)).toEqual(['onderrug']);
+  });
+
+  it('kleurt van een plek langs de ruggengraat alleen de gekozen helft, gespiegeld op voor en achter', () => {
+    const onderrug = spotById('onderrug')!; // achterkant
+    const nek = spotById('nek')!; // voorkant
+    const all = halfClip(onderrug, 'beide');
+    expect(all.x1).toBeLessThan(onderrug.cx - onderrug.rx);
+    expect(all.x2).toBeGreaterThan(onderrug.cx + onderrug.rx);
+    // Achterkant: links van de persoon is links in beeld.
+    expect(halfClip(onderrug, 'links').x2).toBeLessThanOrEqual(onderrug.cx);
+    expect(halfClip(onderrug, 'rechts').x1).toBeGreaterThanOrEqual(onderrug.cx);
+    // Voorkant: links van de persoon is rechts in beeld.
+    expect(halfClip(nek, 'links').x1).toBeGreaterThanOrEqual(nek.cx);
+    expect(halfClip(nek, 'rechts').x2).toBeLessThanOrEqual(nek.cx);
+    const mid = halfClip(onderrug, 'midden');
+    expect(mid.x1).toBeLessThan(onderrug.cx);
+    expect(mid.x2).toBeGreaterThan(onderrug.cx);
+    expect(mid.x2 - mid.x1).toBeLessThan((all.x2 - all.x1) / 2);
+    // Een plek zonder keuze kleurt helemaal.
+    expect(halfClip(spotById('knie-r')!, 'links')).toEqual(halfClip(spotById('knie-r')!, 'beide'));
+  });
+});
+
+describe('spierpijn en stijf', () => {
+  const sore = note({ id: 's', bodyPart: 'Quadriceps', kind: 'spierpijn', date: '2026-10-20' });
+
+  it('staan 6 dagen open en sluiten op de 7e dag vanzelf, zonder iets te schrijven', () => {
+    expect(isOpen(sore, '2026-10-26')).toBe(true);
+    expect(isOpen(sore, '2026-10-27')).toBe(false);
+    expect(sore.resolvedDate).toBeUndefined();
+    expect(closedOn(sore)).toBe('2026-10-27');
+  });
+
+  it('een pijnmelding blijft open tot je hem oplost, ook een oude zonder soort', () => {
+    expect(isOpen(note({ date: '2026-01-01' }), '2026-10-26')).toBe(true);
+    expect(isOpen(note({ date: '2026-01-01', kind: 'pijn' }), '2026-10-26')).toBe(true);
+    expect(isOpen(note({ date: '2026-01-01', resolvedDate: '2026-01-05' }), '2026-10-26')).toBe(false);
+  });
+
+  it('tellen niet mee voor de amber stip en de lijst met klachten, maar hebben een eigen lijst', () => {
+    const pain = note({ id: 'p' });
+    expect(bySpotOpen([pain, sore], '2026-10-24')).toEqual({ 'knie-r': [pain] });
+    expect(openComplaints([pain, sore], '2026-10-24').map((n) => n.id)).toEqual(['p']);
+    expect(openSoreness([pain, sore], '2026-10-24').map((n) => n.id)).toEqual(['s']);
+    expect(Object.keys(openSorenessBySpot([pain, sore], '2026-10-24')).sort()).toEqual(['dij-l', 'dij-r']);
+    // Een verlopen spierpijn vult de lijst Opgelost niet, tenzij je hem zelf oploste.
+    expect(resolvedComplaints([pain, sore], '2026-10-28')).toEqual([]);
+    const solved = note({ id: 'z', kind: 'stijf', resolvedDate: '2026-10-22' });
+    expect(resolvedComplaints([pain, sore, solved], '2026-10-28').map((n) => n.id)).toEqual(['z']);
+  });
+});
+
+describe('titels in het blad van de kaart', () => {
+  it('een paar heet in het meervoud en de rest houdt zijn naam', () => {
+    expect(spotTitle(spotById('dij-r')!)).toEqual({ title: 'Bovenbenen', sub: 'Quadriceps' });
+    expect(spotTitle(spotById('knie-l')!).title).toBe('Knieën');
+    expect(spotTitle(spotById('onderrug')!).title).toBe('Onderrug');
+    expect(spotTitle(spotById('buik')!).title).toBe('Buik en romp');
+  });
+
+  it('een melding heet met een kant zoals opgeslagen en zonder kant in het meervoud', () => {
+    expect(noteTitle({ bodyPart: 'Knie rechts' })).toBe('Knie rechts');
+    expect(noteTitle({ bodyPart: 'Quadriceps' })).toBe('Bovenbenen');
+    expect(noteTitle({ bodyPart: 'Quadriceps', side: 'beide' })).toBe('Bovenbenen');
+    expect(noteTitle({ bodyPart: 'Onderrug midden' })).toBe('Onderrug midden');
   });
 });

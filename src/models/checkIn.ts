@@ -66,6 +66,9 @@ export interface WeeklyHealthCheck {
   trouble: WeeklyTrouble;
   area?: string;
   severity?: TroubleSeverity;
+  // De dag waarop je "Niet nu" koos op de kaart "Hoe voelt je lijf?": die week is dan nog niet
+  // afgehandeld, de kaart komt de volgende dag terug. Optioneel en toegevoegd.
+  laterOn?: string;
 }
 
 // The question of the week on Today (engine/weeklyQuestion.ts): one "Als ...,

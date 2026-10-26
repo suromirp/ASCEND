@@ -27,6 +27,7 @@ import { shortGoalName } from './settingsStatus';
 import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
+import { resolveBodyCheck } from './bodyCheckSettings';
 import { resolveSky } from './skySettings';
 import { resolveIntensityCounting } from './intensitySettings';
 import { resolveFigure, type Figure } from './figureSettings';
@@ -512,6 +513,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.weekReview };
     case 'weekterugblik-dag':
       return { value: choiceShort('terugblikDag', o.weekReviewDay) };
+    case 'lijfvraag':
+      return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
     case 'weekvraag':
       return { checked: o.weeklyQuestion };
     case 'weerplaats':

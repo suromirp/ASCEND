@@ -191,6 +191,32 @@ describe('backup envelope round-trip', () => {
     expect(backup.sessionLogs.find((l) => l.id === 'ok')?.gymProfileId).toBe('b');
   });
 
+  it('what you noticed and the side of a complaint travel in a backup; an older complaint stays as it was', async () => {
+    await InjuryNotesRepo.put({ id: 'new', date: '2026-10-20', bodyPart: 'Onderrug rechts', severity: 'matig', kind: 'pijn', side: 'rechts' });
+    await InjuryNotesRepo.put({ id: 'sore', date: '2026-10-21', bodyPart: 'Quadriceps', severity: 'licht', kind: 'spierpijn', side: 'beide' });
+    await InjuryNotesRepo.put({ id: 'old', date: '2026-09-01', bodyPart: 'Onderrug', severity: 'licht' });
+    await SettingsRepo.set({ bodyCheck: 'elke-week', weeklyHealthChecks: [{ weekStart: '2026-10-19', trouble: 'geen', laterOn: '2026-10-22' }] });
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    const backup = normalizeBackupToCurrentModel(envelope);
+    expect(backup.injuryNotes.find((n) => n.id === 'new')).toMatchObject({ kind: 'pijn', side: 'rechts' });
+    expect(backup.injuryNotes.find((n) => n.id === 'sore')).toMatchObject({ kind: 'spierpijn', side: 'beide' });
+    const old = backup.injuryNotes.find((n) => n.id === 'old')!;
+    expect('kind' in old || 'side' in old).toBe(false);
+    expect(backup.settings.bodyCheck).toBe('elke-week');
+    expect(backup.settings.weeklyHealthChecks?.[0].laterOn).toBe('2026-10-22');
+    await importEnvelope(envelope);
+    expect((await InjuryNotesRepo.getAll()).find((n) => n.id === 'sore')).toMatchObject({ kind: 'spierpijn', side: 'beide' });
+  });
+
+  it('a damaged kind or side on a complaint, and a damaged day of "Niet nu", are dropped', async () => {
+    await InjuryNotesRepo.put({ id: 'bad', date: '2026-10-20', bodyPart: 'Knie', severity: 'licht', kind: 'vreemd', side: 7 } as unknown as InjuryNote);
+    await SettingsRepo.set({ weeklyHealthChecks: [{ weekStart: '2026-10-19', trouble: 'geen', laterOn: 'morgen' }] });
+    const backup = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    const bad = backup.injuryNotes.find((n) => n.id === 'bad')!;
+    expect('kind' in bad || 'side' in bad).toBe(false);
+    expect(backup.settings.weeklyHealthChecks?.[0]).toEqual({ weekStart: '2026-10-19', trouble: 'geen' });
+  });
+
   it('a backup with an empty payload changes nothing (missing categories are unknown, not empty)', async () => {
     await SessionLogsRepo.put(log('a', '2026-09-01'));
     await TrainingGoalsRepo.put({ id: 'goal1', name: 'GR5', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'active', targetDate: '2027-08-02' });

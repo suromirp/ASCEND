@@ -201,8 +201,11 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     const where = weeklyCheck.area ? ` aan je ${weeklyCheck.area.toLowerCase()}` : '';
     if (weeklyCheck.trouble === 'niet_kunnen' || weeklyCheck.severity === 'ernstig') {
       advice.unshift(`Je kon door klachten${where} niet trainen. Bouw volgende week niet verder op, meld het bij Lichaam en laat het bekijken als het niet binnen 2 tot 3 weken beter wordt.`);
-    } else if (weeklyCheck.trouble === 'minder' || weeklyCheck.severity === 'matig') {
+    } else if (weeklyCheck.trouble === 'minder') {
       advice.unshift(`Klachten${where} hielden je deze week af en toe af. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
+    } else if (weeklyCheck.severity === 'matig') {
+      // Een melding op de kaart "Hoe voelt je lijf?": je kon trainen, de pijn hindert wel.
+      advice.unshift(`Je meldde matige pijn${where}. Volgende week houdt ASCEND op die plek de omvang gelijk, zonder extra opbouw.`);
     } else {
       advice.push(`Een lichte klacht${where}, zonder dat je minder kon trainen. Let erop; zakt hij niet, meld het dan weer volgende week.`);
     }

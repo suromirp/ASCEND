@@ -83,4 +83,12 @@ describe('the weekly question about trouble', () => {
     expect(review({ trouble: 'minder', area: 'Knie', severity: 'matig' }).advice[0]).toContain('zonder extra opbouw');
     expect(review({ trouble: 'wel_gewoon', severity: 'mild' }).advice.join(' ')).toContain('lichte klacht');
   });
+
+  it('a report from the card "Hoe voelt je lijf?" still reads: moderate pain holds the build-up, a trouble-free soreness says nothing', () => {
+    const matig = review({ trouble: 'wel_gewoon', area: 'Knie', severity: 'matig' }).advice[0];
+    expect(matig).toContain('matige pijn aan je knie');
+    expect(matig).toContain('zonder extra opbouw');
+    expect(matig).not.toContain('hielden je');
+    expect(review({ trouble: 'geen', area: 'Quadriceps' }).advice.join(' ')).not.toContain('klacht');
+  });
 });

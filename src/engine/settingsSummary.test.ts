@@ -770,3 +770,12 @@ describe('rowSummary: rijen met een blad', () => {
     }
   });
 });
+
+describe('rowSummary: Hoe voelt je lijf?', () => {
+  it('zegt de stand in een paar woorden en valt terug op het advies', () => {
+    expect(rowSummary('lijfvraag', facts()).value).toBe('Bij reden');
+    expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'elke-week' } })).value).toBe('Elke week');
+    expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'uit' } })).value).toBe('Uit');
+    expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'rommel' } as never })).value).toBe('Bij reden');
+  });
+});

@@ -311,4 +311,11 @@ describe('INJURY-LEGS', () => {
     const done = { id: 'i2', date: '2026-09-28', bodyPart: 'Knie links', severity: 'licht' as const, resolvedDate: '2026-09-29' };
     expect(computeAdvice(inputs({ injuries: [done] })).some((a) => a.ruleId === 'INJURY-LEGS')).toBe(false);
   });
+
+  it('ziet pijn aan een been, maar spierpijn en stijf niet', () => {
+    const base = { id: 'i1', date: '2026-09-28', bodyPart: 'Quadriceps', severity: 'licht' as const };
+    expect(computeAdvice(inputs({ injuries: [{ ...base, kind: 'pijn' }] })).some((a) => a.ruleId === 'INJURY-LEGS')).toBe(true);
+    expect(computeAdvice(inputs({ injuries: [{ ...base, kind: 'spierpijn' }] })).some((a) => a.ruleId === 'INJURY-LEGS')).toBe(false);
+    expect(computeAdvice(inputs({ injuries: [{ ...base, kind: 'stijf' }] })).some((a) => a.ruleId === 'INJURY-LEGS')).toBe(false);
+  });
 });

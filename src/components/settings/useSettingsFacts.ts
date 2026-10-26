@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
+import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
 import { currentBodyKg, latestWeight, weightsInUse } from '../../engine/bodyWeight';
@@ -119,7 +120,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       goal: mainGoal && mainGoal.status === 'active' && goalDate ? { name: mainGoal.name, date: mainGoal.targetDate } : null,
       treks: periods.filter((p) => p.trek).length,
       vacations: periods.filter((p) => !p.trek).length,
-      activeInjuries: injuryNotes.filter((n) => !n.resolvedDate).length,
+      activeInjuries: injuryNotes.filter((n) => isOpenOn(n, today) && !isSoreness(n)).length,
       strengthExternal,
       ambition: effectiveAmbition(settings.ambition, sessionLogs, templateById, program, today),
       hasBodyFat: hasBodyFat(weightsInUse(settings.weightEntries, settings.weightFromMacroFactor)),
