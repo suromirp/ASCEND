@@ -27,6 +27,9 @@ export type OneRmView = 'one_rm' | 'work_weight';
 // How the weights you log with dumbbells are read: recognised per exercise (the
 // advice), always per dumbbell, or always as the total of two.
 export type DumbbellLog = 'auto' | 'each' | 'total';
+// How much strength each earlier working set costs the next: learned per exercise
+// from your own sets (the advice) or a fixed 3%.
+export type FatigueMode = 'learned' | 'fixed';
 // The weights ASCEND proposes on a cable or a machine with a stack: learned from
 // what you used and estimated in between (the advice), only what you used, or
 // the steps of your gym profile.
@@ -64,6 +67,10 @@ export interface GymProfile {
   stackStepKg: number;
   // Own step for one exercise (by exercise id), over the one above. For later.
   exerciseStepKg?: Record<string, number>;
+  // The weights of one cable or stack machine in THIS gym (by exercise id), typed in by
+  // you. The list goes before everything ASCEND learns or estimates there
+  // (engine/machineWeights.ts, engine/strengthWeights.ts#candidatesFor).
+  exerciseWeightsKg?: Record<string, number[]>;
 }
 
 export interface StrengthSettings {
@@ -86,8 +93,13 @@ export interface StrengthSettings {
   restSound?: RestSound;
   // Keep the screen on while the workout screen is open.
   keepScreenOn?: boolean;
-  // A weight you change on one set goes on to the next sets you did not touch.
+  // Before "Wijzigingen doorvoeren": a weight you change shifts the next sets you did
+  // not touch by the same difference. Only read, as the old answer for `carryMode`.
   carryWeights?: boolean;
+  // A change of a working set goes on to later open sets: those that were exactly the
+  // same take the new value ('equal', the advice), the weights shift by the same
+  // difference ('shift', the old behaviour), or nothing ('off').
+  carryMode?: CarryMode;
   // A small line "per kant 15 + 2,5" under a working set of a barbell exercise.
   showPlates?: boolean;
   // The block "Geschatte 1RM" with a trend on the Forge page.
@@ -116,6 +128,8 @@ export interface StrengthSettings {
   // After more than four weeks without the exercise the proposal starts a little lighter (default on).
   lighterAfterBreak?: boolean;
   dumbbellLog?: DumbbellLog;
+  // Fatigue per working set: learned per exercise (default) or a fixed 3%.
+  fatigue?: FatigueMode;
   // Show the block "ASCEND naast MacroFactor" at the bottom of Forge (default off).
   showComparison?: boolean;
   // The day the quiet measuring began (ISO), to see the weeks since apart.
@@ -143,7 +157,7 @@ export interface ResolvedStrengthSettings {
   restAlert: RestAlert;
   restSound: RestSound;
   keepScreenOn: boolean;
-  carryWeights: boolean;
+  carryMode: CarryMode;
   showPlates: boolean;
   showOneRm: boolean;
   oneRmView: OneRmView;
@@ -159,6 +173,7 @@ export interface ResolvedStrengthSettings {
   stackWeights: StackWeights;
   lighterAfterBreak: boolean;
   dumbbellLog: DumbbellLog;
+  fatigue: FatigueMode;
   showComparison: boolean;
   checkFrom: string;
   adjustLive: boolean;
@@ -213,6 +228,15 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     const entries = Object.entries(raw.exerciseStepKg).filter((e): e is [string, number] => e[0].length <= 60 && isNum(e[1]) && e[1] >= 0.25 && e[1] <= 50);
     if (entries.length > 0) exerciseStepKg = Object.fromEntries(entries);
   }
+  let exerciseWeightsKg: Record<string, number[]> | undefined;
+  if (isRecord(raw.exerciseWeightsKg)) {
+    const entries = Object.entries(raw.exerciseWeightsKg)
+      .filter(([id]) => id.length > 0 && id.length <= 60)
+      .map(([id, list]): [string, number[] | undefined] => [id, weightList(list, 0.25, 500, 40)?.sort((a, b) => a - b)])
+      .filter((e): e is [string, number[]] => !!e[1])
+      .slice(0, 100);
+    if (entries.length > 0) exerciseWeightsKg = Object.fromEntries(entries);
+  }
   return {
     id: raw.id,
     name: typeof raw.name === 'string' && raw.name.trim() !== '' ? raw.name.trim().slice(0, 40) : DEFAULT_PROFILE.name,
@@ -221,6 +245,7 @@ export function normalizeProfile(raw: unknown): GymProfile | undefined {
     dumbbells: normalizeRack(raw.dumbbells),
     stackStepKg: stepValue(raw.stackStepKg, DEFAULT_PROFILE.stackStepKg),
     ...(exerciseStepKg ? { exerciseStepKg } : {}),
+    ...(exerciseWeightsKg ? { exerciseWeightsKg } : {}),
   };
 }
 
@@ -231,8 +256,11 @@ const WARMUP_SCOPES: WarmupScope[] = ['group', 'exercise'];
 export const ONE_RM_VIEWS: OneRmView[] = ['one_rm', 'work_weight'];
 export const COMPARE_WEEKS: CompareWeeks[] = ['4_8', '2_4', '8_12', '12_26'];
 export const FORGE_SORTS: ForgeSort[] = ['most', 'recent', 'name'];
+export type CarryMode = 'equal' | 'shift' | 'off';
+export const CARRY_MODES: CarryMode[] = ['equal', 'shift', 'off'];
 export const RIR_PREFILLS: RirPrefill[] = ['hint', 'target'];
 export const DUMBBELL_LOGS: DumbbellLog[] = ['auto', 'each', 'total'];
+export const FATIGUE_MODES: FatigueMode[] = ['learned', 'fixed'];
 export const STACK_WEIGHTS: StackWeights[] = ['learned', 'used_only', 'profile'];
 // '4_8' to [4, 8].
 export const compareMoments = (c: CompareWeeks): [number, number] => {
@@ -293,6 +321,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.restAuto === 'boolean') out.restAuto = raw.restAuto;
   if (typeof raw.keepScreenOn === 'boolean') out.keepScreenOn = raw.keepScreenOn;
   if (typeof raw.carryWeights === 'boolean') out.carryWeights = raw.carryWeights;
+  const carryMode = CARRY_MODES.find((v) => v === raw.carryMode);
+  if (carryMode) out.carryMode = carryMode;
   if (typeof raw.showPlates === 'boolean') out.showPlates = raw.showPlates;
   if (typeof raw.showOneRm === 'boolean') out.showOneRm = raw.showOneRm;
   const oneRmView = ONE_RM_VIEWS.find((v) => v === raw.oneRmView);
@@ -310,6 +340,8 @@ export function normalizeStrengthSettings(raw: unknown): StrengthSettings | unde
   if (typeof raw.lighterAfterBreak === 'boolean') out.lighterAfterBreak = raw.lighterAfterBreak;
   const dumbbellLog = DUMBBELL_LOGS.find((v) => v === raw.dumbbellLog);
   if (dumbbellLog) out.dumbbellLog = dumbbellLog;
+  const fatigue = FATIGUE_MODES.find((v) => v === raw.fatigue);
+  if (fatigue) out.fatigue = fatigue;
   if (typeof raw.adjustLive === 'boolean') out.adjustLive = raw.adjustLive;
   const rirPrefill = RIR_PREFILLS.find((v) => v === raw.rirPrefill);
   if (rirPrefill) out.rirPrefill = rirPrefill;
@@ -344,7 +376,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     restAlert: s.restAlert ?? 'sound_vibrate',
     restSound: s.restSound ?? 'chime',
     keepScreenOn: s.keepScreenOn ?? true,
-    carryWeights: s.carryWeights ?? true,
+    carryMode: s.carryMode ?? (s.carryWeights === false ? 'off' : 'equal'),
     showPlates: s.showPlates ?? true,
     showOneRm: s.showOneRm ?? true,
     oneRmView: s.oneRmView ?? 'one_rm',
@@ -359,6 +391,7 @@ export function resolveStrengthSettings(raw: StrengthSettings | undefined | null
     stackWeights: s.stackWeights ?? 'learned',
     lighterAfterBreak: s.lighterAfterBreak ?? true,
     dumbbellLog: s.dumbbellLog ?? 'auto',
+    fatigue: s.fatigue ?? 'learned',
     showComparison: s.showComparison ?? false,
     checkFrom: s.checkFrom ?? DEFAULT_CHECK_FROM,
     adjustLive: s.adjustLive ?? true,
@@ -417,6 +450,8 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
   delete copy.showComparison;
   delete copy.checkFrom;
   delete copy.adjustLive;
+  delete copy.carryMode;
+  delete copy.carryWeights;
   delete copy.rirPrefill;
   return JSON.stringify(copy);
 }
@@ -426,6 +461,6 @@ export function strengthModelKey(raw: StrengthSettings | undefined): string {
 // them on a settings page does not recount the whole strength history.
 export function checkModelKey(raw: StrengthSettings | undefined): string {
   const r = normalizeStrengthSettings(raw) ?? {};
-  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, program: r.program, checkFrom: r.checkFrom };
+  const keep: StrengthSettings = { enabled: r.enabled, progression: r.progression, workSets: r.workSets, widenRange: r.widenRange, estimateUpTo: r.estimateUpTo, activeProfileId: r.activeProfileId, profiles: r.profiles, stackWeights: r.stackWeights, lighterAfterBreak: r.lighterAfterBreak, dumbbellLog: r.dumbbellLog, fatigue: r.fatigue, program: r.program, checkFrom: r.checkFrom };
   return JSON.stringify(keep);
 }

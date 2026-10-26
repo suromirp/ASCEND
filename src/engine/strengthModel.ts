@@ -24,6 +24,7 @@ import { daysBetween } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { isWorkSet } from './workSets';
 import type { ResolvedStrengthSettings } from './strengthSettings';
+import { countsForProfile, ownWeightsFor } from './machineWeights';
 import { candidatesFor, dumbbellsAsTotal, externalFromLoad, loadFromExternal, nearestIndex, profileFor, stepAt, usedOnlyWeights, usedWeights, type Candidate } from './strengthWeights';
 
 // --- constants -------------------------------------------------------------------------
@@ -70,15 +71,21 @@ export const UNDER_EXPECTATION_DROP = 0.05;
 // Fatigue within a training. CHOICE OF THIS FILE (the report has no rule for
 // it): every earlier working set costs the next one this share of the strength.
 // With 3% the model gives 47,5, 45, 42,5 and 42,5 kg for four sets of 11 to 13
-// reps with 2 in reserve, the series the owner's other app showed. That is one
-// example, so the 3% is uncertain; it can be changed here and nowhere else.
+// reps with 2 in reserve, a usual descending series. That is one example, so the
+// 3% is uncertain; with "Leren per oefening" it is only the starting value.
 export const FATIGUE_PER_SET = 0.03;
+// Learned per exercise (setting "Vermoeidheid per set"): the median drop in
+// estimated strength from one working set to the next, pulled toward the 3% while
+// there are few pairs: (n x measured + k x 3%) / (n + k), and kept between 1% and 12%.
+export const FATIGUE_SHRINK_PAIRS = 8;
+export const FATIGUE_MIN = 0.01;
+export const FATIGUE_MAX = 0.12;
 // A step down of more than this share of the weight is too coarse for a later set:
 // the weight stays and the bottom of the range goes down a little.
 export const COARSE_STEP = 0.1;
 
-// The rep ranges, as three reps wide bands around these centres (the owner's
-// other app uses 7 to 9, 9 to 11, 11 to 13, 14 to 16). The range is not stored
+// The rep ranges, as three reps wide bands around these centres (common programs
+// use bands like 7 to 9, 9 to 11, 11 to 13, 14 to 16). The range is not stored
 // anywhere yet, so it is derived from what was done: the middle of the first
 // training, snapped to the nearest band (halfway goes up: 11 reps is the bottom
 // of 11 to 13), and moved only after two trainings in a row outside it.
@@ -144,6 +151,46 @@ export function sessionStrength(sets: SetLog[], ctx: LoadContext): number | unde
   return Math.max(...pool.map((e) => e.strengthKg));
 }
 
+// --- fatigue per set, learned ----------------------------------------------------------------
+
+export interface LearnedFatigue {
+  // The share of strength lost from one working set to the next.
+  perSet: number;
+  // How many pairs of sets it is made of.
+  pairs: number;
+}
+
+// How much estimated strength an exercise loses from set to set, from the sets of
+// your own log. Per training the estimate (KR-1) of each working set is set against
+// the one before it; sets without an estimate, warm-up sets and sets far from failure
+// (half weight, too uncertain) end a pair. With equal working sets only pairs at the
+// same weight count (the sets are then really the same task); with falling sets all
+// pairs do. The median is robust against one odd set, and few pairs pull it to the
+// 3% start value, so a first training barely moves the number.
+export function learnFatigue(sessions: SessionInput[], ctx: LoadContext, equalSets: boolean): LearnedFatigue {
+  const drops: number[] = [];
+  for (const session of sessions) {
+    let prev: { strengthKg: number; weightKg: number } | undefined;
+    for (const set of session.sets) {
+      // A warm-up set breaks a pair, and so does a set whose RIR was not filled in
+      // (rirAssumed): its RIR is the target and its reps may be the prediction itself,
+      // so counting it would learn the model's own guess back.
+      if (!isWorkSet(set) || set.rirAssumed) {
+        prev = undefined;
+        continue;
+      }
+      const e = estimateSet(set, ctx);
+      const current = e && e.weight >= 1 ? { strengthKg: e.strengthKg, weightKg: set.weightKg ?? 0 } : undefined;
+      if (prev && current && (!equalSets || prev.weightKg === current.weightKg)) drops.push(1 - current.strengthKg / prev.strengthKg);
+      prev = current;
+    }
+  }
+  const n = drops.length;
+  if (n === 0) return { perSet: FATIGUE_PER_SET, pairs: 0 };
+  const shrunk = (n * median(drops) + FATIGUE_SHRINK_PAIRS * FATIGUE_PER_SET) / (n + FATIGUE_SHRINK_PAIRS);
+  return { perSet: Math.min(FATIGUE_MAX, Math.max(FATIGUE_MIN, shrunk)), pairs: n };
+}
+
 // --- KR-3 ------------------------------------------------------------------------------
 
 export interface SessionInput {
@@ -152,6 +199,8 @@ export interface SessionInput {
   // The legs were tired from a mountain hike, a long or hard run, or the leg
   // index said so (engine/strengthHistory.ts decides).
   legsTired?: boolean;
+  // The gym profile this training was done in (SessionLog.gymProfileId). Absent: unknown.
+  gymProfileId?: string;
 }
 
 export type SmoothNote = 'none' | 'start' | 'up' | 'down' | 'down_twice' | 'legs' | 'restart';
@@ -307,7 +356,7 @@ export interface WarmupSet {
   reps: number;
 }
 
-export type PrescriptionKind = 'tired' | 'two_under' | 'widened' | 'capped' | 'pause' | 'used_top' | 'used_bottom' | 'up' | 'down' | 'same';
+export type PrescriptionKind = 'tired' | 'two_under' | 'widened' | 'coarse_heavier' | 'capped' | 'pause' | 'used_top' | 'used_bottom' | 'up' | 'down' | 'same';
 
 export interface Prescription {
   sets: PlannedSet[];
@@ -316,6 +365,9 @@ export interface Prescription {
   // One short sentence, plain words.
   reason: string;
   widened: boolean;
+  // The share of strength each earlier working set costs the next: learned from
+  // this exercise or the fixed 3% (setting "Vermoeidheid per set").
+  fatiguePerSet: number;
   // The smoothed strength this is based on.
   strengthKg: number;
   // The range before any widening, and the reps in reserve.
@@ -490,7 +542,8 @@ export const WEIGHT_MISMATCH_TEXT = 'Dit gewicht past niet bij je sportschool. K
 // that learns (the setting "Gewichten van toestellen leren").
 export function usedBefore(input: { sessions: SessionInput[]; date: string; settings: ResolvedStrengthSettings }): number[] | undefined {
   if (input.settings.stackWeights === 'profile') return undefined;
-  return usedWeights(input.sessions.filter((s) => s.date < input.date).flatMap((s) => s.sets));
+  // Only what was used in this gym: the same cable weighs differently in another one.
+  return usedWeights(input.sessions.filter((s) => s.date < input.date && countsForProfile(s.gymProfileId, input.settings.profile.id)).flatMap((s) => s.sets));
 }
 
 // Is this exercise logged as the total of two dumbbells, from the setting and
@@ -544,9 +597,10 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const dumbbellTotal = dumbbellTotalFor(input);
   const candidates = candidatesOf(input, last.top.weightKg, dumbbellTotal);
   if (!candidates) return undefined;
+  const fatiguePerSet = settings.fatigue === 'learned' ? learnFatigue(input.sessions.filter((s) => s.date < input.date), ctx, settings.workSets === 'equal').perSet : FATIGUE_PER_SET;
   // On a cable or stack "Alleen wat je gebruikte": only the used weights exist, and
   // the proposal never invents another one.
-  const usedOnly = settings.stackWeights === 'used_only' && (exercise?.resistance === 'cable' || exercise?.resistance === 'machine_stack') && !!usedOnlyWeights(usedBefore(input));
+  const usedOnly = settings.stackWeights === 'used_only' && (exercise?.resistance === 'cable' || exercise?.resistance === 'machine_stack') && !ownWeightsFor(settings.profile, exercise) && !!usedOnlyWeights(usedBefore(input));
   const mismatch = lastWeightMismatch(input);
   if (mismatch && !input.nearestOnMismatch) return undefined;
   // Did the smoothed strength really go down with the last training? Only then
@@ -630,12 +684,16 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     idx = Math.min(idx, j);
   }
 
-  const first = candidates[idx];
-  const expectedFirst = expectedReps(strengthKg, first.loadKg, rir);
+  let first = candidates[idx];
+  let expectedFirst = expectedReps(strengthKg, first.loadKg, rir);
   const shift = legsTired ? 1 : 0;
-  const lo = Math.max(1, low - shift);
+  // `loRange` is the bottom of the range; `lo` is the bottom for the first set, which
+  // goes down when a coarse step makes the heavier weight the smaller miss.
+  const loRange = Math.max(1, low - shift);
+  let lo = loRange;
   let hi = Math.max(lo, high - shift);
   let widened = false;
+  let coarseHeavier: { lighterKg: number; reps: number } | undefined;
   let shownRir = rir;
   // Only used weights: the heaviest one is the end. Asking for more strength than
   // that, or having reached the top of the range with reps in reserve, is no reason
@@ -644,6 +702,26 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const atTop = usedOnly && !legsTired && idx === candidates.length - 1 && (expectedFirst > hi || readyHeavier);
   const atBottom = usedOnly && !legsTired && idx === 0 && expectedFirst < lo;
   if (!legsTired && !cappedUp && !atTop && expectedFirst > hi) {
+    // A coarse step: no weight lands in the range. The lighter weight is too easy by
+    // `expectedFirst - hi` reps, the next heavier one too hard by `lo - expectedHeavier`.
+    // Take the side with the smaller miss in reps; at an equal miss the lighter side.
+    // Only where the range may be adjusted (setting "Bereik verbreden"): taking the
+    // heavier side lowers the bottom of this set. Not where the heavier weight would go
+    // against a brake (two weak trainings, a pause, the cap on the strength).
+    const heavier = candidates[idx + 1];
+    const brakes = twoUnder || cappedDown || (lighter && idx + 1 > lastIdx);
+    if (settings.widenRange && heavier && !brakes) {
+      const expectedHeavier = expectedReps(strengthKg, heavier.loadKg, rir);
+      if (expectedHeavier < lo && lo - expectedHeavier < expectedFirst - hi) {
+        coarseHeavier = { lighterKg: first.externalKg, reps: expectedHeavier };
+        idx += 1;
+        first = heavier;
+        lo = Math.max(1, expectedHeavier);
+        expectedFirst = expectedHeavier;
+      }
+    }
+  }
+  if (!coarseHeavier && !legsTired && !cappedUp && !atTop && expectedFirst > hi) {
     if (settings.widenRange) {
       // The step is too coarse to stay inside the range: the range grows for this training.
       hi = expectedFirst;
@@ -671,18 +749,18 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       sets.push({ ...sets[0] });
       continue;
     }
-    const tiredStrength = strengthKg * (1 - FATIGUE_PER_SET) ** n;
+    const tiredStrength = strengthKg * (1 - fatiguePerSet) ** n;
     let j = prevIdx;
     for (let k = prevIdx; k >= 0; k--) {
-      if (expectedReps(tiredStrength, candidates[k].loadKg, rir) >= lo) {
+      if (expectedReps(tiredStrength, candidates[k].loadKg, rir) >= loRange) {
         j = k;
         break;
       }
     }
     const here = candidates[prevIdx].loadKg;
     const stay = expectedReps(tiredStrength, here, rir);
-    if (j < prevIdx && (here - candidates[j].loadKg) / here > COARSE_STEP && stay >= lo - 2) j = prevIdx;
-    const bottom = j === prevIdx ? Math.max(1, Math.min(lo, stay)) : lo;
+    if (j < prevIdx && (here - candidates[j].loadKg) / here > COARSE_STEP && stay >= loRange - 2) j = prevIdx;
+    const bottom = j === prevIdx ? Math.max(1, Math.min(loRange, stay)) : loRange;
     sets.push({ weightKg: candidates[j].externalKg, repsLow: bottom, repsHigh: Math.max(bottom, hi), rir: shownRir });
     prevIdx = j;
   }
@@ -691,6 +769,14 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   // about strength: the strength did not go down (see strengthDropped).
   const whyLighter = (): string => {
     const top = last.top!;
+    // Another goal than last time (a wave in the rep range): say so, instead of
+    // describing last time with the range of today.
+    if (!sameGoal) {
+      const lastMid = median(lastReps);
+      return lastMid < (low + high) / 2
+        ? `Deze keer vraagt het programma ${low} tot ${high} herhalingen, meer dan vorige keer, dus een lichter gewicht.`
+        : `Deze keer vraagt het programma ${low} tot ${high} herhalingen, minder dan vorige keer; je geschatte kracht vraagt toch een lichter gewicht.`;
+    }
     if (top.reps < low) return `Vorige keer zat je onder de ${low} tot ${high} herhalingen, dus iets lichter om in het bereik te blijven.`;
     if (top.rir !== undefined && top.rir < rir) return `Vorige keer was het zwaarder dan bedoeld (${top.rir} over, het streven is ${rir}), dus iets lichter.`;
     return `Een stap lichter past beter bij ${low} tot ${high} herhalingen met ${rir} over.`;
@@ -718,6 +804,9 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   } else if (atBottom) {
     kind = 'used_bottom';
     reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht ken ik hier niet, dus dat stel ik niet voor. Kies zelf iets lichter als dit te zwaar is.';
+  } else if (coarseHeavier) {
+    kind = 'coarse_heavier';
+    reason = `De stap is hier te grof voor ${low} tot ${high} herhalingen; met ${formatWeight(exercise, first.externalKg, dumbbellTotal)} haal je er naar verwachting ${coarseHeavier.reps}, dat zit dichter bij je doel dan ${formatWeight(exercise, coarseHeavier.lighterKg, dumbbellTotal)}.`;
   } else if (widened) {
     kind = 'widened';
     const step = stepAt(candidates, idx);
@@ -761,6 +850,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     kind,
     reason,
     widened,
+    fatiguePerSet,
     strengthKg,
     range,
     targetReps,

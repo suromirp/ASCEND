@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adjustText, applyLighter, stillOpen, suggestLighter, tooHeavy, type AdjustContext } from './forgeAdjust';
+import { adjustText, applyLighter, noFitText, stillOpen, suggestLighter, suggestOwnWeights, tooHeavy, type AdjustContext } from './forgeAdjust';
 import type { WorkoutExercise, WorkoutRow } from './forgeWorkout';
 import { DEFAULT_PROFILE } from './strengthSettings';
 
@@ -40,6 +40,13 @@ describe('suggestLighter met een stang', () => {
     expect(adj.items[1].weightKg).toBeLessThanOrEqual(adj.items[0].weightKg);
     // Elk voorgesteld gewicht bestaat met de schijven van het profiel (stang 20 plus paren schijven).
     for (const i of adj.items) expect(((i.weightKg - 20) / 2) % 1.25).toBeCloseTo(0, 5);
+  });
+
+  it('rekent met de daling van de oefening: een grotere daling geeft lichtere latere sets', () => {
+    const base = suggestLighter(exercise('bench-press', sets()), 'r0', ctx())!;
+    const tired = suggestLighter({ ...exercise('bench-press', sets()), fatiguePerSet: 0.1 }, 'r0', ctx())!;
+    expect(tired.items.at(-1)!.weightKg).toBeLessThan(base.items.at(-1)!.weightKg);
+    expect(suggestLighter(exercise('bench-press', sets()), 'r0', ctx({ fatiguePerSet: 0.1 }))!.items.at(-1)!.weightKg).toBe(tired.items.at(-1)!.weightKg);
   });
 
   it('bij gelijke werksets geen extra vermoeidheid', () => {
@@ -131,5 +138,40 @@ describe('suggestLighter met grove stappen op een toestel', () => {
     const ex = exercise('pallof-press', rows());
     expect(suggestLighter(ex, 'r0', ctx({ profile: machine, usedKg: [10, 12.5, 15], stackWeights: 'profile' }))).toBeUndefined();
     expect(suggestLighter(ex, 'r0', ctx({ profile: machine, usedKg: [10, 12.5, 15], stackWeights: 'learned' }))!.items[0].weightKg).toBe(12.5);
+  });
+});
+
+describe('suggestOwnWeights: geen gewicht past', () => {
+  // Een nagemaakte kabel met alleen zware gewichten in deze sportschool.
+  const heavyOnly = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [40, 45] } };
+  const sets = (): WorkoutRow[] => [
+    row(0, { done: true, weightKg: 40, reps: 5, rir: 0 }, { weightKg: 40 }),
+    row(1, { weightKg: 40, reps: 9 }, { weightKg: 40 }),
+  ];
+
+  it('vraagt om de gewichten als zelfs het lichtste gewicht het bereik niet haalt', () => {
+    const ex = exercise('cable-fly', sets());
+    expect(suggestLighter(ex, 'r0', ctx({ profile: heavyOnly }))).toBeUndefined();
+    const fit = suggestOwnWeights(ex, 'r0', ctx({ profile: heavyOnly }))!;
+    expect(fit).toEqual({ fromRowId: 'r0', repsLow: 9, repsHigh: 11 });
+    expect(noFitText(fit)).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel invullen?');
+    expect(noFitText(fit, true)).toBe('Geen gewicht van dit toestel past bij 9 tot 11 herhalingen. Gewichten van dit toestel aanpassen?');
+  });
+  it('zegt één getal als het bereik één getal is', () => {
+    expect(noFitText({ fromRowId: 'r0', repsLow: 10, repsHigh: 10 })).toContain('bij 10 herhalingen');
+  });
+  it('vraagt niets als er wel een lichter gewicht is of als de set niet te zwaar was', () => {
+    const ex = exercise('cable-fly', sets());
+    expect(suggestOwnWeights(ex, 'r0', ctx())).toBeUndefined();
+    const fine = exercise('cable-fly', [{ ...sets()[0], reps: 10, rir: 2 }, sets()[1]]);
+    expect(suggestOwnWeights(fine, 'r0', ctx({ profile: heavyOnly }))).toBeUndefined();
+  });
+  it('vraagt niets bij een stang', () => {
+    expect(suggestOwnWeights(exercise('bench-press', sets()), 'r0', ctx({ profile: heavyOnly }))).toBeUndefined();
+  });
+  it('na het invullen van lichtere gewichten komt het voorstel Lichter wel', () => {
+    const ex = exercise('cable-fly', sets());
+    const filled = { ...DEFAULT_PROFILE, exerciseWeightsKg: { 'cable-fly': [10, 20, 30, 32.5, 35, 40] } };
+    expect(suggestLighter(ex, 'r0', ctx({ profile: filled }))).toBeDefined();
   });
 });

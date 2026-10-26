@@ -100,14 +100,13 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Waarom', text: 'ASCEND rekent met een aangenomen RIR als zwakke aanname en weet zo welke sets gemeten zijn. De rekenregels veranderen niet.' },
     ],
   },
-  forgeDoorgeven: {
-    title: 'Gewicht doorgeven',
-    lead: 'Pas je bij een set het gewicht aan, dan schuiven de sets erna mee.',
+  forgeDoorvoeren: {
+    title: 'Wijzigingen doorvoeren',
+    lead: 'Pas je het gewicht of de herhalingen van een set aan, dan kunnen de latere sets meegaan.',
     points: [
-      { head: 'Alleen sets die je niet aanraakte', text: 'een set die je zelf aanpaste of afvinkte blijft zoals hij is.' },
-      { head: 'Zelfde verschil', text: 'ga je 2,5 kg omhoog, dan gaan de volgende sets ook 2,5 kg omhoog.' },
-      { head: 'Lege sets', text: 'een set zonder gewicht krijgt het nieuwe gewicht.' },
-      { head: 'Herhalingen', text: 'blijven per set zoals ze waren.' },
+      { head: 'Gelijke sets', text: 'sets met hetzelfde gewicht en dezelfde herhalingen als deze set voor je wijziging nemen de nieuwe waarde over. Gewicht en herhalingen apart.' },
+      { head: 'Zelfde verschil', text: 'ga je 2,5 kg omhoog, dan gaan de sets erna ook 2,5 kg omhoog. De herhalingen blijven.' },
+      { head: 'Wat blijft staan', text: 'gedane sets, opwarmsets en sets die je zelf aanpaste. De RIR volgt nooit, die voel je per set.' },
     ],
   },
   forgeOpwarmen: {
@@ -163,6 +162,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geleerd en geschat', text: 'het onthoudt de gewichten die je op dat toestel pakte, ook bij opwarmen. Boven en onder wat je gebruikte telt de stap die je op het toestel twee keer zag, anders de stap uit je sportschool. Een grote kloof ertussen wordt opgevuld. Zo kan er een gewicht tussen zitten dat het toestel niet heeft.' },
       { head: 'Alleen wat je gebruikte', text: 'ASCEND stelt nooit een gewicht voor dat je er nog niet pakte. Vraagt je kracht om zwaarder, dan blijft het gewicht staan en gaan de herhalingen omhoog. Haal je de bovenkant met genoeg over, dan kies je zelf het eerstvolgende gewicht op het toestel. Zonder gebruikte gewichten op dat toestel gelden de stappen van je profiel.' },
       { head: 'Stappen van je profiel', text: 'ASCEND rondt af op de stap die je bij Kabels en toestellen instelde.' },
+      { head: 'Eigen lijst', text: 'vulde je de gewichten van een toestel zelf in (Gewichten per toestel), dan gelden precies die, in elke keuze hierboven.' },
+    ],
+  },
+  toestelgewichten: {
+    title: 'Gewichten per toestel',
+    lead: 'Staan de gewichten van een kabel of toestel in je hoofd, vul ze dan een keer in. ASCEND stelt er dan alleen gewichten uit voor.',
+    points: [
+      { head: 'Invullen', text: 'typ de gewichten met een spatie ertussen, bijvoorbeeld 4,5 9 13,5 18. Je kunt ze ook tijdens een training invullen, in het menu van de oefening.' },
+      { head: 'Per sportschool', text: 'dezelfde kabel heeft in een andere sportschool andere gewichten, dus de lijst hoort bij de sportschool die je koos.' },
+      { head: 'Aanpassen of wissen', text: 'een lijst kun je altijd veranderen. Wis je hem, dan leert en schat ASCEND weer zoals je bij Gewichten van toestellen koos.' },
+    ],
+  },
+  gymProfiel: {
+    title: 'Sportschool',
+    lead: 'Train je in twee sportscholen, kies dan hier waar je nu bent.',
+    points: [
+      { head: 'Wat erbij hoort', text: 'de stangen, schijven en dumbbells, de gewichten per toestel en wat ASCEND leert over de gewichten die je gebruikte.' },
+      { head: 'Je log', text: 'een nieuwe krachttraining onthoudt in welke sportschool hij was. Oudere trainingen hebben dat niet en tellen overal mee.' },
+      { head: 'MacroFactor', text: 'eindigt de naam van een workout op " @ " en de naam van een sportschool, dan hoort hij daarbij.' },
     ],
   },
   forgePauze: {
@@ -173,6 +191,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Alleen een echte pauze', text: 'rustte alleen deze oefening terwijl je wel krachttraining deed, dan begint hij op je laatste niveau.' },
       { head: 'Hoeveel', text: 'het voorstel rekent met 5% minder kracht en kijkt na die training opnieuw.' },
       { head: 'Uit', text: 'dan begint het voorstel ook na een lange pauze op je laatste niveau.' },
+    ],
+  },
+  forgeVermoeidheid: {
+    title: 'Vermoeidheid per set',
+    lead: 'Elke werkset kost de volgende een beetje kracht. Hoeveel verschilt per oefening.',
+    points: [
+      { head: 'Leren per oefening', text: 'ASCEND kijkt in je eigen sets hoeveel geschatte kracht je van set tot set verliest en rekent daarmee voor de latere sets, de verwachte herhalingen en het bijsturen. Met weinig sets blijft het dicht bij 3%.' },
+      { head: 'Vast 3%', text: 'elke oefening krijgt dezelfde daling, wat je ook deed.' },
+      { head: 'Waarom', text: 'hoeveel herhalingen je van set tot set verliest hangt af van de oefening, het gewicht en de rust (matig bewijs).' },
     ],
   },
   forgeDumbbells: {

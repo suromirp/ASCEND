@@ -119,6 +119,18 @@ export const CHOICES = {
       { value: 'exercise', label: 'Per oefening', note: 'Elke samengestelde oefening de volle opbouw', short: 'Per oefening' },
     ],
   }),
+  doorvoeren: def({
+    group: 'Forge',
+    title: 'Wijzigingen doorvoeren',
+    line: 'Wat er met de latere sets gebeurt als je een set aanpast.',
+    advice: 'equal' as 'equal' | 'shift' | 'off',
+    help: 'forgeDoorvoeren',
+    options: [
+      { value: 'equal', label: 'Gelijke sets', note: 'Latere sets die precies hetzelfde waren nemen de nieuwe waarde over', short: 'Gelijke sets' },
+      { value: 'shift', label: 'Zelfde verschil', note: 'Het gewicht van de sets erna schuift evenveel mee', short: 'Zelfde verschil' },
+      { value: 'off', label: 'Uit', note: 'Elke set pas je zelf aan', short: 'Uit' },
+    ],
+  }),
   rirVooraf: def({
     group: 'Forge',
     title: 'RIR vooraf invullen',
@@ -185,6 +197,17 @@ export const CHOICES = {
       { value: 'auto', label: 'Vanzelf herkennen', note: 'Per oefening, aan de gewichten in je logboek', short: 'Vanzelf' },
       { value: 'each', label: 'Per dumbbell', note: 'Het gewicht is die ene dumbbell', short: 'Per dumbbell' },
       { value: 'total', label: 'Totaal van twee', note: 'Het gewicht is beide dumbbells samen', short: 'Totaal van twee' },
+    ],
+  }),
+  vermoeidheid: def({
+    group: 'Forge',
+    title: 'Vermoeidheid per set',
+    line: 'Hoeveel kracht elke werkset de volgende kost.',
+    advice: 'learned' as 'learned' | 'fixed',
+    help: 'forgeVermoeidheid',
+    options: [
+      { value: 'learned', label: 'Leren per oefening', note: 'Uit je eigen sets, met 3% als start', short: 'Leren' },
+      { value: 'fixed', label: 'Vast 3%', note: 'Voor elke oefening hetzelfde', short: 'Vast 3%' },
     ],
   }),
   forgeVolgorde: def({

@@ -6,8 +6,8 @@
 // Besluit: docs/beslissingen/2026-10-25-bijsturen-in-forge.md.
 //
 // De rekening is die van het model zelf: de kracht uit de set die je deed
-// (estimateSet, herhalingen plus RIR), voor elke volgende set 3% minder door
-// vermoeidheid (FATIGUE_PER_SET, tenzij de werksets gelijk staan), en het zwaarste
+// (estimateSet, herhalingen plus RIR), voor elke volgende set minder door
+// vermoeidheid (de daling van de oefening, anders FATIGUE_PER_SET van 3%, tenzij de werksets gelijk staan), en het zwaarste
 // gewicht van je sportschoolprofiel (candidatesFor, met de gewichten die je echt
 // gebruikte) waarbij de verwachte herhalingen de onderkant nog halen. Een gewicht
 // dat ver boven het bereik uitkomt (de stap van het toestel is te grof) wordt nooit
@@ -15,6 +15,7 @@
 
 import type { Exercise } from '../models/exercise';
 import { exerciseOf, MAX_ROW_REPS, type WorkoutExercise, type WorkoutRow } from './forgeWorkout';
+import { hasStack } from './machineWeights';
 import { REPS_ROOM } from './prescriptionCheck';
 import { DEFAULT_RIR, estimateSet, expectedReps, FATIGUE_PER_SET, formatWeight } from './strengthModel';
 import type { GymProfile, StackWeights, WorkSetsMode } from './strengthSettings';
@@ -31,6 +32,8 @@ export interface AdjustContext {
   usedKg?: number[];
   // Hoe streng met de gewichten van toestellen ("Gewichten van toestellen").
   stackWeights?: StackWeights;
+  // De daling per set als de oefening die zelf kent (WorkoutExercise.fatiguePerSet wint).
+  fatiguePerSet?: number;
 }
 
 export interface AdjustItem {
@@ -65,13 +68,14 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
   // Begin bij het gewicht dat je echt gebruikte, ook als het toestel het nog niet kent.
   const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights });
   if (!candidates) return undefined;
+  const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
   const items: AdjustItem[] = [];
   const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
   const fromWork = workIds.indexOf(rowId);
   for (const r of ex.rows.slice(index + 1)) {
     if (r.kind !== 'work' || r.done || r.edited || r.weightKg === undefined) continue;
     const distance = workIds.indexOf(r.id) - fromWork;
-    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - FATIGUE_PER_SET) ** distance;
+    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
     const rir = r.target.rir ?? DEFAULT_RIR;
     const now = loadFromExternal(exercise, r.weightKg, ctx.bodyKg);
     if (now === undefined) continue;
@@ -90,6 +94,49 @@ export function suggestLighter(ex: WorkoutExercise, rowId: string, ctx: AdjustCo
     items.push({ rowId: r.id, weightKg: c.externalKg });
   }
   return items.length > 0 ? { fromRowId: rowId, items } : undefined;
+}
+
+export interface NoFit {
+  // De set die te zwaar was.
+  fromRowId: string;
+  repsLow: number;
+  repsHigh: number;
+}
+
+// Past er op dit toestel geen enkel gewicht meer? Alleen bij een kabel of toestel met een
+// gewichtstapel, na een te zware set, en alleen als `suggestLighter` niets voorstelt omdat
+// zelfs het lichtste gewicht dat ASCEND kent de onderkant van het bereik niet haalt. Dan weet
+// ASCEND niet of er lichtere gewichten zijn; de regel vraagt of je ze invult.
+export function suggestOwnWeights(ex: WorkoutExercise, rowId: string, ctx: AdjustContext): NoFit | undefined {
+  if (ex.timed) return undefined;
+  const exercise = exerciseOf(ex);
+  if (!hasStack(exercise)) return undefined;
+  const index = ex.rows.findIndex((r) => r.id === rowId);
+  const row = ex.rows[index];
+  if (!row || !tooHeavy(row) || row.weightKg === undefined) return undefined;
+  const est = estimateSet({ reps: row.reps!, weightKg: row.weightKg, rir: row.rir, kind: 'work' }, { exercise, bodyKg: ctx.bodyKg, maxToFailure: ctx.maxToFailure });
+  if (!est) return undefined;
+  const candidates = candidatesFor(exercise, profileFor(ctx.profile, ex.dumbbellTotal), { bodyKg: ctx.bodyKg, lastExternalKg: row.weightKg, usedKg: [...(ex.usedKg ?? []), ...(ctx.usedKg ?? []), row.weightKg], stackWeights: ctx.stackWeights });
+  if (!candidates) return undefined;
+  const lightest = candidates[0].loadKg;
+  // Dezelfde daling per set als het bijsturen (suggestLighter), zodat beide hetzelfde beslissen.
+  const fatigue = ex.fatiguePerSet ?? ctx.fatiguePerSet ?? FATIGUE_PER_SET;
+  const workIds = ex.rows.filter((r) => r.kind === 'work').map((r) => r.id);
+  const fromWork = workIds.indexOf(rowId);
+  for (const r of ex.rows.slice(index + 1)) {
+    if (r.kind !== 'work' || r.done || r.edited || r.weightKg === undefined) continue;
+    const distance = workIds.indexOf(r.id) - fromWork;
+    const strength = ctx.workSets === 'equal' ? est.strengthKg : est.strengthKg * (1 - fatigue) ** distance;
+    const rir = r.target.rir ?? DEFAULT_RIR;
+    if (expectedReps(strength, lightest, rir) < r.target.repsLow) return { fromRowId: rowId, repsLow: r.target.repsLow, repsHigh: r.target.repsHigh };
+  }
+  return undefined;
+}
+
+// De regel bij de oefening als geen gewicht past.
+export function noFitText(fit: NoFit, hasList = false): string {
+  const reps = fit.repsLow === fit.repsHigh ? `${fit.repsLow}` : `${fit.repsLow} tot ${fit.repsHigh}`;
+  return `Geen gewicht van dit toestel past bij ${reps} herhalingen. Gewichten van dit toestel ${hasList ? 'aanpassen' : 'invullen'}?`;
 }
 
 // De regel bij de oefening: "Die set was zwaarder dan bedoeld. Volgende sets 62,5 kg?"

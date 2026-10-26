@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareMoments, DEFAULT_CHECK_FROM, DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
+import { checkModelKey, compareMoments, DEFAULT_CHECK_FROM, DEFAULT_PROFILE, normalizeStrengthSettings, parseWeightList, resolveStrengthSettings, strengthModelKey, strengthModelOn, withExerciseValue, withProfile } from './strengthSettings';
 
 describe('de standaardwaarden', () => {
   it('zonder instellingen geldt het advies', () => {
@@ -29,6 +29,13 @@ describe('rommel wordt geweigerd', () => {
       enabled: 'ja', progression: 'snel', workSets: 'equal', warmup: 42, widenRange: false, estimateUpTo: 13, activeProfileId: 7, onzin: 1,
     });
     expect(clean).toEqual({ workSets: 'equal', widenRange: false });
+  });
+  it('de vermoeidheid per set: leren is het advies, rommel valt terug', () => {
+    expect(resolveStrengthSettings(undefined).fatigue).toBe('learned');
+    expect(resolveStrengthSettings({ fatigue: 'fixed' }).fatigue).toBe('fixed');
+    expect(normalizeStrengthSettings({ fatigue: 'fixed' })).toEqual({ fatigue: 'fixed' });
+    expect(normalizeStrengthSettings({ fatigue: 'veel' })).toEqual({});
+    expect(checkModelKey({ fatigue: 'fixed' })).not.toBe(checkModelKey({}));
   });
   it('een profiel met rommel valt terug op de standaard per onderdeel', () => {
     const clean = normalizeStrengthSettings({
@@ -105,15 +112,25 @@ describe('het workoutscherm', () => {
     expect(clean.restSeconds).toEqual({ 'back-squat': 240 });
     expect(clean.exerciseNotes).toEqual({ 'leg-press': 'stoel op 4' });
   });
-  it('gewicht doorgeven en schijven tonen staan standaard aan en vallen terug bij rommel', () => {
-    expect(resolveStrengthSettings(undefined)).toMatchObject({ carryWeights: true, showPlates: true });
-    expect(resolveStrengthSettings({ carryWeights: false, showPlates: false })).toMatchObject({ carryWeights: false, showPlates: false });
+  it('schijven tonen staat standaard aan en valt terug bij rommel', () => {
+    expect(resolveStrengthSettings(undefined)).toMatchObject({ showPlates: true });
+    expect(resolveStrengthSettings({ showPlates: false })).toMatchObject({ showPlates: false });
     const clean = normalizeStrengthSettings({ carryWeights: 'nee', showPlates: 0 })!;
     expect(clean.carryWeights).toBeUndefined();
     expect(clean.showPlates).toBeUndefined();
     expect(resolveStrengthSettings(undefined).showOneRm).toBe(true);
     expect(resolveStrengthSettings({ showOneRm: false }).showOneRm).toBe(false);
     expect(normalizeStrengthSettings({ showOneRm: 'nee' })!.showOneRm).toBeUndefined();
+  });
+  it('wijzigingen doorvoeren: gelijke sets als advies, het oude doorgeven uit wordt Uit, rommel valt terug', () => {
+    expect(resolveStrengthSettings(undefined).carryMode).toBe('equal');
+    expect(resolveStrengthSettings({ carryMode: 'shift' }).carryMode).toBe('shift');
+    expect(resolveStrengthSettings({ carryWeights: false }).carryMode).toBe('off');
+    expect(resolveStrengthSettings({ carryWeights: true }).carryMode).toBe('equal');
+    expect(resolveStrengthSettings({ carryWeights: false, carryMode: 'equal' }).carryMode).toBe('equal');
+    expect(normalizeStrengthSettings({ carryMode: 'nee' })!.carryMode).toBeUndefined();
+    expect(checkModelKey({ carryMode: 'off' })).toBe(checkModelKey({}));
+    expect(strengthModelKey({ carryMode: 'off' })).toBe(strengthModelKey({}));
   });
   it('de keuze tussen 1RM en werkgewicht en de MacroFactor-1RM: advies 1RM en aan, rommel valt weg', () => {
     expect(resolveStrengthSettings(undefined)).toMatchObject({ oneRmView: 'one_rm', showMacroFactorOneRm: true });

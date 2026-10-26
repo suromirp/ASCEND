@@ -26,6 +26,7 @@ const REASON: Record<string, string> = {
   trainingsduur: 'Deze keuze verschijnt pas als er krachttrainingen in je planning staan.',
   'forge-volgorde': FORGE_OFF,
   'forge-sets': FORGE_OFF,
+  'forge-vermoeidheid': FORGE_OFF,
   'forge-opwarmen': FORGE_OFF,
   'forge-opwarmbereik': FORGE_OFF,
   'forge-bereik': FORGE_OFF,

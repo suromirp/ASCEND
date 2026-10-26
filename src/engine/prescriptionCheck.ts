@@ -21,6 +21,11 @@
 //   proposal: then what happened is the measurement, `checkDone` (reps plus RIR
 //   of the set itself, the same room), no estimate. A hand-made log with another
 //   weight did not follow a proposal and counts as an estimate.
+// - Close to what you did (`NEAR_SHARE`): where the proposal of ASCEND lay within 5% of
+//   the load you used, both sides are about equally often a hit; the difference sits
+//   in proposals far away, where the test leans on the Epley conversion to another
+//   weight, its least certain part. So `near` gives a second number for those rows
+//   only (decision docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md).
 //
 // The deviation is in reps: positive is too light (more was possible), negative
 // too heavy, counted from the middle of the range.
@@ -115,6 +120,11 @@ export function checkDone(set: { reps: number; rir?: number }, target: RepTarget
   return judge(set.reps + set.rir - target.rir, target);
 }
 
+// A proposal is "close" when it lies within this share of the load that was used.
+export const NEAR_SHARE = 0.05;
+
+export const isNear = (proposedLoadKg: number, doneLoadKg: number): boolean => doneLoadKg > 0 && Math.abs(proposedLoadKg - doneLoadKg) <= NEAR_SHARE * doneLoadKg + 1e-9;
+
 export interface RowCheck {
   origin: CheckOrigin;
   target: RepTarget;
@@ -122,15 +132,17 @@ export interface RowCheck {
   did: SideCheck;
   // The proposal of ASCEND. `measured`: what happened in Forge itself, not an estimate.
   ascend: SideCheck & { measured: boolean };
+  // The proposal lay within 5% of the load you used (`isNear`). Absent: not close, or unknown.
+  near?: boolean;
 }
 
 // `measured`: a training made in Forge that followed the proposal, `done` is the
 // measurement itself. Otherwise the proposal is an estimate and needs its own side.
-export function checkRow(origin: CheckOrigin, target: RepTarget, done: SideCheck | undefined, proposal: SideCheck | undefined, measured = false): RowCheck | undefined {
+export function checkRow(origin: CheckOrigin, target: RepTarget, done: SideCheck | undefined, proposal: SideCheck | undefined, measured = false, near = false): RowCheck | undefined {
   if (!done) return undefined;
-  if (measured) return { origin, target, did: done, ascend: { ...done, measured: true } };
+  if (measured) return { origin, target, did: done, ascend: { ...done, measured: true }, ...(near ? { near: true } : {}) };
   if (!proposal) return undefined;
-  return { origin, target, did: done, ascend: { ...proposal, measured: false } };
+  return { origin, target, did: done, ascend: { ...proposal, measured: false }, ...(near ? { near: true } : {}) };
 }
 
 // --- the totals -----------------------------------------------------------------------------
@@ -148,6 +160,10 @@ export interface CheckTotals {
   // Forge: the proposals of ASCEND, measured; and the trainings made in Forge with
   // another weight than proposed, where both sides are estimates.
   forge: { ascend: Tally; other: { did: Tally; ascend: Tally } };
+  // Only the rows where the proposal lay within 5% of the load used and that are an
+  // estimate (MacroFactor, and Forge with another weight). A row measured in Forge
+  // has no conversion to another weight, so it is not part of this.
+  near: { did: Tally; ascend: Tally };
 }
 
 function tally(sides: SideCheck[]): Tally {
@@ -161,7 +177,9 @@ export function totalsOf(rows: { date: string; check?: RowCheck }[], from?: stri
   const mf = checks.filter((c) => c.origin === 'macrofactor');
   const fg = checks.filter((c) => c.origin === 'forge' && c.ascend.measured);
   const other = checks.filter((c) => c.origin === 'forge' && !c.ascend.measured);
+  const near = checks.filter((c) => c.near && !c.ascend.measured);
   return {
+    near: { did: tally(near.map((c) => c.did)), ascend: tally(near.map((c) => c.ascend)) },
     macrofactor: { did: tally(mf.map((c) => c.did)), ascend: tally(mf.map((c) => c.ascend)) },
     forge: { ascend: tally(fg.map((c) => c.ascend)), other: { did: tally(other.map((c) => c.did)), ascend: tally(other.map((c) => c.ascend)) } },
   };
@@ -199,4 +217,14 @@ export function checkLines(totals: CheckTotals): { macrofactor?: string; forge?:
     ...(mf !== undefined && mfAscend !== undefined ? { macrofactor: `Raak: MacroFactor ${mf}%, ASCEND ${mfAscend}%` } : {}),
     ...(fg !== undefined ? { forge: `Raak in Forge: ASCEND ${fg}%` } : {}),
   };
+}
+
+// The one extra line: "Dicht bij wat je deed (binnen 5%): jij 74%, ASCEND 73%, 78 keer".
+// Undefined while there are no such rows.
+export function nearLine(totals: CheckTotals): string | undefined {
+  const did = percent(totals.near.did);
+  const ascend = percent(totals.near.ascend);
+  if (did === undefined || ascend === undefined) return undefined;
+  const count = totals.near.did.total;
+  return `Dicht bij wat je deed (binnen 5%): MacroFactor ${did}%, ASCEND ${ascend}%, ${count} keer`;
 }

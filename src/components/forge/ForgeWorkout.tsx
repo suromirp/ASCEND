@@ -19,6 +19,7 @@ import {
   activeRow,
   applyReps,
   applyWeight,
+  carryChange,
   mergeDraft,
   copyRow,
   exerciseComplete,
@@ -92,7 +93,9 @@ import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
-import { adjustText, applyLighter, stillOpen, suggestLighter, type Adjustment } from '../../engine/forgeAdjust';
+import { adjustText, applyLighter, noFitText as noFitLine, stillOpen, suggestLighter, suggestOwnWeights, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
+import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
+import { MachineWeightsForgeSheet } from './MachineWeights';
 import { InputDock } from './InputDock';
 import { ForgeSheet, LongPressRow, MenuRow, RirBubble, TickBox, ValueCell } from './parts';
 import { useWakeLock } from './useWakeLock';
@@ -183,6 +186,9 @@ export function ForgeWorkout({
   const [rirFor, setRirFor] = useState<{ slot: string; rowId: string } | null>(null);
   // Het voorstel "Lichter?" per oefening, na een set die te zwaar was (engine/forgeAdjust.ts).
   const [lighter, setLighter] = useState<Record<string, Adjustment>>({});
+  // Geen gewicht van dit toestel past: de regel die vraagt of je de gewichten invult, per oefening.
+  const [noFit, setNoFit] = useState<Record<string, NoFit>>({});
+  const [fillFor, setFillFor] = useState<string | null>(null);
   const [workoutMenu, setWorkoutMenu] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(startAtForm && !preview);
@@ -321,12 +327,22 @@ export function ForgeWorkout({
     const ticked = result.workout.find((e) => e.slot === slot)?.rows.find((r) => r.id === rowId)?.done;
     // Na een set die te zwaar was stelt Forge een lichter gewicht voor; een andere tik haalt een oud voorstel weg.
     const tickedEx = result.workout.find((e) => e.slot === slot);
-    const proposal = ticked && tickedEx && strength.enabled && strength.adjustLive && !readOnly ? suggestLighter(tickedEx, rowId, { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights }) : undefined;
+    const adjustCtx = { bodyKg, profile: strength.profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights };
+    const live = !!ticked && !!tickedEx && strength.enabled && strength.adjustLive && !readOnly;
+    const proposal = live ? suggestLighter(tickedEx, rowId, adjustCtx) : undefined;
+    // Past er geen enkel gewicht, dan vraagt Forge of je de gewichten van het toestel invult.
+    const fit = live && !proposal ? suggestOwnWeights(tickedEx, rowId, adjustCtx) : undefined;
     setLighter((l) => {
       if (!proposal && !(slot in l)) return l;
       const { [slot]: _old, ...others } = l;
       void _old;
       return proposal ? { ...others, [slot]: proposal } : others;
+    });
+    setNoFit((l) => {
+      if (!fit && !(slot in l)) return l;
+      const { [slot]: _old, ...others } = l;
+      void _old;
+      return fit ? { ...others, [slot]: fit } : others;
     });
     if (ticked) {
       const next = activeRow(result.workout, { slot, rowId });
@@ -391,9 +407,17 @@ export function ForgeWorkout({
     setWorkout((w) =>
       w.map((e) => {
         if (e.slot !== d.slot) return e;
-        if (d.field === 'reps') return applyReps(e, d.rowId, v);
+        // Wijzigingen doorvoeren (carryChange) vervangt het oude doorgeven van het verschil.
+        // Doorvoeren rekent vanaf de stand van toen je het veld opende, zodat een
+        // tussenstand (een leeg veld tijdens het typen) de andere sets niet losmaakt.
         if (baseRef.current?.key !== key) baseRef.current = { key, ex: e };
-        return applyWeight(baseRef.current.ex, d.rowId, v, strength.carryWeights, makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
+        const base = baseRef.current.ex;
+        if (d.field === 'reps') {
+          const changed = applyReps(base, d.rowId, v);
+          return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'reps') : changed;
+        }
+        const changed = applyWeight(base, d.rowId, v, strength.carryMode === 'shift', makeSnap(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal), bodyKg, v), weightBounds(exerciseOf(e)).min, makeLight(exerciseOf(e), profileFor(strength.profile, e.dumbbellTotal)));
+        return strength.carryMode === 'equal' ? carryChange(base, changed, d.rowId, 'weightKg') : changed;
       }),
     );
   }
@@ -463,6 +487,8 @@ export function ForgeWorkout({
       add: (slot) => latest.current.setExercise(slot, (e) => addRow(e, 'work')),
       lighter: (slot) => latest.current.takeLighter(slot),
       keep: (slot) => setLighter((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
+      fill: (slot) => setFillFor(slot),
+      keepFit: (slot) => setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== slot))),
     }),
     [],
   );
@@ -482,6 +508,7 @@ export function ForgeWorkout({
   const menuEx = workout.find((e) => e.slot === menuFor);
   const swapEx = workout.find((e) => e.slot === swapFor);
   const noteEx = workout.find((e) => e.slot === noteFor);
+  const fillEx = workout.find((e) => e.slot === fillFor);
   const dockEx = dock ? workout.find((e) => e.slot === dock.slot) : undefined;
   const dockIndex = dockEx && dock ? dockEx.rows.findIndex((r) => r.id === dock.rowId) : -1;
   const dockRow = dockEx && dockIndex >= 0 ? dockEx.rows[dockIndex] : undefined;
@@ -551,6 +578,7 @@ export function ForgeWorkout({
               profile={strength.profile}
               showPlates={strength.showPlates}
               lighterText={lighter[ex.slot] && stillOpen(ex, lighter[ex.slot]) ? adjustText(stillOpen(ex, lighter[ex.slot])!, exerciseOf(ex)) : undefined}
+              noFitText={noFit[ex.slot] && !lighter[ex.slot] && !exerciseComplete(ex) ? noFitLine(noFit[ex.slot], !!ownWeightsFor(strength.profile, exerciseOf(ex))) : undefined}
               rirAsValue={strength.rirPrefill === 'target'}
               act={actions}
             />
@@ -610,6 +638,9 @@ export function ForgeWorkout({
                 strength.exerciseNotes[menuEx.exerciseId] && <p className="px-4 py-3 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Notitie: {strength.exerciseNotes[menuEx.exerciseId]}</p>
               ) : (
                 <MenuRow icon="notitie" title="Notitie" sub={strength.exerciseNotes[menuEx.exerciseId] ?? 'Bijvoorbeeld de stand van de stoel. Blijft bij deze oefening staan.'} onClick={() => { close(); setNoteFor(menuEx.slot); }} />
+              )}
+              {!readOnly && !preview && hasStack(exerciseOf(menuEx)) && (
+                <MenuRow icon="plus" title="Gewichten van dit toestel" sub={ownWeightsFor(strength.profile, exerciseOf(menuEx)) ? `Je eigen lijst in ${strength.profile.name}.` : `Vul in wat er hangt in ${strength.profile.name}.`} onClick={() => { close(); setFillFor(menuEx.slot); }} />
               )}
               {!readOnly && !menuEx.timed && (
                 <>
@@ -685,6 +716,22 @@ export function ForgeWorkout({
           value={strength.exerciseNotes[noteEx.exerciseId] ?? ''}
           onSave={(text) => saveStrength(withExerciseValue(settings.strengthModel, 'exerciseNotes', noteEx.exerciseId, text.trim() === '' ? undefined : text.trim().slice(0, EXERCISE_NOTE_MAX)))}
           onClose={() => setNoteFor(null)}
+        />
+      )}
+
+      {fillEx && (
+        <MachineWeightsForgeSheet
+          exerciseId={fillEx.exerciseId}
+          onSaved={(next) => {
+            // Met de nieuwe lijst opnieuw kijken of er een lichter gewicht past.
+            const fit = noFit[fillEx.slot];
+            setNoFit((l) => Object.fromEntries(Object.entries(l).filter(([k]) => k !== fillEx.slot)));
+            if (!fit) return;
+            const profile = resolveStrengthSettings(next).profile;
+            const again = suggestLighter(fillEx, fit.fromRowId, { bodyKg, profile, workSets: strength.workSets, maxToFailure: strength.estimateUpTo, stackWeights: strength.stackWeights });
+            if (again) setLighter((l) => ({ ...l, [fillEx.slot]: again }));
+          }}
+          onClose={() => setFillFor(null)}
         />
       )}
 
@@ -771,6 +818,7 @@ export function ForgeWorkout({
               painReports: extra.pain.length > 0 ? extra.pain : undefined,
               strengthData,
               ...(rir !== undefined ? { strengthRir: rir } : {}),
+              ...(strengthData && strengthData.length > 0 ? { gymProfileId: strength.profile.id } : {}),
             });
             // Niet opgeslagen betekent: deze training staat al in je logboek. Het concept is dan klaar.
             dropDraft();
@@ -835,6 +883,8 @@ interface BlockActions {
   add: (slot: string) => void;
   lighter: (slot: string) => void;
   keep: (slot: string) => void;
+  fill: (slot: string) => void;
+  keepFit: (slot: string) => void;
 }
 
 const ExerciseBlock = memo(function ExerciseBlock({
@@ -850,6 +900,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
   profile,
   showPlates,
   lighterText,
+  noFitText,
   rirAsValue,
   act,
 }: {
@@ -867,6 +918,8 @@ const ExerciseBlock = memo(function ExerciseBlock({
   showPlates: boolean;
   // Het voorstel om de volgende sets lichter te maken, als er een is.
   lighterText?: string;
+  // De vraag of je de gewichten van dit toestel invult, als geen gewicht past.
+  noFitText?: string;
   // "RIR vooraf invullen: Met het doel": het doel staat er als waarde, niet als hint.
   rirAsValue: boolean;
   act: BlockActions;
@@ -937,6 +990,16 @@ const ExerciseBlock = memo(function ExerciseBlock({
               <div className="-mb-1 flex gap-4">
                 <TextButton onClick={() => act.lighter(ex.slot)}>Lichter</TextButton>
                 <TextButton tone="dim" onClick={() => act.keep(ex.slot)}>Liever niet</TextButton>
+              </div>
+            </div>
+          )}
+
+          {noFitText && !readOnly && (
+            <div className="mt-2 flex flex-col gap-0.5 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-surface)' }} role="group" aria-label="Gewichten van dit toestel">
+              <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{noFitText}</p>
+              <div className="-mb-1 flex gap-4">
+                <TextButton onClick={() => act.fill(ex.slot)}>{noFitText.endsWith('aanpassen?') ? 'Aanpassen' : 'Invullen'}</TextButton>
+                <TextButton tone="dim" onClick={() => act.keepFit(ex.slot)}>Liever niet</TextButton>
               </div>
             </div>
           )}

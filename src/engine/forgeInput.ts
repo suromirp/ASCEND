@@ -204,6 +204,37 @@ export function applyReps(ex: WorkoutExercise, rowId: string, reps: number | und
   return { ...changed, rows: changed.rows.map((r) => (r.id === rowId ? { ...r, edited: true } : r)) };
 }
 
+// "Wijzigingen doorvoeren" (decision docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md):
+// you changed the weight or the reps of one working set. The working sets after it
+// that are not done, not changed by you and that had exactly the same weight AND
+// the same reps as this set before the change, take the new value of that field.
+// Weight and reps apart: change only the weight and only the weight follows. The
+// RIR never follows (it is measured per set), and neither does `edited`, so a
+// carried set can still be changed or taken from the prescription, and a later
+// change of the next set carries on in the same way. Nothing here is recursive and
+// "Lichter" does not pass through it: it writes its weights straight into the rows.
+// `before` is the exercise as it was before the change (for a weight: the base of
+// applyWeight), `after` the exercise with the change made.
+export function carryChange(before: WorkoutExercise, after: WorkoutExercise, rowId: string, field: FieldName): WorkoutExercise {
+  const index = before.rows.findIndex((r) => r.id === rowId);
+  const was = before.rows[index];
+  const now = after.rows.find((r) => r.id === rowId);
+  if (!was || !now || was.kind !== 'work') return after;
+  const value = now[field];
+  if (value === undefined || value === was[field]) return after;
+  const earlier = new Set(before.rows.slice(0, index + 1).map((r) => r.id));
+  const sameAs = new Map(before.rows.map((r) => [r.id, r]));
+  return {
+    ...after,
+    rows: after.rows.map((r) => {
+      if (earlier.has(r.id) || r.kind !== 'work' || r.done || r.edited) return r;
+      const old = sameAs.get(r.id) ?? r;
+      if (old.weightKg !== was.weightKg || old.reps !== was.reps) return r;
+      return { ...r, [field]: value };
+    }),
+  };
+}
+
 // The reps the prescription asks for: the middle of the range, the bottom for "9+".
 export function targetReps(t: RowTarget): number {
   return t.timedSec ?? (t.failure ? t.repsLow : Math.round((t.repsLow + t.repsHigh) / 2));

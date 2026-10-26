@@ -270,6 +270,19 @@ export function migrateLogManualMeasured(log: SessionLog): SessionLog {
   return valid ? { ...rest, manualMeasured: valid } : rest;
 }
 
+// --- SessionLog.gymProfileId --------------------------------------------------------
+// The gym profile a strength log was done in (decision 2026-10-26-gewichten-per-toestel.md).
+// Optional and additive; kept only as a non-empty text of at most 60 characters, so a
+// hand-edited backup cannot make a training silently drop out of every gym.
+export function migrateLogGymProfile(log: SessionLog): SessionLog {
+  if (!('gymProfileId' in log)) return log;
+  const raw = (log as { gymProfileId?: unknown }).gymProfileId;
+  if (typeof raw === 'string' && raw.trim() !== '' && raw.length <= 60) return log;
+  const { gymProfileId: _damaged, ...rest } = log;
+  void _damaged;
+  return rest;
+}
+
 // --- meer per set: SetLog.rir, SetLog.kind en SetLog.rirAssumed -------------------
 // A set can carry the reps in reserve (`rir`, 0 to 10) and its kind (`kind`,
 // 'warmup' or 'work'; absent is a working set). Both are optional and additive:

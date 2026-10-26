@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from './AppDataContext';
 import { getLoose, getMacroFactorState, getMapping, onMacroFactorChange, type MacroFactorState } from '../storage/macrofactor';
 import { planMacroFactor, type MacroFactorPlan, type NameMapping } from '../engine/macrofactorLink';
+import { allProfiles } from '../engine/machineWeights';
 import { groupRows, linkRows, suggestAll, type LinkRow } from '../engine/macrofactorNames';
 
 export interface MacroFactorView {
@@ -22,7 +23,7 @@ export interface MacroFactorView {
 const EMPTY: MacroFactorState = { workouts: [], dismissed: [], leads: true };
 
 export function useMacroFactor(): MacroFactorView {
-  const { plannedSessions, templates, sessionLogs, program } = useAppData();
+  const { plannedSessions, templates, sessionLogs, program, settings } = useAppData();
   const [state, setState] = useState<MacroFactorState | null>(null);
   const [mapping, setMapping] = useState<NameMapping | null>(null);
   const [loose, setLoose] = useState<string[] | null>(null);
@@ -47,8 +48,8 @@ export function useMacroFactor(): MacroFactorView {
   }, []);
 
   const plan = useMemo(
-    () => (state && mapping ? planMacroFactor(state.workouts, mapping, state.dismissed, plannedSessions, templates, sessionLogs, state.leads, loose ?? []) : { proposals: [], alreadyDone: 0 }),
-    [state, mapping, loose, plannedSessions, templates, sessionLogs],
+    () => (state && mapping ? planMacroFactor(state.workouts, mapping, state.dismissed, plannedSessions, templates, sessionLogs, state.leads, loose ?? [], undefined, allProfiles(settings.strengthModel)) : { proposals: [], alreadyDone: 0 }),
+    [state, mapping, loose, plannedSessions, templates, sessionLogs, settings.strengthModel],
   );
   const rows = useMemo(() => {
     if (!state || !mapping) return [];

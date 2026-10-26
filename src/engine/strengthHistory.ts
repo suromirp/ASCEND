@@ -13,7 +13,7 @@ import { addDays, daysBetween, formatDateNL } from '../utils/dates';
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
-import { checkDone, checkProposal, checkRow, logOrigin, summariseChecks, targetIndexOf, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
+import { checkDone, checkProposal, checkRow, isNear, logOrigin, summariseChecks, targetIndexOf, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
 import {
   analyseSessions,
   deriveRange,
@@ -144,7 +144,7 @@ export function exerciseHistories(logs: SessionLog[], templates: SessionTemplate
         if (!tiredCache.has(ck)) tiredCache.set(ck, legsTiredAt(log.completedDate, log.completedAt, { ...deps, events }));
         tired = tiredCache.get(ck);
       }
-      history.sessions.push({ date: log.completedDate, sets: [...entry.sets], logId: log.id, trainingName: names.get(log.templateId) ?? 'Krachttraining', templateId: log.templateId, ...(logOrigin(log) ? { origin: logOrigin(log) } : {}), legsTired: !!tired, ...(tired ? { tired } : {}) });
+      history.sessions.push({ date: log.completedDate, sets: [...entry.sets], logId: log.id, trainingName: names.get(log.templateId) ?? 'Krachttraining', templateId: log.templateId, ...(logOrigin(log) ? { origin: logOrigin(log) } : {}), legsTired: !!tired, ...(tired ? { tired } : {}), ...(log.gymProfileId ? { gymProfileId: log.gymProfileId } : {}) });
     }
   }
   return [...map.values()];
@@ -277,7 +277,7 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
           const measured = s.origin === 'forge' && withinOneStep;
           const doneSide = measured ? checkDone(done, target) : checkProposal(strengthKg, doneLoad, target);
           const proposalSide = proposedLoad !== undefined ? checkProposal(strengthKg, proposedLoad, target) : undefined;
-          check = checkRow(s.origin, target, doneSide, proposalSide, measured);
+          check = checkRow(s.origin, target, doneSide, proposalSide, measured, proposedLoad !== undefined && isNear(proposedLoad, doneLoad));
         }
       }
       rows.push({

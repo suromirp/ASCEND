@@ -441,6 +441,11 @@ export interface SessionLog {
   workout?: WorkoutDetails;
   // Strength: reps left in the hardest (leg) sets, 0 to 4 (RIR). Optional.
   strengthRir?: number;
+  // The gym profile (GymProfile.id) this strength training was done in, set when the log is
+  // made: in Forge the active profile, from a MacroFactor workout the profile its name ends
+  // on (" @ <name>"). Absent on older logs and where the gym is not known. Optional, additive;
+  // never written onto a log that exists (docs/beslissingen/2026-10-26-gewichten-per-toestel.md).
+  gymProfileId?: string;
   // A hard run or test: how your legs felt at the warm-up, held against the
   // leg index (engine/learning.ts). Optional, additive.
   legsAtStart?: 'fris' | 'normaal' | 'zwaar';

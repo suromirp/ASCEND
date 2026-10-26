@@ -92,7 +92,7 @@ describe('Forge-voorschrift, de punten van de controle', () => {
   it('B2: bij een grove stap blijft het gewicht gelijk met een lagere onderkant', () => {
     // een stapel van 5 kg bij 20 kg is een stap van 25%
     const s = [session('2026-10-01', [work(12, 20, 2), work(12, 20, 2), work(11, 20, 2), work(11, 20, 2)])];
-    const p = prescribe({ exercise: ex('triceps-pushdown'), sessions: s, date: '2026-10-08', settings })!;
+    const p = prescribe({ exercise: ex('triceps-pushdown'), sessions: s, date: '2026-10-08', settings: resolveStrengthSettings({ fatigue: 'fixed' }) })!;
     const weights = p.sets.map((x) => x.weightKg);
     // set 2 en 3 houden 20 kg met een lagere onderkant, pas als ook dat te weinig is gaat het omlaag
     expect(weights.slice(0, 3)).toEqual([20, 20, 20]);

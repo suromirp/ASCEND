@@ -5,6 +5,7 @@ import type { PlannedSession, SessionLog } from '../models/training';
 import { mondayOfWeek } from '../utils/dates';
 import { legFatigueOn, type LegFatigueInputs } from './legFatigue';
 import { readMacroFactorCsv, type MacroFactorWorkout } from './macrofactorImport';
+import { DEFAULT_PROFILE } from './strengthSettings';
 import {
   describeRir,
   describeWorkout,
@@ -231,5 +232,21 @@ describe('words', () => {
     expect(describeRir(2)).toBe('Zwaarste set met nog 2 herhalingen over');
     expect(describeRir(0)).toMatch(/geen herhaling over/);
     expect(describeRir(undefined)).toBeUndefined();
+  });
+});
+
+describe('de sportschool van een workout', () => {
+  const gyms = [
+    { ...DEFAULT_PROFILE, id: 'a', name: 'Sportschool A' },
+    { ...DEFAULT_PROFILE, id: 'b', name: 'Sportschool B' },
+  ];
+  it('hoort bij het profiel waarvan de naam achter " @ " staat', () => {
+    const named: MacroFactorWorkout = { ...workout('Lower A'), name: 'Lower A @ Sportschool B' };
+    expect(workoutToDraft(named, tpl('tpl_lower_a'), undefined, gyms).gymProfileId).toBe('b');
+  });
+  it('krijgt anders het veld niet', () => {
+    expect('gymProfileId' in workoutToDraft(workout('Lower A'), tpl('tpl_lower_a'), undefined, gyms)).toBe(false);
+    const other: MacroFactorWorkout = { ...workout('Lower A'), name: 'Lower A @ Ergens' };
+    expect('gymProfileId' in workoutToDraft(other, tpl('tpl_lower_a'), undefined, gyms)).toBe(false);
   });
 });

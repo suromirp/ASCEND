@@ -4,6 +4,10 @@ import type { SetLog } from '../models/training';
 import {
   analyseSessions,
   deriveRange,
+  FATIGUE_MAX,
+  FATIGUE_MIN,
+  FATIGUE_PER_SET,
+  learnFatigue,
   describePlannedSet,
   estimateSet,
   expectedReps,
@@ -13,6 +17,7 @@ import {
   referenceWeight,
   sessionStrength,
   topSetOf,
+  usedBefore,
   warmupSets,
   type SessionInput, lastDateBefore } from './strengthModel';
 import { readMacroFactorRows } from './macrofactorImport';
@@ -262,7 +267,7 @@ describe('KR-4 het voorschrift', () => {
     const p = prescribe({ exercise: row, sessions: sessions([47.5]), date: '2026-09-20', bodyKg: 80, settings })!;
     expect(p.sets).toHaveLength(3);
   });
-  it('de vermoeidheid binnen de training volgt het voorbeeld 47,5, 45, 42,5, 42,5 bij 11 tot 13 met 2 over', () => {
+  it('de vaste 3% geeft 47,5, 45, 42,5, 42,5 bij 11 tot 13 met 2 over', () => {
     // Kracht waarbij 47,5 kg net 11 herhalingen met 2 over geeft: bij een rij telt 8% van het lichaamsgewicht mee.
     const lat = ex('chest-supported-row');
     const bodyKg = 0;
@@ -272,7 +277,7 @@ describe('KR-4 het voorschrift', () => {
     // sessie met strength = needed: 47,5 kg x 11 met 2 over is 47,5 x (1 + 13/30)
     const s: SessionInput[] = [{ date: '2026-09-01', sets: [work(11, 47.5, 2), work(11, 47.5, 2), work(11, 47.5, 2), work(11, 47.5, 2)] }];
     const profile = { ...settings.profile, stackStepKg: 2.5 };
-    const p = prescribe({ exercise: cable, sessions: s, date: '2026-09-08', settings: { ...settings, profile, estimateUpTo: 15 } })!;
+    const p = prescribe({ exercise: cable, sessions: s, date: '2026-09-08', settings: { ...settings, profile, estimateUpTo: 15, fatigue: 'fixed' } })!;
     void lat;
     expect(needed).toBeGreaterThan(0);
     expect(p.range).toEqual({ low: 11, high: 13, rir: 2 });
@@ -377,6 +382,109 @@ describe('bereik verbreden bij een grove stap', () => {
     const p = prescribe({ exercise: cable, sessions: s, date: '2026-09-08', settings: off })!;
     expect(p.sets[0].repsHigh).toBe(9);
     expect(p.widened).toBe(false);
+  });
+});
+
+describe('bij een grove stap het gewicht met de kleinste verwachte misser', () => {
+  // Een kabel in stappen van 5 kg, doel 14 tot 16 herhalingen met 2 over.
+  const cable = ex('triceps-pushdown');
+  const plan = { low: 14, high: 16, rir: 2 };
+  const run = (sets: SetLog[], over: object = {}) => prescribe({ exercise: cable, sessions: [{ date: '2026-09-01', sets }], date: '2026-09-08', settings: resolveStrengthSettings(over), plan })!;
+
+  it('kiest de zwaardere kant als die dichter bij het doel zit, met een lagere onderkant voor die set', () => {
+    // Kracht 83,3: 50 kg geeft 18 herhalingen (2 boven de top), 55 kg geeft 13 (1 onder de onderkant).
+    const p = run([work(18, 50, 2), work(18, 50, 2), work(18, 50, 2)]);
+    expect(p.kind).toBe('coarse_heavier');
+    expect(p.widened).toBe(false);
+    expect(p.sets[0].weightKg).toBe(55);
+    expect(p.sets[0].repsLow).toBe(13);
+    expect(p.sets[0].repsHigh).toBe(16);
+    expect(p.reason).toBe('De stap is hier te grof voor 14 tot 16 herhalingen; met 55 kg haal je er naar verwachting 13, dat zit dichter bij je doel dan 50 kg.');
+    // De latere sets houden het bereik van het doel: de onderkant wordt daar niet verlaagd.
+    for (const set of p.sets.slice(1)) expect(set.repsLow).toBeGreaterThanOrEqual(13);
+  });
+  it('blijft bij een gelijke misser aan de lichte kant en verbreedt het bereik', () => {
+    // Kracht 82,5: 50 kg geeft 17 (1 boven de top), 55 kg geeft 13 (1 onder de onderkant).
+    const p = run([work(13, 55, 2), work(13, 55, 2), work(13, 55, 2)]);
+    expect(p.kind).toBe('widened');
+    expect(p.sets[0].weightKg).toBe(50);
+    expect(p.sets[0].repsHigh).toBe(17);
+  });
+  it('blijft bij de lichte kant als de zwaardere verder weg zit', () => {
+    // Kracht 78,3: 50 kg geeft 14 herhalingen en past gewoon; geen grove stap.
+    const p = run([work(15, 50, 2), work(15, 50, 2), work(15, 50, 2)]);
+    expect(p.kind).not.toBe('coarse_heavier');
+    expect(p.sets[0].weightKg).toBe(50);
+  });
+  it('met "Bereik verbreden" uit blijft het lichtere gewicht staan en gaat het om meer over', () => {
+    const p = run([work(18, 50, 2), work(18, 50, 2), work(18, 50, 2)], { widenRange: false });
+    expect(p.kind).not.toBe('coarse_heavier');
+    expect(p.sets[0].weightKg).toBe(50);
+    expect(p.sets[0].repsHigh).toBe(16);
+    expect(p.sets[0].rir).toBeGreaterThan(2);
+  });
+});
+
+describe('vermoeidheid per set, per oefening geleerd', () => {
+  const bench = ex('bench-press');
+  const ctx = { exercise: bench };
+  // Een training met werksets van gelijke kracht die elk `drop` lager uitvallen.
+  const dropping = (date: string, drop: number, n = 4): SessionInput => ({
+    date,
+    sets: Array.from({ length: n }, () => work(10, 60, 2)).map((s, i) => ({ ...s, reps: 10, weightKg: 60 * (1 - drop) ** i })),
+  });
+
+  it('zonder paren is het 3% en is er niets geleerd', () => {
+    expect(learnFatigue([], ctx, false)).toEqual({ perSet: FATIGUE_PER_SET, pairs: 0 });
+    expect(learnFatigue([{ date: '2026-09-01', sets: [work(10, 60, 2)] }], ctx, false).pairs).toBe(0);
+  });
+  it('trekt naar 3% zolang er weinig paren zijn en volgt de oefening bij veel', () => {
+    // Elke set 10% lichter bij dezelfde herhalingen is 10% minder kracht per stap.
+    const few = learnFatigue([dropping('2026-09-01', 0.1, 3)], ctx, false);
+    expect(few.pairs).toBe(2);
+    expect(few.perSet).toBeCloseTo((2 * 0.1 + 8 * 0.03) / 10, 3);
+    const many = learnFatigue(Array.from({ length: 8 }, (_, i) => dropping(`2026-09-0${i + 1}`, 0.1)), ctx, false);
+    expect(many.pairs).toBe(24);
+    expect(many.perSet).toBeGreaterThan(0.08);
+    expect(many.perSet).toBeLessThan(0.1);
+  });
+  it('houdt de daling tussen 1% en 12%', () => {
+    const lots = (drop: number) => learnFatigue(Array.from({ length: 12 }, (_, i) => dropping(`2026-09-${String(i + 1).padStart(2, '0')}`, drop)), ctx, false).perSet;
+    expect(lots(0.3)).toBe(FATIGUE_MAX);
+    expect(lots(-0.2)).toBe(FATIGUE_MIN);
+  });
+  it('de mediaan laat een uitschieter los', () => {
+    const odd: SessionInput = { date: '2026-09-20', sets: [work(10, 60, 2), work(10, 30, 2), work(10, 60, 2), work(10, 60, 2)] };
+    const base = Array.from({ length: 6 }, (_, i) => ({ date: `2026-09-0${i + 1}`, sets: [work(10, 60, 2), work(10, 60, 2), work(10, 60, 2)] }));
+    expect(learnFatigue([...base, odd], ctx, false).perSet).toBeLessThan(0.05);
+  });
+  it('telt geen opwarmsets, sets zonder RIR of sets ver van falen', () => {
+    const noisy: SessionInput = { date: '2026-09-01', sets: [{ ...work(5, 30, 4), kind: 'warmup' }, work(10, 60, 2), work(10, 40), work(10, 60, 2), work(10, 40, 5), work(10, 60, 2)] };
+    expect(learnFatigue([noisy], ctx, false).pairs).toBe(0);
+  });
+  it('een opwarmset tussen werksets onderbreekt het paar', () => {
+    const between: SessionInput = { date: '2026-09-01', sets: [work(10, 60, 2), { ...work(5, 30, 4), kind: 'warmup' }, work(10, 60, 2)] };
+    expect(learnFatigue([between], ctx, false).pairs).toBe(0);
+  });
+  it('een set met een aangenomen RIR telt niet: dan zou het model zijn eigen voorspelling terugleren', () => {
+    const untouched: SessionInput = { date: '2026-09-01', sets: [{ ...work(8, 60, 2), rirAssumed: true }, { ...work(6, 60, 2), rirAssumed: true }, { ...work(6, 60, 2), rirAssumed: true }] };
+    expect(learnFatigue([untouched], ctx, true).pairs).toBe(0);
+    const mixed: SessionInput = { date: '2026-09-02', sets: [work(10, 60, 2), { ...work(9, 60, 2), rirAssumed: true }, work(9, 60, 2)] };
+    expect(learnFatigue([mixed], ctx, true).pairs).toBe(0);
+  });
+  it('bij gelijke werksets tellen alleen paren met hetzelfde gewicht', () => {
+    const mixed: SessionInput = { date: '2026-09-01', sets: [work(10, 60, 2), work(10, 60, 2), work(10, 50, 2), work(10, 50, 2)] };
+    expect(learnFatigue([mixed], ctx, true).pairs).toBe(2);
+    expect(learnFatigue([mixed], ctx, false).pairs).toBe(3);
+  });
+  it('het voorschrift gebruikt de geleerde daling, en "Vast 3%" de vaste', () => {
+    const sessions = Array.from({ length: 6 }, (_, i) => dropping(`2026-09-0${i + 1}`, 0.1));
+    const learned = prescribe({ exercise: bench, sessions, date: '2026-09-10', settings })!;
+    const fixed = prescribe({ exercise: bench, sessions, date: '2026-09-10', settings: resolveStrengthSettings({ fatigue: 'fixed' }) })!;
+    expect(fixed.fatiguePerSet).toBe(FATIGUE_PER_SET);
+    expect(learned.fatiguePerSet).toBeGreaterThan(0.06);
+    // Een grotere daling geeft een lichtere laatste set.
+    expect(learned.sets.at(-1)!.weightKg).toBeLessThan(fixed.sets.at(-1)!.weightKg);
   });
 });
 
@@ -544,7 +652,23 @@ describe('de zin bij een lichter voorschrift', () => {
     const rx = prescribe({ exercise: bench, sessions, date: '2026-09-12', settings })!;
     expect(rx.reason).not.toContain('geschatte kracht is wat lager');
     expect(rx.reason).not.toContain('geschatte kracht is gedaald');
-    if (rx.kind === 'down') expect(rx.reason).toContain('Vorige keer zat je onder');
+    // Vorige keer 5 herhalingen bij een doel van 7 tot 9: dat is een ander doel dan nu.
+    if (rx.kind === 'down') expect(rx.reason).toContain('Deze keer vraagt het programma 7 tot 9 herhalingen, meer dan vorige keer');
+  });
+  it('zegt bij hetzelfde doel dat je vorige keer onder het bereik zat', () => {
+    // Vorige keer 6 herhalingen bij 7 tot 9: hetzelfde doel, net eronder.
+    const sessions = [s('2026-09-01', [[8, 60, 2], [8, 60, 2]]), s('2026-09-05', [[8, 60, 2], [8, 60, 2]]), s('2026-09-08', [[6, 70, 2], [6, 70, 2]])];
+    const rx = prescribe({ exercise: bench, sessions, date: '2026-09-12', settings, plan: { low: 7, high: 9, rir: 2 } })!;
+    expect(rx.kind).toBe('down');
+    expect(rx.reason).toContain('Vorige keer zat je onder de 7 tot 9 herhalingen');
+    expect(rx.reason).not.toContain('Deze keer vraagt');
+  });
+  it('zegt bij een ander doel dat het programma nu meer vraagt, met het bereik van nu', () => {
+    // Vorige keer een golf van 4 tot 6, nu 11 tot 13: een lichter gewicht, en de zin gaat over nu.
+    const sessions = [s('2026-09-01', [[5, 80, 2], [5, 80, 2]]), s('2026-09-05', [[5, 80, 2], [5, 80, 2]]), s('2026-09-08', [[5, 80, 2], [5, 80, 2]])];
+    const rx = prescribe({ exercise: bench, sessions, date: '2026-09-12', settings, plan: { low: 11, high: 13, rir: 2 } })!;
+    expect(rx.sets[0].weightKg).toBeLessThan(80);
+    expect(rx.reason).toBe('Deze keer vraagt het programma 11 tot 13 herhalingen, meer dan vorige keer, dus een lichter gewicht.');
   });
   it('zegt het wel als de kracht echt daalde', () => {
     const sessions = [s('2026-09-01', [[8, 70, 2], [8, 70, 2]]), s('2026-09-05', [[8, 70, 2], [8, 70, 2]]), s('2026-09-08', [[6, 65, 2], [6, 65, 2]])];
@@ -747,5 +871,25 @@ describe('dumbbells als totaal', () => {
     expect(formatWeight(press, 60, true)).toBe('60 kg (2 x 30)');
     expect(formatWeight(press, 60)).toBe('60 kg');
     expect(formatWeight(ex('goblet-squat'), 24, true)).toBe('24 kg');
+  });
+});
+
+describe('wat ASCEND leert over gewichten is per sportschool', () => {
+  const sets = (kg: number[]): SetLog[] => kg.map((w) => ({ reps: 10, weightKg: w }));
+  const sessions: SessionInput[] = [
+    { date: '2026-10-01', sets: sets([10, 15]), gymProfileId: 'a' },
+    { date: '2026-10-03', sets: sets([22.5, 27.5]), gymProfileId: 'b' },
+    { date: '2026-10-05', sets: sets([30]) },
+  ];
+  const base = resolveStrengthSettings(undefined).profile;
+  const withActive = (id: string) =>
+    resolveStrengthSettings({ activeProfileId: id, profiles: [{ ...base, id: 'a', name: 'Sportschool A' }, { ...base, id: 'b', name: 'Sportschool B' }] });
+
+  it('telt alleen de trainingen van de actieve sportschool, en die zonder sportschool', () => {
+    expect(usedBefore({ sessions, date: '2026-10-10', settings: withActive('a') })).toEqual([10, 15, 30]);
+    expect(usedBefore({ sessions, date: '2026-10-10', settings: withActive('b') })).toEqual([22.5, 27.5, 30]);
+  });
+  it('zonder sportschoolprofielen telt alles zoals voorheen', () => {
+    expect(usedBefore({ sessions: sessions.map((s) => ({ ...s, gymProfileId: undefined })), date: '2026-10-10', settings })).toEqual([10, 15, 22.5, 27.5, 30]);
   });
 });

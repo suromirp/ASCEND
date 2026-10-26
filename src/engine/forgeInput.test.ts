@@ -5,6 +5,7 @@ import {
   activeRow,
   applyReps,
   applyWeight,
+  carryChange,
   copyRow,
   makeSnap,
   plateClosest,
@@ -326,5 +327,82 @@ describe('een training van voor een naamswijziging', () => {
   });
   it('een afgevinkte oefening die niet meer in de training staat blijft achteraan', () => {
     expect(mergeDraft([...old, ex('ex99', [row('x', { done: true })], { name: 'Oud' })], fresh).map((e) => e.name)).toContain('Oud');
+  });
+});
+
+describe('carryChange: wijzigingen doorvoeren naar gelijke sets', () => {
+  const three = () => ex('a', [row('a1', { weightKg: 40, reps: 10 }), row('a2', { weightKg: 40, reps: 10 }), row('a3', { weightKg: 40, reps: 10 })]);
+
+  it('een nieuw gewicht gaat naar de open sets met hetzelfde gewicht en dezelfde herhalingen', () => {
+    const before = three();
+    const after = carryChange(before, applyWeight(before, 'a1', 45, false), 'a1', 'weightKg');
+    expect(after.rows.map((r) => r.weightKg)).toEqual([45, 45, 45]);
+    expect(after.rows.map((r) => r.reps)).toEqual([10, 10, 10]);
+    expect(after.rows.map((r) => !!r.edited)).toEqual([true, false, false]);
+  });
+
+  it('typen via een leeg veld: steeds vanaf de stand bij het openen, dan gaan de gelijke sets mee', () => {
+    const base = three();
+    let out = base;
+    for (const v of [1, undefined, 8]) out = carryChange(base, applyReps(base, 'a1', v), 'a1', 'reps');
+    expect(out.rows.map((r) => r.reps)).toEqual([8, 8, 8]);
+  });
+
+  it('gewicht en herhalingen apart: alleen het gewicht veranderen laat de herhalingen staan', () => {
+    const before = three();
+    const after = carryChange(before, applyWeight(before, 'a1', 45, false), 'a1', 'weightKg');
+    expect(after.rows[1].reps).toBe(10);
+    const reps = carryChange(before, applyReps(before, 'a1', 8), 'a1', 'reps');
+    expect(reps.rows.map((r) => r.reps)).toEqual([8, 8, 8]);
+    expect(reps.rows.map((r) => r.weightKg)).toEqual([40, 40, 40]);
+  });
+
+  it('een set met ander gewicht of andere herhalingen, een gedane, een zelf aangepaste en een opwarmset blijven staan', () => {
+    const before = ex('a', [
+      row('w', { kind: 'warmup', weightKg: 40, reps: 10 }),
+      row('a1', { weightKg: 40, reps: 10 }),
+      row('a2', { weightKg: 40, reps: 10, done: true }),
+      row('a3', { weightKg: 40, reps: 10, edited: true }),
+      row('a4', { weightKg: 42.5, reps: 10 }),
+      row('a5', { weightKg: 40, reps: 8 }),
+      row('a6', { weightKg: 40, reps: 10 }),
+    ]);
+    const after = carryChange(before, applyWeight(before, 'a1', 45, false), 'a1', 'weightKg');
+    expect(after.rows.map((r) => r.weightKg)).toEqual([40, 45, 40, 40, 42.5, 40, 45]);
+  });
+
+  it('sets voor de gewijzigde set volgen niet, de RIR ook niet', () => {
+    const before = ex('a', [row('a1', { weightKg: 40, reps: 10, rir: 3 }), row('a2', { weightKg: 40, reps: 10, rir: 1 }), row('a3', { weightKg: 40, reps: 10 })]);
+    const after = carryChange(before, applyReps(before, 'a2', 9), 'a2', 'reps');
+    expect(after.rows.map((r) => r.reps)).toEqual([10, 9, 9]);
+    expect(after.rows.map((r) => r.rir)).toEqual([3, 1, 2]);
+  });
+
+  it('een gewijzigde opwarmset voert niets door, en een leeg veld ook niet', () => {
+    const before = ex('a', [row('w', { kind: 'warmup', weightKg: 40, reps: 10 }), row('a1', { weightKg: 40, reps: 10 })]);
+    expect(carryChange(before, applyReps(before, 'w', 5), 'w', 'reps').rows[1].reps).toBe(10);
+    expect(carryChange(before, applyReps(before, 'a1', undefined), 'a1', 'reps')).toEqual(applyReps(before, 'a1', undefined));
+  });
+
+  it('een tweede wijziging van de volgende set gaat op dezelfde manier verder (geen kettingreactie terug)', () => {
+    const first = carryChange(three(), applyReps(three(), 'a1', 8), 'a1', 'reps');
+    const second = carryChange(first, applyReps(first, 'a2', 6), 'a2', 'reps');
+    expect(second.rows.map((r) => r.reps)).toEqual([8, 6, 6]);
+  });
+
+  it('samen met Lichter: een set die Lichter lichter zette volgt een wijziging van het oude gewicht niet', () => {
+    const lighter = three();
+    lighter.rows[2] = { ...lighter.rows[2], weightKg: 37.5 };
+    const after = carryChange(lighter, applyWeight(lighter, 'a1', 45, false), 'a1', 'weightKg');
+    expect(after.rows.map((r) => r.weightKg)).toEqual([45, 45, 37.5]);
+  });
+
+  it('takeTarget zet de voorgeschreven waarden alleen in die set en er volgt niets', () => {
+    const before = three();
+    const taken = takeTarget(before, 'a1');
+    expect(taken.rows[1]).toEqual(before.rows[1]);
+    // Een set die door doorvoer veranderde is niet aangepast en kan het voorschrift nog nemen.
+    const carried = carryChange(before, applyWeight(before, 'a1', 45, false), 'a1', 'weightKg');
+    expect(takeTarget(carried, 'a2').rows[1]).toMatchObject({ weightKg: 47.5, edited: true });
   });
 });

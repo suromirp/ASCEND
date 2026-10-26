@@ -168,6 +168,29 @@ describe('backup envelope round-trip', () => {
     id, templateId: 'tpl', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00.000Z`, variant: 'full', durationMinutes: 40, source: 'manual',
   });
 
+  it('the gym of a strength log and the weights per machine travel in a backup; an older log stays as it was', async () => {
+    await SessionLogsRepo.put({ ...log('with', '2026-09-01'), gymProfileId: 'a' });
+    await SessionLogsRepo.put(log('without', '2026-09-02'));
+    await SettingsRepo.set({ strengthModel: { activeProfileId: 'a', profiles: [{ id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], dumbbells: { startKg: 2, stepKg: 2, upToKg: 10, thenStepKg: 2.5, maxKg: 50 }, stackStepKg: 5, exerciseWeightsKg: { 'cable-fly': [4.5, 9, 13.5] } }] } });
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    const backup = normalizeBackupToCurrentModel(envelope);
+    expect(backup.sessionLogs.find((l) => l.id === 'with')?.gymProfileId).toBe('a');
+    expect('gymProfileId' in backup.sessionLogs.find((l) => l.id === 'without')!).toBe(false);
+    await importEnvelope(envelope);
+    expect((await SessionLogsRepo.getAll()).find((l) => l.id === 'with')?.gymProfileId).toBe('a');
+    expect((await SettingsRepo.get()).strengthModel?.profiles?.[0].exerciseWeightsKg).toEqual({ 'cable-fly': [4.5, 9, 13.5] });
+  });
+
+  it('a damaged gym on a log in a backup is dropped, so the training counts for every gym', async () => {
+    await SessionLogsRepo.put({ ...log('num', '2026-09-01'), gymProfileId: 7 } as unknown as SessionLog);
+    await SessionLogsRepo.put({ ...log('empty', '2026-09-02'), gymProfileId: '  ' });
+    await SessionLogsRepo.put({ ...log('ok', '2026-09-03'), gymProfileId: 'b' });
+    const backup = normalizeBackupToCurrentModel(JSON.parse(JSON.stringify(await buildBackupEnvelope())));
+    expect('gymProfileId' in backup.sessionLogs.find((l) => l.id === 'num')!).toBe(false);
+    expect('gymProfileId' in backup.sessionLogs.find((l) => l.id === 'empty')!).toBe(false);
+    expect(backup.sessionLogs.find((l) => l.id === 'ok')?.gymProfileId).toBe('b');
+  });
+
   it('a backup with an empty payload changes nothing (missing categories are unknown, not empty)', async () => {
     await SessionLogsRepo.put(log('a', '2026-09-01'));
     await TrainingGoalsRepo.put({ id: 'goal1', name: 'GR5', requirements: [], createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', status: 'active', targetDate: '2027-08-02' });

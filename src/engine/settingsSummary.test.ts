@@ -157,11 +157,12 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-geluid', facts()).value).toBe('Klokjes');
     expect(rowSummary('forge-geluid', facts({ settings: { ...facts().settings, strengthModel: { restSound: 'whistle' } } })).value).toBe('Fluitje');
     expect(rowSummary('forge-scherm', facts()).checked).toBe(true);
-    expect(rowSummary('forge-doorgeven', facts()).checked).toBe(true);
     expect(rowSummary('forge-schijven', facts()).checked).toBe(true);
     expect(rowSummary('forge-1rm', facts()).checked).toBe(true);
     expect(rowSummary('forge-1rm', facts({ settings: { ...facts().settings, strengthModel: { showOneRm: false } } })).checked).toBe(false);
-    expect(rowSummary('forge-doorgeven', facts({ settings: { ...facts().settings, strengthModel: { carryWeights: false } } })).checked).toBe(false);
+    expect(rowSummary('forge-doorvoeren', facts()).value).toBe('Gelijke sets');
+    expect(rowSummary('forge-doorvoeren', facts({ settings: { ...facts().settings, strengthModel: { carryWeights: false } } })).value).toBe('Uit');
+    expect(rowSummary('forge-doorvoeren', facts({ settings: { ...facts().settings, strengthModel: { carryMode: 'shift' } } })).value).toBe('Zelfde verschil');
     expect(rowSummary('forge-programma', facts())).toEqual({ value: 'Van ASCEND', dim: true });
     expect(groupSummary('forge', facts())).toEqual({ value: 'Aan', sub: 'Eerst gewicht, opwarmen slim' });
   });
@@ -212,6 +213,9 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-leren', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-pauze', facts())).toEqual({ checked: true, hidden: false });
     expect(rowSummary('forge-pauze', withForge({ lighterAfterBreak: false })).checked).toBe(false);
+    expect(rowSummary('forge-vermoeidheid', facts())).toEqual({ value: 'Leren', auto: true, hidden: false });
+    expect(rowSummary('forge-vermoeidheid', withForge({ fatigue: 'fixed' }))).toEqual({ value: 'Vast 3%', auto: false, hidden: false });
+    expect(rowSummary('forge-vermoeidheid', withForge({ enabled: false })).hidden).toBe(true);
     expect(rowSummary('forge-dumbbells', facts())).toEqual({ value: 'Vanzelf', hidden: false });
     expect(rowSummary('forge-dumbbells', withForge({ dumbbellLog: 'total' })).value).toBe('Totaal van twee');
     expect(rowSummary('forge-dumbbells', withForge({ enabled: false })).hidden).toBe(true);
@@ -219,7 +223,7 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('forge-naast', withForge({ showComparison: true })).checked).toBe(true);
     expect(rowSummary('forge-naast', withForge({ enabled: false })).hidden).toBe(true);
     const tally = (hit: number, total: number) => ({ hit, total });
-    const none = { macrofactor: { did: tally(0, 0), ascend: tally(0, 0) }, forge: { ascend: tally(0, 0), other: { did: tally(0, 0), ascend: tally(0, 0) } } };
+    const none = { near: { did: tally(0, 0), ascend: tally(0, 0) }, macrofactor: { did: tally(0, 0), ascend: tally(0, 0) }, forge: { ascend: tally(0, 0), other: { did: tally(0, 0), ascend: tally(0, 0) } } };
     const totals = { ...none, macrofactor: { did: tally(18, 25), ascend: tally(17, 25) } };
     const r = rowSummary('forge-naast', facts({ strengthCheck: { all: totals, since: none, from: '2026-10-24' } }));
     expect(r.sub).toBe('Raak: MacroFactor 72%, ASCEND 68%');
@@ -243,6 +247,17 @@ describe('rowSummary: forge', () => {
     expect(rowSummary('schijven', facts()).value).toBe('1,25 tot 25 kg');
     expect(rowSummary('dumbbells', facts()).value).toBe('2 tot 50 kg');
     expect(rowSummary('kabels', facts()).value).toBe('Per 5 kg');
+  });
+
+  it('de sportschool en de gewichten per toestel', () => {
+    const withForge = (strengthModel: object) => facts({ settings: { ...facts().settings, strengthModel } });
+    expect(rowSummary('gym-profiel', facts()).value).toBe('Mijn sportschool');
+    expect(rowSummary('toestelgewichten', facts())).toEqual({ value: 'Geen', dim: true });
+    const gym = { id: 'a', name: 'Sportschool A', barsKg: [20], platesKg: [5], stackStepKg: 5, exerciseWeightsKg: { 'cable-fly': [4.5, 9, 13.5, 18] } };
+    expect(rowSummary('toestelgewichten', withForge({ profiles: [gym], activeProfileId: 'a' }))).toEqual({ value: '1 toestel' });
+    const two = withForge({ profiles: [gym, { ...gym, id: 'b', name: 'Sportschool B', exerciseWeightsKg: undefined }], activeProfileId: 'a' });
+    expect(rowSummary('toestelgewichten', two)).toEqual({ value: '1 toestel', sub: 'Voor Sportschool A' });
+    expect(rowSummary('gym-profiel', two).value).toBe('Sportschool A');
   });
 
   it('de trainingsduur is auto als ASCEND hem leerde, en verdwijnt zonder krachttrainingen', () => {

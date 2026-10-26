@@ -31,7 +31,7 @@ import { ForgeFilters } from '../components/forge/ForgeFilters';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { isRepsBased, splitByRecency, trainingFilters, visibleViews } from '../engine/forgeHistory';
 import { checkSummary, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
-import { biasWord, checkLines, type CheckSummary, type Tally } from '../engine/prescriptionCheck';
+import { biasWord, checkLines, nearLine, type CheckSummary, type Tally } from '../engine/prescriptionCheck';
 import { externalOneRmByKey } from '../engine/externalOneRm';
 import { compareMoments, resolveStrengthSettings, strengthModelKey, type OneRmView } from '../engine/strengthSettings';
 import type { OneRmReading } from '../models/metrics';
@@ -239,6 +239,7 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
   const summary = useMemo(() => checkSummary(rows, from), [rows, from]);
   const all = checkLines(summary.all);
   const since = checkLines(summary.since);
+  const near = nearLine(summary.all);
   const sinceText = `Sinds ${formatShortDateNL(from)}`;
   const sinceMacroFactor = since.macrofactor ? `${sinceText}: ${since.macrofactor.replace('Raak: ', '')}` : undefined;
   const sinceForge = since.forge ? `${sinceText}: ${since.forge.replace('Raak in Forge: ', 'Forge, ')}` : undefined;
@@ -256,6 +257,7 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
       {sinceMacroFactor && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceMacroFactor}</p>}
       {all.forge && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.forge}</p>}
       {sinceForge && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceForge}</p>}
+      {near && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{near}</p>}
       {info && (
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           Raak is binnen het herhalingenbereik met de herhalingen in reserve die de training vraagt. Voor ASCEND is het een schatting achteraf, uit de beste set van die dag, behalve in Forge als je het voorgestelde gewicht pakte.

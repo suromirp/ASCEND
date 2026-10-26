@@ -25,7 +25,7 @@ import { formatNumberNL } from '../utils/number';
 import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
-import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, FATIGUE_PER_SET, formatWeight, lastDateBefore, prescribe, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
+import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, formatWeight, lastDateBefore, prescribe, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
 import { COMPOUND_PATTERNS, isCompound, newWarmState, noteWorked, warmupKind, type WarmKind, type WarmState } from './warmup';
 import { setsText } from './macrofactorProgram';
 import type { GymProfile, ResolvedStrengthSettings } from './strengthSettings';
@@ -89,6 +89,9 @@ export interface WorkoutExercise {
   timed: boolean;
   // Dumbbells are logged as the total of two (the weights are sums of two from the rack).
   dumbbellTotal?: boolean;
+  // The share of strength each earlier working set costs the next, as the proposal
+  // counted it (learned or 3%); the adjusting in the training reads it from here.
+  fatiguePerSet?: number;
 }
 
 // --- rep ranges ------------------------------------------------------------------------------
@@ -297,7 +300,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
     if (t && rx && !t.failure && target.weightKg !== undefined) {
       const load = loadFromExternal(exercise, target.weightKg, ctx.bodyKg);
       if (load !== undefined) {
-        const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - FATIGUE_PER_SET) ** i;
+        const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - rx.fatiguePerSet) ** i;
         reps = Math.min(reps, Math.max(t.repsLow, expectedReps(strength, load, t.rir)));
       }
     }
@@ -319,6 +322,7 @@ export function planExercise(slot: ExercisePrescription, ctx: PlanContext, state
     restSec: ctx.settings.restSeconds[exerciseId] ?? programRest ?? restFor(exerciseId, exercise, repsHigh, ctx.settings.restSeconds),
     timed: false,
     ...(dumbbellTotal ? { dumbbellTotal } : {}),
+    ...(rx ? { fatiguePerSet: rx.fatiguePerSet } : {}),
     ...(swapTo ? { swappedFrom: cleanExerciseName(slot.exerciseName) } : {}),
   };
 }
@@ -335,7 +339,7 @@ function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exerci
   const weights = targets.map((t, i) => {
     if (t.repsLow === rx.range.low && t.repsHigh === rx.range.high && t.rir === rx.range.rir && !t.failure) return rx.sets[Math.min(i, rx.sets.length - 1)].weightKg;
     differs = true;
-    const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - FATIGUE_PER_SET) ** i;
+    const strength = ctx.settings.workSets === 'equal' ? rx.strengthKg : rx.strengthKg * (1 - rx.fatiguePerSet) ** i;
     const need = Math.max(1, t.repsLow - (tired ? 1 : 0));
     let idx = 0;
     for (let j = candidates.length - 1; j >= 0; j--) {

@@ -24,6 +24,8 @@ import type { ExerciseSetLog } from '../models/training';
 
 export { isLegSession, minutesLabel, strengthDataFor, strengthRirFor };
 import type { SessionLogDraft } from './activityImport';
+import { profileIdFromWorkoutName } from './machineWeights';
+import type { GymProfile } from './strengthSettings';
 import { formatNumberNL } from '../utils/number';
 import { plausibleStrengthMinutes } from './logDuration';
 
@@ -40,7 +42,7 @@ export function workoutMinutes(workout: MacroFactorWorkout, template: SessionTem
   return planned?.plannedMinutes ?? template.durationVariants.full;
 }
 
-export function workoutToDraft(workout: MacroFactorWorkout, template: SessionTemplate, planned?: PlannedSession): SessionLogDraft {
+export function workoutToDraft(workout: MacroFactorWorkout, template: SessionTemplate, planned?: PlannedSession, profiles: GymProfile[] = []): SessionLogDraft {
   const minutes = workoutMinutes(workout, template, planned);
   const startMs = new Date(workout.start).getTime();
   const draft: SessionLogDraft = {
@@ -53,6 +55,8 @@ export function workoutToDraft(workout: MacroFactorWorkout, template: SessionTem
     durationMinutes: minutes,
     strengthData: strengthDataFor(workout, template),
     strengthRir: strengthRirFor(workout, template),
+    // "Benen A @ naam": the gym profile of that name, if there is one.
+    gymProfileId: profileIdFromWorkoutName(workout.name, profiles),
     externalId: workout.externalId,
     source: 'macrofactor',
   };
@@ -151,6 +155,7 @@ export function planMacroFactor(
   // Name keys linked "als losse krachttraining": never tied to a planned session.
   loose: string[] = [],
   today: string = todayISO(),
+  profiles: GymProfile[] = [],
 ): MacroFactorPlan {
   const templateById = new Map(templates.map((t) => [t.id, t]));
   const dismissedSet = new Set(dismissed);
@@ -233,7 +238,7 @@ export function planMacroFactor(
       workout.date,
     );
     if (free) claimedPlanned.add(free.id);
-    proposals.push({ kind: 'new', workout, template, planned: free, draft: workoutToDraft(workout, template, free) });
+    proposals.push({ kind: 'new', workout, template, planned: free, draft: workoutToDraft(workout, template, free, profiles) });
   }
   // A row that does not look right is marked, so the card can set it apart.
   const marked = proposals.map((p) => {

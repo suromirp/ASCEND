@@ -603,6 +603,7 @@ export interface LogSessionInput {
   painReports?: SessionLog['painReports'];
   workout?: SessionLog['workout'];
   strengthRir?: SessionLog['strengthRir'];
+  gymProfileId?: SessionLog['gymProfileId'];
   legsAtStart?: SessionLog['legsAtStart'];
   // The day it was actually done. Defaults to today; logging a missed
   // session afterwards can pass its own date.
@@ -1340,6 +1341,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           painReports: input.painReports && input.painReports.length > 0 ? input.painReports : undefined,
           workout: input.workout,
           strengthRir: input.strengthRir,
+          ...(input.gymProfileId ? { gymProfileId: input.gymProfileId } : {}),
           legsAtStart: input.legsAtStart,
           externalId: input.externalId,
           sourceSync: input.sourceSync,

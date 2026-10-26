@@ -10,6 +10,7 @@
 
 import type { Exercise } from '../models/exercise';
 import { dumbbellWeights } from './gymProfileEdit';
+import { ownWeightsFor } from './machineWeights';
 import type { DumbbellLog, DumbbellRack, GymProfile, StackWeights } from './strengthSettings';
 
 export interface Candidate {
@@ -187,6 +188,10 @@ export function usedWeights(sets: { weightKg?: number }[]): number[] {
 
 function externalWeights(exercise: Exercise | undefined, profile: GymProfile, ctx: WeightContext): number[] {
   const res = exercise?.resistance;
+  // Weights you typed in for this machine in this gym go before everything else, in
+  // every choice of "Gewichten van toestellen" (engine/machineWeights.ts).
+  const own = ownWeightsFor(profile, exercise);
+  if (own) return own;
   switch (res) {
     case 'barbell': {
       const bar = barFor(profile, ctx.lastExternalKg);

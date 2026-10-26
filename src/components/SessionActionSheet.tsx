@@ -38,6 +38,7 @@ import { REST_DAY_COPY } from '../data/restDayCopy';
 import type { MoveSuggestion } from '../engine/moveSuggestions';
 import { macroFactorLine, pendingMacroFactorWorkout, sessionSheetActions, strengthDoneDuration, type DoneKind, type MacroFactorSource, type SheetAction } from '../engine/sessionActions';
 import { workoutToDraft } from '../engine/macrofactorLink';
+import { allProfiles } from '../engine/machineWeights';
 import { getMacroFactorState, getMapping } from '../storage/macrofactor';
 
 const SETS_FROM_MACROFACTOR = 'Je sets komen vanzelf uit MacroFactor';
@@ -273,7 +274,7 @@ export function SessionActionSheet({
       case 'saveWorkout':
         if (!waiting || saving) return;
         setSaving(true);
-        void logSession(workoutToDraft(waiting, template, session)).then((ok) => (ok ? requestClose() : setSaving(false)));
+        void logSession(workoutToDraft(waiting, template, session, allProfiles(settings.strengthModel))).then((ok) => (ok ? requestClose() : setSaving(false)));
         return;
     }
   };

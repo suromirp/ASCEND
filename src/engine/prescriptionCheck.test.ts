@@ -6,7 +6,7 @@ import { applyStrengthTakeover } from './macrofactorLead';
 import { readMacroFactorCsv } from './macrofactorImport';
 import { restoreManual } from './watchAlign';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
-import { biasWord, checkDone, checkProposal, checkRow, checkLines, logOrigin, percent, summariseChecks, targetOfSlot, totalsOf } from './prescriptionCheck';
+import { biasWord, checkDone, checkProposal, checkRow, checkLines, isNear, logOrigin, nearLine, percent, summariseChecks, targetOfSlot, totalsOf } from './prescriptionCheck';
 import { checkDataKey, checkSummary, comparisonRows, exerciseHistories } from './strengthHistory';
 import { checkModelKey, resolveStrengthSettings } from './strengthSettings';
 
@@ -278,5 +278,34 @@ describe('de vingerafdruk van wat raak bepaalt', () => {
     expect(checkModelKey({ enabled: true, lighterAfterBreak: false })).not.toBe(base);
     expect(checkModelKey({ enabled: true, dumbbellLog: 'total' })).not.toBe(base);
     expect(checkModelKey({ enabled: true, checkFrom: '2026-11-01' })).not.toBe(base);
+  });
+});
+
+describe('raak dicht bij wat je deed', () => {
+  const side = (hit: boolean, deviation = 0) => ({ hit, deviation });
+  it('dicht is binnen 5% van de last die je gebruikte', () => {
+    expect(isNear(100, 100)).toBe(true);
+    expect(isNear(105, 100)).toBe(true);
+    expect(isNear(94, 100)).toBe(false);
+    expect(isNear(60, 0)).toBe(false);
+  });
+  const rows = [
+    { date: '2026-10-20', check: checkRow('macrofactor', target, side(true), side(true), false, true) },
+    { date: '2026-10-21', check: checkRow('macrofactor', target, side(true), side(false), false, true) },
+    { date: '2026-10-22', check: checkRow('macrofactor', target, side(false), side(false), false, true) },
+    { date: '2026-10-23', check: checkRow('macrofactor', target, side(true), side(false), false, false) },
+    { date: '2026-10-24', check: checkRow('forge', target, side(true), undefined, true, true) },
+  ];
+  it('telt beide kanten alleen over de dichte rijen en niet over gemeten Forge-rijen', () => {
+    const t = totalsOf(rows);
+    expect(t.near.did).toMatchObject({ hit: 2, total: 3 });
+    expect(t.near.ascend).toMatchObject({ hit: 1, total: 3 });
+  });
+  it('de regel noemt beide percentages en het aantal, en ontbreekt zonder rijen', () => {
+    expect(nearLine(totalsOf(rows))).toBe('Dicht bij wat je deed (binnen 5%): MacroFactor 67%, ASCEND 33%, 3 keer');
+    expect(nearLine(totalsOf([]))).toBeUndefined();
+  });
+  it('de bestaande regels veranderen niet', () => {
+    expect(checkLines(totalsOf(rows)).macrofactor).toBe('Raak: MacroFactor 75%, ASCEND 25%');
   });
 });

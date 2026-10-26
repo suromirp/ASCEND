@@ -460,7 +460,17 @@ total of two (`dumbbellLog`). In a training Forge proposes a lighter weight afte
 range (`engine/forgeAdjust.ts`, "Lichter" or "Liever niet", never a weight that gives reps far
 above the range), and the RIR of a set starts empty with the target as a hint; a set ticked
 without touching it stores the target with `SetLog.rirAssumed`
-(`docs/beslissingen/2026-10-25-bijsturen-in-forge.md`).
+(`docs/beslissingen/2026-10-25-bijsturen-in-forge.md`). The drop in strength per working set is
+learned per exercise from your own sets, starting at 3% and never from a set with an assumed RIR
+(`strengthModel.ts#learnFatigue`, setting "Vermoeidheid per set"); with a coarse step the first set
+takes the weight with the smallest expected miss (decision
+`docs/beslissingen/2026-10-26-kracht-vermoeidheid-en-grove-stap.md`). "Wijzigingen doorvoeren"
+(`engine/forgeInput.ts#carryChange`, `carryMode`: equal sets, the same difference, or off) and raak
+for proposals within 5% of what was done (`docs/beslissingen/2026-10-26-doorvoeren-en-raak-dichtbij.md`).
+The weights of a machine can be typed in per gym (`GymProfile.exerciseWeightsKg`,
+`engine/machineWeights.ts`); a strength log knows its gym (`SessionLog.gymProfileId`, only on new
+logs) so the weights learned from use stay per gym, and Forge asks to fill them in when no weight
+fits (`docs/beslissingen/2026-10-26-gewichten-per-toestel.md`).
 
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a

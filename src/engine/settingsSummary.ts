@@ -16,6 +16,7 @@ import { resolveOverviews } from './overviewSettings';
 import { resolveMorningNotice, type NoticeSupport } from './morningNotice';
 import { isMyLocation } from './weatherLocation';
 import { resolveStrengthSettings } from './strengthSettings';
+import { allProfiles, machineListCount } from './machineWeights';
 import { checkLines, type CheckSummary } from './prescriptionCheck';
 import { DEFAULT_ENABLED_SPORTS, SPORT_LABEL, parseWeekShape, type Sport } from './sports';
 import { readClothingAdjust } from './clothingFeedback';
@@ -313,8 +314,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.adjustLive, hidden: !forge.enabled };
     case 'forge-rir-vooraf':
       return { value: choiceShort('rirVooraf', forge.rirPrefill) };
-    case 'forge-doorgeven':
-      return { checked: forge.carryWeights };
+    case 'forge-doorvoeren':
+      return { value: choiceShort('doorvoeren', forge.carryMode) };
     case 'forge-1rm':
       return { checked: forge.showOneRm };
     case 'forge-weergave':
@@ -331,6 +332,8 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: forge.showTrendLines, hidden: !forge.enabled };
     case 'forge-leren':
       return { value: choiceShort('forgeLeren', forge.stackWeights), auto: true, hidden: !forge.enabled };
+    case 'forge-vermoeidheid':
+      return { value: choiceShort('vermoeidheid', forge.fatigue), auto: forge.fatigue === 'learned', hidden: !forge.enabled };
     case 'forge-pauze':
       return { checked: forge.lighterAfterBreak, hidden: !forge.enabled };
     case 'forge-dumbbells':
@@ -355,6 +358,13 @@ export function rowSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: `${num(forge.profile.dumbbells.startKg)} tot ${kg(forge.profile.dumbbells.maxKg)}` };
     case 'kabels':
       return { value: `Per ${kg(forge.profile.stackStepKg)}` };
+    case 'gym-profiel':
+      return { value: forge.profile.name };
+    case 'toestelgewichten': {
+      const n = machineListCount(forge.profile);
+      const gyms = allProfiles(s.strengthModel).length;
+      return { value: n > 0 ? plural(n, 'toestel', 'toestellen') : 'Geen', ...(n === 0 ? { dim: true } : {}), ...(gyms > 1 ? { sub: `Voor ${forge.profile.name}` } : {}) };
+    }
 
     // Lichaam
     case 'lichaamsgewicht':
