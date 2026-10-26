@@ -148,7 +148,7 @@ export function SettingsRow(props: SettingsRowProps) {
           type="button"
           role="switch"
           aria-checked={!!checked}
-          aria-label={title}
+          aria-label={adjusted ? `${title}, aangepast` : title}
           className="st-hit"
           onClick={() => {
             haptics.tap();
@@ -165,7 +165,7 @@ export function SettingsRow(props: SettingsRowProps) {
             <InfoButton compact label={`Uitleg: ${title}`} onClick={() => setHelp(true)} />
           </span>
         )}
-        {adjusted && toggle && <AdjustedTag />}
+        {adjusted && toggle && <AdjustedTag hidden />}
       </span>
       {sub && <span className="s st-num">{sub}</span>}
       {toggle ? (
@@ -175,7 +175,7 @@ export function SettingsRow(props: SettingsRowProps) {
           {(hasValue || auto || dot || adjusted) && (
             <span className={`v${dim ? ' dim' : ''}`}>
               {auto && <AutoTag />}
-              {adjusted && <AdjustedTag />}
+              {adjusted && <AdjustedTag hidden={kind !== 'static'} />}
               {dot && <span className={`st-dot ${dot}`} aria-hidden="true" />}
               {hasValue && <span className="st-num">{value}</span>}
             </span>

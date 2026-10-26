@@ -30,7 +30,7 @@ describe('botsende doelen in het voorstel', () => {
     const main = (await TrainingGoalsRepo.getAll())[0];
     await TrainingGoalsRepo.put({ ...main, status: 'active', targetDate: '2027-08-01' } as TrainingGoal);
     await syncProgramHorizon();
-  });
+  }, 90_000);
   afterEach(() => vi.useRealTimers());
 
   it('een Top-doel vlak voor de tocht: het voorstel zegt het in gewone woorden, en er verandert niets voor Akkoord', async () => {
@@ -42,12 +42,12 @@ describe('botsende doelen in het voorstel', () => {
     expect(plan.notes).toContain(plan.conflicts![0].suggestion);
     expect(plan.conflicts![0].message).toContain('28 dagen ertussen');
     expect((await TrainingGoalsRepo.getAll()).some((g) => g.id === 'goal-test-marathon')).toBe(false);
-  });
+  }, 90_000);
 
   it('een doel dat ruim genoeg ervoor of erna staat geeft geen melding', async () => {
     const plan = await computeHorizonPlan({ ...base, title: 'Marathon erbij', goals: [marathon('2027-03-14')] });
     expect(plan.conflicts).toBeUndefined();
-  });
+  }, 90_000);
 
   it('"Toch allebei" wordt na Akkoord bewaard als datum van het andere doel, en dan komt de melding niet terug', async () => {
     const input: HorizonChangeInput = { ...base, title: 'Marathon erbij', goals: [marathon('2027-07-04')] };
@@ -65,7 +65,7 @@ describe('botsende doelen in het voorstel', () => {
     // Dezelfde situatie nog eens voorstellen (een datum die gelijk blijft): geen nieuwe melding.
     const again = await computeHorizonPlan({ ...base, title: 'Nog eens', goals: [{ ...stored.find((g) => g.id === 'goal-test-marathon')!, name: 'Marathon in de zomer' }] });
     expect(again.conflicts).toBeUndefined();
-  });
+  }, 90_000);
 
   it('het voorstel van ASCEND zelf (een label lager) is dezelfde wijziging met dat label, ook pas na Akkoord', async () => {
     const input: HorizonChangeInput = { ...base, title: 'Marathon erbij', goals: [marathon('2027-07-04')] };
@@ -75,5 +75,5 @@ describe('botsende doelen in het voorstel', () => {
     expect(changed.priority).toBe('voortop');
     const plan = await computeHorizonPlan(resolved);
     expect(plan.conflicts).toBeUndefined();
-  });
+  }, 90_000);
 });

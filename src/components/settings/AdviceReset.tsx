@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adviceDifferences, differenceIdsOnPage, type AdviceDifference } from '../../engine/settingsDiff';
 import { settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
@@ -11,7 +11,7 @@ import { Sheet } from './Sheet';
 import { useAdviceReset } from './useAdviceReset';
 
 // Terug naar het advies, rustig en op de plek zelf (docs/beslissingen/2026-10-26-advies-anders.md):
-// een rij die jij anders instelde heeft het label "aangepast", het keuzeblad zegt bij het advies
+// een rij die jij anders instelde heeft een stipje, het keuzeblad zegt bij het advies
 // "Advies", en wie alles wil zien heeft het blad "Aangepaste instellingen" onder Gegevens en
 // back-up. Wat de planning raakt gaat via een voorstel met Akkoord (useAdviceReset).
 
@@ -35,7 +35,13 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
   const { reset, impact, note, busy: planBusy } = useAdviceReset();
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Het blad gaat dicht zodra je terugzet, maar het voorstel (impact) leeft hier: de groep
+  // haalt dit onderdeel pas weg als er geen voorstel meer openstaat.
+  const [open, setOpen] = useState(true);
   const pending = useRef<{ to: string; state: unknown } | null>(null);
+  useEffect(() => {
+    if (!open && !impact) onClose();
+  }, [open, impact, onClose]);
 
   // De sprong gebeurt pas als het blad dicht is, zodat de terugknop niets raars doet.
   function go(d: AdviceDifference, close: () => void) {
@@ -48,12 +54,12 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
 
   return (
     <>
-      <Sheet
+      {open && <Sheet
         eyebrow="Gegevens en back-up"
         title="Aangepaste instellingen"
         line={diffs.length === 0 ? 'Alles staat op het advies.' : 'Dit koos je zelf anders dan het advies. Een stipje bij een instelling betekent hetzelfde. Tik op een regel om hem te openen.'}
         onClose={() => {
-          onClose();
+          setOpen(false);
           const next = pending.current;
           pending.current = null;
           if (next) navigate(next.to, { state: next.state });
@@ -97,7 +103,7 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
             )}
           </>
         )}
-      </Sheet>
+      </Sheet>}
       {impact}
     </>
   );
