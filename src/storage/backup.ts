@@ -54,7 +54,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogGymProfile, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateLogGymProfile, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -489,6 +489,10 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     if (soloPlan) normalized.soloPlan = soloPlan;
     else if (raw.soloPlan != null) skipped.n++;
   }
+
+  // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze
+  // ronde heeft ze niet. Het hoofddoel is het doel met mijlpalen.
+  normalized.trainingGoals = migrateTrainingGoals(normalized.trainingGoals, new Set(normalized.goalMilestones.map((m) => m.goalId)), normalized.routePlan);
 
   normalized.skippedInvalid = skipped.n;
   return normalized;

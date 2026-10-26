@@ -89,6 +89,8 @@ export const BOOT_MIGRATIONS: readonly BootMigration[] = [
   { id: 'mergeDuplicateWeeklyPrescriptionLines', essential: false, version: 1 },
   // Old moves by the system count as the system's again (engine/systemMoves.ts).
   { id: 'releaseSystemMoves', essential: false, version: 1 },
+  // Soort, gegevens en belangrijkheid van de doelen (ronde 2a); verandert de planning niet.
+  { id: 'migrateGoalKinds', essential: false, version: 1 },
 ];
 
 export const BOOT_STEP_LIMIT_MS = 8_000;

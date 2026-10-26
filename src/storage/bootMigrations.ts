@@ -12,7 +12,7 @@
 // stappen ook over geïmporteerde gegevens lopen.
 
 import { seedIfEmpty, syncTemplateAndScheduleDefinitions, ensureDefaultTemplates, restorePatternSessionsRemovedByPrescription, normalizePlannedSessionWeeks, MetaRepo } from './database';
-import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles } from './goalMigration';
+import { migrateToGoalEngine, migrateStrengthProgramDefault, migrateGoalRouteProfiles, migrateGoalKinds } from './goalMigration';
 import { syncGr5MilestoneDefinitions } from './goalMilestoneSync';
 import { mergeDuplicateWeeklyPrescriptionLines } from './planLogCleanup';
 import { releaseSystemMoves } from './systemMovesStep';
@@ -38,6 +38,7 @@ const STEPS: Record<string, () => Promise<unknown>> = {
   mergeDuplicateWeeklyPrescriptionLines,
   // Oude verplaatsingen door het systeem weer van het systeem (Warden Logica punt 4).
   releaseSystemMoves,
+  migrateGoalKinds,
 };
 
 export function currentBuild(): string {
