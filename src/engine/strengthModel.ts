@@ -706,7 +706,8 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
   const atBottom = usedOnly && !legsTired && idx === 0 && expectedFirst < lo;
   if (!legsTired && !cappedUp && !atTop && expectedFirst > hi) {
     // A coarse step: no weight lands in the range. The lighter weight is too easy by
-    // `expectedFirst - hi` reps, the next heavier one too hard by `lo - expectedHeavier`.
+    // `expectedFirst - hi` reps, the next heavier one too hard by `lo - expectedHeavier`,
+    // both measured before rounding down (see below).
     // Take the side with the smaller miss in reps; at an equal miss the lighter side.
     // Only where the range may be adjusted (setting "Bereik verbreden"): taking the
     // heavier side lowers the bottom of this set. Not where the heavier weight would go
@@ -715,7 +716,10 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     const brakes = twoUnder || cappedDown || (lighter && idx + 1 > lastIdx);
     if (settings.widenRange && heavier && !brakes) {
       const expectedHeavier = expectedReps(strengthKg, heavier.loadKg, rir);
-      if (expectedHeavier < lo && lo - expectedHeavier < expectedFirst - hi) {
+      // The misses are compared before rounding down: rounded reps tilt the choice
+      // about one rep toward the lighter side. The rounded number stays what is shown.
+      const exact = (loadKg: number) => EPLEY_DIVISOR * (strengthKg / loadKg - 1) - rir;
+      if (expectedHeavier < lo && lo - exact(heavier.loadKg) < exact(first.loadKg) - hi) {
         coarseHeavier = { lighterKg: first.externalKg, reps: expectedHeavier };
         idx += 1;
         first = heavier;

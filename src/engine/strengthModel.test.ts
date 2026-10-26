@@ -403,9 +403,16 @@ describe('bij een grove stap het gewicht met de kleinste verwachte misser', () =
     // De latere sets houden het bereik van het doel: de onderkant wordt daar niet verlaagd.
     for (const set of p.sets.slice(1)) expect(set.repsLow).toBeGreaterThanOrEqual(13);
   });
-  it('blijft bij een gelijke misser aan de lichte kant en verbreedt het bereik', () => {
-    // Kracht 82,5: 50 kg geeft 17 (1 boven de top), 55 kg geeft 13 (1 onder de onderkant).
+  it('vergelijkt de missers voor het afronden: 17,5 boven de top tegen 13 onder de onderkant kiest zwaar', () => {
+    // Kracht 82,5: 50 kg geeft 17,5 (1,5 boven de top), 55 kg geeft 13 (1 onder de onderkant).
+    // Afgerond zou het 17 tegen 13 zijn, een gelijke misser, en dan bleef het licht.
     const p = run([work(13, 55, 2), work(13, 55, 2), work(13, 55, 2)]);
+    expect(p.kind).toBe('coarse_heavier');
+    expect(p.sets[0].weightKg).toBe(55);
+  });
+  it('blijft aan de lichte kant als die de kleinste misser heeft, en verbreedt het bereik', () => {
+    // Kracht 82: 50 kg geeft 17,2 (1,2 boven de top), 55 kg geeft 12,7 (1,3 onder de onderkant).
+    const p = run([work(9, 60, 2), work(9, 60, 2), work(9, 60, 2)]);
     expect(p.kind).toBe('widened');
     expect(p.sets[0].weightKg).toBe(50);
     expect(p.sets[0].repsHigh).toBe(17);
