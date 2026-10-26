@@ -1,6 +1,7 @@
 # Een stipje in plaats van het label "aangepast"
 
 Datum: 2026-10-27
+Status: aangenomen
 
 ## Besluit
 

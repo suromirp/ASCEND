@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adviceDifferences, differenceIdsOnPage, type AdviceDifference } from '../../engine/settingsDiff';
 import { settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
@@ -28,20 +28,15 @@ function DifferenceLine({ d, facts, onTap }: { d: AdviceDifference; facts: Setti
 }
 
 // Het blad met alles wat anders staat: tikken opent de instelling, onderaan één knop die alles
-// terugzet, na een bevestiging.
-export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClose: () => void }) {
+// terugzet, na een bevestiging. Het terugzetten (advice) hoort bij de groepspagina, niet bij het
+// blad: het blad gaat dicht zodra je terugzet, het voorstel en de uitkomst blijven op de pagina.
+export function AdjustedSheet({ facts, advice, onClose }: { facts: SettingsFacts; advice: ReturnType<typeof useAdviceReset>; onClose: () => void }) {
   const navigate = useNavigate();
   const diffs = useMemo(() => adviceDifferences(facts.settings), [facts.settings]);
-  const { reset, impact, note, busy: planBusy } = useAdviceReset();
+  const { reset, busy: planBusy } = advice;
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
-  // Het blad gaat dicht zodra je terugzet, maar het voorstel (impact) leeft hier: de groep
-  // haalt dit onderdeel pas weg als er geen voorstel meer openstaat.
-  const [open, setOpen] = useState(true);
   const pending = useRef<{ to: string; state: unknown } | null>(null);
-  useEffect(() => {
-    if (!open && !impact) onClose();
-  }, [open, impact, onClose]);
 
   // De sprong gebeurt pas als het blad dicht is, zodat de terugknop niets raars doet.
   function go(d: AdviceDifference, close: () => void) {
@@ -54,12 +49,12 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
 
   return (
     <>
-      {open && <Sheet
+      <Sheet
         eyebrow="Gegevens en back-up"
         title="Aangepaste instellingen"
         line={diffs.length === 0 ? 'Alles staat op het advies.' : 'Dit koos je zelf anders dan het advies. Een stipje bij een instelling betekent hetzelfde. Tik op een regel om hem te openen.'}
         onClose={() => {
-          setOpen(false);
+          onClose();
           const next = pending.current;
           pending.current = null;
           if (next) navigate(next.to, { state: next.state });
@@ -70,7 +65,6 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
             <SettingsList>
               {diffs.map((d) => <DifferenceLine key={d.id} d={d} facts={facts} onTap={() => go(d, close)} />)}
             </SettingsList>
-            {note && <p className="st-hint" role="status">{note}</p>}
             {diffs.length > 0 && !confirm && (
               <div className="st-btns">
                 <button type="button" className="st-btn" onClick={() => setConfirm(true)}>Alles terug naar het advies</button>
@@ -103,8 +97,7 @@ export function AdjustedSheet({ facts, onClose }: { facts: SettingsFacts; onClos
             )}
           </>
         )}
-      </Sheet>}
-      {impact}
+      </Sheet>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { TextButton } from '../../TextButton';
 import { settingsAnchor } from '../../../data/settingsIndex';
 import { AdjustedSheet } from '../AdviceReset';
 import { SettingsSection } from '../SettingsList';
+import { useAdviceReset } from '../useAdviceReset';
 import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
@@ -11,6 +12,9 @@ import type { GroupProps } from './types';
 // het blad van een rij, nooit op de pagina zelf.
 export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   const close = () => setSheet(null);
+  // Terugzetten naar het advies leeft hier en niet in het blad, zodat het voorstel (met Akkoord)
+  // en de uitkomst blijven staan als het blad dicht is.
+  const advice = useAdviceReset();
   return (
     <>
       <SettingsSection title="Back-up">
@@ -25,6 +29,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="herbouwen" title="Adviezen opnieuw berekenen" facts={facts} onClick={() => setSheet('herbouwen')} />
         <SummaryRow id="aangepast" title="Aangepaste instellingen" facts={facts} info="aangepast" onClick={() => setSheet('aangepast')} />
       </SettingsSection>
+      {advice.note && <p className="st-hint" role="status">{advice.note}</p>}
 
       <SettingsSection>
         <SummaryRow id="wissen" title="Alles verwijderen" facts={facts} kind="danger" onClick={() => setSheet('wissen')} />
@@ -45,7 +50,8 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'versie' && <VersionSheet onClose={close} />}
       {sheet === 'startniveau' && <BaselineSheet onClose={close} />}
       {sheet === 'herbouwen' && <RebuildSheet onClose={close} />}
-      {sheet === 'aangepast' && <AdjustedSheet facts={facts} onClose={close} />}
+      {sheet === 'aangepast' && <AdjustedSheet facts={facts} advice={advice} onClose={close} />}
+      {advice.impact}
       {sheet === 'wissen' && <ResetSheet onClose={close} onBackup={() => setSheet('backup')} />}
     </>
   );
