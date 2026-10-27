@@ -42,7 +42,7 @@ export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
   return (
     <Card className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <Eyebrow>Je seizoen in één blik</Eyebrow>
+        <Eyebrow>Je seizoen</Eyebrow>
         <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(strip.start)} tot {formatMonthNL(strip.end)}</span>
       </div>
       <div ref={ref} className="relative mx-1 h-[100px]" role="img" aria-label={`Je seizoen: ${strip.flags.map((f) => `${f.name} op ${formatDateNL(f.date)}`).join(', ')}`}>
