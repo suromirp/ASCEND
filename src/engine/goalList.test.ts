@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import { conflictGoalsFrom } from './goalConflicts';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import {
-  goalsSentence, labelEffectLines, labelLine, listedGoals, moveGoal, nextKeySession, orderPatch, seasonStrip, weeksWord, PRIORITY_RULE,
+  goalsSentence, labelEffectLines, labelLine, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, nextKeySession, orderPatch, seasonStrip, weeksWord, PRIORITY_RULE,
 } from './goalList';
 
 const TODAY = '2026-10-26';
@@ -152,6 +153,49 @@ describe('slepen, hoger en lager', () => {
 
   it('de volgorde wordt als getallen opgeslagen, alleen waar ze verschillen', () => {
     expect(orderPatch(listed(), ['t', 'v2', 'v1', 'e'])).toEqual([{ id: 'v2', order: 1 }, { id: 'v1', order: 2 }]);
+  });
+});
+
+describe('slepen met doelen van een ander label in de opslag', () => {
+  // Opslag: X en Y (Verkenning) staan vooraan, dan A, B en C (Top) zonder volgorde.
+  const goals = () => [
+    run10('x', '2027-05-01', { priority: 'verkenning' }), run10('y', '2027-06-01', { priority: 'verkenning' }),
+    run10('a', '2027-03-14', { priority: 'top' }), run10('b', '2027-07-10', { priority: 'top' }), run10('c', '2027-09-18', { priority: 'top' }),
+  ];
+
+  it('C tussen A en B geeft A, C, B en schrijft elk doel van de lijst weg', () => {
+    const g = goals();
+    const l = listedGoals(g, new Set(), TODAY);
+    expect(l.map((x) => x.goal.id)).toEqual(['a', 'b', 'c', 'x', 'y']);
+    const r = moveGoal(l, 'c', 1);
+    expect(r.ids).toEqual(['a', 'c', 'b', 'x', 'y']);
+    const patch = orderPatch(l, r.ids);
+    expect(patch).toHaveLength(5);
+    const after = g.map((x) => ({ ...x, order: patch.find((p) => p.id === x.id)?.order }));
+    expect(listedGoals(after, new Set(), TODAY).map((x) => x.goal.id)).toEqual(['a', 'c', 'b', 'x', 'y']);
+  });
+
+  it('de botsingen lezen dezelfde volgorde als de lijst', () => {
+    const g = goals().map((x, i) => ({ ...x, order: [4, 3, 2, 0, 1][i] }));
+    const listedIds = listedGoals(g, new Set(), TODAY).map((x) => x.goal.id);
+    const byOrder = conflictGoalsFrom(g, undefined).sort((p, q) => p.order - q.order).map((x) => x.id);
+    expect(byOrder.filter((id) => ['a', 'b', 'c'].includes(id))).toEqual(listedIds.filter((id) => ['a', 'b', 'c'].includes(id)));
+  });
+
+  it('een verplaatsing zonder gevolg voor botsingen wordt alleen bewaard, een ander label is een voorstel', () => {
+    const l = listedGoals(goals(), new Set(), TODAY);
+    expect(moveOutcome(goals(), l, moveGoal(l, 'c', 1), new Set(), TODAY)).toMatchObject({ kind: 'save' });
+    const ordered = goals().map((x, i) => ({ ...x, order: [3, 4, 0, 1, 2][i] }));
+    const lo = listedGoals(ordered, new Set(), TODAY);
+    expect(moveOutcome(ordered, lo, moveGoal(lo, 'a', 0), new Set(), TODAY)).toEqual({ kind: 'nothing' });
+    expect(moveOutcome(goals(), l, moveGoal(l, 'x', 0), new Set(), TODAY)).toEqual({ kind: 'label' });
+  });
+});
+
+describe('het marathondoel en de instellingen', () => {
+  it('geeft niets voor een doel dat geen marathondoel is', () => {
+    const g = run10('a', '2027-03-14');
+    expect(marathonSettingsFor(g, g)).toBeUndefined();
   });
 });
 

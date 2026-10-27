@@ -568,6 +568,8 @@ export interface AppSettings {
   // The next tocht (a trek you set up as a goal of your own, models/leave.ts
   // TrekDetails) on Vandaag. Absent = on. Optional and additive.
   showNextTrek?: boolean;
+  // The season strip on the Ascend tab (engine/goalList.ts#seasonStrip). Absent = on. Optional and additive.
+  showSeasonStrip?: boolean;
   // Bergschoenen inlopen (engine/bootBreakIn.ts): het doel in kilometers (absent
   // = 100) en of een lange tocht ernaar herinnert (absent = aan). Optional and
   // additive; the date and name live in `journey.boots`.

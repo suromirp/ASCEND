@@ -314,6 +314,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.showNextTrek;
     skipped.n++;
   }
+  if ('showSeasonStrip' in s && typeof s.showSeasonStrip !== 'boolean') {
+    delete s.showSeasonStrip;
+    skipped.n++;
+  }
   if ('bootBreakInKm' in s && !(BREAKIN_KM_OPTIONS as readonly unknown[]).includes(s.bootBreakInKm)) {
     delete s.bootBreakInKm;
     skipped.n++;

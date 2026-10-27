@@ -18,6 +18,7 @@ const everything: AppSettings = {
   longSundaySession: 'run',
   afterMainGoal: 'maintain',
   showNextTrek: false,
+  showSeasonStrip: false,
   showStageWater: false,
   trekLegRest: 'strict',
   longRunGrowth: 'wave',

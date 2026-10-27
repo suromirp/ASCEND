@@ -535,6 +535,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Geldt voor', text: 'nieuwe en gewijzigde tochten. Een tocht die al staat, houdt zijn planning tot je hem wijzigt.' },
     ],
   },
+  seizoensstrook: {
+    title: 'Seizoensstrook',
+    lead: 'Bovenaan Ascend staat je seizoen als een strook van nu tot je laatste doel, met een vlag per doel.',
+    points: [
+      { head: 'Wat je ziet', text: 'de weken tussen je doelen en de afbouw voor een doel als een donkerder stuk. Een Top heeft een gevulde vlag.' },
+      { head: 'Uit', text: 'de strook verdwijnt. Je doelen en je planning blijven precies zoals ze zijn.' },
+    ],
+  },
   waterPerEtappe: {
     title: 'Water per etappe',
     lead: 'Bij elke GR5-etappe staat ongeveer hoeveel je onderweg zweet, uit je zweettempo en de uren van de etappe.',

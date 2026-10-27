@@ -20,19 +20,17 @@ import { GoalFormSheet } from '../components/ascend/GoalFormSheet';
 import { GoalMenuSheet } from '../components/ascend/GoalMenuSheet';
 import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
-import { goalsSentence, listedGoals, moveGoal, orderPatch, seasonStrip, type MoveResult } from '../engine/goalList';
-import { conflictsForGoals } from '../engine/goalConflicts';
+import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
 import type { AddTileId } from '../engine/goalDraft';
-import { RACE_KM } from '../engine/goalDraft';
-import { isMarathonGoal } from '../engine/mainGoal';
 import { todayISO } from '../utils/dates';
 
 // Ascend is de plek van je doelen (docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md): op de
 // lucht je seizoen met een vlag per doel, daaronder de doelen in de volgorde die jij kiest, het
 // eerste open en de andere als compacte rij. Alles wat je planning inhoudelijk verandert (een label,
 // een nieuw doel, een volgorde die een botsing verschuift) gaat via een voorstel met Akkoord.
-// Op deze tab staat geen gevulde mint knop: die is van het voorstel.
+// De enige gevulde mint knop is die van de lege staat ("Doel toevoegen"); met doelen op de tab is het
+// de gevulde knop van het voorstel, en de tab zelf heeft er dan geen.
 
 const KEEP = 'Je doel en je planning blijven zoals ze waren.';
 // Een blad sluit eerst (200 ms) voordat het voorstel opent, zodat de terugknop twee lagen niet door
@@ -57,7 +55,7 @@ export function AscentTabPlusButton({ onClick }: { onClick: () => void }) {
 }
 
 export function AscendPage() {
-  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions } = useAppData();
+  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings } = useAppData();
   const navigate = useNavigate();
   const horizon = useHorizonChange();
   const today = todayISO();
@@ -102,13 +100,10 @@ export function AscendPage() {
   // Het resultaat van slepen of Hoger en Lager. Een ander label, of een volgorde die een botsing
   // tussen doelen verschuift, is een voorstel; anders wordt alleen de volgorde bewaard.
   const handleMove = (id: string, result: MoveResult) => {
-    if (result.changesLabel) { void proposeLabel(id, result.priority, result.ids); return; }
-    const patch = orderPatch(listed.map((l) => l), result.ids);
-    if (patch.length === 0) return;
-    const byId = new Map(patch.map((p) => [p.id, p.order]));
-    const after = trainingGoals.map((g) => (byId.has(g.id) ? { ...g, order: byId.get(g.id) } : g));
-    const key = (goals: TrainingGoal[]) => conflictsForGoals(goals, ladder, today).map((c) => `${c.rule}:${c.goalId}:${c.otherGoalId}`).sort().join('|');
-    if (key(after) !== key(trainingGoals)) {
+    const outcome = moveOutcome(trainingGoals, listed, result, ladder, today);
+    if (outcome.kind === 'label') { void proposeLabel(id, result.priority, result.ids); return; }
+    if (outcome.kind === 'nothing') return;
+    if (outcome.kind === 'proposal') {
       const now = new Date().toISOString();
       void horizon.propose(
         () => planHorizonChange({
@@ -116,13 +111,13 @@ export function AscendPage() {
           why: 'Je koos een andere volgorde.',
           explanation: 'Bij twee doelen met hetzelfde label wijkt het doel dat lager in de lijst staat. Een andere volgorde verandert dus wat er bij een botsing gebeurt. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
           trigger: 'goal_changed',
-          goals: after.filter((g) => byId.has(g.id)).map((g) => ({ ...g, updatedAt: now })),
+          goals: outcome.goals.map((g) => ({ ...g, updatedAt: now })),
         }),
         { eyebrow: 'Volgorde van je doelen', ask: 'always', declined: KEEP },
       );
       return;
     }
-    void setGoalOrder(patch).then((before) => setOrderNote({ before }));
+    void setGoalOrder(outcome.patch).then((before) => setOrderNote({ before }));
   };
 
   const archive = (g: TrainingGoal) => {
@@ -139,7 +134,7 @@ export function AscendPage() {
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je doelen</h1>
           {!emptyList && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{goalsSentence(listed, today)}</p>}
         </div>
-        {strip && !emptyList && <SeasonStripCard strip={strip} />}
+        {strip && !emptyList && settings.showSeasonStrip !== false && <SeasonStripCard strip={strip} />}
         {emptyList && (
           <Card className="flex flex-col gap-3">
             <p className="text-base" style={{ color: 'var(--color-ink)' }}>Nog geen doel. Wat wil je bereiken?</p>
@@ -179,7 +174,7 @@ export function AscendPage() {
 
       {!emptyList && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
 
-      <div className="flex flex-col overflow-hidden rounded-2xl border" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
+      <Card className="flex flex-col p-0! overflow-hidden">
         {([['treks', 'Tochten', 'Een tocht naast je doelen, met vrije dagen eromheen'], ['strength', 'Krachtblok', 'Hoe je krachttraining in je plan zit']] as const).map(([id, title, line]) => (
           <button key={id} type="button" onClick={() => setExtra(id)} className="flex min-h-[56px] items-center justify-between gap-3 border-b px-4 py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
             <span className="min-w-0">
@@ -189,15 +184,19 @@ export function AscendPage() {
             <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
           </button>
         ))}
-      </div>
+      </Card>
 
-      {(earlier.length > 0 || !emptyList) && <button type="button" onClick={() => setEarlierOpen(true)} className="flex min-h-[56px] items-center justify-between gap-3 rounded-2xl border px-4 text-left" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
-        <span className="text-base" style={{ color: 'var(--color-ink)' }}>
-          Eerder, afgerond of weggelegd
-          {earlier.length > 0 && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> · {earlier.length} {earlier.length === 1 ? 'doel' : 'doelen'}</span>}
-        </span>
-        <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
-      </button>}
+      {(earlier.length > 0 || !emptyList) && (
+        <Card className="p-0! overflow-hidden">
+          <button type="button" onClick={() => setEarlierOpen(true)} className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 text-left">
+            <span className="text-base" style={{ color: 'var(--color-ink)' }}>
+              Eerder, afgerond of weggelegd
+              {earlier.length > 0 && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> · {earlier.length} {earlier.length === 1 ? 'doel' : 'doelen'}</span>}
+            </span>
+            <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
+          </button>
+        </Card>
+      )}
 
       {detail && (
         <GoalSheet
@@ -273,11 +272,7 @@ export function AscendPage() {
           onSubmit={(next, close) => {
             const was = editing;
             close();
-            // Het oude marathondoel leest zijn soort, datum en tijd ook uit de instellingen.
-            const km = next.details?.distanceKm;
-            const settings = isMarathonGoal(was)
-              ? { marathonRaceType: km !== undefined && Math.abs(km - RACE_KM.marathon) < 0.5 ? ('full' as const) : km !== undefined && Math.abs(km - RACE_KM.half) < 0.5 ? ('half' as const) : undefined, marathonTargetDate: next.targetDate, marathonTargetTimeMinutes: next.details?.targetMinutes }
-              : undefined;
+            const settings = marathonSettingsFor(was, next);
             later(() => void horizon.propose(
               () => planHorizonChange({
                 title: `${next.name || 'Je doel'} aangepast`,

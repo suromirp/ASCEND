@@ -6,7 +6,7 @@ import { Card, Eyebrow } from '../ui';
 // De seizoensstrook op de lucht: van nu tot het laatste doel, een vlag per doel, de weken ertussen
 // en de afbouw als donkerder stuk voor een vlag. Een Top heeft een gevulde vlag, de andere een
 // omlijnde. Alle kleuren komen uit de tokens (op de lucht vanzelf de donkere variant).
-const NAME_W = 76;
+const NAME_W = 96;
 const POLE = [30, 48];
 const TRACK_Y = 70;
 
@@ -23,11 +23,16 @@ export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
     return () => ro.disconnect();
   }, []);
 
-  // Een naam die te dicht op de vorige staat gaat een rij hoger.
+  // Een naam die te dicht op de laatste naam van de onderste rij staat gaat een rij hoger; past ook dat
+  // niet, dan blijft hij onderaan en wordt hij afgekapt.
   const rows: number[] = [];
-  strip.flags.forEach((f, i) => {
-    const prev = i > 0 ? strip.flags[i - 1] : undefined;
-    rows.push(prev && (f.fraction - prev.fraction) * w < NAME_W + 4 ? 1 - rows[i - 1] : 0);
+  const lastX: (number | undefined)[] = [undefined, undefined];
+  strip.flags.forEach((f) => {
+    const x = f.fraction * w;
+    const free = (r: number) => lastX[r] === undefined || x - (lastX[r] as number) >= NAME_W + 4;
+    const row = free(0) ? 0 : free(1) ? 1 : 0;
+    lastX[row] = x;
+    rows.push(row);
   });
   const months = strip.months.filter((_, i) => !(i === 0 && strip.months[1] && strip.months[1].fraction * w < 20));
   const clamp = (x: number) => Math.max(NAME_W / 2, Math.min(w - NAME_W / 2, x));

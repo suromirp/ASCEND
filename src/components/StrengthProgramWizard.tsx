@@ -3,8 +3,8 @@
 // ASCEND-owned fields only (source, frequency, split, which existing
 // SessionTemplates belong to it, block length, muscle priorities/
 // maintenance, notes) — never exercise-level detail, which stays entirely
-// MacroFactor Workouts' job (§1/§4). Mirrors GoalSetupWizard's sheet/step
-// pattern for a consistent setup-flow feel across the app.
+// MacroFactor Workouts' job (§1/§4). Uses the same sheet/step
+// pattern as the other setup sheets for a consistent setup-flow feel across the app.
 
 import { SPLIT_PRESET_LABEL, strengthBlockLabel } from '../utils/splitLabel';
 import { useMemo, useState } from 'react';

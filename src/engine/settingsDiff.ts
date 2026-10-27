@@ -140,6 +140,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   // Doel en tochten
   choice('lange-zondag', 'De lange zondag', 'doel', 'longSundaySession', 'hike', 'langeZondag', true),
   choice('na-hoofddoel', 'Na je hoofddoel', 'doel', 'afterMainGoal', 'stop', 'naHoofddoel', true),
+  flag('seizoensstrook', 'Seizoensstrook tonen', 'doel', 'showSeasonStrip'),
   flag('volgende-tocht', 'Volgende tocht op Vandaag', 'doel', 'showNextTrek'),
   flag('water-per-etappe', 'Water per etappe tonen', 'doel', 'showStageWater'),
   choice('rust-na-tocht', 'Rust na een bergtocht', 'doel', 'trekLegRest', 'soft', 'rustNaTocht', true),

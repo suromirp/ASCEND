@@ -12,9 +12,9 @@ const CUSTOM_DISCIPLINE = '__custom__';
 // Targeted baseline questions (Algorithm Contract v0.2 §27) — the full,
 // generic list across every dimension, regardless of any specific goal's
 // actual demand. Advanced/fallback entry point (Phase 7) — the primary way
-// to answer these is now the goal setup wizard's targeted baseline step
-// (components/GoalSetupWizard.tsx), which only asks about what a goal
-// draft actually demands and doesn't already know. This card stays for
+// to answer these is now the targeted baseline step of the goal form on
+// the Ascend tab (components/GoalCapacityStep.tsx), which only asks about
+// what a goal actually demands and doesn't already know. This card stays for
 // manual entry any time, goal-independent. Answers here are stored as
 // CapabilityEvidence with evidenceType:'manual' — never a fake SessionLog
 // (§5.4).

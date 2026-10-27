@@ -25,7 +25,7 @@
 import type { GoalDetails, GoalKindId, GoalPriority, TrainingGoal } from '../models/goals';
 import { recoveryDaysFor, taperDaysFor } from '../data/goalKinds';
 import { daysBetween, formatDateNL } from '../utils/dates';
-import { effectivePriority, goalDetailsOf, goalKindOf, PRIORITY_NAME } from './goalLabels';
+import { effectivePriority, goalDetailsOf, goalKindOf, PRIORITY_NAME, sortedForList } from './goalLabels';
 import { mainGoal } from './mainGoal';
 
 export const TOP_TOP_MIN_DAYS = 42;
@@ -85,12 +85,13 @@ export interface GoalConflict {
 // doen mee. `mainGoalId` is het hoofddoel met de ladder (altijd Top).
 export function conflictGoalsFrom(goals: TrainingGoal[], mainGoalId: string | undefined): ConflictGoal[] {
   const out: ConflictGoal[] = [];
-  goals.forEach((g, order) => {
+  // Dezelfde sleutel als de lijst op Ascend (sortedForList); de plek in die lijst is de volgorde.
+  sortedForList(goals.map((goal, index) => ({ goal, index })), mainGoalId).forEach(({ goal: g }, order) => {
     const kind = goalKindOf(g);
     if (g.status !== 'active' || !g.targetDate || !kind) return;
     out.push({
       id: g.id, name: g.name || 'Je doel', date: g.targetDate, kind, priority: effectivePriority(g, mainGoalId),
-      details: goalDetailsOf(g), order: g.order ?? order, taperDays: g.taperDays, accepted: g.conflictAccepted ?? [],
+      details: goalDetailsOf(g), order, taperDays: g.taperDays, accepted: g.conflictAccepted ?? [],
     });
   });
   return out;

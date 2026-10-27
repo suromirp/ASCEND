@@ -12,7 +12,7 @@
 
 import type { GoalRequirement } from '../models/goals';
 import type { SessionLog } from '../models/training';
-import { changeLabel, computeGoalReadiness, metersLinkLabel, VERGELIJK_DAGEN, type GoalMeter, type MeterPart } from './goalReadiness';
+import { changeLabel, computeGoalReadiness, metersLinkLabel, VERGELIJK_DAGEN, type GoalMeter, type GoalReadiness, type MeterPart } from './goalReadiness';
 
 // Hoeveel dagen achter elkaar je thuis oefent bij een tocht met hutten.
 export const THUIS_DAGEN_OP_RIJ = 2;
@@ -45,10 +45,15 @@ function plain(m: GoalMeter): Gr5Meter {
   return { key: m.key as MeterKey, label: m.label, parts: m.parts, share: m.share, text: m.text, why: m.why };
 }
 
+// De ene rekenregel voor het doel met de mijlpalen: Je stand en de Ascend-tab lezen allebei deze.
+export function computeMainGoalReadiness(requirements: GoalRequirement[], logs: SessionLog[], today: string): GoalReadiness {
+  return computeGoalReadiness({ kind: 'trek_hut', requirements }, logs, today, { naming: GR5_NAMING, homeDays: THUIS_DAGEN_OP_RIJ });
+}
+
 // Het percentage voor een doel. Undefined als het doel niets heeft om mee te
 // vergelijken (geen rugzakdoel, geen afstand, geen stijging).
 export function computeGr5Readiness(requirements: GoalRequirement[], logs: SessionLog[], today: string): Gr5Readiness | undefined {
-  const r = computeGoalReadiness({ kind: 'trek_hut', requirements }, logs, today, { naming: GR5_NAMING, homeDays: THUIS_DAGEN_OP_RIJ });
+  const r = computeMainGoalReadiness(requirements, logs, today);
   if (r.percent === undefined) return undefined;
   const meters = r.meters.map(plain);
   return {

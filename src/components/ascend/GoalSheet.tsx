@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../../state/AppDataContext';
 import { GOAL_KINDS } from '../../data/goalKinds';
@@ -37,6 +37,8 @@ export function GoalSheet({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  // Eerst het blad sluiten, dan pas navigeren, zodat de terugknop geen halve laag overhoudt.
+  const pending = useRef<string | null>(null);
   const { sessionLogs, goalMilestones, goalMilestoneProgress, clearMilestoneManually } = useAppData();
   const { item, readiness, timing } = view;
   const goal = item.goal;
@@ -57,11 +59,16 @@ export function GoalSheet({
 
   return (
     <>
-      <Sheet eyebrow={`${kind ? GOAL_KINDS[kind].label : 'Doel'} · ${PRIORITY_NAME[item.priority]}`} title={goal.name || 'Naamloos doel'} line={line} onClose={onClose} action={(
+      <Sheet eyebrow={`${kind ? GOAL_KINDS[kind].label : 'Doel'} · ${PRIORITY_NAME[item.priority]}`} title={goal.name || 'Naamloos doel'} line={line} action={(
         <button type="button" onClick={onMenu} aria-label="Meer voor dit doel" className="flex h-11 w-11 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
           <Icon name="meer" size={24} />
         </button>
-      )}>
+      )} onClose={() => {
+        onClose();
+        const to = pending.current;
+        pending.current = null;
+        if (to) navigate(to);
+      }}>
         {(close) => (
           <div className="flex flex-col gap-4 pb-2">
             <div className="flex items-center justify-between gap-3">
@@ -106,7 +113,7 @@ export function GoalSheet({
 
             {goal.targetDate && goal.status === 'active' && timing.state === 'ahead' && <OnCourseCard goalName={goal.name} goalDate={goal.targetDate} />}
 
-            {kind && isTrekGoal(kind) && <JourneyRows onNavigate={navigate} />}
+            {kind && isTrekGoal(kind) && <JourneyRows onNavigate={(to) => { pending.current = to; close(); }} />}
 
             {progress && progress.milestones.length > 0 && (
               <section className="flex flex-col gap-2">

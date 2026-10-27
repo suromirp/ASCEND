@@ -205,6 +205,6 @@ describe('van doelen naar botsingen', () => {
       { ...base, id: 'a', name: 'Eerste in opslag', status: 'active', targetDate: BASE, requirements: runRequirement(10), order: 1 },
       { ...base, id: 'b', name: 'Tweede in opslag', status: 'active', targetDate: at(8), requirements: runRequirement(10), order: 0 },
     ];
-    expect(conflictGoalsFrom(goals, undefined).map((g) => [g.id, g.order])).toEqual([['a', 1], ['b', 0]]);
+    expect(conflictGoalsFrom(goals, undefined).map((g) => [g.id, g.order])).toEqual([['b', 0], ['a', 1]]);
   });
 });

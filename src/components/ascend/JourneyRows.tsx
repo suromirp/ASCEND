@@ -1,4 +1,3 @@
-import type { NavigateFunction } from 'react-router-dom';
 import { baseWeightGrams, formatKg, packProgress } from '../../engine/packList';
 import { Icon, type IconName } from '../icons';
 import { Eyebrow } from '../ui';
@@ -26,7 +25,7 @@ function useRows(): Row[] {
   ];
 }
 
-export function JourneyRows({ compact = false, onNavigate }: { compact?: boolean; onNavigate: NavigateFunction }) {
+export function JourneyRows({ compact = false, onNavigate }: { compact?: boolean; onNavigate: (to: string) => void }) {
   const rows = useRows();
   if (compact) {
     const [planner, ...rest] = rows;

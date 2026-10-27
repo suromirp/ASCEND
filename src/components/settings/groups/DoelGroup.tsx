@@ -49,6 +49,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="programma" title="Programma" facts={facts} onClick={() => setSheet('programma')} />
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
         <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
+        <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
       </SettingsSection>
 
       <SettingsSection title="Tochten">

@@ -343,6 +343,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('langeZondag', s.longSundaySession ?? 'hike') };
     case 'na-hoofddoel':
       return { value: choiceShort('naHoofddoel', s.afterMainGoal ?? 'stop') };
+    case 'seizoensstrook':
+      return { checked: s.showSeasonStrip !== false };
     case 'volgende-tocht':
       return { checked: s.showNextTrek !== false };
     case 'water-per-etappe':

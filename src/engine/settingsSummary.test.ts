@@ -109,6 +109,8 @@ describe('rowSummary: doel en tochten', () => {
     expect(rowSummary('bergschoenen-herinnering', facts()).checked).toBe(true);
     expect(rowSummary('bergschoenen-herinnering', facts({ settings: { ...facts().settings, bootBreakInReminder: false } })).checked).toBe(false);
     expect(rowSummary('water-per-etappe', facts())).toEqual({ checked: true, hidden: false });
+    expect(rowSummary('seizoensstrook', facts()).checked).toBe(true);
+    expect(rowSummary('seizoensstrook', facts({ settings: { ...facts().settings, showSeasonStrip: false } })).checked).toBe(false);
   });
 
   it('de groep Doel en tochten noemt het aantal tochten, niet de week', () => {

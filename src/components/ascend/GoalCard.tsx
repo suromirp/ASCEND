@@ -78,7 +78,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
             <span className="block font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{goal.name || 'Naamloos doel'}</span>
             <span className="mt-0.5 block text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
               {goal.targetDate && <>{formatDateNL(goal.targetDate)} · </>}
-              <span className="font-semibold" style={{ color: when.tone === 'status' ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{when.text}</span>
+              <span className={`font-semibold ${timing.state === 'ahead' ? 'whitespace-nowrap' : ''}`} style={{ color: when.tone === 'status' ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{when.text}</span>
               {kindName && <span className="block text-xs">{kindName}</span>}
             </span>
           </button>

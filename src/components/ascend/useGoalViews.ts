@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAppData } from '../../state/AppDataContext';
 import type { GoalKindId } from '../../models/goals';
 import { computeGoalReadiness, readinessInputOf, type GoalReadiness } from '../../engine/goalReadiness';
+import { computeMainGoalReadiness } from '../../engine/gr5Readiness';
 import { goalTiming, type GoalTiming } from '../../engine/goalRoute';
 import { nextKeySession, type ListedGoal, type NextKeySession } from '../../engine/goalList';
 import { resolveVariantDuration } from '../../engine/substitutions';
@@ -12,8 +13,6 @@ const NAMING: Record<GoalKindId, string> = {
   trek_hut: 'je tocht', trek_tent: 'je tocht', day_hike: 'je bergtocht', mountaineering: 'je bergtocht', run_race: 'je wedstrijd',
   trail: 'je trailrun', bike: 'je fietsdoel', triathlon: 'je triathlon', stronger: 'je krachtdoel', fit: 'je beweegdoel',
 };
-// Het doel met de mijlpalen heet zoals op Je stand: dezelfde functie, dezelfde zin.
-const GR5_NAMING = { the: 'de GR5', your: 'je GR5' };
 
 export interface GoalView {
   item: ListedGoal;
@@ -32,7 +31,7 @@ export function useGoalViews(listed: ListedGoal[]): { views: GoalView[]; next: N
         const g = item.goal;
         const timing = goalTiming(g, today);
         if (item.isMain) {
-          const readiness = computeGoalReadiness({ kind: 'trek_hut', requirements: g.requirements }, sessionLogs, today, { naming: GR5_NAMING, homeDays: 2 });
+          const readiness = computeMainGoalReadiness(g.requirements, sessionLogs, today);
           return { item, timing, readiness: readiness.percent === undefined ? undefined : readiness };
         }
         const input = readinessInputOf(g);

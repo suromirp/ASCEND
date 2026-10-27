@@ -13,10 +13,11 @@
 import type { GoalPriority, TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, daysBetween } from '../utils/dates';
-import { effectivePriority, goalKindOf, goalRecoveryDays, goalTaperDays, PRIORITY_NAME } from './goalLabels';
+import { effectivePriority, goalKindOf, goalRecoveryDays, goalTaperDays, PRIORITY_NAME, sortedForList } from './goalLabels';
+import { conflictsForGoals } from './goalConflicts';
+import { isMarathonGoal } from './mainGoal';
+import { RACE_KM } from './goalDraft';
 import { goalTiming } from './goalRoute';
-
-const RANK: Record<GoalPriority, number> = { top: 0, voortop: 1, verkenning: 2 };
 
 export interface ListedGoal {
   goal: TrainingGoal;
@@ -36,17 +37,12 @@ function isEarlier(goal: TrainingGoal, today: string): boolean {
 // juist de doelen van "Eerder, afgerond of weggelegd".
 export function listedGoals(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string, opts: { earlier?: boolean } = {}): ListedGoal[] {
   const mainId = goals.find((g) => g.status !== 'archived' && ladderGoalIds.has(g.id))?.id;
-  const rows = goals
-    .map((goal, index) => ({ goal, index }))
-    .filter(({ goal }) => (opts.earlier ? isEarlier(goal, today) : !isEarlier(goal, today)));
-  rows.sort((a, b) => {
-    const pa = RANK[effectivePriority(a.goal, mainId)];
-    const pb = RANK[effectivePriority(b.goal, mainId)];
-    if (pa !== pb) return pa - pb;
-    const oa = a.goal.order ?? a.index;
-    const ob = b.goal.order ?? b.index;
-    return oa !== ob ? oa - ob : a.index - b.index;
-  });
+  const rows = sortedForList(
+    goals
+      .map((goal, index) => ({ goal, index }))
+      .filter(({ goal }) => (opts.earlier ? isEarlier(goal, today) : !isEarlier(goal, today))),
+    mainId,
+  );
   return rows.map(({ goal }) => ({ goal, priority: effectivePriority(goal, mainId), isMain: goal.id === mainId }));
 }
 
@@ -232,10 +228,46 @@ export function moveGoal(listed: readonly ListedGoal[], id: string, to: number |
   return { ids, priority, changesLabel: priority !== moving.priority, changed: ids.some((x, i) => x !== original[i]) };
 }
 
-// Wat er opgeslagen moet worden voor een nieuwe volgorde: alleen de doelen waarvan het getal verschilt.
+// Wat er opgeslagen moet worden voor een nieuwe volgorde: elk doel van de lijst krijgt zijn plek als
+// getal, zodat de volgorde niet meer afhangt van de plek van opslag. Alleen waar het getal al
+// klopt hoeft niets te worden geschreven.
 export function orderPatch(listed: readonly ListedGoal[], ids: readonly string[]): { id: string; order: number }[] {
-  const current = new Map(listed.map((l, index) => [l.goal.id, l.goal.order ?? index]));
+  const current = new Map(listed.map((l) => [l.goal.id, l.goal.order]));
   return ids.flatMap((id, order) => (current.get(id) === order ? [] : [{ id, order }]));
+}
+
+export type MoveOutcome =
+  | { kind: 'label' }
+  | { kind: 'nothing' }
+  | { kind: 'save'; patch: { id: string; order: number }[] }
+  // Een andere volgorde die een botsing tussen doelen verschuift: een voorstel met de aangepaste doelen.
+  | { kind: 'proposal'; patch: { id: string; order: number }[]; goals: TrainingGoal[] };
+
+const conflictKey = (goals: TrainingGoal[], ladder: ReadonlySet<string>, today: string) =>
+  conflictsForGoals(goals, ladder, today).map((c) => `${c.rule}:${c.goalId}:${c.otherGoalId}`).sort().join('|');
+
+// Wat een verplaatsing wordt: een ander label is een voorstel van het label, een volgorde die de
+// botsingen tussen doelen verandert is een voorstel, en anders wordt alleen de volgorde bewaard.
+export function moveOutcome(goals: TrainingGoal[], listed: readonly ListedGoal[], result: MoveResult, ladder: ReadonlySet<string>, today: string): MoveOutcome {
+  if (result.changesLabel) return { kind: 'label' };
+  const patch = orderPatch(listed, result.ids);
+  if (patch.length === 0) return { kind: 'nothing' };
+  const byId = new Map(patch.map((p) => [p.id, p.order]));
+  const after = goals.map((g) => (byId.has(g.id) ? { ...g, order: byId.get(g.id) } : g));
+  if (conflictKey(after, ladder, today) !== conflictKey(goals, ladder, today)) {
+    return { kind: 'proposal', patch, goals: after.filter((g) => byId.has(g.id)) };
+  }
+  return { kind: 'save', patch };
+}
+
+// Het oude marathondoel leest zijn soort, datum en tijd ook uit de instellingen. Geeft die
+// instellingen voor het aangepaste doel, of niets als het geen marathondoel is.
+export function marathonSettingsFor(was: TrainingGoal, next: TrainingGoal):
+  { marathonRaceType: 'full' | 'half' | undefined; marathonTargetDate: string | undefined; marathonTargetTimeMinutes: number | undefined } | undefined {
+  if (!isMarathonGoal(was)) return undefined;
+  const km = next.details?.distanceKm;
+  const marathonRaceType = km !== undefined && Math.abs(km - RACE_KM.marathon) < 0.5 ? 'full' : km !== undefined && Math.abs(km - RACE_KM.half) < 0.5 ? 'half' : undefined;
+  return { marathonRaceType, marathonTargetDate: next.targetDate, marathonTargetTimeMinutes: next.details?.targetMinutes };
 }
 
 // --- de volgende stap --------------------------------------------------------------------------

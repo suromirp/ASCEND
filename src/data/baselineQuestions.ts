@@ -2,8 +2,8 @@
 //
 // Shared between the generic, full-list baseline editor
 // (components/BaselineEvidenceCard.tsx — the advanced/fallback entry point,
-// Phase 7) and the goal setup wizard's targeted baseline step
-// (components/GoalSetupWizard.tsx), so both ever ask the exact same
+// Phase 7) and the targeted baseline step
+// (components/GoalCapacityStep.tsx), so both ever ask the exact same
 // question for the exact same dimension — one copy, not two that could
 // silently drift apart.
 //

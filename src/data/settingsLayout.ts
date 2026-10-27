@@ -64,7 +64,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: [],
   },
   doel: {
-    rows: ['doelen', 'programma', 'lange-zondag', 'na-hoofddoel', 'bundel-tochten', 'vrije-dagen'],
+    rows: ['doelen', 'programma', 'lange-zondag', 'na-hoofddoel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
     advanced: [],
   },
   forge: {
