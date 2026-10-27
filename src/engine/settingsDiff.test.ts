@@ -45,6 +45,7 @@ const everything: AppSettings = {
     weatherLine: false, weatherSwap: false, bestMoment: false, clothingAdvice: false, completionMoment: false,
   },
   askShortNight: false,
+  askDoubtTest: false,
   introSoundEnabled: false,
   motion: 'off',
   sky: 'night',

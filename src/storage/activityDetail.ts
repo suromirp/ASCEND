@@ -14,6 +14,10 @@
 
 import { getDB, SessionLogsRepo, SettingsRepo } from './database';
 import type { ActivityDetail } from '../models/activityDetail';
+import type { BestEffort, SessionLog } from '../models/training';
+import { bestEffortFromStream } from '../engine/bestEffort';
+import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
+import { TEST_DISTANCE_KM } from '../engine/racePrediction';
 import { getConnection, getWatchState } from './externalActivities';
 import type { ExternalActivity } from '../engine/activityImport';
 import { buildActivityDetail } from '../engine/activityDetail';
@@ -52,7 +56,10 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
   if (!detailsWanted(state.use)) return 'skipped';
   const log = (await SessionLogsRepo.getAll()).find((l) => l.externalId === activity.externalId);
   // A log that was cut has the profile of what is kept (or none): never of the whole.
-  if (!log || log.detail || log.trim) return 'skipped';
+  if (!log || log.trim) return 'skipped';
+  // A test run also wants its best 5 km (engine/bestEffort.ts), once.
+  const wantsEffort = log.templateId === TEST_TEMPLATE_ID && !log.bestEffort;
+  if (log.detail && !wantsEffort) return 'skipped';
   const connection = await getConnection();
   if (!connection) return 'skipped';
 
@@ -60,6 +67,10 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
     const adapter = createIntervalsIcuAdapter(connection, { fetchImpl: options.fetchImpl });
     const streams = await adapter.fetchActivityStreams!(activity);
     if (!streams) return 'skipped';
+
+    const logKm = (log.cardioData ?? log.outdoorData)?.distanceKm;
+    const bestEffort = wantsEffort ? bestEffortFromStream(streams, TEST_DISTANCE_KM, logKm) : undefined;
+    if (log.detail) return bestEffort && (await attachDerivedToStoredLog(log.id, { bestEffort })) ? 'attached' : 'skipped';
 
     const settings = await SettingsRepo.get();
     let conditions: DetailConditions | undefined;
@@ -81,11 +92,47 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
     }
 
     const detail = buildActivityDetail(streams, { source: activity.source, treadmill: activity.treadmill, reportedGainM: activity.elevationGainM, conditions });
-    if (!detail) return 'skipped';
+    if (!detail && !bestEffort) return 'skipped';
     // Read and write in one transaction: the log may have changed while the
     // series were on their way (your feeling, a putting back), and this only
-    // adds `detail`, never writes back an older copy of the rest.
-    return (await attachDetailToStoredLog(log.id, detail)) ? 'attached' : 'skipped';
+    // adds `detail` and `bestEffort`, never writes back an older copy of the rest.
+    return (await attachDerivedToStoredLog(log.id, { detail, bestEffort })) ? 'attached' : 'skipped';
+  } catch {
+    return 'failed';
+  }
+}
+
+// Adds what is derived from the series (the profile, the best effort of a test) to the log as
+// it is stored now, in one readwrite transaction, and only what the log does not have yet.
+// Nothing measured is touched. Returns whether anything was added.
+export async function attachDerivedToStoredLog(logId: string, derived: { detail?: ActivityDetail; bestEffort?: BestEffort }): Promise<boolean> {
+  const db = await getDB();
+  const tx = db.transaction('sessionLogs', 'readwrite');
+  const current = await tx.store.get(logId);
+  if (!current || current.trim) {
+    await tx.done;
+    return false;
+  }
+  const add: Partial<SessionLog> = {};
+  if (derived.detail && !current.detail) add.detail = derived.detail;
+  if (derived.bestEffort && !current.bestEffort) add.bestEffort = derived.bestEffort;
+  if (Object.keys(add).length === 0) {
+    await tx.done;
+    return false;
+  }
+  await tx.store.put({ ...current, ...add });
+  await tx.done;
+  return true;
+}
+
+// A test run that was linked before the best 5 km existed: look for its activity in what
+// the watch last gave, and read the series once. Never throws.
+export async function ensureBestEffort(logId: string, options: AttachOptions = {}): Promise<AttachResult> {
+  try {
+    const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
+    if (!log || !log.externalId || log.bestEffort || log.trim || log.templateId !== TEST_TEMPLATE_ID) return 'skipped';
+    const activity = (await getWatchState()).activities.find((a) => a.externalId === log.externalId);
+    return activity ? await attachActivityDetail(activity, options) : 'skipped';
   } catch {
     return 'failed';
   }

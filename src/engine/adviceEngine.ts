@@ -38,10 +38,11 @@ import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
 import { checkTargetTime, racePaces } from './racePaces';
-import { formatRaceTime, testResults } from './racePrediction';
+import { countedTests, formatRaceTime } from './racePrediction';
 import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
 import type { WeatherForecast } from '../models/weather';
+import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 
@@ -101,6 +102,9 @@ export interface AdviceInputs {
   illnessEpisodes?: IllnessEpisode[];
   // The morning check-in (engine/wellbeing.ts, rule MORNING-CHECK).
   checkIns?: MorningCheckIn[];
+  // Your verdicts on test runs and the setting that asks first (engine/testJudgment.ts).
+  testJudgments?: TestJudgment[];
+  askDoubtTest?: boolean;
   // The extra training of the week (engine/extraRun.ts, rule EXTRA-SESSION).
   extraSession?: Pick<ExtraAdviceInputs, 'gaps' | 'races' | 'ambition' | 'anchor' | 'restDay' | 'planChangeLog' | 'leave'>;
   // The main goal still carries the old hut default of 12 kg (rule
@@ -1017,7 +1021,7 @@ function tentPackAdvice(inputs: AdviceInputs): Advice[] {
 // asked about again (the id carries the test date; a newer test is new
 // information and may ask once more, from a narrower band).
 function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
-  const tests = testResults(inputs.logs);
+  const tests = countedTests(inputs.logs, { judgments: inputs.testJudgments, ask: inputs.askDoubtTest }).tests;
   if (tests.length === 0) return [];
   const out: Advice[] = [];
   for (const race of inputs.raceGoals ?? []) {

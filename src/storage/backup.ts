@@ -54,8 +54,9 @@ import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
+import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -240,6 +241,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     else s.nightJudgments = nights.list;
     skipped.n += nights.skipped;
   }
+  // Your verdicts on test runs: record by record, a damaged one is dropped and counted, an
+  // older file has none and leaves the verdicts on the device alone
+  // (storage/migrations.ts#migrateTestJudgments).
+  if ('testJudgments' in s) {
+    const tests = migrateTestJudgments(s.testJudgments);
+    if (tests.list === undefined) delete s.testJudgments;
+    else s.testJudgments = tests.list;
+    skipped.n += tests.skipped;
+  }
   // Your own weighings for sweat loss: record by record, a damaged one is dropped and
   // counted, an older file has none and leaves the weighings on the device alone
   // (storage/migrations.ts#migrateSweatEntries).
@@ -337,7 +347,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -446,7 +456,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogBestEffort);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);
@@ -753,6 +763,10 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     const byDate = new Map((incoming.nightJudgments ?? []).map((j) => [j.date, j]));
     for (const j of current.nightJudgments ?? []) byDate.set(j.date, j);
     merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
+  }
+  // Verdicts on test runs: the union per log, the device's own wins.
+  if (incoming.testJudgments || current.testJudgments) {
+    merged.testJudgments = mergeTestJudgments(incoming.testJudgments, current.testJudgments);
   }
   // Weighings for sweat loss are history too: the union per id, the device's own wins, one
   // per training (engine/sweat.ts#mergeSweatEntries).

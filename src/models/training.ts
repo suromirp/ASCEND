@@ -494,7 +494,19 @@ export interface SessionLog {
   // none. Optional, additive; the backup schema number does not move
   // (docs/beslissingen/2026-10-22-loopinzicht.md).
   detail?: ActivityDetail;
+  // Only on a test run: the fastest unbroken stretch of the test distance, read from
+  // the watch's series when the log was opened or synced. Derived, so it is added once
+  // after the log is made and never changes a measured number; the totals stay as they
+  // were (engine/bestEffort.ts, docs/beslissingen/2026-10-27-testloop-lezen.md).
+  // Optional, additive; the backup schema number does not move.
+  bestEffort?: BestEffort;
   source: MetricSource;
+}
+
+// The fastest `km` of a run, in minutes.
+export interface BestEffort {
+  km: number;
+  minutes: number;
 }
 
 export interface WorkoutDetails {

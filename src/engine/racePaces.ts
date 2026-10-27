@@ -168,7 +168,11 @@ export interface TestMeaning {
 export function testMeaning(paces: RacePaces): TestMeaning {
   const { test, race } = paces;
   const km = String(test.km).replace('.', ',');
-  const headline = race
+  const from = test.basis === 'effort' && test.wholeKm ? ` (uit een run van ${String(Math.round(test.wholeKm * 100) / 100).replace('.', ',')} km)` : '';
+  const prediction = race ? ` Dat past bij een ${race.km} km in ongeveer ${Math.round(race.minutes)} minuten, ergens tussen ${Math.round(race.low)} en ${Math.round(race.high)} minuten.` : '';
+  const headline = test.basis === 'effort'
+    ? `Je snelste ${km} km duurde ${formatRaceTime(test.minutes)}${from}.${prediction}`
+    : race
     ? `Je liep ${km} km in ${formatRaceTime(test.minutes)}. Dat past bij een ${race.km} km in ongeveer ${Math.round(race.minutes)} minuten, ergens tussen ${Math.round(race.low)} en ${Math.round(race.high)} minuten.`
     : `Je liep ${km} km in ${formatRaceTime(test.minutes)}.`;
   const rows = [

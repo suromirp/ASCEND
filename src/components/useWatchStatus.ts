@@ -10,8 +10,7 @@ import { getConnection } from '../storage/externalActivities';
 import { getWatchWorkoutState, WATCH_STATE_EVENT, type WatchWorkoutState } from '../storage/watchWorkouts';
 import { watchStatusFor, type WatchStatus } from '../engine/watchStatus';
 import { watchHrPlanFromSettings } from '../engine/watchHeartRate';
-import { racePaces } from '../engine/racePaces';
-import { testResults } from '../engine/racePrediction';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { todayISO } from '../utils/dates';
 import type { PlannedSession, SessionTemplate } from '../models/training';
 
@@ -54,7 +53,7 @@ export function useWatchStatuses(): { statusOf: (session: PlannedSession, templa
     };
   }, []);
 
-  const paces = useMemo(() => racePaces(testResults(sessionLogs)), [sessionLogs]);
+  const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const logged = useMemo(() => new Set(sessionLogs.map((l) => l.plannedSessionId).filter((id): id is string => !!id)), [sessionLogs]);
 
   const statusOf = useCallback(

@@ -54,8 +54,7 @@ import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard'
 import { missionFacts } from '../engine/missionFacts';
 import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
-import { racePaces } from '../engine/racePaces';
-import { testResults } from '../engine/racePrediction';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { dailyQuote } from '../utils/quotes';
@@ -171,7 +170,7 @@ function TodayContent() {
   // The order card has its own say; the old tip only for what it doesn't cover.
   const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
   // The mission's three key numbers; the pace comes from the latest test run.
-  const paces = useMemo(() => racePaces(testResults(sessionLogs)), [sessionLogs]);
+  const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const mission = primary && primaryTemplate
     ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces)
     : undefined;

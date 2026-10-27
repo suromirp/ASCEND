@@ -10,6 +10,7 @@ import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
+import type { TestJudgment } from '../models/testJudgment';
 import type { InfluenceEntry } from '../models/influence';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
 import type { SportId } from '../data/sports';
@@ -648,6 +649,14 @@ export interface AppSettings {
   // "Vragen bij een korte nacht": ask instead of warning when the watch saw
   // doubtfully little sleep. Absent = on. Optional and additive.
   askShortNight?: boolean;
+  // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
+  // waits for your answer before it changes your paces. Absent = on. Optional and additive.
+  askDoubtTest?: boolean;
+  // Your own verdict per test run: "Telt mee" or "Telt niet mee" (models/testJudgment.ts,
+  // engine/testJudgment.ts). The log is never changed. Optional and additive, so the backup
+  // schema number does not move; read defensively on import
+  // (storage/migrations.ts#migrateTestJudgments) and merged per log on restore.
+  testJudgments?: TestJudgment[];
   // "Wat speelde er": your own notes about a day or a training (models/influence.ts).
   // Never changes a log or the watch numbers. Optional and additive, so the backup
   // schema number does not move; travels with the settings and is read defensively

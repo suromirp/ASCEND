@@ -579,6 +579,16 @@ kilometres stay with Garmin.
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.
 
+**The test run and the paces** (`engine/racePrediction.ts#countedTests`, `engine/bestEffort.ts`,
+`engine/testJudgment.ts`, decision `docs/beslissingen/2026-10-27-testloop-lezen.md`): a test counts with the
+fastest unbroken 5 km of the watch's series (`SessionLog.bestEffort`, added once when the series is fetched,
+never over a measured number) and with the whole log when there is none; the app says which. Paces, prediction,
+target-time check and the watch all read `pacesFromLogs`/`countedTests` and never `tests.at(-1)` by themselves.
+A test clearly slower than the last one that counts waits for your answer ("Telt mee" or "Telt niet mee",
+`AppSettings.testJudgments`, per log, next to the logs), and until then the old paces hold; "Telt mee" shows the
+paces from old to new before Akkoord. "Telt niet mee" works on any test afterwards. Setting "Twijfeltest eerst
+vragen" (`askDoubtTest`); off means the latest test counts, as before.
+
 Weeks are derived, not stored: a week is just seven days starting on a
 Monday; which phase/week-number it belongs to is computed from
 `Program.startDate` + `Phase.weekCount` (`utils/dates.ts`), never persisted
