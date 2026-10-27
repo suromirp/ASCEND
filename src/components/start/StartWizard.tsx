@@ -207,7 +207,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 <SheetButtons>
                   {index > 0 && <button type="button" className="st-btn" disabled={horizon.busy} onClick={() => go(-1)}>Terug</button>}
                   <button type="button" className="st-btn gold" disabled={horizon.busy} onClick={() => void makePlan(close)}>
-                    {horizon.busy ? 'Even rekenen…' : 'Eerste week bekijken'}
+                    {horizon.busy ? 'Even rekenen…' : 'Bekijk je plan'}
                   </button>
                 </SheetButtons>
               </>
