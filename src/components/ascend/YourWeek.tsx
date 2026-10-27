@@ -45,6 +45,7 @@ export function YourDirectionCard({ week, onChoose }: { week: YourWeek; onChoose
       <Eyebrow>Je richting</Eyebrow>
       <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{week.chosen ? week.label : 'Nog niet gekozen'}</p>
       <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.chosen ? week.line : week.adviceLine}</p>
+      {week.chosen && <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Je plan volgt dit nog niet; dat komt in een volgende versie.</p>}
       <div className="-mb-3 mt-1">
         <TextButton onClick={onChoose}>{week.chosen ? 'Richting wijzigen' : 'Kies je richting'}</TextButton>
       </div>
@@ -108,7 +109,7 @@ export function YourWeekSheet({ week, onClose }: { week: YourWeek; onClose: () =
               {week.bars.map((bar) => (
                 <div key={bar.week} className="flex flex-col gap-1">
                   <Meter value={bar.budget > 0 ? bar.done / bar.budget : 0} label={`Week ${bar.week} van de golf`} tone={bar.current ? 'status' : 'progress'} />
-                  <span className="text-xs tabular-nums" style={{ color: bar.current ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>Wk {bar.week}: {bar.future ? bar.budget : `${bar.done} van ${bar.budget}`}</span>
+                  <span className="text-xs tabular-nums" style={{ color: bar.current ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>Week {bar.week}: {bar.future ? bar.budget : `${bar.done} van ${bar.budget}`}</span>
                 </div>
               ))}
             </div>

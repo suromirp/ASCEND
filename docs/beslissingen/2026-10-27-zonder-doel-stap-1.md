@@ -57,3 +57,5 @@ Niets.
 ## Terugdraaien
 
 De nieuwe velden in `AppSettings` zijn optioneel: weghalen van de kaart, het blad en de rij Weekbudget laat de rest zoals het was. De golden snapshot van scenario D mag blijven als nulmeting.
+
+Stap 4 haalt de bergtocht, de wandeldag en de rugzakladder uit een plan zonder tochtdoel; de snapshot van D verandert dan met de reden in de commit.

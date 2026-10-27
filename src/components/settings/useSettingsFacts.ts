@@ -144,7 +144,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
-      noGoal: listedGoals(trainingGoals, ladder, today).length === 0,
+      noGoal: listedGoals(trainingGoals, ladder, today).length === 0 && !!program && plannedSessions.length > 0,
       notice: loaded.notice,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);

@@ -512,7 +512,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
     case 'weekbudget': {
       const w = settingBudget(s);
       // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.
-      return { value: `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
+      return { value: w.id === 'improve' ? 'Eigen weken' : `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
     }
     case 'twijfeltest':
       return { checked: s.askDoubtTest !== false };

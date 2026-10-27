@@ -89,7 +89,7 @@ describe('de richtingen als gegevens', () => {
 
   it('gebruikt in zijn teksten geen gedachtestreepjes of uitroeptekens', () => {
     for (const id of DIRECTION_IDS) {
-      expect(`${DIRECTIONS[id].label} ${DIRECTIONS[id].line} ${DIRECTIONS[id].effect}`).not.toMatch(/[–—!]/);
+      expect(`${DIRECTIONS[id].label} ${DIRECTIONS[id].line} ${DIRECTIONS[id].effect}`).not.toMatch(/[\u2013\u2014!]/);
     }
   });
 });

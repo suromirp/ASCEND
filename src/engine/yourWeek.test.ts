@@ -80,6 +80,6 @@ describe('yourWeek', () => {
   it('gebruikt geen gedachtestreepjes of uitroeptekens in zijn zinnen', () => {
     const w = yourWeek(base({ settings: { direction: 'easy', directionStart: '2026-10-26' } }))!;
     const all = [w.minutesLine, w.strengthLine, w.remainingLine, w.explain, w.belowLine, w.adviceLine, w.waveLine].join(' ');
-    expect(all).not.toMatch(/[–—!]/);
+    expect(all).not.toMatch(/[\u2013\u2014!]/);
   });
 });

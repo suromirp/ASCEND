@@ -34,6 +34,9 @@ export function WeekBudgetSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet eyebrow="Doel en tochten" title="Weekbudget" line="Hoeveel een week vraagt als je geen doel hebt." onClose={onClose}>
       <div className="flex flex-col gap-4">
+        {id === 'improve' ? (
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Bij Fitter worden beginnen de minuten bij het gemiddelde van je laatste vier weken en groeien ze per golf. Daarom kies je ze hier niet zelf.</p>
+        ) : (
         <Stepper
           label="Minuten per week"
           display={<span className="font-sans tabular-nums">{budget.minutes} min</span>}
@@ -44,6 +47,7 @@ export function WeekBudgetSheet({ onClose }: { onClose: () => void }) {
           onDec={() => save({ ...choice, minutes: Math.max(MIN_MINUTES, budget.minutes - MINUTE_STEP), strength: budget.strength })}
           onInc={() => save({ ...choice, minutes: Math.min(MINUTES_CEILING, budget.minutes + MINUTE_STEP), strength: budget.strength })}
         />
+        )}
         <Stepper
           label="Keer kracht per week"
           display={<span className="font-sans tabular-nums">{budget.strength} keer</span>}
