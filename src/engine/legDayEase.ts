@@ -467,6 +467,8 @@ export function easeMacroFactorLine(how: LegEaseHow): string {
   return `Doe je de training in MacroFactor? Kies daar zelf een lichtere set met zeker ${rir} herhalingen over.`;
 }
 export const EASE_STARTED_LINE = 'Je bent al begonnen. Lichter kan nu per oefening.';
+// Lichter gekozen op Vandaag nadat je in Forge al een set afvinkte: de training blijft zoals hij begon.
+export const EASE_STARTED_KEPT_LINE = 'Je was al begonnen, dus deze training blijft zoals hij was. Lichter kan nu per oefening.';
 export const EASE_SAVE_FAILED = 'Opslaan lukte niet. Probeer het nog eens.';
 
 // "Lichter gemaakt: 3 sets minder, 2 oefeningen lichter, Side plank vervalt."

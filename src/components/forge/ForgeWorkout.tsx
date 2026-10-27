@@ -95,7 +95,7 @@ import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
 import { useGuardedSave, useLegEase } from '../useLegEase';
-import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_LINE } from '../../engine/legDayEase';
+import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
 import { resolveLegEaseHow } from '../../engine/legEaseSettings';
 import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
@@ -355,7 +355,13 @@ export function ForgeWorkout({
   const easeState = readOnly ? undefined : legEase.state;
   const legPanel = easeState && (easeState.offer.state === 'offer' || easeState.offer.state === 'eased') ? (
     <div className="flex flex-col gap-1">
-      {easeState.offer.state === 'eased' ? (
+      {easeState.offer.state === 'eased' && !easeOn ? (
+        // Lichter gekozen op Vandaag nadat je hier al begon: de rijen bleven zoals ze waren, dus dat zeggen we.
+        <>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>{EASE_STARTED_KEPT_LINE}</p>
+          <div className="flex"><TextButton tone="dim" size="xs" disabled={easeBusy} onClick={() => easeRun(() => legEase.choose('liever-niet'))}>Begrepen</TextButton></div>
+        </>
+      ) : easeState.offer.state === 'eased' ? (
         <>
           <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>{easeSummary(easeSlots(slots, easeHow))}</p>
           {!started && <div className="flex"><TextButton tone="dim" size="xs" disabled={easeBusy} onClick={() => easeRun(legEase.undo, () => replan(false))}>Terugzetten</TextButton></div>}
