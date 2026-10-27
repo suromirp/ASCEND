@@ -370,6 +370,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Daarna', text: 'vraagt ASCEND hoe het ging. Met Klopt niet haal je het weg.' },
     ],
   },
+  reeksenBewaren: {
+    title: 'Volledige reeks bewaren',
+    lead: 'Je horloge schrijft bijna elke seconde je tempo, hartslag en hoogte op. ASCEND kan dat helemaal op deze telefoon bewaren.',
+    points: [
+      { head: 'Waarvoor', text: 'kilometer na kilometer, de rondes van je horloge en de grafieken van een run. Een drempel die later verandert, rekent ASCEND zo opnieuw uit zonder iets op te halen.' },
+      { head: 'Ruimte', text: 'ongeveer 120 KB voor een uur lopen. Een jaar loopjes en tochten is al snel enkele tientallen MB.' },
+      { head: 'Uit', text: 'ASCEND houdt alleen de korte samenvatting en de kilometers. Wat al bewaard is blijft staan tot je het zelf verwijdert.' },
+      { head: 'Je route', text: 'wordt nooit bewaard. Alleen de richting per kilometer telt, voor de wind, en die blijft als getal staan.' },
+    ],
+  },
+  reeksenBackup: {
+    title: 'Reeksen in back-up',
+    lead: 'De reeksen van je horloge komen van intervals.icu, maar die kan ze later misschien niet meer geven. Daarom gaan ze standaard mee in je back-up.',
+    points: [
+      { head: 'Aan', text: 'je back-up wordt groter, ongeveer een derde meer dan de reeksen zelf. Na een herstel staat alles weer op je telefoon.' },
+      { head: 'Uit', text: 'een kleine back-up. Na een herstel haalt ASCEND de reeksen opnieuw op zolang dat kan, en anders blijven de samenvatting en de kilometers.' },
+      { head: 'Kopieën van voor een import', text: 'bevatten de reeksen nooit. Die kopie is er alleen om een import ongedaan te maken.' },
+    ],
+  },
   stravaTekst: {
     title: 'Tekst voor Strava',
     lead: 'Strava geeft elke activiteit een eigen naam. ASCEND zet een korte beschrijving klaar die je zelf in Strava plakt.',

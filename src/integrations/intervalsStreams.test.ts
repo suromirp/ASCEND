@@ -18,20 +18,20 @@ const answerFetch = (body: unknown, status = 200) => vi.fn(async () => new Respo
 const asFetch = (f: unknown) => f as unknown as typeof fetch;
 
 describe('the request for the series', () => {
-  it('names the activity, always lists the types and never asks for power', () => {
+  it('names the activity, always lists the types and asks for power since the watch writes it', () => {
     expect(intervalsActivityId('intervals.icu:i4711')).toBe('i4711');
     expect(intervalsActivityId('other:i4711')).toBeUndefined();
     expect(intervalsActivityId('intervals.icu:')).toBeUndefined();
     const kinds = streamsToRequest(['time', 'heartRate', 'power', 'stanceTime']);
-    expect(kinds).toEqual(['time', 'heartRate', 'stanceTime']);
+    expect(kinds).toEqual(['time', 'heartRate', 'power', 'stanceTime']);
     const url = streamsUrl('i4711', kinds);
-    expect(url).toBe('https://intervals.icu/api/v1/activity/i4711/streams.json?types=time,heartrate,stance_time');
+    expect(url).toBe('https://intervals.icu/api/v1/activity/i4711/streams.json?types=time,heartrate,watts,stance_time');
     expect(streamsToRequest(undefined)).toEqual([]);
     expect(Object.keys(STREAM_NAMES)).toContain('power');
   });
 
   it('knows the series by ASCEND names and drops the rest', () => {
-    expect(streamKindsOf(['time', 'watts', 'temp', 'moving', 'heartrate'])).toEqual(['time', 'power', 'heartRate']);
+    expect(streamKindsOf(['time', 'watts', 'temp', 'moving', 'heartrate'])).toEqual(['time', 'power', 'temperature', 'heartRate']);
     expect(streamKindsOf('nope')).toBeUndefined();
   });
 
@@ -59,7 +59,7 @@ describe('the request for the series', () => {
 
   it('asks nothing when the activity has none of the series, or comes from elsewhere', async () => {
     const f = answerFetch([]);
-    expect(await fetchIntervalsStreams(CONNECTION, { externalId: 'intervals.icu:i1', kind: 'run', streamsAvailable: ['power'] }, { fetchImpl: asFetch(f) })).toBeUndefined();
+    expect(await fetchIntervalsStreams(CONNECTION, { externalId: 'intervals.icu:i1', kind: 'run', streamsAvailable: [] }, { fetchImpl: asFetch(f) })).toBeUndefined();
     expect(await fetchIntervalsStreams(CONNECTION, { externalId: 'x:1', kind: 'run', streamsAvailable: ['time'] }, { fetchImpl: asFetch(f) })).toBeUndefined();
     expect(f).not.toHaveBeenCalled();
   });

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../../state/AppDataContext';
+import { ActivityStreamsRepo } from '../../storage/database';
 import { isOpenOn, isSoreness } from '../../engine/injuryKind';
 import { effectiveAmbition } from '../../engine/ambition';
 import { hasBodyFat } from '../../engine/bodyFat';
@@ -41,6 +42,7 @@ interface Loaded {
   storage: PersistenceStatus | undefined;
   snapshots: number;
   folderChosen: boolean;
+  streamsBytes?: number;
   notice: SettingsFacts['notice'];
 }
 
@@ -55,7 +57,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv] = await Promise.all([
+      const [connection, watch, workouts, macroFactor, storage, snapshots, folder, noticeEnv, streamSize] = await Promise.all([
         getConnection().catch(() => null),
         getWatchState().catch(() => null),
         getWatchWorkoutState().catch(() => null),
@@ -64,9 +66,10 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
         listSnapshots().catch(() => []),
         webBackupFileAdapter.supportsPreferredDirectory() ? (webBackupFileAdapter.hasPreferredDirectory?.() ?? Promise.resolve(false)).catch(() => false) : Promise.resolve(false),
         readNoticeEnvironment().catch(() => undefined),
+        ActivityStreamsRepo.totalBytes().catch(() => undefined),
       ]);
       if (!alive) return;
-      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
+      setLoaded({ linked: !!connection, watch, sendEnabled: !!workouts?.enabled, hrBasis: workouts?.hrBasis, macroFactor, storage, snapshots: snapshots.length, folderChosen: !!folder, streamsBytes: streamSize?.bytes, notice: noticeEnv ? { support: noticeSupport(noticeEnv), granted: noticeEnv.permission === 'granted' } : undefined });
     };
     void load();
     const offWatch = onWatchChange(() => void load());
@@ -141,6 +144,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       folderSupported: webBackupFileAdapter.supportsPreferredDirectory(),
       folderChosen: loaded.folderChosen,
       storage: loaded.storage,
+      streamsBytes: loaded.streamsBytes,
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',

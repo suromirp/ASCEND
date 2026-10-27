@@ -39,6 +39,7 @@ import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, t
 import { adviceDifferences } from './settingsDiff';
 import { settingBudget } from './weekBudget';
 import { DIRECTIONS } from '../data/directions';
+import { formatBytes } from './streamPack';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL, localDateOf } from '../utils/dates';
 
@@ -118,6 +119,9 @@ export interface SettingsFacts {
   folderSupported: boolean;
   folderChosen: boolean;
   storage: 'protected' | 'not_protected' | 'unsupported' | undefined;
+  // De ruimte die de volledige reeksen van loopjes en tochten innemen (bytes); weglaten zolang
+  // dat nog niet is geteld.
+  streamsBytes?: number;
   snapshots: number;
   buildLabel: string;
   // Of de keuze voor de lange zondag er staat (niet bij een bergdoel).
@@ -646,6 +650,12 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return f.storage === 'unsupported' ? { value: 'Niet mogelijk', dim: true } : {};
     case 'momentopnamen':
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
+    case 'reeksen-bewaren':
+      return { checked: s.keepStreams !== false };
+    case 'reeksen-backup':
+      return { checked: s.streamsInBackup !== false, sub: f.streamsBytes !== undefined ? (f.streamsBytes > 0 ? `Maakt de back-up ongeveer ${formatBytes(f.streamsBytes * 1.34)} groter` : 'Nog geen reeksen bewaard') : undefined };
+    case 'reeksen-ruimte':
+      return f.streamsBytes === undefined ? {} : { value: formatBytes(f.streamsBytes), dim: f.streamsBytes === 0 };
     case 'aangepast': {
       const n = adviceDifferences(s).length;
       return { value: String(n), hidden: n === 0 };

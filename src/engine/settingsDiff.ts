@@ -286,6 +286,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   },
   flag('macrofactor-gewicht', 'Gewicht gebruiken', 'koppelingen', 'weightFromMacroFactor'),
   flag('strava-tekst', 'Tekst voor Strava', 'koppelingen', 'stravaText'),
+  flag('reeksen-bewaren', 'Volledige reeks bewaren', 'gegevens', 'keepStreams'),
+  flag('reeksen-backup', 'Reeksen in back-up', 'gegevens', 'streamsInBackup'),
 ];
 
 // ---- de functies -------------------------------------------------------------------------

@@ -18,6 +18,7 @@ import type { SessionStressProfile } from './prescription';
 import type { PainReport } from './checkIn';
 import type { PlannedLeaveMark } from './leave';
 import type { ActivityDetail, RunDynamics } from './activityDetail';
+import type { RunDetail } from './runDetail';
 
 export type MetricSource = 'manual' | 'garmin' | 'health-connect' | 'macrofactor' | 'import';
 
@@ -111,6 +112,7 @@ export type TemplateRole =
   | 'ask_legs' // asks how the legs feel before it starts
   | 'before_race_out' // comes out of the days before a race
   | 'walked_down' // the descent is walked, not run
+  | 'blocks' // has blocks (tempo, intervals) whose pace is compared in the run insight
   | 'extra'; // an extra session the planner may add to a week
 
 // The reusable definition of a workout — "what" a session is, independent of
@@ -504,6 +506,16 @@ export interface SessionLog {
   // that does not match): the totals it was tried for, so the series is not fetched again
   // for the same numbers (engine/bestEffort.ts#effortFingerprint). Derived, optional.
   bestEffortTried?: string;
+  // The kilometres and laps of a run or tocht, worked out from its full series
+  // (models/runDetail.ts, engine/runDetail.ts). Derived and append-only like `detail` and
+  // `bestEffort`: added once, tied to the totals it was read for, never a change to a
+  // measured number; a broken one is dropped by the migration and the log stays whole.
+  // Optional, additive; it travels in the backup
+  // (docs/beslissingen/2026-10-27-run-in-detail-gegevens.md).
+  runDetail?: RunDetail;
+  // The totals a run's series gave no usable `runDetail` for, so they are not fetched again
+  // for the same numbers (engine/runDetail.ts#runDetailFingerprint). Derived, optional.
+  runDetailTried?: string;
   source: MetricSource;
 }
 

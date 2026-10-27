@@ -28,6 +28,7 @@ import type { InjuryNote } from '../models/injury';
 import type { PlanChangeProposal } from '../models/planChange';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
 import type { GoalEngineConfig } from '../models/goalEngineConfig';
+import type { ActivityStreams, SerializedActivityStreams } from '../models/activityStreams';
 import type { RoutePlan, SoloPlan } from '../models/routePlan';
 import type { AppSettings } from './database';
 
@@ -97,6 +98,10 @@ export interface AscendBackupPayloadV5 extends Omit<AscendBackupPayloadV4, 'vers
   version: 5;
   routePlan: RoutePlan | null;
   soloPlan: SoloPlan | null;
+  // The full series of runs and tochten, base64 (models/activityStreams.ts). Optional and
+  // additive, so the version stays 5: a file without it imports as before, and a file made
+  // with "Reeksen in back-up" off simply has none. Never in the copies taken before an import.
+  activityStreams?: SerializedActivityStreams[];
 }
 
 export type AscendBackupPayload = AscendBackupPayloadV1 | AscendBackupPayloadV2 | AscendBackupPayloadV3 | AscendBackupPayloadV4 | AscendBackupPayloadV5;
@@ -147,6 +152,8 @@ export interface NormalizedBackupData {
   // V5 extras, same rule.
   routePlan?: RoutePlan;
   soloPlan?: SoloPlan;
+  // The full series that came with the file; undefined means "not in this backup".
+  activityStreams?: ActivityStreams[];
 }
 
 // --- Data categories ---------------------------------------------------------

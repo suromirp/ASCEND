@@ -63,6 +63,8 @@ const everything: AppSettings = {
   watchCalmRun: false,
   weightFromMacroFactor: false,
   stravaText: false,
+  keepStreams: false,
+  streamsInBackup: false,
 };
 
 describe('adviceDifferences', () => {

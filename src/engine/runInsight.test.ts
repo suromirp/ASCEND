@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { runInsight, mainReason, reasonText, topicsFor, type RunInsightInput, type ShownInsight } from './runInsight';
+import { insightRows, pacingKindOf, runInsight, mainReason, reasonText, topicsFor, type RunInsightInput, type ShownInsight } from './runInsight';
 import { EARLIER_DATES, EASY, TEMPLATES, context, runLog } from './fixtures/runLogs';
 import type { RunSpec } from './fixtures/runStreams';
 import type { SessionLog } from '../models/training';
+import { buildRunDetail } from './runDetail';
+import { fastStartTest, segmentRun } from './fixtures/testRun';
 
 // Made-up logs and series only. The subject is a run on 2026-10-18.
 const DATE = '2026-10-18';
@@ -300,5 +302,75 @@ describe('the reasons in words', () => {
     ];
     expect(all[0]).toBe('het was 9 graden kouder');
     for (const t of all) expect(t).not.toMatch(/[–—]/);
+  });
+});
+
+describe('the one line after a test, a tempo run or an interval training', () => {
+  const OPTS = { logKm: 6.6, logMinutes: 38, builtAt: '2026-10-27T10:00:00.000Z' };
+  const withDetail = (templateId: string, runDetail: SessionLog['runDetail'], over: Partial<SessionLog> = {}): SessionLog => ({
+    ...runLog({ id: 'h', date: DATE, spec: { minutes: 38, pace: 345, hr: 165 }, templateId, strap: true }),
+    cardioData: { durationMinutes: 38, distanceKm: 6.6, source: 'garmin' },
+    durationMinutes: 38,
+    runDetail,
+    ...over,
+  });
+
+  it('a test gets the advice about its start, and no Beter or Let op', () => {
+    const r = insight(withDetail('tpl_test_run', buildRunDetail(fastStartTest(), OPTS)), []);
+    expect(r.pacing).toBe('Begin de volgende test op 5:45 per km, dat is 23 seconden per km rustiger dan je eerste kilometer vandaag. Gelijkmatig lopen is meestal het snelst.');
+    expect(r.better).toBeUndefined();
+    expect(r.watch).toBeUndefined();
+    expect(r.pacing).not.toMatch(/[\u2013\u2014!]/);
+  });
+
+  it('a tempo run gets one line only when the last block faded by 4 percent or more', () => {
+    const laps = [
+      { startSec: 0, endSec: 450, kind: 'work' as const },
+      { startSec: 450, endSec: 915, kind: 'work' as const },
+    ];
+    const run = (paces: number[]) => buildRunDetail(segmentRun(paces.map((pace) => ({ m: 1500, pace }))), { ...OPTS, laps: laps.slice(0, paces.length).map((l, i) => ({ ...l, startSec: i * 450, endSec: i * 450 + (1500 * paces[i]) / 1000 })), bestKm: null });
+    expect(insight(withDetail('tpl_tempo_run', run([300, 318])), []).pacing).toBe('Het laatste blok was 18 seconden per km trager dan het eerste.');
+    expect(insight(withDetail('tpl_tempo_run', run([300, 304])), []).pacing).toBeUndefined();
+  });
+
+  it('an easy run gets none, a stale or missing one gets none, and the switch off gives nothing', () => {
+    const rd = buildRunDetail(fastStartTest(), OPTS);
+    expect(insight(withDetail('tpl_easy_run', rd), []).pacing).toBeUndefined();
+    expect(insight(withDetail('tpl_test_run', rd, { cardioData: { durationMinutes: 38, distanceKm: 6.7, source: 'garmin' } }), []).pacing).toBeUndefined();
+    expect(insight(withDetail('tpl_test_run', undefined), []).pacing).toBeUndefined();
+    expect(insight(withDetail('tpl_test_run', rd), [], { detailsOn: false })).toEqual({});
+    expect(insight(withDetail('tpl_test_run', rd), [], { settings: { enabled: false } })).toEqual({});
+  });
+
+  it('a test without a profile of 48 pieces still has its line', () => {
+    const rd = buildRunDetail(fastStartTest(), OPTS);
+    const noProfile = withDetail('tpl_test_run', rd, { detail: undefined });
+    expect(insight(noProfile, []).pacing).toContain('Begin de volgende test');
+  });
+});
+
+describe('the rows of the card', () => {
+  const line = (topic: 'efficiency' | 'drift', tone: 'better' | 'watch' | 'fact') => ({ topic, tone }) as unknown as NonNullable<ReturnType<typeof runInsight>['better']>;
+  it('puts the pace line in the place of Let op, after Beter, at most two', () => {
+    const rows = insightRows({ better: line('efficiency', 'better'), watch: line('drift', 'watch'), pacing: 'Het laatste blok was 18 seconden per km trager dan het eerste.' });
+    expect(rows).toHaveLength(2);
+    expect(rows[0].kind).toBe('line');
+    expect(rows[1]).toEqual({ kind: 'pacing', word: 'Verdeling', text: 'Het laatste blok was 18 seconden per km trager dan het eerste.' });
+  });
+  it('shows a log with only the pace line', () => {
+    expect(insightRows({ pacing: 'Gelijkmatig.' })).toEqual([{ kind: 'pacing', word: 'Verdeling', text: 'Gelijkmatig.' }]);
+  });
+  it('without the pace line it is Beter and Let op as before', () => {
+    expect(insightRows({ better: line('efficiency', 'better'), watch: line('drift', 'watch'), fact: line('drift', 'fact') })).toHaveLength(2);
+    expect(insightRows({})).toEqual([]);
+  });
+});
+
+describe('which trainings have blocks', () => {
+  it('reads the role on the template, not a list of ids', () => {
+    const own = [{ ...TEMPLATES.find((t) => t.id === 'tpl_easy_run')!, id: 'tpl_eigen', roles: ['blocks' as const] }];
+    expect(pacingKindOf({ templateId: 'tpl_eigen' } as SessionLog, own)).toBe('blocks');
+    expect(pacingKindOf({ templateId: 'tpl_tempo_run' } as SessionLog, TEMPLATES)).toBe('blocks');
+    expect(pacingKindOf({ templateId: 'tpl_easy_run' } as SessionLog, TEMPLATES)).toBeUndefined();
   });
 });

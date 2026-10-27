@@ -74,7 +74,7 @@ describe('which activities get a profile', () => {
     expect(wantsDetail({ ...ACTIVITY, kind: 'hike' })).toBe(true);
     expect(wantsDetail({ ...ACTIVITY, kind: 'ride' })).toBe(false);
     expect(wantsDetail({ ...ACTIVITY, kind: 'strength' })).toBe(false);
-    expect(wantsDetail({ ...ACTIVITY, streamsAvailable: ['power'] })).toBe(false);
+    expect(wantsDetail({ ...ACTIVITY, streamsAvailable: [] })).toBe(false);
     expect(wantsDetail({ ...ACTIVITY, streamsAvailable: undefined })).toBe(false);
   });
 });
@@ -100,7 +100,7 @@ describe('fetching the profile after the save', () => {
     expect(log.detail?.slices).toHaveLength(48);
     expect(log.detail?.conditions).toMatchObject({ source: 'lookup', tempC: 10 });
     // The log is otherwise exactly as it was.
-    expect({ ...log, detail: undefined }).toEqual({ ...logFor(ACTIVITY), detail: undefined });
+    expect({ ...log, detail: undefined, runDetail: undefined }).toEqual({ ...logFor(ACTIVITY), detail: undefined });
     // No track in the profile, no key in it.
     const text = JSON.stringify(log.detail);
     expect(text).not.toContain('52.37');

@@ -115,6 +115,8 @@ describe('the best 5 km on a test log', () => {
 });
 
 describe('the best 5 km never changes your paces by itself', () => {
+  // The series come in one request; the laps in another that this answer also gives something for.
+  const streamCalls = (f: ReturnType<typeof answer>) => f.mock.calls.filter((c) => String((c as unknown[])[0]).includes('/streams.json')).length;
   const quiet = { weatherFetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) };
   beforeEach(async () => {
     await wipeAllData();
@@ -137,15 +139,15 @@ describe('the best 5 km never changes your paces by itself', () => {
     await SessionLogsRepo.put(testLog());
     const f = answer();
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, ...quiet });
-    expect(f).toHaveBeenCalledTimes(1);
+    expect(streamCalls(f)).toBe(1);
     // Nothing changed: no new request.
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
-    expect(f).toHaveBeenCalledTimes(1);
+    expect(streamCalls(f)).toBe(1);
     // The source corrected the distance: the old best effort no longer fits and is read again.
     const stored = (await SessionLogsRepo.getAll())[0];
     await SessionLogsRepo.put({ ...stored, cardioData: { distanceKm: 6.6, durationMinutes: 39.5 } } as SessionLog);
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, ...quiet });
-    expect(f).toHaveBeenCalledTimes(2);
+    expect(streamCalls(f)).toBe(2);
     expect((await SessionLogsRepo.getAll())[0].bestEffort?.wholeKm).toBe(6.6);
   });
 
@@ -155,7 +157,7 @@ describe('the best 5 km never changes your paces by itself', () => {
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
     expect((await SessionLogsRepo.getAll())[0].bestEffortTried).toBe('12.00|40.00');
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
-    expect(f).toHaveBeenCalledTimes(1);
+    expect(streamCalls(f)).toBe(1);
   });
 });
 

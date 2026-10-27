@@ -45,7 +45,10 @@ export type StreamKind =
   | 'stanceBalance'
   | 'verticalOscillation'
   | 'verticalRatio'
-  | 'stepLength';
+  | 'stepLength'
+  | 'respiration'
+  | 'temperature'
+  | 'verticalSpeed';
 
 // --- the series of one activity, in ASCEND's units -----------------------------------
 //
@@ -67,7 +70,19 @@ export interface StreamSet {
   verticalOscillationMm?: (number | null)[];
   verticalRatioPct?: (number | null)[];
   stepLengthM?: (number | null)[];
+  // Running power, watts.
+  powerW?: (number | null)[];
+  // Breaths per minute.
+  respirationRpm?: (number | null)[];
+  // The temperature the watch sensor read, degrees Celsius. Not the weather.
+  temperatureC?: (number | null)[];
+  // Rate of climb or descent, metres per second.
+  verticalSpeedMs?: (number | null)[];
   start?: { lat: number; lon: number };
+  // The track, only while a run is being processed (the heading per kilometre for the
+  // wind). It is never stored, never put on a log and never packed: whoever has read what
+  // they need from it lets the StreamSet go (engine/streamPack.ts keeps no position).
+  position?: { lat: (number | null)[]; lon: (number | null)[] };
 }
 
 // --- the compact profile that is kept on a log -----------------------------------------

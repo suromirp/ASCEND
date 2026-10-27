@@ -22,6 +22,7 @@ import type { GoalEngineConfig } from '../models/goalEngineConfig';
 import { DEFAULT_GOAL_ENGINE_CONFIG } from '../models/goalEngineConfig';
 import type { CapabilityEvidence } from '../models/capability';
 import type { PreImportSnapshot } from './backupTypes';
+import type { ActivityStreams } from '../models/activityStreams';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays, formatDateNL, mondayOfWeek, resolveProgramWeek, todayISO, weekdayShortNL } from '../utils/dates';
 import type { OverviewSettings } from '../engine/overviewSettings';
@@ -46,10 +47,11 @@ import type { JourneyState } from '../engine/journey';
 import type { PackListState } from '../engine/packList';
 import { mainGoal } from '../engine/mainGoal';
 import { programRunBuild } from '../engine/runGrowth';
+import { streamsBytes } from '../engine/streamPack';
 
 export const SCHEMA_VERSION = 1;
 const DB_NAME = 'ascend-db';
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 
 interface AscendDB extends DBSchema {
   meta: { key: string; value: unknown };
@@ -108,6 +110,14 @@ interface AscendDB extends DBSchema {
   // composition changed lives in planChangeProposals (trigger
   // 'weekly_prescription_computed'), never duplicated here.
   weeklyPrescriptions: { key: string; value: WeeklyPrescription; indexes: { 'by-week': string } };
+  // --- Run in detail (version 9) ---
+  // The full series of a run or tocht, packed as binary numbers, one row per log (key: the id
+  // of the log). Apart from sessionLogs on purpose: loading all logs at every start stays as
+  // fast as it was, and a series can go without a log losing anything. The track is never in
+  // it. They travel in the backup file (default on, base64) but not in the snapshots taken
+  // before an import (models/activityStreams.ts,
+  // docs/beslissingen/2026-10-27-run-in-detail-gegevens.md).
+  activityStreams: { key: string; value: ActivityStreams };
 }
 
 let dbPromise: Promise<IDBPDatabase<AscendDB>> | null = null;
@@ -173,6 +183,8 @@ function openDatabase(): Promise<IDBPDatabase<AscendDB>> {
           const store = db.createObjectStore('weeklyPrescriptions', { keyPath: 'id' });
           store.createIndex('by-week', 'weekStartDate');
         }
+        // Version 9: only a new store; nothing that exists is touched.
+        if (!db.objectStoreNames.contains('activityStreams')) db.createObjectStore('activityStreams', { keyPath: 'logId' });
       },
       // Another ASCEND window was updated to a newer DB version: close this
       // connection so that upgrade can finish, and reload into the new
@@ -280,7 +292,36 @@ export const PlannedSessionsRepo = {
 export const SessionLogsRepo = {
   getAll: () => getAll('sessionLogs') as Promise<SessionLog[]>,
   put: (l: SessionLog) => put('sessionLogs', l),
-  delete: (id: string) => del('sessionLogs', id),
+  // A log that goes takes its series with it.
+  delete: async (id: string) => {
+    const db = await getDB();
+    const tx = db.transaction(['sessionLogs', 'activityStreams'], 'readwrite');
+    await Promise.all([tx.objectStore('sessionLogs').delete(id), tx.objectStore('activityStreams').delete(id), tx.done]);
+  },
+};
+
+// The full series of runs and tochten (models/activityStreams.ts). Reading everything at once
+// is for the backup and the size; the screens read one log's series by its id.
+export const ActivityStreamsRepo = {
+  get: async (logId: string) => (await getDB()).get('activityStreams', logId),
+  getAll: () => getAll('activityStreams') as Promise<ActivityStreams[]>,
+  keys: async () => (await getDB()).getAllKeys('activityStreams') as Promise<string[]>,
+  put: (s: ActivityStreams) => put('activityStreams', s),
+  delete: (logId: string) => del('activityStreams', logId),
+  clear: () => clearStore('activityStreams'),
+  // The bytes the series take, counted one row at a time so the whole store is never in memory.
+  totalBytes: async () => {
+    const db = await getDB();
+    let total = 0;
+    let rows = 0;
+    let cursor = await db.transaction('activityStreams').store.openCursor();
+    while (cursor) {
+      total += streamsBytes(cursor.value);
+      rows++;
+      cursor = await cursor.continue();
+    }
+    return { bytes: total, rows };
+  },
 };
 
 export const ObjectivesRepo = {
@@ -661,6 +702,14 @@ export interface AppSettings {
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;
+  // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
+  // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
+  // Optional and additive.
+  keepStreams?: boolean;
+  // "Reeksen in back-up": the full series travel in the backup file (base64). Absent = on,
+  // because the source may stop giving them out; off makes a small backup. The copies taken
+  // before an import never hold them. Optional and additive.
+  streamsInBackup?: boolean;
   // Your own verdict per test run: "Telt mee" or "Telt niet mee" (models/testJudgment.ts,
   // engine/testJudgment.ts). The log is never changed. Optional and additive, so the backup
   // schema number does not move; read defensively on import
@@ -1007,6 +1056,8 @@ export async function resetToDemoData(): Promise<void> {
     // answers, illness and weight history, and the pre-import copies that
     // hold a full copy of the old history.
     clearStore('backupSnapshots'),
+    // The full series of runs belong to the logs and go with them.
+    clearStore('activityStreams'),
     clearStore('meta'),
   ]);
   // Production incident: trainingGoals above is cleared, but the marathon
@@ -1527,6 +1578,8 @@ export interface BackupWriteSet {
   planChangeProposals?: BackupStoreWrite<PlanChangeProposal>;
   strengthProgramStrategies?: BackupStoreWrite<StrengthProgramStrategy>;
   strengthProgramRecommendations?: BackupStoreWrite<StrengthProgramRecommendation>;
+  // The full series that came with a backup (only those the device does not have yet).
+  activityStreams?: BackupStoreWrite<ActivityStreams>;
   settings?: AppSettings;
   // Other meta keys (goalEngineConfig, adviceResponses), written as-is.
   meta?: Record<string, unknown>;
@@ -1547,7 +1600,7 @@ export async function applyBackupWrites(writes: BackupWriteSet): Promise<void> {
   const tx = db.transaction(storeNames, 'readwrite');
   const ops: Promise<unknown>[] = [];
 
-  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations'] as const) {
+  for (const key of ['programs', 'sessionTemplates', 'plannedSessions', 'sessionLogs', 'trainingGoals', 'goalMilestones', 'goalMilestoneProgress', 'capabilityEvidence', 'injuryNotes', 'planChangeProposals', 'strengthProgramStrategies', 'strengthProgramRecommendations', 'activityStreams'] as const) {
     const write = writes[key];
     if (!write) continue;
     const store = tx.objectStore(key);
@@ -1591,6 +1644,7 @@ export async function wipeAllData(): Promise<void> {
     clearStore('strengthProgramStrategies'),
     clearStore('strengthProgramRecommendations'),
     clearStore('weeklyPrescriptions'),
+    clearStore('activityStreams'),
     clearStore('meta'),
   ]);
 }

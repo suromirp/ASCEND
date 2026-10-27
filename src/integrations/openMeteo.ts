@@ -216,7 +216,7 @@ export function pastConditionsUrl(place: WeatherPlace, daysBack: number): string
   const query = new URLSearchParams({
     latitude: String(roundCoordinate(place.lat)),
     longitude: String(roundCoordinate(place.lon)),
-    hourly: 'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m',
+    hourly: 'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m',
     timezone: 'auto',
     past_days: String(Math.min(MAX_PAST_DAYS, Math.max(0, Math.round(daysBack)))),
     forecast_days: '1',
@@ -265,6 +265,50 @@ export function mapPastConditions(raw: unknown, startLocal: string, durationSec:
   ];
   for (const [key, value] of entries) if (value !== undefined) (out as unknown as Record<string, number>)[key] = value;
   return out;
+}
+
+export interface HourlyWindPoint {
+  // Seconds from the start of the training to the hour mark (negative for the hour it began in).
+  atSec: number;
+  speedKmh: number;
+  // The direction the wind comes from, degrees clockwise from north.
+  fromDeg: number;
+}
+
+// The wind of each hour around a training, with the direction it comes from. For the wind
+// against you per kilometre (engine/runDetail.ts). Empty when the answer has no usable hour.
+export function mapPastWind(raw: unknown, startLocal: string, durationSec: number): HourlyWindPoint[] {
+  const h = (raw as { hourly?: Record<string, unknown> } | null)?.hourly;
+  if (!h || !Array.isArray(h.time)) return [];
+  const startMs = Date.parse(`${startLocal.slice(0, 16)}:00Z`);
+  if (!Number.isFinite(startMs)) return [];
+  const speed = Array.isArray(h.wind_speed_10m) ? (h.wind_speed_10m as unknown[]) : [];
+  const dir = Array.isArray(h.wind_direction_10m) ? (h.wind_direction_10m as unknown[]) : [];
+  const out: HourlyWindPoint[] = [];
+  (h.time as unknown[]).forEach((time, i) => {
+    if (!isLocalTime(time)) return;
+    const atSec = (Date.parse(`${time}:00Z`) - startMs) / 1000;
+    const v = num(speed[i]);
+    const d = num(dir[i]);
+    // The hours the training touched, with an hour on both sides to read the nearest from.
+    if (v === undefined || d === undefined || atSec < -7200 || atSec > durationSec + 7200) return;
+    out.push({ atSec, speedKmh: v, fromDeg: d });
+  });
+  return out;
+}
+
+// One request for what a run needs of the weather: the conditions (as before) and the wind of
+// each hour. Only a place rounded to two decimals goes out, never the track.
+export async function fetchPastWeather(
+  place: WeatherPlace,
+  startLocal: string,
+  durationSec: number,
+  daysBack: number,
+  options: FetchOptions = {},
+): Promise<{ conditions?: DetailConditions; wind: HourlyWindPoint[] } | undefined> {
+  if (daysBack > MAX_PAST_DAYS) return undefined;
+  const raw = await getJson(pastConditionsUrl(place, daysBack), options);
+  return { conditions: mapPastConditions(raw, startLocal, durationSec), wind: mapPastWind(raw, startLocal, durationSec) };
 }
 
 export async function fetchPastConditions(

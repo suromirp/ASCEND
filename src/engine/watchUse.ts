@@ -83,10 +83,11 @@ export function detailsWanted(use: WatchUse): boolean {
 export function filterActivityDetails(activities: ExternalActivity[], use: WatchUse): ExternalActivity[] {
   if (use.details) return activities;
   return activities.map((a) => {
-    if (!a.dynamics && !a.streamsAvailable) return a;
-    const { dynamics: _d, streamsAvailable: _s, ...rest } = a;
+    if (!a.dynamics && !a.streamsAvailable && !a.otherStreams) return a;
+    const { dynamics: _d, streamsAvailable: _s, otherStreams: _o, ...rest } = a;
     void _d;
     void _s;
+    void _o;
     return rest;
   });
 }
