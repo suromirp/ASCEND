@@ -178,7 +178,8 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     // was already let go.
     const keyMissed = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
     advice.push(
-      `${missedNames.length === 1 ? missedNames[0] : `${missedNames.slice(0, -1).join(', ')} en ${missedNames.at(-1)}`} ${missedNames.length === 1 ? 'is' : 'zijn'} blijven liggen. ` +
+      // Geen namen: die staan al onder "Blijven liggen" op de terugblik.
+      `${missedNames.length === 1 ? 'Eén training is' : `${missedNames.length} trainingen zijn`} blijven liggen. ` +
       (keyMissed
         ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week; die haalt ASCEND in op een vrije dag als dat nog past. De rest laat je los, niet dubbel doen.`
         : 'Laat het los: inhalen door te stapelen is geen goed idee. Volgende week weer gewoon volgens plan.'),

@@ -24,7 +24,7 @@ export function LegCalendar({ days, today }: { days: LegDay[]; today: string }) 
       <div>
         <Eyebrow>Beenkalender</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Wat elke dag in je benen stopt. Feller is zwaarder, gestippeld is nog gepland. Twee felle vakjes vlak na elkaar kun je beter vermijden.
+          Wat elke dag in je benen stopt. Feller is zwaarder, gestippeld is nog gepland. Twee felle vakjes vlak na elkaar zijn zwaar voor je benen.
         </p>
       </div>
 

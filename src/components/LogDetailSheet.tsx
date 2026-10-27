@@ -177,7 +177,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
 
           {log.subjectiveFeel && (
             <p className="mt-2 text-xs font-medium" style={{ color: log.subjectiveFeel === 'worse' ? 'var(--color-warning)' : 'var(--color-action)' }}>
-              {FEEL_LABEL[log.subjectiveFeel]}
+              Gevoel: {FEEL_LABEL[log.subjectiveFeel]}
             </p>
           )}
 

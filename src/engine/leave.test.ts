@@ -446,7 +446,7 @@ describe('as a proposal with Akkoord', () => {
   it('a period that changes nothing still gives a proposal, with no items', () => {
     const p = input('add', period('no_training', '2026-12-20', '2026-12-20'), [], plan.slice(0, 7));
     expect(p.proposal.changes).toEqual([]);
-    expect(p.proposal.consequences).toMatch(/hoeft niet te veranderen/);
+    expect(p.proposal.consequences).toMatch(/is bewaard/);
   });
 
   it('removing a period brings back what it moved and let go, and takes away what it placed', () => {

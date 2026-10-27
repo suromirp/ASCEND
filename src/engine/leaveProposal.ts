@@ -186,10 +186,10 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
 
 function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, changed = false): string {
   if (count === 0) {
-    if (changed) return 'Je planning hoeft niet te veranderen. Met Akkoord werk je de tocht bij, en ASCEND houdt er rekening mee.';
+    if (changed) return 'De tocht is bijgewerkt en ASCEND houdt er rekening mee.';
     return mode === 'add'
-      ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de periode, en ASCEND houdt er rekening mee.'
-      : 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de periode.';
+      ? 'De periode is bewaard en ASCEND houdt er rekening mee.'
+      : 'De periode is verwijderd.';
   }
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';
   if (period.kind === 'no_training') return 'Op je vakantiedagen staat geen training meer. Wat er stond, schuift naar een andere dag van die week of vervalt, binnen de gewone regels voor rust tussen zware dagen.';
