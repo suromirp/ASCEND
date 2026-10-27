@@ -449,6 +449,14 @@ describe('a source without a usable series is asked once', () => {
     expect(count(g, '/streams.json')).toBe(0);
   });
 
+  it('a second opening in the same session still says no-series, not failed', async () => {
+    const f = requests({ streams: new Response('[]', { status: 200 }) });
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(f) })).toBe('no-series');
+    const g = requests();
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(g) })).toBe('no-series');
+    expect(count(g, '/streams.json')).toBe(0);
+  });
+
   it('a series that cannot be packed is remembered too', async () => {
     const onlyTime = new Response(JSON.stringify([{ type: 'time', data: route.timeSec }]), { status: 200 });
     const f = requests({ streams: onlyTime });

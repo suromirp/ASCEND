@@ -133,8 +133,8 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
     const streams = storedSet ?? (await adapter.fetchActivityStreams!(activity));
     if (!streams) {
       // The source has no series for it: written on the log for these totals, so it is not
-      // asked again at every opening (a correction at the source changes the totals).
-      failedThisSession.add(log.id);
+      // asked again at every opening (a correction at the source changes the totals). Not a
+      // failure: the fingerprint does the work, so a second opening says "no-series".
       await attachDerivedToStoredLog(log.id, {
         runTried: runDetailFingerprint(logKm, logMinutes),
         tried: needs.effort ? effortFingerprint(logKm, logMinutes) : undefined,
@@ -346,11 +346,11 @@ export function ensureOutcomeText(outcome: EnsureOutcome): string | undefined {
     case 'no-link':
       return 'Voor kilometer na kilometer heb je de gegevens van je horloge nodig, via intervals.icu.';
     case 'no-series':
-      return 'Van deze run heeft intervals.icu geen reeks per moment. Er is niets veranderd.';
+      return 'Van deze training heeft intervals.icu geen reeks per moment. Er is niets veranderd.';
     case 'failed':
-      return 'Het ophalen lukte niet. Er is niets veranderd; probeer het zo nog eens.';
+      return 'Het ophalen lukte niet. Er is niets veranderd; de volgende keer dat je de app opent probeert hij het opnieuw.';
     case 'timeout':
-      return 'Het ophalen duurde te lang. Er is niets veranderd; probeer het zo nog eens.';
+      return 'Het ophalen duurde te lang. Er is niets veranderd; de volgende keer dat je de app opent probeert hij het opnieuw.';
   }
 }
 
@@ -378,8 +378,8 @@ export async function ensureRunDetail(logId: string, options: AttachOptions = {}
     // The best 5 km of a test and the profile have their own routes; here it is about the new parts.
     if (!needs.runDetail && !needs.streams) {
       const { km, minutes } = testTotals(log);
-      if (failedThisSession.has(log.id)) return 'failed';
-      return !isUsableRunDetail(log.runDetail) && log.runDetailTried === runDetailFingerprint(km, minutes) ? 'no-series' : 'ready';
+      if (!isUsableRunDetail(log.runDetail) && log.runDetailTried === runDetailFingerprint(km, minutes)) return 'no-series';
+      return failedThisSession.has(log.id) ? 'failed' : 'ready';
     }
     if (!(await getConnection())) return 'no-link';
     // What is known of the activity from the last fetches; else everything ASCEND uses.

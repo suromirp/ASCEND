@@ -129,6 +129,7 @@ export function useHorizonChange(): {
       notes={pending.plan.notes}
       notesTitle={pending.options.notesTitle}
       extraLines={pending.plan.lengths}
+      emptyText="Je planning verandert hier niet door."
       alternative={pending.both ? { label: 'Toch allebei', onClick: () => setPending({ plan: { ...pending.both!, notes: [BOTH_NOTE, ...pending.both!.notes] }, options: pending.options }) } : undefined}
       listUntil={addDays(mondayOfWeek(todayISO()), 13)}
       onRespond={async (response) => {

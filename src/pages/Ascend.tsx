@@ -117,8 +117,9 @@ export function AscendPage() {
     setAdding({ tile, details });
   };
 
+  // Een ander label is altijd een voorstel met Akkoord, ook als je planning niet verandert (CLAUDE.md).
   const proposeLabel = (goalId: string, priority: GoalPriority, orderIds?: string[]) =>
-    horizon.propose(() => planGoalPriority(goalId, priority, orderIds), { eyebrow: 'Label van je doel', ask: 'always', declined: KEEP });
+    horizon.propose(() => planGoalPriority(goalId, priority, orderIds), { eyebrow: 'Label van je doel', ask: 'always', alwaysAsk: true, declined: KEEP });
 
   // Het resultaat van slepen of Hoger en Lager. Een ander label, of een volgorde die een botsing
   // tussen doelen verschuift, is een voorstel; anders wordt alleen de volgorde bewaard.
