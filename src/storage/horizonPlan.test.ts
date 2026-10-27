@@ -105,8 +105,7 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
       const tpls = new Map((await SessionTemplatesRepo.getAll()).map((x) => [x.id, x]));
       const open = (await PlannedSessionsRepo.getAll()).filter((s) => s.scheduledDate >= TODAY && s.scheduledDate <= '2026-11-20' && s.status !== 'skipped' && !s.lock);
       const isRun = (s: { templateId: string }) => tpls.get(s.templateId) && templateSport(tpls.get(s.templateId)!) === 'running' && tpls.get(s.templateId)!.type !== 'recovery';
-      // Op datum gesorteerd: de id's zijn willekeurig, en de volgorde van zoeken mag de
-      // uitkomst niet bepalen.
+      // Op datum gesorteerd, zodat de volgorde van zoeken niet van de opslag afhangt.
       const byDate = (a: { scheduledDate: string }, b: { scheduledDate: string }) => a.scheduledDate.localeCompare(b.scheduledDate);
       const runs = open.filter((s) => isRun(s) && s.templateId !== 'tpl_long_run').sort(byDate);
       const legsList = open.filter((s) => s.templateId === 'tpl_lower_a').sort(byDate);
@@ -116,11 +115,17 @@ describe('doel of planningsinstelling als voorstel met Akkoord', () => {
       for (const run of runs) {
         for (const legs of legsList) {
           if (legs.scheduledDate === run.scheduledDate) continue;
-          await PlannedSessionsRepo.put({ ...legs, scheduledDate: run.scheduledDate });
+          // Het id is vastgezet: op een volle dag beslist het id welke van de twee
+          // verschuift (zie weekValidator.test.ts), en een willekeurig id liet het
+          // voorbeeld soms de loop verschuiven in plaats van de benen.
+          const moved = { ...legs, id: 'planned_0-benen', scheduledDate: run.scheduledDate };
+          await PlannedSessionsRepo.delete(legs.id);
+          await PlannedSessionsRepo.put(moved);
           const off = await computeHorizonPlan({ ...base, trigger: 'availability_changed', title: 'Benen en een zware loop', settings: { hardSameDay: false } });
           const on = await computeHorizonPlan({ ...base, trigger: 'availability_changed', title: 'Benen en een zware loop', settings: { hardSameDay: true } });
+          await PlannedSessionsRepo.delete(moved.id);
           await PlannedSessionsRepo.put(legs);
-          if (off.proposal.changes.some((i) => i.plannedSessionId === legs.id) && !on.proposal.changes.some((i) => i.plannedSessionId === legs.id)) shown = true;
+          if (off.proposal.changes.some((i) => i.plannedSessionId === moved.id) && !on.proposal.changes.some((i) => i.plannedSessionId === moved.id)) shown = true;
           if (shown) break;
         }
         if (shown) break;

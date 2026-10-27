@@ -123,3 +123,19 @@ describe('the other rules', () => {
     expect(r.remaining.some((f) => f.rule === 'TEST-FRESH')).toBe(false);
   });
 });
+
+describe('gelijke gevallen beslist het id', () => {
+  // De oorzaak van een wankele test in storage/horizonPlan.test.ts: de id's van geplande
+  // sessies zijn willekeurig, en als twee sessies op een volle dag verder gelijk staan,
+  // beslist het id welke van de twee verschuift. Dat is bedoeld (dezelfde gegevens geven
+  // altijd hetzelfde antwoord), maar een test mag er niet op rekenen welke het wordt.
+  const moved = (legsId: string, runId: string) => {
+    let list = set(sessions, `${MONDAY}-2`, { scheduledDate: MONDAY, id: legsId });
+    list = set(list, `${MONDAY}-0`, { id: runId });
+    return repairWeeks(input(list, { dailyTimeBudget })).repairs.map((r) => list.find((s) => s.id === r.sessionId)!.templateId);
+  };
+  it('met de ene volgorde van id\'s verschuift de beenkracht, met de andere de loop', () => {
+    expect(moved('a-legs', 'b-run')).toEqual(['tpl_easy_run']);
+    expect(moved('b-legs', 'a-run')).toEqual(['tpl_lower_a']);
+  });
+});
