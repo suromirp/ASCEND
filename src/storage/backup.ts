@@ -57,7 +57,7 @@ import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -385,6 +385,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.resumeMinutes;
     Object.assign(s, nav.value);
     skipped.n += nav.skipped;
+  }
+  // Zonder doel: the direction, its start and your weekly budget; known values stay.
+  if ('direction' in s || 'directionStart' in s || 'weekBudget' in s) {
+    const clean = migrateDirection({ direction: s.direction, directionStart: s.directionStart, weekBudget: s.weekBudget });
+    delete s.direction;
+    delete s.directionStart;
+    delete s.weekBudget;
+    Object.assign(s, clean.value);
+    skipped.n += clean.skipped;
   }
   // The switches of "Overzichten en vragen": a record or not there; the engine
   // reads every key defensively (engine/overviewSettings.ts#resolveOverviews).

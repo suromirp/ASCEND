@@ -37,6 +37,8 @@ import { zoneBpm } from './heartRateZones';
 import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { adviceDifferences } from './settingsDiff';
+import { settingBudget } from './weekBudget';
+import { DIRECTIONS } from '../data/directions';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL, localDateOf } from '../utils/dates';
 
@@ -120,6 +122,8 @@ export interface SettingsFacts {
   buildLabel: string;
   // Of de keuze voor de lange zondag er staat (niet bij een bergdoel).
   longSundayVisible: boolean;
+  // Er is geen doel op Ascend (de lijst van de tab is leeg): dan staat de rij Weekbudget er.
+  noGoal?: boolean;
   // Wat deze telefoon kan voor de ochtendmelding en of meldingen mogen; weglaten als dat
   // nog niet bekend is (dan telt alleen de schakelaar).
   notice?: { support: NoticeSupport; granted: boolean };
@@ -222,6 +226,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     strengthInApp: !f.strengthExternal,
     strengthTrainings: f.strengthDurations.length > 0,
     longSundayVisible: f.longSundayVisible,
+    noGoal: f.noGoal === true,
     sameDayAllowed: f.pairing !== 'never',
     folderSupported: f.folderSupported,
     noticeAvailable: support !== 'unavailable' && support !== 'not_installed',
@@ -504,6 +509,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCard };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
+    case 'weekbudget': {
+      const w = settingBudget(s);
+      // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.
+      return { value: `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
+    }
     case 'twijfeltest':
       return { checked: s.askDoubtTest !== false };
     case 'korte-nacht':

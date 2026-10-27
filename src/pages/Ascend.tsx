@@ -17,11 +17,13 @@ import { GoalList } from '../components/ascend/GoalList';
 import { GoalLabelSheet } from '../components/ascend/GoalLabelSheet';
 import { GoalSheet } from '../components/ascend/GoalSheet';
 import { GoalFormSheet } from '../components/ascend/GoalFormSheet';
+import { YourDirectionCard, YourWeekCard, YourWeekSheet, DirectionSheet } from '../components/ascend/YourWeek';
 import { GoalMenuSheet } from '../components/ascend/GoalMenuSheet';
 import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
 import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, stepAvailability, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
+import { yourWeek } from '../engine/yourWeek';
 import type { AddTileId } from '../engine/goalDraft';
 import { todayISO } from '../utils/dates';
 
@@ -60,7 +62,7 @@ export function AscentTabPlusButton({ onClick }: { onClick: () => void }) {
 }
 
 export function AscendPage() {
-  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings } = useAppData();
+  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings, sessionLogs, templates } = useAppData();
   const navigate = useNavigate();
   const horizon = useHorizonChange();
   const today = todayISO();
@@ -85,6 +87,7 @@ export function AscendPage() {
   const [extra, setExtra] = useState<'treks' | 'strength' | null>(null);
   const [adding, setAdding] = useState<{ tile?: AddTileId; details?: GoalDetails } | null>(null);
   const [earlierOpen, setEarlierOpen] = useState(false);
+  const [weekSheet, setWeekSheet] = useState<'week' | 'direction' | null>(null);
   const [editing, setEditing] = useState<TrainingGoal | null>(null);
   const [archiving, setArchiving] = useState<TrainingGoal | null>(null);
   const [orderNote, setOrderNote] = useState<{ before: { id: string; order: number | undefined }[] } | null>(null);
@@ -148,16 +151,27 @@ export function AscendPage() {
   };
 
   const emptyList = listed.length === 0;
+  // Zonder doel maar met een plan: Je week en je richting in plaats van de lege kaart. Een nieuwe
+  // installatie zonder plan houdt de lege kaart. Met een doel verandert er niets.
+  const week = useMemo(
+    () => (emptyList && !emptyInstall
+      ? yourWeek({ settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, today })
+      : undefined),
+    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, today],
+  );
+  const plain = emptyList && !week;
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
-      <SkyBand actions={emptyList ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
+      <SkyBand actions={plain ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
         <div className="min-w-0">
           <Eyebrow>Ascend</Eyebrow>
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Waar je naartoe werkt</h1>
           {!emptyList && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{goalsSentence(listed, today)}</p>}
+          {week && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.chosen ? `Geen doel, wel een richting: ${week.label.toLowerCase()}.` : 'Nog geen doel en nog geen richting.'}</p>}
         </div>
         {strip && !emptyList && settings.showSeasonStrip !== false && <SeasonStripCard strip={strip} />}
-        {emptyList && (
+        {week && <YourWeekCard week={week} onOpen={() => setWeekSheet('week')} />}
+        {plain && (
           <Card className="flex flex-col gap-3">
             <p className="text-base" style={{ color: 'var(--color-ink)' }}>Hier staat nog niets. Zeg maar: wat wil je bereiken?</p>
             <PrimaryButton onClick={() => startAdd()}>Doel toevoegen</PrimaryButton>
@@ -165,7 +179,9 @@ export function AscendPage() {
         )}
       </SkyBand>
 
-      {emptyList && (
+      {week && <YourDirectionCard week={week} onChoose={() => setWeekSheet('direction')} />}
+
+      {plain && (
         <section className="flex flex-col gap-3" aria-label="Of pak er eentje">
           <p className="text-base" style={{ color: 'var(--color-ink-dim)' }}>Of pak er eentje</p>
           <div className="st-chips">
@@ -194,7 +210,7 @@ export function AscendPage() {
         </p>
       )}
 
-      {!emptyList && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
+      {(!emptyList || week) && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
 
       <Card className="flex flex-col p-0! overflow-hidden">
         {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'], ['strength', 'Krachtblok', 'Hoe kracht in je week past']] as const).map(([id, title, line]) => (
@@ -208,7 +224,7 @@ export function AscendPage() {
         ))}
       </Card>
 
-      {(earlier.length > 0 || !emptyList) && (
+      {(earlier.length > 0 || !plain) && (
         <Card className="p-0! overflow-hidden">
           <button type="button" onClick={() => setEarlierOpen(true)} className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 text-left">
             <span className="text-base" style={{ color: 'var(--color-ink)' }}>
@@ -219,6 +235,9 @@ export function AscendPage() {
           </button>
         </Card>
       )}
+
+      {week && weekSheet === 'week' && <YourWeekSheet week={week} onClose={() => setWeekSheet(null)} />}
+      {week && weekSheet === 'direction' && <DirectionSheet current={week.chosen ? week.directionId : undefined} onClose={() => setWeekSheet(null)} />}
 
       {detail && (
         <GoalSheet

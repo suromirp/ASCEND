@@ -818,3 +818,31 @@ describe('uitleg bij Wat speelde er: voorbeelden bij naam', () => {
     expect(settingsHelp('wat-namen', false)).toBeDefined();
   });
 });
+
+describe('rowSummary: weekbudget', () => {
+  const withSettings = (extra: Partial<SettingsFacts['settings']>, noGoal = true) => facts({ noGoal, settings: { strengthTrackedExternally: false, introSoundEnabled: true, ...extra } });
+
+  it('zonder keuze het advies van Fit blijven', () => {
+    expect(rowSummary('weekbudget', withSettings({}))).toMatchObject({ value: '150 min', sub: '2\u00d7 kracht, advies Fit blijven', hidden: false });
+  });
+
+  it('volgt je richting en je eigen waarden', () => {
+    expect(rowSummary('weekbudget', withSettings({ direction: 'easy' }))).toMatchObject({ value: '90 min', sub: '1\u00d7 kracht, Rustig aan' });
+    expect(rowSummary('weekbudget', withSettings({ direction: 'easy', weekBudget: { minutes: 120, strength: 2 } }))).toMatchObject({ value: '120 min', sub: '2\u00d7 kracht, Rustig aan' });
+  });
+
+  it('staat er niet met een doel', () => {
+    expect(rowSummary('weekbudget', withSettings({}, false)).hidden).toBe(true);
+  });
+
+  it('telt als aangepast zodra je iets anders koos dan het advies', () => {
+    expect(adviceDifferences({ strengthTrackedExternally: false, introSoundEnabled: true }).some((d) => d.id === 'weekbudget')).toBe(false);
+    const found = adviceDifferences({ strengthTrackedExternally: false, introSoundEnabled: true, weekBudget: { minutes: 105 } }).find((d) => d.id === 'weekbudget');
+    expect(found).toMatchObject({ value: '105 min, 2\u00d7 kracht', advice: '150 min, 2\u00d7 kracht', page: 'doel', plan: false });
+  });
+
+  it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
+    const help = settingsHelp('weekbudget', true)!;
+    expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
+  });
+});

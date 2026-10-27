@@ -465,6 +465,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan vraagt ASCEND niets. Je wegingen blijven bewaard.' },
     ],
   },
+  weekbudget: {
+    title: 'Weekbudget',
+    lead: 'Zonder doel telt ASCEND wat je in een week deed tegen een budget in minuten en keren kracht.',
+    points: [
+      { head: 'Advies', text: '150 minuten en 2 keer kracht per week. Dat is de beweegrichtlijn. Met een gekozen richting past het budget zich aan: Rustig aan is 90 minuten en 1 keer kracht, Sterker worden 120 minuten en 3 keer kracht.' },
+      { head: 'Wat telt', text: 'een matige minuut telt 1, een pittige minuut telt 2. Kracht telt niet in de minuten maar als aparte teller: een krachttraining is een keer.' },
+      { head: 'Onder de richtlijn', text: 'minder dan 150 minuten of 2 keer kracht mag. Het is jouw keuze en ASCEND zegt het alleen rustig.' },
+      { head: 'Planning', text: 'het budget leest alleen wat je deed. Je planning verandert er niet van. Dat volgt in een volgende versie.' },
+    ],
+  },
   twijfeltest: {
     title: 'Twijfeltest eerst vragen',
     lead: 'Is een testloop duidelijk trager dan je vorige, dan vraagt ASCEND eerst of hij meetelt voor je tempo\'s.',

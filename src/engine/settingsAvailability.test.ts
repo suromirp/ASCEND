@@ -41,7 +41,12 @@ const withSettings = (extra: Partial<SettingsFacts['settings']>) => facts({ sett
 
 describe('rowAvailability', () => {
   it('staat alles aan en is alles gekoppeld, dan is er niets aan de hand', () => {
-    for (const id of CONDITIONAL_ROWS) expect(rowAvailability(id, facts()), id).toEqual({ available: true });
+    for (const id of CONDITIONAL_ROWS) expect(rowAvailability(id, facts({ noGoal: true })), id).toEqual({ available: true });
+  });
+
+  it('Weekbudget staat er alleen zonder doel', () => {
+    expect(rowAvailability('weekbudget', facts({ noGoal: false }))).toEqual({ available: false, reason: 'Zichtbaar zodra je geen doel hebt', parent: 'doelen' });
+    expect(rowAvailability('weekbudget', facts({ noGoal: true }))).toEqual({ available: true });
   });
 
   it('Kracht meerekenen uit: de Forge-keuzes staan er niet, de sportschool en de schakelaar wel', () => {

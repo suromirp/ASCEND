@@ -64,7 +64,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     advanced: [],
   },
   doel: {
-    rows: ['doelen', 'programma', 'lange-zondag', 'na-hoofddoel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
+    rows: ['doelen', 'programma', 'weekbudget', 'lange-zondag', 'na-hoofddoel', 'seizoensstrook', 'bundel-tochten', 'vrije-dagen'],
     advanced: [],
   },
   forge: {
@@ -178,6 +178,8 @@ export interface RowContext {
   // Er staan krachttrainingen in de planning.
   strengthTrainings: boolean;
   longSundayVisible: boolean;
+  // Er is geen doel op Ascend: dan geldt een richting met een weekbudget.
+  noGoal: boolean;
   // Twee trainingen op een dag mag.
   sameDayAllowed: boolean;
   // Wat dit toestel kan of heeft.
@@ -208,6 +210,7 @@ const B = {
   send: { ok: (_s, c) => c.sendToWatch, reason: 'Zichtbaar zodra Trainingen naar je horloge aan staat', parent: 'naar-horloge' },
   ascendHr: { ok: (s) => resolveWatchHrMode({ mode: s.watchHeartRate }) !== 'intervals', reason: 'Zichtbaar zodra de hartslag van ASCEND naar je horloge gaat', parent: 'horloge-hartslag' },
   goal: { ok: (_s, c) => c.goal, reason: 'Zichtbaar zodra je een hoofddoel hebt', parent: 'doelen' },
+  noGoal: { ok: (_s, c) => c.noGoal, reason: 'Zichtbaar zodra je geen doel hebt', parent: 'doelen' },
   goalOrProgram: { ok: (_s, c) => c.goal || c.program, reason: 'Zichtbaar zodra je een hoofddoel of programma hebt', parent: 'doelen' },
   goalOrTrek: { ok: (_s, c) => c.goal || c.trek, reason: 'Zichtbaar zodra je een hoofddoel of tocht hebt', parent: 'doelen' },
   longSunday: { ok: (_s, c) => c.longSundayVisible, reason: 'Zichtbaar zodra je hoofddoel geen bergtocht is', parent: 'doelen' },
@@ -230,6 +233,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.pairing], 'zware-dingen'),
   // Doel en tochten
   ...rule([B.goalOrProgram], 'programma'),
+  ...rule([B.noGoal], 'weekbudget'),
   ...rule([B.goal], 'na-hoofddoel'),
   ...rule([B.longSunday], 'lange-zondag'),
   ...rule([B.goalOrTrek], 'bundel-tochten', 'volgende-tocht', 'water-per-etappe', 'rust-na-tocht', 'bergschoenen', 'bergschoenen-herinnering'),
