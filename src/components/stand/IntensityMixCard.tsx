@@ -31,7 +31,7 @@ export function IntensityMixCard({ mix }: { mix: IntensityMix }) {
   return (
     <Card className="flex flex-col gap-3">
       <div>
-        <Eyebrow>INTENSITEIT</Eyebrow>
+        <Eyebrow>Intensiteit</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           {perTraining
             ? 'Je loop- en wandeltrainingen van de laatste vier weken.'

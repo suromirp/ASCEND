@@ -35,7 +35,7 @@ const RESTORE_TIMEOUT_MS = 15_000;
 const UNDO_TRIM_TIMEOUT_MS = 15_000;
 const SOURCE_TIMEOUT_MS = 15_000;
 
-const FEEL_LABEL: Record<string, string> = { better: 'Beter dan normaal', normal: 'Normaal', worse: 'Slechter dan normaal' };
+const FEEL_LABEL: Record<string, string> = { better: 'Beter', normal: 'Normaal', worse: 'Slechter' };
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
 export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
@@ -104,7 +104,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       if (n === 0) setRestoreNote('Er was niets terug te zetten; je getallen staan al zo.');
     } catch (err) {
       setRestoreNote(err instanceof TimeoutError
-        ? 'Terugzetten duurt langer dan het zou moeten. Kijk zo of je getallen terug staan, en probeer het anders nog eens.'
+        ? 'Terugzetten duurt langer dan verwacht. Kijk zo of je getallen terug staan; staan ze er niet, probeer het dan nog eens.'
         : 'Terugzetten lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     } finally {
       setRestoring(false);
@@ -123,7 +123,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       if (!done) setTrimNote('Er was niets terug te zetten; de training is al zoals hij was.');
     } catch (err) {
       setTrimNote(err instanceof TimeoutError
-        ? 'Ongedaan maken duurt langer dan het zou moeten. Kijk zo of je getallen terug staan, en probeer het anders nog eens.'
+        ? 'Ongedaan maken duurt langer dan verwacht. Kijk zo of je getallen terug staan; staan ze er niet, probeer het dan nog eens.'
         : 'Ongedaan maken lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     } finally {
       setUndoingTrim(false);
@@ -140,7 +140,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
       const done = await withTimeout(work(log.id), SOURCE_TIMEOUT_MS);
       if (!done) setSourceNote(nothing);
     } catch (err) {
-      setSourceNote(err instanceof TimeoutError ? 'Dit duurt langer dan het zou moeten. Kijk zo of de getallen kloppen, en probeer het anders nog eens.' : failed);
+      setSourceNote(err instanceof TimeoutError ? 'Dit duurt langer dan verwacht. Kijk zo of de getallen kloppen; zo niet, probeer het dan nog eens.' : failed);
     } finally {
       setSourceBusy(false);
     }
@@ -177,7 +177,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
 
           {log.subjectiveFeel && (
             <p className="mt-2 text-xs font-medium" style={{ color: log.subjectiveFeel === 'worse' ? 'var(--color-warning)' : 'var(--color-action)' }}>
-              {FEEL_LABEL[log.subjectiveFeel]}
+              Gevoel: {FEEL_LABEL[log.subjectiveFeel]}
             </p>
           )}
 
@@ -288,7 +288,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
 
           {log.notes && (
             <div className="mt-4">
-              <Eyebrow>NOTITIES</Eyebrow>
+              <Eyebrow>Notities</Eyebrow>
               <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{log.notes}</p>
             </div>
           )}
@@ -321,7 +321,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               stay forever). Always behind a confirmation. */}
           {confirmDelete ? (
             <div className="mt-6 flex flex-col gap-2">
-              <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je geschiedenis verwijderen?</p>
+              <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je logboek verwijderen?</p>
               <div className="flex gap-3">
                 <SecondaryButton onClick={() => setConfirmDelete(false)}>Annuleren</SecondaryButton>
                 <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}>Verwijderen</button>

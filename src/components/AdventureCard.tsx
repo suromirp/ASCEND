@@ -20,7 +20,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
   if (!progress.currentMilestone) {
     return (
       <Card texture>
-        <Eyebrow>VOLGEND KAMP</Eyebrow>
+        <Eyebrow>Volgend kamp</Eyebrow>
         <p className="mt-2 font-display text-xl" style={{ color: 'var(--color-action)' }}>Alle kampen gehaald</p>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName} , klaar voor de expeditie.</p>
       </Card>
@@ -33,7 +33,7 @@ export function AdventureCard({ progress, onOpenLadder }: { progress: GoalProgre
   return (
     <button onClick={onOpenLadder} className="block w-full text-left">
       <Card texture>
-        <Eyebrow>VOLGEND KAMP</Eyebrow>
+        <Eyebrow>Volgend kamp</Eyebrow>
         <p className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{progress.currentMilestone.definition.title}</p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{progress.goalName}</p>
 

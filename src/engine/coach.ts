@@ -73,12 +73,12 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
     case 'tpl_lower_a':
       return legsTomorrow
         ? `Zware beendag. Morgen staat ${legsTomorrow.name}, dus houd een herhaling in de tank.`
-        : 'Zware beendag. Techniek eerst, de zwaarte volgens MacroFactor.';
+        : 'Zware beendag. Techniek eerst.';
   }
   if (legsTomorrow && (template.type === 'cardio' || template.type === 'hiking')) {
     return `Houd het vandaag rustig: morgen staat ${legsTomorrow.name}.`;
   }
-  if (template.type === 'strength') return 'Techniek eerst, de zwaarte volgens MacroFactor.';
+  if (template.type === 'strength') return 'Techniek eerst.';
   return 'Rustig en gelijkmatig. Kun je hele zinnen praten, dan zit je goed.';
 }
 

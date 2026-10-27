@@ -48,7 +48,7 @@ export function WeekLoadCards({ weekStart }: { weekStart: string }) {
     eyebrow: kind === 'rest' ? 'Rustweek' : 'Deze week nog een keer',
     ask: 'always',
     alwaysAsk: true,
-    declined: 'Je week blijft zoals hij was.',
+    declined: 'Prima, je week blijft zoals hij was.',
   });
 
   const note = horizon.note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>;

@@ -220,10 +220,10 @@ export function HistoryPage() {
       <WeekReviewList />
 
       <Card className="flex flex-col py-1">
-        <DisclosureRow title="Toon alle trainingen" value={monthLogs.length} open={logsOpen} onToggle={() => setLogsOpen(!logsOpen)}>
+        <DisclosureRow title="Alle trainingen van deze maand" value={monthLogs.length} open={logsOpen} onToggle={() => setLogsOpen(!logsOpen)}>
           <div className="mx-stagger flex flex-col gap-2 pb-2">
             {monthLogs.length === 0 && (
-              <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen voltooide sessies deze maand.</p>
+              <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Nog geen trainingen deze maand.</p>
             )}
             {monthLogs.map((log) => {
               const template = templateById.get(log.templateId);

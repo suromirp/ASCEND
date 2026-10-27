@@ -16,7 +16,7 @@ export function StrengthProgressionCard({ logs }: { logs: SessionLog[] }) {
 
   return (
     <Card>
-      <Eyebrow>KRACHTPROGRESSIE</Eyebrow>
+      <Eyebrow>Krachtprogressie</Eyebrow>
       <select
         value={activeId}
         onChange={(e) => setSelectedId(e.target.value)}

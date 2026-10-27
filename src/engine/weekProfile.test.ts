@@ -86,7 +86,7 @@ describe('ridgeSentence', () => {
   const days = (logs: SessionLog[], sessions: PlannedSession[], today = TODAY) => dayLoads({ templates, today, weekStart: WEEK, logs, plannedSessions: sessions });
 
   it('zegt dat er niets staat in een lege week', () => {
-    expect(ridgeSentence(days([], []), TODAY)).toBe('Er staat deze week geen training.');
+    expect(ridgeSentence(days([], []), TODAY)).toBe('Deze week staat er geen training.');
   });
 
   it('noemt de zwaarste dag en genoeg ruimte tussen twee beendagen', () => {

@@ -138,7 +138,7 @@ export function AdviceItem({ advice, compact = false, whyAlways = false }: { adv
         eyebrow: weekLoad.kind === 'rest' ? 'Rustweek' : 'Deze week nog een keer',
         ask: 'always',
         alwaysAsk: true,
-        declined: 'Je week blijft zoals hij was.',
+        declined: 'Prima, je week blijft zoals hij was.',
         onStored: () => void respondToAdvice(advice, 'accepted'),
       });
       return;

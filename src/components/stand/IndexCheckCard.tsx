@@ -14,7 +14,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
   return (
     <Card className="flex flex-col gap-3">
       <div>
-        <Eyebrow>INDEX EN JE BENEN</Eyebrow>
+        <Eyebrow>Index en je benen</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Na een harde loop of test vraagt ASCEND hoe je benen voelden bij het inlopen, en legt dat naast wat de index die ochtend zei.
         </p>
@@ -35,7 +35,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
               <div key={c.date + c.name} className="flex items-baseline justify-between gap-3 text-xs">
                 <span className="truncate" style={{ color: 'var(--color-ink)' }}>{c.name} <span style={{ color: 'var(--color-ink-dim)' }}>· {dayShort(c.date)}</span></span>
                 <span className="shrink-0 tabular-nums" style={{ color: c.agrees ? 'var(--color-ink-dim)' : 'var(--color-action)' }}>
-                  index {formatNumberNL(c.index, 1)}, benen {LEGS_WORD[c.legs]}{c.agrees ? '' : ' ≠'}
+                  index {formatNumberNL(c.index, 1)}, benen {LEGS_WORD[c.legs]}{c.agrees ? '' : ', wijkt af'}
                 </span>
               </div>
             ))}

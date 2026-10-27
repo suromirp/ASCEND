@@ -86,7 +86,7 @@ export function InfluenceCard() {
         <div className="flex flex-col gap-1">
           {title}
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            Wat speelde er bij een training of dag, uit je logboek en wat je vastlegde. Tegen je eigen normale schommeling, vanaf 3 keer.
+            Per reden: wat het deed bij je training of dag, uit je logboek en wat je zelf vastlegde. Tegen je eigen normale schommeling, vanaf 3 keer.
           </p>
         </div>
 

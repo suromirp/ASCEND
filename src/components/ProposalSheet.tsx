@@ -69,7 +69,7 @@ export interface ProposalSheetProps {
   alternative?: { label: string; onClick: () => void };
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'VOORSTEL', emptyText, listUntil, extraLines, summary, alternative }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'Voorstel', emptyText, listUntil, extraLines, summary, alternative }: ProposalSheetProps) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   const planPreviewPass = previewPass ?? contextPass;
   const [busy, setBusy] = useState(false);
