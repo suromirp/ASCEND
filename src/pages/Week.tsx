@@ -201,7 +201,7 @@ export function WeekPage() {
 
       {!monthView && restAdvice.length > 0 && (
         <Card className="flex flex-col gap-3" texture>
-          <Eyebrow>RUSTDAG</Eyebrow>
+          <Eyebrow>Rustdag</Eyebrow>
           {restAdvice.map((a) => (
             <div key={a.id}>
               <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>
@@ -213,7 +213,7 @@ export function WeekPage() {
 
       {!monthView && extraAdvice.length > 0 && (
         <Card className="flex flex-col gap-3" texture>
-          <Eyebrow>EXTRA TRAINING</Eyebrow>
+          <Eyebrow>Extra training</Eyebrow>
           {extraAdvice.map((a) => (
             <div key={a.id}>
               <p className="mb-1 text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>{a.title}</p>

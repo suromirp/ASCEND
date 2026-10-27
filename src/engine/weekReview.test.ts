@@ -28,7 +28,7 @@ describe('buildWeekReview', () => {
     expect(review.done).toBe(4);
     expect(review.missed).toEqual(['Heuvelintervallen', 'Lange duurloop']);
     expect(review.perSport).toEqual(['Hardlopen: 5,2 km']);
-    expect(review.advice[0]).toContain('Heuvelintervallen en Lange duurloop schoten erbij in');
+    expect(review.advice[0]).toContain('Heuvelintervallen en Lange duurloop zijn blijven liggen');
     expect(review.advice[0]).toContain('haalt ASCEND in');
     expect(review.title).toBe('Week 2 van 4, basisfase');
   });

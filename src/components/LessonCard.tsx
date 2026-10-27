@@ -13,7 +13,7 @@ export function LessonCard() {
   return (
     <Card className="flex flex-col gap-2" texture>
       <div className="flex items-baseline justify-between">
-        <Eyebrow>LES VAN DE WEEK</Eyebrow>
+        <Eyebrow>Les van de week</Eyebrow>
         <span className="text-xs" style={{ color: read ? 'var(--color-success)' : 'var(--color-ink-dim)' }}>{read ? 'gelezen' : CATEGORY_LABEL[topic.category].toLowerCase()}</span>
       </div>
       <p className="font-display text-lg leading-snug" style={{ color: 'var(--color-ink)' }}>{topic.title}</p>

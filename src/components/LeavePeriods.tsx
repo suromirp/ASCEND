@@ -56,11 +56,11 @@ export function LeavePeriodsCard() {
     <>
       <Card className="flex flex-col gap-3" texture>
         <div>
-          <Eyebrow>VRIJE DAGEN EN VAKANTIES</Eyebrow>
+          <Eyebrow>Vrije dagen en vakanties</Eyebrow>
           <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             {shown.length === 0
-              ? 'Heb je vrije dagen, een vakantie of een tocht gepland? Zet die hier. ASCEND laat zien hoe je weken er dan uitzien en past pas iets aan na jouw akkoord.'
-              : 'ASCEND houdt hier rekening mee in je planning. Een periode toevoegen of weghalen laat je eerst zien en past pas iets aan na jouw akkoord.'}
+              ? 'Heb je vrije dagen, een vakantie of een tocht op komst? Zet ze hier. Je ziet eerst hoe je weken eruit komen te zien; pas na jouw Akkoord verandert er iets.'
+              : 'ASCEND houdt hier rekening mee. Een periode toevoegen of weghalen zie je eerst als voorstel; pas na jouw Akkoord verandert er iets.'}
           </p>
         </div>
 
@@ -113,8 +113,8 @@ export function LeavePeriodsCard() {
           leave={plan.periodsAfter}
           notes={plan.notes}
           emptyText={plan.mode === 'add'
-            ? 'Je planning hoeft niet te veranderen. De periode wordt bewaard en ASCEND houdt er rekening mee.'
-            : 'Je planning hoeft niet te veranderen. De periode wordt verwijderd.'}
+            ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de periode en houdt ASCEND er rekening mee.'
+            : 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de periode.'}
           onRespond={async (response) => {
             if (response === 'accepted') await applyLeave(plan);
           }}
@@ -146,7 +146,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
         <div className={`flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex min-h-0 flex-col rounded-b-none border-b-0 p-0!">
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-5">
-              <Eyebrow>PERIODE TOEVOEGEN</Eyebrow>
+              <Eyebrow>Periode toevoegen</Eyebrow>
               <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>Wanneer ben je vrij of weg?</h3>
 
               <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Soort periode">
@@ -209,7 +209,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
               )}
 
               <label className="mt-4 block text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                Notitie (hoeft niet)
+                Notitie (mag leeg)
                 <input
                   type="text"
                   value={note}
@@ -221,7 +221,7 @@ function LeavePeriodSheet({ existing, onSubmit, onClose }: { existing: LeavePeri
                 />
               </label>
               <p className="mt-3 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                Je ziet eerst wat er in je planning verandert. Pas na jouw akkoord wordt de periode bewaard.
+                Je ziet eerst wat er in je planning verandert. Pas na jouw Akkoord wordt de periode bewaard.
               </p>
               <SettingsLinkRow page="doel" row="rust-na-tocht" label="Rust na een bergtocht instellen" />
             </div>

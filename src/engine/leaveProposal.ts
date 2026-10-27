@@ -178,7 +178,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   if (mode === 'add' && period.kind === 'trek') {
     for (const s of result.sessions) {
       if (s.status === 'skipped' || !idIsTestOrRace(s.templateId, byId) || s.scheduledDate < addDays(period.startDate, -trekLightDaysBefore(dayCount(period), period.trek?.importance)) || s.scheduledDate > period.endDate) continue;
-      notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verplaats ik niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
+      notes.push(`${nameOf(s.templateId)} op ${dayText(s.scheduledDate)} valt bij je tocht. Die verplaatst ASCEND niet zomaar. Kies zelf een andere dag als je fris wilt vertrekken.`);
     }
   }
   return { mode, period, ...(replaces ? { replaces } : {}), periodsAfter, proposal, notes: [...new Set(notes)] };
@@ -186,13 +186,13 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
 
 function explain(mode: 'add' | 'remove', period: LeavePeriod, count: number, changed = false): string {
   if (count === 0) {
-    if (changed) return 'Je planning hoefde niet te veranderen. De tocht is bijgewerkt en ASCEND houdt er rekening mee.';
+    if (changed) return 'Je planning hoeft niet te veranderen. Met Akkoord werk je de tocht bij, en ASCEND houdt er rekening mee.';
     return mode === 'add'
-      ? 'Je planning hoefde niet te veranderen. De periode is bewaard en ASCEND houdt er rekening mee.'
-      : 'Je planning hoefde niet te veranderen. De periode is verwijderd.';
+      ? 'Je planning hoeft niet te veranderen. Met Akkoord bewaar je de periode, en ASCEND houdt er rekening mee.'
+      : 'Je planning hoeft niet te veranderen. Met Akkoord verwijder je de periode.';
   }
   if (mode === 'remove') return 'Wat de periode verschoof of liet vervallen, staat weer op zijn plek.';
-  if (period.kind === 'no_training') return 'Op je vakantiedagen staat geen training meer. Wat er stond, is naar een andere dag van die week geschoven of vervallen, binnen de gewone regels voor rust tussen zware dagen.';
+  if (period.kind === 'no_training') return 'Op je vakantiedagen staat geen training meer. Wat er stond, schuift naar een andere dag van die week of vervalt, binnen de gewone regels voor rust tussen zware dagen.';
   if (period.kind === 'trek' && period.trek?.importance === 'goal') return 'Elke tochtdag is een wandeldag met je rugzak. De dagen ervoor blijven licht, zodat je fris vertrekt, en de dag erna ook. Zware beendagen houden de gewone rust tot en na de tocht.';
   if (period.kind === 'trek') return 'Elke tochtdag is een wandeldag met je rugzak. De dag ervoor en erna blijft licht, en zware beendagen houden de gewone rust tot en na de tocht.';
   return 'Op je vrije dag past een wandeling, binnen de gewone regels voor rust tussen zware dagen.';
@@ -204,8 +204,8 @@ function notesFor(remaining: Finding[], inWindow: (date: string) => boolean, mod
   const lines: string[] = [];
   for (const f of remaining) {
     if ((f.rule !== 'LEAVE-OFF' && f.rule !== 'LEAVE-LIGHT' && f.rule !== 'LEG-SPACING') || !inWindow(f.date)) continue;
-    if (f.level === 1) lines.push(`${f.message} Die heb je zelf vastgezet, dus die laat ik staan.`);
-    else if (f.level === 2) lines.push(`${f.message} Een test of wedstrijd verplaats ik niet zomaar. Kies zelf een andere dag.`);
+    if (f.level === 1) lines.push(`${f.message} Die heb je zelf vastgezet, dus die blijft staan.`);
+    else if (f.level === 2) lines.push(`${f.message} Een test of wedstrijd verplaatst ASCEND niet zomaar. Kies zelf een andere dag.`);
     else lines.push(f.message);
   }
   return [...new Set(lines)];

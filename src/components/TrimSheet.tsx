@@ -75,7 +75,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
         const message = err instanceof TrimUnavailableError
           ? err.message
           : err instanceof TimeoutError
-            ? 'Ophalen duurt langer dan het zou moeten. Probeer het zo nog eens.'
+            ? 'Ophalen duurt langer dan verwacht. Probeer het zo nog eens.'
             : 'Ophalen lukte niet. Probeer het zo nog eens.';
         setLoaded({ kind: 'error', message });
       });
@@ -109,7 +109,7 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
       setNote('Er is niets ingekort: de training is al ingekort of niet meer te vinden.');
     } catch (err) {
       setNote(err instanceof TimeoutError
-        ? 'Inkorten duurt langer dan het zou moeten. Kijk zo in het logblad of het gelukt is, en probeer het anders nog eens.'
+        ? 'Inkorten duurt langer dan verwacht. Kijk zo in de training of het gelukt is; zo niet, probeer het dan nog eens.'
         : 'Inkorten lukte niet. Er is niets veranderd; probeer het zo nog eens.');
     }
     setSaving(false);

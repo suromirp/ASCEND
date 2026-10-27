@@ -81,7 +81,7 @@ export function InfluenceBlock({
     <div>
       {facts.length > 0 && (
         <>
-          <p className="text-[13px] leading-[18px]" style={hint}>Wat ASCEND al weet</p>
+          <p className="text-[13px] leading-[18px]" style={hint}>Dit weet ASCEND al</p>
           <ul className="mt-1 flex flex-col">
             {facts.map((f) => (
               <li key={f.reason} className="py-1.5">
@@ -185,7 +185,7 @@ export function InfluenceBlock({
       </div>
       {mode === 'log' && exclude && <p className="text-[13px] leading-[18px]" style={{ color: 'var(--color-ink)' }}>{EXCLUDE_LOG_EXPLAIN}</p>}
       {showStravaLine && <p className="mt-2 text-xs" style={hint}>Alleen voor jou: niet in de tekst voor Strava.</p>}
-      {failed && <p role="status" className="mt-2 text-xs" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet of is nog niet bevestigd. Kijk zo of het staat, en probeer het anders nog eens.</p>}
+      {failed && <p role="status" className="mt-2 text-xs" style={{ color: 'var(--color-warning)' }}>Opslaan lukte niet of is nog niet bevestigd. Kijk zo of het staat; zo niet, probeer het dan nog eens.</p>}
     </div>
   );
 }

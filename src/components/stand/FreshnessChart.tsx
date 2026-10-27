@@ -46,7 +46,7 @@ export function FreshnessChart({ points, today }: { points: FreshnessPoint[]; to
   return (
     <Card className="flex flex-col gap-3">
       <div>
-        <Eyebrow>FRISHEID</Eyebrow>
+        <Eyebrow>Frisheid</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Je beenvermoeidheid per dag. Lager is frisser. Vooruit is het een schatting uit je planning, met de marge eromheen.
         </p>
@@ -129,5 +129,5 @@ function dayAdvice(p: FreshnessPoint): string {
   }
   if (p.index <= FATIGUE_THRESHOLDS.test.fresh) return 'Je benen zijn fris.';
   if (p.index <= FATIGUE_THRESHOLDS.hard.fresh) return 'Wat vermoeid. Rustig werk gaat prima.';
-  return 'Vermoeid. Een rustige dag helpt het snelst.';
+  return 'Vermoeid. Een rustige dag kan het snelst helpen.';
 }

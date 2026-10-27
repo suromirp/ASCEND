@@ -422,7 +422,7 @@ describe('as a proposal with Akkoord', () => {
     const p = input('add', period('no_training', '2027-01-11', '2027-01-12'), [], locked, { blocks: BLOCKS });
     expect(p.proposal.changes.some((c) => c.plannedSessionId === upperA.id || c.plannedSessionId === test.id)).toBe(false);
     expect(p.notes.some((n) => n.includes('Bovenlichaam A') && n.includes('zelf vastgezet'))).toBe(true);
-    expect(p.notes.some((n) => n.includes('Testloop 5 km') && n.includes('verplaats ik niet zomaar'))).toBe(true);
+    expect(p.notes.some((n) => n.includes('Testloop 5 km') && n.includes('verplaatst ASCEND niet zomaar'))).toBe(true);
   });
 
   it('a test the day before a trek stays, the walk stays too, and the notes say so', () => {
@@ -431,7 +431,7 @@ describe('as a proposal with Akkoord', () => {
     const applied = accept(p, settled).sessions;
     expect(on(applied, '2027-01-11')).toContain('tpl_test_run');
     expect(on(applied, '2027-01-12')).toEqual(['tpl_mountain_hike']);
-    expect(p.notes.some((n) => n.includes('Testloop 5 km') && n.includes('verplaats ik niet zomaar'))).toBe(true);
+    expect(p.notes.some((n) => n.includes('Testloop 5 km') && n.includes('verplaatst ASCEND niet zomaar'))).toBe(true);
   });
 
   it('history and logged sessions are never in the proposal', () => {
@@ -446,7 +446,7 @@ describe('as a proposal with Akkoord', () => {
   it('a period that changes nothing still gives a proposal, with no items', () => {
     const p = input('add', period('no_training', '2026-12-20', '2026-12-20'), [], plan.slice(0, 7));
     expect(p.proposal.changes).toEqual([]);
-    expect(p.proposal.consequences).toMatch(/hoefde niet te veranderen/);
+    expect(p.proposal.consequences).toMatch(/hoeft niet te veranderen/);
   });
 
   it('removing a period brings back what it moved and let go, and takes away what it placed', () => {

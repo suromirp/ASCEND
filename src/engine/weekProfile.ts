@@ -113,13 +113,13 @@ const shortName = (t: SessionTemplate) => t.name.replace(/\s*\([^)]*\)\s*$/, '')
 
 export function ridgeSentence(days: DayLoad[], today: string): string {
   const peak = days.reduce<DayLoad | undefined>((best, d) => (d.load > (best?.load ?? 0) ? d : best), undefined);
-  if (!peak) return 'Er staat deze week geen training.';
+  if (!peak) return 'Deze week staat er geen training.';
   const past = days[days.length - 1].date < today;
   const heaviest = `${cap(weekdayLongNL(peak.date))} ${past || peak.date < today ? 'was' : 'is'} je zwaarste dag.`;
 
   const legs = days.filter((d) => d.legTemplate);
   if (legs.length === 0) return `${heaviest} Geen zware beendag.`;
-  if (legs.length === 1) return `${heaviest} Eén zware beendag (${shortName(legs[0].legTemplate!)}), dus de benen hebben alle ruimte.`;
+  if (legs.length === 1) return `${heaviest} Eén zware beendag (${shortName(legs[0].legTemplate!)}): je benen hebben alle ruimte.`;
 
   // Per paar opeenvolgende beendagen: genoeg ruimte volgens de regel van de planner?
   interface Pair { first: DayLoad; second: DayLoad; gap: number; need: number; intended: boolean; trek: boolean }

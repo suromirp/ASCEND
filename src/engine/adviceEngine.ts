@@ -809,7 +809,7 @@ function restPullAdvice(inputs: AdviceInputs, templateById: Map<string, SessionT
 
   const restToToday: PlanChangeItem = { plannedSessionId: rest.id, action: 'move', fromDate: tomorrow, toDate: today, reason: 'Vandaag staat er geen training meer: dit is je rustdag.', generatedBy: ['engine/adviceEngine.ts', 'REST-PULL'] };
   const rule = 'Staat er vandaag geen training meer en is morgen je rustdag, dan is vandaag al een rustdag. ASCEND haalt de rust naar vandaag en zet morgen een training, als die past zonder te dicht op een zware training te zitten.';
-  const title = 'Vandaag geen training meer: rust je vandaag?';
+  const title = 'Geen training meer vandaag. Wordt dit je rustdag?';
   // Already a training tomorrow next to the rest day (you moved it there).
   const tomorrowTraining = inputs.plannedSessions.find((s) => s.scheduledDate === tomorrow && !isRest(s) && open(s));
   if (tomorrowTraining) {

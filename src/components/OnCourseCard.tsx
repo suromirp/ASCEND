@@ -22,7 +22,7 @@ export function OnCourseCard({ goalName, goalDate }: { goalName: string; goalDat
   );
   return (
     <Card className="flex flex-col gap-2">
-      <Eyebrow>DE COACH</Eyebrow>
+      <Eyebrow>De coach</Eyebrow>
       <p className="font-display text-xl" style={{ color: STATUS_COLOR[course.status] }}>{course.headline}</p>
       {course.summary && <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{course.summary}</p>}
       <div className="mt-1 flex flex-col gap-1.5">

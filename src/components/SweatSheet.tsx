@@ -62,7 +62,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
       await withTimeout(saveSweat(clean), SAVE_LIMIT_MS);
       requestClose();
     } catch (err) {
-      setNote(err instanceof TimeoutError ? 'Opslaan duurt langer dan het zou moeten. Kijk zo of je meting er staat, en probeer het anders nog eens.' : 'Opslaan lukte niet. Probeer het zo nog eens.');
+      setNote(err instanceof TimeoutError ? 'Opslaan duurt langer dan verwacht. Kijk zo of je meting er staat; staat hij er niet, probeer het dan nog eens.' : 'Opslaan lukte niet. Probeer het zo nog eens.');
     } finally {
       setBusy(false);
     }
@@ -76,7 +76,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
       await withTimeout(saveSweat({ logId: log.id, remove: true }), SAVE_LIMIT_MS);
       requestClose();
     } catch (err) {
-      setNote(err instanceof TimeoutError ? 'Weghalen duurt langer dan het zou moeten. Probeer het zo nog eens.' : 'Weghalen lukte niet. Probeer het zo nog eens.');
+      setNote(err instanceof TimeoutError ? 'Weghalen duurt langer dan verwacht. Probeer het zo nog eens.' : 'Weghalen lukte niet. Probeer het zo nog eens.');
     } finally {
       setBusy(false);
     }

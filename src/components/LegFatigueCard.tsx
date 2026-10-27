@@ -83,7 +83,7 @@ export function LegFatigueCard() {
       </div>
       <div className="flex justify-between text-xs" style={{ color: 'var(--color-ink-dim)' }} aria-hidden>
         <span>fris</span>
-        <span>wat moe</span>
+        <span>wat vermoeid</span>
         <span>vermoeid</span>
       </div>
 
@@ -108,7 +108,7 @@ export function LegFatigueCard() {
           {nextStatus !== 'fris' && nextResult.contributions[0] && (
             <span style={{ color: 'var(--color-ink-dim)' }}> · grens {FATIGUE_THRESHOLDS[purpose].fresh}. Het zwaarst telt {nextResult.contributions[0].name} van {short(nextResult.contributions[0].date)} ({formatNumberNL(nextResult.contributions[0].points, 1)}){nextResult.contributions[0].logged ? '' : ': korter, of naar na de ' + (next.templateId === 'tpl_race' ? 'wedstrijd' : 'test')}.</span>
           )}
-          {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn: dan nooit vanzelf fris.</span>}
+          {nextResult.painRecent && <span style={{ color: 'var(--color-ink-dim)' }}> Je meldde pijn, dus dit telt nooit vanzelf als fris.</span>}
         </p>
       )}
 

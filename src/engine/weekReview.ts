@@ -178,10 +178,10 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     // was already let go.
     const keyMissed = missedSessions.find((s) => idHasRole(s.templateId, 'key', byId) && s.status !== 'skipped');
     advice.push(
-      `${missedNames.length === 1 ? missedNames[0] : `${missedNames.slice(0, -1).join(', ')} en ${missedNames.at(-1)}`} ${missedNames.length === 1 ? 'schoot' : 'schoten'} erbij in. ` +
+      `${missedNames.length === 1 ? missedNames[0] : `${missedNames.slice(0, -1).join(', ')} en ${missedNames.at(-1)}`} ${missedNames.length === 1 ? 'is' : 'zijn'} blijven liggen. ` +
       (keyMissed
-        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week; die haalt ASCEND in op een vrije dag als dat nog past. De rest laat je gaan, niet dubbel doen.`
-        : 'Laat ze gaan: inhalen door te stapelen helpt niet. Volgende week gewoon weer volgens plan.'),
+        ? `De ${byId.get(keyMissed.templateId)?.name.toLowerCase()} is de belangrijkste van de week; die haalt ASCEND in op een vrije dag als dat nog past. De rest laat je los, niet dubbel doen.`
+        : 'Laat het los: inhalen door te stapelen is geen goed idee. Volgende week weer gewoon volgens plan.'),
     );
   }
   // The same training missing two weeks in a row: a pattern, not bad luck.
@@ -211,9 +211,9 @@ export function buildWeekReview(inputs: ReviewInputs): WeekReview | null {
     }
   }
   if (heavier >= 2) {
-    advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Slaap je genoeg en eet je genoeg? Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk.');
+    advice.push('Twee of meer trainingen voelden zwaarder dan gepland. Voelt het volgende week weer zo, kies dan de korte versie of houd de minuten gelijk. Slaap en eten kunnen helpen.');
   } else if (lighter >= 2 && advice.length < 3) {
-    advice.push('Een paar trainingen voelden lichter dan gepland. Mooi: dat is het teken dat je sterker wordt. ASCEND bouwt rustig verder.');
+    advice.push('Een paar trainingen voelden lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. ASCEND bouwt rustig verder.');
   }
   if (next?.note && /rust/i.test(next.note) && advice.length < 3) {
     advice.push('Volgende week is een rustweek. Korter en rustiger is precies goed: dan komt de opbouw binnen.');

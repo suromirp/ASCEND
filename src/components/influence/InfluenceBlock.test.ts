@@ -12,7 +12,7 @@ const html = (facts: KnownFact[]) => renderToStaticMarkup(createElement(Influenc
 describe('InfluenceBlock', () => {
   it('toont een feit als gewone regel, zonder knop, vinkje of rondje', () => {
     const out = html([fact]);
-    expect(out).toContain('Wat ASCEND al weet');
+    expect(out).toContain('Dit weet ASCEND al');
     expect(out).toContain('Zware beendag');
     expect(out).toContain('Beenkracht A, uit je logboek');
     expect(out).not.toContain('Tik als het klopt');
@@ -23,6 +23,6 @@ describe('InfluenceBlock', () => {
   });
 
   it('toont geen blok met feiten als er geen zijn', () => {
-    expect(html([])).not.toContain('Wat ASCEND al weet');
+    expect(html([])).not.toContain('Dit weet ASCEND al');
   });
 });

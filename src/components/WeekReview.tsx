@@ -133,7 +133,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             )}
 
             {review.advice.length > 0 && (
-              <Section title="De coach">
+              <Section title="Advies">
                 <div className="flex flex-col gap-2">
                   {review.advice.map((a) => (
                     <p key={a} className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{a}</p>
@@ -147,7 +147,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
             )}
 
             {review.missed.length > 0 && (
-              <Section title="Niet gedaan">
+              <Section title="Blijven liggen">
                 <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{review.missed.join(', ')}</p>
               </Section>
             )}
