@@ -22,7 +22,7 @@ import type { RoutePlan } from '../models/routePlan';
 import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
 import type { TestJudgment } from '../models/testJudgment';
 import { isUsableBestEffort } from '../engine/bestEffort';
-import { MAX_TEST_JUDGMENTS } from '../engine/testJudgment';
+import { capTestJudgments } from '../engine/testJudgment';
 import type { InjuryNote } from '../models/injury';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
@@ -335,12 +335,29 @@ export function migrateLogGymProfile(log: SessionLog): SessionLog {
 // A damaged best effort is dropped and the log keeps everything else; a damaged verdict
 // loses only itself. One verdict per log, the last one wins.
 export function migrateLogBestEffort(log: SessionLog): SessionLog {
-  if (!('bestEffort' in log)) return log;
-  if (isUsableBestEffort((log as { bestEffort?: unknown }).bestEffort)) {
-    const b = (log as { bestEffort: BestEffort }).bestEffort;
-    return { ...log, bestEffort: { km: b.km, minutes: b.minutes } };
+  let out = log;
+  if ('bestEffortTried' in out) {
+    const tried = (out as { bestEffortTried?: unknown }).bestEffortTried;
+    if (typeof tried !== 'string' || tried.length === 0 || tried.length > 40) {
+      const { bestEffortTried: _t, ...rest } = out;
+      void _t;
+      out = rest;
+    }
   }
-  const { bestEffort: _damaged, ...rest } = log;
+  if (!('bestEffort' in out)) return out;
+  const raw = (out as { bestEffort?: unknown }).bestEffort;
+  if (isUsableBestEffort(raw)) {
+    const r = raw as BestEffort;
+    const fin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
+    const kept: BestEffort = { km: r.km, minutes: r.minutes };
+    if (fin(r.wholeKm) && fin(r.wholeMinutes)) {
+      kept.wholeKm = r.wholeKm;
+      kept.wholeMinutes = r.wholeMinutes;
+    }
+    if (r.accepted === true) kept.accepted = true;
+    return { ...out, bestEffort: kept };
+  }
+  const { bestEffort: _damaged, ...rest } = out;
   void _damaged;
   return rest;
 }
@@ -362,7 +379,7 @@ export function migrateTestJudgments(raw: unknown): { list: TestJudgment[] | und
     }
     byLog.set(item.logId, { logId: item.logId, verdict: item.verdict, date });
   }
-  return { list: [...byLog.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_TEST_JUDGMENTS), skipped };
+  return { list: capTestJudgments([...byLog.values()]), skipped };
 }
 
 // --- InjuryNote.kind en InjuryNote.side ---------------------------------------------------

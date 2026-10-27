@@ -89,14 +89,32 @@ export function fastestWindow(stream: StreamSet, distanceM: number): BestWindow 
 
 // The best effort of a test log: the fastest `targetKm` of the series, or nothing when
 // the series cannot give it (too short, holes, a distance that does not match the log).
-export function bestEffortFromStream(stream: StreamSet, targetKm: number, logKm?: number): BestEffort | undefined {
+export function bestEffortFromStream(stream: StreamSet, targetKm: number, logKm?: number, logMinutes?: number): BestEffort | undefined {
   const p = distancePoints(stream);
   if (p.length < 2) return undefined;
   const totalKm = (p[p.length - 1].d - p[0].d) / 1000;
   if (logKm && logKm > 0 && Math.abs(totalKm - logKm) / logKm > DISTANCE_AGREEMENT) return undefined;
   const w = fastestWindow(stream, targetKm * 1000);
   if (!w) return undefined;
-  return { km: targetKm, minutes: Math.round((w.seconds / 60) * 1000) / 1000 };
+  const out: BestEffort = { km: targetKm, minutes: Math.round((w.seconds / 60) * 1000) / 1000 };
+  if (isNum(logKm) && isNum(logMinutes)) {
+    out.wholeKm = logKm;
+    out.wholeMinutes = logMinutes;
+  }
+  return out;
+}
+
+// The fingerprint of the totals a best effort was read for.
+export function effortFingerprint(km: number, minutes: number): string {
+  return `${km.toFixed(2)}|${minutes.toFixed(2)}`;
+}
+
+// A best effort that was read for other totals than the log has now (a correction at the
+// source, a cut): it says nothing about this log any more. One without a fingerprint
+// (read before it existed) cannot be checked against the distance and is not trusted.
+export function isStaleEffort(b: BestEffort, km: number, minutes: number): boolean {
+  if (!isNum(b.wholeKm) || !isNum(b.wholeMinutes)) return true;
+  return Math.abs(b.wholeKm - km) > 0.005 || Math.abs(b.wholeMinutes - minutes) > 0.05;
 }
 
 // A best effort as it may be believed: a finite distance and time that make a running pace.

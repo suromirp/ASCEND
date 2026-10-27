@@ -14,6 +14,7 @@ import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgression
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { NextTrekLine } from '../components/NextTrekLine';
+import { TestPendingLine } from '../components/TestPendingLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
@@ -333,6 +334,9 @@ function TodayContent() {
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
+
+      {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
+      <TestPendingLine />
 
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />

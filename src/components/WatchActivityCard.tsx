@@ -79,7 +79,7 @@ export function WatchActivityCard() {
   // the background after the save, never in its way.
   const addDetail = useCallback(
     (activity: ExternalActivity) => {
-      void attachActivityDetail(activity).then((result) => (result === 'attached' ? refresh() : undefined));
+      void attachActivityDetail(activity, { fresh: true }).then((result) => (result === 'attached' ? refresh() : undefined));
     },
     [refresh],
   );

@@ -13,10 +13,17 @@ import {
   testBasisLine,
   testState,
   upsertTestJudgment,
+  capTestJudgments,
+  effortOffer,
+  previewEffort,
+  mayAcceptAtOnce,
+  MAX_TEST_JUDGMENTS,
+  pendingTestLine,
+  PENDING_TEST_LINE,
 } from './testJudgment';
 
 // Invented data: a 5 km test log, optionally with a best effort read from the series.
-function test(id: string, date: string, km: number, minutes: number, bestEffort?: { km: number; minutes: number }): SessionLog {
+function test(id: string, date: string, km: number, minutes: number, bestEffort?: { km: number; minutes: number; accepted?: boolean; wholeKm?: number; wholeMinutes?: number }): SessionLog {
   return {
     id,
     templateId: 'tpl_test_run',
@@ -24,7 +31,7 @@ function test(id: string, date: string, km: number, minutes: number, bestEffort?
     type: 'cardio',
     durationMinutes: minutes,
     cardioData: { distanceKm: km, durationMinutes: minutes },
-    ...(bestEffort ? { bestEffort } : {}),
+    ...(bestEffort ? { bestEffort: { accepted: true, wholeKm: km, wholeMinutes: minutes, ...bestEffort } } : {}),
     source: 'manual',
   } as unknown as SessionLog;
 }
@@ -116,7 +123,8 @@ describe('a doubtful test', () => {
   it('uses the best 5 km, not the whole run, to judge whether a test was slower', () => {
     // 6 km in 36 minutes looks slow per km, but the best 5 km was as fast as before.
     const long = test('e', '2027-02-10', 6.03, 36, { km: 5, minutes: 28.2 });
-    expect(countedTests([NORMAL, long], { ask: true }).pending).toBeUndefined();
+    const before = test('a2', '2027-01-10', 6, 34, { km: 5, minutes: 28 });
+    expect(countedTests([before, long], { ask: true }).pending).toBeUndefined();
   });
 });
 
@@ -177,5 +185,109 @@ describe('the list of verdicts', () => {
       { logId: 'a', verdict: 'counts', date: '2027-01-05' },
       { logId: 'b', verdict: 'counts', date: '2027-02-01' },
     ]);
+  });
+});
+
+describe('a doubtful test between two slow ones', () => {
+  // a normal, b slower than a, c slower than a as well: both b and c wait.
+  const C2 = test('c2', '2027-03-10', 5, 33);
+  const logs = [NORMAL, SLOWER, C2];
+
+  it('keeps the question on the older one and says a newer test waits as well', () => {
+    const c = countedTests(logs, { ask: true });
+    expect(c.pending?.logId).toBe('c2');
+    expect(c.waiting.map((t) => t.logId)).toEqual(['b', 'c2']);
+    const b = testState(logs, { ask: true }, 'b')!;
+    expect(b.standing).toBe('pending');
+    expect(b.newerWaits).toBe(true);
+    const c2 = testState(logs, { ask: true }, 'c2')!;
+    expect(c2.standing).toBe('pending');
+    expect(c2.newerWaits).toBe(false);
+  });
+
+  it('lets you answer the older one, and compares the newer with it after', () => {
+    const judgments: TestJudgment[] = [{ logId: 'b', verdict: 'counts', date: '2027-03-11' }];
+    const c = countedTests(logs, { ask: true, judgments });
+    expect(c.tests.map((t) => t.logId)).toEqual(['a', 'b', 'c2']);
+    expect(c.pending).toBeUndefined();
+  });
+
+  it('marks a slower test that a faster, newer one has passed as held', () => {
+    expect(testState([NORMAL, SLOWER, FASTER], { ask: true }, 'b')?.standing).toBe('held');
+  });
+});
+
+describe('the best stretch only counts after it is accepted', () => {
+  const unaccepted = test('x', '2027-02-10', 6.03, 36, { km: 5, minutes: 25, accepted: false });
+  const PREV = test('p0', '2027-01-10', 6, 34, { km: 5, minutes: 28 });
+  const accepted = test('x', '2027-02-10', 6.03, 36, { km: 5, minutes: 25 });
+
+  it('counts the whole run while the best stretch has not been accepted', () => {
+    expect(testResults([unaccepted])[0].basis).toBe('whole');
+    expect(testResults([accepted])[0].basis).toBe('effort');
+    expect(effortOffer(unaccepted)).toEqual({ km: 5, minutes: 25 });
+    expect(effortOffer(accepted)).toBeUndefined();
+  });
+
+  it('shows the paces from now to later when the test already sets them', () => {
+    const rows = previewEffort([PREV, unaccepted], {}, 'x');
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].from).not.toBe(rows[0].to);
+  });
+
+  it('lets it count at once for a test that has just come in, or when no pace changes', () => {
+    expect(mayAcceptAtOnce([PREV, unaccepted], {}, 'x', true)).toBe(true);
+    expect(mayAcceptAtOnce([PREV, unaccepted], {}, 'x', false)).toBe(false);
+    // A waiting slower test stays slower on its best stretch: the paces do not move.
+    const slowWhole = test('w', '2027-02-10', 6.03, 40, { km: 5, minutes: 32, accepted: false });
+    expect(mayAcceptAtOnce([PREV, slowWhole], { askDoubtTest: true }, 'w', false)).toBe(true);
+  });
+
+  it('ignores a best effort read for other totals than the log has now', () => {
+    const corrected = test('x', '2027-02-10', 6.03, 36, { km: 5, minutes: 27.67, wholeKm: 6.5, wholeMinutes: 39 });
+    expect(testResults([corrected])[0].basis).toBe('whole');
+    expect(effortOffer(corrected)).toBeUndefined();
+    // Read before the fingerprint existed: not trusted.
+    const legacy = test('x', '2027-02-10', 6.03, 36, { km: 5, minutes: 27.67 });
+    delete (legacy.bestEffort as { wholeKm?: number }).wholeKm;
+    expect(testResults([legacy])[0].basis).toBe('whole');
+  });
+
+  it('never compares a best stretch with a whole run: both are read as the whole run', () => {
+    // previous: whole run 5 km in 28:00; new: best stretch 27:00 of a 6 km run in 34 minutes (slower whole).
+    const previous = test('p', '2027-01-10', 5, 28);
+    const next = test('q', '2027-02-10', 6, 36, { km: 5, minutes: 27 });
+    // On the best stretch it is faster (no doubt); on the whole run it is 34/6 vs 28/5, slower per km.
+    const c = countedTests([previous, next], { ask: true });
+    const whole = (t: { wholeMinutes?: number; wholeKm?: number }) => t.wholeMinutes! / t.wholeKm!;
+    expect(whole(testResults([next])[0])).toBeGreaterThan(whole(testResults([previous])[0]));
+    expect(c.pending?.logId).toBe('q');
+  });
+});
+
+describe('the cap on verdicts', () => {
+  it('lets a "Telt niet mee" fall off last', () => {
+    const list: TestJudgment[] = [{ logId: 'keep', verdict: 'ignore', date: '2020-01-01' }];
+    for (let i = 0; i < MAX_TEST_JUDGMENTS + 5; i++) list.push({ logId: `c${i}`, verdict: 'counts', date: `2027-01-${String((i % 28) + 1).padStart(2, '0')}` });
+    const capped = capTestJudgments(list);
+    expect(capped).toHaveLength(MAX_TEST_JUDGMENTS);
+    expect(capped.some((j) => j.logId === 'keep')).toBe(true);
+  });
+});
+
+describe('the quiet line on Vandaag', () => {
+  it('shows while a slower test waits, and names that test', () => {
+    expect(pendingTestLine([NORMAL, SLOWER], {})).toEqual({ logId: 'b', text: PENDING_TEST_LINE });
+  });
+
+  it('is gone once you answered, when nothing was slower, or when asking is off', () => {
+    expect(pendingTestLine([NORMAL, SLOWER], { testJudgments: [{ logId: 'b', verdict: 'ignore', date: '2027-02-11' }] })).toBeUndefined();
+    expect(pendingTestLine([NORMAL, FASTER], {})).toBeUndefined();
+    expect(pendingTestLine([NORMAL, SLOWER], { askDoubtTest: false })).toBeUndefined();
+    expect(pendingTestLine([], {})).toBeUndefined();
+  });
+
+  it('points at the newest waiting test when two wait', () => {
+    expect(pendingTestLine([NORMAL, SLOWER, test('c2', '2027-03-10', 5, 33)], {})?.logId).toBe('c2');
   });
 });

@@ -10,9 +10,9 @@
 //
 // Pure: no React, no IndexedDB.
 
-import type { SessionLog } from '../models/training';
+import type { BestEffort, SessionLog } from '../models/training';
 import type { TestJudgment } from '../models/testJudgment';
-import { isUsableBestEffort } from './bestEffort';
+import { isStaleEffort, isUsableBestEffort } from './bestEffort';
 import { TEST_TEMPLATE_ID } from './raceBlock';
 
 export const RIEGEL_EXPONENT = 1.06;
@@ -49,17 +49,30 @@ export interface TestResult {
   wholeMinutes?: number;
 }
 
-// One result per test log. A log that carries a best effort (engine/bestEffort.ts) counts
-// with that stretch; without one, or when the log was cut afterwards, the whole log counts.
+// The totals of a test log: distance and time as the log has them now.
+export function testTotals(l: SessionLog): { km: number; minutes: number } {
+  const d = l.cardioData ?? l.outdoorData;
+  return { km: d?.distanceKm ?? 0, minutes: d?.durationMinutes || l.durationMinutes };
+}
+
+// The best effort of a log as it may count: usable, accepted (see BestEffort.accepted), read for
+// the totals the log has now, and the log not cut. Undefined otherwise: the whole log counts.
+export function countingEffort(l: SessionLog): BestEffort | undefined {
+  const { km, minutes } = testTotals(l);
+  const b = l.bestEffort;
+  if (l.trim || !isUsableBestEffort(b) || b.accepted !== true || b.km > km + 0.05 || isStaleEffort(b, km, minutes)) return undefined;
+  return b;
+}
+
+// One result per test log. A log whose best effort has been accepted (engine/bestEffort.ts) counts
+// with that stretch; without one, or when the log was cut or corrected afterwards, the whole log counts.
 export function testResults(logs: SessionLog[]): TestResult[] {
   return logs
     .filter((l) => l.templateId === TEST_TEMPLATE_ID)
     .flatMap((l): TestResult[] => {
-      const d = l.cardioData ?? l.outdoorData;
-      const km = d?.distanceKm ?? 0;
-      const minutes = d?.durationMinutes || l.durationMinutes;
+      const { km, minutes } = testTotals(l);
       if (!(km >= 3 && minutes > 0)) return [];
-      const effort = !l.trim && isUsableBestEffort(l.bestEffort) && l.bestEffort.km <= km + 0.05 ? l.bestEffort : undefined;
+      const effort = countingEffort(l);
       return [
         effort
           ? { date: l.completedDate, km: effort.km, minutes: effort.minutes, logId: l.id, basis: 'effort', wholeKm: km, wholeMinutes: minutes }
@@ -74,9 +87,18 @@ export function testPacePerKm(t: TestResult): number {
   return riegel(t.minutes, t.km, 5) / 5;
 }
 
+// Two tests are compared on the same basis: when one counts with its best stretch and the other
+// with the whole run, both are read as the whole run, so a different basis never makes a doubt.
+export function comparablePaces(a: TestResult, b: TestResult): [number, number] {
+  if (a.basis === b.basis || !a.wholeKm || !a.wholeMinutes || !b.wholeKm || !b.wholeMinutes) return [testPacePerKm(a), testPacePerKm(b)];
+  return [riegel(a.wholeMinutes, a.wholeKm, 5) / 5, riegel(b.wholeMinutes, b.wholeKm, 5) / 5];
+}
+
 // A test clearly slower than the one before it (more than the normal spread).
 export function isSlowerTest(t: TestResult, previous: TestResult | undefined): boolean {
-  return !!previous && testPacePerKm(t) / testPacePerKm(previous) - 1 > TEST_NOISE;
+  if (!previous) return false;
+  const [now, before] = comparablePaces(t, previous);
+  return now / before - 1 > TEST_NOISE;
 }
 
 export interface TestJudgmentOptions {
@@ -92,6 +114,9 @@ export interface CountedTests {
   tests: TestResult[];
   // The newest slower test that waits for an answer (its paces are not in yet).
   pending?: TestResult;
+  // Every test that was held back for an answer, oldest first: also one an even newer test
+  // waits behind, or one a later test has passed.
+  waiting: TestResult[];
   // The tests you marked "Telt niet mee".
   ignored: TestResult[];
 }
@@ -101,6 +126,7 @@ export function countedTests(logs: SessionLog[], options: TestJudgmentOptions = 
   const ask = options.ask !== false;
   const tests: TestResult[] = [];
   const ignored: TestResult[] = [];
+  const waiting: TestResult[] = [];
   let pending: TestResult | undefined;
   for (const t of testResults(logs)) {
     const v = t.logId ? verdict.get(t.logId) : undefined;
@@ -110,12 +136,13 @@ export function countedTests(logs: SessionLog[], options: TestJudgmentOptions = 
     }
     if (ask && v !== 'counts' && isSlowerTest(t, tests.at(-1))) {
       pending = t;
+      waiting.push(t);
       continue;
     }
     pending = undefined;
     tests.push(t);
   }
-  return { tests, pending, ignored };
+  return { tests, pending, waiting, ignored };
 }
 
 export interface RacePrediction {
@@ -134,7 +161,7 @@ export function predictRace(logs: SessionLog[], raceKm: number, options?: TestJu
   return {
     latest,
     predictedMinutes: raceKm <= RIEGEL_MAX_KM ? riegel(latest.minutes, latest.km, raceKm) : undefined,
-    change: prev ? testPacePerKm(latest) / testPacePerKm(prev) - 1 : undefined,
+    change: prev ? (([a, b]) => a / b - 1)(comparablePaces(latest, prev)) : undefined,
   };
 }
 

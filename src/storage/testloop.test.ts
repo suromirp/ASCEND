@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { saveConnection } from './externalActivities';
-import { attachActivityDetail } from './activityDetail';
+import { acceptBestEffort, attachActivityDetail } from './activityDetail';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode } from './backup';
 import { migrateLogBestEffort, migrateTestJudgments } from './migrations';
 import { asProviderAnswer, makeStreams } from '../engine/fixtures/runStreams';
@@ -66,9 +66,13 @@ describe('the best 5 km on a test log', () => {
   it('is added once from the series, and the measured numbers stay as they were', async () => {
     await SessionLogsRepo.put(testLog());
     const f = answer();
-    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), weatherFetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) });
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, weatherFetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) });
     const log = (await SessionLogsRepo.getAll())[0];
     expect(log.bestEffort?.km).toBe(5);
+    // A test that has just come in counts with it at once, tied to the totals it was read for.
+    expect(log.bestEffort?.accepted).toBe(true);
+    expect(log.bestEffort?.wholeKm).toBe(6.67);
+    expect(log.bestEffort?.wholeMinutes).toBe(40);
     // 6 min per km all the way: the best 5 km takes about 30 minutes.
     expect(log.bestEffort?.minutes).toBeGreaterThan(29.5);
     expect(log.bestEffort?.minutes).toBeLessThan(30.5);
@@ -110,7 +114,60 @@ describe('the best 5 km on a test log', () => {
   });
 });
 
+describe('the best 5 km never changes your paces by itself', () => {
+  const quiet = { weatherFetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) };
+  beforeEach(async () => {
+    await wipeAllData();
+    await saveConnection({ athleteId: 'i12345', apiKey: 'geheime-sleutel-0123' });
+  });
+
+  it('waits for Akkoord when an older test already sets the paces and counting it would move them', async () => {
+    await SessionLogsRepo.put(testLog());
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(answer()), ...quiet });
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.bestEffort).toBeDefined();
+    expect(log.bestEffort?.accepted).toBeUndefined();
+    expect(await acceptBestEffort(log.id)).toBe(true);
+    expect((await SessionLogsRepo.getAll())[0].bestEffort?.accepted).toBe(true);
+    // Twice does nothing.
+    expect(await acceptBestEffort(log.id)).toBe(false);
+  });
+
+  it('reads the series again after a correction at the source, and not before', async () => {
+    await SessionLogsRepo.put(testLog());
+    const f = answer();
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, ...quiet });
+    expect(f).toHaveBeenCalledTimes(1);
+    // Nothing changed: no new request.
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
+    expect(f).toHaveBeenCalledTimes(1);
+    // The source corrected the distance: the old best effort no longer fits and is read again.
+    const stored = (await SessionLogsRepo.getAll())[0];
+    await SessionLogsRepo.put({ ...stored, cardioData: { distanceKm: 6.6, durationMinutes: 39.5 } } as SessionLog);
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, ...quiet });
+    expect(f).toHaveBeenCalledTimes(2);
+    expect((await SessionLogsRepo.getAll())[0].bestEffort?.wholeKm).toBe(6.6);
+  });
+
+  it('remembers that a series gave no best 5 km and does not fetch it again for the same totals', async () => {
+    await SessionLogsRepo.put(testLog({ cardioData: { distanceKm: 12, durationMinutes: 40 } } as Partial<SessionLog>));
+    const f = answer();
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
+    expect((await SessionLogsRepo.getAll())[0].bestEffortTried).toBe('12.00|40.00');
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('migrating the best effort and the verdicts', () => {
+  it('keeps the fingerprint and the acceptance, and drops a damaged tried marker', () => {
+    const kept = migrateLogBestEffort(testLog({ bestEffort: { km: 5, minutes: 27.5, wholeKm: 6, wholeMinutes: 34, accepted: true }, bestEffortTried: '6.00|34.00' }));
+    expect(kept.bestEffort).toEqual({ km: 5, minutes: 27.5, wholeKm: 6, wholeMinutes: 34, accepted: true });
+    expect(kept.bestEffortTried).toBe('6.00|34.00');
+    const bad = migrateLogBestEffort(testLog({ bestEffortTried: 42 as unknown as string }));
+    expect('bestEffortTried' in bad).toBe(false);
+  });
+
   it('keeps a whole best effort and drops a damaged one, the log keeps everything else', () => {
     const ok = migrateLogBestEffort(testLog({ bestEffort: { km: 5, minutes: 27.5 } }));
     expect(ok.bestEffort).toEqual({ km: 5, minutes: 27.5 });

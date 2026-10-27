@@ -16,6 +16,7 @@ import { useAppData } from '../state/AppDataContext';
 import { TestVerdictCard } from './TestVerdictCard';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import { ensureBestEffort } from '../storage/activityDetail';
+import { wantsBestEffort } from '../engine/testJudgment';
 import { logKindLabel } from '../engine/sports';
 import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine/workoutDetails';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
@@ -50,10 +51,11 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
   const garminType = activity?.garminSuggestedType;
   // A test run linked before the best 5 km existed: read it once from the watch's series.
   useEffect(() => {
-    if (log.templateId === TEST_TEMPLATE_ID && log.externalId && !log.bestEffort && !log.trim) {
+    if (log.externalId && wantsBestEffort(log)) {
       void ensureBestEffort(log.id).then((r) => (r === 'attached' ? refresh() : undefined));
     }
-  }, [log.id, log.templateId, log.externalId, log.bestEffort, log.trim, refresh]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log.id, log.externalId, log.bestEffort, log.bestEffortTried, log.trim, refresh]);
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
 
   const rows: { label: string; value: string; icon?: 'horloge' | 'notitie' }[] = [];

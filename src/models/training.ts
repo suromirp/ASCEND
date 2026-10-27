@@ -500,6 +500,10 @@ export interface SessionLog {
   // were (engine/bestEffort.ts, docs/beslissingen/2026-10-27-testloop-lezen.md).
   // Optional, additive; the backup schema number does not move.
   bestEffort?: BestEffort;
+  // Only on a test run whose series gave no usable best 5 km (treadmill, holes, a distance
+  // that does not match): the totals it was tried for, so the series is not fetched again
+  // for the same numbers (engine/bestEffort.ts#effortFingerprint). Derived, optional.
+  bestEffortTried?: string;
   source: MetricSource;
 }
 
@@ -507,6 +511,13 @@ export interface SessionLog {
 export interface BestEffort {
   km: number;
   minutes: number;
+  // The totals of the log it was read for (its fingerprint): after a correction at the
+  // source the totals no longer match and the best effort is ignored until it is read again.
+  wholeKm?: number;
+  wholeMinutes?: number;
+  // True once the test counts with this stretch. Set at once when that changes no pace
+  // (or the test is brand new), otherwise only after your Akkoord in the log sheet.
+  accepted?: boolean;
 }
 
 export interface WorkoutDetails {
