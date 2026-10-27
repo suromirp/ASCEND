@@ -22,7 +22,7 @@ const content: KnowledgeContent = {
       ],
     },
     {
-      heading: 'Blaren voorkomen',
+      heading: 'Blaren: wat kan helpen',
       items: [
         'Een blaar ontstaat door wrijving, warmte en vocht samen. Haal ze alle drie weg: droge voeten, goede pasvorm, en een laag die de wrijving opvangt.',
         'Tape vooraf op je bekende plekken (hielen, kleine teen, bal van de voet). In een onderzoek bij ultralopers verminderde simpele papieren tape (micropore) blaren met ongeveer 40 procent; een eerdere studie vond geen effect, dus het helpt vooral op plekken waar jij ze krijgt. Leukotape is sterker en blijft dagen zitten.',

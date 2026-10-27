@@ -64,7 +64,7 @@ export const WORKOUTS: Record<string, WorkoutSpec> = {
     structure: [MACROFACTOR_BLOCK],
     builds: [
       { label: 'Kracht bovenlichaam', why: 'Een rugzak dragen, stokken gebruiken en een goede houding houden, dag na dag.' },
-      { label: 'Spiermassa', why: 'Meer spier maakt je robuuster en helpt blessures voorkomen.' },
+      { label: 'Spiermassa', why: 'Meer spier maakt je robuuster en kan het risico op blessures verlagen.' },
     ],
   },
   tpl_upper_b: {

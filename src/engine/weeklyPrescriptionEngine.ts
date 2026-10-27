@@ -41,6 +41,7 @@ import { writeTrainingPrescription } from './prescriptionWriter';
 import { addDays } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { hasRole, isTestOrRace } from './templateRoles';
+import { ISSUE_NOT_ALL_PLACED } from './proposalIssues';
 
 const SOURCE = 'engine/weeklyPrescriptionEngine.ts#computeWeeklyPrescriptionPlan';
 // Recovery is never a candidate — same reasoning/precedent as
@@ -297,7 +298,7 @@ export function computeWeeklyPrescriptionPlan(
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: 'weekly_prescription_computed',
-    issue: items.length > 0 ? 'Weekprescriptie bijgewerkt' : noFreeDayWeekCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
+    issue: items.length > 0 ? 'Weekplan bijgewerkt' : noFreeDayWeekCount > 0 ? ISSUE_NOT_ALL_PLACED : 'Geen aanpassingen nodig',
     changes: items,
     alternatives,
     consequences: `Wordt toegepast op het forecast-bereik (week +2 en verder), nooit op de huidige of volgende week.${unplaceableNote}`,

@@ -57,7 +57,7 @@ export function TrainingSpotsPage() {
       <PageHeader eyebrow="Gidsen" title="Trainingsplekken" line="Waar je welke training doet, met hoogtemeters en lengte" />
 
       <Card className="flex flex-col gap-2">
-        <Eyebrow>VANAF</Eyebrow>
+        <Eyebrow>Vanaf</Eyebrow>
         <div className="flex items-center gap-2">
           <select
             value={home && home.name !== 'Mijn locatie' ? home.name : ''}
@@ -79,7 +79,7 @@ export function TrainingSpotsPage() {
           </button>
         </div>
         <p className="text-xs leading-snug" style={{ color: locError ? 'var(--color-warning)' : 'var(--color-ink-dim)' }}>
-          {locError ?? 'Je locatie blijft alleen op dit toestel. Afstanden zijn schattingen.'}
+          {locError ?? 'Je locatie blijft alleen op deze telefoon. Afstanden zijn schattingen.'}
         </p>
       </Card>
 
@@ -104,7 +104,7 @@ export function TrainingSpotsPage() {
       </div>
 
       <Card className="flex flex-col gap-2">
-        <Eyebrow>GEEN HEUVEL IN DE BUURT?</Eyebrow>
+        <Eyebrow>Geen heuvel in de buurt?</Eyebrow>
         {FLAT_COUNTRY_TIPS.map((t) => (
           <p key={t} className="flex gap-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             <span style={{ color: 'var(--color-ink-dim)' }}>·</span>

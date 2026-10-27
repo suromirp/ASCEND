@@ -110,6 +110,9 @@ function migrateLegacyObjectives(
 
 // --- export direction --------------------------------------------------------
 
+export { BackupMessageError, backupErrorText } from './backupMessage';
+import { BackupMessageError } from './backupMessage';
+
 export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
   const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, goalEngineConfig, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, adviceResponses, routePlan, soloPlan] = await Promise.all([
     ProgramsRepo.getAll(),
@@ -511,14 +514,14 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
 
 export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupData {
   if (!isRecord(raw)) {
-    throw new Error('Kon het bestand niet lezen. Is dit een geldig ASCEND-back-upbestand (.json)?');
+    throw new BackupMessageError('Kon het bestand niet lezen. Is dit een geldig ASCEND-back-upbestand (.json)?');
   }
   const obj = raw;
 
   // New-style envelope (v0.3.2+).
   if (typeof obj.backupSchemaVersion === 'number' && isRecord(obj.payload)) {
     if (obj.backupSchemaVersion > CURRENT_BACKUP_SCHEMA_VERSION) {
-      throw new Error(
+      throw new BackupMessageError(
         `Deze back-up komt van een nieuwere versie van ASCEND (schema v${obj.backupSchemaVersion}). Werk de app bij voordat je hem importeert.`,
       );
     }
@@ -526,7 +529,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     const createdAt = typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString();
     const version = payload.version;
     if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5) {
-      throw new Error('Deze back-up heeft een onbekende gegevensversie en kan niet worden geïmporteerd.');
+      throw new BackupMessageError('Deze back-up heeft een onbekende gegevensversie en kan niet worden geïmporteerd.');
     }
     return buildNormalized({
       createdAt,
@@ -555,7 +558,7 @@ export function normalizeBackupToCurrentModel(raw: unknown): NormalizedBackupDat
     });
   }
 
-  throw new Error('Kon het bestand niet herkennen als een ASCEND-back-upbestand.');
+  throw new BackupMessageError('Kon het bestand niet herkennen als een ASCEND-back-upbestand.');
 }
 
 // JSON.parse with a message the user can act on. A file cut off halfway
@@ -564,7 +567,7 @@ export function parseBackupText(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error('Dit bestand is beschadigd of onvolledig: het is geen geldige back-up. Er is niets gewijzigd.');
+    throw new BackupMessageError('Dit bestand is beschadigd of onvolledig: het is geen geldige back-up. Er is niets gewijzigd.');
   }
 }
 
@@ -1045,7 +1048,7 @@ export async function createPreImportSnapshot(): Promise<PreImportSnapshot> {
 // append-only). Takes its own snapshot first, so this too can be undone.
 export async function restoreSnapshot(id: string): Promise<void> {
   const snapshot = (await BackupSnapshotsRepo.getAll()).find((s) => s.id === id);
-  if (!snapshot) throw new Error('Deze kopie bestaat niet meer.');
+  if (!snapshot) throw new BackupMessageError('Deze kopie bestaat niet meer.');
   const backup = normalizeBackupToCurrentModel(snapshot.envelope);
   const before = await createPreImportSnapshot();
   const selections = defaultActionsForMode('full_restore');

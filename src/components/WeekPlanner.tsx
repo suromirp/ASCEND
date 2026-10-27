@@ -210,7 +210,7 @@ export function WeekPlanner({
   const signOf = (log: SessionLog | undefined): SignState | undefined => (log ? signState(deviations.get(log.id), entryForLog(settings.influences, log.id), settings.influenceSign) : undefined);
   const templates = Array.from(templateById.values());
 
-  if (days.length === 0) return <Eyebrow>Geen data</Eyebrow>;
+  if (days.length === 0) return <Eyebrow>Geen gegevens</Eyebrow>;
 
   return (
     <div className="mx-stagger overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>

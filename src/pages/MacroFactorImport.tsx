@@ -164,10 +164,10 @@ export function MacroFactorImportPage() {
       <SettingsPageLink page="koppelingen" row="macrofactor" label="Instellingen van MacroFactor" />
 
       <Card className="flex flex-col gap-3">
-        <Eyebrow>DRIE STAPPEN</Eyebrow>
+        <Eyebrow>Drie stappen</Eyebrow>
         <Step n={1}>Open MacroFactor en ga naar Meer, dan Data Export. De namen kunnen in jouw versie iets anders heten.</Step>
         <Step n={2}>Kies Granular Export. Vink Weight Trend en Scale Weight aan en tik op Export. Voor krachttrainingen tik je op Export Workout Log: de eerste keer 30 dagen, daarna wekelijks 7 dagen.</Step>
-        <Step n={3}>Je krijgt een xlsx-bestand. Tik op Delen en kies ASCEND, voor elk bestand. Lukt dat niet, bewaar dan het bestand en tik hieronder op Kies bestand.</Step>
+        <Step n={3}>Je krijgt een xlsx-bestand. Tik op Delen en kies ASCEND, voor elk bestand. Lukt dat niet, bewaar het bestand en tik hieronder op Bestand kiezen.</Step>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
           ASCEND leest het bestand alleen op deze telefoon; het gaat nergens heen. Bij krachttrainingen koppel je eerst de namen en verwerk je ze daarna in één keer; er wordt nooit iets stil opgeslagen.
         </p>
@@ -177,7 +177,7 @@ export function MacroFactorImportPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <Eyebrow>BESTAND</Eyebrow>
+        <Eyebrow>Bestand</Eyebrow>
         <input
           ref={input}
           type="file"
@@ -272,7 +272,7 @@ export function MacroFactorImportPage() {
 
       {nothingToOffer && (
         <Card className="flex flex-col gap-1">
-          <Eyebrow>ALLES STAAT AL IN JE LOGBOEK</Eyebrow>
+          <Eyebrow>Alles staat al in je logboek</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
             Van de {countText(state.workouts.length)} in dit bestand is er niets meer dat ASCEND kan toevoegen.
           </p>

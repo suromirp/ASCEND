@@ -52,7 +52,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <p className="st-hint" style={{ marginLeft: 0, marginRight: 0, color: 'var(--color-ink)' }} role="status">{restNote ?? plan.note}</p>
       )}
 
-      <SettingsSection title="Mijn week">
+      <SettingsSection title="Je week">
         <SummaryRow id="bundel-dagen" title="Dagen en tijd" facts={facts} onClick={() => setSheet('bundel-dagen')} />
       </SettingsSection>
 

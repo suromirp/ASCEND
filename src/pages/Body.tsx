@@ -129,7 +129,7 @@ export function BodyPage() {
         ))}
         {soreness.length > 0 && (
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            Deze week: {sorenessPhrases(soreness)}. Dat gaat vanzelf weer dicht.
+            Deze week: {sorenessPhrases(soreness)}. Na 7 dagen sluit dit vanzelf.
           </p>
         )}
         <div>

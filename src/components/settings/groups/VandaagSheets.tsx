@@ -52,7 +52,7 @@ export function PlaceSheet({ onClose }: { onClose: () => void }) {
         footer={
           <>
             <p className="st-hint" style={{ marginLeft: 0 }}>
-              {follows ? 'Zonder toestemming van je toestel blijft de laatste plek staan.' : place ? `Het weer is voor ${place.name}.` : 'Er is nog geen plaats gekozen.'}
+              {follows ? 'Zonder toestemming van je telefoon blijft de laatste plek staan.' : place ? `Het weer is voor ${place.name}.` : 'Er is nog geen plaats gekozen.'}
             </p>
             <div className="st-btns">
               <button type="button" className="st-btn" onClick={() => navigate('/weer')}>{follows ? 'Plaats opnieuw bepalen' : 'Andere plaats kiezen'}</button>

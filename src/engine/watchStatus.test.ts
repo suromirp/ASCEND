@@ -108,7 +108,7 @@ describe('shortWatchError', () => {
     expect(shortWatchError('intervals.icu herkent je API-sleutel niet. Kopieer de sleutel opnieuw.')).toBe('sleutel niet herkend');
     expect(shortWatchError('intervals.icu heeft op dit moment een storing. Probeer het later nog eens.')).toBe('storing bij intervals.icu');
     expect(shortWatchError('Met deze sleutel mag ASCEND geen trainingen in je agenda zetten. Maak ...')).toBe('sleutel mag niet schrijven');
-    expect(shortWatchError('iets heel anders')).toBe('onbekende fout');
+    expect(shortWatchError('iets heel anders')).toBe('reden onbekend');
   });
 });
 

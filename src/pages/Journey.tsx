@@ -62,13 +62,13 @@ export function JourneyPage() {
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             De taken staan op een tijdlijn tot je hoofddoel. Stel eerst een hoofddoel met een datum in, dan zie je hier wat wanneer aan de beurt is.
           </p>
-          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doel instellen</PrimaryButton>
+          <PrimaryButton onClick={() => navigate('/ascend/doelen')}>Doel toevoegen</PrimaryButton>
         </Card>
       ) : (
         <>
           <Card className="flex flex-col gap-2" texture>
             <div className="flex items-baseline justify-between">
-              <Eyebrow>JE VOORBEREIDING</Eyebrow>
+              <Eyebrow>Je voorbereiding</Eyebrow>
               <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>nog {journeyWeeksLeft(today, goalDate)} weken</span>
             </div>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{progress.done} van {progress.total} taken gedaan</p>
@@ -83,7 +83,7 @@ export function JourneyPage() {
           <button onClick={() => navigate('/reis/paklijst')} className="text-left">
             <Card className="flex items-center justify-between gap-3">
               <div>
-                <Eyebrow>PAKLIJST</Eyebrow>
+                <Eyebrow>Paklijst</Eyebrow>
                 <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>Basisgewicht {formatKg(baseWeightGrams(items))}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>{packs.have} van {packs.total} onderdelen heb je al</p>
               </div>

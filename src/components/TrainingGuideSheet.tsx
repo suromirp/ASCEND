@@ -95,21 +95,21 @@ export function TrainingGuideSheet({
 
           {plan && plan.builds.length > 0 && (
             <>
-              <SectionTitle>WAAROM</SectionTitle>
+              <SectionTitle>Waarom</SectionTitle>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{plan.builds.map((b) => b.why).join(' ')}</p>
             </>
           )}
 
           {myPace && (
             <>
-              <SectionTitle>JE TEMPO</SectionTitle>
+              <SectionTitle>Je tempo</SectionTitle>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{myPace}</p>
             </>
           )}
 
           {brief && brief.levelsUsed.length > 0 && (
             <>
-              <SectionTitle>ZO VOELT ELK TEMPO</SectionTitle>
+              <SectionTitle>Zo voelt elk tempo</SectionTitle>
               <div className="mt-2 flex flex-col gap-1.5">
                 {brief.levelsUsed.map((lvl) => (
                   <p key={lvl} className="flex items-start gap-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
@@ -123,7 +123,7 @@ export function TrainingGuideSheet({
 
           {plan && plan.load.some((l) => l.level > 0) && (
             <>
-              <SectionTitle>WAT HET VRAAGT VAN JE LICHAAM</SectionTitle>
+              <SectionTitle>Wat het vraagt van je lichaam</SectionTitle>
               <div className="mt-3 flex flex-col gap-2">
                 {plan.load.filter((l) => l.level > 0).map((l) => (
                   <div key={l.label} className="flex items-center gap-3">
@@ -199,7 +199,7 @@ export function TrainingGuideSheet({
               <Sections sections={background} />
               {guide.gear.length > 0 && (
                 <div className="mt-4">
-                  <Eyebrow>MATERIAAL</Eyebrow>
+                  <Eyebrow>Materiaal</Eyebrow>
                   <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>{guide.gear.join(' · ')}</p>
                 </div>
               )}
@@ -214,7 +214,7 @@ export function TrainingGuideSheet({
               )}
               {guide.sources.length > 0 && (
                 <div className="mt-4">
-                  <Eyebrow>BRONNEN</Eyebrow>
+                  <Eyebrow>Bronnen</Eyebrow>
                   <div className="mt-2 flex flex-col gap-1.5">
                     {guide.sources.map((src) =>
                       src.url ? (
@@ -347,7 +347,7 @@ export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: Wo
       </div>
       </>)}
 
-      {!compact && <SectionTitle>OPBOUW</SectionTitle>}
+      {!compact && <SectionTitle>Opbouw</SectionTitle>}
       {/* A chart only says something when the session has steps; one
           continuous block is just the step below. */}
       {plan.timeline.length > 1 && (

@@ -298,7 +298,7 @@ export function GarminLinkPage() {
       <Card className="flex flex-col gap-4">
         <Eyebrow>Wat ASCEND van je horloge gebruikt</Eyebrow>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Tik aan wat je wilt. Wat uit staat haalt ASCEND niet op, laat hij niet zien en gebruikt hij niet in de ochtendcheck of in een berekening. Dit blijft op deze telefoon en gaat niet mee in een back-up.
+          Tik aan wat je wilt. Wat uit staat haalt ASCEND niet op, laat het niet zien en gebruikt het niet in de ochtendcheck of in een berekening. Dit blijft op deze telefoon en gaat niet mee in een back-up.
         </p>
         <UseRow
           title="Trainingen"
@@ -322,7 +322,7 @@ export function GarminLinkPage() {
         />
         <UseRow
           title="Details van loopjes en tochten"
-          text="ASCEND vraagt per loop of tocht de reeks van hartslag, tempo, hoogte en loopvorm op en bewaart er alleen een korte samenvatting van. Daarmee vergelijkt hij je loopjes eerlijk. Uit betekent: niet ophalen, niet tonen en niet meetellen."
+          text="ASCEND haalt per loop of tocht hartslag, tempo, hoogte en loopvorm op en bewaart alleen een korte samenvatting. Daarmee vergelijkt ASCEND je loopjes eerlijk. Uit betekent: niet ophalen, niet tonen en niet meetellen."
           checked={watch?.use.details !== false && watch?.use.activities !== false}
           onChange={(on) => void changeUse('details', on)}
           note={watch?.use.activities === false ? 'Werkt alleen als Trainingen aan staat.' : undefined}
@@ -649,7 +649,7 @@ function WatchWorkoutsCard({ controls }: { controls: WatchWorkoutControls }) {
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <Eyebrow>Naar je horloge</Eyebrow>
-        <InfoButton onClick={() => setShowInfo((v) => !v)} label="Hoe werkt dit, en hoe ruim ik op?" />
+        <InfoButton onClick={() => setShowInfo((v) => !v)} label="Hoe werkt dit, en hoe ruim je op?" />
       </div>
       {showInfo && <WatchInfo />}
       <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
@@ -696,7 +696,7 @@ function WatchInfo() {
   return (
     <div className="flex flex-col gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
       <InfoPoint title="Wat vanzelf gaat">
-        Staat de schakelaar aan, dan zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda en werkt ze bij na elke wijziging in je planning. Wat je overslaat haalt hij er altijd uit, en wat je hebt gedaan ook als Gedane trainingen weghalen aan staat. Daarna stuurt intervals.icu ze door naar Garmin Connect.
+        Staat de schakelaar aan, dan zet ASCEND de trainingen van de komende 7 dagen in je intervals.icu-agenda en werkt ze bij na elke wijziging in je planning. Wat je overslaat haalt ASCEND er altijd uit, en wat je hebt gedaan ook als Gedane trainingen weghalen aan staat. Daarna stuurt intervals.icu ze door naar Garmin Connect.
       </InfoPoint>
       <InfoPoint title="Zo herken je ze">
         De naam begint met ASC (of ASCEND ·, of niets: dat kies je hierboven). In de beschrijving staat bovenaan voor welke dag ASCEND hem plande.

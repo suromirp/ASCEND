@@ -61,7 +61,7 @@ export function EtappesPage() {
       </p>
 
       <Card className="flex flex-col gap-3" texture>
-        <Eyebrow>JE VIJF ZWAARSTE DAGEN</Eyebrow>
+        <Eyebrow>Je vijf zwaarste dagen</Eyebrow>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Gerangschikt op omhoog plus omlaag samen, volgens jouw plan. Daaronder wat je al kunt: je beste dag van de laatste acht weken.
         </p>
@@ -96,7 +96,7 @@ export function EtappesPage() {
       </Card>
 
       <Card className="flex flex-col gap-2">
-        <Eyebrow>JE PLAN IN CIJFERS</Eyebrow>
+        <Eyebrow>Je plan in cijfers</Eyebrow>
         <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>
           <Num>{totals.walkDays}</Num> loopdagen{totals.restDays > 0 ? <> en <Num>{totals.restDays}</Num> {totals.restDays === 1 ? 'rustdag' : 'rustdagen'}</> : ''}
         </p>
@@ -119,7 +119,7 @@ export function EtappesPage() {
 
       {waterUnmeasured && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-          Het water per etappe is nog niet gemeten, naar algemene cijfers. Meet je zweetverlies bij een training om het jouwe te zien.
+          Het water per etappe is nog niet jouw eigen meting; het zijn algemene cijfers. Meet je zweetverlies bij een training om het jouwe te zien.
         </p>
       )}
 
@@ -170,7 +170,7 @@ export function EtappesPage() {
       ))}
 
       <Card className="flex flex-col gap-2">
-        <Eyebrow>ALLEEN ONDERWEG</Eyebrow>
+        <Eyebrow>Alleen onderweg</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
           Van dit plan maak je een vertrekbrief voor thuis, met de afspraak voor je dagelijkse bericht.
         </p>

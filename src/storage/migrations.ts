@@ -9,6 +9,7 @@
 // it is missing or not a list, so an older backup imports as before.
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
+import { BackupMessageError } from './backupMessage';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
 import { parseWeekShape, type WeekShape } from '../engine/sports';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
@@ -57,7 +58,7 @@ export function migrateV1toV2(data: AscendExport): AscendExport {
 
 export function migrateExport(data: AscendExport): AscendExport {
   if (data.schemaVersion > CURRENT_SCHEMA_VERSION) {
-    throw new Error(
+    throw new BackupMessageError(
       `Dit bestand komt van een nieuwere versie van ASCEND (schema v${data.schemaVersion}). Werk de app bij voor je het importeert.`,
     );
   }

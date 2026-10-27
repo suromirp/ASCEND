@@ -70,7 +70,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="bundel-rusttimer" title="Rusttimer" facts={facts} onClick={() => setSheet('bundel-rusttimer')} />
         <SummaryRow id="forge-scherm" title="Scherm aan tijdens je training" facts={facts} onChange={(on) => save({ keepScreenOn: on })} />
         <SummaryRow id="forge-bijsturen" title="Bijsturen in de training" facts={facts} info="forgeBijsturen" onChange={(on) => save({ adjustLive: on })} />
-        <SummaryRow id="bundel-sportschool" title="Mijn sportschool" facts={facts} onClick={() => setSheet('bundel-sportschool')} />
+        <SummaryRow id="bundel-sportschool" title="Je sportschool" facts={facts} onClick={() => setSheet('bundel-sportschool')} />
       </SettingsSection>
 
       {anyShown(ADVANCED, facts) && (
@@ -129,7 +129,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
         </BundleSheet>
       )}
       {sheet === 'bundel-sportschool' && (
-        <BundleSheet eyebrow="Forge" title="Mijn sportschool" line="Wat er in je sportschool ligt. Forge stelt alleen gewichten voor die kunnen." onClose={close}>
+        <BundleSheet eyebrow="Forge" title="Je sportschool" line="Wat er in je sportschool ligt. Forge stelt alleen gewichten voor die kunnen." onClose={close}>
           <SummaryRow id="gym-profiel" title="Sportschool" facts={facts} info="gymProfiel" onClick={() => setInner('gym-profiel')} />
           <SummaryRow id="stangen" title="Stangen" facts={facts} onClick={() => setInner('stangen')} />
           <SummaryRow id="schijven" title="Schijven" facts={facts} onClick={() => setInner('schijven')} />

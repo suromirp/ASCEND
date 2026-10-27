@@ -68,7 +68,7 @@ export function SportSheet({
 
 // Trainingstijd per dag, zoals die al was: minuten per weekdag, met een harde limiet onder
 // Geavanceerd. Een lege dag heeft geen budget (nooit een verzonnen waarde). Het blad
-// "Mijn week" met Rust, Kort, Normaal en Lang volgt na de planningsreparaties.
+// "Je week" met Rust, Kort, Normaal en Lang volgt na de planningsreparaties.
 export function BudgetSheet({
   dailyTimeBudget,
   onSave,

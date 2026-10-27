@@ -103,7 +103,7 @@ export function GoalCapacityStep({
 
       {knownRows.length > 0 && (
         <section className="flex flex-col gap-1.5">
-          <Eyebrow>AL BEKEND</Eyebrow>
+          <Eyebrow>Al bekend</Eyebrow>
           {knownRows.map((r) => (
             <div key={r.id} className="flex items-baseline justify-between gap-3 text-xs">
               <span style={{ color: 'var(--color-ink)' }}>{r.label}</span>
@@ -115,7 +115,7 @@ export function GoalCapacityStep({
 
       {open.length > 0 && (
         <section className="flex flex-col gap-5">
-          <Eyebrow>NOG NODIG</Eyebrow>
+          <Eyebrow>Nog nodig</Eyebrow>
           {activityNeeds.length > 0 && (
             <RecentActivityBlock needs={activityNeeds.map((n) => n.key)} asOf={asOf} onSave={saveActivity} onSkip={() => setActivityDone(true)} />
           )}

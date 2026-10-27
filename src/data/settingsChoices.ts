@@ -28,7 +28,7 @@ export const CHOICES = {
     advice: 'auto_small' as 'always_ask' | 'auto_small' | 'auto_all',
     help: 'wijzigingen',
     options: [
-      { value: 'always_ask', label: 'Vraag eerst', note: 'Wacht op je akkoord, de weekcontrole meldt wat ze rechtzet' },
+      { value: 'always_ask', label: 'Vraag eerst', note: 'Wacht op je Akkoord, de weekcontrole meldt wat ze rechtzet' },
       { value: 'auto_small', label: 'Deels zelf', note: 'Weken verder weg zelf, met een melding' },
       { value: 'auto_all', label: 'Alles zelf', note: 'Meteen, met een melding achteraf' },
     ],
@@ -397,7 +397,7 @@ export const CHOICES = {
     advice: 'auto' as 'auto' | 'man' | 'vrouw',
     help: 'figuur',
     options: [
-      { value: 'auto', label: 'Automatisch', note: 'Van je koppeling, als die het weet. Anders een man', short: 'Automatisch' },
+      { value: 'auto', label: 'Automatisch', note: 'Van je koppeling, als die het weet. Anders Man', short: 'Automatisch' },
       { value: 'man', label: 'Man', short: 'Man' },
       { value: 'vrouw', label: 'Vrouw', short: 'Vrouw' },
     ],
@@ -484,7 +484,7 @@ export const CHOICES = {
     options: [
       { value: 'alles', label: 'Alles laten zien', note: 'Alle kaarten, zoals het advies', short: 'Alles' },
       { value: 'belangrijkst', label: 'Alleen het belangrijkste', note: 'Je training, de ochtendcheck en het weer', short: 'Het belangrijkste' },
-      { value: 'training', label: 'Alleen mijn training', note: 'Alleen je training van vandaag', short: 'Alleen training' },
+      { value: 'training', label: 'Alleen je training', note: 'Ook de ochtendcheck en het weer gaan uit', short: 'Alleen training' },
     ],
   }),
   terugblikDag: def({

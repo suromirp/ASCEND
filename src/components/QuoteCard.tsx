@@ -28,7 +28,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
           onClick={() => setShowOriginal((v) => !v)}
           className="min-h-[44px] font-display text-base leading-relaxed"
           style={{ color: 'var(--color-ink-dim)' }}
-          aria-label={showOriginal ? 'Toon de Nederlandse vertaling' : 'Toon het origineel'}
+          aria-label={showOriginal ? 'Nederlandse vertaling tonen' : 'Origineel tonen'}
         >
           “{shown}”
         </button>

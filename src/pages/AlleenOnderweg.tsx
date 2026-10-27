@@ -57,7 +57,7 @@ export function AlleenOnderwegPage() {
       <PageHeader eyebrow="Ascend" title="Alleen onderweg" line="Je kaart voor als het misgaat" fallback="/ascend" />
 
       <Card className="flex flex-col gap-3" texture>
-        <Eyebrow>ALARM</Eyebrow>
+        <Eyebrow>Alarm</Eyebrow>
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="font-sans tabular-nums text-5xl leading-none" style={{ color: 'var(--color-ink)' }}>{EMERGENCY_NUMBER}</p>
@@ -87,7 +87,7 @@ export function AlleenOnderwegPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <Eyebrow>BIJ EEN ONGELUK</Eyebrow>
+        <Eyebrow>Bij een ongeluk</Eyebrow>
         <ol className="flex flex-col gap-3">
           {ALARM_STEPS.map((step, i) => (
             <li key={step} className="flex gap-3 text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
@@ -102,7 +102,7 @@ export function AlleenOnderwegPage() {
           Meer in de Kennisbank: Als het misgaat
         </TextButton>
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <Eyebrow>BRONNEN</Eyebrow>
+          <Eyebrow>Bronnen</Eyebrow>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{ALARM_REPORT}</p>
           <div className="mt-1 flex flex-col">
             {ALARM_SOURCES.map((s) => (
@@ -116,7 +116,7 @@ export function AlleenOnderwegPage() {
 
       <Card className="flex flex-col gap-4">
         <div>
-          <Eyebrow>AFSPRAAK MET THUIS</Eyebrow>
+          <Eyebrow>Afspraak met thuis</Eyebrow>
           <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
             Dit blijft op je telefoon en gaat alleen mee als je het zelf deelt. De app stuurt zelf niets en alarmeert niemand: het is een afspraak tussen jou en thuis.
           </p>
@@ -175,9 +175,9 @@ export function AlleenOnderwegPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <Eyebrow>VERTREKBRIEF</Eyebrow>
+        <Eyebrow>Vertrekbrief</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-          De app stelt een brief voor thuis samen uit je etappeplan: de route, je slaapplek per datum, je uitrusting, de afspraak en of je een satellietcommunicator meeneemt.
+          ASCEND stelt een brief voor thuis samen uit je etappeplan: de route, je slaapplek per datum, je uitrusting, de afspraak en of je een satellietcommunicator meeneemt.
         </p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Nu {totals.walkDays} loopdagen{totals.restDays > 0 ? ` en ${totals.restDays} ${totals.restDays === 1 ? 'rustdag' : 'rustdagen'}` : ''}
@@ -214,7 +214,7 @@ function LetterSheet({ letter, onCopy, onShare, feedback, onClose }: { letter: s
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div role="dialog" aria-modal="true" aria-label="Vertrekbrief" className={`max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-8">
-            <Eyebrow>VERTREKBRIEF</Eyebrow>
+            <Eyebrow>Vertrekbrief</Eyebrow>
             <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{letter}</div>
             <div className="mt-5 flex gap-3">
               <PrimaryButton fullWidth={false} onClick={onCopy}>Kopiëren</PrimaryButton>

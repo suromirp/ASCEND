@@ -57,8 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="flex flex-1 flex-col gap-4 px-6 py-10" style={{ color: 'var(--color-ink)' }}>
         <p className="font-display text-2xl" style={{ color: 'var(--color-ink)' }}>Er ging iets mis</p>
         <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-          Dit scherm kon niet geladen worden. Maak een screenshot van de melding hieronder en stuur die door, dat
-          is de snelste weg naar een oplossing.
+          Dit scherm kon niet laden. Een screenshot van de melding hieronder helpt het meest; stuur die door.
         </p>
         <pre
           className="overflow-x-auto whitespace-pre-wrap rounded-xl border p-3 text-xs"
@@ -68,7 +67,7 @@ export class ErrorBoundary extends Component<Props, State> {
         </pre>
         <button
           onClick={() => this.setState({ error: null })}
-          className="w-full rounded-xl py-3 text-sm font-semibold"
+          className="min-h-[44px] w-full rounded-xl py-3 text-sm font-semibold"
           style={{ background: 'var(--color-action-fill)', color: 'var(--color-on-action)' }}
         >
           Opnieuw proberen

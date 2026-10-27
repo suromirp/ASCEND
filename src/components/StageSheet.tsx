@@ -112,12 +112,12 @@ export function StageSheet({
             )}
 
             {hasHighPass(stage) && stage.highPass && (
-              <Block heading="HOGE PAS, VROEG VERTREKKEN">
+              <Block heading="Hoge pas, vroeg vertrekken">
                 {stage.highPass.name} ({formatNumberNL(stage.highPass.m, 0)} m). {EARLY_START_NOTE}
               </Block>
             )}
 
-            <Block heading="NAAST JE BESTE DAG VAN DE LAATSTE ACHT WEKEN">
+            <Block heading="Naast je beste dag van de laatste acht weken">
               <CompareRows rows={rows} />
               {dayRows.length > 0 && (
                 <div className="mt-3">
@@ -129,7 +129,7 @@ export function StageSheet({
               )}
             </Block>
 
-            <Block heading="JE PLAN">
+            <Block heading="Je plan">
               {!mergedFirst && (
                 <>
                   <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Waar slaap je na deze etappe?</p>
@@ -190,7 +190,7 @@ export function StageSheet({
               )}
             </Block>
 
-            <Block heading="BIVAK IN DIT GEBIED">
+            <Block heading="Bivak in dit gebied">
               {regimes.length === 0 ? (
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                   Voor deze etappe staat geen bivakregel in het onderzoek. Zoek de regel van de gemeente of het gebied op voor je er slaapt.
@@ -218,7 +218,7 @@ export function StageSheet({
               <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{BIVOUAC_EVERYWHERE}</p>
             </Block>
 
-            <Block heading="WATER EN WINKEL">
+            <Block heading="Water en winkel">
               {water && (
                 <div className="mb-3 rounded-xl border p-3" style={{ borderColor: 'var(--color-card-border)' }}>
                   <p className="text-sm font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{stageWaterLine(water)}</p>
@@ -241,7 +241,7 @@ export function StageSheet({
             </Block>
 
             {stage.notes.length > 0 && (
-              <Block heading="LET OP">
+              <Block heading="Let op">
                 <div className="flex flex-col gap-3">
                   {stage.notes.map((n) => (
                     <div key={n.text}>
@@ -254,7 +254,7 @@ export function StageSheet({
             )}
 
             <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <Eyebrow>BRON</Eyebrow>
+              <Eyebrow>Bron</Eyebrow>
               <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
                 Cijfers van {STAGES_SOURCE}, overgenomen op {formatDateNL(STAGES_TAKEN_ON)}. De route verandert soms: gebruik voor vertrek de officiële GPX.
               </p>

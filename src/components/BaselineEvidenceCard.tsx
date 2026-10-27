@@ -46,10 +46,10 @@ export function BaselineEvidenceCard() {
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>STARTNIVEAU</Eyebrow>
+      <Eyebrow>Startniveau</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-        Korte, gerichte vragen over wat je aantoonbaar kunt, helpt ASCEND straks betere doelen en trainingsdoelen
-        voor te stellen. Handmatige antwoorden, geen verzonnen sessies.
+        Een paar korte vragen over wat je aantoonbaar kunt, helpen ASCEND om straks betere doelen
+        voor te stellen. Alleen jouw antwoorden, geen verzonnen sessies.
       </p>
 
       {manualEntries.length > 0 && (

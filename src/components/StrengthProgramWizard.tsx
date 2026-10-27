@@ -20,6 +20,7 @@ import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Icon } from './icons';
+import { ISSUE_NOT_ALL_PLACED } from '../engine/proposalIssues';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -213,13 +214,13 @@ function CommittedRangeOptIn({ strategy, onClose }: { strategy: StrengthProgramS
   }
 
   const nothingToApply = committedProposal.changes.length === 0;
-  const blocked = nothingToApply && committedProposal.issue === 'Kon niet volledig plaatsen';
+  const blocked = nothingToApply && committedProposal.issue === ISSUE_NOT_ALL_PLACED;
 
   return (
     <>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-        Dit begint automatisch vanaf {formatDateNL(forecastStart)} , je planning voor deze en volgende week blijft
-        intact. Dat raden we ook aan, tenzij je hier nu al mee wil trainen.
+        Dit begint automatisch vanaf {formatDateNL(forecastStart)}. Je planning voor deze en volgende week blijft
+        zoals ze is. Dat is ook het advies, tenzij je er nu al mee wilt trainen.
       </p>
       {blocked && (
         <p className="text-xs leading-relaxed" style={{ color: 'var(--color-warning)' }}>
@@ -331,7 +332,7 @@ function SessionsStep({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Eyebrow>SESSIETYPES IN DIT BLOK</Eyebrow>
+        <Eyebrow>Sessietypes in dit blok</Eyebrow>
         {strengthTemplates.length === 0 && (
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Geen krachtsessies gevonden om te kiezen.</p>
         )}
@@ -389,7 +390,7 @@ function FocusStep({
   return (
     <div className="mt-4 flex flex-col gap-4">
       <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Bloklengte (weken, optioneel)</label>
+        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Bloklengte (weken, mag leeg)</label>
         <input
           type="number"
           min={1}
@@ -400,12 +401,12 @@ function FocusStep({
           style={inputStyle}
         />
         <p className="mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          Zonder bloklengte blijft dit blok open, geen automatische reviewherinnering op einddatum.
+          Zonder bloklengte blijft het blok open en krijg je aan het einde geen herinnering.
         </p>
       </div>
 
       <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Prioriteit (optioneel)</label>
+        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Prioriteit (mag leeg)</label>
         <ChipMultiSelect
           options={MUSCLE_GROUP_OPTIONS}
           selected={local.musclePriorities ?? []}
@@ -413,7 +414,7 @@ function FocusStep({
         />
       </div>
       <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Onderhoud (optioneel)</label>
+        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Onderhoud (mag leeg)</label>
         <ChipMultiSelect
           options={MUSCLE_GROUP_OPTIONS}
           selected={local.muscleMaintenance ?? []}
@@ -421,7 +422,7 @@ function FocusStep({
         />
       </div>
       <div>
-        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notities (optioneel)</label>
+        <label className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Notities (mag leeg)</label>
         <textarea
           value={local.notes ?? ''}
           onChange={(e) => setLocal((s) => ({ ...s, notes: e.target.value || undefined }))}
@@ -534,7 +535,7 @@ function PreviewStep({
   return (
     <div className="mt-4 flex flex-col gap-4">
       <div>
-        <Eyebrow>BLOK</Eyebrow>
+        <Eyebrow>Blok</Eyebrow>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-ink)' }}>
           {strengthBlockLabel(draft.sessionsPerWeek, draft.splitType)}
         </p>
@@ -544,7 +545,7 @@ function PreviewStep({
       </div>
 
       <div>
-        <Eyebrow>WAT ER IN JE PLANNING VERANDERT</Eyebrow>
+        <Eyebrow>Wat er in je planning verandert</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{proposal.explanation}</p>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{proposal.consequences}</p>
       </div>

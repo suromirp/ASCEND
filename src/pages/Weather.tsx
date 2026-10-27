@@ -138,14 +138,14 @@ export function WeatherPage() {
           </div>
         ) : (
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Nog geen plaats. Dan zie je hier en bij je hardloop-, wandel- en bergtrainingen het weer en wat je aantrekt.
+            Nog geen plaats gekozen. Met een plaats zie je hier en bij je hardloop-, wandel- en bergtrainingen het weer en wat je aantrekt.
           </p>
         )}
 
         <PrimaryButton onClick={() => void locate()} disabled={busy.locate}>
           <span className="inline-flex items-center justify-center gap-2">
             <Icon name="locatie" size={18} />
-            {busy.locate ? 'Locatie bepalen…' : place && isMyLocation(place) ? 'Locatie opnieuw bepalen' : 'Gebruik mijn locatie'}
+            {busy.locate ? 'Locatie bepalen…' : place && isMyLocation(place) ? 'Locatie opnieuw bepalen' : 'Locatie gebruiken'}
           </span>
         </PrimaryButton>
 
@@ -165,7 +165,7 @@ export function WeatherPage() {
         </div>
         {privacyOpen && (
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
-            Dit is dezelfde plaats als je woonplaats bij Trainingsplekken, en hij zit in je back-up. Naar Open-Meteo gaat alleen een plaatsnaam of een plek afgerond op ongeveer een kilometer, nooit je precieze plek, en geen naam of account.
+            Dit is dezelfde plaats als je woonplaats bij Trainingsplekken en staat in je back-up. Naar Open-Meteo gaat alleen een plaatsnaam of een plek afgerond op ongeveer een kilometer, nooit je precieze plek, en geen naam of account.
           </p>
         )}
       </Card>

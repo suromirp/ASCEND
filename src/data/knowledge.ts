@@ -66,7 +66,7 @@ export const KNOWLEDGE_TOPICS: KnowledgeTopic[] = [
   { id: 'navigatie-slecht-zicht', title: 'Navigeren in mist en bij slecht zicht', category: 'navigatie', summary: 'Je weg vinden zonder zicht, een route terugvinden en wanneer je beter blijft staan.', window: [24, 4] },
   { id: 'voeding-water', title: 'Water en eten onderweg', category: 'slapen', summary: 'Hoeveel je drinkt en eet op een lange bergdag, water vinden en zuiveren, en voeding voor meerdere dagen.', window: [34, 6] },
   { id: 'slapen-hutten-bivak', title: 'Slapen: hutten, bivak en tent', category: 'slapen', summary: 'Bivakregels per gebied, slapen in je tent, en hutten reserveren en wat je daar verwacht.', window: [30, 6] },
-  { id: 'voeten-blaren', title: 'Voeten, schoenen en blaren', category: 'lichaam', summary: 'Schoenen inlopen, sokken kiezen, blaren voorkomen en behandelen.', window: [32, 6] },
+  { id: 'voeten-blaren', title: 'Voeten, schoenen en blaren', category: 'lichaam', summary: 'Schoenen inlopen, sokken kiezen, blaren tegengaan en behandelen.', window: [32, 6] },
   { id: 'afdalen-stokken', title: 'Afdalen en wandelstokken', category: 'lichaam', summary: 'Techniek voor lange afdalingen, stokken goed afstellen en gebruiken, en je knieën sparen.', window: [28, 6] },
   { id: 'weer-lezen', title: 'Het bergweer lezen', category: 'weer', summary: 'Weersvoorspellingen in de bergen, wolken en wind lezen en een dag plannen rond het weer.', window: [30, 6] },
   { id: 'weer-onweer', title: 'Onweer herkennen en ermee omgaan', category: 'weer', summary: 'Aankomend onweer herkennen, wat je doet op een kam, in een dal en bij een hut, en hoe je het vermijdt.', window: [22, 4] },

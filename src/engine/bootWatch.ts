@@ -150,7 +150,7 @@ export function storageSilentAdvice(): string[] {
 export function backupFailedLines(probe: StorageProbe | null, adviceShown = false): string[] {
   if (probe === 'silent' && adviceShown) return ['De back-up lukt nu niet, om dezelfde reden: de opslag antwoordt niet.'];
   if (probe === 'silent') return ['De back-up lukt nu niet.', ...storageSilentAdvice()];
-  return ['De back-up lukte nu niet. Probeer het opnieuw na Opnieuw proberen.'];
+  return ['De back-up lukte niet. Tik eerst op Opnieuw proberen en maak daarna opnieuw een back-up.'];
 }
 
 // The order of opening (state/AppDataContext.tsx): first the data, then the

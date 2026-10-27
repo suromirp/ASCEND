@@ -38,14 +38,14 @@ export const TODAY_PROFILE_ORDER: TodayProfileChoice[] = ['alles', 'belangrijkst
 export const TODAY_PROFILE_LABEL: Record<TodayProfile, string> = {
   alles: 'Alles laten zien',
   belangrijkst: 'Alleen het belangrijkste',
-  training: 'Alleen mijn training',
+  training: 'Alleen je training',
   aangepast: 'Aangepast',
 };
 
 export const TODAY_PROFILE_NOTE: Record<TodayProfileChoice, string> = {
   alles: 'Alle kaarten, zoals het advies.',
   belangrijkst: 'Je training, de ochtendcheck en het weer.',
-  training: 'Alleen je training van vandaag.',
+  training: 'Ook de ochtendcheck en het weer gaan uit.',
 };
 
 type ProfileInput = Pick<AppSettings, 'overviews' | 'introSoundEnabled' | 'bodyCheck'>;

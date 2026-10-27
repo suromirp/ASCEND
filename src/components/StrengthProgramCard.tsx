@@ -76,13 +76,13 @@ export function StrengthProgramCard() {
 
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>KRACHTPROGRAMMA</Eyebrow>
+      <Eyebrow>Krachtprogramma</Eyebrow>
 
       {!strategy ? (
         <>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-            Nog geen krachtblok ingesteld. ASCEND bepaalt frequentie, split en planning, MacroFactor Workouts blijft
-            de oefeningen zelf bepalen.
+            Nog geen krachtblok ingesteld. ASCEND bepaalt hoe vaak je traint, de split en de planning; MacroFactor Workouts
+            bepaalt de oefeningen.
           </p>
           <SecondaryButton onClick={() => setWizard({ mode: 'create', draft: blankStrategyDraft(strengthExternal) })}>
             Krachtblok starten
@@ -112,14 +112,14 @@ export function StrengthProgramCard() {
 
           <div className="flex gap-3">
             <SecondaryButton onClick={() => setWizard({ mode: 'edit', draft: strategy })}>Schema aanpassen</SecondaryButton>
-            <SecondaryButton onClick={() => void reportStrengthSchemaEnded()}>Mijn schema is afgelopen</SecondaryButton>
+            <SecondaryButton onClick={() => void reportStrengthSchemaEnded()}>Schema is afgelopen</SecondaryButton>
           </div>
         </>
       )}
 
       {strengthRecommendation && (
         <div className="flex flex-col gap-2 border-t pt-3" style={{ borderColor: 'var(--color-card-border)' }}>
-          <Eyebrow>KRACHTBLOK EVALUEREN</Eyebrow>
+          <Eyebrow>Krachtblok evalueren</Eyebrow>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{strengthRecommendation.rationale}</p>
           <div className="flex flex-col gap-2">
             <div className="flex gap-3">

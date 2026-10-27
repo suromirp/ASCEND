@@ -321,7 +321,7 @@ describe('rowSummary: lichaam', () => {
   });
 
   it('figuur: Automatisch zegt eerlijk dat het nog niet bekend is', () => {
-    expect(rowSummary('figuur', facts())).toEqual({ value: 'Man', auto: true, sub: 'Nog niet bekend, we tonen Man' });
+    expect(rowSummary('figuur', facts())).toEqual({ value: 'Man', auto: true, sub: 'Nog niet bekend, nu Man' });
     expect(rowSummary('figuur', facts({ linkedSex: 'vrouw' }))).toEqual({ value: 'Vrouw', auto: true, sub: 'Uit je koppeling' });
     expect(rowSummary('figuur', facts({ settings: { ...facts().settings, figure: 'vrouw' } }))).toEqual({ value: 'Vrouw' });
     expect(rowSummary('figuur', facts({ settings: { ...facts().settings, figure: 'man' }, linkedSex: 'vrouw' }))).toEqual({ value: 'Man' });
@@ -333,7 +333,7 @@ describe('rowSummary: wat speelde er', () => {
 
   it('alles staat standaard aan, met je patroon als oorzaak', () => {
     expect(rowSummary('wat-teken', facts()).checked).toBe(true);
-    expect(rowSummary('wat-overzicht', facts())).toEqual({ checked: true, sub: 'Wat doet dit met je?' });
+    expect(rowSummary('wat-overzicht', facts())).toEqual({ checked: true, sub: 'Wat een reden met je doet' });
     expect(rowSummary('wat-test', facts()).checked).toBe(true);
     expect(rowSummary('wat-oorzaak', facts())).toEqual({ value: 'Ook je patroon', sub: 'Uit weer, horloge, logboek en je patroon' });
   });
@@ -753,7 +753,7 @@ describe('rowSummary: rijen met een blad', () => {
     expect(rowSummary('bundel-invullen', facts({ strengthExternal: true })).hidden).toBe(true);
   });
 
-  it('Weer en kleding, Inzicht na een training en Wat ik van mijn horloge gebruik', () => {
+  it('Weer en kleding, Inzicht na een training en Gebruik van je horloge', () => {
     expect(rowSummary('bundel-weer', facts()).value).toBe('4 van 4 aan');
     expect(rowSummary('bundel-weer', withSettings({ overviews: { weatherSwap: false, bestMoment: false } })).value).toBe('2 van 4 aan');
     expect(rowSummary('bundel-inzicht', facts())).toEqual({ value: 'Aan', sub: '4 van 4 onderwerpen' });

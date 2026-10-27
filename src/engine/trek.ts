@@ -28,7 +28,7 @@ export const TREK_TERRAIN_LABEL: Record<TrekTerrain, string> = {
 export const TREK_IMPORTANCES: TrekImportance[] = ['training', 'goal'];
 export const TREK_IMPORTANCE_LABEL: Record<TrekImportance, string> = {
   training: 'Training onderweg',
-  goal: 'Doel, ik wil fris zijn',
+  goal: 'Doel, fris aan de start',
 };
 
 export function trekImportanceHint(importance: TrekImportance, days: number): string {

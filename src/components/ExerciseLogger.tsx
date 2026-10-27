@@ -527,7 +527,7 @@ function GeneralLogger({
           )}
           {detailForm(template.id) && <WorkoutDetailsFields templateId={template.id} value={workout} onChange={setWorkout} />}
           <div>
-            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE), hoe zwaar voelde de hele training?</p>
+            <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Zwaarte (RPE): hoe zwaar voelde de hele training?</p>
             <div className="mt-2 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
               {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
                 const inPlan = planRpe && n >= planRpe[0] && n <= planRpe[1];

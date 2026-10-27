@@ -47,18 +47,18 @@ export const SEVERITY_CHOICES = [
 
 const KNAPIK = 'Roeien en optrekken helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in Aanvullend onderzoek GR5 voorbereiding).';
 const ROMP = 'Rompoefeningen staan in het krachtmenu van Aanvullend onderzoek GR5 voorbereiding (bewijs: expert).';
-const NIETS_APART = 'Voor deze plek vonden we in onze onderzoeken niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
+const NIETS_APART = 'Voor deze plek staat in het onderzoek achter ASCEND niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
 
 export const BODY_CARE: Record<string, BodyCare> = {
   nek: {
     bijLast: [
       'Een stijve nek komt vaak van een zware rugzak, een slechte slaaphouding of lang naar beneden kijken. Beweeg rustig, draai en buig binnen wat zonder pijn gaat.',
-      'Vermijd grote, snelle nekrollen. Warmte en lichte beweging helpen vaak meer dan stilhouden.',
+      'Vermijd grote, snelle nekrollen. Warmte en lichte beweging kunnen vaak meer helpen dan stilhouden.',
     ],
     fysio: ['pijn met tintelen of minder kracht in de arm'],
     direct: 'Duizeligheid of dubbelzien bij nekpijn: ga dezelfde dag naar je huisarts, en bel 112 als er uitval bij komt, zoals een scheve mond of een arm die niet meer meewerkt.',
     voorkomen: {
-      intro: 'Een sterke bovenrug en schouderbladen nemen werk over van de nek. Twee keer per week is genoeg.',
+      intro: 'Een sterke bovenrug en sterke schouderbladen kunnen werk van de nek overnemen. Twee keer per week is genoeg.',
       oefeningen: [
         { name: 'Kin intrekken met vasthouden', dose: '2 × 8, 5 seconden vast', note: 'Lang in je nek, kin recht naar achter' },
         { name: 'Roeien met een elastiek', dose: '3 × 10', note: 'Schouderbladen rustig naar elkaar' },
@@ -74,7 +74,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['een val of klap op de schouder', 'een arm die slap of tintelend aanvoelt'],
     voorkomen: {
-      intro: 'Sterke schouderbladen en een sterke rug dragen een rugzak makkelijker. Twee keer per week.',
+      intro: 'Sterke schouderbladen en een sterke rug kunnen een rugzak makkelijker dragen. Twee keer per week.',
       oefeningen: [
         { name: 'Roeien met een elastiek of gewicht', dose: '3 × 10', note: 'Rustig terug, niet zwaaien' },
         { name: 'Buitenwaartse rotatie met een elastiek', dose: '2 × 12 per kant', note: 'Elleboog tegen je zij' },
@@ -106,7 +106,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     fysio: [],
     direct: 'Buikpijn met koorts of misselijkheid hoort niet bij een spier: laat het dezelfde dag door je huisarts bekijken, geen fysio.',
     voorkomen: {
-      intro: 'Een stevige romp helpt je rug en heupen bij een zware rugzak. Twee tot drie keer per week.',
+      intro: 'Een stevige romp kan je rug en heupen helpen bij een zware rugzak. Twee tot drie keer per week.',
       oefeningen: [
         { name: 'Plank', dose: '3 × 30 seconden', note: 'Billen niet omhoog, niet inzakken' },
         { name: 'Suitcase carry', dose: '3 × 20 meter per kant', note: 'Een gewicht in één hand, rechtop blijven' },
@@ -138,7 +138,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['pijn in de lies of heup die erger wordt als je doorloopt (dat kan het bot zijn)'],
     voorkomen: {
-      intro: 'Sterke heupspieren houden je knie en bekken rustig. Twee keer per week.',
+      intro: 'Sterke heupspieren kunnen je knie en bekken rustig houden. Twee keer per week.',
       oefeningen: [
         { name: 'Heup zijwaarts heffen', dose: '2 × 12 per kant', note: 'Op je zij, tenen naar voren' },
         { name: 'Step-up op een tree', dose: '3 × 8 per been', note: 'Later met een rugzak' },
@@ -154,7 +154,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['plotselinge scherpe pijn met een knap of een blauwe plek'],
     voorkomen: {
-      intro: 'Sterkere bovenbenen vangen het dalen op. Eén tot twee keer per week, langzaam zakkend.',
+      intro: 'Sterkere bovenbenen kunnen het dalen beter opvangen. Eén tot twee keer per week, langzaam zakkend.',
       oefeningen: [
         { name: 'Step-down van een lage trede', dose: '3 × 8 per been', note: 'Zak in 3 tot 4 seconden' },
         { name: 'Langzaam zakkende squat', dose: '3 × 8', note: 'Omhoog in 1, omlaag in 3 seconden' },
@@ -170,7 +170,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['een knie die op slot slaat, doorzakt of snel dik wordt'],
     voorkomen: {
-      intro: 'Sterkere bovenbenen en heupen vangen het dalen op. Twee keer per week, rustig opbouwen.',
+      intro: 'Sterkere bovenbenen en heupen kunnen het dalen beter opvangen. Twee keer per week, rustig opbouwen.',
       oefeningen: [
         { name: 'Step-down van een lage trede', dose: '3 × 8 per been', note: 'Zak in 3 tot 4 seconden, knie boven je tweede teen' },
         { name: 'Langzaam zakkende squat', dose: '3 × 8' },
@@ -186,7 +186,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['pijn op één plekje op het bot die erger wordt (dat kan een stressreactie zijn)'],
     voorkomen: {
-      intro: 'Sterke kuiten, voeten en scheenspieren dragen de landing. Twee keer per week.',
+      intro: 'Sterke kuiten, voeten en scheenspieren kunnen de landing helpen dragen. Twee keer per week.',
       oefeningen: [
         { name: 'Tenen omhoog (tibialis raise)', dose: '2 × 15', note: 'Hakken tegen de muur' },
         { name: 'Eenbenige kuitheffing', dose: '3 × 12 per been', note: 'Langzaam omlaag' },
@@ -202,7 +202,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['een enkel die instabiel voelt of steeds omslaat'],
     voorkomen: {
-      intro: 'Balans en sterke voeten maken je enkels stabieler. Twee tot drie keer per week.',
+      intro: 'Balans en sterke voeten kunnen je enkels stabieler maken. Twee tot drie keer per week.',
       oefeningen: [
         { name: 'Op één been staan', dose: '3 × 30 seconden per been', note: 'Daarna met je ogen dicht' },
         { name: 'Eenbenige kuitheffing', dose: '3 × 12 per been' },
@@ -214,12 +214,12 @@ export const BODY_CARE: Record<string, BodyCare> = {
   bovenrug: {
     bijLast: [
       'Een stijve bovenrug en schouders na een zware rugzak komt vaak door de druk op de schouderbanden. Stel de rugzak hoger af en verdeel het gewicht over je heupen.',
-      'Beweeg vaak: rustig rollen en draaien helpt meestal meer dan stilzitten.',
+      'Beweeg vaak: rustig rollen en draaien kan meestal meer helpen dan stilzitten.',
     ],
     fysio: ['pijn tussen de schouderbladen die uitstraalt naar de arm met tintelen'],
     direct: 'Pijn tussen de schouderbladen met benauwdheid: bel direct je huisarts of 112.',
     voorkomen: {
-      intro: 'Een sterke bovenrug draagt een rugzak makkelijker. Twee keer per week.',
+      intro: 'Een sterke bovenrug kan een rugzak makkelijker dragen. Twee keer per week.',
       oefeningen: [
         { name: 'Roeien met een elastiek of gewicht', dose: '3 × 10' },
         { name: 'Scapular wall slides', dose: '2 × 10' },
@@ -231,12 +231,12 @@ export const BODY_CARE: Record<string, BodyCare> = {
   onderrug: {
     bijLast: [
       'Een stijve of zeurende onderrug door een zware rugzak of lang zitten is meestal niet gevaarlijk. Blijf rustig bewegen en vermijd een dag of twee zwaar tillen.',
-      'Rust houden helpt zelden. Rustig lopen en bewegen helpt meestal meer.',
+      'Rust houden helpt zelden. Rustig lopen en bewegen kan meestal meer helpen.',
     ],
     fysio: [],
     direct: 'Een doof gevoel rond je zitvlak of liezen, moeite met plassen of een been dat zwakker wordt: ga dezelfde dag naar een huisarts of de spoedpost.',
     voorkomen: {
-      intro: 'Een stevige romp en sterke billen en hamstrings ontlasten je rug. Twee keer per week.',
+      intro: 'Een stevige romp en sterke billen en hamstrings kunnen je rug ontlasten. Twee keer per week.',
       oefeningen: [
         { name: 'Bird dog', dose: '3 × 8 per kant', note: 'Rug vlak, rustig wisselen' },
         { name: 'Plank', dose: '3 × 30 seconden' },
@@ -251,7 +251,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     ],
     fysio: ['uitstraling met een doof gevoel of minder kracht in het been'],
     voorkomen: {
-      intro: 'Sterke billen nemen werk van je rug en knieën over. Twee keer per week.',
+      intro: 'Sterke billen kunnen werk van je rug en knieën overnemen. Twee keer per week.',
       oefeningen: [
         { name: 'Bilbrug', dose: '3 × 12', note: 'Boven even aanspannen' },
         { name: 'Romeense deadlift met licht gewicht', dose: '3 × 8' },
@@ -284,7 +284,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     fysio: ['een plotselinge scherpe pijn of een knap in de kuit'],
     direct: 'Een dikke, warme en pijnlijke kuit, vooral aan één kant en zonder duidelijke oorzaak, laat je dezelfde dag door je huisarts bekijken.',
     voorkomen: {
-      intro: 'Sterke kuiten vangen veel van de stappen op. Twee keer per week.',
+      intro: 'Sterke kuiten kunnen veel van de stappen opvangen. Twee keer per week.',
       oefeningen: [
         { name: 'Eenbenige kuitheffing, knie gestrekt', dose: '3 × 12 per been', note: 'Langzaam omlaag' },
         { name: 'Kuitheffing met gebogen knie', dose: '3 × 10 per been', note: 'Voor de diepe kuitspier' },
@@ -301,7 +301,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     fysio: [],
     direct: 'Een klap of knap achter in de enkel, of niet meer op je tenen kunnen staan: laat het dezelfde dag door je huisarts bekijken.',
     voorkomen: {
-      intro: 'Een pees went aan belasting als je langzaam opbouwt. Twee tot drie keer per week.',
+      intro: 'Een pees kan wennen aan belasting als je langzaam opbouwt. Twee tot drie keer per week.',
       oefeningen: [
         { name: 'Kuitheffing, langzaam omlaag', dose: '3 × 12 per been', note: 'In 3 seconden zakken' },
         { name: 'Kuitheffing met gebogen knie', dose: '3 × 10 per been' },
