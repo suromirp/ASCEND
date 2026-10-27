@@ -219,7 +219,7 @@ function ProposalCard({
   const details = describeActivityDetails(activity);
   return (
     <Card className="flex flex-col gap-3">
-      <Eyebrow>VAN JE HORLOGE</Eyebrow>
+      <Eyebrow>Van je horloge</Eyebrow>
       <div>
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{describeActivity(activity)}</p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
@@ -237,7 +237,7 @@ function ProposalCard({
         {match
           ? <>Hoort bij <span style={{ color: 'var(--color-action)' }}>{match.template.name}</span>, gepland voor {dayLabel(match.session.scheduledDate)}.</>
           : template
-            ? <>Er stond niets passends gepland. Opslaan legt hem los vast als <span style={{ color: 'var(--color-action)' }}>{template.name}</span>.</>
+            ? <>Er stond niets passends gepland. Met Opslaan komt hij los in je logboek, als <span style={{ color: 'var(--color-action)' }}>{template.name}</span>.</>
             : 'Er stond niets passends gepland. Kies bij Andere training wat het was.'}
       </p>
       {similarLog && (
@@ -278,7 +278,7 @@ function ChooseSheet({
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
-            <Eyebrow>WAT WAS DIT?</Eyebrow>
+            <Eyebrow>Wat was dit?</Eyebrow>
             <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{describeActivity(activity)}</p>
             {planned.length > 0 && (
               <div className="flex flex-col gap-2">

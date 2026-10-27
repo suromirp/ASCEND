@@ -32,7 +32,7 @@ export function StartWelcome({ onHold }: { onHold: (hold: boolean) => void }) {
         </header>
         <Card className="flex flex-col gap-3">
           <p className="text-base" style={{ color: 'var(--color-ink)' }}>
-            ASCEND plant pas als je hebt verteld wat je wilt. Met een paar vragen zie je je eerste week, en jij zegt of die klopt.
+            ASCEND plant pas als jij hebt verteld wat je wilt. Na een paar vragen zie je je eerste week, en jij zegt of die klopt.
           </p>
           <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>
             Gebruikte je ASCEND al eerder? Zet dan je back-up terug: je trainingen, doelen en instellingen komen terug.

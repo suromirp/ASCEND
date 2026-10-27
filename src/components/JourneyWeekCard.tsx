@@ -24,7 +24,7 @@ export function JourneyWeekCard() {
         {task.title}
       </DayRow>
       {open && (
-        <TodaySheet eyebrow="DEZE WEEK VOOR DE GR5" title={task.title} onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow="Deze week voor de GR5" title={task.title} onClose={() => setOpen(false)}>
           {(close) => (
             <div className="flex flex-col gap-4">
               <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{task.why}</p>

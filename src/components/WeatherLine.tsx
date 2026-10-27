@@ -12,7 +12,7 @@
 //
 // `onOpen` makes the line a button (the mission card passes it, the page Weer
 // opens). With it, an outdoor training with no place chosen yet gets one calm
-// text button in the place of the line, "Weer en kleding bij je training: kies
+// text button in the place of the line, "Weer en kleding erbij? Kies
 // je plaats", as long as the weather line or the clothing advice is on. Not a
 // filled button: the main button of Today is the one accent of the screen.
 
@@ -44,7 +44,7 @@ export function WeatherLine({ template, date, minutes, className = '', onOpen }:
         className={`flex min-h-[44px] w-full items-center justify-between gap-2 text-left text-sm font-medium ${className}`}
         style={{ color: 'var(--color-action)' }}
       >
-        <span className="min-w-0">Weer en kleding bij je training: kies je plaats</span>
+        <span className="min-w-0">Weer en kleding erbij? Kies je plaats.</span>
         <Icon name="verder" size={16} className="shrink-0" />
       </button>
     );

@@ -32,7 +32,7 @@ export function ScheduleAnomalyCard() {
 
   return (
     <Card className="mx-attention flex flex-col gap-2">
-      <Eyebrow>OPGEVALLEN IN JE SCHEMA</Eyebrow>
+      <Eyebrow>Opgevallen in je schema</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{proposal.issue}.</p>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         {proposal.changes[0]?.reason}
@@ -47,7 +47,7 @@ export function ScheduleAnomalyCard() {
       <div className="mt-1 flex gap-3">
         <SecondaryButton onClick={() => setDismissed(true)} disabled={applying}>Liever niet</SecondaryButton>
         <PrimaryButton onClick={() => void handleApply()} disabled={applying}>
-          {applying ? 'Bezig…' : 'Aanpassen'}
+          {applying ? 'Bezig…' : 'Akkoord'}
         </PrimaryButton>
       </div>
     </Card>

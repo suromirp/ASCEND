@@ -35,7 +35,7 @@ export function QuietDayCard({
       style={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}
       aria-label="Vandaag"
     >
-      <Eyebrow>VANDAAG</Eyebrow>
+      <Eyebrow>Vandaag</Eyebrow>
       <h2 className="font-display text-[28px] leading-tight" style={{ color: 'var(--color-ink)' }}>{title}</h2>
       <p className="text-[15px] leading-relaxed" style={{ color: 'var(--color-ink)' }}>{body}</p>
       {detail && <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{detail}</p>}

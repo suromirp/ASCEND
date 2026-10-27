@@ -14,7 +14,7 @@ export type DayRowState = 'todo' | 'now' | 'done' | 'skipped';
 export function YourDay({ children }: { children: ReactNode }) {
   return (
     <section aria-label="Je dag">
-      <div className="mb-2"><Eyebrow>JE DAG</Eyebrow></div>
+      <div className="mb-2"><Eyebrow>Je dag</Eyebrow></div>
       <ol className="overflow-hidden rounded-2xl border" style={{ background: 'var(--color-card)', borderColor: 'var(--color-card-border)' }}>{children}</ol>
     </section>
   );

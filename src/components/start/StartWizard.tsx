@@ -14,7 +14,7 @@ import { haptics } from '../../utils/haptics';
 // laat de app leeg met het welkom
 // (docs/beslissingen/2026-10-25-eerst-vragen-dan-plannen.md).
 
-const EXPLANATION = 'Je doel, je dagen en of je krachttraining wilt bepalen je weken. ASCEND plant niets zonder dat je het ziet: je ziet eerst wat er komt, en het gebeurt pas na jouw akkoord.';
+const EXPLANATION = 'Je doel, je dagen en je keuze voor krachttraining bepalen je weken. Je ziet eerst wat er komt; pas na jouw Akkoord gebeurt er iets.';
 
 const DAY_LABELS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 
@@ -46,7 +46,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
         settings: { ...settings, ...(marathonRaceType ? { marathonRaceType, marathonTargetDate } : {}) },
         firstPlan: { milestones: setup.milestones, strategy: setup.strategy, allowedDays: setup.allowedDays, restDay: setup.settings.restDay },
       }),
-      { eyebrow: 'Je eerste week', notesTitle: 'Wat je koos', ask: 'always', alwaysAsk: true, declined: 'Er is niets ingepland.', onStored: close, onDeclined: close },
+      { eyebrow: 'Je eerste week', notesTitle: 'Wat je koos', ask: 'always', alwaysAsk: true, declined: 'Prima, er is niets ingepland.', onStored: close, onDeclined: close },
     );
   }
 
@@ -55,11 +55,11 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
     race: 'Welke afstand?',
     date: answers.goal === 'trek' ? 'Wanneer begint je tocht?' : 'Wanneer is je wedstrijd?',
     days: 'Hoeveel dagen per week wil je trainen?',
-    which: 'Welke dagen kunnen?',
+    which: 'Op welke dagen kun je?',
     strength: 'Wil je ook krachttraining?',
   };
   const line: Record<StartStep, string> = {
-    goal: 'Kies wat het best past. Je kunt het later altijd veranderen.',
+    goal: 'Kies wat het best past. Je kunt het later nog veranderen.',
     race: 'Je kiest er één. Een andere afstand kun je later bij je doelen zetten.',
     date: 'Met een datum bouwt ASCEND naar die dag toe. Zonder datum plant ASCEND rustig door.',
     days: advice.reason,
@@ -207,7 +207,7 @@ export function StartWizard({ answers, onAnswers, onClose }: { answers: StartAns
                 <SheetButtons>
                   {index > 0 && <button type="button" className="st-btn" disabled={horizon.busy} onClick={() => go(-1)}>Terug</button>}
                   <button type="button" className="st-btn gold" disabled={horizon.busy} onClick={() => void makePlan(close)}>
-                    {horizon.busy ? 'Even rekenen…' : 'Plan laten maken'}
+                    {horizon.busy ? 'Even rekenen…' : 'Eerste week bekijken'}
                   </button>
                 </SheetButtons>
               </>

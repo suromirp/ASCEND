@@ -15,12 +15,12 @@ const log = (templateId: string, date: string, extra: Partial<SessionLog> = {}):
 describe('coachLineForToday', () => {
   it('warns to keep it easy before a heavy leg day', () => {
     const line = coachLineForToday({ template: t('tpl_easy_run'), date: '2026-09-29', program, tomorrow: [t('tpl_lower_a')], yesterdayLogs: [], templateById: byId });
-    expect(line).toBe('Rustig houden vandaag: morgen staat Benen A (zwaar).');
+    expect(line).toBe('Houd het vandaag rustig: morgen staat Benen A (zwaar).');
   });
 
   it('puts yesterday feeling heavy first, and knows a rest week', () => {
     const heavy = [log('tpl_easy_run', '2026-09-28', { rpe: 7 })];
-    expect(coachLineForToday({ template: t('tpl_upper_a'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: heavy, templateById: byId })).toContain('voelde zwaar');
+    expect(coachLineForToday({ template: t('tpl_upper_a'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: heavy, templateById: byId })).toContain('voelde gisteren zwaar');
     expect(coachLineForToday({ template: t('tpl_easy_run'), date: '2026-10-22', program, tomorrow: [], yesterdayLogs: [], templateById: byId })).toContain('Rustweek');
   });
 });
@@ -45,6 +45,6 @@ describe('pain after a run or a hike', () => {
 
   it("brings yesterday's pain up in today's line", () => {
     const sore = [log('tpl_long_run', '2026-09-28', { painAreas: ['Achillespees'] })];
-    expect(coachLineForToday({ template: t('tpl_upper_a'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: sore, templateById: byId })).toBe('Gisteren pijn aan je achillespees. Voelt het nog niet goed, kies dan de korte versie of verplaats deze training.');
+    expect(coachLineForToday({ template: t('tpl_upper_a'), date: '2026-09-29', program, tomorrow: [], yesterdayLogs: sore, templateById: byId })).toBe('Gisteren pijn aan je achillespees. Voelt het nog niet goed, neem dan de korte versie of verplaats de training.');
   });
 });

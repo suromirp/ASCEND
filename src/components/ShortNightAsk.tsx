@@ -107,7 +107,7 @@ export function ShortNightAsk({ reading, today }: { reading: WellnessReading; to
     body = (
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs leading-snug" style={dim}>
-          {night.hours ? `Die nacht telt niet mee. Je schat ongeveer ${night.hours} uur.` : 'Die nacht telt niet mee.'}
+          {night.hours ? `Die nacht telt niet mee. Jij schat ongeveer ${night.hours} uur.` : 'Die nacht telt niet mee.'}
         </p>
         {undo}
       </div>

@@ -15,7 +15,7 @@ export function zoneOfTemplate(template: SessionTemplate, date: string | undefin
 // Wat de zone in het lijf voelt, in één zin.
 export const ZONE_SENTENCE: Record<Zone, string> = {
   1: 'Heel rustig. Je kunt zonder moeite praten.',
-  2: 'Hele zinnen praten moet kunnen.',
+  2: 'Je moet nog hele zinnen kunnen praten.',
   3: 'Stevig. Praten gaat in korte zinnen.',
   4: 'Hard. Praten lukt nauwelijks.',
   5: 'Alles wat je hebt, maar kort.',

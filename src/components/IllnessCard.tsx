@@ -29,7 +29,7 @@ export function IllnessStatusCard() {
   if (active) {
     return (
       <Card className="flex flex-col gap-2" >
-        <Eyebrow>ZIEK</Eyebrow>
+        <Eyebrow>Ziek</Eyebrow>
         <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>{ILLNESS_LABEL[active.kind]}</p>
         <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sinds {day(active.startDate)}</p>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{ILLNESS_GUIDANCE[active.kind]}</p>
@@ -55,7 +55,7 @@ export function IllnessStatusCard() {
     const heavyBack = ramp.heavyFrom <= todayISO();
     return (
       <Card className="flex flex-col gap-1.5">
-        <Eyebrow>WEER OPBOUWEN</Eyebrow>
+        <Eyebrow>Weer opbouwen</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
           {heavyBack
             ? `Zware trainingen mogen weer. Houd ze tot en met ${day(ramp.until)} wat korter en lichter dan normaal.`
@@ -95,9 +95,9 @@ function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void
       >
         <div className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="rounded-b-none border-b-0 pb-6">
-            <Eyebrow>NIET FIT?</Eyebrow>
+            <Eyebrow>Niet fit?</Eyebrow>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Kies wat het meest past. ASCEND past je planning aan en je meldt je weer beter met één tik.
+              Kies wat het meest past. ASCEND past je planning aan, en met één tik meld je je weer beter.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               {KINDS.map((kind) => (

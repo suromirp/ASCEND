@@ -249,7 +249,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   // mountain hike) is caught up, on a free day this week that keeps 48
   // hours from other heavy leg days; everything else is let go
   // (docs/onderzoek, rapport 2, rule C8: catching up is never stacking).
-  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest laten we gaan: twee trainingen op één dag om bij te benen helpt niet.';
+  const rule = 'ASCEND haalt alleen de sleuteltraining van de week in, de lange duurloop of de bergtocht, op een vrije dag in dezelfde week en nooit binnen 48 uur van een andere zware beendag. Staat er vandaag of morgen een rustdag en deed je de dag ervoor niets, dan wordt die rustdag de inhaaldag: er is niets om van te herstellen. De rest vervalt: twee trainingen op één dag om bij te benen helpt niet.';
   const missed = recentMissed
     .map((s) => ({ s, template: templateById.get(s.templateId) }))
     .filter((m): m is { s: PlannedSession; template: SessionTemplate } => !!m.template && m.template.type !== 'recovery')
@@ -281,10 +281,10 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
   }
   const names = missed.map((m) => m.template.name);
   const list = (xs: string[]) => (xs.length === 1 ? xs[0] : `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}`);
-  const title = missed.length === 1 ? `${names[0]} van ${shortDate(missed[0].s.scheduledDate)} gemist` : `${missed.length} trainingen gemist: ${list(names)}`;
+  const title = missed.length === 1 ? `${names[0]} van ${shortDate(missed[0].s.scheduledDate)} is blijven liggen` : `${missed.length} trainingen zijn blijven liggen: ${list(names)}`;
   const effect = [
     caughtUp.length > 0 ? `${caughtUp.join('; ')}.` : '',
-    dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'laten we gaan' : 'laten we gaan'}, de rest van de week blijft zoals gepland.` : '',
+    dropped.length > 0 ? `${list(dropped)} ${dropped.length === 1 ? 'vervalt' : 'vervallen'}. De rest van je week blijft zoals gepland.` : '',
   ].filter(Boolean).join(' ');
   // One training caught up on a free day: the other free days as options.
   let options: AdviceOption[] | undefined;
@@ -300,7 +300,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     ruleId: 'MISSED-CATCH-UP',
     title,
     effect,
-    why: `${missed.length === 1 ? 'Je hebt deze training niet afgevinkt.' : 'Je hebt deze trainingen niet afgevinkt.'} ${rule}`,
+    why: `${missed.length === 1 ? 'Deze training is niet afgevinkt.' : 'Deze trainingen zijn niet afgevinkt.'} ${rule}`,
     priority: caughtUp.length > 0 ? 3 : 2,
     proposal: proposal(title, items, effect, rule),
   }];

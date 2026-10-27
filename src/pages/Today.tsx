@@ -310,7 +310,7 @@ function TodayContent() {
         />
       ) : allTodayDone && anyDoneToday ? (
         <DoneTodayCard
-          title="Klaar voor vandaag"
+          title="Vandaag zit erop"
           line={`${doneToday.map((l) => templateById.get(l.templateId)?.name).filter(Boolean).join(' en ')} gedaan, ${doneToday.reduce((sum, l) => sum + l.durationMinutes, 0)} min`}
           tomorrow={tomorrowLine}
         />
@@ -318,16 +318,16 @@ function TodayContent() {
         <QuietDayCard
           title={mainTiming?.state === 'underway' ? `${mainGoal!.name}, dag ${mainTiming.day} van ${mainTiming.days}` : mainTiming?.state === 'past' ? 'Je hoofddoel ligt achter je' : onHoliday ? 'Vakantie' : allTodayDone ? 'Vandaag geen training' : 'Rust of vrije dag'}
           body={mainTiming?.state === 'underway'
-            ? 'De tocht is de training. ASCEND plant tot het eind niets.'
+            ? 'De tocht is je training. Tot het eind plant ASCEND niets.'
             : mainTiming?.state === 'past'
-              ? 'Na je hoofddoel plant ASCEND geen training meer. Kies een nieuw doel bij Ascend, of zet dit doel op behaald.'
+              ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend, of markeer dit doel als behaald.'
             : onHoliday
-            ? 'Je bent vrij. Er staat niets op de planning.'
+            ? 'Vrij vandaag. Er staat niets op de planning.'
             : allTodayDone
               ? illness
-                ? 'Je bent ziek gemeld. Rust; wat je nu mist, hoef je niet in te halen.'
+                ? 'Je bent ziek gemeld. Rust uit; wat je nu mist, hoef je niet in te halen.'
                 : 'Je training van vandaag is van de planning gehaald. Rust is ook training.'
-              : 'Geen training gepland voor vandaag.'}
+              : 'Vandaag staat er niets gepland.'}
           tomorrow={tomorrowLine}
         />
       )}
@@ -351,10 +351,10 @@ function TodayContent() {
 
       {showRecoveryWarning && (
         <Card className="flex flex-col gap-1">
-          <Eyebrow>HERSTELSIGNAAL</Eyebrow>
+          <Eyebrow>Herstelsignaal</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
-            De lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Overweeg vandaag
-            rustiger te gaan, minder herhalingen, lagere helling, of een kortere sessie.
+            Je lange duurloop voelde de laatste twee weken slechter na de heuvelintervallen. Vandaag rustiger?
+            Minder herhalingen, een lagere helling of een kortere sessie kan helpen.
           </p>
         </Card>
       )}
@@ -363,7 +363,7 @@ function TodayContent() {
 
       {concurrentTrainingTip && (
         <Card className="flex flex-col gap-1">
-          <Eyebrow>TIP VOOR VANDAAG</Eyebrow>
+          <Eyebrow>Tip voor vandaag</Eyebrow>
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
         </Card>
       )}

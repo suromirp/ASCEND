@@ -61,7 +61,7 @@ export function AlignProposalCard({
         <Eyebrow>Gelijktrekken met je horloge</Eyebrow>
         <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>{countLabel(items.length)} gelijktrekken met je horloge</p>
         <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Deze trainingen vulde je zelf in en je horloge heeft ze ook gemeten. Met Akkoord nemen ze de cijfers van je horloge over: duur, afstand, hartslag en hoogtemeters. Wat jij zelf invulde, zoals gevoel, inspanning en pijn, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten.
+          Je vulde deze trainingen zelf in en je horloge mat ze ook. Met Akkoord nemen ze de cijfers van je horloge over: duur, afstand, hartslag en hoogtemeters. Wat jij invulde, zoals gevoel, inspanning en pijn, blijft staan. Je eigen cijfers worden bewaard en je kunt ze terugzetten.
         </p>
         <AlignList items={shown} templates={templates} />
         {items.length > shown.length && (
