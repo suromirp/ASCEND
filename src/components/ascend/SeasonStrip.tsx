@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateNL, formatMonthNL } from '../../utils/dates';
 import type { SeasonStrip } from '../../engine/goalList';
 import { placeSeasonNames } from '../../engine/seasonLayout';
@@ -24,7 +24,9 @@ export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
 
   // Waar de namen staan, rekent engine/seasonLayout.ts uit: geen overlap en geen stok door een naam.
   // Een naam die niet past gaat een rij hoger of wordt korter getoond.
-  const places = placeSeasonNames(strip.flags.map((f) => f.fraction * w), w);
+  const fractionsKey = strip.flags.map((f) => f.fraction).join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const places = useMemo(() => placeSeasonNames(strip.flags.map((f) => f.fraction * w), w), [fractionsKey, w]);
   const topRow = places.reduce((m, p) => Math.max(m, p.row), 0);
   const TRACK_Y = POLE[topRow] + 22;
   const months = strip.months.filter((_, i) => !(i === 0 && strip.months[1] && strip.months[1].fraction * w < 20));

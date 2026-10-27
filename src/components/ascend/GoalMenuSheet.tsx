@@ -11,12 +11,12 @@ function Row({ icon, flip, title, line, tone = 'ink', disabled, onClick }: { ico
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex min-h-[56px] w-full items-center gap-3 border-b px-4 py-2 text-left last:border-b-0 disabled:opacity-40"
+      className="flex min-h-[56px] w-full items-center gap-3 border-b px-4 py-2 text-left last:border-b-0"
       style={{ borderColor: 'var(--color-card-border)', color: tone === 'danger' ? 'var(--color-danger-text)' : 'var(--color-ink)' }}
     >
-      <span className={flip ? 'flex rotate-180' : 'flex'}><Icon name={icon} size={20} /></span>
+      <span className={`${flip ? 'flex rotate-180' : 'flex'}${disabled ? ' opacity-40' : ''}`}><Icon name={icon} size={20} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-base">{title}</span>
+        <span className={`block text-base${disabled ? ' opacity-40' : ''}`}>{title}</span>
         {line && <span className="block text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{line}</span>}
       </span>
     </button>

@@ -67,7 +67,7 @@ export function placeSeasonNames(xs: readonly number[], totalWidth: number): Nam
   };
   const search = (i: number): boolean => {
     if (i === xs.length) return true;
-    if (++nodes > 20000) return false;
+    if (++nodes > 2000) return false;
     for (const option of options(i)) {
       out.push(option);
       if (search(i + 1)) return true;

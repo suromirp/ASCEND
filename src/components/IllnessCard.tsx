@@ -14,6 +14,9 @@ import { ProposalSheet } from './ProposalSheet';
 import type { Advice } from '../engine/adviceEngine';
 import { Card, Eyebrow, PrimaryButton } from './ui';
 import { TextButton } from './TextButton';
+import { withTimeout } from '../utils/withTimeout';
+
+const SAVE_LIMIT_MS = 15_000;
 
 // Ziek melden en weer beter zijn een voorstel met Akkoord. Verandert de planning
 // niet, dan wordt de periode direct bewaard; anders komt eerst het voorstel,
@@ -22,13 +25,21 @@ function useIllnessProposal() {
   const { planIllness, applyIllness } = useAppData();
   const [plan, setPlan] = useState<IllnessPlan | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const request = async (change: IllnessChange) => {
     if (busy) return;
+    setError(null);
     const next = planIllness(change);
     if (!next) return;
     if (!next.changesPlanning) {
       setBusy(true);
-      try { await applyIllness(next); } finally { setBusy(false); }
+      try {
+        await withTimeout(applyIllness(next), SAVE_LIMIT_MS, 'Opslaan');
+      } catch {
+        setError('Dat lukte nu niet. Probeer het zo nog eens.');
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     setPlan(next);
@@ -43,7 +54,7 @@ function useIllnessProposal() {
       onClose={() => setPlan(null)}
     />
   );
-  return { request, sheet, busy };
+  return { request, sheet, busy, error };
 }
 
 function illnessAdvice(plan: IllnessPlan): Advice {
@@ -68,7 +79,7 @@ function day(iso: string): string {
 // The status cards (ill / building back). Shown at the top of Today.
 export function IllnessStatusCard() {
   const { settings } = useAppData();
-  const { request, sheet, busy } = useIllnessProposal();
+  const { request, sheet, busy, error } = useIllnessProposal();
   const active = activeIllness(settings.illnessEpisodes);
   const ramp = recoveryRamp(settings.illnessEpisodes, todayISO());
 
@@ -84,6 +95,7 @@ export function IllnessStatusCard() {
         <PrimaryButton disabled={busy} onClick={() => void request({ action: 'recover' })}>
           {busy ? 'Even bewaren…' : 'Ik ben weer beter'}
         </PrimaryButton>
+        {error && <p className="text-sm" role="status" style={{ color: 'var(--color-warning)' }}>{error}</p>}
         {active.kind === 'above_neck' && (
           <TextButton
             onClick={() => void request({ action: 'report', kind: 'below_neck' })}
