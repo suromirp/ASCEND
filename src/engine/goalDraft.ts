@@ -98,6 +98,12 @@ export function suggestPriority(existing: readonly TrainingGoal[], date: string 
   return date < lastTop ? 'voortop' : 'verkenning';
 }
 
+// Hoe een leeg veld heet in "Vul ... in.": de vragen zelf eindigen op een vraagteken.
+const MISSING: Partial<Record<keyof GoalDetails, string>> = {
+  days: 'het aantal dagen', distanceKm: 'de afstand', gainM: 'de meters omhoog', lossM: 'de meters omlaag',
+  targetMinutes: 'je doeltijd', packKg: 'het gewicht van je rugzak', expectedMinutes: 'de verwachte tijd',
+};
+
 // Wat er nog mist of niet kan, in gewone woorden. Leeg als je door kunt.
 export function draftProblems(id: AddTileId, details: GoalDetails, date: string | undefined, today: string, unchangedDate?: string): string[] {
   const kind = GOAL_KINDS[kindOfTile(id, details)];
@@ -108,7 +114,7 @@ export function draftProblems(id: AddTileId, details: GoalDetails, date: string 
     if (q.choices) {
       if (!v) out.push(q.key === 'shelter' ? 'Kies of je in hutten of met tent slaapt.' : q.label === 'Afstand' ? 'Kies een afstand.' : `Kies ${q.label.toLowerCase()}.`);
     } else if (typeof v !== 'number' || !(v > 0)) {
-      out.push(`Vul ${q.label.toLowerCase()} in.`);
+      out.push(`Vul ${MISSING[q.key] ?? q.label.toLowerCase().replace(/\?$/, '')} in.`);
     }
   }
   if (kind.needsDate && !date) out.push('Kies een datum.');
