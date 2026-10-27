@@ -2153,7 +2153,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const proposal = await planHorizonChangeImpl({
           title: `${plan.goalDraft.name || 'Je doel'}: zo verandert je planning`,
           why: 'Volgt je doel.',
-          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop hij eindigt. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
           trigger: plan.goalDraft.createdAt === plan.goalDraft.updatedAt ? 'goal_created' : 'goal_changed',
           goals: [plan.goalDraft],
         }).catch(() => null);

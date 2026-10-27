@@ -160,7 +160,7 @@ describe('meters die nog niet meetbaar zijn tellen niet mee maar worden genoemd'
     expect(r.meters[1].share).toBe(1);
     const mean = r.meters.reduce((a, m) => a + m.share, 0) / 3;
     expect(r.percent).toBe(Math.min(99, Math.round(mean * 100)));
-    expect(r.missingSentence).toBe('Nog niet meegeteld: je langste zwemmen en je koppeltrainingen.');
+    expect(r.missingSentence).toBe('Hier is nog niets van gemeten: je langste zwemmen en je koppeltrainingen.');
     // De zin telt alleen wat meetelt.
     expect(r.sentence).toContain('drie dingen');
     expect(r.sentence).not.toContain('zwemmen');
@@ -177,7 +177,7 @@ describe('meters die nog niet meetbaar zijn tellen niet mee maar worden genoemd'
     expect(r.percent).toBeUndefined();
     expect(r.meters).toEqual([]);
     expect(r.missing.map((m) => m.key)).toEqual(['krachttrend', 'hardeSets', 'volhouden']);
-    expect(r.missingSentence).toBe('Nog niet meegeteld: je krachttrend, je harde sets per spiergroep en je volhouden.');
+    expect(r.missingSentence).toBe('Hier is nog niets van gemeten: je krachttrend, je harde sets per spiergroep en je volhouden.');
   });
 
   it('een gegeven dat ontbreekt maakt de meter ontbrekend, niet nul', () => {

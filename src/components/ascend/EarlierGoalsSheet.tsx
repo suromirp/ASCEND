@@ -15,7 +15,7 @@ export function EarlierGoalsSheet({
   onClose: () => void;
 }) {
   return (
-    <Sheet eyebrow="Ascend" title="Eerder, afgerond of weggelegd" line={goals.length === 0 ? 'Er staat hier nog niets.' : undefined} onClose={onClose}>
+    <Sheet eyebrow="Ascend" title="Eerdere doelen" line={goals.length === 0 ? 'Nog niets hier. Een afgerond of weggelegd doel komt hier terecht.' : undefined} onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-3 pb-2">
           {goals.length > 0 && (

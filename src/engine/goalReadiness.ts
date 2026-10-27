@@ -76,7 +76,7 @@ export interface GoalReadiness {
   weakest?: GoalMeter;
   sentence: string;
   weakestSentence?: string;
-  missingSentence?: string; // "Nog niet meegeteld: je langste zwemmen."
+  missingSentence?: string; // "Hier is nog niets van gemeten: je langste zwemmen."
   derivedNote?: string; // bij een dagdoel: 100% is een aandeel van de doeldag
   change?: number;
 }
@@ -427,8 +427,8 @@ const COUNT_WORD = ['nul', 'één', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeve
 function sentenceOf(meters: GoalMeter[], the: string): string {
   const items = meters.map((m) => `je ${m.label.toLowerCase()} ${m.text}`);
   const list = items.length > 1 ? `${items.slice(0, -1).join(', ')} en ${items.at(-1)}` : items[0];
-  if (meters.length === 1) return `Dit meet één ding dat ${the} vraagt: ${list}.`;
-  return `Het gemiddelde van ${COUNT_WORD[meters.length] ?? meters.length} dingen die ${the} vraagt: ${list}.`;
+  if (meters.length === 1) return `Dit telt één ding dat ${the} vraagt: ${list}.`;
+  return `Zo sta je ervoor, gemiddeld over ${COUNT_WORD[meters.length] ?? meters.length} dingen die ${the} vraagt: ${list}.`;
 }
 
 function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, options: ReadinessOptions): Omit<GoalReadiness, 'change'> {
@@ -454,11 +454,11 @@ function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, o
   }
 
   const missingSentence = missing.length > 0
-    ? `Nog niet meegeteld: ${missing.map((m) => `je ${m.label.toLowerCase()}`).join(', ').replace(/, ([^,]*)$/, ' en $1')}.`
+    ? `Hier is nog niets van gemeten: ${missing.map((m) => `je ${m.label.toLowerCase()}`).join(', ').replace(/, ([^,]*)$/, ' en $1')}.`
     : undefined;
 
   if (meters.length === 0) {
-    return { percent: undefined, meters, missing, sentence: missingSentence ?? 'Er is nog niets om je tegen te meten.', missingSentence };
+    return { percent: undefined, meters, missing, sentence: missingSentence ?? 'Nog niets te meten. Dat komt met trainingen die meetellen.', missingSentence };
   }
 
   const mean = meters.reduce((n, m) => n + m.share, 0) / meters.length;
@@ -474,7 +474,7 @@ function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, o
     missing,
     weakest,
     sentence: sentenceOf(meters, naming.the),
-    weakestSentence: weakest ? `Het zwakst: ${weakest.label.toLowerCase()}, ${weakest.text}.` : undefined,
+    weakestSentence: weakest ? `Hier is nog het meeste te winnen: ${weakest.label.toLowerCase()}, ${weakest.text}.` : undefined,
     missingSentence,
     derivedNote: usesShare ? DAY_SHARE_NOTE : undefined,
   };
@@ -530,7 +530,7 @@ export interface ComboReadiness {
 export function computeComboReadiness(parts: ComboPart[], logs: SessionLog[], today: string): ComboReadiness {
   const computed = parts.map((p) => ({ name: p.name, readiness: computeGoalReadiness(p.input, logs, today, p.options) }));
   const measured = computed.filter((p): p is { name: string; readiness: GoalReadiness & { percent: number } } => p.readiness.percent !== undefined);
-  if (measured.length === 0) return { percent: undefined, parts: computed, sentence: 'Er is nog niets om je tegen te meten.' };
+  if (measured.length === 0) return { percent: undefined, parts: computed, sentence: 'Nog niets te meten. Dat komt met trainingen die meetellen.' };
   const lowest = measured.reduce((a, b) => (b.readiness.percent < a.readiness.percent ? b : a));
   const others = measured.filter((p) => p !== lowest);
   const tail = others.length > 0 ? ` ${others.map((p) => `${p.name} staat op ${p.readiness.percent}%`).join(', ').replace(/, ([^,]*)$/, ' en $1')}.` : '';

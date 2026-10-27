@@ -33,7 +33,7 @@ describe('Klaar voor de GR5', () => {
     expect(r.meters.map((m) => m.key)).toEqual(['rugzak', 'langsteDag', 'hoogte', 'dagen']);
     expect(r.meters.every((m) => m.share === 0)).toBe(true);
     expect(r.change).toBeUndefined();
-    expect(r.sentence).toContain('Het gemiddelde van vier dingen die de GR5 vraagt');
+    expect(r.sentence).toContain('Zo sta je ervoor, gemiddeld over vier dingen die de GR5 vraagt');
     expect(r.sentence).toContain('je rugzak 0 van 14 kg');
   });
 
@@ -51,7 +51,7 @@ describe('Klaar voor de GR5', () => {
     expect(r.sentence).toContain('je rugzak 7 van 14 kg');
     expect(r.sentence).toContain('je stijging en daling 500 en 500 van 1.000 m');
     expect(r.weakest?.key).not.toBe('dagen');
-    expect(r.weakestSentence).toMatch(/^Het zwakst: /);
+    expect(r.weakestSentence).toMatch(/^Hier is nog het meeste te winnen: /);
   });
 
   it('klaar: 100% alleen als alle vier de meters vol zijn', () => {
@@ -112,7 +112,7 @@ describe('Klaar voor de GR5', () => {
     const r = computeGr5Readiness(GR5.filter((x) => x.kind === 'packWeight'), [hike('2026-10-10', 60, 0, 7)], TODAY)!;
     expect(r.meters).toHaveLength(1);
     expect(r.percent).toBe(50);
-    expect(r.sentence).toBe('Dit meet één ding dat de GR5 vraagt: je rugzak 7 van 14 kg.');
+    expect(r.sentence).toBe('Dit telt één ding dat de GR5 vraagt: je rugzak 7 van 14 kg.');
     expect(computeGr5Readiness([], [], TODAY)).toBeUndefined();
   });
 

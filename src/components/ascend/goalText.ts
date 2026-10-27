@@ -9,5 +9,5 @@ export function whenText(view: GoalView): { text: string; tone: 'status' | 'dim'
   const t = view.timing;
   if (t.state === 'ahead') return { text: `${t.weeksLeft} ${t.weeksLeft === 1 ? 'week' : 'weken'}`, tone: 'status' };
   if (t.state === 'underway') return { text: `onderweg, dag ${t.day} van ${t.days}`, tone: 'status' };
-  return { text: 'doorlopend', tone: 'dim' };
+  return { text: 'loopt gewoon door', tone: 'dim' };
 }

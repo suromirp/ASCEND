@@ -45,8 +45,8 @@ export const GoalCard = forwardRef<HTMLDivElement, {
   const percent = readiness?.percent;
   const change = readiness ? changeLabel(readiness.change) : undefined;
   const sentence = readiness?.sentence ?? (kind
-    ? 'Er is nog niets om je tegen te meten.'
-    : 'Dit doel heeft nog geen soort, dus ASCEND kan er nog niets aan meten. Kies bij Doel aanpassen een soort.');
+    ? 'Nog niets te meten. Dat komt met trainingen die meetellen.'
+    : 'Dit doel heeft nog geen soort, dus er valt niets te meten. Kies er een via Doel aanpassen.');
 
   return (
     <div
@@ -99,7 +99,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
         </button>
       </div>
 
-      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{kind ? labelLine(goal, item.priority) : 'Kies een soort om dit doel te laten meetellen.'}</p>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{kind ? labelLine(goal, item.priority) : 'Kies een soort, dan telt dit doel mee.'}</p>
 
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between gap-3">
@@ -134,11 +134,11 @@ export const GoalCard = forwardRef<HTMLDivElement, {
       {open && kind && isTrekGoal(kind) && <JourneyRows compact onNavigate={navigate} />}
 
       <div className="-mb-2 flex items-center justify-between">
-        <TextButton onClick={onDetails} icon="verder">Alles over dit doel</TextButton>
+        <TextButton onClick={onDetails} icon="verder">Meer over dit doel</TextButton>
         <TextButton tone="dim" onClick={onToggle} icon="omlaag" flipped={open} aria-expanded={open}>{open ? 'Inklappen' : 'Uitklappen'}</TextButton>
       </div>
       {timing.state === 'underway' && (
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training: het doel is de training.</p>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Tijdens het doel plant ASCEND geen training. Het doel is je training.</p>
       )}
     </div>
   );
@@ -149,7 +149,7 @@ export function NextStep({ next }: { next: NextKeySession }) {
     <div className="flex items-start gap-3 rounded-xl p-3" style={{ background: 'var(--color-surface)' }}>
       <span className="mt-0.5 shrink-0" style={{ color: 'var(--color-ink-dim)' }}><Icon name="vlag" size={18} /></span>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>
-        <span className="font-semibold">Volgende stap · {formatShortDayNL(next.date)}.</span> {next.name}{next.minutes > 0 ? `, ${next.minutes} minuten` : ''}.
+        <span className="font-semibold">Hierna · {formatShortDayNL(next.date)}.</span> {next.name}{next.minutes > 0 ? `, ${next.minutes} minuten` : ''}.
       </p>
     </div>
   );

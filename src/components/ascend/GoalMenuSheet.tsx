@@ -41,11 +41,11 @@ export function GoalMenuSheet({
         const pick = (fn: () => void) => () => { close(); window.setTimeout(fn, 280); };
         return (
           <div className="st-list">
-            <Row icon="notitie" title="Doel aanpassen" line="Datum, afstand, rugzak en wat bij dit soort hoort" onClick={pick(onEdit)} />
-            <Row icon="schijf" title="Label wijzigen" line="Top, Voortop of Verkenning" onClick={pick(onLabel)} />
+            <Row icon="notitie" title="Doel aanpassen" line="Datum, afstand, rugzak en meer" onClick={pick(onEdit)} />
+            <Row icon="schijf" title="Label wijzigen" line="Hoe belangrijk: Top, Voortop of Verkenning" onClick={pick(onLabel)} />
             <Row icon="omlaag" flip title="Hoger in de lijst" disabled={index === 0} onClick={pick(() => onStep('up'))} />
             <Row icon="omlaag" title="Lager in de lijst" disabled={index === count - 1} onClick={pick(() => onStep('down'))} />
-            <Row icon="wissen" title="Archiveren" tone="danger" onClick={pick(onArchive)} />
+            <Row icon="wissen" title="Archiveren" line="Terughalen kan later, zonder datum" tone="danger" onClick={pick(onArchive)} />
           </div>
         );
       }}

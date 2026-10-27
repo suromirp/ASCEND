@@ -32,7 +32,7 @@ import { todayISO } from '../utils/dates';
 // De enige gevulde mint knop is die van de lege staat ("Doel toevoegen"); met doelen op de tab is het
 // de gevulde knop van het voorstel, en de tab zelf heeft er dan geen.
 
-const KEEP = 'Je doel en je planning blijven zoals ze waren.';
+const KEEP = 'Prima, alles blijft zoals het was.';
 // Een blad sluit eerst (200 ms) voordat het voorstel opent, zodat de terugknop twee lagen niet door
 // elkaar haalt.
 const AFTER_SHEET_MS = 280;
@@ -131,21 +131,21 @@ export function AscendPage() {
       <SkyBand actions={emptyList ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
         <div className="min-w-0">
           <Eyebrow>Ascend</Eyebrow>
-          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je doelen</h1>
+          <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Waar je naartoe werkt</h1>
           {!emptyList && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{goalsSentence(listed, today)}</p>}
         </div>
         {strip && !emptyList && settings.showSeasonStrip !== false && <SeasonStripCard strip={strip} />}
         {emptyList && (
           <Card className="flex flex-col gap-3">
-            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Nog geen doel. Wat wil je bereiken?</p>
+            <p className="text-base" style={{ color: 'var(--color-ink)' }}>Hier staat nog niets. Zeg maar: wat wil je bereiken?</p>
             <PrimaryButton onClick={() => startAdd()}>Doel toevoegen</PrimaryButton>
           </Card>
         )}
       </SkyBand>
 
       {emptyList && (
-        <section className="flex flex-col gap-3" aria-label="Of begin met">
-          <p className="text-base" style={{ color: 'var(--color-ink-dim)' }}>Of begin met</p>
+        <section className="flex flex-col gap-3" aria-label="Of pak er eentje">
+          <p className="text-base" style={{ color: 'var(--color-ink-dim)' }}>Of pak er eentje</p>
           <div className="st-chips">
             {START_CHIPS.map((c) => <Chip key={c.label} onClick={() => startAdd(c.tile, c.details)}>{c.label}</Chip>)}
           </div>
@@ -175,7 +175,7 @@ export function AscendPage() {
       {!emptyList && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
 
       <Card className="flex flex-col p-0! overflow-hidden">
-        {([['treks', 'Tochten', 'Een tocht naast je doelen, met vrije dagen eromheen'], ['strength', 'Krachtblok', 'Hoe je krachttraining in je plan zit']] as const).map(([id, title, line]) => (
+        {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'], ['strength', 'Krachtblok', 'Hoe kracht in je week past']] as const).map(([id, title, line]) => (
           <button key={id} type="button" onClick={() => setExtra(id)} className="flex min-h-[56px] items-center justify-between gap-3 border-b px-4 py-2 text-left last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
             <span className="min-w-0">
               <span className="block text-base" style={{ color: 'var(--color-ink)' }}>{title}</span>
@@ -190,7 +190,7 @@ export function AscendPage() {
         <Card className="p-0! overflow-hidden">
           <button type="button" onClick={() => setEarlierOpen(true)} className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 text-left">
             <span className="text-base" style={{ color: 'var(--color-ink)' }}>
-              Eerder, afgerond of weggelegd
+              Eerdere doelen
               {earlier.length > 0 && <span className="tabular-nums" style={{ color: 'var(--color-ink-dim)' }}> · {earlier.length} {earlier.length === 1 ? 'doel' : 'doelen'}</span>}
             </span>
             <span style={{ color: 'var(--color-ink-dim)' }}><Icon name="verder" size={18} /></span>
@@ -244,11 +244,11 @@ export function AscendPage() {
               () => planHorizonChange({
                 title: `${draft.name || 'Je doel'}: zo verandert je planning`,
                 why: 'Volgt je nieuwe doel.',
-                explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop hij eindigt. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+                explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
                 trigger: 'goal_created',
                 goals: [draft],
               }),
-              { eyebrow: 'Doel toevoegen · stap 3 van 3', ask: 'always', alwaysAsk: true, declined: 'Er is niets toegevoegd. Je planning blijft zoals ze was.' },
+              { eyebrow: 'Doel toevoegen · stap 3 van 3', ask: 'always', alwaysAsk: true, declined: 'Prima, niets toegevoegd. Je planning blijft zoals ze was.' },
             ));
           }}
           onClose={() => setAdding(null)}
@@ -275,9 +275,9 @@ export function AscendPage() {
             const settings = marathonSettingsFor(was, next);
             later(() => void horizon.propose(
               () => planHorizonChange({
-                title: `${next.name || 'Je doel'} aangepast`,
+                title: `${next.name || 'Je doel'}: zo verandert je planning`,
                 why: 'Volgt wat je aanpaste.',
-                explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop hij eindigt. Een andere datum, soort of tent in plaats van hutten verandert je planning nooit ongemerkt: ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+                explanation: 'Een andere datum, soort of tent in plaats van hutten verandert je planning nooit ongemerkt. Jij ziet eerst wat er verschuift; pas na je Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
                 trigger: 'goal_changed',
                 goals: [next],
                 ...(settings ? { settings } : {}),
@@ -290,17 +290,17 @@ export function AscendPage() {
       )}
 
       {extra && (
-        <Sheet eyebrow="Ascend" title={extra === 'treks' ? 'Tochten' : 'Krachtblok'} line={extra === 'treks' ? 'Een tocht naast je doelen, met vrije dagen eromheen.' : 'Hoe je krachttraining in je plan zit.'} onClose={() => setExtra(null)}>
+        <Sheet eyebrow="Ascend" title={extra === 'treks' ? 'Tochten' : 'Krachtblok'} line={extra === 'treks' ? 'Een tocht erbij? Er komen vrije dagen omheen.' : 'Hoe kracht in je week past.'} onClose={() => setExtra(null)}>
           {extra === 'treks' ? <TrekGoalsCard /> : <StrengthProgramCard />}
         </Sheet>
       )}
 
       {archiving && (
         <ImpactSheet
-          eyebrow="DOEL ARCHIVEREN"
+          eyebrow="Doel archiveren"
           title={`${archiving.name} archiveren?`}
           lines={[]}
-          why="Een gearchiveerd doel telt niet meer mee voor je planning. Heeft dat gevolgen voor je trainingen, dan zie je eerst wat er verandert en beslis je daarna. Je kunt het doel later terughalen."
+          why="Het doel telt dan niet meer mee in je planning. Raakt dat je trainingen, dan zie je eerst wat er verandert en beslis jij. Je kunt het terughalen, maar dan zonder datum."
           primaryLabel="Archiveren"
           secondaryLabel="Annuleren"
           onPrimary={() => archive(archiving)}

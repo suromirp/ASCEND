@@ -21,13 +21,13 @@ export const STALE_NOTE = 'Je planning veranderde net nog. Er is niets aangepast
 const FAILED_NOTE = 'Het lukte niet om je planning nu bij te werken. Er is niets aangepast; probeer het zo nog eens.';
 const PENDING_NOTE = 'Je planning wordt nog bijgewerkt. Zodra het klaar is, zie je onderin wat er veranderde, met ongedaan maken.';
 const PARTIAL_NOTE = 'Dit lukte maar half. Onderin zie je wat er wel veranderde; met ongedaan maken zet je het terug.';
-const APPLIED_NOTE = 'Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.';
-const UNCHANGED_NOTE = 'Opgeslagen. Je planning hoefde niet te veranderen.';
+const APPLIED_NOTE = 'Gelukt, het staat in je planning. Onderin zie je wat er veranderde en kun je het ongedaan maken.';
+const UNCHANGED_NOTE = 'Opgeslagen. Je planning kon gewoon blijven zoals ze was.';
 const NOTE_FOR: Record<HorizonApplyStatus, string> = {
   applied: APPLIED_NOTE, unchanged: UNCHANGED_NOTE, stale: STALE_NOTE, failed: FAILED_NOTE, pending: PENDING_NOTE, partial: PARTIAL_NOTE,
 };
 
-const BOTH_NOTE = 'Je houdt allebei de doelen op hun datum. ASCEND meldt deze botsing niet opnieuw zolang de datums blijven. De veiligheidsgrenzen tussen zware beendagen blijven gelden.';
+const BOTH_NOTE = 'Je houdt allebei de doelen op hun datum. Je hoort hier niets meer over zolang de datums gelijk blijven. De veiligheidsgrenzen tussen zware beendagen blijven gelden.';
 
 export interface HorizonProposeOptions {
   eyebrow: string;

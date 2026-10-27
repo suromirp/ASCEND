@@ -27,15 +27,15 @@ export interface AddTile {
 const tile = (id: AddTileId, label: string, kind: GoalKindId, picto: PictogramName, summary?: string): AddTile => ({ id, label, summary: summary ?? GOAL_KINDS[kind].summary, picto });
 
 export const ADD_TILES: readonly AddTile[] = [
-  tile('trek', 'Trektocht', 'trek_hut', 'wandelen', 'Meerdere dagen met rugzak, hut of tent.'),
-  tile('day_hike', 'Bergtocht', 'day_hike', 'bergtocht', 'Eén lange dag met veel hoogtemeters.'),
+  tile('trek', 'Trektocht', 'trek_hut', 'wandelen', 'Meerdere dagen onderweg met je rugzak, in hut of tent.'),
+  tile('day_hike', 'Bergtocht', 'day_hike', 'bergtocht', 'Eén lange dag met flink wat klimmen.'),
   tile('mountaineering', 'Mountaineering', 'mountaineering', 'bergtocht', 'Toppen, gletsjer, vroege start.'),
-  tile('run_race', 'Hardloopwedstrijd', 'run_race', 'lopen', '5 km tot marathon.'),
+  tile('run_race', 'Hardloopwedstrijd', 'run_race', 'lopen', 'Van 5 km tot marathon, op een vaste dag.'),
   tile('trail', 'Trailrun', 'trail', 'lopen', 'Hardlopen met hoogtemeters.'),
   tile('bike', 'Fietstocht of wedstrijd', 'bike', 'fietsen', 'Rit, col of meerdere dagen.'),
   tile('triathlon', 'Triathlon', 'triathlon', 'lopen', 'Zwemmen, fietsen en lopen.'),
-  tile('stronger', 'Sterker worden', 'stronger', 'kracht', 'Kracht op je hoofdoefeningen.'),
-  tile('fit', 'Fit blijven', 'fit', 'lichaam', 'Beweegrichtlijn, zonder datum.'),
+  tile('stronger', 'Sterker worden', 'stronger', 'kracht', 'Meer kracht op je hoofdoefeningen.'),
+  tile('fit', 'Fit blijven', 'fit', 'lichaam', 'Gewoon fit blijven, zonder datum, met de beweegrichtlijn als maat.'),
 ];
 
 export const RACE_KM: Record<string, number> = { '5k': 5, '10k': 10, half: 21.1, marathon: 42.2 };

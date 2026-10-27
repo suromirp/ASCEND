@@ -165,7 +165,7 @@ function sentence(first: ConflictGoal, second: ConflictGoal, gap: number, need: 
 function suggestion(c: { resolution: ConflictResolution; goal: ConflictGoal; priority: GoalPriority }): string {
   const { resolution, goal, priority } = c;
   if (resolution.kind === 'shorten_taper') {
-    return `Voorstel: de afbouw van ${goal.name} wordt ${dag(resolution.taperDays)} in plaats van ${dag(taperOf(goal, priority))}. Dan past het.`;
+    return `Voorstel: ${goal.name} krijgt ${dag(resolution.taperDays)} afbouw in plaats van ${dag(taperOf(goal, priority))}. Dan past het.`;
   }
   if (resolution.kind === 'lower_label') {
     const short = resolution.taperDays !== undefined ? ` met een afbouw van ${dag(resolution.taperDays)}` : '';
@@ -174,7 +174,7 @@ function suggestion(c: { resolution: ConflictResolution; goal: ConflictGoal; pri
   if (priority === 'verkenning') {
     return `${goal.name} doe je als training mee. ASCEND houdt de dagen eromheen licht.`;
   }
-  return 'ASCEND kan dit niet oplossen met een kortere afbouw of een lager label. Kies je toch allebei, dan plant ASCEND zoals je wilt en houdt de dagen eromheen licht, maar je kunt niet voor allebei pieken. De grenzen tussen zware beendagen blijven.';
+  return 'Een kortere afbouw of een lager label lost dit niet op. Kies je toch allebei, dan plant ASCEND zoals jij wilt en blijven de dagen eromheen licht. Voor allebei pieken lukt niet. De grenzen tussen zware beendagen blijven gelden.';
 }
 
 // Alle botsingen tussen de doelen op deze datum, nieuw en oud. Doelen in het verleden en doelen
