@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession } from '../models/training';
-import { addDays, mondayOfWeek } from '../utils/dates';
+import { addDays, daysBetween, mondayOfWeek } from '../utils/dates';
 
 // Ronde 2b: het herstel na een doel (regel AFTER-GOAL in engine/weekValidator.ts), van de soort en
 // nooit van het label. Nagemaakte week: dezelfde indeling als in weekValidator.test.ts.
@@ -158,5 +158,38 @@ describe('AFTER-GOAL: herstel na een wedstrijd', () => {
 
   it('het herstel van het ene doel dat voorbij is, telt niet meer', () => {
     expect(found(withRace, { afterGoals: [{ date: '2026-10-10', days: 5 }] })).toEqual([]);
+  });
+});
+
+describe('de weekcontrole zet een zware beendag niet op een dag die een andere zware beendag al heeft', () => {
+  // Zaterdag 20 maart 2027 is een wedstrijd, daarna zes dagen herstel (tot en met vrijdag 26 maart). In de week erna staan Benen A (zwaar) en Bovenlichaam B
+  // samen op vrijdag (te vol), Heuvel afdaling op zaterdag en een lange loop op zondag. Verplaatsen
+  // van Benen A naar de zaterdag haalt de volle dag leeg, maar zet twee zware beendagen op een dag.
+  const MON = '2027-03-22';
+  const row = (id: string, templateId: string, offset: number): PlannedSession => ({ id, templateId, scheduledDate: addDays(MON, offset), weekStartDate: MON, status: 'planned', order: offset });
+  const layout = (): PlannedSession[] => [
+    { id: 'race2', templateId: 'tpl_race', scheduledDate: '2027-03-20', weekStartDate: '2027-03-15', status: 'planned', order: 9 },
+    row('rest', 'tpl_herstel', 0),
+    row('up-a', 'tpl_upper_a', 1),
+    row('easy', 'tpl_easy_run', 3),
+    row('z-low', 'tpl_lower_a', 4),
+    row('a-up-b', 'tpl_upper_b', 4),
+    row('hills', 'tpl_hills_descent', 5),
+    row('long', 'tpl_long_run', 6),
+  ];
+  const go = (list: PlannedSession[]) => repairWeeks({ sessions: list, logs: [], templates, today: '2027-03-01', restDay: 1, goalDay: '2027-08-01', afterGoals: [{ date: '2027-03-20', days: 6 }], dailyTimeBudget });
+
+  it('Benen A komt niet op de dag van Heuvel afdaling te staan', () => {
+    const r = go(layout());
+    const low = r.sessions.find((s) => s.id === 'z-low')!;
+    const hills = r.sessions.find((s) => s.id === 'hills')!;
+    expect(low.scheduledDate).not.toBe(hills.scheduledDate);
+    expect(r.repairs.filter((x) => x.sessionId === 'z-low' && x.to === hills.scheduledDate)).toEqual([]);
+  });
+
+  it('een verplaatsing die dezelfde twee zware beendagen dichter bij elkaar zet, telt niet als beter', () => {
+    const r = go(layout());
+    const gap = (list: PlannedSession[]) => Math.abs(daysBetween(list.find((s) => s.id === 'z-low')!.scheduledDate, list.find((s) => s.id === 'hills')!.scheduledDate));
+    expect(gap(r.sessions)).toBeGreaterThanOrEqual(gap(layout()));
   });
 });

@@ -234,6 +234,19 @@ export function AutoTag() {
   return <span className="st-auto">auto</span>;
 }
 
+// Het stipje bij een instelling die jij anders koos dan het advies; het blad "Aangepaste
+// instellingen" legt het uit. Staat het in een rij die het al in haar label zegt, dan is het
+// stipje voor een schermlezer stil (hidden).
+export function AdjustedTag({ hidden = false }: { hidden?: boolean }) {
+  return (
+    <span
+      {...(hidden ? { 'aria-hidden': true } : { role: 'img', 'aria-label': 'aangepast' })}
+      className="inline-block shrink-0 rounded-full"
+      style={{ width: 8, height: 8, background: 'var(--color-action)', opacity: 0.55 }}
+    />
+  );
+}
+
 // Een tikbare keuze in de vorm van een afgeronde chip (de sportschool). Een
 // gestippelde chip is "Eigen gewicht" of "Anders".
 export function Chip({ selected, onClick, children, dashed = false, label }: { selected?: boolean; onClick: () => void; children: ReactNode; dashed?: boolean; label?: string }) {

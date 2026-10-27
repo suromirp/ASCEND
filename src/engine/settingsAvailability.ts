@@ -6,6 +6,8 @@
 
 import { SHOW_WHEN, blockerOf, placementOf, type SettingsPageId } from '../data/settingsLayout';
 import { rowContext, type SettingsFacts } from './settingsSummary';
+import { adviceDifferences } from './settingsDiff';
+import type { AppSettings } from '../storage/database';
 
 export type Availability = { available: true } | { available: false; reason: string; parent: string };
 
@@ -36,3 +38,14 @@ export function adviceTarget(settingId: string, facts: SettingsFacts): AdviceTar
 }
 
 export const CONDITIONAL_ROWS = Object.keys(SHOW_WHEN);
+
+// Op welke rijen staat iets anders dan het advies? Een instelling in het blad van een rij telt
+// voor die rij, zodat de rij het kleine label "aangepast" krijgt (per groep te lezen met `page`).
+export function adjustedRows(settings: AppSettings, page?: SettingsPageId): Set<string> {
+  const rows = new Set<string>();
+  for (const d of adviceDifferences(settings)) {
+    const placement = placementOf(d.id);
+    if (placement && (page === undefined || placement.page === page)) rows.add(placement.row);
+  }
+  return rows;
+}

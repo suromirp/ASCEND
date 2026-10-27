@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { formatDateNL } from '../utils/dates';
 import { durationNote, groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, type SettingsFacts } from './settingsSummary';
+import { adviceDifferences } from './settingsDiff';
 import { PAGE_ROWS, SETTINGS_PAGES, allRowIds } from '../data/settingsLayout';
 import { DEFAULT_WATCH_USE } from './watchUse';
 
@@ -784,5 +785,14 @@ describe('rowSummary: Hoe voelt je lijf?', () => {
     expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'elke-week' } })).value).toBe('Elke week');
     expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'uit' } })).value).toBe('Uit');
     expect(rowSummary('lijfvraag', facts({ settings: { ...facts().settings, bodyCheck: 'rommel' } as never })).value).toBe('Bij reden');
+  });
+});
+
+describe('rowSummary: aangepaste instellingen', () => {
+  it('telt wat anders staat dan het advies, en is er niet als alles op het advies staat', () => {
+    const f = facts();
+    const n = adviceDifferences(f.settings).length;
+    expect(rowSummary('aangepast', f)).toEqual({ value: String(n), hidden: n === 0 });
+    expect(rowSummary('aangepast', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true } }))).toEqual({ value: '0', hidden: true });
   });
 });

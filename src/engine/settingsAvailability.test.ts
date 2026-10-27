@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONDITIONAL_ROWS, adviceTarget, rowAvailability, settingAvailabilityOnPage } from './settingsAvailability';
+import { CONDITIONAL_ROWS, adjustedRows, adviceTarget, rowAvailability, settingAvailabilityOnPage } from './settingsAvailability';
 import { rowSummary, type SettingsFacts } from './settingsSummary';
 import { DEFAULT_WATCH_USE } from './watchUse';
 import { SETTINGS_PAGES, SHOW_WHEN, allRowIds } from '../data/settingsLayout';
@@ -123,7 +123,8 @@ describe('rowAvailability', () => {
     for (const f of states) {
       for (const page of SETTINGS_PAGES) {
         for (const row of allRowIds(page.id)) {
-          if (!rowSummary(row, f).hidden) continue;
+          // De rij Aangepaste instellingen is er niet als niets anders staat: geen afhankelijkheid.
+          if (row === 'aangepast' || !rowSummary(row, f).hidden) continue;
           const a = rowAvailability(row, f);
           expect(a.available, row).toBe(false);
           if (!a.available) {
@@ -156,5 +157,30 @@ describe('adviceTarget', () => {
     expect(target?.page).toBe('koppelingen');
     expect(target?.row).not.toBe('horloge-status');
     expect(adviceTarget('bestaat-niet', facts())).toBeUndefined();
+  });
+});
+
+describe('adjustedRows', () => {
+  it('is leeg zolang alles op het advies staat', () => {
+    expect(adjustedRows(facts().settings).size).toBe(0);
+  });
+
+  it('wijst de rij aan, ook als de instelling in het blad van een rij zit', () => {
+    const s = withSettings({ ambition: 'stevig', strengthModel: { restSound: 'bell' } }).settings;
+    const rows = adjustedRows(s);
+    expect(rows.has('ambitie')).toBe(true);
+    expect(rows.has('bundel-rusttimer')).toBe(true);
+    expect(rows.has('forge-geluid')).toBe(false);
+    expect(adjustedRows(s, 'planning').has('ambitie')).toBe(true);
+    expect(adjustedRows(s, 'gegevens').size).toBe(0);
+  });
+});
+
+describe("de rij Aangepaste instellingen", () => {
+  it("is er niet zolang alles op het advies staat, en telt anders het aantal", () => {
+    expect(rowSummary("aangepast", facts()).hidden).toBe(true);
+    const r = rowSummary("aangepast", withSettings({ ambition: "stevig" }));
+    expect(r.hidden).toBe(false);
+    expect(r.value).toBe("1");
   });
 });

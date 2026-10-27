@@ -351,9 +351,16 @@ export function repairWeeks(input: CheckInput): RepairResult {
     const weeks = new Set(dates.flatMap((d) => [-7, 0, 7].map((o) => mondayOfWeek(addDays(d, o)))));
     const before = validateWeeks({ ...input, ...(strictRest ? { trekRest: 'strict' as const } : {}), sessions }, weeks);
     const beforeKeys = new Set(before.map(key));
+    // The same pair of heavy leg days can be reported before and after, and still be worse: one day
+    // closer, or on one day. A finding that stays counts only when the days between did not shrink.
+    const gapOf = (list: PlannedSession[], f: Finding) => {
+      const days = f.sessionIds.map((id) => list.find((o) => o.id === id)?.scheduledDate).filter((d): d is string => !!d);
+      return days.length === 2 ? Math.abs(daysBetween(days[0], days[1])) : Infinity;
+    };
+    const gapBefore = new Map(before.filter((f) => f.rule === 'LEG-SPACING').map((f) => [key(f), gapOf(sessions, f)]));
     return (changed: PlannedSession[]) => {
       const after = validateWeeks({ ...input, ...(strictRest ? { trekRest: 'strict' as const } : {}), sessions: changed }, weeks);
-      return after.length < before.length && after.every((f) => beforeKeys.has(key(f)));
+      return after.length < before.length && after.every((f) => beforeKeys.has(key(f)) && (f.rule !== 'LEG-SPACING' || gapOf(changed, f) >= (gapBefore.get(key(f)) ?? 0)));
     };
   };
 

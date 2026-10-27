@@ -1,8 +1,8 @@
-import { useState, type ComponentType } from 'react';
+import { useMemo, useState, type ComponentType } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../../components/icons';
 import { SkyBand } from '../../components/SkyBand';
-import { SettingsJumpContext } from '../../components/settings/jumpContext';
+import { SettingsAdjustedContext, SettingsJumpContext } from '../../components/settings/jumpContext';
 import { useSettingsFacts } from '../../components/settings/useSettingsFacts';
 import { useFlashOnMount, useJumpState } from '../../components/settings/jump';
 import type { GroupProps } from '../../components/settings/groups/types';
@@ -15,7 +15,8 @@ import { KoppelingenGroup } from '../../components/settings/groups/KoppelingenGr
 import { GegevensGroup } from '../../components/settings/groups/GegevensGroup';
 import { GidsenGroup } from '../../components/settings/groups/GidsenGroup';
 import { LichaamGroup } from '../../components/settings/groups/LichaamGroup';
-import { GroupReset } from '../../components/settings/AdviceCard';
+import { GroupReset } from '../../components/settings/AdviceReset';
+import { adjustedRows } from '../../engine/settingsAvailability';
 import { SETTINGS_ROOT, isSettingsPageId, placementOf, settingsPageTitle, type SettingsPageId } from '../../data/settingsLayout';
 
 // Welke inhoud bij welke groep hoort. Een groep die er nog niet is, toont Soon.
@@ -51,6 +52,7 @@ function GroupPageInner({ id }: { id: SettingsPageId }) {
   const Content = GROUPS[id] ?? Soon;
 
   useFlashOnMount(target);
+  const adjusted = useMemo(() => adjustedRows(facts.settings, id), [facts.settings, id]);
 
   return (
     <SettingsJumpContext.Provider value={{ target }}>
@@ -63,7 +65,9 @@ function GroupPageInner({ id }: { id: SettingsPageId }) {
           <h1 className="st-title">{settingsPageTitle(id)}</h1>
         </SkyBand>
         {jump.reason && <p className="st-hint" style={{ marginLeft: 0, marginRight: 0 }} role="status">{jump.reason}</p>}
-        <Content facts={facts} reload={reload} sheet={sheet} setSheet={setSheet} />
+        <SettingsAdjustedContext.Provider value={adjusted}>
+          <Content facts={facts} reload={reload} sheet={sheet} setSheet={setSheet} />
+        </SettingsAdjustedContext.Provider>
         <GroupReset page={id} facts={facts} />
       </div>
     </SettingsJumpContext.Provider>

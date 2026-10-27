@@ -36,6 +36,7 @@ import { resolveRunInsight } from './runInsightSettings';
 import { zoneBpm } from './heartRateZones';
 import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
+import { adviceDifferences } from './settingsDiff';
 import { formatNumberNL } from '../utils/number';
 import { formatDateNL } from '../utils/dates';
 
@@ -627,6 +628,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return f.storage === 'unsupported' ? { value: 'Niet mogelijk', dim: true } : {};
     case 'momentopnamen':
       return { value: String(f.snapshots), dim: f.snapshots === 0 };
+    case 'aangepast': {
+      const n = adviceDifferences(s).length;
+      return { value: String(n), hidden: n === 0 };
+    }
     case 'versie':
       return { value: f.buildLabel };
     case 'startniveau':

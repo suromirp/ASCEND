@@ -80,7 +80,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
     rows: ['garmin', 'bundel-horloge-gebruik', 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'bundel-horloge-sturen', 'macrofactor', 'macrofactor-leidend', 'macrofactor-gewicht', 'strava-tekst'],
     advanced: [],
   },
-  gegevens: { rows: ['backup', 'backupmap', 'opslag', 'momentopnamen', 'startniveau', 'herbouwen', 'wissen'], advanced: [], footer: ['versie'] },
+  gegevens: { rows: ['backup', 'backupmap', 'opslag', 'momentopnamen', 'startniveau', 'herbouwen', 'aangepast', 'wissen'], advanced: [], footer: ['versie'] },
   gidsen: { rows: ['weer-gids', 'kennisbank', 'plekken', 'bronnen'], advanced: [] },
 };
 
