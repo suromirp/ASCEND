@@ -669,6 +669,9 @@ export interface AppSettings {
   influenceCause?: 'uit' | 'weet' | 'patroon';
   influenceOverview?: boolean;
   influenceTestMove?: boolean;
+  // Alcohol and wiet named in the explanation and the help of "Wat speelde er"
+  // (absent = on). Off: the same texts in neutral words. Your own chips stay.
+  influenceNames?: boolean;
   // The one question per week in the week review (models/checkIn.ts).
   weeklyHealthChecks?: WeeklyHealthCheck[];
   // The question of the week and your one-line plan (engine/weeklyQuestion.ts).

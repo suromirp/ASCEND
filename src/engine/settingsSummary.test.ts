@@ -4,6 +4,7 @@ import { durationNote, groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, ty
 import { adviceDifferences } from './settingsDiff';
 import { PAGE_ROWS, SETTINGS_PAGES, allRowIds } from '../data/settingsLayout';
 import { DEFAULT_WATCH_USE } from './watchUse';
+import { settingsHelp } from '../data/settingsHelp';
 
 const TODAY = '2026-10-22';
 
@@ -338,6 +339,11 @@ describe('rowSummary: wat speelde er', () => {
     expect(rowSummary('wat-overzicht', facts())).toEqual({ checked: true, sub: 'Wat een reden met je doet' });
     expect(rowSummary('wat-test', facts()).checked).toBe(true);
     expect(rowSummary('wat-oorzaak', facts())).toEqual({ value: 'Ook je patroon', sub: 'Uit weer, horloge, logboek en je patroon' });
+  });
+
+  it('voorbeelden bij naam: standaard aan, uit maakt de rij neutraal', () => {
+    expect(rowSummary('wat-namen', facts())).toEqual({ checked: true, sub: 'Alcohol en wiet staan in de uitleg' });
+    expect(rowSummary('wat-namen', withSettings({ influenceNames: false }))).toEqual({ checked: false, sub: 'De uitleg blijft neutraal' });
   });
 
   it('een schakelaar die uit staat, en de oorzaak in drie stappen', () => {
@@ -798,5 +804,17 @@ describe('rowSummary: aangepaste instellingen', () => {
     const n = adviceDifferences(f.settings).length;
     expect(rowSummary('aangepast', f)).toEqual({ value: String(n), hidden: n === 0 });
     expect(rowSummary('aangepast', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true } }))).toEqual({ value: '0', hidden: true });
+  });
+});
+
+describe('uitleg bij Wat speelde er: voorbeelden bij naam', () => {
+  const words = (key: string, named: boolean) => JSON.stringify(settingsHelp(key, named));
+  it('aan noemt alcohol en wiet bij naam, uit gebruikt neutrale woorden', () => {
+    expect(words('wat-test', true)).toMatch(/wiet/i);
+    expect(words('wat-oorzaak', true)).toMatch(/Alcohol en wiet/);
+    for (const key of ['wat-test', 'wat-oorzaak']) {
+      expect(words(key, false)).not.toMatch(/alcohol|wiet|glazen/i);
+    }
+    expect(settingsHelp('wat-namen', false)).toBeDefined();
   });
 });

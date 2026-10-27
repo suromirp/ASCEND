@@ -193,6 +193,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('wat-oorzaak', 'Mogelijke oorzaak', 'lichaam', 'influenceCause', 'patroon', 'oorzaak'),
   flag('wat-overzicht', 'Op Je stand', 'lichaam', 'influenceOverview'),
   flag('wat-test', 'Test verschuiven', 'lichaam', 'influenceTestMove'),
+  flag('wat-namen', 'Voorbeelden bij naam noemen', 'lichaam', 'influenceNames'),
   {
     id: 'intensiteit', title: 'Intensiteit tellen', page: 'lichaam',
     differs: (s) => resolveIntensityCounting(s) !== 'heartrate',

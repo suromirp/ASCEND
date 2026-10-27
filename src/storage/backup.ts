@@ -306,7 +306,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     skipped.n++;
   }
   // The switches of "Wat speelde er": a yes or a no, and the cause one of three words, or not there.
-  for (const key of ['influenceSign', 'influenceOverview', 'influenceTestMove']) {
+  for (const key of ['influenceSign', 'influenceOverview', 'influenceTestMove', 'influenceNames']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;

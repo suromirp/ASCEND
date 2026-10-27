@@ -318,6 +318,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Alcohol en wiet', text: 'noemt ASCEND nooit uit zichzelf.' },
     ],
   },
+  'wat-namen': {
+    title: 'Voorbeelden bij naam noemen',
+    lead: 'In de uitleg van Wat speelde er kunnen alcohol en wiet bij naam staan, als geheugensteun.',
+    points: [
+      { head: 'Aan', text: 'de uitleg noemt alcohol en wiet bij naam.' },
+      { head: 'Uit', text: 'dezelfde uitleg in neutrale woorden, zoals "wat je dronk of gebruikte". De keuzes waar je zelf een notitie mee maakt blijven gewoon staan.' },
+      { head: 'Altijd', text: 'ASCEND noemt zelf nooit alcohol of wiet als reden in een lijst, een melding of een tekst voor Strava.' },
+    ],
+  },
   'wat-overzicht': {
     title: 'Op Je stand',
     lead: 'Vanaf 3 keer per reden laat Je stand zien wat het met je rusthartslag, HRV, slaap, hartslag bij tempo en zwaarte doet.',
@@ -591,5 +600,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     ],
   },
 };
+
+// Dezelfde uitleg zonder alcohol en wiet bij naam, voor als "Voorbeelden bij naam
+// noemen" uit staat (docs/beslissingen/2026-10-27-redenen-bij-naam.md).
+const NEUTRAL_HELP: Record<string, SettingsHelp> = {
+  'wat-oorzaak': {
+    ...SETTINGS_HELP['wat-oorzaak'],
+    points: SETTINGS_HELP['wat-oorzaak'].points.map((p) => (p.head === 'Alcohol en wiet' ? { head: 'Wat je dronk of gebruikte', text: 'noemt ASCEND nooit uit zichzelf.' } : p)),
+  },
+  'wat-test': {
+    ...SETTINGS_HELP['wat-test'],
+    points: SETTINGS_HELP['wat-test'].points.map((p) => (p.head === 'Wanneer'
+      ? { head: 'Wanneer', text: 'als er die dag een testloop staat en je de avond ervoor veel vastlegde van wat je dronk of gebruikte, of als er morgen een staat na een zware avond. Bij wat je gebruikte alleen op dezelfde dag.' }
+      : p)),
+  },
+};
+
+// De uitleg bij een instelling; `named` is de instelling "Voorbeelden bij naam noemen".
+export function settingsHelp(key: string, named: boolean = true): SettingsHelp | undefined {
+  return (!named && NEUTRAL_HELP[key]) || SETTINGS_HELP[key];
+}
 
 export type SettingsHelpKey = keyof typeof SETTINGS_HELP;

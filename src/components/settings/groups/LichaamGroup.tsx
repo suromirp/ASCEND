@@ -45,6 +45,7 @@ export function LichaamGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="wat-oorzaak" title="Mogelijke oorzaak" facts={facts} info="wat-oorzaak" onClick={() => setInner('wat-oorzaak')} />
           <SummaryRow id="wat-overzicht" title="Op Je stand" facts={facts} info="wat-overzicht" onChange={(on) => void updateSettings({ influenceOverview: on })} />
           <SummaryRow id="wat-test" title="Test verschuiven" facts={facts} info="wat-test" onChange={(on) => void updateSettings({ influenceTestMove: on })} />
+          <SummaryRow id="wat-namen" title="Voorbeelden bij naam noemen" facts={facts} info="wat-namen" onChange={(on) => void updateSettings({ influenceNames: on })} />
           <SummaryRow id="wat-vastgelegd" title="Vastgelegd" facts={facts} onClick={() => setInner('wat-vastgelegd')} />
         </BundleSheet>
       )}

@@ -40,6 +40,14 @@ export const ILLNESS_GUIDANCE: Record<IllnessKind, string> = {
   stomach: 'Rust en drink genoeg. Je trainingen van vandaag en morgen zijn van je planning gehaald. Wat je mist, telt niet als gemist en hoef je niet in te halen.',
 };
 
+// What a report does to the planning, said before Akkoord (the guidance above
+// is for after it).
+const ILLNESS_PROPOSAL: Record<IllnessKind, string> = {
+  above_neck: 'Met Akkoord gaan de zware trainingen van vandaag en morgen van je planning. Rustig bewegen mag als je je goed voelt. Wat je mist telt niet als gemist en haal je niet in.',
+  below_neck: 'Met Akkoord gaan je trainingen van vandaag en morgen van je planning. Wat je mist terwijl je ziek bent telt niet als gemist en haal je niet in.',
+  stomach: 'Met Akkoord gaan je trainingen van vandaag en morgen van je planning. Wat je mist telt niet als gemist en haal je niet in.',
+};
+
 export function activeIllness(episodes: IllnessEpisode[] | undefined): IllnessEpisode | undefined {
   return (episodes ?? []).find((e) => !e.endDate);
 }
@@ -126,7 +134,7 @@ export function planIllnessStart(
     'illness_reported',
     `Ziek gemeld: ${ILLNESS_LABEL[kind].toLowerCase()}`,
     changes,
-    ILLNESS_GUIDANCE[kind],
+    ILLNESS_PROPOSAL[kind],
     'Vuistregel: alleen klachten boven de nek is licht bewegen, koorts of klachten onder de nek is rust. Gemiste trainingen tijdens ziekte worden niet ingehaald.',
   );
 }
@@ -165,4 +173,42 @@ export function planIllnessEnd(
       'Na ziekte bouw je in ongeveer 1 tot 2 dagen per zieke dag weer op. Gemiste trainingen worden niet ingehaald.',
     ),
   };
+}
+
+// Ziek melden, van kind veranderen en weer beter als een voorstel met Akkoord
+// (docs/beslissingen/2026-10-27-ziek-als-voorstel.md). Dit rekent alleen: de
+// periode en de planning worden pas bewaard na Akkoord, bij Liever niet blijft
+// alles zoals het was en wordt er niets genoteerd.
+export type IllnessChange = { action: 'report'; kind: IllnessKind } | { action: 'recover' };
+
+export interface IllnessPlan {
+  change: IllnessChange;
+  proposal: PlanChangeProposal;
+  episodesBefore: IllnessEpisode[];
+  episodesAfter: IllnessEpisode[];
+  // Verandert de planning niet, dan hoeft er niets te worden getoond.
+  changesPlanning: boolean;
+}
+
+export function planIllnessChange(
+  change: IllnessChange,
+  current: IllnessEpisode[],
+  plannedSessions: PlannedSession[],
+  templates: SessionTemplate[],
+  logs: SessionLog[],
+  asOf: string,
+): IllnessPlan | undefined {
+  const active = activeIllness(current);
+  if (change.action === 'report') {
+    const episodesAfter = active
+      ? current.map((e) => (e.id === active.id ? { ...e, kind: change.kind } : e))
+      : [...current, { id: makeId('illness'), kind: change.kind, startDate: asOf }];
+    const proposal = planIllnessStart(change.kind, plannedSessions, templates, logs, asOf);
+    return { change, proposal, episodesBefore: current, episodesAfter, changesPlanning: proposal.changes.some((c) => c.action !== 'keep') };
+  }
+  if (!active) return undefined;
+  // The ended episode goes last, so undo can reopen it.
+  const episodesAfter = [...current.filter((e) => e.id !== active.id), { ...active, endDate: asOf }];
+  const { proposal } = planIllnessEnd(active, asOf, plannedSessions, templates, logs);
+  return { change, proposal, episodesBefore: current, episodesAfter, changesPlanning: proposal.changes.some((c) => c.action !== 'keep') };
 }

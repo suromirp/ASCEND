@@ -486,6 +486,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.influenceOverview !== false, sub: 'Wat een reden met je doet' };
     case 'wat-test':
       return { checked: s.influenceTestMove !== false, sub: 'Na een avond die je noteerde' };
+    case 'wat-namen':
+      return { checked: s.influenceNames !== false, sub: s.influenceNames === false ? 'De uitleg blijft neutraal' : 'Alcohol en wiet staan in de uitleg' };
     case 'wat-vastgelegd': {
       const n = (s.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate === true).length;
       return n === 0 ? { value: 'Nog niets', dim: true } : { value: `${n} keer`, sub: 'Bekijken, wijzigen of wissen' };

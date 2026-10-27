@@ -47,8 +47,7 @@ import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Pro
 import { buildMarathonGoal } from '../engine/goalMigration';
 import { PRIORITY_RULE } from '../engine/goalList';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
-import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
-import type { IllnessKind } from '../models/illness';
+import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
 import { sortPeriods } from '../engine/leave';
 import { planLeaveChange, type LeavePlan } from '../engine/leaveProposal';
@@ -541,8 +540,8 @@ interface AppData {
   saveSweatPre: (date: string, weightKg: number | null) => Promise<void>;
   removeInfluence: (id: string) => Promise<void>;
   clearInfluences: () => Promise<void>;
-  reportIllness: (kind: IllnessKind) => Promise<void>;
-  recoverFromIllness: () => Promise<void>;
+  planIllness: (change: IllnessChange) => IllnessPlan | undefined;
+  applyIllness: (plan: IllnessPlan) => Promise<void>;
   dismissRecentChange: () => void;
   // Fase 3: advice engine (engine/adviceEngine.ts) + change log.
   planChangeLog: PlanChangeProposal[];
@@ -1891,34 +1890,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const removeInfluence = useCallback((id: string) => writeInfluences((list) => list.filter((e) => e.id !== id)), [writeInfluences]);
   const clearInfluences = useCallback(() => writeInfluences(() => []), [writeInfluences]);
 
-  const reportIllness = useCallback(async (kind: IllnessKind) => {
-    const asOf = todayISO();
-    const stored = await SettingsRepo.get();
-    const current = stored.illnessEpisodes ?? [];
-    const active = activeIllness(current);
-    const episodes = active
-      ? current.map((e) => (e.id === active.id ? { ...e, kind } : e))
-      : [...current, { id: makeId('illness'), kind, startDate: asOf }];
-    setSettings(await SettingsRepo.set({ illnessEpisodes: episodes }));
-    const [planned, tpls, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll()]);
-    const proposal = planIllnessStart(kind, planned, tpls, logs, asOf);
-    const restore = { settings: { illnessEpisodes: current } };
-    if (!(await commitPlanChange(proposal, proposal.issue, restore))) await showStatusOnlyChange(proposal, restore);
-  }, [commitPlanChange, showStatusOnlyChange]);
+  // Ziek melden en weer beter zijn voorstellen (engine/illness.ts#planIllnessChange):
+  // niets wordt bewaard voor Akkoord (applyIllness), bij Liever niet blijft alles
+  // zoals het was.
+  const planIllness = useCallback(
+    (change: IllnessChange): IllnessPlan | undefined =>
+      planIllnessChange(change, settings.illnessEpisodes ?? [], plannedSessions, templates, sessionLogs, todayISO()),
+    [settings.illnessEpisodes, plannedSessions, templates, sessionLogs],
+  );
 
-  const recoverFromIllness = useCallback(async () => {
-    const asOf = todayISO();
+  const applyIllness = useCallback(async (plan: IllnessPlan) => {
+    await planSettled();
     const stored = await SettingsRepo.get();
-    const current = stored.illnessEpisodes ?? [];
-    const active = activeIllness(current);
-    if (!active) return;
-    // Keep the ended episode last, so undo can reopen it.
-    const episodes = [...current.filter((e) => e.id !== active.id), { ...active, endDate: asOf }];
-    setSettings(await SettingsRepo.set({ illnessEpisodes: episodes }));
-    const [planned, tpls, logs] = await Promise.all([PlannedSessionsRepo.getAll(), SessionTemplatesRepo.getAll(), SessionLogsRepo.getAll()]);
-    const { proposal } = planIllnessEnd(active, asOf, planned, tpls, logs);
-    const restore = { settings: { illnessEpisodes: current } };
-    if (!(await commitPlanChange(proposal, proposal.issue, restore))) await showStatusOnlyChange(proposal, restore);
+    // Undo zet de periodes terug zoals ze waren, samen met de planning.
+    const restore = { settings: { illnessEpisodes: stored.illnessEpisodes ?? [] } };
+    setSettings(await SettingsRepo.set({ illnessEpisodes: plan.episodesAfter }));
+    if (!(await commitPlanChange(plan.proposal, plan.proposal.issue, restore))) await showStatusOnlyChange(plan.proposal, restore);
   }, [commitPlanChange, showStatusOnlyChange]);
 
   const updateGoalEngineConfig = useCallback(async (patch: Partial<GoalEngineConfig>): Promise<GoalEngineConfig> => {
@@ -2610,8 +2597,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     saveSweatPre,
     removeInfluence,
     clearInfluences,
-    reportIllness,
-    recoverFromIllness,
+    planIllness,
+    applyIllness,
     dismissRecentChange: () => setRecentChange(null),
     strengthProgramStrategies,
     strengthExternal,
