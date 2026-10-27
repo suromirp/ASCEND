@@ -308,11 +308,61 @@ export async function ensureBestEffort(logId: string, options: AttachOptions = {
   try {
     const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
     if (!log || !log.externalId || !wantsBestEffort(log)) return 'skipped';
-    const activity = (await getWatchState()).activities.find((a) => a.externalId === log.externalId);
-    return activity ? await attachActivityDetail(activity, options) : 'skipped';
+    const state = await getWatchState();
+    // What is known of the activity from the last fetches (the new ones, then the older ones); an
+    // activity that fell out of both gets the minimal one ensureRunDetail makes, so a test from a
+    // few weeks back is still read. No weather is fetched for it.
+    const known = [...state.activities, ...state.history].find((a) => a.externalId === log.externalId);
+    const activity: ExternalActivity = known ?? {
+      externalId: log.externalId,
+      source: log.source === 'garmin' ? 'garmin' : 'import',
+      start: `${log.completedDate}T00:00:00`,
+      kind: 'run',
+      durationSec: Math.max(60, Math.round(testTotals(log).minutes * 60)),
+      treadmill: (log.cardioData ?? log.outdoorData)?.environment === 'treadmill',
+      streamsAvailable: WANTED_STREAMS,
+    };
+    return await attachActivityDetail(activity, known ? options : { ...options, skipWeather: true });
   } catch {
     return 'failed';
   }
+}
+
+// How far back the opening looks for a test that still wants its best 5 km, and how long one read may take.
+export const RECENT_TEST_DAYS = 60;
+export const RECENT_TEST_TIMEOUT_MS = 20_000;
+
+// At the opening, in the background: the test runs of the last 60 days that carry an activity and
+// still want their best 5 km, one after the other, each with a limit in time. What is read for the
+// same totals is not asked again (the fingerprints), a test that was read counts at once or waits for
+// Akkoord (the line on Vandaag). Never throws; returns whether anything was added.
+export async function ensureRecentTestEfforts(options: AttachOptions & { today?: string } = {}): Promise<boolean> {
+  let added = false;
+  try {
+    const today = options.today ?? todayISO();
+    const logs = (await SessionLogsRepo.getAll())
+      .filter((l) => l.externalId && wantsBestEffort(l) && daysBetween(l.completedDate, today) <= RECENT_TEST_DAYS && daysBetween(l.completedDate, today) >= 0)
+      .sort((a, b) => b.completedDate.localeCompare(a.completedDate));
+    for (const log of logs) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const result = await Promise.race([
+          ensureBestEffort(log.id, options),
+          new Promise<AttachResult>((resolve) => {
+            timer = setTimeout(() => resolve('failed'), RECENT_TEST_TIMEOUT_MS);
+          }),
+        ]);
+        if (result === 'attached') added = true;
+      } catch {
+        // Next one.
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+  } catch {
+    // Never an error outwards.
+  }
+  return added;
 }
 
 // --- an older run: fill in the kilometres and the series when its sheet opens ------------------

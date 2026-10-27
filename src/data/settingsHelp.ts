@@ -521,6 +521,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Zonder antwoord', text: 'blijven je tempo\'s die van je vorige test.' },
       { head: 'Telt mee', text: 'dan zie je eerst welke tempo\'s veranderen, en pas na Akkoord gaan ze in.' },
       { head: 'Telt niet mee', text: 'de test blijft in je logboek, maar telt niet voor je tempo\'s en je voorspelling. Dat kun je bij elke test achteraf ook kiezen.' },
+      { head: 'Snelste 5 km', text: 'leest ASCEND achteraf uit je horloge. Verandert dat een tempo, dan staat er een rustige regel op Vandaag. Tik erop en kijk of die mag tellen.' },
       { head: 'Uit', text: 'dan telt de laatste test altijd, zoals vroeger.' },
     ],
   },

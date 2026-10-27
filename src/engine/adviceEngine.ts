@@ -44,6 +44,7 @@ import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
 import { formatNumberNL } from '../utils/number';
 import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
+import { awaitsEffort } from './testJudgment';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
@@ -1098,11 +1099,16 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     const km = race.distanceKm;
     const paces = racePaces(tests, km);
     if (!paces) continue;
+    // A best 5 km of this test waits for Akkoord and will change the number: no advice on it yet.
+    if (awaitsEffort(inputs.logs, paces.test.logId)) continue;
     const check = checkTargetTime(paces, race.targetMinutes, race.raceDate);
     if (!check) continue;
     const target = Math.round(race.targetMinutes);
     const distance = formatNumberNL(km, km % 1 === 0 ? 0 : 1);
-    const test = `${formatNumberNL(paces.test.km, 1)} km in ${formatRaceTime(paces.test.minutes)}`;
+    // Say what it counts on: the best 5 km of the run, or the whole run.
+    const test = paces.test.basis === 'effort'
+      ? `snelste ${formatNumberNL(paces.test.km, paces.test.km % 1 === 0 ? 0 : 1)} km in ${formatRaceTime(paces.test.minutes)}`
+      : `hele run: ${formatNumberNL(paces.test.km, paces.test.km % 1 === 0 ? 0 : 1)} km in ${formatRaceTime(paces.test.minutes)}`;
     const now = `${Math.round(check.predictedMinutes)} minuten`;
     const ambitious = check.verdict === 'ambitious';
     const title = ambitious

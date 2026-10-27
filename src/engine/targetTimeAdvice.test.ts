@@ -82,6 +82,29 @@ describe('TARGET-TIME', () => {
   });
 });
 
+describe('TARGET-TIME says what it counts on', () => {
+  const withEffort = (accepted?: boolean): SessionLog => ({
+    ...test('t1', '2026-10-29', 36),
+    cardioData: { durationMinutes: 36, distanceKm: 6, source: 'manual' },
+    bestEffort: { km: 5, minutes: 27.67, wholeKm: 6, wholeMinutes: 36, ...(accepted ? { accepted } : {}) },
+  } as SessionLog);
+
+  it('names the whole run when the best 5 km does not count', () => {
+    const plain: SessionLog = { ...test('t1', '2026-10-29', 36), cardioData: { durationMinutes: 36, distanceKm: 6, source: 'manual' } };
+    const [a] = targetTime(inputs({ logs: [plain] }));
+    expect(a.effect).toContain('(hele run: 6 km in 36:00)');
+  });
+
+  it('names the best 5 km when that counts', () => {
+    const [a] = targetTime(inputs({ logs: [withEffort(true)], raceGoals: [race(40)] }));
+    expect(a.effect).toContain('(snelste 5 km in 27:40)');
+  });
+
+  it('gives no advice on a test whose best 5 km waits for Akkoord', () => {
+    expect(targetTime(inputs({ logs: [withEffort(false)] }))).toEqual([]);
+  });
+});
+
 describe('Akkoord sets the target time and nothing else', () => {
   const goal: TrainingGoal = {
     id: 'race', name: 'Hardloopwedstrijd', status: 'active', targetDate: '2027-03-20', createdAt: 'a', updatedAt: 'a',

@@ -71,6 +71,7 @@ import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { useFollowLocation } from './useFollowLocation';
 import { syncWatchActivities } from '../storage/externalActivities';
+import { ensureRecentTestEfforts } from '../storage/activityDetail';
 import { resetAllDataAndAgenda, syncWatchWorkouts, syncWatchWorkoutsAfterPlanChange } from '../storage/watchWorkouts';
 import { applyFeedback, type FeedbackPatch } from '../engine/autoTick';
 import { announcementFor, type SavedMoment } from '../engine/savedMoments';
@@ -1235,7 +1236,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         // in a refresh that runs the sync and its week check over the result
         // (docs/onderzoek/Planning op een lijn.md, conflict 12).
         // Each on its own: one that fails doesn't stop the next.
-        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['watch workouts', syncWatchWorkouts]] as const) {
+        // Tests of the last 60 days that still want their best 5 km: read once, refresh when one was added.
+        const readRecentTestEfforts = async () => {
+          if (await ensureRecentTestEfforts()) await refresh();
+        };
+        for (const [name, step] of [['planning sync', () => refresh()], ['availability', runForecastReplan], ['strength review', runStrengthReviewCheck], ['weekly prescription', runWeeklyPrescriptionBuild], ['watch activities', syncWatchActivities], ['best 5 km of recent tests', readRecentTestEfforts], ['watch workouts', syncWatchWorkouts]] as const) {
           try {
             await step();
           } catch (err) {

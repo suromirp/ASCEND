@@ -20,6 +20,9 @@ import {
   MAX_TEST_JUDGMENTS,
   pendingTestLine,
   PENDING_TEST_LINE,
+  effortOfferLine,
+  EFFORT_OFFER_LINE,
+  awaitsEffort,
 } from './testJudgment';
 
 // Invented data: a 5 km test log, optionally with a best effort read from the series.
@@ -289,5 +292,30 @@ describe('the quiet line on Vandaag', () => {
 
   it('points at the newest waiting test when two wait', () => {
     expect(pendingTestLine([NORMAL, SLOWER, test('c2', '2027-03-10', 5, 33)], {})?.logId).toBe('c2');
+  });
+});
+
+describe('the quiet line for a best 5 km that waits for Akkoord', () => {
+  // A slow whole run of 6 km in 36:00 after a quicker test; its best 5 km has not been accepted yet.
+  const OFFERED = test('d', '2027-04-10', 6, 30, { km: 5, minutes: 25, accepted: false });
+  const ACCEPTED = test('d', '2027-04-10', 6, 30, { km: 5, minutes: 25 });
+
+  it('shows when counting the stretch would change a pace, and points at that test', () => {
+    expect(effortOfferLine([NORMAL, OFFERED], {})).toEqual({ logId: 'd', text: EFFORT_OFFER_LINE });
+    expect(awaitsEffort([NORMAL, OFFERED], 'd')).toBe(true);
+  });
+
+  it('is quiet when it counts already, when nothing waits or when you left the test out', () => {
+    expect(effortOfferLine([NORMAL, ACCEPTED], {})).toBeUndefined();
+    expect(effortOfferLine([NORMAL], {})).toBeUndefined();
+    expect(awaitsEffort([NORMAL, ACCEPTED], 'd')).toBe(false);
+    expect(effortOfferLine([NORMAL, OFFERED], { testJudgments: [{ logId: 'd', verdict: 'ignore', date: '2027-04-11' }] })).toBeUndefined();
+  });
+
+  it('never shows next to the line of a doubt test', () => {
+    const slow = test('e', '2027-05-10', 5, 33);
+    const both = [NORMAL, OFFERED, slow];
+    expect(pendingTestLine(both, {})?.logId).toBe('e');
+    expect(effortOfferLine(both, {})).toBeUndefined();
   });
 });
