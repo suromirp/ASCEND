@@ -560,6 +560,10 @@ function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   if (!next) {
     return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `${hardWas('Je laatste training')}. ${rule}`, priority: 1 }];
   }
+  // Staat de kaart Benen (LEG-EASE) vandaag al voor deze training, dan biedt die het verplaatsen aan, met de
+  // beenindex erbij; een tweede voorstel voor dezelfde training zou ernaast staan. Laat de kaart het zien
+  // omdat je benen fris genoeg zijn, dan hoeft er ook niets te schuiven.
+  if (next.scheduledDate === inputs.asOf && legCardSessionOf(inputs)?.id === next.id) return [];
   const nextTemplate = templateById.get(next.templateId)!;
   const laterDates = catchUpDates(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
   const later = laterDates[0];
@@ -981,7 +985,8 @@ export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reaso
   const laterDates = catchUpDates(next, t, inputs, templateById, addDays(today, fromOffset), clear);
   const later = laterDates[0];
   if (!later) return undefined;
-  const title = `${t.name} een dag later`;
+  // "Later" en niet "een dag later": de eerste goede dag kan ook twee dagen verder liggen; de knop noemt de dag.
+  const title = `${t.name} later`;
   const why = 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).';
   const effectFor = (d: string) => `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(d)}.`;
   return {

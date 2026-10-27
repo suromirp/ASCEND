@@ -152,6 +152,13 @@ describe('LEG-EASE: een dag later voor een zware beendag van vandaag', () => {
     expect(morning('voorstel')).toEqual([]);
   });
 
+  it('na een zware training gisteren geeft HARD-THEN-SPACE geen tweede verplaatsvoorstel naast de kaart', () => {
+    const hard = [log('2026-11-02', { templateId: 'tpl_hill_intervals', rpe: 9 })];
+    const hardThen = (legEase?: 'voorstel' | 'uit') => computeAdvice(inputs({ logs: hard, legEase })).filter((a) => a.ruleId === 'HARD-THEN-SPACE');
+    expect(hardThen('voorstel')).toEqual([]);
+    expect(hardThen('uit').length).toBe(1);
+  });
+
   it('een rustige dag (op) blijft van MORNING-CHECK, ook met de kaart', () => {
     const op = [{ date: '2026-11-03', legs: 'spierpijn' as const, energy: 'op' as const, sleep: 'slecht' as const }];
     expect(computeAdvice(inputs({ checkIns: op, legEase: 'voorstel' })).some((a) => a.ruleId === 'MORNING-CHECK')).toBe(true);
