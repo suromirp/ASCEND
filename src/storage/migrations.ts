@@ -23,6 +23,7 @@ import { mainGoal } from '../engine/mainGoal';
 import { variantOf } from '../data/goalKinds';
 import type { RoutePlan } from '../models/routePlan';
 import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
+import { MAX_LEG_EASE_DAYS, type LegEaseDay } from '../models/legEase';
 import type { TestJudgment } from '../models/testJudgment';
 import { isUsableBestEffort } from '../engine/bestEffort';
 import { isUsableRunDetail } from '../engine/runDetail';
@@ -150,6 +151,33 @@ export function migrateNightJudgments(raw: unknown): { list: NightJudgment[] | u
     });
   }
   return { list: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)), skipped };
+}
+
+// --- lichter bij vermoeide benen: settings.legEaseDays -----------------------------------
+// Wat je koos op een dag met vermoeide benen (models/legEase.ts). Optioneel en additief, dus
+// het schemanummer van de back-up verandert niet: een bestand van voor deze lijst heeft geen
+// sleutel, en dat laat de keuzes op het toestel met rust. Een record zonder datum, training of
+// geldige keuze valt weg en wordt geteld; een kapotte reden of index verliest alleen zichzelf.
+// Per datum en training blijft de laatste staan, en de laatste MAX_LEG_EASE_DAYS blijven over.
+const LEG_EASE_REASONS = ['spierpijn', 'flink', 'harde-loop', 'index'] as const;
+export function migrateLegEaseDays(raw: unknown): { list: LegEaseDay[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byKey = new Map<string, LegEaseDay>();
+  let skipped = 0;
+  for (const item of raw) {
+    const d = typeof item === 'object' && item !== null && !Array.isArray(item) ? (item as Record<string, unknown>) : undefined;
+    if (!d || typeof d.date !== 'string' || !ISO_DAY.test(d.date.slice(0, 10)) || typeof d.plannedSessionId !== 'string' || d.plannedSessionId === '' || (d.choice !== 'lichter' && d.choice !== 'liever-niet')) {
+      skipped++;
+      continue;
+    }
+    const reasons = Array.isArray(d.reasons) ? d.reasons.filter((r): r is LegEaseDay['reasons'][number] => (LEG_EASE_REASONS as readonly unknown[]).includes(r)) : [];
+    const index = typeof d.index === 'number' && Number.isFinite(d.index) && d.index >= 0 && d.index <= 200 ? Math.round(d.index * 10) / 10 : 0;
+    const at = typeof d.at === 'string' && !Number.isNaN(Date.parse(d.at)) ? d.at : `${d.date.slice(0, 10)}T00:00:00.000Z`;
+    byKey.set(`${d.date.slice(0, 10)}|${d.plannedSessionId}`, { date: d.date.slice(0, 10), plannedSessionId: d.plannedSessionId, choice: d.choice, reasons, index, at });
+  }
+  const list = [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date) || a.at.localeCompare(b.at)).slice(-MAX_LEG_EASE_DAYS);
+  return { list, skipped };
 }
 
 // --- zweetverlies: settings.sweatEntries ---------------------------------------------

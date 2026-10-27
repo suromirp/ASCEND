@@ -35,6 +35,8 @@ const everything: AppSettings = {
   showBodyFat: false,
   figure: 'vrouw',
   bodyCheck: 'uit',
+  legEase: 'uit',
+  legEaseHow: 'extra',
   influenceSign: false,
   influenceCause: 'uit',
   influenceOverview: false,

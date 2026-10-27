@@ -492,6 +492,20 @@ to the same `InjuryNote` list as Lichaam (`kind`, `side`); spierpijn and stijf n
 injury and close after 7 days when read (`engine/injuryKind.ts`). "Wat terugkomt" on Lichaam is
 derived, never stored (`engine/bodyRecurrence.ts`).
 
+**A heavy leg day on tired legs** (`engine/legDayEase.ts`, `engine/legSoreness.ts`, decision
+`docs/beslissingen/2026-10-27-spierpijn-en-zware-beendag.md`, design `docs/visie/Spierpijn en een zware beendag.md`):
+a heavy leg day of today with a reason (soreness you reported, in the morning check or as a "spierpijn" note on a leg spot
+of today or yesterday, the last answer wins; a hard run earlier today, a test run too, through `earlierTodayPoints` with 6
+hours between when the time is unknown; or a leg index above 12) gets one card on Vandaag (`LegEaseCard`) and the same
+question in Forge: "Lichter" (`easeSlots`: at least 3 reps in reserve, the last set off, extras gone, only exercises that
+load the legs) or a day later (`adviceEngine.ts#legEaseMoveAdvice`, rule LEG-EASE, a proposal with Akkoord), always with
+"Liever niet". The choice is kept per date and training in `AppSettings.legEaseDays` (last 60, `migrateLegEaseDays`) and
+never touches a template, the planning or a log. `legFatigueOn` and the planner stay as they were, so `planGolden.test.ts`
+does not move; the week rule LEG-FRESH is not built. A log of a training you eased is left out of "raak"
+(`strengthHistory.ts#comparisonRows`, `eased`). Moving a heavy leg day or hard run shows a quiet line with the leg index of
+the new day (`moveLegNote`). Settings "Lichter bij vermoeide benen" (`legEase`: voorstel, regel, uit; uit also silences the
+quiet line) and "Hoe licht" (`legEaseHow`).
+
 **Forge** compares each exercise now against 4 and 8 weeks back and the best ever
 (`engine/forgeHistory.ts`, decision
 `docs/beslissingen/2026-10-24-forge-vergelijken-en-zoeken.md`). A moment only counts

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { fatigueBand, fatigueStatus, fatigueWord, FATIGUE_THRESHOLDS, legFatigueOn, type LegFatigueInputs } from '../engine/legFatigue';
 import { LegFatigueInfoSheet } from './LegFatigueInfoSheet';
+import { legSorenessList } from '../engine/legSoreness';
 import { resolveVariantDuration } from '../engine/substitutions';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { daysBetween, todayISO, weekdayShortNL } from '../utils/dates';
@@ -23,7 +24,7 @@ const LEVEL_COLOR = ['var(--color-progress)', 'var(--color-warning)', 'var(--col
 const ZONE_EDGES = [0, FATIGUE_THRESHOLDS.test.fresh, FATIGUE_THRESHOLDS.hard.fresh, SCALE];
 
 export function useLegFatigueInputs(): LegFatigueInputs {
-  const { sessionLogs, plannedSessions, templates, program, settings } = useAppData();
+  const { sessionLogs, plannedSessions, templates, program, settings, injuryNotes } = useAppData();
   const today = todayISO();
   return useMemo(() => {
     // The same weight the planner reads (state/AppDataContext.tsx): MacroFactor's trend weight when it is switched on.
@@ -31,9 +32,10 @@ export function useLegFatigueInputs(): LegFatigueInputs {
     return {
       logs: sessionLogs, plannedSessions, templates, today, bodyKg, program,
       minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
-      soreness: settings.morningCheckIns?.filter((c) => c.legs === 'spierpijn' || c.legs === 'flink').map((c) => ({ date: c.date, level: c.legs === 'flink' ? 'flink' as const : 'spierpijn' as const })),
+      // Spierpijn uit de ochtendcheck en een melding op een beenplek uit Hoe voelt je lijf? tellen even zwaar.
+      soreness: legSorenessList(settings.morningCheckIns, injuryNotes),
     };
-  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.morningCheckIns, today]);
+  }, [sessionLogs, plannedSessions, templates, program, settings.weightEntries, settings.weightFromMacroFactor, settings.morningCheckIns, injuryNotes, today]);
 }
 
 export function LegFatigueCard() {

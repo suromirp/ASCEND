@@ -3,6 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import type { LegFeeling, MorningCheckIn } from '../models/checkIn';
 import { recentPainSpot } from '../engine/wellbeing';
 import { describeMorningPreview, previewMorningAdvice } from '../engine/adviceEngine';
+import { resolveLegEase } from '../engine/legEaseSettings';
 import { ENERGY, LEGS, SLEEP, SOURCE_TEXT, type SuggestionSource } from '../engine/morningCard';
 import { todayISO } from '../utils/dates';
 import { TodaySheet } from './vandaag/TodaySheet';
@@ -87,7 +88,7 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
       logs: sessionLogs, plannedSessions, templates, injuries: [], program,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
       sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
-      respondedIds: answeredAdviceIds, asOf: today,
+      respondedIds: answeredAdviceIds, asOf: today, legEase: resolveLegEase({ legEase: settings.legEase }),
       checkIns: [...(settings.morningCheckIns ?? []).filter((c) => c.date !== today), entry],
     }).filter((a) => !answeredAdviceIds.has(a.id)));
   };

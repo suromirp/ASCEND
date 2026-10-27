@@ -56,6 +56,8 @@ describe('de indeling in acht groepen', () => {
     expect(placementOf('rustdag')).toEqual({ page: 'planning', row: 'bundel-dagen', sheet: true });
     expect(placementOf('zware-dingen')).toEqual({ page: 'planning', row: 'meerdere', sheet: true });
     expect(placementOf('lucht-vanaf')).toEqual({ page: 'vandaag', row: 'lucht', sheet: true });
+    expect(placementOf('lichterbenen')).toEqual({ page: 'vandaag', row: 'lichterbenen' });
+    expect(placementOf('lichterbenen-hoe')).toEqual({ page: 'vandaag', row: 'lichterbenen', sheet: true });
     expect(placementOf('horloge-status-week')).toEqual({ page: 'koppelingen', row: 'bundel-horloge-sturen', sheet: true });
     expect(placementOf('bestaat-niet')).toBeUndefined();
   });

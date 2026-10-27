@@ -10,6 +10,7 @@ import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
+import type { LegEaseDay } from '../models/legEase';
 import type { TestJudgment } from '../models/testJudgment';
 import type { InfluenceEntry } from '../models/influence';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
@@ -788,6 +789,17 @@ export interface AppSettings {
   // reden is (de standaard), elke week of nooit. Optional and additive; read defensively
   // (engine/bodyCheck.ts#resolveBodyCheck), so no migration step is needed.
   bodyCheck?: 'reden' | 'elke-week' | 'uit';
+  // "Lichter bij vermoeide benen" (engine/legDayEase.ts): na spierpijn, een harde loop eerder die dag of een
+  // hoge beenindex een voorstel voor een lichtere beendag of een dag later ('voorstel', het advies), alleen de
+  // feitregel ('regel') of niets ('uit'). `legEaseHow`: hoe licht (3 herhalingen over en een set minder,
+  // alleen het gewicht, of extra licht). Optional and additive; read defensively
+  // (engine/legEaseSettings.ts), so no migration step is needed.
+  legEase?: 'voorstel' | 'regel' | 'uit';
+  legEaseHow?: 'standaard' | 'alleen-gewicht' | 'extra';
+  // Wat je koos op een dag met vermoeide benen, per datum en training (models/legEase.ts). Een lijst naast de
+  // logs; de laatste 60. Optional and additive; read defensively on import
+  // (storage/migrations.ts#migrateLegEaseDays) and merged per date and session.
+  legEaseDays?: LegEaseDay[];
   // "Lucht bovenaan" (engine/skySettings.ts): the light or dark sky on the tabs, by
   // the clock ('auto', the default), always light or always dark, and from when it is
   // dark. Optional and additive; read defensively, so no migration step is needed.

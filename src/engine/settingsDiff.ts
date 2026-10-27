@@ -218,6 +218,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   overviewFlag('weekterugblik', 'Weekterugblik', 'weekReview'),
   overviewSpec('weekterugblik-dag', 'Dag van de terugblik', 'weekReviewDay', (v: string) => choiceShort('terugblikDag', v)),
   choice('lijfvraag', 'Hoe voelt je lijf?', 'vandaag', 'bodyCheck', 'reden', 'lijfvraag'),
+  choice('lichterbenen', 'Lichter bij vermoeide benen', 'vandaag', 'legEase', 'voorstel', 'lichterbenen'),
+  choice('lichterbenen-hoe', 'Hoe licht', 'vandaag', 'legEaseHow', 'standaard', 'lichterbenenHoe'),
   overviewFlag('weekvraag', 'Vraag van de week', 'weeklyQuestion'),
   overviewFlag('weerregel', 'Weer bij je training', 'weatherLine'),
   overviewFlag('beste-moment', 'Beste moment tonen', 'bestMoment'),

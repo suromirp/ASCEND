@@ -14,6 +14,7 @@ import type { AppSettings } from '../storage/database';
 import { resolveOverviews } from '../engine/overviewSettings';
 import { resolveRunInsight } from '../engine/runInsightSettings';
 import { resolveSky } from '../engine/skySettings';
+import { resolveLegEase } from '../engine/legEaseSettings';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
 import { resolveWatchHrMode } from '../engine/watchHeartRate';
 
@@ -73,7 +74,7 @@ export const PAGE_ROWS: Record<SettingsPageId, PageRows> = {
   },
   lichaam: { rows: ['lichaamsgewicht', 'vetpercentage', 'hartslag', 'blessures', 'figuur', 'bundel-wat', 'intensiteit'], advanced: [] },
   vandaag: {
-    rows: ['kaarten', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'lucht', 'bundel-inzicht', 'zweet-vragen'],
+    rows: ['kaarten', 'lichterbenen', 'ochtendmelding', 'ochtendmelding-tijd', 'weerplaats', 'bundel-weer', 'beweging', 'lucht', 'bundel-inzicht', 'zweet-vragen'],
     advanced: ['ochtendkaart', 'ochtend-vanaf', 'korte-nacht', 'weekterugblik-dag', 'terugknop', 'hervatten'],
   },
   koppelingen: {
@@ -139,6 +140,7 @@ const MOVED: Record<string, { row: string; sheet?: boolean }> = {
   ...inSheet('bundel-weer', 'weerregel', 'beste-moment', 'weerruil', 'kledingadvies', 'kleding-voorkeur'),
   ...inSheet('bundel-inzicht', 'loopinzicht', 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm', 'loopweer', 'borstband'),
   ...inSheet('lucht', 'lucht-vanaf'),
+  ...inSheet('lichterbenen', 'lichterbenen-hoe'),
   // Koppelingen
   ...inSheet('bundel-horloge-gebruik', 'horloge-gebruik', 'garmin-trainingen', 'horloge-details', 'slaap', 'rusthartslag', 'hrv'),
   ...inSheet('bundel-horloge-sturen', 'naar-horloge', 'horloge-voorvoegsel', 'horloge-hartslag', 'horloge-rustige-loop', 'horloge-gedaan-weghalen', 'horloge-status', 'horloge-status-week'),
@@ -222,6 +224,7 @@ const B = {
   notice: { ok: (_s, c) => c.noticeAvailable, reason: 'Zichtbaar zodra je telefoon de ochtendmelding kan sturen', parent: 'ochtendmelding' },
   clothing: { ok: (s) => resolveOverviews(s.overviews).clothingAdvice, reason: 'Zichtbaar zodra het kledingadvies aan staat', parent: 'kledingadvies' },
   insight: { ok: (s) => resolveRunInsight(s.runInsight).enabled, reason: 'Zichtbaar zodra Inzicht na een training aan staat', parent: 'loopinzicht' },
+  legEaseOffers: { ok: (s) => resolveLegEase(s) === 'voorstel', reason: 'Zichtbaar zodra Lichter bij vermoeide benen met een voorstel werkt', parent: 'lichterbenen' },
   skyAuto: { ok: (s) => resolveSky(s).sky === 'auto', reason: 'Zichtbaar zodra Lucht bovenaan op Automatisch staat', parent: 'lucht' },
   folder: { ok: (_s, c) => c.folderSupported, reason: 'Zichtbaar zodra je browser een vaste map kan onthouden', parent: 'backup' },
 } satisfies Record<string, Blocker>;
@@ -257,6 +260,7 @@ export const SHOW_WHEN: Record<string, Blocker[]> = Object.fromEntries([
   ...rule([B.clothing], 'kleding-voorkeur'),
   ...rule([B.insight], 'loop-efficientie', 'loop-langedagen', 'loop-berg', 'loop-vorm'),
   ...rule([B.skyAuto], 'lucht-vanaf'),
+  ...rule([B.legEaseOffers], 'lichterbenen-hoe'),
   // Koppelingen
   ...rule([B.garmin], 'bundel-horloge-gebruik', 'garmin-trainingen', 'slaap', 'rusthartslag', 'hrv', 'bundel-horloge-sturen', 'naar-horloge'),
   ...rule([B.garmin, B.activities], 'vanzelf-afvinken', 'garmin-leidend', 'correcties-overnemen', 'horloge-details'),

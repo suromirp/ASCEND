@@ -353,3 +353,58 @@ describe('de benen', () => {
     expect(legDayLine('2026-09-17', { logs: [], templates, program, bodyKg: BODY })).toBe('Beenindex 0, fris.');
   });
 });
+
+describe('Lichter bij vermoeide benen', () => {
+  const squat = () => slot('ex8', 'Barbell Back Squat', 4, '5-8', { rpe: 8 });
+  const workRows = (ex: WorkoutExercise) => ex.rows.filter((r) => r.kind === 'work');
+
+  it('zonder keuze verandert er niets aan de planning', () => {
+    const a = planWorkout([squat()], ctx());
+    const b = planWorkout([squat()], ctx({ ease: undefined }));
+    expect(b).toEqual(a);
+    expect(workRows(a[0])).toHaveLength(4);
+  });
+
+  it('met Lichter: een set minder, een lager of gelijk gewicht en de reden eronder', () => {
+    const normal = planWorkout([squat()], ctx())[0];
+    const eased = planWorkout([squat()], ctx({ ease: { how: 'standaard', because: 'spierpijn' } }))[0];
+    expect(workRows(eased)).toHaveLength(3);
+    expect(workRows(eased)[0].weightKg!).toBeLessThanOrEqual(workRows(normal)[0].weightKg!);
+    expect(workRows(eased)[0].target.rir).toBeGreaterThanOrEqual(3);
+    expect(eased.reason).toContain('Lichter door spierpijn: zeker 3 herhalingen over.');
+  });
+
+  it('alleen gewicht laat alle sets staan', () => {
+    const eased = planWorkout([squat()], ctx({ ease: { how: 'alleen-gewicht', because: 'spierpijn' } }))[0];
+    expect(workRows(eased)).toHaveLength(4);
+  });
+
+  it('bovenlichaam blijft zoals voorgeschreven, ook met Lichter', () => {
+    const raise = slot('ex5', 'Lateral raises', 3, '12-15');
+    expect(planWorkout([raise], ctx({ ease: { how: 'standaard', because: 'spierpijn' } }))).toEqual(planWorkout([raise], ctx()));
+  });
+
+  it('een oefening die vervalt staat er niet meer in', () => {
+    const extra = slot('ex9', 'Walking Lunge', 3, '10', { priority: 'optional' });
+    const out = planWorkout([squat(), extra], ctx({ ease: { how: 'standaard', because: 'spierpijn' } }));
+    expect(out.map((e) => e.slot)).toEqual(['ex8']);
+  });
+
+  it('met spierpijn zijn de benen moe en blijft het gewicht gelijk', () => {
+    const sore = { injuries: [{ id: 'n1', date: '2026-10-22', bodyPart: 'Quadriceps links', severity: 'licht' as const, kind: 'spierpijn' as const }], checkIns: [] };
+    const tired = planWorkout([squat()], ctx({ sore }))[0];
+    expect(tired.reason).toContain('spierpijn');
+  });
+});
+
+describe('de regel op een beendag met een loop eerder vandaag', () => {
+  const testRun = { id: 'tr', templateId: 'tpl_test_run', type: 'cardio' as const, completedDate: '2026-09-17', completedAt: '2026-09-17T09:00:00', variant: 'full' as const, durationMinutes: 25, rpe: 9, source: 'manual' as const };
+  it('noemt de testloop van vanochtend en telt hem mee', () => {
+    const line = legDayLine('2026-09-17', { logs: [testRun], templates, program, bodyKg: BODY });
+    expect(line).toMatch(/^Je testloop van vanochtend telt nog mee\. Beenindex \d+, /);
+  });
+  it('met spierpijn staat het in de regel', () => {
+    const sore = { injuries: [{ id: 'n1', date: '2026-09-17', bodyPart: 'Kuit rechts', severity: 'licht' as const, kind: 'spierpijn' as const }], checkIns: [] };
+    expect(legDayLine('2026-09-17', { logs: [], templates, program, bodyKg: BODY, sore })).toBe('Je benen zijn nog moe van spierpijn. Zelfde gewicht, een herhaling minder is normaal.');
+  });
+});

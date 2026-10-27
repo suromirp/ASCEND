@@ -45,6 +45,7 @@ import type { WeatherForecast } from '../models/weather';
 import type { TestJudgment } from '../models/testJudgment';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
+import { LEG_BODY_PARTS } from './legSpots';
 
 export type AdviceTrigger = 'plan_update' | 'same_muscles_back_to_back' | 'session_missed' | 'session_too_hard' | 'session_too_light' | 'injury_active' | 'strength_irregular';
 
@@ -102,6 +103,10 @@ export interface AdviceInputs {
   illnessEpisodes?: IllnessEpisode[];
   // The morning check-in (engine/wellbeing.ts, rule MORNING-CHECK).
   checkIns?: MorningCheckIn[];
+  // "Lichter bij vermoeide benen" (engine/legEaseSettings.ts). With a proposal, the card on Vandaag
+  // (rule LEG-EASE) speaks for a heavy leg day of today after muscle soreness, so MORNING-CHECK
+  // does not make a second card for the same training.
+  legEase?: 'voorstel' | 'regel' | 'uit';
   // Your verdicts on test runs and the setting that asks first (engine/testJudgment.ts).
   testJudgments?: TestJudgment[];
   askDoubtTest?: boolean;
@@ -119,7 +124,6 @@ export interface AdviceInputs {
 }
 
 const LOAD_SPORT_TYPES = new Set(['cardio', 'hiking']);
-const LEG_BODY_PARTS = ['knie', 'enkel', 'heup', 'hamstring', 'kuit', 'voet', 'achilles', 'quadriceps', 'scheen', 'bil', 'been', 'benen'];
 
 // A planned session counts as done when it has its own log, or when the
 // same training was logged within two days of it without being linked
@@ -903,11 +907,16 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   if (sig.sore !== 'none' || sig.rest) {
     const days = sig.sore !== 'none' ? 1 : 0;
     const next = inputs.plannedSessions.filter((s) => heavy(s, days)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
+    // The card of LEG-EASE already offers Lichter and a later day for the heavy leg day of today.
+    const nextTemplate = next ? templateById.get(next.templateId) : undefined;
+    const covered = inputs.legEase === 'voorstel' && !sig.rest && !!next && nextTemplate?.type === 'strength' && next.scheduledDate === today && isLegHeavyTemplate(nextTemplate);
     const reason = sig.rest ? 'Je bent op of sliep slecht en bent moe' : sig.sore === 'flink' ? 'Flinke spierpijn' : 'Spierpijn';
     const rule = sig.rest
       ? 'Bij "op", of bij twee signalen tegelijk, is vandaag een rustige dag: herstel komt eerst (Saw, Main en Gastin 2016).'
       : 'Met spierpijn zijn je benen 1 tot 2 dagen minder krachtig en minder zuinig; een harde training levert dan minder op (Marcora 2007). Rustig lopen, fietsen en bovenlichaam blijven staan.';
-    if (next) {
+    if (covered) {
+      // Nothing here: the card of LEG-EASE speaks for this training.
+    } else if (next) {
       const t = templateById.get(next.templateId)!;
       // Not next to another hard or leg-heavy session (that day or the day after).
       const clear = (d: string) => !inputs.plannedSessions.some((o) => o.id !== next.id && (o.scheduledDate === d || o.scheduledDate === addDays(d, 1)) && heavy(o, 14));
@@ -949,6 +958,38 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     out.push({ id: `morning-tired:${today}`, trigger: 'session_too_hard', ruleId: 'MORNING-CHECK', priority: 3, title: 'Drie ochtenden op rij moe', effect: 'Houd de komende 3 tot 4 dagen ongeveer een kwart minder minuten en geen harde trainingen. Daarna weer gewoon verder.', why: 'Recreatieve lopers die hun schema zo bijstelden op hun ochtendgevoel, gingen meer vooruit dan met een vast schema (Nuuttila e.a. 2022).' });
   }
   return out;
+}
+
+// --- Rule LEG-EASE -----------------------------------------------------------
+// The "a day later" half of the card on Vandaag for a heavy leg day (or a hard run) of today on tired
+// legs (engine/legDayEase.ts): the first good days after today, with the same checks as every other
+// move (room, the 48-hour rule, not next to another hard or leg-heavy session), as a proposal with
+// Akkoord through the usual planning round. Undefined when there is no good day this week: the card
+// then offers Lichter only. `fromOffset` 2 after soreness (one to two days no heavy legs), else 1.
+export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reason: string, fromOffset: 1 | 2): Advice | undefined {
+  const templateById = new Map(inputs.templates.map((t) => [t.id, t]));
+  const next = inputs.plannedSessions.find((s) => s.id === sessionId);
+  const t = next ? templateById.get(next.templateId) : undefined;
+  if (!next || !t) return undefined;
+  const today = inputs.asOf;
+  const loggedIds = new Set(inputs.logs.map((l) => l.plannedSessionId));
+  const heavy = (s: PlannedSession) => {
+    const o = templateById.get(s.templateId);
+    return !!o && o.type !== 'recovery' && s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate >= today && daysBetween(today, s.scheduledDate) <= 14 && (isHardRun(o) || isLegHeavyTemplate(o));
+  };
+  const clear = (d: string) => !inputs.plannedSessions.some((o) => o.id !== next.id && (o.scheduledDate === d || o.scheduledDate === addDays(d, 1)) && heavy(o));
+  const laterDates = catchUpDates(next, t, inputs, templateById, addDays(today, fromOffset), clear);
+  const later = laterDates[0];
+  if (!later) return undefined;
+  const title = `${t.name} een dag later`;
+  const why = 'Met vermoeide benen levert een zware beendag of harde training minder op, en doortrainen mag. Een dag later kan helpen, en je kiest zelf (docs/onderzoek/Pijn spierpijn en vermoeidheid melden.md).';
+  const effectFor = (d: string) => `${t.name} van ${shortDate(next.scheduledDate)} naar ${shortDate(d)}.`;
+  return {
+    id: `leg-ease:${today}:${next.id}`, trigger: 'session_too_hard', ruleId: 'LEG-EASE', priority: 4, title,
+    effect: effectFor(later),
+    why,
+    ...moveOptions(title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `${reason} op ${shortDate(today)}.`, generatedBy: ['engine/adviceEngine.ts', 'LEG-EASE'] }, laterDates, t.name, why, effectFor),
+  };
 }
 
 // What Vandaag will say about a check-in you have not saved yet: the same rule,

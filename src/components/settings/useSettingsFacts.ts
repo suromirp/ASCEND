@@ -13,6 +13,7 @@ import { baseWeightGrams, resolvePackItems } from '../../engine/packList';
 import { JOURNEY_TASKS } from '../../data/journeyTasks';
 import { programAnchorDate } from '../../engine/programLayout';
 import { checkDataKey, quietCheck } from '../../engine/strengthHistory';
+import { easedLogIds } from '../../engine/legDayEase';
 import { checkModelKey, resolveStrengthSettings, type StrengthSettings } from '../../engine/strengthSettings';
 import { DEFAULT_WATCH_USE } from '../../engine/watchUse';
 import type { IntervalsHrBasis } from '../../engine/watchHeartRate';
@@ -89,11 +90,13 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
   // (checkModelKey).
   const checkKey = checkModelKey(settings.strengthModel);
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const dataKey = checkDataKey(sessionLogs, templates, program, bodyKg);
+  // Spierpijn en een gekozen Lichter horen erbij: ze bepalen of een training telt (engine/legDayEase.ts).
+  const easeKey = JSON.stringify([settings.legEaseDays, settings.morningCheckIns?.filter((c) => c.legs).map((c) => [c.date, c.legs]), injuryNotes.filter((n) => n.kind === 'spierpijn').map((n) => [n.date, n.bodyPart, n.resolvedDate])]);
+  const dataKey = checkDataKey(sessionLogs, templates, program, bodyKg) + easeKey;
   const strengthCheck = useMemo(() => {
     const resolved = resolveStrengthSettings(JSON.parse(checkKey) as StrengthSettings);
     if (!resolved.enabled) return undefined;
-    return quietCheck(sessionLogs, templates, { logs: sessionLogs, templates, program, bodyKg }, resolved);
+    return quietCheck(sessionLogs, templates, { logs: sessionLogs, templates, program, bodyKg, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] } }, resolved, easedLogIds(sessionLogs, settings.legEaseDays));
     // De lijsten zelf staan er bewust niet in: de vingerafdruk (dataKey) is hun inhoud.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [checkKey, dataKey]);

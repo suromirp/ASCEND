@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
 import { hasSignificantPain, isStopPain, painReports } from './pain';
-import { computeAdvice, describeMorningPreview, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
+import { computeAdvice, describeMorningPreview, legEaseMoveAdvice, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -114,5 +114,50 @@ describe('wat je antwoord doet, voor je opslaat', () => {
   it('neemt een pijnplek mee die erger is dan na de training', () => {
     const logs = [log('2026-11-02', { painReports: [{ area: 'Knie', score: 3 }] })];
     expect(same({ logs, checkIns: [{ date: '2026-11-03', legs: 'fris', energy: 'gewoon', sleep: 'goed', spot: { area: 'Knie', score: 6 } }] })).toContain('Knie vanochtend 6 van 10');
+  });
+});
+
+describe('LEG-EASE: een dag later voor een zware beendag van vandaag', () => {
+  const today = [ps('legs', 'tpl_lower_a', '2026-11-03'), ps('upper', 'tpl_upper_b', '2026-11-04'), ps('easy', 'tpl_easy_run', '2026-11-05')];
+  const inputs = (over: Partial<AdviceInputs> = {}): AdviceInputs => ({ logs: [], plannedSessions: today, templates, injuries: [], program: null, dailyTimeBudget: {}, sameDayPairingPreference: 'automatic', respondedIds: new Set(), asOf: '2026-11-03', ...over });
+  const sore = [{ date: '2026-11-03', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const }];
+
+  it('geeft een voorstel met Akkoord naar de eerste goede dag, met een keuze als er meer zijn', () => {
+    const a = legEaseMoveAdvice(inputs(), 'legs', 'Spierpijn', 1)!;
+    expect(a.ruleId).toBe('LEG-EASE');
+    expect(a.proposal!.changes[0]).toMatchObject({ plannedSessionId: 'legs', action: 'move' });
+    expect(a.proposal!.changes[0].toDate! > '2026-11-03').toBe(true);
+    const dates = (a.options ?? [{ proposal: a.proposal! }]).map((o) => o.proposal.changes[0].toDate!);
+    expect([...dates].sort()).toEqual(dates);
+  });
+
+  it('na spierpijn begint het een dag later dan anders (een tot twee dagen geen zware benen)', () => {
+    const one = legEaseMoveAdvice(inputs(), 'legs', 'Een harde loop eerder vandaag', 1)!.proposal!.changes[0].toDate!;
+    const two = legEaseMoveAdvice(inputs(), 'legs', 'Spierpijn', 2)!.proposal!.changes[0].toDate!;
+    expect(two >= one).toBe(true);
+    expect(two >= '2026-11-05').toBe(true);
+  });
+
+  it('zonder goede dag deze week: geen voorstel, de kaart biedt dan alleen Lichter', () => {
+    const crowded = [ps('legs', 'tpl_lower_a', '2026-11-03'), ps('a', 'tpl_hill_intervals', '2026-11-04'), ps('b', 'tpl_long_run', '2026-11-05'), ps('c', 'tpl_intervals', '2026-11-06'), ps('d', 'tpl_lower_b', '2026-11-07'), ps('e', 'tpl_test_run', '2026-11-08'), ps('f', 'tpl_upper_a', '2026-11-09')];
+    expect(legEaseMoveAdvice(inputs({ plannedSessions: crowded }), 'legs', 'Spierpijn', 2)).toBeUndefined();
+  });
+
+  it('MORNING-CHECK zwijgt over deze training zodra de kaart van LEG-EASE het overneemt', () => {
+    const morning = (legEase?: 'voorstel' | 'regel' | 'uit') => computeAdvice(inputs({ checkIns: sore, legEase })).filter((a) => a.ruleId === 'MORNING-CHECK');
+    expect(morning().length).toBe(1);
+    expect(morning('regel').length).toBe(1);
+    expect(morning('uit').length).toBe(1);
+    expect(morning('voorstel')).toEqual([]);
+  });
+
+  it('een rustige dag (op) blijft van MORNING-CHECK, ook met de kaart', () => {
+    const op = [{ date: '2026-11-03', legs: 'spierpijn' as const, energy: 'op' as const, sleep: 'slecht' as const }];
+    expect(computeAdvice(inputs({ checkIns: op, legEase: 'voorstel' })).some((a) => a.ruleId === 'MORNING-CHECK')).toBe(true);
+  });
+
+  it('een beendag van morgen blijft van MORNING-CHECK', () => {
+    const tomorrow = [ps('legs', 'tpl_lower_a', '2026-11-04'), ps('easy', 'tpl_easy_run', '2026-11-05')];
+    expect(computeAdvice(inputs({ plannedSessions: tomorrow, checkIns: sore, legEase: 'voorstel' })).some((a) => a.ruleId === 'MORNING-CHECK')).toBe(true);
   });
 });
