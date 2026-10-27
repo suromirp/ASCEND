@@ -8,6 +8,7 @@ import { asProviderAnswer, makeStreams } from '../engine/fixtures/runStreams';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { SessionLog } from '../models/training';
 import { addDays, todayISO } from '../utils/dates';
+import { effortOffer } from '../engine/testJudgment';
 
 // Made-up data and mocked requests only. The best 5 km of a test run and the verdicts on
 // test runs: additive, so an older backup imports as before and a newer one round-trips.
@@ -155,9 +156,100 @@ describe('the best 5 km never changes your paces by itself', () => {
     await SessionLogsRepo.put(testLog({ cardioData: { distanceKm: 12, durationMinutes: 40 } } as Partial<SessionLog>));
     const f = answer();
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
-    expect((await SessionLogsRepo.getAll())[0].bestEffortTried).toBe('12.00|40.00');
+    expect((await SessionLogsRepo.getAll())[0].bestEffortTried).toBe('12.00|40.00|v2');
     await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
     expect(streamCalls(f)).toBe(1);
+  });
+});
+
+describe('a new reading of a best 5 km that counted before stops were told apart', () => {
+  const quiet = { weatherFetchImpl: asFetch(vi.fn(async () => new Response('{}', { status: 500 }))) };
+  beforeEach(async () => {
+    await wipeAllData();
+    await saveConnection({ athleteId: 'i12345', apiKey: 'geheime-sleutel-0123' });
+  });
+  const oldCounted = (minutes: number) => ({ km: 5, minutes, wholeKm: 6.67, wholeMinutes: 40, accepted: true });
+
+  it('becomes a candidate when it would change a pace, and the old one keeps counting', async () => {
+    await SessionLogsRepo.put(testLog({ bestEffort: oldCounted(33) }));
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(answer()), ...quiet });
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.bestEffort).toMatchObject({ minutes: 33, accepted: true });
+    expect(log.bestEffort?.v).toBeUndefined();
+    expect(log.bestEffortReread?.v).toBe(2);
+    expect(log.bestEffortReread?.accepted).toBeUndefined();
+    expect(log.bestEffortReread?.prevMinutes).toBe(33);
+    expect(effortOffer(log)?.reread).toBe(true);
+  });
+
+  it('is read only once', async () => {
+    await SessionLogsRepo.put(testLog({ bestEffort: oldCounted(33) }));
+    const f = answer();
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), ...quiet });
+    expect(f.mock.calls.filter((c) => String((c as unknown[])[0]).includes('/streams.json')).length).toBe(1);
+  });
+
+  it('takes over at once, and the candidate field disappears, when no pace changes', async () => {
+    const first = answer();
+    await SessionLogsRepo.put(testLog());
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(first), fresh: true, ...quiet });
+    const read = (await SessionLogsRepo.getAll())[0].bestEffort!;
+    await SessionLogsRepo.put(testLog({ bestEffort: { km: 5, minutes: read.minutes, wholeKm: 6.67, wholeMinutes: 40, accepted: true } }));
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(answer()), ...quiet });
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.bestEffort).toMatchObject({ accepted: true, v: 2 });
+    expect('bestEffortReread' in log).toBe(false);
+  });
+
+  it('takes over after Akkoord and cleans up the candidate; Niet nu leaves everything', async () => {
+    await SessionLogsRepo.put(testLog({ bestEffort: oldCounted(33) }));
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(answer()), ...quiet });
+    // Niet nu: nothing is called, nothing changes.
+    const waiting = (await SessionLogsRepo.getAll())[0];
+    expect(waiting.bestEffort?.minutes).toBe(33);
+    expect(waiting.bestEffortReread).toBeDefined();
+    expect(await acceptBestEffort(waiting.id)).toBe(true);
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.bestEffort).toMatchObject({ accepted: true, v: 2 });
+    expect(log.bestEffort?.minutes).toBe(waiting.bestEffortReread?.minutes);
+    expect('bestEffortReread' in log).toBe(false);
+    expect(await acceptBestEffort(log.id)).toBe(false);
+  });
+
+  it('reads a test once more whose tried marker is from an older reading', async () => {
+    await SessionLogsRepo.put(testLog({ bestEffortTried: '6.67|40.00' }));
+    const f = answer();
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, ...quiet });
+    expect((await SessionLogsRepo.getAll())[0].bestEffort).toBeDefined();
+    expect(f.mock.calls.filter((c) => String((c as unknown[])[0]).includes('/streams.json')).length).toBe(1);
+  });
+
+  it('asks Akkoord for a new test with stops that is faster than the whole run and changes a pace', async () => {
+    const stopped = makeStreams({ minutes: 40, pace: 360, hr: 170, pauses: [{ atMinute: 10, seconds: 150 }] });
+    const f = vi.fn(async () => new Response(JSON.stringify(asProviderAnswer(stopped)), { status: 200 }));
+    await SessionLogsRepo.put(testLog({ durationMinutes: 42.5, cardioData: { distanceKm: 6.67, durationMinutes: 42.5 } } as Partial<SessionLog>));
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f), fresh: true, ...quiet });
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.bestEffort?.stops).toBeGreaterThan(0);
+    expect(log.bestEffort?.accepted).toBeUndefined();
+    expect(effortOffer(log)).toBeDefined();
+  });
+
+  it('keeps reading the totals of a new test without stops at once', async () => {
+    await SessionLogsRepo.put(testLog());
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(answer()), fresh: true, ...quiet });
+    expect((await SessionLogsRepo.getAll())[0].bestEffort?.accepted).toBe(true);
+  });
+
+  it('reads a candidate defensively', () => {
+    const ok = migrateLogBestEffort(testLog({ bestEffortReread: { km: 5, minutes: 27, v: 2, wholeKm: 6.67, wholeMinutes: 40, accepted: true, prevMinutes: 28 } }));
+    expect(ok.bestEffortReread).toEqual({ km: 5, minutes: 27, v: 2, wholeKm: 6.67, wholeMinutes: 40, prevMinutes: 28 });
+    const noVersion = migrateLogBestEffort(testLog({ bestEffortReread: { km: 5, minutes: 27 } }));
+    expect('bestEffortReread' in noVersion).toBe(false);
+    const broken = migrateLogBestEffort(testLog({ bestEffort: { km: 5, minutes: 28, accepted: true }, bestEffortReread: { km: 5, minutes: -1, v: 2 } }));
+    expect('bestEffortReread' in broken).toBe(false);
+    expect(broken.bestEffort?.accepted).toBe(true);
   });
 });
 

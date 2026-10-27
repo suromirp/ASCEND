@@ -25,7 +25,11 @@ import {
   awaitsEffort,
   wantsBestEffort,
   testStopsRemark,
+  effortFreshAllowed,
+  offerReread,
+  withEffortAccepted,
 } from './testJudgment';
+import { effortTried } from './bestEffort';
 
 // Invented data: a 5 km test log, optionally with a best effort read from the series.
 function test(id: string, date: string, km: number, minutes: number, bestEffort?: { km: number; minutes: number; accepted?: boolean; wholeKm?: number; wholeMinutes?: number; v?: number; stops?: number; stoppedSec?: number }): SessionLog {
@@ -325,10 +329,10 @@ describe('the quiet line for a best 5 km that waits for Akkoord', () => {
 describe('stops in the best 5 km of a test', () => {
   it('names the stops after the time and adds one dry sentence when there are many', () => {
     const few = testResults([test('s', '2027-01-10', 6.03, 36, { km: 5, minutes: 27.67, v: 2, stops: 2, stoppedSec: 45 })])[0];
-    expect(testBasisLine(few)).toBe('Beste 5 km uit je run: 27:40, zonder 2 keer stilstaan, samen 0:45');
+    expect(testBasisLine(few)).toBe('Beste 5 km uit je run: 27:40. Je stond 2 keer stil, samen 0:45; die tijd telt niet mee.');
     expect(testStopsRemark(few)).toBeUndefined();
     const many = testResults([test('m', '2027-01-10', 6.03, 36, { km: 5, minutes: 27.67, v: 2, stops: 3, stoppedSec: 100 })])[0];
-    expect(testBasisLine(many)).toBe('Beste 5 km uit je run: 27:40, zonder 3 keer stilstaan, samen 1:40');
+    expect(testBasisLine(many)).toBe('Beste 5 km uit je run: 27:40. Je stond 3 keer stil, samen 1:40; die tijd telt niet mee.');
     expect(testStopsRemark(many)).toBe('Stilstaan geeft wat rust, dus deze test is iets te gunstig.');
     expect(testBasisLine(testResults([test('o', '2027-01-10', 6.03, 36, { km: 5, minutes: 27.67 })])[0])).toBe('Beste 5 km uit je run: 27:40');
   });
@@ -337,5 +341,59 @@ describe('stops in the best 5 km of a test', () => {
     expect(wantsBestEffort(test('w', '2027-01-10', 6, 34, { km: 5, minutes: 28, accepted: false }))).toBe(true);
     expect(wantsBestEffort(test('w', '2027-01-10', 6, 34, { km: 5, minutes: 28, accepted: false, v: 2 }))).toBe(false);
     expect(wantsBestEffort(test('w', '2027-01-10', 6, 34, { km: 5, minutes: 28, accepted: true }))).toBe(false);
+  });
+});
+
+describe('a new reading of a best 5 km that already counts', () => {
+  const today = '2027-01-20';
+  const old = { km: 5, minutes: 28, accepted: true };
+  const withReread = (reread: Record<string, unknown>) => ({ ...test('r', '2027-01-10', 6, 34, old), bestEffortReread: { wholeKm: 6, wholeMinutes: 34, km: 5, minutes: 27, v: 2, ...reread } }) as unknown as SessionLog;
+
+  it('reads an accepted one of the old reading once more, only in the last 60 days', () => {
+    const log = test('r', '2027-01-10', 6, 34, old);
+    expect(wantsBestEffort(log, today)).toBe(true);
+    expect(wantsBestEffort(log)).toBe(false);
+    expect(wantsBestEffort(log, '2027-04-20')).toBe(false);
+    expect(wantsBestEffort(withReread({}), today)).toBe(false);
+    expect(wantsBestEffort(test('r', '2027-01-10', 6, 34, { ...old, v: 2 }), today)).toBe(false);
+  });
+
+  it('reads a log with an old tried marker once more, not with the new one', () => {
+    const plain = { ...test('t', '2027-01-10', 6, 34), bestEffortTried: '6.00|34.00' } as SessionLog;
+    expect(wantsBestEffort(plain, today)).toBe(true);
+    expect(wantsBestEffort({ ...plain, bestEffortTried: effortTried(6, 34) } as SessionLog, today)).toBe(false);
+  });
+
+  it('offers the new reading while the old one keeps counting', () => {
+    const log = withReread({ stops: 2, stoppedSec: 50, prevMinutes: 28 });
+    const offer = effortOffer(log)!;
+    expect(offer).toMatchObject({ minutes: 27, reread: true, prevMinutes: 28, stops: 2 });
+    expect(offerReread(offer)).toBe(true);
+    expect(testResults([log])[0].minutes).toBe(28);
+    expect(awaitsEffort([log], 'r')).toBe(true);
+    // Accepting it puts the candidate in place of the old one.
+    const after = withEffortAccepted([log], 'r')[0];
+    expect(after.bestEffort).toMatchObject({ minutes: 27, accepted: true });
+    expect(after.bestEffortReread).toBeUndefined();
+    expect(testResults([after])[0].minutes).toBe(27);
+  });
+
+  it('lets a candidate that changes no pace count at once, and asks when it does', () => {
+    const near = withReread({ minutes: 28.0 });
+    expect(mayAcceptAtOnce([near], undefined, 'r', false)).toBe(true);
+    const far = withReread({ minutes: 25 });
+    expect(previewEffort([far], undefined, 'r').length).toBeGreaterThan(0);
+    expect(mayAcceptAtOnce([far], undefined, 'r', false)).toBe(false);
+  });
+
+  it('ignores a candidate read for other totals', () => {
+    expect(effortOffer(withReread({ wholeKm: 7 }))).toBeUndefined();
+  });
+
+  it('never lets a new test with stops count at once when it is faster than the whole run and a pace changes', () => {
+    expect(effortFreshAllowed({ km: 5, minutes: 28, stops: 2 }, true, 6, 36)).toBe(false);
+    expect(effortFreshAllowed({ km: 5, minutes: 28, stops: 0 }, true, 6, 36)).toBe(true);
+    expect(effortFreshAllowed({ km: 5, minutes: 31, stops: 2 }, true, 6, 36)).toBe(true);
+    expect(effortFreshAllowed({ km: 5, minutes: 28, stops: 2 }, false, 6, 36)).toBe(false);
   });
 });

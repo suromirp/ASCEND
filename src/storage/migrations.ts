@@ -378,28 +378,43 @@ export function migrateLogBestEffort(log: SessionLog): SessionLog {
       out = rest;
     }
   }
+  const rereadRaw = (out as { bestEffortReread?: unknown }).bestEffortReread;
+  if ('bestEffortReread' in out) {
+    const cand = isUsableBestEffort(rereadRaw) ? sanitizeBestEffort(rereadRaw) : undefined;
+    // A candidate is always v 2 or later and never accepted; anything else is dropped.
+    if (cand && cand.v !== undefined) {
+      delete cand.accepted;
+      out = { ...out, bestEffortReread: cand };
+    } else {
+      const { bestEffortReread: _r, ...rest } = out;
+      void _r;
+      out = rest;
+    }
+  }
   if (!('bestEffort' in out)) return out;
   const raw = (out as { bestEffort?: unknown }).bestEffort;
-  if (isUsableBestEffort(raw)) {
-    const r = raw as BestEffort;
-    const fin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
-    const kept: BestEffort = { km: r.km, minutes: r.minutes };
-    if (fin(r.wholeKm) && fin(r.wholeMinutes)) {
-      kept.wholeKm = r.wholeKm;
-      kept.wholeMinutes = r.wholeMinutes;
-    }
-    if (r.accepted === true) kept.accepted = true;
-    if (typeof r.v === 'number' && Number.isInteger(r.v) && r.v >= 2 && r.v <= 99) kept.v = r.v;
-    const small = (v: unknown, max: number): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
-    if (small(r.stops, 500) && small(r.stoppedSec, 36000)) {
-      kept.stops = Math.round(r.stops);
-      kept.stoppedSec = Math.round(r.stoppedSec);
-    }
-    return { ...out, bestEffort: kept };
-  }
+  if (isUsableBestEffort(raw)) return { ...out, bestEffort: sanitizeBestEffort(raw) };
   const { bestEffort: _damaged, ...rest } = out;
   void _damaged;
   return rest;
+}
+
+function sanitizeBestEffort(r: BestEffort): BestEffort {
+  const fin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
+  const kept: BestEffort = { km: r.km, minutes: r.minutes };
+  if (fin(r.wholeKm) && fin(r.wholeMinutes)) {
+    kept.wholeKm = r.wholeKm;
+    kept.wholeMinutes = r.wholeMinutes;
+  }
+  if (r.accepted === true) kept.accepted = true;
+  if (typeof r.v === 'number' && Number.isInteger(r.v) && r.v >= 2 && r.v <= 99) kept.v = r.v;
+  const small = (v: unknown, max: number): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
+  if (small(r.stops, 500) && small(r.stoppedSec, 36000)) {
+    kept.stops = Math.round(r.stops);
+    kept.stoppedSec = Math.round(r.stoppedSec);
+  }
+  if (fin(r.prevMinutes) && r.prevMinutes < 1000) kept.prevMinutes = r.prevMinutes;
+  return kept;
 }
 
 export function migrateTestJudgments(raw: unknown): { list: TestJudgment[] | undefined; skipped: number } {

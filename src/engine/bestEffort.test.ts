@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StreamSet } from '../models/activityDetail';
-import { bestEffortFromStream, distancePoints, fastestWindow, isUsableBestEffort, manyStops, stopsNote, stopsPhrase } from './bestEffort';
+import { bestEffortFromStream, distancePoints, fastestWindow, isUsableBestEffort, manyStops, stopsNote, stopsPhrase, stopsSentence, stopsShort, MAX_GAP_SEC } from './bestEffort';
 
 // A run at a speed per phase: [seconds, metres per second]; one reading per second.
 function run(phases: [number, number][], opts: { skip?: (t: number) => boolean } = {}): StreamSet {
@@ -182,13 +182,170 @@ describe('stops in the fastest stretch', () => {
     const e = bestEffortFromStream(steady([300, 700, 1100], 40, false), 5, 5.9, 32)!;
     expect(e.v).toBe(2);
     expect(e.stops).toBe(3);
-    expect(stopsPhrase(e)).toMatch(/^zonder 3 keer stilstaan, samen \d:\d\d$/);
+    expect(stopsPhrase(e)).toMatch(/^3 keer stilstaan, samen \d:\d\d$/);
+    expect(stopsSentence(e)).toMatch(/^Je stond 3 keer stil, samen \d:\d\d; die tijd telt niet mee\.$/);
     expect(manyStops(e)).toBe(true);
     expect(stopsNote(e)).toContain('iets te gunstig');
-    expect(stopsPhrase({ stops: 1, stoppedSec: 20 })).toBe('zonder 1 keer stilstaan, samen 0:20');
+    expect(stopsPhrase({ stops: 1, stoppedSec: 20 })).toBe('1 keer stilstaan, samen 0:20');
+    expect(stopsSentence({ stops: 1, stoppedSec: 20 })).toBe('Je stond 1 keer stil, samen 0:20; die tijd telt niet mee.');
+    expect(stopsShort({ stops: 3, stoppedSec: 100 })).toBe('zonder 1:40 stilstaan');
+    expect(stopsShort({ stops: 0, stoppedSec: 0 })).toBeUndefined();
     expect(manyStops({ stops: 2, stoppedSec: 50 })).toBe(false);
-    expect(stopsNote({ stops: 2, stoppedSec: 50 })).toBe('zonder 2 keer stilstaan, samen 0:50');
+    expect(stopsNote({ stops: 2, stoppedSec: 50 })).toBe('2 keer stilstaan, samen 0:50');
     expect(stopsNote({})).toBe('');
     expect(bestEffortFromStream(steady([300], 40, false), 5, 5.9, 32, 'count')!.stops).toBeUndefined();
+  });
+
+  // The fastest a series could possibly be over a distance: no faster than its fastest reading.
+  const maxSpeed = (s: StreamSet) => {
+    let top = 0;
+    const t = s.timeSec;
+    const d = s.distanceM as number[];
+    for (let k = 1; k < t.length; k++) {
+      const dt = t[k] - t[k - 1];
+      if (dt > 0 && dt <= MAX_GAP_SEC) top = Math.max(top, (d[k] - d[k - 1]) / dt);
+    }
+    return top;
+  };
+
+  it('does not make a slow crowd faster than the run was: a stop costs nothing and gives nothing', () => {
+    // 120 seconds at 0,9 m/s in the middle of a run at 3 m/s.
+    const s = run([[600, 3], [120, 0.9], [1400, 3]]);
+    const w = fastestWindow(s, 5000)!;
+    expect(w.seconds).toBeGreaterThanOrEqual(5000 / 3 - 0.01);
+    expect(w.stops).toBeLessThanOrEqual(1);
+  });
+
+  it('reads a GPS stutter with a catch-up jump as a hole, not as a stop and not as time won', () => {
+    // 12 seconds on the same spot, then the distance of those seconds in one go.
+    const timeSec: number[] = [];
+    const distanceM: number[] = [];
+    let d = 0;
+    for (let t = 0; t <= 3600; t++) {
+      timeSec.push(t);
+      if (t >= 1000 && t < 1012) distanceM.push(d);
+      else {
+        if (t === 1012) d += 36;
+        d += 3;
+        distanceM.push(d);
+      }
+    }
+    const w = fastestWindow({ timeSec, distanceM }, 5000)!;
+    expect(w.seconds).toBeGreaterThanOrEqual(5000 / 3 - 0.01);
+    expect(w.stops).toBe(0);
+    expect(w.startM >= 3064 || w.endM <= 3010).toBe(true);
+  });
+
+  it('counts the drift around one stop as one stop', () => {
+    const drift: [number, number][] = [];
+    for (let k = 0; k < 15; k++) drift.push([4, 0.3], [4, 1.2]);
+    // Just over 5 km in all, so the one stretch has the drift in it.
+    const w = fastestWindow(run([[600, 3], ...drift, [1100, 3]]), 5000)!;
+    expect(w.stops).toBe(1);
+  });
+
+  it('counts slow walking above the stop limit as time, not as a stop', () => {
+    const s = run([[600, 3], [120, 1.5], [1400, 3.2]]);
+    const w = fastestWindow(s, 5000)!;
+    expect(w.stops).toBe(0);
+    expect(w.stoppedSec).toBe(0);
+    expect(w.seconds).toBeCloseTo(fastestWindow(s, 5000, 'count')!.seconds, 6);
+  });
+
+  it('keeps stoppedSec honest at the edges of the stretch', () => {
+    // A stop at the very start and at the very end of the run is outside every stretch.
+    const s = run([[60, 0], [1700, 3], [60, 0]]);
+    const w = fastestWindow(s, 5000)!;
+    expect(w.stops).toBe(0);
+    expect(w.stoppedSec).toBe(0);
+    expect(w.seconds).toBeCloseTo(5000 / 3, 0);
+  });
+
+  it('is never faster than the fastest possible time of the series (made-up runs with stops and stutters)', () => {
+    let seed = 11;
+    const rnd = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 0xffffffff;
+    };
+    let found = 0;
+    for (let round = 0; round < 25; round++) {
+      const timeSec: number[] = [];
+      const distanceM: number[] = [];
+      let t = 0;
+      let d = 0;
+      while (d < 40000) {
+        const kind = rnd();
+        const len = 3 + Math.floor(rnd() * 25);
+        const v = 2.8 + rnd() * 0.6;
+        for (let q = 0; q < len; q++) {
+          timeSec.push(t);
+          distanceM.push(d);
+          if (kind < 0.05) {
+            // standing still, the clock running
+          } else if (kind < 0.08) {
+            d += 0.2 + rnd() * 0.9;
+          } else if (kind < 0.085) {
+            // a stutter: still, then the distance in one go
+            if (q === len - 1) d += v * len * 1.2;
+          } else if (kind < 0.11) {
+            t += 20 + Math.floor(rnd() * 40);
+          } else {
+            d += v;
+          }
+          t++;
+        }
+      }
+      timeSec.push(t);
+      distanceM.push(d);
+      const s = { timeSec, distanceM };
+      const w = fastestWindow(s, 5000);
+      if (!w) continue;
+      found++;
+      expect(w.seconds).toBeGreaterThanOrEqual(5000 / maxSpeed(s) - 1e-6);
+    }
+    expect(found).toBeGreaterThan(10);
+  });
+
+  it('reads a city test with an automatic pause, creeps and a hard start as a plausible stretch', () => {
+    // Made up: a hard start at 3,1 m/s, one pause of 23 s with 1,3 m of distance (no readings in it),
+    // creeps of 72, 34 and 7 seconds, and a total of about 6 km in 36 minutes.
+    const timeSec: number[] = [];
+    const distanceM: number[] = [];
+    let t = 0;
+    let d = 0;
+    const push = () => {
+      timeSec.push(t);
+      distanceM.push(d);
+    };
+    const move = (sec: number, v: number) => {
+      for (let q = 0; q < sec; q++) {
+        push();
+        d += v;
+        t++;
+      }
+    };
+    move(780, 3.1);
+    push();
+    t += 23;
+    d += 1.3;
+    move(240, 3.0);
+    move(72, 0.2);
+    move(380, 2.9);
+    move(7, 0.4);
+    move(145, 3.0);
+    move(34, 0.3);
+    move(430, 3.0);
+    move(150, 2.8);
+    push();
+    const s = { timeSec, distanceM };
+    // The old reading had no whole stretch.
+    expect(fastestWindow(s, 5000, 'count')).toBeUndefined();
+    const w = fastestWindow(s, 5000)!;
+    expect(w).toBeDefined();
+    expect(w.stops).toBeGreaterThanOrEqual(3);
+    expect(w.stoppedSec).toBeGreaterThan(100);
+    expect(w.seconds).toBeGreaterThanOrEqual(5000 / maxSpeed(s) - 1e-6);
+    expect(w.seconds).toBeGreaterThan(1500);
+    expect(w.seconds).toBeLessThan(1800);
   });
 });
