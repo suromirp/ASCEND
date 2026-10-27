@@ -4,6 +4,7 @@ import { hasSignificantPain, isStopPain, painReports } from './pain';
 import { computeAdvice, describeMorningPreview, legEaseMoveAdvice, previewLegCard, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
+import { legEaseCardSession, morningRestDay } from './legDayEase';
 
 const { templates } = buildDefaultProgramData();
 const log = (date: string, extra: Partial<SessionLog> = {}): SessionLog => ({ id: `l-${date}`, templateId: 'tpl_easy_run', type: 'cardio', completedDate: date, completedAt: `${date}T10:00:00Z`, variant: 'full', durationMinutes: 40, source: 'manual', ...extra });
@@ -154,6 +155,11 @@ describe('LEG-EASE: een dag later voor een zware beendag van vandaag', () => {
   it('een rustige dag (op) blijft van MORNING-CHECK, ook met de kaart', () => {
     const op = [{ date: '2026-11-03', legs: 'spierpijn' as const, energy: 'op' as const, sleep: 'slecht' as const }];
     expect(computeAdvice(inputs({ checkIns: op, legEase: 'voorstel' })).some((a) => a.ruleId === 'MORNING-CHECK')).toBe(true);
+    // En de kaart Benen zwijgt dan, zodat er geen Lichter naast een rustige dag staat.
+    const i = inputs({ checkIns: op, legEase: 'voorstel' });
+    expect(legEaseCardSession({ mode: 'voorstel', today: i.asOf, plannedSessions: i.plannedSessions, templates: i.templates, logs: i.logs, injuries: i.injuries, checkIns: op })).toBeUndefined();
+    expect(morningRestDay(i.asOf, op, i.logs)).toBe(true);
+    expect(morningRestDay(i.asOf, sore, i.logs)).toBe(false);
   });
 
   const names = (list: { title: string }[]) => list.map((a) => a.title).join(' | ');

@@ -187,7 +187,13 @@ export function ForgeWorkout({
   const easeHow = resolveLegEaseHow(settings);
   const decision = !preview && plannedSessionId ? decisionFor(settings.legEaseDays, date, plannedSessionId) : undefined;
   // Met de instelling op Uit maakt een eerder gekozen Lichter de rijen niet stil lichter.
-  const [easeOn, setEaseOn] = useState(() => legEase.mode !== 'uit' && decision?.choice === 'lichter');
+  // Een begonnen training houdt de keuze waarmee hij begon: een later Lichter of Terugzetten op Vandaag
+  // verandert afgevinkte rijen niet, dus het paneel volgt dan het concept.
+  const [easeOn, setEaseOn] = useState(() => {
+    if (legEase.mode === 'uit') return false;
+    if (restored && restored.exercises.some((e) => e.rows.some((r) => r.done))) return restored.eased ?? false;
+    return decision?.choice === 'lichter';
+  });
   const [easeReasons] = useState(() => decision?.reasons ?? []);
   const ease = useMemo(() => (easeOn ? { how: easeHow, because: easeBecause(legEase.state?.signals.reasons ?? easeReasons) } : undefined), [easeOn, easeHow, legEase.state, easeReasons]);
   const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);

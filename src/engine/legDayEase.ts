@@ -27,6 +27,7 @@ import { isHardRun, isLegHeavyTemplate } from './scheduler';
 import { logSport } from './sports';
 import { exerciseKey, HARD_RUN_MINUTES, HARD_RUN_RPE } from './strengthHistory';
 import { hasRole, isTestOrRace } from './templateRoles';
+import { checkInFor, morningSignals } from './wellbeing';
 
 export { soreFromNotes } from './legSoreness';
 
@@ -184,10 +185,17 @@ export function legPainOpen(injuries: InjuryNote[], date: string): boolean {
   return injuries.some((n) => kindOf(n) === 'pijn' && isLegSpot(n.bodyPart) && isOpenOn(n, date) && n.date <= date && n.date >= addDays(date, -14));
 }
 
+// Een ochtend van "op", of twee signalen tegelijk (MORNING-CHECK: een rustige dag). Dan spreekt alleen
+// het rustadvies en zwijgt de kaart Benen, zodat er geen Lichter naast een rustige dag staat.
+export function morningRestDay(today: string, checkIns: MorningCheckIn[] | undefined, logs: SessionLog[]): boolean {
+  return morningSignals(checkInFor(today, checkIns), logs).rest;
+}
+
 // De training van vandaag waar de kaart Benen (LEG-EASE) voor spreekt, als er spierpijn is gemeld:
-// dezelfde keuze als de kaart (easeTarget, geen pijn op een beenplek, nog niet beantwoord). MORNING-CHECK
+// dezelfde keuze als de kaart (easeTarget, geen pijn op een beenplek, geen rustige ochtend). MORNING-CHECK
 // slaat die training over, zodat dezelfde spierpijn niet twee kaarten geeft. Zonder kaart (instelling
-// niet op voorstel, pijn, niets te kiezen) blijft MORNING-CHECK zelf spreken.
+// niet op voorstel, pijn, een rustige ochtend, niets te kiezen) blijft MORNING-CHECK zelf spreken. Na
+// Liever niet op de kaart zwijgen ze allebei: je gaf je antwoord al.
 export function legEaseCardSession(args: {
   mode: LegEaseMode | undefined;
   today: string;
@@ -195,9 +203,11 @@ export function legEaseCardSession(args: {
   templates: SessionTemplate[];
   logs: SessionLog[];
   injuries: InjuryNote[];
+  checkIns?: MorningCheckIn[];
 }): PlannedSession | undefined {
   if (args.mode !== 'voorstel') return undefined;
   if (legPainOpen(args.injuries, args.today)) return undefined;
+  if (morningRestDay(args.today, args.checkIns, args.logs)) return undefined;
   return easeTarget(args.today, args.plannedSessions, args.templates, args.logs)?.session;
 }
 

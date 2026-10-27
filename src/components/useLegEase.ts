@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { legEaseMoveAdvice, type Advice } from '../engine/adviceEngine';
 import { currentBodyKg } from '../engine/bodyWeight';
-import { EASE_SAVE_FAILED, easeTarget, easeTargetOf, legDaySignals, makeDecision, recordDecision, removeDecision, shouldOfferEase, type EaseOffer, type EaseTarget, type LegDaySignals, type SignalDeps } from '../engine/legDayEase';
+import { EASE_SAVE_FAILED, easeTarget, easeTargetOf, legDaySignals, makeDecision, morningRestDay, recordDecision, removeDecision, shouldOfferEase, type EaseOffer, type EaseTarget, type LegDaySignals, type SignalDeps } from '../engine/legDayEase';
 import { resolveLegEase, resolveLegEaseHow, type LegEaseHow, type LegEaseMode } from '../engine/legEaseSettings';
 import type { LegEaseChoice } from '../models/legEase';
 import { resolveVariantDuration } from '../engine/substitutions';
@@ -47,6 +47,8 @@ export function useLegEase(sessionId?: string | null): LegEaseApi {
       const own = sessionId ? plannedSessions.find((s) => s.id === sessionId) : undefined;
       const target = sessionId ? (own && own.scheduledDate === today ? easeTargetOf(own, templates.find((t) => t.id === own.templateId)) : undefined) : easeTarget(today, plannedSessions, templates, sessionLogs);
       if (!target) return undefined;
+      // Een rustige ochtend: dan spreekt het rustadvies van de ochtendcheck, niet deze kaart.
+      if (!sessionId && morningRestDay(today, checkIns, sessionLogs)) return undefined;
       const deps: SignalDeps = {
         logs: sessionLogs, plannedSessions, templates, program, bodyKg, today,
         minutesOf: (s, t) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
