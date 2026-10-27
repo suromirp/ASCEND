@@ -3,7 +3,7 @@ import { formatDateNL } from '../../utils/dates';
 import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
 
-// "Eerder, afgerond of weggelegd": wat gearchiveerd is, afgerond of voorbij. Een gearchiveerd doel
+// "Eerdere doelen": wat gearchiveerd is, afgerond of voorbij. Een gearchiveerd doel
 // kun je terughalen (het wordt dan een doel zonder datum, klaar voor een nieuwe); een voorbij doel
 // archiveer je met een voorstel, want het kan nog iets in je planning raken.
 export function EarlierGoalsSheet({

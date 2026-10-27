@@ -27,7 +27,7 @@ const NOTE_FOR: Record<HorizonApplyStatus, string> = {
   applied: APPLIED_NOTE, unchanged: UNCHANGED_NOTE, stale: STALE_NOTE, failed: FAILED_NOTE, pending: PENDING_NOTE, partial: PARTIAL_NOTE,
 };
 
-const BOTH_NOTE = 'Je houdt allebei de doelen op hun datum. Je hoort hier niets meer over zolang de datums gelijk blijven. De veiligheidsgrenzen tussen zware beendagen blijven gelden.';
+const BOTH_NOTE = 'Je houdt allebei de doelen op hun datum. Je hoort hier niets meer over zolang de datums niet veranderen. De veiligheidsgrenzen tussen zware beendagen blijven gelden.';
 
 export interface HorizonProposeOptions {
   eyebrow: string;

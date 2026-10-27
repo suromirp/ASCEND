@@ -34,7 +34,7 @@ function isEarlier(goal: TrainingGoal, today: string): boolean {
 
 // De doelen voor de lijst, in de volgorde van de tab: eerst op label, daarbinnen op de gekozen
 // volgorde (`TrainingGoal.order`), zonder volgorde op de plek van opslag. `earlier: true` geeft
-// juist de doelen van "Eerder, afgerond of weggelegd".
+// juist de doelen van "Eerdere doelen".
 export function listedGoals(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string, opts: { earlier?: boolean } = {}): ListedGoal[] {
   const mainId = goals.find((g) => g.status !== 'archived' && ladderGoalIds.has(g.id))?.id;
   const rows = sortedForList(

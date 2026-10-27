@@ -40,7 +40,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
     if (restDay === day) return;
     const plan = planRestDay(day);
     if (plan.proposal.changes.length === 0) {
-      void applyRestDay(plan).then(() => setRestNote('Opgeslagen. Je planning hoefde niet te veranderen.'));
+      void applyRestDay(plan).then(() => setRestNote('Opgeslagen. Je planning kon gewoon blijven zoals ze was.'));
       return;
     }
     setRestPlan(plan);

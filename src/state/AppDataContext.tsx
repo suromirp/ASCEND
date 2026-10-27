@@ -45,6 +45,7 @@ import { weekLoadInput, type WeekLoadKind } from '../storage/weekLoadPlan';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
+import { PRIORITY_RULE } from '../engine/goalList';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
@@ -2077,7 +2078,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
     return planHorizonChangeImpl({
       title: `${name}: ${label}`,
-      why: priority === 'top' ? 'Je traint hier naartoe.' : priority === 'voortop' ? 'Je wilt dit goed doen onderweg.' : 'Je doet hieraan mee als training.',
+      why: PRIORITY_RULE[priority],
       explanation: 'Het label bepaalt hoeveel rust er voor een doel komt en of het een eigen opbouw krijgt. Je ziet eerst wat er in je planning verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
       trigger: 'goal_changed',
       goals: changed,
