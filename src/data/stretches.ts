@@ -119,7 +119,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
     stretches: [
       { name: 'Kattenrug / koeienrug (cat-cow)', durationSec: 45, videoUrl: 'https://youtu.be/muQ0luAlGKI' },
       { name: "Kindhouding (child's pose)", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
-      { name: 'Pelvic tilt (bekkenkanteling)', durationSec: 30, videoUrl: 'https://youtu.be/n2cpk6o-6_w' },
+      { name: 'Bekkenkanteling (pelvic tilt)', durationSec: 30, videoUrl: 'https://youtu.be/n2cpk6o-6_w' },
     ],
   },
   {

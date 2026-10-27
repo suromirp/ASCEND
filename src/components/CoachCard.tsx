@@ -101,7 +101,7 @@ export function CoachCard() {
         {plain && (
           <Pill disabled={busy} onClick={() => { setBusy(true); void respondToAdvice(first, 'accepted').finally(() => setBusy(false)); }}>Begrepen</Pill>
         )}
-        <Pill primary={!plain} onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</Pill>
+        <Pill onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</Pill>
       </div>
       {open && (
         <TodaySheet eyebrow={advice.length === 1 ? 'Advies' : `${advice.length} adviezen`} onClose={() => setOpen(false)}>
