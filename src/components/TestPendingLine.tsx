@@ -5,14 +5,16 @@
 
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { pendingTestLine } from '../engine/testJudgment';
+import { effortOfferLine, pendingTestLine } from '../engine/testJudgment';
 import { Icon } from './icons';
 import { LogDetailSheet } from './LogDetailSheet';
 
 export function TestPendingLine() {
   const { sessionLogs, settings, templateById } = useAppData();
   const [open, setOpen] = useState(false);
-  const line = pendingTestLine(sessionLogs, settings);
+  // Een twijfeltest gaat voor; nooit twee regels tegelijk. Daarna een snelste 5 km die op Akkoord wacht
+  // (docs/beslissingen/2026-10-27-snelste-5km-achteraf.md).
+  const line = pendingTestLine(sessionLogs, settings) ?? effortOfferLine(sessionLogs, settings);
   const log = line ? sessionLogs.find((l) => l.id === line.logId) : undefined;
   if (!line || !log) return null;
   return (

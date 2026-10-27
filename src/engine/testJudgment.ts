@@ -190,3 +190,29 @@ export function pendingTestLine(logs: SessionLog[], settings: TestJudgmentSettin
   const pending = countedTests(logs, judgmentOptions(settings)).pending;
   return pending?.logId ? { logId: pending.logId, text: PENDING_TEST_LINE } : undefined;
 }
+
+// --- a best 5 km that waits for Akkoord ------------------------------------------------
+
+export const EFFORT_OFFER_LINE = 'Je testloop heeft een snelste 5 km. Kijk of die mag tellen.';
+
+// Does this test log carry a best 5 km that does not count yet (so its paces still rest on the whole run)?
+export function awaitsEffort(logs: SessionLog[], logId: string | undefined): boolean {
+  const log = logId ? logs.find((l) => l.id === logId) : undefined;
+  return !!log && effortOffer(log) !== undefined;
+}
+
+// The quiet line on Vandaag for a best 5 km that was read but waits for Akkoord, because counting it
+// changes a pace. The newest such test, never one you left out, and never next to the line of a doubt
+// test: that one goes first. Nothing when counting it would change no pace (then it counts by itself).
+export function effortOfferLine(logs: SessionLog[], settings: TestJudgmentSettings | undefined): { logId: string; text: string } | undefined {
+  if (pendingTestLine(logs, settings)) return undefined;
+  const options = judgmentOptions(settings);
+  const ignored = new Set(countedTests(logs, options).ignored.map((t) => t.logId));
+  const offered = logs
+    .filter((l) => !ignored.has(l.id) && effortOffer(l) !== undefined)
+    .sort((a, b) => b.completedDate.localeCompare(a.completedDate));
+  for (const log of offered) {
+    if (previewEffort(logs, settings, log.id).length > 0) return { logId: log.id, text: EFFORT_OFFER_LINE };
+  }
+  return undefined;
+}

@@ -632,7 +632,7 @@ counts waits for your answer ("Telt mee" or "Telt niet mee", `AppSettings.testJu
 "Telt niet mee" never dropped by the cap of 60) and until then the old paces hold; a quiet line on Vandaag
 (`TestPendingLine`) says so, and an older waiting test keeps its question while a newer one waits too. Tests on
 different bases are compared on the whole run. "Telt niet mee" works on any test afterwards. Setting "Twijfeltest
-eerst vragen" (`askDoubtTest`); off means the latest test counts, as before.
+eerst vragen" (`askDoubtTest`); off means the latest test counts, as before. A test of the last 60 days that still has no best 5 km is read in the background at the opening (`activityDetail.ts#ensureRecentTestEfforts`); one that waits for Akkoord gets a quiet line on Vandaag after the doubt line, never two (`testJudgment.ts#effortOfferLine`), and TARGET-TIME names its basis and waits for that Akkoord (`docs/beslissingen/2026-10-27-snelste-5km-achteraf.md`).
 
 Weeks are derived, not stored: a week is just seven days starting on a
 Monday; which phase/week-number it belongs to is computed from
