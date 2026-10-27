@@ -12,7 +12,7 @@
 
 import type { Advice } from './adviceEngine';
 import type { SessionLog, SessionTemplate } from '../models/training';
-import { addDays } from '../utils/dates';
+import { addDays, localDateOf } from '../utils/dates';
 import { FATIGUE_THRESHOLDS, legFatigueOn } from './legFatigue';
 import { hasRole } from './templateRoles';
 
@@ -30,7 +30,7 @@ export function declinedRules(responses: Record<string, StoredResponse>, today: 
   const since = addDays(today, -LOOKBACK_DAYS);
   const byRule = new Map<string, StoredResponse[]>();
   for (const r of Object.values(responses)) {
-    if (!r.ruleId || r.at.slice(0, 10) < since) continue;
+    if (!r.ruleId || localDateOf(r.at) < since) continue;
     byRule.set(r.ruleId, [...(byRule.get(r.ruleId) ?? []), r]);
   }
   const quiet = new Set<string>();

@@ -16,6 +16,7 @@
 // transaction — so a bad import can always be undone by re-importing that
 // snapshot's own envelope.
 
+import { localDateOf } from '../utils/dates';
 import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -173,7 +174,7 @@ export function backupFileName(createdAt: string): string {
   // `.json` keeps every existing OS/browser/text-editor treating it as
   // plain, previewable JSON — nothing generic breaks on a file it doesn't
   // recognize.
-  return `ascend-${createdAt.slice(0, 10)}.ascend-backup.json`;
+  return `ascend-${localDateOf(createdAt)}.ascend-backup.json`;
 }
 
 // --- import direction: normalize ---------------------------------------------

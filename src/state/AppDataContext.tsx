@@ -293,7 +293,7 @@ import type { GoalActivationPlan, PlanChangeProposal, RecentPlanChange } from '.
 import { computeActiveGoalOverviews, type GoalOverview } from '../engine/goalOverview';
 import { activeStrengthStrategy, strengthTrackedExternally, daysUntilBlockEnd, computeStrengthReviewTriggers, buildStrengthProgramRecommendation, type StrengthReviewSignals } from '../engine/strengthProgram';
 import { computeStrengthPlacementPlan, computeStrengthPlacementPlanForCommittedRange } from '../engine/strengthScheduling';
-import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL } from '../utils/dates';
+import { mondayOfWeek, todayISO, daysBetween, addDays, weekdayShortNL, formatDateNL, localDateOf } from '../utils/dates';
 import { withProgramExercises } from '../engine/macrofactorProgram';
 import { makeId } from '../utils/id';
 import type { InfluenceEntry } from '../models/influence';
@@ -1167,7 +1167,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // reason text engine/scheduler.ts#proposeMove already stamps onto its
     // own cascade proposals, never a second conflict-detection formula.
     const recentLegConflictCount = proposals.filter(
-      (p) => daysBetween(p.createdAt.slice(0, 10), asOf) <= 28 && p.changes.some((c) => c.reason?.includes('48 uur hersteltijd')),
+      (p) => daysBetween(localDateOf(p.createdAt), asOf) <= 28 && p.changes.some((c) => c.reason?.includes('48 uur hersteltijd')),
     ).length;
 
     const signals: StrengthReviewSignals = {

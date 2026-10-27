@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { StrengthDoneExtra } from '../components/StrengthDoneElsewhere';
 import { useAppData } from '../state/AppDataContext';
 import { resolveProgramWeek } from '../utils/dates';
-import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, isoWeekday, mondayOfWeek, todayISO, weekdayShortNL, localDateOf } from '../utils/dates';
 import { deriveSessionStatus } from '../engine/sessionStatus';
 import { activeIllness, isHeavySession } from '../engine/illness';
 import { hillIntervalsDegradingLongRun } from '../engine/recoveryCheck';
@@ -134,7 +134,7 @@ function TodayContent() {
   // install isn't nagged after its very first session.
   const backupTouchedAt = [settings.lastExportedAt, settings.lastExportReminderDismissedAt].filter((d): d is string => !!d).sort().at(-1);
   const firstLogDate = sessionLogs.map((l) => l.completedDate).sort()[0];
-  const reminderReference = backupTouchedAt?.slice(0, 10) ?? firstLogDate;
+  const reminderReference = (backupTouchedAt ? localDateOf(backupTouchedAt) : undefined) ?? firstLogDate;
   const showExportReminder = !!reminderReference && daysBetween(reminderReference, today) >= 7;
   const logsSinceBackup = settings.lastExportedAt ? sessionLogs.filter((l) => l.completedAt > settings.lastExportedAt!).length : sessionLogs.length;
 

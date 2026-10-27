@@ -3,7 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
 import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, localDateOf } from '../utils/dates';
 import { isEmptyStart, restoreSafetyLines } from '../engine/freshStart';
 import { importDiffLine } from '../engine/importPreview';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -162,7 +162,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
             {step.kind === 'mode' && (
               <div className="mt-4 flex flex-col gap-3">
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  Back-up van {formatDateNL(step.backup.createdAt.slice(0, 10))}
+                  Back-up van {formatDateNL(localDateOf(step.backup.createdAt))}
                   {step.backup.sourceBackupSchemaVersion === 0 && ' (oudere export)'}
                 </p>
                 {(['full_restore', 'merge', 'custom'] as ImportMode[]).map((mode) => (

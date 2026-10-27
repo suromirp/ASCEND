@@ -38,7 +38,7 @@ import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { adviceDifferences } from './settingsDiff';
 import { formatNumberNL } from '../utils/number';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -612,7 +612,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showWatchStatus !== false && s.showWatchStatusOnWeek !== false };
     case 'macrofactor':
       return f.macroFactor?.readAt
-        ? { title: 'Laatste export', value: shortDate(f.macroFactor.readAt.slice(0, 10)) }
+        ? { title: 'Laatste export', value: shortDate(localDateOf(f.macroFactor.readAt)) }
         : { title: 'Export inlezen', value: 'Nog niet', dim: true, sub: 'Kracht en gewicht uit MacroFactor' };
     case 'macrofactor-leidend':
       return { checked: f.macroFactor?.leads !== false };
@@ -707,7 +707,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       if (!garmin && !mf) return { value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
       const parts = [
         garmin ? `Garmin${f.watch?.syncedAt ? ` om ${clock(f.watch.syncedAt)}` : ''}` : null,
-        mf && f.macroFactor?.readAt ? `MacroFactor ${shortDate(f.macroFactor.readAt.slice(0, 10))}` : null,
+        mf && f.macroFactor?.readAt ? `MacroFactor ${shortDate(localDateOf(f.macroFactor.readAt))}` : null,
       ].filter((p): p is string => p !== null);
       return garmin ? { value: 'Verbonden', dot: 'ok', sub: parts.join(', ') } : { value: 'MacroFactor', sub: parts.join(', ') };
     }
