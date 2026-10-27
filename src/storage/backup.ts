@@ -176,7 +176,13 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
     // Only the series of a log that still exists: a leftover of a deleted log stays out.
     const logIds = new Set(sessionLogs.map((l) => l.id));
     const streams = (await ActivityStreamsRepo.getAll()).filter((s) => logIds.has(s.logId));
-    if (streams.length > 0) payload.activityStreams = streams.map(serializeStreams);
+    // In small steps, so a year of series does not hold the screen still in one long block.
+    const serialized = [];
+    for (let i = 0; i < streams.length; i++) {
+      serialized.push(serializeStreams(streams[i]));
+      if (i % 25 === 24) await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    if (serialized.length > 0) payload.activityStreams = serialized;
   }
 
   return {

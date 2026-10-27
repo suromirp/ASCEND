@@ -46,11 +46,12 @@ export function BackupSheet({ onClose, onImport }: { onClose: () => void; onImpo
       {() => (
         <>
           <div className="st-btns col first">
-            <button type="button" className="st-btn gold" disabled={busy} onClick={() => void make()}>Back-up maken</button>
+            <button type="button" className="st-btn gold" disabled={busy} onClick={() => void make()}>{busy ? 'Back-up maken…' : 'Back-up maken'}</button>
             <button type="button" className="st-btn" onClick={() => onImport()}>Back-up terugzetten</button>
           </div>
-          {status && <p className="st-hint" style={{ marginLeft: 0 }} role="status">{status}</p>}
-          {!status && since > 0 && (
+          {busy && <p className="st-hint" style={{ marginLeft: 0 }} role="status">Met veel reeksen kan dit een paar seconden duren.</p>}
+          {!busy && status && <p className="st-hint" style={{ marginLeft: 0 }} role="status">{status}</p>}
+          {!busy && !status && since > 0 && (
             <p className="st-hint" style={{ marginLeft: 0 }}>{`Sinds de laatste back-up ${since === 1 ? 'is 1 training' : `zijn ${since} trainingen`} gelogd.`}</p>
           )}
         </>
