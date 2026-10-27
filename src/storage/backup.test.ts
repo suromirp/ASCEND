@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
-import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, listSnapshots, restoreSnapshot } from './backup';
+import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, backupErrorText, listSnapshots, restoreSnapshot } from './backup';
 import type { SessionLog, PlannedSession } from '../models/training';
 import { migrateInfluences, migrateNightJudgments } from './migrations';
 import type { InfluenceEntry } from '../models/influence';
@@ -738,5 +738,14 @@ describe('meer per set in een back-up (rir, kind en rirAssumed)', () => {
     const damaged = [{ exerciseId: 'sq', exerciseName: 'Squat', sets: [{ reps: 6, weightKg: 100, rir: 'veel', kind: 'zwaar' }, { reps: 5, rir: 11 }, { reps: 4, rir: -1 }] }];
     const backup = normalizeBackupToCurrentModel(flat([baseLog('bad', damaged as never)]));
     expect(backup.sessionLogs[0].strengthData![0].sets).toEqual([{ reps: 6, weightKg: 100 }, { reps: 5 }, { reps: 4 }]);
+  });
+});
+
+describe('foutzinnen voor de gebruiker', () => {
+  it('een eigen zin van ASCEND komt in beeld, een andere fout wordt de vaste zin', () => {
+    let own: unknown;
+    try { parseBackupText('{"backupSchemaVersion": 4, "payl'); } catch (e) { own = e; }
+    expect(backupErrorText(own, 'vast')).toMatch(/beschadigd of onvolledig/);
+    expect(backupErrorText(new Error('QuotaExceededError'), 'vast')).toBe('vast');
   });
 });

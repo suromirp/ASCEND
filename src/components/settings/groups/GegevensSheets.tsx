@@ -3,7 +3,7 @@ import { useAppData } from '../../../state/AppDataContext';
 import { backupAge } from '../../../engine/settingsAttention';
 import { longDate } from '../../../engine/settingsSummary';
 import { getPersistenceStatus, requestPersistentStorage, type PersistenceStatus } from '../../../storage/persistence';
-import { backupFileName, listSnapshots, restoreSnapshot } from '../../../storage/backup';
+import { backupErrorText, backupFileName, listSnapshots, restoreSnapshot } from '../../../storage/backup';
 import { webBackupFileAdapter } from '../../../storage/backupFileAdapter';
 import type { PreImportSnapshot } from '../../../storage/backupTypes';
 import { checkForUpdate } from '../../../utils/appUpdate';
@@ -130,8 +130,7 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
       setSnapshots(await listSnapshots());
       onChanged();
     } catch (err) {
-      console.warn('Terugzetten mislukt:', err instanceof Error ? err.message : err);
-      setMessage('Terugzetten lukte niet. Er is niets veranderd; probeer het nog eens.');
+      setMessage(backupErrorText(err, 'Terugzetten lukte niet. Er is niets veranderd; probeer het nog eens.'));
     } finally {
       setBusy(false);
       setConfirmId(null);

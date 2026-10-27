@@ -47,7 +47,7 @@ export const SEVERITY_CHOICES = [
 
 const KNAPIK = 'Roeien en optrekken helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in Aanvullend onderzoek GR5 voorbereiding).';
 const ROMP = 'Rompoefeningen staan in het krachtmenu van Aanvullend onderzoek GR5 voorbereiding (bewijs: expert).';
-const NIETS_APART = 'Voor deze plek vonden we in onze onderzoeken niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
+const NIETS_APART = 'Voor deze plek staat in het onderzoek achter ASCEND niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
 
 export const BODY_CARE: Record<string, BodyCare> = {
   nek: {

@@ -18,6 +18,7 @@ import {
   defaultActionsForMode,
   defaultPlanPolicyForMode,
   CATEGORY_SUPPORTED_ACTIONS,
+  backupErrorText,
 } from '../storage/backup';
 import {
   ALL_CATEGORIES,
@@ -83,8 +84,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
         const backup = normalizeBackupToCurrentModel(parsed);
         setStep({ kind: 'mode', backup });
       } catch (err) {
-        console.warn('Back-up lezen mislukt:', err instanceof Error ? err.message : err);
-        setStep({ kind: 'error', message: 'Dit back-upbestand is niet te lezen. Kies een bestand dat ASCEND zelf heeft gemaakt.' });
+        setStep({ kind: 'error', message: backupErrorText(err, 'Dit back-upbestand is niet te lezen. Kies een bestand dat ASCEND zelf heeft gemaakt.') });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,8 +125,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
       await refresh();
       setStep({ kind: 'done', snapshotId: snapshot.id });
     } catch (err) {
-      console.warn('Importeren mislukt:', err instanceof Error ? err.message : err);
-      setStep({ kind: 'error', message: 'Importeren is mislukt. Er is niets gewijzigd.' });
+      setStep({ kind: 'error', message: backupErrorText(err, 'Importeren is mislukt. Er is niets gewijzigd.') });
     }
   }
 
@@ -137,8 +136,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
       await refresh();
       setStep({ kind: 'undone' });
     } catch (err) {
-      console.warn('Ongedaan maken mislukt:', err instanceof Error ? err.message : err);
-      setStep({ kind: 'error', message: 'Ongedaan maken lukte niet. Probeer het nog eens, of zet een kopie terug onder Instellingen, Gegevens en back-up.' });
+      setStep({ kind: 'error', message: backupErrorText(err, 'Ongedaan maken lukte niet. Probeer het nog eens, of zet een kopie terug onder Instellingen, Gegevens en back-up.') });
     }
   }
 
