@@ -175,7 +175,7 @@ function driftRow(input: RunTrendsInput): TrendRow {
     strengthText: 'Drift is het zakken van je tempo per hartslag van de eerste naar de tweede helft. Het schommelt per loop zo\'n 3 procentpunten en verschilt sterk per persoon, dus ASCEND zegt pas iets vanaf 3 procentpunten verschil tussen het midden van de laatste drie en de drie daarvoor. Onder de 5 procent noemt een coach goed; dat is een richtlijn en geen gemeten grens.',
     meaning:
       word === 'Beter'
-        ? 'Je hartslag blijft op lange dagen beter bij je tempo. Dat is wat een GR5-dag vraagt.'
+        ? 'Je hartslag blijft op lange dagen beter bij je tempo. Dat is wat een lange dag in de bergen vraagt.'
         : word === 'Slechter'
           ? 'Je hartslag loopt op lange dagen meer op dan eerst. Let op eten en drinken, warmte en een te snel begin.'
           : 'Je drift is ongeveer gelijk aan die van de loopjes ervoor.',

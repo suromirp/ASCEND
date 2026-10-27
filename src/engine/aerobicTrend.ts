@@ -133,5 +133,5 @@ export function progressMoment(trend: AerobicTrend, last: ProgressCelebrated | u
   if (last && (today < addDays(last.date, CELEBRATE_EVERY_DAYS) || c > last.changeSec - CELEBRATE_FURTHER_SEC)) return undefined;
   const sec = Math.round(-c);
   const bpm = trend.bpmChange !== undefined ? Math.round(-trend.bpmChange) : 0;
-  return `Je wordt fitter. Bij dezelfde hartslag loop je ${sec} seconden per km sneller dan een maand geleden${bpm >= 1 ? `; hetzelfde tempo kost je ongeveer ${bpm} ${bpm === 1 ? 'slag' : 'slagen'} minder` : ''}. Dat is de trend over weken, niet één loopje.`;
+  return `Een goed teken: bij dezelfde hartslag loop je ${sec} seconden per km sneller dan een maand geleden${bpm >= 1 ? `; hetzelfde tempo kost je ongeveer ${bpm} ${bpm === 1 ? 'slag' : 'slagen'} minder` : ''}. Dat is de trend over weken, niet één loopje.`;
 }
