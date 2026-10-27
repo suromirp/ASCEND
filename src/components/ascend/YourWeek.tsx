@@ -109,7 +109,12 @@ export function YourWeekSheet({ week, onClose }: { week: YourWeek; onClose: () =
               {week.bars.map((bar) => (
                 <div key={bar.week} className="flex flex-col gap-1">
                   <Meter value={bar.budget > 0 ? bar.done / bar.budget : 0} label={`Week ${bar.week} van de golf`} tone={bar.current ? 'status' : 'progress'} />
-                  <span className="text-xs tabular-nums" style={{ color: bar.current ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>Week {bar.week}: {bar.future ? bar.budget : `${bar.done} van ${bar.budget}`}</span>
+                  {/* Twee regels, zodat "Week 1" en "0 van 120" op 360 px niet midden in breken. */}
+                  <span className="text-xs tabular-nums" style={{ color: bar.current ? 'var(--color-ink)' : 'var(--color-ink-dim)' }}>
+                    Week {bar.week}
+                    <br />
+                    {bar.future ? `${bar.budget} min` : `${bar.done} van ${bar.budget}`}
+                  </span>
                 </div>
               ))}
             </div>
