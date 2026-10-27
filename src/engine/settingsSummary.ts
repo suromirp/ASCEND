@@ -28,6 +28,7 @@ import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
 import { resolveBodyCheck } from './bodyCheckSettings';
+import { resolveLegEase, resolveLegEaseHow } from './legEaseSettings';
 import { resolveSky } from './skySettings';
 import { resolveLongRunGrowth } from './runGrowth';
 import { resolveIntensityCounting } from './intensitySettings';
@@ -541,6 +542,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('terugblikDag', o.weekReviewDay) };
     case 'lijfvraag':
       return { value: choiceShort('lijfvraag', resolveBodyCheck(s)) };
+    case 'lichterbenen':
+      return { value: choiceShort('lichterbenen', resolveLegEase(s)) };
+    case 'lichterbenen-hoe':
+      return { value: choiceShort('lichterbenenHoe', resolveLegEaseHow(s)) };
     case 'weekvraag':
       return { checked: o.weeklyQuestion };
     case 'weerplaats':

@@ -23,6 +23,9 @@ import type { Program } from '../models/program';
 import type { ExercisePrescription, ExerciseSetLog, SessionLog, SessionTemplate, SetKind, SetLog, SetTarget } from '../models/training';
 import { formatNumberNL } from '../utils/number';
 import { fatigueEvents, fatigueWord, legFatigueOn } from './legFatigue';
+import { earlierTodayPoints, easeExerciseReason, easeSlots, EASE_RIR, EASE_RIR_EXTRA } from './legDayEase';
+import { legSorenessList, type SoreSource } from './legSoreness';
+import type { LegEaseHow } from './legEaseSettings';
 import { cleanExerciseName } from './exerciseMatch';
 import { exerciseHistories, exerciseKey, legsTiredAt, type ExerciseHistory, type LegsTired } from './strengthHistory';
 import { DEFAULT_RIR, dumbbellTotalFor, expectedReps, formatWeight, lastDateBefore, prescribe, usedBefore, warmupSets, warmupShapes, type Prescription, type WarmupSet } from './strengthModel';
@@ -168,6 +171,11 @@ export interface PlanContext {
   date: string;
   // Forge counts along (the setting "Kracht meerekenen"). Off: the template only.
   modelOn: boolean;
+  // Spierpijn die je meldde: ook dat maakt je benen moe (engine/strengthHistory.ts#legsTiredAt).
+  sore?: SoreSource;
+  // Je koos "Lichter" voor deze training (engine/legDayEase.ts): meer reserve en een set minder voor
+  // wat de benen belast. Zonder keuze verandert er niets. `because`: waardoor, in de regel eronder.
+  ease?: { how: LegEaseHow; because: string };
 }
 
 export interface PlanState {
@@ -179,7 +187,7 @@ export interface PlanState {
 
 export function planState(ctx: PlanContext): PlanState {
   const strengthLogs = ctx.logs.filter((l) => l.strengthData && l.strengthData.length > 0);
-  const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg };
+  const deps = { logs: ctx.logs, templates: ctx.templates, program: ctx.program, bodyKg: ctx.bodyKg, ...(ctx.sore ? { sore: ctx.sore } : {}) };
   const histories = new Map(exerciseHistories(strengthLogs, ctx.templates, deps).map((h) => [h.key, h]));
   return { histories, tiredNow: legsTiredAt(ctx.date, undefined, deps), warm: newWarmState() };
 }
@@ -356,7 +364,15 @@ function programWeights(rx: Prescription, targets: SetTarget[], exercise: Exerci
 
 export function planWorkout(slots: ExercisePrescription[], ctx: PlanContext): WorkoutExercise[] {
   const state = planState(ctx);
-  return slots.map((slot) => planExercise(slot, ctx, state));
+  if (!ctx.ease) return slots.map((slot) => planExercise(slot, ctx, state));
+  // Lichter: dezelfde training met voorschriften die meer reserve vragen; daarna rekent het model gewoon.
+  const eased = easeSlots(slots, ctx.ease.how);
+  const raised = new Set(eased.raised);
+  const line = easeExerciseReason(ctx.ease.how === 'extra' ? EASE_RIR_EXTRA : EASE_RIR, ctx.ease.because);
+  return eased.slots.map((slot) => {
+    const ex = planExercise(slot, ctx, state);
+    return raised.has(slot.id) ? { ...ex, reason: ex.reason ? `${line} ${ex.reason}` : line } : ex;
+  });
 }
 
 // --- what you do on the screen -------------------------------------------------------------------
@@ -716,11 +732,30 @@ export function swapOptions(current: Exercise | undefined, profile: GymProfile, 
 
 // --- the legs ---------------------------------------------------------------------------------
 
-// One short line on a leg day: why the legs may be tired, or the leg index.
-export function legDayLine(date: string, deps: { logs: SessionLog[]; templates: SessionTemplate[]; program?: Program | null; bodyKg?: number }): string {
+// One short line on a leg day: why the legs may be tired, or the leg index. A hard run earlier today
+// (a test run too) counts along: the index leaves a training of the same day out on purpose, so the
+// points it still carries are added here (engine/legDayEase.ts#earlierTodayPoints).
+export interface LegDayLineDeps {
+  logs: SessionLog[];
+  templates: SessionTemplate[];
+  program?: Program | null;
+  bodyKg?: number;
+  sore?: SoreSource;
+  // The training itself, so it does not count as "earlier".
+  excludeId?: string;
+}
+
+export function legDayLine(date: string, deps: LegDayLineDeps): string {
+  const inputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program, ...(deps.sore ? { soreness: legSorenessList(deps.sore.checkIns, deps.sore.injuries) } : {}) };
+  const earlier = earlierTodayPoints(date, { logs: deps.logs, templates: deps.templates, program: deps.program, bodyKg: deps.bodyKg, excludeId: deps.excludeId });
+  if (earlier.points > 0) {
+    const index = legFatigueOn(date, inputs, fatigueEvents(inputs)).index + earlier.points;
+    const what = earlier.label === 'testloop' ? 'Je testloop' : 'Je loop';
+    const when = earlier.morning ? 'van vanochtend' : 'van eerder vandaag';
+    return `${what} ${when} telt nog mee. Beenindex ${formatNumberNL(index, 0)}, ${fatigueWord(index).word.toLowerCase()}.`;
+  }
   const tired = legsTiredAt(date, undefined, deps);
   if (tired) return `Je benen zijn nog moe van ${tired.because}. Zelfde gewicht, een herhaling minder is normaal.`;
-  const inputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program };
   const index = legFatigueOn(date, inputs, fatigueEvents(inputs)).index;
   return `Beenindex ${formatNumberNL(index, 0)}, ${fatigueWord(index).word.toLowerCase()}.`;
 }

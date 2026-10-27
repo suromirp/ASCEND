@@ -31,6 +31,7 @@ import { ForgeFilters } from '../components/forge/ForgeFilters';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { isRepsBased, splitByRecency, trainingFilters, visibleViews } from '../engine/forgeHistory';
 import { checkSummary, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, type ComparisonRow } from '../engine/strengthHistory';
+import { easedLogIds } from '../engine/legDayEase';
 import { biasWord, checkLines, nearLine, type CheckSummary, type Tally } from '../engine/prescriptionCheck';
 import { externalOneRmByKey } from '../engine/externalOneRm';
 import { compareMoments, resolveStrengthSettings, strengthModelKey, type OneRmView } from '../engine/strengthSettings';
@@ -50,7 +51,7 @@ const NO_READINGS = new Map<string, OneRmReading[]>();
 export function ForgePage() {
   const navigate = useNavigate();
   const forgeSettings = jumpRoute('forge', { jumpTo: 'forge' });
-  const { sessionLogs, templates, program, settings, updateSettings } = useAppData();
+  const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
   const today = todayISO();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
   const [query, setQuery] = usePageState('zoek', '');
@@ -79,14 +80,14 @@ export function ForgePage() {
     const s = resolveStrengthSettings(JSON.parse(strengthKey) as typeof settings.strengthModel);
     if (!s.enabled) return undefined;
     const strengthLogs = sessionLogs.filter((l) => l.strengthData && l.strengthData.length > 0);
-    const deps = { logs: sessionLogs, templates, program, bodyKg };
+    const deps = { logs: sessionLogs, templates, program, bodyKg, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] } };
     const histories = exerciseHistories(strengthLogs, templates, deps);
     const tiredNow = legsTiredAt(today, undefined, deps);
     return {
       views: exerciseViews(histories, s, bodyKg, today, tiredNow),
-      rows: comparisonRows(histories, s, bodyKg, templates),
+      rows: comparisonRows(histories, s, bodyKg, templates, easedLogIds(sessionLogs, settings.legEaseDays)),
     };
-  }, [strengthKey, sessionLogs, templates, program, bodyKg, today]);
+  }, [strengthKey, sessionLogs, templates, program, bodyKg, today, injuryNotes, settings.morningCheckIns, settings.legEaseDays]);
 
   const trainings = useMemo(() => (model ? trainingFilters(templates, model.views) : []), [model, templates]);
   // A stored filter for a training that is no longer there counts as "Alles".

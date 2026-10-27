@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { InjuryNotesRepo, ProgramsRepo, SessionLogsRepo, TrainingGoalsRepo, GoalMilestonesRepo, GoalMilestoneProgressRepo, CapabilityEvidenceRepo, SettingsRepo, MetaRepo, PlannedSessionsRepo, StrengthProgramStrategiesRepo, PlanChangeProposalsRepo, BackupSnapshotsRepo, wipeAllData } from './database';
 import { buildBackupEnvelope, normalizeBackupToCurrentModel, buildImportPreview, createImportPlan, createPreImportSnapshot, applyImportPlan, defaultActionsForMode, defaultPlanPolicyForMode, parseBackupText, backupErrorText, listSnapshots, restoreSnapshot } from './backup';
 import type { SessionLog, PlannedSession } from '../models/training';
-import { migrateInfluences, migrateNightJudgments } from './migrations';
+import { migrateInfluences, migrateLegEaseDays, migrateNightJudgments } from './migrations';
 import type { InfluenceEntry } from '../models/influence';
 import type { SweatEntry } from '../models/sweat';
 import { LEGACY_MILESTONE_ID_MAP } from '../engine/goalMigration';
@@ -394,6 +394,62 @@ describe('backup envelope round-trip', () => {
       expect(backup.skippedInvalid).toBe(4);
       const notAList = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { nightJudgments: 'oops' } } });
       expect(notAList.settings.nightJudgments).toBeUndefined();
+    });
+  });
+
+  // What you chose on days with tired legs (models/legEase.ts): additive in the settings, no schema step,
+  // it travels in a backup, an old backup without it imports as before, and a restore merges per date and training.
+  describe('legEaseDays (lichter bij vermoeide benen)', () => {
+    const day = (date: string, plannedSessionId: string, choice: 'lichter' | 'liever-niet' = 'lichter') => ({ date, plannedSessionId, choice, reasons: ['spierpijn' as const], index: 9.5, at: `${date}T07:00:00.000Z` });
+    const kept = [day('2026-10-20', 's1'), day('2026-10-21', 's2', 'liever-niet')];
+
+    it('round-trips through export and a full restore onto a clean device', async () => {
+      await SettingsRepo.set({ legEaseDays: kept, legEase: 'regel', legEaseHow: 'extra' });
+      const envelope = await buildBackupEnvelope();
+      await wipeAllData();
+      expect((await SettingsRepo.get()).legEaseDays).toBeUndefined();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.legEaseDays).toEqual(kept);
+      expect(restored.legEase).toBe('regel');
+      expect(restored.legEaseHow).toBe('extra');
+    });
+
+    it('a back-up without the field imports as before and leaves the choices on the device alone', async () => {
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ legEaseDays: kept });
+      const backup = normalizeBackupToCurrentModel(envelope);
+      expect(backup.skippedInvalid).toBe(0);
+      expect(backup.settings.legEaseDays).toBeUndefined();
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).legEaseDays).toEqual(kept);
+    });
+
+    it('a restore merges per date and training, the device wins', async () => {
+      await SettingsRepo.set({ legEaseDays: [day('2026-10-20', 's1', 'liever-niet'), day('2026-10-19', 's0')] });
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ legEaseDays: [day('2026-10-20', 's1', 'lichter'), day('2026-10-22', 's3')] });
+      await importEnvelope(envelope);
+      expect((await SettingsRepo.get()).legEaseDays).toEqual([day('2026-10-19', 's0'), day('2026-10-20', 's1', 'lichter'), day('2026-10-22', 's3')]);
+    });
+
+    it('drops a damaged record and counts it, keeps the rest of a record with a damaged reason or index', async () => {
+      const out = migrateLegEaseDays([day('2026-10-20', 's1'), { date: 'nooit', plannedSessionId: 's2', choice: 'lichter' }, { date: '2026-10-21', plannedSessionId: '', choice: 'lichter' }, { date: '2026-10-22', plannedSessionId: 's3', choice: 'misschien' }, { date: '2026-10-23', plannedSessionId: 's4', choice: 'lichter', reasons: ['spierpijn', 'rommel'], index: 'veel' }]);
+      expect(out.list).toHaveLength(2);
+      expect(out.list![1]).toMatchObject({ date: '2026-10-23', plannedSessionId: 's4', choice: 'lichter', reasons: ['spierpijn'], index: 0 });
+      expect(out.skipped).toBe(3);
+      expect(migrateLegEaseDays('oops')).toEqual({ list: undefined, skipped: 1 });
+      expect(migrateLegEaseDays(undefined)).toEqual({ list: undefined, skipped: 0 });
+      const envelope = await buildBackupEnvelope();
+      const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { legEaseDays: [kept[0], { date: 'nooit' }] } } });
+      expect(backup.settings.legEaseDays).toEqual([kept[0]]);
+      expect(backup.skippedInvalid).toBe(1);
+    });
+
+    it('keeps the newest 60 and one choice per date and training', () => {
+      const many = Array.from({ length: 70 }, (_, i) => day(`2026-${i < 35 ? '08' : '09'}-${String((i % 28) + 1).padStart(2, '0')}`, `s${i}`));
+      const out = migrateLegEaseDays([...many, { ...many[0], choice: 'liever-niet' }]);
+      expect(out.list).toHaveLength(60);
     });
   });
 

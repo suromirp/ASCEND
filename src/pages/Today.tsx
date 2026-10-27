@@ -46,6 +46,7 @@ import { reviewWeekToShow, morningCheckInMode, showWeeklyQuestion } from '../eng
 import { leaveLabelOn } from '../engine/leave';
 import { coachLineForToday } from '../engine/coach';
 import { CoachCard } from '../components/CoachCard';
+import { LegEaseCard } from '../components/LegEaseCard';
 import { InfluenceMoveCard } from '../components/influence/InfluenceMoveCard';
 import { AdHocLogSheet } from '../components/AdHocLogSheet';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../data/stretches';
@@ -370,6 +371,8 @@ function TodayContent() {
           <p className="text-sm" style={{ color: 'var(--color-ink)' }}>{concurrentTrainingTip.reason}</p>
         </Card>
       )}
+
+      <LegEaseCard />
 
       <CoachCard />
 

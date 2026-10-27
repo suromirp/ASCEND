@@ -376,3 +376,13 @@ export function mergeDraft(draft: WorkoutExercise[], fresh: WorkoutExercise[]): 
   const gone = draft.filter((d) => !fresh.some((f) => f.slot === d.slot) && d.rows.some((r) => r.done || r.edited));
   return [...merged, ...gone];
 }
+
+// Opent een concept opnieuw: is Lichter intussen gekozen of teruggezet (op Vandaag, of na een
+// herstart) en is er nog geen set afgevinkt, dan wordt er opnieuw gepland zoals bij Lichter in
+// het scherm zelf, zodat concept en keuze niet uit elkaar lopen. Een afgevinkte set blijft altijd
+// staan: dan geldt het concept zoals het is. `draftEased` ontbreekt bij een concept van voor deze keuze.
+export function resumeDraft(draft: WorkoutExercise[], draftEased: boolean | undefined, easeOn: boolean, fresh: WorkoutExercise[]): WorkoutExercise[] {
+  const started = draft.some((e) => e.rows.some((r) => r.done));
+  if (!started && (draftEased ?? false) !== easeOn) return fresh;
+  return mergeDraft(draft, fresh);
+}

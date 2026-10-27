@@ -14,6 +14,7 @@ import { applyPlanChangeItems } from '../engine/proposalEngine';
 import { isLegHeavyTemplate } from '../engine/scheduler';
 import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
 import { useLegFatigueInputs } from './LegFatigueCard';
+import { useLegMoveNotes } from './useLegMoveNote';
 import { formatNumberNL } from '../utils/number';
 import { Icon } from './icons';
 import { TextButton } from './TextButton';
@@ -96,6 +97,9 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
     const at = legFatigueOn(item.toDate, { ...fatigueInputs, plannedSessions: after });
     return { kind, date: item.toDate, index: at.index, status: fatigueStatus(at, kind) } as const;
   }, [chosen, plannedSessions, templates, fatigueInputs, planPreviewPass]);
+
+  // Stil, zonder knop: hoe vermoeid je benen ongeveer zijn op de dag waar een zware beendag of harde training heen gaat.
+  const legNotes = useLegMoveNotes((chosen?.changes ?? []).filter((c) => c.action === 'move').map((c) => ({ sessionId: c.plannedSessionId, toDate: c.toDate })));
 
   const minutes = (e: PreviewEntry, date: string) => {
     if (e.type === 'recovery') return undefined;
@@ -184,6 +188,12 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
                   )}
                 </div>
               )}
+
+              {legNotes.map((n) => (
+                <p key={n.line} className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                  {n.line} {n.explain}
+                </p>
+              ))}
 
               {extraLines && extraLines.length > 0 && (
                 <div className="mt-3 flex flex-col gap-1.5 rounded-xl border px-3.5 py-3" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>

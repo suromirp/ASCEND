@@ -5,6 +5,7 @@ import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton } from './ui';
 import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
+import { useLegMoveNotes } from './useLegMoveNote';
 
 export function RescheduleDialog({
   proposal,
@@ -16,6 +17,8 @@ export function RescheduleDialog({
   onCancel: () => void;
 }) {
   const { closing, requestClose } = useSheetClose(onCancel);
+  // Stil, zonder knop: hoe vermoeid je benen op de nieuwe dag ongeveer zijn.
+  const legNotes = useLegMoveNotes(proposal.changes.filter((c) => !c.restore && c.toDate !== c.fromDate).map((c) => ({ sessionId: c.sessionId, toDate: c.toDate })));
 
   return (
     <Portal>
@@ -42,6 +45,11 @@ export function RescheduleDialog({
                 </div>
               ))}
             </div>
+            {legNotes.map((n) => (
+              <p key={n.line} className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
+                {n.line} {n.explain}
+              </p>
+            ))}
             <p
               className="mt-4 text-xs leading-relaxed"
               style={{ color: proposal.resolved ? 'var(--color-ink-dim)' : 'var(--color-warning)' }}

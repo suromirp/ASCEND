@@ -812,6 +812,22 @@ describe('rowSummary: Hoe voelt je lijf?', () => {
   });
 });
 
+describe('rowSummary: Lichter bij vermoeide benen', () => {
+  it('zegt de stand en valt terug op het advies', () => {
+    expect(rowSummary('lichterbenen', facts()).value).toBe('Voorstel');
+    expect(rowSummary('lichterbenen', facts({ settings: { ...facts().settings, legEase: 'regel' } })).value).toBe('Regel');
+    expect(rowSummary('lichterbenen', facts({ settings: { ...facts().settings, legEase: 'uit' } })).value).toBe('Uit');
+    expect(rowSummary('lichterbenen', facts({ settings: { ...facts().settings, legEase: 'rommel' } as never })).value).toBe('Voorstel');
+  });
+
+  it('Hoe licht: standaard, alleen gewicht of extra licht', () => {
+    expect(rowSummary('lichterbenen-hoe', facts()).value).toBe('Standaard');
+    expect(rowSummary('lichterbenen-hoe', facts({ settings: { ...facts().settings, legEaseHow: 'alleen-gewicht' } })).value).toBe('Alleen gewicht');
+    expect(rowSummary('lichterbenen-hoe', facts({ settings: { ...facts().settings, legEaseHow: 'extra' } })).value).toBe('Extra licht');
+    expect(rowSummary('lichterbenen-hoe', facts({ settings: { ...facts().settings, legEaseHow: 5 } as never })).value).toBe('Standaard');
+  });
+});
+
 describe('rowSummary: aangepaste instellingen', () => {
   it('telt wat anders staat dan het advies, en is er niet als alles op het advies staat', () => {
     const f = facts();

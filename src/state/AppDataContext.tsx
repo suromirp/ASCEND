@@ -66,6 +66,7 @@ import { applyHorizonPlanNow, computeHorizonPlan, type HorizonApplyResult, type 
 import { SHOW_SPLASH } from '../utils/updateFlag';
 import { resolveMotion, splashMinimumMs } from '../engine/motionSettings';
 import { computeAdvice, type Advice } from '../engine/adviceEngine';
+import { resolveLegEase } from '../engine/legEaseSettings';
 import { influenceMove, influenceMoveCause, type InfluenceMove } from '../engine/influenceProposal';
 import { useWeatherForecast, type WeatherView } from './useWeather';
 import { useFollowLocation } from './useFollowLocation';
@@ -2419,6 +2420,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         asOf: todayISO(),
         illnessEpisodes: settings.illnessEpisodes,
         checkIns: settings.morningCheckIns,
+        legEase: resolveLegEase({ legEase: settings.legEase }),
         testJudgments: settings.testJudgments,
         askDoubtTest: settings.askDoubtTest !== false,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
@@ -2428,7 +2430,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.testJudgments, settings.askDoubtTest, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   // The proposal to move a test after what you noted about the evening before. Its own memo

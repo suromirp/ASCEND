@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../data/exercises';
 import {
   mergeDraft,
+  resumeDraft,
   activeRow,
   applyReps,
   applyWeight,
@@ -328,6 +329,27 @@ describe('een training van voor een naamswijziging', () => {
   });
   it('een afgevinkte oefening die niet meer in de training staat blijft achteraan', () => {
     expect(mergeDraft([...old, ex('ex99', [row('x', { done: true })], { name: 'Oud' })], fresh).map((e) => e.name)).toContain('Oud');
+  });
+});
+
+describe('een concept en de keuze Lichter', () => {
+  const draft = (done: boolean) => [ex('a', [row('d1', { weightKg: 80, reps: 8, done })], { name: 'Squat' })];
+  const lighter = [ex('a', [row('n1', { weightKg: 70 })], { name: 'Squat' })];
+  const normal = [ex('a', [row('n2', { weightKg: 80 })], { name: 'Squat' })];
+  it('Lichter gekozen na het concept: opnieuw gepland zolang er niets is afgevinkt', () => {
+    expect(resumeDraft(draft(false), false, true, lighter)).toBe(lighter);
+    expect(resumeDraft(draft(false), undefined, true, lighter)).toBe(lighter);
+  });
+  it('Terugzetten na het concept: opnieuw gepland zonder Lichter', () => {
+    expect(resumeDraft(draft(false), true, false, normal)).toBe(normal);
+  });
+  it('een afgevinkte set blijft altijd staan', () => {
+    expect(resumeDraft(draft(true), false, true, lighter)[0].rows[0].id).toBe('d1');
+    expect(resumeDraft(draft(true), true, false, normal)[0].rows[0].done).toBe(true);
+  });
+  it('gelijke keuze: het concept blijft zoals het is', () => {
+    expect(resumeDraft(draft(false), true, true, lighter)[0].rows[0].id).toBe('d1');
+    expect(resumeDraft(draft(false), undefined, false, normal)[0].rows[0].id).toBe('d1');
   });
 });
 

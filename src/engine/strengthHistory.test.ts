@@ -4,7 +4,9 @@ import type { SessionLog } from '../models/training';
 import { demoStrengthLogs, demoWeights } from './fixtures/strengthLogs';
 import { legFatigueOn, fatigueEvents } from './legFatigue';
 import { exerciseById } from '../data/exercises';
-import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, type ExerciseHistory } from './strengthHistory';
+import { accuracy, comparisonRows, exerciseHistories, exerciseViews, legsTiredAt, missingData, quietCheck, type ExerciseHistory } from './strengthHistory';
+import { easedLogIds } from './legDayEase';
+import { addDays } from '../utils/dates';
 import { resolveStrengthSettings } from './strengthSettings';
 
 const { templates, program } = buildDefaultProgramData();
@@ -186,5 +188,109 @@ describe('wat er aan de sets ontbreekt', () => {
   });
   it('niets als de sets compleet zijn, en opwarmsets tellen niet', () => {
     expect(missingData(history('assisted-pull-up', [{ reps: 10, weightKg: -45, kind: 'warmup' }, { reps: 6, weightKg: -14, rir: 1 }]))).toBeUndefined();
+  });
+});
+
+describe('spierpijn maakt de benen moe', () => {
+  const note = { id: 'n1', date: '2026-09-17', bodyPart: 'Quadriceps links', severity: 'licht' as const, kind: 'spierpijn' as const };
+  const sore = { injuries: [note], checkIns: [] };
+
+  it('een melding van spierpijn op een beenplek: moe van spierpijn', () => {
+    expect(legsTiredAt('2026-09-17', undefined, { ...deps, logs: [], sore })?.because).toBe('spierpijn');
+    expect(legsTiredAt('2026-09-17', undefined, { ...deps, logs: [] })).toBeUndefined();
+  });
+
+  it('Spierpijn in de ochtendcheck telt hetzelfde', () => {
+    expect(legsTiredAt('2026-09-17', undefined, { ...deps, logs: [], sore: { injuries: [], checkIns: [{ date: '2026-09-17', legs: 'spierpijn' }] } })?.because).toBe('spierpijn');
+  });
+
+  it('spierpijn op een schouder maakt de benen niet moe', () => {
+    expect(legsTiredAt('2026-09-17', undefined, { ...deps, logs: [], sore: { injuries: [{ ...note, bodyPart: 'Schouder links' }], checkIns: [] } })).toBeUndefined();
+  });
+
+  it('een training op een dag met spierpijn krijgt legsTired in de geschiedenis', () => {
+    // Alleen oefeningen die de benen belasten: de eerste squat.
+    const date = exerciseHistories(strengthLogs, templates, deps).find((h) => h.key === 'back-squat')!.sessions[0].date;
+    const withSore = exerciseHistories(strengthLogs, templates, { ...deps, sore: { injuries: [{ ...note, date: addDays(date, -1) }], checkIns: [] } });
+    const without = exerciseHistories(strengthLogs, templates, deps);
+    const first = (h: ExerciseHistory[]) => h.find((x) => x.key === 'back-squat')!.sessions.find((x) => x.date === date)!;
+    expect(first(withSore).legsTired).toBe(true);
+    expect(first(withSore).tired?.because).toBe('spierpijn');
+    expect(first(without).legsTired).toBe(false);
+  });
+});
+
+describe('spierpijn van dezelfde dag bij een training die al gelogd is', () => {
+  const note = { id: 'n1', date: '2026-09-17', bodyPart: 'Quadriceps links', severity: 'licht' as const, kind: 'spierpijn' as const };
+  const day = exerciseHistories(strengthLogs, templates, deps).find((h) => h.key === 'back-squat')!.sessions[0].date;
+  const squat = (sore: { injuries: (typeof note)[]; checkIns: { date: string; legs: 'spierpijn' }[] }) =>
+    exerciseHistories(strengthLogs, templates, { ...deps, sore }).find((h) => h.key === 'back-squat')!.sessions.find((x) => x.date === day)!;
+
+  it('een melding van die dag zelf telt niet: ze kan van na de training zijn', () => {
+    expect(squat({ injuries: [{ ...note, date: day }], checkIns: [] }).legsTired).toBe(false);
+  });
+
+  it('de ochtendcheck van die dag en een melding van gisteren tellen wel', () => {
+    expect(squat({ injuries: [], checkIns: [{ date: day, legs: 'spierpijn' }] }).legsTired).toBe(true);
+    expect(squat({ injuries: [{ ...note, date: addDays(day, -1) }], checkIns: [] }).legsTired).toBe(true);
+  });
+
+  it('zonder tijdstip van de training (nu) telt een melding van vandaag wel', () => {
+    expect(legsTiredAt(day, undefined, { ...deps, logs: [], sore: { injuries: [{ ...note, date: day }], checkIns: [] } })?.because).toBe('spierpijn');
+  });
+});
+
+describe('een bewust lichtere training en raak', () => {
+  const histories = exerciseHistories(strengthLogs, templates, deps);
+  const all = comparisonRows(histories, settings, BODY, templates);
+  const legKeys = new Set(histories.filter((h) => h.exercise?.loadsLegs).map((h) => h.key));
+  const withCheck = all.find((r) => r.check && legKeys.has(r.exerciseKey))!;
+
+  it('een training waar je Lichter koos heeft geen raak en telt niet mee voor de eerlijke zin', () => {
+    const rows = comparisonRows(histories, settings, BODY, templates, new Set([withCheck.logId]));
+    const same = rows.filter((r) => r.logId === withCheck.logId);
+    expect(same.length).toBeGreaterThan(0);
+    for (const r of same) {
+      expect(r.eased).toBe(true);
+      expect(r.check).toBeUndefined();
+      expect(r.reason).toContain('Bewust lichter gedaan');
+    }
+    expect(accuracy(rows).total).toBe(accuracy(all).total - same.length);
+    // De rest blijft zoals het was.
+    expect(rows.filter((r) => r.logId !== withCheck.logId)).toEqual(all.filter((r) => r.logId !== withCheck.logId));
+  });
+
+  it('quietCheck telt de rijen van die training niet', () => {
+    const easedId = withCheck.logId;
+    const total = (s: ReturnType<typeof quietCheck>) => s.all.macrofactor.did.total + s.all.forge.ascend.total + s.all.forge.other.did.total;
+    const before = quietCheck(logs, templates, deps, settings);
+    const after = quietCheck(logs, templates, deps, settings, new Set([easedId]));
+    expect(total(after)).toBeLessThan(total(before));
+  });
+
+  it('alleen rijen van oefeningen die de benen belasten tellen als lichter gedaan', () => {
+    const legRows = new Set(histories.filter((h) => h.exercise?.loadsLegs).map((h) => h.key));
+    const everyLog = new Set(strengthLogs.map((l) => l.id));
+    const rows = comparisonRows(histories, settings, BODY, templates, everyLog);
+    expect(rows.some((r) => r.eased)).toBe(true);
+    for (const r of rows) {
+      const isLeg = legRows.has(r.exerciseKey);
+      expect(!!r.eased).toBe(isLeg);
+      if (!isLeg) expect(all.find((a) => a.logId === r.logId && a.exerciseKey === r.exerciseKey)).toEqual(r);
+    }
+  });
+
+  it('easedLogIds laat een dag ruimte voor de datum', () => {
+    const log = strengthLogs[0];
+    const choice = { date: addDays(log.completedDate, -1), plannedSessionId: 'p1', choice: 'lichter' as const, reasons: ['spierpijn' as const], index: 9, at: '2026-10-22T07:00:00.000Z' };
+    expect(easedLogIds([{ ...log, plannedSessionId: 'p1' }], [choice]).has(log.id)).toBe(true);
+    expect(easedLogIds([{ ...log, plannedSessionId: 'p1' }], [{ ...choice, date: addDays(log.completedDate, -3) }]).size).toBe(0);
+  });
+
+  it('easedLogIds kent het log van een training met een gekozen Lichter', () => {
+    const log = strengthLogs[0];
+    const choice = { date: log.completedDate, plannedSessionId: 'p1', choice: 'lichter' as const, reasons: ['spierpijn' as const], index: 9, at: '2026-10-22T07:00:00.000Z' };
+    expect(easedLogIds([{ ...log, plannedSessionId: 'p1' }], [choice]).has(log.id)).toBe(true);
+    expect(easedLogIds([log], [choice]).size).toBe(0);
   });
 });

@@ -56,10 +56,11 @@ import { cleanClothingAdjust } from '../engine/clothingFeedback';
 import { cleanRunInsight } from '../engine/runInsightSettings';
 import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
+import { MAX_LEG_EASE_DAYS } from '../models/legEase';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLegEaseDays, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
@@ -266,6 +267,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     if (nights.list === undefined) delete s.nightJudgments;
     else s.nightJudgments = nights.list;
     skipped.n += nights.skipped;
+  }
+  // What you chose on days with tired legs: record by record, a damaged one is dropped and counted
+  // (storage/migrations.ts#migrateLegEaseDays).
+  if ('legEaseDays' in s) {
+    const eased = migrateLegEaseDays(s.legEaseDays);
+    if (eased.list === undefined) delete s.legEaseDays;
+    else s.legEaseDays = eased.list;
+    skipped.n += eased.skipped;
   }
   // Your verdicts on test runs: record by record, a damaged one is dropped and counted, an
   // older file has none and leaves the verdicts on the device alone
@@ -803,6 +812,12 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
     const byDate = new Map((incoming.nightJudgments ?? []).map((j) => [j.date, j]));
     for (const j of current.nightJudgments ?? []) byDate.set(j.date, j);
     merged.nightJudgments = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-MAX_JUDGMENTS);
+  }
+  // What you chose on days with tired legs: the union per date and training, the device's own wins.
+  if (incoming.legEaseDays || current.legEaseDays) {
+    const byKey = new Map((incoming.legEaseDays ?? []).map((d) => [`${d.date}|${d.plannedSessionId}`, d]));
+    for (const d of current.legEaseDays ?? []) byKey.set(`${d.date}|${d.plannedSessionId}`, d);
+    merged.legEaseDays = [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date) || a.at.localeCompare(b.at)).slice(-MAX_LEG_EASE_DAYS);
   }
   // Verdicts on test runs: the union per log, the device's own wins.
   if (incoming.testJudgments || current.testJudgments) {

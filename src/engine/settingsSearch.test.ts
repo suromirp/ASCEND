@@ -75,6 +75,10 @@ describe('searchSettings', () => {
     for (const q of ['lijf', 'spierpijn', 'stijf', 'klachten']) expect(ids(q), q).toContain('lijfvraag');
   });
 
+  it('Lichter bij vermoeide benen is te vinden op spierpijn, benen en beendag', () => {
+    for (const q of ['spierpijn', 'beendag', 'lichter', 'beenindex']) expect(ids(q), q).toContain('lichterbenen');
+  });
+
   it('zet gelijke scores in de volgorde van de index', () => {
     const items: SearchableSetting[] = [
       { id: 'b', title: 'Beta', note: 'x', group: 'planning', keywords: ['zoek'] },

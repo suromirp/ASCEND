@@ -20,7 +20,7 @@ import {
   applyReps,
   applyWeight,
   carryChange,
-  mergeDraft,
+  resumeDraft,
   copyRow,
   dockFieldKey,
   exerciseComplete,
@@ -94,6 +94,9 @@ import { Portal } from '../Portal';
 import { TrainingGuideSheet } from '../TrainingGuideSheet';
 import { TextButton } from '../TextButton';
 import { PrimaryButton, SecondaryButton } from '../ui';
+import { useGuardedSave, useLegEase } from '../useLegEase';
+import { decisionFor, easeBecause, easeFactShort, easeForgeExplain, easeSlots, easeSummary, EASE_STARTED_KEPT_LINE, EASE_STARTED_LINE } from '../../engine/legDayEase';
+import { resolveLegEaseHow } from '../../engine/legEaseSettings';
 import { adjustText, applyLighter, noFitText as noFitLine, stillHeavyTip, stillOpen, suggestLighter, suggestOwnWeights, suggestTooBigStep, tooBigStepTip, type Adjustment, type NoFit } from '../../engine/forgeAdjust';
 import { hasStack, ownWeightsFor } from '../../engine/machineWeights';
 import { MachineWeightsForgeSheet } from './MachineWeights';
@@ -120,6 +123,8 @@ interface WorkoutDraft {
   exercises: WorkoutExercise[];
   rest?: Rest;
   column: 'target' | 'previous';
+  // Of de rijen met Lichter gepland zijn; een concept van voor deze keuze heeft het niet.
+  eased?: boolean;
 }
 
 const clock = () => Date.now();
@@ -148,7 +153,7 @@ export function ForgeWorkout({
   preview?: boolean;
   onClose: () => void;
 }) {
-  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs } = useAppData();
+  const { logSession, settings, updateSettings, strengthExternal, templates, sessionLogs, injuryNotes } = useAppData();
   const today = todayISO();
   const date = scheduledDate ?? today;
   // Met MacroFactor als bron en bij alleen kijken is dit het voorschrift zonder invulvelden.
@@ -175,8 +180,25 @@ export function ForgeWorkout({
   });
 
   // De planning van de rijen, één keer: de geschiedenis per oefening uit de logs.
-  const [ctx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled }));
-  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? mergeDraft(restored.exercises, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
+  const [baseCtx] = useState<PlanContext>(() => ({ logs: sessionLogs, templates, program, bodyKg, settings: strength, date, modelOn: strength.enabled, sore: { injuries: injuryNotes, checkIns: settings.morningCheckIns ?? [] } }));
+  // Lichter bij vermoeide benen (engine/legDayEase.ts): heb je het voor deze training gekozen, dan zijn de
+  // voorschriften van de beenoefeningen lichter. De training zelf verandert nooit; dit is alleen dit scherm.
+  const legEase = useLegEase(preview ? null : (plannedSessionId ?? null));
+  const easeHow = resolveLegEaseHow(settings);
+  const decision = !preview && plannedSessionId ? decisionFor(settings.legEaseDays, date, plannedSessionId) : undefined;
+  // Met de instelling op Uit maakt een eerder gekozen Lichter de rijen niet stil lichter.
+  // Een begonnen training houdt de keuze waarmee hij begon: een later Lichter of Terugzetten op Vandaag
+  // verandert afgevinkte rijen niet, dus het paneel volgt dan het concept.
+  const [easeOn, setEaseOn] = useState(() => {
+    if (legEase.mode === 'uit') return false;
+    if (restored && restored.exercises.some((e) => e.rows.some((r) => r.done))) return restored.eased ?? false;
+    return decision?.choice === 'lichter';
+  });
+  const [easeReasons] = useState(() => decision?.reasons ?? []);
+  const ease = useMemo(() => (easeOn ? { how: easeHow, because: easeBecause(legEase.state?.signals.reasons ?? easeReasons) } : undefined), [easeOn, easeHow, legEase.state, easeReasons]);
+  const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);
+  const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
+  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
   // De klok loopt vanaf je eerste afgevinkte set; een training die je opende maar nog niet begon, start opnieuw.
   const [startedAt] = useState(() => (restored && restored.exercises.some((e) => e.rows.some((r) => r.done)) ? restored.startedAt : Date.now()));
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
@@ -266,9 +288,9 @@ export function ForgeWorkout({
   }, [key]);
   useEffect(() => {
     if (readOnly) return;
-    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, ...(rest ? { rest } : {}), column };
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
-  }, [readOnly, startedAt, workout, rest, column, flushDraft]);
+  }, [readOnly, startedAt, workout, easeOn, rest, column, flushDraft]);
   useEffect(() => {
     window.addEventListener('pagehide', flushDraft);
     document.addEventListener('visibilitychange', flushDraft);
@@ -312,7 +334,65 @@ export function ForgeWorkout({
   }, [dock, workout, strength.profile]);
 
   const legDay = isLegHeavyTemplate(template);
-  const legLine = useMemo(() => (legDay ? legDayLine(date, { logs: sessionLogs, templates, program, bodyKg }) : undefined), [legDay, date, sessionLogs, templates, program, bodyKg]);
+  const checkIns = settings.morningCheckIns;
+  const legLine = useMemo(() => (legDay ? legDayLine(date, { logs: sessionLogs, templates, program, bodyKg, sore: { injuries: injuryNotes, checkIns: checkIns ?? [] }, excludeId: plannedSessionId }) : undefined), [legDay, date, sessionLogs, templates, program, bodyKg, injuryNotes, checkIns, plannedSessionId]);
+  const { busy: easeBusy, failed: easeFailed, retry: easeRetry, run: easeRun } = useGuardedSave();
+  // Zodra je iets afvinkte, blijft de training zoals hij is: afgevinkte rijen blijven altijd staan.
+  const started = workout.some((e) => e.rows.some((r) => r.done));
+
+  // Opnieuw rekenen met of zonder Lichter. Alleen zolang er niets is afgevinkt.
+  function replan(on: boolean) {
+    const because = easeBecause(legEase.state?.signals.reasons ?? easeReasons);
+    const next = planWorkout(slots, { ...baseCtx, ...(on ? { ease: { how: easeHow, because } } : {}) });
+    setEaseOn(on);
+    setWorkout(next);
+    setLighter({});
+    setNoFit({});
+    setHeavyTip({});
+    setActiveRef(activeRow(next));
+    setFolded({});
+  }
+  const easeState = readOnly ? undefined : legEase.state;
+  const legPanel = easeState && (easeState.offer.state === 'offer' || easeState.offer.state === 'eased') ? (
+    <div className="flex flex-col gap-1">
+      {easeState.offer.state === 'eased' && !easeOn ? (
+        // Lichter gekozen op Vandaag nadat je hier al begon: de rijen bleven zoals ze waren, dus dat zeggen we.
+        <>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>{EASE_STARTED_KEPT_LINE}</p>
+          <div className="flex"><TextButton tone="dim" size="xs" disabled={easeBusy} onClick={() => easeRun(() => legEase.choose('liever-niet'))}>Begrepen</TextButton></div>
+        </>
+      ) : easeState.offer.state === 'eased' ? (
+        <>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>{easeSummary(easeSlots(slots, easeHow))}</p>
+          {!started && <div className="flex"><TextButton tone="dim" size="xs" disabled={easeBusy} onClick={() => easeRun(legEase.undo, () => replan(false))}>Terugzetten</TextButton></div>}
+        </>
+      ) : started ? (
+        <>
+          {legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>}
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>{EASE_STARTED_LINE}</p>
+          <div className="flex"><TextButton tone="dim" size="xs" disabled={easeBusy} onClick={() => easeRun(() => legEase.choose('liever-niet'))}>Begrepen</TextButton></div>
+        </>
+      ) : (
+        <>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>{easeFactShort(easeState.signals)}</p>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink)' }}>De hele training lichter?</p>
+          <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{easeForgeExplain(easeHow, strength.enabled)}</p>
+          <div className="flex flex-wrap items-center gap-x-3">
+            <div className="flex w-28 shrink-0">
+              <SecondaryButton disabled={easeBusy} onClick={() => easeRun(() => legEase.choose('lichter'), () => replan(true))}>Lichter</SecondaryButton>
+            </div>
+            <TextButton tone="dim" disabled={easeBusy} onClick={() => easeRun(() => legEase.choose('liever-niet'))}>Liever niet</TextButton>
+          </div>
+        </>
+      )}
+      {easeFailed && (
+        <p className="flex flex-wrap items-center gap-x-3 text-xs leading-snug" role="status" style={{ color: 'var(--color-warning)' }}>
+          {easeFailed}
+          {easeRetry && <TextButton size="xs" onClick={easeRetry}>Opnieuw</TextButton>}
+        </p>
+      )}
+    </div>
+  ) : null;
   const { done, total } = progress(workout);
   const guide = getTrainingGuide(template.id);
 
@@ -510,7 +590,7 @@ export function ForgeWorkout({
   );
 
   function swap(slot: string, exerciseId: string | null) {
-    const prescription = slots.find((s) => s.id === slot);
+    const prescription = effSlots.find((s) => s.id === slot);
     if (!prescription) return;
     const state = planStateBefore(ctx, workout, slot);
     const to = exerciseId ? exerciseById(exerciseId) : undefined;
@@ -572,7 +652,7 @@ export function ForgeWorkout({
               {preview ? (
                 <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo staat hij klaar. Afvinken kan op de dag zelf.</p>
               ) : readOnly && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je houdt kracht bij in MacroFactor. Dit is het voorschrift om mee te kijken; afvinken doe je hier als je klaar bent.</p>}
-              {legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>}
+              {legPanel ?? (legLine && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{legLine}</p>)}
             </div>
           )}
 

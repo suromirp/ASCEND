@@ -353,6 +353,30 @@ export const CHOICES = {
       { value: 'uit', label: 'Uit', note: 'Geen kaart. Klachten melden kan altijd op Lichaam', short: 'Uit' },
     ],
   }),
+  lichterbenen: def({
+    group: 'Vandaag en meldingen',
+    title: 'Lichter bij vermoeide benen',
+    line: 'Na spierpijn of een zware loop een lichtere beendag of een dag later.',
+    advice: 'voorstel' as 'voorstel' | 'regel' | 'uit',
+    help: 'lichterbenen',
+    options: [
+      { value: 'voorstel', label: 'Met een voorstel', note: 'Een kaart met Lichter, een dag later en Liever niet', short: 'Voorstel' },
+      { value: 'regel', label: 'Alleen een regel', note: 'Wat ASCEND ziet, zonder dat er iets te kiezen is', short: 'Regel' },
+      { value: 'uit', label: 'Uit', note: 'Niets, ook niet bij het verplaatsen van een beendag', short: 'Uit' },
+    ],
+  }),
+  lichterbenenHoe: def({
+    group: 'Vandaag en meldingen',
+    title: 'Hoe licht',
+    line: 'Wat Lichter doet met een beendag.',
+    advice: 'standaard' as 'standaard' | 'alleen-gewicht' | 'extra',
+    help: 'lichterbenenHoe',
+    options: [
+      { value: 'standaard', label: 'Standaard', note: 'Zeker 3 herhalingen over en een set minder per oefening', short: 'Standaard' },
+      { value: 'alleen-gewicht', label: 'Alleen gewicht', note: 'Zeker 3 herhalingen over, alle sets blijven staan', short: 'Alleen gewicht' },
+      { value: 'extra', label: 'Extra licht', note: 'Zeker 4 herhalingen over en een set minder', short: 'Extra licht' },
+    ],
+  }),
   lucht: def({
     group: 'Vandaag en meldingen',
     title: 'Lucht bovenaan',

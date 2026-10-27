@@ -13,6 +13,7 @@ import { addDays, daysBetween, formatDateNL } from '../utils/dates';
 import { cleanExerciseName, matchExercise, normalizeExerciseName } from './exerciseMatch';
 import { FATIGUE_THRESHOLDS, fatigueEvents, legFatigueOn, type FatigueEvent, type LegFatigueInputs } from './legFatigue';
 import { logSport } from './sports';
+import { soreFromNotes, type SoreSource } from './legSoreness';
 import { checkDone, checkProposal, checkRow, isNear, logOrigin, summariseChecks, targetIndexOf, targetOfSlot, type CheckOrigin, type CheckSummary, type RepTarget, type RowCheck } from './prescriptionCheck';
 import {
   analyseSessions,
@@ -74,6 +75,8 @@ export interface LegsDeps {
   program?: Program | null;
   bodyKg?: number;
   events?: FatigueEvent[];
+  // Spierpijn die je meldde (ochtendcheck of Hoe voelt je lijf?): ook dat maakt je benen moe.
+  sore?: SoreSource;
 }
 
 // Are the legs tired on this day, from what happened in the 48 hours before
@@ -89,6 +92,9 @@ export function legsTiredAt(date: string, before: string | undefined, deps: Legs
     const label = hardLegLabel(log);
     if (label) return { because: `${label} ${dayWord(ago)}` };
   }
+  // Spierpijn in de benen die dag (van een training die al gelogd is: een melding van die dag zelf telt niet,
+  // want ze heeft geen tijdstip en kan van na de training zijn): de benen zijn moe, het gewicht blijft gelijk en een herhaling minder is normaal.
+  if (deps.sore && soreFromNotes(deps.sore.injuries, deps.sore.checkIns, date, !before)) return { because: 'spierpijn' };
   const inputs: LegFatigueInputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program };
   const events = deps.events ?? fatigueEvents(inputs);
   const result = legFatigueOn(date, inputs, events);
@@ -236,6 +242,9 @@ export interface ComparisonRow {
   // "Raak" for this exercise of this training; absent without reps in reserve
   // or without a known origin (engine/prescriptionCheck.ts).
   check?: RowCheck;
+  // You chose "Lichter" for this training (engine/legDayEase.ts): a deliberately lighter training is not a
+  // miss of the proposal and not a miss of you, so it has no check and does not count in the accuracy.
+  eased?: boolean;
 }
 
 // The slot of the template of this training for this exercise.
@@ -244,7 +253,7 @@ function slotFor(templates: SessionTemplate[] | undefined, templateId: string | 
   return template?.exercises?.find((e) => exerciseKey(e.id, e.exerciseName).key === key);
 }
 
-export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined, templates?: SessionTemplate[]): ComparisonRow[] {
+export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedStrengthSettings, bodyKg: number | undefined, templates?: SessionTemplate[], eased?: ReadonlySet<string>): ComparisonRow[] {
   const rows: ComparisonRow[] = [];
   const strengthDates = histories.flatMap((x) => x.sessions.map((s) => s.date));
   for (const h of histories) {
@@ -272,8 +281,10 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
       const actualSet = { weightKg: doneKg, repsLow: done.reps, repsHigh: done.reps, rir: done.rir ?? 0 };
       const actual = done.rir === undefined ? describeActual(h.exercise, doneKg, done.reps) : describePlannedSet(h.exercise, actualSet);
       const withinOneStep = Math.abs(doneKg - proposed.weightKg) <= rx.stepKg + 1e-6;
+      // Alleen een oefening die de benen belast is lichter gedaan; bovenlichaam en romp bleven zoals voorgeschreven.
+      const easedLog = !!eased?.has(s.logId) && !!h.exercise?.loadsLegs;
       let check: RowCheck | undefined;
-      if (s.origin && measuredSet && done.rir !== undefined) {
+      if (!easedLog && s.origin && measuredSet && done.rir !== undefined) {
         const target: RepTarget = { low: rx.range.low, high: rx.range.high, rir: rx.range.rir };
         // The strength of the day: the best work set (a pyramid or a top set with
         // back-offs: the heaviest effort, not one lucky or tired set between).
@@ -300,9 +311,10 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
         actualKg: doneKg,
         actual,
         withinOneStep,
-        reason: rx.reason,
+        reason: easedLog ? 'Bewust lichter gedaan. Dit telt niet mee voor raak.' : rx.reason,
         kind: rx.kind,
         ...(check ? { check } : {}),
+        ...(easedLog ? { eased: true } : {}),
       });
     }
   }
@@ -319,9 +331,9 @@ export function checkSummary(rows: ComparisonRow[], from: string): CheckSummary 
 }
 
 // Raak for the settings and the block on Forge, from the stored logs. Pure.
-export function quietCheck(logs: SessionLog[], templates: SessionTemplate[], deps: LegsDeps, settings: ResolvedStrengthSettings): CheckSummary {
+export function quietCheck(logs: SessionLog[], templates: SessionTemplate[], deps: LegsDeps, settings: ResolvedStrengthSettings, eased?: ReadonlySet<string>): CheckSummary {
   const strengthLogs = logs.filter((l) => l.strengthData && l.strengthData.length > 0);
-  const rows = comparisonRows(exerciseHistories(strengthLogs, templates, deps), settings, deps.bodyKg, templates);
+  const rows = comparisonRows(exerciseHistories(strengthLogs, templates, deps), settings, deps.bodyKg, templates, eased);
   return checkSummary(rows, settings.checkFrom);
 }
 
@@ -334,7 +346,8 @@ export interface Accuracy {
 // The one honest sentence above the comparison.
 export const MIN_COMPARISONS = 5;
 
-export function accuracy(rows: ComparisonRow[]): Accuracy {
+export function accuracy(all: ComparisonRow[]): Accuracy {
+  const rows = all.filter((r) => !r.eased);
   const total = rows.length;
   const within = rows.filter((r) => r.withinOneStep).length;
   if (total === 0) return { total, within, sentence: 'Er is nog geen training waarvoor ASCEND vooraf iets had kunnen voorstellen. Daarvoor zijn minstens twee trainingen van dezelfde oefening nodig, met herhalingen in reserve.' };

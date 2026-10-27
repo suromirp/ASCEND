@@ -54,6 +54,25 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'geen kaart. Op Lichaam meld je altijd zelf wat je voelt. Pijn in je benen blijft een hint geven bij zware beentrainingen.' },
     ],
   },
+  lichterbenen: {
+    title: 'Lichter bij vermoeide benen',
+    lead: 'Na spierpijn of een zware loop stelt ASCEND een lichtere beendag of een dag later voor. Je kiest zelf, en je planning verandert nooit zonder jouw akkoord. De kaart komt ook voor een harde loop van vandaag, daar alleen met een dag later.',
+    points: [
+      { head: 'Met een voorstel', text: 'op een dag met een zware beendag, en spierpijn, een harde loop eerder die dag of een hoge beenindex, komt er een kaart op Vandaag. Lichter, een dag later of Liever niet.' },
+      { head: 'Wat Lichter is', text: 'dezelfde training met minder gewicht, zeker 3 herhalingen over en een set minder per oefening (niet bij Alleen gewicht). Alleen oefeningen die je benen belasten. Het kan helpen om door te trainen zonder dat het te veel wordt.' },
+      { head: 'MacroFactor blijft leidend', text: 'het schrijft de training voor. ASCEND slaat niets terug en zegt wat je er zelf kunt kiezen.' },
+      { head: 'Alleen een regel of uit', text: 'de regel zegt wat ASCEND ziet, zonder knoppen. Uit zet ook de stille regel bij het verplaatsen van een beendag uit.' },
+    ],
+  },
+  lichterbenenHoe: {
+    title: 'Hoe licht',
+    lead: 'Wat Lichter doet met een beendag. Het advies is zeker 3 herhalingen over en een set minder per oefening (niet bij Alleen gewicht).',
+    points: [
+      { head: 'Standaard', text: 'zeker 3 herhalingen over en van elke oefening met drie sets of meer vervalt de laatste.' },
+      { head: 'Alleen gewicht', text: 'zeker 3 herhalingen over, alle sets blijven staan.' },
+      { head: 'Extra licht', text: 'zeker 4 herhalingen over en een set minder.' },
+    ],
+  },
   beweging: {
     title: 'Beweging',
     lead: 'Hoeveel de app beweegt: een zachte indruk bij een tik, ringen die vollopen, getallen die optellen.',

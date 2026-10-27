@@ -4,6 +4,7 @@ import { CHOICES } from '../../../data/settingsChoices';
 import { resolveOverviews, type OverviewSettings } from '../../../engine/overviewSettings';
 import { resolveNavigation } from '../../../engine/navigationSettings';
 import { resolveBodyCheck } from '../../../engine/bodyCheckSettings';
+import { resolveLegEase, resolveLegEaseHow } from '../../../engine/legEaseSettings';
 import { resolveMotion } from '../../../engine/motionSettings';
 import { resolveSky } from '../../../engine/skySettings';
 import { type InsightTopicSwitch, type RunInsightSettings } from '../../../engine/runInsightSettings';
@@ -65,6 +66,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
     <>
       <SettingsSection title="Op Vandaag">
         <SummaryRow id="kaarten" title="Kaarten op Vandaag" facts={facts} info="kaarten" onClick={() => setSheet('kaarten')} />
+        <SummaryRow id="lichterbenen" title="Lichter bij vermoeide benen" facts={facts} info="lichterbenen" onClick={() => setSheet('lichterbenen')} />
       </SettingsSection>
 
       <SettingsSection title="Meldingen">
@@ -163,6 +165,24 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
           }
         />
       )}
+      {sheet === 'lichterbenen' && (
+        <ChoiceFromDef
+          def={CHOICES.lichterbenen}
+          value={resolveLegEase(settings)}
+          onPick={(v) => void updateSettings({ legEase: v })}
+          onClose={close}
+          footer={
+            rowShown('lichterbenen-hoe', facts) ? (
+              <div style={{ marginTop: 16 }}>
+                <SettingsList>
+                  <SummaryRow id="lichterbenen-hoe" title="Hoe licht" facts={facts} info="lichterbenenHoe" onClick={() => setInner('lichterbenen-hoe')} />
+                </SettingsList>
+              </div>
+            ) : undefined
+          }
+        />
+      )}
+      {inner === 'lichterbenen-hoe' && <ChoiceFromDef def={CHOICES.lichterbenenHoe} value={resolveLegEaseHow(settings)} onPick={(v) => void updateSettings({ legEaseHow: v })} onClose={closeInner} />}
       {inner === 'lijfvraag' && <ChoiceFromDef def={CHOICES.lijfvraag} value={resolveBodyCheck(settings)} onPick={(v) => void updateSettings({ bodyCheck: v })} onClose={closeInner} />}
       {inner === 'lucht-vanaf' && <ChoiceFromDef def={CHOICES.luchtVanaf} value={sky.nightFrom} onPick={(v) => void updateSettings({ skyNightFrom: v })} onClose={closeInner} />}
       {sheet === 'beweging' && <ChoiceFromDef def={CHOICES.beweging} value={resolveMotion(settings)} onPick={(v) => void updateSettings({ motion: v })} onClose={close} />}
