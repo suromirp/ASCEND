@@ -83,7 +83,7 @@ export function CoachCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <Eyebrow>ADVIES</Eyebrow>
+        <Eyebrow>Advies</Eyebrow>
         {more > 0 && (
           <button onClick={() => setOpen(true)} className="-mr-2 min-h-[44px] px-2 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
             nog {more}
@@ -105,7 +105,7 @@ export function CoachCard() {
         <Pill primary={!plain} onClick={() => setOpen(true)}>{plain ? 'Uitleg' : 'Bekijk'}</Pill>
       </div>
       {open && (
-        <TodaySheet eyebrow={advice.length === 1 ? 'ADVIES' : `${advice.length} ADVIEZEN`} onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow={advice.length === 1 ? 'Advies' : `${advice.length} adviezen`} onClose={() => setOpen(false)}>
           <div className="flex flex-col">
             {advice.map((a, i) => (
               <div key={a.id} className={i > 0 ? 'mt-4 border-t pt-4' : ''} style={{ borderColor: 'var(--color-card-border)' }}>

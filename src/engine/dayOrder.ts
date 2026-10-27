@@ -89,13 +89,13 @@ function rule(p: Pair, tomorrowHard: boolean): DayOrderAdvice | undefined {
   // 3. Long run + something.
   if (has('langeLoop')) {
     const x = pick((r) => r === 'langeLoop');
-    if (x.or === 'benen') return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, avoid: true, headline: `Liever niet op één dag`, reason: `Moet het, doe dan eerst de ${x.t.name.toLowerCase()} en ${x.ot.name} liefst 6 uur later, en houd morgen rustig.`, why: 'Beide zijn zwaar voor je benen. Loop eerst: kracht vooraf maakt een lange loop zwaarder dan andersom.', evidence: 'matig', sources: [SRC.doma2013, SRC.ratamess] };
+    if (x.or === 'benen') return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, avoid: true, headline: `Beter niet op één dag`, reason: `Moet het, doe dan eerst de ${x.t.name.toLowerCase()} en ${x.ot.name} liefst 6 uur later, en houd morgen rustig.`, why: 'Beide zijn zwaar voor je benen. Loop eerst: kracht vooraf maakt een lange loop zwaarder dan andersom.', evidence: 'matig', sources: [SRC.doma2013, SRC.ratamess] };
     return { order: [x.s.id, x.o.id], headline: `Eerst de ${x.t.name.toLowerCase()}, dan ${x.ot.name}`, reason: 'De lange loop eerst en liefst alleen; daarna mag het op elk moment.', why: 'De lange duurloop is de training die het meest naar je doelen vertaalt; die doe je met frisse benen.', evidence: 'afgeleid', sources: [] };
   }
   // 4. Hills up and down + legs.
   if (has('heuvelsOpEnAf') && has('benen')) {
     const x = pick((r) => r === 'heuvelsOpEnAf');
-    return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, avoid: true, headline: 'Liever niet op één dag', reason: `Bergaf en zware benen geven allebei spierschade, en die stapelt. Moet het: eerst ${x.t.name.toLowerCase()}, ${x.ot.name} liefst 6 uur later.`, why: 'Excentrisch werk (bergaf, het zakken in een squat) geeft de meeste spierschade; twee keer op een dag telt op.', evidence: 'afgeleid', sources: [SRC.doma2014] };
+    return { order: [x.s.id, x.o.id], gapHours: 6, minGapHours: 3, avoid: true, headline: 'Beter niet op één dag', reason: `Bergaf en zware benen geven allebei spierschade, en die stapelt. Moet het: eerst ${x.t.name.toLowerCase()}, ${x.ot.name} liefst 6 uur later.`, why: 'Excentrisch werk (bergaf, het zakken in een squat) geeft de meeste spierschade; twee keer op een dag telt op.', evidence: 'afgeleid', sources: [SRC.doma2014] };
   }
   // 5. Hard run + legs.
   if ((isHardRun(ra) && rb === 'benen') || (isHardRun(rb) && ra === 'benen')) {

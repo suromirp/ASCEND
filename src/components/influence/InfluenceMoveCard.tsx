@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { influenceMoveSummary, morningNumber } from '../../engine/influenceProposal';
+import { influenceMoveLine, influenceMoveSummary, morningNumber } from '../../engine/influenceProposal';
 import { excludedMornings } from '../../engine/influence';
 import { useAppData } from '../../state/AppDataContext';
 import { todayISO } from '../../utils/dates';
@@ -14,7 +14,7 @@ import { useRecoveryMetrics } from '../useRecoveryMetrics';
 // niet, en na Akkoord de melding met Ongedaan maken.
 
 export function InfluenceMoveCard() {
-  const { influenceMove, settings } = useAppData();
+  const { influenceMove, settings, templates } = useAppData();
   const metrics = useRecoveryMetrics();
   const [open, setOpen] = useState(false);
   const today = todayISO();
@@ -26,7 +26,7 @@ export function InfluenceMoveCard() {
     <>
       <Card className="flex flex-col gap-3">
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-          Je test 5 km staat {cause.today ? 'vandaag' : 'morgen'}. ASCEND heeft een voorstel om hem te verschuiven.
+          {influenceMoveLine(cause, templates.find((t) => t.id === cause.session.templateId)?.name)}
         </p>
         <SecondaryButton className="w-full" onClick={() => setOpen(true)}>Voorstel bekijken</SecondaryButton>
       </Card>

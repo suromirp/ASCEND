@@ -61,7 +61,7 @@ describe('MISSED-CATCH-UP', () => {
     const advice = computeAdvice(inputs({ plannedSessions: [ps('a', 'upper', '2026-09-28'), ps('b', 'run', '2026-09-29')] }));
     const missed = advice.filter((a) => a.ruleId === 'MISSED-CATCH-UP');
     expect(missed).toHaveLength(1);
-    expect(missed[0].title).toBe('2 trainingen gemist: Upper A en Easy Run');
+    expect(missed[0].title).toBe('2 trainingen zijn blijven liggen: Upper A en Easy Run');
     expect(missed[0].proposal?.changes.map((c) => c.action)).toEqual(['remove', 'remove']);
   });
 

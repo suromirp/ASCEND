@@ -270,7 +270,7 @@ export function WeekPlanner({
             )}
             {advice && (
               <p className="flex flex-wrap items-center gap-x-1.5 px-3 pb-2 pl-[68px] text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-                <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-progress)' }}>{advice.avoid ? 'Liever niet op één dag' : advice.headline}</span>
+                <span style={{ color: advice.avoid ? 'var(--color-warning)' : 'var(--color-progress)' }}>{advice.avoid ? 'Beter niet op één dag' : advice.headline}</span>
                 {advice.gapHours && <span>· liefst {advice.gapHours} uur ertussen</span>}
               </p>
             )}

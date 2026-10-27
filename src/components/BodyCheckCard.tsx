@@ -134,7 +134,7 @@ export function BodyCheckCard() {
             ))}
           </div>
         ) : (
-          <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Niets viel deze week op. Voel je toch iets, kies dan Iets anders aanwijzen.</p>
+          <p className="min-w-0 flex-1 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Niets viel deze week op. Voel je toch iets, tik dan op Iets anders aanwijzen.</p>
         )}
       </div>
 

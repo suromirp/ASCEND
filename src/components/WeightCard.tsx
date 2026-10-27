@@ -40,7 +40,7 @@ export function WeightReminder() {
     <>
       <DayRow label="Gewicht" onClick={() => setOpen(true)}>Trendgewicht bijwerken</DayRow>
       {open && (
-        <TodaySheet eyebrow="GEWICHT BIJWERKEN" onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow="Gewicht bijwerken" onClose={() => setOpen(false)}>
           {(close) => (
             <div className="flex flex-col gap-2">
               <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>

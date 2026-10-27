@@ -252,7 +252,7 @@ export function TodayMissionCard({
       )}
 
       {showMove && (
-        <TodaySheet eyebrow="VERPLAATSEN" title={template.name} onClose={() => setShowMove(false)}>
+        <TodaySheet eyebrow="Verplaatsen" title={template.name} onClose={() => setShowMove(false)}>
           {(close) => (
             <MoveSuggestions
               sessionDate={todayISO()}

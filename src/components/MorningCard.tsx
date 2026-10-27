@@ -117,7 +117,7 @@ export function MorningCard() {
           )}
         </div>
         <div>
-          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelen je benen? Eén tik is genoeg</p>
+          <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe voelen je benen? Eén tik is genoeg.</p>
           <div className="mt-2 grid grid-cols-4 gap-1.5">
             {LEGS.map(([k, text]) => {
               const isSuggestion = suggested?.value === k;
@@ -157,7 +157,7 @@ export function MorningCard() {
 }
 
 function Title() {
-  return <h2 className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>Vanochtend</h2>;
+  return <h2 className="text-base font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>Goedemorgen</h2>;
 }
 
 // De melding "Goedemorgen. Hoe voel je je?" opent Vandaag op `#/?actie=ochtend`

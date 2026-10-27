@@ -50,11 +50,12 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
   const note = progressionTarget(template, program, date)?.step.note ?? '';
   const soreYesterday = yesterdayLogs.flatMap((l) => significantPain(l).map((r) => r.area));
   if (soreYesterday.length > 0) {
-    return `Gisteren pijn aan je ${joinNL([...new Set(soreYesterday)].map((a) => a.toLowerCase()))}. Voelt het nog niet goed, kies dan de korte versie of verplaats deze training.`;
+    return `Gisteren pijn aan je ${joinNL([...new Set(soreYesterday)].map((a) => a.toLowerCase()))}. Voelt het nog niet goed, neem dan de korte versie of verplaats de training.`;
   }
   const heavyYesterday = yesterdayLogs.find((l) => feltHeavy(l, templateById.get(l.templateId), program));
   if (heavyYesterday) {
-    return `${templateById.get(heavyYesterday.templateId)?.name ?? 'Gisteren'} voelde zwaar. Begin rustig, en kies de korte versie als het vandaag niet gaat.`;
+    const heavyName = templateById.get(heavyYesterday.templateId)?.name;
+    return `${heavyName ? `${heavyName} voelde gisteren zwaar` : 'Gisteren voelde zwaar'}. Begin rustig; gaat het vandaag niet, neem dan de korte versie.`;
   }
   if (/rustweek/i.test(note)) return 'Rustweek: korter en rustiger is precies goed. Zo komt de opbouw binnen.';
   if (/^Kort en fris|Minder volume/.test(note)) return 'Afbouwen voor de start: minder, maar wel in hetzelfde tempo. Fris aankomen is het doel.';
@@ -75,7 +76,7 @@ export function coachLineForToday({ template, date, program, tomorrow, yesterday
         : 'Zware beendag. Techniek eerst, de zwaarte volgens MacroFactor.';
   }
   if (legsTomorrow && (template.type === 'cardio' || template.type === 'hiking')) {
-    return `Rustig houden vandaag: morgen staat ${legsTomorrow.name}.`;
+    return `Houd het vandaag rustig: morgen staat ${legsTomorrow.name}.`;
   }
   if (template.type === 'strength') return 'Techniek eerst, de zwaarte volgens MacroFactor.';
   return 'Rustig en gelijkmatig. Kun je hele zinnen praten, dan zit je goed.';
@@ -127,14 +128,14 @@ export function coachReaction(log: SessionLog, template: SessionTemplate | undef
   const top = plannedRpeTop(template, log.completedDate, program);
   const planned = resolveEffectiveFullDuration(template, log.completedDate, program);
   if (log.rpe !== undefined && top !== undefined && log.rpe >= top + 2) {
-    return `Zwaarder dan gepland (zwaarte ${log.rpe}, gepland tot ${top}). Doe de volgende keer rustiger aan; voelt het weer zo, kies dan de korte versie.`;
+    return `Zwaarder dan gepland (zwaarte ${log.rpe}, gepland tot ${top}). Volgende keer iets rustiger? Voelt het weer zo, neem dan de korte versie.`;
   }
-  if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal. Let op slaap en eten, en doe het morgen rustig aan.';
+  if (log.subjectiveFeel === 'worse') return 'Slechter dan normaal, dat hoort erbij. Houd het morgen rustig; goed slapen en eten kan helpen.';
   if (log.variant === 'full' && log.durationMinutes > 0 && log.durationMinutes < planned * 0.7) {
-    return 'Korter dan gepland. Prima: iets doen is altijd beter dan niets.';
+    return 'Korter dan gepland. Prima: iets doen telt.';
   }
   if (log.rpe !== undefined && top !== undefined && top > EASY_RPE_TOP && log.rpe <= top - 3) {
-    return 'Lichter dan gepland. Een goed teken: je wordt sterker. Blijf het rustig opbouwen.';
+    return 'Lichter dan gepland. Dat kan een teken zijn dat je sterker wordt. Bouw het rustig verder op.';
   }
   return 'Gedaan zoals gepland. Zo bouw je op.';
 }

@@ -116,6 +116,14 @@ const short = (iso: string) => `${weekdayShortNL(iso).toLowerCase()} ${formatDat
 // De uitleg onder de titel: wat je vastlegde, het getal van vanochtend als dat er is, en waarom het
 // voor ASCEND uitmaakt. Nooit wat je had moeten doen. `targetDate`: de dag waar het voorstel op uitkomt,
 // alleen als er maar één keuze is.
+// De zin op de kaart van Vandaag, met de naam van de test zoals die in je planning staat
+// ("Testloop 5 km" wordt "testloop van 5 km").
+export function influenceMoveLine(cause: InfluenceMoveCause, testName: string = TEST_NAME): string {
+  const m = /^(.+?)\s+(\d+(?:[.,]\d+)?\s*km)$/i.exec(testName.trim());
+  const name = m ? `${m[1].toLowerCase()} van ${m[2]}` : testName.trim().toLowerCase();
+  return `Je ${name} staat ${cause.today ? 'vandaag' : 'morgen'}. Er ligt een voorstel om hem te verschuiven.`;
+}
+
 export function influenceMoveSummary(cause: InfluenceMoveCause, morning?: MorningNumber, targetDate?: string): string {
   const parts = [`Je legde vast: ${noteWords(cause)}.`];
   if (cause.today && morning) {

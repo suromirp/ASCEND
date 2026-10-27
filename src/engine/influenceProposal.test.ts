@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AdviceInputs } from './adviceEngine';
-import { influenceMove, influenceMoveCause, influenceMoveId, influenceMoveSummary, morningNumber, noteWords, type MoveCauseInput } from './influenceProposal';
+import { influenceMove, influenceMoveCause, influenceMoveId, influenceMoveLine, influenceMoveSummary, morningNumber, noteWords, type MoveCauseInput } from './influenceProposal';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { addDays } from '../utils/dates';
 import type { InfluenceEntry, InfluenceReasonNote } from '../models/influence';
@@ -116,6 +116,12 @@ describe('de tekst', () => {
     expect(text).toContain('Vanochtend is je rusthartslag 58, 8 boven je gemiddelde.');
     expect(text).toContain('ASCEND rekent je tempo\'s uit de uitkomst van deze test.');
     expect(text).toContain('vr 30');
+  });
+
+  it('noemt de test bij zijn echte naam, met de dag', () => {
+    expect(influenceMoveLine({ ...cause, today: false }, 'Testloop 5 km')).toBe('Je testloop van 5 km staat morgen. Er ligt een voorstel om hem te verschuiven.');
+    expect(influenceMoveLine({ ...cause, today: true }, 'Testloop 10 km')).toBe('Je testloop van 10 km staat vandaag. Er ligt een voorstel om hem te verschuiven.');
+    expect(influenceMoveLine({ ...cause, today: false }, 'Tempotest')).toBe('Je tempotest staat morgen. Er ligt een voorstel om hem te verschuiven.');
   });
 
   it('zegt nooit wat je had moeten doen, en heeft geen gedachtestreepjes', () => {

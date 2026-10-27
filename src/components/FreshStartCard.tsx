@@ -34,7 +34,7 @@ export function FreshStartCard() {
       </p>
       <div className="mt-1 flex flex-wrap gap-3">
         <SecondaryButton onClick={() => void updateSettings({ freshStartDismissedAt: new Date().toISOString() })} className="min-w-[148px] whitespace-nowrap">Nieuw beginnen</SecondaryButton>
-        <PrimaryButton onClick={() => setImporting(true)} fullWidth={false} className="min-w-[120px]">Zet terug</PrimaryButton>
+        <PrimaryButton onClick={() => setImporting(true)} fullWidth={false} className="min-w-[120px]">Back-up terugzetten</PrimaryButton>
       </div>
       {importing && <ImportWizard onClose={() => setImporting(false)} />}
     </Card>

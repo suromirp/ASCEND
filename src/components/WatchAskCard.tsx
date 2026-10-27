@@ -70,7 +70,7 @@ export function WatchAskCard({
         </p>
         <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{describeLog(log)}</p>
         <p className="mt-2 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          ASCEND deed dit zelf, omdat je horloge precies één activiteit had die bij de geplande training van die dag paste.
+          Dit deed ASCEND zelf: je horloge had precies één activiteit die bij de geplande training van die dag paste.
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export function WatchAskCard({
 
       <div>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-          Zwaarte (RPE), hoe zwaar voelde de hele training?{log.rpe !== undefined && rpe === log.rpe ? ' Zo stond het op je horloge.' : ''}
+          Zwaarte (RPE): hoe zwaar voelde de hele training?{log.rpe !== undefined && rpe === log.rpe ? ' Zo stond het op je horloge.' : ''}
         </p>
         <div className="mt-2 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Zwaarte van 1 tot 10">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (

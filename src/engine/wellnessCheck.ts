@@ -133,7 +133,7 @@ function hrvLine(value: number, base: number[]): WellnessLine {
   if (value < avg - margin) line.short = `${line.short}, lager dan gewoonlijk`;
   else if (value > avg + margin) line.short = `${line.short}, hoger dan gewoonlijk`;
   if (value < avg - margin) {
-    return { ...line, tone: 'attention', note: `Lager dan jouw gewone bereik (gemiddeld ${rounded}). Je lichaam is mogelijk nog niet hersteld. Eén ochtend zegt weinig, een paar achter elkaar wel.` };
+    return { ...line, tone: 'attention', note: `Lager dan jouw gewone bereik (gemiddeld ${rounded}). Misschien ben je nog niet hersteld. Eén ochtend zegt weinig, een paar achter elkaar meer.` };
   }
   if (value > avg + margin) return { ...line, tone: 'normal', note: `Hoger dan jouw gewone bereik (gemiddeld ${rounded}). Meestal een teken dat je goed hersteld bent.` };
   return { ...line, tone: 'normal', note: `Binnen jouw gewone bereik (gemiddeld ${rounded}, laatste 4 weken).` };
