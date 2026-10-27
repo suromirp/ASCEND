@@ -45,7 +45,7 @@ export function StartWelcome({ onHold }: { onHold: (hold: boolean) => void }) {
       </SkyBand>
 
       <p className="px-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-        Je gegevens blijven op dit toestel. ASCEND heeft geen account.
+        Je gegevens blijven op deze telefoon. ASCEND heeft geen account.
       </p>
 
       {open === 'questions' && <StartWizard answers={answers} onAnswers={setAnswers} onClose={() => setOpen(null)} />}

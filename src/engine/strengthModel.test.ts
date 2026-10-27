@@ -801,7 +801,7 @@ describe('na een pauze lichter beginnen', () => {
   it('na meer dan 28 dagen rekent het met 5% minder kracht en zegt dat', () => {
     const p = prescribe({ exercise: bench, sessions, date: '2026-07-07', settings })!;
     expect(p.kind).toBe('pause');
-    expect(p.reason).toBe('Je deed dit meer dan vier weken niet, dus we beginnen iets lichter en kijken na deze training opnieuw.');
+    expect(p.reason).toBe('Je deed dit meer dan vier weken niet, dus het voorstel begint iets lichter. Na deze training kijkt ASCEND opnieuw.');
     expect(p.strengthKg).toBeCloseTo(80 * 0.95, 6);
     expect(p.sets[0].weightKg).toBeLessThan(60);
   });

@@ -14,7 +14,7 @@ import { isHeatSession } from '../engine/clothing';
 const FEELS: ClothingFeel[] = ['too_warm', 'good', 'too_cold'];
 const THANKS: Record<ClothingFeel, string> = {
   too_warm: 'Genoteerd. Een volgende keer kleedt ASCEND je iets lichter.',
-  good: 'Fijn, dan houden we het zo.',
+  good: 'Fijn, dan blijft het zo.',
   too_cold: 'Genoteerd. Een volgende keer kleedt ASCEND je iets warmer.',
 };
 

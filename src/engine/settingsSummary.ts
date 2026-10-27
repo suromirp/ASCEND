@@ -472,7 +472,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (r.setting !== 'auto') return { value: choiceShort('figuur', r.setting) };
       return r.source === 'linked'
         ? { value: choiceShort('figuur', r.figure), auto: true, sub: 'Uit je koppeling' }
-        : { value: choiceShort('figuur', r.figure), auto: true, sub: 'Nog niet bekend, we tonen Man' };
+        : { value: choiceShort('figuur', r.figure), auto: true, sub: 'Nog niet bekend, nu Man' };
     }
 
     // Wat speelde er (engine/influence.ts): alles staat aan, de oorzaak met je patroon.
@@ -483,9 +483,9 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { value: choiceShort('oorzaak', cause), sub: cause === 'uit' ? 'Feiten staan niet in het blad' : cause === 'weet' ? 'Uit weer, horloge en logboek' : 'Uit weer, horloge, logboek en je patroon' };
     }
     case 'wat-overzicht':
-      return { checked: s.influenceOverview !== false, sub: 'Wat doet dit met je?' };
+      return { checked: s.influenceOverview !== false, sub: 'Wat een reden met je doet' };
     case 'wat-test':
-      return { checked: s.influenceTestMove !== false, sub: 'Na een avond met 3 of meer glazen' };
+      return { checked: s.influenceTestMove !== false, sub: 'Na een avond die je noteerde' };
     case 'wat-vastgelegd': {
       const n = (s.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate === true).length;
       return n === 0 ? { value: 'Nog niets', dim: true } : { value: `${n} keer`, sub: 'Bekijken, wijzigen of wissen' };

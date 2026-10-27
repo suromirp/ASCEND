@@ -40,6 +40,7 @@ import { resolveHorizonZone, committedWeekStartDates } from './planningHorizon';
 import { reconcileWeeksComposition, type ReconciliationTarget } from './weekReconciliation';
 import { makeId } from '../utils/id';
 import { splitLabel, strengthBlockLabel } from '../utils/splitLabel';
+import { ISSUE_NOT_ALL_PLACED } from './proposalIssues';
 
 // Only ever the first N ids the strategy lists (N = sessionsPerWeek),
 // never a cross-week rotation — every worked example in the addendum (and
@@ -144,7 +145,7 @@ function buildPlan(
   return {
     id: makeId('planchange'),
     trigger: 'strength_program_changed',
-    issue: items.length > 0 ? 'Krachtblok inplannen' : unplaceableCount > 0 ? 'Kon niet volledig plaatsen' : 'Geen aanpassingen nodig',
+    issue: items.length > 0 ? 'Krachtblok inplannen' : unplaceableCount > 0 ? ISSUE_NOT_ALL_PLACED : 'Geen aanpassingen nodig',
     changes: items,
     alternatives,
     consequences: items.length > 0

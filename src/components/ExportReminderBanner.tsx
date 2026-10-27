@@ -12,8 +12,8 @@ export function ExportReminderBanner({ logsSinceBackup, neverBackedUp, onExport,
       <Eyebrow>Back-up</Eyebrow>
       <p className="text-sm" style={{ color: 'var(--color-ink)' }}>
         {neverBackedUp
-          ? `Je hebt nog geen back-up. ${one ? 'Je training staat' : `Je ${logsSinceBackup} trainingen staan`} alleen op dit toestel.`
-          : `${logsSinceBackup} ${one ? 'training' : 'trainingen'} sinds je laatste back-up. Alles staat alleen op dit toestel.`}
+          ? `Je hebt nog geen back-up. ${one ? 'Je training staat' : `Je ${logsSinceBackup} trainingen staan`} alleen op deze telefoon.`
+          : `${logsSinceBackup} ${one ? 'training' : 'trainingen'} sinds je laatste back-up. Alles staat alleen op deze telefoon.`}
       </p>
       <div className="mt-1 flex gap-3">
         <SecondaryButton onClick={onDismiss}>Niet nu</SecondaryButton>

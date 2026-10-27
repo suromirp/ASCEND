@@ -49,7 +49,7 @@ export function WeeklyQuestionCard() {
       <>
         <DayRow label="Vraag" state="done" onClick={() => setOpen(true)}>Je plan staat erin: {savedAnswer}</DayRow>
         {open && (
-          <TodaySheet eyebrow="VRAAG VAN DE WEEK" title={question.vraag} onClose={() => setOpen(false)}>
+          <TodaySheet eyebrow="Vraag van de week" title={question.vraag} onClose={() => setOpen(false)}>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>Je plan staat erin: {savedAnswer}</p>
             <p className="mt-1 text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>Je ziet het terug in je weekterugblik.</p>
           </TodaySheet>
@@ -72,7 +72,7 @@ export function WeeklyQuestionCard() {
     <>
       <DayRow label="Vraag" onClick={() => setOpen(true)}>{question.vraag}</DayRow>
       {open && (
-        <TodaySheet eyebrow="VRAAG VAN DE WEEK" title={question.vraag} onClose={() => setOpen(false)}>
+        <TodaySheet eyebrow="Vraag van de week" title={question.vraag} onClose={() => setOpen(false)}>
           {(close) => (
             <div className="flex flex-col gap-3">
               <div>

@@ -20,7 +20,7 @@ export function WarmupSheet({ title, warmup, onClose }: { title: string; warmup:
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-8">
-            <div className="-mt-2"><SheetHeader eyebrow={`Warming-up · ${warmupTotalMinutes(warmup)} min`} title={title} onClose={requestClose} /></div>
+            <div className="-mt-2"><SheetHeader eyebrow={`Opwarmen · ${warmupTotalMinutes(warmup)} min`} title={title} onClose={requestClose} /></div>
 
             <ol className="flex flex-col gap-5">
               {warmup.blocks.map((block, bi) => (

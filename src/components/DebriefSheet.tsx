@@ -48,12 +48,12 @@ function Sheet({ name, counted, logAdvice, strengthExternal, meaning, onClose }:
         <div className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-6">
             <div>
-              <Eyebrow>TERUGBLIK</Eyebrow>
+              <Eyebrow>Terugblik</Eyebrow>
               <p className="mt-1.5 text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{name}</p>
             </div>
             {meaning && (
               <div>
-                <Eyebrow>DIT BETEKENT JE TEST</Eyebrow>
+                <Eyebrow>Dit betekent je test</Eyebrow>
                 <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{meaning.headline}</p>
                 <ul className="mt-3 flex flex-col gap-2.5">
                   {meaning.rows.map((r) => (

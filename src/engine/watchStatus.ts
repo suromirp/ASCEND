@@ -139,7 +139,7 @@ export function watchStatusLine(status: WatchStatus, today: string): WatchStatus
       return { text: `Gaat ${when} naar je horloge` };
     }
     case 'failed':
-      return { text: `Niet gelukt: ${status.reason ?? 'onbekende fout'}`, action: 'retry', actionLabel: 'Opnieuw' };
+      return { text: `Niet gelukt: ${status.reason ?? 'de reden is onbekend'}`, action: 'retry', actionLabel: 'Opnieuw' };
   }
 }
 

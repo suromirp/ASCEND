@@ -31,8 +31,8 @@ export function MilestoneDetailSheet({
           <h3 className="mt-1 font-display text-xl" style={{ color: 'var(--color-ink)' }}>{title}</h3>
           <p className="mt-0.5 text-xs font-medium" style={{ color: 'var(--color-action)' }}>{detail.subtitle}</p>
 
-          <Section heading="DOEL">{detail.goal}</Section>
-          <Section heading="WAAROM">{detail.why}</Section>
+          <Section heading="Doel">{detail.goal}</Section>
+          <Section heading="Waarom">{detail.why}</Section>
 
           {detail.note && (
             <div
@@ -45,14 +45,14 @@ export function MilestoneDetailSheet({
 
           {detail.achievedWhen && (
             <div className="mt-4">
-              <Eyebrow>BEHAALD WANNEER</Eyebrow>
+              <Eyebrow>Behaald wanneer</Eyebrow>
               <BulletList items={detail.achievedWhen} />
             </div>
           )}
 
           {detail.achievedWhenGroups && (
             <div className="mt-4 flex flex-col gap-3">
-              <Eyebrow>BEHAALD WANNEER</Eyebrow>
+              <Eyebrow>Behaald wanneer</Eyebrow>
               {detail.achievedWhenGroups.map((g) => (
                 <div key={g.heading}>
                   <p className="text-xs font-medium" style={{ color: 'var(--color-action)' }}>{g.heading}</p>
@@ -62,13 +62,13 @@ export function MilestoneDetailSheet({
             </div>
           )}
 
-          {detail.data && <Section heading="DATA OM BIJ TE HOUDEN">{detail.data.join(' · ')}</Section>}
+          {detail.data && <Section heading="Gegevens om bij te houden">{detail.data.join(' · ')}</Section>}
 
-          {detail.preparation && <Section heading="OPBOUW">{detail.preparation}</Section>}
+          {detail.preparation && <Section heading="Opbouw">{detail.preparation}</Section>}
 
           {detail.sources.length > 0 && (
             <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--color-card-border)' }}>
-              <Eyebrow>BRONNEN</Eyebrow>
+              <Eyebrow>Bronnen</Eyebrow>
               <div className="mt-2 flex flex-col gap-1.5">
                 {detail.sources.map((s) =>
                   s.url ? (

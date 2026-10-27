@@ -83,7 +83,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       <SettingsSection title="Garmin">
         <SummaryRow id="garmin" title="Via intervals.icu" facts={facts} onClick={() => navigate('/koppelen/garmin')} />
         {/* Zonder koppeling hoort een rij er niet (SHOW_WHEN in data/settingsLayout.ts). */}
-        <SummaryRow id="bundel-horloge-gebruik" title="Wat ik van mijn horloge gebruik" facts={facts} onClick={() => setSheet('bundel-horloge-gebruik')} />
+        <SummaryRow id="bundel-horloge-gebruik" title="Gebruik van je horloge" facts={facts} onClick={() => setSheet('bundel-horloge-gebruik')} />
         <SummaryRow id="vanzelf-afvinken" title="Vanzelf afvinken" facts={facts} info="vanzelfAfvinken" onChange={(on) => void setAutoTick(on).finally(reload)} />
         <SummaryRow id="garmin-leidend" title="Garmin is leidend" facts={facts} info="garminLeidend" onChange={(on) => void setGarminLeads(on).finally(reload)} />
         <SummaryRow id="correcties-overnemen" title="Correcties uit intervals.icu overnemen" facts={facts} info="correctiesOvernemen" onChange={(on) => void setTakeCorrections(on).finally(reload)} />
@@ -101,7 +101,7 @@ export function KoppelingenGroup({ facts, reload, sheet, setSheet }: GroupProps)
       </SettingsSection>
 
       {sheet === 'bundel-horloge-gebruik' && (
-        <BundleSheet eyebrow="Koppelingen" title="Wat ik van mijn horloge gebruik" line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
+        <BundleSheet eyebrow="Koppelingen" title="Gebruik van je horloge" line="Uit betekent: ASCEND haalt het niet meer op en bewaart het niet." onClose={() => setSheet(null)}>
           <SummaryRow id="garmin-trainingen" title="Trainingen" facts={facts} onChange={(on) => void changeUse('activities', on)} />
           <SummaryRow id="horloge-details" title="Details van loopjes" facts={facts} onChange={(on) => void changeUse('details', on)} />
           <SummaryRow id="slaap" title="Slaap" facts={facts} onChange={(on) => void changeUse('sleep', on)} />

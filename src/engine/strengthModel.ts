@@ -810,7 +810,7 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
       : 'Dit is het zwaarste gewicht dat je op dit toestel gebruikte, dus het blijft staan en de herhalingen gaan omhoog tot de bovenkant van het bereik.';
   } else if (atBottom) {
     kind = 'used_bottom';
-    reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. Een lichter gewicht ken ik hier niet, dus dat stel ik niet voor. Kies zelf iets lichter als dit te zwaar is.';
+    reason = 'Dit is het lichtste gewicht dat je op dit toestel gebruikte. ASCEND kent hier geen lichter gewicht en stelt dat dus niet voor. Kies zelf iets lichter als dit te zwaar is.';
   } else if (coarseHeavier) {
     kind = 'coarse_heavier';
     reason = `De stap is hier te grof voor ${low} tot ${high} herhalingen; met ${formatWeight(exercise, first.externalKg, dumbbellTotal)} haal je er naar verwachting ${coarseHeavier.reps}, dat zit dichter bij je doel dan ${formatWeight(exercise, coarseHeavier.lighterKg, dumbbellTotal)}.`;
@@ -820,18 +820,18 @@ export function prescribe(input: PrescribeInput): Prescription | undefined {
     reason = `Een stap van ${nl(step)} kg is hier te grof voor ${low} tot ${high} herhalingen, daarom is het bereik nu tijdelijk verbreed.`;
   } else if (lighter) {
     kind = 'pause';
-    reason = 'Je deed dit meer dan vier weken niet, dus we beginnen iets lichter en kijken na deze training opnieuw.';
+    reason = 'Je deed dit meer dan vier weken niet, dus het voorstel begint iets lichter. Na deze training kijkt ASCEND opnieuw.';
   } else if (pauseDays > BREAK_DAYS) {
     kind = 'pause';
-    reason = 'Je deed dit een tijd niet, dus we beginnen op je laatste niveau en kijken na deze training opnieuw.';
+    reason = 'Je deed dit een tijd niet, dus het voorstel begint op je laatste niveau. Na deze training kijkt ASCEND opnieuw.';
   } else if (cappedUp) {
     kind = 'capped';
     reason = weekBound
-      ? 'Je geschatte kracht is gestegen, maar per week rekenen we hooguit 10% meer kracht mee, dus het gewicht gaat rustig omhoog.'
-      : 'Je geschatte kracht is gestegen, maar per training rekenen we hooguit 5% meer kracht mee, dus het gewicht gaat rustig omhoog.';
+      ? 'Je geschatte kracht is gestegen, maar ASCEND rekent per week met hooguit 10% meer kracht, dus het gewicht gaat rustig omhoog.'
+      : 'Je geschatte kracht is gestegen, maar ASCEND rekent per training met hooguit 5% meer kracht, dus het gewicht gaat rustig omhoog.';
   } else if (cappedDown) {
     kind = 'capped';
-    reason = 'Je geschatte kracht is gedaald, maar per training rekenen we hooguit 10% minder kracht mee, dus het gewicht gaat rustig omlaag.';
+    reason = 'Je geschatte kracht is gedaald, maar ASCEND rekent per training met hooguit 10% minder kracht, dus het gewicht gaat rustig omlaag.';
   } else if (first.loadKg > lastLoad + 1e-6) {
     kind = 'up';
     reason = before === undefined

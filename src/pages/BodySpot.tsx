@@ -32,7 +32,7 @@ export function BodySpotPage() {
       <div className="animate-page-in flex flex-col gap-5 px-4 pb-10 pt-6">
         <PageHeader eyebrow="Lichaam" title="Plek niet gevonden" fallback="/lichaam" />
         <Card className="flex flex-col gap-3">
-          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Deze plek ken ik niet. Kies er een op het figuur.</p>
+          <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>ASCEND kent deze plek niet. Kies er een op het figuur.</p>
           <SecondaryButton onClick={() => navigate('/lichaam')}>Naar Lichaam</SecondaryButton>
         </Card>
       </div>
@@ -89,11 +89,11 @@ function SpotDetail({ spot }: { spot: BodySpot }) {
             <span className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{stretchMinutes(stretches)} min</span>
           </div>
           <StretchItems stretches={stretches} className="mt-2 flex flex-col" />
-          <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rustig en zonder te veren. Voel je pijn, geen lichte spanning, stop dan.</p>
+          <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Rustig en zonder te veren. Voel je pijn (geen lichte spanning), stop dan.</p>
         </Card>
 
         <Card>
-          <Eyebrow>Voorkomen</Eyebrow>
+          <Eyebrow>Sterker maken</Eyebrow>
           <p className="mt-1.5 text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{care.voorkomen.intro}</p>
           <ul className="mt-1 flex flex-col">
             {care.voorkomen.oefeningen.map((e, i) => (
@@ -165,7 +165,7 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
       {line && <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
       <ReportDateField id="klacht-datum" value={date} onChange={setDate} />
       <div>
-        <label htmlFor="klacht-notitie" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat merk je? (hoeft niet)</label>
+        <label htmlFor="klacht-notitie" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat merk je? (mag leeg)</label>
         <textarea
           id="klacht-notitie"
           value={note}
@@ -177,7 +177,7 @@ function ReportForm({ spot, hasOpen }: { spot: BodySpot; hasOpen: boolean }) {
         />
       </div>
       <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-        Melden legt de klacht vast, meer niet. Je planning verandert er niet door. Bij een klacht aan been of voet laat ASCEND op Vandaag een hint zien bij zware beentrainingen; jij kiest per training. De week zelf pas je aan op Week.
+        Melden legt de klacht vast, meer niet: je planning verandert er niet door. Bij een klacht aan been of voet toont Vandaag een hint bij zware beentrainingen; jij kiest per training. Je week pas je zelf aan op Week.
       </p>
       <PrimaryButton onClick={() => void report()} disabled={busy || !isValidReportDate(date, todayISO())}>{busy ? 'Bezig…' : 'Melden'}</PrimaryButton>
       {state === 'done' && (

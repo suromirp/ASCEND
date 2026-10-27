@@ -28,7 +28,7 @@ export function JourneyTaskSheet({ row, onTick, onUntick, onClose, extra }: { ro
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div role="dialog" aria-label={task.title} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-8">
-            <Eyebrow>{row.isThisWeek ? 'DEZE WEEK' : 'TAAK'}</Eyebrow>
+            <Eyebrow>{row.isThisWeek ? 'Deze week' : 'Taak'}</Eyebrow>
             <h3 className="font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{task.title}</h3>
             <p className="text-xs font-medium" style={{ color: 'var(--color-action)' }}>{windowLine(row)}</p>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{task.why}</p>

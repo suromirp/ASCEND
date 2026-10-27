@@ -24,7 +24,7 @@ export function PainReportFields({ value, onChange }: { value: PainReport[]; onC
           </button>
         ))}
       </div>
-      <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Spierpijn vragen we morgenochtend.</p>
+      <p className="mt-1.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vraagt morgenochtend naar spierpijn.</p>
 
       {asked && (
         <div className="mt-3 flex flex-col gap-3">

@@ -124,7 +124,7 @@ export function ForgePage() {
         <Card className="flex flex-col gap-3">
           <p className="font-display text-xl" style={{ color: 'var(--color-ink)' }}>Nog geen krachttrainingen</p>
           <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-            Lees een export van MacroFactor in. Dan staan hier je oefeningen, je vooruitgang en wat ASCEND de volgende keer voorstelt. Per set heeft ASCEND de herhalingen in reserve (RIR) nodig, die staan in de export.
+            Lees een export van MacroFactor in. Dan staan hier je oefeningen, je vooruitgang en wat ASCEND de volgende keer voorstelt. Voor elke set heeft ASCEND de herhalingen in reserve (RIR) nodig; die staan in de export.
           </p>
           <PrimaryButton onClick={() => navigate('/koppelen/macrofactor')}>MacroFactor inlezen</PrimaryButton>
         </Card>
@@ -251,7 +251,7 @@ function ComparisonSection({ rows, from }: { rows: ComparisonRow[]; from: string
         <InfoButton onClick={() => setInfo((v) => !v)} label={info ? 'Uitleg over raak sluiten' : 'Uitleg over raak'} />
       </div>
       {empty && (
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen met herhalingen in reserve nodig, waarvoor ASCEND vooraf iets kon voorstellen.</p>
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>Nog te weinig om iets te zeggen. Er zijn trainingen nodig met herhalingen in reserve, waarvoor ASCEND vooraf iets kon voorstellen.</p>
       )}
       {all.macrofactor && <p className="text-sm leading-snug" style={{ color: 'var(--color-ink)' }}>{all.macrofactor}</p>}
       {sinceMacroFactor && <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{sinceMacroFactor}</p>}

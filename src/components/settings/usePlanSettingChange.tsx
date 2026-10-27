@@ -141,7 +141,7 @@ export function usePlanSettingChange(): {
         settings: { enabledSports: nextEnabled },
         ...(start && start.changes.length > 0 ? { startItems: start.changes } : {}),
       }),
-      { eyebrow: 'Planning aanpassen', ask: 'setting', declined: `${SPORT_LABEL[sport]} blijft ${on ? 'uit' : 'aan'} en je planning blijft zoals hij was.`, onStored },
+      { eyebrow: 'Planning aanpassen', ask: 'setting', declined: `${SPORT_LABEL[sport]} blijft ${on ? 'uit' : 'aan'} en je planning blijft zoals ze was.`, onStored },
     );
   }
 
@@ -166,19 +166,19 @@ export function usePlanSettingChange(): {
 
   function keepForNewPlanning() {
     if (!pending) return;
-    setNote('Opgeslagen. Je bestaande planning blijft zoals hij is, nieuwe planning gebruikt de nieuwe instelling.');
+    setNote('Opgeslagen. Je bestaande planning blijft zoals ze is, nieuwe planning gebruikt de nieuwe instelling.');
     setPending(null);
   }
 
   const impact = pending ? (
     <ImpactSheet
-      eyebrow="PLANNING AANPASSEN?"
+      eyebrow="Planning aanpassen?"
       title={pending.title}
       lines={pending.lines}
       why={pending.proposal.consequences}
       primaryLabel="Akkoord"
       secondaryLabel="Liever niet"
-      note="Met Liever niet blijft je bestaande planning zoals hij is. Alleen nieuwe planning gebruikt de nieuwe instelling."
+      note="Met Liever niet blijft je bestaande planning zoals ze is. Alleen nieuwe planning gebruikt de nieuwe instelling."
       onPrimary={() => void applyPending()}
       onSecondary={keepForNewPlanning}
       onClose={keepForNewPlanning}

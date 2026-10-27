@@ -67,14 +67,14 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Wijzigingen',
     lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',
     points: [
-      { head: 'Vraag eerst', text: 'je ziet alles vooraf en geeft akkoord. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht (rustdag vrij, ruimte tussen zware dagen), met de melding Planning bijgewerkt en ongedaan maken.' },
+      { head: 'Vraag eerst', text: 'je ziet alles vooraf en kiest Akkoord. Alleen de weekcontrole zet wat ASCEND zelf plande meteen recht (rustdag vrij, ruimte tussen zware dagen), met de melding Planning bijgewerkt en ongedaan maken.' },
       { head: 'Deels zelf', text: 'weken verder weg past ASCEND zelf aan, met een melding. Deze en volgende week, of iets schrappen, vraagt altijd eerst.' },
       { head: 'Alles zelf', text: 'alles meteen, met een melding en ongedaan maken.' },
     ],
   },
   ambitie: {
     title: 'Ambitie',
-    lead: 'Hoe snel je lopen en tochten in minuten opbouwen.',
+    lead: 'Hoe snel de minuten van je lopen en tochten groeien.',
     points: [
       { head: 'Altijd', text: 'een training wordt nooit meer dan 10% langer dan je langste van de afgelopen maand.' },
       { head: 'Waarom', text: 'pezen en botten wennen langzamer dan je conditie.' },
@@ -170,7 +170,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     lead: 'MacroFactor schat ook een 1RM. ASCEND zet die naast die van jezelf, zonder ze te mengen.',
     points: [
       { head: 'Waar het vandaan komt', text: 'uit het blad "Exercises - 1-RM" van de volledige export. Lees de export opnieuw in voor nieuwe dagen.' },
-      { head: 'Twee getallen', text: 'ze kunnen verschillen: MacroFactor en ASCEND rekenen niet hetzelfde. Gebruik ze om de richting te zien, niet als maximum dat je moet halen.' },
+      { head: 'Twee getallen', text: 'ze kunnen verschillen, want MacroFactor en ASCEND rekenen niet hetzelfde. Gebruik ze voor de richting, niet als maximum dat je moet halen.' },
       { head: 'Uit', text: 'dan staat er alleen de schatting van ASCEND. Wat je ingelezen hebt blijft bewaard.' },
     ],
   },
@@ -178,7 +178,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     title: 'Vergelijken met',
     lead: 'Forge zet het getal van nu naast het getal van eerder, zodat je het verschil ziet.',
     points: [
-      { head: '4 en 8 weken', text: 'het advies: een maand en twee maanden terug. Daarnaast staat altijd het beste ooit.' },
+      { head: '4 en 8 weken', text: 'het advies, een maand en twee maanden terug. Daarnaast staat altijd het beste ooit.' },
       { head: 'Andere momenten', text: 'kies 2 en 4 weken als je vaak traint, of 12 en 26 weken voor het lange werk.' },
       { head: 'Geen oordeel', text: 'het verschil is een kleine regel. Gelijk of lager is geen mislukking, een hogere 1RM is niet het enige doel.' },
     ],
@@ -328,7 +328,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   'wat-test': {
     title: 'Test verschuiven',
-    lead: 'ASCEND kan voorstellen een testloop te verschuiven na een avond met veel glazen of wiet vlak ervoor.',
+    lead: 'ASCEND kan voorstellen een testloop te verschuiven na een avond die je zelf zwaar noteerde.',
     points: [
       { head: 'Wanneer', text: 'als er die dag een testloop staat en je de avond ervoor 3 of meer glazen vastlegde, of als er morgen een staat na 6 of meer glazen. Bij wiet alleen op dezelfde dag.' },
       { head: 'Altijd een voorstel', text: 'het gaat zoals elk voorstel met Akkoord. Gewone trainingen schuiven nooit om een reden.' },
@@ -349,7 +349,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'ASCEND', text: 'je horloge piept op dezelfde slagen als waarmee ASCEND de training achteraf beoordeelt.' },
       { head: 'intervals.icu', text: 'ASCEND stuurt alleen de zonenaam en intervals.icu rekent die om met zijn eigen drempel. Dat kan anders uitkomen.' },
       { head: 'Rustige loop', text: 'bij een rustige of lange duurloop loopt de grens van het begin van zone 1 tot het einde van zone 2. Hardlopend kom je zelden onder zone 1, dus het horloge piept vooral als je te hoog gaat.' },
-      { head: 'Zonder', text: 'drempel of maximale hartslag, of als intervals.icu de jouwe niet laat lezen, blijft het bij de zonenaam.' },
+      { head: 'Ontbreekt er iets', text: 'zonder drempel of maximale hartslag, of als intervals.icu die niet laat lezen, blijft het bij de zonenaam.' },
     ],
   },
   vanzelfAfvinken: {
@@ -376,7 +376,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Overgenomen', text: 'duur, afstand, hartslag en hoogtemeters.' },
       { head: 'Blijft staan', text: 'gevoel, inspanning, pijn en je rugzak.' },
-      { head: 'Terug', text: 'je eigen cijfers zijn bewaard en kun je terugzetten.' },
+      { head: 'Terug', text: 'je eigen cijfers zijn bewaard; je kunt ze terugzetten.' },
     ],
   },
   correctiesOvernemen: {
@@ -404,7 +404,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Volgt je locatie', text: 'je plek, afgerond op ongeveer een kilometer, wordt bijgewerkt als je de app opent. Hoogstens eens per uur.' },
       { head: 'Vaste plaats', text: 'de plek die je koos blijft zoals ze is.' },
-      { head: 'Toestemming', text: 'zonder toestemming van je toestel gebeurt er niets.' },
+      { head: 'Toestemming', text: 'zonder toestemming van je telefoon gebeurt er niets.' },
     ],
   },
   besteMoment: {
@@ -422,7 +422,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
     points: [
       { head: 'Alles laten zien', text: 'alle kaarten, zoals het advies.' },
       { head: 'Alleen het belangrijkste', text: 'je training, de ochtendcheck en het weer. Weekterugblik, vraag van de week, citaat, ochtendkaart en geluid gaan uit.' },
-      { head: 'Alleen mijn training', text: 'ook de ochtendcheck en het weer gaan uit.' },
+      { head: 'Alleen je training', text: 'ook de ochtendcheck en het weer gaan uit.' },
       { head: 'Aangepast', text: 'je losse schakelaars passen bij geen profiel. Je kunt ze hieronder zelf zetten.' },
     ],
   },
@@ -545,7 +545,7 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
   },
   waterPerEtappe: {
     title: 'Water per etappe',
-    lead: 'Bij elke GR5-etappe staat ongeveer hoeveel je onderweg zweet, uit je zweettempo en de uren van de etappe.',
+    lead: 'Bij elke etappe staat ongeveer hoeveel je onderweg zweet, uit je zweettempo en de uren van de etappe.',
     points: [
       { head: 'Je tempo', text: 'komt uit je eigen wegingen voor en na een training (in het blad van een training, onder Zweetverlies). Zonder wegingen staat er een standaard naar algemene cijfers, met de woorden nog niet gemeten.' },
       { head: 'Geen advies', text: 'het is een richtlijn voor wat je kwijtraakt, geen medisch advies. Het gaat om niet te veel uitdrogen, niet om alles terug te drinken.' },

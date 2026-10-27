@@ -116,7 +116,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
             {line && <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}
             <ReportDateField id="klacht-datum-anders" value={date} onChange={setDate} />
             <div>
-              <label htmlFor="klacht-notitie-anders" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat merk je? (hoeft niet)</label>
+              <label htmlFor="klacht-notitie-anders" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wat merk je? (mag leeg)</label>
               <textarea
                 id="klacht-notitie-anders"
                 value={note}

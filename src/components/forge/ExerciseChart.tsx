@@ -38,7 +38,7 @@ export function ExerciseChart({
   const chart = useMemo(() => {
     if (repsLed) {
       const pts = forgePoints(view, mode).map((p) => ({ label: shortDateNL(p.date, today), value: p.value }));
-      return { points: pts, color: 'var(--color-progress)', note: 'De lijn zijn de herhalingen van je beste set.' };
+      return { points: pts, color: 'var(--color-progress)', note: 'De lijn toont de herhalingen van je beste set.' };
     }
     if (mode === 'work_weight') {
       const pts = forgePoints(view, 'work_weight').map((p) => ({ label: shortDateNL(p.date, today), value: assisted && bodyKg ? bodyKg + p.value : p.value }));

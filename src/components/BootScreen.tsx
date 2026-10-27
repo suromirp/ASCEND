@@ -87,7 +87,7 @@ export function BootScreen({ splash }: { splash: boolean }) {
           <SecondaryButton onClick={() => void makeBackup()} disabled={backup === 'busy'}>
             {backup === 'busy' ? 'Back-up wordt gemaakt…' : 'Back-up maken'}
           </SecondaryButton>
-          {backup === 'done' && <p className="text-xs" role="status" style={{ color: 'var(--color-success-text)' }}>De back-up is gemaakt. Je gegevens staan veilig.</p>}
+          {backup === 'done' && <p className="text-xs" role="status" style={{ color: 'var(--color-success-text)' }}>De back-up is gemaakt. Bewaar het bestand op een veilige plek.</p>}
           {backup === 'failed' && (
             <div role="status" className="flex flex-col gap-1">
               {backupFailedLines(backupProbe, probe === 'silent').map((line) => (

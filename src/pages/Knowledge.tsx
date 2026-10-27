@@ -26,7 +26,7 @@ export function KnowledgePage() {
       </p>
       {lesson && (
         <Card className="flex flex-col gap-1" texture>
-          <Eyebrow>DEZE WEEK</Eyebrow>
+          <Eyebrow>Deze week</Eyebrow>
           <button onClick={() => navigate(`/kennis/${lesson.id}`)} className="min-h-[44px] text-left font-display text-lg" style={{ color: 'var(--color-action)' }}>{lesson.title}</button>
         </Card>
       )}
@@ -87,7 +87,7 @@ export function KnowledgeTopicPage() {
 
       {content.videos.length > 0 && (
         <Card className="flex flex-col gap-1">
-          <Eyebrow>KIJKEN</Eyebrow>
+          <Eyebrow>Kijken</Eyebrow>
           {content.videos.map((v) => (
             <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] flex-col justify-center border-b py-2 last:border-b-0" style={{ borderColor: 'var(--color-card-border)' }}>
               <span className="text-sm" style={{ color: 'var(--color-action)' }}>{v.title}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></span>
@@ -118,7 +118,7 @@ export function KnowledgeTopicPage() {
 
       {content.sources.length > 0 && (
         <Card className="flex flex-col gap-1">
-          <Eyebrow>BRONNEN</Eyebrow>
+          <Eyebrow>Bronnen</Eyebrow>
           {content.sources.map((s) => (
             <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className="min-h-[44px] py-2 text-xs underline underline-offset-2" style={{ color: 'var(--color-ink-dim)' }}>{s.label}<Icon name="buiten" size={14} className="ml-1 inline align-[-2px]" /></a>
           ))}
@@ -130,7 +130,7 @@ export function KnowledgeTopicPage() {
         className="min-h-[48px] rounded-xl border text-sm font-semibold"
         style={{ borderColor: 'var(--color-action)', color: isRead ? 'var(--color-progress)' : 'var(--color-action)' }}
       >
-        {isRead ? 'Gelezen, terugzetten' : 'Markeer als gelezen'}
+        {isRead ? 'Weer als ongelezen' : 'Als gelezen markeren'}
       </button>
     </div>
   );

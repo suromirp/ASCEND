@@ -5,6 +5,7 @@ import { Portal } from './Portal';
 import { useSheetClose } from '../utils/useSheetClose';
 import { formatDateNL } from '../utils/dates';
 import { isEmptyStart, restoreSafetyLines } from '../engine/freshStart';
+import { importDiffLine } from '../engine/importPreview';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
 import {
   normalizeBackupToCurrentModel,
@@ -82,7 +83,8 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
         const backup = normalizeBackupToCurrentModel(parsed);
         setStep({ kind: 'mode', backup });
       } catch (err) {
-        setStep({ kind: 'error', message: err instanceof Error ? err.message : 'Kon dit back-upbestand niet lezen.' });
+        console.warn('Back-up lezen mislukt:', err instanceof Error ? err.message : err);
+        setStep({ kind: 'error', message: 'Dit back-upbestand is niet te lezen. Kies een bestand dat ASCEND zelf heeft gemaakt.' });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +125,8 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
       await refresh();
       setStep({ kind: 'done', snapshotId: snapshot.id });
     } catch (err) {
-      setStep({ kind: 'error', message: err instanceof Error ? err.message : 'Importeren is mislukt. Er is niets gewijzigd.' });
+      console.warn('Importeren mislukt:', err instanceof Error ? err.message : err);
+      setStep({ kind: 'error', message: 'Importeren is mislukt. Er is niets gewijzigd.' });
     }
   }
 
@@ -134,7 +137,8 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
       await refresh();
       setStep({ kind: 'undone' });
     } catch (err) {
-      setStep({ kind: 'error', message: err instanceof Error ? err.message : 'Ongedaan maken is mislukt.' });
+      console.warn('Ongedaan maken mislukt:', err instanceof Error ? err.message : err);
+      setStep({ kind: 'error', message: 'Ongedaan maken lukte niet. Probeer het nog eens, of zet een kopie terug onder Instellingen, Gegevens en back-up.' });
     }
   }
 
@@ -149,11 +153,11 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
           onClick={(e) => e.stopPropagation()}
         >
           <Card className="rounded-b-none border-b-0 pb-6">
-            <Eyebrow>GEGEVENS IMPORTEREN</Eyebrow>
+            <Eyebrow>Gegevens importeren</Eyebrow>
 
             {step.kind === 'picking' && (
               <p className="mt-4 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-                Kies een ASCEND back-upbestand…
+                Kies een back-upbestand van ASCEND…
               </p>
             )}
 
@@ -207,7 +211,7 @@ export function ImportWizard({ onClose }: { onClose: () => void }) {
 
             {step.kind === 'done' && (
               <div className="mt-4 flex flex-col gap-4">
-                <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Import geslaagd.</p>
+                <p className="text-sm" style={{ color: 'var(--color-success-text)' }}>Import gelukt.</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
                   Klopt er iets niet? Je kunt de import ongedaan maken. Dat kan later ook via Instellingen, Gegevens en back-up.
                 </p>
@@ -333,11 +337,7 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
               <span style={{ color: 'var(--color-ink-dim)' }}>Zit niet in deze back-up, blijft zoals het is</span>
             ) : (
               <span style={{ color: 'var(--color-ink-dim)' }}>
-                {[
-                  entry.toAdd > 0 && `${entry.toAdd} nieuw`,
-                  entry.toReplace > 0 && `${entry.toReplace} bijgewerkt`,
-                  entry.toSkipDuplicate > 0 && `${entry.toSkipDuplicate} al aanwezig`,
-                ].filter(Boolean).join(' · ') || 'Geen wijzigingen'}
+                {importDiffLine(entry)}
               </span>
             )}
             {entry.toRemove > 0 && (
@@ -357,7 +357,7 @@ function PreviewStep({ preview, deviceEmpty, onConfirm, onBack }: { preview: Imp
       </p>
       {totalRemoved > 0 && (
         <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>
-          Let op: in totaal verdwijnen {totalRemoved} onderdelen die nu op je toestel staan.
+          Let op: in totaal verdwijnen {totalRemoved} onderdelen die nu op deze telefoon staan.
         </p>
       )}
       {totalConflicts > 0 && (

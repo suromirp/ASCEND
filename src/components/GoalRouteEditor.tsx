@@ -160,7 +160,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
       />
 
       <section className="flex flex-col gap-3">
-        <Eyebrow>TOTALE TOCHT</Eyebrow>
+        <Eyebrow>Totale tocht</Eyebrow>
         <NumberField label="Afstand" unit="km" decimals={1} value={amountOf(reqs, 'distance')} onChange={(v) => setTotal('distance', v)} placeholder="600" />
         <div className="grid grid-cols-2 gap-3">
           <NumberField label="Stijging" unit="m D+" value={amountOf(reqs, 'elevationGain')} onChange={(v) => setTotal('elevationGain', v)} placeholder="30.000" />
@@ -180,7 +180,7 @@ export function GoalRouteEditor({ goal, onChange }: { goal: TrainingGoal; onChan
 
       {execution === 'stages' && (
         <section className="flex flex-col gap-3">
-          <Eyebrow>PER ETAPPE</Eyebrow>
+          <Eyebrow>Per etappe</Eyebrow>
           <NumberField
             label="Langste etappe"
             unit="dagen"

@@ -76,10 +76,10 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {afterGoalPlan && (
         <ImpactSheet
-          eyebrow="PLANNING AANPASSEN?"
+          eyebrow="Planning aanpassen?"
           title={afterGoalPlan.value === 'stop' ? 'Na je hoofddoel: niets meer plannen' : 'Na je hoofddoel: onderhoudsweken'}
           lines={afterGoalPlan.lines}
-          why="Je hoofddoel ligt achter je, dus deze keuze verandert je planning meteen. Daarom eerst je akkoord."
+          why="Je hoofddoel ligt achter je, dus deze keuze verandert je planning meteen. Daarom eerst je Akkoord."
           primaryLabel="Akkoord"
           secondaryLabel="Liever niet"
           note="Met Liever niet blijven de instelling en je planning zoals ze waren."

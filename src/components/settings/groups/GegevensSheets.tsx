@@ -130,7 +130,8 @@ export function SnapshotsSheet({ onChanged, onClose }: { onChanged: () => void; 
       setSnapshots(await listSnapshots());
       onChanged();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Terugzetten is mislukt.');
+      console.warn('Terugzetten mislukt:', err instanceof Error ? err.message : err);
+      setMessage('Terugzetten lukte niet. Er is niets veranderd; probeer het nog eens.');
     } finally {
       setBusy(false);
       setConfirmId(null);
@@ -236,7 +237,7 @@ export function RebuildSheet({ onClose }: { onClose: () => void }) {
           {busy ? 'Bezig' : 'Nu berekenen'}
         </button>
       </div>
-      {done && <p className="st-hint" style={{ marginLeft: 0 }} role="status">ASCEND heeft opnieuw gekeken. Nieuwe aanbevelingen verschijnen zodra er iets is.</p>}
+      {done && <p className="st-hint" style={{ marginLeft: 0 }} role="status">ASCEND heeft opnieuw gekeken. Nieuwe adviezen verschijnen zodra er iets is.</p>}
     </Sheet>
   );
 }

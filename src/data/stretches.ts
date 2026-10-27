@@ -180,11 +180,11 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
 ];
 
 export const STRETCH_GENERAL_ADVICE = [
-  'Nooit bouncen, rustig en gecontroleerd bewegen.',
-  'Adem rustig door tijdens het aanhouden van een stretch.',
-  'Bij pijn (niet lichte spanning) direct stoppen.',
-  'Stretch pas als de spieren warm zijn, na een korte warming-up of aan het eind van de training.',
-  'Stretchen voorkomt spierpijn (DOMS) niet aantoonbaar, maar verbetert wel mobiliteit en gewrichtsfunctie op lange termijn.',
+  'Niet veren: beweeg rustig en gecontroleerd.',
+  'Adem rustig door terwijl je de rek aanhoudt.',
+  'Voel je pijn (geen lichte spanning), stop dan meteen.',
+  'Rek pas als je spieren warm zijn: na een korte warming-up of aan het eind van de training.',
+  'Rekken helpt niet aantoonbaar tegen spierpijn (DOMS), maar kan op lange termijn wel helpen bij beweeglijkheid en gewrichten.',
 ];
 
 export const STRETCH_SOURCE_NOTE = 'Bron: Mayo Clinic, dynamisch stretchen vóór het sporten, statisch stretchen erna. Video’s: ziekenhuizen, fysiotherapie-kanalen en Special Olympics; "IT-band stretch" is hernoemd naar TFL/laterale-heupstretch en volledige nekrollen zijn vervangen door gecontroleerde nekrotatie, beide op basis van de onderliggende bewegingswetenschap.';
