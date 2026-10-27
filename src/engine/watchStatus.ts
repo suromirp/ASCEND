@@ -75,7 +75,7 @@ export function watchStatusFor(session: PlannedSession, template: SessionTemplat
 }
 
 // The long messages of integrations/intervalsIcu.ts in a few words, for a
-// one-line status. Anything unknown becomes "onbekende fout"; the full text
+// one-line status. Anything unknown becomes "reden onbekend"; the full text
 // stays on the Garmin page.
 export function shortWatchError(message: string): string {
   const m = message.toLowerCase();
@@ -89,7 +89,7 @@ export function shortWatchError(message: string): string {
   if (m.includes('begrijpt')) return 'onverwacht antwoord';
   if (m.includes('koppeling niet lezen')) return 'koppeling onleesbaar';
   if (m.includes('planning niet lezen')) return 'planning onleesbaar';
-  return 'onbekende fout';
+  return 'reden onbekend';
 }
 
 // "19.04", in the time of the device.
