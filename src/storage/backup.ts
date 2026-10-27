@@ -172,7 +172,9 @@ export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): P
   // The full series of runs and tochten, as base64. They may not be fetchable again from the
   // source, so they go along by default (docs/beslissingen/2026-10-27-run-in-detail-gegevens.md).
   if (options.streams ?? settings.streamsInBackup !== false) {
-    const streams = await ActivityStreamsRepo.getAll();
+    // Only the series of a log that still exists: a leftover of a deleted log stays out.
+    const logIds = new Set(sessionLogs.map((l) => l.id));
+    const streams = (await ActivityStreamsRepo.getAll()).filter((s) => logIds.has(s.logId));
     if (streams.length > 0) payload.activityStreams = streams.map(serializeStreams);
   }
 
@@ -1160,9 +1162,11 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   const restoredMeta: Record<string, unknown> = !current.program && touches(programAction) && resolved.program ? { strengthProgramDefaultSeeded: true } : {};
 
   // The series that came with the file: only for logs that are there afterwards, and never over
-  // a set the device already has for that log (its own is the newer reading).
+  // a set the device already has for that log (its own is the newer reading). With "Volledige
+  // reeks bewaren" off (as it is afterwards) no series are written at all.
   let streamPuts: ActivityStreams[] = [];
-  if (touches(historyAction) && backup.activityStreams && backup.activityStreams.length > 0) {
+  const keepStreams = (resolved.settings ?? current.settings)?.keepStreams !== false;
+  if (keepStreams && touches(historyAction) && backup.activityStreams && backup.activityStreams.length > 0) {
     const have = new Set(await ActivityStreamsRepo.keys());
     const logIds = new Set(resolved.sessionLogs.final.map((l) => l.id));
     streamPuts = backup.activityStreams.filter((s) => logIds.has(s.logId) && !have.has(s.logId));

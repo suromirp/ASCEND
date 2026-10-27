@@ -19,6 +19,8 @@ import type {
   PackType,
   SerializedActivityStreams,
   SerializedSeries,
+  StoredLap,
+  StoredLapSource,
   StoredSeries,
   StreamKindStored,
 } from '../models/activityStreams';
@@ -136,6 +138,8 @@ export interface PackMeta {
 // time or nothing else to keep.
 export function packStreams(set: StreamSet, meta: PackMeta): ActivityStreams | undefined {
   if (!set.timeSec || set.timeSec.length < 2) return undefined;
+  // A gap in the clock cannot be kept: it would come back as a 0 in a rising series.
+  if (set.timeSec.some((t) => !isNum(t) || t < MIN_RAW.u32 || t > MAX_RAW.u32)) return undefined;
   const series: ActivityStreams['series'] = {};
   for (const spec of PACK_SPECS) {
     const values = set[spec.field] as readonly (number | null | undefined)[] | undefined;
@@ -229,6 +233,43 @@ function readSeries(raw: unknown, kind: StreamKindStored): StoredSeries | undefi
   return { type: r.type, scale: r.scale, missing: GAP[r.type], data };
 }
 
+const MAX_LAPS = 200;
+// A kilometre of headwind is a speed in km/h; more than this is no wind but a damaged file.
+const MAX_HEADWIND_KMH = 150;
+const MAX_HEADWIND_KM = 1000;
+
+const LAP_SOURCE_KEYS: (keyof StoredLapSource)[] = [
+  'distanceM', 'movingSec', 'avgSpeedMs', 'gapMs', 'avgHeartRate', 'maxHeartRate', 'avgCadence', 'avgWatts',
+  'avgStepLengthM', 'gainM', 'decouplingPct', 'avgRespiration', 'avgTempC', 'zone', 'intensity', 'headwindPct',
+  'tailwindPct', 'avgWindMs',
+];
+
+// Laps as they come out of a file: the same clean-up as when they come from the source
+// (integrations/intervalsIcu.ts#mapIntervalsLaps): the label up to 60 characters, the kind only
+// work or recovery, the source only finite numbers, at most 200 laps, in order of start.
+export function cleanStoredLaps(raw: unknown): StoredLap[] {
+  if (!Array.isArray(raw)) return [];
+  const out: StoredLap[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'object' || item === null) continue;
+    const it = item as Record<string, unknown>;
+    if (!isNum(it.startSec) || !isNum(it.endSec) || it.endSec <= it.startSec) continue;
+    const lap: StoredLap = { startSec: it.startSec, endSec: it.endSec };
+    if (it.kind === 'work' || it.kind === 'recovery') lap.kind = it.kind;
+    if (typeof it.label === 'string' && it.label.trim() !== '') lap.label = it.label.trim().slice(0, 60);
+    if (typeof it.groupId === 'string' && it.groupId !== '') lap.groupId = it.groupId.slice(0, 40);
+    if (typeof it.source === 'object' && it.source !== null) {
+      const src = it.source as Record<string, unknown>;
+      const source: StoredLapSource = {};
+      for (const key of LAP_SOURCE_KEYS) if (isNum(src[key])) source[key] = src[key];
+      if (Object.keys(source).length > 0) lap.source = source;
+    }
+    out.push(lap);
+    if (out.length >= MAX_LAPS) break;
+  }
+  return out.sort((a, b) => a.startSec - b.startSec);
+}
+
 // A series set as it comes out of a backup file. Undefined when it is damaged beyond use
 // (no key, no time, series of different lengths); a single bad series is dropped on its own.
 export function deserializeStreams(raw: unknown): ActivityStreams | undefined {
@@ -244,6 +285,8 @@ export function deserializeStreams(raw: unknown): ActivityStreams | undefined {
   const time = series.time;
   if (!time) return undefined;
   const length = time.data.byteLength / BYTES[time.type];
+  // A file with a gap in the clock is not trusted either.
+  if (new Uint32Array(time.data).includes(time.missing)) return undefined;
   for (const kind of Object.keys(series) as StreamKindStored[]) {
     const s = series[kind]!;
     if (s.data.byteLength / BYTES[s.type] !== length) delete series[kind];
@@ -259,11 +302,9 @@ export function deserializeStreams(raw: unknown): ActivityStreams | undefined {
     sampleCount: length,
     series,
   };
-  if (Array.isArray(r.headwindKmh) && r.headwindKmh.every((v) => v === null || isNum(v))) out.headwindKmh = r.headwindKmh;
-  if (Array.isArray(r.laps)) {
-    const laps = r.laps.filter((l) => l && isNum(l.startSec) && isNum(l.endSec) && l.endSec > l.startSec);
-    if (laps.length > 0) out.laps = laps;
-  }
+  if (Array.isArray(r.headwindKmh) && r.headwindKmh.length <= MAX_HEADWIND_KM && r.headwindKmh.every((v) => v === null || (isNum(v) && Math.abs(v) <= MAX_HEADWIND_KMH))) out.headwindKmh = r.headwindKmh;
+  const laps = cleanStoredLaps(r.laps);
+  if (laps.length > 0) out.laps = laps;
   if (Array.isArray(r.unknownKinds)) {
     const names = r.unknownKinds.filter((n): n is string => typeof n === 'string' && n.length > 0 && n.length <= 40).slice(0, 30);
     if (names.length > 0) out.unknownKinds = names;

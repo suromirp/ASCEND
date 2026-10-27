@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { useLegFatigueInputs } from './LegFatigueCard';
-import { runInsight, type RunInsight, type ShownInsight } from '../engine/runInsight';
+import { insightRows, runInsight, type RunInsight, type ShownInsight } from '../engine/runInsight';
 import { getWatchState, onWatchChange } from '../storage/externalActivities';
 import { getShownInsights, recordShownInsights } from '../storage/runInsightShown';
 import { detailsWanted } from '../engine/watchUse';
@@ -50,7 +50,7 @@ export function useRunInsight(logId: string | undefined, options: { brake?: bool
   const brake = options.brake !== false;
   const log = useMemo(() => sessionLogs.find((l) => l.id === logId), [sessionLogs, logId]);
   const insight = useMemo(() => {
-    if (!log || !log.detail || (brake && shown === undefined)) return undefined;
+    if (!log || (brake && shown === undefined)) return undefined;
     return runInsight({
       log, logs: sessionLogs, templates, program, hr: settings.heartRate, legs,
       settings: settings.runInsight, detailsOn, shown: brake ? shown : undefined, today: todayISO(),
@@ -60,11 +60,12 @@ export function useRunInsight(logId: string | undefined, options: { brake?: bool
 
   // What the card showed is remembered, so the same line does not come back
   // right away after the next training.
-  const key = insight ? [insight.better, insight.watch, insight.fact].filter(Boolean).map((l) => `${l!.topic}:${l!.tone}`).join(',') : '';
+  // Only the lines the card shows count: the line about the pace takes the place of "Let op".
+  const shownLines = insight ? insightRows(insight).flatMap((r) => (r.kind === 'line' ? [r.line] : [])) : [];
+  const key = shownLines.map((l) => `${l.topic}:${l.tone}`).join(',');
   useEffect(() => {
     if (!brake || !log || !insight || !key) return;
-    const lines = [insight.better, insight.watch, insight.fact].filter((l): l is NonNullable<typeof l> => !!l);
-    void recordShownInsights(log.id, lines, todayISO()).catch(() => undefined);
+    void recordShownInsights(log.id, shownLines, todayISO()).catch(() => undefined);
     // The record is keyed on what was shown, not on every recompute.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, log?.id, brake]);

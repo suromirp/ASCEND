@@ -1056,6 +1056,8 @@ export async function resetToDemoData(): Promise<void> {
     // answers, illness and weight history, and the pre-import copies that
     // hold a full copy of the old history.
     clearStore('backupSnapshots'),
+    // The full series of runs belong to the logs and go with them.
+    clearStore('activityStreams'),
     clearStore('meta'),
   ]);
   // Production incident: trainingGoals above is cleared, but the marathon

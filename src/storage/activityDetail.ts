@@ -33,7 +33,7 @@ import { createIntervalsIcuAdapter, streamsToRequest, WANTED_STREAMS } from '../
 import { fetchPastWeather, type FetchOptions, type HourlyWindPoint } from '../integrations/openMeteo';
 import { buildRunDetail, isStaleRunDetail, isUsableRunDetail, runDetailFingerprint, windAgainstFn, windFromStored, windPerKm } from '../engine/runDetail';
 import { packStreams, unpackStreams } from '../engine/streamPack';
-import { logSport } from '../engine/sports';
+import { isWalkOrTripLog, logSport } from '../engine/sports';
 import type { DetailConditions } from '../models/activityDetail';
 import { daysBetween, todayISO } from '../utils/dates';
 
@@ -89,11 +89,15 @@ export interface DetailNeeds {
 export function needsOf(log: SessionLog, opts: { keepStreams: boolean; streamsFresh: boolean; retry: boolean }): DetailNeeds {
   const { km, minutes } = testTotals(log);
   const rd = log.runDetail;
+  // Series that gave nothing for these totals (runDetailTried) are not fetched again for the
+  // profile either; a correction at the source changes the totals and tries once more.
+  const gaveNothing = log.runDetailTried === runDetailFingerprint(km, minutes);
   return {
-    detail: !log.detail,
+    detail: !log.detail && !gaveNothing,
     effort: wantsBestEffort(log) && opts.retry,
-    runDetail: opts.retry && (!isUsableRunDetail(rd) || isStaleRunDetail(rd, km, minutes)) && log.runDetailTried !== runDetailFingerprint(km, minutes),
-    streams: opts.retry && opts.keepStreams && !opts.streamsFresh,
+    runDetail: opts.retry && (!isUsableRunDetail(rd) || isStaleRunDetail(rd, km, minutes)) && !gaveNothing,
+    // A set that gave nothing (or could not be packed) for these totals is not asked for again.
+    streams: opts.retry && opts.keepStreams && !opts.streamsFresh && !gaveNothing,
   };
 }
 
@@ -128,7 +132,13 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
     const adapter = createIntervalsIcuAdapter(connection, { fetchImpl: options.fetchImpl });
     const streams = storedSet ?? (await adapter.fetchActivityStreams!(activity));
     if (!streams) {
+      // The source has no series for it: written on the log for these totals, so it is not
+      // asked again at every opening (a correction at the source changes the totals).
       failedThisSession.add(log.id);
+      await attachDerivedToStoredLog(log.id, {
+        runTried: runDetailFingerprint(logKm, logMinutes),
+        tried: needs.effort ? effortFingerprint(logKm, logMinutes) : undefined,
+      });
       return 'skipped';
     }
     // The laps come in a request of their own; without them the kilometres still work.
@@ -214,6 +224,9 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
       if (packed) {
         await ActivityStreamsRepo.put(packed);
         streamsKept = true;
+      } else {
+        // Series that cannot be packed: remembered for these totals, not tried at every opening.
+        runTried = runDetailFingerprint(logKm, logMinutes);
       }
     }
 
@@ -258,7 +271,7 @@ export async function attachDerivedToStoredLog(
     const { km, minutes } = testTotals(current);
     if (!isUsableRunDetail(current.runDetail) || isStaleRunDetail(current.runDetail, km, minutes)) add.runDetail = derived.runDetail;
   }
-  if (derived.runTried && !derived.runDetail && current.runDetailTried !== derived.runTried) add.runDetailTried = derived.runTried;
+  if (derived.runTried && current.runDetailTried !== derived.runTried) add.runDetailTried = derived.runTried;
   if (Object.keys(add).length === 0) {
     await tx.done;
     return false;
@@ -341,11 +354,12 @@ export function ensureOutcomeText(outcome: EnsureOutcome): string | undefined {
   }
 }
 
-function kindOfLog(log: SessionLog): ExternalActivityKind {
-  const sport = logSport(log);
-  if (sport === 'cycling') return 'ride';
-  if (sport === 'hiking' || log.type === 'recovery') return 'hike';
-  return 'run';
+// Only a run is read as a run and a walk, tocht or bergtocht as a hike; strength, a ride or
+// anything else has no series ASCEND uses, so nothing is fetched for it.
+function kindOfLog(log: SessionLog): ExternalActivityKind | undefined {
+  if (logSport(log) === 'running') return 'run';
+  if (isWalkOrTripLog(log)) return 'hike';
+  return undefined;
 }
 
 // Called when the sheet or the detail screen of a run opens: once per log (and per set of
@@ -356,7 +370,7 @@ export async function ensureRunDetail(logId: string, options: AttachOptions = {}
     const log = (await SessionLogsRepo.getAll()).find((l) => l.id === logId);
     if (!log || !log.externalId || log.trim) return 'no-link';
     const kind = kindOfLog(log);
-    if (kind !== 'run' && kind !== 'hike') return 'no-link';
+    if (!kind) return 'no-link';
     const state = await getWatchState();
     if (!detailsWanted(state.use)) return 'off';
     const settings = await SettingsRepo.get();

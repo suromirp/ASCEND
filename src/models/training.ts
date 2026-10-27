@@ -112,6 +112,7 @@ export type TemplateRole =
   | 'ask_legs' // asks how the legs feel before it starts
   | 'before_race_out' // comes out of the days before a race
   | 'walked_down' // the descent is walked, not run
+  | 'blocks' // has blocks (tempo, intervals) whose pace is compared in the run insight
   | 'extra'; // an extra session the planner may add to a week
 
 // The reusable definition of a workout — "what" a session is, independent of

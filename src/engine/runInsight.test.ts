@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { runInsight, mainReason, reasonText, topicsFor, type RunInsightInput, type ShownInsight } from './runInsight';
+import { insightRows, pacingKindOf, runInsight, mainReason, reasonText, topicsFor, type RunInsightInput, type ShownInsight } from './runInsight';
 import { EARLIER_DATES, EASY, TEMPLATES, context, runLog } from './fixtures/runLogs';
 import type { RunSpec } from './fixtures/runStreams';
 import type { SessionLog } from '../models/training';
@@ -346,5 +346,31 @@ describe('the one line after a test, a tempo run or an interval training', () =>
     const rd = buildRunDetail(fastStartTest(), OPTS);
     const noProfile = withDetail('tpl_test_run', rd, { detail: undefined });
     expect(insight(noProfile, []).pacing).toContain('Begin de volgende test');
+  });
+});
+
+describe('the rows of the card', () => {
+  const line = (topic: 'efficiency' | 'drift', tone: 'better' | 'watch' | 'fact') => ({ topic, tone }) as unknown as NonNullable<ReturnType<typeof runInsight>['better']>;
+  it('puts the pace line in the place of Let op, after Beter, at most two', () => {
+    const rows = insightRows({ better: line('efficiency', 'better'), watch: line('drift', 'watch'), pacing: 'Het laatste blok was 18 seconden per km trager dan het eerste.' });
+    expect(rows).toHaveLength(2);
+    expect(rows[0].kind).toBe('line');
+    expect(rows[1]).toEqual({ kind: 'pacing', word: 'Verdeling', text: 'Het laatste blok was 18 seconden per km trager dan het eerste.' });
+  });
+  it('shows a log with only the pace line', () => {
+    expect(insightRows({ pacing: 'Gelijkmatig.' })).toEqual([{ kind: 'pacing', word: 'Verdeling', text: 'Gelijkmatig.' }]);
+  });
+  it('without the pace line it is Beter and Let op as before', () => {
+    expect(insightRows({ better: line('efficiency', 'better'), watch: line('drift', 'watch'), fact: line('drift', 'fact') })).toHaveLength(2);
+    expect(insightRows({})).toEqual([]);
+  });
+});
+
+describe('which trainings have blocks', () => {
+  it('reads the role on the template, not a list of ids', () => {
+    const own = [{ ...TEMPLATES.find((t) => t.id === 'tpl_easy_run')!, id: 'tpl_eigen', roles: ['blocks' as const] }];
+    expect(pacingKindOf({ templateId: 'tpl_eigen' } as SessionLog, own)).toBe('blocks');
+    expect(pacingKindOf({ templateId: 'tpl_tempo_run' } as SessionLog, TEMPLATES)).toBe('blocks');
+    expect(pacingKindOf({ templateId: 'tpl_easy_run' } as SessionLog, TEMPLATES)).toBeUndefined();
   });
 });

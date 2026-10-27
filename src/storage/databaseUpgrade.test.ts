@@ -80,5 +80,9 @@ describe('upgrading the database from version 8', () => {
     await database.ActivityStreamsRepo.put(row);
     await database.wipeAllData();
     expect(await database.ActivityStreamsRepo.getAll()).toEqual([]);
+    // The reset behind the button "Alles verwijderen" does the same.
+    await database.ActivityStreamsRepo.put(row);
+    await database.resetToDemoData();
+    expect(await database.ActivityStreamsRepo.getAll()).toEqual([]);
   });
 });

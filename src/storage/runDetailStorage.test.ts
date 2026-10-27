@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivityStreamsRepo, MetaRepo, SessionLogsRepo, SettingsRepo, wipeAllData } from './database';
 import { saveConnection } from './externalActivities';
 import { attachActivityDetail, ensureOutcomeText, ensureRunDetail, forgetFailures, needsOf } from './activityDetail';
+import { resetAllDataAndAgenda } from './watchWorkouts';
 import { applyImportPlan, buildBackupEnvelope, buildImportPreview, createImportPlan, createPreImportSnapshot, defaultActionsForMode, defaultPlanPolicyForMode, listSnapshots, normalizeBackupToCurrentModel, parseBackupText } from './backup';
 import { migrateActivityStreams, migrateLogRunDetail } from './migrations';
 import { asFullAnswer, fastStartTest } from '../engine/fixtures/testRun';
@@ -407,5 +408,96 @@ describe('reading kilometres from a file', () => {
     expect(migrateActivityStreams(undefined)).toEqual({ list: undefined, skipped: 0 });
     expect(migrateActivityStreams('nee')).toEqual({ list: undefined, skipped: 1 });
     expect(migrateActivityStreams([null, 5])).toEqual({ list: [], skipped: 2 });
+  });
+});
+
+describe('what is not a run is not asked for', () => {
+  it('a strength log with an external id gets no-link and no request', async () => {
+    await SessionLogsRepo.put(logFor({ id: 'log_kracht', templateId: 'tpl_upper_a', type: 'strength', sport: undefined, cardioData: undefined, externalId: 'intervals.icu:i55' }));
+    const f = requests();
+    expect(await ensureRunDetail('log_kracht', { fetchImpl: asFetch(f) })).toBe('no-link');
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it('a ride is no run either, a walk is read as a tocht', async () => {
+    await SessionLogsRepo.put(logFor({ id: 'log_fiets', sport: 'cycling', externalId: 'intervals.icu:i56' }));
+    const f = requests();
+    expect(await ensureRunDetail('log_fiets', { fetchImpl: asFetch(f) })).toBe('no-link');
+    expect(f).not.toHaveBeenCalled();
+    await SessionLogsRepo.put(logFor({ id: 'log_wandel', templateId: 'tpl_mountain_hike', type: 'adventure', sport: 'hiking', externalId: 'intervals.icu:i57' }));
+    const g = requests();
+    expect(await ensureRunDetail('log_wandel', { fetchImpl: asFetch(g) })).not.toBe('no-link');
+    expect(g).toHaveBeenCalled();
+  });
+});
+
+describe('a source without a usable series is asked once', () => {
+  beforeEach(async () => {
+    await MetaRepo.set('watchActivities', { activities: [ACTIVITY] });
+  });
+
+  it('an empty answer is written on the log and not fetched again in a new session', async () => {
+    const f = requests({ streams: new Response('[]', { status: 200 }) });
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(f) })).toBe('no-series');
+    expect(count(f, '/streams.json')).toBe(1);
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.runDetailTried).toBe('6.60|38.00');
+    forgetFailures();
+    const g = requests();
+    expect(await ensureRunDetail('log_1', { fetchImpl: asFetch(g) })).toBe('no-series');
+    expect(await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(g) })).toBe('skipped');
+    expect(count(g, '/streams.json')).toBe(0);
+  });
+
+  it('a series that cannot be packed is remembered too', async () => {
+    const onlyTime = new Response(JSON.stringify([{ type: 'time', data: route.timeSec }]), { status: 200 });
+    const f = requests({ streams: onlyTime });
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(f) });
+    expect(await ActivityStreamsRepo.get('log_1')).toBeUndefined();
+    forgetFailures();
+    const log = (await SessionLogsRepo.getAll())[0];
+    expect(log.runDetailTried).toBe('6.60|38.00');
+    expect(needsOf(log, { keepStreams: true, streamsFresh: false, retry: true }).streams).toBe(false);
+    const g = requests();
+    expect(await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(g) })).toBe('skipped');
+    expect(count(g, '/streams.json')).toBe(0);
+  });
+
+  it('a correction at the source (other totals) is tried again', async () => {
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(requests({ streams: new Response('[]', { status: 200 }) })) });
+    forgetFailures();
+    const log = (await SessionLogsRepo.getAll())[0];
+    await SessionLogsRepo.put({ ...log, cardioData: { durationMinutes: 38, distanceKm: 6.7, source: 'garmin' } });
+    const g = requests();
+    expect(await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(g) })).toBe('attached');
+    expect(count(g, '/streams.json')).toBe(1);
+  });
+});
+
+describe('"Alles verwijderen" and the series', () => {
+  beforeEach(async () => {
+    await attachActivityDetail(ACTIVITY, { fetchImpl: asFetch(requests()) });
+  });
+
+  it('the function behind the button empties the store', async () => {
+    expect(await ActivityStreamsRepo.getAll()).toHaveLength(1);
+    await resetAllDataAndAgenda({ fetchImpl: asFetch(requests()) });
+    expect(await ActivityStreamsRepo.getAll()).toEqual([]);
+  });
+
+  it('the backup holds only series of logs that still exist', async () => {
+    const own = (await ActivityStreamsRepo.get('log_1'))!;
+    await ActivityStreamsRepo.put({ ...own, logId: 'log_weg' });
+    const payload = (await buildBackupEnvelope()).payload as { activityStreams?: { logId: string }[] };
+    expect(payload.activityStreams!.map((x) => x.logId)).toEqual(['log_1']);
+  });
+
+  it('with "Volledige reeks bewaren" off an import writes no series', async () => {
+    const envelope = JSON.parse(JSON.stringify(await buildBackupEnvelope()));
+    await wipeAllData();
+    await SettingsRepo.set({ keepStreams: false });
+    await importEnvelope({ ...envelope, payload: { ...envelope.payload, settings: { ...envelope.payload.settings, keepStreams: false } } });
+    expect(await ActivityStreamsRepo.getAll()).toEqual([]);
+    expect((await SessionLogsRepo.getAll())).toHaveLength(1);
   });
 });

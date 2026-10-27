@@ -19,6 +19,13 @@ describe('packing the series', () => {
     expect(packed.unknownKinds).toEqual(['smo2']);
   });
 
+  it('refuses a set with a gap in the clock instead of turning it into a 0', () => {
+    const gappy = { ...set, timeSec: set.timeSec.map((t, i) => (i === 3 ? (null as unknown as number) : t)) };
+    expect(packStreams(gappy, META)).toBeUndefined();
+    const nan = { ...set, timeSec: set.timeSec.map((t, i) => (i === 3 ? Number.NaN : t)) };
+    expect(packStreams(nan, META)).toBeUndefined();
+  });
+
   it('keeps no position, whatever the set held', () => {
     const text = JSON.stringify(packed);
     expect(text).not.toContain('position');
@@ -133,6 +140,41 @@ describe('the series in a backup file', () => {
     // A series of another length than the clock is dropped too.
     const short = deserializeStreams({ ...file, series: { ...file.series, power: { ...file.series.power, data: file.series.power.data.slice(0, 40) } } })!;
     expect(short.series.power).toBeUndefined();
+  });
+
+  it('cleans the laps of a file like the laps from the source', () => {
+    const file = JSON.parse(JSON.stringify(serializeStreams(packed)));
+    const long = Array.from({ length: 260 }, (_, i) => ({ startSec: i * 10, endSec: i * 10 + 9 }));
+    const many = deserializeStreams({ ...file, laps: long })!;
+    expect(many.laps).toHaveLength(200);
+    const odd = deserializeStreams({
+      ...file,
+      laps: [
+        { startSec: 50, endSec: 90, label: `  ${'x'.repeat(80)}  `, kind: 'sprint', groupId: 'g'.repeat(60), source: { avgHeartRate: 150, zone: 'hoog', distanceM: Number.NaN, onzin: 4 } },
+        { startSec: 0, endSec: 40, kind: 'work', source: { onzin: 4 } },
+      ],
+    })!;
+    expect(odd.laps![0]).toEqual({ startSec: 0, endSec: 40, kind: 'work' });
+    const second = odd.laps![1];
+    expect(second.label).toHaveLength(60);
+    expect(second.kind).toBeUndefined();
+    expect(second.groupId).toHaveLength(40);
+    expect(second.source).toEqual({ avgHeartRate: 150 });
+  });
+
+  it('limits the wind list', () => {
+    const file = JSON.parse(JSON.stringify(serializeStreams(packed)));
+    expect(deserializeStreams({ ...file, headwindKmh: [1, 999] })!.headwindKmh).toBeUndefined();
+    expect(deserializeStreams({ ...file, headwindKmh: new Array(1001).fill(1) })!.headwindKmh).toBeUndefined();
+    expect(deserializeStreams({ ...file, headwindKmh: [1, null, -3.5] })!.headwindKmh).toEqual([1, null, -3.5]);
+  });
+
+  it('refuses a file with a gap in the clock', () => {
+    const file = JSON.parse(JSON.stringify(serializeStreams(packed)));
+    const bytes = Uint8Array.from(atob(file.series.time.data), (c) => c.charCodeAt(0));
+    bytes.set([255, 255, 255, 255], 4);
+    file.series.time.data = btoa(String.fromCharCode(...bytes));
+    expect(deserializeStreams(file)).toBeUndefined();
   });
 
   it('drops a bad lap, a bad wind list and silly names without losing the set', () => {

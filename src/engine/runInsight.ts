@@ -36,7 +36,7 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrendPoint } from './readiness';
 import { logSport } from './sports';
-import { idIsTestOrRace } from './templateRoles';
+import { idHasRole, idIsTestOrRace } from './templateRoles';
 import { pacingLine, type PacingLineKind } from './runDetailRules';
 import { isStaleRunDetail } from './runDetail';
 import { formatNumberNL } from '../utils/number';
@@ -116,6 +116,21 @@ export interface RunInsight {
   pacing?: string;
   // What could not be compared, per topic, for the small line under the sheet.
   notCompared?: { topic: InsightTopic; reason: NotComparable; text: string }[];
+}
+
+// A row of the card after a run: a line with its sheet "Waarom", or the one sentence about the
+// spread of the pace, which has no sheet.
+export type InsightRow = { kind: 'line'; line: InsightLine } | { kind: 'pacing'; word: string; text: string };
+
+// The rows of the card, at most two. The line about the pace stands in the place of "Let op" and
+// goes ahead of it; "Beter" stays first. A fact only fills a free place.
+export function insightRows(insight: RunInsight): InsightRow[] {
+  const rows: InsightRow[] = [];
+  if (insight.better) rows.push({ kind: 'line', line: insight.better });
+  if (insight.pacing) rows.push({ kind: 'pacing', word: 'Verdeling', text: insight.pacing });
+  else if (insight.watch) rows.push({ kind: 'line', line: insight.watch });
+  if (rows.length < 2 && insight.fact) rows.push({ kind: 'line', line: insight.fact });
+  return rows.slice(0, 2);
 }
 
 // What was shown after earlier trainings, for the brake.
@@ -565,14 +580,13 @@ function braked(line: InsightLine, input: RunInsightInput): boolean {
   );
 }
 
-// Tempo run and interval training: the blocks are what is compared; the rest of the hard
-// trainings have no blocks.
-const BLOCK_TEMPLATES = new Set(['tpl_tempo_run', 'tpl_intervals']);
+// Tempo run and interval training carry the role 'blocks' (engine/templateRoles.ts): the
+// blocks are what is compared; the rest of the hard trainings have no blocks.
 
 // Which hard training this is, for its one line; undefined for any other.
 export function pacingKindOf(log: SessionLog, templates: SessionTemplate[]): PacingLineKind | undefined {
   if (idIsTestOrRace(log.templateId, templates)) return 'test';
-  return BLOCK_TEMPLATES.has(log.templateId) ? 'blocks' : undefined;
+  return idHasRole(log.templateId, 'blocks', templates) ? 'blocks' : undefined;
 }
 
 export function runInsight(input: RunInsightInput): RunInsight {
