@@ -130,9 +130,10 @@ export function WatchAskCard({
         disabled={busy || saving}
         onClick={async () => {
           setSaving(true);
-          const ok = await sweat.save();
+          // Het gevoel gaat altijd mee; lukt de weging niet, dan kan die later in het Logboek.
+          await sweat.save();
           setSaving(false);
-          if (ok) onAnswer({ rpe, subjectiveFeel: feel, painReports: pain });
+          onAnswer({ rpe, subjectiveFeel: feel, painReports: pain });
         }}
       >
         {answered || sweat.result ? 'Opslaan' : 'Klaar'}
