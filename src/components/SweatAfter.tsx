@@ -24,7 +24,7 @@ export function SweatAfterRow({ sweat, showHeading = true }: { sweat: SweatAfter
         </div>
       )}
       {showBefore && <NumberField tall label="Gewicht voor (kg)" value={sweat.before} onChange={sweat.setBefore} unit="kg" decimals={1} />}
-      <NumberField tall label="Zweetverlies: gewicht na (kg)" value={sweat.after} onChange={sweat.setAfter} unit="kg" decimals={1} helper="Weeg jezelf zonder kleren, na het plassen." />
+      <NumberField tall label={showHeading ? "Gewicht na (kg)" : "Zweetverlies: gewicht na (kg)"} value={sweat.after} onChange={sweat.setAfter} unit="kg" decimals={1} helper="Weeg jezelf zonder kleren, na het plassen." />
       {more && (
         <>
           <NumberField tall label="Gedronken onderweg" value={sweat.drank} onChange={sweat.setDrank} unit="ml" />
