@@ -199,4 +199,12 @@ describe('van doelen naar botsingen', () => {
   it('negeert doelen in het verleden', () => {
     expect(goalConflicts([marathon('2026-12-01'), trek('2026-12-10')], TODAY)).toEqual([]);
   });
+
+  it('de gekozen volgorde van de tab (TrainingGoal.order) gaat voor de plek van opslag', () => {
+    const goals: TrainingGoal[] = [
+      { ...base, id: 'a', name: 'Eerste in opslag', status: 'active', targetDate: BASE, requirements: runRequirement(10), order: 1 },
+      { ...base, id: 'b', name: 'Tweede in opslag', status: 'active', targetDate: at(8), requirements: runRequirement(10), order: 0 },
+    ];
+    expect(conflictGoalsFrom(goals, undefined).map((g) => [g.id, g.order])).toEqual([['b', 0], ['a', 1]]);
+  });
 });

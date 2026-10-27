@@ -16,12 +16,15 @@ export function Sheet({
   title,
   line,
   onClose,
+  action,
   children,
 }: {
   eyebrow: string;
   title: string;
   line?: string;
   onClose: () => void;
+  // Een knop links van het kruisje (de drie puntjes van een doel), 44 bij 44 px.
+  action?: ReactNode;
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
   const { closing, requestClose } = useSheetClose(onClose);
@@ -42,9 +45,12 @@ export function Sheet({
               <div className="st-eyebrow"><Eyebrow>{eyebrow}</Eyebrow></div>
               <h2>{title}</h2>
             </div>
-            <button type="button" className="st-close" aria-label="Sluiten" onClick={requestClose}>
-              <Icon name="sluiten" size={22} />
-            </button>
+            <div className="flex items-start">
+              {action}
+              <button type="button" className="st-close" aria-label="Sluiten" onClick={requestClose}>
+                <Icon name="sluiten" size={22} />
+              </button>
+            </div>
             {line && <p>{line}</p>}
           </div>
           <div className="st-sheet-body">{typeof children === 'function' ? children(requestClose) : children}</div>

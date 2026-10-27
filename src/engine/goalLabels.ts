@@ -45,6 +45,22 @@ export function effectivePriority(goal: TrainingGoal, mainGoalId: string | undef
   return fromRole[goalPlanRole(goal, mainGoalId)];
 }
 
+const LIST_RANK: Record<GoalPriority, number> = { top: 0, voortop: 1, verkenning: 2 };
+
+// De ene sorteersleutel van de lijst met doelen: eerst op label, daarbinnen op de gekozen volgorde
+// (`TrainingGoal.order`), zonder volgorde op de plek van opslag. De lijst op Ascend en de botsingen
+// tussen doelen lezen allebei deze functie, zodat wat je ziet ook is wat de planning leest.
+export function sortedForList<T extends { goal: TrainingGoal; index: number }>(rows: readonly T[], mainGoalId: string | undefined): T[] {
+  return [...rows].sort((a, b) => {
+    const pa = LIST_RANK[effectivePriority(a.goal, mainGoalId)];
+    const pb = LIST_RANK[effectivePriority(b.goal, mainGoalId)];
+    if (pa !== pb) return pa - pb;
+    const oa = a.goal.order ?? a.index;
+    const ob = b.goal.order ?? b.index;
+    return oa !== ob ? oa - ob : a.index - b.index;
+  });
+}
+
 // De soort van een doel. Een hardloopwedstrijd zonder soort (nog niet overgezet) is run_race.
 export function goalKindOf(goal: TrainingGoal): GoalKindId | undefined {
   if (goal.kind) return goal.kind;

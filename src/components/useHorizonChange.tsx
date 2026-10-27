@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
-import type { HorizonApplyStatus, HorizonPlan } from '../storage/horizonPlan';
+import { withAcceptedConflicts, withResolvedConflicts, type HorizonApplyStatus, type HorizonPlan } from '../storage/horizonPlan';
 import { askBeforeApplying, needsConfirmation } from '../engine/changeImpact';
 import { addDays, mondayOfWeek, todayISO } from '../utils/dates';
 
@@ -27,6 +27,8 @@ const NOTE_FOR: Record<HorizonApplyStatus, string> = {
   applied: APPLIED_NOTE, unchanged: UNCHANGED_NOTE, stale: STALE_NOTE, failed: FAILED_NOTE, pending: PENDING_NOTE, partial: PARTIAL_NOTE,
 };
 
+const BOTH_NOTE = 'Je houdt allebei de doelen op hun datum. ASCEND meldt deze botsing niet opnieuw zolang de datums blijven. De veiligheidsgrenzen tussen zware beendagen blijven gelden.';
+
 export interface HorizonProposeOptions {
   eyebrow: string;
   ask: 'always' | 'setting';
@@ -50,10 +52,11 @@ export function useHorizonChange(): {
   propose: (make: () => Promise<HorizonPlan | null>, options: HorizonProposeOptions) => Promise<void>;
   sheet: ReactNode;
 } {
-  const { applyHorizonPlan, plannedSessions, settings, leavePeriods } = useAppData();
+  const { applyHorizonPlan, planHorizonChange, plannedSessions, settings, leavePeriods } = useAppData();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const [pending, setPending] = useState<{ plan: HorizonPlan; options: HorizonProposeOptions } | null>(null);
+  // `both`: het voorstel als je twee botsende doelen toch allebei houdt (de stille knop "Toch allebei").
+  const [pending, setPending] = useState<{ plan: HorizonPlan; options: HorizonProposeOptions; both?: HorizonPlan } | null>(null);
 
   async function apply(plan: HorizonPlan, options: HorizonProposeOptions) {
     const stored = (status: HorizonApplyStatus) => status === 'applied' || status === 'unchanged' || status === 'partial';
@@ -68,8 +71,22 @@ export function useHorizonChange(): {
     setBusy(true);
     setNote(null);
     try {
-      const plan = await make();
+      let plan = await make();
       if (!plan) return;
+      // Twee doelen die te dicht op elkaar liggen (engine/goalConflicts.ts): het voorstel is wat
+      // ASCEND voorstelt (een kortere afbouw of een label lager), met de som erbij. "Toch allebei"
+      // laat zien wat er gebeurt als je de datums houdt zoals je ze koos.
+      let both: HorizonPlan | undefined;
+      if (plan.conflicts?.length) {
+        const conflicts = plan.conflicts;
+        const messages = conflicts.flatMap((c) => [c.message, c.suggestion]);
+        both = await planHorizonChange(await withAcceptedConflicts(plan.input, conflicts));
+        if (conflicts.some((c) => c.resolution.kind !== 'tell')) {
+          const resolved = await planHorizonChange(await withResolvedConflicts(plan.input, conflicts));
+          plan = { ...resolved, notes: [...new Set([...messages, ...resolved.notes])] };
+        }
+        options = { ...options, alwaysAsk: true };
+      }
       const items = plan.proposal.changes;
       if (items.length === 0 && plan.lengths.length === 0 && !options.alwaysAsk) {
         await apply(plan, options);
@@ -84,7 +101,7 @@ export function useHorizonChange(): {
         await apply(plan, options);
         return;
       }
-      setPending({ plan, options });
+      setPending({ plan, options, both });
     } catch (err) {
       setNote(err instanceof Error ? err.message : FAILED_NOTE);
     } finally {
@@ -112,6 +129,7 @@ export function useHorizonChange(): {
       notes={pending.plan.notes}
       notesTitle={pending.options.notesTitle}
       extraLines={pending.plan.lengths}
+      alternative={pending.both ? { label: 'Toch allebei', onClick: () => setPending({ plan: { ...pending.both!, notes: [BOTH_NOTE, ...pending.both!.notes] }, options: pending.options }) } : undefined}
       listUntil={addDays(mondayOfWeek(todayISO()), 13)}
       onRespond={async (response) => {
         if (response === 'accepted') await apply(pending.plan, pending.options);

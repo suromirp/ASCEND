@@ -115,6 +115,11 @@ export interface TrainingGoalBase {
   // (engine/goalConflicts.ts). Verschuift een van beide doelen, dan is het een ander paar en
   // komt de melding terug. Optioneel.
   conflictAccepted?: string[];
+  // De plek in de lijst op de Ascend-tab, door slepen gekozen (ronde 2c): een lager getal staat
+  // hoger. Alleen een volgorde, nooit een belangrijkheid: het label (`priority`) groepeert, de
+  // volgorde beslist alleen wie wijkt bij een botsing tussen doelen met hetzelfde label.
+  // Optioneel; zonder staat het doel op de plek van opslag.
+  order?: number;
   createdAt: string;
   updatedAt: string;
 }

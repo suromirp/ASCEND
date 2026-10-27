@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Program } from '../models/program';
 import type { PlannedSession, SessionLog, SessionTemplate, SessionVariant } from '../models/training';
-import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
+import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress, GoalPriority } from '../models/goals';
 import type { InjuryNote } from '../models/injury';
 import type { CapabilityEvidence } from '../models/capability';
 import type { StrengthProgramStrategy, StrengthProgramRecommendation } from '../models/strengthProgram';
@@ -426,6 +426,13 @@ interface AppData {
   // Tussendoel or only followed (engine/raceBlock.ts): a proposal first,
   // stored with applyHorizonPlan after Akkoord.
   planGoalRole: (goalId: string, role: 'secondary' | 'track') => Promise<HorizonPlan | null>;
+  // Het label van een doel (Top, Voortop, Verkenning) als voorstel, eventueel met de nieuwe
+  // volgorde van de doelen erbij (ronde 2c). Opgeslagen met applyHorizonPlan, na Akkoord; de
+  // botsingen met andere doelen staan in HorizonPlan.conflicts.
+  planGoalPriority: (goalId: string, priority: GoalPriority, orderIds?: string[]) => Promise<HorizonPlan | null>;
+  // De volgorde van de doelen in de lijst, zonder voorstel: alleen voor een verplaatsing die de
+  // planning niet raakt. Geeft wat er stond terug, voor ongedaan maken.
+  setGoalOrder: (patch: { id: string; order: number | undefined }[]) => Promise<{ id: string; order: number | undefined }[]>;
   // Soft-delete: sets status:'archived' rather than removing the row, so
   // GoalMilestoneProgress/PlanChangeProposal rows that still reference this
   // goalId stay valid (models/goals.ts's GoalStatus already has 'archived'
@@ -2048,6 +2055,51 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
   }, [planHorizonChangeImpl]);
 
+  const planGoalPriority = useCallback(async (goalId: string, priority: GoalPriority, orderIds?: string[]): Promise<HorizonPlan | null> => {
+    const all = await TrainingGoalsRepo.getAll();
+    const goal = all.find((g) => g.id === goalId);
+    if (!goal) return null;
+    const now = new Date().toISOString();
+    const name = goal.name || 'Je doel';
+    const label = priority === 'top' ? 'Top' : priority === 'voortop' ? 'Voortop' : 'Verkenning';
+    const changed: TrainingGoal[] = [{
+      ...goal, priority, priorityChosen: true, planRole: priority === 'verkenning' ? 'track' : 'secondary', updatedAt: now,
+      // Een eigen kortere afbouw hoorde bij het oude label: het nieuwe krijgt het advies.
+      ...(priority !== goal.priority ? { taperDays: undefined } : {}),
+    }];
+    if (changed[0].taperDays === undefined) delete changed[0].taperDays;
+    if (orderIds) {
+      orderIds.forEach((id, order) => {
+        if (id === goalId) { changed[0].order = order; return; }
+        const other = all.find((g) => g.id === id);
+        if (other && other.order !== order) changed.push({ ...other, order, updatedAt: now });
+      });
+    }
+    return planHorizonChangeImpl({
+      title: `${name}: ${label}`,
+      why: priority === 'top' ? 'Je traint hier naartoe.' : priority === 'voortop' ? 'Je wilt dit goed doen onderweg.' : 'Je doet hieraan mee als training.',
+      explanation: 'Het label bepaalt hoeveel rust er voor een doel komt en of het een eigen opbouw krijgt. ASCEND laat eerst zien wat er in je planning verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+      trigger: 'goal_changed',
+      goals: changed,
+    });
+  }, [planHorizonChangeImpl]);
+
+  const setGoalOrder = useCallback(async (patch: { id: string; order: number | undefined }[]) => {
+    const all = await TrainingGoalsRepo.getAll();
+    const before: { id: string; order: number | undefined }[] = [];
+    const now = new Date().toISOString();
+    for (const { id, order } of patch) {
+      const goal = all.find((g) => g.id === id);
+      if (!goal) continue;
+      before.push({ id, order: goal.order });
+      const next: TrainingGoal = { ...goal, updatedAt: now };
+      if (order === undefined) delete next.order; else next.order = order;
+      await TrainingGoalsRepo.put(next);
+    }
+    await refresh();
+    return before;
+  }, [refresh]);
+
   // The Marathon card: race type, date and time live in settings and on the
   // goal. Another date or type changes the planning, so all of it goes through
   // the same proposal; when nothing in the plan changes it is simply stored.
@@ -2438,6 +2490,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     clearMilestoneManually,
     updateGoal,
     planGoalRole,
+    planGoalPriority,
+    setGoalOrder,
     archiveGoal,
     unarchiveGoal,
     activateGoal,

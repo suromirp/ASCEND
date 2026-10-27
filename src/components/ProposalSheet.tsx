@@ -16,6 +16,7 @@ import { fatigueStatus, legFatigueOn } from '../engine/legFatigue';
 import { useLegFatigueInputs } from './LegFatigueCard';
 import { formatNumberNL } from '../utils/number';
 import { Icon } from './icons';
+import { TextButton } from './TextButton';
 import { idIsTestOrRace } from '../engine/templateRoles';
 
 // "Zo ziet je week eruit": a sheet from below, like a training in Week. On
@@ -64,9 +65,11 @@ export interface ProposalSheetProps {
   extraLines?: string[];
   // One sentence under the title: what the proposal does as a whole.
   summary?: string;
+  // Een stille tekstknop onder Akkoord en Liever niet ("Toch allebei" bij twee doelen die botsen).
+  alternative?: { label: string; onClick: () => void };
 }
 
-export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'VOORSTEL', emptyText, listUntil, extraLines, summary }: ProposalSheetProps) {
+export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, notes, notesTitle = 'Blijft staan', eyebrow = 'VOORSTEL', emptyText, listUntil, extraLines, summary, alternative }: ProposalSheetProps) {
   const { plannedSessions, templates, program, respondToAdvice, planPreviewPass: contextPass } = useAppData();
   const planPreviewPass = previewPass ?? contextPass;
   const [busy, setBusy] = useState(false);
@@ -245,6 +248,11 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
               <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">Liever niet</SecondaryButton>
               <PrimaryButton onClick={() => void respond('accepted')} disabled={busy} fullWidth={false}>Akkoord</PrimaryButton>
             </div>
+            {alternative && (
+              <div className="flex justify-center px-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+                <TextButton tone="dim" onClick={alternative.onClick} disabled={busy}>{alternative.label}</TextButton>
+              </div>
+            )}
           </Card>
         </div>
       </div>

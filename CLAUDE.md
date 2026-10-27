@@ -382,6 +382,15 @@ the backup lacks. `seedIfEmpty()` without options and `runBootMigrations({ seedP
 still fill the full default program, for the tests only. Nothing may create a program or planning
 at start without a proposal. Changing the week shape later is not built yet.
 
+**The Ascend tab is your goals** (`pages/Ascend.tsx`, `components/ascend/`, `engine/goalList.ts`, decision
+`docs/beslissingen/2026-10-26-ascend-tab-als-doelen.md`): goals in the order you choose (`TrainingGoal.order`; one
+sort key, `goalLabels.ts#sortedForList`, read by the list and by `goalConflicts.ts`; every move writes the order of
+the whole visible list), the first one open, a goal sheet per goal, and a season strip on the sky (switch "Seizoensstrook
+tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an order that shifts a conflict
+(`goalList.ts#moveOutcome`) are always a proposal with Akkoord, never silent. "Klaar voor je doel" of the main goal is
+`gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand. `/ascend/doelen` redirects to the tab. Krachtprogressie
+and Trainingsverdeling live on Je stand.
+
 **Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,
 shown on Week as "Vrije dagen en vakanties"). Three kinds: `no_training` (no
 training on those days; what was there moves to an empty day of that week or is

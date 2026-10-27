@@ -24,7 +24,7 @@ import { playIntroDrumsOnFirstInteraction } from './utils/sound';
 import { tapFollowsOverlayClose } from './utils/overlayGuard';
 import { TodayPage } from './pages/Today';
 import { WeekPage } from './pages/Week';
-import { AscendPage, GoalsPage } from './pages/Ascend';
+import { AscendPage } from './pages/Ascend';
 import { HistoryPage } from './pages/History';
 import { SettingsOverview } from './pages/settings/SettingsOverview';
 import { SettingsGroupPage } from './pages/settings/SettingsGroupPage';
@@ -318,7 +318,7 @@ function AppShell() {
             <Route path="/stand" element={<StandingPage />} />
             <Route path="/week" element={<WeekPage />} />
             <Route path="/ascend" element={<AscendPage />} />
-            <Route path="/ascend/doelen" element={<GoalsPage />} />
+            <Route path="/ascend/doelen" element={<Navigate to="/ascend" replace />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/more" element={<SettingsOverview />} />
             <Route path="/more/:groep" element={<SettingsGroupPage />} />

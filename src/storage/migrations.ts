@@ -938,6 +938,9 @@ export function migrateTrainingGoal(goal: TrainingGoal, ctx: GoalKindContext): T
   if (chosen === true) next.priorityChosen = true; else delete next.priorityChosen;
   const accepted = readAcceptedConflicts(goal.conflictAccepted);
   if (accepted) next.conflictAccepted = accepted; else delete next.conflictAccepted;
+  // Ronde 2c: de plek in de lijst op de Ascend-tab, een heel getal vanaf 0.
+  const order: unknown = goal.order;
+  if (typeof order === 'number' && Number.isFinite(order) && order >= 0) next.order = Math.round(order); else delete next.order;
   return next;
 }
 

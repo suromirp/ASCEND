@@ -260,3 +260,17 @@ describe('reviewpunten van ronde 2a', () => {
     void ms;
   });
 });
+
+describe('de plek in de lijst (TrainingGoal.order, ronde 2c)', () => {
+  it('een heel getal vanaf nul blijft staan, afgerond', () => {
+    expect(migrateTrainingGoal({ ...followGoal, order: 2 }, { isMain: false, tent: false }).order).toBe(2);
+    expect(migrateTrainingGoal({ ...followGoal, order: 1.6 }, { isMain: false, tent: false }).order).toBe(2);
+  });
+
+  it('een kapotte waarde gaat weg en een doel zonder volgorde krijgt er geen', () => {
+    for (const bad of [-1, Number.NaN, '3', null]) {
+      expect('order' in migrateTrainingGoal({ ...followGoal, order: bad as never }, { isMain: false, tent: false })).toBe(false);
+    }
+    expect('order' in migrateTrainingGoal(followGoal, { isMain: false, tent: false })).toBe(false);
+  });
+});
