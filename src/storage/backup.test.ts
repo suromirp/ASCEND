@@ -585,6 +585,8 @@ describe('backup envelope round-trip', () => {
       expect(bad.settings.influenceSign).toBeUndefined();
       expect(bad.settings.influenceOverview).toBeUndefined();
       expect(bad.settings.influenceTestMove).toBeUndefined();
+      expect(normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { influenceNames: 'nee' } } }).settings.influenceNames).toBeUndefined();
+      expect(normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { influenceNames: false } } }).settings.influenceNames).toBe(false);
       expect(bad.settings.influenceCause).toBeUndefined();
       expect(bad.skippedInvalid).toBe(4);
       const good = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { influenceSign: false, influenceOverview: true, influenceTestMove: false, influenceCause: 'weet' } } });

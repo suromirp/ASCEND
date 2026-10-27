@@ -82,15 +82,15 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: alleen voltooid/niet voltooid. Oefeningen, sets, reps, gewicht en RIR log je in MacroFactor.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Eerste bovenlichaamtraining van de week, algemene kracht en spiergroei van borst, rug, schouders en armen. Krachttraining blijft ook naast hardlopen en hiken belangrijk: het kan je zelfs zuiniger laten lopen.',
       },
       {
-        heading: 'UITVOERING',
+        heading: 'Uitvoering',
         body: 'Het volledige programma staat in MacroFactor Workouts: oefeningen, sets, herhalingen, gewicht, rust en hoeveel herhalingen je in de tank houdt (RIR). Dat hoef je niet nog eens in ASCEND vast te leggen. MacroFactor past je volgende trainingen aan op wat je logt.',
       },
       {
-        heading: 'WAAR OP LETTEN',
+        heading: 'Waar op letten',
         subsections: [
           { heading: 'Goed', items: ['geplande sets uitgevoerd', 'techniek blijft stabiel', 'MacroFactor-targets voor reps/RIR gehaald', 'geen noodzaak om achteraf extra cardio toe te voegen'] },
           { heading: 'Te zwaar', items: ['techniek verslechtert duidelijk', 'targets worden herhaaldelijk niet gehaald', 'werkelijk RIR ligt veel lager dan voorgeschreven', 'prestaties lopen meerdere sessies achter elkaar terug'] },
@@ -98,7 +98,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         note: 'Eén mindere training is geen reden om het programma aan te passen, kijk naar trends over meerdere weken.',
       },
       {
-        heading: 'DELOAD',
+        heading: 'Deload',
         body: 'MacroFactor plant zijn eigen deload-cyclus op basis van je trainingsgeschiedenis (training cycles, geen kalenderweken), die hoeft niet exact samen te vallen met week 4 van dit ASCEND-blok. Verschuiven of missen van workouts schuift de MacroFactor-cyclus mee.',
       },
     ],
@@ -111,11 +111,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'In het blok voor je wedstrijd komen deze intervallen op zaterdag, in plaats van de heuvels. Intervallen van 2 minuten of langer verhogen je conditie (VO2max) aantoonbaar meer dan rustig lopen, vooral bij minstens een kwartier hard werk per keer en een blok van 4 weken of langer. Samen met de tempoloop zijn het je twee kwaliteitstrainingen; meer hoeft niet.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           '12 minuten inlopen, met aan het eind 3 korte versnellingen.',
           'Blokken van 4 minuten hard: zone 4, ongeveer je 5 km-tempo. Alleen losse woorden lukken nog.',
@@ -134,11 +134,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, D+ en D− als je die hebt, en hoe zwaar het voelde.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'De GR5 vraagt ongeveer 30.000 meter dalen. Dalen beschadigt je bovenbenen het meest, maar na een paar korte afdaalsessies veel minder: dat beschermingseffect houdt weken, en is na 6 tot 9 weken zonder herhaling weg. Daarom wordt de heuveldag om de twee weken "op en af".',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           '10 minuten opwarmen.',
           'Een paar keer 1 minuut hard bergop, wandelend terug.',
@@ -157,11 +157,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'ASCEND kiest deze training als tempo je grootste tekort is voor een hardloopdoel. Korte harde stukken op ongeveer je 5 tot 10 km-tempo, sneller dan je tempoloop, zodat de twee iets anders trainen. Het grootste deel van je week blijft rustig, zoals het hoort.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           '10 minuten rustig inlopen.',
           'Stukken van 1 minuut hard: ongeveer je 5 tot 10 km-tempo, alleen losse woorden (zone 4).',
@@ -180,11 +180,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'ASCEND kiest deze training als tempo je grootste tekort is, in de zwaarste week van een blok. Rustig beginnen en pas aan het eind steviger: je oefent tempo houden op benen die al moe zijn, zonder dat het een zware training wordt.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           'Rustig in zone 2, hele zinnen kunnen praten.',
           'Het laatste stuk iets steviger, zone 3: korte zinnen lukken nog. Dat stuk groeit van 10 naar 20 minuten.',
@@ -202,11 +202,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur en hoe het voelde. Meer hoeft niet.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'ASCEND kiest deze training in de week na je wedstrijd, minstens 48 uur erna. Eerlijk: er is geen bewijs dat een herstelloop je sneller laat herstellen dan rust. Het is rustig extra volume dat het ritme erin houdt. Rust, wandelen of fietsen is net zo goed.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: ['Heel rustig, langzamer dan je rustige duurloop.', 'Geen tempo, geen hartslagdoel.'],
         note: 'Zware of pijnlijke benen? Wandel of sla hem over. Ook dat is herstel.',
       },
@@ -220,11 +220,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, hoogtemeters en het gewicht van je rugzak.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'ASCEND kiest deze training als lang onderweg zijn of een rugzak dragen je grootste tekort is voor de GR5. Wandelen met een rugzak bouwt uren op de been en draagkracht op, met veel minder klap voor je benen dan hardlopen. Onderzoek naar rugzaktraining vond het meeste effect als het gewicht stap voor stap omhoog gaat, naast conditie en kracht.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           'De rugzak van deze week, strak op je heupen. Deze winter begin je licht, rond 5 tot 6 kilo, en het gewicht klimt in kleine stappen.',
           'Stevig doorwandelen, hele zinnen kunnen praten.',
@@ -243,11 +243,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'In de Opbouw stelt ASCEND een extra loop voor als de weken ervoor goed gingen: bijna alles gedaan, geen pijn, niet steeds zwaarder dan gepland. Zo groeit je weekvolume, terwijl geen enkele loop meer dan 10% boven je langste van de afgelopen maand komt. Juist zo\'n sprong in één loop hing samen met meer blessures, het weektotaal niet.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           'Rustig hardlopen in zone 2, je kunt hele zinnen praten.',
           'Aan het eind 6 versnellingen van 20 seconden: rustig optrekken tot ongeveer je 5 km-tempo.',
@@ -266,11 +266,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, gemiddelde hartslag en hoe zwaar het voelde, via je Garmin.',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'Je hebt een hardloopwedstrijd als tussendoel. In de 8 weken ervoor wordt de rustige duurloop een tempoloop: blokken rond je drempel, het tempo dat je ongeveer een uur kunt volhouden. Dat is de training die je 10 km-tempo het meest laat opschuiven, en hij telt ook gewoon mee voor je basis richting de GR5.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           '10 minuten rustig inlopen.',
           'Blokken van 7 minuten comfortabel zwaar: je kunt nog korte zinnen zeggen, niet meer (RPE 6-7, zone 3).',
@@ -289,11 +289,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: alleen de 5 km zelf. Afstand 5, de tijd van de test, en de zwaarte die je voelde (meestal 8 of 9).',
     sections: [
       {
-        heading: 'WAAROM',
+        heading: 'Waarom',
         body: 'Een rustig loopje zegt niets over je wedstrijdtempo. Een 5 km op tijd wel: daaruit rekent ASCEND hoe haalbaar je doeltijd is, en de tweede test laat zien wat je tempolopen opleverden.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           'Kies een vlakke route of een atletiekbaan.',
           '10 minuten inlopen met 2 tot 3 korte versnellingen.',
@@ -312,11 +312,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: je tijd, afstand en gemiddelde hartslag. Dit is je nieuwe meetpunt.',
     sections: [
       {
-        heading: 'DE DAGEN ERVOOR',
+        heading: 'De dagen ervoor',
         body: 'ASCEND houdt de dagen voor de wedstrijd licht: geen heuvels of zware beentraining vlak ervoor. De dag erna is de lange duurloop kort.',
       },
       {
-        heading: 'OP DE DAG',
+        heading: 'Op de dag',
         items: [
           'Eet zoals je gewend bent, niets nieuws.',
           'Goed inlopen: 10 tot 15 minuten rustig met 3 tot 4 korte versnellingen.',
@@ -334,15 +334,15 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, D+, gemiddelde hartslag, via Garmin Forerunner 255 + borstband.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Aerobe basis en hardloopontwikkeling opbouwen, zonder je herstel van de beentraining of de heuvelintervallen in het weekend te verstoren. De opbouw zit bewust vooral in duur, niet tegelijk in duur én tempo én intensiteit, plotselinge sprongen in trainingsbelasting hangen samen met een hoger blessurerisico.',
       },
       {
-        heading: 'INTENSITEIT',
+        heading: 'Intensiteit',
         body: 'RPE ongeveer 3-4 van 10: ontspannen lopen en hele zinnen kunnen praten. Geen record, geen tempoloop. De praattest is een goede maatstaf: kun je praten, dan zit je rond of onder je aerobe drempel, precies waar deze training hoort.',
       },
       {
-        heading: 'WANNEER TE HARD?',
+        heading: 'Wanneer te hard?',
         items: [
           'volledige zinnen spreken wordt moeilijk',
           'ademhaling wordt duidelijk zwaar',
@@ -355,11 +355,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         note: 'Tempo is géén doel. Op een warme dag, met wind of als je moe bent, is dezelfde rustige inspanning een stuk langzamer.',
       },
       {
-        heading: 'WANNEER TE LANGZAAM?',
+        heading: 'Wanneer te langzaam?',
         body: 'Bij een rustige duurloop is te langzaam veel minder een probleem dan te snel. Zolang je écht rustig loopt met een natuurlijke loopbeweging, hoeft het tempo niet omhoog omdat je hartslag laag is, het hoofddoel is rustig volume verzamelen zonder je herstel van Benen A of de heuvelintervallen te verstoren.',
       },
       {
-        heading: 'GARMIN',
+        heading: 'Garmin',
         body: 'Hartslagzones op basis van je drempelhartslag zijn preciezer dan zones op basis van je maximale hartslag. Hoofdscherm: timer, hartslag, hartslagzone, tempo. De borstband heeft de voorkeur boven de polssensor voor trainingssturing.',
       },
     ],
@@ -373,15 +373,15 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Ontwikkelen en behouden van maximale kracht, spiermassa en robuustheid van het onderlichaam, de basis voor hardlopen en later stijgen en rugzakwerk.',
       },
       {
-        heading: 'WAAROM MIDDEN IN DE WEEK?',
+        heading: 'Waarom midden in de week?',
         body: 'Benen A staat ver genoeg na het zware weekend en ver genoeg ervoor, zodat er minstens 48 uur tussen zware beendagen zit. De dag ervoor is een dag voor het bovenlichaam die je benen spaart, de dag erna een rustige duurloop. Kracht- en duurtraining combineren is prima verdedigbaar, zolang de loop rond Benen A echt rustig blijft.',
       },
       {
-        heading: 'CONTROLEPUNT',
+        heading: 'Controlepunt',
         items: [
           'squat-/legpressprestaties gaan meerdere weken achteruit',
           'RDL/hinge wordt duidelijk slechter',
@@ -400,11 +400,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'De tweede training voor je bovenlichaam deze week. Samen met Bovenlichaam A verdeel je het werk over twee trainingen. Voor spiergroei tellen vooral genoeg werk per week en regelmaat; voor kracht vooral zwaarder gewicht.',
       },
       {
-        heading: 'WAAR OP LETTEN',
+        heading: 'Waar op letten',
         body: 'Geen extra conditietraining nodig vandaag. Dit is bewust een dag zonder zware beenbelasting, tussen de beentraining en het zware weekend.',
       },
     ],
@@ -417,23 +417,23 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Primair: langdurig bergop kunnen bewegen. Secundair: verticale trainingsbelasting opbouwen richting de GR5.',
       },
       {
-        heading: 'OPTIE A, LOOPBAND OP HELLING',
+        heading: 'Optie A, loopband op helling',
         body: 'Helling ongeveer 8-15%, snelheid meestal 4-5,5 km/u, RPE 4-5/10, een werkgebied, geen verplichte combinatie. Kies snelheid en helling waarmee je de volledige geplande tijd gecontroleerd kunt volhouden, niet automatisch de zwaarste combinatie. Niet structureel aan de handgrepen hangen, dat vermindert bovendien de nauwkeurigheid van Garmins afstandsmeting.',
       },
       {
-        heading: 'GESCHATTE D+, GEEN GPS-METING',
+        heading: 'Geschatte D+, geen GPS-meting',
         body: 'Op een loopband ga je niet echt omhoog, dus de hoogtemeters van je Garmin kloppen daar niet. ASCEND schat D+ uit afstand × helling% (D+ ≈ afstand in meters × helling% ÷ 100), vul de helling in bij het loggen en ASCEND berekent en vult de schatting voor je in. Dit blijft een trainingsmaat, geen echte hoogtemeting.',
       },
       {
-        heading: 'OPTIE B, BUITEN HIKEN',
+        heading: 'Optie B, buiten hiken',
         body: 'Wanneer mogelijk heeft een echte heuvelroute extra waarde: ongelijke ondergrond, balans, wisselende staplengtes en écht D+/D− die een treadmill niet levert. Log met GPS: duur, afstand, D+, D−, hartslag, RPE.',
       },
       {
-        heading: 'WANNEER TE ZWAAR?',
+        heading: 'Wanneer te zwaar?',
         items: [
           'RPE loopt langdurig naar 6-7+',
           'praten wordt lastig',
@@ -455,15 +455,15 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: alleen afvinken. Oefeningen, sets, reps, gewicht en RIR in MacroFactor.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'De tweede beentraining van de week. MacroFactor bepaalt de daadwerkelijke belasting, dit is niet per definitie lichter dan Benen A.',
       },
       {
-        heading: 'BELANGRIJKSTE MEETPUNT',
+        heading: 'Belangrijkste meetpunt',
         body: 'Let op of de dag ervoor je benen al te moe maakt. Wordt Benen B meerdere weken op rij slechter? Maak dan eerst die dag lichter, in plaats van de krachttraining te schrappen.',
       },
       {
-        heading: 'LATER',
+        heading: 'Later',
         body: 'Kan mountain-specifieker worden: single-leg kracht, step-ups, gecontroleerde step-downs, kuit-/soleuswerk, hamstrings, core/bracing, hoeft nu nog niet los in ASCEND geprogrammeerd te worden zolang MacroFactor het krachtprogramma beheert.',
       },
     ],
@@ -476,13 +476,13 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'Training is niet verplicht.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Vermoeidheid van het zware weekend (heuvelintervallen + lange duurloop) laten dalen voordat de nieuwe week begint. Een herstelwandeling hoeft niet als prestatie behandeld te worden, geen tempo- of hartslagdoel nodig.',
       },
-      { heading: 'OPTIES', items: ['volledige rust', '30-60 min rustige wandeling'] },
-      { heading: 'GEEN', items: ['intervallen', 'zware incline', 'lange run', 'zware beentraining'] },
+      { heading: 'Opties', items: ['volledige rust', '30-60 min rustige wandeling'] },
+      { heading: 'Geen', items: ['intervallen', 'zware incline', 'lange run', 'zware beentraining'] },
       {
-        heading: 'GARMIN RECOVERY TIME',
+        heading: 'Garmin recovery time',
         body: 'Een hoge Recovery Time betekent niet "36 uur niet sporten", het is Garmins schatting van de tijd tot je optimaal hersteld bent voor de volgende zware workout, en past zich gedurende de dag aan op onder andere slaap, stress en activiteit. Hoge Recovery Time + rustige wandeling is meestal prima; hoge Recovery Time + een zware sessie is wel relevante informatie om mee te wegen.',
       },
     ],
@@ -495,19 +495,19 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, helling/D+, gemiddelde hartslag, RPE.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'De kwaliteitssessie van de week: bergop intervallen combineren een echte snelheidsprikkel (voor hardloopprogressie) met opbouwende D+ (voor de GR5), twee doelen in één sessie in plaats van losse hardloop- en bergsessies.',
       },
       {
-        heading: 'UITVOERING',
+        heading: 'Uitvoering',
         body: '10 min rustig opwarmen. Daarna herhaald: 1 minuut hard bergop (RPE 8-9/10), dan 2 minuten wandelend of heel rustig joggend terug naar beneden. Het aantal herhalingen staat in je plan: van 4 in een rustweek tot 8 in de zwaarste week. Sluit af met 10 min rustig uitlopen.',
       },
       {
-        heading: 'WAAROM BERGOP, NIET VLAK?',
+        heading: 'Waarom bergop, niet vlak?',
         body: 'De helling verlaagt de impact per stap ten opzichte van vlakke sprints, en elke herhaling telt tegelijk mee als D+-training. Dit is dezelfde reden waarom heuvelherhalingen vaak worden aanbevolen als laagdrempelige introductie tot snelheidswerk.',
       },
       {
-        heading: 'WANNEER TE ZWAAR?',
+        heading: 'Wanneer te zwaar?',
         items: [
           'techniek/houding verslechtert duidelijk tijdens de herhalingen',
           'geen volledig herstel meer mogelijk tussen herhalingen binnen de geplande tijd',
@@ -526,19 +526,19 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, D+, D−, gemiddelde hartslag, RPE.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'De langste sessie van de week, bouwt zowel de marathon-uithouding (tijd op de been, aerobe basis) als GR5-specificiteit (D+, terrein, op vermoeide benen na zaterdag) tegelijk op.',
       },
       {
-        heading: 'OP VERMOEIDE BENEN, BEWUST',
+        heading: 'Op vermoeide benen, bewust',
         body: 'De lange duurloop komt direct na de heuvelintervallen. Dat is geen ongelukkige planning: bergsport-specifieke schema\'s trainen bewust een zwaar weekendblok (klimprikkel, dan een dag op vermoeide benen) omdat dat is wat een meerdaagse tocht als de GR5 daadwerkelijk vraagt.',
       },
       {
-        heading: 'OPBOUW',
+        heading: 'Opbouw',
         body: 'Rustig tempo (RPE 3-4/10). ASCEND bouwt de minuten voor je op en vraagt nooit meer dan 10% boven je langste loop van de afgelopen maand. Elke vierde week is een rustweek.',
       },
       {
-        heading: 'WANNEER TE ZWAAR?',
+        heading: 'Wanneer te zwaar?',
         items: [
           'de laatste 10-15 minuten voelen als tempo-/wedstrijdtraining in plaats van rustig',
           'volledige zinnen spreken wordt structureel moeilijk',
@@ -558,11 +558,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, hoogtemeters omhoog en omlaag, rugzakgewicht, zwaarte.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'De training die het meest op een GR5-dag lijkt: uren op de benen, echte hoogtemeters omhoog en vooral omlaag, en de rugzak op je rug. Duur, hoogtemeters en rugzakgewicht groeien per week in kleine stappen. Het rugzakgewicht gaat nooit omhoog in een week waarin ook de hoogtemeters omhoog gaan, en loopt naar je rugzakdoel, met in de zwaarste weken tot 1 kg erboven.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           'Rustig tempo: je kunt blijven praten, ook bergop (zone 1 tot 2, RPE 3-4).',
           'Bergop kleine passen, bergaf beheerst en met gebogen knieën. Dalen is wat je bovenbenen het meest vraagt.',
@@ -572,7 +572,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         ],
       },
       {
-        heading: 'WANNEER TE ZWAAR?',
+        heading: 'Wanneer te zwaar?',
         items: [
           'je knieën gaan zeuren bij het dalen',
           'je kunt bergop geen hele zinnen meer praten',
@@ -582,7 +582,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         note: 'Neem dan kleinere passen bij het dalen, gebruik stokken (in een kleine studie gaven wandelstokken na een bergtocht minder spierschade en spierpijn, dus oefen er nu al mee), of loop de tocht met een kilo of twee minder in je rugzak. Liever de rugzak een week langer op hetzelfde gewicht dan een stap te snel.',
       },
       {
-        heading: 'VEILIG OP PAD',
+        heading: 'Veilig op pad',
         body: 'Check de route en het weer, en laat iemand weten waar je loopt en wanneer je terug bent. Dit is de langste training van de week, tot vijf uur in Expeditieklaar.',
       },
     ],
@@ -600,11 +600,11 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, hoogtemeters omhoog en omlaag, rugzakgewicht, zwaarte.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Twee dagen achter elkaar wandelen, zoals op de GR5. Deze eerste dag is bewust rustiger dan morgen. Het doel is niet deze dag zwaar maken, maar morgen op vermoeide benen gewoon weer kunnen vertrekken.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: [
           'Bewust rustig (RPE 3): je bewaart iets voor morgen.',
           'Hoogteverschil en de rugzak van deze week, net als morgen.',
@@ -613,7 +613,7 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
         ],
       },
       {
-        heading: 'WANNEER TE ZWAAR?',
+        heading: 'Wanneer te zwaar?',
         items: [
           'je bent na afloop zo moe dat morgen niet lukt',
           'je knieën of voeten zeuren al aan het eind van vandaag',
@@ -633,15 +633,15 @@ export const TRAINING_GUIDES: Record<string, TrainingDayGuide> = {
     registration: 'ASCEND: duur, afstand, zwaarte.',
     sections: [
       {
-        heading: 'DOEL',
+        heading: 'Doel',
         body: 'Een rustige rit voor je conditie, zonder de schokken van hardlopen. Telt als fietsen, niet als hardlopen.',
       },
       {
-        heading: 'ZO DOE JE HET',
+        heading: 'Zo doe je het',
         items: ['Rustig tempo: je kunt hele zinnen praten (zone 2, RPE 3-4).', 'Liever wat langer rustig dan kort en hard.'],
       },
       {
-        heading: 'WANNEER TE ZWAAR?',
+        heading: 'Wanneer te zwaar?',
         items: ['je kunt niet meer praten', 'je benen zijn de dag erna nog zwaar voor een krachttraining of loop'],
         note: 'Fiets dan korter of in een lichtere versnelling.',
       },

@@ -24,6 +24,7 @@ import { resolveOverviews, type OverviewSettings } from './overviewSettings';
 import { resolveRunInsight, type InsightTopicSwitch } from './runInsightSettings';
 import { resolveSky } from './skySettings';
 import { resolveStrengthSettings, type StrengthSettings } from './strengthSettings';
+import { budgetText, resolveWeekBudget, settingBudget } from './weekBudget';
 import { resolveCalmRun, resolveWatchHrMode } from './watchHeartRate';
 
 export interface AdviceSpec {
@@ -138,6 +139,12 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   plain('zware-dingen', 'Benen en een zware loop', 'planning', 'hardSameDay', false as boolean, (v) => onOff(v === true), { plan: true }),
 
   // Doel en tochten
+  {
+    id: 'weekbudget', title: 'Weekbudget', page: 'doel',
+    differs: (s) => { const c = resolveWeekBudget(s.weekBudget); return c.minutes !== undefined || c.strength !== undefined || !c.doubleHard; },
+    value: (s) => budgetText(settingBudget(s).budget),
+    reset: () => ({ weekBudget: undefined }),
+  },
   choice('lange-zondag', 'De lange zondag', 'doel', 'longSundaySession', 'hike', 'langeZondag', true),
   choice('na-hoofddoel', 'Na je hoofddoel', 'doel', 'afterMainGoal', 'stop', 'naHoofddoel', true),
   flag('seizoensstrook', 'Seizoensstrook tonen', 'doel', 'showSeasonStrip'),
@@ -193,6 +200,7 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   choice('wat-oorzaak', 'Mogelijke oorzaak', 'lichaam', 'influenceCause', 'patroon', 'oorzaak'),
   flag('wat-overzicht', 'Op Je stand', 'lichaam', 'influenceOverview'),
   flag('wat-test', 'Test verschuiven', 'lichaam', 'influenceTestMove'),
+  flag('wat-namen', 'Voorbeelden bij naam noemen', 'lichaam', 'influenceNames'),
   {
     id: 'intensiteit', title: 'Intensiteit tellen', page: 'lichaam',
     differs: (s) => resolveIntensityCounting(s) !== 'heartrate',

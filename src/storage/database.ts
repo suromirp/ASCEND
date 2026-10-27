@@ -649,6 +649,15 @@ export interface AppSettings {
   // "Vragen bij een korte nacht": ask instead of warning when the watch saw
   // doubtfully little sleep. Absent = on. Optional and additive.
   askShortNight?: boolean;
+  // "Zonder doel" (engine/direction.ts, docs/beslissingen/2026-10-27-zonder-doel-stap-1.md): the
+  // direction you chose when you have no goal ('maintain' Fit blijven, 'improve' Fitter worden,
+  // 'stronger' Sterker worden, 'easy' Rustig aan), the Monday it started, and your own weekly
+  // budget (minutes, times of strength, whether hard minutes count double). Absent = nothing
+  // chosen, the advice of Fit blijven; the plan does not follow it yet. Optional and additive;
+  // read defensively and cleaned on import (storage/migrations.ts#migrateDirection).
+  direction?: 'maintain' | 'improve' | 'stronger' | 'easy';
+  directionStart?: string;
+  weekBudget?: { minutes?: number; strength?: number; doubleHard?: boolean };
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;
@@ -669,6 +678,9 @@ export interface AppSettings {
   influenceCause?: 'uit' | 'weet' | 'patroon';
   influenceOverview?: boolean;
   influenceTestMove?: boolean;
+  // Alcohol and wiet named in the explanation and the help of "Wat speelde er"
+  // (absent = on). Off: the same texts in neutral words. Your own chips stay.
+  influenceNames?: boolean;
   // The one question per week in the week review (models/checkIn.ts).
   weeklyHealthChecks?: WeeklyHealthCheck[];
   // The question of the week and your one-line plan (engine/weeklyQuestion.ts).

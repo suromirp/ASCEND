@@ -27,6 +27,7 @@ import { noticeSupport } from '../../engine/morningNotice';
 import { readNoticeEnvironment } from '../../utils/morningNotice';
 import { resolveProgramWeek, todayISO } from '../../utils/dates';
 import { mainGoal as findMainGoal } from '../../engine/mainGoal';
+import { listedGoals } from '../../engine/goalList';
 
 // Alles wat de instellingen over je weten, als de feiten die engine/settingsSummary.ts
 // leest. De opslag die niet in de app-staat zit (horloge, MacroFactor, back-up) wordt
@@ -143,6 +144,7 @@ export function useSettingsFacts(): { facts: SettingsFacts; reload: () => void }
       snapshots: loaded.snapshots,
       buildLabel: buildLabel(),
       longSundayVisible: !mainIsTrek || settings.longSundaySession === 'run',
+      noGoal: listedGoals(trainingGoals, ladder, today).length === 0 && !!program && plannedSessions.length > 0,
       notice: loaded.notice,
     };
   }, [settings, goalEngineConfig, program, trainingGoals, goalMilestones, injuryNotes, templates, plannedSessions, templateById, sessionLogs, strengthExternal, loaded, strengthCheck]);

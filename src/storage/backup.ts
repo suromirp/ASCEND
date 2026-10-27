@@ -16,6 +16,7 @@
 // transaction — so a bad import can always be undone by re-importing that
 // snapshot's own envelope.
 
+import { localDateOf } from '../utils/dates';
 import { isEmptyStart } from '../engine/freshStart';
 import type { Program } from '../models/program';
 import type { SessionTemplate, PlannedSession, SessionLog } from '../models/training';
@@ -56,7 +57,7 @@ import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -173,7 +174,7 @@ export function backupFileName(createdAt: string): string {
   // `.json` keeps every existing OS/browser/text-editor treating it as
   // plain, previewable JSON — nothing generic breaks on a file it doesn't
   // recognize.
-  return `ascend-${createdAt.slice(0, 10)}.ascend-backup.json`;
+  return `ascend-${localDateOf(createdAt)}.ascend-backup.json`;
 }
 
 // --- import direction: normalize ---------------------------------------------
@@ -305,7 +306,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     skipped.n++;
   }
   // The switches of "Wat speelde er": a yes or a no, and the cause one of three words, or not there.
-  for (const key of ['influenceSign', 'influenceOverview', 'influenceTestMove']) {
+  for (const key of ['influenceSign', 'influenceOverview', 'influenceTestMove', 'influenceNames']) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -384,6 +385,15 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.resumeMinutes;
     Object.assign(s, nav.value);
     skipped.n += nav.skipped;
+  }
+  // Zonder doel: the direction, its start and your weekly budget; known values stay.
+  if ('direction' in s || 'directionStart' in s || 'weekBudget' in s) {
+    const clean = migrateDirection({ direction: s.direction, directionStart: s.directionStart, weekBudget: s.weekBudget });
+    delete s.direction;
+    delete s.directionStart;
+    delete s.weekBudget;
+    Object.assign(s, clean.value);
+    skipped.n += clean.skipped;
   }
   // The switches of "Overzichten en vragen": a record or not there; the engine
   // reads every key defensively (engine/overviewSettings.ts#resolveOverviews).

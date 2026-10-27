@@ -32,7 +32,7 @@
 //   SessionLog is append-only", of the same kind as manualMeasured and trim.
 
 import type { CardioMetric, OutdoorMetric, SessionLog, SourceField, SourceNumbers, SourceSync, SourceUpdate } from '../models/training';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, localDateOf } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { sourceNumbers, durationLabel, type ExternalActivity } from './activityImport';
 import { fromIntervals } from './logSource';
@@ -300,7 +300,7 @@ function numbersText(values: Partial<Record<SourceField, number | null | undefin
 export function sourceUpdateLine(log: SessionLog): string | undefined {
   const u = log.sourceSync?.updated;
   if (!u) return undefined;
-  return `Bijgewerkt uit intervals.icu op ${formatDateNL(u.at.slice(0, 10))}`;
+  return `Bijgewerkt uit intervals.icu op ${formatDateNL(localDateOf(u.at))}`;
 }
 
 // "Eerder: 62 min, 9,8 km, 410 m D+": the numbers that "Vorige getallen terugzetten" gives back.

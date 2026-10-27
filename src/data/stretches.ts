@@ -55,9 +55,9 @@ export const COOLDOWN_RUN: Stretch[] = [
 
 export const COOLDOWN_RECOVERY: Stretch[] = [
   { name: 'Kattenrug / koeienrug (cat-cow)', durationSec: 45, videoUrl: 'https://youtu.be/muQ0luAlGKI' },
-  { name: "Child's pose", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
+  { name: "Kindhouding (child's pose)", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
   { name: 'Thread-the-needle', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=6roMIB2YV4Y' },
-  { name: 'Forward fold', durationSec: 45, videoUrl: 'https://www.youtube.com/watch?v=cyVochkrbs0' },
+  { name: 'Voorwaartse vouw (forward fold)', durationSec: 45, videoUrl: 'https://www.youtube.com/watch?v=cyVochkrbs0' },
   { name: 'Staande zijwaartse rek (side-bend)', durationSec: 30, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=IpyxmlAp4jo' },
 ];
 
@@ -76,7 +76,7 @@ export const MORNING_ROUTINE: Stretch[] = [
 ];
 
 export const EVENING_ROUTINE: Stretch[] = [
-  { name: "Child's pose", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
+  { name: "Kindhouding (child's pose)", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
   { name: 'Zittende forward fold', durationSec: 45, videoUrl: 'https://www.youtube.com/shorts/imptdV-1wKY' },
   { name: 'Figure-four liggend', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=WmRfU23f-fM' },
   { name: 'Nek zij-buiging (oor naar schouder)', durationSec: 25, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=UUXUVFQS5u0' },
@@ -107,7 +107,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
     stretches: [
       { name: 'Cross-body schouderstretch', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=KrBCD8Hv-fk' },
       { name: 'Schouderrollen', durationSec: 30, videoUrl: 'https://www.youtube.com/watch?v=Bv8QPOs7xks' },
-      { name: "Child's pose", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
+      { name: "Kindhouding (child's pose)", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
       { name: 'Thread-the-needle', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=6roMIB2YV4Y' },
       // New — gerichte scapulaire controle, weinig aanwezig in de rest van de bibliotheek.
       { name: 'Scapular wall slides', durationSec: 30, note: 'controle, geen stretch', videoUrl: 'https://www.youtube.com/watch?v=Eaj_NG5_hIo' },
@@ -118,8 +118,8 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
     label: 'Onderrug',
     stretches: [
       { name: 'Kattenrug / koeienrug (cat-cow)', durationSec: 45, videoUrl: 'https://youtu.be/muQ0luAlGKI' },
-      { name: "Child's pose", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
-      { name: 'Pelvic tilt (bekkenkanteling)', durationSec: 30, videoUrl: 'https://youtu.be/n2cpk6o-6_w' },
+      { name: "Kindhouding (child's pose)", durationSec: 60, videoUrl: 'https://www.youtube.com/watch?v=LZgABs0IggM' },
+      { name: 'Bekkenkanteling (pelvic tilt)', durationSec: 30, videoUrl: 'https://youtu.be/n2cpk6o-6_w' },
     ],
   },
   {
@@ -139,7 +139,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
     stretches: [
       { name: '90/90 heuprotatie', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=f_7qIPxw6nE' },
       { name: 'Figure-four liggend', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=WmRfU23f-fM' },
-      { name: 'Dynamic pigeon', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=nMBjRbv9624' },
+      { name: 'Dynamische duif (dynamic pigeon)', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=nMBjRbv9624' },
       // New — adductor-mobiliteit was nauwelijks apart aanwezig.
       { name: 'Adductor rock-back', durationSec: 30, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=uZyLZDxcD38' },
     ],
@@ -156,7 +156,7 @@ export const PROBLEM_AREAS: ProblemAreaGroup[] = [
     id: 'hamstrings',
     label: 'Hamstrings',
     stretches: [
-      { name: 'Forward fold', durationSec: 45, videoUrl: 'https://www.youtube.com/watch?v=cyVochkrbs0' },
+      { name: 'Voorwaartse vouw (forward fold)', durationSec: 45, videoUrl: 'https://www.youtube.com/watch?v=cyVochkrbs0' },
       { name: 'Liggende hamstringstretch (met band)', durationSec: 45, note: 'per kant', videoUrl: 'https://www.youtube.com/watch?v=Il1L75v6gq0' },
     ],
   },

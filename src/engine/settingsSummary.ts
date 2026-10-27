@@ -37,8 +37,10 @@ import { zoneBpm } from './heartRateZones';
 import { bootGoalKm } from './bootBreakIn';
 import { HR_FALLBACK_TEXT, resolveCalmRun, resolveWatchHr, resolveWatchHrMode, type IntervalsHrBasis } from './watchHeartRate';
 import { adviceDifferences } from './settingsDiff';
+import { settingBudget } from './weekBudget';
+import { DIRECTIONS } from '../data/directions';
 import { formatNumberNL } from '../utils/number';
-import { formatDateNL } from '../utils/dates';
+import { formatDateNL, localDateOf } from '../utils/dates';
 
 // Een regel onder een rij past op 360 px op één regel (13 px, de breedte van de rij).
 export const SUB_MAX_LENGTH = 40;
@@ -120,6 +122,8 @@ export interface SettingsFacts {
   buildLabel: string;
   // Of de keuze voor de lange zondag er staat (niet bij een bergdoel).
   longSundayVisible: boolean;
+  // Er is geen doel op Ascend (de lijst van de tab is leeg): dan staat de rij Weekbudget er.
+  noGoal?: boolean;
   // Wat deze telefoon kan voor de ochtendmelding en of meldingen mogen; weglaten als dat
   // nog niet bekend is (dan telt alleen de schakelaar).
   notice?: { support: NoticeSupport; granted: boolean };
@@ -222,6 +226,7 @@ export function rowContext(f: SettingsFacts): RowContext {
     strengthInApp: !f.strengthExternal,
     strengthTrainings: f.strengthDurations.length > 0,
     longSundayVisible: f.longSundayVisible,
+    noGoal: f.noGoal === true,
     sameDayAllowed: f.pairing !== 'never',
     folderSupported: f.folderSupported,
     noticeAvailable: support !== 'unavailable' && support !== 'not_installed',
@@ -472,7 +477,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       if (r.setting !== 'auto') return { value: choiceShort('figuur', r.setting) };
       return r.source === 'linked'
         ? { value: choiceShort('figuur', r.figure), auto: true, sub: 'Uit je koppeling' }
-        : { value: choiceShort('figuur', r.figure), auto: true, sub: 'Nog niet bekend, nu Man' };
+        : { value: choiceShort('figuur', r.figure), auto: true, sub: `Nog niet gekozen, dus ${choiceShort('figuur', r.figure)}` };
     }
 
     // Wat speelde er (engine/influence.ts): alles staat aan, de oorzaak met je patroon.
@@ -486,6 +491,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.influenceOverview !== false, sub: 'Wat een reden met je doet' };
     case 'wat-test':
       return { checked: s.influenceTestMove !== false, sub: 'Na een avond die je noteerde' };
+    case 'wat-namen':
+      return { checked: s.influenceNames !== false, sub: s.influenceNames === false ? 'De uitleg blijft neutraal' : 'Alcohol en wiet staan in de uitleg' };
     case 'wat-vastgelegd': {
       const n = (s.influences ?? []).filter((e) => e.reasons.length > 0 || e.excludeHeartRate === true).length;
       return n === 0 ? { value: 'Nog niets', dim: true } : { value: `${n} keer`, sub: 'Bekijken, wijzigen of wissen' };
@@ -502,6 +509,11 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCard };
     case 'zweet-vragen':
       return { checked: s.askSweat !== false };
+    case 'weekbudget': {
+      const w = settingBudget(s);
+      // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.
+      return { value: w.id === 'improve' ? 'Eigen weken' : `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
+    }
     case 'twijfeltest':
       return { checked: s.askDoubtTest !== false };
     case 'korte-nacht':
@@ -612,7 +624,7 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.showWatchStatus !== false && s.showWatchStatusOnWeek !== false };
     case 'macrofactor':
       return f.macroFactor?.readAt
-        ? { title: 'Laatste export', value: shortDate(f.macroFactor.readAt.slice(0, 10)) }
+        ? { title: 'Laatste export', value: shortDate(localDateOf(f.macroFactor.readAt)) }
         : { title: 'Export inlezen', value: 'Nog niet', dim: true, sub: 'Kracht en gewicht uit MacroFactor' };
     case 'macrofactor-leidend':
       return { checked: f.macroFactor?.leads !== false };
@@ -707,7 +719,7 @@ export function groupSummary(page: SettingsPageId, f: SettingsFacts): { value?: 
       if (!garmin && !mf) return { value: 'Geen', dim: true, sub: 'Garmin en MacroFactor nog niet gekoppeld' };
       const parts = [
         garmin ? `Garmin${f.watch?.syncedAt ? ` om ${clock(f.watch.syncedAt)}` : ''}` : null,
-        mf && f.macroFactor?.readAt ? `MacroFactor ${shortDate(f.macroFactor.readAt.slice(0, 10))}` : null,
+        mf && f.macroFactor?.readAt ? `MacroFactor ${shortDate(localDateOf(f.macroFactor.readAt))}` : null,
       ].filter((p): p is string => p !== null);
       return garmin ? { value: 'Verbonden', dot: 'ok', sub: parts.join(', ') } : { value: 'MacroFactor', sub: parts.join(', ') };
     }

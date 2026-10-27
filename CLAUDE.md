@@ -400,6 +400,11 @@ tonen"). A new label, a goal added or changed, "In hutten" or "Met tent", and an
 `gr5Readiness.ts#computeMainGoalReadiness`, the same as on Je stand. `/ascend/doelen` redirects to the tab. Krachtprogressie
 and Trainingsverdeling live on Je stand.
 
+**Ziek melden and "weer beter"** (`engine/illness.ts#planIllnessChange`, `components/IllnessCard.tsx`, decision
+`docs/beslissingen/2026-10-27-ziek-als-voorstel.md`) are a proposal with Akkoord when the planning changes: the
+period is stored only on Akkoord, with Liever niet nothing is stored and nothing changes; when the planning does
+not change the period is stored at once. Undo puts the periods back with the planning.
+
 **Free days, holidays and treks** (`engine/leave.ts`, `AppSettings.leavePeriods`,
 shown on Week as "Vrije dagen en vakanties"). Three kinds: `no_training` (no
 training on those days; what was there moves to an empty day of that week or is
@@ -551,7 +556,9 @@ on each side and bands that do not touch. Je stand shows "Wat doet dit met je?" 
 your own band; a test the same day after 3 or more glasses (or wiet that day) gets a proposal
 with Akkoord (`engine/influenceProposal.ts`). Morning numbers from intervals.icu are kept 400
 days for this (`engine/wellnessRange.ts`). A reason is never in a list, a notification or the
-Strava text.
+Strava text. Setting "Voorbeelden bij naam noemen" (`AppSettings.influenceNames`, on by default) only
+decides whether the explanation and help name alcohol and wiet or say "wat je dronk of gebruikte";
+the chips stay (`data/settingsHelp.ts#settingsHelp`, decision `docs/beslissingen/2026-10-27-redenen-bij-naam.md`).
 
 **Heart rate on the watch** (`engine/watchHeartRate.ts`, `engine/heartRateZones.ts`, decision
 `docs/beslissingen/2026-10-25-hartslag-op-het-horloge.md`): ASCEND's zones follow Garmin's

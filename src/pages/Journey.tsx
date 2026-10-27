@@ -55,7 +55,7 @@ export function JourneyPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <PageHeader eyebrow="Ascend" title="Reisplanner" line={goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'} fallback="/ascend" />
+      <PageHeader eyebrow="Reis" title="Reisplanner" line={goalDate ? `Op weg naar ${formatDateNL(goalDate)}` : 'Op weg naar de start'} fallback="/ascend" />
 
       {!goalDate ? (
         <Card className="flex flex-col gap-3">

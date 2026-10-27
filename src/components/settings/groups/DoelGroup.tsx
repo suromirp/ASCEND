@@ -12,6 +12,7 @@ import { ChoiceFromDef } from './ChoiceFromDef';
 import { usePlanSettingChange } from '../usePlanSettingChange';
 import { choiceShort } from '../../../data/settingsChoices';
 import { ProgramSheet, RestartSheet } from './DoelSheets';
+import { WeekBudgetSheet } from './WeekBudgetSheet';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -47,6 +48,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       <SettingsSection title="Doel">
         <SummaryRow id="doelen" title="Hoofddoel" facts={facts} onClick={() => navigate('/ascend/doelen')} />
         <SummaryRow id="programma" title="Programma" facts={facts} onClick={() => setSheet('programma')} />
+        <SummaryRow id="weekbudget" title="Weekbudget" facts={facts} info="weekbudget" onClick={() => setSheet('weekbudget')} />
         <SummaryRow id="lange-zondag" title="De lange zondag" facts={facts} onClick={() => setSheet('lange-zondag')} />
         <SummaryRow id="na-hoofddoel" title="Na je hoofddoel" facts={facts} onClick={() => setSheet('na-hoofddoel')} />
         <SummaryRow id="seizoensstrook" title="Seizoensstrook tonen" facts={facts} info="seizoensstrook" onChange={(on) => void updateSettings({ showSeasonStrip: on })} />
@@ -68,6 +70,7 @@ export function DoelGroup({ facts, sheet, setSheet }: GroupProps) {
       )}
       {sheet === 'programma' && <ProgramSheet onClose={close} onRestart={() => setSheet('opnieuw')} />}
       {sheet === 'opnieuw' && <RestartSheet onClose={close} />}
+      {sheet === 'weekbudget' && <WeekBudgetSheet onClose={close} />}
       {sheet === 'lange-zondag' && (
         <ChoiceFromDef def={CHOICES.langeZondag} value={settings.longSundaySession ?? 'hike'} onPick={(v) => { if (v !== (settings.longSundaySession ?? 'hike')) { setNote(null); void plan.changeSetting(`De lange zondag: ${choiceShort('langeZondag', v)}`, { longSundaySession: v }, 'Volgt je keuze voor de lange zondag.'); } }} onClose={close} />
       )}

@@ -15,7 +15,7 @@ export function GidsenGroup() {
     ['bronnen', 'Bronnen', '/bronnen'],
   ];
   return (
-    <SettingsSection>
+    <SettingsSection title="Opzoeken">
       {rows.map(([id, title, to]) => <SettingsRow key={id} id={id} title={title} onClick={() => navigate(to)} />)}
     </SettingsSection>
   );

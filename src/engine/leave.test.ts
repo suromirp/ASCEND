@@ -5,7 +5,7 @@ import { planLeaveChange, type LeavePlan } from './leaveProposal';
 import { applyPlanChangeItems } from './proposalEngine';
 import { previewProposal } from './proposalPreview';
 import {
-  describePeriodDates, isLeaveBlockedDay, isLeavePeriod, leaveDays, leaveLabelOn, lightDays, periodsInWeek, validateLeaveDraft,
+  describePeriodCompact, describePeriodDates, isLeaveBlockedDay, isLeavePeriod, leaveDays, leaveLabelOn, lightDays, periodsInWeek, validateLeaveDraft,
 } from './leave';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { LeavePeriod } from '../models/leave';
@@ -78,6 +78,12 @@ describe('the periods themselves', () => {
     expect(leaveLabelOn('2026-10-31', [trek])).toMatchObject({ kind: 'light', title: 'Dag na je tocht' });
     expect(leaveLabelOn('2026-11-05', [trek, holiday, free])).toBeUndefined();
     expect(describePeriodDates(holiday)).toBe('di 27 oktober t/m do 29 oktober');
+  });
+
+  it('names a period short for a title', () => {
+    expect(describePeriodCompact({ startDate: '2026-11-10', endDate: '2026-11-14' })).toBe('10 tot 14 nov');
+    expect(describePeriodCompact({ startDate: '2026-10-28', endDate: '2026-11-03' })).toBe('28 okt tot 3 nov');
+    expect(describePeriodCompact({ startDate: '2026-11-10', endDate: '2026-11-10' })).toBe('10 nov');
   });
 
   it('is blocked for the weekly planning on holiday and trek days only', () => {

@@ -87,7 +87,7 @@ function Sheet({ name, counted, logAdvice, strengthExternal, meaning, testLogId,
                 <div className="mt-1"><AdviceItem advice={a} compact /></div>
               </div>
             ))}
-            <PrimaryButton onClick={requestClose}>Sluiten</PrimaryButton>
+            <PrimaryButton onClick={requestClose}>Begrepen</PrimaryButton>
           </Card>
         </div>
       </div>

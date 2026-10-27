@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { PRIORITY_NAME } from '../../engine/goalLabels';
-import { moveGoal, type MoveResult, type NextKeySession } from '../../engine/goalList';
+import { landingIndex, moveGoal, type MoveResult, type NextKeySession } from '../../engine/goalList';
 import { GoalCard } from './GoalCard';
 import type { GoalView } from './useGoalViews';
 
@@ -18,7 +18,7 @@ interface Drag {
 }
 
 export function GoalList({
-  views, isOpen, next, onToggle, onDetails, onLabel, onMove,
+  views, isOpen, next, onToggle, onDetails, onLabel, onMove, onBlocked,
 }: {
   views: GoalView[];
   isOpen: (id: string, index: number) => boolean;
@@ -27,19 +27,25 @@ export function GoalList({
   onDetails: (id: string) => void;
   onLabel: (id: string) => void;
   onMove: (id: string, result: MoveResult) => void;
+  // Een verplaatsing die niet kon (het hoofddoel onder een doel dat geen Top is): de pagina zegt waarom.
+  onBlocked: (id: string) => void;
 }) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [announce, setAnnounce] = useState('');
   const cards = useRef(new Map<string, HTMLDivElement>());
   const live = useRef({ views, onMove, drag });
-  useEffect(() => { live.current = { views, onMove, drag }; });
+  const onBlockedRef = useRef(onBlocked);
+  useEffect(() => { live.current = { views, onMove, drag }; onBlockedRef.current = onBlocked; });
   const cleanup = useRef<(() => void) | null>(null);
   useEffect(() => () => cleanup.current?.(), []);
 
   const listed = views.map((v) => v.item);
-  const say = (id: string, target: number) => {
-    const r = moveGoal(listed, id, target);
-    setAnnounce(`Plek ${target + 1} van ${views.length}, label ${PRIORITY_NAME[r.priority]}`);
+  // Alleen de plek die bij loslaten echt komt: het hoofddoel kan niet onder een doel dat geen Top is.
+  const say = (id: string, wanted: number) => {
+    const at = landingIndex(listed, id, wanted);
+    const r = moveGoal(listed, id, at);
+    const stays = at !== wanted ? ', het hoofddoel blijft bij de Top-doelen' : '';
+    setAnnounce(`Plek ${at + 1} van ${views.length}, label ${PRIORITY_NAME[r.priority]}${stays}`);
   };
 
   function targetAt(id: string, y: number): number {
@@ -64,7 +70,7 @@ export function GoalList({
     let raf = 0;
     const update = () => {
       const dy = lastY - startY + ((scroller?.scrollTop ?? 0) - startScroll);
-      setDrag({ id, mode: 'pointer', target: targetAt(id, lastY), dy });
+      setDrag({ id, mode: 'pointer', target: landingIndex(live.current.views.map((v) => v.item), id, targetAt(id, lastY)), dy });
     };
     const loop = () => {
       if (scroller) {
@@ -85,10 +91,12 @@ export function GoalList({
     };
     const up = () => {
       stop();
-      const target = targetAt(id, lastY);
+      const items = live.current.views.map((v) => v.item);
+      const wanted = targetAt(id, lastY);
       setDrag(null);
-      const result = moveGoal(live.current.views.map((v) => v.item), id, target);
+      const result = moveGoal(items, id, wanted);
       if (result.changed) live.current.onMove(id, result);
+      else if (landingIndex(items, id, wanted) !== wanted) onBlockedRef.current(id);
     };
     const cancel = () => { stop(); setDrag(null); };
     cleanup.current = stop;
@@ -107,12 +115,13 @@ export function GoalList({
       setDrag(null);
       const result = moveGoal(listed, id, d.target);
       if (result.changed) onMove(id, result);
-      else setAnnounce('Op dezelfde plek gelaten');
+      else { setAnnounce('Op dezelfde plek gelaten'); if (landingIndex(listed, id, d.target) !== d.target) onBlocked(id); }
     } else if (d && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       e.preventDefault();
-      const target = Math.max(0, Math.min(views.length - 1, d.target + (e.key === 'ArrowUp' ? -1 : 1)));
+      const wanted = Math.max(0, Math.min(views.length - 1, d.target + (e.key === 'ArrowUp' ? -1 : 1)));
+      const target = landingIndex(listed, id, wanted);
       setDrag({ ...d, target });
-      say(id, target);
+      say(id, wanted);
     } else if (d && (e.key === 'Escape' || e.key === 'Tab')) {
       if (e.key === 'Escape') e.preventDefault();
       setDrag(null);

@@ -7,7 +7,7 @@
 //
 // Pure: no React, no IndexedDB.
 
-import { daysBetween } from '../utils/dates';
+import { daysBetween, localDateOf } from '../utils/dates';
 
 export const FRESH_START_DAYS = 14;
 
@@ -20,7 +20,7 @@ export function shouldOfferRestore(input: {
 }): boolean {
   const { seededAt, today, logCount, lastExportedAt, dismissedAt } = input;
   if (!seededAt || dismissedAt || lastExportedAt || logCount > 0) return false;
-  return daysBetween(seededAt.slice(0, 10), today) < FRESH_START_DAYS;
+  return daysBetween(localDateOf(seededAt), today) < FRESH_START_DAYS;
 }
 
 // --- an empty app: nothing chosen, nothing done ----------------------------

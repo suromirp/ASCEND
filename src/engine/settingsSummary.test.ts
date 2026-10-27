@@ -4,6 +4,7 @@ import { durationNote, groupSummary, rowSummary, searchValue, SUB_MAX_LENGTH, ty
 import { adviceDifferences } from './settingsDiff';
 import { PAGE_ROWS, SETTINGS_PAGES, allRowIds } from '../data/settingsLayout';
 import { DEFAULT_WATCH_USE } from './watchUse';
+import { settingsHelp } from '../data/settingsHelp';
 
 const TODAY = '2026-10-22';
 
@@ -323,7 +324,7 @@ describe('rowSummary: lichaam', () => {
   });
 
   it('figuur: Automatisch zegt eerlijk dat het nog niet bekend is', () => {
-    expect(rowSummary('figuur', facts())).toEqual({ value: 'Man', auto: true, sub: 'Nog niet bekend, nu Man' });
+    expect(rowSummary('figuur', facts())).toEqual({ value: 'Man', auto: true, sub: 'Nog niet gekozen, dus Man' });
     expect(rowSummary('figuur', facts({ linkedSex: 'vrouw' }))).toEqual({ value: 'Vrouw', auto: true, sub: 'Uit je koppeling' });
     expect(rowSummary('figuur', facts({ settings: { ...facts().settings, figure: 'vrouw' } }))).toEqual({ value: 'Vrouw' });
     expect(rowSummary('figuur', facts({ settings: { ...facts().settings, figure: 'man' }, linkedSex: 'vrouw' }))).toEqual({ value: 'Man' });
@@ -338,6 +339,11 @@ describe('rowSummary: wat speelde er', () => {
     expect(rowSummary('wat-overzicht', facts())).toEqual({ checked: true, sub: 'Wat een reden met je doet' });
     expect(rowSummary('wat-test', facts()).checked).toBe(true);
     expect(rowSummary('wat-oorzaak', facts())).toEqual({ value: 'Ook je patroon', sub: 'Uit weer, horloge, logboek en je patroon' });
+  });
+
+  it('voorbeelden bij naam: standaard aan, uit maakt de rij neutraal', () => {
+    expect(rowSummary('wat-namen', facts())).toEqual({ checked: true, sub: 'Alcohol en wiet staan in de uitleg' });
+    expect(rowSummary('wat-namen', withSettings({ influenceNames: false }))).toEqual({ checked: false, sub: 'De uitleg blijft neutraal' });
   });
 
   it('een schakelaar die uit staat, en de oorzaak in drie stappen', () => {
@@ -798,5 +804,45 @@ describe('rowSummary: aangepaste instellingen', () => {
     const n = adviceDifferences(f.settings).length;
     expect(rowSummary('aangepast', f)).toEqual({ value: String(n), hidden: n === 0 });
     expect(rowSummary('aangepast', facts({ settings: { strengthTrackedExternally: false, introSoundEnabled: true } }))).toEqual({ value: '0', hidden: true });
+  });
+});
+
+describe('uitleg bij Wat speelde er: voorbeelden bij naam', () => {
+  const words = (key: string, named: boolean) => JSON.stringify(settingsHelp(key, named));
+  it('aan noemt alcohol en wiet bij naam, uit gebruikt neutrale woorden', () => {
+    expect(words('wat-test', true)).toMatch(/wiet/i);
+    expect(words('wat-oorzaak', true)).toMatch(/Alcohol en wiet/);
+    for (const key of ['wat-test', 'wat-oorzaak']) {
+      expect(words(key, false)).not.toMatch(/alcohol|wiet|glazen/i);
+    }
+    expect(settingsHelp('wat-namen', false)).toBeDefined();
+  });
+});
+
+describe('rowSummary: weekbudget', () => {
+  const withSettings = (extra: Partial<SettingsFacts['settings']>, noGoal = true) => facts({ noGoal, settings: { strengthTrackedExternally: false, introSoundEnabled: true, ...extra } });
+
+  it('zonder keuze het advies van Fit blijven', () => {
+    expect(rowSummary('weekbudget', withSettings({}))).toMatchObject({ value: '150 min', sub: '2\u00d7 kracht, advies Fit blijven', hidden: false });
+  });
+
+  it('volgt je richting en je eigen waarden', () => {
+    expect(rowSummary('weekbudget', withSettings({ direction: 'easy' }))).toMatchObject({ value: '90 min', sub: '1\u00d7 kracht, Rustig aan' });
+    expect(rowSummary('weekbudget', withSettings({ direction: 'easy', weekBudget: { minutes: 120, strength: 2 } }))).toMatchObject({ value: '120 min', sub: '2\u00d7 kracht, Rustig aan' });
+  });
+
+  it('staat er niet met een doel', () => {
+    expect(rowSummary('weekbudget', withSettings({}, false)).hidden).toBe(true);
+  });
+
+  it('telt als aangepast zodra je iets anders koos dan het advies', () => {
+    expect(adviceDifferences({ strengthTrackedExternally: false, introSoundEnabled: true }).some((d) => d.id === 'weekbudget')).toBe(false);
+    const found = adviceDifferences({ strengthTrackedExternally: false, introSoundEnabled: true, weekBudget: { minutes: 105 } }).find((d) => d.id === 'weekbudget');
+    expect(found).toMatchObject({ value: '105 min, 2\u00d7 kracht', advice: '150 min, 2\u00d7 kracht', page: 'doel', plan: false });
+  });
+
+  it('heeft uitleg zonder gedachtestreepjes of uitroeptekens', () => {
+    const help = settingsHelp('weekbudget', true)!;
+    expect(`${help.title} ${help.lead} ${help.points.map((p) => p.head + p.text).join(' ')}`).not.toMatch(/[\u2013\u2014!]/);
   });
 });

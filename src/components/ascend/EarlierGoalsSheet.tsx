@@ -7,8 +7,10 @@ import { Sheet } from '../settings/Sheet';
 // kun je terughalen (het wordt dan een doel zonder datum, klaar voor een nieuwe); een voorbij doel
 // archiveer je met een voorstel, want het kan nog iets in je planning raken.
 export function EarlierGoalsSheet({
-  goals, onUnarchive, onArchive, onClose,
+  goals, note, onUnarchive, onArchive, onClose,
 }: {
+  // Een korte regel, bijvoorbeeld na het terughalen.
+  note?: string | null;
   goals: TrainingGoal[];
   onUnarchive: (goalId: string) => void;
   onArchive: (goal: TrainingGoal) => void;
@@ -37,6 +39,7 @@ export function EarlierGoalsSheet({
               ))}
             </div>
           )}
+          {note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{note}</p>}
           <TextButton tone="dim" onClick={close} className="self-center">Sluiten</TextButton>
         </div>
       )}

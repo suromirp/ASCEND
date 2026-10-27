@@ -142,7 +142,7 @@ describe('de hele planningsronde met een tocht', () => {
       mode: 'add', period: trek, existing: [], sessions: base, logs, templates, today: TODAY,
       context: (periods) => context(periods, { logs, blocks: BLOCKS, newId: () => `draft-${accepted++}` }),
     });
-    expect(plan.proposal.issue).toBe('Tocht Sneeuwhike: wo 13 januari 2027 t/m do 14 januari 2027');
+    expect(plan.proposal.issue).toBe('Tocht Sneeuwhike, 13 tot 14 jan');
     expect(plan.proposal.changes.some((c) => c.plannedSessionId === mine || c.plannedSessionId === test)).toBe(false);
     expect(plan.notes.join(' ')).toMatch(/vastgezet/);
     expect(plan.proposal.changes.filter((c) => c.action === 'add').every((c) => c.leave?.periodId === 'trek-a')).toBe(true);

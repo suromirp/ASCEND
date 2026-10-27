@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planIllnessStart, planIllnessEnd, recoveryRamp, isIllnessDay, activeIllness, rampDays, recoveryDurationAdjustments } from './illness';
+import { planIllnessChange, planIllnessStart, planIllnessEnd, recoveryRamp, isIllnessDay, activeIllness, rampDays, recoveryDurationAdjustments } from './illness';
 import { computeReadiness } from './readiness';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
@@ -101,5 +101,43 @@ describe('building back after illness at about three quarters volume', () => {
     expect(resolveEffectiveFullDuration(tpl, '2026-10-06', null)).toBe(30);
     expect(resolveEffectiveFullDuration(tpl, '2026-10-12', null)).toBe(40);
     setDurationAdjustments([]);
+  });
+});
+
+describe('planIllnessChange', () => {
+  it('ziek melden rekent alleen: de ingevoerde lijsten blijven zoals ze waren', () => {
+    const before = JSON.stringify(week);
+    const current: IllnessEpisode[] = [];
+    const plan = planIllnessChange({ action: 'report', kind: 'below_neck' }, current, week, templates, [], '2026-10-07')!;
+    expect(plan.changesPlanning).toBe(true);
+    expect(plan.episodesBefore).toEqual([]);
+    expect(plan.episodesAfter).toHaveLength(1);
+    expect(plan.episodesAfter[0]).toMatchObject({ kind: 'below_neck', startDate: '2026-10-07' });
+    expect(plan.episodesAfter[0].endDate).toBeUndefined();
+    expect(current).toEqual([]);
+    expect(JSON.stringify(week)).toBe(before);
+    expect(plan.preview).toContain('Met Akkoord');
+    expect(plan.proposal.consequences).not.toContain('Met Akkoord');
+  });
+
+  it('van soort veranderen houdt dezelfde periode', () => {
+    const current: IllnessEpisode[] = [{ id: 'i', kind: 'above_neck', startDate: '2026-10-06' }];
+    const plan = planIllnessChange({ action: 'report', kind: 'below_neck' }, current, week, templates, [], '2026-10-07')!;
+    expect(plan.episodesAfter).toEqual([{ id: 'i', kind: 'below_neck', startDate: '2026-10-06' }]);
+  });
+
+  it('weer beter sluit de periode en geeft het voorstel van planIllnessEnd', () => {
+    const current: IllnessEpisode[] = [{ id: 'i', kind: 'below_neck', startDate: '2026-10-05' }];
+    const plan = planIllnessChange({ action: 'recover' }, current, week, templates, [], '2026-10-08')!;
+    expect(plan.episodesAfter).toEqual([{ id: 'i', kind: 'below_neck', startDate: '2026-10-05', endDate: '2026-10-08' }]);
+    expect(plan.changesPlanning).toBe(true);
+    expect(plan.proposal.trigger).toBe('illness_resolved');
+  });
+
+  it('weer beter zonder lopende ziekte doet niets, en zonder open sessies verandert de planning niet', () => {
+    expect(planIllnessChange({ action: 'recover' }, [], week, templates, [], '2026-10-08')).toBeUndefined();
+    const current: IllnessEpisode[] = [{ id: 'i', kind: 'above_neck', startDate: '2026-10-20' }];
+    const plan = planIllnessChange({ action: 'recover' }, current, [], templates, [], '2026-10-21')!;
+    expect(plan.changesPlanning).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSheetClose } from '../../utils/useSheetClose';
-import { SETTINGS_HELP } from '../../data/settingsHelp';
+import { SETTINGS_HELP, settingsHelp } from '../../data/settingsHelp';
+import { useAppData } from '../../state/AppDataContext';
 import { Portal } from '../Portal';
 import { Icon } from '../icons';
 import { Eyebrow } from '../ui';
@@ -63,7 +64,8 @@ export function Sheet({
 // Uitleg die snel te lezen is: één zin vooraf, daarna korte punten met een
 // vetgedrukt begin. De teksten staan in data/settingsHelp.ts.
 export function InfoSheet({ helpKey, onClose }: { helpKey: string; onClose: () => void }) {
-  const help = SETTINGS_HELP[helpKey];
+  const { settings } = useAppData();
+  const help = settingsHelp(helpKey, settings.influenceNames !== false);
   if (!help) return null;
   return (
     <Sheet eyebrow="Uitleg" title={help.title} onClose={onClose}>

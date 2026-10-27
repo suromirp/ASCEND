@@ -15,7 +15,7 @@ import type { PlannedSession, SessionLog, SessionTemplate } from '../models/trai
 import { addDays, daysBetween } from '../utils/dates';
 import { effectivePriority, goalKindOf, goalRecoveryDays, goalTaperDays, PRIORITY_NAME, sortedForList } from './goalLabels';
 import { conflictsForGoals } from './goalConflicts';
-import { isMarathonGoal } from './mainGoal';
+import { isMarathonGoal, mainGoal } from './mainGoal';
 import { RACE_KM } from './goalDraft';
 import { goalTiming } from './goalRoute';
 
@@ -36,7 +36,7 @@ function isEarlier(goal: TrainingGoal, today: string): boolean {
 // volgorde (`TrainingGoal.order`), zonder volgorde op de plek van opslag. `earlier: true` geeft
 // juist de doelen van "Eerdere doelen".
 export function listedGoals(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string, opts: { earlier?: boolean } = {}): ListedGoal[] {
-  const mainId = goals.find((g) => g.status !== 'archived' && ladderGoalIds.has(g.id))?.id;
+  const mainId = mainGoal(goals, ladderGoalIds, 'live')?.id;
   const rows = sortedForList(
     goals
       .map((goal, index) => ({ goal, index }))
@@ -228,6 +228,34 @@ export function moveGoal(listed: readonly ListedGoal[], id: string, to: number |
     if (neighbour) priority = neighbour.priority;
   }
   return { ids, priority, changesLabel: priority !== moving.priority, changed: ids.some((x, i) => x !== original[i]) };
+}
+
+// Kan dit doel een stap omhoog of omlaag, en zo niet, waarom niet. Dezelfde berekening als de
+// verplaatsing zelf (moveGoal), zodat de knop nooit iets belooft wat niet gebeurt.
+export function stepAvailability(listed: readonly ListedGoal[], id: string, dir: 'up' | 'down'): { can: true } | { can: false; reason: string } {
+  const from = listed.findIndex((l) => l.goal.id === id);
+  if (from < 0) return { can: false, reason: 'Dit doel staat niet in je lijst.' };
+  if (moveGoal(listed, id, dir).changed) return { can: true };
+  if (dir === 'up' && from === 0) return { can: false, reason: 'Dit doel staat al bovenaan.' };
+  if (dir === 'down' && from === listed.length - 1) return { can: false, reason: 'Dit doel staat al onderaan.' };
+  if (listed[from].isMain && dir === 'down') return { can: false, reason: 'Je hoofddoel blijft bij de Top-doelen, dus lager kan niet.' };
+  return { can: false, reason: 'Hier kan dit doel niet naartoe.' };
+}
+
+// De plek waar een doel echt terechtkomt als je het naar `to` sleept of schuift: het hoofddoel kan
+// niet onder een doel dat geen Top is, dus daar komt het niet. De aankondiging bij het slepen met
+// het toetsenbord en de lijn bij het slepen lezen dit, zodat ze niets beloven wat bij het loslaten
+// niet gebeurt.
+export function landingIndex(listed: readonly ListedGoal[], id: string, to: number): number {
+  const r = moveGoal(listed, id, to);
+  const at = r.ids.indexOf(id);
+  return at < 0 ? to : at;
+}
+
+// De volgorde van een doel dat je terughaalt: achteraan de lijst die je nu ziet.
+export function orderForRestored(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string): number {
+  const visible = listedGoals(goals, ladderGoalIds, today);
+  return visible.reduce((m, l) => Math.max(m, (l.goal.order ?? goals.indexOf(l.goal)) + 1), 0);
 }
 
 // Wat er opgeslagen moet worden voor een nieuwe volgorde: elk doel van de lijst krijgt zijn plek als

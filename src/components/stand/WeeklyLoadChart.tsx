@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LOAD_SPORTS, LOAD_JUMP, loadVersusBefore, type LoadSport, type WeekLoad } from '../../engine/standing';
 import { formatNumberNL } from '../../utils/number';
-import { Card } from '../ui';
+import { Card, Eyebrow } from '../ui';
 import { dayMonth, dayShort as dayShortNL, roundedTop } from './chartParts';
 
 // Je stand → weekly load: minutes × effort per week, per sport. Solid is
@@ -37,7 +37,7 @@ export function WeeklyLoadChart({ weeks }: { weeks: WeekLoad[] }) {
   return (
     <Card className="flex flex-col gap-3">
       <div>
-        <p className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Belasting per week</p>
+        <Eyebrow>Belasting per week</Eyebrow>
         <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
           Elke training telt als minuten maal zwaarte (de 1 tot 10 die je invult). 45 minuten op zwaarte 6 is 270 punten. Een balk is de som van een week: vol is gedaan, licht is nog gepland. Tik op een week om de telling te zien.
         </p>
@@ -145,7 +145,7 @@ function WeekTally({ week, average }: { week: WeekLoad; average?: number }) {
               <div className="min-w-0 flex-1">
                 <p className="break-words text-xs" style={{ color: 'var(--color-ink)' }}>{it.name}</p>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-                  {dayShortNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
+                  {dayShortNL(it.date)} · {it.minutes} min · zwaarte {it.estimated ? '±' : ''}{formatNumberNL(it.effort, 0)}
                 </p>
               </div>
               <div className="flex w-24 shrink-0 items-center gap-2">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import type { GoalDetails, GoalPriority, TrainingGoal } from '../models/goals';
@@ -11,17 +11,19 @@ import { TrekGoalsCard } from '../components/TrekGoals';
 import { StrengthProgramCard } from '../components/StrengthProgramCard';
 import { Sheet } from '../components/settings/Sheet';
 import { usePageState } from '../components/usePageState';
-import { useHorizonChange } from '../components/useHorizonChange';
+import { APPLIED_NOTE, useHorizonChange } from '../components/useHorizonChange';
 import { SeasonStripCard } from '../components/ascend/SeasonStrip';
 import { GoalList } from '../components/ascend/GoalList';
 import { GoalLabelSheet } from '../components/ascend/GoalLabelSheet';
 import { GoalSheet } from '../components/ascend/GoalSheet';
 import { GoalFormSheet } from '../components/ascend/GoalFormSheet';
+import { YourDirectionCard, YourWeekCard, YourWeekSheet, DirectionSheet } from '../components/ascend/YourWeek';
 import { GoalMenuSheet } from '../components/ascend/GoalMenuSheet';
 import { EarlierGoalsSheet } from '../components/ascend/EarlierGoalsSheet';
 import { useGoalViews } from '../components/ascend/useGoalViews';
-import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, type MoveResult } from '../engine/goalList';
+import { goalsSentence, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, seasonStrip, stepAvailability, type MoveResult } from '../engine/goalList';
 import { needsFirstPlan } from '../engine/freshStart';
+import { yourWeek } from '../engine/yourWeek';
 import type { AddTileId } from '../engine/goalDraft';
 import { todayISO } from '../utils/dates';
 
@@ -37,6 +39,11 @@ const KEEP = 'Prima, alles blijft zoals het was.';
 // elkaar haalt.
 const AFTER_SHEET_MS = 280;
 const later = (fn: () => void) => { window.setTimeout(fn, AFTER_SHEET_MS); };
+// Een regel onderaan de tab blijft een paar seconden staan, net als de meldingsbalk, en gaat weg bij de
+// volgende handeling.
+const NOTE_MS = 8000;
+const RESTORED_NOTE = 'Teruggehaald, zonder datum. Geef het een datum als je ernaartoe wilt trainen.';
+const MAIN_STAYS_NOTE = 'Je hoofddoel blijft bij de Top-doelen, dus dat kon niet.';
 
 const START_CHIPS: { label: string; tile: AddTileId; details?: GoalDetails }[] = [
   { label: 'Trektocht', tile: 'trek' },
@@ -55,7 +62,7 @@ export function AscentTabPlusButton({ onClick }: { onClick: () => void }) {
 }
 
 export function AscendPage() {
-  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings } = useAppData();
+  const { trainingGoals, goalMilestones, unarchiveGoal, planGoalChange, planGoalPriority, planHorizonChange, setGoalOrder, program, plannedSessions, settings, sessionLogs, templates } = useAppData();
   const navigate = useNavigate();
   const horizon = useHorizonChange();
   const today = todayISO();
@@ -69,6 +76,7 @@ export function AscendPage() {
   const [openIds, setOpenIds] = usePageState<string[] | null>('ascendOpen', null, (v) => v === null || Array.isArray(v));
   const isOpen = (id: string, index: number) => (openIds === null ? index === 0 : openIds.includes(id));
   const toggle = (id: string) => {
+    clearNotes();
     const current = openIds ?? listed.slice(0, 1).map((l) => l.goal.id);
     setOpenIds(current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
   };
@@ -79,9 +87,23 @@ export function AscendPage() {
   const [extra, setExtra] = useState<'treks' | 'strength' | null>(null);
   const [adding, setAdding] = useState<{ tile?: AddTileId; details?: GoalDetails } | null>(null);
   const [earlierOpen, setEarlierOpen] = useState(false);
+  const [weekSheet, setWeekSheet] = useState<'week' | 'direction' | null>(null);
   const [editing, setEditing] = useState<TrainingGoal | null>(null);
   const [archiving, setArchiving] = useState<TrainingGoal | null>(null);
   const [orderNote, setOrderNote] = useState<{ before: { id: string; order: number | undefined }[] } | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+  // Alleen de balk of de regel: na een voorstel dat is doorgevoerd laat de balk onderin zien wat er
+  // veranderde, dus dan blijft de regel erboven weg.
+  const horizonNote = horizon.note === APPLIED_NOTE ? null : horizon.note;
+  const clearNotes = () => { horizon.clearNote(); setOrderNote(null); setFlash(null); };
+  const shownNote = horizonNote ?? flash ?? (orderNote ? 'Volgorde opgeslagen.' : null);
+  useEffect(() => {
+    if (!shownNote) return;
+    const t = window.setTimeout(clearNotes, NOTE_MS);
+    return () => window.clearTimeout(t);
+    // clearNotes verandert elke render; alleen een nieuwe regel zet de tijd opnieuw.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shownNote]);
 
   const detail = views.find((v) => v.item.goal.id === detailId);
   const labelView = views.find((v) => v.item.goal.id === labelId);
@@ -89,17 +111,20 @@ export function AscendPage() {
   const emptyInstall = needsFirstPlan({ programs: program ? 1 : 0, plannedSessions: plannedSessions.length });
 
   const startAdd = (tile?: AddTileId, details?: GoalDetails) => {
+    clearNotes();
     // Een nieuwe installatie plant niets zonder dat je eerst zegt wat je wilt: de vragen staan op Vandaag.
     if (emptyInstall && listed.length === 0) { navigate('/'); return; }
     setAdding({ tile, details });
   };
 
+  // Een ander label is altijd een voorstel met Akkoord, ook als je planning niet verandert (CLAUDE.md).
   const proposeLabel = (goalId: string, priority: GoalPriority, orderIds?: string[]) =>
-    horizon.propose(() => planGoalPriority(goalId, priority, orderIds), { eyebrow: 'Label van je doel', ask: 'always', declined: KEEP });
+    horizon.propose(() => planGoalPriority(goalId, priority, orderIds), { eyebrow: 'Label van je doel', ask: 'always', alwaysAsk: true, declined: KEEP });
 
   // Het resultaat van slepen of Hoger en Lager. Een ander label, of een volgorde die een botsing
   // tussen doelen verschuift, is een voorstel; anders wordt alleen de volgorde bewaard.
   const handleMove = (id: string, result: MoveResult) => {
+    clearNotes();
     const outcome = moveOutcome(trainingGoals, listed, result, ladder, today);
     if (outcome.kind === 'label') { void proposeLabel(id, result.priority, result.ids); return; }
     if (outcome.kind === 'nothing') return;
@@ -121,21 +146,33 @@ export function AscendPage() {
   };
 
   const archive = (g: TrainingGoal) => {
+    clearNotes();
     setArchiving(null);
     void horizon.propose(() => planGoalChange(g.id, { archive: true }), { eyebrow: 'Doel archiveren', ask: 'always', declined: KEEP });
   };
 
   const emptyList = listed.length === 0;
+  // Zonder doel maar met een plan: Je week en je richting in plaats van de lege kaart. Een nieuwe
+  // installatie zonder plan houdt de lege kaart. Met een doel verandert er niets.
+  const week = useMemo(
+    () => (emptyList && !emptyInstall
+      ? yourWeek({ settings, goals: listed.map((l) => l.goal), milestones: ladder, logs: sessionLogs, templates, today })
+      : undefined),
+    [emptyList, emptyInstall, settings, listed, ladder, sessionLogs, templates, today],
+  );
+  const plain = emptyList && !week;
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-10">
-      <SkyBand actions={emptyList ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
+      <SkyBand actions={plain ? undefined : <AscentTabPlusButton onClick={() => startAdd()} />}>
         <div className="min-w-0">
           <Eyebrow>Ascend</Eyebrow>
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Waar je naartoe werkt</h1>
           {!emptyList && <p className="mt-1 text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{goalsSentence(listed, today)}</p>}
+          {week && <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{week.chosen ? `Geen doel, wel een richting: ${week.label.toLowerCase()}.` : 'Nog geen doel en nog geen richting.'}</p>}
         </div>
         {strip && !emptyList && settings.showSeasonStrip !== false && <SeasonStripCard strip={strip} />}
-        {emptyList && (
+        {week && <YourWeekCard week={week} onOpen={() => setWeekSheet('week')} />}
+        {plain && (
           <Card className="flex flex-col gap-3">
             <p className="text-base" style={{ color: 'var(--color-ink)' }}>Hier staat nog niets. Zeg maar: wat wil je bereiken?</p>
             <PrimaryButton onClick={() => startAdd()}>Doel toevoegen</PrimaryButton>
@@ -143,7 +180,9 @@ export function AscendPage() {
         )}
       </SkyBand>
 
-      {emptyList && (
+      {week && <YourDirectionCard week={week} onChoose={() => setWeekSheet('direction')} />}
+
+      {plain && (
         <section className="flex flex-col gap-3" aria-label="Of pak er eentje">
           <p className="text-base" style={{ color: 'var(--color-ink-dim)' }}>Of pak er eentje</p>
           <div className="st-chips">
@@ -158,21 +197,21 @@ export function AscendPage() {
           isOpen={isOpen}
           next={next}
           onToggle={toggle}
-          onDetails={setDetailId}
-          onLabel={setLabelId}
+          onDetails={(id) => { clearNotes(); setDetailId(id); }}
+          onLabel={(id) => { clearNotes(); setLabelId(id); }}
           onMove={handleMove}
+          onBlocked={() => setFlash(MAIN_STAYS_NOTE)}
         />
       )}
 
-      {horizon.note && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">{horizon.note}</p>}
-      {orderNote && (
-        <p className="flex items-center justify-between gap-3 text-sm" style={{ color: 'var(--color-ink)' }} role="status">
-          Volgorde opgeslagen.
-          <TextButton onClick={() => { void setGoalOrder(orderNote.before); setOrderNote(null); }}>Ongedaan maken</TextButton>
+      {shownNote && (
+        <p className="flex items-center justify-between gap-3 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }} role="status">
+          {shownNote}
+          {!horizonNote && !flash && orderNote && <TextButton onClick={() => { void setGoalOrder(orderNote.before); setOrderNote(null); }}>Ongedaan maken</TextButton>}
         </p>
       )}
 
-      {!emptyList && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
+      {(!emptyList || week) && <SecondaryButton onClick={() => startAdd()}>Doel toevoegen</SecondaryButton>}
 
       <Card className="flex flex-col p-0! overflow-hidden">
         {([['treks', 'Tochten', 'Een tocht erbij? Er komen vrije dagen omheen.'], ['strength', 'Krachtblok', 'Hoe kracht in je week past']] as const).map(([id, title, line]) => (
@@ -186,7 +225,7 @@ export function AscendPage() {
         ))}
       </Card>
 
-      {(earlier.length > 0 || !emptyList) && (
+      {(earlier.length > 0 || !plain) && (
         <Card className="p-0! overflow-hidden">
           <button type="button" onClick={() => setEarlierOpen(true)} className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 text-left">
             <span className="text-base" style={{ color: 'var(--color-ink)' }}>
@@ -197,6 +236,9 @@ export function AscendPage() {
           </button>
         </Card>
       )}
+
+      {week && weekSheet === 'week' && <YourWeekSheet week={week} onClose={() => setWeekSheet(null)} />}
+      {week && weekSheet === 'direction' && <DirectionSheet current={week.chosen ? week.directionId : undefined} onClose={() => setWeekSheet(null)} />}
 
       {detail && (
         <GoalSheet
@@ -214,6 +256,8 @@ export function AscendPage() {
           name={menuView.item.goal.name}
           index={views.indexOf(menuView)}
           count={views.length}
+          up={stepAvailability(listed, menuView.item.goal.id, 'up')}
+          down={stepAvailability(listed, menuView.item.goal.id, 'down')}
           onEdit={() => setEditing(menuView.item.goal)}
           onLabel={() => setLabelId(menuView.item.goal.id)}
           onStep={(dir) => handleMove(menuView.item.goal.id, moveGoal(listed, menuView.item.goal.id, dir))}
@@ -258,7 +302,8 @@ export function AscendPage() {
       {earlierOpen && (
         <EarlierGoalsSheet
           goals={earlier}
-          onUnarchive={(id) => void unarchiveGoal(id)}
+          note={flash}
+          onUnarchive={(id) => { clearNotes(); void unarchiveGoal(id).then(() => setFlash(RESTORED_NOTE)); }}
           onArchive={(g) => { setEarlierOpen(false); later(() => setArchiving(g)); }}
           onClose={() => setEarlierOpen(false)}
         />

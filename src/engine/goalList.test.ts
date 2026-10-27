@@ -3,7 +3,7 @@ import { conflictGoalsFrom } from './goalConflicts';
 import type { TrainingGoal } from '../models/goals';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import {
-  goalsSentence, labelEffectLines, labelLine, listedGoals, marathonSettingsFor, moveGoal, moveOutcome, nextKeySession, orderPatch, seasonStrip, weeksWord, PRIORITY_RULE,
+  goalsSentence, labelEffectLines, labelLine, listedGoals, marathonSettingsFor, landingIndex, moveGoal, moveOutcome, nextKeySession, orderForRestored, orderPatch, stepAvailability, seasonStrip, weeksWord, PRIORITY_RULE,
 } from './goalList';
 
 const TODAY = '2026-10-26';
@@ -153,6 +153,54 @@ describe('slepen, hoger en lager', () => {
 
   it('de volgorde wordt als getallen opgeslagen, alleen waar ze verschillen', () => {
     expect(orderPatch(listed(), ['t', 'v2', 'v1', 'e'])).toEqual([{ id: 'v2', order: 1 }, { id: 'v1', order: 2 }]);
+  });
+});
+
+describe('Hoger en Lager die niets kunnen doen', () => {
+  const l = listedGoals([
+    mk('gr5', '2027-07-01', { kind: 'trek_hut', order: 0 }), run10('v', '2027-03-14', { priority: 'voortop', order: 1 }), run10('e', '2027-09-18', { priority: 'verkenning', order: 2 }),
+  ], new Set(['gr5']), TODAY);
+
+  it('het eerste doel kan niet hoger en het laatste niet lager, met een reden', () => {
+    expect(stepAvailability(l, 'gr5', 'up')).toEqual({ can: false, reason: 'Dit doel staat al bovenaan.' });
+    expect(stepAvailability(l, 'e', 'down')).toEqual({ can: false, reason: 'Dit doel staat al onderaan.' });
+  });
+
+  it('het hoofddoel kan niet lager zolang daaronder geen Top staat', () => {
+    const r = stepAvailability(l, 'gr5', 'down');
+    expect(r.can).toBe(false);
+    expect(r).toMatchObject({ reason: expect.stringContaining('Top') });
+  });
+
+  it('een doel direct onder het hoofddoel kan hoger, want het krijgt het label van het hoofddoel', () => {
+    expect(stepAvailability(l, 'v', 'up')).toEqual({ can: true });
+    expect(moveGoal(l, 'v', 'up').priority).toBe('top');
+  });
+
+  it('wat kan, kan ook echt: de knop volgt moveGoal', () => {
+    for (const x of l) {
+      for (const dir of ['up', 'down'] as const) {
+        expect(stepAvailability(l, x.goal.id, dir).can).toBe(moveGoal(l, x.goal.id, dir).changed);
+      }
+    }
+  });
+
+  it('het hoofddoel belandt bij slepen nooit onder een doel dat geen Top is', () => {
+    expect(landingIndex(l, 'gr5', 2)).toBe(0);
+    expect(landingIndex(l, 'v', 0)).toBe(0);
+    expect(landingIndex(l, 'v', 2)).toBe(2);
+  });
+});
+
+describe('een teruggehaald doel', () => {
+  it('komt achteraan de zichtbare lijst', () => {
+    const goals = [mk('a', '2027-03-14', { order: 0 }), mk('b', '2027-04-14', { order: 1 }), mk('x', undefined, { status: 'archived', order: 0 })];
+    expect(orderForRestored(goals, new Set(), TODAY)).toBe(2);
+    expect(orderForRestored([], new Set(), TODAY)).toBe(0);
+  });
+
+  it('zonder volgorde telt de plek van opslag', () => {
+    expect(orderForRestored([mk('a', '2027-03-14'), mk('b', '2027-04-14')], new Set(), TODAY)).toBe(2);
   });
 });
 

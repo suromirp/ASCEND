@@ -12,7 +12,7 @@ export function useSeasonHeader(): { title: string; line?: string } {
   const mainGoal = findMainGoal(trainingGoals, ladder);
   const weeksLeft = goalDate ? Math.max(0, Math.ceil(daysBetween(today, goalDate) / 7)) : undefined;
   return {
-    title: mainGoal ? mainGoal.name : 'Je programma',
+    title: mainGoal ? mainGoal.name : 'Je jaar',
     line: goalDate ? `${formatDateNL(goalDate)} · nog ${weeksLeft} ${weeksLeft === 1 ? 'week' : 'weken'}` : undefined,
   };
 }

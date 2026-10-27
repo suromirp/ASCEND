@@ -5,13 +5,70 @@
 
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { activeIllness, recoveryRamp, ILLNESS_GUIDANCE, ILLNESS_HINT, ILLNESS_LABEL } from '../engine/illness';
+import { activeIllness, recoveryRamp, type IllnessChange, type IllnessPlan, ILLNESS_GUIDANCE, ILLNESS_HINT, ILLNESS_LABEL } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
 import { formatDateNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
+import { ProposalSheet } from './ProposalSheet';
+import type { Advice } from '../engine/adviceEngine';
 import { Card, Eyebrow, PrimaryButton } from './ui';
 import { TextButton } from './TextButton';
+import { withTimeout } from '../utils/withTimeout';
+
+const SAVE_LIMIT_MS = 15_000;
+
+// Ziek melden en weer beter zijn een voorstel met Akkoord. Verandert de planning
+// niet, dan wordt de periode direct bewaard; anders komt eerst het voorstel,
+// en bij Liever niet blijft alles zoals het was.
+function useIllnessProposal() {
+  const { planIllness, applyIllness } = useAppData();
+  const [plan, setPlan] = useState<IllnessPlan | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const request = async (change: IllnessChange) => {
+    if (busy) return;
+    setError(null);
+    const next = planIllness(change);
+    if (!next) return;
+    if (!next.changesPlanning) {
+      setBusy(true);
+      try {
+        await withTimeout(applyIllness(next), SAVE_LIMIT_MS, 'Opslaan');
+      } catch {
+        setError('Dat lukte nu niet. Probeer het zo nog eens.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    setPlan(next);
+  };
+  const sheet = plan && (
+    <ProposalSheet
+      advice={illnessAdvice(plan)}
+      eyebrow={plan.change.action === 'recover' ? 'Weer beter' : 'Ziek melden'}
+      summary={plan.change.action === 'recover' ? 'Dit gaat van je planning als je weer opbouwt.' : 'Dit gaat van je planning als je je ziek meldt.'}
+      emptyText="Je planning hoeft niet te veranderen."
+      onRespond={async (response) => { if (response === 'accepted') await applyIllness(plan); }}
+      onClose={() => setPlan(null)}
+    />
+  );
+  return { request, sheet, busy, error };
+}
+
+function illnessAdvice(plan: IllnessPlan): Advice {
+  return {
+    id: `illness:${plan.proposal.id}`,
+    trigger: 'plan_update',
+    ruleId: 'ILLNESS',
+    title: 'Zo ziet je planning eruit',
+    effect: plan.preview,
+    why: plan.proposal.explanation,
+    priority: 0,
+    proposal: plan.proposal,
+  };
+}
 
 const KINDS: IllnessKind[] = ['above_neck', 'below_neck', 'stomach'];
 
@@ -21,39 +78,42 @@ function day(iso: string): string {
 
 // The status cards (ill / building back). Shown at the top of Today.
 export function IllnessStatusCard() {
-  const { settings, recoverFromIllness, reportIllness } = useAppData();
-  const [busy, setBusy] = useState(false);
+  const { settings } = useAppData();
+  const { request, sheet, busy, error } = useIllnessProposal();
   const active = activeIllness(settings.illnessEpisodes);
   const ramp = recoveryRamp(settings.illnessEpisodes, todayISO());
 
   if (active) {
     return (
+      <>
+      {sheet}
       <Card className="flex flex-col gap-2" >
         <Eyebrow>Ziek</Eyebrow>
         <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>{ILLNESS_LABEL[active.kind]}</p>
         <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sinds {day(active.startDate)}</p>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{ILLNESS_GUIDANCE[active.kind]}</p>
-        <PrimaryButton
-          onClick={async () => { setBusy(true); await recoverFromIllness(); setBusy(false); }}
-          disabled={busy}
-        >
-          Ik ben weer beter
+        <PrimaryButton disabled={busy} onClick={() => void request({ action: 'recover' })}>
+          {busy ? 'Even bewaren…' : 'Ik ben weer beter'}
         </PrimaryButton>
+        {error && <p className="text-sm" role="status" style={{ color: 'var(--color-warning)' }}>{error}</p>}
         {active.kind === 'above_neck' && (
           <TextButton
-            onClick={async () => { setBusy(true); await reportIllness('below_neck'); setBusy(false); }}
+            onClick={() => void request({ action: 'report', kind: 'below_neck' })}
             className="self-start text-left"
           >
             Toch koorts of klachten onder de nek?
           </TextButton>
         )}
       </Card>
+      </>
     );
   }
 
   if (ramp) {
     const heavyBack = ramp.heavyFrom <= todayISO();
     return (
+      <>
+      {sheet}
       <Card className="flex flex-col gap-1.5">
         <Eyebrow>Weer opbouwen</Eyebrow>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
@@ -63,24 +123,27 @@ export function IllnessStatusCard() {
         </p>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Gemiste trainingen hoef je niet in te halen.</p>
       </Card>
+      </>
     );
   }
-  return null;
+  return sheet;
 }
 
 // "Niet fit?" link + the three-choice sheet. Hidden while already ill.
 // `plain`: zonder onderstreping, als gewone tekstknop naast Verplaatsen op de missiekaart.
 // `outlined`: de mint omlijnde knop naast Verplaatsen op de missiekaart.
 export function NotFitLink({ plain = false, outlined = false }: { plain?: boolean; outlined?: boolean }) {
-  const { settings, reportIllness } = useAppData();
+  const { settings } = useAppData();
+  const { request, sheet } = useIllnessProposal();
   const [open, setOpen] = useState(false);
-  if (activeIllness(settings.illnessEpisodes)) return null;
+  if (activeIllness(settings.illnessEpisodes)) return <>{sheet}</>;
   return (
     <>
       <button onClick={() => setOpen(true)} className={outlined ? 'flex-1 min-h-[44px] rounded-xl px-3 py-2 text-sm font-medium transition-all active:scale-[0.97] active:opacity-70' : plain ? 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-sm font-medium' : 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center self-center text-xs font-medium'} style={outlined ? { border: '1.5px solid color-mix(in srgb, var(--color-action) 75%, transparent)', color: 'var(--color-action)' } : { color: 'var(--color-ink-dim)' }}>
         Niet fit?
       </button>
-      {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await reportIllness(kind); }} onClose={() => setOpen(false)} />}
+      {open && <IllnessSheet onPick={async (kind) => { setOpen(false); await request({ action: 'report', kind }); }} onClose={() => setOpen(false)} />}
+      {sheet}
     </>
   );
 }
@@ -97,7 +160,7 @@ function IllnessSheet({ onPick, onClose }: { onPick: (kind: IllnessKind) => void
           <Card className="rounded-b-none border-b-0 pb-6">
             <Eyebrow>Niet fit?</Eyebrow>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>
-              Kies wat het meest past. ASCEND past je planning aan, en met één tik meld je je weer beter.
+              Kies wat het meest past. Je ziet eerst wat er in je planning verandert en beslist zelf. Met één tik meld je je later weer beter.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               {KINDS.map((kind) => (

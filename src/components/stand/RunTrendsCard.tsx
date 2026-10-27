@@ -25,14 +25,9 @@ export function RunTrendsCard() {
     [sessionLogs, templates, program, settings.heartRate, settings.runInsight, excluded, detailsOn],
   );
   if (trends.rows.length === 0) return null;
-  // Zonder één rij met gegevens is er niets te laten zien: één regel is genoeg.
-  if (trends.rows.every((r) => r.word === 'Te weinig gegevens')) {
-    return (
-      <Card className="flex min-h-[44px] items-center">
-        <p className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Lopen: nog te weinig gegevens voor een trend. Na een paar loopjes verschijnt hij hier.</p>
-      </Card>
-    );
-  }
+  // Zonder één rij met gegevens is er niets te laten zien. De kaart Tempo bij zone 2 eronder
+  // zegt dan al dat er nog geen loopjes zijn, dus hier geen tweede regel met hetzelfde.
+  if (trends.rows.every((r) => r.word === 'Te weinig gegevens')) return null;
   return (
     <>
       <Card className="flex flex-col !py-2">

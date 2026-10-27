@@ -51,7 +51,7 @@ export function GoalFormSheet({
   const tile = ADD_TILES.find((t) => t.id === tileId);
   const dateValue = date || undefined;
   const priority = picked ?? suggestPriority(live, dateValue, mainGoalId);
-  const problems = tileId ? draftProblems(tileId, details, dateValue, today, goal?.targetDate) : [];
+  const problems = tileId ? draftProblems(tileId, details, dateValue, today, goal?.targetDate, goal && tileId === startTile ? detailsFromGoal(goal) : undefined) : [];
   const nextOrder = live.reduce((m, g, i) => Math.max(m, (g.order ?? i) + 1), 0);
   const questions = useMemo(() => (tileId ? questionsFor(tileId).filter((q) => !q.showIf || q.showIf(details)) : []), [tileId, details]);
 

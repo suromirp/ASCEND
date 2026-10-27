@@ -39,6 +39,7 @@ const everything: AppSettings = {
   influenceCause: 'uit',
   influenceOverview: false,
   influenceTestMove: false,
+  influenceNames: false,
   intensityCounting: 'plan',
   overviews: {
     morningCheckIn: false, morningCard: false, morningCardFrom: '7', weekReview: false, weekReviewDay: 'sunday', weeklyQuestion: false,
@@ -46,6 +47,7 @@ const everything: AppSettings = {
   },
   askShortNight: false,
   askDoubtTest: false,
+  weekBudget: { minutes: 105, strength: 3, doubleHard: false },
   introSoundEnabled: false,
   motion: 'off',
   sky: 'night',

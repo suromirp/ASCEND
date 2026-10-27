@@ -32,7 +32,7 @@ import { hasMacroFactorWeight, MACROFACTOR_FRESH_DAYS } from '../engine/bodyWeig
 import type { WeightEntry } from '../models/metrics';
 import { formatNumberNL } from '../utils/number';
 import { forgetMapping, importMacroFactorWorkouts, takeSharedFile } from '../storage/macrofactor';
-import { daysBetween, formatDateNL, todayISO } from '../utils/dates';
+import { daysBetween, formatDateNL, todayISO, localDateOf } from '../utils/dates';
 import { TextButton } from '../components/TextButton';
 
 // 'ok' with lines is the calm summary of a file; the other forms are one line.
@@ -214,7 +214,7 @@ export function MacroFactorImportPage() {
         )}
         {state.readAt && !notice && (
           <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
-            Laatst gelezen op {formatDateNL(state.readAt.slice(0, 10))}{state.fileName ? `: ${state.fileName}` : ''}.
+            Laatst gelezen op {formatDateNL(localDateOf(state.readAt))}{state.fileName ? `: ${state.fileName}` : ''}.
           </p>
         )}
       </Card>

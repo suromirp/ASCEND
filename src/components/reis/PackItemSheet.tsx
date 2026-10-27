@@ -35,7 +35,7 @@ export function PackItemSheet({
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
         <div role="dialog" aria-label={item ? 'Onderdeel aanpassen' : 'Onderdeel toevoegen'} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
           <Card className="flex flex-col gap-4 rounded-b-none border-b-0 pb-8">
-            <Eyebrow>{item ? 'ONDERDEEL AANPASSEN' : 'ONDERDEEL TOEVOEGEN'}</Eyebrow>
+            <Eyebrow>{item ? 'Onderdeel aanpassen' : 'Onderdeel toevoegen'}</Eyebrow>
             <div>
               <label htmlFor="pack-name" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Naam</label>
               <input

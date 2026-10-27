@@ -171,11 +171,11 @@ export const ALL_CATEGORIES: BackupDataCategory[] = [
 ];
 
 export const CATEGORY_LABEL: Record<BackupDataCategory, string> = {
-  program_and_templates: 'Trainingsschema (templates)',
+  program_and_templates: "Trainingsschema's",
   training_history: 'Trainingsgeschiedenis',
   planned_schedule: 'Huidige planning',
   objectives_and_milestones: 'Doelen en mijlpalen',
-  capability_evidence: 'Baseline-metingen',
+  capability_evidence: 'Startmetingen',
   injuries: 'Blessures',
   app_settings: 'Instellingen',
 };

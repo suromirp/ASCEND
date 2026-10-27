@@ -337,7 +337,7 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               <p className="text-xs" style={{ color: 'var(--color-danger-text)' }}>Deze training uit je logboek verwijderen?</p>
               <div className="flex gap-3">
                 <SecondaryButton onClick={() => setConfirmDelete(false)}>Annuleren</SecondaryButton>
-                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-11 flex-1 rounded-xl text-xs font-semibold" style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}>Verwijderen</button>
+                <button onClick={() => void undoLog(log.id).then(requestClose)} className="min-h-[44px] flex-1 rounded-xl px-3 py-2 text-sm font-medium" style={{ background: 'var(--color-danger)', color: 'var(--color-ink)' }}>Verwijderen</button>
               </div>
             </div>
           ) : (

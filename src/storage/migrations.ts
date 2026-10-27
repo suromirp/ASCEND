@@ -10,8 +10,11 @@
 
 import { isPlausibleFatPct } from '../engine/bodyFat';
 import { BackupMessageError } from './backupMessage';
+import type { AppSettings } from './database';
 import { isLeavePeriod, isTrekDetails } from '../engine/leave';
 import { parseWeekShape, type WeekShape } from '../engine/sports';
+import { parseDirection, parseDirectionStart } from '../engine/direction';
+import { resolveWeekBudget } from '../engine/weekBudget';
 import { RESUME_MINUTE_CHOICES, TAB_BACK_MODES, type TabBackMode } from '../engine/navigationSettings';
 import type { LeavePeriod } from '../models/leave';
 import { GOAL_KIND_IDS, GOAL_PRIORITIES, type GoalDetails, type GoalKindId, type GoalPriority, type GoalRequirement, type TrainingGoal } from '../models/goals';
@@ -474,6 +477,48 @@ export function cleanNavigationSettings(raw: { tabBack?: unknown; resumeMinutes?
     const minutes = RESUME_MINUTE_CHOICES.find((m) => m === raw.resumeMinutes);
     if (minutes !== undefined) value.resumeMinutes = minutes;
     else skipped++;
+  }
+  return { value, skipped };
+}
+
+// --- zonder doel: richting, start en weekbudget (optionele instellingen) ------------
+// `settings.direction`, `settings.directionStart` en `settings.weekBudget` zijn optioneel en
+// additief: een back-up van voor deze instellingen heeft ze niet en blijft zoals hij is. Staat
+// er wel iets, dan blijft alleen een bekende waarde over; de rest wordt weggelaten en geteld.
+// Een richting zonder geldige startmaandag houdt de richting en laat de start weg: de golf
+// begint dan bij de eerstvolgende keuze.
+export function migrateDirection(raw: { direction?: unknown; directionStart?: unknown; weekBudget?: unknown }): {
+  value: { direction?: NonNullable<AppSettings['direction']>; directionStart?: string; weekBudget?: NonNullable<AppSettings['weekBudget']> };
+  skipped: number;
+} {
+  const value: { direction?: NonNullable<AppSettings['direction']>; directionStart?: string; weekBudget?: NonNullable<AppSettings['weekBudget']> } = {};
+  let skipped = 0;
+  if (raw.direction !== undefined) {
+    const direction = parseDirection(raw.direction);
+    if (direction) value.direction = direction;
+    else skipped++;
+  }
+  if (raw.directionStart !== undefined) {
+    const start = parseDirectionStart(raw.directionStart);
+    if (start && value.direction) value.directionStart = start;
+    else skipped++;
+  }
+  if (raw.weekBudget !== undefined) {
+    const input = (raw.weekBudget && typeof raw.weekBudget === 'object' && !Array.isArray(raw.weekBudget) ? raw.weekBudget : undefined) as Record<string, unknown> | undefined;
+    const clean = resolveWeekBudget(raw.weekBudget);
+    const kept: NonNullable<AppSettings['weekBudget']> = {
+      ...(clean.minutes !== undefined ? { minutes: clean.minutes } : {}),
+      ...(clean.strength !== undefined ? { strength: clean.strength } : {}),
+      ...(clean.doubleHard ? {} : { doubleHard: false }),
+    };
+    // Wat er stond maar niet bleef (een onzinnige waarde, of geen object) telt als weggelaten.
+    if (!input) skipped++;
+    else {
+      if (input.minutes !== undefined && clean.minutes === undefined) skipped++;
+      if (input.strength !== undefined && clean.strength === undefined) skipped++;
+      if (input.doubleHard !== undefined && typeof input.doubleHard !== 'boolean') skipped++;
+    }
+    if (Object.keys(kept).length > 0) value.weekBudget = kept;
   }
   return { value, skipped };
 }
