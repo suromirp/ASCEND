@@ -57,7 +57,7 @@ describe('twee Tops', () => {
     expect(c).toMatchObject({ rule: 'TOP-TOP', gapDays: 42, neededDays: 43, goalId: half.id });
     // 10 + 21 + t <= 42 geeft t = 11.
     expect(c.resolution).toEqual({ kind: 'shorten_taper', taperDays: 11 });
-    expect(c.suggestion).toContain('wordt 11 dagen in plaats van 12 dagen');
+    expect(c.suggestion).toContain('krijgt 11 dagen afbouw in plaats van 12 dagen');
   });
 
   it('gaat een label lager als inkorten niet genoeg is, en zegt het eerlijk als niets helpt', () => {
@@ -75,7 +75,7 @@ describe('twee Tops', () => {
     // Binnen het herstel zelf (5 dagen) past ook een Verkenning niet: eerlijk melden.
     const [e] = goalConflicts([marathon(BASE), marathon(at(5))], TODAY);
     expect(e.resolution).toEqual({ kind: 'tell' });
-    expect(e.suggestion).toContain('niet oplossen');
+    expect(e.suggestion).toContain('lost dit niet op');
   });
 
   it('laat het doel wijken dat lager in de lijst staat, ook als dat het eerste in de tijd is', () => {

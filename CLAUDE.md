@@ -144,6 +144,15 @@ fris en sportief op donker marine.
   `engine/settingsSummary.ts` (pure functies met tests), zodat de rij, het
   zoekresultaat en het overzicht hetzelfde zeggen.
 
+### Stem
+
+De teksten klinken als een trainer die je kent: je/jij, kort en direct, met warmte in de toon en
+nooit in uitroepen. Waar duidelijkheid voorgaat (een getal of datum, een waarschuwing, wat een label
+of voorstel met je planning doet) komt het droge feit eerst en blijft het onaangetast, met liefst een
+zin in dezelfde toon eromheen. Humor is licht en zeldzaam, en de vaste woorden blijven overal gelijk.
+Eerst de Ascend-tab, daarna de hele app
+(`docs/beslissingen/2026-10-27-stem-van-ascend.md`).
+
 ### Beweging
 
 Subtiel en kort: 150 tot 400 ms, ease-out, nooit stuiterend, met CSS (`mx-*` onderaan

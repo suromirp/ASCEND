@@ -61,7 +61,7 @@ export function GoalFormSheet({
 
   if (step === 1 || !tile || !tileId) {
     return (
-      <Sheet eyebrow={editing ? 'Doel aanpassen' : 'Doel toevoegen · stap 1 van 3'} title="Wat wil je bereiken?" line="Kies een soort. Daarna een paar vragen." onClose={onClose}>
+      <Sheet eyebrow={editing ? 'Doel aanpassen' : 'Doel toevoegen · stap 1 van 3'} title="Wat wil je bereiken?" line="Kies een soort. Dan volgen er een paar vragen." onClose={onClose}>
         {(close) => (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Soort doel">
@@ -108,7 +108,7 @@ export function GoalFormSheet({
     <Sheet
       eyebrow={editing ? 'Doel aanpassen' : 'Doel toevoegen · stap 2 van 3'}
       title={tile.label}
-      line={editing ? 'Wat je verandert, zie je eerst als voorstel.' : `${count === 0 ? 'Een paar keuzes' : count === 1 ? 'Eén vraag' : `${count} vragen`}. Je kunt alles later aanpassen.`}
+      line={editing ? 'Eerst een voorstel, pas daarna verandert er iets.' : `${count === 0 ? 'Een paar keuzes' : count === 1 ? 'Eén vraag' : `${count} vragen`}, en alles kun je later nog aanpassen.`}
       onClose={onClose}
     >
       {(close) => (
@@ -139,19 +139,19 @@ export function GoalFormSheet({
           ))}
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="goal-date" className="text-base" style={{ color: 'var(--color-ink)' }}>Datum{!needsDate && <span style={{ color: 'var(--color-ink-dim)' }}> (mag leeg)</span>}</label>
+            <label htmlFor="goal-date" className="text-base" style={{ color: 'var(--color-ink)' }}>{needsDate ? 'Wanneer is het?' : <>Datum<span style={{ color: 'var(--color-ink-dim)' }}> (mag leeg)</span></>}</label>
             <input id="goal-date" type="date" value={date} min={goal?.targetDate && goal.targetDate < today ? undefined : today} onChange={(e) => setDate(e.target.value)} className="min-h-[48px] w-full rounded-xl border px-3 text-base" style={fieldStyle} />
             {date && weeks !== undefined && weeks > 0 && <p className="text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{weekdayLongNL(date)}, over {weeksWord(weeks)}</p>}
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="goal-name" className="text-base" style={{ color: 'var(--color-ink)' }}>Naam</label>
+            <label htmlFor="goal-name" className="text-base" style={{ color: 'var(--color-ink)' }}>Hoe noem je dit doel?</label>
             <input id="goal-name" type="text" value={name} placeholder={goal ? goal.name : nameDefault} onChange={(e) => setName(e.target.value)} className="min-h-[48px] w-full rounded-xl border px-3 text-base" style={fieldStyle} />
           </div>
 
           {!editing && (
             <div className="flex flex-col gap-2">
-              <Eyebrow>Hoe belangrijk is dit doel?</Eyebrow>
+              <Eyebrow>Hoe belangrijk is dit doel voor jou?</Eyebrow>
               <div className="st-list" role="radiogroup" aria-label="Label van dit doel">
                 {GOAL_PRIORITIES.map((p) => (
                   <button

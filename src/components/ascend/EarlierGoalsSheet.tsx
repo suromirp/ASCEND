@@ -3,7 +3,7 @@ import { formatDateNL } from '../../utils/dates';
 import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
 
-// "Eerder, afgerond of weggelegd": wat gearchiveerd is, afgerond of voorbij. Een gearchiveerd doel
+// "Eerdere doelen": wat gearchiveerd is, afgerond of voorbij. Een gearchiveerd doel
 // kun je terughalen (het wordt dan een doel zonder datum, klaar voor een nieuwe); een voorbij doel
 // archiveer je met een voorstel, want het kan nog iets in je planning raken.
 export function EarlierGoalsSheet({
@@ -15,7 +15,7 @@ export function EarlierGoalsSheet({
   onClose: () => void;
 }) {
   return (
-    <Sheet eyebrow="Ascend" title="Eerder, afgerond of weggelegd" line={goals.length === 0 ? 'Er staat hier nog niets.' : undefined} onClose={onClose}>
+    <Sheet eyebrow="Ascend" title="Eerdere doelen" line={goals.length === 0 ? 'Nog niets hier. Een afgerond of weggelegd doel komt hier terecht.' : undefined} onClose={onClose}>
       {(close) => (
         <div className="flex flex-col gap-3 pb-2">
           {goals.length > 0 && (

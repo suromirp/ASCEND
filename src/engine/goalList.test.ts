@@ -44,11 +44,11 @@ describe('de zin onder de titel', () => {
   it('telt de doelen en noemt het eerste in de tijd', () => {
     const goals = [mk('b', '2027-07-10'), run10('a', '2027-03-14')];
     const listed = listedGoals(goals, new Set(), TODAY);
-    expect(goalsSentence(listed, TODAY)).toBe('2 doelen. Het eerste is over 20 weken.');
+    expect(goalsSentence(listed, TODAY)).toBe('2 doelen, en het eerste is over 20 weken.');
   });
 
   it('enkelvoud en zonder datum', () => {
-    expect(goalsSentence(listedGoals([run10('a', '2026-11-02')], new Set(), TODAY), TODAY)).toBe('1 doel. Het is over 1 week.');
+    expect(goalsSentence(listedGoals([run10('a', '2026-11-02')], new Set(), TODAY), TODAY)).toBe('1 doel, en dat is al over 1 week.');
     expect(goalsSentence(listedGoals([mk('f', undefined, { kind: 'fit' })], new Set(), TODAY), TODAY)).toBe('1 doel.');
     expect(goalsSentence([], TODAY)).toBe('Nog geen doel.');
   });
@@ -94,9 +94,9 @@ describe('de seizoensstrook', () => {
 describe('het label in gewone woorden', () => {
   it('Top, Voortop en Verkenning, met de afbouw van de soort', () => {
     const g = run10('a', '2027-03-14');
-    expect(labelLine(g, 'top')).toMatch(/^Hier train je naartoe\./);
-    expect(labelLine(g, 'voortop')).toBe('Wil je goed doen onderweg. Vier dagen rustiger ervoor.');
-    expect(labelLine(g, 'verkenning')).toBe('Je doet mee als training. Geen rust ervoor.');
+    expect(labelLine(g, 'top')).toMatch(/^Hier doe je het voor\./);
+    expect(labelLine(g, 'voortop')).toBe('Een goede dag, geen alles of niets. Vier dagen rustiger ervoor.');
+    expect(labelLine(g, 'verkenning')).toBe('Gewoon meedoen als training. Geen rust ervoor.');
   });
 
   it('een lange afbouw in weken', () => {

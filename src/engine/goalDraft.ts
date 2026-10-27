@@ -27,15 +27,15 @@ export interface AddTile {
 const tile = (id: AddTileId, label: string, kind: GoalKindId, picto: PictogramName, summary?: string): AddTile => ({ id, label, summary: summary ?? GOAL_KINDS[kind].summary, picto });
 
 export const ADD_TILES: readonly AddTile[] = [
-  tile('trek', 'Trektocht', 'trek_hut', 'wandelen', 'Meerdere dagen met rugzak, hut of tent.'),
-  tile('day_hike', 'Bergtocht', 'day_hike', 'bergtocht', 'Eén lange dag met veel hoogtemeters.'),
+  tile('trek', 'Trektocht', 'trek_hut', 'wandelen', 'Meerdere dagen onderweg met je rugzak, in hut of tent.'),
+  tile('day_hike', 'Bergtocht', 'day_hike', 'bergtocht', 'Eén lange dag met flink wat klimmen.'),
   tile('mountaineering', 'Mountaineering', 'mountaineering', 'bergtocht', 'Toppen, gletsjer, vroege start.'),
-  tile('run_race', 'Hardloopwedstrijd', 'run_race', 'lopen', '5 km tot marathon.'),
+  tile('run_race', 'Hardloopwedstrijd', 'run_race', 'lopen', 'Van 5 km tot marathon, op een vaste dag.'),
   tile('trail', 'Trailrun', 'trail', 'lopen', 'Hardlopen met hoogtemeters.'),
   tile('bike', 'Fietstocht of wedstrijd', 'bike', 'fietsen', 'Rit, col of meerdere dagen.'),
   tile('triathlon', 'Triathlon', 'triathlon', 'lopen', 'Zwemmen, fietsen en lopen.'),
-  tile('stronger', 'Sterker worden', 'stronger', 'kracht', 'Kracht op je hoofdoefeningen.'),
-  tile('fit', 'Fit blijven', 'fit', 'lichaam', 'Beweegrichtlijn, zonder datum.'),
+  tile('stronger', 'Sterker worden', 'stronger', 'kracht', 'Meer kracht op je hoofdoefeningen.'),
+  tile('fit', 'Fit blijven', 'fit', 'lichaam', 'Gewoon fit blijven, zonder datum, met de beweegrichtlijn als maat.'),
 ];
 
 export const RACE_KM: Record<string, number> = { '5k': 5, '10k': 10, half: 21.1, marathon: 42.2 };
@@ -98,6 +98,12 @@ export function suggestPriority(existing: readonly TrainingGoal[], date: string 
   return date < lastTop ? 'voortop' : 'verkenning';
 }
 
+// Hoe een leeg veld heet in "Vul ... in.": de vragen zelf eindigen op een vraagteken.
+const MISSING: Partial<Record<keyof GoalDetails, string>> = {
+  days: 'het aantal dagen', distanceKm: 'de afstand', gainM: 'de meters omhoog', lossM: 'de meters omlaag',
+  targetMinutes: 'je doeltijd', packKg: 'het gewicht van je rugzak', expectedMinutes: 'de verwachte tijd',
+};
+
 // Wat er nog mist of niet kan, in gewone woorden. Leeg als je door kunt.
 export function draftProblems(id: AddTileId, details: GoalDetails, date: string | undefined, today: string, unchangedDate?: string): string[] {
   const kind = GOAL_KINDS[kindOfTile(id, details)];
@@ -108,7 +114,7 @@ export function draftProblems(id: AddTileId, details: GoalDetails, date: string 
     if (q.choices) {
       if (!v) out.push(q.key === 'shelter' ? 'Kies of je in hutten of met tent slaapt.' : q.label === 'Afstand' ? 'Kies een afstand.' : `Kies ${q.label.toLowerCase()}.`);
     } else if (typeof v !== 'number' || !(v > 0)) {
-      out.push(`Vul ${q.label.toLowerCase()} in.`);
+      out.push(`Vul ${MISSING[q.key] ?? q.label.toLowerCase().replace(/\?$/, '')} in.`);
     }
   }
   if (kind.needsDate && !date) out.push('Kies een datum.');

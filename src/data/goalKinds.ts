@@ -220,8 +220,8 @@ const TREK_HUT: GoalKindDefinition = {
   summary: 'Meerdere dagen lopen met een rugzak en een bed onderweg.',
   variants: TREK_VARIANTS,
   inputs: [
-    input('days', 'Aantal dagen', 'dagen', true), input('distanceKm', 'Afstand', 'km', true), input('gainM', 'Omhoog (D+)', 'm', true),
-    input('lossM', 'Omlaag (D-)', 'm', true), input('packKg', 'Rugzak', 'kg'), input('shelter', 'Hut of tent', 'keuze'), input('highestPointM', 'Hoogste punt', 'm'),
+    input('days', 'Hoeveel dagen?', 'dagen', true), input('distanceKm', 'Afstand', 'km', true), input('gainM', 'Omhoog (D+)', 'm', true),
+    input('lossM', 'Omlaag (D-)', 'm', true), input('packKg', 'Hoe zwaar is je rugzak?', 'kg'), input('shelter', 'Hut of tent', 'keuze'), input('highestPointM', 'Hoogste punt', 'm'),
   ],
   needsDate: true,
   dayShare: false,
@@ -334,7 +334,7 @@ const MOUNTAINEERING: GoalKindDefinition = {
   variants: [{ id: 'gewoon', label: 'Hoge bergtocht' }],
   inputs: [
     input('distanceKm', 'Afstand van de zware dag', 'km', true), input('gainM', 'Omhoog van de zware dag', 'm', true), input('lossM', 'Omlaag van de zware dag', 'm', true),
-    input('expectedMinutes', 'Verwachte tijd van de zware dag', 'min'), input('packKg', 'Rugzak', 'kg'), input('days', 'Aantal dagen', 'dagen'),
+    input('expectedMinutes', 'Verwachte tijd van de zware dag', 'min'), input('packKg', 'Hoe zwaar is je rugzak?', 'kg'), input('days', 'Hoeveel dagen?', 'dagen'),
     input('highestPointM', 'Hoogste punt', 'm'), input('sleepingPointM', 'Hoogste slaapplek', 'm'),
   ],
   needsDate: true,
@@ -401,7 +401,7 @@ const RUN_RACE: GoalKindDefinition = {
   group: 'duur',
   summary: 'Een wedstrijd van 5 km tot een marathon.',
   variants: RUN_VARIANTS,
-  inputs: [input('variant', 'Afstand', 'keuze', true), input('distanceKm', 'Afstand', 'km'), input('targetMinutes', 'Doeltijd', 'min')],
+  inputs: [input('variant', 'Afstand', 'keuze', true), input('distanceKm', 'Afstand', 'km'), input('targetMinutes', 'Welke tijd wil je neerzetten?', 'min')],
   needsDate: true,
   dayShare: false,
   buildWeeks: {
@@ -534,7 +534,7 @@ const BIKE: GoalKindDefinition = {
   ],
   inputs: [
     input('variant', 'Soort', 'keuze', true), input('distanceKm', 'Afstand', 'km', true), input('gainM', 'Omhoog (D+)', 'm'), input('expectedMinutes', 'Verwachte tijd (per dag bij een reis)', 'min', true),
-    input('days', 'Aantal dagen', 'dagen'), input('baggageKg', 'Bagage', 'kg'),
+    input('days', 'Hoeveel dagen?', 'dagen'), input('baggageKg', 'Bagage', 'kg'),
   ],
   needsDate: true,
   dayShare: false,
@@ -607,7 +607,7 @@ const TRIATHLON: GoalKindDefinition = {
   group: 'duur',
   summary: 'Zwemmen, fietsen en lopen, van sprint tot halve afstand.',
   variants: [{ id: 'sprint', label: 'Sprint' }, { id: 'olympisch', label: 'Olympisch' }, { id: 'half', label: 'Half' }],
-  inputs: [input('variant', 'Afstand', 'keuze', true), input('targetMinutes', 'Doeltijd', 'min')],
+  inputs: [input('variant', 'Afstand', 'keuze', true), input('targetMinutes', 'Welke tijd wil je neerzetten?', 'min')],
   needsDate: true,
   dayShare: false,
   buildWeeks: {

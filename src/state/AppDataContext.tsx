@@ -45,6 +45,7 @@ import { weekLoadInput, type WeekLoadKind } from '../storage/weekLoadPlan';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
+import { PRIORITY_RULE } from '../engine/goalList';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { activeIllness, planIllnessStart, planIllnessEnd } from '../engine/illness';
 import type { IllnessKind } from '../models/illness';
@@ -2020,7 +2021,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const goal = (await TrainingGoalsRepo.getAll()).find((g) => g.id === goalId);
     if (!goal) return null;
     const now = new Date().toISOString();
-    const explanation = 'Je doel bepaalt de fasen van je planning en de dag waarop hij eindigt. Een andere datum of een gearchiveerd doel verandert je planning nooit ongemerkt: ASCEND laat eerst zien wat er verschuift, omgaat of vervalt, en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.';
+    const explanation = 'Je doel bepaalt de fasen van je planning en de dag waarop het eindigt. Een andere datum of een gearchiveerd doel verandert je planning nooit ongemerkt: je ziet eerst wat er verschuift, omgaat of vervalt; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.';
     if (change.archive) {
       const archived: TrainingGoal = { ...goal, status: 'archived', targetDate: undefined, updatedAt: now };
       // The Marathon card reads its own settings: those go with it (see archiveGoal).
@@ -2077,8 +2078,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
     return planHorizonChangeImpl({
       title: `${name}: ${label}`,
-      why: priority === 'top' ? 'Je traint hier naartoe.' : priority === 'voortop' ? 'Je wilt dit goed doen onderweg.' : 'Je doet hieraan mee als training.',
-      explanation: 'Het label bepaalt hoeveel rust er voor een doel komt en of het een eigen opbouw krijgt. ASCEND laat eerst zien wat er in je planning verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+      why: PRIORITY_RULE[priority],
+      explanation: 'Het label bepaalt hoeveel rust er voor een doel komt en of het een eigen opbouw krijgt. Je ziet eerst wat er in je planning verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
       trigger: 'goal_changed',
       goals: changed,
     });
@@ -2117,9 +2118,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return planHorizonChangeImpl({
       title: dateChanged
         ? (patch.marathonTargetDate ? `Wedstrijddatum naar ${formatDateNL(patch.marathonTargetDate)}` : 'Marathon zonder datum')
-        : 'Marathondoel aangepast',
+        : 'Marathondoel: zo verandert je planning',
       why: dateChanged ? 'Volgt je nieuwe wedstrijddatum.' : 'Volgt je marathondoel.',
-      explanation: 'Je wedstrijd bepaalt een blok in je planning. Een andere datum of afstand verandert je planning nooit ongemerkt: ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+      explanation: 'Je wedstrijd bepaalt een blok in je planning. Een andere datum of afstand verandert je planning nooit ongemerkt: je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
       trigger: 'goal_changed',
       settings: nextSettings,
       ...(goal ? { goals: [goal] } : {}),
@@ -2153,7 +2154,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const proposal = await planHorizonChangeImpl({
           title: `${plan.goalDraft.name || 'Je doel'}: zo verandert je planning`,
           why: 'Volgt je doel.',
-          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop hij eindigt. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord. Wat je al deed en wat je zelf vastzette blijft staan.',
+          explanation: 'Een doel bepaalt de fasen van je planning en de dag waarop het eindigt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets. Wat je al deed en zelf vastzette, blijft staan.',
           trigger: plan.goalDraft.createdAt === plan.goalDraft.updatedAt ? 'goal_created' : 'goal_changed',
           goals: [plan.goalDraft],
         }).catch(() => null);

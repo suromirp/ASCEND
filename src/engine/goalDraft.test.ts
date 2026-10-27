@@ -7,6 +7,11 @@ const NOW = '2026-10-26T10:00:00.000Z';
 const existing = (id: string, date: string, priority: TrainingGoal['priority']): TrainingGoal => ({ id, name: id, status: 'active', targetDate: date, priority, requirements: [], createdAt: NOW, updatedAt: NOW }) as TrainingGoal;
 
 describe('de soorten in het toevoegblad', () => {
+  it('een leeg veld met een vraag als label leest als gewone zin', () => {
+    expect(draftProblems('trek', { distanceKm: 100, gainM: 5000, lossM: 5000, shelter: 'hut' }, '2027-07-10', '2026-10-26')).toContain('Vul het aantal dagen in.');
+    expect(draftProblems('trek', {}, '2027-07-10', '2026-10-26').some((p) => p.includes('?'))).toBe(false);
+  });
+
   it('heeft een tegel per soort, de tocht met hut of tent als één', () => {
     expect(ADD_TILES.map((t) => t.id)).toEqual(['trek', 'day_hike', 'mountaineering', 'run_race', 'trail', 'bike', 'triathlon', 'stronger', 'fit']);
     expect(ADD_TILES.every((t) => t.label && t.summary && t.picto)).toBe(true);
@@ -95,11 +100,11 @@ describe('van antwoorden naar een doel', () => {
     expect(draftProblems('run_race', { variant: '10k' }, '2026-01-01', '2026-10-26')).toHaveLength(1);
     expect(draftProblems('run_race', { variant: '10k' }, '2027-03-14', '2026-10-26')).toEqual([]);
     expect(draftProblems('fit', {}, undefined, '2026-10-26')).toEqual([]);
-    expect(draftProblems('trek', { days: 5 }, '2027-07-10', '2026-10-26')).toContain('Vul afstand in.');
+    expect(draftProblems('trek', { days: 5 }, '2027-07-10', '2026-10-26')).toContain('Vul de afstand in.');
   });
 
   it('een eigen afstand vraagt om een getal en wordt de afstand van het doel', () => {
-    expect(draftProblems('run_race', { variant: 'eigen' }, '2027-03-14', '2026-10-26')).toEqual(['Vul afstand in.']);
+    expect(draftProblems('run_race', { variant: 'eigen' }, '2027-03-14', '2026-10-26')).toEqual(['Vul de afstand in.']);
     const g = buildGoalDraft({ ...base, tile: 'run_race', details: { variant: 'eigen', distanceKm: 15 }, date: '2027-03-14', name: '', priority: 'voortop' });
     expect(g.details?.variant).toBeUndefined();
     expect(g.details?.distanceKm).toBe(15);

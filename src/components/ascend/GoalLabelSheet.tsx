@@ -31,8 +31,8 @@ export function GoalLabelSheet({
   return (
     <Sheet
       eyebrow={goal.name || short}
-      title="Hoe belangrijk is dit doel?"
-      line={isMain ? 'Dit doel heeft de mijlpalen van je tocht en blijft je Top.' : `Nu: ${PRIORITY_NAME[priority]}. Je ziet eerst wat een ander label in je plan verandert.`}
+      title="Hoe belangrijk is dit doel voor jou?"
+      line={isMain ? 'Dit doel heeft de mijlpalen van je tocht, dus het blijft je Top.' : `Nu: ${PRIORITY_NAME[priority]}. Je ziet eerst wat er verandert, daarna beslis jij.`}
       onClose={onClose}
     >
       {(close) => (

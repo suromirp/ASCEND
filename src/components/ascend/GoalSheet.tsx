@@ -72,7 +72,7 @@ export function GoalSheet({
         {(close) => (
           <div className="flex flex-col gap-4 pb-2">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe belangrijk dit doel is</span>
+              <span className="text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe belangrijk dit doel voor jou is</span>
               <LabelPill priority={item.priority} onClick={onLabel} strong={item.priority === 'top'} />
             </div>
             <div className="flex items-center gap-4 rounded-2xl border p-4" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
@@ -84,8 +84,8 @@ export function GoalSheet({
                 {change && <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</p>}
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
                   {readiness && percent !== undefined
-                    ? `Het gemiddelde van ${readiness.meters.length === 1 ? 'deze meter' : `deze ${readiness.meters.length} meters`}. Elke meter stopt bij 100%, dus een zware rugzak maakt een korte dag niet goed.`
-                    : 'Er is nog niets om je tegen te meten.'}
+                    ? `Het gemiddelde van ${readiness.meters.length === 1 ? 'deze meter' : `deze ${readiness.meters.length} meters`}. Elke meter stopt bij 100%, dus een zware rugzak redt een korte dag niet.`
+                    : 'Nog niets te meten. Dat komt met trainingen die meetellen.'}
                 </p>
               </div>
             </div>

@@ -40,7 +40,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
     if (restDay === day) return;
     const plan = planRestDay(day);
     if (plan.proposal.changes.length === 0) {
-      void applyRestDay(plan).then(() => setRestNote('Opgeslagen. Je planning hoefde niet te veranderen.'));
+      void applyRestDay(plan).then(() => setRestNote('Opgeslagen. Je planning kon gewoon blijven zoals ze was.'));
       return;
     }
     setRestPlan(plan);
@@ -190,7 +190,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           onRespond={async (response) => {
             if (response === 'accepted') {
               await applyRestDay(restPlan);
-              setRestNote('Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.');
+              setRestNote('Gelukt, het staat in je planning. Onderin zie je wat er veranderde en kun je het ongedaan maken.');
             } else setRestNote('Je rustdag en je planning blijven zoals ze waren.');
           }}
           onClose={() => setRestPlan(null)}

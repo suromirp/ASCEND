@@ -34,7 +34,7 @@ function isEarlier(goal: TrainingGoal, today: string): boolean {
 
 // De doelen voor de lijst, in de volgorde van de tab: eerst op label, daarbinnen op de gekozen
 // volgorde (`TrainingGoal.order`), zonder volgorde op de plek van opslag. `earlier: true` geeft
-// juist de doelen van "Eerder, afgerond of weggelegd".
+// juist de doelen van "Eerdere doelen".
 export function listedGoals(goals: readonly TrainingGoal[], ladderGoalIds: ReadonlySet<string>, today: string, opts: { earlier?: boolean } = {}): ListedGoal[] {
   const mainId = goals.find((g) => g.status !== 'archived' && ladderGoalIds.has(g.id))?.id;
   const rows = sortedForList(
@@ -52,10 +52,11 @@ export function weeksWord(weeks: number): string {
   return `${weeks} ${weeks === 1 ? 'week' : 'weken'}`;
 }
 
-// "3 doelen. Het eerste is over 37 weken." Het eerste is het doel dat het eerst komt.
+// "3 doelen, en het eerste is over 37 weken." Het eerste is het doel dat het eerst komt.
 export function goalsSentence(listed: readonly ListedGoal[], today: string): string {
   if (listed.length === 0) return 'Nog geen doel.';
-  const head = `${listed.length} ${listed.length === 1 ? 'doel' : 'doelen'}.`;
+  const count = `${listed.length} ${listed.length === 1 ? 'doel' : 'doelen'}`;
+  const head = `${count}.`;
   const ahead = listed
     .map((l) => ({ l, timing: goalTiming(l.goal, today) }))
     .filter((x): x is { l: ListedGoal; timing: { state: 'ahead'; weeksLeft: number } } => x.timing.state === 'ahead')
@@ -63,7 +64,8 @@ export function goalsSentence(listed: readonly ListedGoal[], today: string): str
   if (ahead.length === 0) return head;
   const first = ahead[0].timing.weeksLeft;
   const when = `over ${weeksWord(first)}`;
-  return listed.length === 1 ? `${head} Het is ${when}.` : `${head} Het eerste is ${when}.`;
+  const al = first <= 4 ? 'al ' : '';
+  return listed.length === 1 ? `${count}, en dat is ${al}${when}.` : `${count}, en het eerste is ${al}${when}.`;
 }
 
 // --- de seizoensstrook -------------------------------------------------------------------------
@@ -141,9 +143,9 @@ export function seasonStrip(listed: readonly ListedGoal[], today: string): Seaso
 // --- het label in gewone woorden ---------------------------------------------------------------
 
 export const PRIORITY_RULE: Record<GoalPriority, string> = {
-  top: 'Hier train je naartoe.',
-  voortop: 'Wil je goed doen onderweg.',
-  verkenning: 'Je doet mee als training.',
+  top: 'Hier doe je het voor.',
+  voortop: 'Een goede dag, geen alles of niets.',
+  verkenning: 'Gewoon meedoen als training.',
 };
 
 const WORDS = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien'];

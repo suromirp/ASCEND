@@ -62,7 +62,7 @@ export function usePlanSettingChange(): {
       return;
     }
     await commitPlanChange(proposal, title, restore);
-    setNote('Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.');
+    setNote('Gelukt, het staat in je planning. Onderin zie je wat er veranderde en kun je het ongedaan maken.');
   }
 
   function scheduleFitFor(settingLabel: string, dailyTimeBudget: typeof goalEngineConfig.availability.dailyTimeBudget, pairing: TrainingStrategyProfile['sameDayPairingPreference']) {
@@ -159,7 +159,7 @@ export function usePlanSettingChange(): {
     if (!pending) return;
     setApplying(true);
     await commitPlanChange(pending.proposal, pending.title, pending.restore);
-    setNote('Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.');
+    setNote('Gelukt, het staat in je planning. Onderin zie je wat er veranderde en kun je het ongedaan maken.');
     setApplying(false);
     setPending(null);
   }
