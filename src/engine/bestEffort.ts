@@ -55,22 +55,80 @@ export function distancePoints(stream: StreamSet): Point[] {
   return out.filter((p, i) => i === 0 || p.t > out[i - 1].t);
 }
 
+// A stop is not a hole: standing at a traffic light or a crossing. Two readings far apart
+// in time whose distance hardly moved (a watch that paused by itself), or a run of readings
+// that creep forward slower than STOP_SPEED_MS, are a stop. A gap where the distance does
+// jump stays a hole (the watch lost the run), and says nothing about the pace.
+export const STOP_GAP_MAX_M = 15;
+export const STOP_SPEED_MS = 1;
+// A creep shorter than this is noise, not a stop.
+export const STOP_MIN_SEC = 3;
+// The version of how a best effort is read. 2: stops are told apart (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md).
+export const EFFORT_VERSION = 2;
+// Many stops make the test a little too friendly: standing still is rest.
+export const MANY_STOPPED_SEC = 60;
+export const MANY_STOPS = 3;
+
+export type StopMode = 'skip' | 'count';
+
+// "Stilstaan bij een testloop" (AppSettings.testStops): absent or unknown = skip, the advice.
+export const resolveTestStops = (v: unknown): StopMode => (v === 'count' ? 'count' : 'skip');
+
 export interface BestWindow {
-  // Seconds the fastest stretch took.
+  // Seconds the fastest stretch took (moving time when stops are skipped, clock time otherwise).
   seconds: number;
   startM: number;
   endM: number;
+  // The stops inside the stretch, only when stops are skipped.
+  stops?: number;
+  stoppedSec?: number;
 }
 
 // The fastest unbroken stretch of `distanceM` metres. Undefined when the series is
-// shorter than that or every stretch has a hole in it.
-export function fastestWindow(stream: StreamSet, distanceM: number): BestWindow | undefined {
+// shorter than that or every stretch has a hole in it. With mode 'skip' (the default) the
+// time of a stop does not count in the stretch and the stops are counted; with 'count' the
+// clock runs on, as it did before.
+export function fastestWindow(stream: StreamSet, distanceM: number, mode: StopMode = 'skip'): BestWindow | undefined {
   const p = distancePoints(stream);
   const n = p.length;
   if (n < 2 || p[n - 1].d - p[0].d < distanceM) return undefined;
-  // bad[k]: how many pairs up to and including (k-1, k) are holes.
+  const skip = mode === 'skip';
+  // stop[k]: the pair (k-1, k) is a stop.
+  const stop: boolean[] = new Array(n).fill(false);
+  if (skip) {
+    let k = 1;
+    while (k < n) {
+      const dt = p[k].t - p[k - 1].t;
+      const dd = p[k].d - p[k - 1].d;
+      if (dt > MAX_GAP_SEC) {
+        if (dd < STOP_GAP_MAX_M) stop[k] = true;
+        k++;
+        continue;
+      }
+      if (dd / dt >= STOP_SPEED_MS) {
+        k++;
+        continue;
+      }
+      // A creep: take the whole run of slow pairs, and keep it when it lasts long enough.
+      let e = k;
+      while (e + 1 < n && p[e + 1].t - p[e].t <= MAX_GAP_SEC && (p[e + 1].d - p[e].d) / (p[e + 1].t - p[e].t) < STOP_SPEED_MS) e++;
+      if (p[e].t - p[k - 1].t >= STOP_MIN_SEC) for (let q = k; q <= e; q++) stop[q] = true;
+      k = e + 1;
+    }
+  }
+  // bad[k]: how many pairs up to and including (k-1, k) are holes. m[k]: moving seconds up
+  // to point k. stopSec[k] and starts[k]: seconds stood still and stops begun up to pair k.
   const bad: number[] = new Array(n).fill(0);
-  for (let k = 1; k < n; k++) bad[k] = bad[k - 1] + (p[k].t - p[k - 1].t > MAX_GAP_SEC ? 1 : 0);
+  const m: number[] = new Array(n).fill(0);
+  const stopSec: number[] = new Array(n).fill(0);
+  const starts: number[] = new Array(n).fill(0);
+  for (let k = 1; k < n; k++) {
+    const dt = p[k].t - p[k - 1].t;
+    bad[k] = bad[k - 1] + (dt > MAX_GAP_SEC && !stop[k] ? 1 : 0);
+    m[k] = m[k - 1] + (stop[k] ? 0 : dt);
+    stopSec[k] = stopSec[k - 1] + (stop[k] ? dt : 0);
+    starts[k] = starts[k - 1] + (stop[k] && !stop[k - 1] ? 1 : 0);
+  }
   let best: BestWindow | undefined;
   let i = 0;
   for (let j = 1; j < n; j++) {
@@ -80,28 +138,62 @@ export function fastestWindow(stream: StreamSet, distanceM: number): BestWindow 
     // The pairs from i to j must all be whole.
     if (bad[j] - bad[i] > 0) continue;
     const span = p[i + 1].d - p[i].d;
-    const startT = span > 0 ? p[i].t + ((from - p[i].d) / span) * (p[i + 1].t - p[i].t) : p[i].t;
-    const seconds = p[j].t - startT;
-    if (seconds > 0 && (!best || seconds < best.seconds)) best = { seconds, startM: from - p[0].d, endM: p[j].d - p[0].d };
+    const frac = span > 0 ? (from - p[i].d) / span : 0;
+    const startT = m[i] + frac * (m[i + 1] - m[i]);
+    const seconds = m[j] - startT;
+    if (seconds > 0 && (!best || seconds < best.seconds)) {
+      best = { seconds, startM: from - p[0].d, endM: p[j].d - p[0].d };
+      if (skip) {
+        best.stops = starts[j] - starts[i] + (i >= 1 && stop[i] && stop[i + 1] ? 1 : 0);
+        best.stoppedSec = Math.round(stopSec[j] - stopSec[i]);
+      }
+    }
   }
   return best;
 }
 
 // The best effort of a test log: the fastest `targetKm` of the series, or nothing when
 // the series cannot give it (too short, holes, a distance that does not match the log).
-export function bestEffortFromStream(stream: StreamSet, targetKm: number, logKm?: number, logMinutes?: number): BestEffort | undefined {
+export function bestEffortFromStream(stream: StreamSet, targetKm: number, logKm?: number, logMinutes?: number, mode: StopMode = 'skip'): BestEffort | undefined {
   const p = distancePoints(stream);
   if (p.length < 2) return undefined;
   const totalKm = (p[p.length - 1].d - p[0].d) / 1000;
   if (logKm && logKm > 0 && Math.abs(totalKm - logKm) / logKm > DISTANCE_AGREEMENT) return undefined;
-  const w = fastestWindow(stream, targetKm * 1000);
+  const w = fastestWindow(stream, targetKm * 1000, mode);
   if (!w) return undefined;
-  const out: BestEffort = { km: targetKm, minutes: Math.round((w.seconds / 60) * 1000) / 1000 };
+  const out: BestEffort = { km: targetKm, minutes: Math.round((w.seconds / 60) * 1000) / 1000, v: EFFORT_VERSION };
+  if (mode === 'skip') {
+    out.stops = w.stops ?? 0;
+    out.stoppedSec = w.stoppedSec ?? 0;
+  }
   if (isNum(logKm) && isNum(logMinutes)) {
     out.wholeKm = logKm;
     out.wholeMinutes = logMinutes;
   }
   return out;
+}
+
+// "zonder 3 keer stilstaan, samen 1:40", or undefined when there were no stops.
+export function stopsPhrase(b: Pick<BestEffort, 'stops' | 'stoppedSec'>): string | undefined {
+  const stops = b.stops ?? 0;
+  const sec = Math.round(b.stoppedSec ?? 0);
+  if (stops <= 0 || sec <= 0) return undefined;
+  const time = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  return `zonder ${stops === 1 ? '1 keer' : `${stops} keer`} stilstaan, samen ${time}`;
+}
+
+// Standing still is rest, so a test with a lot of it is a bit too friendly.
+export function manyStops(b: Pick<BestEffort, 'stops' | 'stoppedSec'>): boolean {
+  return (b.stoppedSec ?? 0) > MANY_STOPPED_SEC || (b.stops ?? 0) > MANY_STOPS;
+}
+
+export const MANY_STOPS_SENTENCE = 'Stilstaan geeft wat rust, dus deze test is iets te gunstig.';
+
+// The line after the time: the stops and, when there are many, the honest remark. Empty without stops.
+export function stopsNote(b: Pick<BestEffort, 'stops' | 'stoppedSec'>): string {
+  const phrase = stopsPhrase(b);
+  if (!phrase) return '';
+  return manyStops(b) ? `${phrase}. ${MANY_STOPS_SENTENCE}` : phrase;
 }
 
 // The fingerprint of the totals a best effort was read for.

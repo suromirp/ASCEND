@@ -166,6 +166,11 @@ describe('migrating the best effort and the verdicts', () => {
     const kept = migrateLogBestEffort(testLog({ bestEffort: { km: 5, minutes: 27.5, wholeKm: 6, wholeMinutes: 34, accepted: true }, bestEffortTried: '6.00|34.00' }));
     expect(kept.bestEffort).toEqual({ km: 5, minutes: 27.5, wholeKm: 6, wholeMinutes: 34, accepted: true });
     expect(kept.bestEffortTried).toBe('6.00|34.00');
+    const stops = migrateLogBestEffort(testLog({ bestEffort: { km: 5, minutes: 27.5, wholeKm: 6, wholeMinutes: 34, v: 2, stops: 3, stoppedSec: 100 } }));
+    expect(stops.bestEffort).toMatchObject({ v: 2, stops: 3, stoppedSec: 100 });
+    const broken = migrateLogBestEffort(testLog({ bestEffort: { km: 5, minutes: 27.5, wholeKm: 6, wholeMinutes: 34, stops: -1, stoppedSec: 'x' as unknown as number } }));
+    expect(broken.bestEffort?.stops).toBeUndefined();
+    expect(broken.bestEffort?.minutes).toBe(27.5);
     const bad = migrateLogBestEffort(testLog({ bestEffortTried: 42 as unknown as string }));
     expect('bestEffortTried' in bad).toBe(false);
   });

@@ -14,6 +14,7 @@ import { SummaryRow } from './SummaryRow';
 import { rowShown } from './rowShown';
 import type { GroupProps } from './types';
 import { FAST_GROWTH_WARNING, resolveLongRunGrowth } from '../../../engine/runGrowth';
+import { resolveTestStops } from '../../../engine/bestEffort';
 import { REST_DAY_OPTIONS } from '../../../engine/restDay';
 import { ChoiceList, ChoiceSheet } from '../Sheet';
 
@@ -67,6 +68,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="wijzigingen" title="Wijzigingen" facts={facts} info="wijzigingen" onClick={() => setSheet('wijzigingen')} />
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
         <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
+        <SummaryRow id="test-stilstaan" title="Stilstaan bij een testloop" facts={facts} info="testStilstaan" onClick={() => setSheet('test-stilstaan')} />
       </SettingsSection>
 
       {sheet === 'bundel-dagen' && (
@@ -115,6 +117,9 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
       {sport && <SportSheet sport={sport} note={plan.note} onToggle={(s, on) => void plan.toggleSport(s, on)} onFrequency={(s, n) => void plan.setFrequency(s, n)} onClose={close} />}
       {sheet === 'wijzigingen' && (
         <ChoiceFromDef def={CHOICES.wijzigingen} value={plan.applyMode} onPick={(v) => void updateSettings({ changeApplyMode: v })} onClose={close} />
+      )}
+      {sheet === 'test-stilstaan' && (
+        <ChoiceFromDef def={CHOICES.testStilstaan} value={resolveTestStops(settings.testStops)} onPick={(v) => void updateSettings({ testStops: v })} onClose={close} />
       )}
       {sheet === 'ambitie' && (
         <ChoiceFromDef

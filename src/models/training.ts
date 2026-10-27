@@ -530,6 +530,14 @@ export interface BestEffort {
   // True once the test counts with this stretch. Set at once when that changes no pace
   // (or the test is brand new), otherwise only after your Akkoord in the log sheet.
   accepted?: boolean;
+  // How it was read (engine/bestEffort.ts#EFFORT_VERSION). Without it (read before stops were
+  // told apart) an unaccepted one is read once more from the series.
+  v?: number;
+  // Stops (a traffic light) inside the stretch and the seconds stood still, which do not count
+  // in `minutes`. Only when stops are skipped (AppSettings.testStops); optional, additive
+  // (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md).
+  stops?: number;
+  stoppedSec?: number;
 }
 
 export interface WorkoutDetails {

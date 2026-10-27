@@ -703,6 +703,10 @@ export interface AppSettings {
   // "Twijfeltest eerst vragen": a test run that came out clearly slower than the one before
   // waits for your answer before it changes your paces. Absent = on. Optional and additive.
   askDoubtTest?: boolean;
+  // "Stilstaan bij een testloop": 'skip' (advice, absent = skip) leaves the time of a stop at a
+  // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
+  // read; what is stored stays as it was. Optional and additive.
+  testStops?: 'skip' | 'count';
   // "Volledige reeks bewaren": keep the full series of a run or tocht on this device
   // (activityStreams). Absent = on. Off keeps only the derived profile and kilometres.
   // Optional and additive.

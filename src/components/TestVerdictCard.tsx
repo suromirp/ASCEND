@@ -6,7 +6,8 @@
 
 import { useMemo, useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { effortOffer, judgmentOptions, previewEffort, previewVerdict, testBasisLine, testState, upsertTestJudgment, type PaceChangeRow } from '../engine/testJudgment';
+import { MANY_STOPS_SENTENCE, manyStops, stopsPhrase } from '../engine/bestEffort';
+import { effortOffer, judgmentOptions, previewEffort, previewVerdict, testBasisLine, testState, testStopsRemark, upsertTestJudgment, type PaceChangeRow } from '../engine/testJudgment';
 import { formatRaceTime, TEST_DISTANCE_KM } from '../engine/racePrediction';
 import { acceptBestEffort } from '../storage/activityDetail';
 import type { TestVerdict } from '../models/testJudgment';
@@ -73,7 +74,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
       {offer && offerRows.length > 0 && !offerDismissed && (
         <div className="mb-4">
           <p className="text-sm" style={ink}>
-            Uit je run blijkt een beste {String(TEST_DISTANCE_KM).replace('.', ',')} km van <span className="tabular-nums">{formatRaceTime(offer.minutes)}</span>. Je tempo's rekenden met de hele run.
+            Uit je run blijkt een beste {String(TEST_DISTANCE_KM).replace('.', ',')} km van <span className="tabular-nums">{formatRaceTime(offer.minutes)}</span>{stopsPhrase(offer) ? `, ${stopsPhrase(offer)}` : ''}. {manyStops(offer) ? `${MANY_STOPS_SENTENCE} ` : ''}Je tempo's rekenden met de hele run.
           </p>
           <div className="mt-2">
             <PaceRows title="Dit worden je tempo's" rows={offerRows} busy={busy} onAkkoord={() => void acceptOffer()} onCancel={() => setOfferDismissed(true)} cancelLabel="Niet nu" />
@@ -81,6 +82,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
         </div>
       )}
       <p className="text-xs" style={dim}>{testBasisLine(state.result)}</p>
+      {testStopsRemark(state.result) && <p className="text-xs" style={dim}>{testStopsRemark(state.result)}</p>}
       {state.result.basis === 'whole' && !!log?.externalId && !log.bestEffort && !log.bestEffortTried && (
         <p className="text-xs" style={dim}>Dit is de hele run. De beste {String(TEST_DISTANCE_KM).replace('.', ',')} km komt erbij zodra de reeks van je horloge binnen is.</p>
       )}

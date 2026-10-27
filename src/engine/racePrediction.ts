@@ -47,6 +47,9 @@ export interface TestResult {
   basis?: 'effort' | 'whole';
   wholeKm?: number;
   wholeMinutes?: number;
+  // Stops inside the fastest stretch, when it was read with stops left out (basis 'effort').
+  stops?: number;
+  stoppedSec?: number;
 }
 
 // The totals of a test log: distance and time as the log has them now.
@@ -75,7 +78,7 @@ export function testResults(logs: SessionLog[]): TestResult[] {
       const effort = countingEffort(l);
       return [
         effort
-          ? { date: l.completedDate, km: effort.km, minutes: effort.minutes, logId: l.id, basis: 'effort', wholeKm: km, wholeMinutes: minutes }
+          ? { date: l.completedDate, km: effort.km, minutes: effort.minutes, logId: l.id, basis: 'effort', wholeKm: km, wholeMinutes: minutes, ...(effort.stops ? { stops: effort.stops, stoppedSec: effort.stoppedSec } : {}) }
           : { date: l.completedDate, km, minutes, logId: l.id, basis: 'whole', wholeKm: km, wholeMinutes: minutes },
       ];
     })

@@ -525,6 +525,17 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'dan telt de laatste test altijd, zoals vroeger.' },
     ],
   },
+  testStilstaan: {
+    title: 'Stilstaan bij een testloop',
+    lead: 'Staat je horloge niet stil als jij voor een stoplicht wacht, dan loopt de klok door in je snelste 5 km.',
+    points: [
+      { head: 'Niet meetellen', text: 'de tijd dat je stilstond telt niet in je snelste 5 km. ASCEND zegt erbij hoe vaak en hoelang, bijvoorbeeld: zonder 3 keer stilstaan, samen 1:40.' },
+      { head: 'Veel stilstaan', text: 'meer dan een minuut of meer dan 3 stops geeft wat rust. Dan zegt ASCEND dat de test iets te gunstig is.' },
+      { head: 'Meetellen', text: 'de klok loopt door, zoals het was. Pauzeert je horloge vanzelf, dan telt een stuk met zo een gat in de tijd dan niet mee.' },
+      { head: 'Je tempo\'s', text: 'veranderen niet vanzelf. Is er een tempo anders, dan zie je het eerst in het logblad en pas na Akkoord telt het.' },
+      { head: 'Bestaande tests', text: 'een snelste 5 km die al meetelt blijft zoals hij was. Een die nog wacht wordt één keer opnieuw gelezen.' },
+    ],
+  },
   korteNacht: {
     title: 'Vragen bij een korte nacht',
     lead: 'Zag je horloge maar een deel van de nacht, dan vraagt ASCEND of dat klopt in plaats van te denken dat je slecht sliep.',

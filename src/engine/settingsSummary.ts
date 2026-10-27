@@ -7,6 +7,7 @@
 // regel (`sub`): een feit of een bron, nooit uitleg. Een test bewaakt dat een regel
 // niet langer is dan SUB_MAX_LENGTH, zodat niets afkapt op 360 px.
 
+import { resolveTestStops } from './bestEffort';
 import type { AppSettings } from '../storage/database';
 import type { Weekday } from '../models/goalEngineConfig';
 import type { WatchUse } from './watchUse';
@@ -519,6 +520,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.
       return { value: w.id === 'improve' ? 'Eigen weken' : `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
     }
+    case 'test-stilstaan':
+      return { value: choiceShort('testStilstaan', resolveTestStops(s.testStops)) };
     case 'twijfeltest':
       return { checked: s.askDoubtTest !== false };
     case 'korte-nacht':

@@ -23,10 +23,12 @@ import {
   effortOfferLine,
   EFFORT_OFFER_LINE,
   awaitsEffort,
+  wantsBestEffort,
+  testStopsRemark,
 } from './testJudgment';
 
 // Invented data: a 5 km test log, optionally with a best effort read from the series.
-function test(id: string, date: string, km: number, minutes: number, bestEffort?: { km: number; minutes: number; accepted?: boolean; wholeKm?: number; wholeMinutes?: number }): SessionLog {
+function test(id: string, date: string, km: number, minutes: number, bestEffort?: { km: number; minutes: number; accepted?: boolean; wholeKm?: number; wholeMinutes?: number; v?: number; stops?: number; stoppedSec?: number }): SessionLog {
   return {
     id,
     templateId: 'tpl_test_run',
@@ -317,5 +319,23 @@ describe('the quiet line for a best 5 km that waits for Akkoord', () => {
     const both = [NORMAL, OFFERED, slow];
     expect(pendingTestLine(both, {})?.logId).toBe('e');
     expect(effortOfferLine(both, {})).toBeUndefined();
+  });
+});
+
+describe('stops in the best 5 km of a test', () => {
+  it('names the stops after the time and adds one dry sentence when there are many', () => {
+    const few = testResults([test('s', '2027-01-10', 6.03, 36, { km: 5, minutes: 27.67, v: 2, stops: 2, stoppedSec: 45 })])[0];
+    expect(testBasisLine(few)).toBe('Beste 5 km uit je run: 27:40, zonder 2 keer stilstaan, samen 0:45');
+    expect(testStopsRemark(few)).toBeUndefined();
+    const many = testResults([test('m', '2027-01-10', 6.03, 36, { km: 5, minutes: 27.67, v: 2, stops: 3, stoppedSec: 100 })])[0];
+    expect(testBasisLine(many)).toBe('Beste 5 km uit je run: 27:40, zonder 3 keer stilstaan, samen 1:40');
+    expect(testStopsRemark(many)).toBe('Stilstaan geeft wat rust, dus deze test is iets te gunstig.');
+    expect(testBasisLine(testResults([test('o', '2027-01-10', 6.03, 36, { km: 5, minutes: 27.67 })])[0])).toBe('Beste 5 km uit je run: 27:40');
+  });
+
+  it('reads one that waits and has no version once more, but never one that counts', () => {
+    expect(wantsBestEffort(test('w', '2027-01-10', 6, 34, { km: 5, minutes: 28, accepted: false }))).toBe(true);
+    expect(wantsBestEffort(test('w', '2027-01-10', 6, 34, { km: 5, minutes: 28, accepted: false, v: 2 }))).toBe(false);
+    expect(wantsBestEffort(test('w', '2027-01-10', 6, 34, { km: 5, minutes: 28, accepted: true }))).toBe(false);
   });
 });
