@@ -151,7 +151,7 @@ export function GoalFormSheet({
 
           {!editing && (
             <div className="flex flex-col gap-2">
-              <Eyebrow>Hoe belangrijk is dit doel?</Eyebrow>
+              <Eyebrow>Hoe belangrijk is dit doel voor jou?</Eyebrow>
               <div className="st-list" role="radiogroup" aria-label="Label van dit doel">
                 {GOAL_PRIORITIES.map((p) => (
                   <button

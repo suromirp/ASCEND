@@ -109,7 +109,7 @@ export function AscendPage() {
         () => planHorizonChange({
           title: 'Volgorde van je doelen',
           why: 'Je koos een andere volgorde.',
-          explanation: 'Bij twee doelen met hetzelfde label wijkt het doel dat lager in de lijst staat. Een andere volgorde verandert dus wat er bij een botsing gebeurt. ASCEND laat eerst zien wat er verandert en past het pas toe na jouw akkoord.',
+          explanation: 'Hebben twee doelen hetzelfde label, dan wijkt het doel dat lager in de lijst staat. Een andere volgorde verandert dus wat er bij een botsing gebeurt. Je ziet eerst wat er verandert; pas na jouw Akkoord gebeurt er iets.',
           trigger: 'goal_changed',
           goals: outcome.goals.map((g) => ({ ...g, updatedAt: now })),
         }),

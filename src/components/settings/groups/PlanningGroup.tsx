@@ -190,7 +190,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
           onRespond={async (response) => {
             if (response === 'accepted') {
               await applyRestDay(restPlan);
-              setRestNote('Opgeslagen en toegepast. Onderin zie je wat er veranderde, met ongedaan maken.');
+              setRestNote('Gelukt, het staat in je planning. Onderin zie je wat er veranderde en kun je het ongedaan maken.');
             } else setRestNote('Je rustdag en je planning blijven zoals ze waren.');
           }}
           onClose={() => setRestPlan(null)}
