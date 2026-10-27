@@ -183,3 +183,11 @@ describe('a goal time against the test', () => {
     expect(checkTargetTime(late, 52, raceDate)?.verdict).toBe('ambitious');
   });
 });
+
+describe('twijfel op dezelfde basis', () => {
+  it('een vorige test op de beste 5 km tegen een nieuwe op de hele run vergelijkt beide op de hele run', () => {
+    const prev = { date: '2026-09-01', km: 5, minutes: 25, basis: 'effort' as const, wholeKm: 6, wholeMinutes: 32 };
+    const latest = { date: '2026-10-01', km: 6, minutes: 32.5, basis: 'whole' as const, wholeKm: 6, wholeMinutes: 32.5 };
+    expect(racePaces([prev, latest])?.doubtful).toBe(false);
+  });
+});

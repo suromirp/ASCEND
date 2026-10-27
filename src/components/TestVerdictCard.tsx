@@ -76,7 +76,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
             Uit je run blijkt een beste {String(TEST_DISTANCE_KM).replace('.', ',')} km van <span className="tabular-nums">{formatRaceTime(offer.minutes)}</span>. Je tempo's rekenden met de hele run.
           </p>
           <div className="mt-2">
-            <PaceRows title="Dit worden je tempo's" rows={offerRows} busy={busy} onAkkoord={() => void acceptOffer()} onCancel={() => setOfferDismissed(true)} />
+            <PaceRows title="Dit worden je tempo's" rows={offerRows} busy={busy} onAkkoord={() => void acceptOffer()} onCancel={() => setOfferDismissed(true)} cancelLabel="Niet nu" />
           </div>
         </div>
       )}
@@ -124,7 +124,7 @@ export function TestVerdictCard({ logId }: { logId: string }) {
 }
 
 // De tempo's van nu naar straks, met Akkoord en Annuleren: eerst zien, dan bewaren.
-function PaceRows({ title, rows, busy, onAkkoord, onCancel }: { title: string; rows: PaceChangeRow[]; busy: boolean; onAkkoord: () => void; onCancel: () => void }) {
+function PaceRows({ title, rows, busy, onAkkoord, onCancel, cancelLabel = 'Annuleren' }: { title: string; rows: PaceChangeRow[]; busy: boolean; onAkkoord: () => void; onCancel: () => void; cancelLabel?: string }) {
   const dim = { color: 'var(--color-ink-dim)' };
   const ink = { color: 'var(--color-ink)' };
   return (
@@ -142,7 +142,7 @@ function PaceRows({ title, rows, busy, onAkkoord, onCancel }: { title: string; r
       <p className="mt-2 text-xs leading-relaxed" style={dim}>Je trainingen en het horloge gebruiken deze tempo's bij de volgende keer synchroniseren.</p>
       <div className="mt-3 flex gap-3">
         <SecondaryButton disabled={busy} onClick={onAkkoord}>Akkoord</SecondaryButton>
-        <SecondaryButton disabled={busy} onClick={onCancel}>Annuleren</SecondaryButton>
+        <SecondaryButton disabled={busy} onClick={onCancel}>{cancelLabel}</SecondaryButton>
       </div>
     </div>
   );

@@ -19,7 +19,7 @@
 // Pure: no React, no IndexedDB.
 
 import { daysBetween, formatDateNL } from '../utils/dates';
-import { formatRaceTime, predictionRange, riegel, RIEGEL_MAX_KM, TEST_NOISE, type TestResult } from './racePrediction';
+import { formatRaceTime, isSlowerTest, predictionRange, riegel, RIEGEL_MAX_KM, type TestResult } from './racePrediction';
 
 // --- VDOT (Daniels and Gilbert, 1979) --------------------------------------
 
@@ -100,7 +100,6 @@ export function racePaces(tests: TestResult[], raceKm = 10): RacePaces | undefin
   const latest = tests.at(-1);
   if (!latest || latest.km <= 0 || latest.minutes <= 0) return undefined;
   const prev = tests.at(-2);
-  const perKm = (t: TestResult) => riegel(t.minutes, t.km, 5) / 5;
   const vdot = vdotOf(latest.km, latest.minutes);
   const fiveK = (minutesAtVdot(vdot, 5) * 60) / 5;
   const [easyFast, easySlow] = [paceAtShare(vdot, EASY_SHARE[1]), paceAtShare(vdot, EASY_SHARE[0])];
@@ -113,7 +112,8 @@ export function racePaces(tests: TestResult[], raceKm = 10): RacePaces | undefin
     threshold: { fast: thrFast, slow: thrSlow },
     interval: { fast: fiveK * (1 - INTERVAL_SPREAD), slow: fiveK * (1 + INTERVAL_SPREAD) },
     race: minutes === undefined ? undefined : { km: raceKm, minutes, low: predictionRange(minutes)[0], high: predictionRange(minutes)[1] },
-    doubtful: !!prev && perKm(latest) / perKm(prev) - 1 > TEST_NOISE,
+    // Op dezelfde basis als de twijfelvraag (comparablePaces): beste 5 km tegen hele run telt niet.
+    doubtful: isSlowerTest(latest, prev),
   };
 }
 
