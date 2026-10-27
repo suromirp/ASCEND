@@ -55,7 +55,7 @@ import { cleanMorningNotice } from '../engine/morningNotice';
 import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
@@ -249,6 +249,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     else s.sweatEntries = sweat.list;
     skipped.n += sweat.skipped;
   }
+  // Your weight before a training, kept until its log is there: record by record, a damaged
+  // one is dropped and counted; an older file has none (storage/migrations.ts#migrateSweatPre).
+  if ('sweatPre' in s) {
+    const pre = migrateSweatPre(s.sweatPre);
+    if (pre.list === undefined) delete s.sweatPre;
+    else s.sweatPre = pre.list;
+    skipped.n += pre.skipped;
+  }
   // The switch for water per stage: a yes or a no, or not there.
   if ('showStageWater' in s && typeof s.showStageWater !== 'boolean') {
     delete s.showStageWater;
@@ -329,7 +337,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -750,6 +758,12 @@ function mergeSettingsHistory(current: AppSettings, incoming: Partial<AppSetting
   // per training (engine/sweat.ts#mergeSweatEntries).
   if (incoming.sweatEntries || current.sweatEntries) {
     merged.sweatEntries = mergeSweatEntries(current.sweatEntries, incoming.sweatEntries);
+  }
+  // A weight from before a training is a draft: the union per day, the device's own wins.
+  if (incoming.sweatPre || current.sweatPre) {
+    const byDate = new Map((incoming.sweatPre ?? []).map((p) => [p.date, p]));
+    for (const p of current.sweatPre ?? []) byDate.set(p.date, p);
+    merged.sweatPre = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   }
   // Notes of "Wat speelde er" are history too: the union per id, the newest updatedAt
   // wins and on a tie the device does. A note you removed on this device comes back

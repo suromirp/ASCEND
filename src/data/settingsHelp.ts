@@ -446,6 +446,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'de vraag blijft staan als regel bij Je dag.' },
     ],
   },
+  zweetVragen: {
+    title: 'Zweetverlies vragen',
+    lead: 'Bij een loop, wandeling of tocht herinnert ASCEND je om je te wegen en vraagt het na afloop naar je gewicht, zodat je je eigen zweettempo leert kennen.',
+    points: [
+      { head: 'Vooraf', text: 'op de missiekaart staat een kleine regel om je gewicht in te vullen. Heeft MacroFactor vandaag of gisteren een gewicht, dan staat dat er als voorstel. Het wordt nooit zonder tik overgenomen.' },
+      { head: 'Na afloop', text: 'bij Hoe ging het en op het scherm Gedaan staat een rij voor je gewicht na. Vergat je je te wegen, dan kun je allebei achteraf invullen, of de schatting van je horloge.' },
+      { head: 'Achteraf', text: 'blijft kunnen in het Logboek, bij de training zelf.' },
+      { head: 'Uit', text: 'dan vraagt ASCEND niets. Je wegingen blijven bewaard.' },
+    ],
+  },
   korteNacht: {
     title: 'Vragen bij een korte nacht',
     lead: 'Zag je horloge maar een deel van de nacht, dan vraagt ASCEND of dat klopt in plaats van te denken dat je slecht sliep.',

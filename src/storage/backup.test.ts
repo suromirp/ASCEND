@@ -452,6 +452,57 @@ describe('backup envelope round-trip', () => {
     });
   });
 
+  // Your weight from before a training (models/sweat.ts#SweatPre): additive in the settings.
+  describe('sweatPre (gewicht van voor de training)', () => {
+    const pres = [{ date: '2026-10-26', weightKg: 79.8, updatedAt: '2026-10-26T06:00:00.000Z' }, { date: '2026-10-27', weightKg: 80, updatedAt: '2026-10-27T06:00:00.000Z' }];
+
+    it('travels in the export together with the switch and comes back on a clean device', async () => {
+      await SettingsRepo.set({ sweatPre: pres, askSweat: false });
+      const envelope = await buildBackupEnvelope();
+      expect(envelope.payload.settings.sweatPre).toEqual(pres);
+      await wipeAllData();
+      expect((await SettingsRepo.get()).sweatPre).toBeUndefined();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.sweatPre).toEqual(pres);
+      expect(restored.askSweat).toBe(false);
+    });
+
+    it('an older back-up without the keys imports as before and leaves the device alone', async () => {
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ sweatPre: pres });
+      const backup = normalizeBackupToCurrentModel(envelope);
+      expect(backup.skippedInvalid).toBe(0);
+      expect(backup.settings.sweatPre).toBeUndefined();
+      expect(backup.settings.askSweat).toBeUndefined();
+      await importEnvelope(envelope);
+      const restored = await SettingsRepo.get();
+      expect(restored.sweatPre).toEqual(pres);
+      expect(restored.askSweat).toBeUndefined();
+    });
+
+    it('drops damaged records and a damaged switch and counts them', async () => {
+      const envelope = await buildBackupEnvelope();
+      const settings = { sweatPre: [pres[1], { date: 'nooit', weightKg: 80 }, { date: '2026-10-25', weightKg: 5 }, { date: '2026-10-24', weightKg: '80' }], askSweat: 'ja' };
+      const backup = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings } });
+      expect(backup.settings.sweatPre).toEqual([pres[1]]);
+      expect(backup.settings.askSweat).toBeUndefined();
+      expect(backup.skippedInvalid).toBe(4);
+      const notAList = normalizeBackupToCurrentModel({ ...envelope, payload: { ...envelope.payload, settings: { sweatPre: 'oops' } } });
+      expect(notAList.settings.sweatPre).toBeUndefined();
+    });
+
+    it('a restore merges per day and the device wins', async () => {
+      await SettingsRepo.set({ sweatPre: [{ ...pres[0], weightKg: 70 }, { date: '2026-10-20', weightKg: 79, updatedAt: '2026-10-20T06:00:00.000Z' }] });
+      const envelope = await buildBackupEnvelope();
+      await SettingsRepo.set({ sweatPre: pres });
+      await importEnvelope(envelope);
+      const merged = (await SettingsRepo.get()).sweatPre!;
+      expect(merged.map((p) => p.date)).toEqual(['2026-10-20', '2026-10-26', '2026-10-27']);
+      expect(merged[1].weightKg).toBe(79.8);
+    });
+  });
+
   // "Wat speelde er" (models/influence.ts): additive in the settings, no schema step.
   describe('influences (wat speelde er)', () => {
     const note = (id: string, date: string, updatedAt: string, extra: Partial<InfluenceEntry> = {}): InfluenceEntry => ({ id, date, reasons: [{ reason: 'alcohol', amount: 'matig' }], updatedAt, ...extra });

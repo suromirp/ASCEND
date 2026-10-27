@@ -11,6 +11,8 @@ import { Card, Eyebrow, PrimaryButton } from './ui';
 import { Icon } from './icons';
 import { ClothingFeedback } from './ClothingFeedback';
 import { RunInsightCard } from './RunInsightCard';
+import { SweatAfterRow } from './SweatAfter';
+import { useSweatAfter } from './useSweatAfter';
 import './completion.css';
 
 export interface CelebrationEvent {
@@ -65,6 +67,17 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
     [sessionLogs, plannedSessions, templates, trainingGoals, goalMilestones, goalMilestoneProgress, legs, event],
   );
   const { facts, lines } = summary;
+  // Zweetverlies bij het afronden: alleen bij één loop, wandeling of tocht (instelling "Zweetverlies vragen").
+  const sweatLog = event.kind === 'session' && summary.count === 1 ? sessionLogs.find((l) => l.id === event.logIds?.[0]) : undefined;
+  const sweat = useSweatAfter(sweatLog);
+  const [goingOn, setGoingOn] = useState(false);
+  async function goOn() {
+    if (goingOn) return;
+    setGoingOn(true);
+    const ok = await sweat.save();
+    setGoingOn(false);
+    if (ok) requestClose();
+  }
   const flag = event.kind === 'milestone';
 
   return (
@@ -129,6 +142,14 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
 
             {event.kind === 'session' && summary.count === 1 && <ClothingFeedback logId={event.logIds?.[0]} />}
 
+            {sweat.show && (
+              <div className="completion-rise mt-4" style={delay(700)}>
+                <Card>
+                  <SweatAfterRow sweat={sweat} />
+                </Card>
+              </div>
+            )}
+
             {event.quote && <QuoteBlock quote={event.quote} at={720} />}
 
           </div>
@@ -137,7 +158,7 @@ function CompletionScreen({ event, onDismiss }: { event: CelebrationEvent; onDis
             className="completion-rise fixed inset-x-0 bottom-0 z-10 mx-auto w-full max-w-md px-4 pb-[max(env(safe-area-inset-bottom),20px)] pt-6"
             style={{ background: 'linear-gradient(to top, var(--color-bg) 65%, transparent)', ...delay(780) }}
           >
-            <PrimaryButton onClick={requestClose}>Verder</PrimaryButton>
+            <PrimaryButton onClick={() => void goOn()} disabled={goingOn}>Verder</PrimaryButton>
           </div>
         </div>
       </div>

@@ -23,6 +23,7 @@ import { WeatherLine } from './WeatherLine';
 import { ClothingAdvice } from './ClothingAdvice';
 import { WatchStatusRow } from './WatchStatusRow';
 import { BootReminderLine } from './reis/BootReminderLine';
+import { SweatBeforeRow } from './SweatBeforeRow';
 
 // "40 minuten" groot, de rest kleiner met zijn eenheid ernaast.
 function splitChip(text: string, tempo: boolean): { value: string; unit: string } | undefined {
@@ -167,6 +168,7 @@ export function TodayMissionCard({
         )}
         {paceNote && <p className="mt-2 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{paceNote}</p>}
         <BootReminderLine template={template} className="mt-2" />
+        <SweatBeforeRow template={template} className="mt-1" />
       </div>
 
       {zone && (

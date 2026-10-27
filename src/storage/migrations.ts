@@ -21,7 +21,7 @@ import { variantOf } from '../data/goalKinds';
 import type { RoutePlan } from '../models/routePlan';
 import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
 import type { InjuryNote } from '../models/injury';
-import type { SweatEntry } from '../models/sweat';
+import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
 import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
 import type { ExternalOneRm, OneRmReading, WeightEntry } from '../models/metrics';
@@ -201,6 +201,35 @@ export function migrateSweatEntries(raw: unknown): { list: SweatEntry[] | undefi
     if (!seen || entry.updatedAt >= seen.updatedAt) byLog.set(entry.logId, entry);
   }
   return { list: [...byLog.values()].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)), skipped };
+}
+
+// --- zweetverlies vóór de training: settings.sweatPre ---------------------------------
+// Je gewicht van vóór een training, bewaard tot de log van die dag er is (models/sweat.ts).
+// Optioneel en additief, dus het schemanummer van de back-up verandert niet: een bestand van
+// voor deze lijst heeft geen sleutel en laat de lijst op het toestel met rust. Een record
+// zonder echte datum of met een gewicht buiten 20 tot 300 kg valt weg en wordt geteld; per
+// dag blijft de laatste staan.
+export function migrateSweatPre(raw: unknown): { list: SweatPre[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byDate = new Map<string, SweatPre>();
+  let skipped = 0;
+  for (const item of raw) {
+    const r = typeof item === 'object' && item !== null && !Array.isArray(item) ? (item as Record<string, unknown>) : undefined;
+    if (
+      !r ||
+      typeof r.date !== 'string' || !ISO_DAY.test(r.date.slice(0, 10)) ||
+      typeof r.weightKg !== 'number' || !Number.isFinite(r.weightKg) || r.weightKg < 20 || r.weightKg > 300
+    ) {
+      skipped++;
+      continue;
+    }
+    const date = r.date.slice(0, 10);
+    const pre: SweatPre = { date, weightKg: r.weightKg, updatedAt: typeof r.updatedAt === 'string' ? r.updatedAt : `${date}T00:00:00.000Z` };
+    const seen = byDate.get(date);
+    if (!seen || pre.updatedAt >= seen.updatedAt) byDate.set(date, pre);
+  }
+  return { list: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)), skipped };
 }
 
 // --- Garmin is leidend: SessionLog.manualMeasured -----------------------------

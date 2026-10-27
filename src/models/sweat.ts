@@ -29,3 +29,12 @@ export interface SweatEntry {
   tempC?: number;
   updatedAt: string;
 }
+
+// Je gewicht van vóór een training, bewaard tot de log van die dag er is
+// (AppSettings.sweatPre, engine/sweatMoments.ts). Eén per dag. Zodra er een meting
+// (SweatEntry) voor die training is, is dit voorgewicht overgenomen en telt het niet meer.
+export interface SweatPre {
+  date: string;
+  weightKg: number;
+  updatedAt: string;
+}
