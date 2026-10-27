@@ -20,6 +20,7 @@ const everything: AppSettings = {
   showNextTrek: false,
   showSeasonStrip: false,
   showStageWater: false,
+  askSweat: false,
   trekLegRest: 'strict',
   longRunGrowth: 'wave',
   bootBreakInKm: 150,

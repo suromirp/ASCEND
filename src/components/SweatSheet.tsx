@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { SessionLog } from '../models/training';
-import type { SweatEntry } from '../models/sweat';
-import { entryResultLine, sweatActivityOfLog, sweatLossMl } from '../engine/sweat';
+import { entryResultLine, sweatLossMl } from '../engine/sweat';
+import { buildSweatEntry, preWeightForLog } from '../engine/sweatMoments';
 import { formatDateNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
@@ -21,8 +21,8 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
   const { settings, saveSweat } = useAppData();
   const existing = settings.sweatEntries?.find((e) => e.logId === log.id);
   const { closing, requestClose } = useSheetClose(onClose);
-  const activity = sweatActivityOfLog(log) ?? 'walk';
-  const [before, setBefore] = useState(existing?.weightBeforeKg);
+  const pre = preWeightForLog(settings.sweatPre, settings.sweatEntries, log);
+  const [before, setBefore] = useState(existing?.weightBeforeKg ?? pre);
   const [after, setAfter] = useState(existing?.weightAfterKg);
   const [drank, setDrank] = useState(existing?.drankMl);
   const [pee, setPee] = useState(existing?.peeMl);
@@ -31,20 +31,13 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  const draft: SweatEntry = {
-    id: existing?.id ?? makeId('sweat'),
-    logId: log.id,
-    date: log.completedDate,
-    activity,
-    durationMinutes: log.durationMinutes,
-    weightBeforeKg: before,
-    weightAfterKg: after,
-    drankMl: drank,
-    peeMl: pee,
-    watchMl: watch,
-    tempC: temp,
-    updatedAt: new Date().toISOString(),
-  };
+  const draft = buildSweatEntry(
+    log,
+    { weightBeforeKg: before, weightAfterKg: after, drankMl: drank, peeMl: pee, watchMl: watch, tempC: temp },
+    existing,
+    makeId('sweat'),
+    new Date().toISOString(),
+  );
   const loss = sweatLossMl(draft);
   const result = entryResultLine(draft);
   const hasNumbers = loss !== undefined || watch !== undefined;
@@ -56,10 +49,8 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
     setBusy(true);
     setNote(null);
     try {
-      // Alleen invullen wat er is: lege velden worden niet bewaard.
-      const clean: SweatEntry = { ...draft };
-      for (const key of ['weightBeforeKg', 'weightAfterKg', 'drankMl', 'peeMl', 'watchMl', 'tempC'] as const) if (clean[key] === undefined) delete clean[key];
-      await withTimeout(saveSweat(clean), SAVE_LIMIT_MS);
+      // Lege velden worden niet bewaard (buildSweatEntry laat ze weg).
+      await withTimeout(saveSweat(draft), SAVE_LIMIT_MS);
       requestClose();
     } catch (err) {
       setNote(err instanceof TimeoutError ? 'Opslaan duurt langer dan verwacht. Kijk zo of je meting er staat; staat hij er niet, probeer het dan nog eens.' : 'Opslaan lukte niet. Probeer het zo nog eens.');

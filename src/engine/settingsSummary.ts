@@ -500,6 +500,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: o.morningCheckIn };
     case 'ochtendkaart':
       return { checked: o.morningCard };
+    case 'zweet-vragen':
+      return { checked: s.askSweat !== false };
     case 'korte-nacht':
       return { checked: s.askShortNight !== false };
     case 'ochtend-vanaf':

@@ -298,6 +298,7 @@ import { withProgramExercises } from '../engine/macrofactorProgram';
 import { makeId } from '../utils/id';
 import type { InfluenceEntry } from '../models/influence';
 import type { SweatEntry } from '../models/sweat';
+import { clearSweatPre, setSweatPre } from '../engine/sweatMoments';
 import { applyChange, blankEntry, excludedLogIds, type NoteTarget } from '../engine/influence';
 import { buildBackupEnvelope, backupFileName } from '../storage/backup';
 import { webBackupFileAdapter } from '../storage/backupFileAdapter';
@@ -535,6 +536,9 @@ interface AppData {
   // Your weighing for sweat loss, one per training (settings.sweatEntries); a weighing without
   // numbers is removed.
   saveSweat: (entry: SweatEntry | { logId: string; remove: true }) => Promise<void>;
+  // Your weight from before a training, kept until its log is there (settings.sweatPre, one per
+  // day); null takes it away.
+  saveSweatPre: (date: string, weightKg: number | null) => Promise<void>;
   removeInfluence: (id: string) => Promise<void>;
   clearInfluences: () => Promise<void>;
   reportIllness: (kind: IllnessKind) => Promise<void>;
@@ -1872,6 +1876,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+  const saveSweatPre = useCallback(
+    async (date: string, weightKg: number | null) => {
+      const job = influenceTail.current.then(async () => {
+        const stored = await SettingsRepo.get();
+        const list = weightKg === null ? clearSweatPre(stored.sweatPre, date) : setSweatPre(stored.sweatPre, { date, weightKg, updatedAt: new Date().toISOString() }, todayISO());
+        setSettings(await SettingsRepo.set({ sweatPre: list }));
+      });
+      influenceTail.current = job.catch(() => undefined);
+      return job;
+    },
+    [],
+  );
   const removeInfluence = useCallback((id: string) => writeInfluences((list) => list.filter((e) => e.id !== id)), [writeInfluences]);
   const clearInfluences = useCallback(() => writeInfluences(() => []), [writeInfluences]);
 
@@ -2589,6 +2605,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     undoRecentChange,
     saveInfluence,
     saveSweat,
+    saveSweatPre,
     removeInfluence,
     clearInfluences,
     reportIllness,

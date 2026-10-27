@@ -78,6 +78,7 @@ export function VandaagGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       </SettingsSection>
 
       <SettingsSection title="Na een training">
+        <SummaryRow id="zweet-vragen" title="Zweetverlies vragen" facts={facts} info="zweetVragen" onChange={(on) => void updateSettings({ askSweat: on })} />
         <SummaryRow id="bundel-inzicht" title="Inzicht na een training" facts={facts} info="loopinzicht" onClick={() => setSheet('bundel-inzicht')} />
       </SettingsSection>
 

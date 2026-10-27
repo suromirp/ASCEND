@@ -8,7 +8,7 @@ import type { InjuryNote } from '../models/injury';
 import type { IllnessEpisode } from '../models/illness';
 import type { LeavePeriod } from '../models/leave';
 import type { ExternalOneRm, WeightEntry } from '../models/metrics';
-import type { SweatEntry } from '../models/sweat';
+import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { MorningCheckIn, NightJudgment, WeeklyHealthCheck, WeeklyIntention } from '../models/checkIn';
 import type { InfluenceEntry } from '../models/influence';
 import type { TrainingGoal, GoalMilestone, GoalMilestoneProgress } from '../models/goals';
@@ -637,6 +637,12 @@ export interface AppSettings {
   // engine/sweat.ts). Een lijst naast de logs, zodat een log nooit verandert; wordt
   // defensief gelezen (storage/migrations.ts#migrateSweatEntries) en per id samengevoegd.
   sweatEntries?: SweatEntry[];
+  // Je gewicht van vóór een training, bewaard tot de log van die dag er is (één per dag,
+  // twee weken). Een concept naast de metingen; storage/migrations.ts#migrateSweatPre.
+  sweatPre?: SweatPre[];
+  // "Zweetverlies vragen": de herinnering om je te wegen en de rij bij het afronden.
+  // Standaard aan.
+  askSweat?: boolean;
   // Water per etappe tonen op Etappes en in het blad van een etappe. Standaard aan.
   showStageWater?: boolean;
   // "Vragen bij een korte nacht": ask instead of warning when the watch saw

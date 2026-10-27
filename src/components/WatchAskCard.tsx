@@ -16,6 +16,8 @@ import { PainReportFields } from './PainReportFields';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
 import { TextButton } from './TextButton';
 import { StravaTextButton } from './StravaTextButton';
+import { SweatAfterRow } from './SweatAfter';
+import { useSweatAfter } from './useSweatAfter';
 
 const FEELS: [SubjectiveFeel, string][] = [['better', 'Beter'], ['normal', 'Normaal'], ['worse', 'Slechter']];
 
@@ -54,6 +56,8 @@ export function WatchAskCard({
   const [feel, setFeel] = useState<SubjectiveFeel | undefined>(log.subjectiveFeel);
   const [rpe, setRpe] = useState<number | undefined>(log.rpe);
   const [pain, setPain] = useState<PainReport[]>(log.painReports ?? []);
+  const sweat = useSweatAfter(log);
+  const [saving, setSaving] = useState(false);
   const asksPain = !!template && (template.type === 'cardio' || template.type === 'hiking' || (template.type === 'strength' && isLegHeavyTemplate(template)));
   const answered = feel !== undefined || rpe !== undefined || pain.length > 0;
   const chip = (on: boolean) => ({
@@ -94,6 +98,8 @@ export function WatchAskCard({
         </div>
       </div>
 
+      <SweatAfterRow sweat={sweat} />
+
       <div>
         <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           Zwaarte (RPE): hoe zwaar voelde de hele training?{log.rpe !== undefined && rpe === log.rpe ? ' Zo stond het op je horloge.' : ''}
@@ -120,8 +126,16 @@ export function WatchAskCard({
 
       {asksPain && <PainReportFields value={pain} onChange={setPain} />}
 
-      <PrimaryButton disabled={busy} onClick={() => onAnswer({ rpe, subjectiveFeel: feel, painReports: pain })}>
-        {answered ? 'Opslaan' : 'Klaar'}
+      <PrimaryButton
+        disabled={busy || saving}
+        onClick={async () => {
+          setSaving(true);
+          const ok = await sweat.save();
+          setSaving(false);
+          if (ok) onAnswer({ rpe, subjectiveFeel: feel, painReports: pain });
+        }}
+      >
+        {answered || sweat.result ? 'Opslaan' : 'Klaar'}
       </PrimaryButton>
       <div className="flex gap-3">
         <SecondaryButton onClick={onReject} disabled={busy}>Klopt niet</SecondaryButton>
