@@ -14,6 +14,7 @@ import { resolveEffectiveFullDuration, resolveVariantDuration, weeklyProgression
 import type { PlannedSession, SessionTemplate, SessionVariant, SubjectiveFeel } from '../models/training';
 import { TodayMissionCard } from '../components/TodayMissionCard';
 import { NextTrekLine } from '../components/NextTrekLine';
+import { TestPendingLine } from '../components/TestPendingLine';
 import { ExerciseLogger } from '../components/ExerciseLogger';
 import { RescheduleDialog } from '../components/RescheduleDialog';
 import { IllnessStatusCard, NotFitLink } from '../components/IllnessCard';
@@ -54,8 +55,7 @@ import { DoneTodayCard, QuietDayCard } from '../components/vandaag/QuietDayCard'
 import { missionFacts } from '../engine/missionFacts';
 import { tomorrowEntry, tomorrowText, trainingRowState } from '../engine/yourDay';
 import { buildSessionBrief } from '../engine/sessionBrief';
-import { racePaces } from '../engine/racePaces';
-import { testResults } from '../engine/racePrediction';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { wantsLogShortcut, withoutShortcut } from '../engine/shortcutAction';
 import { dailyQuote } from '../utils/quotes';
@@ -171,7 +171,7 @@ function TodayContent() {
   // The order card has its own say; the old tip only for what it doesn't cover.
   const concurrentTrainingTip = dayOrderAdvice ? null : suggestSameDayOrder(todaySessions, templateById);
   // The mission's three key numbers; the pace comes from the latest test run.
-  const paces = useMemo(() => racePaces(testResults(sessionLogs)), [sessionLogs]);
+  const paces = useMemo(() => pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces, [sessionLogs, settings]);
   const mission = primary && primaryTemplate
     ? missionFacts(primaryTemplate.id, buildSessionBrief(primaryTemplate, primary.scheduledDate, program, { templates }), paces)
     : undefined;
@@ -334,6 +334,9 @@ function TodayContent() {
 
       {/* Een voorstel om de test te verschuiven na wat je zelf vastlegde (alleen als het geldt). */}
       <InfluenceMoveCard />
+
+      {/* Een trage test die wacht op je antwoord: een rustige regel, tot je kiest. */}
+      <TestPendingLine />
 
       {/* Direct onder de missie: wat bevestigd moet worden. */}
       <WatchActivityCard />

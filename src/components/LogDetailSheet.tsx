@@ -10,9 +10,13 @@ import { Card, Eyebrow, SecondaryButton } from './ui';
 import { Icon } from './icons';
 import { keptNumbersLine, logSource, sourceNoun } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
+import { TestVerdictCard } from './TestVerdictCard';
+import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
+import { ensureBestEffort } from '../storage/activityDetail';
+import { wantsBestEffort } from '../engine/testJudgment';
 import { logKindLabel } from '../engine/sports';
 import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine/workoutDetails';
 import { buildWorkoutPlan } from '../engine/workoutPlan';
@@ -39,12 +43,19 @@ const FEEL_LABEL: Record<string, string> = { better: 'Beter', normal: 'Normaal',
 const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdoor: 'Buiten' };
 
 export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
-  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, sessionLogs, templates, program, settings } = useAppData();
+  const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, sessionLogs, templates, program, settings, refresh } = useAppData();
   // Read the log fresh, so the sheet follows a change (the own numbers put back).
   const log = sessionLogs.find((l) => l.id === shown.id) ?? shown;
   const activity = log.outdoorData ?? log.cardioData;
   const modality = activity?.modality ? getModality(log.templateId, activity.modality) : undefined;
   const garminType = activity?.garminSuggestedType;
+  // A test run linked before the best 5 km existed: read it once from the watch's series.
+  useEffect(() => {
+    if (log.externalId && wantsBestEffort(log)) {
+      void ensureBestEffort(log.id).then((r) => (r === 'attached' ? refresh() : undefined));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log.id, log.externalId, log.bestEffort, log.bestEffortTried, log.trim, refresh]);
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
 
   const rows: { label: string; value: string; icon?: 'horloge' | 'notitie' }[] = [];
@@ -180,6 +191,8 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
               Gevoel: {FEEL_LABEL[log.subjectiveFeel]}
             </p>
           )}
+
+          {log.templateId === TEST_TEMPLATE_ID && <div className="mt-3"><TestVerdictCard logId={log.id} /></div>}
 
           {rows.length > 0 && (
             <div className="mt-4 flex flex-col gap-2">

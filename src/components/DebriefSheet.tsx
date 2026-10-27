@@ -4,8 +4,9 @@
 
 import { useMemo } from 'react';
 import { useAppData } from '../state/AppDataContext';
-import { racePaces, testMeaning, type TestMeaning } from '../engine/racePaces';
-import { testResults } from '../engine/racePrediction';
+import { testMeaning, type TestMeaning } from '../engine/racePaces';
+import { judgmentOptions, pacesFromLogs, testState } from '../engine/testJudgment';
+import { TestVerdictCard } from './TestVerdictCard';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
 import { extractEvidenceFromLogs, keyId } from '../engine/capability';
 import { capabilityKeyLabel } from '../data/baselineQuestions';
@@ -16,7 +17,7 @@ import { AdviceItem } from './CoachCard';
 import { useSheetClose } from '../utils/useSheetClose';
 
 export function DebriefSheet() {
-  const { debriefLogId, dismissDebrief, celebration, sessionLogs, templateById, advice, strengthExternal: externalStrength } = useAppData();
+  const { debriefLogId, dismissDebrief, celebration, sessionLogs, templateById, advice, strengthExternal: externalStrength, settings } = useAppData();
   const log = sessionLogs.find((l) => l.id === debriefLogId);
   const logAdvice = advice.filter((a) => a.relatedLogId === debriefLogId);
   const counted = useMemo(() => {
@@ -27,20 +28,22 @@ export function DebriefSheet() {
   // A test run: what it means for your paces and your race.
   const meaning = useMemo(() => {
     if (!log || log.templateId !== TEST_TEMPLATE_ID) return undefined;
-    const paces = racePaces(testResults(sessionLogs));
+    const paces = pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces;
     return paces && paces.test.logId === log.id ? testMeaning(paces) : undefined;
-  }, [log, sessionLogs]);
+  }, [log, sessionLogs, settings]);
+  // A test log: it shows what was read, and asks when the test came out slower.
+  const isTest = !!log && log.templateId === TEST_TEMPLATE_ID && !!testState(sessionLogs, judgmentOptions(settings), log.id);
   if (!log || celebration) return null;
 
   const name = templateById.get(log.templateId)?.name ?? 'Sessie';
   const strengthExternal = log.type === 'strength' && externalStrength;
   // Nothing worth a sheet: no numbers, no advice — the celebration was enough.
-  if (logAdvice.length === 0 && !meaning && (counted.length === 0 || strengthExternal)) return null;
+  if (logAdvice.length === 0 && !meaning && !isTest && (counted.length === 0 || strengthExternal)) return null;
 
-  return <Sheet key={log.id} name={name} counted={counted.map((e) => `${capabilityKeyLabel(e.key)}: ${formatCapabilityValue(e.measured)}`)} logAdvice={logAdvice} strengthExternal={strengthExternal} meaning={meaning} onClose={dismissDebrief} />;
+  return <Sheet key={log.id} name={name} counted={counted.map((e) => `${capabilityKeyLabel(e.key)}: ${formatCapabilityValue(e.measured)}`)} logAdvice={logAdvice} strengthExternal={strengthExternal} meaning={meaning} testLogId={isTest ? log.id : undefined} onClose={dismissDebrief} />;
 }
 
-function Sheet({ name, counted, logAdvice, strengthExternal, meaning, onClose }: { name: string; counted: string[]; logAdvice: ReturnType<typeof useAppData>['advice']; strengthExternal: boolean; meaning?: TestMeaning; onClose: () => void }) {
+function Sheet({ name, counted, logAdvice, strengthExternal, meaning, testLogId, onClose }: { name: string; counted: string[]; logAdvice: ReturnType<typeof useAppData>['advice']; strengthExternal: boolean; meaning?: TestMeaning; testLogId?: string; onClose: () => void }) {
   const { closing, requestClose } = useSheetClose(onClose);
   return (
     <Portal>
@@ -69,6 +72,7 @@ function Sheet({ name, counted, logAdvice, strengthExternal, meaning, onClose }:
                 <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{meaning.note}</p>
               </div>
             )}
+            {testLogId && <TestVerdictCard logId={testLogId} />}
             {counted.length > 0 && !strengthExternal && (
               <div>
                 <p className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Telt mee voor</p>

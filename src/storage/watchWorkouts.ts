@@ -30,8 +30,7 @@ import {
 } from '../integrations/intervalsIcu';
 import { planWatchSync, selectWatchWorkouts, type TrackedWorkout, type WatchWorkout } from '../engine/watchWorkout';
 import { hasAscendHeartRate, resolveWatchHrMode, watchHrPlanFromSettings, type IntervalsHrBasis } from '../engine/watchHeartRate';
-import { racePaces } from '../engine/racePaces';
-import { testResults } from '../engine/racePrediction';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { addDays, todayISO } from '../utils/dates';
 
 const STATE_KEY = 'watchWorkoutsSync';
@@ -131,7 +130,7 @@ async function loadDesired(
   ]);
   const basis = await refreshHrBasis(state, settings, connection, options, now);
   const hr = watchHrPlanFromSettings(settings, basis);
-  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: racePaces(testResults(logs)), today, options: { namePrefix: settings.watchNamePrefix, hr } });
+  const desired = selectWatchWorkouts({ sessions, logs, templates, program: programs[0], paces: pacesFromLogs(logs, judgmentOptions(settings)).paces, today, options: { namePrefix: settings.watchNamePrefix, hr } });
   const logged = new Set(logs.map((l) => l.plannedSessionId).filter((id): id is string => !!id));
   return { desired, logged, removeDone: settings.watchRemoveDone !== false };
 }

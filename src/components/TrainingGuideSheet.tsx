@@ -21,8 +21,8 @@ import { ModalityGuide } from './ModalityPicker';
 import { WeatherLine } from './WeatherLine';
 import { ClothingAdvice } from './ClothingAdvice';
 import { buildSessionBrief } from '../engine/sessionBrief';
-import { paceLine, racePaces } from '../engine/racePaces';
-import { testResults } from '../engine/racePrediction';
+import { paceLine } from '../engine/racePaces';
+import { judgmentOptions, pacesFromLogs } from '../engine/testJudgment';
 import { getModalities } from '../data/modalities';
 import { filterForTraining } from '../engine/trainingSpots';
 import { Icon } from './icons';
@@ -59,7 +59,7 @@ export function TrainingGuideSheet({
   const { closing, requestClose } = useSheetClose(onClose);
   const plan = template ? buildWorkoutPlan(template, dateIso, program) : undefined;
   // Tempo run and intervals: your pace, from your latest test run.
-  const myPace = template ? paceLine(template.id, racePaces(testResults(sessionLogs))) : undefined;
+  const myPace = template ? paceLine(template.id, pacesFromLogs(sessionLogs, judgmentOptions(settings)).paces) : undefined;
   const brief = template ? buildSessionBrief(template, dateIso, program, { templates }) : undefined;
   // "Te zwaar?" are the guide's own when-to-ease-off sections; the rest is
   // background.

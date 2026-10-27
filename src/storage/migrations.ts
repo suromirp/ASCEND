@@ -20,13 +20,16 @@ import { mainGoal } from '../engine/mainGoal';
 import { variantOf } from '../data/goalKinds';
 import type { RoutePlan } from '../models/routePlan';
 import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
+import type { TestJudgment } from '../models/testJudgment';
+import { isUsableBestEffort } from '../engine/bestEffort';
+import { capTestJudgments } from '../engine/testJudgment';
 import type { InjuryNote } from '../models/injury';
 import type { SweatEntry, SweatPre } from '../models/sweat';
 import type { AlcoholAmount, InfluenceEntry, InfluenceReason, InfluenceReasonNote } from '../models/influence';
 import { AMOUNTS, MAX_LABEL_LENGTH, REASON_LABEL } from '../data/influenceReasons';
 import type { ExternalOneRm, OneRmReading, WeightEntry } from '../models/metrics';
 import type { ActivityDetail, DetailConditions, DetailSlice, RunDynamics, TerrainStretch } from '../models/activityDetail';
-import type { ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
+import type { BestEffort, ExerciseSetLog, ManualMeasured, ManualStrength, MeasuredField, MetricSource, SessionLog, SessionTrim, SetLog, SourceField, SourceNumbers, SourceSync, SourceUpdate, TrimField } from '../models/training';
 
 // v2: SessionLog got an optional `externalId` (the id of an imported watch
 // activity). Nothing in a v1 file has to change for it.
@@ -321,6 +324,62 @@ export function migrateLogGymProfile(log: SessionLog): SessionLog {
   const { gymProfileId: _damaged, ...rest } = log;
   void _damaged;
   return rest;
+}
+
+// --- testloop lezen: SessionLog.bestEffort en settings.testJudgments ------------------------
+// A test run may carry the fastest unbroken 5 km read from the watch's series
+// (`bestEffort`, models/training.ts, engine/bestEffort.ts), and your own verdicts on test
+// runs ("Telt mee", "Telt niet mee") are a list next to the logs. Both are optional and
+// additive, so the backup schema number does not move: a file from before them has neither
+// and imports as it was (the whole log then counts and every test counts, as before).
+// A damaged best effort is dropped and the log keeps everything else; a damaged verdict
+// loses only itself. One verdict per log, the last one wins.
+export function migrateLogBestEffort(log: SessionLog): SessionLog {
+  let out = log;
+  if ('bestEffortTried' in out) {
+    const tried = (out as { bestEffortTried?: unknown }).bestEffortTried;
+    if (typeof tried !== 'string' || tried.length === 0 || tried.length > 40) {
+      const { bestEffortTried: _t, ...rest } = out;
+      void _t;
+      out = rest;
+    }
+  }
+  if (!('bestEffort' in out)) return out;
+  const raw = (out as { bestEffort?: unknown }).bestEffort;
+  if (isUsableBestEffort(raw)) {
+    const r = raw as BestEffort;
+    const fin = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
+    const kept: BestEffort = { km: r.km, minutes: r.minutes };
+    if (fin(r.wholeKm) && fin(r.wholeMinutes)) {
+      kept.wholeKm = r.wholeKm;
+      kept.wholeMinutes = r.wholeMinutes;
+    }
+    if (r.accepted === true) kept.accepted = true;
+    return { ...out, bestEffort: kept };
+  }
+  const { bestEffort: _damaged, ...rest } = out;
+  void _damaged;
+  return rest;
+}
+
+export function migrateTestJudgments(raw: unknown): { list: TestJudgment[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byLog = new Map<string, TestJudgment>();
+  let skipped = 0;
+  for (const item of raw) {
+    if (!isObj(item) || typeof item.logId !== 'string' || item.logId.trim() === '' || item.logId.length > 80 || (item.verdict !== 'counts' && item.verdict !== 'ignore')) {
+      skipped++;
+      continue;
+    }
+    const date = typeof item.date === 'string' && ISO_DAY.test(item.date.slice(0, 10)) ? item.date.slice(0, 10) : undefined;
+    if (!date) {
+      skipped++;
+      continue;
+    }
+    byLog.set(item.logId, { logId: item.logId, verdict: item.verdict, date });
+  }
+  return { list: capTestJudgments([...byLog.values()]), skipped };
 }
 
 // --- InjuryNote.kind en InjuryNote.side ---------------------------------------------------

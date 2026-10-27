@@ -66,6 +66,7 @@ export function PlanningGroup({ facts, sheet, setSheet }: GroupProps) {
         <SummaryRow id="meerdere" title="Twee trainingen per dag" facts={facts} onClick={() => setSheet('meerdere')} />
         <SummaryRow id="wijzigingen" title="Wijzigingen" facts={facts} info="wijzigingen" onClick={() => setSheet('wijzigingen')} />
         <SummaryRow id="ambitie" title="Ambitie" facts={facts} info="ambitie" onClick={() => setSheet('ambitie')} />
+        <SummaryRow id="twijfeltest" title="Twijfeltest eerst vragen" facts={facts} info="twijfeltest" onChange={(on) => void updateSettings({ askDoubtTest: on })} />
       </SettingsSection>
 
       {sheet === 'bundel-dagen' && (

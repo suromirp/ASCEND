@@ -57,7 +57,22 @@ describe('TARGET-TIME', () => {
 
   it('does not act on a test that came out clearly slower than the one before it', () => {
     const bad = [...logs, test('t2', '2027-01-14', 31.5)];
-    expect(targetTime(inputs({ logs: bad, asOf: '2027-01-15' }))).toEqual([]);
+    // Counted as before (the setting off), a doubtful latest test is no ground for advice.
+    expect(targetTime(inputs({ logs: bad, asOf: '2027-01-15', askDoubtTest: false }))).toEqual([]);
+    // After "Telt mee" it is counted and still doubtful, so still no advice.
+    expect(targetTime(inputs({ logs: bad, asOf: '2027-01-15', testJudgments: [{ logId: 't2', verdict: 'counts', date: '2027-01-15' }] }))).toEqual([]);
+  });
+
+  it('keeps reading the previous test while the slower one waits for an answer', () => {
+    const bad = [...logs, test('t2', '2027-01-14', 31.5)];
+    expect(targetTime(inputs({ logs: bad, asOf: '2027-01-15' })).map((a) => a.id)).toEqual(['goaltime:race:2026-10-29']);
+  });
+
+  it('leaves a test you marked "Telt niet mee" out', () => {
+    const slow = [test('t0', '2026-10-01', 31.5), ...logs];
+    const judgments = [{ logId: 't1', verdict: 'ignore' as const, date: '2026-10-30' }];
+    // Only the slower test is left, so that one speaks.
+    expect(targetTime(inputs({ logs: slow, testJudgments: judgments })).map((a) => a.id)).toEqual(['goaltime:race:2026-10-01']);
   });
 
   it('a goal far slower than the test is offered a sharper time', () => {
