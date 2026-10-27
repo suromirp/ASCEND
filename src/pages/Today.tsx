@@ -320,7 +320,7 @@ function TodayContent() {
           body={mainTiming?.state === 'underway'
             ? 'De tocht is je training. Tot het eind plant ASCEND niets.'
             : mainTiming?.state === 'past'
-              ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend, of markeer dit doel als behaald.'
+              ? 'Na je hoofddoel plant ASCEND niets meer. Kies een nieuw doel bij Ascend.'
             : onHoliday
             ? 'Vrij vandaag. Er staat niets op de planning.'
             : allTodayDone

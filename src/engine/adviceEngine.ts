@@ -300,7 +300,7 @@ function missedAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTem
     ruleId: 'MISSED-CATCH-UP',
     title,
     effect,
-    why: `${missed.length === 1 ? 'Deze training is niet afgevinkt.' : 'Deze trainingen zijn niet afgevinkt.'} ${rule}`,
+    why: `${missed.length === 1 ? 'Deze training is blijven liggen.' : 'Deze trainingen zijn blijven liggen.'} ${rule}`,
     priority: caughtUp.length > 0 ? 3 : 2,
     proposal: proposal(title, items, effect, rule),
   }];
