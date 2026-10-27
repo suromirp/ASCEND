@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { morningSignals, recentPainSpot, shouldAskCheckIn, tiredStreak } from './wellbeing';
 import { hasSignificantPain, isStopPain, painReports } from './pain';
-import { computeAdvice, describeMorningPreview, legEaseMoveAdvice, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
+import { computeAdvice, describeMorningPreview, legEaseMoveAdvice, previewLegCard, previewMorningAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import type { PlannedSession, SessionLog } from '../models/training';
 
@@ -154,6 +154,42 @@ describe('LEG-EASE: een dag later voor een zware beendag van vandaag', () => {
   it('een rustige dag (op) blijft van MORNING-CHECK, ook met de kaart', () => {
     const op = [{ date: '2026-11-03', legs: 'spierpijn' as const, energy: 'op' as const, sleep: 'slecht' as const }];
     expect(computeAdvice(inputs({ checkIns: op, legEase: 'voorstel' })).some((a) => a.ruleId === 'MORNING-CHECK')).toBe(true);
+  });
+
+  const names = (list: { title: string }[]) => list.map((a) => a.title).join(' | ');
+  const morningOf = (over: Partial<AdviceInputs>) => computeAdvice(inputs({ checkIns: sore, legEase: 'voorstel', ...over })).filter((a) => a.ruleId === 'MORNING-CHECK');
+
+  it('spierpijn met een kwaliteitsloop vandaag: de kaart spreekt, MORNING-CHECK zwijgt', () => {
+    const quality = [ps('q', 'tpl_intervals', '2026-11-03'), ps('easy', 'tpl_easy_run', '2026-11-05')];
+    expect(morningOf({ plannedSessions: quality })).toEqual([]);
+    // Zonder de kaart (instelling Regel) spreekt MORNING-CHECK zelf.
+    expect(morningOf({ plannedSessions: quality, legEase: 'regel' }).length).toBe(1);
+  });
+
+  it('een beendag en een loop op één dag: de kaart dekt de beendag, de loop blijft van MORNING-CHECK', () => {
+    const both = [ps('legs', 'tpl_lower_a', '2026-11-03'), ps('q', 'tpl_intervals', '2026-11-03'), ps('easy', 'tpl_easy_run', '2026-11-08')];
+    const list = morningOf({ plannedSessions: both });
+    expect(list.length).toBe(1);
+    expect(list[0].id).toContain(':q');
+    expect(names(list)).not.toContain('Benen A');
+  });
+
+  it('pijn op een beenplek: de kaart zwijgt, dus spreekt MORNING-CHECK', () => {
+    const pain = [{ id: 'n1', date: '2026-11-02', bodyPart: 'Knie links', severity: 'matig' as const, kind: 'pijn' as const }];
+    expect(morningOf({ injuries: pain }).length).toBe(1);
+    const spierpijn = [{ ...pain[0], kind: 'spierpijn' as const }];
+    expect(morningOf({ injuries: spierpijn })).toEqual([]);
+  });
+
+  it('het voorbeeld onder de ochtendcheck noemt de kaart Benen in plaats van "Je planning blijft zoals hij is"', () => {
+    const i = inputs({ checkIns: sore, legEase: 'voorstel' });
+    const card = previewLegCard(i);
+    expect(card).toContain('Benen A');
+    const line = describeMorningPreview(previewMorningAdvice(i), card);
+    expect(line).toContain('de kaart Benen voor');
+    expect(line).not.toBe('Je planning blijft zoals hij is.');
+    // Zonder de kaart (Regel) blijft het voorbeeld bij het gewone advies.
+    expect(previewLegCard(inputs({ checkIns: sore, legEase: 'regel' }))).toBeUndefined();
   });
 
   it('een beendag van morgen blijft van MORNING-CHECK', () => {

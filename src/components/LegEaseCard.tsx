@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { easeAdvice, easeExplain, easeFact, easeMacroFactorLine, easeTitle, EASE_DONE_LINE, EASE_INDEX_EXPLAIN, moveLabel } from '../engine/legDayEase';
+import { easeAdvice, easeDoneLine, easeExplain, easeFact, easeMacroFactorLine, easeTitle, EASE_INDEX_EXPLAIN, moveLabel } from '../engine/legDayEase';
 import type { LegEaseChoice } from '../models/legEase';
 import { useAppData } from '../state/AppDataContext';
 import { resolveStrengthSettings } from '../engine/strengthSettings';
@@ -34,7 +34,7 @@ export function LegEaseCard() {
       <Eyebrow>Benen</Eyebrow>
       {offer.state === 'eased' ? (
         <>
-          <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{EASE_DONE_LINE}</p>
+          <p className="text-base font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{easeDoneLine(how, weightFollows)}</p>
           <p className="text-xs leading-relaxed" style={dim}>{easeMacroFactorLine(how)}</p>
           <div className="flex">
             <TextButton tone="dim" disabled={busy} onClick={() => run(undo)}>Terugzetten</TextButton>

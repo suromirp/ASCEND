@@ -20,7 +20,7 @@ import {
   applyReps,
   applyWeight,
   carryChange,
-  mergeDraft,
+  resumeDraft,
   copyRow,
   dockFieldKey,
   exerciseComplete,
@@ -123,6 +123,8 @@ interface WorkoutDraft {
   exercises: WorkoutExercise[];
   rest?: Rest;
   column: 'target' | 'previous';
+  // Of de rijen met Lichter gepland zijn; een concept van voor deze keuze heeft het niet.
+  eased?: boolean;
 }
 
 const clock = () => Date.now();
@@ -184,12 +186,13 @@ export function ForgeWorkout({
   const legEase = useLegEase(preview ? null : (plannedSessionId ?? null));
   const easeHow = resolveLegEaseHow(settings);
   const decision = !preview && plannedSessionId ? decisionFor(settings.legEaseDays, date, plannedSessionId) : undefined;
-  const [easeOn, setEaseOn] = useState(() => decision?.choice === 'lichter');
+  // Met de instelling op Uit maakt een eerder gekozen Lichter de rijen niet stil lichter.
+  const [easeOn, setEaseOn] = useState(() => legEase.mode !== 'uit' && decision?.choice === 'lichter');
   const [easeReasons] = useState(() => decision?.reasons ?? []);
   const ease = useMemo(() => (easeOn ? { how: easeHow, because: easeBecause(legEase.state?.signals.reasons ?? easeReasons) } : undefined), [easeOn, easeHow, legEase.state, easeReasons]);
   const ctx = useMemo<PlanContext>(() => ({ ...baseCtx, ...(ease ? { ease } : {}) }), [baseCtx, ease]);
   const effSlots = useMemo(() => (easeOn ? easeSlots(slots, easeHow).slots : slots), [easeOn, slots, easeHow]);
-  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? mergeDraft(restored.exercises, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
+  const [workout, setWorkout] = useState<WorkoutExercise[]>(() => (restored ? resumeDraft(restored.exercises, restored.eased, easeOn, planWorkout(slots, ctx)) : planWorkout(slots, ctx)));
   // De klok loopt vanaf je eerste afgevinkte set; een training die je opende maar nog niet begon, start opnieuw.
   const [startedAt] = useState(() => (restored && restored.exercises.some((e) => e.rows.some((r) => r.done)) ? restored.startedAt : Date.now()));
   const [rest, setRest] = useState<Rest | undefined>(() => (restored?.rest && restored.rest.endsAt > Date.now() - REST_DONE_LINGER_MS ? restored.rest : undefined));
@@ -279,9 +282,9 @@ export function ForgeWorkout({
   }, [key]);
   useEffect(() => {
     if (readOnly) return;
-    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, ...(rest ? { rest } : {}), column };
+    pendingDraft.current = { v: DRAFT_VERSION, savedAt: Date.now(), startedAt, exercises: workout, eased: easeOn, ...(rest ? { rest } : {}), column };
     if (draftTimer.current === undefined) draftTimer.current = window.setTimeout(flushDraft, 300);
-  }, [readOnly, startedAt, workout, rest, column, flushDraft]);
+  }, [readOnly, startedAt, workout, easeOn, rest, column, flushDraft]);
   useEffect(() => {
     window.addEventListener('pagehide', flushDraft);
     document.addEventListener('visibilitychange', flushDraft);

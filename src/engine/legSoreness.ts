@@ -23,14 +23,17 @@ export interface SoreSource {
 
 // Een melding van spierpijn in de benen die op `date` meetelt: van die dag of de dag ervoor, en
 // niet weggehaald op of voor die dag (later weghalen verandert niets aan wat toen gold).
-function countsOn(note: InjuryNote, date: string): boolean {
+function countsOn(note: InjuryNote, date: string, sameDay: boolean): boolean {
   if (kindOf(note) !== 'spierpijn' || !isLegSpot(note.bodyPart)) return false;
   const ago = daysBetween(note.date, date);
-  if (ago < 0 || ago > 1) return false;
+  if (ago < 0 || ago > 1 || (ago === 0 && !sameDay)) return false;
   return !(note.resolvedDate && note.resolvedDate <= date);
 }
 
-export function soreFromNotes(notes: InjuryNote[], checkIns: MorningCheckIn[], date: string): Soreness | undefined {
+// `sameDayNotes` false: een melding van die dag zelf telt niet. Een melding heeft geen tijdstip, dus
+// voor een training die al gelogd is weten we niet of ze er vóór was (alleen de ochtendcheck en
+// meldingen van eerdere dagen tellen dan).
+export function soreFromNotes(notes: InjuryNote[], checkIns: MorningCheckIn[], date: string, sameDayNotes = true): Soreness | undefined {
   const today = checkIns.find((c) => c.date === date && !c.allNormal);
   const answered = today?.legs;
   if (answered === 'flink') return 'flink';
@@ -38,7 +41,7 @@ export function soreFromNotes(notes: InjuryNote[], checkIns: MorningCheckIn[], d
   // Fris of Wat stijf vandaag is het laatste antwoord: een melding van gisteren telt niet meer.
   // Een melding van vandaag zelf blijft staan (zonder tijdstip is ze niet ouder dan het antwoord).
   const earliest = answered === 'fris' || answered === 'stijf' ? 0 : 1;
-  return notes.some((n) => countsOn(n, date) && daysBetween(n.date, date) <= earliest) ? 'spierpijn' : undefined;
+  return notes.some((n) => countsOn(n, date, sameDayNotes) && daysBetween(n.date, date) <= earliest) ? 'spierpijn' : undefined;
 }
 
 // De spierpijn zoals de beenindex hem leest (engine/legFatigue.ts#FatigueSoreness): dezelfde

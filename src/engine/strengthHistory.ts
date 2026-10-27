@@ -92,8 +92,9 @@ export function legsTiredAt(date: string, before: string | undefined, deps: Legs
     const label = hardLegLabel(log);
     if (label) return { because: `${label} ${dayWord(ago)}` };
   }
-  // Spierpijn in de benen die dag: de benen zijn moe, het gewicht blijft gelijk en een herhaling minder is normaal.
-  if (deps.sore && soreFromNotes(deps.sore.injuries, deps.sore.checkIns, date)) return { because: 'spierpijn' };
+  // Spierpijn in de benen die dag (van een training die al gelogd is: een melding van die dag zelf telt niet,
+  // want ze heeft geen tijdstip en kan van na de training zijn): de benen zijn moe, het gewicht blijft gelijk en een herhaling minder is normaal.
+  if (deps.sore && soreFromNotes(deps.sore.injuries, deps.sore.checkIns, date, !before)) return { because: 'spierpijn' };
   const inputs: LegFatigueInputs = { logs: deps.logs, plannedSessions: [], templates: deps.templates, today: date, bodyKg: deps.bodyKg, program: deps.program };
   const events = deps.events ?? fatigueEvents(inputs);
   const result = legFatigueOn(date, inputs, events);
@@ -280,7 +281,8 @@ export function comparisonRows(histories: ExerciseHistory[], settings: ResolvedS
       const actualSet = { weightKg: doneKg, repsLow: done.reps, repsHigh: done.reps, rir: done.rir ?? 0 };
       const actual = done.rir === undefined ? describeActual(h.exercise, doneKg, done.reps) : describePlannedSet(h.exercise, actualSet);
       const withinOneStep = Math.abs(doneKg - proposed.weightKg) <= rx.stepKg + 1e-6;
-      const easedLog = !!eased?.has(s.logId);
+      // Alleen een oefening die de benen belast is lichter gedaan; bovenlichaam en romp bleven zoals voorgeschreven.
+      const easedLog = !!eased?.has(s.logId) && !!h.exercise?.loadsLegs;
       let check: RowCheck | undefined;
       if (!easedLog && s.origin && measuredSet && done.rir !== undefined) {
         const target: RepTarget = { low: rx.range.low, high: rx.range.high, rir: rx.range.rir };

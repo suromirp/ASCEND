@@ -15,7 +15,7 @@ import type { ExercisePrescription, PlannedSession, SessionLog, SessionTemplate,
 import type { InjuryNote } from '../models/injury';
 import type { MorningCheckIn } from '../models/checkIn';
 import { MAX_LEG_EASE_DAYS, type LegEaseChoice, type LegEaseDay, type LegEaseReason } from '../models/legEase';
-import { addDays, weekdayLongNL } from '../utils/dates';
+import { addDays, daysBetween, weekdayLongNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { cleanExerciseName } from './exerciseMatch';
 import { FATIGUE_BAND, FATIGUE_THRESHOLDS, fatigueEvents, fatigueWord, legFatigueOn, sessionImpulse, type LegFatigueInputs } from './legFatigue';
@@ -55,6 +55,8 @@ export interface EarlierToday {
   label?: 'testloop' | 'loop';
   // De loop begon voor de middag; anders heet hij "eerder vandaag".
   morning?: boolean;
+  // De harde loop is gepland en nog niet gelogd: dan zeggen de teksten dat je hem vandaag loopt, niet dat je liep.
+  planned?: boolean;
 }
 
 export interface EarlierDeps {
@@ -79,6 +81,7 @@ export function earlierTodayPoints(date: string, deps: EarlierDeps, hoursApart =
   let test = false;
   let morning = false;
   let any = false;
+  let anyLogged = false;
   for (const e of events) {
     if (e.date !== date || e.id === deps.excludeId) continue;
     const t = byId.get(e.templateId);
@@ -86,6 +89,7 @@ export function earlierTodayPoints(date: string, deps: EarlierDeps, hoursApart =
     if (e.logged) {
       const log = logById.get(e.id);
       if (!log || !isHardRunLog(log)) continue;
+      anyLogged = true;
     } else if (!isHardRun(t)) continue;
     const imp = sessionImpulse(e, t, events, byId, deps.bodyKg);
     const damageLeft = hoursApart <= 24 ? 1 : 2 ** (-(hoursApart - 24) / 36);
@@ -96,7 +100,7 @@ export function earlierTodayPoints(date: string, deps: EarlierDeps, hoursApart =
     if (log && startedBeforeNoon(log)) morning = true;
   }
   if (!any || points <= 0) return { points: 0 };
-  return { points: round1(points), label: test ? 'testloop' : 'loop', morning };
+  return { points: round1(points), label: test ? 'testloop' : 'loop', morning, ...(anyLogged ? {} : { planned: true }) };
 }
 
 function isHardRunLog(log: SessionLog): boolean {
@@ -171,9 +175,30 @@ export function legDaySignals(date: string, deps: SignalDeps, excludeId?: string
   const baseIndex = legFatigueOn(date, inputs).index;
   const earlier = earlierTodayPoints(date, { logs: deps.logs, templates: deps.templates, plannedSessions: deps.plannedSessions, program: deps.program, bodyKg: deps.bodyKg, excludeId }, SAME_DAY_HOURS);
   const sore = soreFromNotes(deps.injuries, deps.checkIns, date);
-  // Pijn is iets anders dan spierpijn: een open melding "pijn" op een beenplek, van de laatste 14 dagen.
-  const pain = deps.injuries.some((n) => kindOf(n) === 'pijn' && isLegSpot(n.bodyPart) && isOpenOn(n, date) && n.date <= date && n.date >= addDays(date, -14));
-  return combineSignals({ date, sore, earlier, baseIndex, pain });
+  return combineSignals({ date, sore, earlier, baseIndex, pain: legPainOpen(deps.injuries, date) });
+}
+
+// Pijn is iets anders dan spierpijn: een open melding "pijn" op een beenplek, van de laatste 14 dagen.
+// Dan is Lichter niet het instrument en werkt de pijnrem (INJURY-LEGS).
+export function legPainOpen(injuries: InjuryNote[], date: string): boolean {
+  return injuries.some((n) => kindOf(n) === 'pijn' && isLegSpot(n.bodyPart) && isOpenOn(n, date) && n.date <= date && n.date >= addDays(date, -14));
+}
+
+// De training van vandaag waar de kaart Benen (LEG-EASE) voor spreekt, als er spierpijn is gemeld:
+// dezelfde keuze als de kaart (easeTarget, geen pijn op een beenplek, nog niet beantwoord). MORNING-CHECK
+// slaat die training over, zodat dezelfde spierpijn niet twee kaarten geeft. Zonder kaart (instelling
+// niet op voorstel, pijn, niets te kiezen) blijft MORNING-CHECK zelf spreken.
+export function legEaseCardSession(args: {
+  mode: LegEaseMode | undefined;
+  today: string;
+  plannedSessions: PlannedSession[];
+  templates: SessionTemplate[];
+  logs: SessionLog[];
+  injuries: InjuryNote[];
+}): PlannedSession | undefined {
+  if (args.mode !== 'voorstel') return undefined;
+  if (legPainOpen(args.injuries, args.today)) return undefined;
+  return easeTarget(args.today, args.plannedSessions, args.templates, args.logs)?.session;
 }
 
 // --- wie krijgt het voorstel ---------------------------------------------------------------------
@@ -246,12 +271,14 @@ export function easeChosen(decisions: LegEaseDay[] | undefined, date: string, pl
   return !!plannedSessionId && decisionFor(decisions, date, plannedSessionId)?.choice === 'lichter';
 }
 
-// Logs waarvan je zelf koos voor Lichter: een bewust lichtere training telt niet mee voor "raak"
-// (engine/strengthHistory.ts#comparisonRows).
+// Logs waarvan je zelf koos voor Lichter: een bewust lichtere beenoefening telt niet mee voor "raak"
+// (engine/strengthHistory.ts#comparisonRows, per rij en alleen voor oefeningen die de benen belasten).
+// Gekoppeld op de geplande training, met een dag ruimte voor de datum (een training die na middernacht
+// eindigt, of die je een dag later logt).
 export function easedLogIds(logs: SessionLog[], decisions: LegEaseDay[] | undefined): Set<string> {
   const chosen = (decisions ?? []).filter((d) => d.choice === 'lichter');
   if (chosen.length === 0) return new Set();
-  return new Set(logs.filter((l) => l.plannedSessionId && chosen.some((d) => d.plannedSessionId === l.plannedSessionId && d.date === l.completedDate)).map((l) => l.id));
+  return new Set(logs.filter((l) => l.plannedSessionId && chosen.some((d) => d.plannedSessionId === l.plannedSessionId && Math.abs(daysBetween(d.date, l.completedDate)) <= 1)).map((l) => l.id));
 }
 
 // --- de keuzes bewaren ---------------------------------------------------------------------------
@@ -355,7 +382,8 @@ export function easeFact(s: LegDaySignals): string {
   else if (s.sore === 'spierpijn') clauses.push('je meldde spierpijn in je benen');
   if (s.earlier.points > 0) {
     const when = s.earlier.morning ? 'vanochtend' : 'eerder vandaag';
-    clauses.push(s.earlier.label === 'testloop' ? `je liep ${when} je testloop` : `je liep ${when} hard`);
+    if (s.earlier.planned) clauses.push(s.earlier.label === 'testloop' ? 'je loopt vandaag ook je testloop' : 'je loopt vandaag ook hard');
+    else clauses.push(s.earlier.label === 'testloop' ? `je liep ${when} je testloop` : `je liep ${when} hard`);
   }
   const named = clauses.slice(0, 2);
   if (named.length === 0) return `${indexWords(s)}. Je benen dragen nog veel van de afgelopen dagen.`;
@@ -369,7 +397,8 @@ export function easeFactShort(s: LegDaySignals): string {
   else if (s.sore === 'spierpijn') parts.push('spierpijn gemeld');
   if (s.earlier.points > 0) {
     const when = s.earlier.morning ? 'vanochtend' : 'eerder vandaag';
-    parts.push(s.earlier.label === 'testloop' ? `${when} een testloop` : `${when} een harde loop`);
+    if (s.earlier.planned) parts.push(s.earlier.label === 'testloop' ? 'vandaag ook een testloop' : 'vandaag ook een harde loop');
+    else parts.push(s.earlier.label === 'testloop' ? `${when} een testloop` : `${when} een harde loop`);
   }
   const named = parts.slice(0, 2);
   if (named.length === 0) return `${indexWords(s)}. Je benen dragen nog veel van de afgelopen dagen.`;
@@ -411,7 +440,18 @@ export function easeForgeExplain(how: LegEaseHow, weightFollows = true): string 
   return `${capital(`${weight}zeker ${rir} herhalingen over, ${sets}`)}`;
 }
 
-export const EASE_DONE_LINE = 'Lichter gemaakt. In Forge staan minder gewicht en minder sets klaar.';
+// Wat Forge na Lichter klaar heeft staan, in de woorden van de gekozen manier (zoals easeExplain).
+export function easeDoneLine(how: LegEaseHow, weightFollows = true): string {
+  const rir = how === 'extra' ? EASE_RIR_EXTRA : EASE_RIR;
+  if (weightFollows) {
+    return how === 'alleen-gewicht'
+      ? `Lichter gemaakt. In Forge staat minder gewicht klaar, met zeker ${rir} herhalingen over.`
+      : `Lichter gemaakt. In Forge staan minder gewicht en minder sets klaar, met zeker ${rir} herhalingen over.`;
+  }
+  return how === 'alleen-gewicht'
+    ? `Lichter gemaakt. In Forge staat zeker ${rir} herhalingen over klaar. Het gewicht blijft zoals voorgeschreven.`
+    : `Lichter gemaakt. In Forge staan minder sets klaar, met zeker ${rir} herhalingen over. Het gewicht blijft zoals voorgeschreven.`;
+}
 export function easeMacroFactorLine(how: LegEaseHow): string {
   const rir = how === 'extra' ? EASE_RIR_EXTRA : EASE_RIR;
   return `Doe je de training in MacroFactor? Kies daar zelf een lichtere set met zeker ${rir} herhalingen over.`;

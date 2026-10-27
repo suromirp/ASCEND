@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import type { LegFeeling, MorningCheckIn } from '../models/checkIn';
 import { recentPainSpot } from '../engine/wellbeing';
-import { describeMorningPreview, previewMorningAdvice } from '../engine/adviceEngine';
+import { describeMorningPreview, previewLegCard, previewMorningAdvice } from '../engine/adviceEngine';
 import { resolveLegEase } from '../engine/legEaseSettings';
 import { ENERGY, LEGS, SLEEP, SOURCE_TEXT, type SuggestionSource } from '../engine/morningCard';
 import { todayISO } from '../utils/dates';
@@ -51,7 +51,7 @@ function ChoiceRow<K extends string>({ label, from, options, value, set }: { lab
 // onSaved: de ochtendkaart meldt hiermee dat je via het blad hebt beantwoord, zodat
 // ze net als na één tik blijft staan met Wijzigen en Ongedaan maken.
 export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, onSaved }: { painOnly?: boolean; initialLegs?: LegFeeling; onClose: () => void; onSaved?: () => void }) {
-  const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds } = useAppData();
+  const { settings, updateSettings, sessionLogs, plannedSessions, templates, program, goalEngineConfig, answeredAdviceIds, injuryNotes } = useAppData();
   const today = todayISO();
   const existing = settings.morningCheckIns?.find((c) => c.date === today);
   const spot = recentPainSpot(today, sessionLogs);
@@ -84,13 +84,14 @@ export function MorningCheckInSheet({ painOnly = false, initialLegs, onClose, on
   // Wat Vandaag na opslaan zegt: hetzelfde advies, op je echte planning.
   const preview = () => {
     const entry: MorningCheckIn = { ...draft, legs, energy, sleep, date: today, allNormal: undefined };
-    return describeMorningPreview(previewMorningAdvice({
-      logs: sessionLogs, plannedSessions, templates, injuries: [], program,
+    const inputs = {
+      logs: sessionLogs, plannedSessions, templates, injuries: injuryNotes, program,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget,
       sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
       respondedIds: answeredAdviceIds, asOf: today, legEase: resolveLegEase({ legEase: settings.legEase }),
       checkIns: [...(settings.morningCheckIns ?? []).filter((c) => c.date !== today), entry],
-    }).filter((a) => !answeredAdviceIds.has(a.id)));
+    };
+    return describeMorningPreview(previewMorningAdvice(inputs).filter((a) => !answeredAdviceIds.has(a.id)), previewLegCard(inputs));
   };
 
   const complete = painOnly ? draft.spot !== undefined : !!(legs && sleep && (energy || wellness));

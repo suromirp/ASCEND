@@ -31,6 +31,7 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { findHeavyConflicts, freshnessAt, isHardRun, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
+import { legEaseCardSession } from './legDayEase';
 import { isTemplatePlannable, type EnabledSports } from './sports';
 import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
@@ -906,17 +907,16 @@ function morningAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
 
   if (sig.sore !== 'none' || sig.rest) {
     const days = sig.sore !== 'none' ? 1 : 0;
-    const next = inputs.plannedSessions.filter((s) => heavy(s, days)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
-    // The card of LEG-EASE already offers Lichter and a later day for the heavy leg day of today.
-    const nextTemplate = next ? templateById.get(next.templateId) : undefined;
-    const covered = inputs.legEase === 'voorstel' && !sig.rest && !!next && nextTemplate?.type === 'strength' && next.scheduledDate === today && isLegHeavyTemplate(nextTemplate);
+    // The card of LEG-EASE already speaks for the one training it picks today (a heavy leg day, else a hard
+    // run): the same choice as the card, so one muscle soreness gives one card. Without a card (the setting,
+    // pain on a leg spot) MORNING-CHECK speaks itself.
+    const cardId = !sig.rest ? legCardSessionOf(inputs)?.id : undefined;
+    const next = inputs.plannedSessions.filter((s) => s.id !== cardId && heavy(s, days)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0];
     const reason = sig.rest ? 'Je bent op of sliep slecht en bent moe' : sig.sore === 'flink' ? 'Flinke spierpijn' : 'Spierpijn';
     const rule = sig.rest
       ? 'Bij "op", of bij twee signalen tegelijk, is vandaag een rustige dag: herstel komt eerst (Saw, Main en Gastin 2016).'
       : 'Met spierpijn zijn je benen 1 tot 2 dagen minder krachtig en minder zuinig; een harde training levert dan minder op (Marcora 2007). Rustig lopen, fietsen en bovenlichaam blijven staan.';
-    if (covered) {
-      // Nothing here: the card of LEG-EASE speaks for this training.
-    } else if (next) {
+    if (next) {
       const t = templateById.get(next.templateId)!;
       // Not next to another hard or leg-heavy session (that day or the day after).
       const clear = (d: string) => !inputs.plannedSessions.some((o) => o.id !== next.id && (o.scheduledDate === d || o.scheduledDate === addDays(d, 1)) && heavy(o, 14));
@@ -992,6 +992,22 @@ export function legEaseMoveAdvice(inputs: AdviceInputs, sessionId: string, reaso
   };
 }
 
+// The training the card of LEG-EASE speaks for today, when soreness is reported (engine/legDayEase.ts).
+function legCardSessionOf(inputs: AdviceInputs): PlannedSession | undefined {
+  return legEaseCardSession({ mode: inputs.legEase, today: inputs.asOf, plannedSessions: inputs.plannedSessions, templates: inputs.templates, logs: inputs.logs, injuries: inputs.injuries });
+}
+
+// The name of the training that card will speak for after this check-in, for the preview line under the
+// sheet. Only with soreness and not on a day of "op" (then the rest advice speaks, as before).
+export function previewLegCard(inputs: AdviceInputs): string | undefined {
+  const checkIn = checkInFor(inputs.asOf, inputs.checkIns);
+  if (!checkIn || checkIn.allNormal) return undefined;
+  const sig = morningSignals(checkIn, inputs.logs);
+  if (sig.sore === 'none' || sig.rest) return undefined;
+  const session = legCardSessionOf(inputs);
+  return session ? inputs.templates.find((t) => t.id === session.templateId)?.name : undefined;
+}
+
 // What Vandaag will say about a check-in you have not saved yet: the same rule,
 // run on your real plan, so the sheet never promises more than the advice does.
 export function previewMorningAdvice(inputs: AdviceInputs): Advice[] {
@@ -999,9 +1015,11 @@ export function previewMorningAdvice(inputs: AdviceInputs): Advice[] {
 }
 
 // That preview in one line under the check-in.
-export function describeMorningPreview(advice: Advice[]): string {
-  if (advice.length === 0) return 'Je planning blijft zoals hij is.';
-  return `Op Vandaag verschijnt dan: ${advice.map((a) => `"${a.title}"`).join(' en ')}. Niets verandert zonder jouw akkoord.`;
+// `legCard`: the name of the training the card Benen will speak for (previewLegCard).
+export function describeMorningPreview(advice: Advice[], legCard?: string): string {
+  if (advice.length === 0 && !legCard) return 'Je planning blijft zoals hij is.';
+  const shown = [...advice.map((a) => `"${a.title}"`), ...(legCard ? [`de kaart Benen voor ${legCard}`] : [])];
+  return `Op Vandaag verschijnt dan: ${shown.join(' en ')}. Niets verandert zonder jouw akkoord.`;
 }
 
 function restWeekSkipAdvice(inputs: AdviceInputs): Advice[] {

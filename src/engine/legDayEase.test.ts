@@ -7,7 +7,7 @@ import type { ExercisePrescription, PlannedSession, SessionLog } from '../models
 import { legFatigueOn } from './legFatigue';
 import {
   combineSignals, decisionFor, earlierTodayPoints, easeBecause, easeExerciseReason, easeExplain, easeFact, easeFactShort, easeForgeExplain, easeAdvice, easeMacroFactorLine, easeSlots, easeSummary, easeTarget,
-  easedLogIds, EASE_DONE_LINE, EASE_INDEX_EXPLAIN, EASE_SAVE_FAILED, EASE_STARTED_LINE, legDaySignals, LEG_EASE_INDEX, makeDecision, MAX_LEG_EASE_DAYS, moveLabel, moveLegNote, recordDecision, removeDecision, shouldOfferEase, soreFromNotes,
+  easedLogIds, easeDoneLine, EASE_INDEX_EXPLAIN, EASE_SAVE_FAILED, EASE_STARTED_LINE, legDaySignals, LEG_EASE_INDEX, makeDecision, MAX_LEG_EASE_DAYS, moveLabel, moveLegNote, recordDecision, removeDecision, shouldOfferEase, soreFromNotes,
   type SignalDeps,
 } from './legDayEase';
 
@@ -56,6 +56,17 @@ describe('soreFromNotes', () => {
     expect(soreFromNotes(yesterday, [check(TODAY, 'stijf')], TODAY)).toBeUndefined();
     // Een melding van vandaag zelf is niet ouder dan het antwoord.
     expect(soreFromNotes([note('Knie links', TODAY)], [check(TODAY, 'fris')], TODAY)).toBe('spierpijn');
+  });
+});
+
+describe('earlierTodayPoints: gepland of gelogd', () => {
+  it('een geplande harde loop telt als gepland, een gelogde niet', () => {
+    const plan = [planned('r1', 'tpl_test_run', TODAY)];
+    const e = earlierTodayPoints(TODAY, { logs: [], templates, program, plannedSessions: plan });
+    expect(e.points).toBeGreaterThan(0);
+    expect(e.planned).toBe(true);
+    const done = log('tpl_test_run', TODAY, 25, { rpe: 9, completedAt: `${TODAY}T09:00:00`, plannedSessionId: 'r1' });
+    expect(earlierTodayPoints(TODAY, { logs: [done], templates, program, plannedSessions: plan }).planned).toBeUndefined();
   });
 });
 
@@ -310,7 +321,7 @@ describe('de teksten', () => {
   const sore = combineSignals({ date: TODAY, earlier: { points: 9.5, label: 'testloop', morning: true }, baseIndex: 5.5, sore: 'spierpijn' });
   const all = [
     easeFact(sore), easeFactShort(sore), EASE_INDEX_EXPLAIN, easeAdvice(true, true), easeAdvice(true, false), easeAdvice(false, true), easeExplain('standaard'), easeExplain('alleen-gewicht'), easeExplain('extra', false),
-    easeForgeExplain('standaard'), easeForgeExplain('alleen-gewicht', false), EASE_DONE_LINE, easeMacroFactorLine('extra'), EASE_STARTED_LINE, EASE_SAVE_FAILED,
+    easeForgeExplain('standaard'), easeForgeExplain('alleen-gewicht', false), easeDoneLine('standaard'), easeDoneLine('alleen-gewicht'), easeDoneLine('extra', false), easeMacroFactorLine('extra'), EASE_STARTED_LINE, EASE_SAVE_FAILED,
     easeSummary({ setsRemoved: 3, lighter: 2, dropped: ['Side plank'] }), easeExerciseReason(3, easeBecause(sore.reasons)), moveLabel('2026-10-23'),
   ];
 
@@ -320,6 +331,23 @@ describe('de teksten', () => {
     expect(easeFact(combineSignals({ date: TODAY, earlier: { points: 0 }, baseIndex: 12, sore: 'flink' }))).toBe('Je meldde flinke spierpijn in je benen. Beenindex 12.');
     expect(easeFact(combineSignals({ date: TODAY, earlier: { points: 0 }, baseIndex: 14.1 }))).toBe('Beenindex 14. Je benen dragen nog veel van de afgelopen dagen.');
     expect(easeFact(combineSignals({ date: TODAY, earlier: { points: 0 }, baseIndex: 12.4 }))).toContain('ongeveer 12');
+  });
+
+  it('een geplande, nog niet gelogde loop zegt dat je hem vandaag loopt', () => {
+    const planned = combineSignals({ date: TODAY, earlier: { points: 9.5, label: 'testloop', planned: true }, baseIndex: 5.5, sore: 'spierpijn' });
+    expect(easeFact(planned)).toBe('Je meldde spierpijn in je benen en je loopt vandaag ook je testloop. Beenindex 15.');
+    expect(easeFactShort(planned)).toBe('Spierpijn gemeld en vandaag ook een testloop. Beenindex 15.');
+    const hard = combineSignals({ date: TODAY, earlier: { points: 6, label: 'loop', planned: true }, baseIndex: 8 });
+    expect(easeFact(hard)).toBe('Je loopt vandaag ook hard. Beenindex ongeveer 14.');
+    expect(easeFact(hard)).not.toContain('liep');
+  });
+
+  it('de zin na Lichter volgt de manier en of het gewicht meekomt', () => {
+    expect(easeDoneLine('standaard')).toBe('Lichter gemaakt. In Forge staan minder gewicht en minder sets klaar, met zeker 3 herhalingen over.');
+    expect(easeDoneLine('alleen-gewicht')).not.toContain('sets');
+    expect(easeDoneLine('extra')).toContain('zeker 4');
+    expect(easeDoneLine('standaard', false)).toContain('Het gewicht blijft zoals voorgeschreven');
+    expect(easeDoneLine('standaard', false)).not.toContain('minder gewicht');
   });
 
   it('geen gedachtestreepjes in nieuwe tekst', () => {
