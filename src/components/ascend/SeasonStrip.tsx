@@ -24,18 +24,19 @@ export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
   }, []);
 
   // Een naam die te dicht op de laatste naam van de onderste rij staat gaat een rij hoger; past ook dat
-  // niet, dan blijft hij onderaan en wordt hij afgekapt.
+  // niet, dan blijft hij onderaan en wordt hij afgekapt. Er wordt gerekend met de plek waar de naam
+  // echt staat: aan de randen schuift hij naar binnen (clamp).
+  const clamp = (x: number) => Math.max(NAME_W / 2, Math.min(w - NAME_W / 2, x));
   const rows: number[] = [];
   const lastX: (number | undefined)[] = [undefined, undefined];
   strip.flags.forEach((f) => {
-    const x = f.fraction * w;
+    const x = clamp(f.fraction * w);
     const free = (r: number) => lastX[r] === undefined || x - (lastX[r] as number) >= NAME_W + 4;
     const row = free(0) ? 0 : free(1) ? 1 : 0;
     lastX[row] = x;
     rows.push(row);
   });
   const months = strip.months.filter((_, i) => !(i === 0 && strip.months[1] && strip.months[1].fraction * w < 20));
-  const clamp = (x: number) => Math.max(NAME_W / 2, Math.min(w - NAME_W / 2, x));
   const hasTaper = (f: SeasonStrip['flags'][number]) => f.taperFraction !== undefined && f.taperFraction < f.fraction;
 
   return (
