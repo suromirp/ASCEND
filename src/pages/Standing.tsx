@@ -106,7 +106,7 @@ export function StandingPage() {
           : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
     },
     {
-      // De kop zegt al "Week 2 van de basisfase"; deze regel komt alleen als er iets bij te zeggen is.
+      // De kop zegt al "Week 2 van 4, basisfase"; deze regel komt alleen als er iets bij te zeggen is.
       label: 'Fase',
       value: position ? phaseName(position.phase.name) : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
       text: position
@@ -124,7 +124,7 @@ export function StandingPage() {
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
       <SkyBand>
         <div>
-          {position && <Eyebrow>Week {position.weekInProgram} van de {position.phase.name.toLowerCase()}</Eyebrow>}
+          {position && <Eyebrow>Week {position.weekInPhase} van {position.phase.weekCount}, {position.phase.name.toLowerCase()}</Eyebrow>}
           <h1 className="font-display text-[28px] leading-[34px]" style={{ color: 'var(--color-ink)' }}>Je stand</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Hoe je ervoor staat, naast wat je vandaag doet.</p>
         </div>

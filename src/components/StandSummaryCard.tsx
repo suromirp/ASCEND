@@ -29,7 +29,7 @@ export function StandSummaryCard() {
       ? `${Math.round((jump.ratio - 1) * 100)}% zwaarder dan de 4 weken ervoor`
       : jump.ratio < 0.7
         ? 'lichter dan de 4 weken ervoor'
-        : 'zoals de 4 weken ervoor';
+        : 'even zwaar als de 4 weken ervoor';
 
   // Colour only on the verdict: a warning for tired legs or a heavy week.
   return (

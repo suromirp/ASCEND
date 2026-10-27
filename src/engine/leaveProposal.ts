@@ -160,7 +160,7 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
   }
 
   // De titel staat ook in de meldingsbalk, dus kort: het belangrijkste woord eerst, dan de datum.
-  const label = LEAVE_KIND_SHORT[period.kind];
+  const label = dayCount(period) > 1 && period.kind !== 'no_training' ? (period.kind === 'trek' ? 'Tocht' : 'Vrije dagen') : LEAVE_KIND_SHORT[period.kind];
   const when = describePeriodCompact(period);
   const title = period.trek?.name ? `Tocht ${period.trek.name}` : label;
   const proposal: PlanChangeProposal = {

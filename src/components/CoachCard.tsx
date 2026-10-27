@@ -83,7 +83,7 @@ export function CoachCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <Eyebrow tone={kind.color}>Advies, {kind.label.toLowerCase()}</Eyebrow>
+        <Eyebrow>Advies, {kind.label.toLowerCase()}</Eyebrow>
         {more > 0 && (
           <button onClick={() => setOpen(true)} className="-mr-2 min-h-[44px] px-2 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
             nog {more}
