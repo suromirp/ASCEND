@@ -24,11 +24,14 @@ function Row({ icon, flip, title, line, tone = 'ink', disabled, onClick }: { ico
 }
 
 export function GoalMenuSheet({
-  name, index, count, onEdit, onLabel, onStep, onArchive, onClose,
+  name, index, count, up, down, onEdit, onLabel, onStep, onArchive, onClose,
 }: {
   name: string;
   index: number;
   count: number;
+  // Of een stap kan, en zo niet waarom niet (engine/goalList.ts#stepAvailability).
+  up: { can: boolean; reason?: string };
+  down: { can: boolean; reason?: string };
   onEdit: () => void;
   onLabel: () => void;
   onStep: (dir: 'up' | 'down') => void;
@@ -43,8 +46,8 @@ export function GoalMenuSheet({
           <div className="st-list">
             <Row icon="notitie" title="Doel aanpassen" line="Datum, afstand, rugzak en meer" onClick={pick(onEdit)} />
             <Row icon="schijf" title="Label wijzigen" line="Hoe belangrijk: Top, Voortop of Verkenning" onClick={pick(onLabel)} />
-            <Row icon="omlaag" flip title="Hoger in de lijst" disabled={index === 0} onClick={pick(() => onStep('up'))} />
-            <Row icon="omlaag" title="Lager in de lijst" disabled={index === count - 1} onClick={pick(() => onStep('down'))} />
+            <Row icon="omlaag" flip title="Hoger in de lijst" line={up.can ? undefined : up.reason} disabled={!up.can} onClick={pick(() => onStep('up'))} />
+            <Row icon="omlaag" title="Lager in de lijst" line={down.can ? undefined : down.reason} disabled={!down.can} onClick={pick(() => onStep('down'))} />
             <Row icon="wissen" title="Archiveren" line="Terughalen kan later, zonder datum" tone="danger" onClick={pick(onArchive)} />
           </div>
         );

@@ -116,6 +116,24 @@ describe('van antwoorden naar een doel', () => {
   });
 });
 
+describe('aanpassen met velden die al leeg waren', () => {
+  it('een verplicht veld dat al leeg was blokkeert Volgende niet', () => {
+    const was = { shelter: 'hut' as const };
+    expect(draftProblems('trek', { shelter: 'hut' }, '2027-07-10', '2026-10-26', undefined, was)).toEqual([]);
+  });
+
+  it('een veld dat je zelf leegmaakt blokkeert wel', () => {
+    const was = { shelter: 'hut' as const, days: 5, distanceKm: 100, gainM: 5000, lossM: 5000 };
+    const now = { shelter: 'hut' as const, distanceKm: 100, gainM: 5000, lossM: 5000 };
+    expect(draftProblems('trek', now, '2027-07-10', '2026-10-26', undefined, was)).toContain('Vul het aantal dagen in.');
+  });
+
+  it('een veld dat leeg was maar nu iets geks krijgt, of een nieuw doel, blijft gelden', () => {
+    expect(draftProblems('trek', { shelter: 'hut' }, '2027-07-10', '2026-10-26')).toContain('Vul het aantal dagen in.');
+    expect(draftProblems('trek', { shelter: 'hut', days: 0 }, '2027-07-10', '2026-10-26', undefined, {})).toEqual([]);
+  });
+});
+
 describe('het tempo onder de doeltijd', () => {
   it('zegt het tempo in min/km', () => {
     expect(paceText(10, 45)).toBe('Dat is een tempo van 4:30 min/km.');

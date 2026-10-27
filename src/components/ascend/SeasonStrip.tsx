@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDateNL, formatMonthNL } from '../../utils/dates';
 import type { SeasonStrip } from '../../engine/goalList';
+import { placeSeasonNames } from '../../engine/seasonLayout';
 import { Card, Eyebrow } from '../ui';
 
 // De seizoensstrook op de lucht: van nu tot het laatste doel, een vlag per doel, de weken ertussen
 // en de afbouw als donkerder stuk voor een vlag. Een Top heeft een gevulde vlag, de andere een
 // omlijnde. Alle kleuren komen uit de tokens (op de lucht vanzelf de donkere variant).
-const NAME_W = 96;
-const POLE = [30, 48];
-const TRACK_Y = 70;
+const POLE = [30, 48, 66];
 
 export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -23,19 +22,11 @@ export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
     return () => ro.disconnect();
   }, []);
 
-  // Een naam die te dicht op de laatste naam van de onderste rij staat gaat een rij hoger; past ook dat
-  // niet, dan blijft hij onderaan en wordt hij afgekapt. Er wordt gerekend met de plek waar de naam
-  // echt staat: aan de randen schuift hij naar binnen (clamp).
-  const clamp = (x: number) => Math.max(NAME_W / 2, Math.min(w - NAME_W / 2, x));
-  const rows: number[] = [];
-  const lastX: (number | undefined)[] = [undefined, undefined];
-  strip.flags.forEach((f) => {
-    const x = clamp(f.fraction * w);
-    const free = (r: number) => lastX[r] === undefined || x - (lastX[r] as number) >= NAME_W + 4;
-    const row = free(0) ? 0 : free(1) ? 1 : 0;
-    lastX[row] = x;
-    rows.push(row);
-  });
+  // Waar de namen staan, rekent engine/seasonLayout.ts uit: geen overlap en geen stok door een naam.
+  // Een naam die niet past gaat een rij hoger of wordt korter getoond.
+  const places = placeSeasonNames(strip.flags.map((f) => f.fraction * w), w);
+  const topRow = places.reduce((m, p) => Math.max(m, p.row), 0);
+  const TRACK_Y = POLE[topRow] + 22;
   const months = strip.months.filter((_, i) => !(i === 0 && strip.months[1] && strip.months[1].fraction * w < 20));
   const hasTaper = (f: SeasonStrip['flags'][number]) => f.taperFraction !== undefined && f.taperFraction < f.fraction;
 
@@ -45,19 +36,21 @@ export function SeasonStripCard({ strip }: { strip: SeasonStrip }) {
         <Eyebrow>Je seizoen</Eyebrow>
         <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{formatDateNL(strip.start)} tot {formatMonthNL(strip.end)}</span>
       </div>
-      <div ref={ref} className="relative mx-1 h-[100px]" role="img" aria-label={`Je seizoen: ${strip.flags.map((f) => `${f.name} op ${formatDateNL(f.date)}`).join(', ')}`}>
+      <div ref={ref} className="relative mx-1" style={{ height: TRACK_Y + 30 }} role="img" aria-label={`Je seizoen: ${strip.flags.map((f) => `${f.name} op ${formatDateNL(f.date)}`).join(', ')}`}>
         <span className="absolute h-[4px] rounded-full" style={{ left: 0, right: 0, top: TRACK_Y, background: 'var(--color-track)' }} />
         {strip.flags.filter(hasTaper).map((f) => (
           <span key={`t-${f.id}`} className="absolute h-[4px] rounded-full" style={{ left: (f.taperFraction ?? 0) * w, width: (f.fraction - (f.taperFraction ?? 0)) * w, top: TRACK_Y, background: 'color-mix(in srgb, var(--color-page) 55%, var(--color-track))' }} />
         ))}
         {strip.flags.map((f, i) => {
           const x = f.fraction * w;
-          const pole = POLE[rows[i]];
+          const place = places[i];
+          const pole = POLE[place.row];
+          const align = x - place.left < place.width * 0.25 ? 'left' : x - place.left > place.width * 0.75 ? 'right' : 'center';
           return (
             <div key={f.id}>
               <span
-                className="absolute truncate text-center text-xs font-semibold"
-                style={{ left: clamp(x) - NAME_W / 2, width: NAME_W, top: TRACK_Y - pole - 18, color: 'var(--color-ink)' }}
+                className="absolute truncate text-xs font-semibold"
+                style={{ left: place.left, width: place.width, textAlign: align, top: TRACK_Y - pole - 18, color: 'var(--color-ink)' }}
               >
                 {f.name}
               </span>

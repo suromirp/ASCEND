@@ -105,12 +105,21 @@ const MISSING: Partial<Record<keyof GoalDetails, string>> = {
 };
 
 // Wat er nog mist of niet kan, in gewone woorden. Leeg als je door kunt.
-export function draftProblems(id: AddTileId, details: GoalDetails, date: string | undefined, today: string, unchangedDate?: string): string[] {
+// `was`: de gegevens van het doel zoals ze waren, bij het aanpassen. Een verplicht veld dat toen al
+// leeg was en nog leeg is (een verse tocht zonder dagen of afstand) houdt je niet tegen; een veld dat
+// je zelf leegmaakt wel.
+export function draftProblems(id: AddTileId, details: GoalDetails, date: string | undefined, today: string, unchangedDate?: string, was?: GoalDetails): string[] {
   const kind = GOAL_KINDS[kindOfTile(id, details)];
   const out: string[] = [];
   for (const q of questionsFor(id)) {
     if (!q.required || (q.showIf && !q.showIf(details))) continue;
     const v = details[q.key];
+    if (was) {
+      const before = was[q.key];
+      const wasEmpty = q.choices ? !before : typeof before !== 'number' || !(before > 0);
+      const nowEmpty = q.choices ? !v : typeof v !== 'number' || !(v > 0);
+      if (wasEmpty && nowEmpty) continue;
+    }
     if (q.choices) {
       if (!v) out.push(q.key === 'shelter' ? 'Kies of je in hutten of met tent slaapt.' : q.label === 'Afstand' ? 'Kies een afstand.' : `Kies ${q.label.toLowerCase()}.`);
     } else if (typeof v !== 'number' || !(v > 0)) {

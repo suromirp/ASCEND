@@ -45,7 +45,7 @@ import { weekLoadInput, type WeekLoadKind } from '../storage/weekLoadPlan';
 import { currentBodyKg } from '../engine/bodyWeight';
 import { packWeightOf, tentPackProposal, withPackWeight } from '../engine/gr5Profile';
 import { buildMarathonGoal } from '../engine/goalMigration';
-import { PRIORITY_RULE } from '../engine/goalList';
+import { orderForRestored, PRIORITY_RULE } from '../engine/goalList';
 import { setFreshnessContext, setHardSameDayAllowed, proposeMove, proposeNoTimeToday, proposeSkip as proposeSkipEngine, proposeBackOnPlan as proposeBackOnPlanEngine, skipSession as skipSessionEngine, type ScheduleProposal } from '../engine/scheduler';
 import { planIllnessChange, type IllnessChange, type IllnessPlan } from '../engine/illness';
 import type { LeavePeriod } from '../models/leave';
@@ -1798,10 +1798,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     async (goalId: string) => {
       const goal = trainingGoals.find((g) => g.id === goalId);
       if (!goal || goal.status !== 'archived') return;
-      await TrainingGoalsRepo.put({ ...goal, status: 'paused', updatedAt: new Date().toISOString() });
+      // Een teruggehaald doel komt achteraan de lijst die je nu ziet.
+      const order = orderForRestored(trainingGoals, new Set(goalMilestones.map((m) => m.goalId)), todayISO());
+      await TrainingGoalsRepo.put({ ...goal, status: 'paused', order, updatedAt: new Date().toISOString() });
       await refresh();
     },
-    [trainingGoals, refresh],
+    [trainingGoals, goalMilestones, refresh],
   );
 
   const strengthExternal = strengthTrackedExternally(strengthProgramStrategies, settings.strengthTrackedExternally);
