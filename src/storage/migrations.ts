@@ -389,6 +389,12 @@ export function migrateLogBestEffort(log: SessionLog): SessionLog {
       kept.wholeMinutes = r.wholeMinutes;
     }
     if (r.accepted === true) kept.accepted = true;
+    if (typeof r.v === 'number' && Number.isInteger(r.v) && r.v >= 2 && r.v <= 99) kept.v = r.v;
+    const small = (v: unknown, max: number): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
+    if (small(r.stops, 500) && small(r.stoppedSec, 36000)) {
+      kept.stops = Math.round(r.stops);
+      kept.stoppedSec = Math.round(r.stoppedSec);
+    }
     return { ...out, bestEffort: kept };
   }
   const { bestEffort: _damaged, ...rest } = out;

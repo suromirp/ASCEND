@@ -33,6 +33,17 @@ export const CHOICES = {
       { value: 'auto_all', label: 'Alles zelf', note: 'Meteen, met een melding achteraf' },
     ],
   }),
+  testStilstaan: def({
+    group: 'Planning',
+    title: 'Stilstaan bij een testloop',
+    line: 'Wachten voor een stoplicht in je snelste 5 km.',
+    advice: 'skip' as 'skip' | 'count',
+    help: 'testStilstaan',
+    options: [
+      { value: 'skip', label: 'Niet meetellen', note: 'De tijd dat je stilstond telt niet, ASCEND noemt de stops erbij', short: 'Niet meetellen' },
+      { value: 'count', label: 'Meetellen', note: 'De klok loopt door, zoals het was', short: 'Meetellen' },
+    ],
+  }),
   ambitie: def({
     group: 'Planning',
     title: 'Ambitie',

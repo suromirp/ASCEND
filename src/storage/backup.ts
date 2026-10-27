@@ -388,6 +388,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
       skipped.n++;
     }
   }
+  if ('testStops' in s && s.testStops !== 'skip' && s.testStops !== 'count') {
+    delete s.testStops;
+    skipped.n++;
+  }
   if ('intensityCounting' in s && s.intensityCounting !== 'heartrate' && s.intensityCounting !== 'plan') {
     delete s.intensityCounting;
     skipped.n++;

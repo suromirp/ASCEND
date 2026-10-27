@@ -96,7 +96,7 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
               <NumberField tall label="Gewicht voor" value={before} onChange={setBefore} unit="kg" decimals={1} />
               <NumberField tall label="Gewicht na" value={after} onChange={setAfter} unit="kg" decimals={1} />
               <NumberField tall label="Gedronken onderweg" value={drank} onChange={setDrank} unit="ml" helper="Alles wat je dronk, ook uit een fles of bij een bron." />
-              <NumberField tall label="Geplast sinds de eerste weging" value={pee} onChange={setPee} unit="ml" helper="Plas je onderweg, schat dan hoeveel. Dat gewicht ging niet door zweet weg. Laat leeg als je niet plaste." />
+              <NumberField tall label="Geplast sinds de eerste weging" value={pee} onChange={setPee} unit="ml" helper="Een gewone plas is ongeveer 300 ml, een korte 150 en een volle blaas 450. Of tel de seconden: ongeveer 20 ml per seconde. Laat leeg als je niet plaste." />
               <NumberField tall label="Temperatuur" value={temp} onChange={setTemp} unit="°C" decimals={1} helper={log.detail?.conditions?.tempC !== undefined ? 'Ingevuld uit het weer bij deze training.' : 'Zonder temperatuur kan ASCEND de meting niet op een warme of koude dag zetten.'} />
               <NumberField tall label="Schatting van je horloge" value={watch} onChange={setWatch} unit="ml" helper="Alleen als je niet woog. Een eigen weging gaat altijd voor." />
             </div>

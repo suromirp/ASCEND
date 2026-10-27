@@ -13,7 +13,7 @@
 import type { SessionLog } from '../models/training';
 import type { TestJudgment, TestVerdict } from '../models/testJudgment';
 import { formatPaceRange, racePaces, type RacePaces } from './racePaces';
-import { effortFingerprint, isStaleEffort, isUsableBestEffort } from './bestEffort';
+import { MANY_STOPS_SENTENCE, EFFORT_VERSION, manyStops, stopsPhrase, effortFingerprint, isStaleEffort, isUsableBestEffort } from './bestEffort';
 import { countedTests, formatRaceTime, TEST_DISTANCE_KM, testTotals, type CountedTests, type TestJudgmentOptions, type TestResult } from './racePrediction';
 import { TEST_TEMPLATE_ID } from './raceBlock';
 
@@ -70,8 +70,16 @@ export function mergeTestJudgments(incoming: TestJudgment[] | undefined, current
 
 // "Beste 5 km uit je run: 27:40" or "Hele run: 6,03 km in 36:00".
 export function testBasisLine(t: TestResult): string {
-  if (t.basis === 'effort') return `Beste ${String(TEST_DISTANCE_KM).replace('.', ',')} km uit je run: ${formatRaceTime(t.minutes)}`;
+  if (t.basis === 'effort') {
+    const stops = stopsPhrase(t);
+    return `Beste ${String(TEST_DISTANCE_KM).replace('.', ',')} km uit je run: ${formatRaceTime(t.minutes)}${stops ? `, ${stops}` : ''}`;
+  }
   return `Hele run: ${String(Math.round(t.km * 100) / 100).replace('.', ',')} km in ${formatRaceTime(t.minutes)}`;
+}
+
+// One dry sentence when a test had a lot of standing still, else nothing.
+export function testStopsRemark(t: Pick<TestResult, 'basis' | 'stops' | 'stoppedSec'>): string | undefined {
+  return t.basis === 'effort' && manyStops(t) ? MANY_STOPS_SENTENCE : undefined;
 }
 
 // 'held': a slower test that a newer test has passed (the newer one counts), so nothing waits on it.
@@ -104,12 +112,12 @@ export function testState(logs: SessionLog[], options: TestJudgmentOptions, logI
 
 // The best effort a log carries but that does not count yet (not accepted), read for the totals
 // the log has now. Undefined when there is none, or when it is stale or the log was cut.
-export function effortOffer(log: SessionLog): { km: number; minutes: number } | undefined {
+export function effortOffer(log: SessionLog): { km: number; minutes: number; stops?: number; stoppedSec?: number } | undefined {
   const b = log.bestEffort;
   if (log.templateId !== TEST_TEMPLATE_ID || log.trim || !isUsableBestEffort(b) || b.accepted === true) return undefined;
   const { km, minutes } = testTotals(log);
   if (b.km > km + 0.05 || isStaleEffort(b, km, minutes)) return undefined;
-  return { km: b.km, minutes: b.minutes };
+  return { km: b.km, minutes: b.minutes, stops: b.stops, stoppedSec: b.stoppedSec };
 }
 
 // Does this test log still want its best stretch read from the series? Not when it has a usable
@@ -119,7 +127,12 @@ export function wantsBestEffort(log: SessionLog): boolean {
   if (log.templateId !== TEST_TEMPLATE_ID || log.trim) return false;
   const { km, minutes } = testTotals(log);
   if (!(km >= 3 && minutes > 0)) return false;
-  if (isUsableBestEffort(log.bestEffort) && !isStaleEffort(log.bestEffort, km, minutes)) return false;
+  const b = log.bestEffort;
+  if (isUsableBestEffort(b) && !isStaleEffort(b, km, minutes)) {
+    // One that counts stays as it was. One that waits and was read before stops were told apart is
+    // read once more (docs/beslissingen/2026-10-27-stilstaan-bij-de-testloop.md).
+    if (b.accepted === true || (b.v ?? 1) >= EFFORT_VERSION) return false;
+  }
   return log.bestEffortTried !== effortFingerprint(km, minutes);
 }
 

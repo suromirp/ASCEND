@@ -21,7 +21,7 @@ import type { ActivityDetail } from '../models/activityDetail';
 import type { BestEffort, SessionLog } from '../models/training';
 import type { RunDetail } from '../models/runDetail';
 import type { StoredLap } from '../models/activityStreams';
-import { bestEffortFromStream, effortFingerprint, isStaleEffort, isUsableBestEffort } from '../engine/bestEffort';
+import { bestEffortFromStream, resolveTestStops, EFFORT_VERSION, effortFingerprint, isStaleEffort, isUsableBestEffort } from '../engine/bestEffort';
 import { TEST_DISTANCE_KM, testTotals } from '../engine/racePrediction';
 import { mayAcceptAtOnce, wantsBestEffort } from '../engine/testJudgment';
 import { getConnection, getWatchState } from './externalActivities';
@@ -154,7 +154,7 @@ async function attachNow(activity: ExternalActivity, options: AttachOptions): Pr
     let bestEffort: BestEffort | undefined;
     let tried: string | undefined;
     if (needs.effort) {
-      bestEffort = bestEffortFromStream(streams, TEST_DISTANCE_KM, logKm, logMinutes);
+      bestEffort = bestEffortFromStream(streams, TEST_DISTANCE_KM, logKm, logMinutes, resolveTestStops(settings.testStops));
       if (bestEffort) {
         const logs = (await SessionLogsRepo.getAll()).map((l) => (l.id === log.id ? { ...l, bestEffort } : l));
         // A new test counts at once; an older one only when no pace changes, else it waits for Akkoord.
@@ -262,7 +262,10 @@ export async function attachDerivedToStoredLog(
     // Added when there is none, or when the one there was read for other totals (a correction at
     // the source). One that is still good is never written over.
     const { km, minutes } = testTotals(current);
-    if (!isUsableBestEffort(current.bestEffort) || isStaleEffort(current.bestEffort, km, minutes)) add.bestEffort = derived.bestEffort;
+    const cur = current.bestEffort;
+    // One that waits and was read before stops were told apart is read once more; one that counts is never written over.
+    const reread = isUsableBestEffort(cur) && cur.accepted !== true && (cur.v ?? 1) < EFFORT_VERSION;
+    if (!isUsableBestEffort(cur) || isStaleEffort(cur, km, minutes) || reread) add.bestEffort = derived.bestEffort;
   }
   if (derived.tried && !derived.bestEffort && current.bestEffortTried !== derived.tried) add.bestEffortTried = derived.tried;
   if (derived.runDetail) {
