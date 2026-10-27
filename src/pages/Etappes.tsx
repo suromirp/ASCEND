@@ -55,7 +55,7 @@ export function EtappesPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <PageHeader eyebrow="Ascend" title="Etappes" line="De 36 etappes van de GR5" fallback="/ascend" />
+      <PageHeader eyebrow="Reis" title="Etappes" line="De 36 etappes van de GR5" fallback="/ascend" />
       <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>
         Van het Meer van Genève naar Nice. Alles staat in de app, dus ook zonder bereik kun je het nalezen. Kies per etappe waar je slaapt, of je haar samenvoegt met de volgende of een rustdag neemt.
       </p>

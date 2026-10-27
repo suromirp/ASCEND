@@ -405,9 +405,12 @@ function TodayContent() {
         <JourneyWeekCard />
         {showWeeklyQuestion(settings.overviews) && <WeeklyQuestionCard />}
         <WeightReminder />
-        <DayRow label="Morgen" onClick={() => navigate('/week')} trailing={tomorrow.kind === 'training' ? `${tomorrow.minutes} min` : undefined}>
-          {tomorrow.kind === 'training' ? tomorrow.name : tomorrowText(tomorrow)}
-        </DayRow>
+        {/* De kaart erboven zegt al "Morgen: Niets gepland"; dezelfde zin als rij is dubbel. */}
+        {!(tomorrow.kind === 'none' && !(primary && primaryTemplate && mission)) && (
+          <DayRow label="Morgen" onClick={() => navigate('/week')} trailing={tomorrow.kind === 'training' ? `${tomorrow.minutes} min` : undefined}>
+            {tomorrow.kind === 'training' ? tomorrow.name : tomorrowText(tomorrow)}
+          </DayRow>
+        )}
       </YourDay>
 
       <StandSummaryCard />

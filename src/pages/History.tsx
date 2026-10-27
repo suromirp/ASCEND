@@ -97,7 +97,12 @@ function clock(totalMinutes: number): string {
 // Het verschil met vorige maand als korte pil; stil als vorige maand leeg was of er niets verschilt.
 function deltaPill(diff: number, text: string) {
   if (diff === 0) return undefined;
-  return <StatusPill tone={diff > 0 ? 'progress' : 'neutral'}>{diff > 0 ? '+' : '−'}{text}</StatusPill>;
+  return (
+    <div className="flex flex-col gap-1">
+      <StatusPill tone={diff > 0 ? 'progress' : 'neutral'}>{diff > 0 ? '+' : '−'}{text}</StatusPill>
+      <span className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>tegen vorige maand</span>
+    </div>
+  );
 }
 
 // Positive means "more than last month" — good for training-volume stats,

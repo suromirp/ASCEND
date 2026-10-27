@@ -542,7 +542,7 @@ export function ForgeWorkout({
               <button type="button" onClick={onClose} aria-label="Terug, de training blijft staan" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="terug" size={22} />
               </button>
-              <h1 className="min-w-0 flex-1 truncate font-display text-xl" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
+              <h1 className="min-w-0 flex-1 line-clamp-2 break-words font-display text-xl leading-tight" style={{ color: 'var(--color-ink)' }}>{template.name}</h1>
               <button type="button" onClick={() => setWorkoutMenu(true)} aria-label="Menu van de training" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-ink-dim)' }}>
                 <Icon name="meer" size={22} />
               </button>

@@ -21,7 +21,7 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionLog, SessionTemplate } from '../models/training';
 import { addDays, mondayOfWeek } from '../utils/dates';
 import { makeId } from '../utils/id';
-import { LEAVE_KIND_LABEL, dayCount, describePeriodDates, leaveLabelOn, sortPeriods } from './leave';
+import { LEAVE_KIND_LABEL, LEAVE_KIND_SHORT, dayCount, describePeriodCompact, describePeriodDates, leaveLabelOn, sortPeriods } from './leave';
 import { trekLightDaysBefore } from './trekTaper';
 import { planPass, type PlanPassContext } from './planPass';
 import type { Finding } from './weekValidator';
@@ -159,14 +159,15 @@ export function planLeaveChange(input: LeavePlanInput): LeavePlan {
     items.push({ action: 'add', newSessionDraft: { templateId: a.templateId, scheduledDate: a.scheduledDate, weekStartDate: mondayOfWeek(a.scheduledDate) }, toDate: a.scheduledDate, reason: reasonFor(a, a.scheduledDate, 'add'), generatedBy: SOURCE, ...(mark !== undefined ? { leave: mark } : {}) });
   }
 
-  const label = LEAVE_KIND_LABEL[period.kind];
-  const when = describePeriodDates(period);
+  // De titel staat ook in de meldingsbalk, dus kort: het belangrijkste woord eerst, dan de datum.
+  const label = LEAVE_KIND_SHORT[period.kind];
+  const when = describePeriodCompact(period);
   const title = period.trek?.name ? `Tocht ${period.trek.name}` : label;
   const proposal: PlanChangeProposal = {
     id: makeId('planchange'),
     trigger: mode === 'add' ? 'leave_added' : 'leave_removed',
     leavePeriodId: period.id,
-    issue: mode === 'add' ? `${replaces ? `${title} gewijzigd` : title}: ${when}` : `${title} verwijderd: ${when}`,
+    issue: mode === 'add' ? `${replaces ? `${title} gewijzigd` : title}, ${when}` : `${title} verwijderd, ${when}`,
     changes: items,
     alternatives: [],
     consequences: explain(mode, period, items.length, !!replaces),

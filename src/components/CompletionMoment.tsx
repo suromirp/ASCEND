@@ -245,7 +245,7 @@ function LineRow({ line, first, at }: { line: CompletionLine; first: boolean; at
       </span>
       <span>
         {line.text}
-        {line.note && <span style={{ color: 'var(--color-ink-dim)' }}> {line.note}</span>}
+        {line.note && <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{line.note}</span>}
       </span>
     </div>
   );

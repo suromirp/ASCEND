@@ -52,9 +52,6 @@ export function SeasonOverview({ onSelectWeek }: { onSelectWeek: (weekStart: str
             </li>
           ))}
         </ul>
-        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>
-          Elke fase gaat in golven van vier weken: wennen, opbouw, zwaarste week, rustweek.
-        </p>
       </Card>
 
       {phases.map((p) => (

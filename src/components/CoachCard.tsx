@@ -83,7 +83,7 @@ export function CoachCard() {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <Eyebrow>Advies</Eyebrow>
+        <Eyebrow tone={kind.color}>Advies, {kind.label.toLowerCase()}</Eyebrow>
         {more > 0 && (
           <button onClick={() => setOpen(true)} className="-mr-2 min-h-[44px] px-2 text-[13px]" style={{ color: 'var(--color-ink-dim)' }}>
             nog {more}
@@ -93,7 +93,6 @@ export function CoachCard() {
       <div className="-mt-2 flex gap-3">
         <KindIcon trigger={first.trigger} />
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium" style={{ color: kind.color }}>{kind.label}</p>
           <p className="text-[15px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>{first.title}</p>
           <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{first.effect}</p>
         </div>

@@ -201,6 +201,15 @@ export function describePeriodDates(p: Pick<LeavePeriod, 'startDate' | 'endDate'
   return p.startDate === p.endDate ? dayText(p.startDate, short) : `${dayText(p.startDate, short)} t/m ${dayText(p.endDate, short)}`;
 }
 
+// Voor een korte titel: "10 nov", "10 tot 14 nov" of "28 okt tot 3 nov".
+export function describePeriodCompact(p: Pick<LeavePeriod, 'startDate' | 'endDate'>): string {
+  const day = (iso: string) => Number(iso.slice(8, 10));
+  const month = (iso: string) => MONTHS_SHORT[Number(iso.slice(5, 7)) - 1];
+  if (p.startDate === p.endDate) return `${day(p.startDate)} ${month(p.startDate)}`;
+  const sameMonth = p.startDate.slice(0, 7) === p.endDate.slice(0, 7);
+  return `${day(p.startDate)}${sameMonth ? '' : ` ${month(p.startDate)}`} tot ${day(p.endDate)} ${month(p.endDate)}`;
+}
+
 export function describeDayCount(p: Pick<LeavePeriod, 'startDate' | 'endDate'>): string {
   const n = dayCount(p);
   return `${n} ${n === 1 ? 'dag' : 'dagen'}`;

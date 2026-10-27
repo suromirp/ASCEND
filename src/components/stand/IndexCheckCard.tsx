@@ -21,7 +21,7 @@ export function IndexCheckCard({ checks }: { checks: IndexCheck[] }) {
       </div>
       {checks.length === 0 ? (
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-          Nog geen metingen. Vul na je volgende harde loop of test in hoe je benen voelden; dan zie je hier hoe goed het getal bij jou klopt.
+          Nog geen metingen. Hier zie je straks hoe goed het getal bij jou klopt.
         </p>
       ) : (
         <>

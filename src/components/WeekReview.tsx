@@ -121,7 +121,7 @@ export function WeekReviewSheet({ review, onClose }: { review: WeekReview; onClo
                   <p className="font-sans text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{review.perSport.map((p) => p.replace(': ', ' ')).join(' · ')}</p>
                 )}
                 {review.avgRpe !== undefined && (
-                  <p className="font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>gem. zwaarte {String(review.avgRpe).replace('.', ',')}</p>
+                  <p className="font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>gem. zwaarte {String(review.avgRpe).replace('.', ',')}</p>
                 )}
               </div>
             </div>

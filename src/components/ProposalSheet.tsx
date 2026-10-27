@@ -313,7 +313,6 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
     : entry.change === 'anders' && entry.otherName ? `was ${entry.otherName}`
     : entry.change === 'weg' && entry.otherDate ? `naar ${short(entry.otherDate)}`
     : entry.change === 'vervalt' ? 'vervalt'
-    : entry.change === 'nieuw' ? 'nieuw'
     : rest ? 'Wandelen mag, niets af te vinken'
     : afterTest ? 'Na de test, liefst 6 uur later' : undefined;
   return (

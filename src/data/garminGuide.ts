@@ -36,14 +36,14 @@ const GARMIN_RECOVERY_TIME: GuideSource = { label: 'Garmin, Recovery Time', url:
 const PUBMED_CALORIES: GuideSource = { label: 'PubMed, wetenschappelijke literatuur', url: 'https://pubmed.ncbi.nlm.nih.gov' };
 
 export const GARMIN_ZONE_SETUP: GuideCard = {
-  heading: 'HARTSLAGZONES INSTELLEN',
+  heading: 'Hartslagzones instellen',
   body: `Sport Heart Rate → Running → Based on %LTHR, met je eigen drempelhartslag (LTHR). Voor hardlopen geven sportspecifieke zones op basis van %LTHR een preciezer beeld dan alleen generieke %Max HR-zones. Laat Max HR- en LTHR automatic detection aan staan zodat Garmin nieuwe betrouwbare waarden kan voorstellen na voldoende activiteiten, de lactaatdrempelmeting vereist wel een compatibele borstband.`,
   note: `Vul je eigen waarden in bij Instellingen, Lichaam, Je hartslag: dan staan de zones in bpm bij elke training. Gebruik hartslag niet als enige waarheid, een percentagezone is niet hetzelfde als een laboratoriummeting van je aerobe drempel. Talk test + RPE + HR samen blijven de beste praktische combinatie.`,
   sources: [GARMIN_ZONES, GARMIN_AUTO_DETECT],
 };
 
 export const GARMIN_STRAP_USAGE: GuideCard = {
-  heading: 'BORSTBAND GEBRUIKEN BIJ',
+  heading: 'Borstband gebruiken bij',
   items: ['Rustige duurloop', 'later: tempolopen', 'later: intervallen', 'loopband op helling', 'zware bergwandelingen als de hartslag belangrijk is'],
   body: 'Niet noodzakelijk bij een casual wandeling, normale dagelijkse stappen of een rustdag, het horloge alleen is daar voldoende.',
   note: 'Voor trainingssturing heeft de borstband de voorkeur boven de polssensor: elektroden licht vochtig maken, strak en direct tegen de huid, en vóór de activiteit controleren of de sensor verbonden is.',
@@ -51,7 +51,7 @@ export const GARMIN_STRAP_USAGE: GuideCard = {
 };
 
 export const GARMIN_DATA_SCREENS: GuideCard = {
-  heading: 'DATASCHERMEN PER ACTIVITEIT',
+  heading: 'Dataschermen per activiteit',
   items: [
     'Rustige duurloop. Hoofdscherm: timer, hartslag, hartslagzone, tempo. Tweede scherm: afstand, gem. HR, gem. tempo, cadans.',
     'Bergop wandelen (binnen), gebruik Treadmill/Indoor Walking of maak een custom activity "Bergop wandelen" met eigen dataschermen.',
@@ -62,7 +62,7 @@ export const GARMIN_DATA_SCREENS: GuideCard = {
 };
 
 export const GARMIN_METRICS: GuideCard = {
-  heading: 'METRICS INTERPRETEREN',
+  heading: 'Metrics interpreteren',
   items: [
     'Hartslag/zones, primair voor cardio-intensiteit.',
     'Training Effect, Garmins schatting van het effect van een sessie op aerobe/anaerobe fitness. Gebruik dit achteraf als context, niet als doel tijdens de training.',

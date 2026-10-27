@@ -106,10 +106,11 @@ export function StandingPage() {
           : 'Na twee volle weken zie je hier hoeveel van de geplande trainingen je deed.',
     },
     {
+      // De kop zegt al "Week 2 van de basisfase"; deze regel komt alleen als er iets bij te zeggen is.
       label: 'Fase',
-      value: position ? `week ${position.weekInPhase} van ${position.phase.weekCount}` : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
+      value: position ? phaseName(position.phase.name) : mainPast ? 'klaar' : mainState === 'underway' ? 'onderweg' : 'nog niet',
       text: position
-        ? `${phaseName(position.phase.name)}.${restWeek?.isRestWeek && !restWeek.skipped ? ' Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? ` Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
+        ? `${restWeek?.isRestWeek && !restWeek.skipped ? 'Deze week is een rustweek: minder, zodat de weken ervoor binnenkomen.' : ''}${position.weekInPhase === position.phase.weekCount && nextPhase ? `${restWeek?.isRestWeek && !restWeek.skipped ? ' ' : ''}Volgende week begint ${phaseName(nextPhase.name)}.` : ''}`
         : mainPast || mainState === 'underway' ? 'Het programma naar je hoofddoel is af.' : '',
     },
     {
@@ -117,7 +118,7 @@ export function StandingPage() {
       value: `${streak} ${streak === 1 ? 'trainingsdag' : 'trainingsdagen'}`,
       text: 'Achter elkaar alles gedaan wat gepland stond. Dagen zonder training tellen niet mee en breken de reeks niet.',
     },
-  ];
+  ].filter((r) => r.label !== 'Fase' || !position || r.text);
 
   return (
     <div className="animate-page-in flex flex-col gap-5 px-4 pb-6">
@@ -148,8 +149,8 @@ export function StandingPage() {
         {strengthModelOn(settings.strengthModel) && (
           <button onClick={() => navigate('/forge')} className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-2xl border p-4 text-left" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-card)' }}>
             <span>
-              <span className="block font-display text-xl" style={{ color: 'var(--color-ink)' }}>Forge</span>
-              <span className="mt-0.5 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
+              <Eyebrow as="span">Forge</Eyebrow>
+              <span className="mt-1 block text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Je krachttraining: vooruitgang per oefening en wat ASCEND de volgende keer voorstelt.</span>
             </span>
             <span className="shrink-0 text-sm" style={{ color: 'var(--color-progress)' }}><Icon name="verder" size={16} /></span>
           </button>

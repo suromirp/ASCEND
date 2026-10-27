@@ -45,8 +45,8 @@ export const SEVERITY_CHOICES = [
   { value: 'ernstig', label: 'Ernstig', line: 'Het hindert ook in het gewone leven.' },
 ] as const;
 
-const KNAPIK = 'Roeien en optrekken helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in Aanvullend onderzoek GR5 voorbereiding).';
-const ROMP = 'Rompoefeningen staan in het krachtmenu van Aanvullend onderzoek GR5 voorbereiding (bewijs: expert).';
+const KNAPIK = 'Roeien en optrekken helpen bij rugzakdragen (Knapik e.a. 2012, bewijs: matig, in het onderzoek “Aanvullend onderzoek GR5 voorbereiding”).';
+const ROMP = 'Rompoefeningen staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert).';
 const NIETS_APART = 'Voor deze plek staat in het onderzoek achter ASCEND niets apart. Dit is een rustige, algemene aanpak; krachttraining verlaagt over sporten heen het aantal blessures (Lauersen e.a. 2014, bewijs: matig tot sterk).';
 
 export const BODY_CARE: Record<string, BodyCare> = {
@@ -108,7 +108,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
     voorkomen: {
       intro: 'Een stevige romp kan je rug en heupen helpen bij een zware rugzak. Twee tot drie keer per week.',
       oefeningen: [
-        { name: 'Plank', dose: '3 × 30 seconden', note: 'Billen niet omhoog, niet inzakken' },
+        { name: 'Onderarmsteun (plank)', dose: '3 × 30 seconden', note: 'Billen niet omhoog, niet inzakken' },
         { name: 'Suitcase carry', dose: '3 × 20 meter per kant', note: 'Een gewicht in één hand, rechtop blijven' },
         { name: 'Pallof press', dose: '2 × 10 per kant', note: 'Met een elastiek, niet laten draaien' },
       ],
@@ -144,7 +144,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Step-up op een tree', dose: '3 × 8 per been', note: 'Later met een rugzak' },
         { name: 'Bilbrug', dose: '3 × 12', note: 'Boven even aanspannen' },
       ],
-      basis: 'Heupabductie en step-ups staan in het krachtmenu van Aanvullend onderzoek GR5 voorbereiding (bewijs: expert; heupkracht bij kniepijn voorin: bewijs matig, als behandeling). De bilbrug is afgeleid.',
+      basis: 'Heupabductie en step-ups staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert; heupkracht bij kniepijn voorin: bewijs matig, als behandeling). De bilbrug is afgeleid.',
     },
   },
   dij: {
@@ -160,7 +160,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Langzaam zakkende squat', dose: '3 × 8', note: 'Omhoog in 1, omlaag in 3 seconden' },
         { name: 'Split squat', dose: '3 × 6 per been', note: 'Rechtop, knie boven je voet' },
       ],
-      basis: 'Step-downs en langzaam zakken zijn de beste vervanger voor afdalen (Aanvullend onderzoek GR5 voorbereiding, bewijs: expert). Echte afdalingen blijven de best onderbouwde prikkel.',
+      basis: 'Step-downs en langzaam zakken zijn de beste vervanger voor afdalen (het onderzoek “Aanvullend onderzoek GR5 voorbereiding”, bewijs: expert). Echte afdalingen blijven de best onderbouwde prikkel.',
     },
   },
   knie: {
@@ -176,7 +176,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Langzaam zakkende squat', dose: '3 × 8' },
         { name: 'Heup zijwaarts heffen', dose: '2 × 12 per kant' },
       ],
-      basis: 'Langzaam zakken en step-downs: Aanvullend onderzoek GR5 voorbereiding (bewijs: expert voor afdalen). Heupkracht naast kniewerk helpt bij pijn voorin de knie (JOSPT 2018, bewijs: matig, als behandeling en niet als voorkomen).',
+      basis: 'Langzaam zakken en step-downs: het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert voor afdalen). Heupkracht naast kniewerk helpt bij pijn voorin de knie (JOSPT 2018, bewijs: matig, als behandeling en niet als voorkomen).',
     },
   },
   scheen: {
@@ -192,7 +192,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Eenbenige kuitheffing', dose: '3 × 12 per been', note: 'Langzaam omlaag' },
         { name: 'Korte-voetoefening', dose: '10 minuten, 2 tot 3 keer per week', note: 'Trek je voorvoet naar je hiel zonder je tenen te buigen' },
       ],
-      basis: 'Voetspiertraining maakte recreatieve lopers 2,4 keer minder vatbaar voor een loopblessure, in één onderzoek (Taddei e.a. 2020, bewijs: matig). De rest is afgeleid uit het krachtmenu van Aanvullend onderzoek GR5 voorbereiding.',
+      basis: 'Voetspiertraining maakte recreatieve lopers 2,4 keer minder vatbaar voor een loopblessure, in één onderzoek (Taddei e.a. 2020, bewijs: matig). De rest is afgeleid uit het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding”.',
     },
   },
   enkel: {
@@ -238,8 +238,8 @@ export const BODY_CARE: Record<string, BodyCare> = {
     voorkomen: {
       intro: 'Een stevige romp en sterke billen en hamstrings kunnen je rug ontlasten. Twee keer per week.',
       oefeningen: [
-        { name: 'Bird dog', dose: '3 × 8 per kant', note: 'Rug vlak, rustig wisselen' },
-        { name: 'Plank', dose: '3 × 30 seconden' },
+        { name: 'Vogelhond (bird dog)', dose: '3 × 8 per kant', note: 'Rug vlak, rustig wisselen' },
+        { name: 'Onderarmsteun (plank)', dose: '3 × 30 seconden' },
         { name: 'Romeense deadlift met licht gewicht', dose: '3 × 8', note: 'Heupen naar achter, rug lang' },
       ],
       basis: `${ROMP} Bij militairen zit de rug op de tweede plaats van de blessures met een zware rugzak (Orr e.a. 2021).`,
@@ -257,7 +257,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Romeense deadlift met licht gewicht', dose: '3 × 8' },
         { name: 'Heup zijwaarts heffen', dose: '2 × 12 per kant' },
       ],
-      basis: 'Romeense deadlift en heupabductie staan in het krachtmenu van Aanvullend onderzoek GR5 voorbereiding (bewijs: matig en expert). De bilbrug is afgeleid.',
+      basis: 'Romeense deadlift en heupabductie staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: matig en expert). De bilbrug is afgeleid.',
     },
   },
   hamstring: {
@@ -290,7 +290,7 @@ export const BODY_CARE: Record<string, BodyCare> = {
         { name: 'Kuitheffing met gebogen knie', dose: '3 × 10 per been', note: 'Voor de diepe kuitspier' },
         { name: 'Tenen omhoog (tibialis raise)', dose: '2 × 15' },
       ],
-      basis: 'Eenbenige kuitheffingen staan in het krachtmenu van Aanvullend onderzoek GR5 voorbereiding (bewijs: expert). Normen voor aantallen komen van coaches en zijn niet bewezen (bewijs: zwak).',
+      basis: 'Eenbenige kuitheffingen staan in het krachtmenu van het onderzoek “Aanvullend onderzoek GR5 voorbereiding” (bewijs: expert). Normen voor aantallen komen van coaches en zijn niet bewezen (bewijs: zwak).',
     },
   },
   achilles: {

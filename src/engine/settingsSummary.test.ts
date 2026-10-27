@@ -324,7 +324,7 @@ describe('rowSummary: lichaam', () => {
   });
 
   it('figuur: Automatisch zegt eerlijk dat het nog niet bekend is', () => {
-    expect(rowSummary('figuur', facts())).toEqual({ value: 'Man', auto: true, sub: 'Nog niet bekend, nu Man' });
+    expect(rowSummary('figuur', facts())).toEqual({ value: 'Man', auto: true, sub: 'Nog niet gekozen, dus Man' });
     expect(rowSummary('figuur', facts({ linkedSex: 'vrouw' }))).toEqual({ value: 'Vrouw', auto: true, sub: 'Uit je koppeling' });
     expect(rowSummary('figuur', facts({ settings: { ...facts().settings, figure: 'vrouw' } }))).toEqual({ value: 'Vrouw' });
     expect(rowSummary('figuur', facts({ settings: { ...facts().settings, figure: 'man' }, linkedSex: 'vrouw' }))).toEqual({ value: 'Man' });

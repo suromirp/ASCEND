@@ -80,7 +80,7 @@ export function StrengthProgramWizard({
           onClick={(e) => e.stopPropagation()}
         >
           <Card className="rounded-b-none border-b-0 pb-6">
-            <Eyebrow>{mode === 'create' ? 'NIEUW KRACHTBLOK' : 'KRACHTBLOK AANPASSEN'}</Eyebrow>
+            <Eyebrow>{mode === 'create' ? 'Nieuw krachtblok' : 'Krachtblok aanpassen'}</Eyebrow>
 
             {step.kind === 'sessions' && (
               <SessionsStep

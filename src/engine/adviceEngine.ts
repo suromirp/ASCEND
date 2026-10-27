@@ -546,17 +546,19 @@ function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
   const next = inputs.plannedSessions
     .filter((s) => s.status !== 'skipped' && !loggedIds.has(s.id) && s.scheduledDate >= inputs.asOf && daysBetween(recent.completedDate, s.scheduledDate) <= 1)
     .find((s) => { const t = templateById.get(s.templateId); return t ? isLegHeavyTemplate(t) : false; });
-  const signal = recent.rpe !== undefined && recent.rpe >= 8 ? `zwaarte ${recent.rpe} van 10` : 'zwaarder dan normaal';
+  const signal = recent.rpe !== undefined && recent.rpe >= 8 ? `zwaarte ${recent.rpe} van 10` : 'zwaarder dan normaal';
+  // Eén woord voor het oordeel: "was zwaar (zwaarte 8 van 10)" of "voelde zwaarder dan normaal", niet allebei.
+  const hardWas = (who: string) => (recent.rpe !== undefined && recent.rpe >= 8 ? `${who} was zwaar (${signal})` : `${who} voelde zwaarder dan normaal`);
   const rule = 'Na een zware training krijgt de eerstvolgende zware beendag een dag extra herstel, als daar plek voor is.';
-  const base = { trigger: 'session_too_hard' as const, ruleId: 'HARD-THEN-SPACE', title: `${loggedName} was zwaar (${signal})`, relatedLogId: recent.id, priority: 4 };
+  const base = { trigger: 'session_too_hard' as const, ruleId: 'HARD-THEN-SPACE', title: hardWas(loggedName), relatedLogId: recent.id, priority: 4 };
   if (!next) {
-    return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `Je laatste training was zwaar (${signal}). ${rule}`, priority: 1 }];
+    return [{ ...base, id: `hard:${recent.id}`, effect: 'Er staat morgen geen zware beensessie, dus er hoeft niets te schuiven. Houd het de komende dag rustig.', why: `${hardWas('Je laatste training')}. ${rule}`, priority: 1 }];
   }
   const nextTemplate = templateById.get(next.templateId)!;
   const laterDates = catchUpDates(next, nextTemplate, inputs, templateById, addDays(next.scheduledDate, 1));
   const later = laterDates[0];
   if (!later) {
-    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `Je laatste training was zwaar (${signal}). ${rule}` }];
+    return [{ ...base, id: `hard:${recent.id}`, effect: `${nextTemplate.name} op ${shortDate(next.scheduledDate)} rustig houden (RPE 3-4); er is geen latere plek deze week.`, why: `${hardWas('Je laatste training')}. ${rule}` }];
   }
   const hardEffect = (d: string) => `${nextTemplate.name} naar ${shortDate(d)}.`;
   const moved = moveOptions(base.title, { plannedSessionId: next.id, action: 'move', fromDate: next.scheduledDate, toDate: later, reason: `Extra herstel na ${loggedName} (${signal}).`, generatedBy: ['engine/adviceEngine.ts', 'HARD-THEN-SPACE'] }, laterDates, nextTemplate.name, rule, hardEffect);
@@ -564,7 +566,7 @@ function tooHardAdvice(inputs: AdviceInputs, templateById: Map<string, SessionTe
     ...base,
     id: `hard:${recent.id}`,
     effect: hardEffect(later),
-    why: `Je laatste training was zwaar (${signal}). ${rule}`,
+    why: `${hardWas('Je laatste training')}. ${rule}`,
     ...moved,
   }];
 }

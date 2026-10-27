@@ -43,7 +43,7 @@ export function StandSummaryCard() {
         Benen <span style={{ color: level >= 2 ? 'var(--color-warning)' : 'var(--color-ink)' }}>{word.toLowerCase()}</span>
         {' · '}
         <span className="tabular-nums" style={{ color: 'var(--color-ink)' }}>{done} van {week.length}</span> gedaan
-        {weekWord && <>{' · '}week <span style={{ color: heavy ? 'var(--color-warning)' : 'var(--color-ink)' }}>{weekWord}</span></>}
+        {weekWord && <>{' · '}deze week is <span style={{ color: heavy ? 'var(--color-warning)' : 'var(--color-ink)' }}>{weekWord}</span></>}
       </span>
       <span className="shrink-0" style={{ color: 'var(--color-ink-dim)' }}><ChevronGlyph /></span>
     </button>

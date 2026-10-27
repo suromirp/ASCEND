@@ -54,7 +54,7 @@ export function AlleenOnderwegPage() {
 
   return (
     <div className="animate-page-in flex flex-col gap-4 px-4 pb-24 pt-6">
-      <PageHeader eyebrow="Ascend" title="Alleen onderweg" line="Je kaart voor als het misgaat" fallback="/ascend" />
+      <PageHeader eyebrow="Reis" title="Alleen onderweg" line="Je kaart voor als het misgaat" fallback="/ascend" />
 
       <Card className="flex flex-col gap-3" texture>
         <Eyebrow>Alarm</Eyebrow>
@@ -127,8 +127,8 @@ export function AlleenOnderwegPage() {
           <>
             <div>
               <label htmlFor="solo-who" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Wie is je thuisfront?</label>
-              <input id="solo-who" type="text" value={solo.who} maxLength={80} onChange={(e) => updateSolo({ who: e.target.value })} placeholder="Een voornaam of hoe je die persoon noemt" className={inputClass} style={inputStyle} />
-              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Zo begint de brief. Het blijft op deze telefoon.</p>
+              <input id="solo-who" type="text" value={solo.who} maxLength={80} onChange={(e) => updateSolo({ who: e.target.value })} placeholder="Bijvoorbeeld een voornaam" className={inputClass} style={inputStyle} />
+              <p className="mt-1 text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Met deze naam begint je brief. De naam blijft op deze telefoon.</p>
             </div>
             <div>
               <label htmlFor="solo-time" className="text-xs" style={{ color: 'var(--color-ink-dim)' }}>Hoe laat stuur je elke dag een bericht?</label>
