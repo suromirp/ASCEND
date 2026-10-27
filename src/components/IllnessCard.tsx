@@ -21,10 +21,16 @@ import { TextButton } from './TextButton';
 function useIllnessProposal() {
   const { planIllness, applyIllness } = useAppData();
   const [plan, setPlan] = useState<IllnessPlan | null>(null);
+  const [busy, setBusy] = useState(false);
   const request = async (change: IllnessChange) => {
+    if (busy) return;
     const next = planIllness(change);
     if (!next) return;
-    if (!next.changesPlanning) { await applyIllness(next); return; }
+    if (!next.changesPlanning) {
+      setBusy(true);
+      try { await applyIllness(next); } finally { setBusy(false); }
+      return;
+    }
     setPlan(next);
   };
   const sheet = plan && (
@@ -37,7 +43,7 @@ function useIllnessProposal() {
       onClose={() => setPlan(null)}
     />
   );
-  return { request, sheet };
+  return { request, sheet, busy };
 }
 
 function illnessAdvice(plan: IllnessPlan): Advice {
@@ -46,7 +52,7 @@ function illnessAdvice(plan: IllnessPlan): Advice {
     trigger: 'plan_update',
     ruleId: 'ILLNESS',
     title: 'Zo ziet je planning eruit',
-    effect: plan.proposal.consequences,
+    effect: plan.preview,
     why: plan.proposal.explanation,
     priority: 0,
     proposal: plan.proposal,
@@ -62,7 +68,7 @@ function day(iso: string): string {
 // The status cards (ill / building back). Shown at the top of Today.
 export function IllnessStatusCard() {
   const { settings } = useAppData();
-  const { request, sheet } = useIllnessProposal();
+  const { request, sheet, busy } = useIllnessProposal();
   const active = activeIllness(settings.illnessEpisodes);
   const ramp = recoveryRamp(settings.illnessEpisodes, todayISO());
 
@@ -75,8 +81,8 @@ export function IllnessStatusCard() {
         <p className="font-display text-lg" style={{ color: 'var(--color-ink)' }}>{ILLNESS_LABEL[active.kind]}</p>
         <p className="-mt-1 text-xs" style={{ color: 'var(--color-ink-dim)' }}>Sinds {day(active.startDate)}</p>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>{ILLNESS_GUIDANCE[active.kind]}</p>
-        <PrimaryButton onClick={() => void request({ action: 'recover' })}>
-          Ik ben weer beter
+        <PrimaryButton disabled={busy} onClick={() => void request({ action: 'recover' })}>
+          {busy ? 'Even bewaren…' : 'Ik ben weer beter'}
         </PrimaryButton>
         {active.kind === 'above_neck' && (
           <TextButton

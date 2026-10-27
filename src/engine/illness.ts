@@ -134,7 +134,7 @@ export function planIllnessStart(
     'illness_reported',
     `Ziek gemeld: ${ILLNESS_LABEL[kind].toLowerCase()}`,
     changes,
-    ILLNESS_PROPOSAL[kind],
+    ILLNESS_GUIDANCE[kind],
     'Vuistregel: alleen klachten boven de nek is licht bewegen, koorts of klachten onder de nek is rust. Gemiste trainingen tijdens ziekte worden niet ingehaald.',
   );
 }
@@ -188,6 +188,9 @@ export interface IllnessPlan {
   episodesAfter: IllnessEpisode[];
   // Verandert de planning niet, dan hoeft er niets te worden getoond.
   changesPlanning: boolean;
+  // Wat het voorstel vóór Akkoord zegt. De consequences van het voorstel staan in de voltooide
+  // tijd, want die komen na Akkoord in de meldingsbalk en het logboek.
+  preview: string;
 }
 
 export function planIllnessChange(
@@ -204,11 +207,11 @@ export function planIllnessChange(
       ? current.map((e) => (e.id === active.id ? { ...e, kind: change.kind } : e))
       : [...current, { id: makeId('illness'), kind: change.kind, startDate: asOf }];
     const proposal = planIllnessStart(change.kind, plannedSessions, templates, logs, asOf);
-    return { change, proposal, episodesBefore: current, episodesAfter, changesPlanning: proposal.changes.some((c) => c.action !== 'keep') };
+    return { change, proposal, episodesBefore: current, episodesAfter, changesPlanning: proposal.changes.some((c) => c.action !== 'keep'), preview: ILLNESS_PROPOSAL[change.kind] };
   }
   if (!active) return undefined;
   // The ended episode goes last, so undo can reopen it.
   const episodesAfter = [...current.filter((e) => e.id !== active.id), { ...active, endDate: asOf }];
   const { proposal } = planIllnessEnd(active, asOf, plannedSessions, templates, logs);
-  return { change, proposal, episodesBefore: current, episodesAfter, changesPlanning: proposal.changes.some((c) => c.action !== 'keep') };
+  return { change, proposal, episodesBefore: current, episodesAfter, changesPlanning: proposal.changes.some((c) => c.action !== 'keep'), preview: proposal.consequences };
 }

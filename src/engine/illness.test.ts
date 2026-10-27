@@ -116,7 +116,8 @@ describe('planIllnessChange', () => {
     expect(plan.episodesAfter[0].endDate).toBeUndefined();
     expect(current).toEqual([]);
     expect(JSON.stringify(week)).toBe(before);
-    expect(plan.proposal.consequences).toContain('Met Akkoord');
+    expect(plan.preview).toContain('Met Akkoord');
+    expect(plan.proposal.consequences).not.toContain('Met Akkoord');
   });
 
   it('van soort veranderen houdt dezelfde periode', () => {
