@@ -36,6 +36,9 @@ import type { SessionLog, SessionTemplate } from '../models/training';
 import type { Program } from '../models/program';
 import type { TrendPoint } from './readiness';
 import { logSport } from './sports';
+import { idIsTestOrRace } from './templateRoles';
+import { pacingLine, type PacingLineKind } from './runDetailRules';
+import { isStaleRunDetail } from './runDetail';
 import { formatNumberNL } from '../utils/number';
 import { addDays } from '../utils/dates';
 import { zoneBpm, type HeartRateSettings } from './heartRateZones';
@@ -107,6 +110,10 @@ export interface RunInsight {
   fact?: InsightLine;
   // "Gelijk aan je laatste loopjes", "Niet te vergelijken ...", or that the weather played a part.
   note?: string;
+  // The one line a test, race, tempo run or interval training gets about the spread of its
+  // pace (engine/runDetailRules.ts#pacingLine), from the kilometres on the log. It stands in
+  // the place of "Let op", so a training still shows at most two lines.
+  pacing?: string;
   // What could not be compared, per topic, for the small line under the sheet.
   notCompared?: { topic: InsightTopic; reason: NotComparable; text: string }[];
 }
@@ -558,9 +565,26 @@ function braked(line: InsightLine, input: RunInsightInput): boolean {
   );
 }
 
+// Tempo run and interval training: the blocks are what is compared; the rest of the hard
+// trainings have no blocks.
+const BLOCK_TEMPLATES = new Set(['tpl_tempo_run', 'tpl_intervals']);
+
+// Which hard training this is, for its one line; undefined for any other.
+export function pacingKindOf(log: SessionLog, templates: SessionTemplate[]): PacingLineKind | undefined {
+  if (idIsTestOrRace(log.templateId, templates)) return 'test';
+  return BLOCK_TEMPLATES.has(log.templateId) ? 'blocks' : undefined;
+}
+
 export function runInsight(input: RunInsightInput): RunInsight {
   const s = resolveRunInsight(input.settings);
-  if (!s.enabled || !input.detailsOn || !input.log.detail) return {};
+  if (!s.enabled || !input.detailsOn) return {};
+  const kind = pacingKindOf(input.log, input.templates);
+  // Kilometres read for other totals than the log has now (a correction at the source) say nothing.
+  const d = input.log.cardioData ?? input.log.outdoorData;
+  const rd = input.log.runDetail;
+  const fresh = !!rd && !isStaleRunDetail(rd, d?.distanceKm ?? 0, d?.durationMinutes || input.log.durationMinutes);
+  const pacing = kind && !input.log.trim && fresh ? pacingLine(rd, kind) : undefined;
+  if (!input.log.detail) return pacing ? { pacing } : {};
   const ctx: ComparisonContext = {
     logs: input.logs,
     templates: input.templates,
@@ -571,7 +595,7 @@ export function runInsight(input: RunInsightInput): RunInsight {
     excludedLogIds: input.excludedLogIds,
   };
   const topics = topicsFor(input.log, ctx).filter((t) => s.topics[TOPIC_SWITCH[t]]);
-  if (topics.length === 0) return {};
+  if (topics.length === 0) return pacing ? { pacing } : {};
   const noun = logSport(input.log) === 'hiking' ? 'tochten' : 'loopjes';
 
   const results = new Map<InsightTopic, TopicResult>();
@@ -594,6 +618,7 @@ export function runInsight(input: RunInsightInput): RunInsight {
   const fact = !better || !watch ? lines.filter((l) => l.tone === 'fact' && l.topic !== better?.topic && l.topic !== watch?.topic)[0] : undefined;
 
   const out: RunInsight = {};
+  if (pacing) out.pacing = pacing;
   if (better) out.better = better;
   if (watch) out.watch = watch;
   if (fact) out.fact = fact;

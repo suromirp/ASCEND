@@ -2,9 +2,10 @@ import { ImportWizard } from '../../ImportWizard';
 import { TextButton } from '../../TextButton';
 import { settingsAnchor } from '../../../data/settingsIndex';
 import { AdjustedSheet } from '../AdviceReset';
+import { useAppData } from '../../../state/AppDataContext';
 import { SettingsSection } from '../SettingsList';
 import { useAdviceReset } from '../useAdviceReset';
-import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, VersionSheet } from './GegevensSheets';
+import { BackupSheet, BaselineSheet, FolderSheet, RebuildSheet, ResetSheet, SnapshotsSheet, StorageSheet, StreamsSheet, VersionSheet } from './GegevensSheets';
 import { SummaryRow } from './SummaryRow';
 import type { GroupProps } from './types';
 
@@ -15,6 +16,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
   // Terugzetten naar het advies leeft hier en niet in het blad, zodat het voorstel (met Akkoord)
   // en de uitkomst blijven staan als het blad dicht is.
   const advice = useAdviceReset();
+  const { updateSettings } = useAppData();
   return (
     <>
       <SettingsSection title="Back-up">
@@ -22,6 +24,12 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
         <SummaryRow id="backupmap" title="Vaste map" facts={facts} onClick={() => setSheet('backupmap')} />
         <SummaryRow id="opslag" title="Opslag beschermd" facts={facts} kind={facts.storage === 'unsupported' || facts.storage === undefined ? 'static' : 'nav'} onClick={() => setSheet('opslag')} />
         <SummaryRow id="momentopnamen" title="Kopieën van voor een import" facts={facts} onClick={() => setSheet('momentopnamen')} />
+      </SettingsSection>
+
+      <SettingsSection title="Reeksen van je horloge">
+        <SummaryRow id="reeksen-bewaren" title="Volledige reeks bewaren" facts={facts} info="reeksenBewaren" onChange={(on) => void updateSettings({ keepStreams: on })} />
+        <SummaryRow id="reeksen-backup" title="Reeksen in back-up" facts={facts} info="reeksenBackup" onChange={(on) => void updateSettings({ streamsInBackup: on })} />
+        <SummaryRow id="reeksen-ruimte" title="Ruimte van reeksen" facts={facts} onClick={() => setSheet('reeksen')} />
       </SettingsSection>
 
       <SettingsSection title="App">
@@ -46,6 +54,7 @@ export function GegevensGroup({ facts, reload, sheet, setSheet }: GroupProps) {
       {sheet === 'import' && <ImportWizard onClose={close} />}
       {sheet === 'backupmap' && <FolderSheet chosen={facts.folderChosen} onChanged={reload} onClose={close} />}
       {sheet === 'opslag' && <StorageSheet onChanged={reload} onClose={close} />}
+      {sheet === 'reeksen' && <StreamsSheet onChanged={reload} onClose={close} />}
       {sheet === 'momentopnamen' && <SnapshotsSheet onChanged={reload} onClose={close} />}
       {sheet === 'versie' && <VersionSheet onClose={close} />}
       {sheet === 'startniveau' && <BaselineSheet onClose={close} />}

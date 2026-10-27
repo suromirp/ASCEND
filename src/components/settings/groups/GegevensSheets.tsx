@@ -11,6 +11,8 @@ import { buildLabel } from '../../../utils/buildLabel';
 import { formatDateNL, localDateOf, localTimeOf, todayISO } from '../../../utils/dates';
 import { BaselineEvidenceCard } from '../../BaselineEvidenceCard';
 import { SettingsList } from '../SettingsList';
+import { ActivityStreamsRepo } from '../../../storage/database';
+import { formatBytes } from '../../../engine/streamPack';
 import { Sheet } from '../Sheet';
 
 // Back-up: maken en terugzetten. "Back-up maken" is de ene gouden knop van het blad.
@@ -102,6 +104,59 @@ export function StorageSheet({ onChanged, onClose }: { onChanged: () => void; on
           <p className="st-hint" style={{ marginLeft: 0 }}>Zet ASCEND op je beginscherm (in Safari: Deel, Zet op beginscherm) en maak regelmatig een back-up.</p>
           <div className="st-btns">
             <button type="button" className="st-btn" onClick={() => void requestPersistentStorage().then((s) => { setStatus(s); onChanged(); })}>Opnieuw vragen</button>
+          </div>
+        </>
+      )}
+    </Sheet>
+  );
+}
+
+// De ruimte van de volledige reeksen op dit toestel, en ze verwijderen. De samenvatting en de
+// kilometers van elke run blijven staan; de reeksen komen terug zodra je een run opent, zolang
+// intervals.icu ze nog geeft (of met een herstel uit een back-up die ze bevat).
+export function StreamsSheet({ onChanged, onClose }: { onChanged: () => void; onClose: () => void }) {
+  const [size, setSize] = useState<{ bytes: number; rows: number } | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => {
+    void ActivityStreamsRepo.totalBytes().then(setSize).catch(() => setSize({ bytes: 0, rows: 0 }));
+  }, []);
+
+  async function wipe() {
+    setBusy(true);
+    try {
+      await ActivityStreamsRepo.clear();
+      setSize({ bytes: 0, rows: 0 });
+      setConfirm(false);
+      setMessage('De reeksen zijn verwijderd. De kilometers van je runs staan er nog.');
+      onChanged();
+    } catch {
+      setMessage('Verwijderen lukte niet. Er is niets veranderd.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet
+      eyebrow="Gegevens en back-up"
+      title="Ruimte van reeksen"
+      line={size === null ? 'Even tellen.' : size.rows === 0 ? 'Er zijn nog geen reeksen bewaard.' : `${formatBytes(size.bytes)} voor ${size.rows} ${size.rows === 1 ? 'run of tocht' : 'runs en tochten'}.`}
+      onClose={onClose}
+    >
+      {message && <p className="st-hint" role="status" style={{ marginLeft: 0 }}>{message}</p>}
+      {size !== null && size.rows > 0 && !confirm && (
+        <div className="st-btns">
+          <button type="button" className="st-btn red" onClick={() => setConfirm(true)}>Reeksen verwijderen</button>
+        </div>
+      )}
+      {confirm && (
+        <>
+          <p className="st-hint" style={{ marginLeft: 0 }}>Alle reeksen op deze telefoon gaan weg. Zonder back-up met reeksen of een koppeling kun je ze niet terughalen.</p>
+          <div className="st-btns">
+            <button type="button" className="st-btn red" disabled={busy} onClick={() => void wipe()}>{busy ? 'Bezig…' : 'Ja, verwijderen'}</button>
+            <button type="button" className="st-btn" disabled={busy} onClick={() => setConfirm(false)}>Annuleren</button>
           </div>
         </>
       )}

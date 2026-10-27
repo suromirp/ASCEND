@@ -582,6 +582,20 @@ the date you started wearing them, walks and treks only (`engine/bootBreakIn.ts`
 (`engine/journey.ts#withDerivedDone`, `withBootsDone`), never a stored flag. Running shoe
 kilometres stay with Garmin.
 
+**Run in detail, the data** (`storage/activityDetail.ts`, `engine/streamPack.ts`, `engine/runDetail.ts`,
+`engine/runDetailRules.ts`, decision `docs/beslissingen/2026-10-27-run-in-detail-gegevens.md`): the full series of a
+run or tocht live in a store of their own, `activityStreams` (key `logId`, database version 9), packed as typed
+arrays at the moments the watch wrote them; the track is never kept, only the wind against you per kilometre worked
+out from it. The series DO go in the backup file by default (base64, setting "Reeksen in back-up", size in the row)
+because the source may stop handing Garmin data out and then a restore could not fetch them again; the copies taken
+before an import (`backupSnapshots`) never hold them. "Volledige reeks bewaren" decides whether they are kept at all.
+`SessionLog.runDetail` (kilometres, laps, a line of about 150 points, the place of the best 5 km) is derived and
+append-only like `detail` and `bestEffort`: added once, tied to the totals it was read for (`wholeKm`, `wholeMinutes`),
+`runDetailTried` the fingerprint of totals that gave nothing, never a change to a measured number, and a damaged one
+is dropped by `migrateLogRunDetail` without losing the log. Kilometres, laps and the verdicts (RD-1 to RD-8) are pure
+functions with tests; a test, tempo run or interval training gets one line about the spread of its pace
+(`RunInsight.pacing`), the two-line rule after a run stays.
+
 **Strava text** (`engine/activityText.ts`): ASCEND never writes to Strava (that would
 need a server); it prepares a short text to copy. Planned numbers appear only when
 the log belongs to a planned session, and no minutes without a measured duration.

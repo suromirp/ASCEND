@@ -15,7 +15,7 @@ import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
 import { TestVerdictCard } from './TestVerdictCard';
 import { TEST_TEMPLATE_ID } from '../engine/raceBlock';
-import { ensureBestEffort } from '../storage/activityDetail';
+import { ensureBestEffort, ensureRunDetail } from '../storage/activityDetail';
 import { wantsBestEffort } from '../engine/testJudgment';
 import { logKindLabel } from '../engine/sports';
 import { cleanDetails, detailForm, plannedDetails, workoutLine } from '../engine/workoutDetails';
@@ -56,6 +56,16 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [log.id, log.externalId, log.bestEffort, log.bestEffortTried, log.trim, refresh]);
+  // An older run from the watch: the kilometres and the full series are filled in once when the
+  // sheet opens (storage/activityDetail.ts#ensureRunDetail, with a limit in time; it says
+  // nothing here, the detail screen shows the outcome).
+  const hasRunDetail = !!log.runDetail;
+  useEffect(() => {
+    if (log.externalId && !log.trim) {
+      void ensureRunDetail(log.id).then((r) => (r === 'added' ? refresh() : undefined));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log.id, log.externalId, log.trim, hasRunDetail, refresh]);
   const compatibility = garminType ? getCompatibility(log.templateId, garminType) : undefined;
 
   const rows: { label: string; value: string; icon?: 'horloge' | 'notitie' }[] = [];

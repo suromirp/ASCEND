@@ -31,6 +31,7 @@ import type { SubjectiveFeel } from '../models/training';
 import type { RecoveryMetric } from '../models/metrics';
 import type { IntervalsHrBasis } from '../engine/watchHeartRate';
 import type { RunDynamics, StreamKind, StreamSet } from '../models/activityDetail';
+import type { StoredLap, StoredLapSource } from '../models/activityStreams';
 
 export const INTERVALS_BASE_URL = 'https://intervals.icu';
 export const INTERVALS_ADAPTER_ID = 'intervals.icu';
@@ -179,7 +180,17 @@ export const STREAM_NAMES: Record<StreamKind, string> = {
   verticalOscillation: 'vertical_oscillation',
   verticalRatio: 'vertical_ratio',
   stepLength: 'step_length',
+  // Ademhaling is de naam uit de scripts van intervals.icu zelf (streams.get("respiration")).
+  // De namen van temperatuur en verticale snelheid staan niet in de OpenAPI-beschrijving en
+  // zijn de gangbare namen; ze worden alleen gevraagd als de activiteit ze in stream_types noemt.
+  respiration: 'respiration',
+  temperature: 'temp',
+  verticalSpeed: 'vertical_speed',
 };
+
+// Series that ASCEND computes itself (gradient, standing still) or that are no measurement:
+// not worth listing as "other".
+const IGNORED_STREAM_NAMES = new Set(['grade_smooth', 'moving', 'fixed_altitude', 'fixed_watts', 'raw_watts']);
 
 const KIND_OF_STREAM = new Map<string, StreamKind>((Object.entries(STREAM_NAMES) as [StreamKind, string][]).map(([kind, name]) => [name, kind]));
 
@@ -192,6 +203,18 @@ export function streamKindsOf(raw: unknown): StreamKind[] | undefined {
     if (kind) kinds.add(kind);
   }
   return [...kinds];
+}
+
+// The names of the series ASCEND does not know, for later: names only, never values.
+export function otherStreamNames(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out = new Set<string>();
+  for (const name of raw) {
+    if (typeof name !== 'string' || name.length === 0 || name.length > 40 || KIND_OF_STREAM.has(name) || IGNORED_STREAM_NAMES.has(name)) continue;
+    out.add(name);
+    if (out.size >= 30) break;
+  }
+  return out.size > 0 ? [...out] : undefined;
 }
 
 const inRange = (n: unknown, min: number, max: number): number | undefined => (typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max ? n : undefined);
@@ -239,6 +262,7 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
   // the kind decides.
   const dynamics = kind === 'strength' ? undefined : dynamicsOf(raw);
   const streams = kind === 'strength' ? undefined : streamKindsOf(raw.stream_types);
+  const others = kind === 'strength' ? undefined : otherStreamNames(raw.stream_types);
   return {
     externalId: `${INTERVALS_ADAPTER_ID}:${raw.id}`,
     source: fromGarmin ? 'garmin' : 'import',
@@ -258,6 +282,7 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
     treadmill: kind !== 'strength' && (raw.trainer === true || raw.type === 'VirtualRun' || raw.type === 'VirtualRide'),
     ...(dynamics ? { dynamics } : {}),
     ...(streams ? { streamsAvailable: streams } : {}),
+    ...(others ? { otherStreams: others } : {}),
   };
 }
 
@@ -289,12 +314,13 @@ export function streamsUrl(activityId: string, kinds: StreamKind[]): string {
 }
 
 // What ASCEND asks for of an activity: everything the research found useful
-// (docs/onderzoek/Loopgegevens en vooruitgang.md) that the activity has. The
-// power series is left out on purpose: a watch of this kind gives no running
-// power, and nothing here reads it.
+// (docs/onderzoek/Loopgegevens en vooruitgang.md, docs/onderzoek/Run in detail.md) that the
+// activity has. Power is asked for since the watch with a chest strap does write it; only
+// what the activity lists in its own stream_types is ever requested.
 export const WANTED_STREAMS: StreamKind[] = [
-  'time', 'distance', 'heartRate', 'speed', 'altitude', 'cadence', 'position',
+  'time', 'distance', 'heartRate', 'speed', 'altitude', 'cadence', 'position', 'power',
   'stanceTime', 'stanceBalance', 'verticalOscillation', 'verticalRatio', 'stepLength',
+  'respiration', 'temperature', 'verticalSpeed',
 ];
 
 export function streamsToRequest(available: StreamKind[] | undefined): StreamKind[] {
@@ -357,6 +383,10 @@ export function mapIntervalsStreams(raw: unknown, kind: ExternalActivityKind = '
   put('verticalRatioPct', toSeries(get('verticalRatio')?.data, length, (v) => (v >= 2 && v <= 20 ? v : null)));
   // Millimetres at the provider, metres once through here (see stepLengthMetres).
   put('stepLengthM', toSeries(get('stepLength')?.data, length, (v) => (v >= 300 && v <= 3000 ? v / 1000 : v >= 0.3 && v <= 3 ? v : null)));
+  put('powerW', toSeries(get('power')?.data, length, (v) => (v >= 0 && v <= 2000 ? v : null)));
+  put('respirationRpm', toSeries(get('respiration')?.data, length, (v) => (v > 0 && v <= 150 ? v : null)));
+  put('temperatureC', toSeries(get('temperature')?.data, length, (v) => (v >= -50 && v <= 80 ? v : null)));
+  put('verticalSpeedMs', toSeries(get('verticalSpeed')?.data, length, (v) => (v >= -10 && v <= 10 ? v : null)));
 
   const position = get('position');
   if (position && Array.isArray(position.data) && Array.isArray(position.data2)) {
@@ -368,6 +398,19 @@ export function mapIntervalsStreams(raw: unknown, kind: ExternalActivityKind = '
         break;
       }
     }
+    // The whole track stays in memory only while the run is processed (the heading per
+    // kilometre for the wind); nothing stores it.
+    const n = Math.min(position.data.length, position.data2.length, length);
+    const lat: (number | null)[] = [];
+    const lon: (number | null)[] = [];
+    for (let i = 0; i < n; i++) {
+      const a = position.data[i];
+      const b = position.data2[i];
+      const ok = typeof a === 'number' && typeof b === 'number' && Number.isFinite(a) && Number.isFinite(b) && (a !== 0 || b !== 0) && Math.abs(a) <= 90 && Math.abs(b) <= 180;
+      lat.push(ok ? a : null);
+      lon.push(ok ? b : null);
+    }
+    if (lat.some((v) => v !== null)) set.position = { lat, lon };
   }
   return set;
 }
@@ -493,6 +536,85 @@ export async function fetchIntervalsStreams(
   return mapIntervalsStreams(await getJson(connection, () => streamsUrl(id, kinds), options), activity.kind);
 }
 
+// --- the laps and intervals of one activity ----------------------------------------------------
+
+export function intervalsUrl(activityId: string): string {
+  return `${INTERVALS_BASE_URL}/api/v1/activity/${encodeURIComponent(activityId)}/intervals`;
+}
+
+const MAX_LAPS = 200;
+
+// The answer of GET /api/v1/activity/{id}/intervals (IntervalsDTO: icu_intervals and icu_groups)
+// -> the laps ASCEND keeps next to the series. start_time and end_time are seconds since the
+// start (`int32` in the provider's OpenAPI description); when they are missing the indexes
+// into the series are read through `timeSec`. What the source worked out is kept for
+// comparison only; ASCEND shows its own numbers from the series.
+export function mapIntervalsLaps(raw: unknown, timeSec?: readonly number[]): StoredLap[] {
+  const list = (raw as { icu_intervals?: unknown } | null)?.icu_intervals;
+  if (!Array.isArray(list)) return [];
+  const out: StoredLap[] = [];
+  for (const item of list) {
+    if (typeof item !== 'object' || item === null) continue;
+    const it = item as Record<string, unknown>;
+    const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+    let startSec = num(it.start_time);
+    let endSec = num(it.end_time);
+    if ((startSec === undefined || endSec === undefined) && timeSec) {
+      const a = num(it.start_index);
+      const b = num(it.end_index);
+      if (a !== undefined && b !== undefined && timeSec[a] !== undefined && timeSec[Math.min(b, timeSec.length - 1)] !== undefined) {
+        startSec = timeSec[a];
+        endSec = timeSec[Math.min(b, timeSec.length - 1)];
+      }
+    }
+    if (startSec === undefined || endSec === undefined || endSec <= startSec) continue;
+    const lap: StoredLap = { startSec, endSec };
+    if (it.type === 'WORK') lap.kind = 'work';
+    else if (it.type === 'RECOVERY') lap.kind = 'recovery';
+    if (typeof it.label === 'string' && it.label.trim() !== '') lap.label = it.label.trim().slice(0, 60);
+    if (it.group_id !== undefined && it.group_id !== null && String(it.group_id) !== '') lap.groupId = String(it.group_id).slice(0, 40);
+    const source: StoredLapSource = {};
+    const put = <K extends keyof StoredLapSource>(key: K, value: number | undefined, decimals = 2) => {
+      if (value !== undefined) source[key] = (Math.round(value * 10 ** decimals) / 10 ** decimals) as StoredLapSource[K];
+    };
+    put('distanceM', num(it.distance), 1);
+    put('movingSec', num(it.moving_time), 0);
+    put('avgSpeedMs', num(it.average_speed), 3);
+    put('gapMs', num(it.gap), 3);
+    put('avgHeartRate', num(it.average_heartrate), 1);
+    put('maxHeartRate', num(it.max_heartrate), 0);
+    put('avgCadence', num(it.average_cadence), 1);
+    put('avgWatts', num(it.average_watts), 0);
+    put('avgStepLengthM', stepLengthMetres(it.average_stride ?? it.average_step_length), 3);
+    put('gainM', num(it.total_elevation_gain), 1);
+    put('decouplingPct', num(it.decoupling), 1);
+    put('avgRespiration', num(it.average_respiration), 1);
+    put('avgTempC', num(it.average_temp), 1);
+    put('zone', num(it.zone), 0);
+    put('intensity', num(it.intensity), 1);
+    put('headwindPct', num(it.headwind_percent), 1);
+    put('tailwindPct', num(it.tailwind_percent), 1);
+    put('avgWindMs', num(it.average_wind_speed), 1);
+    if (Object.keys(source).length > 0) lap.source = source;
+    out.push(lap);
+    if (out.length >= MAX_LAPS) break;
+  }
+  return out.sort((a, b) => a.startSec - b.startSec);
+}
+
+// The laps of one stored activity, in one request. Empty when it has none; throws an
+// IntervalsError like the other requests.
+export async function fetchIntervalsLaps(
+  connection: IntervalsConnection,
+  activity: Pick<ExternalActivity, 'externalId'>,
+  timeSec: readonly number[] | undefined,
+  options: FetchOptions = {},
+): Promise<StoredLap[]> {
+  const id = intervalsActivityId(activity.externalId);
+  if (!id) return [];
+  return mapIntervalsLaps(await getJson(connection, () => intervalsUrl(id), options), timeSec);
+}
+
 // --- the heart rate intervals.icu holds for running ------------------------------
 
 export function sportSettingsUrl(athleteId: string): string {
@@ -547,6 +669,11 @@ export function createIntervalsIcuAdapter(connection: IntervalsConnection | null
     fetchActivityStreams: async (activity) => {
       if (!connection) return undefined;
       return fetchIntervalsStreams(connection, activity, options);
+    },
+    // The laps and intervals of that activity.
+    fetchActivityLaps: async (activity, timeSec) => {
+      if (!connection) return [];
+      return fetchIntervalsLaps(connection, activity, timeSec, options);
     },
   };
 }

@@ -10,6 +10,7 @@ import type { RecoveryMetric, BodyMetric, NutritionMetric } from '../models/metr
 import type { SessionLog } from '../models/training';
 import type { ExternalActivity } from '../engine/activityImport';
 import type { StreamSet } from '../models/activityDetail';
+import type { StoredLap } from '../models/activityStreams';
 
 export interface DateRange {
   from: string; // ISO date
@@ -36,4 +37,7 @@ export interface DataSourceAdapter {
   // dynamics...) in ASCEND's units, one request. engine/activityDetail.ts turns
   // them into the compact profile that is kept; the series themselves are not.
   fetchActivityStreams?: (activity: Pick<ExternalActivity, 'externalId' | 'kind' | 'streamsAvailable'>) => Promise<StreamSet | undefined>;
+  // The laps or intervals of one activity, with their boundaries in seconds since the start
+  // (`timeSec` of the series lets an adapter turn indexes into seconds).
+  fetchActivityLaps?: (activity: Pick<ExternalActivity, 'externalId'>, timeSec?: readonly number[]) => Promise<StoredLap[]>;
 }

@@ -459,6 +459,20 @@ describe('rowSummary: gegevens en back-up', () => {
     expect(rowSummary('opslag', facts({ storage: 'not_protected' })).value).toBe('Nee');
     expect(rowSummary('momentopnamen', facts({ snapshots: 0 }))).toEqual({ value: '0', dim: true });
   });
+
+  it('de reeksen van je horloge: aan als standaard, met de ruimte erbij', () => {
+    expect(rowSummary('reeksen-bewaren', facts()).checked).toBe(true);
+    expect(rowSummary('reeksen-bewaren', facts({ settings: { keepStreams: false } as never })).checked).toBe(false);
+    expect(rowSummary('reeksen-backup', facts()).checked).toBe(true);
+    expect(rowSummary('reeksen-backup', facts({ settings: { streamsInBackup: false } as never })).checked).toBe(false);
+    // Zolang er niets geteld is staat er geen regel; daarna de ruimte in de rij, een derde groter als tekst.
+    expect(rowSummary('reeksen-backup', facts()).sub).toBeUndefined();
+    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 0 })).sub).toBe('Nog geen reeksen bewaard');
+    expect(rowSummary('reeksen-backup', facts({ streamsBytes: 30_000_000 })).sub).toBe('Maakt de back-up ongeveer 40 MB groter');
+    expect(rowSummary('reeksen-ruimte', facts())).toEqual({});
+    expect(rowSummary('reeksen-ruimte', facts({ streamsBytes: 0 }))).toEqual({ value: '0 B', dim: true });
+    expect(rowSummary('reeksen-ruimte', facts({ streamsBytes: 4_200_000 }))).toEqual({ value: '4,2 MB', dim: false });
+  });
 });
 
 describe('zoekwaarde', () => {

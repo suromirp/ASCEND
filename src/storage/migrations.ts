@@ -25,6 +25,9 @@ import type { RoutePlan } from '../models/routePlan';
 import type { NightJudgment, WeeklyHealthCheck } from '../models/checkIn';
 import type { TestJudgment } from '../models/testJudgment';
 import { isUsableBestEffort } from '../engine/bestEffort';
+import { isUsableRunDetail } from '../engine/runDetail';
+import { deserializeStreams } from '../engine/streamPack';
+import type { ActivityStreams } from '../models/activityStreams';
 import { capTestJudgments } from '../engine/testJudgment';
 import type { InjuryNote } from '../models/injury';
 import type { SweatEntry, SweatPre } from '../models/sweat';
@@ -632,6 +635,50 @@ export function migrateLogDetail(log: SessionLog): SessionLog {
   const { detail: _damaged, ...rest } = log;
   void _damaged;
   return valid ? { ...rest, detail: valid } : rest;
+}
+
+// --- Run in detail: SessionLog.runDetail en de reeksen ---------------------------------------
+// The kilometres and laps of a run are derived from its full series (models/runDetail.ts,
+// engine/runDetail.ts) and sit on the log as `runDetail`, with `runDetailTried` for totals
+// that gave nothing. Both are optional and additive, so the backup schema number does not
+// move: a file from before them has neither and imports as it was. A damaged `runDetail`
+// is dropped as a whole and the log keeps everything else; it is derived, so it is read
+// again from the series. `runDetailTried` must be a short text.
+export function migrateLogRunDetail(log: SessionLog): SessionLog {
+  let out = log;
+  if ('runDetailTried' in out) {
+    const tried = (out as { runDetailTried?: unknown }).runDetailTried;
+    if (typeof tried !== 'string' || tried.length === 0 || tried.length > 40) {
+      const { runDetailTried: _t, ...rest } = out;
+      void _t;
+      out = rest;
+    }
+  }
+  if (!('runDetail' in out)) return out;
+  const raw = (out as { runDetail?: unknown }).runDetail;
+  if (isUsableRunDetail(raw)) return out;
+  const { runDetail: _damaged, ...rest } = out;
+  void _damaged;
+  return rest;
+}
+
+// The full series in a backup file (payload.activityStreams, base64): read series by series.
+// A set that is damaged beyond use is dropped and counted, the rest is kept; a file from
+// before them has none (undefined: "not in this backup", the device keeps its own).
+export function migrateActivityStreams(raw: unknown): { list: ActivityStreams[] | undefined; skipped: number } {
+  if (raw === undefined || raw === null) return { list: undefined, skipped: 0 };
+  if (!Array.isArray(raw)) return { list: undefined, skipped: 1 };
+  const byLog = new Map<string, ActivityStreams>();
+  let skipped = 0;
+  for (const item of raw) {
+    const read = deserializeStreams(item);
+    if (!read) {
+      skipped++;
+      continue;
+    }
+    byLog.set(read.logId, read);
+  }
+  return { list: [...byLog.values()], skipped };
 }
 
 // --- activiteit inkorten: SessionLog.trim ---------------------------------------------

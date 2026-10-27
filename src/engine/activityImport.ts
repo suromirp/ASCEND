@@ -55,6 +55,9 @@ export interface ExternalActivity {
   // The series this activity has at its source (heart rate, speed, altitude,
   // the running dynamics...). Only these are ever asked for.
   streamsAvailable?: StreamKind[];
+  // The names of other series the source lists that ASCEND does not know (names only, no
+  // values), so it can be seen later what else is there. At most 30.
+  otherStreams?: string[];
 }
 
 export const ACTIVITY_KIND_LABEL: Record<ExternalActivityKind, string> = {

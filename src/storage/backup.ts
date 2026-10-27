@@ -26,6 +26,7 @@ import type { CapabilityEvidence } from '../models/capability';
 import type { InjuryNote } from '../models/injury';
 import type { WeeklyHealthCheck } from '../models/checkIn';
 import type { WeightEntry } from '../models/metrics';
+import type { ActivityStreams } from '../models/activityStreams';
 import {
   ProgramsRepo,
   SessionTemplatesRepo,
@@ -40,6 +41,7 @@ import {
   BackupSnapshotsRepo,
   MetaRepo,
   PlanChangeProposalsRepo,
+  ActivityStreamsRepo,
   StrengthProgramStrategiesRepo,
   StrengthProgramRecommendationsRepo,
   applyBackupWrites,
@@ -57,8 +59,9 @@ import { MAX_JUDGMENTS } from '../engine/shortNight';
 import { mergeSweatEntries } from '../engine/sweat';
 import { mergeTestJudgments } from '../engine/testJudgment';
 import { BREAKIN_KM_OPTIONS } from '../engine/bootBreakIn';
-import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
+import { cleanNavigationSettings, migrateDirection, migrateExport, dedupeInfluencesByPlace, migrateExternalOneRm, migrateInfluences, migrateLeavePeriods, migrateLogDetail, migrateInjuryNote, migrateLogGymProfile, migrateLogBestEffort, migrateLogRunDetail, migrateActivityStreams, migrateTestJudgments, migrateWeeklyHealthCheck, migrateLogManualMeasured, migrateLogSets, migrateLogSourceSync, migrateLogTrim, migrateNightJudgments, migrateSweatEntries, migrateSweatPre, migrateTrainingGoals, migrateWeightEntries, readWeekShape, type AscendExport } from './migrations';
 import { mergeExternalOneRm } from '../engine/externalOneRm';
+import { serializeStreams } from '../engine/streamPack';
 import { mergeJourneyState, normalizeJourneyState } from '../engine/journey';
 import { normalizePackList } from '../engine/packList';
 import { makeId } from '../utils/id';
@@ -115,7 +118,14 @@ function migrateLegacyObjectives(
 export { BackupMessageError, backupErrorText } from './backupMessage';
 import { BackupMessageError } from './backupMessage';
 
-export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
+export interface BuildEnvelopeOptions {
+  // Whether the full series travel along. Left out: the setting "Reeksen in back-up" decides
+  // (on unless you turned it off). The copy taken before an import passes false: it only
+  // has to undo that import, and the series would make every copy tens of megabytes.
+  streams?: boolean;
+}
+
+export async function buildBackupEnvelope(options: BuildEnvelopeOptions = {}): Promise<AscendBackupEnvelope> {
   const [programs, templates, plannedSessions, sessionLogs, trainingGoals, goalMilestones, goalMilestoneProgress, capabilityEvidence, injuryNotes, settings, goalEngineConfig, strengthProgramStrategies, strengthProgramRecommendations, planChangeProposals, adviceResponses, routePlan, soloPlan] = await Promise.all([
     ProgramsRepo.getAll(),
     SessionTemplatesRepo.getAll(),
@@ -158,6 +168,13 @@ export async function buildBackupEnvelope(): Promise<AscendBackupEnvelope> {
     routePlan: routePlan.updatedAt ? routePlan : null,
     soloPlan: soloPlan.updatedAt ? soloPlan : null,
   };
+
+  // The full series of runs and tochten, as base64. They may not be fetchable again from the
+  // source, so they go along by default (docs/beslissingen/2026-10-27-run-in-detail-gegevens.md).
+  if (options.streams ?? settings.streamsInBackup !== false) {
+    const streams = await ActivityStreamsRepo.getAll();
+    if (streams.length > 0) payload.activityStreams = streams.map(serializeStreams);
+  }
 
   return {
     backupSchemaVersion: CURRENT_BACKUP_SCHEMA_VERSION,
@@ -348,7 +365,7 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.bootBreakInReminder;
     skipped.n++;
   }
-  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest'] as const) {
+  for (const key of ['showWatchStatus', 'showWatchStatusOnWeek', 'watchRemoveDone', 'stravaText', 'askShortNight', 'askSweat', 'askDoubtTest', 'keepStreams', 'streamsInBackup'] as const) {
     if (key in s && typeof s[key] !== 'boolean') {
       delete s[key];
       skipped.n++;
@@ -466,7 +483,7 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
   const skipped: Counter = { n: 0 };
   const templates = cleanList<SessionTemplate>(raw.templates, isTemplate, skipped);
   const plannedSessions = cleanList<PlannedSession>(raw.plannedSessions, isPlanned, skipped);
-  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogBestEffort);
+  const sessionLogs = cleanList<SessionLog>(raw.sessionLogs, isLog, skipped)?.map(migrateLogManualMeasured).map(migrateLogSets).map(migrateLogDetail).map(migrateLogTrim).map(migrateLogSourceSync).map(migrateLogGymProfile).map(migrateLogBestEffort).map(migrateLogRunDetail);
   const injuryNotes = cleanList<InjuryNote>(raw.injuryNotes, hasId, skipped)?.map(migrateInjuryNote);
   const capabilityEvidence = hasCapability ? cleanList<CapabilityEvidence>(raw.capabilityEvidence, hasId, skipped) : undefined;
   const settings = cleanSettings(raw.settings, skipped);
@@ -530,6 +547,11 @@ function buildNormalized({ createdAt, sourceBackupSchemaVersion, raw, legacyGoal
     const soloPlan = sanitizeSoloPlan(raw.soloPlan);
     if (soloPlan) normalized.soloPlan = soloPlan;
     else if (raw.soloPlan != null) skipped.n++;
+    // The full series: set by set, a damaged one is dropped and counted; no key means the
+    // file has none and the device keeps its own.
+    const streams = migrateActivityStreams(raw.activityStreams);
+    if (streams.list) normalized.activityStreams = streams.list;
+    skipped.n += streams.skipped;
   }
 
   // Soort, gegevens en belangrijkheid van elk doel (ronde 2a): een back-up van voor deze
@@ -1068,7 +1090,7 @@ export async function listSnapshots(): Promise<PreImportSnapshot[]> {
 }
 
 export async function createPreImportSnapshot(): Promise<PreImportSnapshot> {
-  const envelope = await buildBackupEnvelope();
+  const envelope = await buildBackupEnvelope({ streams: false });
   const snapshot: PreImportSnapshot = {
     id: makeId('snapshot'),
     createdAt: new Date().toISOString(),
@@ -1137,6 +1159,15 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
   // update, so its flag is set (storage/goalMigration.ts#migrateStrengthProgramDefault).
   const restoredMeta: Record<string, unknown> = !current.program && touches(programAction) && resolved.program ? { strengthProgramDefaultSeeded: true } : {};
 
+  // The series that came with the file: only for logs that are there afterwards, and never over
+  // a set the device already has for that log (its own is the newer reading).
+  let streamPuts: ActivityStreams[] = [];
+  if (touches(historyAction) && backup.activityStreams && backup.activityStreams.length > 0) {
+    const have = new Set(await ActivityStreamsRepo.keys());
+    const logIds = new Set(resolved.sessionLogs.final.map((l) => l.id));
+    streamPuts = backup.activityStreams.filter((s) => logIds.has(s.logId) && !have.has(s.logId));
+  }
+
   try {
     await applyBackupWrites({
       programs: touches(programAction) && resolved.program ? { clear: true, puts: [resolved.program] } : undefined,
@@ -1147,6 +1178,7 @@ export async function applyImportPlan(backup: NormalizedBackupData, plan: Import
       sessionLogs: touches(historyAction) ? { clear: false, puts: resolved.sessionLogs.final } : undefined,
       planChangeProposals: touches(historyAction) && resolved.planChangeProposals ? { clear: false, puts: resolved.planChangeProposals.final } : undefined,
       strengthProgramRecommendations: touches(historyAction) && resolved.strengthProgramRecommendations ? { clear: false, puts: resolved.strengthProgramRecommendations.final } : undefined,
+      activityStreams: streamPuts.length > 0 ? { clear: false, puts: streamPuts } : undefined,
       trainingGoals: listWrite(goalsAction, resolved.trainingGoals),
       goalMilestones: listWrite(goalsAction, resolved.goalMilestones),
       goalMilestoneProgress: touches(goalsAction) ? { clear: false, puts: resolved.goalMilestoneProgress.final } : undefined,
