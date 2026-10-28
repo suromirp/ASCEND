@@ -57,8 +57,9 @@ export interface Question extends GoalInputSpec {
 }
 
 // Wat een soort niet vraagt in dit blad: de afstand als de keuze hem al zegt, het hoogste punt, de
-// bagage en de krachtdoelen per oefening (die staan bij Sterker worden in Forge en Instellingen).
-const SKIP = new Set<keyof GoalDetails>(['highestPointM', 'sleepingPointM', 'baggageKg', 'strengthTargets']);
+// bagage. De krachtdoelen per oefening staan er wel in (een eigen veld in het formulier, zonder verplichting:
+// zonder doelgewichten meet de kaart de kracht nog niet).
+const SKIP = new Set<keyof GoalDetails>(['highestPointM', 'sleepingPointM', 'baggageKg']);
 const MAX_QUESTIONS = 6;
 
 export function questionsFor(id: AddTileId): Question[] {
@@ -78,6 +79,10 @@ export function questionsFor(id: AddTileId): Question[] {
     // Een cutoff hoort bij een ultra; een tijdslimiet bij een dagtocht (de soort vraagt hem al).
     if (spec.key === 'cutoffMinutes') {
       out.push({ ...spec, showIf: (d) => d.variant === 'ultra' });
+      continue;
+    }
+    if (spec.key === 'strengthTargets') {
+      out.push({ ...spec, required: false });
       continue;
     }
     if (spec.key === 'variant') {
@@ -276,6 +281,8 @@ export function applyGoalEdit(goal: TrainingGoal, input: EditInput): TrainingGoa
   }
   if (kind === 'run_race' && details.variant && RACE_KM[details.variant] !== undefined) details.distanceKm = RACE_KM[details.variant];
   if (details.variant === 'eigen') delete details.variant;
+  // Een cutoff hoort bij een ultra: gaat de trail naar kort, dan valt hij weg (ook als het formulier hem nog had).
+  if (kind === 'trail' && details.variant !== 'ultra') delete details.cutoffMinutes;
   if (kind === 'trek_hut' || kind === 'trek_tent') details.shelter = kind === 'trek_tent' ? 'tent' : 'hut';
   const multi = kind === 'trek_hut' || kind === 'trek_tent';
   let requirements = [...goal.requirements];

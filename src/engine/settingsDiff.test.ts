@@ -55,6 +55,8 @@ const everything: AppSettings = {
   haptics: false,
   testStops: 'count',
   readinessWeighting: 'equal',
+  goalGrowth: 'careful',
+  limitMargin: 'none',
   proposeTargetTime: false,
   weekBudget: { minutes: 105, strength: 3, doubleHard: false },
   introSoundEnabled: false,

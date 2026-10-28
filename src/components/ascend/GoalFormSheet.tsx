@@ -14,6 +14,7 @@ import { NumberField } from '../NumberField';
 import { TextButton } from '../TextButton';
 import { Sheet } from '../settings/Sheet';
 import { LabelBars } from './GoalLabel';
+import { StrengthTargetsField } from './StrengthTargetsField';
 
 // Het blad om een doel toe te voegen (drie stappen: de soort, een paar vragen, en dan het voorstel
 // met Akkoord) en om een doel aan te passen (alleen de vragen, met wat er al staat ingevuld). Beide
@@ -115,7 +116,9 @@ export function GoalFormSheet({
         <div className="flex flex-col gap-5">
           {questions.map((q) => (
             <div key={q.key} className="flex flex-col gap-2">
-              {q.choices ? (
+              {q.key === 'strengthTargets' ? (
+                <StrengthTargetsField value={details.strengthTargets ?? []} onChange={(next) => set('strengthTargets', next)} />
+              ) : q.choices ? (
                 <>
                   <span className="text-base" style={{ color: 'var(--color-ink)' }}>{q.label}{!q.required && <span style={{ color: 'var(--color-ink-dim)' }}> (mag leeg)</span>}</span>
                   <div className="st-chips">

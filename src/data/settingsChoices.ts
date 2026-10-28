@@ -303,8 +303,31 @@ export const CHOICES = {
     advice: 'speed' as 'speed' | 'equal',
     help: 'klaarWeging',
     options: [
-      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk', short: 'Snelheid' },
+      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk; bij Sterker worden kracht 60% en harde sets 40%', short: 'Snelheid' },
       { value: 'equal', label: 'Gelijk', note: 'Elke meter telt even zwaar mee', short: 'Gelijk' },
+    ],
+  }),
+  klaarGroei: def({
+    group: 'Doel en tochten',
+    title: 'Groei bij het rekenen',
+    line: 'Hoe snel je volgens ASCEND beter wordt, in de meters van Klaar voor je doel.',
+    advice: 'average' as 'average' | 'careful',
+    help: 'klaarGroei',
+    options: [
+      { value: 'average', label: 'Gemiddeld', note: 'Het midden van de band, bij hardlopen 0,55% per week', short: 'Gemiddeld' },
+      { value: 'careful', label: 'Voorzichtig', note: 'De onderkant van de band, bij hardlopen 0,3% per week', short: 'Voorzichtig' },
+    ],
+  }),
+  klaarMarge: def({
+    group: 'Doel en tochten',
+    title: 'Marge bij een tijdslimiet',
+    line: 'Hoeveel ruimte onder de limiet of cutoff ASCEND je gunt.',
+    advice: 'ten' as 'ten' | 'five' | 'none',
+    help: 'klaarMarge',
+    options: [
+      { value: 'ten', label: '10%', note: 'Ruimte voor eten, pauzes en een tragere dag', short: '10%' },
+      { value: 'five', label: '5%', note: 'Krapper, voor wie strak plant', short: '5%' },
+      { value: 'none', label: 'Geen', note: 'De limiet zelf is de grens', short: 'Geen' },
     ],
   }),
   rustNaTocht: def({

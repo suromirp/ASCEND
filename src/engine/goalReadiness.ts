@@ -476,13 +476,14 @@ function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, o
   const weightOf = (m: GoalMeter) => options.weights ? options.weights[m.key] ?? DEFAULT_METER_WEIGHT : 1;
   const totalWeight = meters.reduce((n, m) => n + weightOf(m), 0);
   const mean = meters.reduce((n, m) => n + m.share * weightOf(m), 0) / totalWeight;
-  const full = meters.every((m) => m.share >= 1);
+  // Een meter zonder gewicht telt in het getal niet mee, dus ook niet voor "vol".
+  const full = meters.every((m) => m.share >= 1 || weightOf(m) <= 0);
   const percent = full ? 100 : Math.min(99, Math.round(mean * 100));
   // Het meeste te winnen = het grootste gewogen gat (gewicht maal 1 min vulling). Zonder weging is dat de
   // laagste meter, dus voor de GR5 verandert er niets. Een meter zonder gewicht (Volhouden bij een
   // doeltijd) telt in het getal niet mee en kan dus ook niet "het meeste" opleveren.
-  const open = meters.filter((m) => m.share < 1);
-  const weakest = open.length > 0 ? weightedGapWeakest(meters, weightOf) ?? open.reduce((a, b) => (b.share < a.share ? b : a)) : undefined;
+  // Zonder meter met gewicht en een gat is er niets te winnen: dan is er ook geen "meeste", en het getal is 100%.
+  const weakest = weightedGapWeakest(meters, weightOf);
   const usesShare = def.dayShare && meters.some((m) => m.evidence === 'afgeleid');
 
   return {

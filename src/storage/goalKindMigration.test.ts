@@ -90,6 +90,9 @@ describe('soort, gegevens en belangrijkheid van een doel', () => {
     expect(readGoalDetails({ distanceKm: 20, timeLimitMinutes: 420, cutoffMinutes: 660 })).toEqual({ distanceKm: 20, timeLimitMinutes: 420, cutoffMinutes: 660 });
     expect(readGoalDetails({ distanceKm: 20 })).toEqual({ distanceKm: 20 });
     expect(readGoalDetails({ timeLimitMinutes: -5, cutoffMinutes: 'laat' })).toBeUndefined();
+    // Een cutoff hoort bij een ultra: bij een korte trail valt hij weg.
+    expect(readGoalDetails({ variant: 'kort', distanceKm: 20, cutoffMinutes: 300 })).toEqual({ variant: 'kort', distanceKm: 20 });
+    expect(readGoalDetails({ variant: 'ultra', distanceKm: 50, cutoffMinutes: 660 })).toEqual({ variant: 'ultra', distanceKm: 50, cutoffMinutes: 660 });
     expect(readGoalDetails({ strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }, { exercise: 7 }, null] })).toEqual({ strengthTargets: [{ exercise: 'Squat', kg: 100, reps: 5 }] });
     const broken = migrateTrainingGoal({ ...trekGoal, kind: 'kapot' as never, details: 'x' as never, priority: 'nu' as never }, { isMain: true, tent: false });
     // Een onbekende soort of belangrijkheid kan uit een nieuwere versie komen: die blijft staan.

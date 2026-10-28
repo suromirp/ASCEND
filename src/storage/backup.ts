@@ -392,6 +392,14 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.readinessWeighting;
     skipped.n++;
   }
+  if ('goalGrowth' in s && s.goalGrowth !== 'average' && s.goalGrowth !== 'careful') {
+    delete s.goalGrowth;
+    skipped.n++;
+  }
+  if ('limitMargin' in s && s.limitMargin !== 'ten' && s.limitMargin !== 'five' && s.limitMargin !== 'none') {
+    delete s.limitMargin;
+    skipped.n++;
+  }
   if ('testStops' in s && s.testStops !== 'skip' && s.testStops !== 'count') {
     delete s.testStops;
     skipped.n++;

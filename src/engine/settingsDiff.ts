@@ -219,6 +219,8 @@ export const ADVICE_SPECS: AdviceSpec[] = [
   flag('weekvoorstel', 'Voorstel bij een probleem in de week', 'planning', 'weekFixProposal'),
   flag('slepen-week', 'Trainingen slepen in Week', 'planning', 'dragWeek'),
   choice('klaar-weging', 'Weging bij een doeltijd', 'doel', 'readinessWeighting', 'speed', 'klaarWeging'),
+  choice('klaar-groei', 'Groei bij het rekenen', 'doel', 'goalGrowth', 'average', 'klaarGroei'),
+  choice('klaar-marge', 'Marge bij een tijdslimiet', 'doel', 'limitMargin', 'ten', 'klaarMarge'),
   flag('doeltijd-voorstel', 'Doeltijd aanpassen voorstellen', 'doel', 'proposeTargetTime'),
   choice('test-stilstaan', 'Stilstaan bij een testloop', 'planning', 'testStops', 'skip', 'testStilstaan'),
   flag('korte-nacht', 'Vragen bij een korte nacht', 'vandaag', 'askShortNight'),

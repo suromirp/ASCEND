@@ -38,8 +38,9 @@ describe('tijdslimiet bij een dagtocht', () => {
     const r = computeLimitReadiness(day(420), hikes, TODAY, { naming })!;
     const m = r.meters.find((x) => x.key === 'tempo')!;
     expect(Math.round(m.share * 100)).toBe(36);
-    expect(m.text).toBe('6:54 verwacht, tijdslimiet 7:00');
-    expect(r.derivedNote).toContain('grens op 6:18');
+    expect(m.text).toBe('6:54 uur verwacht, tijdslimiet 7:00 uur');
+    expect(r.derivedNote).toContain('grens op 6:18 uur');
+    expect(r.derivedNote).toContain('ongeveer 6:54 uur; de tijdslimiet is 7:00 uur');
     expect(r.derivedNote).toContain('minder zeker dan een testloop');
   });
 
@@ -88,6 +89,46 @@ describe('cutoff bij een ultra', () => {
     const r = computeLimitReadiness(ultra(660), logs, TODAY, { naming })!;
     expect(Math.round(r.meters.find((m) => m.key === 'tempo')!.share * 100)).toBe(39);
     expect(r.derivedNote).toContain('Een schatting uit je eigen dagen');
+  });
+
+  it('zegt je lange lopen als de referentie een loop is, en je lange wandelingen als het een wandeling is', () => {
+    const fromRun = computeLimitReadiness(ultra(660), logs, TODAY, { naming })!;
+    expect(fromRun.derivedNote).toContain('Je lange lopen passen bij ongeveer 10:49 uur');
+    const fromHike = computeLimitReadiness(ultra(660), [hike('2026-10-15', 360, 25, 1000)], TODAY, { naming })!;
+    expect(fromHike.derivedNote).toContain('Je lange wandelingen passen bij');
+    expect(fromHike.derivedNote).not.toContain('lange lopen');
+  });
+
+  it('de marge is een instelling: 5% en geen marge leggen de grens hoger', () => {
+    const edge = (margin?: 'ten' | 'five' | 'none') => {
+      const res = readLimit(ultra(660), logs, TODAY, { margin });
+      return res && 'read' in res ? res.read : undefined;
+    };
+    expect(hoursMinutes(edge()!.edge)).toBe('9:54');
+    expect(hoursMinutes(edge('ten')!.edge)).toBe('9:54');
+    expect(hoursMinutes(edge('five')!.edge)).toBe('10:27');
+    expect(hoursMinutes(edge('none')!.edge)).toBe('11:00');
+    expect(edge('none')!.share).toBeGreaterThan(edge('five')!.share);
+    expect(edge('five')!.share).toBeGreaterThan(edge('ten')!.share);
+    const none = computeLimitReadiness(ultra(660), logs, TODAY, { naming, margin: 'none' })!;
+    expect(none.derivedNote).toContain('zonder marge is de limiet zelf de grens');
+    expect(none.derivedNote).not.toContain('10% marge');
+  });
+
+  it('voorzichtige groei vraagt meer weken en geeft een lagere meter', () => {
+    const pick = (growth?: 'average' | 'careful') => {
+      const res = readLimit(ultra(660), logs, TODAY, { growth });
+      return res && 'read' in res ? res.read : undefined;
+    };
+    expect(pick('careful')!.weeks).toBeGreaterThan(pick('average')!.weeks);
+    expect(pick('careful')!.share).toBeLessThan(pick('average')!.share);
+  });
+
+  it('een korte trail heeft geen cutoff, ook niet als er nog een in de gegevens staat', () => {
+    const short = goal('trail', { variant: 'kort', distanceKm: 20, gainM: 800, expectedMinutes: 200, cutoffMinutes: 300 });
+    expect(readLimit(short, logs, TODAY)).toBeUndefined();
+    const none = goal('trail', { distanceKm: 20, gainM: 800, cutoffMinutes: 300 });
+    expect(readLimit(none, logs, TODAY)).toBeUndefined();
   });
 
   it('zonder marge zou de meter vol zijn: de marge is een echte keuze', () => {

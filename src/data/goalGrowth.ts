@@ -12,8 +12,12 @@
 export type GrowthEvidence = 'sterk' | 'matig' | 'zwak' | 'expert' | 'afgeleid';
 
 export interface GrowthRate {
-  // Gemiddelde groei per week als breuk van de prestatie (0,0055 is 0,55% per week).
+  // Gemiddelde groei per week als breuk van de prestatie (0,0055 is 0,55% per week): het midden van de band.
   weekly: number;
+  // De band om dat midden. De onderkant is de voorzichtige keuze ("Groei bij het rekenen"), de bovenkant
+  // is voor wie net begint. Geen studie geeft deze grenzen; ze zijn afgeleid.
+  low: number;
+  high: number;
   evidence: GrowthEvidence;
   source: string;
 }
@@ -21,13 +25,13 @@ export interface GrowthRate {
 // De sporten waarvoor nu een prestatiemeter bestaat. Nieuwe sporten komen hier bij.
 export const GOAL_GROWTH: Record<'run' | 'walk' | 'trail', GrowthRate> = {
   run: {
-    weekly: 0.0055,
+    weekly: 0.0055, low: 0.003, high: 0.008,
     evidence: 'afgeleid',
-    source: 'Munoz e.a. 2014 (0,35 tot 0,5% per week bij recreatieve lopers), Nuuttila e.a. 2022, Daniels (een VDOT-punt per vier tot zes weken)',
+    source: 'het midden van de band van 0,3 tot 0,8% per week, afgeleid uit meerdere bronnen (Munoz e.a. 2014 vond 0,35 tot 0,5% bij recreatieve lopers, verder Nuuttila e.a. 2022 en Daniels), niet uit één studie',
   },
   // Tempo bij een tijdslimiet of cutoff: geen trainingsstudie gevonden, dezelfde schatting als fietsvermogen.
-  walk: { weekly: 0.005, evidence: 'zwak', source: 'afgeleid, geen studie over het tempo van recreatieve wandelaars' },
-  trail: { weekly: 0.0055, evidence: 'zwak', source: 'het hardlooptempo, doorgetrokken naar inspanningskilometers; de groei op een ultra is niet onderzocht' },
+  walk: { weekly: 0.005, low: 0.003, high: 0.008, evidence: 'zwak', source: 'afgeleid, geen studie over het tempo van recreatieve wandelaars' },
+  trail: { weekly: 0.0055, low: 0.003, high: 0.008, evidence: 'zwak', source: 'het hardlooptempo, doorgetrokken naar inspanningskilometers; de groei op een ultra is niet onderzocht' },
 };
 
 // Het aantal weken werk waarbij een meter op de helft staat: vulling = HALF_WEEKS / (HALF_WEEKS + weken).
@@ -35,8 +39,18 @@ export const GOAL_GROWTH: Record<'run' | 'walk' | 'trail', GrowthRate> = {
 // capaciteitsbreuk ook ongeveer 50% geeft.
 export const HALF_WEEKS = 10;
 
-// Marge op een tijdslimiet of cutoff (voor de voorwaardemeter, engine/limitReadiness.ts).
-export const LIMIT_MARGIN = 0.1;
+// Marge op een tijdslimiet of cutoff (voor de voorwaardemeter, engine/limitReadiness.ts). Instelling
+// "Marge bij een tijdslimiet" (AppSettings.limitMargin): tien procent is het advies, afwezig = tien.
+export type LimitMarginChoice = 'ten' | 'five' | 'none';
+export const LIMIT_MARGINS: Record<LimitMarginChoice, number> = { ten: 0.1, five: 0.05, none: 0 };
+export const LIMIT_MARGIN = LIMIT_MARGINS.ten;
+export const resolveLimitMargin = (v: unknown): LimitMarginChoice => (v === 'five' || v === 'none' ? v : 'ten');
+
+// Instelling "Groei bij het rekenen" (AppSettings.goalGrowth): gemiddeld (het midden van de band, advies,
+// afwezig = gemiddeld) of voorzichtig (de onderkant van de band: meer weken werk, een lagere meter).
+export type GrowthChoice = 'average' | 'careful';
+export const resolveGrowthChoice = (v: unknown): GrowthChoice => (v === 'careful' ? 'careful' : 'average');
+export const growthPer = (rate: GrowthRate, choice: GrowthChoice = 'average'): number => (choice === 'careful' ? rate.low : rate.weekly);
 
 // Kracht: groei van het geschatte maximum per week, per niveau op een oefening. De richting is sterk
 // (beginners winnen veel sneller dan ervaren krachtsporters), de getallen zijn zwak en afgeleid uit
@@ -44,7 +58,7 @@ export const LIMIT_MARGIN = 0.1;
 // op die oefening (engine/strengthReadiness.ts), nooit uit een vraag.
 export type StrengthLevel = 'beginner' | 'gevorderd' | 'ervaren';
 export const STRENGTH_GROWTH: Record<StrengthLevel, GrowthRate> = {
-  beginner: { weekly: 0.01, evidence: 'zwak', source: 'Ralston e.a. 2018 (ongetrainden winnen in de eerste maanden 1 tot 3% per week)' },
-  gevorderd: { weekly: 0.0025, evidence: 'zwak', source: 'afgeleid uit Rhea 2003 en Latella e.a. 2020' },
-  ervaren: { weekly: 0.001, evidence: 'zwak', source: 'Latella e.a. 2020 (powerlifters na het eerste wedstrijdjaar)' },
+  beginner: { weekly: 0.01, low: 0.005, high: 0.02, evidence: 'zwak', source: 'Ralston e.a. 2018 (ongetrainden winnen in de eerste maanden 1 tot 3% per week)' },
+  gevorderd: { weekly: 0.0025, low: 0.0015, high: 0.004, evidence: 'zwak', source: 'afgeleid uit Rhea 2003 en Latella e.a. 2020' },
+  ervaren: { weekly: 0.001, low: 0.0005, high: 0.0015, evidence: 'zwak', source: 'Latella e.a. 2020 (powerlifters na het eerste wedstrijdjaar)' },
 };

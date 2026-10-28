@@ -21,7 +21,7 @@ import { daysBetween, formatDateNL, formatShortDateNL } from '../utils/dates';
 import { formatNumberNL } from '../utils/number';
 import { computeGoalReadiness, readinessInputOf, type GoalReadiness, type MissingMeter, type ReadinessOptions } from './goalReadiness';
 import { goalDetailsOf } from './goalLabels';
-import { GOAL_GROWTH } from '../data/goalGrowth';
+import { GOAL_GROWTH, growthPer, type GrowthChoice } from '../data/goalGrowth';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
 import { outlookMinutes, outlookWeeksSaid, raceOutlook, racePaces } from './racePaces';
 import { countedTests, formatRaceTime, type TestResult } from './racePrediction';
@@ -73,6 +73,8 @@ export interface RaceReadinessOptions {
   judgments?: TestJudgment[];
   ask?: boolean;
   weighting?: ReadinessWeighting;
+  // "Groei bij het rekenen": gemiddeld (advies) of voorzichtig. Meter, regel en voorstel lezen dezelfde groei.
+  growth?: GrowthChoice;
 }
 
 export const WAITING_LINE = 'Je testloop wacht nog op je Akkoord.';
@@ -107,7 +109,7 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
   const expected = paces?.race?.minutes;
   if (!paces || expected === undefined) return { facts: { status: 'none', targetMinutes: target, statusLine: NO_TEST_LINE } };
 
-  const work = weeksOfWork({ now: expected, need: target, lowerIsBetter: true, weeklyGain: GOAL_GROWTH.run.weekly });
+  const work = weeksOfWork({ now: expected, need: target, lowerIsBetter: true, weeklyGain: growthPer(GOAL_GROWTH.run, options.growth) });
   const share = fillFromWeeks(work);
   const gap = expected - target;
   // Eerst afronden op hele seconden, dan splitsen: nooit "0:60".
@@ -123,10 +125,10 @@ function speedAt(goal: TrainingGoal, logs: SessionLog[], date: string, options: 
   if (goal.status === 'active' && !paces.doubtful) {
     const left = daysBetween(date, goal.targetDate) / 7;
     if (left > 0) {
-      const outlook = raceOutlook(expected, target, left);
+      const outlook = raceOutlook(expected, target, left, options.growth);
       const day = formatDateNL(goal.targetDate).replace(/ \d{4}$/, '');
-      const head = `Bij gemiddelde groei rond ${day}: ongeveer ${outlookMinutes(outlook)} minuten`;
-      if (outlook.fits) bandLine = `${head}, je doel valt erbinnen.`;
+      const head = `Bij ${options.growth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei rond ${day}: ongeveer ${outlookMinutes(outlook)} minuten`;
+      if (outlook.fits) bandLine = `${head}. Je doeltijd past daarbinnen.`;
       else {
         const said = outlookWeeksSaid(outlook);
         bandLine = `${head}. ${clock(target)} vraagt ongeveer ${said.need} weken; tot ${day} zijn het er ${said.left}.`;

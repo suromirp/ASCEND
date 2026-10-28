@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeStrengthReadiness, strengthLevelFor } from './strengthReadiness';
+import { computeStrengthReadiness, strengthLevelFor, weeksWorkSaid } from './strengthReadiness';
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
 
@@ -41,6 +41,35 @@ describe('Sterker worden met een doelgewicht', () => {
     const m = r.meters.find((x) => x.key === 'krachttrend')!;
     expect(m.share).toBe(1);
     expect(m.text).toBe('Squat: gehaald');
+  });
+
+  it('zegt alleen "gehaald" als de meter vol is, en anders eerlijk hoe klein het gat is', () => {
+    for (let kg = 90; kg <= 102; kg += 0.25) {
+      const r = computeStrengthReadiness(goal(), [lift('2026-10-20', [{ reps: 5, weightKg: kg }])], TODAY, { naming })!;
+      const m = r.meters.find((x) => x.key === 'krachttrend')!;
+      expect(m.text.includes('gehaald')).toBe(m.share === 1);
+    }
+    const near = computeStrengthReadiness(goal(), [lift('2026-10-20', [{ reps: 5, weightKg: 99.9 }])], TODAY, { naming })!;
+    const m = near.meters.find((x) => x.key === 'krachttrend')!;
+    expect(m.share).toBeLessThan(1);
+    expect(m.text).toBe('Squat nog minder dan een halve kilo voor 5 herhalingen');
+  });
+
+  it('zegt weken in enkelvoud en "minder dan een week" waar dat klopt', () => {
+    expect(weeksWorkSaid(0.3)).toBe('minder dan een week werk');
+    expect(weeksWorkSaid(1.2)).toBe('ongeveer 1 week werk');
+    expect(weeksWorkSaid(6.4)).toBe('ongeveer 6 weken werk');
+    const near = computeStrengthReadiness(goal(), [lift('2026-10-20', [{ reps: 5, weightKg: 99.9 }])], TODAY, { naming })!;
+    expect(near.derivedNote).toContain('minder dan een week werk');
+  });
+
+  it('voorzichtige groei geeft een lagere meter, en Gelijk laat de meters even zwaar wegen', () => {
+    const logs = [lift('2026-10-20', [{ reps: 5, weightKg: 90 }])];
+    const average = computeStrengthReadiness(goal(), logs, TODAY, { naming })!;
+    const careful = computeStrengthReadiness(goal(), logs, TODAY, { naming, growth: 'careful' })!;
+    expect(careful.meters.find((x) => x.key === 'krachttrend')!.share).toBeLessThan(average.meters.find((x) => x.key === 'krachttrend')!.share);
+    const equal = computeStrengthReadiness(goal(), logs, TODAY, { naming, weighting: 'equal' })!;
+    expect(equal.percent).toBeDefined();
   });
 
   it('neemt het niveau ervaren bij meer dan twee jaar geschiedenis op die oefening', () => {

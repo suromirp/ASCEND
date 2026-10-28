@@ -21,7 +21,7 @@
 import { daysBetween, formatDateNL } from '../utils/dates';
 import { MANY_STOPS_SENTENCE, manyStops, stopsSentence } from './bestEffort';
 import { formatRaceTime, isSlowerTest, predictionRange, PREDICTION_SPREAD, riegel, RIEGEL_MAX_KM, type TestResult } from './racePrediction';
-import { GOAL_GROWTH } from '../data/goalGrowth';
+import { GOAL_GROWTH, growthPer, type GrowthChoice } from '../data/goalGrowth';
 import { weeksOfWork } from './goalGap';
 
 // --- VDOT (Daniels and Gilbert, 1979) --------------------------------------
@@ -206,17 +206,24 @@ export interface RaceOutlook {
   weeksLeft: number;
   // The goal asks no more than the weeks there are.
   fits: boolean;
+  // The smallest whole minute that fits: the number the card calls "ongeveer" and the proposal sets.
+  wholeMinutes: number;
 }
 
-export function raceOutlook(predictedMinutes: number, targetMinutes: number, weeksLeft: number): RaceOutlook {
+export function raceOutlook(predictedMinutes: number, targetMinutes: number, weeksLeft: number, growth: GrowthChoice = 'average'): RaceOutlook {
   const left = Math.max(0, weeksLeft);
-  const g = GOAL_GROWTH.run.weekly;
+  const g = growthPer(GOAL_GROWTH.run, growth);
+  const fitsAt = (m: number) => weeksOfWork({ now: predictedMinutes, need: m, lowerIsBetter: true, weeklyGain: g }) <= left;
   const work = weeksOfWork({ now: predictedMinutes, need: targetMinutes, lowerIsBetter: true, weeklyGain: g });
-  return { atRaceDay: predictedMinutes * Math.pow(1 - g, left), work, weeksLeft: left, fits: work <= left };
+  const atRaceDay = predictedMinutes * Math.pow(1 - g, left);
+  // Not Math.round: a rounded-down minute does not fit, and the proposal must fit after Akkoord.
+  let whole = Math.max(1, Math.ceil(atRaceDay) - 1);
+  while (!fitsAt(whole)) whole += 1;
+  return { atRaceDay, work, weeksLeft: left, fits: work <= left, wholeMinutes: whole };
 }
 
-// "ongeveer 50 minuten" (whole minutes, as a person says it).
-export const outlookMinutes = (o: RaceOutlook): number => Math.round(o.atRaceDay);
+// "ongeveer 50 minuten": the smallest whole minute that fits, the same number the proposal sets.
+export const outlookMinutes = (o: RaceOutlook): number => o.wholeMinutes;
 
 // How many weeks the goal asks, as said next to the weeks there are: never "about 21 weeks; there are 21"
 // when it just does not fit.
@@ -229,7 +236,8 @@ export interface TargetTimeCheck {
   verdict: 'ambitious' | 'easy';
   outlook: RaceOutlook;
   predictedMinutes: number;
-  // The goal time a proposal would set: the time at race day at average growth, in whole minutes.
+  // The goal time a proposal would set: the smallest whole minute that fits the weeks there are, so after
+  // Akkoord the card says it fits.
   suggested: number;
 }
 
@@ -237,11 +245,11 @@ export interface TargetTimeCheck {
 // enough (within the prediction's own spread), or when the test cannot say: past Riegel's reach, a
 // doubtful test, no weeks left. Ambitious only when the goal asks more weeks than there are, so the card
 // has said the same; easy when the goal is slower than where the test puts you now.
-export function checkTargetTime(paces: RacePaces, targetMinutes: number, raceDate: string, asOf?: string): TargetTimeCheck | undefined {
+export function checkTargetTime(paces: RacePaces, targetMinutes: number, raceDate: string, asOf?: string, growth: GrowthChoice = 'average'): TargetTimeCheck | undefined {
   if (!paces.race || paces.doubtful) return undefined;
   const weeks = daysBetween(asOf ?? paces.test.date, raceDate) / 7;
   if (weeks <= 0) return undefined;
-  const outlook = raceOutlook(paces.race.minutes, targetMinutes, weeks);
+  const outlook = raceOutlook(paces.race.minutes, targetMinutes, weeks, growth);
   const base = { outlook, predictedMinutes: paces.race.minutes, suggested: outlookMinutes(outlook) };
   if (!outlook.fits && targetMinutes < outlook.atRaceDay * (1 - PREDICTION_SPREAD)) return { verdict: 'ambitious', ...base };
   if (targetMinutes > paces.race.minutes * (1 + PREDICTION_SPREAD)) return { verdict: 'easy', ...base };

@@ -1048,12 +1048,18 @@ export function readGoalDetails(raw: unknown): GoalDetails | undefined {
     const x = r[key];
     if (typeof x === 'number' && Number.isFinite(x) && x > 0) out[key] = x;
   }
+  // Een cutoff hoort bij een ultra: bij een andere keuze van kort of ultra valt hij weg.
+  if (out.variant !== undefined && out.variant !== 'ultra') delete out.cutoffMinutes;
   if (Array.isArray(r.strengthTargets)) {
     const list = r.strengthTargets.flatMap((t) => {
       if (!t || typeof t !== 'object') return [];
       const { exercise, kg, reps } = t as Record<string, unknown>;
-      return typeof exercise === 'string' && typeof kg === 'number' && kg > 0 && typeof reps === 'number' && reps > 0 ? [{ exercise, kg, reps }] : [];
-    });
+      // Een naam van gewone lengte, een eindig gewicht en hele herhalingen; wat anders is valt weg.
+      return typeof exercise === 'string' && exercise.trim().length > 0 && exercise.length <= 80
+        && typeof kg === 'number' && Number.isFinite(kg) && kg > 0 && kg <= 500
+        && typeof reps === 'number' && Number.isInteger(reps) && reps > 0 && reps <= 30
+        ? [{ exercise, kg, reps }] : [];
+    }).slice(0, 8);
     if (list.length > 0) out.strengthTargets = list;
   }
   return Object.keys(out).length > 0 ? out : undefined;

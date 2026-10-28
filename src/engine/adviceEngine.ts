@@ -38,6 +38,7 @@ import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
 import { PACK_WEIGHT_EXPLANATION, type TentPackProposal } from './gr5Profile';
+import type { GrowthChoice } from '../data/goalGrowth';
 import { checkTargetTime, outlookWeeksSaid, racePaces } from './racePaces';
 import { countedTests, formatRaceTime } from './racePrediction';
 import { RACE_TEMPLATE_ID, type RaceBlock } from './raceBlock';
@@ -126,6 +127,8 @@ export interface AdviceInputs {
   askDoubtTest?: boolean;
   // "Doeltijd aanpassen voorstellen" (rule TARGET-TIME). Absent = on.
   proposeTargetTime?: boolean;
+  // "Groei bij het rekenen" (AppSettings.goalGrowth): the same growth as the card. Absent = average.
+  goalGrowth?: GrowthChoice;
   // "Nieuwe test voorstellen bij stilstand" (rule TEST-RETRY). Absent = on.
   newTestOnStops?: boolean;
   // Holidays, treks and free days (engine/leave.ts): the new test and what moves for it avoid them (rule TEST-RETRY).
@@ -1146,9 +1149,11 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     if (!paces) continue;
     // A best 5 km of this test waits for Akkoord and will change the number: no advice on it yet.
     if (awaitsEffort(inputs.logs, paces.test.logId)) continue;
-    const check = checkTargetTime(paces, race.targetMinutes, race.raceDate, inputs.asOf);
+    const check = checkTargetTime(paces, race.targetMinutes, race.raceDate, inputs.asOf, inputs.goalGrowth);
     if (!check) continue;
+    // The id keeps the whole minute (answers are kept under it); the words use the clock of the card.
     const target = Math.round(race.targetMinutes);
+    const clockTarget = formatRaceTime(race.targetMinutes);
     const distance = formatNumberNL(km, km % 1 === 0 ? 0 : 1);
     // Say what it counts on: the best 5 km of the run, or the whole run.
     const test = paces.test.basis === 'effort'
@@ -1158,16 +1163,19 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
     // Dezelfde rekening als de doelkaart: gemiddelde groei, geteld vanaf vandaag.
     const said = outlookWeeksSaid(check.outlook);
     const raceDay = shortDate(race.raceDate);
-    const outlookText = `Bij gemiddelde groei is dat rond ${raceDay} ongeveer ${check.suggested} minuten`;
+    const outlookText = `Bij ${inputs.goalGrowth === 'careful' ? 'voorzichtige' : 'gemiddelde'} groei is dat rond ${raceDay} ongeveer ${check.suggested} minuten`;
     const ambitious = check.verdict === 'ambitious';
     const title = ambitious
-      ? `Doeltijd ${distance} km: ${target} minuten past nog niet bij je test`
-      : `Doeltijd ${distance} km: ${target} minuten is ruim langzamer dan je test`;
+      ? `Doeltijd ${distance} km: ${clockTarget} past nog niet bij je test`
+      : `Doeltijd ${distance} km: ${clockTarget} is ruim langzamer dan je test`;
     const lead = `Je testloop van ${shortDate(paces.test.date)} (${test}) past bij een ${distance} km in ongeveer ${now}.${testStopsRemark(paces.test) ? ` ${testStopsRemark(paces.test)}` : ''}`;
     const effect = ambitious
-      ? `${lead} ${outlookText}, en ${target} minuten vraagt ongeveer ${said.need} weken; tot ${raceDay} zijn het er ${said.left}. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`
-      : `${lead} ${outlookText}, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan en vraagt ASCEND hier niet meer naar.`;
-    const why = 'De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Recreatieve lopers die trainen worden gemiddeld ongeveer een half procent per week sneller (Muñoz e.a. 2014, Nuuttila e.a. 2022). Dat is doorgerekend tot je wedstrijd, met dezelfde rekening als de meter Snelheid op je doelkaart, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden, kies dan Liever niet: dan blijft alles staan. Met Liever niet vraagt ASCEND hier niet meer naar, tot je de doeltijd zelf verandert.';
+      ? `${lead} ${outlookText}, en ${clockTarget} vraagt ongeveer ${said.need} weken; tot ${raceDay} zijn het er ${said.left}. Voorstel: zet je doeltijd op ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en vraagt ASCEND hier niet meer naar.`
+      : `${lead} ${outlookText}, dus ${clockTarget} laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${clockTarget} staan en vraagt ASCEND hier niet meer naar.`;
+    const growthWhy = inputs.goalGrowth === 'careful'
+      ? 'Jij koos in de instellingen voor voorzichtige groei: ASCEND rekent met de onderkant van een band van 0,3 tot 0,8% per week, 0,3% dus. Die band is afgeleid uit meerdere onderzoeken (onder andere Muñoz e.a. 2014 en Nuuttila e.a. 2022), niet uit één studie.'
+      : 'ASCEND rekent met 0,55% per week: het midden van een band van 0,3 tot 0,8% die uit meerdere onderzoeken is afgeleid (onder andere Muñoz e.a. 2014 en Nuuttila e.a. 2022), niet uit één studie.';
+    const why = `De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Hoe snel iemand sneller wordt, verschilt sterk. ${growthWhy} Dat is doorgerekend tot je wedstrijd, met dezelfde rekening als de meter Snelheid op je doelkaart, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden, kies dan Liever niet: dan blijft alles staan. Met Liever niet vraagt ASCEND hier niet meer naar, tot je de doeltijd zelf verandert.`;
     out.push({
       id: `goaltime:${race.goalId}:${target}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,
       relatedLogId: paces.test.logId, goalTargetTime: { goalId: race.goalId, minutes: check.suggested },

@@ -147,6 +147,40 @@ describe('race day from one calculation', () => {
   });
 });
 
+describe('the proposal always fits after Akkoord', () => {
+  it('over a grid of expected times and weeks, the suggested minute fits and the one below does not', () => {
+    for (const growth of ['average', 'careful'] as const) {
+      for (let predicted = 22.3; predicted < 130; predicted += 3.37) {
+        for (let weeks = 0.5; weeks < 60; weeks += 2.9) {
+          const o = raceOutlook(predicted, predicted * 0.7, weeks, growth);
+          const m = outlookMinutes(o);
+          expect(raceOutlook(predicted, m, weeks, growth).fits).toBe(true);
+          expect(raceOutlook(predicted, m - 1, weeks, growth).fits).toBe(false);
+          expect(m).toBeGreaterThanOrEqual(Math.floor(o.atRaceDay));
+          expect(m).toBeLessThanOrEqual(Math.ceil(o.atRaceDay));
+        }
+      }
+    }
+  });
+
+  it('a goal time set to the proposal is no longer asked about, and its outlook says it fits', () => {
+    const paces = racePaces([t('2026-10-29', 29 + 5 / 60)])!;
+    for (const raceDate of ['2026-12-20', '2027-01-30', '2027-03-20', '2027-05-01', '2027-08-01']) {
+      for (const target of [40, 44.5, 47.75, 50, 52.2]) {
+        const c = checkTargetTime(paces, target, raceDate);
+        if (!c || c.verdict !== 'ambitious') continue;
+        const after = raceOutlook(paces.race!.minutes, c.suggested, c.outlook.weeksLeft);
+        expect(after.fits).toBe(true);
+        expect(checkTargetTime(paces, c.suggested, raceDate)).toBeUndefined();
+      }
+    }
+  });
+
+  it('careful growth gives a slower time on race day than average growth', () => {
+    expect(raceOutlook(60, 50, 20, 'careful').atRaceDay).toBeGreaterThan(raceOutlook(60, 50, 20).atRaceDay);
+  });
+});
+
 describe('a goal time against the test', () => {
   // A made-up first test, 20 weeks and a bit before the race: 29:05 for 5 km.
   const paces = racePaces([t('2026-10-29', 29 + 5 / 60)])!;

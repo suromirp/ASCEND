@@ -325,11 +325,11 @@ const DAY_HIKE: GoalKindDefinition = {
     },
     {
       id: 'tempo', label: 'Tempo', type: 'beste_dag', metric: 'extern', unit: 'aandeel', sports: ['hiking'], windowDays: WINDOW_56,
-      need: s({ from: 'external' }, 'zwak', D('Klaar voor je doel logisch, voorwaarde: de DIN-tijd van de dag keer jouw eigen factor, naast je tijdslimiet min 10% marge')),
+      need: s({ from: 'external' }, 'zwak', D('Klaar voor je doel logisch, voorwaarde: de DIN-tijd van de dag keer jouw eigen factor, naast je tijdslimiet min de marge uit de instelling (advies 10%)')),
       appliesWhen: { key: 'timeLimitMinutes', atLeast: 1 },
       measure: 'De DIN-tijd van de dag keer de factor van jouw wandelingen van minstens anderhalf uur in de laatste acht weken (minstens drie).',
-      full: 'Binnen je tijdslimiet min 10% marge is de meter vol. Anders het gat in weken werk bij gemiddelde groei; bij tien weken staat hij op 50%.',
-      why: 'Je mag de tocht pas volbrengen als je binnen de tijd blijft; de marge is voor eten, pauzes en een tragere dag.',
+      full: 'Binnen je tijdslimiet min de marge (advies 10%, in de instellingen) is de meter vol. Anders het gat in weken werk bij gemiddelde groei; bij tien weken staat hij op 50%.',
+      why: 'Haal je de laatste lift of bus niet, dan wordt het een lange terugweg of een nacht in de bergen. De marge is voor eten, pauzes en een tragere dag.',
     },
   ],
 };
@@ -529,10 +529,10 @@ const TRAIL: GoalKindDefinition = {
     },
     {
       id: 'tempo', label: 'Tempo', type: 'beste_dag', metric: 'extern', unit: 'aandeel', sports: ['running', 'hiking'], windowDays: WINDOW_56,
-      need: s({ from: 'external' }, 'zwak', D('Klaar voor je doel logisch, voorwaarde: inspanningskilometers (ITRA, een vuistregel) uit je beste lange loop, naast je cutoff min 10% marge')),
+      need: s({ from: 'external' }, 'zwak', D('Klaar voor je doel logisch, voorwaarde: inspanningskilometers (ITRA, een vuistregel) uit je beste lange loop, naast je cutoff min de marge uit de instelling (advies 10%)')),
       appliesWhen: { key: 'cutoffMinutes', atLeast: 1 },
       measure: 'Je tempo per inspanningskilometer (kilometers plus het stijgen gedeeld door 100) in je beste loop of bergwandeling van minstens anderhalf uur in de laatste acht weken, doorgetrokken naar de wedstrijd.',
-      full: 'Binnen je cutoff min 10% marge is de meter vol. Anders het gat in weken werk bij gemiddelde groei; bij tien weken staat hij op 50%.',
+      full: 'Binnen je cutoff min de marge (advies 10%, in de instellingen) is de meter vol. Anders het gat in weken werk bij gemiddelde groei; bij tien weken staat hij op 50%.',
       why: 'Wie de cutoff mist, mag niet verder; de schatting uit je eigen lange lopen is minder zeker dan een testloop.',
     },
     { ...volhouden(), appliesWhen: { variant: ['kort'] } },

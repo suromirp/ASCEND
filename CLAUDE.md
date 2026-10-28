@@ -499,6 +499,14 @@ the card and the sheet all use the one calculation `racePaces.ts#raceOutlook` (a
 The same weeks-of-work language carries the Krachttrend of "Sterker worden" (`engine/strengthReadiness.ts`, level from the length of
 your own history on that exercise, never beginner) and the condition meter Tempo for a day hike with `GoalDetails.timeLimitMinutes` or an
 ultra with `cutoffMinutes` (`engine/limitReadiness.ts`, 10% margin; decision `2026-10-28-klaar-voor-je-doel-logisch-voorwaarden.md`).
+The finish (`2026-10-28-klaar-voor-je-doel-logisch-afwerking.md`): which calculation belongs to which goal lives in one place,
+`engine/goalReadinessFor.ts#goalReadinessFor`, read by the Ascend card and the sheet (`useGoalViews`); the proposal of TARGET-TIME is
+the smallest whole minute that fits the weeks there are (`raceOutlook().wholeMinutes`, the same number the card calls "ongeveer"), so
+after Akkoord the card says it fits; a meter without weight never makes "het meeste te winnen" and does not keep the number under 100.
+Two settings: "Groei bij het rekenen" (`goalGrowth`: gemiddeld = the middle of the band, voorzichtig = the bottom, `data/goalGrowth.ts#growthPer`)
+and "Marge bij een tijdslimiet" (`limitMargin`: 10%, 5%, geen); Sterker worden follows "Weging bij een doeltijd" too. The 0,55% is the middle
+of 0,3 to 0,8% derived from several sources, never attributed to one study. The form of Sterker worden takes the strength targets per exercise
+(`StrengthTargetsField`, `engine/strengthTargetsDraft.ts`); a cutoff only belongs to an ultra, also when editing.
 
 **Lichaam** (`/lichaam`, `/lichaam/:plek`, decision
 `docs/beslissingen/2026-10-24-lichaam-als-figuur.md`) is the one place for

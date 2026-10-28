@@ -3,7 +3,7 @@
 // Je wilt de dag of de wedstrijd volbrengen, maar alleen binnen een tijd (de laatste lift of bus van een
 // dagtocht, de cutoff van een ultra). De meter Tempo telt als een gewone meter, even zwaar als de andere.
 //   verwacht   wat jouw eigen lange dagen voorspellen voor deze dag of wedstrijd
-//   grens      de limiet min 10% marge (LIMIT_MARGIN: eten, pauzes, een tragere dag)
+//   grens      de limiet min een marge (instelling, advies 10%: eten, pauzes, een tragere dag)
 // Is verwacht binnen de grens, dan 100%. Anders het gat in weken werk (engine/goalGap.ts) en de kromme
 // 10 / (10 + weken), met de groei van data/goalGrowth.ts.
 //
@@ -20,7 +20,7 @@
 
 import type { TrainingGoal } from '../models/goals';
 import type { SessionLog } from '../models/training';
-import { GOAL_GROWTH, LIMIT_MARGIN } from '../data/goalGrowth';
+import { GOAL_GROWTH, LIMIT_MARGINS, growthPer, type GrowthChoice, type LimitMarginChoice } from '../data/goalGrowth';
 import { addDays } from '../utils/dates';
 import { computeGoalReadiness, readinessInputOf, type ExternalValue, type GoalReadiness } from './goalReadiness';
 import { fillFromWeeks, weeksOfWork } from './goalGap';
@@ -73,15 +73,15 @@ export function dinFactor(logs: SessionLog[], date: string): number | undefined 
 }
 
 // Het tempo per inspanningskilometer van je beste loop of wandeling, en de tijd van die dag.
-export function bestEffortPace(logs: SessionLog[], date: string): { pace: number; minutes: number; effortKm: number } | undefined {
+export function bestEffortPace(logs: SessionLog[], date: string): { pace: number; minutes: number; effortKm: number; sport: 'run' | 'hike' } | undefined {
   const since = addDays(date, -LIMIT_WINDOW_DAYS);
-  let best: { pace: number; minutes: number; effortKm: number } | undefined;
+  let best: { pace: number; minutes: number; effortKm: number; sport: 'run' | 'hike' } | undefined;
   for (const l of logs) {
     if (l.completedDate < since || l.completedDate > date || !(isHike(l) || isRun(l)) || l.durationMinutes < LIMIT_MIN_MINUTES) continue;
     const effortKm = kmOf(l) + gainOf(l) / 100;
     if (kmOf(l) <= 0 || effortKm <= 0) continue;
     const pace = l.durationMinutes / effortKm;
-    if (!best || pace < best.pace) best = { pace, minutes: l.durationMinutes, effortKm };
+    if (!best || pace < best.pace) best = { pace, minutes: l.durationMinutes, effortKm, sport: isRun(l) ? 'run' : 'hike' };
   }
   return best;
 }
@@ -108,14 +108,21 @@ export interface LimitRead {
 
 export type LimitResult = { read: LimitRead } | { need: string } | undefined;
 
-export function readLimit(goal: TrainingGoal, logs: SessionLog[], date: string): LimitResult {
+export interface LimitChoices {
+  growth?: GrowthChoice;
+  margin?: LimitMarginChoice;
+}
+
+export function readLimit(goal: TrainingGoal, logs: SessionLog[], date: string, choices: LimitChoices = {}): LimitResult {
   const d = goal.details;
   if (!d) return undefined;
   const hike = goal.kind === 'day_hike' && d.timeLimitMinutes && d.timeLimitMinutes > 0;
-  const trail = goal.kind === 'trail' && d.cutoffMinutes && d.cutoffMinutes > 0;
+  // Een cutoff hoort bij een ultra: een korte trail heeft er geen (zoals het formulier ook zegt).
+  const trail = goal.kind === 'trail' && d.variant === 'ultra' && d.cutoffMinutes && d.cutoffMinutes > 0;
   if (!hike && !trail) return undefined;
   const limit = (hike ? d.timeLimitMinutes : d.cutoffMinutes) as number;
   let expected: number;
+  let refSport: 'run' | 'hike' | undefined;
   if (hike) {
     if (!d.distanceKm) return { need: 'Vul de afstand van je dag in, dan kan ASCEND je tempo naast je tijdslimiet leggen.' };
     const factor = dinFactor(logs, date);
@@ -126,22 +133,25 @@ export function readLimit(goal: TrainingGoal, logs: SessionLog[], date: string):
     const ref = bestEffortPace(logs, date);
     if (!ref) return { need: NEED_LONG_RUN_LINE };
     const raceEffort = d.distanceKm + (d.gainM ?? 0) / 100;
+    refSport = ref.sport;
     expected = stretchTime(ref.minutes, raceEffort / ref.effortKm);
   }
-  const edge = limit * (1 - LIMIT_MARGIN);
-  const weeks = weeksOfWork({ now: expected, need: edge, lowerIsBetter: true, weeklyGain: GOAL_GROWTH[hike ? 'walk' : 'trail'].weekly });
+  const margin = LIMIT_MARGINS[choices.margin ?? 'ten'];
+  const edge = limit * (1 - margin);
+  const weeks = weeksOfWork({ now: expected, need: edge, lowerIsBetter: true, weeklyGain: growthPer(GOAL_GROWTH[hike ? 'walk' : 'trail'], choices.growth) });
   const name = hike ? 'tijdslimiet' : 'cutoff';
-  const kind = hike ? 'je wandelingen' : 'je lange lopen';
+  const kind = hike ? 'je wandelingen' : refSport === 'run' ? 'je lange lopen' : 'je lange wandelingen';
+  const marginText = margin > 0 ? `met ${Math.round(margin * 100)}% marge ligt de grens op ${hoursMinutes(edge)} uur` : 'zonder marge is de limiet zelf de grens';
   return {
     read: {
       kind: hike ? 'hike' : 'trail', expected, limit, edge, weeks, share: fillFromWeeks(weeks),
-      text: `${hoursMinutes(expected)} verwacht, ${name} ${hoursMinutes(limit)}`,
-      line: `${kind[0].toUpperCase()}${kind.slice(1)} passen bij ongeveer ${hoursMinutes(expected)}; de ${name} is ${hoursMinutes(limit)}, met 10% marge ligt de grens op ${hoursMinutes(edge)}. Een schatting uit je eigen dagen, minder zeker dan een testloop.`,
+      text: `${hoursMinutes(expected)} uur verwacht, ${name} ${hoursMinutes(limit)} uur`,
+      line: `${kind[0].toUpperCase()}${kind.slice(1)} passen bij ongeveer ${hoursMinutes(expected)} uur; de ${name} is ${hoursMinutes(limit)} uur, ${marginText}. Een schatting uit je eigen dagen, minder zeker dan een testloop.`,
     },
   };
 }
 
-export interface LimitReadinessOptions {
+export interface LimitReadinessOptions extends LimitChoices {
   naming: { the: string; your: string };
   since?: string;
 }
@@ -152,11 +162,11 @@ export function computeLimitReadiness(goal: TrainingGoal, logs: SessionLog[], to
   if (!input) return undefined;
   const external = (id: string, date: string): ExternalValue | undefined => {
     if (id !== 'tempo') return undefined;
-    const res = readLimit(goal, logs, date);
+    const res = readLimit(goal, logs, date, options);
     return res && 'read' in res ? { share: res.read.share, text: res.read.text } : undefined;
   };
   const r = computeGoalReadiness(input, logs, today, { naming: options.naming, since: options.since ?? goal.createdAt.slice(0, 10), external });
-  const now = readLimit(goal, logs, today);
+  const now = readLimit(goal, logs, today, options);
   if (!now) return r;
   const line = 'read' in now ? now.read.line : now.need;
   return { ...r, derivedNote: [r.derivedNote, line].filter(Boolean).join(' ') };
