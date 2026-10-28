@@ -709,6 +709,13 @@ export interface AppSettings {
   // ASCEND itself (a training you or an accepted proposal fixed) gets a proposal with Akkoord.
   // Off keeps the notice and the lines in the rows, only the proposal is gone. Absent = on.
   weekFixProposal?: boolean;
+  // "Doeltijd aanpassen voorstellen": a test that says your goal time is out of reach (or far too easy)
+  // gets a proposal to change it (rule TARGET-TIME). Absent = on. One Liever niet holds for every later
+  // test until the goal time itself changes. Optional and additive.
+  proposeTargetTime?: boolean;
+  // "Klaar voor je doel bij een doeltijd": 'speed' (advice, absent = speed) lets speed weigh most in
+  // the number of a race with a goal time, 'equal' weighs every meter the same (engine/raceReadiness.ts).
+  readinessWeighting?: 'speed' | 'equal';
   // "Stilstaan bij een testloop": 'skip' (advice, absent = skip) leaves the time of a stop at a
   // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
   // read; what is stored stays as it was. Optional and additive.

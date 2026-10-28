@@ -2433,6 +2433,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         legEase: resolveLegEase({ legEase: settings.legEase }),
         testJudgments: settings.testJudgments,
         askDoubtTest: settings.askDoubtTest !== false,
+        proposeTargetTime: settings.proposeTargetTime !== false,
         newTestOnStops: settings.newTestOnStops !== false,
         leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
@@ -2442,7 +2443,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         weather: weather.forecast && showWeatherSwap(settings.overviews) ? { forecast: weather.forecast, now: new Date(), leave: settings.leavePeriods } : undefined,
       }),
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
-    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
+    [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.proposeTargetTime, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
 
   // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).

@@ -296,6 +296,17 @@ export const CHOICES = {
       { value: 'fast', label: 'Sneller dan het onderzoek', note: 'Wekelijks tot 120% van je langste loop van 30 dagen', short: 'Sneller dan het onderzoek' },
     ],
   }),
+  klaarWeging: def({
+    group: 'Doel en tochten',
+    title: 'Klaar voor je doel bij een doeltijd',
+    line: 'Hoe zwaar snelheid meetelt bij een wedstrijd met een doeltijd.',
+    advice: 'speed' as 'speed' | 'equal',
+    help: 'klaarWeging',
+    options: [
+      { value: 'speed', label: 'Snelheid weegt het zwaarst', note: 'Snelheid 60%, langste loop en weekvolume 20% elk', short: 'Snelheid zwaarst' },
+      { value: 'equal', label: 'Gelijk', note: 'Elke meter telt even zwaar mee', short: 'Gelijk' },
+    ],
+  }),
   rustNaTocht: def({
     group: 'Doel en tochten',
     title: 'Rust na een bergtocht',

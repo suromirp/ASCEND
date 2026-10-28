@@ -428,11 +428,11 @@ const RUN_RACE: GoalKindDefinition = {
   ],
   meters: [
     {
-      id: 'verwachteTijd', label: 'Verwachte tijd', type: 'beste_dag', metric: 'extern', unit: 'aandeel', sports: ['running'], windowDays: WINDOW_42,
+      id: 'verwachteTijd', label: 'Snelheid', type: 'beste_dag', metric: 'extern', unit: 'aandeel', sports: ['running'], windowDays: WINDOW_42,
       need: s({ from: 'external' }, 'matig', D('3.4 meter 1, Riegel tot en met de halve marathon (Vickers en Vertosick 2016)')),
       appliesWhen: { variant: ['5k', '10k', 'half'] },
       measure: 'De wedstrijdtijd uit je laatste testloop of wedstrijd (Riegel), naast je doeltijd.',
-      full: 'Gelijk aan of sneller dan je doeltijd; elk procent trager haalt de meter 3 procentpunten omlaag, tot 15% trager.',
+      full: 'Je doeltijd gedeeld door je verwachte tijd, begrensd op 100%: gelijk aan of sneller dan je doeltijd is vol.',
       why: 'Voor de marathon voorspelt ASCEND geen tijd, want de formule onderschat daar sterk.',
     },
     {

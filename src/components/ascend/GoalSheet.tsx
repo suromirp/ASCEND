@@ -20,6 +20,7 @@ import { isTrekGoal, whenText } from './goalText';
 import { LabelPill } from './GoalLabel';
 import { JourneyRows } from './JourneyRows';
 import type { GoalView } from './useGoalViews';
+import { RaceFactsBlock } from './GoalCard';
 
 // Het blad van één doel: de meters achter het percentage, de volgende stap, de coach, bij een
 // tocht de tochtmodule en de mijlpalen, en onderaan "Dit doel": label, plek in de lijst (Hoger en
@@ -83,12 +84,16 @@ export function GoalSheet({
                 <Eyebrow>Klaar voor je doel</Eyebrow>
                 {change && <p className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</p>}
                 <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>
-                  {readiness && percent !== undefined
+                  {readiness?.race?.weighted
+                    ? 'Snelheid telt voor 60% mee, je langste loop en je weekvolume voor 20% elk. Elke meter stopt bij 100%.'
+                    : readiness && percent !== undefined
                     ? `Het gemiddelde van ${readiness.meters.length === 1 ? 'deze meter' : `deze ${readiness.meters.length} meters`}. Elke meter stopt bij 100%, dus een zware rugzak redt een korte dag niet.`
                     : 'Nog niets te meten. Dat komt met trainingen die meetellen.'}
                 </p>
               </div>
             </div>
+
+            {readiness?.race && <RaceFactsBlock race={readiness.race} />}
 
             {readiness && readiness.meters.length > 0 && (
               <div className="st-list">

@@ -13,6 +13,22 @@ import { LabelPill } from './GoalLabel';
 import type { GoalView } from './useGoalViews';
 import { JourneyRows } from './JourneyRows';
 import { isTrekGoal, whenText } from './goalText';
+import type { RaceFacts } from '../../engine/raceReadiness';
+
+// Wat een hardloopwedstrijd met een doeltijd bovenaan zegt: eerst het droge feit (verwacht nu, doel,
+// de afstand ertussen), dan wat de groei kan geven en waarop het rust. Zonder test één regel.
+export function RaceFactsBlock({ race }: { race: RaceFacts }) {
+  const dim = { color: 'var(--color-ink-dim)' };
+  if (race.status === 'no-target') return null;
+  if (!race.nowLine) return race.statusLine ? <p className="text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>{race.statusLine}</p> : null;
+  return (
+    <div className="flex flex-col gap-1 tabular-nums">
+      <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--color-ink)' }}>{race.nowLine}</p>
+      {race.bandLine && <p className="text-sm leading-snug" style={dim}>{race.bandLine}</p>}
+      {race.basisLine && <p className="text-xs leading-snug" style={dim}>{race.basisLine}</p>}
+    </div>
+  );
+}
 
 // Eén doel in de lijst. Het eerste doel staat open: de ring met "Klaar voor je doel", de zin
 // waaruit het bestaat, de meters, de volgende stap en bij een tocht de tochtmodule. De andere zijn
@@ -79,7 +95,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
             <span className="mt-0.5 block text-sm tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
               {goal.targetDate && <>{formatDateNL(goal.targetDate)} · </>}
               <span className={`font-semibold ${timing.state === 'ahead' ? 'whitespace-nowrap' : ''}`} style={{ color: when.tone === 'status' ? 'var(--color-status)' : 'var(--color-ink-dim)' }}>{when.text}</span>
-              {kindName && <span className="block text-xs">{kindName}</span>}
+              {kindName && kindName !== goal.name && <span className="block text-xs">{kindName}</span>}
             </span>
           </button>
           <div className="mt-1 flex">
@@ -106,6 +122,7 @@ export const GoalCard = forwardRef<HTMLDivElement, {
           <Eyebrow as="span">Klaar voor je doel</Eyebrow>
           {change && <span className="text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{change}</span>}
         </div>
+        {readiness?.race && <RaceFactsBlock race={readiness.race} />}
         <p className={`text-sm leading-relaxed ${open ? '' : 'line-clamp-2'}`} style={{ color: 'var(--color-ink)' }}>{sentence}</p>
       </div>
 

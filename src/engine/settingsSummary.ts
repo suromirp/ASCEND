@@ -28,6 +28,7 @@ import { shortGoalName } from './settingsStatus';
 import { MIN_LOGS_TO_LEARN } from './durationLearning';
 import { resolveNavigation, resumeLabel } from './navigationSettings';
 import { resolveMotion } from './motionSettings';
+import { resolveReadinessWeighting } from './raceReadiness';
 import { resolveBodyCheck } from './bodyCheckSettings';
 import { resolveLegEase, resolveLegEaseHow } from './legEaseSettings';
 import { resolveSky } from './skySettings';
@@ -520,6 +521,10 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       // De waarde blijft kort (met de InfoButton past ze op 360 px); de kracht staat op de regel eronder.
       return { value: w.id === 'improve' ? 'Eigen weken' : `${w.budget.minutes} min`, sub: `${w.budget.strength}\u00d7 kracht, ${w.chosen ? DIRECTIONS[w.id].label : 'advies Fit blijven'}` };
     }
+    case 'klaar-weging':
+      return { value: choiceShort('klaarWeging', resolveReadinessWeighting(s.readinessWeighting)) };
+    case 'doeltijd-voorstel':
+      return { checked: s.proposeTargetTime !== false };
     case 'test-stilstaan':
       return { value: choiceShort('testStilstaan', resolveTestStops(s.testStops)) };
     case 'twijfeltest':

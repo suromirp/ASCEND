@@ -124,6 +124,8 @@ export interface AdviceInputs {
   // Your verdicts on test runs and the setting that asks first (engine/testJudgment.ts).
   testJudgments?: TestJudgment[];
   askDoubtTest?: boolean;
+  // "Doeltijd aanpassen voorstellen" (rule TARGET-TIME). Absent = on.
+  proposeTargetTime?: boolean;
   // "Nieuwe test voorstellen bij stilstand" (rule TEST-RETRY). Absent = on.
   newTestOnStops?: boolean;
   // Holidays, treks and free days (engine/leave.ts): the new test and what moves for it avoid them (rule TEST-RETRY).
@@ -1110,7 +1112,11 @@ function tentPackAdvice(inputs: AdviceInputs): Advice[] {
 // it, Liever niet leaves the goal exactly as it is and the same test is not
 // asked about again (the id carries the test date; a newer test is new
 // information and may ask once more, from a narrower band).
+// Changed 28 October (decision 2026-10-28-klaar-voor-je-doel-snelheid.md): the goal stays the goal. The id
+// now carries the target time instead of the test date, so one Liever niet is enough for every later test
+// until the target time itself changes. The setting "Doeltijd aanpassen voorstellen" can switch the rule off.
 function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
+  if (inputs.proposeTargetTime === false) return [];
   const tests = countedTests(inputs.logs, { judgments: inputs.testJudgments, ask: inputs.askDoubtTest }).tests;
   if (tests.length === 0) return [];
   const out: Advice[] = [];
@@ -1142,7 +1148,7 @@ function targetTimeAdvice(inputs: AdviceInputs): Advice[] {
       : `${lead} Met nog ${check.band.weeks} weken tot ${shortDate(race.raceDate)} is ${check.band.low} tot ${check.band.high} minuten realistisch, dus ${target} minuten laat veel liggen. Voorstel: scherp je doeltijd aan naar ${check.suggested} minuten. Met Liever niet blijft ${target} minuten staan.`;
     const why = 'De testloop is het eerlijkste meetpunt dat ASCEND heeft. Uit de tijd rekent ASCEND je tempo op andere afstanden uit. Recreatieve lopers die trainen worden in 10 tot 15 weken 3 tot 6% sneller (Muñoz e.a. 2014, Nuuttila e.a. 2022); wie nog vroeg in zijn looploopbaan zit, kan tot ongeveer 0,8% per week winnen. Dat is doorgerekend tot je wedstrijd, met ruimte voor een test die op een warme of vermoeide dag viel. Je doeltijd verandert alleen als je Akkoord geeft. Wil je jouw tijd houden als droom, kies dan Liever niet: dan blijft alles staan. Na je volgende testloop kijkt ASCEND opnieuw.';
     out.push({
-      id: `goaltime:${race.goalId}:${paces.test.date}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,
+      id: `goaltime:${race.goalId}:${target}`, trigger: 'plan_update', ruleId: 'TARGET-TIME', title, effect, why, priority: 3,
       relatedLogId: paces.test.logId, goalTargetTime: { goalId: race.goalId, minutes: check.suggested },
     });
   }

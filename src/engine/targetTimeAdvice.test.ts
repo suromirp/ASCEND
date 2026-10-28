@@ -24,7 +24,7 @@ describe('TARGET-TIME', () => {
 
   it('proposes a goal time inside the band when 45 minutes is out of reach, tied to the test log', () => {
     const [a] = targetTime(inputs({ logs }));
-    expect(a.id).toBe('goaltime:race:2026-10-29');
+    expect(a.id).toBe('goaltime:race:45');
     expect(a.goalTargetTime?.goalId).toBe('race');
     expect(a.goalTargetTime!.minutes).toBeGreaterThanOrEqual(53);
     expect(a.goalTargetTime!.minutes).toBeLessThanOrEqual(55);
@@ -45,14 +45,22 @@ describe('TARGET-TIME', () => {
     expect(targetTime(inputs({ logs, raceGoals: [] }))).toEqual([]);
   });
 
-  it('is never asked again after Liever niet (or Akkoord) for the same test', () => {
-    expect(targetTime(inputs({ logs, respondedIds: new Set(['goaltime:race:2026-10-29']) }))).toEqual([]);
+  it('is never asked again after Liever niet (or Akkoord) for the same goal time', () => {
+    expect(targetTime(inputs({ logs, respondedIds: new Set(['goaltime:race:45']) }))).toEqual([]);
   });
 
-  it('a newer test is new information: it may ask once more', () => {
+  it('a newer test does not ask again after Liever niet: the goal stays the goal', () => {
     const later = [...logs, test('t2', '2027-01-14', 28.5)];
-    const again = targetTime(inputs({ logs: later, asOf: '2027-01-15', respondedIds: new Set(['goaltime:race:2026-10-29']) }));
-    expect(again.map((a) => a.id)).toEqual(['goaltime:race:2027-01-14']);
+    expect(targetTime(inputs({ logs: later, asOf: '2027-01-15', respondedIds: new Set(['goaltime:race:45']) }))).toEqual([]);
+  });
+
+  it('a changed goal time is new: it may ask once more', () => {
+    const [a] = targetTime(inputs({ logs, raceGoals: [race(46)], respondedIds: new Set(['goaltime:race:45']) }));
+    expect(a.id).toBe('goaltime:race:46');
+  });
+
+  it('says nothing when "Doeltijd aanpassen voorstellen" is off', () => {
+    expect(targetTime(inputs({ logs, proposeTargetTime: false }))).toEqual([]);
   });
 
   it('does not act on a test that came out clearly slower than the one before it', () => {
@@ -65,14 +73,14 @@ describe('TARGET-TIME', () => {
 
   it('keeps reading the previous test while the slower one waits for an answer', () => {
     const bad = [...logs, test('t2', '2027-01-14', 31.5)];
-    expect(targetTime(inputs({ logs: bad, asOf: '2027-01-15' })).map((a) => a.id)).toEqual(['goaltime:race:2026-10-29']);
+    expect(targetTime(inputs({ logs: bad, asOf: '2027-01-15' })).map((a) => a.id)).toEqual(['goaltime:race:45']);
   });
 
   it('leaves a test you marked "Telt niet mee" out', () => {
     const slow = [test('t0', '2026-10-01', 31.5), ...logs];
     const judgments = [{ logId: 't1', verdict: 'ignore' as const, date: '2026-10-30' }];
     // Only the slower test is left, so that one speaks.
-    expect(targetTime(inputs({ logs: slow, testJudgments: judgments })).map((a) => a.id)).toEqual(['goaltime:race:2026-10-01']);
+    expect(targetTime(inputs({ logs: slow, testJudgments: judgments })).map((a) => a.id)).toEqual(['goaltime:race:45']);
   });
 
   it('a goal far slower than the test is offered a sharper time', () => {

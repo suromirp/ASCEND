@@ -94,7 +94,18 @@ export interface ReadinessOptions {
   external?: (meterId: string, today: string) => ExternalValue | undefined;
   // Overschrijft de grens op dagen achter elkaar (GoalDetails.homeDaysInRow en de soort).
   homeDays?: number;
+  // Wegingen per meter (sleutel van de meter naar gewicht). Zonder: elke meter even zwaar. Een
+  // meter die niet in de lijst staat weegt 0,2. Het percentage blijft één getal; alleen de
+  // verdeling verschuift (engine/raceReadiness.ts: bij een doeltijd weegt snelheid het zwaarst).
+  weights?: Record<string, number>;
+  // De dag waarop het doel is gemaakt (ISO). Is dat minder dan vier weken geleden, dan is er niets om
+  // mee te vergelijken en blijft de verandering weg. Ook een waarde van 0 vier weken terug telt dan
+  // niet als beginpunt: geen sprong van 0 bij een nieuw doel.
+  since?: string;
 }
+
+// Het gewicht van een meter die niet in `weights` staat.
+export const DEFAULT_METER_WEIGHT = 0.2;
 
 export interface GoalReadinessInput {
   kind: GoalKindId;
@@ -461,7 +472,9 @@ function compute(input: GoalReadinessInput, logs: SessionLog[], today: string, o
     return { percent: undefined, meters, missing, sentence: missingSentence ?? 'Nog niets te meten. Dat komt met trainingen die meetellen.', missingSentence };
   }
 
-  const mean = meters.reduce((n, m) => n + m.share, 0) / meters.length;
+  const weightOf = (m: GoalMeter) => options.weights ? options.weights[m.key] ?? DEFAULT_METER_WEIGHT : 1;
+  const totalWeight = meters.reduce((n, m) => n + weightOf(m), 0);
+  const mean = meters.reduce((n, m) => n + m.share * weightOf(m), 0) / totalWeight;
   const full = meters.every((m) => m.share >= 1);
   const percent = full ? 100 : Math.min(99, Math.round(mean * 100));
   const open = meters.filter((m) => m.share < 1);
@@ -491,8 +504,10 @@ export function computeGoalReadiness(input: GoalReadinessInput, logs: SessionLog
   const now = compute(input, logs, today, options);
   if (now.percent === undefined) return now;
   const before = compute(input, logs, addDays(today, -VERGELIJK_DAGEN), options);
-  // Een verschil zegt pas iets als er vier weken terug of nu iets te meten was.
-  const change = before.percent !== undefined && (before.percent > 0 || now.percent > 0) ? now.percent - before.percent : undefined;
+  // Een verschil zegt pas iets als er vier weken terug of nu iets te meten was. Met `since` (een doel
+  // van na het eerste meetpunt) moet er vier weken terug al een waarde zijn geweest.
+  const existed = options.since === undefined || (options.since <= addDays(today, -VERGELIJK_DAGEN) && (before.percent ?? 0) > 0);
+  const change = existed && before.percent !== undefined && (before.percent > 0 || now.percent > 0) ? now.percent - before.percent : undefined;
   return { ...now, change };
 }
 
