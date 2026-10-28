@@ -11,6 +11,7 @@ import { Icon } from './icons';
 import { keptNumbersLine, logSource, sourceNoun } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 import { useAppData } from '../state/AppDataContext';
 import { TestVerdictCard } from './TestVerdictCard';
@@ -44,8 +45,10 @@ const ENVIRONMENT_LABEL: Record<string, string> = { treadmill: 'Loopband', outdo
 
 export function LogDetailSheet({ log: shown, templateName, onClose }: { log: SessionLog; templateName: string; onClose: () => void }) {
   const { undoLog, setLogWorkout, restoreFromWatch, undoTrimWatchActivity, restoreSourceUpdate, takeOverSourceNumbers, sessionLogs, templates, program, settings, refresh } = useAppData();
+  const navigate = useNavigate();
   // Read the log fresh, so the sheet follows a change (the own numbers put back).
   const log = sessionLogs.find((l) => l.id === shown.id) ?? shown;
+  const strengthExercises = [...new Set((log.strengthData ?? []).map((e) => e.exerciseName).filter((n) => n.trim() !== ''))];
   const activity = log.outdoorData ?? log.cardioData;
   const modality = activity?.modality ? getModality(log.templateId, activity.modality) : undefined;
   const garminType = activity?.garminSuggestedType;
@@ -212,6 +215,18 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
 
           {ensureOutcome && (ensureOutcome === 'no-series' || ensureOutcome === 'failed' || ensureOutcome === 'timeout') && !hasRunDetail && (
             <p className="mt-3 text-sm" style={{ color: 'var(--color-ink-dim)' }}>{ensureOutcomeText(ensureOutcome)}</p>
+          )}
+
+          {strengthExercises.length > 0 && (
+            <div className="mt-4 flex flex-col">
+              <Eyebrow>Oefeningen</Eyebrow>
+              {strengthExercises.map((name) => (
+                <div key={name} className="flex items-center justify-between gap-3 border-b text-sm" style={{ borderColor: 'var(--color-card-border)' }}>
+                  <span className="min-w-0" style={{ color: 'var(--color-ink)' }}>{name}</span>
+                  <TextButton aria-label={`Deze oefening in Forge: ${name}`} onClick={() => { requestClose(); window.setTimeout(() => navigate('/forge', { state: { zoek: name } }), 280); }}>In Forge</TextButton>
+                </div>
+              ))}
+            </div>
           )}
 
           {rows.length > 0 && (

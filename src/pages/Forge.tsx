@@ -21,7 +21,7 @@
 // (docs/beslissingen/2026-10-24-1rm-uit-macrofactor.md).
 
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, Eyebrow, InfoButton, PageHeader, PrimaryButton, SecondaryButton, Segmented } from '../components/ui';
 import { SettingsPageLink } from '../components/settings/SettingsLink';
 import { jumpRoute } from '../components/settings/jump';
@@ -54,7 +54,10 @@ export function ForgePage() {
   const { sessionLogs, templates, program, settings, updateSettings, injuryNotes } = useAppData();
   const today = todayISO();
   const bodyKg = currentBodyKg(settings.weightEntries, settings.weightFromMacroFactor);
-  const [query, setQuery] = usePageState('zoek', '');
+  // "Deze oefening in Forge" in het logboek geeft de naam mee als zoekterm; anders begint het zoeken leeg.
+  const location = useLocation();
+  const startQuery = (location.state as { zoek?: unknown } | null)?.zoek;
+  const [query, setQuery] = usePageState('zoek', typeof startQuery === 'string' ? startQuery : '');
   const [trainingChoice, setTrainingChoice] = usePageState<string | null>('training', null);
   const [openKey, setOpenKey] = usePageState<string | null>('open', null);
   const [historyKey, setHistoryKey] = useState<string | null>(null);
