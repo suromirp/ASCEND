@@ -1,4 +1,4 @@
-import { Fragment, useMemo, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { Eyebrow } from '../components/ui';
@@ -11,6 +11,8 @@ import { DescentCard } from '../components/stand/DescentCard';
 import { RunTrendsCard } from '../components/stand/RunTrendsCard';
 import { AerobicTrendCard } from '../components/AerobicTrendCard';
 import { Gr5ReadinessCard } from '../components/Gr5ReadinessCard';
+import { TextButton } from '../components/TextButton';
+import { OrderSheet } from '../components/stand/OrderSheet';
 import { ForgeEntryCard } from '../components/stand/ForgeEntryCard';
 import { StrengthProgressionCard } from '../components/stand/StrengthProgressionCard';
 import { TrainingSplitRow } from '../components/stand/TrainingSplitRow';
@@ -41,6 +43,7 @@ import { resolveCardOrder } from '../engine/cardOrder';
 
 export function StandingPage() {
   const navigate = useNavigate();
+  const [ordering, setOrdering] = useState(false);
   const { program, plannedSessions, sessionLogs, templates, templateById, settings, planChangeLog, trainingGoals, goalMilestones, goalMilestoneProgress, sessionsForWeek } = useAppData();
   const inputs = useLegFatigueInputs();
   const today = inputs.today;
@@ -200,6 +203,11 @@ export function StandingPage() {
       {order.map((id) => (
         <Fragment key={id}>{blocks[id]}</Fragment>
       ))}
+
+      <div className="flex justify-center">
+        <TextButton tone="dim" onClick={() => setOrdering(true)}>Volgorde aanpassen</TextButton>
+      </div>
+      {ordering && <OrderSheet onClose={() => setOrdering(false)} />}
     </div>
   );
 }
