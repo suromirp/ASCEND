@@ -40,12 +40,15 @@ interface StartEvent { button?: number; clientY: number; preventDefault: () => v
 
 export function useVerticalDrag() {
   const cleanup = useRef<(() => void) | null>(null);
+  const abort = useRef<(() => void) | null>(null);
   useEffect(() => () => cleanup.current?.(), []);
 
   const start = useCallback(<T,>(e: StartEvent, h: VerticalDragHandlers<T>) => {
     if (e.button !== undefined && e.button > 0) return;
     e.preventDefault();
-    cleanup.current?.();
+    // Een nieuw slepen terwijl er nog een loopt (een tweede vinger): het oude wordt netjes afgebroken,
+    // zodat er geen zwevende rij blijft staan.
+    abort.current?.();
     const scroller = document.getElementById('app-scroll');
     const startY = e.clientY;
     const startScroll = scroller?.scrollTop ?? 0;
@@ -84,6 +87,7 @@ export function useVerticalDrag() {
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', cancel);
       cleanup.current = null;
+      abort.current = null;
     };
     const up = () => {
       stop();
@@ -92,6 +96,7 @@ export function useVerticalDrag() {
     };
     const cancel = () => { stop(); if (picked || threshold === 0) h.onCancel(); };
     cleanup.current = stop;
+    abort.current = cancel;
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', cancel);

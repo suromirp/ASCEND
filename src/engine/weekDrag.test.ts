@@ -199,3 +199,13 @@ describe('newConcernLines', () => {
     expect(newConcernLines(input, MON, 'b', '2026-10-01', ['TWO-HARD-RUNS'])).toEqual([]);
   });
 });
+
+describe('decideMove: de eigen training blijft op zijn dag', () => {
+  it('doet niets, ook als er verder iets in het voorstel staat', () => {
+    const proposal = { resolved: true, reason: '', changes: [
+      { plannedSessionId: 'a', fromDate: '2026-11-02', toDate: '2026-11-02' },
+      { plannedSessionId: 'b', fromDate: '2026-11-03', toDate: '2026-11-04' },
+    ] } as unknown as Parameters<typeof decideMove>[0];
+    expect(decideMove(proposal).action).toBe('none');
+  });
+});

@@ -125,13 +125,17 @@ export function dayVerdicts(ctx: DragContext, sessionId: string, weekStart: stri
       const first = conflicts[0];
       const firstTemplate = templateById.get(first.templateId);
       const conflictNames = conflicts.flatMap((c) => { const n = templateById.get(c.templateId)?.name; return n ? [n] : []; });
-      const axes = firstTemplate ? sharedHeavyAxes(template, firstTemplate).map((a) => HEAVY_AXIS_LABEL[a]).join(' en ') : '';
+      const shared = firstTemplate ? sharedHeavyAxes(template, firstTemplate) : [];
+      const axes = shared.map((a) => HEAVY_AXIS_LABEL[a]).join(' en ');
+      // De 48 uur gelden voor twee zware beendagen; een test vraagt frisse benen; anders alleen het feit.
+      const testInvolved = hasRole(template, 'test') || (firstTemplate ? hasRole(firstTemplate, 'test') : false);
+      const rule = testInvolved ? ' Je test heeft frisse benen nodig.' : shared.includes('lowerBodyLoad') ? ' Liefst 48 uur ertussen.' : '';
       const alsoHeavy = axes ? `, ook zwaar voor ${axes}` : '';
       const named = joinNames(conflictNames);
       return {
         date, kind: 'clash', droppable: true, tone: 'warn', ask: true,
         chip: fit(`Dicht op ${named}`, `Dicht op ${conflictNames[0] ?? 'een zware dag'}`, 'Dicht op een zware dag'),
-        line: `${day}. Dicht op ${named}${alsoHeavy}. Liefst 48 uur ertussen. Als je loslaat, krijg je een voorstel.`,
+        line: `${day}. Dicht op ${named}${alsoHeavy}.${rule} Als je loslaat, krijg je een voorstel.`,
         askReason: undefined,
       };
     }
@@ -197,7 +201,10 @@ export interface DecideOptions { askAlways?: boolean; verdict?: DayVerdict }
 
 export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {}): MoveDecision {
   const real = proposal.changes.filter((c) => c.toDate !== c.fromDate || c.restore);
-  if (proposal.changes.length === 0 || real.length === 0) return { action: 'none', proposal };
+  const own = proposal.changes[0];
+  // De eigen training blijft op zijn dag: dan is er niets te verplaatsen (applyProposal zou het als overslaan lezen).
+  const stays = own !== undefined && own.toDate === own.fromDate && !own.restore;
+  if (proposal.changes.length === 0 || real.length === 0 || stays) return { action: 'none', proposal };
   const clean = proposal.resolved && proposal.changes.length === 1;
   const reasons: string[] = [];
   let resolved = proposal.resolved;
@@ -208,8 +215,8 @@ export function decideMove(proposal: ScheduleProposal, opts: DecideOptions = {})
   if (opts.askAlways) reasons.push(TEST_ASK_REASON);
   if (reasons.length === 0) return { action: clean ? 'apply' : 'ask', proposal };
   // Een cascade of botsing houdt zijn eigen reden, met de nieuwe er vooraan.
-  const own = clean ? [] : [proposal.reason];
-  return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...own].join(' ') } };
+  const kept = clean ? [] : [proposal.reason];
+  return { action: 'ask', proposal: { ...proposal, resolved, reason: [...reasons, ...kept].join(' ') } };
 }
 
 // --- wat er na het slepen nieuw ontstaat -----------------------------------------------
