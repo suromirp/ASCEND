@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { applyPlanChangeItems } from './proposalEngine';
+import { planPass } from './planPass';
+import type { LeavePeriod } from '../models/leave';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 const { templates } = buildDefaultProgramData();
@@ -139,20 +141,19 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
     expect(long).toMatchObject({ action: 'move', fromDate: '2026-11-01' });
     expect(long.toDate).toBe('2026-11-02');
     expect(long.plannedMinutes).toBeGreaterThan(0);
-    expect(a.effect).toContain('Herstelwandeling van ma 2 november vervalt');
+    expect(a.effect).toContain('Lange duurloop van zo 1 november doe je op ma 2 november in plaats van je rustdag, korter (45 minuten). De herstelwandeling van die dag vervalt.');
     expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'walk')).toMatchObject({ action: 'remove' });
-    expect(a.effect).toContain('Lange duurloop van zo 1 november gaat naar');
-    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober maakt de test minder fris; laat hem gaan of doe hem Lichter.');
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober laat je deze week gaan, zodat je benen zaterdag fris zijn.');
     expect(a.effect).toContain('Kies een route zonder stoplichten en zet auto-pauze uit.');
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[\u2013\u2014]/);
-    // De zelf vastgezette beendag staat niet als item in het voorstel.
-    expect(ids).not.toContain('legs');
+    // De zelf vastgezette beendag vervalt alleen met Akkoord en staat er met naam in.
+    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')).toMatchObject({ action: 'remove' });
   });
 
-  it('past toe: de lange duurloop staat op de nieuwe dag, Benen A van do blijft staan', () => {
+  it('past toe: de lange duurloop staat op de nieuwe dag, Benen A van do vervalt', () => {
     const a = retry({ plannedSessions: week(lockUser) })!;
     const { sessions } = applyPlanChangeItems(a.proposal!.changes, week(lockUser), undefined, { by: 'proposal' as const, at: 'x' });
-    expect(sessions.find((s) => s.id === 'legs')).toMatchObject({ scheduledDate: '2026-10-29', templateId: 'tpl_lower_a' });
+    expect(sessions.find((s) => s.id === 'legs')!.status).toBe('skipped');
     expect(sessions.find((s) => s.id === 'hills')).toMatchObject({ templateId: 'tpl_test_run', scheduledDate: '2026-10-31' });
     expect(sessions.find((s) => s.id === 'long')!.scheduledDate).not.toBe('2026-11-01');
   });
@@ -181,5 +182,96 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
     const a = retry({ plannedSessions: locked });
     expect(a?.proposal!.changes.map((c) => c.plannedSessionId) ?? []).not.toContain('long');
     expect(a?.proposal!.changes.find((c) => c.plannedSessionId === 'hills')).toBeUndefined();
+  });
+});
+
+describe('TEST-RETRY: herstel na de review', () => {
+  const lockUser = { by: 'user' as const, at: '2026-10-20T08:00:00Z' };
+  const lockProposal = { by: 'proposal' as const, at: '2026-10-28T08:00:00Z' };
+  const standard = (): PlannedSession[] => [
+    planned('upA', 'tpl_upper_a', '2026-10-28', '2026-10-26'),
+    { ...planned('legs', 'tpl_lower_a', '2026-10-29', '2026-10-26'), lock: lockUser },
+    planned('upB', 'tpl_upper_b', '2026-10-30', '2026-10-26'),
+    planned('hills', 'tpl_hill_intervals', '2026-10-31', '2026-10-26'),
+    planned('long', 'tpl_long_run', '2026-11-01', '2026-10-26'),
+    planned('walk', 'tpl_herstel', '2026-11-02', '2026-11-02'),
+    planned('upA2', 'tpl_upper_a', '2026-11-03', '2026-11-02'),
+  ];
+  const ask = (over: Partial<AdviceInputs> = {}) => computeAdvice(inputs({ plannedSessions: standard(), ...over }));
+  const retryOf = (over: Partial<AdviceInputs> = {}) => ask(over).find((a) => a.ruleId === 'TEST-RETRY');
+  const period = (kind: LeavePeriod['kind'], startDate: string, endDate: string): LeavePeriod => ({ id: `p-${kind}`, kind, startDate, endDate });
+  const touchesTest = (a: ReturnType<typeof retryOf>) => a?.proposal?.changes.find((c) => c.plannedSessionId === 'hills');
+
+  it('simulatie: na Akkoord geen tegenspraak van TEST-MAKE-ROOM en geen stille extra verschuiving', () => {
+    const a = retryOf()!;
+    expect(a).toBeDefined();
+    const applied = applyPlanChangeItems(a.proposal!.changes, standard(), undefined, lockProposal).sessions;
+    const pass = planPass(applied, { today: '2026-10-28', logs: [testLog()], templates, program: null, blocks: [], restDay: 1, newId: () => 'new' });
+    const strip = (list: PlannedSession[]) => list.map((x) => ({ id: x.id, t: x.templateId, d: x.scheduledDate, st: x.status })).sort((x, y) => x.id.localeCompare(y.id));
+    expect(strip(pass.sessions)).toEqual(strip(applied));
+    expect(pass.repairs).toEqual([]);
+    const after = computeAdvice(inputs({ plannedSessions: pass.sessions }));
+    expect(after.filter((x) => x.ruleId === 'TEST-MAKE-ROOM' || x.ruleId === 'TEST-INFLUENCE')).toEqual([]);
+    expect(after.filter((x) => x.ruleId === 'TEST-RETRY')).toEqual([]);
+  });
+
+  it('noemt in de standaardweek de beendag die met Akkoord vervalt', () => {
+    const a = retryOf()!;
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober laat je deze week gaan, zodat je benen zaterdag fris zijn.');
+    expect(a.effect).toContain('De herstelwandeling van die dag vervalt.');
+  });
+
+  it('is geen kandidaat als zelfs zonder de beendag de benen niet fris worden', () => {
+    const heavyLog = (date: string, id: string): SessionLog => ({ ...testLog(), id, templateId: 'tpl_lower_a', type: 'strength', completedDate: date, completedAt: `${date}T10:00:00Z`, durationMinutes: 60, bestEffort: undefined } as SessionLog);
+    const a = retryOf({ logs: [testLog(), heavyLog('2026-10-28', 'g1'), heavyLog('2026-10-27', 'g2'), heavyLog('2026-10-26', 'g3')] });
+    expect(touchesTest(a)).toBeUndefined();
+  });
+
+  it('slaat vrije dagen, tochten en lichte dagen over, voor de testdag en voor een verschuiving', () => {
+    const noTrain = retryOf({ leave: [period('no_training', '2026-11-02', '2026-11-02')] });
+    expect(noTrain?.proposal?.changes.some((c) => c.action === 'move' && c.toDate === '2026-11-02' && c.plannedSessionId !== 'hills')).toBeFalsy();
+    expect(touchesTest(retryOf({ leave: [period('no_training', '2026-10-31', '2026-10-31')] }))).toBeUndefined();
+    const trek = retryOf({ leave: [period('trek', '2026-11-03', '2026-11-04')] });
+    expect(trek?.proposal?.changes.some((c) => c.plannedSessionId === 'long' && ['2026-11-02', '2026-11-03', '2026-11-04'].includes(c.toDate ?? ''))).toBeFalsy();
+    // Zaterdag is de lichte dag voor een tocht die zondag begint.
+    expect(touchesTest(retryOf({ leave: [period('trek', '2026-11-01', '2026-11-02')] }))).toBeUndefined();
+  });
+
+  it('neemt een harde loop die jij vastzette of verplaatste niet als testdag', () => {
+    expect(touchesTest(retryOf({ plannedSessions: standard().map((x) => (x.id === 'hills' ? { ...x, lock: lockUser } : x)) }))).toBeUndefined();
+    expect(touchesTest(retryOf({ plannedSessions: standard().map((x) => (x.id === 'hills' ? { ...x, status: 'moved' as const } : x)) }))).toBeUndefined();
+  });
+
+  it('zwijgt als TEST-MAKE-ROOM al over een test spreekt', () => {
+    const list = ask({ plannedSessions: [...standard(), planned('missed', 'tpl_test_run', '2026-10-24', '2026-10-19')] });
+    expect(list.some((x) => x.ruleId === 'TEST-MAKE-ROOM')).toBe(true);
+    expect(list.some((x) => x.ruleId === 'TEST-RETRY')).toBe(false);
+  });
+
+  it('raakt een beendag van vandaag niet aan waar de kaart Benen voor spreekt', () => {
+    const today = [...standard().filter((x) => x.id !== 'upA' && x.id !== 'legs'), planned('todayLegs', 'tpl_lower_a', '2026-10-28', '2026-10-26')];
+    const checkIns = [{ date: '2026-10-28', legs: 'spierpijn' as const, energy: 'gewoon' as const, sleep: 'goed' as const }];
+    expect(retryOf({ plannedSessions: today })?.proposal?.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBe(true);
+    expect(retryOf({ plannedSessions: today, checkIns, legEase: 'voorstel' })?.proposal?.changes.some((c) => c.plannedSessionId === 'todayLegs')).toBeFalsy();
+  });
+
+  it('toetst het dagbudget voor de testloop op de testdag', () => {
+    const budget = { saturday: { preferredMinutes: 30, softFlexMinutes: 0, hardMaximumMinutes: 30 } } as AdviceInputs['dailyTimeBudget'];
+    const crowded = [...standard(), planned('extraUpper', 'tpl_upper_b', '2026-10-31', '2026-10-26')];
+    expect(touchesTest(retryOf({ plannedSessions: crowded, dailyTimeBudget: budget }))).toBeUndefined();
+  });
+
+  it('rekent het dagbudget van de verschoven lange duurloop met zijn korte lengte', () => {
+    const full = templates.find((t) => t.id === 'tpl_long_run')!.durationVariants.full;
+    const generous = { monday: { preferredMinutes: 60, softFlexMinutes: 0, hardMaximumMinutes: 60 } } as AdviceInputs['dailyTimeBudget'];
+    expect(full).toBeGreaterThan(60);
+    const a = retryOf({ plannedSessions: standard().filter((x) => x.id !== 'walk'), dailyTimeBudget: generous });
+    expect(a?.proposal?.changes.find((c) => c.plannedSessionId === 'long')).toMatchObject({ toDate: '2026-11-02' });
+  });
+
+  it('herkent een test of wedstrijd aan de rol, niet aan vaste id\'s', () => {
+    const renamed = templates.map((t) => (t.id === 'tpl_race' ? { ...t, id: 'tpl_eigen_wedstrijd' } : t));
+    const withRace = [...standard(), planned('race', 'tpl_eigen_wedstrijd', '2026-11-07', '2026-11-02')];
+    expect(retryOf({ plannedSessions: withRace, templates: renamed })).toBeUndefined();
   });
 });

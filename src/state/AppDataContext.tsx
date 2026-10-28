@@ -2429,6 +2429,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         testJudgments: settings.testJudgments,
         askDoubtTest: settings.askDoubtTest !== false,
         newTestOnStops: settings.newTestOnStops !== false,
+        leave: settings.leavePeriods,
         removedByPlanIds: new Set(planChangeLog.filter((p) => p.resolution === 'accepted').flatMap((p) => p.changes.filter((c) => c.action === 'remove' && c.plannedSessionId).map((c) => c.plannedSessionId!))),
         extraSession: extraSessionContext,
         tentPack: tentPackProposal(trainingGoals, new Set(goalMilestones.map((m) => m.goalId))),
