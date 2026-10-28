@@ -1,6 +1,7 @@
 import type { ScheduleProposal } from '../engine/scheduler';
 import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
+import { haptics } from '../utils/haptics';
 import { Portal } from './Portal';
 import { Card, PrimaryButton, SecondaryButton } from './ui';
 import { Icon } from './icons';
@@ -62,7 +63,7 @@ export function RescheduleDialog({
             {proposal.resolved ? (
               <div className="mt-5 flex gap-3">
                 <SecondaryButton onClick={requestClose}>Liever niet</SecondaryButton>
-                <PrimaryButton onClick={onApply} fullWidth={false}>Akkoord</PrimaryButton>
+                <PrimaryButton onClick={() => { haptics.tap(); onApply(); }} fullWidth={false}>Akkoord</PrimaryButton>
               </div>
             ) : (
               <div className="mt-5 flex flex-col gap-3">

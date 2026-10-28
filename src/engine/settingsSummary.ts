@@ -531,6 +531,8 @@ function baseSummary(rowId: string, f: SettingsFacts): RowSummary {
       return { checked: s.askDoubtTest !== false };
     case 'nieuwe-test':
       return { checked: s.newTestOnStops !== false };
+    case 'trillen':
+      return { checked: s.haptics !== false };
     case 'weekvoorstel':
       return { checked: s.weekFixProposal !== false };
     case 'slepen-week':

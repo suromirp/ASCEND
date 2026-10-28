@@ -711,6 +711,9 @@ export interface AppSettings {
   weekFixProposal?: boolean;
   // Trainingen slepen in Week (components/useWeekDrag.ts). Afwezig is aan; uit haalt de grepen weg.
   dragWeek?: boolean;
+  // "Trillen": een korte tik in je hand bij een schakelaar, een afgevinkte set, een training
+  // oppakken en Akkoord. Absent = aan. Het rustsignaal van Forge staat hier los van.
+  haptics?: boolean;
   // "Doeltijd aanpassen voorstellen": a test that says your goal time is out of reach (or far too easy)
   // gets a proposal to change it (rule TARGET-TIME). Absent = on. One Liever niet holds for every later
   // test until the goal time itself changes. Optional and additive.

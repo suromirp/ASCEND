@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef } from 'react';
 import { useAppData } from '../state/AppDataContext';
 import { resolveMotion, type MotionMode } from '../engine/motionSettings';
 import { MOTION_KEY } from '../utils/updateFlag';
+import { resolveHaptics } from '../engine/hapticsSettings';
+import { setHapticsEnabled } from '../utils/haptics';
 
 // Hoeveel de app beweegt (instelling "Beweging", docs/beslissingen/2026-10-24-beweging.md).
 // `prefers-reduced-motion: reduce` telt altijd als Uit. De CSS leest dezelfde stand uit
@@ -32,6 +34,15 @@ export function useMotionAttribute(ready = true): void {
       // geen opslag: de stand geldt dan pas als de instellingen geladen zijn
     }
   }, [mode, ready]);
+}
+
+// Geeft de instelling "Trillen" door aan de tik (utils/haptics.ts). Volgt Beweging niet.
+export function useHapticsSetting(): void {
+  const { settings } = useAppData();
+  const on = resolveHaptics(settings);
+  useLayoutEffect(() => {
+    setHapticsEnabled(on);
+  }, [on]);
 }
 
 // Telt een geheel getal kort op bij het eerste verschijnen (500 ms, ease-out). Schrijft

@@ -52,6 +52,7 @@ const everything: AppSettings = {
   newTestOnStops: false,
   weekFixProposal: false,
   dragWeek: false,
+  haptics: false,
   testStops: 'count',
   readinessWeighting: 'equal',
   proposeTargetTime: false,

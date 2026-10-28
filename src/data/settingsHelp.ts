@@ -82,6 +82,15 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Uit', text: 'alles staat meteen op zijn plek. Heeft je telefoon beperkte beweging aan, dan geldt dit altijd.' },
     ],
   },
+  trillen: {
+    title: 'Trillen',
+    lead: 'Een korte tik in je hand als je iets doet: een schakelaar, een set afvinken, een training oppakken, Akkoord geven.',
+    points: [
+      { head: 'Wat', text: 'schakelaars en keuzes, een afgevinkte set, een training oppakken in Week, Akkoord op een voorstel, en twee stootjes bij een opgeslagen training of een behaalde mijlpaal.' },
+      { head: 'Rusttimer', text: 'het signaal als de rust om is staat apart in Forge onder Signaal. Deze schakelaar gaat daar niet over.' },
+      { head: 'iPhone', text: 'op een iPhone bestaat trillen in de browser niet. Dan doet deze schakelaar niets.' },
+    ],
+  },
   wijzigingen: {
     title: 'Wijzigingen',
     lead: 'Na een training, een gemiste sessie of een nieuwe instelling kan je planning schuiven.',

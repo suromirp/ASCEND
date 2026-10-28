@@ -9,6 +9,7 @@ import type { LeavePeriod } from '../models/leave';
 import { LeaveBand } from './LeaveBand';
 import { formatDateNL, formatShortDayNL, todayISO, weekdayShortNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
+import { haptics } from '../utils/haptics';
 import { Portal } from './Portal';
 import { Card, Eyebrow, PrimaryButton, SecondaryButton } from './ui';
 import { applyPlanChangeItems } from '../engine/proposalEngine';
@@ -259,7 +260,7 @@ export function ProposalSheet({ advice, onClose, onRespond, previewPass, leave, 
 
             <div className="flex gap-3 border-t px-5 pt-3" style={{ borderColor: 'var(--color-card-border)', paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
               <SecondaryButton onClick={() => void respond('declined')} disabled={busy} className="min-h-[46px]">Liever niet</SecondaryButton>
-              <PrimaryButton onClick={() => void respond('accepted')} disabled={busy} fullWidth={false}>Akkoord</PrimaryButton>
+              <PrimaryButton onClick={() => { haptics.tap(); void respond('accepted'); }} disabled={busy} fullWidth={false}>Akkoord</PrimaryButton>
             </div>
             {alternative && (
               <div className="flex justify-center px-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>

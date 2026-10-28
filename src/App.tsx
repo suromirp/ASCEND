@@ -14,7 +14,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Icon, type IconName } from './components/icons';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { useScrollRestoration } from './components/useScrollRestoration';
-import { useMotionAttribute } from './components/motion';
+import { useHapticsSetting, useMotionAttribute } from './components/motion';
 import { useSkyAttribute } from './components/sky';
 import { resolveNavigation } from './engine/navigationSettings';
 import { localStorageOrNull, planLaunch, readLastRoute, writeLastRoute } from './utils/launchRoute';
@@ -171,6 +171,7 @@ function AppShell() {
   const navigate = useNavigate();
   useOverlayA11y();
   useMotionAttribute(!loading);
+  useHapticsSetting();
   useSkyAttribute();
 
   // Terug brengt je op dezelfde hoogte, ook na een herlaad (components/useScrollRestoration.ts).
