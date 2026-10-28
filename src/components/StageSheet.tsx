@@ -14,7 +14,7 @@ import { formatDateNL, formatHoursMinutesNL, weekdayLongNL } from '../utils/date
 import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow, Toggle } from './ui';
+import { Card, Eyebrow, Toggle, SheetGrip } from './ui';
 import { Icon } from './icons';
 
 const SOURCE_LABEL: Record<StageFact['source'], string> = {
@@ -78,9 +78,10 @@ export function StageSheet({
           role="dialog"
           aria-modal="true"
           aria-label={`Etappe ${stage.overall}: ${stage.from} naar ${stage.to}`}
-          className={`max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <Eyebrow>{`Etappe ${stage.overall} van 36 · ${section?.name ?? ''}`}</Eyebrow>
             <h3 className="mt-1 font-display text-xl leading-snug" style={{ color: 'var(--color-ink)' }}>{stage.from} naar {stage.to}</h3>

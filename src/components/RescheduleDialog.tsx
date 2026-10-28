@@ -3,7 +3,7 @@ import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { haptics } from '../utils/haptics';
 import { Portal } from './Portal';
-import { Card, PrimaryButton, SecondaryButton } from './ui';
+import { Card, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 import { Icon } from './icons';
 import { SheetHeader } from './SheetHeader';
 import { useLegMoveNotes } from './useLegMoveNote';
@@ -27,7 +27,8 @@ export function RescheduleDialog({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-6">
             <div className="-mt-2"><SheetHeader eyebrow="Schema-aanpassing" onClose={requestClose} /></div>
             <div className="mt-3 flex flex-col gap-2">

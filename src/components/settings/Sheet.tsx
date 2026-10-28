@@ -4,7 +4,7 @@ import { SETTINGS_HELP, settingsHelp } from '../../data/settingsHelp';
 import { useAppData } from '../../state/AppDataContext';
 import { Portal } from '../Portal';
 import { Icon } from '../icons';
-import { Eyebrow } from '../ui';
+import { Eyebrow, SheetGrip } from '../ui';
 import './settings.css';
 
 // Het onderblad van de instellingen: een greep, de groep als Eyebrow, de titel in
@@ -38,10 +38,10 @@ export function Sheet({
         <div
           ref={sheetRef}
           aria-label={title}
-          className={`st-sheet ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`st-sheet relative ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="st-grip" />
+          <SheetGrip />
           <div className="st-sh">
             <div className="min-w-0">
               <div className="st-eyebrow"><Eyebrow>{eyebrow}</Eyebrow></div>

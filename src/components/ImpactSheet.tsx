@@ -3,7 +3,7 @@
 // removes a session, is shown in full before anything happens.
 
 import { Portal } from './Portal';
-import { Card, PrimaryButton, SecondaryButton, Eyebrow } from './ui';
+import { Card, PrimaryButton, SecondaryButton, Eyebrow, SheetGrip } from './ui';
 import { useSheetClose } from '../utils/useSheetClose';
 
 export function ImpactSheet({
@@ -40,7 +40,8 @@ export function ImpactSheet({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={busy ? undefined : requestClose}
       >
-        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-4 rounded-b-none border-b-0 pb-6">
             <div>
               <Eyebrow>{eyebrow}</Eyebrow>

@@ -476,3 +476,14 @@ export function ZoneBar({ active, label }: { active?: 1 | 2 | 3 | 4 | 5; label?:
     </div>
   );
 }
+
+// Het lichte balkje bovenaan een blad: je kunt het blad omlaag slepen om te sluiten.
+// Absoluut bovenaan het paneel (dat `relative` is), dus de kop verschuift niet; het
+// hele paneel is het sleepgebied (useSheetClose). Geen animatie, dus ook met Beweging Uit zichtbaar.
+export function SheetGrip() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center pt-2">
+      <span className="h-1 w-10 rounded-full" style={{ background: 'var(--color-control-border)' }} />
+    </div>
+  );
+}

@@ -15,7 +15,7 @@ import { zoneText } from '../engine/heartRateZones';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
-import { Card, Eyebrow } from './ui';
+import { Card, Eyebrow, SheetGrip } from './ui';
 import { SessionHeader } from './SessionHeader';
 import { ModalityGuide } from './ModalityPicker';
 import { WeatherLine } from './WeatherLine';
@@ -79,9 +79,10 @@ export function TrainingGuideSheet({
       >
         <div
           ref={sheetRef}
-          className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
         <Card className="rounded-b-none border-b-0 pb-8">
           <div className="-mt-2"><SheetHeader eyebrow={dayLabel} onClose={requestClose} /></div>
 

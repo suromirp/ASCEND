@@ -9,7 +9,7 @@ import { withTimeout } from '../../utils/withTimeout';
 import { ChoiceStrip } from '../ChoiceStrip';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
-import { Card, PrimaryButton, SecondaryButton } from '../ui';
+import { Card, PrimaryButton, SecondaryButton, SheetGrip } from '../ui';
 import { REPORT_TIMEOUT_MS, reportInputStyle } from './reportConfig';
 
 const OTHER = '__anders__';
@@ -71,11 +71,12 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={() => !busy && requestClose()}>
         <div ref={sheetRef}
-          className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label="Iets anders melden"
         >
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Klacht" title="Iets anders melden" onClose={() => !busy && requestClose()} />
             <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>Voor een plek die niet op het figuur staat, of als je het liever zelf benoemt.</p>

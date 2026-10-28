@@ -22,7 +22,7 @@ import { Icon } from './icons';
 import { NumberField } from './NumberField';
 import { Portal } from './Portal';
 import { ProposalSheet } from './ProposalSheet';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle } from './ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle, SheetGrip } from './ui';
 import { TextButton } from './TextButton';
 
 const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
@@ -163,7 +163,8 @@ function TrekSheet({ existing, onSubmit, onClose }: { existing?: LeavePeriod; on
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div ref={sheetRef} className={`flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative flex max-h-[92vh] w-full max-w-md flex-col ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex min-h-0 flex-col rounded-b-none border-b-0 p-0!">
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-3 pt-5">
               <Eyebrow>{existing ? 'Tocht wijzigen' : 'Tocht toevoegen'}</Eyebrow>

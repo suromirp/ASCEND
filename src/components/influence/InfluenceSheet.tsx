@@ -6,7 +6,7 @@ import { TimeoutError, withTimeout } from '../../utils/withTimeout';
 import { useSheetClose } from '../../utils/useSheetClose';
 import { Portal } from '../Portal';
 import { SheetHeader } from '../SheetHeader';
-import { Card, SecondaryButton } from '../ui';
+import { Card, SecondaryButton, SheetGrip } from '../ui';
 import { InfluenceBlock } from './InfluenceBlock';
 import { useKnownFacts } from './useInfluence';
 
@@ -67,9 +67,10 @@ export function InfluenceSheet({
           role="dialog"
           aria-modal="true"
           aria-label={title}
-          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={eyebrow} title={title} onClose={requestClose} /></div>
             {line && <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>{line}</p>}

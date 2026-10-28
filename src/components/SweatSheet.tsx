@@ -10,7 +10,7 @@ import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { NumberField } from './NumberField';
-import { Card, PrimaryButton, SecondaryButton } from './ui';
+import { Card, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 
 const SAVE_LIMIT_MS = 10_000;
 
@@ -84,9 +84,10 @@ export function SweatSheet({ log, templateName, onClose }: { log: SessionLog; te
           role="dialog"
           aria-modal="true"
           aria-label="Zweetverlies meten"
-          className={`max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[88vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={formatDateNL(log.completedDate)} title="Zweetverlies" onClose={requestClose} /></div>
             <p className="mt-0.5 text-sm leading-relaxed" style={{ color: 'var(--color-ink-dim)' }}>

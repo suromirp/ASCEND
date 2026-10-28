@@ -13,7 +13,7 @@ import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
 import { TextButton } from './TextButton';
 import { TrimChart } from './TrimChart';
-import { Card, PrimaryButton, SecondaryButton } from './ui';
+import { Card, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 
 // The series come from the provider (its own limit is 15 seconds); this is the
 // limit for the whole fetch, and for the write, which is local work.
@@ -125,11 +125,12 @@ export function TrimSheet({ log, templateName, onClose }: { log: SessionLog; tem
       >
         <div
           ref={sheetRef}
-          className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label="Inkorten"
         >
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <div className="-mt-2"><SheetHeader eyebrow={templateName} title="Inkorten" onClose={requestClose} /></div>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-dim)' }}>Haal een stuk aan het begin of het eind weg, bijvoorbeeld een autorit.</p>

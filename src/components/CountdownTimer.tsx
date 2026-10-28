@@ -5,7 +5,7 @@ import { playTimerAlarm } from '../utils/sound';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { SheetHeader } from './SheetHeader';
-import { Card, PrimaryButton, SecondaryButton } from './ui';
+import { Card, PrimaryButton, SecondaryButton, SheetGrip } from './ui';
 
 const inputStyle = { background: 'var(--color-charcoal)', borderColor: 'var(--color-card-border)', color: 'var(--color-ink)' };
 
@@ -74,7 +74,8 @@ export function CountdownTimer({
         className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={requestClose}
       >
-        <div ref={sheetRef} className={`w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative w-full max-w-md ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-5 rounded-b-none border-b-0 pb-6">
             <SheetHeader eyebrow="Timer" title={label} onClose={requestClose} />
 

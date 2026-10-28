@@ -11,7 +11,7 @@ import { formatNumberNL } from '../utils/number';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { TrendLineChart } from './TrendLineChart';
-import { Card, Eyebrow, InfoButton, SecondaryButton } from './ui';
+import { Card, Eyebrow, InfoButton, SecondaryButton, SheetGrip } from './ui';
 
 
 function formatter(format: InsightLine['seriesFormat']): (v: number) => string {
@@ -29,7 +29,8 @@ export function RunInsightSheet({ model, notCompared = [], onClose }: { model: S
   return (
     <Portal>
       <div className={`fixed inset-0 z-[70] flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Waarom: ${model.title}`}>
+        <div ref={sheetRef} className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={`Waarom: ${model.title}`}>
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <Eyebrow>{model.title}</Eyebrow>
             <p className="mt-1 font-display text-2xl" style={{ color: 'var(--color-ink)' }}>{model.word}</p>

@@ -2,7 +2,7 @@ import type { Gr5Readiness } from '../engine/gr5Readiness';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
 import { dayMonth } from './stand/chartParts';
-import { Card, Eyebrow } from './ui';
+import { Card, Eyebrow, SheetGrip } from './ui';
 
 // De vier meters achter het percentage: jouw beste van de laatste acht weken
 // naast wat de GR5 vraagt, elk met één zin waarom. Het percentage is het
@@ -13,7 +13,8 @@ export function Gr5ReadinessSheet({ readiness, onClose }: { readiness: Gr5Readin
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klaar voor de GR5">
+        <div ref={sheetRef} className={`relative max-h-[90vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Klaar voor de GR5">
+          <SheetGrip />
           <Card className="rounded-b-none border-b-0 pb-8">
             <Eyebrow>Klaar voor de GR5</Eyebrow>
             <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--color-ink)' }}>

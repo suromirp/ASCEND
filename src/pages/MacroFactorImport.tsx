@@ -20,7 +20,7 @@ import type { MacroFactorProgram } from '../engine/macrofactorProgram';
 import { Icon } from '../components/icons';
 import { Portal } from '../components/Portal';
 import { useSheetClose } from '../utils/useSheetClose';
-import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle, PageHeader } from '../components/ui';
+import { Card, Eyebrow, PrimaryButton, SecondaryButton, Toggle, PageHeader, SheetGrip } from '../components/ui';
 import { useAppData } from '../state/AppDataContext';
 import { useMacroFactor } from '../state/useMacroFactor';
 import { MacroFactorFormatError, nameKey } from '../engine/macrofactorImport';
@@ -373,7 +373,8 @@ function DetailsSheet({ text, onClose }: { text: string; onClose: () => void }) 
   return (
     <Portal>
       <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`} onClick={requestClose}>
-        <div ref={sheetRef} className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+        <div ref={sheetRef} className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`} onClick={(e) => e.stopPropagation()}>
+          <SheetGrip />
           <Card className="flex flex-col gap-3 rounded-b-none border-b-0 pb-6">
             <Eyebrow>Details</Eyebrow>
             <p className="text-xs leading-snug" style={{ color: 'var(--color-ink-dim)' }}>

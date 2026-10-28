@@ -6,7 +6,7 @@ import { getCompatibility, COMPATIBILITY_LABEL } from '../data/garminSuggested';
 import { formatDateNL } from '../utils/dates';
 import { useSheetClose } from '../utils/useSheetClose';
 import { Portal } from './Portal';
-import { Card, Eyebrow, SecondaryButton } from './ui';
+import { Card, Eyebrow, SecondaryButton, SheetGrip } from './ui';
 import { Icon } from './icons';
 import { keptNumbersLine, logSource, sourceNoun } from '../engine/logSource';
 import { SheetHeader } from './SheetHeader';
@@ -190,9 +190,10 @@ export function LogDetailSheet({ log: shown, templateName, onClose }: { log: Ses
         onClick={requestClose}
       >
         <div ref={sheetRef}
-          className={`max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
+          className={`relative max-h-[85vh] w-full max-w-md overflow-y-auto ${closing ? 'animate-sheet-out' : 'animate-sheet-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
+          <SheetGrip />
         <Card className="rounded-b-none border-b-0 pb-8">
           <div className="-mt-2"><SheetHeader eyebrow={formatDateNL(log.completedDate)} title={templateName} onClose={requestClose} /></div>
           <p className="mt-0.5 text-xs" style={{ color: 'var(--color-ink-dim)' }}>
