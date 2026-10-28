@@ -386,6 +386,18 @@ export const CHOICES = {
       { value: 'off', label: 'Uit', note: 'Alles staat meteen op zijn plek', short: 'Uit' },
     ],
   }),
+  plaatjes: def({
+    group: 'Forge',
+    title: 'Plaatjes bij oefeningen',
+    line: 'Wat je ziet als je op het kaartje bij een oefening tikt.',
+    advice: 'beide' as 'beide' | 'spierkaart' | 'uit',
+    help: 'plaatjes',
+    options: [
+      { value: 'beide', label: 'Spierkaart en tekening', note: 'Welke spieren werken en hoe de beweging gaat', short: 'Kaart en tekening' },
+      { value: 'spierkaart', label: 'Alleen spierkaart', note: 'Geen tekeningen, dus ook niets om te laden', short: 'Alleen spierkaart' },
+      { value: 'uit', label: 'Uit', note: 'Geen kaartje bij een oefening', short: 'Uit' },
+    ],
+  }),
   lijfvraag: def({
     group: 'Vandaag en meldingen',
     title: 'Hoe voelt je lijf?',

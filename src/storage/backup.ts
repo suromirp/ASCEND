@@ -401,6 +401,10 @@ function cleanSettings(raw: unknown, skipped: Counter): Partial<AppSettings> | u
     delete s.limitMargin;
     skipped.n++;
   }
+  if ('exerciseArt' in s && s.exerciseArt !== 'beide' && s.exerciseArt !== 'spierkaart' && s.exerciseArt !== 'uit') {
+    delete s.exerciseArt;
+    skipped.n++;
+  }
   if ('testStops' in s && s.testStops !== 'skip' && s.testStops !== 'count') {
     delete s.testStops;
     skipped.n++;

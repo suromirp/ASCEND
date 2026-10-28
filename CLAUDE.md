@@ -643,6 +643,21 @@ in the target and the hint (`spotterSlot` in `planExercise`, so also after a swa
 Raak judges ASCEND's proposal against its own raised target and your own sets against what the plan asked (`comparisonRows`), so a deliberate 1 where
 MacroFactor said 0 is no miss; `noSpotter` is part of `checkModelKey`.
 
+**Plaatjes bij oefeningen** (`data/exerciseArt.ts`, `data/muscleRegions.ts`, `engine/muscleMap.ts`, `engine/exerciseArtData.ts`,
+`components/ExerciseArtButton.tsx`, `components/ExerciseArtSheet.tsx`, decision
+`docs/beslissingen/2026-10-28-plaatjes-bij-oefeningen.md`, research `docs/onderzoek/Afbeeldingen bij oefeningen.md`): in Forge (the
+exercise head in a training and the rows of the list) a card of 44 by 44 px opens the sheet of an exercise: the drawing in three steps
+(Workout Guide, CC BY-SA 4.0, one `public/exercise-art/<slug>.json` per drawing with a viewBox and three paths, no colour: it takes
+`currentColor`), the muscle card (the Lichaam figure with the 19 muscle groups drawn as soft arcs, lila `--color-sport-strength` only for
+muscle data, front and back where needed), Doen, Let op and Vaak fout from the cues, and the credit with a direct link to the licence
+(opens in a new tab, never takes you out of a training; the kind "Afbeeldingen" in Bronnen has it too). The three images of a file are put in the order of the movement by `ART_ORDER` (step 1 the start, 2 the middle, 3 the end; a permutation, tested), a drawing that shows something wrong or unclear is left out (decision `-aanvulling.md`), and the url carries `?v=` (`DRAWING_VERSION`, raise it when a file changes). The link exercise to drawing is data (`zeker` or `variant` with a note); an exercise without one shows the muscle card
+as the main picture, without an apology. The drawings are not in the precache (`globIgnores` in `vite.config.ts`): they load when a sheet
+opens, are kept by a runtime cache "exercise-art", and those of your own templates are fetched in the background
+(`components/useExerciseArtPrefetch.ts`). Never put them in `globPatterns`. A changed or added drawing keeps `LICENSE.md` and
+`ATTRIBUTION.md` in that folder true. The movement plays once on opening (900 ms, Rustig half, Uit and reduced motion straight to the end
+state) and `haptics.tap` only fires for a step you take yourself, with 140 ms between. Setting "Plaatjes bij oefeningen"
+(`exerciseArt`: beide, spierkaart, uit; `engine/exerciseArtSettings.ts`).
+
 **A doubtful short night** (watch off the wrist: under 4 hours, or under half your own
 average once there are 7 days) becomes a question in the morning check instead of a
 warning (`engine/shortNight.ts`, decision `docs/beslissingen/2026-10-25-korte-nacht-vragen.md`).

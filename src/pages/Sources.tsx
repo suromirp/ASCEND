@@ -9,6 +9,7 @@
 // you come back (usePageState).
 
 import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAppData } from '../state/AppDataContext';
 import { buildSourceLibrary, searchSources, CATEGORY_LABEL, type LibrarySource, type SourceCategory } from '../engine/sourceLibrary';
 import { Card, Eyebrow, PageHeader } from '../components/ui';
@@ -16,7 +17,7 @@ import { DisclosureRow } from '../components/DisclosureRow';
 import { usePageState } from '../components/usePageState';
 import { Icon } from '../components/icons';
 
-const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor'];
+const CATEGORY_ORDER: SourceCategory[] = ['wetenschap', 'training', 'bergsport', 'garmin', 'macrofactor', 'afbeeldingen'];
 
 const isCategoryList = (v: unknown) => Array.isArray(v) && v.every((c) => (CATEGORY_ORDER as readonly unknown[]).includes(c));
 const isKeyList = (v: unknown) => Array.isArray(v) && v.every((k) => typeof k === 'string');
@@ -25,7 +26,10 @@ export function SourcesPage() {
   const { templateById } = useAppData();
   const library = useMemo(() => buildSourceLibrary((id) => templateById.get(id)?.name ?? id), [templateById]);
   const [query, setQuery] = usePageState('query', '');
-  const [openCategories, setOpenCategories] = usePageState<SourceCategory[]>('open', [], isCategoryList);
+  // /bronnen?soort=afbeeldingen opent die soort meteen (de naamsvermelding bij een tekening wijst hierheen).
+  const [params] = useSearchParams();
+  const wanted = CATEGORY_ORDER.find((c) => c === params.get('soort'));
+  const [openCategories, setOpenCategories] = usePageState<SourceCategory[]>('open', wanted ? [wanted] : [], isCategoryList);
   const [openSources, setOpenSources] = usePageState<string[]>('open-sources', [], isKeyList);
   const searching = query.trim().length > 0;
 

@@ -11,6 +11,7 @@
 
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exerciseById } from '../../data/exercises';
+import { ExerciseArtButton } from '../ExerciseArtButton';
 import { previewDayLine } from '../../engine/sessionActions';
 import { restAlertChannels, restVibrationPattern } from '../../engine/restVibration';
 import { MUSCLE_LABEL } from '../../models/exercise';
@@ -1166,6 +1167,7 @@ const ExerciseBlock = memo(function ExerciseBlock({
       data-slot={ex.slot}
     >
       <div className="flex items-start gap-2">
+        {ex.known && <ExerciseArtButton exerciseId={ex.exerciseId} name={ex.name} />}
         {complete ? (
           <button type="button" onClick={() => act.fold(ex.slot)} aria-expanded={!folded} aria-label={`${ex.name}, ${folded ? 'uitklappen' : 'inklappen'}`} className="min-h-[44px] min-w-0 flex-1 py-1.5 text-left">
             {headText}

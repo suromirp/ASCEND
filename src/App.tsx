@@ -15,6 +15,7 @@ import { Icon, type IconName } from './components/icons';
 import { useOverlayA11y } from './components/useOverlayA11y';
 import { useScrollRestoration } from './components/useScrollRestoration';
 import { useHapticsSetting, useMotionAttribute } from './components/motion';
+import { useExerciseArtPrefetch } from './components/useExerciseArtPrefetch';
 import { useSkyAttribute } from './components/sky';
 import { resolveNavigation } from './engine/navigationSettings';
 import { localStorageOrNull, planLaunch, readLastRoute, writeLastRoute } from './utils/launchRoute';
@@ -172,6 +173,7 @@ function AppShell() {
   useOverlayA11y();
   useMotionAttribute(!loading);
   useHapticsSetting();
+  useExerciseArtPrefetch();
   useSkyAttribute();
 
   // Terug brengt je op dezelfde hoogte, ook na een herlaad (components/useScrollRestoration.ts).

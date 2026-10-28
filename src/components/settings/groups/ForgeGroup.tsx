@@ -4,6 +4,7 @@ import { haptics } from '../../../utils/haptics';
 import { restAlertChannels, restVibrationPattern } from '../../../engine/restVibration';
 import { useAppData } from '../../../state/AppDataContext';
 import { CHOICES } from '../../../data/settingsChoices';
+import { resolveExerciseArt } from '../../../engine/exerciseArtSettings';
 import { resolveStrengthSettings, withProfile, type StrengthSettings } from '../../../engine/strengthSettings';
 import { SettingsEmpty, SettingsSection } from '../SettingsList';
 import { AddOnSheet, GymProfileSheet, MachineListSheet } from './ToestelSheets';
@@ -104,6 +105,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
           <SummaryRow id="forge-extras" title="Wat er verder veranderde" facts={facts} info="forgeExtras" onChange={(on) => save({ showExtras: on })} />
           <SummaryRow id="forge-lijntjes" title="Lijntjes in de lijst" facts={facts} info="forgeLijntjes" onChange={(on) => save({ showTrendLines: on })} />
           <SummaryRow id="forge-volgorde-lijst" title="Volgorde van de oefeningen" facts={facts} onClick={() => setInner('forge-volgorde-lijst')} />
+          <SummaryRow id="forge-plaatjes" title="Plaatjes bij oefeningen" facts={facts} info="plaatjes" onClick={() => setInner('forge-plaatjes')} />
         </BundleSheet>
       )}
       {sheet === 'bundel-rekenmodel' && (
@@ -154,6 +156,7 @@ export function ForgeGroup({ facts, sheet, setSheet }: GroupProps) {
       {sheet === 'forge-opwarmbereik' && <ChoiceFromDef def={CHOICES.opwarmbereik} value={s.warmupScope} onPick={(v) => save({ warmupScope: v })} onClose={close} />}
 
       {/* Keuzes in een blad: een onderblad bovenop. */}
+      {inner === 'forge-plaatjes' && <ChoiceFromDef def={CHOICES.plaatjes} value={resolveExerciseArt(settings)} onPick={(v) => void updateSettings({ exerciseArt: v })} onClose={closeInner} />}
       {inner === 'forge-weergave' && <ChoiceFromDef def={CHOICES.forgeWeergave} value={s.oneRmView} onPick={(v) => save({ oneRmView: v })} onClose={closeInner} />}
       {inner === 'forge-vergelijken' && <ChoiceFromDef def={CHOICES.forgeVergelijken} value={s.compareWeeks} onPick={(v) => save({ compareWeeks: v })} onClose={closeInner} />}
       {inner === 'forge-volgorde-lijst' && <ChoiceFromDef def={CHOICES.forgeVolgorde} value={s.listSort} onPick={(v) => save({ listSort: v })} onClose={closeInner} />}

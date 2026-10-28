@@ -45,6 +45,16 @@ export const SETTINGS_HELP: Record<string, SettingsHelp> = {
       { head: 'Donker', text: 'dezelfde kaarten en kleuren, maar op diep marine met zachte bergen en een paar zwakke sterren.' },
     ],
   },
+  plaatjes: {
+    title: 'Plaatjes bij oefeningen',
+    lead: 'Naast een oefening in Forge staat een klein kaartje met de spieren die werken. Tik erop en je ziet de beweging in drie stappen, de spieren op het lichaam en wat je moet doen, waar je op let en wat vaak misgaat.',
+    points: [
+      { head: 'Spierkaart en tekening', text: 'het advies. De tekeningen komen van Workout Guide en zijn van Everkinetic en Bryl Lim, CC BY-SA 4.0. Ze worden geladen als je een oefening opent, en op de achtergrond voor de oefeningen van je eigen trainingen. Zonder netwerk zie je dan alleen het spierkaartje.' },
+      { head: 'Alleen spierkaart', text: 'de spieren en de uitleg, zonder tekening. Er wordt niets geladen.' },
+      { head: 'Uit', text: 'geen kaartje bij een oefening. Het menu van een oefening houdt de uitleg.' },
+      { head: 'Een andere variant', text: 'staat er een tekening van bijna dezelfde oefening, dan zegt een regel eronder wat anders is.' },
+    ],
+  },
   lijfvraag: {
     title: 'Hoe voelt je lijf?',
     lead: 'Een korte kaart op Vandaag: voel je iets van je week? Je tikt op een plek, kiest spierpijn, stijf of pijn, en krijgt wat kan helpen. Je planning verandert er niet door.',

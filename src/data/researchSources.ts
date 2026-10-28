@@ -1866,5 +1866,29 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
       "usedIn": [
           "Loopinzicht: het blad Waarom"
       ]
-  }
+  },
+  {
+    title: 'Workout Guide: tekeningen van oefeningen, van Bryl Lim',
+    publisher: 'GitHub',
+    url: 'https://github.com/bryllim/workout-guide',
+    category: 'afbeeldingen',
+    meta: 'CC BY-SA 4.0 · kleur en detail aangepast voor ASCEND',
+    usedIn: ['Tekeningen in het blad van een oefening'],
+  },
+  {
+    title: 'Everkinetic: de oorspronkelijke poses van de oefeningen, van Greg Priday',
+    publisher: 'GitHub',
+    url: 'https://github.com/everkinetic/data',
+    category: 'afbeeldingen',
+    meta: 'CC BY-SA 4.0 · oorspronkelijk werk waar Workout Guide op voortbouwt',
+    usedIn: ['Tekeningen in het blad van een oefening'],
+  },
+  {
+    title: 'Licentie CC BY-SA 4.0: wat je met de tekeningen mag doen',
+    publisher: 'Creative Commons',
+    url: 'https://creativecommons.org/licenses/by-sa/4.0/deed.nl',
+    category: 'afbeeldingen',
+    meta: 'Je mag de tekeningen delen en aanpassen met naamsvermelding, onder dezelfde licentie',
+    usedIn: ['Tekeningen in het blad van een oefening'],
+  },
 ];

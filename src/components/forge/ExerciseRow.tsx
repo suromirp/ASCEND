@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { formatNumberNL } from '../../utils/number';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../icons';
+import { ExerciseArtButton } from '../ExerciseArtButton';
 import { Eyebrow } from '../ui';
 import { ExerciseChart } from './ExerciseChart';
 import { TrendSpark } from './TrendSpark';
@@ -71,39 +72,42 @@ export function ExerciseRow({
 
   return (
     <div className="border-t first:border-t-0" style={{ borderColor: 'var(--color-card-border)' }}>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="flex min-h-[60px] w-full items-center gap-3 py-2 text-left"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{history.name}</span>
-          <span className="flex items-center gap-2 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-            <span className="whitespace-nowrap">{count} {count === 1 ? 'training' : 'trainingen'}</span>
-            {showTrendLines && <TrendSpark values={trend} />}
+      <div className="flex items-center gap-2">
+        {exercise && <ExerciseArtButton exerciseId={exercise.id} name={history.name} />}
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="flex min-h-[60px] min-w-0 flex-1 items-center gap-3 py-2 text-left"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-base leading-snug" style={{ color: 'var(--color-ink)' }}>{history.name}</span>
+            <span className="flex items-center gap-2 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
+              <span className="whitespace-nowrap">{count} {count === 1 ? 'training' : 'trainingen'}</span>
+              {showTrendLines && <TrendSpark values={trend} />}
+            </span>
           </span>
-        </span>
-        <span className="shrink-0 text-right font-sans tabular-nums">
-          {cmp.now ? (
-            <>
-              <span className="block text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{text(cmp.now.value)}</span>
-              <span className="block text-xs" style={{ color: rowChange !== undefined ? TONE[deltaTone(rowChange)] : 'var(--color-ink-dim)' }}>
-                {first?.change !== undefined
-                  ? `${diff(first.change)} sinds ${first.near || !first.point ? `${first.weeks} wk` : shortDateNL(first.point.date, today)}`
-                  : cmp.previous && cmp.previousChange !== undefined
-                    ? `${diff(cmp.previousChange)} sinds ${shortDateNL(cmp.previous.date, today)}`
-                    : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
-              </span>
-            </>
-          ) : (
-            <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{kind === 'one_rm' ? 'Nog geen schatting' : kind === 'reps' ? 'Nog geen herhalingen' : 'Nog geen werkgewicht'}</span>
-          )}
-        </span>
-        <span className="shrink-0" style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms ease-out' }}>
-          <Icon name="omlaag" size={20} />
-        </span>
-      </button>
+          <span className="shrink-0 text-right font-sans tabular-nums">
+            {cmp.now ? (
+              <>
+                <span className="block text-base font-semibold" style={{ color: 'var(--color-ink)' }}>{text(cmp.now.value)}</span>
+                <span className="block text-xs" style={{ color: rowChange !== undefined ? TONE[deltaTone(rowChange)] : 'var(--color-ink-dim)' }}>
+                  {first?.change !== undefined
+                    ? `${diff(first.change)} sinds ${first.near || !first.point ? `${first.weeks} wk` : shortDateNL(first.point.date, today)}`
+                    : cmp.previous && cmp.previousChange !== undefined
+                      ? `${diff(cmp.previousChange)} sinds ${shortDateNL(cmp.previous.date, today)}`
+                      : count === 1 ? 'Eerste keer' : 'Geen vergelijking'}
+                </span>
+              </>
+            ) : (
+              <span className="block text-xs" style={{ color: 'var(--color-ink-dim)' }}>{kind === 'one_rm' ? 'Nog geen schatting' : kind === 'reps' ? 'Nog geen herhalingen' : 'Nog geen werkgewicht'}</span>
+            )}
+          </span>
+          <span className="shrink-0" style={{ color: 'var(--color-ink-dim)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms ease-out' }}>
+            <Icon name="omlaag" size={20} />
+          </span>
+        </button>
+      </div>
       {open && (
         <>
           {showTrendLines && (

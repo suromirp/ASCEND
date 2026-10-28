@@ -34,6 +34,7 @@ const everything: AppSettings = {
     adjustLive: false, noSpotter: false, rirPrefill: 'target',
   },
   showBodyFat: false,
+  exerciseArt: 'uit',
   figure: 'vrouw',
   bodyCheck: 'uit',
   legEase: 'uit',
