@@ -330,7 +330,7 @@ function StepRow({ step }: { step: PlanStep }) {
 // The steps of one session (summary, tags, chart, steps with intensity,
 // RPE and heart-rate zone). Shared by the guide and the training screen,
 // so both always say exactly the same thing.
-export function WorkoutSteps({ plan, compact = false, intro = true }: { plan: WorkoutPlan; compact?: boolean; intro?: boolean }) {
+function WorkoutSteps({ plan, compact = false, intro = true }: { plan: WorkoutPlan; compact?: boolean; intro?: boolean }) {
   const total = plan.timeline.reduce((sum, s) => sum + s.seconds, 0);
   const peak = Math.max(...plan.timeline.map((s) => s.intensity)) as Intensity;
   const usedLevels = [...new Set(plan.timeline.filter((s) => s.kind !== 'strength').map((s) => s.intensity))].sort() as Intensity[];

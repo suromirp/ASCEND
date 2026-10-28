@@ -105,7 +105,7 @@ const mod = (n: number, m: number) => ((n % m) + m) % m;
 
 // Weeks since a fixed Monday: the turning number of the pools that are not
 // counted from an end.
-export function weekNumber(weekStart: string): number {
+function weekNumber(weekStart: string): number {
   return Math.floor(daysBetween(EPOCH_MONDAY, mondayOfWeek(weekStart)) / 7);
 }
 

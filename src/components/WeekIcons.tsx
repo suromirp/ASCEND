@@ -57,16 +57,6 @@ export function WeekSportIcon({ template }: { template: SessionTemplate }) {
   );
 }
 
-// Het amberen driehoekje van een zware beendag; de uitleg staat in de legenda van de grafiek.
-export function LegMark() {
-  return (
-    <span className="inline-flex shrink-0" style={{ color: 'var(--color-warning)' }}>
-      <svg aria-hidden="true" viewBox="0 0 12 12" width="12" height="12" fill="currentColor"><path d="M6 1.5l5 9H1z" /></svg>
-      <span className="sr-only">Zware beendag</span>
-    </span>
-  );
-}
-
 export function MapIcon() {
   return <Svg size={16}><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z" /><path d="M9 4v13.5M15 6.5V20" /></Svg>;
 }

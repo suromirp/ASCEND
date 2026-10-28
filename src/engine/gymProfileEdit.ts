@@ -25,7 +25,7 @@ export type WeightKind = 'bars' | 'plates';
 const limitsOf = (kind: WeightKind) => (kind === 'bars' ? BAR_LIMITS : PLATE_LIMITS);
 
 // Bars are stored heaviest first, plates lightest first.
-export function sortWeights(kind: WeightKind, list: number[]): number[] {
+function sortWeights(kind: WeightKind, list: number[]): number[] {
   const unique = [...new Set(list.map(r2))];
   return unique.sort((a, b) => (kind === 'bars' ? b - a : a - b));
 }

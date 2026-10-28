@@ -151,7 +151,7 @@ const COLUMN_LABEL: Record<ColumnId, string> = {
 
 export const REQUIRED: ColumnId[] = ['date', 'workout', 'duration', 'exercise', 'weight', 'reps'];
 
-export function stripDiacritics(s: string): string {
+function stripDiacritics(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 

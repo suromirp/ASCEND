@@ -178,7 +178,7 @@ export function applyChoice(plan: RoutePlan, stageId: string, patch: Partial<Sta
 // Zwaarte is hier simpel en uitlegbaar: omhoog plus omlaag in meters. Een
 // waarde die de site niet geeft telt als 0, en die dag krijgt daarom
 // `incomplete`. Gelijke stand: de langste dag eerst.
-export function loadOf(day: ItineraryDay): number {
+function loadOf(day: ItineraryDay): number {
   return day.up + day.down;
 }
 

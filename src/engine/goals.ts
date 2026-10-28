@@ -1,8 +1,4 @@
-import type { TrainingGoal, GoalRequirement } from '../models/goals';
-
-export function findRequirement(goal: TrainingGoal, kind: GoalRequirement['kind']): GoalRequirement | undefined {
-  return goal.requirements.find((r) => r.kind === kind);
-}
+import type { TrainingGoal } from '../models/goals';
 
 // The goal with its target time (minutes) set to another value: what Akkoord
 // does on a goal-time proposal (engine/adviceEngine.ts, TARGET-TIME). Only an

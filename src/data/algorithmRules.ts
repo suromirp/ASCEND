@@ -235,7 +235,3 @@ export const ALGORITHM_RULES: AlgorithmRuleMetadata[] = [
     ruleVersion: 1,
   },
 ];
-
-export function findAlgorithmRule(ruleId: string): AlgorithmRuleMetadata | undefined {
-  return ALGORITHM_RULES.find((r) => r.ruleId === ruleId);
-}

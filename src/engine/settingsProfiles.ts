@@ -51,7 +51,7 @@ export const TODAY_PROFILE_NOTE: Record<TodayProfileChoice, string> = {
 type ProfileInput = Pick<AppSettings, 'overviews' | 'introSoundEnabled' | 'bodyCheck'>;
 
 // De losse waarden van dit moment, met de standaard waar een waarde ontbreekt.
-export function todayCardValues(settings: Partial<ProfileInput>): TodayCardValues {
+function todayCardValues(settings: Partial<ProfileInput>): TodayCardValues {
   const o = resolveOverviews(settings.overviews);
   return {
     morningCheckIn: o.morningCheckIn,

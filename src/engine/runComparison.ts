@@ -185,7 +185,7 @@ export function windowOf(topic: InsightTopic, movingSec: number): BlockOptions {
   return EFFICIENCY_BLOCK;
 }
 
-export function referenceHrOf(hr: HeartRateSettings | undefined, subjectBlockHr?: number): number | undefined {
+function referenceHrOf(hr: HeartRateSettings | undefined, subjectBlockHr?: number): number | undefined {
   const band = zoneBpm(2, hr);
   if (band) return Math.round((band[0] + band[1]) / 2);
   return subjectBlockHr !== undefined ? Math.round(subjectBlockHr) : undefined;

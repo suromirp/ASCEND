@@ -316,7 +316,7 @@ const isExerciseSets = (v: unknown): v is NonNullable<SessionLog['strengthData']
   );
 
 // The strength part of a takeover by MacroFactor; undefined when damaged.
-export function migrateManualStrength(raw: unknown): ManualStrength | undefined {
+function migrateManualStrength(raw: unknown): ManualStrength | undefined {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return undefined;
   const s = raw as Record<string, unknown>;
   if (typeof s.workoutId !== 'string') return undefined;
@@ -472,7 +472,7 @@ export function migrateWeeklyHealthCheck(check: WeeklyHealthCheck): WeeklyHealth
 // whose new field is damaged (hand-edited) keeps its reps and weight and loses
 // only that field. `rirAssumed` (true: the reps in reserve are the aim of the
 // plan, not measured) is only kept as `true` and only next to a valid `rir`.
-export function migrateSetLog(raw: SetLog): SetLog {
+function migrateSetLog(raw: SetLog): SetLog {
   if (typeof raw !== 'object' || raw === null || (!('rir' in raw) && !('kind' in raw) && !('rirAssumed' in raw))) return raw;
   const { rir, kind, rirAssumed, ...rest } = raw as SetLog;
   const out: SetLog = rest;

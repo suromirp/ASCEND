@@ -52,7 +52,7 @@ const local = (name: string) => name.slice(name.indexOf(':') + 1);
 const TOKEN = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[([\s\S]*?)\]\]>|<![^>]*>|<(\/?)([^\s/>]+)((?:[^>"']|"[^"]*"|'[^']*')*?)(\/?)>|([^<]+)/g;
 const ATTR = /([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
-export function* tokenize(xml: string): Generator<Token> {
+function* tokenize(xml: string): Generator<Token> {
   TOKEN.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = TOKEN.exec(xml))) {
@@ -120,7 +120,7 @@ export function formatKind(code: string): DateKind | undefined {
 }
 
 // Per cell format index (the `s` of a cell): is it a date or time format?
-export function parseStyles(xml: string): (DateKind | undefined)[] {
+function parseStyles(xml: string): (DateKind | undefined)[] {
   const custom = new Map<number, string>();
   const xfs: number[] = [];
   let inCellXfs = false;
@@ -142,7 +142,7 @@ export interface WorkbookSheet {
   relId: string;
 }
 
-export function parseWorkbook(xml: string): { sheets: WorkbookSheet[]; date1904: boolean } {
+function parseWorkbook(xml: string): { sheets: WorkbookSheet[]; date1904: boolean } {
   const sheets: WorkbookSheet[] = [];
   let date1904 = false;
   for (const t of tokenize(xml)) {
@@ -153,7 +153,7 @@ export function parseWorkbook(xml: string): { sheets: WorkbookSheet[]; date1904:
   return { sheets, date1904 };
 }
 
-export function parseRelationships(xml: string): Map<string, string> {
+function parseRelationships(xml: string): Map<string, string> {
   const map = new Map<string, string>();
   for (const t of tokenize(xml)) {
     if (t.kind === 'open' && t.name === 'Relationship' && t.attrs.Id && t.attrs.Target) map.set(t.attrs.Id, t.attrs.Target);
@@ -176,7 +176,7 @@ export interface SheetContext {
   date1904: boolean;
 }
 
-export function parseSheet(xml: string, ctx: SheetContext): Cell[][] {
+function parseSheet(xml: string, ctx: SheetContext): Cell[][] {
   const rows: Cell[][] = [];
   let row: Cell[] | null = null;
   // The open cell.

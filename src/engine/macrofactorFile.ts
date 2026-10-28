@@ -109,7 +109,7 @@ function unknownLayoutMessage(tables: SheetTable[]): string {
 // MacroFactor's own "xlsx" export is CSV in disguise: every row is one cell
 // holding the whole comma separated line (`Date,"Workout Duration",...`).
 // Such a sheet is turned back into a real table before anything else.
-export function unwrapCsvInCells(table: SheetTable): SheetTable {
+function unwrapCsvInCells(table: SheetTable): SheetTable {
   const lines = table.rows
     .map((row) => row.map(cellText).filter((t) => t.trim() !== ''))
     .filter((cells) => cells.length > 0);

@@ -3,6 +3,7 @@ import { useAppData } from '../state/AppDataContext';
 import { previewProposal, type PreviewEntry, type PreviewMove } from '../engine/proposalPreview';
 import { resolveVariantDuration } from '../engine/substitutions';
 import type { Advice } from '../engine/adviceEngine';
+import type { PlanChangeProposal } from '../models/planChange';
 import type { PlannedSession, SessionType } from '../models/training';
 import type { LeavePeriod } from '../models/leave';
 import { LeaveBand } from './LeaveBand';
@@ -345,6 +346,20 @@ function EntryCard({ entry, minutes, afterTest }: { entry: PreviewEntry; minutes
       </div>
       {highlighted && <span className="shrink-0"><Eyebrow as="span" tone="var(--color-action)">{entry.change === 'nieuw' ? 'Nieuw' : entry.change === 'anders' ? 'Anders' : 'Hierheen'}</Eyebrow></span>}
       {!highlighted && minutes !== undefined && !struck && <span className="shrink-0 text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>{minutes} min</span>}
+    </div>
+  );
+}
+
+// De wijzigingen van een voorstel als lijst, zonder het blad met de week: een regel per wijziging
+// (pictogram, naam, "do 29 okt > zo 1 nov", "wordt Testloop 5 km", "vervalt"). Dezelfde regels als
+// bovenaan "Zo ziet je week eruit", zodat het advies en het voorstel hetzelfde laten zien.
+export function ProposalChangeList({ proposal }: { proposal: PlanChangeProposal }) {
+  const { plannedSessions, templates, planPreviewPass } = useAppData();
+  const data = useMemo(() => previewProposal(proposal.changes, plannedSessions, templates, planPreviewPass), [proposal, plannedSessions, templates, planPreviewPass]);
+  if (data.moves.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2.5 rounded-xl border p-3.5" style={{ borderColor: 'var(--color-card-border)', background: 'var(--color-charcoal)' }}>
+      {data.moves.map((m, i) => <MoveLine key={i} move={m} />)}
     </div>
   );
 }

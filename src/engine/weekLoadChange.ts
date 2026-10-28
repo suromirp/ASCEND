@@ -68,7 +68,7 @@ export function changeStart(weekStart: string, today: string, sessions: PlannedS
 }
 
 // The program with the days of this week before `from` held as they stand.
-export function holdDaysBefore(program: Program, weekStart: string, from: string): Program {
+function holdDaysBefore(program: Program, weekStart: string, from: string): Program {
   const monday = mondayOfWeek(weekStart);
   if (from <= monday) return program;
   const until = from < addDays(monday, 7) ? from : addDays(monday, 7);
@@ -97,7 +97,7 @@ export function isRestWeekAt(program: Program, monday: string): boolean {
 }
 
 // Whole weeks until the next rest week that is not trained through.
-export function weeksToNextRestWeek(program: Program, weekStart: string): number | undefined {
+function weeksToNextRestWeek(program: Program, weekStart: string): number | undefined {
   const monday = mondayOfWeek(weekStart);
   for (let k = 1; k <= 104; k++) {
     const week = addDays(monday, 7 * k);

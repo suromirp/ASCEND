@@ -93,7 +93,7 @@ function buildTargetTemplateIds(lines: WeeklyPrescription['lines'], desiredSlots
 // (Bergconditie), but the week already has another candidate for the same
 // line (Lange Duurloop). That session already serves the line, so it
 // satisfies the target instead of being removed and replaced.
-export function satisfyWithExistingSessions(targetIds: string[], lines: WeeklyPrescription['lines'], weekSessions: PlannedSession[]): string[] {
+function satisfyWithExistingSessions(targetIds: string[], lines: WeeklyPrescription['lines'], weekSessions: PlannedSession[]): string[] {
   const available = new Map<string, number>();
   for (const s of weekSessions) if (s.status !== 'skipped') available.set(s.templateId, (available.get(s.templateId) ?? 0) + 1);
   const take = (id: string) => {

@@ -161,7 +161,7 @@ export interface WorkoutText {
 
 // The workout text for a session. `paces` is optional: without a test every
 // session runs on heart rate zones.
-export function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, paces?: RacePaces, hr?: WatchHrPlan): WorkoutText {
+function intervalsWorkoutText(plan: WorkoutPlan, template: SessionTemplate, paces?: RacePaces, hr?: WatchHrPlan): WorkoutText {
   const target: WatchTarget = paces && PACE_SESSIONS.has(template.id) ? 'PACE' : 'HR';
   const distance = DISTANCE_STEPS[template.id];
 
@@ -311,8 +311,4 @@ export function planWatchSync(
     else plan.remove.push({ plannedId, tracked: t });
   }
   return plan;
-}
-
-export function isEmptyPlan(plan: SyncPlan): boolean {
-  return plan.create.length + plan.update.length + plan.remove.length + plan.forget.length === 0;
 }

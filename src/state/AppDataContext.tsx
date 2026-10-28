@@ -307,7 +307,8 @@ import { setDurationAdjustments, setRecentSessionMaxima, recentSessionMaxima, se
 import { coachReaction } from '../engine/coach';
 import { requestPersistentStorage } from '../storage/persistence';
 import { durationScopeFor } from '../engine/durationScope';
-import { patternDays, planPass } from '../engine/planPass';
+import { patternDays, previewPlanPass } from '../engine/planPass';
+import { adviceSessionIds, weekNotice, weekNoticeConcerns, type WeekNotice } from '../engine/weekFixProposal';
 import { declinedRules, learnFromDeclines, type StoredResponse } from '../engine/learning';
 import { onDatabaseBlocked, syncProgramHorizon, type ProgramHorizonResult } from '../storage/database';
 import { planEndDay, programAnchorDate } from '../engine/programLayout';
@@ -556,6 +557,10 @@ interface AppData {
   // The rest of the planning run over a proposed week, for its preview. With
   // `leave`: as if those were your periods (a period you have not agreed to yet).
   planPreviewPass: (sessions: PlannedSession[], leave?: LeavePeriod[], restDay?: number) => PlannedSession[];
+  // What is wrong in a week and the proposal for it (engine/weekFixProposal.ts), for the card on Week.
+  // The concerns of a week at once; the proposals only when asked for (weekFixesFor, may take a few hundred ms).
+  weekNoticeFor: (weekStart: string) => WeekNotice;
+  weekFixesFor: (weekStart: string) => WeekNotice;
   // Rustdag: changing it is a proposal (engine/restDayProposal.ts); applyRestDay
   // stores the rest day and the planning together, only on Akkoord.
   planRestDay: (restDay: number) => RestDayPlan;
@@ -2298,7 +2303,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const periods = leave ?? settings.leavePeriods;
     // The weeks near, and the weeks of a period further away.
     const until = [addDays(today, 28), ...(periods ?? []).map((p) => addDays(p.endDate, 21))].sort().pop()!;
-    return planPass(sessions, {
+    return previewPlanPass(sessions, {
       today, logs: sessionLogs, templates, program, blocks: raceBlocks(trainingGoals, mainGoalId, anchor, today), afterGoals: afterGoalWindows(trainingGoals, mainGoalId, anchor, today), restDay, goalDay: anchor,
       dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
       slotDays: patternDays(templates, settings, restDay),
@@ -2306,7 +2311,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       newId: () => `preview-pass-${n++}`,
       until,
       leave: periods, hikingEnabled: isSportEnabled('hiking', settings.enabledSports), trekRest: settings.trekLegRest,
-    }).sessions;
+    });
   }, [trainingGoals, goalMilestones, settings, sessionLogs, templates, program, goalEngineConfig]);
 
   // Vrije dagen, vakanties en tochten: the proposal for adding or removing a
@@ -2439,6 +2444,54 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     ].sort((a, b) => b.priority - a.priority), declinedRules(adviceResponses, todayISO())),
     [plannerAdvice, sessionLogs, plannedSessions, templates, injuryNotes, program, goalEngineConfig, settings.enabledSports, settings.illnessEpisodes, settings.morningCheckIns, settings.legEase, settings.testJudgments, settings.askDoubtTest, settings.newTestOnStops, adviceResponses, planChangeLog, extraSessionContext, trainingGoals, goalMilestones, weather.forecast, settings.leavePeriods, settings.overviews],
   );
+
+  // The week check over the week you look at, with what is yours reported too (rule WEEK-CHECK).
+  // Two steps so drawing never waits: `weekNoticeFor` gives the concerns at once (about 10 ms), and
+  // `weekFixesFor` works out the proposals (a few hundred milliseconds) only when you ask for them in Week
+  // ("Bekijk voorstel"). Never throws: a failure leaves Week with its plain list.
+  const weekNoticeCache = useRef<{ key: unknown[]; quick: Map<string, WeekNotice>; full: Map<string, WeekNotice> } | null>(null);
+  const weekCheckInput = useCallback(() => {
+    const today = todayISO();
+    const anchor = planEndDay(trainingGoals, goalMilestones, today, settings.afterMainGoal);
+    const ladder = new Set(goalMilestones.map((m) => m.goalId));
+    const mainGoalId = mainGoal(trainingGoals, ladder)?.id;
+    const restDay = settings.restDay ?? 1;
+    const blocks = raceBlocks(trainingGoals, mainGoalId, anchor, today);
+    return {
+      sessions: plannedSessions, logs: sessionLogs, templates, today, restDay, goalDay: anchor,
+      raceDays: blocks.map((b) => b.raceDate), afterGoals: afterGoalWindows(trainingGoals, mainGoalId, anchor, today), program,
+      dailyTimeBudget: goalEngineConfig.availability.dailyTimeBudget, sameDayPairingPreference: goalEngineConfig.strategy.sameDayPairingPreference,
+      slotDays: patternDays(templates, settings, restDay),
+      minutesOf: (s: PlannedSession, t: SessionTemplate) => resolveVariantDuration(t, 'full', s.scheduledDate, program),
+      leave: settings.leavePeriods, trekRest: settings.trekLegRest,
+    };
+  }, [trainingGoals, goalMilestones, settings, plannedSessions, sessionLogs, templates, program, goalEngineConfig]);
+  const weekNoticeState = useCallback((): NonNullable<typeof weekNoticeCache.current> => {
+    const key = [weekCheckInput, advice];
+    if (!weekNoticeCache.current || weekNoticeCache.current.key.some((v, i) => v !== key[i])) weekNoticeCache.current = { key, quick: new Map(), full: new Map() };
+    return weekNoticeCache.current;
+  }, [weekCheckInput, advice]);
+  const weekNoticeFor = useCallback((weekStart: string): WeekNotice => {
+    const state = weekNoticeState();
+    const cached = state.quick.get(weekStart);
+    if (cached) return cached;
+    try {
+      const result = weekNoticeConcerns(weekCheckInput(), weekStart, adviceSessionIds(advice));
+      state.quick.set(weekStart, result);
+      return result;
+    } catch (err) {
+      console.error('De weekmelding kon niet worden berekend:', err);
+      return { concerns: [], fixes: {}, covered: [] };
+    }
+  }, [weekNoticeState, weekCheckInput, advice]);
+  const weekFixesFor = useCallback((weekStart: string): WeekNotice => {
+    const state = weekNoticeState();
+    const cached = state.full.get(weekStart);
+    if (cached) return cached;
+    const result = weekNotice(weekCheckInput(), weekStart, settings.weekFixProposal !== false, adviceSessionIds(advice));
+    state.full.set(weekStart, result);
+    return result;
+  }, [weekNoticeState, weekCheckInput, advice, settings.weekFixProposal]);
 
   // The proposal to move a test after what you noted about the evening before. Its own memo
   // so the coach advice above stays as it was; the answer is kept like any advice response.
@@ -2589,6 +2642,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     influenceMove: influenceMoveNow,
     answeredAdviceIds,
     planPreviewPass,
+    weekNoticeFor,
+    weekFixesFor,
     leavePeriods,
     planLeave,
     applyLeave,

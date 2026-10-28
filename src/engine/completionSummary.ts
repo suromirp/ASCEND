@@ -55,7 +55,7 @@ const NAMED_KINDS = 3;
 
 // "Benen A 5 keer, Bovenlichaam B 4 keer en nog 2 andere soorten": een korte
 // regel, ook bij tientallen trainingen.
-export function kindsSummary(names: string[]): string {
+function kindsSummary(names: string[]): string {
   const counts = new Map<string, number>();
   for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
   const ranked = [...counts].sort((a, b) => b[1] - a[1]);

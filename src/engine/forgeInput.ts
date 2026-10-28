@@ -13,7 +13,6 @@
 import type { Exercise } from '../models/exercise';
 import { formatNumberNL, parseNumberNL } from '../utils/number';
 import {
-  exerciseOf,
   MAX_ROW_KG,
   MAX_ROW_REPS,
   updateRow,
@@ -241,7 +240,7 @@ export function carryChange(before: WorkoutExercise, after: WorkoutExercise, row
 }
 
 // The reps the prescription asks for: the middle of the range, the bottom for "9+".
-export function targetReps(t: RowTarget): number {
+function targetReps(t: RowTarget): number {
   return t.timedSec ?? (t.failure ? t.repsLow : Math.round((t.repsLow + t.repsHigh) / 2));
 }
 
@@ -356,11 +355,6 @@ export function plateChange(step: Pick<PlateStep, 'add' | 'remove'>): string | u
   const parts = [step.add.length > 0 ? `Erbij ${list(step.add)}` : '', step.remove.length > 0 ? `eraf ${list(step.remove)}` : ''].filter(Boolean);
   return parts.length === 0 ? undefined : `${parts.join(', ')}.`;
 }
-
-export const hasPlates = (ex: WorkoutExercise): boolean => {
-  const e = exerciseOf(ex);
-  return e?.resistance === 'barbell' || e?.resistance === 'machine_plates';
-};
 
 // A training opened before its exercises changed (a renamed exercise, another
 // exercise in a slot, a program read in): what you already did or changed

@@ -224,7 +224,7 @@ export interface ReasonEffect {
 
 // --- de band -------------------------------------------------------------------------------------------
 
-export function robustBand(values: number[], floor: (center: number) => number): { center: number; half: number } | undefined {
+function robustBand(values: number[], floor: (center: number) => number): { center: number; half: number } | undefined {
   if (values.length === 0) return undefined;
   const center = median(values);
   const mad = median(values.map((v) => Math.abs(v - center)));
@@ -512,7 +512,7 @@ export function outsideSentence(e: ReasonEffect): string {
 }
 
 // "6 u 40"
-export function hoursMinutes(minutes: number): string {
+function hoursMinutes(minutes: number): string {
   const total = Math.round(minutes);
   const h = Math.floor(total / 60);
   const m = total % 60;

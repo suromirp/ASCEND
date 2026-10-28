@@ -34,7 +34,7 @@ function paceFor(templateId: string, paces: RacePaces): PaceRange | undefined {
   return idHasRole(templateId, 'easy_pace') ? paces.easy : undefined;
 }
 
-export function formatPaceChip(range: PaceRange): string {
+function formatPaceChip(range: PaceRange): string {
   return `${formatPace(range.fast)} tot ${formatPace(range.slow)} /km`;
 }
 

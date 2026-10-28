@@ -29,7 +29,7 @@ export const NOTICE_TAG = 'ascend-ochtend';
 // Het adres waar de melding naartoe leidt: Vandaag, met het blad open.
 export const NOTICE_LINK = '#/?actie=ochtend';
 
-export function timeToMinutes(time: string): number | undefined {
+function timeToMinutes(time: string): number | undefined {
   const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
   return m ? Number(m[1]) * 60 + Number(m[2]) : undefined;
 }
@@ -71,7 +71,7 @@ export function cleanMorningNotice(raw: unknown): { value: MorningNoticeSettings
 const pad = (n: number) => String(n).padStart(2, '0');
 
 // De datum van het toestel, zoals de rest van de app die telt.
-export function localDate(now: Date): string {
+function localDate(now: Date): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 

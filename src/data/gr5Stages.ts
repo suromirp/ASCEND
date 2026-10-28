@@ -187,10 +187,6 @@ export const GR5_STAGES: Gr5Stage[] = build([
   },
 ]);
 
-export function stageById(id: string): Gr5Stage | undefined {
-  return GR5_STAGES.find((s) => s.id === id);
-}
-
 export function stagesOfSection(section: SectionId): Gr5Stage[] {
   return GR5_STAGES.filter((s) => s.section === section);
 }

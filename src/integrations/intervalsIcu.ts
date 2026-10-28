@@ -231,7 +231,7 @@ function stepLengthMetres(n: unknown): number | undefined {
 
 // The averages of the running dynamics. A value outside what a body can do is a
 // glitch of the source and is dropped on its own. Undefined when nothing is left.
-export function dynamicsOf(raw: IntervalsActivity): RunDynamics | undefined {
+function dynamicsOf(raw: IntervalsActivity): RunDynamics | undefined {
   const out: RunDynamics = {};
   const put = <K extends keyof RunDynamics>(key: K, value: number | undefined, decimals = 0) => {
     if (value !== undefined) out[key] = (Math.round(value * 10 ** decimals) / 10 ** decimals) as RunDynamics[K];
@@ -286,7 +286,7 @@ export function mapIntervalsActivity(raw: IntervalsActivity): ExternalActivity |
   };
 }
 
-export function mapIntervalsActivities(raw: unknown): ExternalActivity[] {
+function mapIntervalsActivities(raw: unknown): ExternalActivity[] {
   if (!Array.isArray(raw)) throw new IntervalsError('response', MESSAGES.response);
   const seen = new Set<string>();
   const out: ExternalActivity[] = [];
@@ -828,7 +828,7 @@ export interface AgendaEvent {
   date: string;
 }
 
-export function eventsListUrl(athleteId: string, range: { from: string; to: string }): string {
+function eventsListUrl(athleteId: string, range: { from: string; to: string }): string {
   return `${INTERVALS_BASE_URL}/api/v1/athlete/${encodeURIComponent(athleteId)}/events?oldest=${range.from}&newest=${range.to}&category=WORKOUT`;
 }
 

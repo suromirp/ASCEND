@@ -40,7 +40,7 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
         <Eyebrow>Belasting per dag</Eyebrow>
         <p className="flex items-center gap-4 whitespace-nowrap text-xs" style={{ color: 'var(--color-ink-dim)' }}>
           <span className="flex items-center gap-1.5">
-            <svg viewBox="0 0 12 12" width="10" height="10" fill="var(--color-warning)" aria-hidden="true"><path d="M6 1.5l5 9H1z" /></svg>
+            <svg viewBox="0 0 12 12" width="10" height="10" fill="var(--color-ink-dim)" aria-hidden="true"><path d="M6 1.5l5 9H1z" /></svg>
             zware beendag
           </span>
           {hasPrevious && (
@@ -75,7 +75,7 @@ export function WeekRidge({ days, previous, today, bare = false }: { days: DayLo
           const done = d.date <= today;
           return (
             <g key={d.date}>
-              {d.legTemplate && d.load > 0 && <path d={`M${px - 5.5} ${py - 5} L${px} ${py - 13.5} L${px + 5.5} ${py - 5}Z`} fill="var(--color-warning)" stroke="var(--color-card)" strokeWidth="1" />}
+              {d.legTemplate && d.load > 0 && <path d={`M${px - 5.5} ${py - 5} L${px} ${py - 13.5} L${px + 5.5} ${py - 5}Z`} fill="var(--color-ink-dim)" stroke="var(--color-card)" strokeWidth="1" />}
               {isToday && <circle cx={px} cy={py} r="8" fill="var(--color-status)" fillOpacity=".22" />}
               {isToday ? (
                 <circle cx={px} cy={py} r="4.2" fill="var(--color-status)" />

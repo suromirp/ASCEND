@@ -20,13 +20,13 @@ export const SECONDARY_WEIGHT = 0.5;
 
 export type MuscleVolume = Record<MuscleGroup, number>;
 
-export const emptyMuscleVolume = (): MuscleVolume => Object.fromEntries(MUSCLE_GROUPS.map((m) => [m, 0])) as MuscleVolume;
+const emptyMuscleVolume = (): MuscleVolume => Object.fromEntries(MUSCLE_GROUPS.map((m) => [m, 0])) as MuscleVolume;
 
 export const countsAsHardSet = (set: SetLog): boolean => isWorkSet(set) && (set.rir === undefined || set.rir <= HARD_SET_MAX_RIR);
 
 // The exercise of a stored entry: by its own id when that is one of ours, else
 // by its name. Absent when the list does not know it for sure.
-export function exerciseOfEntry(entry: ExerciseSetLog): Exercise | undefined {
+function exerciseOfEntry(entry: ExerciseSetLog): Exercise | undefined {
   const byId = exerciseById(entry.exerciseId);
   if (byId) return byId;
   const matched = matchExercise(entry.exerciseName);

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { SettingsPageId } from '../../data/settingsLayout';
 import { Icon } from '../icons';
 import { jumpRoute } from './jump';
@@ -21,22 +21,6 @@ export function SettingsLinkRow({ page, row, label = 'Instellingen' }: { page: S
       <span>{label}</span>
       <Icon name="verder" size={16} />
     </button>
-  );
-}
-
-// Het tandwiel van een pagina die zijn eigen instellingen heeft (Forge): 44 bij 44 px.
-export function SettingsGearLink({ page, row, label }: { page: SettingsPageId; row?: string; label: string }) {
-  const r = jumpRoute(page, row ? { jumpTo: row } : {});
-  return (
-    <Link
-      to={r.to}
-      state={r.state}
-      aria-label={label}
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border"
-      style={{ borderColor: 'var(--color-control-border)', color: 'var(--color-ink-dim)' }}
-    >
-      <Icon name="tandwiel" />
-    </Link>
   );
 }
 

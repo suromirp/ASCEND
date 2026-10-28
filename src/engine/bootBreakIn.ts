@@ -127,7 +127,7 @@ export function bootBreakInStatus(input: {
 
 // Een lange wandeling of bergtocht met rugzak: een tocht (avontuur), of een
 // wandeling met een rugzakdoel. Hardlopen valt hier nooit onder.
-export function isLongHikeTemplate(t: Pick<SessionTemplate, 'type' | 'sport' | 'outdoorTarget'>): boolean {
+function isLongHikeTemplate(t: Pick<SessionTemplate, 'type' | 'sport' | 'outdoorTarget'>): boolean {
   if (t.type === 'strength' || t.type === 'recovery') return false;
   if (t.type === 'adventure') return true;
   return templateSport(t as SessionTemplate) === 'hiking' && (t.outdoorTarget?.backpackWeightKg ?? 0) > 0;

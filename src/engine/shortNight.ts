@@ -49,7 +49,7 @@ export interface NightInfo {
 
 // A verdict holds for the numbers you saw: when the watch later shows other minutes for
 // that night, it lapses. A verdict without minutes (from before) holds as it always did.
-export function judgmentHolds(judgment: NightJudgment | undefined, minutes: number | undefined): boolean {
+function judgmentHolds(judgment: NightJudgment | undefined, minutes: number | undefined): boolean {
   if (!judgment) return false;
   return judgment.minutes === undefined || judgment.minutes === minutes;
 }

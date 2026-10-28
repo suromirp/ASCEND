@@ -403,7 +403,7 @@ export function clothingForTraining(input: {
   return clothingFromWeather(w, kind, input.durationMinutes, { heatSession: isHeatSession(input.template), adjustC: input.adjustC });
 }
 
-export function clothingFromWeather(w: SessionWeather, kind: ClothingKind, minutes: number, opts: { heatSession?: boolean; adjustC?: number } = {}): ClothingAdvice {
+function clothingFromWeather(w: SessionWeather, kind: ClothingKind, minutes: number, opts: { heatSession?: boolean; adjustC?: number } = {}): ClothingAdvice {
   return clothingAdvice({
     kind,
     minutes,

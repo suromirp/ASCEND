@@ -153,7 +153,7 @@ function loadAt(template: SessionTemplate, program: Program, date: string): Load
 
 // The key session of the week (long run or mountain hike) before and after
 // the repeat: this week, and the heaviest week of the wave.
-export function keyImpact(program: Program, weekStart: string, plannedSessions: PlannedSession[], templates: SessionTemplate[]): KeyImpact | undefined {
+function keyImpact(program: Program, weekStart: string, plannedSessions: PlannedSession[], templates: SessionTemplate[]): KeyImpact | undefined {
   const monday = mondayOfWeek(weekStart);
   const key = plannedSessions.find((s) => s.scheduledDate >= monday && s.scheduledDate <= addDays(monday, 6) && s.status !== 'skipped' && idHasRole(s.templateId, 'key', templates));
   const template = key && templates.find((t) => t.id === key.templateId);
@@ -200,7 +200,7 @@ export interface RepeatWeekInputs {
   respondedIds: Set<string>;
 }
 
-export function repeatWeekId(weekStart: string): string {
+function repeatWeekId(weekStart: string): string {
   return `repeat-week:${weekStart}`;
 }
 
@@ -242,7 +242,7 @@ export function proposeRepeatWeek(inputs: RepeatWeekInputs): RepeatWeekProposal 
 
 // --- 5. words ---------------------------------------------------------------
 
-export function describeLoad(l: LoadLine): string {
+function describeLoad(l: LoadLine): string {
   const parts = [`${l.minutes} minuten`];
   if (l.elevationGainM) parts.push(`${Math.round(l.elevationGainM)} m omhoog`);
   if (l.backpackKg) parts.push(`${String(l.backpackKg).replace('.', ',')} kg rugzak`);

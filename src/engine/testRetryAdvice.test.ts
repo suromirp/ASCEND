@@ -36,6 +36,9 @@ describe('TEST-RETRY: a new attempt after a test with a lot of standing still', 
     expect(a.effect).toContain('Met Akkoord wordt Heuvelintervallen op za 31 oktober een testloop van 5 km.');
     expect(a.effect).toContain('Kies een route zonder stoplichten en zet auto-pauze uit.');
     expect(a.effect).toContain('Liever niet');
+    expect(a.lead).toBe('Je testloop van di 27 oktober had 2:16 stilstand, dus hij is iets te gunstig.');
+    expect(a.tip).toBe('Kies een route zonder stoplichten en zet auto-pauze uit.');
+    expect(a.brief).toBe('Di 27 okt: 2:16 stilgestaan');
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[\u2013\u2014]/);
     expect(a.proposal!.changes).toHaveLength(1);
     expect(a.proposal!.changes[0]).toMatchObject({ plannedSessionId: 'hills', action: 'move', fromDate: '2026-10-31', toDate: '2026-10-31', templateId: 'tpl_test_run' });
@@ -158,10 +161,22 @@ describe('TEST-RETRY: ruimte maken in een gewone week', () => {
     expect(sessions.find((s) => s.id === 'long')!.scheduledDate).not.toBe('2026-11-01');
   });
 
-  it('verschuift een beendag die niet vastgezet is naar na de test, in hetzelfde voorstel', () => {
+  it('verschuift een beendag die niet vastgezet is alleen naar een dag die geen nieuw advies geeft, anders laat hij hem gaan', () => {
     const a = retry({ plannedSessions: week(undefined, ['upA2', 'legs2']) })!;
-    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')).toMatchObject({ action: 'move', fromDate: '2026-10-29' });
-    expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')!.toDate! >= '2026-10-31').toBe(true);
+    const legs = a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')!;
+    const long = a.proposal!.changes.find((c) => c.plannedSessionId === 'long');
+    // De lange duurloop gaat naar ma 2 november; Benen A op di 3 november zou er direct achter staan en meteen een
+    // nieuw advies geven (docs/beslissingen/2026-10-28-voorstel-eindstand.md). Dan vervalt hij liever met Akkoord.
+    expect(long).toMatchObject({ action: 'move', toDate: '2026-11-02' });
+    expect(legs.action === 'move' ? legs.toDate : 'vervalt').not.toBe('2026-11-03');
+    expect(a.effect).toContain('Benen A (zwaar) van do 29 oktober laat je deze week gaan');
+  });
+
+  it('verschuift een beendag naar na de test als daar een dag voor is, in hetzelfde voorstel', () => {
+    const a = retry({ plannedSessions: week(undefined, ['upA2', 'legs2', 'walk', 'long']) })!;
+    const legs = a.proposal!.changes.find((c) => c.plannedSessionId === 'legs')!;
+    expect(legs).toMatchObject({ action: 'move', fromDate: '2026-10-29' });
+    expect(legs.toDate! >= '2026-10-31').toBe(true);
     expect(a.effect).toContain('na de test');
   });
 

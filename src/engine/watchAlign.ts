@@ -57,7 +57,7 @@ function sameAtShownPrecision(field: MeasuredField, a: number, b: number): boole
 
 // --- what the watch measured ---------------------------------------------------------
 
-export function watchValues(activity: ExternalActivity): Partial<Record<MeasuredField, Value>> {
+function watchValues(activity: ExternalActivity): Partial<Record<MeasuredField, Value>> {
   return sourceNumbers(activity);
 }
 

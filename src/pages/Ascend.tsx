@@ -53,7 +53,7 @@ const START_CHIPS: { label: string; tile: AddTileId; details?: GoalDetails }[] =
   { label: 'Fit blijven', tile: 'fit' },
 ];
 
-export function AscentTabPlusButton({ onClick }: { onClick: () => void }) {
+function AscentTabPlusButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-label="Doel toevoegen" className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ color: 'var(--color-on-light)' }}>
       <Icon name="plus" size={24} />

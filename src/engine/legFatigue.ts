@@ -231,7 +231,7 @@ function adaptKind(t: SessionTemplate, e: FatigueEvent): AdaptKind | undefined {
 // 1.0 nothing similar in 6 weeks; 0.8 the last one 3 to 6 weeks ago; 0.75
 // one in the last 3 weeks; 0.6 two or more (Maeo e.a. 2017; Doma e.a. 2017;
 // Byrnes e.a. 1985). Only sessions before this one count.
-export function adaptationFactor(event: FatigueEvent, kind: AdaptKind, all: FatigueEvent[], byId: Map<string, SessionTemplate>): number {
+function adaptationFactor(event: FatigueEvent, kind: AdaptKind, all: FatigueEvent[], byId: Map<string, SessionTemplate>): number {
   const similar = all.filter((o) => {
     if (o.id === event.id || o.date >= event.date) return false;
     const t = byId.get(o.templateId);

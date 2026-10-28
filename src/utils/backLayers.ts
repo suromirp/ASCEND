@@ -69,7 +69,7 @@ export function layerIdOf(state: unknown): number {
 }
 
 // De stap van de router (react-router zet key en idx in history.state).
-export function routerKeyOf(state: unknown): string | undefined {
+function routerKeyOf(state: unknown): string | undefined {
   if (typeof state !== 'object' || state === null) return undefined;
   const { key, idx } = state as Record<string, unknown>;
   if (typeof key === 'string') return `key:${key}`;

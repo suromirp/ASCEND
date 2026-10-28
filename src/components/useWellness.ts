@@ -48,7 +48,3 @@ export function useTodayWatch(today: string): { reading: WellnessReading | undef
   const reading = useMemo(() => todayWellness(today, metrics, { ask, judgments, excludedMornings }), [today, metrics, ask, judgments, excludedMornings]);
   return { reading, linked, sleepOn };
 }
-
-export function useTodayWellness(today: string): WellnessReading | undefined {
-  return useTodayWatch(today).reading;
-}

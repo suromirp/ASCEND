@@ -61,7 +61,7 @@ function readField(log: SessionLog, field: SourceField): number | undefined {
 }
 
 // A log that follows the source at all.
-export function followsSource(log: SessionLog): boolean {
+function followsSource(log: SessionLog): boolean {
   return fromIntervals(log) && log.type !== 'strength' && !!(log.cardioData ?? log.outdoorData);
 }
 

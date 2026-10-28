@@ -46,7 +46,7 @@ const platesCache = new Map<string, number[]>();
 // Every weight you can make with the plates on ONE side (as many of each as
 // you like), up to maxKg, ascending, without 0. Counted in hundredths of a kg
 // so 1,25 + 2,5 never drifts.
-export function plateSums(platesKg: number[], maxKg = 150): number[] {
+function plateSums(platesKg: number[], maxKg = 150): number[] {
   const key = `${platesKg.join(',')}|${maxKg}`;
   const cached = platesCache.get(key);
   if (cached) return cached;
@@ -159,7 +159,7 @@ export function usedOnlyWeights(usedKg: number[] | undefined): number[] | undefi
 
 // The rack of two dumbbells together: every weight doubled, so the weights are
 // the sums of two equal dumbbells from the rack (steps of twice the step).
-export function totalRack(d: DumbbellRack): DumbbellRack {
+function totalRack(d: DumbbellRack): DumbbellRack {
   return { startKg: r2(2 * d.startKg), stepKg: r2(2 * d.stepKg), upToKg: r2(2 * d.upToKg), thenStepKg: r2(2 * d.thenStepKg), maxKg: r2(2 * d.maxKg) };
 }
 

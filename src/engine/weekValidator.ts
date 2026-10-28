@@ -62,6 +62,9 @@ export interface Finding {
   subjectId: string;
   level: LockLevel;
   message: string;
+  // TEST-FRESH only: the leg index on the test day and the line it is held to.
+  legIndex?: number;
+  limit?: number;
 }
 
 export interface CheckInput {
@@ -91,6 +94,22 @@ export interface CheckInput {
   // Rest after a tocht (Instellingen): 'soft' (default) accepts the short
   // version of a heavy leg day from 48 hours after a tocht, 'strict' keeps 72.
   trekRest?: 'soft' | 'strict';
+  // Report also a training on the rest day that you (or an accepted proposal) fixed in place, level 1.
+  // Off by default: the planning run counts the same findings as before (engine/weekConcerns.ts sets it).
+  reportYours?: boolean;
+  // Ids of sessions with a lock of yours (level 1) that the repair may move or change this time. Only for
+  // a proposal with Akkoord (engine/weekFixProposal.ts): the check itself never touches what is yours.
+  mayMove?: string[];
+}
+
+// The days of a week with no training: a recovery walk counts as rest, a skipped session is gone and a
+// logged training counts. One notion for the REST-DAY rule, Week and TEST-RETRY.
+export function freeDaysOfWeek(anyDay: string, sessions: PlannedSession[], logs: SessionLog[], templateById: Map<string, SessionTemplate>): string[] {
+  const monday = mondayOfWeek(anyDay);
+  const trains = (templateId: string) => templateById.get(templateId)?.type !== 'recovery';
+  return Array.from({ length: 7 }, (_, i) => addDays(monday, i)).filter((day) =>
+    !sessions.some((o) => o.status !== 'skipped' && o.scheduledDate === day && trains(o.templateId))
+    && !logs.some((l) => l.completedDate === day && trains(l.templateId)));
 }
 
 const HORIZON_DAYS = 7 * 44;
@@ -183,7 +202,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
 
     // The rest day stays free; what you put there yourself is your choice.
-    if (input.restDay && t.type !== 'recovery' && !leave.inTrek(s) && isoWeekday(s.scheduledDate) === input.restDay && level(s) >= 2) {
+    if (input.restDay && t.type !== 'recovery' && !leave.inTrek(s) && isoWeekday(s.scheduledDate) === input.restDay && (level(s) >= 2 || (!!input.reportYours && level(s) === 1 && freeDaysOfWeek(s.scheduledDate, input.sessions, input.logs, byId).length === 0))) {
       findings.push({ rule: 'REST-DAY', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat op je rustdag (${day(s.scheduledDate)}).` });
     }
 
@@ -254,7 +273,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
       const limit = hasRole(t, 'race') ? FATIGUE_THRESHOLDS.race.doubt : FATIGUE_THRESHOLDS.test.fresh;
       const legIndex = freshnessAt(s.scheduledDate, around(s.scheduledDate, 52).filter((o) => o.id !== s.id), byId, recentLogs).index;
       if (legIndex > limit) {
-        findings.push({ rule: 'TEST-FRESH', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} op ${day(s.scheduledDate)}: beenindex ${legIndex.toFixed(1).replace('.', ',')}, grens ${limit}.` });
+        findings.push({ rule: 'TEST-FRESH', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), legIndex, limit, message: `${name} op ${day(s.scheduledDate)}: beenindex ${legIndex.toFixed(1).replace('.', ',')}, grens ${limit}.` });
       }
       continue;
     }
@@ -337,7 +356,8 @@ export function repairWeeks(input: CheckInput): RepairResult {
   // With a holiday or a trek in the plan nothing is stacked on a day that
   // has no time budget: a session that has to move takes an empty day.
   const leaveActive = (input.leave?.length ?? 0) > 0;
-  const movable = (s: PlannedSession) => level(s) === 3 && !s.raceBlock && !leave.inTrek(s);
+  const yours = new Set(input.mayMove ?? []);
+  const movable = (s: PlannedSession) => (level(s) === 3 || (level(s) === 1 && yours.has(s.id))) && !s.raceBlock && !leave.inTrek(s);
   let sessions = input.sessions;
   const repairs: Repair[] = [];
   const tried = new Set<string>();
@@ -427,7 +447,7 @@ export function repairWeeks(input: CheckInput): RepairResult {
     // the system's strength before it (also a test you placed yourself).
     const next = findings
       // A test that is on the wrong day itself waits for its proposal first.
-      .filter((f) => ((f.level === 3 && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
+      .filter((f) => (((f.level === 3 || (f.level === 1 && yours.has(f.subjectId))) && movable(byIdNow.get(f.subjectId)!)) || ((f.level === 1 || f.level === 2) && f.rule === 'TEST-FRESH' && !findings.some((o) => o !== f && o.subjectId === f.subjectId))) && !tried.has(key(f)))
       .sort((a, b) => RULE_ORDER.indexOf(a.rule) - RULE_ORDER.indexOf(b.rule) || a.date.localeCompare(b.date))[0];
     if (!next) return { sessions, repairs, remaining: findings };
     tried.add(key(next));

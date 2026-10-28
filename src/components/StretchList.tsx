@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { Stretch } from '../models/training';
-import { Card } from './ui';
 import { CountdownTimer } from './CountdownTimer';
 
 import { Icon } from './icons';
@@ -43,34 +42,5 @@ export function StretchItems({ stretches, className = 'mt-3 flex flex-col' }: { 
         <CountdownTimer initialSeconds={timerFor.durationSec ?? 30} label={timerFor.name} onClose={() => setTimerFor(null)} />
       )}
     </>
-  );
-}
-
-export function StretchList({
-  title,
-  stretches,
-  className = 'mt-5',
-}: {
-  title: string;
-  stretches: Stretch[];
-  className?: string;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Card className={className}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="min-h-[44px] flex w-full items-center justify-between text-left"
-        aria-expanded={open}
-      >
-        <span className="text-sm font-medium" style={{ color: 'var(--color-ink)' }}>{title}</span>
-        <span className="flex items-center gap-1 font-sans text-xs tabular-nums" style={{ color: 'var(--color-ink-dim)' }}>
-          {stretches.length} oefeningen
-          <span className="transition-transform" style={{ transform: open ? 'rotate(90deg)' : undefined }}><Icon name="verder" size={16} /></span>
-        </span>
-      </button>
-      {open && <StretchItems stretches={stretches} />}
-    </Card>
   );
 }

@@ -313,7 +313,3 @@ export const EVIDENCE_REGISTRY: EvidenceSource[] = [
     lastReviewed: REVIEWED,
   },
 ];
-
-export function findEvidence(id: string): EvidenceSource | undefined {
-  return EVIDENCE_REGISTRY.find((e) => e.id === id);
-}

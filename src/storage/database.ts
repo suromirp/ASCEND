@@ -267,7 +267,7 @@ export const SessionTemplatesRepo = {
 // belongs to the Monday-week of the day it is on. Every write goes through
 // here, so a move to another week can't leave it counted in its old week
 // too (production bug: totals and "x / 7" doubled after a cross-week move).
-export function withDerivedWeek(s: PlannedSession): PlannedSession {
+function withDerivedWeek(s: PlannedSession): PlannedSession {
   const monday = mondayOfWeek(s.scheduledDate);
   return s.weekStartDate === monday ? s : { ...s, weekStartDate: monday };
 }
@@ -520,8 +520,6 @@ export const RecoveryMetricsRepo = {
   putAll: (metrics: RecoveryMetric[]) => putAll('recoveryMetrics', metrics),
   delete: (id: string) => del('recoveryMetrics', id),
 };
-export const BodyMetricsRepo = { getAll: () => getAll('bodyMetrics') as Promise<BodyMetric[]> };
-export const NutritionMetricsRepo = { getAll: () => getAll('nutritionMetrics') as Promise<NutritionMetric[]> };
 
 export const MetaRepo = {
   get: async <T,>(key: string): Promise<T | undefined> => {
@@ -707,6 +705,10 @@ export interface AppSettings {
   // waits for your answer) gets a proposal for a new attempt in place of the next hard run.
   // Absent = on. Optional and additive.
   newTestOnStops?: boolean;
+  // "Voorstel bij een probleem in de week": what is wrong in a week and may not be repaired by
+  // ASCEND itself (a training you or an accepted proposal fixed) gets a proposal with Akkoord.
+  // Off keeps the notice and the lines in the rows, only the proposal is gone. Absent = on.
+  weekFixProposal?: boolean;
   // "Stilstaan bij een testloop": 'skip' (advice, absent = skip) leaves the time of a stop at a
   // traffic light out of the fastest 5 km, 'count' keeps the clock as it ran. Read when the series is
   // read; what is stored stays as it was. Optional and additive.
