@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WeekNotice as WeekNoticeData } from '../engine/weekFixProposal';
+import { TAKEN_LINE, type WeekNotice as WeekNoticeData } from '../engine/weekFixProposal';
 import { noticeHeadline } from '../engine/weekConcerns';
 import { useAppData } from '../state/AppDataContext';
 import { ProposalSheet } from './ProposalSheet';
@@ -18,7 +18,7 @@ export function WeekNotice({ notice }: { notice: WeekNoticeData }) {
   const { answeredAdviceIds, settings } = useAppData();
   const [proposalId, setProposalId] = useState<string | null>(null);
   const [allOpen, setAllOpen] = useState(false);
-  const { concerns, fixes } = notice;
+  const { concerns, fixes, covered } = notice;
   if (concerns.length === 0) return null;
 
   const withFix = concerns.map((c) => fixes[c.key]).filter((a): a is NonNullable<typeof a> => !!a);
@@ -28,6 +28,9 @@ export function WeekNotice({ notice }: { notice: WeekNoticeData }) {
   const shown = concerns.slice(0, SHOWN);
   const rest = concerns.length - shown.length;
   const quiet = !open && !!declined;
+  const openCount = withFix.filter((a) => !answeredAdviceIds.has(a.id)).length;
+  // Na een Liever niet op het eerste voorstel zie je wat er nog openstaat.
+  const stillOpen = !!declined && openCount > 0;
   const sheetAdvice = withFix.find((a) => a.id === proposalId);
 
   return (
@@ -49,9 +52,15 @@ export function WeekNotice({ notice }: { notice: WeekNoticeData }) {
           {rest > 0 && <TextButton onClick={() => setAllOpen(true)}>en nog {rest}</TextButton>}
         </div>
       )}
+      {stillOpen && (
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{`Nog ${openCount} ${openCount === 1 ? 'punt' : 'punten'} met een voorstel.`}</p>
+      )}
       {open && <PrimaryButton onClick={() => setProposalId(open.id)}>Bekijk voorstel</PrimaryButton>}
       {quiet && <TextButton onClick={() => setProposalId(declined!.id)}>Toch een voorstel</TextButton>}
-      {proposalsOn && withFix.length === 0 && (
+      {covered.length > 0 && (
+        <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>{TAKEN_LINE}</p>
+      )}
+      {proposalsOn && withFix.length === 0 && covered.length === 0 && (
         <p className="text-sm leading-snug" style={{ color: 'var(--color-ink-dim)' }}>ASCEND vond deze week geen dag die beter past.</p>
       )}
 

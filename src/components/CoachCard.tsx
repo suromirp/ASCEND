@@ -1,8 +1,8 @@
-// ASCEND: coach card on Today (Fase 3): the main piece of advice from
-// engine/adviceEngine.ts as one compact card; all of them, each with what ASCEND suggests and, one tap
-// away, why (trigger -> rule -> effect). Visual pass (production feedback:
-// "mag wat mooier, visueler"): an icon per kind of advice, the suggestion
-// up front, the why folded into a quiet panel, clear pill actions.
+// ASCEND: de coachkaart op Vandaag. Het belangrijkste advies uit engine/adviceEngine.ts als een compacte
+// kaart: pictogram per soort, de titel en de korte regel (`brief`) erbij. Een tik opent het blad
+// (`AdviceItem`): de feitregel (`lead`), de wijzigingen als lijst, hoogstens een tip, dan de knoppen.
+// Het waarom zit dicht achter "Waarom?". Akkoord is het enige gevulde mint als het de enige keuze is;
+// een advies zonder `lead` houdt zijn alinea (`effect`). Zie docs/beslissingen/2026-10-28-adviesblad-compact.md.
 
 import { ProposalChangeList, ProposalSheet } from './ProposalSheet';
 import { useState, type ReactNode } from 'react';

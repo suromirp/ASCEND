@@ -38,7 +38,7 @@ describe('TEST-RETRY: a new attempt after a test with a lot of standing still', 
     expect(a.effect).toContain('Liever niet');
     expect(a.lead).toBe('Je testloop van di 27 oktober had 2:16 stilstand, dus hij is iets te gunstig.');
     expect(a.tip).toBe('Kies een route zonder stoplichten en zet auto-pauze uit.');
-    expect(a.brief).toBe('Dinsdag 2:16 stilgestaan');
+    expect(a.brief).toBe('Di 27 okt: 2:16 stilgestaan');
     expect(`${a.title}${a.effect}${a.why}`).not.toMatch(/[\u2013\u2014]/);
     expect(a.proposal!.changes).toHaveLength(1);
     expect(a.proposal!.changes[0]).toMatchObject({ plannedSessionId: 'hills', action: 'move', fromDate: '2026-10-31', toDate: '2026-10-31', templateId: 'tpl_test_run' });

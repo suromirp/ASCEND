@@ -2,9 +2,12 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { computeAdvice, type AdviceInputs } from './adviceEngine';
 import { buildDefaultProgramData } from '../data/defaultProgram';
 import { applyPlanChangeItems } from './proposalEngine';
-import { planPass } from './planPass';
+import { planPass, patternDays } from './planPass';
 import { setFreshnessContext } from './scheduler';
 import { addDays } from '../utils/dates';
+import { previewProposal } from './proposalPreview';
+import { weekConcerns } from './weekConcerns';
+import { weekNotice } from './weekFixProposal';
 import type { PlannedSession, SessionLog } from '../models/training';
 
 const { templates } = buildDefaultProgramData();
@@ -72,6 +75,12 @@ describe('TEST-RETRY neemt de rustdag van een week alleen in als die week een an
       const key = (list: PlannedSession[]) => list.map((s) => `${s.id}:${s.scheduledDate}:${s.status}`).sort();
       expect(key(pass.sessions)).toEqual(key(applied));
       expect(trainedDays(pass.sessions, '2026-11-02')).toBeLessThanOrEqual(6);
+      // Week meldt niets voor die week: de week heeft een rustdag, ook al staat de lange duurloop op de ingestelde.
+      const check = { sessions: applied, logs: [testLog()], templates, today: '2026-10-28', restDay: 1 };
+      expect(weekConcerns(check, '2026-11-02')).toEqual([]);
+      const notice = weekNotice(check, '2026-11-02', true);
+      expect(notice.concerns).toEqual([]);
+      expect(notice.fixes).toEqual({});
     });
   }
 
@@ -91,4 +100,23 @@ describe('TEST-RETRY neemt de rustdag van een week alleen in als die week een an
     expect(a.proposal!.changes.find((c) => c.plannedSessionId === 'long')).toMatchObject({ action: 'move' });
     expect(a.proposal!.changes.some((c) => c.action === 'remove' && c.plannedSessionId !== 'legs' && c.plannedSessionId !== 'walk')).toBe(false);
   });
+});
+
+describe('voorstel, voorvertoning en uitkomst zijn gelijk', () => {
+  for (const restDay of [1, 4] as const) {
+    it(`rustdag ${restDay}: de rustige duurloop is na Akkoord overgeslagen en de week heeft een rustdag`, () => {
+      const a = retryOf(ownerWeek(), { restDay } as Partial<AdviceInputs>)!;
+      expect(a).toBeDefined();
+      const sessions = ownerWeek();
+      const pass = (list: PlannedSession[]) => planPass(list, { today: '2026-10-28', logs: [testLog()], templates, program: null, blocks: [], restDay, goalDay: '2027-08-01', until: '2026-12-31', slotDays: patternDays(templates, {} as never, restDay), newId: () => 'new' }).sessions;
+      const preview = previewProposal(a.proposal!.changes, sessions, templates, pass);
+      const applied = pass(applyPlanChangeItems(a.proposal!.changes, sessions, undefined, lockProposal).sessions);
+      const easy = applied.find((s) => s.id === 'easy')!;
+      const lead = a.proposal!.changes.find((c) => c.plannedSessionId === 'easy');
+      expect(lead?.action).toBe('remove');
+      expect(easy.status).toBe('skipped');
+      expect(preview.moves.some((m) => m.name === 'Rustige duurloop' && m.action === 'remove')).toBe(true);
+      expect(trainedDays(applied, '2026-11-02')).toBeLessThanOrEqual(6);
+    });
+  }
 });

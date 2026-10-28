@@ -31,9 +31,9 @@ import type { PlanChangeItem, PlanChangeProposal } from '../models/planChange';
 import type { IllnessEpisode } from '../models/illness';
 import { activeIllness, isIllnessDay, recoveryRamp } from './illness';
 import { findHeavyConflicts, freshnessAt, isHardRun, respectsHeavySpacing, dayHasRoomFor, isLegHeavyTemplate, isIntentionalBackToBack, heavyAxes, HEAVY_AXIS_LABEL } from './scheduler';
-import { legEaseCardSession } from './legDayEase';
+import { LEG_EASE_INDEX, legEaseCardSession } from './legDayEase';
 import { isTemplatePlannable, type EnabledSports } from './sports';
-import { addDays, daysBetween, formatDateNL, mondayOfWeek, weekDates, weekdayLongNL, weekdayShortNL } from '../utils/dates';
+import { addDays, daysBetween, formatDateNL, formatShortDayNL, mondayOfWeek, weekDates, weekdayLongNL, weekdayShortNL } from '../utils/dates';
 import { makeId } from '../utils/id';
 import { plannedRpeTop, EASY_RPE_TOP } from './coach';
 import { proposeExtraSession, type ExtraAdviceInputs } from './extraRun';
@@ -48,7 +48,7 @@ import { awaitsEffort, testStopsRemark } from './testJudgment';
 import { manyStops, stopsShort } from './bestEffort';
 import { hasRole, idIsTestOrRace } from './templateRoles';
 import { leaveDays, lightDays } from './leave';
-import { lockLevel } from './weekValidator';
+import { freeDaysOfWeek, lockLevel } from './weekValidator';
 import type { LeavePeriod } from '../models/leave';
 import { weatherAdvice } from './weatherSwap';
 import { LEG_BODY_PARTS } from './legSpots';
@@ -1210,8 +1210,10 @@ function testRetryAdvice(inputs: AdviceInputs, templateById: Map<string, Session
     : `Je testloop van ${shortDate(last.date)} was duidelijk trager dan je vorige en wacht nog op je antwoord, dus hij telt nog niet mee.`;
   const longDay = weekdayLongNL(last.date);
   const dayName = `${longDay.charAt(0).toUpperCase()}${longDay.slice(1)}`;
+  const shortDay = formatShortDayNL(last.date);
+  const dayLabel = `${shortDay.charAt(0).toUpperCase()}${shortDay.slice(1)}`;
   const brief = stops
-    ? `${dayName} ${(last.stoppedSec ?? 0) > 60 ? stoppedTime(last.stoppedSec ?? 0) : `${last.stops} keer`} stilgestaan`
+    ? `${dayLabel}: ${(last.stoppedSec ?? 0) > 60 ? stoppedTime(last.stoppedSec ?? 0) : `${last.stops} keer`} stilgestaan`
     : `${dayName} trager dan je vorige, wacht op je antwoord`;
   const tip = stops ? 'Kies een route zonder stoplichten en zet auto-pauze uit.' : 'Zorg dat je die dag uitgerust aan de start staat.';
   const why = 'De testloop is het meetpunt voor je tempo\'s en je voorspelde tijd. Een test met veel stilstaan of een dag die niet klopte geeft een tempo dat niet helemaal van jou is. Eén nieuwe poging op de plek van je eerstvolgende harde loop kost geen extra belasting: je traint niet meer, alleen anders. ASCEND zoekt de dag die het minst verandert. Staat er een zware beendag of de lange duurloop in de weg, dan schuift die mee naar een dag waar hij past, in hetzelfde voorstel. Wat jij zelf vastzette, schuift of laat ASCEND alleen gaan met jouw Akkoord, met de naam erbij. Alleen jij beslist: dit is een voorstel.';
@@ -1326,12 +1328,7 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
     // A rest day is a day of the week without training (a recovery walk counts as rest), the same notion as
     // the REST-DAY rule and the rest day swap. A move may take the last rest day of a week only when the
     // same proposal lets the lightest training of that week go (decision 2026-10-28-nieuwe-testpoging-rustdag.md).
-    const hasRest = (list: PlannedSession[], anyDay: string) => {
-      const monday = mondayOfWeek(anyDay);
-      return Array.from({ length: 7 }, (_, i) => addDays(monday, i)).some((day) =>
-        !list.some((o) => o.scheduledDate === day && templateById.get(o.templateId)?.type !== 'recovery')
-        && !inputs.logs.some((l) => l.completedDate === day && templateById.get(l.templateId)?.type !== 'recovery'));
-    };
+    const hasRest = (list: PlannedSession[], anyDay: string) => freeDaysOfWeek(anyDay, list, inputs.logs, templateById).length > 0;
     const lightestToDrop = (list: PlannedSession[], anyDay: string, except: string[]): PlannedSession | undefined => {
       const rank = (o: PlannedSession) => {
         const t = templateById.get(o.templateId);
@@ -1350,8 +1347,11 @@ function retryPlansFor(found: PlannedSession, inputs: AdviceInputs, templateById
       restBlocked = false;
       const t = templateById.get(s.templateId)!;
       const strength = t.type === 'strength';
-      const targets = strength ? (isLegHeavyTemplate(t) ? [0, 1, 2, 3] : [1, -1, 2, -2, 3]) : [2, 3, 4, 5, 6, 7];
       const others = state.filter((o) => o.id !== s.id);
+      // A heavy leg day goes first to a day the legs can carry it (the line of the quiet note when you move one yourself);
+      // only when no such day fits it goes to a tired one, as before, and the note in the sheet says so.
+      const calm = (off: number) => freshnessAt(addDays(date, off), others, templateById, inputs.logs).index <= LEG_EASE_INDEX;
+      const targets = strength ? (isLegHeavyTemplate(t) ? [0, 1, 2, 3].sort((x, y) => Number(!calm(x)) - Number(!calm(y))) : [1, -1, 2, -2, 3]) : [2, 3, 4, 5, 6, 7];
       // First a day that keeps the rest day of its week; only then one that costs it, with the lightest training let go.
       for (const letGo of [false, true]) for (const off of targets) {
         const d = addDays(date, off);

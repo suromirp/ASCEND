@@ -42,18 +42,25 @@ describe('weekConcerns', () => {
   });
 
   it('een vrije dag elders: de training op je rustdag heet dat ook zo', () => {
-    const list = weekConcerns(input(fullWeek().filter((s) => s.id !== 'w-1')), MONDAY);
-    const rest = list.find((c) => c.rule === 'REST-DAY')!;
+    // Een testloop (niveau 2) op je rustdag wordt gemeld ook als een andere dag vrij is.
+    const sessions = fullWeek().filter((s) => s.id !== 'w-1').map((s) => (s.id === 'w-3' ? { ...s, templateId: 'tpl_test_run', lock: undefined, status: 'planned' as const } : s));
+    const rest = weekConcerns(input(sessions), MONDAY).find((c) => c.rule === 'REST-DAY')!;
     expect(rest.headline).toBe('Je rustdag heeft een training.');
-    expect(rest.fact).toBe('Rustige duurloop staat op donderdag 29, je rustdag.');
+    expect(rest.fact).toBe('Testloop 5 km staat op donderdag 29, je rustdag.');
+    expect(rest.why).toContain('Je testloop staat op die dag');
   });
 
   it('te dicht op elkaar: beide trainingen krijgen hun tekst', () => {
     const list = weekConcerns(input(fullWeek(MONDAY, ['tpl_lower_a', 'tpl_hills_descent', 'tpl_herstel', 'tpl_herstel', 'tpl_herstel', 'tpl_herstel', 'tpl_herstel']).map((s) => ({ ...s, lock: undefined, status: 'planned' as const })), { restDay: 7 }), MONDAY);
     const spacing = list.find((c) => c.rule === 'LEG-SPACING')!;
     expect(spacing.headline).toBe('Benen A (zwaar) en Heuvelsprints en afdalen liggen te dicht op elkaar.');
-    expect(spacing.fact).toBe('Er zit geen dag tussen, liefst 2 voor dezelfde spieren.');
+    expect(spacing.fact).toBe('Er zit geen dag tussen, liefst 1 dag ertussen (48 uur).');
     expect(spacing.notes).toEqual({ 'w-0': '1 dag voor Heuvelsprints en afdalen', 'w-1': '1 dag na Benen A (zwaar)' });
+  });
+
+  it('een eigen training op de rustdag met een vrije dag elders is geen melding', () => {
+    const sessions = fullWeek().filter((s) => s.id !== 'w-1').map((s) => ({ ...s, lock: { by: 'proposal' as const, at: '2026-10-28T08:00:00Z' } }));
+    expect(weekConcerns(input(sessions), MONDAY).find((c) => c.rule === 'REST-DAY')).toBeUndefined();
   });
 
   it('twee harde loopjes op een dag', () => {

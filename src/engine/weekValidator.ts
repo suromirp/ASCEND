@@ -102,6 +102,16 @@ export interface CheckInput {
   mayMove?: string[];
 }
 
+// The days of a week with no training: a recovery walk counts as rest, a skipped session is gone and a
+// logged training counts. One notion for the REST-DAY rule, Week and TEST-RETRY.
+export function freeDaysOfWeek(anyDay: string, sessions: PlannedSession[], logs: SessionLog[], templateById: Map<string, SessionTemplate>): string[] {
+  const monday = mondayOfWeek(anyDay);
+  const trains = (templateId: string) => templateById.get(templateId)?.type !== 'recovery';
+  return Array.from({ length: 7 }, (_, i) => addDays(monday, i)).filter((day) =>
+    !sessions.some((o) => o.status !== 'skipped' && o.scheduledDate === day && trains(o.templateId))
+    && !logs.some((l) => l.completedDate === day && trains(l.templateId)));
+}
+
 const HORIZON_DAYS = 7 * 44;
 const EASY_ID = 'tpl_easy_run';
 
@@ -192,7 +202,7 @@ export function validateWeeks(input: CheckInput, onlyWeeks?: Set<string>): Findi
     }
 
     // The rest day stays free; what you put there yourself is your choice.
-    if (input.restDay && t.type !== 'recovery' && !leave.inTrek(s) && isoWeekday(s.scheduledDate) === input.restDay && (level(s) >= 2 || (!!input.reportYours && level(s) === 1))) {
+    if (input.restDay && t.type !== 'recovery' && !leave.inTrek(s) && isoWeekday(s.scheduledDate) === input.restDay && (level(s) >= 2 || (!!input.reportYours && level(s) === 1 && freeDaysOfWeek(s.scheduledDate, input.sessions, input.logs, byId).length === 0))) {
       findings.push({ rule: 'REST-DAY', date: s.scheduledDate, sessionIds: [s.id], subjectId: s.id, level: level(s), message: `${name} staat op je rustdag (${day(s.scheduledDate)}).` });
     }
 

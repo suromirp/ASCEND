@@ -4,7 +4,7 @@ import type { PlannedSession } from '../models/training';
 import { addDays } from '../utils/dates';
 import { applyPlanChangeItems } from './proposalEngine';
 import { weekConcerns } from './weekConcerns';
-import { planWeekFix } from './weekFixProposal';
+import { adviceSessionIds, planWeekFix, weekNotice } from './weekFixProposal';
 import { repairWeeks, validateWeeks, type CheckInput } from './weekValidator';
 
 const { templates } = buildDefaultProgramData();
@@ -22,7 +22,7 @@ describe('mayMove', () => {
   });
   it('met de optie herstelt ze alleen die training, en alleen die van jou', () => {
     const list = week(FULL).map((s) => (s.id === 'w-3' ? { ...s, scheduledDate: '2026-10-29' } : s));
-    const r = repairWeeks(input(list.filter((s) => s.id !== 'w-1'), { reportYours: true, mayMove: ['w-3'] }));
+    const r = repairWeeks(input(list, { reportYours: true, mayMove: ['w-3'] }));
     expect(r.repairs.every((x) => x.sessionId === 'w-3')).toBe(true);
     expect(r.repairs.length).toBeGreaterThan(0);
     const past = repairWeeks(input(week(FULL), { reportYours: true, mayMove: ['w-3'], today: '2026-10-30' }));
@@ -79,5 +79,39 @@ describe('planWeekFix, een week zonder rustdag', () => {
     const noShort = templates.map((t) => (t.id === 'tpl_long_run' ? { ...t, durationVariants: { ...t.durationVariants, short: undefined } } : t));
     const long = weekConcerns(input(sessions, { templates: noShort }), MONDAY).find((c) => c.rule === 'ONE-LONG')!;
     expect(planWeekFix(input(sessions, { templates: noShort }), long, MONDAY)).toBeNull();
+  });
+});
+
+describe('weekNotice naast de voorstellen van Vandaag', () => {
+  const sessions = week(FULL);
+  const advice = (id: string, changeId: string) => ({
+    id, trigger: 'plan_update' as const, ruleId: 'TEST-RETRY', title: 't', effect: 'e', why: 'w', priority: 1,
+    proposal: { id: 'p', trigger: 'plan_check' as const, issue: 'i', changes: [{ plannedSessionId: changeId, action: 'move' as const, fromDate: '2026-10-29', toDate: '2026-10-30', reason: 'r', generatedBy: [] }], alternatives: [], consequences: '', explanation: '', createdAt: '' },
+  });
+
+  it('verzamelt de ids uit wijzigingen, opties en de test van TEST-MAKE-ROOM', () => {
+    const a = { ...advice('testroom:t-9', 'w-1'), options: [{ label: 'x', effect: 'y', proposal: advice('x', 'w-2').proposal }] };
+    expect([...adviceSessionIds([a])].sort()).toEqual(['t-9', 'w-1', 'w-2']);
+  });
+
+  it('geeft geen eigen voorstel als Vandaag er al een heeft voor dezelfde training', () => {
+    const open = weekNotice(input(sessions), MONDAY, true);
+    expect(Object.keys(open.fixes)).toContain('REST-DAY:w-3');
+    const taken = adviceSessionIds([advice('a', 'w-3')]);
+    const n = weekNotice(input(sessions), MONDAY, true, taken);
+    expect(n.fixes['REST-DAY:w-3']).toBeUndefined();
+    expect(n.covered).toContain('REST-DAY:w-3');
+    expect(n.concerns.length).toBe(open.concerns.length);
+  });
+
+  it('laat een voorstel staan als het een andere training betreft', () => {
+    const n = weekNotice(input(sessions), MONDAY, true, adviceSessionIds([advice('a', 'ander')]));
+    expect(n.covered).toEqual([]);
+    expect(n.fixes['REST-DAY:w-3']).toBeDefined();
+  });
+
+  it('de test van TEST-MAKE-ROOM telt ook als de test zelf niet verschuift', () => {
+    const n = weekNotice(input(sessions), MONDAY, true, adviceSessionIds([advice('testroom:w-3', 'w-0')]));
+    expect(n.covered).toContain('REST-DAY:w-3');
   });
 });

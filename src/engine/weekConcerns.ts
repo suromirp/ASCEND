@@ -11,10 +11,11 @@
 //
 // Puur: geen React, geen IndexedDB.
 
-import type { PlannedSession } from '../models/training';
-import { addDays, daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
+import type { PlannedSession, SessionTemplate } from '../models/training';
+import { daysBetween, mondayOfWeek, weekdayLongNL } from '../utils/dates';
 import { idHasRole } from './templateRoles';
-import { validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
+import { legSpacingDays } from './scheduler';
+import { freeDaysOfWeek, validateWeeks, type CheckInput, type CheckRule, type Finding } from './weekValidator';
 
 export const CONCERN_RULES: readonly CheckRule[] = ['REST-DAY', 'LEG-SPACING', 'TWO-HARD-RUNS', 'AFTER-TEST', 'ONE-LONG', 'TEST-FRESH'];
 
@@ -43,12 +44,8 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
   const nameOf = (id: string) => names.get(byId.get(id)?.templateId ?? '') ?? 'Training';
   const dateOf = (id: string) => byId.get(id)?.scheduledDate ?? monday;
   const findings = validateWeeks({ ...input, reportYours: true }, new Set([monday])).filter((f) => CONCERN_RULES.includes(f.rule));
-  // Een dag zonder training (of met alleen Herstel) is een vrije dag.
-  const recovery = new Set(input.templates.filter((t) => t.type === 'recovery').map((t) => t.id));
-  const busyDays = new Set(input.sessions
-    .filter((s: PlannedSession) => s.status !== 'skipped' && mondayOfWeek(s.scheduledDate) === monday && !recovery.has(s.templateId))
-    .map((s) => s.scheduledDate));
-  const freeDays = Array.from({ length: 7 }, (_, i) => addDays(monday, i)).filter((d) => !busyDays.has(d));
+  // Een dag zonder training (of met alleen Herstel) is een vrije dag; dezelfde opvatting als de controle.
+  const freeDays = freeDaysOfWeek(monday, input.sessions, input.logs, new Map(input.templates.map((t) => [t.id, t])));
 
   return findings.map((f): WeekConcern => {
     const base = { key: `${f.rule}:${[...f.sessionIds].sort().join(',')}`, rule: f.rule, finding: f };
@@ -56,12 +53,15 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
     switch (f.rule) {
       case 'REST-DAY': {
         const noneFree = freeDays.length === 0;
+        const level2 = f.level >= 2;
         return {
           ...base,
           headline: noneFree ? 'Deze week heeft geen rustdag.' : 'Je rustdag heeft een training.',
           fact: noneFree ? 'Op elke dag staat een training.' : `${nameOf(a)} staat op ${dayName(dateOf(a))}, je rustdag.`,
           title: noneFree ? 'Je week heeft geen rustdag' : 'Een training van je rustdag halen',
-          why: 'Een rustdag is er om te herstellen. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
+          why: level2
+            ? `Een rustdag is er om te herstellen. ${idHasRole(byId.get(a)?.templateId ?? '', 'race', input.templates) ? 'Je wedstrijd' : 'Je testloop'} staat op die dag en schuift niet zonder jouw Akkoord, daarom vraagt ASCEND het eerst.`
+            : 'Een rustdag is er om te herstellen. Deze training stond er door een voorstel dat je accepteerde of door jouw eigen keuze, daarom vraagt ASCEND het eerst.',
           notes: { [a]: 'op je rustdag' },
         };
       }
@@ -71,12 +71,15 @@ export function weekConcerns(input: CheckInput, weekStart: string): WeekConcern[
         const late = early === a ? b : a;
         const between = Math.max(0, gap - 1);
         const days = plural(gap, 'dag', 'dagen');
+        const tplOf = (id: string): SessionTemplate | undefined => input.templates.find((t) => t.id === byId.get(id)?.templateId);
+        const [tEarly, tLate] = [tplOf(early), tplOf(late)];
+        const need = tEarly && tLate ? Math.max(1, legSpacingDays(tEarly, tLate)) : 1;
         return {
           ...base,
           headline: `${nameOf(early)} en ${nameOf(late)} liggen te dicht op elkaar.`,
-          fact: `Er zit ${between === 0 ? 'geen dag' : plural(between, 'dag', 'dagen')} tussen, liefst 2 voor dezelfde spieren.`,
+          fact: `Er zit ${between === 0 ? 'geen dag' : plural(between, 'dag', 'dagen')} tussen, liefst ${need === 2 ? '2 dagen' : '1 dag'} ertussen (${need === 2 ? 72 : 48} uur).`,
           title: 'Zware beendagen verder uit elkaar',
-          why: 'Zware dagen voor dezelfde spieren hebben tijd nodig om te herstellen. ASCEND houdt er liefst 48 uur tussen.',
+          why: `Zware beendagen hebben tijd nodig om te herstellen. ASCEND houdt er liefst ${need === 2 ? 72 : 48} uur tussen.`,
           notes: { [early]: `${days} voor ${nameOf(late)}`, [late]: `${days} na ${nameOf(early)}` },
         };
       }
